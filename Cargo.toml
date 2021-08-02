@@ -1,0 +1,28 @@
+[package]
+name = "deno_graph"
+version = "0.1.0"
+edition = "2018"
+description = "module graph analysis for deno"
+authors = ["the Deno authors"]
+license = "MIT"
+
+[lib]
+name = "deno_graph"
+
+[dependencies]
+anyhow = "1.0.41"
+data-url = "0.1.0"
+futures = "0.3.14"
+lazy_static = "1.4.0"
+log = { version = "0.4.14", features = ["serde"] }
+parking_lot = "0.11.1"
+regex = "1.4.3"
+serde = { version = "1.0.125", features = ["derive"] }
+serde_json = { version = "1.0.64", features = ["preserve_order"] }
+swc_common = "0.11.0"
+swc_ecmascript = { version = "0.48.0", features = ["dep_graph", "parser"] }
+url = "2.2.1"
+wasm-bindgen = "0.2.74"
+
+[dev-dependencies]
+tokio = { version = "1.8.1", features = ["macros", "rt-multi-thread"] }
