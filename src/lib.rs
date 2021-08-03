@@ -16,6 +16,8 @@ use source::Loader;
 use source::Locker;
 use source::Resolver;
 
+use serde_json::json;
+use serde_json::to_string_pretty;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
@@ -58,7 +60,7 @@ pub async fn js_create_graph(
   let builder =
     Builder::new(root_specifier, false, loader, maybe_resolver, maybe_locker);
   let graph = builder.build().await;
-  format!("{:?}", graph)
+  format!("{}", to_string_pretty(&json!(graph)).unwrap())
 }
 
 #[cfg(test)]
@@ -118,6 +120,6 @@ mod tests {
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let graph =
       create_graph(root_specifier, loader, maybe_resolver, None).await;
-    println!("{:?}", graph);
+    println!("{}", to_string_pretty(&json!(graph)).unwrap());
   }
 }

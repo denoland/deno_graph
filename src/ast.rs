@@ -9,6 +9,7 @@ use anyhow::Result;
 use lazy_static::lazy_static;
 use regex::Match;
 use regex::Regex;
+use serde::Serialize;
 use std::fmt;
 use std::rc::Rc;
 use swc_common::comments::Comment;
@@ -91,7 +92,7 @@ impl<'a> From<&'a MediaType> for Syntax {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Position {
   pub line: usize,
   pub character: usize,
@@ -107,7 +108,7 @@ impl Position {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Range {
   pub start: Position,
   pub end: Position,
@@ -154,9 +155,10 @@ impl Range {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Span {
   pub specifier: ModuleSpecifier,
+  #[serde(flatten)]
   pub range: Range,
 }
 

@@ -10,6 +10,9 @@ use crate::source::*;
 use anyhow::Result;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
+use serde::ser::SerializeStruct;
+use serde::Serialize;
+use serde::Serializer;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
@@ -72,6 +75,17 @@ impl PartialEq for ResolutionError {
 
 impl Eq for ResolutionError {}
 
+impl fmt::Display for ResolutionError {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Self::InvalidDowngrade => write!(f, "Modules imported via https are not allowed to import http modules."),
+      Self::InvalidLocalImport => write!(f, "Remote modules are not allowed to import local modules. Consider using a dynamic import instead."),
+      Self::ResolverError(err) => write!(f, "Error returned from resolved: {}", err),
+      Self::InvalidSpecifier(err) => write!(f, "Invalid specifier error: {}", err),
+    }
+  }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 enum Resolved {
   Specifier(ModuleSpecifier, ast::Span),
@@ -85,24 +99,86 @@ impl Default for Resolved {
   }
 }
 
+impl Serialize for Resolved {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    match self {
+      Self::Specifier(specifier, span) => {
+        let mut state = serializer.serialize_struct("ResolvedSpecifier", 2)?;
+        state.serialize_field("specifier", specifier)?;
+        state.serialize_field("span", span)?;
+        state.end()
+      }
+      Self::Err(err, span) => {
+        let mut state = serializer.serialize_struct("ResolvedError", 2)?;
+        state.serialize_field("error", &err.to_string())?;
+        state.serialize_field("span", span)?;
+        state.end()
+      }
+      _ => Serialize::serialize(&None::<Resolved>, serializer),
+    }
+  }
+}
+
 impl Resolved {
   pub fn is_none(&self) -> bool {
     self == &Self::None
   }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Dependency {
+  #[serde(rename = "code", skip_serializing_if = "Resolved::is_none")]
   maybe_code: Resolved,
+  #[serde(rename = "type", skip_serializing_if = "Resolved::is_none")]
   maybe_type: Resolved,
   is_dynamic: bool,
 }
 
-#[derive(Debug)]
+fn serialize_type_dependency<S>(
+  maybe_types_dependency: &Option<(String, Resolved)>,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  match *maybe_types_dependency {
+    Some((ref specifier, ref resolved)) => {
+      let mut state = serializer.serialize_struct("TypesDependency", 2)?;
+      state.serialize_field("specifier", specifier)?;
+      state.serialize_field("dependency", resolved)?;
+      state.end()
+    }
+    None => serializer.serialize_none(),
+  }
+}
+
+fn serialize_source<S>(source: &str, serializer: S) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  serializer.serialize_u32(source.as_bytes().iter().count() as u32)
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Module {
   dependencies: HashMap<String, Dependency>,
+  #[serde(flatten, skip_serializing_if = "Option::is_none")]
+  maybe_cache_info: Option<CacheInfo>,
+  #[serde(rename = "checksum", skip_serializing_if = "Option::is_none")]
+  maybe_checksum: Option<String>,
+  #[serde(
+    rename = "typesDependency",
+    skip_serializing_if = "Option::is_none",
+    serialize_with = "serialize_type_dependency"
+  )]
   maybe_types_dependency: Option<(String, Resolved)>,
   media_type: MediaType,
+  #[serde(rename = "size", serialize_with = "serialize_source")]
   source: String,
   specifier: ModuleSpecifier,
 }
@@ -111,6 +187,8 @@ impl Module {
   pub fn new(specifier: ModuleSpecifier, source: String) -> Self {
     Self {
       dependencies: Default::default(),
+      maybe_cache_info: None,
+      maybe_checksum: None,
       maybe_types_dependency: None,
       media_type: MediaType::Unknown,
       source,
@@ -122,14 +200,50 @@ impl Module {
 #[derive(Debug)]
 enum ModuleSlot {
   Module(Module),
-  Err(ModuleGraphError),
-  Missing,
-  Pending,
+  Err(ModuleSpecifier, ModuleGraphError),
+  Missing(ModuleSpecifier),
+  Pending(ModuleSpecifier),
 }
 
-#[derive(Debug)]
+impl Serialize for ModuleSlot {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    match self {
+      Self::Module(module) => Serialize::serialize(module, serializer),
+      Self::Err(specifier, err) => {
+        let mut state = serializer.serialize_struct("ModuleSlot", 2)?;
+        state.serialize_field("specifier", specifier)?;
+        state.serialize_field("error", &err.to_string())?;
+        state.end()
+      }
+      Self::Missing(specifier) => {
+        let mut state = serializer.serialize_struct("ModuleSlot", 2)?;
+        state.serialize_field("specifier", specifier)?;
+        state.serialize_field(
+          "error",
+          "The module was missing and could not be loaded.",
+        )?;
+        state.end()
+      }
+      Self::Pending(specifier) => {
+        let mut state = serializer.serialize_struct("ModuleSlot", 2)?;
+        state.serialize_field("specifier", specifier)?;
+        state.serialize_field(
+          "error",
+          "[INTERNAL ERROR] A pending module load never completed.",
+        )?;
+        state.end()
+      }
+    }
+  }
+}
+
+#[derive(Debug, Serialize)]
 pub struct ModuleGraph {
   root: ModuleSpecifier,
+  #[serde(skip_serializing)]
   maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
   modules: HashMap<ModuleSpecifier, ModuleSlot>,
   redirects: HashMap<ModuleSpecifier, ModuleSpecifier>,
@@ -204,12 +318,15 @@ impl Builder {
           self.visit(specifier, response)
         }
         Some((specifier, Ok(None))) => {
-          self.graph.modules.insert(specifier, ModuleSlot::Missing);
+          self
+            .graph
+            .modules
+            .insert(specifier.clone(), ModuleSlot::Missing(specifier));
         }
         Some((specifier, Err(err))) => {
           self.graph.modules.insert(
-            specifier,
-            ModuleSlot::Err(ModuleGraphError::LoadingErr(err)),
+            specifier.clone(),
+            ModuleSlot::Err(specifier, ModuleGraphError::LoadingErr(err)),
           );
         }
         _ => {}
@@ -228,7 +345,7 @@ impl Builder {
       self
         .graph
         .modules
-        .insert(specifier.clone(), ModuleSlot::Pending);
+        .insert(specifier.clone(), ModuleSlot::Pending(specifier.clone()));
       let future = self.loader.load(specifier, is_dynamic);
       self.pending.push(future);
     }
@@ -402,7 +519,9 @@ impl Builder {
           // Return the module as a valid module
           ModuleSlot::Module(module)
         }
-        Err(diagnostic) => ModuleSlot::Err(diagnostic.into()),
+        Err(diagnostic) => {
+          ModuleSlot::Err(specifier.clone(), diagnostic.into())
+        }
       };
     self.graph.modules.insert(specifier, module_slot);
   }

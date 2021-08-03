@@ -2,8 +2,13 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 import * as base64 from "https://deno.land/std@0.102.0/encoding/base64.ts";
+import * as colors from "https://deno.land/std@0.102.0/fmt/colors.ts";
 
 const STD_VERSION = `0.102.0`;
+
+console.log(
+  `${colors.bold(colors.green("Building"))} deno_graph web assembly...`,
+);
 
 const home = Deno.env.get("HOME");
 const root = new URL(".", import.meta.url).pathname;
@@ -18,14 +23,24 @@ if (new URL(import.meta.url).protocol === "file:") {
   Deno.exit(1);
 }
 
-const cargoFmtCmdStatus = Deno.run({ cmd: ["cargo", "fmt"] }).status();
+const cargoFmtCmd = ["cargo", "fmt"];
+console.log(`  ${colors.bold(colors.gray(cargoFmtCmd.join(" ")))}`);
+const cargoFmtCmdStatus = Deno.run({ cmd: cargoFmtCmd }).status();
 if (!(await cargoFmtCmdStatus).success) {
   console.error(`cargo fmt failed`);
   Deno.exit(1);
 }
 
+const cargoBuildCmd = [
+  "cargo",
+  "build",
+  "--release",
+  "--target",
+  "wasm32-unknown-unknown",
+];
+console.log(`  ${colors.bold(colors.gray(cargoBuildCmd.join(" ")))}`);
 const cargoBuildReleaseCmdStatus = Deno.run({
-  cmd: ["cargo", "build", "--release", "--target", "wasm32-unknown-unknown"],
+  cmd: cargoBuildCmd,
   env: {
     "SOURCE_DATE_EPOCH": "1600000000",
     "TZ": "UTC",
@@ -38,21 +53,25 @@ if (!(await cargoBuildReleaseCmdStatus).success) {
   Deno.exit(1);
 }
 
-const wasmBindgenCmdStatus = Deno.run({
-  cmd: [
-    "wasm-bindgen",
-    "./target/wasm32-unknown-unknown/release/deno_graph.wasm",
-    "--target",
-    "deno",
-    "--weak-refs",
-    "--out-dir",
-    "./target/wasm32-bindgen-deno-js",
-  ],
-}).status();
+const wasmBindGenCmd = [
+  "wasm-bindgen",
+  "./target/wasm32-unknown-unknown/release/deno_graph.wasm",
+  "--target",
+  "deno",
+  "--weak-refs",
+  "--out-dir",
+  "./target/wasm32-bindgen-deno-js",
+];
+console.log(`  ${colors.bold(colors.gray(wasmBindGenCmd.join(" ")))}`);
+const wasmBindgenCmdStatus = Deno.run({ cmd: wasmBindGenCmd }).status();
 if (!(await wasmBindgenCmdStatus).success) {
   console.error(`wasm-bindgen failed`);
   Deno.exit(1);
 }
+
+console.log(
+  `${colors.bold(colors.green("Generating"))} lib files...`,
+);
 
 const generatedWasm = await Deno.readFile(
   "./target/wasm32-bindgen-deno-js/deno_graph_bg.wasm",
@@ -80,7 +99,9 @@ export const data = base64.decode("\\\n${
   base64.encode(generatedWasm).replace(/.{78}/g, "$&\\\n")
 }\\\n");
 `;
-await Deno.writeTextFile("./lib/deno_graph.wasm.js", wasmJs);
+const libDenoGraphWasm = "./lib/deno_graph.wasm.js";
+console.log(`  write ${colors.yellow(libDenoGraphWasm)}`);
+await Deno.writeTextFile(libDenoGraphWasm, wasmJs);
 
 const generatedJs = await Deno.readTextFile(
   "./target/wasm32-bindgen-deno-js/deno_graph.js",
@@ -104,12 +125,24 @@ export const _wasmModule = wasmModule;
 export const _wasmInstance = wasmInstance;
 export const _wasmBytes = wasmBytes;
 `;
-await Deno.writeTextFile("./lib/deno_graph.js", bindingJs);
+const libDenoGraphJs = "./lib/deno_graph.js";
+console.log(`  write ${colors.yellow(libDenoGraphJs)}`);
+await Deno.writeTextFile(libDenoGraphJs, bindingJs);
 
-const denoFmtCmdStatus = Deno.run({
-  cmd: ["deno", "fmt", "./lib/deno_graph.wasm.js", "./lib/deno_graph.js"],
-}).status();
+const denoFmtCmd = [
+  "deno",
+  "fmt",
+  "--quiet",
+  "./lib/deno_graph.wasm.js",
+  "./lib/deno_graph.js",
+];
+console.log(`  ${colors.bold(colors.gray(denoFmtCmd.join(" ")))}`);
+const denoFmtCmdStatus = Deno.run({ cmd: denoFmtCmd }).status();
 if (!(await denoFmtCmdStatus).success) {
   console.error("deno fmt command failed");
   Deno.exit(1);
 }
+
+console.log(
+  `${colors.bold(colors.green("Finished"))} deno_graph web assembly.`,
+);
