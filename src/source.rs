@@ -4,6 +4,8 @@ use crate::module_specifier::ModuleSpecifier;
 
 use anyhow::Result;
 use futures::future::Future;
+use serde::Deserialize;
+use serde::Serialize;
 use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
@@ -11,6 +13,7 @@ use std::pin::Pin;
 
 /// Information that comes from an external source which can be optionally
 /// included in the module graph.
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CacheInfo {
   /// The path to the local representation of the file. If a local file, the
   /// path to the original file, if a remote file, the path to the file in the
@@ -25,7 +28,7 @@ pub struct CacheInfo {
 }
 
 /// The response that is expected from a loader's `.load()` method.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct LoadResponse {
   /// The module specifier of the final module. This can differ from the
   /// requested specifier (e.g. if there was a redirect encountered when
@@ -38,23 +41,13 @@ pub struct LoadResponse {
   pub content: String,
 }
 
-/// The return future of a load request, which the output should be a tuple
-/// of the original requested module specifier and a result of the optional
-/// load response. If the requested specifier cannot be found, the result should
-/// be `None`. If some other error is encountered, the result should be an
-/// error containing the error.
-pub type LoadFuture = Pin<
-  Box<
-    (dyn Future<Output = (ModuleSpecifier, Result<Option<LoadResponse>>)>
-       + 'static
-       + Send),
-  >,
->;
+pub type LoadResult = (ModuleSpecifier, Result<Option<LoadResponse>>);
+pub type LoadFuture = Pin<Box<dyn Future<Output = LoadResult> + 'static>>;
 
 /// A trait which allows asynchronous loading of source files into a module
 /// graph in a thread safe way as well as a way to provide additional meta data
 /// about any cached resources.
-pub trait Loader: Sync + Send {
+pub trait Loader {
   /// An optional method which returns cache info for a module specifier.
   fn get_cache_info(&self, _specifier: &ModuleSpecifier) -> Option<CacheInfo> {
     None
@@ -94,6 +87,7 @@ pub trait Resolver: fmt::Debug {
 #[cfg(test)]
 pub(crate) mod tests {
   use super::*;
+  use crate::module_specifier::resolve_import;
   use anyhow::anyhow;
   use anyhow::Error;
   use futures::future;
@@ -141,6 +135,48 @@ pub(crate) mod tests {
         _ => Ok(None),
       };
       Box::pin(future::ready((specifier.clone(), response)))
+    }
+  }
+
+  #[derive(Debug)]
+  pub(crate) struct MockResolver {
+    map: HashMap<ModuleSpecifier, HashMap<String, ModuleSpecifier>>,
+  }
+
+  impl MockResolver {
+    pub fn new<S: AsRef<str>>(map: Vec<(S, Vec<(S, S)>)>) -> Self {
+      Self {
+        map: map
+          .into_iter()
+          .map(|(r, m)| {
+            let referrer = ModuleSpecifier::parse(r.as_ref()).unwrap();
+            let map = m
+              .into_iter()
+              .map(|(s, ms)| {
+                let specifier_str = s.as_ref().to_string();
+                let specifier = ModuleSpecifier::parse(ms.as_ref()).unwrap();
+                (specifier_str, specifier)
+              })
+              .collect();
+            (referrer, map)
+          })
+          .collect(),
+      }
+    }
+  }
+
+  impl Resolver for MockResolver {
+    fn resolve(
+      &self,
+      specifier: &str,
+      referrer: &ModuleSpecifier,
+    ) -> Result<ModuleSpecifier> {
+      if let Some(map) = self.map.get(referrer) {
+        if let Some(resolved_specifier) = map.get(specifier) {
+          return Ok(resolved_specifier.clone());
+        }
+      }
+      resolve_import(specifier, referrer).map_err(|err| err.into())
     }
   }
 }

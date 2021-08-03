@@ -3,6 +3,7 @@
 use anyhow::Result;
 use std::error::Error;
 use std::fmt;
+use std::path::PathBuf;
 use url::ParseError;
 
 pub type ModuleSpecifier = url::Url;
@@ -43,6 +44,16 @@ impl fmt::Display for SpecifierError {
   }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+fn specifier_from_path(path: PathBuf) -> ModuleSpecifier {
+  ModuleSpecifier::from_file_path(path).unwrap()
+}
+
+#[cfg(target_arch = "wasm32")]
+fn specifier_from_path(_path: PathBuf) -> ModuleSpecifier {
+  ModuleSpecifier::parse(EMPTY_SPECIFIER).unwrap()
+}
+
 /// Given a specifier string and a referring module specifier, try to resolve
 /// the target module specifier, erroring if it cannot be resolved.
 pub fn resolve_import(
@@ -80,7 +91,7 @@ pub fn resolve_import(
         // Otherwise, later joining in Url would be interpreted in
         // the parent directory (appending trailing slash does not work)
         let path = std::env::current_dir().unwrap().join("empty");
-        ModuleSpecifier::from_file_path(path).unwrap()
+        specifier_from_path(path)
       } else {
         referrer.clone()
       };

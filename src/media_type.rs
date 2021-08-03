@@ -186,15 +186,25 @@ impl<'a> From<&'a String> for MediaType {
   }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+fn file_specifier_to_path(specifier: &ModuleSpecifier) -> PathBuf {
+  if let Ok(path) = specifier.to_file_path() {
+    path
+  } else {
+    PathBuf::from(specifier.path())
+  }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn file_specifier_to_path(specifier: &ModuleSpecifier) -> PathBuf {
+  PathBuf::from(specifier.path())
+}
+
 impl<'a> From<&'a ModuleSpecifier> for MediaType {
   fn from(specifier: &'a ModuleSpecifier) -> Self {
     if specifier.scheme() != "data" {
       let path = if specifier.scheme() == "file" {
-        if let Ok(path) = specifier.to_file_path() {
-          path
-        } else {
-          PathBuf::from(specifier.path())
-        }
+        file_specifier_to_path(specifier)
       } else {
         PathBuf::from(specifier.path())
       };
@@ -214,11 +224,7 @@ fn map_js_like_extension(
   default: MediaType,
 ) -> MediaType {
   let path = if specifier.scheme() == "file" {
-    if let Ok(path) = specifier.to_file_path() {
-      path
-    } else {
-      PathBuf::from(specifier.path())
-    }
+    file_specifier_to_path(specifier)
   } else {
     PathBuf::from(specifier.path())
   };

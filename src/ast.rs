@@ -1,7 +1,9 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 use crate::media_type::MediaType;
-use crate::ModuleSpecifier;
+use crate::module_specifier::ModuleSpecifier;
+#[cfg(target_arch = "wasm32")]
+use crate::module_specifier::EMPTY_SPECIFIER;
 
 use anyhow::Result;
 use lazy_static::lazy_static;
@@ -188,10 +190,30 @@ impl fmt::Display for Location {
   }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<swc_common::Loc> for Location {
   fn from(loc: swc_common::Loc) -> Self {
     let specifier = match &loc.file.name {
       FileName::Real(path) => ModuleSpecifier::from_file_path(path).unwrap(),
+      FileName::Custom(input) => ModuleSpecifier::parse(input).unwrap(),
+      _ => unreachable!("invalid specifier"),
+    };
+
+    Location {
+      specifier,
+      position: Position {
+        line: loc.line,
+        character: loc.col_display,
+      },
+    }
+  }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl From<swc_common::Loc> for Location {
+  fn from(loc: swc_common::Loc) -> Self {
+    let specifier = match &loc.file.name {
+      FileName::Real(_) => ModuleSpecifier::parse(EMPTY_SPECIFIER).unwrap(),
       FileName::Custom(input) => ModuleSpecifier::parse(input).unwrap(),
       _ => unreachable!("invalid specifier"),
     };

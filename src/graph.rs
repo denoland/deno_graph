@@ -10,10 +10,10 @@ use crate::source::*;
 use anyhow::Result;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
-use parking_lot::Mutex;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
-use std::sync::Arc;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub enum ModuleGraphError {
@@ -130,7 +130,7 @@ enum ModuleSlot {
 #[derive(Debug)]
 pub struct ModuleGraph {
   root: ModuleSpecifier,
-  maybe_locker: Option<Arc<Mutex<dyn Locker>>>,
+  maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
   modules: HashMap<ModuleSpecifier, ModuleSlot>,
   redirects: HashMap<ModuleSpecifier, ModuleSpecifier>,
 }
@@ -138,7 +138,7 @@ pub struct ModuleGraph {
 impl ModuleGraph {
   pub fn new(
     root: ModuleSpecifier,
-    maybe_locker: Option<Arc<Mutex<dyn Locker>>>,
+    maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
   ) -> Self {
     Self {
       root,
@@ -154,7 +154,7 @@ impl ModuleGraph {
   /// the first specifier that failed the integrity check.
   pub fn lock(&self) -> Result<(), ModuleGraphError> {
     if let Some(locker) = &self.maybe_locker {
-      let mut locker = locker.lock();
+      let mut locker = locker.borrow_mut();
       for (_, module_slot) in self.modules.iter() {
         if let ModuleSlot::Module(module) = module_slot {
           if !locker.check_or_insert(&module.specifier, &module.source) {
@@ -172,8 +172,8 @@ impl ModuleGraph {
 pub(crate) struct Builder {
   is_dynamic_root: bool,
   graph: ModuleGraph,
-  loader: Arc<Mutex<dyn Loader>>,
-  maybe_resolver: Option<Arc<Mutex<dyn Resolver>>>,
+  loader: Box<dyn Loader>,
+  maybe_resolver: Option<Box<dyn Resolver>>,
   pending: FuturesUnordered<LoadFuture>,
 }
 
@@ -181,9 +181,9 @@ impl Builder {
   pub fn new(
     root_specifier: ModuleSpecifier,
     is_dynamic_root: bool,
-    loader: Arc<Mutex<dyn Loader>>,
-    maybe_resolver: Option<Arc<Mutex<dyn Resolver>>>,
-    maybe_locker: Option<Arc<Mutex<dyn Locker>>>,
+    loader: Box<dyn Loader>,
+    maybe_resolver: Option<Box<dyn Resolver>>,
+    maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
   ) -> Self {
     Self {
       is_dynamic_root,
@@ -229,8 +229,7 @@ impl Builder {
         .graph
         .modules
         .insert(specifier.clone(), ModuleSlot::Pending);
-      let mut loader = self.loader.lock();
-      let future = loader.load(specifier, is_dynamic);
+      let future = self.loader.load(specifier, is_dynamic);
       self.pending.push(future);
     }
   }
@@ -245,7 +244,6 @@ impl Builder {
   ) -> Resolved {
     let mut remapped = false;
     let resolved_specifier = if let Some(resolver) = &self.maybe_resolver {
-      let resolver = resolver.lock();
       remapped = true;
       resolver
         .resolve(specifier, referrer)
