@@ -29,3 +29,7 @@ wasm-bindgen-futures = "0.4.24"
 
 [dev-dependencies]
 tokio = { version = "1.9.0", features = ["macros", "rt-multi-thread"] }
+
+[profile.release]
+lto = true
+opt-level = "z"
