@@ -157,6 +157,7 @@ impl Range {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Span {
+  #[serde(skip_serializing)]
   pub specifier: ModuleSpecifier,
   #[serde(flatten)]
   pub range: Range,
