@@ -2,8 +2,6 @@
 
 FROM mcr.microsoft.com/vscode/devcontainers/rust:0-1
 
-RUN chown -R vscode /usr/local/cargo
-
 ENV DENO_INSTALL=/deno
 RUN mkdir -p /deno \
     && curl -fsSL https://deno.land/x/install/install.sh | sh \
@@ -14,3 +12,5 @@ ENV PATH=${DENO_INSTALL}/bin:${PATH} \
 
 RUN rustup target add wasm32-unknown-unknown
 RUN cargo install -f wasm-bindgen-cli
+
+RUN chown -R vscode /usr/local/cargo
