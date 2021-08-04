@@ -1,10 +1,7 @@
 #!/usr/bin/env -S deno run --allow-run --allow-read --allow-write --allow-env
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-import * as base64 from "https://deno.land/std@0.102.0/encoding/base64.ts";
 import * as colors from "https://deno.land/std@0.102.0/fmt/colors.ts";
-
-const STD_VERSION = `0.102.0`;
 
 await Deno.permissions.request({ name: "env" });
 await Deno.permissions.request({ name: "run" });
