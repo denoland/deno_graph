@@ -4,7 +4,7 @@ import {
   assert,
   assertEquals,
 } from "https://deno.land/std@0.102.0/testing/asserts.ts";
-import { createGraph } from "./mod.ts";
+import { createGraph, load } from "./mod.ts";
 
 Deno.test({
   name: "createGraph - basic usage",
@@ -22,6 +22,19 @@ Deno.test({
         });
       },
     });
+    console.log(graph);
+  },
+});
+
+Deno.test({
+  name: "createGraph with load - remote modules",
+  async fn() {
+    const graph = await createGraph(
+      "https://deno.land/std@0.103.0/examples/chat/server.ts",
+      {
+        load,
+      },
+    );
     console.log(graph);
   },
 });
