@@ -6,6 +6,11 @@ import * as colors from "https://deno.land/std@0.102.0/fmt/colors.ts";
 
 const STD_VERSION = `0.102.0`;
 
+await Deno.permissions.request({ name: "env" });
+await Deno.permissions.request({ name: "run" });
+await Deno.permissions.request({ name: "read" });
+await Deno.permissions.request({ name: "write" });
+
 console.log(
   `${colors.bold(colors.green("Building"))} deno_graph web assembly...`,
 );
