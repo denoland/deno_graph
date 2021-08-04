@@ -75,38 +75,19 @@ if (!(await wasmBindgenCmdStatus).success) {
 }
 
 console.log(
-  `${colors.bold(colors.green("Generating"))} lib files...`,
+  `${colors.bold(colors.green("Copying"))} lib wasm...`,
 );
 
-const generatedWasm = await Deno.readFile(
+const denoGraphWasmDest = "./lib/deno_graph_bg.wasm";
+await Deno.copyFile(
   "./target/wasm32-bindgen-deno-js/deno_graph_bg.wasm",
+  denoGraphWasmDest,
 );
 
-const generatedWasmLength = generatedWasm.length.toString();
-const formattedWasmSize = generatedWasmLength.padStart(
-  Math.ceil(generatedWasmLength.length / 3) * 3,
-).replace(/...\B/g, "$&_").trim();
-
-const wasmIntegrity = `sha256-${
-  base64.encode(await crypto.subtle.digest("SHA-256", generatedWasm))
-}`;
-
-const wasmJs = `${copyrightHeader}
-// @generated file from build script, do not edit
-
-import * as base64 from "https://deno.land/std@${STD_VERSION}/encoding/base64.ts";
-
-export const size = ${formattedWasmSize};
-export const name = "deno_graph.wasm";
-export const type = "application/wasm";
-export const hash = ${JSON.stringify(wasmIntegrity)};
-export const data = base64.decode("\\\n${
-  base64.encode(generatedWasm).replace(/.{78}/g, "$&\\\n")
-}\\\n");
-`;
-const libDenoGraphWasm = "./lib/deno_graph.wasm.js";
-console.log(`  write ${colors.yellow(libDenoGraphWasm)}`);
-await Deno.writeTextFile(libDenoGraphWasm, wasmJs);
+console.log(`  copy ${colors.yellow(denoGraphWasmDest)}`);
+console.log(
+  `${colors.bold(colors.green("Generating"))} lib JS bindings...`,
+);
 
 const generatedJs = await Deno.readTextFile(
   "./target/wasm32-bindgen-deno-js/deno_graph.js",
@@ -115,20 +96,19 @@ const bindingJs = `${copyrightHeader}
 // @generated file from build script, do not edit
 // deno-lint-ignore-file
 
-import { data as wasmBytes } from "./deno_graph.wasm.js";
-
 ${
   generatedJs.replace(
-    /^const file =.*?;\nconst wasmFile =.*?;\nconst wasmModule =.*?;\n/sm,
-    "const wasmModule = new WebAssembly.Module(wasmBytes);",
+    /^\s*wasmCode\s=\sawait Deno\.readFile\(wasm_url\);$/sm,
+    `if ("permissions" in Deno) {\nDeno.permissions.request({ name: "read" });\n}\nwasmCode = await Deno.readFile(wasm_url);`,
+  ).replace(
+    /^\s*wasmCode\s=\sawait\s\(await\sfetch\(wasm_url\)\)\.arrayBuffer\(\);$/sm,
+    `if ("permissions" in Deno) {\nDeno.permissions.request({ name: "net", host: wasm_url.host });\n}\nwasmCode = await (await fetch(wasm_url)).arrayBuffer();`,
   )
 }
 
 /* for testing and debugging */
 export const _wasm = wasm;
-export const _wasmModule = wasmModule;
 export const _wasmInstance = wasmInstance;
-export const _wasmBytes = wasmBytes;
 `;
 const libDenoGraphJs = "./lib/deno_graph.js";
 console.log(`  write ${colors.yellow(libDenoGraphJs)}`);
