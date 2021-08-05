@@ -1,0 +1,64 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  rust:
+    name: deno_doc-${{ matrix.os }}
+    if: |
+      github.event_name == 'push' ||
+      !startsWith(github.event.pull_request.head.label, 'denoland:')
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: [macOS-latest, ubuntu-latest, windows-2019]
+    
+    steps:
+      - name: ☑️ clone repository
+        uses: actions/checkout@v2
+      
+      - name: ➡️ install rust
+        uses: hecrj/setup-rust-action@v1.3.4
+        with:
+          rust-version: 1.53.0
+      
+      - name: ➡️ install clippy and rustfmt
+        run: |
+          rustup component add clippy
+          rustup component add rustfmt
+      
+      - name: 🗃️ cache
+        uses: action/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-
+
+      - name: ➡️ install up Deno
+        uses: denoland/setup-deno@v1.0.0
+        with:
+          deno-version: 1.x
+      
+      - name: 💄 format
+        if: contains(matrix.os, 'ubuntu')
+        run: |
+          rustfmt --check src/lib.rs
+          deno fmt --check *.ts lib
+      
+      - name: 💄 lint
+        if: contains(matrix.os, 'ubuntu')
+        run: |
+          cargo clippy --locked --release --all-targets -- -D clippy::all
+          deno lint *.ts lib
+
+      - name: 🏗️ build
+        run: cargo build --locked --release --all-targets
+      
+      - name: 🧪 test
+        run: |
+          cargo test --locked --release --all-targets
+          deno test --allow-read --allow-net
