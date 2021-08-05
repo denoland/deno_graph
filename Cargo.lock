@@ -149,6 +149,7 @@ dependencies = [
  "serde_json",
  "swc_common",
  "swc_ecmascript",
+ "termcolor",
  "tokio",
  "url",
  "wasm-bindgen",
@@ -850,9 +851,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_dep_graph"
-version = "0.33.0"
+version = "0.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1708b8dbf2a91b21b62d2f6bc5e56c20e23aa97c5200f9aad5899ddc4ab5503e"
+checksum = "46e294566d33d6b32b9f1988116b67d06f85c1d3163b68163a4cd9f9abfa0b6e"
 dependencies = [
  "swc_atoms",
  "swc_common",
@@ -862,9 +863,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_parser"
-version = "0.65.0"
+version = "0.66.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a47e935b2ff6bdb6cd7ccb20aa1a6cb94f9993e5fc44ab69692dcb87bd8b4238"
+checksum = "86b3663c7d31f8ce7d679a86dcaf207483711db5fb8974fc30fb67f2f0dbee0f"
 dependencies = [
  "either",
  "enum_kind",
@@ -896,9 +897,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecmascript"
-version = "0.50.0"
+version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7d7cf5f01d49cba27028518c15bf45343d0d99799f60ab7aabcbc0b6a440204"
+checksum = "0b8d715be625914e2361b105248cef3266d2e5f96d6b839858468a13745411b6"
 dependencies = [
  "swc_ecma_ast",
  "swc_ecma_dep_graph",
@@ -962,6 +963,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-xid",
+]
+
+[[package]]
+name = "termcolor"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
+dependencies = [
+ "winapi-util",
 ]
 
 [[package]]
@@ -1150,6 +1160,15 @@ name = "winapi-i686-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
+
+[[package]]
+name = "winapi-util"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70ec6ce85bb158151cae5e5c87f95a8e97d2c0c4b001223f33a334e3ce5de178"
+dependencies = [
+ "winapi",
+]
 
 [[package]]
 name = "winapi-x86_64-pc-windows-gnu"

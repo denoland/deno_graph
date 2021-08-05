@@ -13,7 +13,7 @@ use std::pin::Pin;
 
 /// Information that comes from an external source which can be optionally
 /// included in the module graph.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct CacheInfo {
   /// The path to the local representation of the file. If a local file, the
   /// path to the original file, if a remote file, the path to the file in the
@@ -94,11 +94,16 @@ pub(crate) mod tests {
 
   pub(crate) struct MockLoader {
     sources: HashMap<ModuleSpecifier, Result<LoadResponse, Error>>,
+    cache_info: HashMap<ModuleSpecifier, CacheInfo>,
   }
+
+  type MockLoaderSources<S> =
+    Vec<(S, Result<(S, Option<Vec<(S, S)>>, S), Error>)>;
 
   impl MockLoader {
     pub fn new<S: AsRef<str>>(
-      sources: Vec<(S, Result<(S, Option<Vec<(S, S)>>, S), Error>)>,
+      sources: MockLoaderSources<S>,
+      cache_info: Vec<(S, CacheInfo)>,
     ) -> Self {
       Self {
         sources: sources
@@ -119,11 +124,22 @@ pub(crate) mod tests {
             (specifier, result)
           })
           .collect(),
+        cache_info: cache_info
+          .into_iter()
+          .map(|(s, c)| {
+            let specifier = ModuleSpecifier::parse(s.as_ref()).unwrap();
+            (specifier, c)
+          })
+          .collect(),
       }
     }
   }
 
   impl Loader for MockLoader {
+    fn get_cache_info(&self, specifier: &ModuleSpecifier) -> Option<CacheInfo> {
+      self.cache_info.get(specifier).cloned()
+    }
+
     fn load(
       &mut self,
       specifier: &ModuleSpecifier,

@@ -22,9 +22,9 @@ async function requestNet(host: string): Promise<void> {
   await Deno.permissions.request({ name: "net", host });
 }
 
-/** A Deno speicfic loader function that can be passed to the `createModuleGraph`
- * which will use `Deno.readTextFile` for local files, or use `fetch()` for
- * remote modules.
+/** A Deno specific loader function that can be passed to the
+ * `createModuleGraph` which will use `Deno.readTextFile` for local files, or
+ * use `fetch()` for remote modules.
  *
  * @param specifier The string module specifier from the module graph.
  */

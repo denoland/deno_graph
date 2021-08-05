@@ -175,7 +175,7 @@ impl fmt::Display for Span {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Location {
   pub specifier: ModuleSpecifier,
   pub position: Position,
@@ -236,7 +236,7 @@ pub enum TypeScriptReference {
   Types(String, Range),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Diagnostic {
   pub location: Location,
   pub message: String,

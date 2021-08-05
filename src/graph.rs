@@ -7,6 +7,7 @@ use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
 use crate::source::*;
 
+use anyhow::anyhow;
 use anyhow::Result;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
@@ -25,6 +26,16 @@ pub enum ModuleGraphError {
   LoadingErr(anyhow::Error),
   ParseErr(ast::Diagnostic),
   InvalidSource(ModuleSpecifier),
+}
+
+impl Clone for ModuleGraphError {
+  fn clone(&self) -> Self {
+    match self {
+      Self::LoadingErr(err) => Self::LoadingErr(anyhow!(err.to_string())),
+      Self::ParseErr(err) => Self::ParseErr(err.clone()),
+      Self::InvalidSource(specifier) => Self::InvalidSource(specifier.clone()),
+    }
+  }
 }
 
 impl std::error::Error for ModuleGraphError {}
@@ -56,7 +67,7 @@ impl From<ast::Diagnostic> for ModuleGraphError {
 }
 
 #[derive(Debug)]
-enum ResolutionError {
+pub enum ResolutionError {
   InvalidDowngrade,
   InvalidLocalImport,
   ResolverError(anyhow::Error),
@@ -89,7 +100,7 @@ impl fmt::Display for ResolutionError {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-enum Resolved {
+pub enum Resolved {
   Specifier(ModuleSpecifier, ast::Span),
   Err(ResolutionError, ast::Span),
   None,
@@ -132,8 +143,8 @@ impl Resolved {
 
 #[derive(Debug, Default)]
 pub struct Dependency {
-  maybe_code: Resolved,
-  maybe_type: Resolved,
+  pub(crate) maybe_code: Resolved,
+  pub(crate) maybe_type: Resolved,
   is_dynamic: bool,
 }
 
@@ -141,21 +152,21 @@ pub struct Dependency {
 #[serde(rename_all = "camelCase")]
 pub struct Module {
   #[serde(serialize_with = "serialize_dependencies")]
-  dependencies: BTreeMap<String, Dependency>,
+  pub dependencies: BTreeMap<String, Dependency>,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
-  maybe_cache_info: Option<CacheInfo>,
+  pub maybe_cache_info: Option<CacheInfo>,
   #[serde(rename = "checksum", skip_serializing_if = "Option::is_none")]
-  maybe_checksum: Option<String>,
+  pub maybe_checksum: Option<String>,
   #[serde(
     rename = "typesDependency",
     skip_serializing_if = "Option::is_none",
     serialize_with = "serialize_type_dependency"
   )]
-  maybe_types_dependency: Option<(String, Resolved)>,
-  media_type: MediaType,
+  pub maybe_types_dependency: Option<(String, Resolved)>,
+  pub media_type: MediaType,
   #[serde(rename = "size", serialize_with = "serialize_source")]
-  source: String,
-  specifier: ModuleSpecifier,
+  pub source: String,
+  pub specifier: ModuleSpecifier,
 }
 
 impl Module {
@@ -170,23 +181,33 @@ impl Module {
       specifier,
     }
   }
+
+  pub fn size(&self) -> f64 {
+    self.source.as_bytes().len() as f64
+  }
 }
 
 #[derive(Debug)]
-enum ModuleSlot {
+pub(crate) enum ModuleSlot {
   Module(Module),
   Err(ModuleGraphError),
   Missing,
   Pending,
 }
 
+impl ModuleSlot {
+  pub fn is_module(&self) -> bool {
+    matches!(*self, Self::Module(_))
+  }
+}
+
 #[derive(Debug, Serialize)]
 pub struct ModuleGraph {
-  root: ModuleSpecifier,
+  pub(crate) root: ModuleSpecifier,
   #[serde(skip_serializing)]
   maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
   #[serde(serialize_with = "serialize_modules")]
-  modules: BTreeMap<ModuleSpecifier, ModuleSlot>,
+  pub(crate) modules: BTreeMap<ModuleSpecifier, ModuleSlot>,
   redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
 }
 
@@ -200,6 +221,17 @@ impl ModuleGraph {
       maybe_locker,
       modules: Default::default(),
       redirects: Default::default(),
+    }
+  }
+
+  /// Get a module from the module graph, returning `None` if the module is not
+  /// part of the graph, or if when loading the module it errored. If any module
+  /// resolution error is needed, then use the `try_get()` method which will
+  /// return any resolution error as the error in the result.
+  pub fn get(&self, specifier: &ModuleSpecifier) -> Option<&Module> {
+    match self.modules.get(specifier) {
+      Some(ModuleSlot::Module(module)) => Some(module),
+      _ => None,
     }
   }
 
@@ -221,6 +253,32 @@ impl ModuleGraph {
       }
     }
     Ok(())
+  }
+
+  /// Resolve a specifier from the module graph following any possible redirects
+  /// returning the "final" module.
+  pub fn resolve(&self, specifier: &ModuleSpecifier) -> ModuleSpecifier {
+    let mut redirected_specifier = specifier;
+    while let Some(specifier) = self.redirects.get(redirected_specifier) {
+      redirected_specifier = specifier;
+    }
+    redirected_specifier.clone()
+  }
+
+  /// Retrieve a module from the module graph. If the module identified as a
+  /// dependency of the graph, but resolving or loading that module resulted in
+  /// an error, the error will be returned as the `Err` of the result. If the
+  /// module is not part of the graph, or the module is missing from the graph,
+  /// the result will be `Ok` with the option of the module.
+  pub fn try_get(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Result<Option<&Module>, ModuleGraphError> {
+    match self.modules.get(specifier) {
+      Some(ModuleSlot::Module(module)) => Ok(Some(module)),
+      Some(ModuleSlot::Err(err)) => Err(err.clone()),
+      _ => Ok(None),
+    }
   }
 }
 
@@ -271,6 +329,13 @@ impl Builder {
       }
       if self.pending.is_empty() {
         break;
+      }
+    }
+
+    // Enrich with cache info from the loader
+    for slot in self.graph.modules.values_mut() {
+      if let ModuleSlot::Module(ref mut module) = slot {
+        module.maybe_cache_info = self.loader.get_cache_info(&module.specifier);
       }
     }
 
@@ -357,6 +422,16 @@ impl Builder {
 
     // If the response was redirected, then we add the module to the redirects
     if requested_specifier != specifier {
+      // remove a potentially pending redirect that will never resolve
+      if let Some(slot) = self.graph.modules.get(&requested_specifier) {
+        if matches!(slot, ModuleSlot::Pending) {
+          self.graph.modules.remove(&requested_specifier);
+        }
+      }
+      // if the root has been redirected, update the root
+      if self.graph.root == requested_specifier {
+        self.graph.root = specifier.clone();
+      }
       self
         .graph
         .redirects

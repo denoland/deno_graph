@@ -2,7 +2,9 @@
 
 mod ast;
 mod checksum;
+mod colors;
 mod graph;
+mod info;
 mod js_graph;
 mod media_type;
 mod module_specifier;
@@ -60,7 +62,7 @@ pub async fn js_create_graph(
   let builder =
     Builder::new(root_specifier, false, loader, maybe_resolver, maybe_locker);
   let graph = builder.build().await;
-  format!("{}", to_string_pretty(&json!(graph)).unwrap())
+  to_string_pretty(&json!(graph)).unwrap()
 }
 
 #[cfg(test)]
@@ -68,32 +70,39 @@ mod tests {
   use super::*;
   use anyhow::Error;
   use source::tests::*;
+  use source::CacheInfo;
+
+  type Sources<'a> = Vec<(
+    &'a str,
+    Result<(&'a str, Option<Vec<(&'a str, &'a str)>>, &'a str), Error>,
+  )>;
 
   fn setup(
-    sources: Vec<(
-      &str,
-      Result<(&str, Option<Vec<(&str, &str)>>, &str), Error>,
-    )>,
+    sources: Sources,
+    cache_info: Vec<(&str, CacheInfo)>,
   ) -> Box<dyn Loader> {
-    Box::new(MockLoader::new(sources))
+    Box::new(MockLoader::new(sources, cache_info))
   }
 
   #[tokio::test]
   async fn test_create_graph() {
-    let loader = setup(vec![
-      (
-        "file:///a/test01.ts",
-        Ok((
+    let loader = setup(
+      vec![
+        (
           "file:///a/test01.ts",
-          None,
-          r#"import * as b from "./test02.ts";"#,
-        )),
-      ),
-      (
-        "file:///a/test02.ts",
-        Ok(("file:///a/test02.ts", None, r#"export const b = "b";"#)),
-      ),
-    ]);
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"import * as b from "./test02.ts";"#,
+          )),
+        ),
+        (
+          "file:///a/test02.ts",
+          Ok(("file:///a/test02.ts", None, r#"export const b = "b";"#)),
+        ),
+      ],
+      vec![],
+    );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(root_specifier, loader, None, None).await;
@@ -102,16 +111,19 @@ mod tests {
 
   #[tokio::test]
   async fn test_create_graph_with_resolver() {
-    let loader = setup(vec![
-      (
-        "file:///a/test01.ts",
-        Ok(("file:///a/test01.ts", None, r#"import * as b from "b";"#)),
-      ),
-      (
-        "file:///a/test02.ts",
-        Ok(("file:///a/test02.ts", None, r#"export const b = "b";"#)),
-      ),
-    ]);
+    let loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok(("file:///a/test01.ts", None, r#"import * as b from "b";"#)),
+        ),
+        (
+          "file:///a/test02.ts",
+          Ok(("file:///a/test02.ts", None, r#"export const b = "b";"#)),
+        ),
+      ],
+      vec![],
+    );
     let resolver = MockResolver::new(vec![(
       "file:///a/test01.ts",
       vec![("b", "file:///a/test02.ts")],

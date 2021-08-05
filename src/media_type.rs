@@ -340,8 +340,7 @@ mod tests {
   fn resolve_path(path_str: &str) -> Result<ModuleSpecifier> {
     let path = std::env::current_dir().unwrap().join(path_str);
     let path = normalize_path(&path);
-    Url::from_file_path(path.clone())
-      .map_err(|_| anyhow!("Invalid path: {}", path_str))
+    Url::from_file_path(path).map_err(|_| anyhow!("Invalid path: {}", path_str))
   }
 
   fn resolve_url_or_path(specifier: &str) -> Result<ModuleSpecifier> {
