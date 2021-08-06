@@ -168,9 +168,9 @@ impl ModuleGraph {
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self, maybe_no_color: Option<bool>) -> String {
     let value = self.0.to_string();
-    let no_color = maybe_no_color.unwrap_or_else(|| get_no_color());
+    let no_color = maybe_no_color.unwrap_or_else(get_no_color);
     if no_color {
-      strip_ansi_codes(value).to_string()
+      strip_ansi_codes(value)
     } else {
       value
     }
