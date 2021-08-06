@@ -176,3 +176,14 @@ impl ModuleGraph {
     }
   }
 }
+
+#[wasm_bindgen]
+pub struct Module(pub(crate) graph::Module);
+
+#[wasm_bindgen]
+impl Module {
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> JsValue {
+    JsValue::from_serde(&self.0).unwrap()
+  }
+}

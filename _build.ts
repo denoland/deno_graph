@@ -86,11 +86,11 @@ console.log(`  copy ${colors.yellow(denoGraphWasmDest)}`);
 
 const denoGraphSnippetsDest = "./lib/snippets";
 await emptyDir(denoGraphSnippetsDest);
-console.log(`  delete ${colors.yellow(denoGraphWasmDest)}`);
+console.log(`  delete ${colors.yellow(denoGraphSnippetsDest)}`);
 await copy("./target/wasm32-bindgen-deno-js/snippets", denoGraphSnippetsDest, {
   overwrite: true,
 });
-console.log(`  copy ${colors.yellow(denoGraphWasmDest)}`);
+console.log(`  copy ${colors.yellow(denoGraphSnippetsDest)}`);
 
 console.log(
   `${colors.bold(colors.green("Generating"))} lib JS bindings...`,

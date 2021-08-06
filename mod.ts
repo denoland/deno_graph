@@ -1,14 +1,24 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-import { createGraph as jsCreateGraph } from "./lib/deno_graph.js";
-import type { CacheInfo, LoadResponse, ModuleGraph } from "./lib/types.d.ts";
+import {
+  createGraph as jsCreateGraph,
+  parseModule as jsParseModule,
+} from "./lib/deno_graph.js";
+import type {
+  CacheInfo,
+  LoadResponse,
+  Module,
+  ModuleGraph,
+} from "./lib/types.d.ts";
 
 export { load } from "./lib/loader.ts";
 export type {
   CacheInfo,
   LoadResponse,
+  Module,
   ModuleGraph,
   ModuleGraphJson,
+  ModuleJson,
 } from "./lib/types.d.ts";
 
 export interface CreateGraphOptions {
@@ -88,4 +98,33 @@ export function createGraph(
     check,
     getChecksum,
   );
+}
+
+export interface ParseModuleOptions {
+  /** For remote resources, a record of headers should be set, where the key's
+   * have been normalized to be lower case values. */
+  headers?: Record<string, string>;
+  /** An optional callback that allows the default resolution logic of the
+   * module graph to be "overridden". This is intended to allow items like an
+   * import map to be used with the module graph. The callback takes the string
+   * of the module specifier from the referrer and the string URL of the
+   * referrer. The callback then returns a resolved URL string specifier. */
+  resolve?(specifier: string, referrer: string): string;
+}
+
+/** Parse a module based on the supplied information and return its analyzed
+ * representation. If an error is encountered when parsing, the function will
+ * throw.
+ *
+ * @param specifier The URL text specifier to use when parsing the module.
+ * @param content The content of the module to be parsed.
+ * @param options Options to use when parsing the module.
+ */
+export function parseModule(
+  specifier: string,
+  content: string,
+  options: ParseModuleOptions = {},
+): Module {
+  const { headers, resolve } = options;
+  return jsParseModule(specifier, headers, content, resolve);
 }

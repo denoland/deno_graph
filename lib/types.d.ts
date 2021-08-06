@@ -111,6 +111,13 @@ export interface ModuleGraphJson {
   redirects: Record<string, string>;
 }
 
+export class Module {
+  private constructor();
+
+  free(): void;
+  toJSON(): ModuleJson;
+}
+
 /** An interface to the web assembly structure of a built module graph. */
 export class ModuleGraph {
   private constructor();

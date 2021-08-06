@@ -18,6 +18,7 @@ use serde::Serialize;
 use serde::Serializer;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
 
@@ -282,6 +283,141 @@ impl ModuleGraph {
   }
 }
 
+/// Resolve a string specifier from a referring module, using the resolver if
+/// present, returning the resolution result.
+fn resolve(
+  specifier: &str,
+  referrer: &ModuleSpecifier,
+  range: &ast::Range,
+  maybe_resolver: &Option<Box<dyn Resolver>>,
+) -> Resolved {
+  let mut remapped = false;
+  let resolved_specifier = if let Some(resolver) = maybe_resolver {
+    remapped = true;
+    resolver
+      .resolve(specifier, referrer)
+      .map_err(ResolutionError::ResolverError)
+  } else {
+    resolve_import(specifier, referrer)
+      .map_err(ResolutionError::InvalidSpecifier)
+  };
+  let span = ast::Span {
+    specifier: referrer.clone(),
+    range: range.clone(),
+  };
+  match resolved_specifier {
+    Ok(specifier) => {
+      let referrer_scheme = referrer.scheme();
+      let specifier_scheme = specifier.scheme();
+      if referrer_scheme == "https" && specifier_scheme == "http" {
+        Resolved::Err(ResolutionError::InvalidDowngrade, span)
+      } else if (referrer_scheme == "https" || referrer_scheme == "http")
+        && !(specifier_scheme == "https" || specifier_scheme == "http")
+        && !remapped
+      {
+        Resolved::Err(ResolutionError::InvalidLocalImport, span)
+      } else {
+        Resolved::Specifier(specifier, span)
+      }
+    }
+    Err(err) => Resolved::Err(err, span),
+  }
+}
+
+/// With the provided information, parse a module and return its "module slot"
+pub(crate) fn parse_module(
+  specifier: &ModuleSpecifier,
+  maybe_headers: &Option<HashMap<String, String>>,
+  content: &str,
+  maybe_resolver: &Option<Box<dyn Resolver>>,
+) -> ModuleSlot {
+  // Init the module and determine its media type
+  let mut module = Module::new(specifier.clone(), content.to_string());
+  module.media_type = if let Some(headers) = maybe_headers {
+    if let Some(content_type) = headers.get("content-type") {
+      MediaType::from_content_type(&module.specifier, content_type)
+    } else {
+      MediaType::from(&module.specifier)
+    }
+  } else {
+    MediaType::from(&module.specifier)
+  };
+
+  // Parse the module and start analyzing the module.
+  match ast::parse(&module.specifier, &module.source, &module.media_type) {
+    Ok(parsed_module) => {
+      // Analyze the TypeScript triple-slash references
+      for reference in parsed_module.analyze_ts_references() {
+        match reference {
+          ast::TypeScriptReference::Path(specifier, range) => {
+            let resolved_dependency =
+              resolve(&specifier, &module.specifier, &range, maybe_resolver);
+            let dep = module.dependencies.entry(specifier).or_default();
+            dep.maybe_code = resolved_dependency;
+          }
+          ast::TypeScriptReference::Types(specifier, range) => {
+            let resolved_dependency =
+              resolve(&specifier, &module.specifier, &range, maybe_resolver);
+            if module.media_type == MediaType::JavaScript
+              || module.media_type == MediaType::Jsx
+            {
+              module.maybe_types_dependency =
+                Some((specifier, resolved_dependency));
+            } else {
+              let dep = module.dependencies.entry(specifier).or_default();
+              dep.maybe_type = resolved_dependency;
+            }
+          }
+        }
+      }
+
+      // Analyze the X-TypeScript-Types header
+      if module.maybe_types_dependency.is_none() {
+        if let Some(headers) = maybe_headers {
+          if let Some(types_header) = headers.get("x-typescript-types") {
+            let resolved_dependency = resolve(
+              types_header,
+              &module.specifier,
+              &ast::Range::default(),
+              maybe_resolver,
+            );
+            module.maybe_types_dependency =
+              Some((types_header.clone(), resolved_dependency));
+          }
+        }
+      }
+
+      // Analyze ES dependencies
+      let descriptors = parsed_module.analyze_dependencies();
+      for desc in descriptors {
+        let dep = module
+          .dependencies
+          .entry(desc.specifier.to_string())
+          .or_default();
+        let resolved_dependency = resolve(
+          &desc.specifier,
+          &module.specifier,
+          &parsed_module.range_from_span(&desc.specifier_span),
+          maybe_resolver,
+        );
+        dep.maybe_code = resolved_dependency;
+        let specifier = module.specifier.clone();
+        let maybe_type = parsed_module
+          .analyze_deno_types(&desc)
+          .map(|(s, r)| resolve(&s, &specifier, &r, maybe_resolver))
+          .unwrap_or_else(|| Resolved::None);
+        if dep.maybe_type.is_none() {
+          dep.maybe_type = maybe_type
+        }
+      }
+
+      // Return the module as a valid module
+      ModuleSlot::Module(module)
+    }
+    Err(diagnostic) => ModuleSlot::Err(diagnostic.into()),
+  }
+}
+
 pub(crate) struct Builder {
   is_dynamic_root: bool,
   graph: ModuleGraph,
@@ -354,63 +490,6 @@ impl Builder {
     }
   }
 
-  /// Resolve a string specifier from a referring module, using the resolver if
-  /// present, returning the resolution result.
-  fn resolve(
-    &mut self,
-    specifier: &str,
-    referrer: &ModuleSpecifier,
-    range: &ast::Range,
-  ) -> Resolved {
-    let mut remapped = false;
-    let resolved_specifier = if let Some(resolver) = &self.maybe_resolver {
-      remapped = true;
-      resolver
-        .resolve(specifier, referrer)
-        .map_err(ResolutionError::ResolverError)
-    } else {
-      resolve_import(specifier, referrer)
-        .map_err(ResolutionError::InvalidSpecifier)
-    };
-    let span = ast::Span {
-      specifier: referrer.clone(),
-      range: range.clone(),
-    };
-    match resolved_specifier {
-      Ok(specifier) => {
-        let referrer_scheme = referrer.scheme();
-        let specifier_scheme = specifier.scheme();
-        if referrer_scheme == "https" && specifier_scheme == "http" {
-          Resolved::Err(ResolutionError::InvalidDowngrade, span)
-        } else if (referrer_scheme == "https" || referrer_scheme == "http")
-          && !(specifier_scheme == "https" || specifier_scheme == "http")
-          && !remapped
-        {
-          Resolved::Err(ResolutionError::InvalidLocalImport, span)
-        } else {
-          Resolved::Specifier(specifier, span)
-        }
-      }
-      Err(err) => Resolved::Err(err, span),
-    }
-  }
-
-  /// Resolve an dependency of a module and load the dependency if required,
-  /// returning the resolved dependency.
-  fn resolve_load(
-    &mut self,
-    specifier: &str,
-    referrer: &ModuleSpecifier,
-    range: &ast::Range,
-    is_dynamic: bool,
-  ) -> Resolved {
-    let resolved_import = self.resolve(specifier, referrer, range);
-    if let Resolved::Specifier(specifier, _) = &resolved_import {
-      self.load(specifier, is_dynamic);
-    };
-    resolved_import
-  }
-
   /// Visit a module, parsing it and resolving any dependencies.
   fn visit(
     &mut self,
@@ -438,102 +517,29 @@ impl Builder {
         .insert(requested_specifier, specifier.clone());
     }
 
-    // Init the module and determine its media type
-    let mut module = Module::new(response.specifier, response.content);
-    module.media_type = if let Some(headers) = &maybe_headers {
-      if let Some(content_type) = headers.get("content-type") {
-        MediaType::from_content_type(&module.specifier, content_type)
-      } else {
-        MediaType::from(&module.specifier)
-      }
-    } else {
-      MediaType::from(&module.specifier)
-    };
+    let module_slot = parse_module(
+      &specifier,
+      &maybe_headers,
+      &response.content,
+      &self.maybe_resolver,
+    );
 
-    // Parse the module and start analyzing the module.
-    let module_slot =
-      match ast::parse(&module.specifier, &module.source, &module.media_type) {
-        Ok(parsed_module) => {
-          // Analyze the TypeScript triple-slash references
-          for reference in parsed_module.analyze_ts_references() {
-            match reference {
-              ast::TypeScriptReference::Path(specifier, range) => {
-                let resolved_dependency = self.resolve_load(
-                  &specifier,
-                  &module.specifier,
-                  &range,
-                  false,
-                );
-                let dep = module.dependencies.entry(specifier).or_default();
-                dep.maybe_code = resolved_dependency;
-              }
-              ast::TypeScriptReference::Types(specifier, range) => {
-                let resolved_dependency = self.resolve_load(
-                  &specifier,
-                  &module.specifier,
-                  &range,
-                  false,
-                );
-                if module.media_type == MediaType::JavaScript
-                  || module.media_type == MediaType::Jsx
-                {
-                  module.maybe_types_dependency =
-                    Some((specifier, resolved_dependency));
-                } else {
-                  let dep = module.dependencies.entry(specifier).or_default();
-                  dep.maybe_type = resolved_dependency;
-                }
-              }
-            }
-          }
-
-          // Analyze the X-TypeScript-Types header
-          if module.maybe_types_dependency.is_none() {
-            if let Some(headers) = &maybe_headers {
-              if let Some(types_header) = headers.get("x-typescript-types") {
-                let resolved_dependency = self.resolve_load(
-                  types_header,
-                  &module.specifier,
-                  &ast::Range::default(),
-                  false,
-                );
-                module.maybe_types_dependency =
-                  Some((types_header.clone(), resolved_dependency));
-              }
-            }
-          }
-
-          // Analyze ES dependencies
-          let descriptors = parsed_module.analyze_dependencies();
-          for desc in descriptors {
-            let dep = module
-              .dependencies
-              .entry(desc.specifier.to_string())
-              .or_default();
-            let resolved_dependency = self.resolve_load(
-              &desc.specifier,
-              &module.specifier,
-              &parsed_module.range_from_span(&desc.specifier_span),
-              desc.is_dynamic,
-            );
-            dep.maybe_code = resolved_dependency;
-            let specifier = module.specifier.clone();
-            let maybe_type = parsed_module
-              .analyze_deno_types(&desc)
-              .map(|(s, r)| {
-                self.resolve_load(&s, &specifier, &r, desc.is_dynamic)
-              })
-              .unwrap_or_else(|| Resolved::None);
-            if dep.maybe_type.is_none() {
-              dep.maybe_type = maybe_type
-            }
-          }
-
-          // Return the module as a valid module
-          ModuleSlot::Module(module)
+    if let ModuleSlot::Module(module) = &module_slot {
+      for dep in module.dependencies.values() {
+        if let Resolved::Specifier(specifier, _) = &dep.maybe_code {
+          self.load(specifier, dep.is_dynamic);
         }
-        Err(diagnostic) => ModuleSlot::Err(diagnostic.into()),
-      };
+        if let Resolved::Specifier(specifier, _) = &dep.maybe_type {
+          self.load(specifier, dep.is_dynamic);
+        }
+      }
+
+      if let Some((_, Resolved::Specifier(specifier, _))) =
+        &module.maybe_types_dependency
+      {
+        self.load(specifier, false);
+      }
+    }
     self.graph.modules.insert(specifier, module_slot);
   }
 }

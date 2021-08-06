@@ -4,7 +4,7 @@ import {
   assert,
   assertEquals,
 } from "https://deno.land/std@0.102.0/testing/asserts.ts";
-import { createGraph, load } from "./mod.ts";
+import { createGraph, load, parseModule } from "./mod.ts";
 
 Deno.test({
   name: "createGraph - basic usage",
@@ -36,5 +36,21 @@ Deno.test({
       },
     );
     console.log(JSON.stringify(graph.toJSON(), undefined, "  "));
+  },
+});
+
+Deno.test({
+  name: "parseModule - basic usage",
+  fn() {
+    const module = parseModule(
+      "file:///a/test01.ts",
+      `
+        import { a } from "./a.ts";
+        import * as b from "./b.ts";
+        export { c } from "./c.ts";
+        const d = await import("./d.ts");
+      `,
+    );
+    console.log(JSON.stringify(module.toJSON(), undefined, "  "));
   },
 });
