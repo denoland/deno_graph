@@ -18,8 +18,6 @@ use source::Loader;
 use source::Locker;
 use source::Resolver;
 
-use serde_json::json;
-use serde_json::to_string_pretty;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
@@ -35,7 +33,7 @@ pub async fn create_graph(
   builder.build().await
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = createGraph)]
 pub async fn js_create_graph(
   root_specifier: String,
   load: js_sys::Function,
@@ -43,7 +41,7 @@ pub async fn js_create_graph(
   maybe_resolve: Option<js_sys::Function>,
   maybe_check: Option<js_sys::Function>,
   maybe_get_checksum: Option<js_sys::Function>,
-) -> String {
+) -> js_graph::ModuleGraph {
   let loader = Box::new(JsLoader::new(load, maybe_cache_info));
   let maybe_resolver: Option<Box<dyn Resolver>> =
     if let Some(resolve) = maybe_resolve {
@@ -62,13 +60,15 @@ pub async fn js_create_graph(
   let builder =
     Builder::new(root_specifier, false, loader, maybe_resolver, maybe_locker);
   let graph = builder.build().await;
-  to_string_pretty(&json!(graph)).unwrap()
+  js_graph::ModuleGraph(graph)
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
   use anyhow::Error;
+  use serde_json::json;
+  use serde_json::to_string_pretty;
   use source::tests::*;
   use source::CacheInfo;
 

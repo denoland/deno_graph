@@ -1,7 +1,9 @@
-#!/usr/bin/env -S deno run --allow-run --allow-read --allow-write --allow-env
+#!/usr/bin/env -S deno run --unstable --allow-run --allow-read --allow-write --allow-env
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-import * as colors from "https://deno.land/std@0.102.0/fmt/colors.ts";
+import * as colors from "https://deno.land/std@0.103.0/fmt/colors.ts";
+import { copy } from "https://deno.land/std@0.103.0/fs/copy.ts";
+import { emptyDir } from "https://deno.land/std@0.103.0/fs/empty_dir.ts";
 
 await Deno.permissions.request({ name: "env" });
 await Deno.permissions.request({ name: "run" });
@@ -80,8 +82,16 @@ await Deno.copyFile(
   "./target/wasm32-bindgen-deno-js/deno_graph_bg.wasm",
   denoGraphWasmDest,
 );
-
 console.log(`  copy ${colors.yellow(denoGraphWasmDest)}`);
+
+const denoGraphSnippetsDest = "./lib/snippets";
+await emptyDir(denoGraphSnippetsDest);
+console.log(`  delete ${colors.yellow(denoGraphWasmDest)}`);
+await copy("./target/wasm32-bindgen-deno-js/snippets", denoGraphSnippetsDest, {
+  overwrite: true,
+});
+console.log(`  copy ${colors.yellow(denoGraphWasmDest)}`);
+
 console.log(
   `${colors.bold(colors.green("Generating"))} lib JS bindings...`,
 );

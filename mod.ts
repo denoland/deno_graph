@@ -1,10 +1,15 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-import { js_create_graph as jsCreateGraph } from "./lib/deno_graph.js";
-import type { CacheInfo, LoadResponse } from "./lib/types.d.ts";
+import { createGraph as jsCreateGraph } from "./lib/deno_graph.js";
+import type { CacheInfo, LoadResponse, ModuleGraph } from "./lib/types.d.ts";
 
 export { load } from "./lib/loader.ts";
-export type { CacheInfo, LoadResponse } from "./lib/types.d.ts";
+export type {
+  CacheInfo,
+  LoadResponse,
+  ModuleGraph,
+  ModuleGraphJson,
+} from "./lib/types.d.ts";
 
 export interface CreateGraphOptions {
   /**
@@ -63,7 +68,7 @@ export interface CreateGraphOptions {
  *   }
  * });
  *
- * console.log(graph);
+ * console.log(graph.toString());
  * ```
  *
  * @param rootSpecifier A URL string of the root module specifier to build the
@@ -73,7 +78,7 @@ export interface CreateGraphOptions {
 export function createGraph(
   rootSpecifier: string,
   options: CreateGraphOptions,
-): Promise<string> {
+): Promise<ModuleGraph> {
   const { load, cacheInfo, resolve, check, getChecksum } = options;
   return jsCreateGraph(
     rootSpecifier,

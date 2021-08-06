@@ -22,7 +22,7 @@ Deno.test({
         });
       },
     });
-    console.log(graph);
+    console.log(graph.toJSON());
   },
 });
 
@@ -35,6 +35,6 @@ Deno.test({
         load,
       },
     );
-    console.log(graph);
+    console.log(JSON.stringify(graph.toJSON(), undefined, "  "));
   },
 });

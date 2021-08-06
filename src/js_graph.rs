@@ -1,6 +1,8 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 use crate::checksum;
+use crate::colors::strip_ansi_codes;
+use crate::graph;
 use crate::module_specifier::ModuleSpecifier;
 use crate::source::CacheInfo;
 use crate::source::LoadFuture;
@@ -145,5 +147,32 @@ impl Resolver for JsResolver {
     let value: String = value.into_serde()?;
     let resolved_specifier = ModuleSpecifier::parse(&value)?;
     Ok(resolved_specifier)
+  }
+}
+
+#[wasm_bindgen(module = "/src/deno_apis.js")]
+extern "C" {
+  fn get_no_color() -> bool;
+}
+
+#[wasm_bindgen]
+pub struct ModuleGraph(pub(crate) graph::ModuleGraph);
+
+#[wasm_bindgen]
+impl ModuleGraph {
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> JsValue {
+    JsValue::from_serde(&self.0).unwrap()
+  }
+
+  #[wasm_bindgen(js_name = toString)]
+  pub fn to_string(&self, maybe_no_color: Option<bool>) -> String {
+    let value = self.0.to_string();
+    let no_color = maybe_no_color.unwrap_or_else(|| get_no_color());
+    if no_color {
+      strip_ansi_codes(value).to_string()
+    } else {
+      value
+    }
   }
 }
