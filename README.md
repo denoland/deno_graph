@@ -126,7 +126,7 @@ available in the path. If it is, then script should _just work_:
 But can be manually invoked like:
 
 ```
-> deno run _build.ts
+> deno run --unstable _build.ts
 ```
 
 And you will be prompted for the permissions that Deno needs to perform the
