@@ -4,6 +4,7 @@ import {
   createGraph as jsCreateGraph,
   parseModule as jsParseModule,
 } from "./lib/deno_graph.js";
+import { load as defaultLoad } from "./lib/loader.ts";
 import type {
   CacheInfo,
   LoadResponse,
@@ -32,7 +33,7 @@ export interface CreateGraphOptions {
    * @param specifier The URL string of the resource to be loaded and resolved
    * @param isDynamic A flag that indicates if the module was being loaded dynamically
    */
-  load(
+  load?(
     specifier: string,
     isDynamic: boolean,
   ): Promise<LoadResponse | undefined>;
@@ -58,25 +59,16 @@ export interface CreateGraphOptions {
 /** Create a module graph using the same algorithms that are used in the Deno
  * CLI, resolving with the module graph for further processing.
  *
- * Users need to provide a `load()` callback at a minimum, which fetches the
- * source files and returns them to the graph builder.
+ * A default `load()` function is provided which will attempt to load local
+ * modules via `Deno.readFile()` and will use `fetch()` to load remote
+ * modules. An alternative `load()` function can be provided via the options.
  *
  * ### Example
  *
  * ```ts
  * import { createGraph } from "https://deno.land/x/deno_graph/mod.ts";
  *
- * const graph = await createGraph("https://example.com/a.ts", {
- *   load(specifier) {
- *     return {
- *       specifier,
- *       headers: {
- *         "content-type": "application/typescript"
- *       },
- *       content: `console.log("hello deno_graph");`
- *     }
- *   }
- * });
+ * const graph = await createGraph("https://example.com/a.ts");
  *
  * console.log(graph.toString());
  * ```
@@ -87,9 +79,10 @@ export interface CreateGraphOptions {
  */
 export function createGraph(
   rootSpecifier: string,
-  options: CreateGraphOptions,
+  options: CreateGraphOptions = {},
 ): Promise<ModuleGraph> {
-  const { load, cacheInfo, resolve, check, getChecksum } = options;
+  const { load = defaultLoad, cacheInfo, resolve, check, getChecksum } =
+    options;
   return jsCreateGraph(
     rootSpecifier,
     load,

@@ -51,6 +51,7 @@ Deno.test({
         const d = await import("./d.ts");
       `,
     );
-    console.log(JSON.stringify(module.toJSON(), undefined, "  "));
+    // console.log(JSON.stringify(module.toJSON(), undefined, "  "));
+    console.log(module.dependencies);
   },
 });

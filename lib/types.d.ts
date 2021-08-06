@@ -44,7 +44,7 @@ export interface SpanJson {
   end: LocationJson;
 }
 
-export interface ResolvedDependencyJson {
+export interface ResolvedDependency {
   /** The fully resolved string URL of the dependency, which should be
    * resolvable in the module graph. If there was an error, `error` will be set
    * and this will be undefined. */
@@ -60,18 +60,18 @@ export interface TypesDependencyJson {
   /** The string specifier that was used for the dependency. */
   specifier: string;
   /** An object point to the resolved dependency. */
-  dependency: ResolvedDependencyJson;
+  dependency: ResolvedDependency;
 }
 
 export interface DependencyJson {
   /** The string specifier that was used for the dependency. */
   specifier: string;
   /** An object pointing to the resolved _code_ dependency. */
-  code?: ResolvedDependencyJson;
+  code?: ResolvedDependency;
   /** An object pointing to the resolved _type_ dependency of a module. This is
    * populated when the `@deno-types` directive was used to supply a type
    * definition file for a dependency. */
-  type?: ResolvedDependencyJson;
+  type?: ResolvedDependency;
   /** A flag indicating if the dependency was dynamic. (e.g.
    * `await import("mod.ts")`) */
   isDynamic?: true;
@@ -111,10 +111,42 @@ export interface ModuleGraphJson {
   redirects: Record<string, string>;
 }
 
+export interface Dependency {
+  /** An object pointing to the resolved _code_ dependency. */
+  code?: ResolvedDependency;
+  /** An object pointing to the resolved _type_ dependency of a module. This is
+   * populated when the `@deno-types` directive was used to supply a type
+   * definition file for a dependency. */
+  type?: ResolvedDependency;
+  /** A flag indicating if the dependency was dynamic. (e.g.
+   * `await import("mod.ts")`) */
+  isDynamic?: true;
+}
+
 export class Module {
   private constructor();
 
+  /** Any cache information that was available on the module when the graph
+   * was built. */
+  readonly cacheInfo: CacheInfo | undefined;
+  /** The calculated checksum of the source of the module if available when the
+   * graph was built. */
+  readonly checksum: string | undefined;
+  /** A record of the dependencies, where the key is the string specifier of
+   * the dependency and the value is the dependecy object. */
+  readonly dependencies: Record<string, Dependency>;
+  /** The size of the source content in bytes. */
+  readonly size: number;
+  /** The source content of the module. */
+  readonly source: string;
+  /** The fully qualified string URL of the module. */
+  readonly specifier: string;
+
+  /** Explicitly free the memory used by the module. */
   free(): void;
+
+  /** Returns a plain-object representation of the module suitable for
+   * serialization as JSON. */
   toJSON(): ModuleJson;
 }
 
@@ -127,7 +159,16 @@ export class ModuleGraph {
    * automatically garbage collected when the graph falls out of use. */
   free(): void;
 
-  /** Return a plain-object representation of the module graph suitable for
+  /** Retrieve a module from the module graph, if an error was encountered when
+   * loading the module, this method will throw with that error. */
+  get(specifier: string): Module | undefined;
+
+  /** Determine if the graph sources are valid by calling the passed `check()`
+   * function. If any of the modules in the graph fail the check, then an
+   * error is thrown. */
+  lock(): void;
+
+  /** Returns a plain-object representation of the module graph suitable for
    * serialization as JSON, similiar to the `deno info --json` output. */
   toJSON(): ModuleGraphJson;
 

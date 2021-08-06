@@ -10,7 +10,7 @@ pub type ModuleSpecifier = url::Url;
 
 pub const EMPTY_SPECIFIER: &str = "deno://empty";
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SpecifierError {
   InvalidUrl(ParseError),
   ImportPrefixMissing(String, Option<ModuleSpecifier>),

@@ -12,6 +12,7 @@ use crate::source::Resolver;
 
 use anyhow::anyhow;
 use anyhow::Result;
+use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 pub(crate) struct JsLoader {
@@ -160,9 +161,30 @@ pub struct ModuleGraph(pub(crate) graph::ModuleGraph);
 
 #[wasm_bindgen]
 impl ModuleGraph {
+  #[wasm_bindgen]
+  pub fn get(&self, specifier: String) -> Result<Option<Module>, JsValue> {
+    let specifier = ModuleSpecifier::parse(&specifier)
+      .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+    self
+      .0
+      .try_get(&specifier)
+      .map(|mm| mm.map(|m| Module(m.clone())))
+      .map_err(|err| js_sys::Error::new(&err.to_string()).into())
+  }
+
+  #[wasm_bindgen]
+  pub fn lock(&self) -> Result<(), JsValue> {
+    self
+      .0
+      .lock()
+      .map_err(|err| js_sys::Error::new(&err.to_string()).into())
+  }
+
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> JsValue {
-    JsValue::from_serde(&self.0).unwrap()
+    let serializer =
+      serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
+    self.0.serialize(&serializer).unwrap()
   }
 
   #[wasm_bindgen(js_name = toString)]
@@ -182,8 +204,44 @@ pub struct Module(pub(crate) graph::Module);
 
 #[wasm_bindgen]
 impl Module {
+  #[wasm_bindgen(getter, js_name = cacheInfo)]
+  pub fn cache_info(&self) -> JsValue {
+    let serializer =
+      serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
+    self.0.maybe_cache_info.serialize(&serializer).unwrap()
+  }
+
+  #[wasm_bindgen(getter)]
+  pub fn checksum(&self) -> Option<String> {
+    self.0.maybe_checksum.clone()
+  }
+
+  #[wasm_bindgen(getter)]
+  pub fn dependencies(&self) -> JsValue {
+    let serializer =
+      serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
+    self.0.dependencies.serialize(&serializer).unwrap()
+  }
+
+  #[wasm_bindgen(getter)]
+  pub fn size(&self) -> usize {
+    self.0.size()
+  }
+
+  #[wasm_bindgen(getter)]
+  pub fn source(&self) -> String {
+    self.0.source.clone()
+  }
+
+  #[wasm_bindgen(getter)]
+  pub fn specifier(&self) -> String {
+    self.0.specifier.to_string()
+  }
+
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> JsValue {
-    JsValue::from_serde(&self.0).unwrap()
+    let serializer =
+      serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
+    self.0.serialize(&serializer).unwrap()
   }
 }

@@ -72,7 +72,7 @@ impl fmt::Display for ModuleGraph {
           .iter()
           .filter_map(|(_, m)| {
             if let ModuleSlot::Module(module) = m {
-              Some(module.size())
+              Some(module.size() as f64)
             } else {
               None
             }
@@ -91,7 +91,7 @@ impl fmt::Display for ModuleGraph {
           f,
           "\n{} {}",
           self.root,
-          colors::gray(format!("({})", human_size(root.size())))
+          colors::gray(format!("({})", human_size(root.size() as f64)))
         )?;
         let mut seen = HashSet::new();
         let dep_len = root.dependencies.len();

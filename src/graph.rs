@@ -75,6 +75,17 @@ pub enum ResolutionError {
   InvalidSpecifier(SpecifierError),
 }
 
+impl Clone for ResolutionError {
+  fn clone(&self) -> Self {
+    match self {
+      Self::InvalidDowngrade => Self::InvalidDowngrade,
+      Self::InvalidLocalImport => Self::InvalidLocalImport,
+      Self::ResolverError(err) => Self::ResolverError(anyhow!(err.to_string())),
+      Self::InvalidSpecifier(err) => Self::InvalidSpecifier(err.clone()),
+    }
+  }
+}
+
 impl PartialEq for ResolutionError {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
@@ -100,7 +111,7 @@ impl fmt::Display for ResolutionError {
   }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Resolved {
   Specifier(ModuleSpecifier, ast::Span),
   Err(ResolutionError, ast::Span),
@@ -142,14 +153,22 @@ impl Resolved {
   }
 }
 
-#[derive(Debug, Default)]
+fn is_false(v: &bool) -> bool {
+  !v
+}
+
+#[derive(Debug, Default, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Dependency {
+  #[serde(rename = "code", skip_serializing_if = "Resolved::is_none")]
   pub(crate) maybe_code: Resolved,
+  #[serde(rename = "type", skip_serializing_if = "Resolved::is_none")]
   pub(crate) maybe_type: Resolved,
+  #[serde(skip_serializing_if = "is_false")]
   is_dynamic: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Module {
   #[serde(serialize_with = "serialize_dependencies")]
@@ -183,8 +202,9 @@ impl Module {
     }
   }
 
-  pub fn size(&self) -> f64 {
-    self.source.as_bytes().len() as f64
+  /// Return the size in bytes of the content of the module.
+  pub fn size(&self) -> usize {
+    self.source.as_bytes().len()
   }
 }
 
