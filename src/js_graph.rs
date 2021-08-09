@@ -185,6 +185,23 @@ impl ModuleGraph {
       .map_err(|err| js_sys::Error::new(&err.to_string()).into())
   }
 
+  #[wasm_bindgen(getter)]
+  pub fn modules(&self) -> js_sys::Array {
+    self
+      .0
+      .modules
+      .values()
+      .filter_map(|ms| {
+        if let graph::ModuleSlot::Module(m) = ms {
+          Some(Module(m.clone()))
+        } else {
+          None
+        }
+      })
+      .map(JsValue::from)
+      .collect()
+  }
+
   #[wasm_bindgen]
   pub fn resolve(&self, specifier: String) -> String {
     let specifier = ModuleSpecifier::parse(&specifier).unwrap();

@@ -158,6 +158,9 @@ export class Module {
 export class ModuleGraph {
   private constructor();
 
+  /** The modules that are part of the module graph. */
+  readonly modules: Module[];
+
   /** The root specifier that was used to build the module graph from. */
   readonly root: string;
 
