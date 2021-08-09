@@ -15,11 +15,15 @@ import type {
 export { load } from "./lib/loader.ts";
 export type {
   CacheInfo,
+  Dependency,
   LoadResponse,
+  LocationJson,
   Module,
   ModuleGraph,
   ModuleGraphJson,
   ModuleJson,
+  ResolvedDependency,
+  SpanJson,
 } from "./lib/types.d.ts";
 
 export interface CreateGraphOptions {
