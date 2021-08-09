@@ -59,7 +59,7 @@ export interface ResolvedDependency {
 export interface TypesDependencyJson {
   /** The string specifier that was used for the dependency. */
   specifier: string;
-  /** An object point to the resolved dependency. */
+  /** An object pointing to the resolved dependency. */
   dependency: ResolvedDependency;
 }
 
