@@ -249,6 +249,17 @@ impl Module {
     self.0.specifier.to_string()
   }
 
+  #[wasm_bindgen(getter, js_name = typesDependency)]
+  pub fn maybe_types_dependency(&self) -> JsValue {
+    let serializer =
+      serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
+    self
+      .0
+      .maybe_types_dependency
+      .serialize(&serializer)
+      .unwrap()
+  }
+
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> JsValue {
     let serializer =

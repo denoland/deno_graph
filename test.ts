@@ -53,5 +53,6 @@ Deno.test({
     );
     // console.log(JSON.stringify(module.toJSON(), undefined, "  "));
     console.log(module.dependencies);
+    console.log(module.typesDependency);
   },
 });

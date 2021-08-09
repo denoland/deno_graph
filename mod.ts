@@ -24,6 +24,7 @@ export type {
   ModuleJson,
   ResolvedDependency,
   SpanJson,
+  TypesDependency,
 } from "./lib/types.d.ts";
 
 export interface CreateGraphOptions {
