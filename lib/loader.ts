@@ -45,7 +45,7 @@ export async function load(
       case "http:":
       case "https:": {
         await requestNet(url.host);
-        const response = await fetch(url, { redirect: "follow" });
+        const response = await fetch(String(url), { redirect: "follow" });
         if (response.status !== 200) {
           return undefined;
         }
