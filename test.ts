@@ -43,8 +43,9 @@ Deno.test({
   name: "parseModule - basic usage",
   fn() {
     const module = parseModule(
-      "file:///a/test01.ts",
+      "file:///a/test01.js",
       `
+        /// <reference types="./test01.d.ts" />
         import { a } from "./a.ts";
         import * as b from "./b.ts";
         export { c } from "./c.ts";

@@ -56,7 +56,7 @@ export interface ResolvedDependency {
   span: SpanJson;
 }
 
-export interface TypesDependency {
+export interface TypesDependencyJson {
   /** The string specifier that was used for the dependency. */
   specifier: string;
   /** An object pointing to the resolved dependency. */
@@ -86,7 +86,7 @@ export interface ModuleJson extends CacheInfo {
   dependencies?: DependencyJson[];
   /** If the module had a types dependency, the information about that
    * dependency. */
-  typesDependency?: TypesDependency;
+  typesDependency?: TypesDependencyJson;
   /** The resolved media type of the module, which determines how Deno will
    * handle the module. */
   mediaType?: MediaType;
@@ -141,8 +141,10 @@ export class Module {
   readonly source: string;
   /** The fully qualified string URL of the module. */
   readonly specifier: string;
-  /** The types dependency for the module. */
-  readonly typesDependency: TypesDependency;
+  /** The types dependency for the module, where the first value in the tuple
+   * was the string specifier used and the second value is the resolved
+   * dependency. */
+  readonly typesDependency?: [string, ResolvedDependency];
 
   /** Explicitly free the memory used by the module. */
   free(): void;
