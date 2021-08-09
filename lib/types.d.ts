@@ -154,6 +154,9 @@ export class Module {
 export class ModuleGraph {
   private constructor();
 
+  /** The root specifier that was used to build the module graph from. */
+  readonly root: string;
+
   /** Explictly free the memory used by the module graph. The web assembly
    * bindings does use weak references, meaning that the memory should be
    * automatically garbage collected when the graph falls out of use. */
@@ -167,6 +170,10 @@ export class ModuleGraph {
    * function. If any of the modules in the graph fail the check, then an
    * error is thrown. */
   lock(): void;
+
+  /** Given a string URL, return the resolved string URL accounting for any
+   * redirections that might have occured when resolving the module graph. */
+  resolve(specifier: string): string;
 
   /** Returns a plain-object representation of the module graph suitable for
    * serialization as JSON, similiar to the `deno info --json` output. */

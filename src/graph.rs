@@ -224,7 +224,7 @@ impl ModuleSlot {
 
 #[derive(Debug, Serialize)]
 pub struct ModuleGraph {
-  pub(crate) root: ModuleSpecifier,
+  pub root: ModuleSpecifier,
   #[serde(skip_serializing)]
   maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
   #[serde(serialize_with = "serialize_modules")]
@@ -250,7 +250,8 @@ impl ModuleGraph {
   /// resolution error is needed, then use the `try_get()` method which will
   /// return any resolution error as the error in the result.
   pub fn get(&self, specifier: &ModuleSpecifier) -> Option<&Module> {
-    match self.modules.get(specifier) {
+    let specifier = self.resolve(specifier);
+    match self.modules.get(&specifier) {
       Some(ModuleSlot::Module(module)) => Some(module),
       _ => None,
     }
@@ -295,7 +296,8 @@ impl ModuleGraph {
     &self,
     specifier: &ModuleSpecifier,
   ) -> Result<Option<&Module>, ModuleGraphError> {
-    match self.modules.get(specifier) {
+    let specifier = self.resolve(specifier);
+    match self.modules.get(&specifier) {
       Some(ModuleSlot::Module(module)) => Ok(Some(module)),
       Some(ModuleSlot::Err(err)) => Err(err.clone()),
       _ => Ok(None),

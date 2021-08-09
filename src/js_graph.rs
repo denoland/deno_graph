@@ -161,6 +161,11 @@ pub struct ModuleGraph(pub(crate) graph::ModuleGraph);
 
 #[wasm_bindgen]
 impl ModuleGraph {
+  #[wasm_bindgen(getter)]
+  pub fn root(&self) -> String {
+    self.0.root.to_string()
+  }
+
   #[wasm_bindgen]
   pub fn get(&self, specifier: String) -> Result<Option<Module>, JsValue> {
     let specifier = ModuleSpecifier::parse(&specifier)
@@ -178,6 +183,12 @@ impl ModuleGraph {
       .0
       .lock()
       .map_err(|err| js_sys::Error::new(&err.to_string()).into())
+  }
+
+  #[wasm_bindgen]
+  pub fn resolve(&self, specifier: String) -> String {
+    let specifier = ModuleSpecifier::parse(&specifier).unwrap();
+    self.0.resolve(&specifier).to_string()
   }
 
   #[wasm_bindgen(js_name = toJSON)]
