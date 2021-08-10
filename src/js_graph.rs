@@ -208,6 +208,19 @@ impl ModuleGraph {
     self.0.resolve(&specifier).to_string()
   }
 
+  #[wasm_bindgen(js_name = resolveDependency)]
+  pub fn resolve_dependency(
+    &self,
+    specifier: String,
+    referrer: String,
+  ) -> Option<String> {
+    let referrer = ModuleSpecifier::parse(&referrer).unwrap();
+    self
+      .0
+      .resolve_dependency(&specifier, &referrer)
+      .map(|s| s.to_string())
+  }
+
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> JsValue {
     let serializer =

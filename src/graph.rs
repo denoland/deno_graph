@@ -287,6 +287,30 @@ impl ModuleGraph {
     redirected_specifier.clone()
   }
 
+  /// Resolve a dependency of a referring module providing the string specifier
+  /// of the depdency and returning an optional fully qualified module
+  /// specifier.
+  pub fn resolve_dependency(
+    &self,
+    specifier: &str,
+    referrer: &ModuleSpecifier,
+  ) -> Option<&ModuleSpecifier> {
+    let referrer = self.resolve(referrer);
+    let referring_module_slot = self.modules.get(&referrer)?;
+    if let ModuleSlot::Module(referring_module) = referring_module_slot {
+      let dependency = referring_module.dependencies.get(specifier)?;
+      if let Resolved::Specifier(specifier, _) = &dependency.maybe_type {
+        Some(specifier)
+      } else if let Resolved::Specifier(specifier, _) = &dependency.maybe_code {
+        Some(specifier)
+      } else {
+        None
+      }
+    } else {
+      None
+    }
+  }
+
   /// Retrieve a module from the module graph. If the module identified as a
   /// dependency of the graph, but resolving or loading that module resulted in
   /// an error, the error will be returned as the `Err` of the result. If the

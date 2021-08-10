@@ -185,6 +185,11 @@ export class ModuleGraph {
    * redirections that might have occured when resolving the module graph. */
   resolve(specifier: string): string;
 
+  /** Given a string specifier of a module's dependency and the referring
+   * module's string URL, return the string URL of the dependency, otherwise
+   * return undefined. */
+  resolveDependency(specifier: string, referrer: string): string | undefined;
+
   /** Returns a plain-object representation of the module graph suitable for
    * serialization as JSON, similiar to the `deno info --json` output. */
   toJSON(): ModuleGraphJson;
