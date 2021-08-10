@@ -123,5 +123,5 @@ export function parseModule(
   options: ParseModuleOptions = {},
 ): Module {
   const { headers, resolve } = options;
-  return jsParseModule(specifier, headers, content, resolve);
+  return jsParseModule(specifier, headers, content, resolve) as Module;
 }
