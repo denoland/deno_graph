@@ -21,6 +21,7 @@ lazy_static::lazy_static! {
 }
 
 /// Helper function to strip ansi codes.
+#[cfg(feature = "wasm")]
 pub fn strip_ansi_codes<S: AsRef<str>>(s: S) -> String {
   STRIP_ANSI_RE.replace_all(s.as_ref(), "").to_string()
 }

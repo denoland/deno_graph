@@ -39,6 +39,9 @@ const cargoBuildCmd = [
   "cargo",
   "build",
   "--release",
+  "--no-default-features",
+  "--features",
+  "wasm",
   "--target",
   "wasm32-unknown-unknown",
 ];

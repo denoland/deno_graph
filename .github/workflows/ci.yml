@@ -52,13 +52,13 @@ jobs:
       - name: 💄  lint
         if: contains(matrix.os, 'ubuntu')
         run: |
-          cargo clippy --locked --release --all-targets -- -D clippy::all
+          cargo clippy --locked --release --all-features --all-targets -- -D clippy::all
           deno lint *.ts lib
 
       - name: 🏗️  build
-        run: cargo build --locked --release --all-targets
+        run: cargo build --locked --release --all-features --all-targets
       
       - name: 🧪  test
         run: |
-          cargo test --locked --release --all-targets
+          cargo test --locked --release --all-features --all-targets
           deno test --allow-read --allow-net

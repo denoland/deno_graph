@@ -1,10 +1,12 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 mod ast;
+#[cfg(feature = "wasm")]
 mod checksum;
 mod colors;
 mod graph;
 mod info;
+#[cfg(feature = "wasm")]
 mod js_graph;
 mod media_type;
 mod module_specifier;
@@ -16,6 +18,7 @@ pub use graph::ModuleGraph;
 pub use graph::ModuleGraphError;
 use graph::ModuleSlot;
 pub use module_specifier::ModuleSpecifier;
+#[cfg(feature = "rust")]
 use source::Loader;
 use source::Locker;
 use source::Resolver;
@@ -23,10 +26,12 @@ use source::Resolver;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+#[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
 
 /// Create a module graph, based on loanding and recursively analyzing the
 /// dependencies of the module, returning the resulting graph.
+#[cfg(feature = "rust")]
 pub async fn create_graph(
   root_specifier: ModuleSpecifier,
   loader: Box<dyn Loader>,
@@ -40,6 +45,7 @@ pub async fn create_graph(
 
 /// Parse an individual module, returning the module as a result, otherwise
 /// erroring with a module graph error.
+#[cfg(feature = "rust")]
 pub fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: &Option<HashMap<String, String>>,
@@ -53,6 +59,7 @@ pub fn parse_module(
   }
 }
 
+#[cfg(feature = "wasm")]
 #[wasm_bindgen(js_name = createGraph)]
 pub async fn js_create_graph(
   root_specifier: String,
@@ -83,6 +90,7 @@ pub async fn js_create_graph(
   js_graph::ModuleGraph(graph)
 }
 
+#[cfg(feature = "wasm")]
 #[wasm_bindgen(js_name = parseModule)]
 pub fn js_parse_module(
   specifier: String,
