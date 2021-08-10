@@ -7,7 +7,7 @@ authors = ["the Deno authors"]
 license = "MIT"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 name = "deno_graph"
 
 [dependencies]
