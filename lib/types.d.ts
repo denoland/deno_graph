@@ -135,6 +135,9 @@ export class Module {
   /** A record of the dependencies, where the key is the string specifier of
    * the dependency and the value is the dependecy object. */
   readonly dependencies: Record<string, Dependency>;
+  /** The media type assigned to the module. This determines how Deno will
+   * handle the module. */
+  readonly mediaType: MediaType;
   /** The size of the source content in bytes. */
   readonly size: number;
   /** The source content of the module. */

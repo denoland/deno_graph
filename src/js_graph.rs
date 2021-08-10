@@ -251,6 +251,11 @@ impl Module {
     self.0.dependencies.serialize(&serializer).unwrap()
   }
 
+  #[wasm_bindgen(getter, js_name = mediaType)]
+  pub fn media_type(&self) -> String {
+    self.0.media_type.to_string()
+  }
+
   #[wasm_bindgen(getter)]
   pub fn size(&self) -> usize {
     self.0.size()
