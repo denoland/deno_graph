@@ -3,6 +3,9 @@ name = "deno_graph"
 version = "0.1.0"
 edition = "2018"
 description = "module graph analysis for deno"
+homepage = "https://deno.land/"
+repository = "https://github.com/denoland/deno_graph"
+documentation = "https://docs.rs/deno_graph"
 authors = ["the Deno authors"]
 license = "MIT"
 
