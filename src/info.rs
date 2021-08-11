@@ -345,13 +345,13 @@ mod tests {
   use super::*;
   use crate::colors::strip_ansi_codes;
   use crate::graph::Builder;
-  use crate::source::tests::MockLoader;
   use crate::source::CacheInfo;
+  use crate::source::MemoryLoader;
   use std::path::PathBuf;
 
   #[tokio::test]
   async fn test_info_graph() {
-    let loader = Box::new(MockLoader::new(
+    let loader = Box::new(MemoryLoader::new(
       vec![
         (
           "https://deno.land/x/example/a.ts",

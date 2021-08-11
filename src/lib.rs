@@ -130,8 +130,9 @@ mod tests {
   use super::*;
   use anyhow::Error;
   use serde_json::to_string_pretty;
-  use source::tests::*;
+  use source::tests::MockResolver;
   use source::CacheInfo;
+  use source::MemoryLoader;
 
   type Sources<'a> = Vec<(
     &'a str,
@@ -142,7 +143,7 @@ mod tests {
     sources: Sources,
     cache_info: Vec<(&str, CacheInfo)>,
   ) -> Box<dyn Loader> {
-    Box::new(MockLoader::new(sources, cache_info))
+    Box::new(MemoryLoader::new(sources, cache_info))
   }
 
   #[tokio::test]

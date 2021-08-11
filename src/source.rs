@@ -2,7 +2,13 @@
 
 use crate::module_specifier::ModuleSpecifier;
 
+#[cfg(feature = "rust")]
+use anyhow::anyhow;
+#[cfg(feature = "rust")]
+use anyhow::Error;
 use anyhow::Result;
+#[cfg(feature = "rust")]
+use futures::future;
 use futures::future::Future;
 use serde::Deserialize;
 use serde::Serialize;
@@ -84,75 +90,76 @@ pub trait Resolver: fmt::Debug {
   ) -> Result<ModuleSpecifier>;
 }
 
+/// An implementation of the loader attribute where the responses are provided
+/// ahead of time. This is useful for testing or
+#[cfg(feature = "rust")]
+pub struct MemoryLoader {
+  sources: HashMap<ModuleSpecifier, Result<LoadResponse, Error>>,
+  cache_info: HashMap<ModuleSpecifier, CacheInfo>,
+}
+
+#[cfg(feature = "rust")]
+type MemoryLoaderSources<S> =
+  Vec<(S, Result<(S, Option<Vec<(S, S)>>, S), Error>)>;
+
+#[cfg(feature = "rust")]
+impl MemoryLoader {
+  pub fn new<S: AsRef<str>>(
+    sources: MemoryLoaderSources<S>,
+    cache_info: Vec<(S, CacheInfo)>,
+  ) -> Self {
+    Self {
+      sources: sources
+        .into_iter()
+        .map(|(s, r)| {
+          let specifier = ModuleSpecifier::parse(s.as_ref()).unwrap();
+          let result = r.map(|(s, mh, c)| LoadResponse {
+            specifier: ModuleSpecifier::parse(s.as_ref()).unwrap(),
+            maybe_headers: mh.map(|h| {
+              h.into_iter()
+                .map(|(k, v)| (k.as_ref().to_string(), v.as_ref().to_string()))
+                .collect()
+            }),
+            content: c.as_ref().to_string(),
+          });
+          (specifier, result)
+        })
+        .collect(),
+      cache_info: cache_info
+        .into_iter()
+        .map(|(s, c)| {
+          let specifier = ModuleSpecifier::parse(s.as_ref()).unwrap();
+          (specifier, c)
+        })
+        .collect(),
+    }
+  }
+}
+
+#[cfg(feature = "rust")]
+impl Loader for MemoryLoader {
+  fn get_cache_info(&self, specifier: &ModuleSpecifier) -> Option<CacheInfo> {
+    self.cache_info.get(specifier).cloned()
+  }
+
+  fn load(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    _is_dynamic: bool,
+  ) -> LoadFuture {
+    let response = match self.sources.get(specifier) {
+      Some(Ok(response)) => Ok(Some(response.clone())),
+      Some(Err(err)) => Err(anyhow!("{}", err)),
+      _ => Ok(None),
+    };
+    Box::pin(future::ready((specifier.clone(), response)))
+  }
+}
+
 #[cfg(test)]
-pub(crate) mod tests {
+pub mod tests {
   use super::*;
   use crate::module_specifier::resolve_import;
-  use anyhow::anyhow;
-  use anyhow::Error;
-  use futures::future;
-
-  pub(crate) struct MockLoader {
-    sources: HashMap<ModuleSpecifier, Result<LoadResponse, Error>>,
-    cache_info: HashMap<ModuleSpecifier, CacheInfo>,
-  }
-
-  type MockLoaderSources<S> =
-    Vec<(S, Result<(S, Option<Vec<(S, S)>>, S), Error>)>;
-
-  impl MockLoader {
-    pub fn new<S: AsRef<str>>(
-      sources: MockLoaderSources<S>,
-      cache_info: Vec<(S, CacheInfo)>,
-    ) -> Self {
-      Self {
-        sources: sources
-          .into_iter()
-          .map(|(s, r)| {
-            let specifier = ModuleSpecifier::parse(s.as_ref()).unwrap();
-            let result = r.map(|(s, mh, c)| LoadResponse {
-              specifier: ModuleSpecifier::parse(s.as_ref()).unwrap(),
-              maybe_headers: mh.map(|h| {
-                h.into_iter()
-                  .map(|(k, v)| {
-                    (k.as_ref().to_string(), v.as_ref().to_string())
-                  })
-                  .collect()
-              }),
-              content: c.as_ref().to_string(),
-            });
-            (specifier, result)
-          })
-          .collect(),
-        cache_info: cache_info
-          .into_iter()
-          .map(|(s, c)| {
-            let specifier = ModuleSpecifier::parse(s.as_ref()).unwrap();
-            (specifier, c)
-          })
-          .collect(),
-      }
-    }
-  }
-
-  impl Loader for MockLoader {
-    fn get_cache_info(&self, specifier: &ModuleSpecifier) -> Option<CacheInfo> {
-      self.cache_info.get(specifier).cloned()
-    }
-
-    fn load(
-      &mut self,
-      specifier: &ModuleSpecifier,
-      _is_dynamic: bool,
-    ) -> LoadFuture {
-      let response = match self.sources.get(specifier) {
-        Some(Ok(response)) => Ok(Some(response.clone())),
-        Some(Err(err)) => Err(anyhow!("{}", err)),
-        _ => Ok(None),
-      };
-      Box::pin(future::ready((specifier.clone(), response)))
-    }
-  }
 
   #[derive(Debug)]
   pub(crate) struct MockResolver {
