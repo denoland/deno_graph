@@ -175,13 +175,13 @@ mod tests {
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(root_specifier.clone(), loader, None, None).await;
-    assert_eq!(graph.modules.iter().count(), 2);
+    assert_eq!(graph.modules.len(), 2);
     assert_eq!(graph.root, root_specifier);
     let maybe_root_module = graph.modules.get(&root_specifier);
     assert!(maybe_root_module.is_some());
     let root_module_slot = maybe_root_module.unwrap();
     if let ModuleSlot::Module(module) = root_module_slot {
-      assert_eq!(module.dependencies.iter().count(), 1);
+      assert_eq!(module.dependencies.len(), 1);
       let maybe_dependency = module.dependencies.get("./test02.ts");
       assert!(maybe_dependency.is_some());
       let dependency_specifier =
@@ -257,7 +257,7 @@ mod tests {
     );
     assert!(result.is_ok());
     let actual = result.unwrap();
-    assert_eq!(actual.dependencies.iter().count(), 4);
+    assert_eq!(actual.dependencies.len(), 4);
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::TypeScript);
   }
