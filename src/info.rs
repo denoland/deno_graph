@@ -100,7 +100,7 @@ impl fmt::Display for ModuleGraph {
             f,
             "",
             idx == dep_len - 1 && root.maybe_types_dependency.is_none(),
-            &self,
+            self,
             &mut seen,
           )?;
         }
