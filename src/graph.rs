@@ -165,7 +165,7 @@ pub struct Dependency {
   #[serde(rename = "type", skip_serializing_if = "Resolved::is_none")]
   pub(crate) maybe_type: Resolved,
   #[serde(skip_serializing_if = "is_false")]
-  is_dynamic: bool,
+  pub is_dynamic: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -249,6 +249,7 @@ impl ModuleGraph {
   /// part of the graph, or if when loading the module it errored. If any module
   /// resolution error is needed, then use the `try_get()` method which will
   /// return any resolution error as the error in the result.
+  #[cfg(feature = "rust")]
   pub fn get(&self, specifier: &ModuleSpecifier) -> Option<&Module> {
     let specifier = self.resolve(specifier);
     match self.modules.get(&specifier) {

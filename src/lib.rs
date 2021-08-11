@@ -13,10 +13,16 @@ mod module_specifier;
 pub mod source;
 
 use graph::Builder;
+#[cfg(feature = "rust")]
 pub use graph::Module;
+#[cfg(feature = "rust")]
 pub use graph::ModuleGraph;
+#[cfg(feature = "rust")]
 pub use graph::ModuleGraphError;
 use graph::ModuleSlot;
+#[cfg(feature = "rust")]
+pub use media_type::MediaType;
+#[cfg(feature = "rust")]
 pub use module_specifier::ModuleSpecifier;
 #[cfg(feature = "rust")]
 use source::Loader;
@@ -87,7 +93,8 @@ pub async fn js_create_graph(
     } else {
       None
     };
-  let root_specifier = ModuleSpecifier::parse(&root_specifier).unwrap();
+  let root_specifier =
+    module_specifier::ModuleSpecifier::parse(&root_specifier).unwrap();
   let builder =
     Builder::new(root_specifier, false, loader, maybe_resolver, maybe_locker);
   let graph = builder.build().await;
@@ -105,7 +112,7 @@ pub fn js_parse_module(
   let maybe_headers: Option<HashMap<String, String>> = maybe_headers
     .into_serde()
     .map_err(|err| js_sys::Error::new(&err.to_string()))?;
-  let specifier = ModuleSpecifier::parse(&specifier)
+  let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
     .map_err(|err| js_sys::Error::new(&err.to_string()))?;
   let maybe_resolver: Option<Box<dyn Resolver>> =
     if let Some(resolve) = maybe_resolve {
@@ -128,8 +135,8 @@ pub fn js_parse_module(
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::graph::Resolved;
   use anyhow::Error;
-  use serde_json::to_string_pretty;
   use source::tests::MockResolver;
   use source::CacheInfo;
   use source::MemoryLoader;
@@ -167,8 +174,32 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let graph = create_graph(root_specifier, loader, None, None).await;
-    println!("{:?}", graph);
+    let graph = create_graph(root_specifier.clone(), loader, None, None).await;
+    assert_eq!(graph.modules.iter().count(), 2);
+    assert_eq!(graph.root, root_specifier);
+    let maybe_root_module = graph.modules.get(&root_specifier);
+    assert!(maybe_root_module.is_some());
+    let root_module_slot = maybe_root_module.unwrap();
+    if let ModuleSlot::Module(module) = root_module_slot {
+      assert_eq!(module.dependencies.iter().count(), 1);
+      let maybe_dependency = module.dependencies.get("./test02.ts");
+      assert!(maybe_dependency.is_some());
+      let dependency_specifier =
+        ModuleSpecifier::parse("file:///a/test02.ts").unwrap();
+      let dependency = maybe_dependency.unwrap();
+      assert_eq!(dependency.is_dynamic, false);
+      if let Resolved::Specifier(resolved_specifier, _) = &dependency.maybe_code
+      {
+        assert_eq!(resolved_specifier, &dependency_specifier);
+      } else {
+        panic!("unexpected resolved slot");
+      }
+      assert_eq!(dependency.maybe_type, Resolved::None);
+      let maybe_dep_module_slot = graph.get(&dependency_specifier);
+      assert!(maybe_dep_module_slot.is_some());
+    } else {
+      panic!("unspected module slot");
+    }
   }
 
   #[tokio::test]
@@ -194,7 +225,20 @@ mod tests {
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let graph =
       create_graph(root_specifier, loader, maybe_resolver, None).await;
-    println!("{}", to_string_pretty(&graph).unwrap());
+    let maybe_module = graph.get(&graph.root);
+    assert!(maybe_module.is_some());
+    let module = maybe_module.unwrap();
+    let maybe_dep = module.dependencies.get("b");
+    assert!(maybe_dep.is_some());
+    let dep = maybe_dep.unwrap();
+    if let Resolved::Specifier(dep_sepcifier, _) = &dep.maybe_code {
+      assert_eq!(
+        dep_sepcifier,
+        &ModuleSpecifier::parse("file:///a/test02.ts").unwrap()
+      );
+    } else {
+      panic!("unspected resolved type");
+    }
   }
 
   #[test]
@@ -213,6 +257,8 @@ mod tests {
     );
     assert!(result.is_ok());
     let actual = result.unwrap();
-    println!("{}", to_string_pretty(&actual).unwrap());
+    assert_eq!(actual.dependencies.iter().count(), 4);
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::TypeScript);
   }
 }

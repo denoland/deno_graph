@@ -1,6 +1,6 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-use crate::ModuleSpecifier;
+use crate::module_specifier::ModuleSpecifier;
 
 use data_url::DataUrl;
 use serde::Serialize;
