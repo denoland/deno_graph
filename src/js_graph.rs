@@ -15,7 +15,7 @@ use anyhow::Result;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-pub(crate) struct JsLoader {
+pub struct JsLoader {
   load: js_sys::Function,
   maybe_cache_info: Option<js_sys::Function>,
 }
@@ -71,7 +71,7 @@ impl Loader for JsLoader {
 }
 
 #[derive(Debug)]
-pub(crate) struct JsLocker {
+pub struct JsLocker {
   maybe_check: Option<js_sys::Function>,
   maybe_get_checksum: Option<js_sys::Function>,
 }
@@ -122,7 +122,7 @@ impl Locker for JsLocker {
 }
 
 #[derive(Debug)]
-pub(crate) struct JsResolver {
+pub struct JsResolver {
   resolve: js_sys::Function,
 }
 
