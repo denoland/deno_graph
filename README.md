@@ -1,11 +1,96 @@
 # deno_graph
 
-The module graph logic for the Deno CLI.
+[![Build Status - Cirrus][]][Build status] [![Twitter handle][]][Twitter badge]
+[![Discord Chat](https://img.shields.io/discord/684898665143206084?logo=discord&style=social)](https://discord.gg/deno)
+
+The module graph/dependency logic for the Deno CLI.
 
 This repository is a Rust crate which provides the foundational code to be able
 to build a module graph, following the Deno CLI's module resolution logic. It
 also provides a web assembly interface to the built code, making it possible to
 leverage the logic outside of the Deno CLI from JavaScript/TypeScript.
+
+## Rust usage
+
+### `create_graph()`
+
+`create_graph()` is the main way of interfacing with the crate. It requires the
+root module specifier/URL for the graph and an implementation of the
+`source::Loader` trait. It also optionally takes implementations of the
+`source::Resolver` and `source::Locker` traits. It will load and parse the root
+module and recursively all of its dependencies, returning asyncronously a
+resulting `ModuleGraph`.
+
+### `source::Loader` trait
+
+Implementing this trait requires the `load()` method and optionally the
+`get_cache_into()` method. The `load()` method returns a future with the
+requested module specifier and the resulting load response. This allows the
+module graph to deal with redirections, error conditions, and local and remote
+content.
+
+The `get_cache_info()` is the API for exposing additional meta data about a
+module specifier as it resides in the cache so it can be part of a module graphs
+information. When the graph is built, the method will be called with each
+resolved module in the graph to see if the additional information is available.
+
+### `source::Resolver` trait
+
+This trait "replaces" the default resolution logic of the module graph. It is
+intended to allow concepts like import maps to "plug" into the module graph.
+
+### `source::Locker` trait
+
+This trait allows the module graph to perform sub-resource integrity checks on a
+module graph.
+
+### `source::MemoryLoader` struct
+
+`MemoryLoader` is a structure that implements the `source::Loader` trait and is
+designed so that a cache of modules can be stored in memory to be parsed and
+retrived when building a module graph. This is useful for testing purposes or in
+situations where the module contents is already available and _dynamically_
+loading them is not practical or desirable.
+
+A minimal example would look like this:
+
+```rust
+use deno_graph::create_graph;
+use deno_graph::ModuleSpecifier;
+use deno_graph::source::MemoryLoader;
+use futures::executor::block_on;
+
+fn main() {
+  let loader = Box::new(MemoryLoader::new(
+    vec![
+      ("file:///test.ts", Ok(("file:///test.ts", None, "import * as a from \"./a.ts\";"))),
+      ("file:///a.ts", Ok(("file:///a.ts", None, "export const a = \"a\";"))),
+    ]
+  ));
+  let root_specifier = ModuleSpecifier::parse("file:///test.ts").unwrap();
+  let future = async move {
+    let graph = create_graph(root_specifier, loader, None, None).await;
+    println!("{}", graph);
+  };
+  block_on()
+}
+```
+
+### Other core concepts
+
+#### `ModuleSpecifier` type alias
+
+Currently part of the the `deno_core` crate. `deno_graph` explicitly doesn't
+depend on `deno_core` or any part of the Deno CLI. It exports the type alias
+publicably for re-use by other crates.
+
+#### `MediaType` enum
+
+Currently part of the `deno_cli` crate, this enum represents the various media
+types that the Deno CLI can resolve and handle. Since `deno_graph` doesn't rely
+upon any part of the Deno CLI, it was necessary to implement this in this crate,
+and the implementation here will eventually replace the implementation in
+`deno_cli`.
 
 ## Usage from Deno CLI or Deploy
 
@@ -131,3 +216,19 @@ But can be manually invoked like:
 
 And you will be prompted for the permissions that Deno needs to perform the
 build.
+
+### Contributing
+
+We appreciate your help!
+
+To contribute, please read our
+[contributing instructions](https://deno.land/manual/contributing).
+
+This repository includes `.devcontainer` metadata which will allow a development
+container to be built which has all the development pre-requisites available to
+make contribution easier.
+
+[Build Status - Cirrus]: https://github.com/denoland/deno_graph/workflows/ci/badge.svg?branch=main&event=push
+[Build status]: https://github.com/denoland/deno_graph/actions
+[Twitter badge]: https://twitter.com/intent/follow?screen_name=deno_land
+[Twitter handle]: https://img.shields.io/twitter/follow/deno_land.svg?style=social&label=Follow
