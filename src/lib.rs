@@ -20,6 +20,12 @@ pub use graph::ModuleGraph;
 #[cfg(feature = "rust")]
 pub use graph::ModuleGraphError;
 use graph::ModuleSlot;
+#[cfg(feature = "wasm")]
+pub use js_graph::JsLoader;
+#[cfg(feature = "wasm")]
+pub use js_graph::JsLocker;
+#[cfg(feature = "wasm")]
+pub use js_graph::JsResolver;
 #[cfg(feature = "rust")]
 pub use media_type::MediaType;
 #[cfg(feature = "rust")]
