@@ -187,7 +187,7 @@ mod tests {
       let dependency_specifier =
         ModuleSpecifier::parse("file:///a/test02.ts").unwrap();
       let dependency = maybe_dependency.unwrap();
-      assert_eq!(dependency.is_dynamic, false);
+      assert!(!dependency.is_dynamic);
       if let Resolved::Specifier(resolved_specifier, _) = &dependency.maybe_code
       {
         assert_eq!(resolved_specifier, &dependency_specifier);
