@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   rust:
-    name: deno_doc-${{ matrix.os }}
+    name: deno_graph-${{ matrix.os }}
     if: |
       github.event_name == 'push' ||
       !startsWith(github.event.pull_request.head.label, 'denoland:')
@@ -21,7 +21,7 @@ jobs:
       - name: ➡️  install rust
         uses: hecrj/setup-rust-action@v1.3.4
         with:
-          rust-version: 1.53.0
+          rust-version: 1.54.0
       
       - name: ➡️  install clippy and rustfmt
         run: |
