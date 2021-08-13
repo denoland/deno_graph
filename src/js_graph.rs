@@ -54,16 +54,22 @@ impl Loader for JsLoader {
     let this = JsValue::null();
     let arg0 = JsValue::from(specifier.to_string());
     let arg1 = JsValue::from(is_dynamic);
-    let result = self.load.call2(&this, &arg0, &arg1).unwrap();
+    let result = self.load.call2(&this, &arg0, &arg1);
     let f = async move {
-      let response =
-        wasm_bindgen_futures::JsFuture::from(js_sys::Promise::resolve(&result))
-          .await;
+      let response = match result {
+        Ok(result) => {
+          wasm_bindgen_futures::JsFuture::from(js_sys::Promise::resolve(
+            &result,
+          ))
+          .await
+        }
+        Err(err) => Err(err),
+      };
       (
         specifier,
         response
           .map(|value| value.into_serde().unwrap())
-          .map_err(|_| anyhow!("promise rejected")),
+          .map_err(|_| anyhow!("load rejected or errored")),
       )
     };
     Box::pin(f)

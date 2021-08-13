@@ -3,7 +3,9 @@
 import {
   assert,
   assertEquals,
-} from "https://deno.land/std@0.102.0/testing/asserts.ts";
+  assertThrows,
+  assertThrowsAsync,
+} from "https://deno.land/std@0.104.0/testing/asserts.ts";
 import { createGraph, load, parseModule } from "./mod.ts";
 
 Deno.test({
@@ -46,17 +48,90 @@ https://example.com/a.ts (32B)
 });
 
 Deno.test({
-  name: "createGraph with load - remote modules",
+  name: "createGraph() - root module missing",
+  async fn() {
+    const graph = await createGraph("file:///a/test.ts", {
+      load() {
+        return Promise.resolve(undefined);
+      },
+    });
+    assertEquals(graph.modules.length, 0);
+  },
+});
+
+Deno.test({
+  name: "createGraph() - invalid URL",
+  fn() {
+    return assertThrowsAsync(
+      async () => {
+        await createGraph("./bad.ts");
+      },
+      Error,
+      "relative URL without a base",
+    );
+  },
+});
+
+Deno.test({
+  name: "createGraph() - load rejects",
+  async fn() {
+    const graph = await createGraph("file:///a/test.ts", {
+      load() {
+        return Promise.reject(new Error("something bad happened"));
+      },
+    });
+    assertEquals(graph.modules.length, 0);
+  },
+});
+
+Deno.test({
+  name: "createGraph() - load throws",
+  async fn() {
+    const graph = await createGraph("file:///a/test.ts", {
+      load() {
+        throw new Error("something bad happened");
+      },
+    });
+    assertEquals(graph.modules.length, 0);
+  },
+});
+
+Deno.test({
+  name: "createGraph() - default load - remote modules",
   async fn() {
     const graph = await createGraph(
       "https://deno.land/std@0.103.0/examples/chat/server.ts",
-      { load },
     );
     assertEquals(graph.modules.length, 37);
     const rootModule = graph.get(graph.root);
     assert(rootModule);
     assertEquals(rootModule.mediaType, "TypeScript");
     assertEquals(Object.entries(rootModule.dependencies).length, 3);
+  },
+});
+
+Deno.test({
+  name: "load() - remote module",
+  async fn() {
+    const response = await load(
+      "https://deno.land/std@0.103.0/examples/chat/server.ts",
+    );
+    assert(response);
+    assertEquals(
+      response.specifier,
+      "https://deno.land/std@0.103.0/examples/chat/server.ts",
+    );
+    assertEquals(response.content.length, 2197);
+  },
+});
+
+Deno.test({
+  name: "load() - remote module - not found",
+  async fn() {
+    const response = await load(
+      "https://deno.land/x/bad-url",
+    );
+    assertEquals(response, undefined);
   },
 });
 
@@ -125,5 +200,31 @@ Deno.test({
         },
       },
     });
+  },
+});
+
+Deno.test({
+  name: "parseModule() - invalid URL",
+  fn() {
+    return assertThrows(
+      () => {
+        parseModule("./bad.ts", `console.log("hello");`);
+      },
+      Error,
+      "relative URL without a base",
+    );
+  },
+});
+
+Deno.test({
+  name: "parseModule() - syntax error",
+  fn() {
+    return assertThrows(
+      () => {
+        parseModule("file:///a/test.md", `# Some Markdown\n\n**bold**`);
+      },
+      Error,
+      "The module's source code would not be parsed",
+    );
   },
 });

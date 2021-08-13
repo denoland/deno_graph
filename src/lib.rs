@@ -84,7 +84,7 @@ pub async fn js_create_graph(
   maybe_resolve: Option<js_sys::Function>,
   maybe_check: Option<js_sys::Function>,
   maybe_get_checksum: Option<js_sys::Function>,
-) -> js_graph::ModuleGraph {
+) -> Result<js_graph::ModuleGraph, JsValue> {
   let loader = Box::new(js_graph::JsLoader::new(load, maybe_cache_info));
   let maybe_resolver: Option<Box<dyn Resolver>> =
     if let Some(resolve) = maybe_resolve {
@@ -100,11 +100,12 @@ pub async fn js_create_graph(
       None
     };
   let root_specifier =
-    module_specifier::ModuleSpecifier::parse(&root_specifier).unwrap();
+    module_specifier::ModuleSpecifier::parse(&root_specifier)
+      .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
   let builder =
     Builder::new(root_specifier, false, loader, maybe_resolver, maybe_locker);
   let graph = builder.build().await;
-  js_graph::ModuleGraph(graph)
+  Ok(js_graph::ModuleGraph(graph))
 }
 
 #[cfg(feature = "wasm")]
