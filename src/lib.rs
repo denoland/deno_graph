@@ -41,10 +41,6 @@ use std::rc::Rc;
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
 
-#[cfg(feature = "wee_alloc")]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
 /// Create a module graph, based on loanding and recursively analyzing the
 /// dependencies of the module, returning the resulting graph.
 #[cfg(feature = "rust")]

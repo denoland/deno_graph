@@ -30,7 +30,6 @@ termcolor = "1.1.2"
 url = { version = "2.2.2", features = ["serde"] }
 wasm-bindgen = { version = "0.2.75", features = ["serde-serialize"], optional = true }
 wasm-bindgen-futures = { version = "0.4.25", optional = true }
-wee_alloc = { version = "0.4.5", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1.9.0", features = ["macros", "rt-multi-thread"] }
@@ -38,7 +37,7 @@ tokio = { version = "1.9.0", features = ["macros", "rt-multi-thread"] }
 [features]
 default = ["rust"]
 rust = []
-wasm = ["js-sys", "serde-wasm-bindgen", "wasm-bindgen", "wasm-bindgen-futures", "wee_alloc"]
+wasm = ["js-sys", "serde-wasm-bindgen", "wasm-bindgen", "wasm-bindgen-futures"]
 
 [profile.release]
 codegen-units = 1
