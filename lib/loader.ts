@@ -47,6 +47,8 @@ export async function load(
         await requestNet(url.host);
         const response = await fetch(String(url), { redirect: "follow" });
         if (response.status !== 200) {
+          // ensure the body is read as to not leak resources
+          await response.arrayBuffer();
           return undefined;
         }
         const content = await response.text();
