@@ -42,6 +42,7 @@ pub struct LoadResponse {
   pub specifier: ModuleSpecifier,
   /// If the module is a remote module, the headers should be returned as a
   /// hashmap of lower-cased string values.
+  #[serde(rename = "headers", skip_serializing_if = "Option::is_none")]
   pub maybe_headers: Option<HashMap<String, String>>,
   /// The content of the remote module.
   pub content: String,

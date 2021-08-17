@@ -206,6 +206,37 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn test_create_graph_with_headers() {
+    let loader = setup(
+      vec![(
+        "https://example.com/a",
+        Ok((
+          "https://example.com/a",
+          Some(vec![(
+            "content-type",
+            "application/typescript; charset=utf-8",
+          )]),
+          r#"declare interface A { a: string; }"#,
+        )),
+      )],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("https://example.com/a").expect("bad url");
+    let graph = create_graph(root_specifier.clone(), loader, None, None).await;
+    assert_eq!(graph.modules.len(), 1);
+    assert_eq!(graph.root, root_specifier);
+    let maybe_root_module = graph.modules.get(&root_specifier);
+    assert!(maybe_root_module.is_some());
+    let root_module_slot = maybe_root_module.unwrap();
+    if let ModuleSlot::Module(module) = root_module_slot {
+      assert_eq!(module.media_type, MediaType::TypeScript);
+    } else {
+      panic!("unspected module slot");
+    }
+  }
+
+  #[tokio::test]
   async fn test_create_graph_with_resolver() {
     let loader = setup(
       vec![
