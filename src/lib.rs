@@ -264,4 +264,24 @@ mod tests {
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::TypeScript);
   }
+
+  #[test]
+  fn test_parse_module_with_headers() {
+    let specifier = ModuleSpecifier::parse("https://localhost/file").unwrap();
+    let mut headers = HashMap::new();
+    headers.insert(
+      "content-type".to_string(),
+      "application/typescript; charset=utf-8".to_string(),
+    );
+    let maybe_headers = Some(headers);
+    let result = parse_module(
+      &specifier,
+      &maybe_headers,
+      r#"declare interface A {
+  a: string;
+}"#,
+      &None,
+    );
+    assert!(result.is_ok());
+  }
 }
