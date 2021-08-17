@@ -206,6 +206,37 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn test_create_graph_with_headers() {
+    let loader = setup(
+      vec![(
+        "https://example.com/a",
+        Ok((
+          "https://example.com/a",
+          Some(vec![(
+            "content-type",
+            "application/typescript; charset=utf-8",
+          )]),
+          r#"declare interface A { a: string; }"#,
+        )),
+      )],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("https://example.com/a").expect("bad url");
+    let graph = create_graph(root_specifier.clone(), loader, None, None).await;
+    assert_eq!(graph.modules.len(), 1);
+    assert_eq!(graph.root, root_specifier);
+    let maybe_root_module = graph.modules.get(&root_specifier);
+    assert!(maybe_root_module.is_some());
+    let root_module_slot = maybe_root_module.unwrap();
+    if let ModuleSlot::Module(module) = root_module_slot {
+      assert_eq!(module.media_type, MediaType::TypeScript);
+    } else {
+      panic!("unspected module slot");
+    }
+  }
+
+  #[tokio::test]
   async fn test_create_graph_with_resolver() {
     let loader = setup(
       vec![
@@ -263,5 +294,25 @@ mod tests {
     assert_eq!(actual.dependencies.len(), 4);
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::TypeScript);
+  }
+
+  #[test]
+  fn test_parse_module_with_headers() {
+    let specifier = ModuleSpecifier::parse("https://localhost/file").unwrap();
+    let mut headers = HashMap::new();
+    headers.insert(
+      "content-type".to_string(),
+      "application/typescript; charset=utf-8".to_string(),
+    );
+    let maybe_headers = Some(headers);
+    let result = parse_module(
+      &specifier,
+      &maybe_headers,
+      r#"declare interface A {
+  a: string;
+}"#,
+      &None,
+    );
+    assert!(result.is_ok());
   }
 }

@@ -11,27 +11,29 @@ import { createGraph, load, parseModule } from "./mod.ts";
 Deno.test({
   name: "createGraph()",
   async fn() {
-    const graph = await createGraph("https://example.com/a.ts", {
+    const graph = await createGraph("https://example.com/a", {
       load(specifier, isDynamic) {
         assert(!isDynamic);
-        assertEquals(specifier, "https://example.com/a.ts");
+        assertEquals(specifier, "https://example.com/a");
         return Promise.resolve({
           specifier,
           headers: {
-            "content-type": "application/typescript",
+            "content-type": "application/typescript; charset=utf-8",
           },
-          content: `console.log("hello deno_graph!")`,
+          content: `declare interface A {
+            a: string;
+          }`,
         });
       },
     });
     assertEquals(graph.toJSON(), {
-      root: "https://example.com/a.ts",
+      root: "https://example.com/a",
       modules: [
         {
-          specifier: "https://example.com/a.ts",
+          specifier: "https://example.com/a",
           dependencies: [],
           mediaType: "TypeScript",
-          size: 32,
+          size: 56,
         },
       ],
       redirects: {},
@@ -39,9 +41,9 @@ Deno.test({
     assertEquals(
       graph.toString(true),
       `type: TypeScript
-dependencies: 0 unique (total 32B)
+dependencies: 0 unique (total 56B)
 
-https://example.com/a.ts (32B)
+https://example.com/a (56B)
 `,
     );
   },
@@ -200,6 +202,24 @@ Deno.test({
         },
       },
     });
+  },
+});
+
+Deno.test({
+  name: "parseModule() - with headers",
+  fn() {
+    const module = parseModule(
+      `https://example.com/a`,
+      `declare interface A {
+      a: string;
+    }`,
+      {
+        headers: {
+          "content-type": "application/typescript; charset=utf-8",
+        },
+      },
+    );
+    assertEquals(module.mediaType, "TypeScript");
   },
 });
 
