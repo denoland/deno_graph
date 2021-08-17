@@ -60,6 +60,8 @@ if (!(await cargoBuildReleaseCmdStatus).success) {
   Deno.exit(1);
 }
 
+await emptyDir("./target/wasm32-bindgen-deno-js");
+
 const wasmBindGenCmd = [
   "wasm-bindgen",
   "./target/wasm32-unknown-unknown/release/deno_graph.wasm",
