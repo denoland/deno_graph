@@ -8,9 +8,6 @@ use termcolor::Color::Ansi256;
 use termcolor::Color::Red;
 use termcolor::{Ansi, ColorSpec, WriteColor};
 
-#[cfg(windows)]
-use termcolor::{BufferWriter, ColorChoice};
-
 lazy_static::lazy_static! {
   // STRIP_ANSI_RE and strip_ansi_codes are lifted from the "console" crate.
   // Copyright 2017 Armin Ronacher <armin.ronacher@active-4.com>. MIT License.
@@ -28,11 +25,6 @@ pub fn strip_ansi_codes<S: AsRef<str>>(s: S) -> String {
 
 pub fn use_color() -> bool {
   !(*NO_COLOR)
-}
-
-#[cfg(windows)]
-pub fn enable_ansi() {
-  BufferWriter::stdout(ColorChoice::AlwaysAnsi);
 }
 
 fn style<S: AsRef<str>>(s: S, colorspec: ColorSpec) -> impl fmt::Display {

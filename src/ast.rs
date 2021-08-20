@@ -2,8 +2,7 @@
 
 use crate::media_type::MediaType;
 use crate::module_specifier::ModuleSpecifier;
-#[cfg(target_arch = "wasm32")]
-use crate::module_specifier::EMPTY_SPECIFIER;
+use crate::text_encoding::strip_bom;
 
 use anyhow::Result;
 use lazy_static::lazy_static;
@@ -11,18 +10,15 @@ use regex::Match;
 use regex::Regex;
 use serde::Serialize;
 use std::fmt;
-use std::rc::Rc;
 use swc_common::comments::Comment;
+use swc_common::comments::Comments;
 use swc_common::comments::SingleThreadedComments;
 use swc_common::BytePos;
-use swc_common::FileName;
-use swc_common::SourceMap;
 use swc_common::Spanned;
 use swc_ecmascript::ast::Module;
 use swc_ecmascript::dep_graph::analyze_dependencies;
 use swc_ecmascript::dep_graph::DependencyDescriptor;
 use swc_ecmascript::dep_graph::DependencyKind;
-use swc_ecmascript::parser;
 use swc_ecmascript::parser::lexer::Lexer;
 use swc_ecmascript::parser::EsConfig;
 use swc_ecmascript::parser::JscTarget;
@@ -30,6 +26,7 @@ use swc_ecmascript::parser::Parser;
 use swc_ecmascript::parser::StringInput;
 use swc_ecmascript::parser::Syntax;
 use swc_ecmascript::parser::TsConfig;
+use text_lines::TextLines;
 
 static TARGET: JscTarget = JscTarget::Es2021;
 
@@ -79,8 +76,8 @@ fn get_ts_config(tsx: bool, dts: bool) -> TsConfig {
   }
 }
 
-impl<'a> From<&'a MediaType> for Syntax {
-  fn from(media_type: &'a MediaType) -> Self {
+impl<'a> From<MediaType> for Syntax {
+  fn from(media_type: MediaType) -> Self {
     match media_type {
       MediaType::JavaScript => Self::Es(get_es_config(false)),
       MediaType::Jsx => Self::Es(get_es_config(true)),
@@ -94,16 +91,19 @@ impl<'a> From<&'a MediaType> for Syntax {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Position {
+  /// The 0-indexed line index.
   pub line: usize,
+  /// The 0-indexed character index.
   pub character: usize,
 }
 
 impl Position {
-  fn from_byte_pos(sm: &Rc<SourceMap>, pos: BytePos) -> Self {
-    let loc = sm.lookup_char_pos(pos);
-    Self {
-      line: loc.line - 1,
-      character: loc.col_display,
+  pub fn from_pos(text_lines: &TextLines, pos: BytePos) -> Self {
+    let line_and_column_index =
+      text_lines.line_and_column_index(pos.0 as usize);
+    Position {
+      line: line_and_column_index.line_index,
+      character: line_and_column_index.column_index,
     }
   }
 }
@@ -132,25 +132,14 @@ impl Default for Range {
 impl Range {
   fn from_comment_match(
     comment: &Comment,
-    sm: &Rc<SourceMap>,
+    parsed_module: &ParsedModule,
     m: &Match,
   ) -> Self {
     Self {
-      start: Position::from_byte_pos(
-        sm,
-        comment.span.lo + BytePos((m.start() + 1) as u32),
-      ),
-      end: Position::from_byte_pos(
-        sm,
-        comment.span.lo + BytePos((m.end() + 1) as u32),
-      ),
-    }
-  }
-
-  pub fn from_span(sm: &Rc<SourceMap>, span: &swc_common::Span) -> Self {
-    Self {
-      start: Position::from_byte_pos(sm, span.lo),
-      end: Position::from_byte_pos(sm, span.hi),
+      start: parsed_module
+        .get_position(comment.span.lo + BytePos((m.start() + 1) as u32)),
+      end: parsed_module
+        .get_position(comment.span.lo + BytePos((m.end() + 1) as u32)),
     }
   }
 }
@@ -193,44 +182,6 @@ impl fmt::Display for Location {
   }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-impl From<swc_common::Loc> for Location {
-  fn from(loc: swc_common::Loc) -> Self {
-    let specifier = match &loc.file.name {
-      FileName::Real(path) => ModuleSpecifier::from_file_path(path).unwrap(),
-      FileName::Custom(input) => ModuleSpecifier::parse(input).unwrap(),
-      _ => unreachable!("invalid specifier"),
-    };
-
-    Location {
-      specifier,
-      position: Position {
-        line: loc.line,
-        character: loc.col_display,
-      },
-    }
-  }
-}
-
-#[cfg(target_arch = "wasm32")]
-impl From<swc_common::Loc> for Location {
-  fn from(loc: swc_common::Loc) -> Self {
-    let specifier = match &loc.file.name {
-      FileName::Real(_) => ModuleSpecifier::parse(EMPTY_SPECIFIER).unwrap(),
-      FileName::Custom(input) => ModuleSpecifier::parse(input).unwrap(),
-      _ => unreachable!("invalid specifier"),
-    };
-
-    Location {
-      specifier,
-      position: Position {
-        line: loc.line,
-        character: loc.col_display,
-      },
-    }
-  }
-}
-
 pub enum TypeScriptReference {
   Path(String, Range),
   Types(String, Range),
@@ -250,20 +201,10 @@ impl fmt::Display for Diagnostic {
   }
 }
 
-impl Diagnostic {
-  fn from_parser_error(err: parser::error::Error, sm: &Rc<SourceMap>) -> Self {
-    Self {
-      location: sm.lookup_char_pos(err.span().lo).into(),
-      message: err.into_kind().msg().to_string(),
-    }
-  }
-}
-
 pub(crate) struct ParsedModule {
   comments: SingleThreadedComments,
-  pub leading_comments: Vec<Comment>,
   module: Module,
-  source_map: Rc<SourceMap>,
+  text_lines: TextLines,
 }
 
 impl ParsedModule {
@@ -283,12 +224,12 @@ impl ParsedModule {
     if let Some(m) = captures.get(1) {
       Some((
         m.as_str().to_string(),
-        Range::from_comment_match(comment, &self.source_map, &m),
+        Range::from_comment_match(comment, self, &m),
       ))
     } else if let Some(m) = captures.get(2) {
       Some((
         m.as_str().to_string(),
-        Range::from_comment_match(comment, &self.source_map, &m),
+        Range::from_comment_match(comment, self, &m),
       ))
     } else {
       unreachable!("Unexpected captures from deno types regex")
@@ -297,13 +238,13 @@ impl ParsedModule {
 
   pub fn analyze_ts_references(&self) -> Vec<TypeScriptReference> {
     let mut references = Vec::new();
-    for comment in &self.leading_comments {
+    for comment in self.get_leading_comments().iter() {
       if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
         if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
           let m = captures.get(1).unwrap();
           references.push(TypeScriptReference::Path(
             m.as_str().to_string(),
-            Range::from_comment_match(comment, &self.source_map, &m),
+            Range::from_comment_match(comment, self, &m),
           ));
         } else if let Some(captures) =
           TYPES_REFERENCE_RE.captures(&comment.text)
@@ -311,7 +252,7 @@ impl ParsedModule {
           let m = captures.get(1).unwrap();
           references.push(TypeScriptReference::Types(
             m.as_str().to_string(),
-            Range::from_comment_match(comment, &self.source_map, &m),
+            Range::from_comment_match(comment, self, &m),
           ));
         }
       }
@@ -319,37 +260,51 @@ impl ParsedModule {
     references
   }
 
+  /// Get the module's leading comments, where triple slash directives might
+  /// be located.
+  pub fn get_leading_comments(&self) -> Vec<Comment> {
+    self
+      .comments
+      .get_leading(self.module.span.lo)
+      .unwrap_or_else(Vec::new)
+  }
+
   pub fn range_from_span(&self, span: &swc_common::Span) -> Range {
-    Range::from_span(&self.source_map, span)
+    Range {
+      start: self.get_position(span.lo),
+      end: self.get_position(span.hi),
+    }
+  }
+
+  pub fn get_position(&self, pos: BytePos) -> Position {
+    Position::from_pos(&self.text_lines, pos)
   }
 }
 
 pub(crate) fn parse(
   specifier: &ModuleSpecifier,
   source: &str,
-  media_type: &MediaType,
+  media_type: MediaType,
 ) -> Result<ParsedModule, Diagnostic> {
-  let source_map = Rc::new(SourceMap::default());
-  let source_file = source_map.new_source_file(
-    FileName::Custom(specifier.as_str().to_string()),
-    source.to_string(),
-  );
-  let input = StringInput::from(&*source_file);
+  let source = strip_bom(source);
+  let text_lines = TextLines::new(&source);
+  let input =
+    StringInput::new(&source, BytePos(0), BytePos(source.len() as u32));
   let comments = SingleThreadedComments::default();
   let lexer = Lexer::new(media_type.into(), TARGET, input, Some(&comments));
   let mut parser = Parser::new_from(lexer);
-  let sm = &source_map;
-  let module = parser
-    .parse_module()
-    .map_err(|err| Diagnostic::from_parser_error(err, sm))?;
-  let leading_comments =
-    comments.with_leading(module.span.lo, |comments| comments.to_vec());
+  let module = parser.parse_module().map_err(|err| Diagnostic {
+    location: Location {
+      specifier: specifier.clone(),
+      position: Position::from_pos(&text_lines, err.span().lo),
+    },
+    message: err.into_kind().msg().to_string(),
+  })?;
 
   Ok(ParsedModule {
     comments,
-    leading_comments,
     module,
-    source_map,
+    text_lines,
   })
 }
 
@@ -378,7 +333,7 @@ mod tests {
 
     const a = await import("./a.ts");
     "#;
-    let result = parse(&specifier, source, &MediaType::TypeScript);
+    let result = parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_module = result.unwrap();
     assert_eq!(parsed_module.analyze_dependencies().len(), 6);
@@ -402,7 +357,7 @@ mod tests {
     import type { i } from "./i.d.ts";
     export type { j } from "./j.d.ts";
     "#;
-    let result = parse(&specifier, source, &MediaType::TypeScript);
+    let result = parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_module = result.unwrap();
     let dependencies = parsed_module.analyze_dependencies();

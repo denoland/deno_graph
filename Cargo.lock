@@ -161,6 +161,7 @@ dependencies = [
  "swc_common",
  "swc_ecmascript",
  "termcolor",
+ "text_lines",
  "tokio",
  "url",
  "wasm-bindgen",
@@ -1007,6 +1008,12 @@ checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
 dependencies = [
  "winapi-util",
 ]
+
+[[package]]
+name = "text_lines"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "116279ecd8fa26fbdcf20c79ee6f85a5ce325a953486e11e71c51670bdaa308f"
 
 [[package]]
 name = "tinyvec"

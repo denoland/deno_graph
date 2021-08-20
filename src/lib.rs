@@ -11,6 +11,7 @@ mod js_graph;
 mod media_type;
 mod module_specifier;
 pub mod source;
+mod text_encoding;
 
 use graph::Builder;
 #[cfg(feature = "rust")]

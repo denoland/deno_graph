@@ -391,7 +391,7 @@ pub(crate) fn parse_module(
   };
 
   // Parse the module and start analyzing the module.
-  match ast::parse(&module.specifier, &module.source, &module.media_type) {
+  match ast::parse(&module.specifier, &module.source, module.media_type) {
     Ok(parsed_module) => {
       // Analyze the TypeScript triple-slash references
       for reference in parsed_module.analyze_ts_references() {
