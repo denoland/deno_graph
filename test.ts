@@ -50,6 +50,17 @@ https://example.com/a (56B)
 });
 
 Deno.test({
+  name: "createGraph() - data url",
+  async fn() {
+    const graph = await createGraph(
+      `data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs=`,
+    );
+    assertEquals(graph.modules.length, 1);
+    assertEquals(graph.modules[0].source, `console.log("hello deno_graph");`);
+  },
+});
+
+Deno.test({
   name: "createGraph() - root module missing",
   async fn() {
     const graph = await createGraph("file:///a/test.ts", {
