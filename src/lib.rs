@@ -14,7 +14,7 @@ pub mod source;
 mod text_encoding;
 
 #[cfg(feature = "rust")]
-pub use ast::ParsedAst;
+pub use ast::ParsedModule;
 #[cfg(feature = "rust")]
 pub use ast::Position;
 use graph::Builder;
@@ -83,14 +83,14 @@ pub fn parse_module_from_ast<TComments: swc_common::comments::Comments>(
   specifier: &ModuleSpecifier,
   maybe_headers: &Option<HashMap<String, String>>,
   content: &str,
-  parsed_ast: &impl ParsedAst<TComments>,
+  parsed_module: &impl ParsedModule<TComments>,
   maybe_resolver: &Option<Box<dyn Resolver>>,
 ) -> Result<Module, ModuleGraphError> {
   Ok(graph::parse_module_from_ast(
     specifier,
     maybe_headers,
     content,
-    parsed_ast,
+    parsed_module,
     maybe_resolver,
   ))
 }

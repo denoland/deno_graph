@@ -129,24 +129,24 @@ impl Default for Range {
 
 impl Range {
   pub(crate) fn from_span<TComments: swc_common::comments::Comments>(
-    parsed_ast: &impl ParsedAst<TComments>,
+    parsed_module: &impl ParsedModule<TComments>,
     span: &swc_common::Span,
   ) -> Range {
     Range {
-      start: parsed_ast.get_position(span.lo),
-      end: parsed_ast.get_position(span.hi),
+      start: parsed_module.get_position(span.lo),
+      end: parsed_module.get_position(span.hi),
     }
   }
 
   fn from_comment_match<TComments: swc_common::comments::Comments>(
     comment: &Comment,
-    parsed_ast: &impl ParsedAst<TComments>,
+    parsed_module: &impl ParsedModule<TComments>,
     m: &Match,
   ) -> Self {
     Self {
-      start: parsed_ast
+      start: parsed_module
         .get_position(comment.span.lo + BytePos((m.start() + 1) as u32)),
-      end: parsed_ast
+      end: parsed_module
         .get_position(comment.span.lo + BytePos((m.end() + 1) as u32)),
     }
   }
@@ -210,19 +210,19 @@ impl fmt::Display for Diagnostic {
 }
 
 /// A parsed module with comments.
-pub trait ParsedAst<TComments: swc_common::comments::Comments> {
+pub trait ParsedModule<TComments: swc_common::comments::Comments> {
   fn comments(&self) -> &TComments;
   fn module(&self) -> &swc_ecmascript::ast::Module;
   fn get_position(&self, pos: BytePos) -> Position;
 }
 
-pub(crate) struct ParsedModule {
+pub(crate) struct ParsedModuleImpl {
   comments: SingleThreadedComments,
   module: Module,
   text_lines: TextLines,
 }
 
-impl ParsedAst<SingleThreadedComments> for ParsedModule {
+impl ParsedModule<SingleThreadedComments> for ParsedModuleImpl {
   fn comments(&self) -> &SingleThreadedComments {
     &self.comments
   }
@@ -241,22 +241,22 @@ impl ParsedAst<SingleThreadedComments> for ParsedModule {
 pub(crate) fn get_leading_comments<
   TComments: swc_common::comments::Comments,
 >(
-  parsed_ast: &impl ParsedAst<TComments>,
+  parsed_module: &impl ParsedModule<TComments>,
 ) -> Vec<Comment> {
-  parsed_ast
+  parsed_module
     .comments()
-    .get_leading(parsed_ast.module().span.lo)
+    .get_leading(parsed_module.module().span.lo)
     .unwrap_or_else(Vec::new)
 }
 
 pub(crate) fn analyze_dependencies<
   TComments: swc_common::comments::Comments,
 >(
-  parsed_ast: &impl ParsedAst<TComments>,
+  parsed_module: &impl ParsedModule<TComments>,
 ) -> Vec<DependencyDescriptor> {
   swc_ecmascript::dep_graph::analyze_dependencies(
-    parsed_ast.module(),
-    parsed_ast.comments(),
+    parsed_module.module(),
+    parsed_module.comments(),
   )
   .into_iter()
   .filter(|desc| desc.kind != DependencyKind::Require)
@@ -264,7 +264,7 @@ pub(crate) fn analyze_dependencies<
 }
 
 pub(crate) fn analyze_deno_types<TComments: swc_common::comments::Comments>(
-  parsed_ast: &impl ParsedAst<TComments>,
+  parsed_module: &impl ParsedModule<TComments>,
   desc: &DependencyDescriptor,
 ) -> Option<(String, Range)> {
   let comment = desc.leading_comments.last()?;
@@ -272,12 +272,12 @@ pub(crate) fn analyze_deno_types<TComments: swc_common::comments::Comments>(
   if let Some(m) = captures.get(1) {
     Some((
       m.as_str().to_string(),
-      Range::from_comment_match(comment, parsed_ast, &m),
+      Range::from_comment_match(comment, parsed_module, &m),
     ))
   } else if let Some(m) = captures.get(2) {
     Some((
       m.as_str().to_string(),
-      Range::from_comment_match(comment, parsed_ast, &m),
+      Range::from_comment_match(comment, parsed_module, &m),
     ))
   } else {
     unreachable!("Unexpected captures from deno types regex")
@@ -285,23 +285,23 @@ pub(crate) fn analyze_deno_types<TComments: swc_common::comments::Comments>(
 }
 
 pub fn analyze_ts_references<TComments: swc_common::comments::Comments>(
-  parsed_ast: &impl ParsedAst<TComments>,
+  parsed_module: &impl ParsedModule<TComments>,
 ) -> Vec<TypeScriptReference> {
   let mut references = Vec::new();
-  for comment in get_leading_comments(parsed_ast).iter() {
+  for comment in get_leading_comments(parsed_module).iter() {
     if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
       if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
         let m = captures.get(1).unwrap();
         references.push(TypeScriptReference::Path(
           m.as_str().to_string(),
-          Range::from_comment_match(comment, parsed_ast, &m),
+          Range::from_comment_match(comment, parsed_module, &m),
         ));
       } else if let Some(captures) = TYPES_REFERENCE_RE.captures(&comment.text)
       {
         let m = captures.get(1).unwrap();
         references.push(TypeScriptReference::Types(
           m.as_str().to_string(),
-          Range::from_comment_match(comment, parsed_ast, &m),
+          Range::from_comment_match(comment, parsed_module, &m),
         ));
       }
     }
@@ -313,7 +313,7 @@ pub(crate) fn parse(
   specifier: &ModuleSpecifier,
   source: &str,
   media_type: MediaType,
-) -> Result<ParsedModule, Diagnostic> {
+) -> Result<ParsedModuleImpl, Diagnostic> {
   let source = strip_bom(source);
   let text_lines = TextLines::new(source);
   let input =
@@ -329,7 +329,7 @@ pub(crate) fn parse(
     message: err.into_kind().msg().to_string(),
   })?;
 
-  Ok(ParsedModule {
+  Ok(ParsedModuleImpl {
     comments,
     module,
     text_lines,

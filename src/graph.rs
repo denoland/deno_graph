@@ -4,7 +4,7 @@ use crate::ast;
 use crate::ast::analyze_deno_types;
 use crate::ast::analyze_dependencies;
 use crate::ast::analyze_ts_references;
-use crate::ast::ParsedAst;
+use crate::ast::ParsedModule;
 use crate::ast::Range;
 use crate::media_type::MediaType;
 use crate::module_specifier::resolve_import;
@@ -424,7 +424,7 @@ pub(crate) fn parse_module_from_ast<
   specifier: &ModuleSpecifier,
   maybe_headers: &Option<HashMap<String, String>>,
   content: &str,
-  parsed_ast: &impl ParsedAst<TComments>,
+  parsed_module: &impl ParsedModule<TComments>,
   maybe_resolver: &Option<Box<dyn Resolver>>,
 ) -> Module {
   // Init the module and determine its media type
@@ -432,7 +432,7 @@ pub(crate) fn parse_module_from_ast<
   module.media_type = get_media_type(specifier, maybe_headers);
 
   // Analyze the TypeScript triple-slash references
-  for reference in analyze_ts_references(parsed_ast) {
+  for reference in analyze_ts_references(parsed_module) {
     match reference {
       ast::TypeScriptReference::Path(specifier, range) => {
         let resolved_dependency =
@@ -473,7 +473,7 @@ pub(crate) fn parse_module_from_ast<
   }
 
   // Analyze ES dependencies
-  let descriptors = analyze_dependencies(parsed_ast);
+  let descriptors = analyze_dependencies(parsed_module);
   for desc in descriptors {
     let dep = module
       .dependencies
@@ -482,12 +482,12 @@ pub(crate) fn parse_module_from_ast<
     let resolved_dependency = resolve(
       &desc.specifier,
       &module.specifier,
-      &Range::from_span(parsed_ast, &desc.specifier_span),
+      &Range::from_span(parsed_module, &desc.specifier_span),
       maybe_resolver,
     );
     dep.maybe_code = resolved_dependency;
     let specifier = module.specifier.clone();
-    let maybe_type = analyze_deno_types(parsed_ast, &desc)
+    let maybe_type = analyze_deno_types(parsed_module, &desc)
       .map(|(s, r)| resolve(&s, &specifier, &r, maybe_resolver))
       .unwrap_or_else(|| Resolved::None);
     if dep.maybe_type.is_none() {
