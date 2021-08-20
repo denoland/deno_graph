@@ -287,9 +287,9 @@ pub(crate) fn parse(
   media_type: MediaType,
 ) -> Result<ParsedModule, Diagnostic> {
   let source = strip_bom(source);
-  let text_lines = TextLines::new(&source);
+  let text_lines = TextLines::new(source);
   let input =
-    StringInput::new(&source, BytePos(0), BytePos(source.len() as u32));
+    StringInput::new(source, BytePos(0), BytePos(source.len() as u32));
   let comments = SingleThreadedComments::default();
   let lexer = Lexer::new(media_type.into(), TARGET, input, Some(&comments));
   let mut parser = Parser::new_from(lexer);
