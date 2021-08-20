@@ -1,6 +1,11 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 use crate::ast;
+use crate::ast::analyze_deno_types;
+use crate::ast::analyze_dependencies;
+use crate::ast::analyze_ts_references;
+use crate::ast::ParsedAst;
+use crate::ast::Range;
 use crate::media_type::MediaType;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -396,90 +401,116 @@ pub(crate) fn parse_module(
   content: &str,
   maybe_resolver: &Option<Box<dyn Resolver>>,
 ) -> ModuleSlot {
-  // Init the module and determine its media type
-  let mut module = Module::new(specifier.clone(), content.to_string());
-  module.media_type = if let Some(headers) = maybe_headers {
-    if let Some(content_type) = headers.get("content-type") {
-      MediaType::from_content_type(&module.specifier, content_type)
-    } else {
-      MediaType::from(&module.specifier)
-    }
-  } else {
-    MediaType::from(&module.specifier)
-  };
-
   // Parse the module and start analyzing the module.
-  match ast::parse(&module.specifier, &module.source, module.media_type) {
+  match ast::parse(specifier, content, get_media_type(specifier, maybe_headers))
+  {
     Ok(parsed_module) => {
-      // Analyze the TypeScript triple-slash references
-      for reference in parsed_module.analyze_ts_references() {
-        match reference {
-          ast::TypeScriptReference::Path(specifier, range) => {
-            let resolved_dependency =
-              resolve(&specifier, &module.specifier, &range, maybe_resolver);
-            let dep = module.dependencies.entry(specifier).or_default();
-            dep.maybe_code = resolved_dependency;
-          }
-          ast::TypeScriptReference::Types(specifier, range) => {
-            let resolved_dependency =
-              resolve(&specifier, &module.specifier, &range, maybe_resolver);
-            if module.media_type == MediaType::JavaScript
-              || module.media_type == MediaType::Jsx
-            {
-              module.maybe_types_dependency =
-                Some((specifier, resolved_dependency));
-            } else {
-              let dep = module.dependencies.entry(specifier).or_default();
-              dep.maybe_type = resolved_dependency;
-            }
-          }
-        }
-      }
-
-      // Analyze the X-TypeScript-Types header
-      if module.maybe_types_dependency.is_none() {
-        if let Some(headers) = maybe_headers {
-          if let Some(types_header) = headers.get("x-typescript-types") {
-            let resolved_dependency = resolve(
-              types_header,
-              &module.specifier,
-              &ast::Range::default(),
-              maybe_resolver,
-            );
-            module.maybe_types_dependency =
-              Some((types_header.clone(), resolved_dependency));
-          }
-        }
-      }
-
-      // Analyze ES dependencies
-      let descriptors = parsed_module.analyze_dependencies();
-      for desc in descriptors {
-        let dep = module
-          .dependencies
-          .entry(desc.specifier.to_string())
-          .or_default();
-        let resolved_dependency = resolve(
-          &desc.specifier,
-          &module.specifier,
-          &parsed_module.range_from_span(&desc.specifier_span),
-          maybe_resolver,
-        );
-        dep.maybe_code = resolved_dependency;
-        let specifier = module.specifier.clone();
-        let maybe_type = parsed_module
-          .analyze_deno_types(&desc)
-          .map(|(s, r)| resolve(&s, &specifier, &r, maybe_resolver))
-          .unwrap_or_else(|| Resolved::None);
-        if dep.maybe_type.is_none() {
-          dep.maybe_type = maybe_type
-        }
-      }
-
       // Return the module as a valid module
-      ModuleSlot::Module(module)
+      ModuleSlot::Module(parse_module_from_ast(
+        specifier,
+        maybe_headers,
+        content,
+        &parsed_module,
+        maybe_resolver,
+      ))
     }
     Err(diagnostic) => ModuleSlot::Err(diagnostic.into()),
+  }
+}
+
+pub(crate) fn parse_module_from_ast<
+  TComments: swc_common::comments::Comments,
+>(
+  specifier: &ModuleSpecifier,
+  maybe_headers: &Option<HashMap<String, String>>,
+  content: &str,
+  parsed_ast: &impl ParsedAst<TComments>,
+  maybe_resolver: &Option<Box<dyn Resolver>>,
+) -> Module {
+  // Init the module and determine its media type
+  let mut module = Module::new(specifier.clone(), content.to_string());
+  module.media_type = get_media_type(specifier, maybe_headers);
+
+  // Analyze the TypeScript triple-slash references
+  for reference in analyze_ts_references(parsed_ast) {
+    match reference {
+      ast::TypeScriptReference::Path(specifier, range) => {
+        let resolved_dependency =
+          resolve(&specifier, &module.specifier, &range, maybe_resolver);
+        let dep = module.dependencies.entry(specifier).or_default();
+        dep.maybe_code = resolved_dependency;
+      }
+      ast::TypeScriptReference::Types(specifier, range) => {
+        let resolved_dependency =
+          resolve(&specifier, &module.specifier, &range, maybe_resolver);
+        if module.media_type == MediaType::JavaScript
+          || module.media_type == MediaType::Jsx
+        {
+          module.maybe_types_dependency =
+            Some((specifier, resolved_dependency));
+        } else {
+          let dep = module.dependencies.entry(specifier).or_default();
+          dep.maybe_type = resolved_dependency;
+        }
+      }
+    }
+  }
+
+  // Analyze the X-TypeScript-Types header
+  if module.maybe_types_dependency.is_none() {
+    if let Some(headers) = maybe_headers {
+      if let Some(types_header) = headers.get("x-typescript-types") {
+        let resolved_dependency = resolve(
+          types_header,
+          &module.specifier,
+          &ast::Range::default(),
+          maybe_resolver,
+        );
+        module.maybe_types_dependency =
+          Some((types_header.clone(), resolved_dependency));
+      }
+    }
+  }
+
+  // Analyze ES dependencies
+  let descriptors = analyze_dependencies(parsed_ast);
+  for desc in descriptors {
+    let dep = module
+      .dependencies
+      .entry(desc.specifier.to_string())
+      .or_default();
+    let resolved_dependency = resolve(
+      &desc.specifier,
+      &module.specifier,
+      &Range::from_span(parsed_ast, &desc.specifier_span),
+      maybe_resolver,
+    );
+    dep.maybe_code = resolved_dependency;
+    let specifier = module.specifier.clone();
+    let maybe_type = analyze_deno_types(parsed_ast, &desc)
+      .map(|(s, r)| resolve(&s, &specifier, &r, maybe_resolver))
+      .unwrap_or_else(|| Resolved::None);
+    if dep.maybe_type.is_none() {
+      dep.maybe_type = maybe_type
+    }
+  }
+
+  // Return the module as a valid module
+  module
+}
+
+fn get_media_type(
+  specifier: &ModuleSpecifier,
+  maybe_headers: &Option<HashMap<String, String>>,
+) -> MediaType {
+  if let Some(headers) = maybe_headers {
+    if let Some(content_type) = headers.get("content-type") {
+      MediaType::from_content_type(specifier, content_type)
+    } else {
+      MediaType::from(specifier)
+    }
+  } else {
+    MediaType::from(specifier)
   }
 }
 

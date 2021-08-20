@@ -11,12 +11,10 @@ use regex::Regex;
 use serde::Serialize;
 use std::fmt;
 use swc_common::comments::Comment;
-use swc_common::comments::Comments;
 use swc_common::comments::SingleThreadedComments;
 use swc_common::BytePos;
 use swc_common::Spanned;
 use swc_ecmascript::ast::Module;
-use swc_ecmascript::dep_graph::analyze_dependencies;
 use swc_ecmascript::dep_graph::DependencyDescriptor;
 use swc_ecmascript::dep_graph::DependencyKind;
 use swc_ecmascript::parser::lexer::Lexer;
@@ -130,15 +128,25 @@ impl Default for Range {
 }
 
 impl Range {
-  fn from_comment_match(
+  pub(crate) fn from_span<TComments: swc_common::comments::Comments>(
+    parsed_ast: &impl ParsedAst<TComments>,
+    span: &swc_common::Span,
+  ) -> Range {
+    Range {
+      start: parsed_ast.get_position(span.lo),
+      end: parsed_ast.get_position(span.hi),
+    }
+  }
+
+  fn from_comment_match<TComments: swc_common::comments::Comments>(
     comment: &Comment,
-    parsed_module: &ParsedModule,
+    parsed_ast: &impl ParsedAst<TComments>,
     m: &Match,
   ) -> Self {
     Self {
-      start: parsed_module
+      start: parsed_ast
         .get_position(comment.span.lo + BytePos((m.start() + 1) as u32)),
-      end: parsed_module
+      end: parsed_ast
         .get_position(comment.span.lo + BytePos((m.end() + 1) as u32)),
     }
   }
@@ -201,84 +209,104 @@ impl fmt::Display for Diagnostic {
   }
 }
 
+/// A parsed module with comments.
+pub trait ParsedAst<TComments: swc_common::comments::Comments> {
+  fn comments(&self) -> &TComments;
+  fn module(&self) -> &swc_ecmascript::ast::Module;
+  fn get_position(&self, pos: BytePos) -> Position;
+}
+
 pub(crate) struct ParsedModule {
   comments: SingleThreadedComments,
   module: Module,
   text_lines: TextLines,
 }
 
-impl ParsedModule {
-  pub fn analyze_dependencies(&self) -> Vec<DependencyDescriptor> {
-    analyze_dependencies(&self.module, &self.comments)
-      .into_iter()
-      .filter(|desc| desc.kind != DependencyKind::Require)
-      .collect()
+impl ParsedAst<SingleThreadedComments> for ParsedModule {
+  fn comments(&self) -> &SingleThreadedComments {
+    &self.comments
   }
 
-  pub fn analyze_deno_types(
-    &self,
-    desc: &DependencyDescriptor,
-  ) -> Option<(String, Range)> {
-    let comment = desc.leading_comments.last()?;
-    let captures = DENO_TYPES_RE.captures(&comment.text)?;
-    if let Some(m) = captures.get(1) {
-      Some((
-        m.as_str().to_string(),
-        Range::from_comment_match(comment, self, &m),
-      ))
-    } else if let Some(m) = captures.get(2) {
-      Some((
-        m.as_str().to_string(),
-        Range::from_comment_match(comment, self, &m),
-      ))
-    } else {
-      unreachable!("Unexpected captures from deno types regex")
-    }
+  fn module(&self) -> &swc_ecmascript::ast::Module {
+    &self.module
   }
 
-  pub fn analyze_ts_references(&self) -> Vec<TypeScriptReference> {
-    let mut references = Vec::new();
-    for comment in self.get_leading_comments().iter() {
-      if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
-        if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
-          let m = captures.get(1).unwrap();
-          references.push(TypeScriptReference::Path(
-            m.as_str().to_string(),
-            Range::from_comment_match(comment, self, &m),
-          ));
-        } else if let Some(captures) =
-          TYPES_REFERENCE_RE.captures(&comment.text)
-        {
-          let m = captures.get(1).unwrap();
-          references.push(TypeScriptReference::Types(
-            m.as_str().to_string(),
-            Range::from_comment_match(comment, self, &m),
-          ));
-        }
-      }
-    }
-    references
-  }
-
-  /// Get the module's leading comments, where triple slash directives might
-  /// be located.
-  pub fn get_leading_comments(&self) -> Vec<Comment> {
-    self
-      .comments
-      .get_leading(self.module.span.lo)
-      .unwrap_or_else(Vec::new)
-  }
-
-  pub fn range_from_span(&self, span: &swc_common::Span) -> Range {
-    Range {
-      start: self.get_position(span.lo),
-      end: self.get_position(span.hi),
-    }
-  }
-
-  pub fn get_position(&self, pos: BytePos) -> Position {
+  fn get_position(&self, pos: BytePos) -> Position {
     Position::from_pos(&self.text_lines, pos)
   }
+}
+
+/// Get the module's leading comments, where triple slash directives might
+/// be located.
+pub(crate) fn get_leading_comments<
+  TComments: swc_common::comments::Comments,
+>(
+  parsed_ast: &impl ParsedAst<TComments>,
+) -> Vec<Comment> {
+  parsed_ast
+    .comments()
+    .get_leading(parsed_ast.module().span.lo)
+    .unwrap_or_else(Vec::new)
+}
+
+pub(crate) fn analyze_dependencies<
+  TComments: swc_common::comments::Comments,
+>(
+  parsed_ast: &impl ParsedAst<TComments>,
+) -> Vec<DependencyDescriptor> {
+  swc_ecmascript::dep_graph::analyze_dependencies(
+    parsed_ast.module(),
+    parsed_ast.comments(),
+  )
+  .into_iter()
+  .filter(|desc| desc.kind != DependencyKind::Require)
+  .collect()
+}
+
+pub(crate) fn analyze_deno_types<TComments: swc_common::comments::Comments>(
+  parsed_ast: &impl ParsedAst<TComments>,
+  desc: &DependencyDescriptor,
+) -> Option<(String, Range)> {
+  let comment = desc.leading_comments.last()?;
+  let captures = DENO_TYPES_RE.captures(&comment.text)?;
+  if let Some(m) = captures.get(1) {
+    Some((
+      m.as_str().to_string(),
+      Range::from_comment_match(comment, parsed_ast, &m),
+    ))
+  } else if let Some(m) = captures.get(2) {
+    Some((
+      m.as_str().to_string(),
+      Range::from_comment_match(comment, parsed_ast, &m),
+    ))
+  } else {
+    unreachable!("Unexpected captures from deno types regex")
+  }
+}
+
+pub fn analyze_ts_references<TComments: swc_common::comments::Comments>(
+  parsed_ast: &impl ParsedAst<TComments>,
+) -> Vec<TypeScriptReference> {
+  let mut references = Vec::new();
+  for comment in get_leading_comments(parsed_ast).iter() {
+    if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
+      if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
+        let m = captures.get(1).unwrap();
+        references.push(TypeScriptReference::Path(
+          m.as_str().to_string(),
+          Range::from_comment_match(comment, parsed_ast, &m),
+        ));
+      } else if let Some(captures) = TYPES_REFERENCE_RE.captures(&comment.text)
+      {
+        let m = captures.get(1).unwrap();
+        references.push(TypeScriptReference::Types(
+          m.as_str().to_string(),
+          Range::from_comment_match(comment, parsed_ast, &m),
+        ));
+      }
+    }
+  }
+  references
 }
 
 pub(crate) fn parse(
@@ -336,8 +364,8 @@ mod tests {
     let result = parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_module = result.unwrap();
-    assert_eq!(parsed_module.analyze_dependencies().len(), 6);
-    assert_eq!(parsed_module.analyze_ts_references().len(), 0);
+    assert_eq!(analyze_dependencies(&parsed_module).len(), 6);
+    assert_eq!(analyze_ts_references(&parsed_module).len(), 0);
   }
 
   #[test]
@@ -360,10 +388,11 @@ mod tests {
     let result = parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_module = result.unwrap();
-    let dependencies = parsed_module.analyze_dependencies();
+    let dependencies = analyze_dependencies(&parsed_module);
     assert_eq!(dependencies.len(), 10);
     assert_eq!(dependencies[0].specifier.to_string(), "./a.ts");
-    let range = parsed_module.range_from_span(&dependencies[0].specifier_span);
+    let range =
+      Range::from_span(&parsed_module, &dependencies[0].specifier_span);
     assert_eq!(
       range,
       Range {
@@ -379,7 +408,8 @@ mod tests {
     );
     assert!(!dependencies[0].is_dynamic);
     assert_eq!(dependencies[1].specifier.to_string(), "./b.ts");
-    let range = parsed_module.range_from_span(&dependencies[1].specifier_span);
+    let range =
+      Range::from_span(&parsed_module, &dependencies[1].specifier_span);
     assert_eq!(
       range,
       Range {

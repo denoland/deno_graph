@@ -13,6 +13,10 @@ mod module_specifier;
 pub mod source;
 mod text_encoding;
 
+#[cfg(feature = "rust")]
+pub use ast::ParsedAst;
+#[cfg(feature = "rust")]
+pub use ast::Position;
 use graph::Builder;
 #[cfg(feature = "rust")]
 pub use graph::Module;
@@ -70,6 +74,25 @@ pub fn parse_module(
     ModuleSlot::Err(err) => Err(err),
     _ => unreachable!("unreachable ModuleSlot variant"),
   }
+}
+
+/// Parse an individual module from an AST, returning the module
+/// as a result, otherwise erroring with a module graph error.
+#[cfg(feature = "rust")]
+pub fn parse_module_from_ast<TComments: swc_common::comments::Comments>(
+  specifier: &ModuleSpecifier,
+  maybe_headers: &Option<HashMap<String, String>>,
+  content: &str,
+  parsed_ast: &impl ParsedAst<TComments>,
+  maybe_resolver: &Option<Box<dyn Resolver>>,
+) -> Result<Module, ModuleGraphError> {
+  Ok(graph::parse_module_from_ast(
+    specifier,
+    maybe_headers,
+    content,
+    parsed_ast,
+    maybe_resolver,
+  ))
 }
 
 #[cfg(feature = "wasm")]
