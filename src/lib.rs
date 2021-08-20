@@ -237,6 +237,39 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn test_create_graph_with_data_url() {
+    let loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"import * as b from "data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;";"#,
+          )),
+        ),
+        (
+          "https://example.com/c.ts",
+          Ok(("https://example.com/c.ts", None, r#"export const c = """#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let graph = create_graph(root_specifier.clone(), loader, None, None).await;
+    assert_eq!(graph.modules.len(), 3);
+    let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
+    let maybe_module = graph.get(&data_specifier);
+    assert!(maybe_module.is_some());
+    let module = maybe_module.unwrap();
+    assert_eq!(
+      module.source,
+      r#"export * from "https://example.com/c.ts";"#
+    );
+  }
+
+  #[tokio::test]
   async fn test_create_graph_with_resolver() {
     let loader = setup(
       vec![
