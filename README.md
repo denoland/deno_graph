@@ -142,7 +142,7 @@ There are several options that can be passed the function in the optional
 stand alone crate which also targets Web Assembly and provides a
 JavaScript/TypeScript interface. This permits users of the package to be able to
 replicate the `deno info` command in Deno CLI within the runtime environment
-without requiring a `Deno` namesapce API.
+without requiring a `Deno` namespace API.
 
 The module graph has two methods which provide the output of `deno info`. The
 method `toString()` provides the text output from `deno info` and `toJSON()`
@@ -202,7 +202,7 @@ Note that the `wasm-bindgen-cli` should match the version of `wasm-bindgen` in
 this crate and be explicitly set using the `--version` flag on install.
 
 Also, the build script (`_build.ts`) requires the Deno CLI to be installed and
-available in the path. If it is, then script should _just work_:
+available in the path. If it is, the script should _just work_:
 
 ```
 > ./_build.ts
