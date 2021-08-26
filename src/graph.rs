@@ -4,7 +4,8 @@ use crate::ast;
 use crate::ast::analyze_deno_types;
 use crate::ast::analyze_dependencies;
 use crate::ast::analyze_ts_references;
-use crate::ast::ParsedModule;
+use crate::ast::AstParser;
+use crate::ast::ParsedAst;
 use crate::ast::Range;
 use crate::media_type::MediaType;
 use crate::module_specifier::resolve_import;
@@ -359,7 +360,7 @@ fn resolve(
   specifier: &str,
   referrer: &ModuleSpecifier,
   range: &ast::Range,
-  maybe_resolver: &Option<Box<dyn Resolver>>,
+  maybe_resolver: Option<&Box<dyn Resolver>>,
 ) -> Resolved {
   let mut remapped = false;
   let resolved_specifier = if let Some(resolver) = maybe_resolver {
@@ -397,20 +398,24 @@ fn resolve(
 /// With the provided information, parse a module and return its "module slot"
 pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
-  maybe_headers: &Option<HashMap<String, String>>,
+  maybe_headers: Option<&HashMap<String, String>>,
   content: &str,
-  maybe_resolver: &Option<Box<dyn Resolver>>,
+  maybe_resolver: Option<&Box<dyn Resolver>>,
+  ast_parser: &mut dyn AstParser,
 ) -> ModuleSlot {
   // Parse the module and start analyzing the module.
-  match ast::parse(specifier, content, get_media_type(specifier, maybe_headers))
-  {
-    Ok(parsed_module) => {
+  match ast_parser.parse(
+    specifier,
+    content,
+    get_media_type(specifier, maybe_headers),
+  ) {
+    Ok(parsed_ast) => {
       // Return the module as a valid module
       ModuleSlot::Module(parse_module_from_ast(
         specifier,
         maybe_headers,
         content,
-        &parsed_module,
+        parsed_ast,
         maybe_resolver,
       ))
     }
@@ -418,21 +423,19 @@ pub(crate) fn parse_module(
   }
 }
 
-pub(crate) fn parse_module_from_ast<
-  TComments: swc_common::comments::Comments,
->(
+pub(crate) fn parse_module_from_ast(
   specifier: &ModuleSpecifier,
-  maybe_headers: &Option<HashMap<String, String>>,
+  maybe_headers: Option<&HashMap<String, String>>,
   content: &str,
-  parsed_module: &impl ParsedModule<TComments>,
-  maybe_resolver: &Option<Box<dyn Resolver>>,
+  parsed_ast: &dyn ParsedAst,
+  maybe_resolver: Option<&Box<dyn Resolver>>,
 ) -> Module {
   // Init the module and determine its media type
   let mut module = Module::new(specifier.clone(), content.to_string());
   module.media_type = get_media_type(specifier, maybe_headers);
 
   // Analyze the TypeScript triple-slash references
-  for reference in analyze_ts_references(parsed_module) {
+  for reference in analyze_ts_references(parsed_ast) {
     match reference {
       ast::TypeScriptReference::Path(specifier, range) => {
         let resolved_dependency =
@@ -473,7 +476,7 @@ pub(crate) fn parse_module_from_ast<
   }
 
   // Analyze ES dependencies
-  let descriptors = analyze_dependencies(parsed_module);
+  let descriptors = analyze_dependencies(parsed_ast);
   for desc in descriptors {
     let dep = module
       .dependencies
@@ -482,12 +485,12 @@ pub(crate) fn parse_module_from_ast<
     let resolved_dependency = resolve(
       &desc.specifier,
       &module.specifier,
-      &Range::from_span(parsed_module, &desc.specifier_span),
+      &Range::from_span(parsed_ast, &desc.specifier_span),
       maybe_resolver,
     );
     dep.maybe_code = resolved_dependency;
     let specifier = module.specifier.clone();
-    let maybe_type = analyze_deno_types(parsed_module, &desc)
+    let maybe_type = analyze_deno_types(parsed_ast, &desc)
       .map(|(s, r)| resolve(&s, &specifier, &r, maybe_resolver))
       .unwrap_or_else(|| Resolved::None);
     if dep.maybe_type.is_none() {
@@ -501,7 +504,7 @@ pub(crate) fn parse_module_from_ast<
 
 fn get_media_type(
   specifier: &ModuleSpecifier,
-  maybe_headers: &Option<HashMap<String, String>>,
+  maybe_headers: Option<&HashMap<String, String>>,
 ) -> MediaType {
   if let Some(headers) = maybe_headers {
     if let Some(content_type) = headers.get("content-type") {
@@ -514,21 +517,23 @@ fn get_media_type(
   }
 }
 
-pub(crate) struct Builder {
+pub(crate) struct Builder<'a> {
   is_dynamic_root: bool,
   graph: ModuleGraph,
   loader: Box<dyn Loader>,
   maybe_resolver: Option<Box<dyn Resolver>>,
   pending: FuturesUnordered<LoadFuture>,
+  ast_parser: &'a mut dyn AstParser,
 }
 
-impl Builder {
+impl<'a> Builder<'a> {
   pub fn new(
     root_specifier: ModuleSpecifier,
     is_dynamic_root: bool,
     loader: Box<dyn Loader>,
     maybe_resolver: Option<Box<dyn Resolver>>,
     maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+    ast_parser: &'a mut dyn AstParser,
   ) -> Self {
     Self {
       is_dynamic_root,
@@ -536,6 +541,7 @@ impl Builder {
       loader,
       maybe_resolver,
       pending: FuturesUnordered::new(),
+      ast_parser,
     }
   }
 
@@ -620,9 +626,10 @@ impl Builder {
 
     let module_slot = parse_module(
       &specifier,
-      &maybe_headers,
+      maybe_headers.as_ref(),
       &response.content,
-      &self.maybe_resolver,
+      self.maybe_resolver.as_ref(),
+      self.ast_parser,
     );
 
     if let ModuleSlot::Module(module) = &module_slot {

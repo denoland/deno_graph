@@ -9,6 +9,7 @@ use lazy_static::lazy_static;
 use regex::Match;
 use regex::Regex;
 use serde::Serialize;
+use std::collections::HashMap;
 use std::fmt;
 use swc_common::comments::Comment;
 use swc_common::comments::SingleThreadedComments;
@@ -128,25 +129,25 @@ impl Default for Range {
 }
 
 impl Range {
-  pub(crate) fn from_span<TComments: swc_common::comments::Comments>(
-    parsed_module: &impl ParsedModule<TComments>,
+  pub(crate) fn from_span(
+    parsed_ast: &dyn ParsedAst,
     span: &swc_common::Span,
   ) -> Range {
     Range {
-      start: parsed_module.get_position(span.lo),
-      end: parsed_module.get_position(span.hi),
+      start: parsed_ast.get_position(span.lo),
+      end: parsed_ast.get_position(span.hi),
     }
   }
 
-  fn from_comment_match<TComments: swc_common::comments::Comments>(
+  fn from_comment_match(
     comment: &Comment,
-    parsed_module: &impl ParsedModule<TComments>,
+    parsed_ast: &dyn ParsedAst,
     m: &Match,
   ) -> Self {
     Self {
-      start: parsed_module
+      start: parsed_ast
         .get_position(comment.span.lo + BytePos((m.start() + 1) as u32)),
-      end: parsed_module
+      end: parsed_ast
         .get_position(comment.span.lo + BytePos((m.end() + 1) as u32)),
     }
   }
@@ -210,20 +211,36 @@ impl fmt::Display for Diagnostic {
 }
 
 /// A parsed module with comments.
-pub trait ParsedModule<TComments: swc_common::comments::Comments> {
-  fn comments(&self) -> &TComments;
+pub trait ParsedAst {
+  /// Gets the comments found in the source file.
+  fn comments(&self) -> &dyn swc_common::comments::Comments;
+  /// Gets the parsed module—AST.
   fn module(&self) -> &swc_ecmascript::ast::Module;
+  /// Gets a position from the specified byte position.
+  /// Note: This should/will panic when the byte position is
+  // outside the bounds of the source file.
   fn get_position(&self, pos: BytePos) -> Position;
 }
 
-pub(crate) struct ParsedModuleImpl {
+/// Parses modules.
+pub trait AstParser {
+  /// Parses the provided information to a `ParsedAst` and returns a reference.
+  fn parse(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    source: &str,
+    media_type: MediaType,
+  ) -> Result<&dyn ParsedAst, Diagnostic>;
+}
+
+pub struct DefaultParsedAst {
   comments: SingleThreadedComments,
   module: Module,
   text_lines: TextLines,
 }
 
-impl ParsedModule<SingleThreadedComments> for ParsedModuleImpl {
-  fn comments(&self) -> &SingleThreadedComments {
+impl ParsedAst for DefaultParsedAst {
+  fn comments(&self) -> &dyn swc_common::comments::Comments {
     &self.comments
   }
 
@@ -238,33 +255,27 @@ impl ParsedModule<SingleThreadedComments> for ParsedModuleImpl {
 
 /// Get the module's leading comments, where triple slash directives might
 /// be located.
-pub(crate) fn get_leading_comments<
-  TComments: swc_common::comments::Comments,
->(
-  parsed_module: &impl ParsedModule<TComments>,
-) -> Vec<Comment> {
-  parsed_module
+pub(crate) fn get_leading_comments(parsed_ast: &dyn ParsedAst) -> Vec<Comment> {
+  parsed_ast
     .comments()
-    .get_leading(parsed_module.module().span.lo)
+    .get_leading(parsed_ast.module().span.lo)
     .unwrap_or_else(Vec::new)
 }
 
-pub(crate) fn analyze_dependencies<
-  TComments: swc_common::comments::Comments,
->(
-  parsed_module: &impl ParsedModule<TComments>,
+pub(crate) fn analyze_dependencies(
+  parsed_ast: &dyn ParsedAst,
 ) -> Vec<DependencyDescriptor> {
   swc_ecmascript::dep_graph::analyze_dependencies(
-    parsed_module.module(),
-    parsed_module.comments(),
+    parsed_ast.module(),
+    parsed_ast.comments(),
   )
   .into_iter()
   .filter(|desc| desc.kind != DependencyKind::Require)
   .collect()
 }
 
-pub(crate) fn analyze_deno_types<TComments: swc_common::comments::Comments>(
-  parsed_module: &impl ParsedModule<TComments>,
+pub(crate) fn analyze_deno_types(
+  parsed_ast: &dyn ParsedAst,
   desc: &DependencyDescriptor,
 ) -> Option<(String, Range)> {
   let comment = desc.leading_comments.last()?;
@@ -272,36 +283,36 @@ pub(crate) fn analyze_deno_types<TComments: swc_common::comments::Comments>(
   if let Some(m) = captures.get(1) {
     Some((
       m.as_str().to_string(),
-      Range::from_comment_match(comment, parsed_module, &m),
+      Range::from_comment_match(comment, parsed_ast, &m),
     ))
   } else if let Some(m) = captures.get(2) {
     Some((
       m.as_str().to_string(),
-      Range::from_comment_match(comment, parsed_module, &m),
+      Range::from_comment_match(comment, parsed_ast, &m),
     ))
   } else {
     unreachable!("Unexpected captures from deno types regex")
   }
 }
 
-pub fn analyze_ts_references<TComments: swc_common::comments::Comments>(
-  parsed_module: &impl ParsedModule<TComments>,
+pub fn analyze_ts_references(
+  parsed_ast: &dyn ParsedAst,
 ) -> Vec<TypeScriptReference> {
   let mut references = Vec::new();
-  for comment in get_leading_comments(parsed_module).iter() {
+  for comment in get_leading_comments(parsed_ast).iter() {
     if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
       if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
         let m = captures.get(1).unwrap();
         references.push(TypeScriptReference::Path(
           m.as_str().to_string(),
-          Range::from_comment_match(comment, parsed_module, &m),
+          Range::from_comment_match(comment, parsed_ast, &m),
         ));
       } else if let Some(captures) = TYPES_REFERENCE_RE.captures(&comment.text)
       {
         let m = captures.get(1).unwrap();
         references.push(TypeScriptReference::Types(
           m.as_str().to_string(),
-          Range::from_comment_match(comment, parsed_module, &m),
+          Range::from_comment_match(comment, parsed_ast, &m),
         ));
       }
     }
@@ -309,31 +320,60 @@ pub fn analyze_ts_references<TComments: swc_common::comments::Comments>(
   references
 }
 
-pub(crate) fn parse(
-  specifier: &ModuleSpecifier,
-  source: &str,
-  media_type: MediaType,
-) -> Result<ParsedModuleImpl, Diagnostic> {
-  let source = strip_bom(source);
-  let text_lines = TextLines::new(source);
-  let input =
-    StringInput::new(source, BytePos(0), BytePos(source.len() as u32));
-  let comments = SingleThreadedComments::default();
-  let lexer = Lexer::new(media_type.into(), TARGET, input, Some(&comments));
-  let mut parser = Parser::new_from(lexer);
-  let module = parser.parse_module().map_err(|err| Diagnostic {
-    location: Location {
-      specifier: specifier.clone(),
-      position: Position::from_pos(&text_lines, err.span().lo),
-    },
-    message: err.into_kind().msg().to_string(),
-  })?;
+pub struct DefaultAstParser {
+  modules: HashMap<ModuleSpecifier, DefaultParsedAst>,
+}
 
-  Ok(ParsedModuleImpl {
-    comments,
-    module,
-    text_lines,
-  })
+impl DefaultAstParser {
+  /// Creates a default implementation of `AstParser`.
+  pub fn new() -> Self {
+    Self {
+      modules: HashMap::new(),
+    }
+  }
+
+  /// Gets an AST by a module specifier if it was previously parsed.
+  pub fn get_ast(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<&DefaultParsedAst> {
+    self.modules.get(specifier)
+  }
+}
+
+impl AstParser for DefaultAstParser {
+  fn parse(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    source: &str,
+    media_type: MediaType,
+  ) -> Result<&dyn ParsedAst, Diagnostic> {
+    let source = strip_bom(source);
+    let text_lines = TextLines::new(source);
+    let input =
+      StringInput::new(source, BytePos(0), BytePos(source.len() as u32));
+    let comments = SingleThreadedComments::default();
+    let lexer = Lexer::new(media_type.into(), TARGET, input, Some(&comments));
+    let mut parser = Parser::new_from(lexer);
+    let module = parser.parse_module().map_err(|err| Diagnostic {
+      location: Location {
+        specifier: specifier.clone(),
+        position: Position::from_pos(&text_lines, err.span().lo),
+      },
+      message: err.into_kind().msg().to_string(),
+    })?;
+
+    self.modules.insert(
+      specifier.clone(),
+      DefaultParsedAst {
+        comments,
+        module,
+        text_lines,
+      },
+    );
+
+    Ok(self.modules.get(&specifier).unwrap())
+  }
 }
 
 #[cfg(test)]
@@ -361,11 +401,12 @@ mod tests {
 
     const a = await import("./a.ts");
     "#;
-    let result = parse(&specifier, source, MediaType::TypeScript);
+    let mut parser = DefaultAstParser::new();
+    let result = parser.parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
-    let parsed_module = result.unwrap();
-    assert_eq!(analyze_dependencies(&parsed_module).len(), 6);
-    assert_eq!(analyze_ts_references(&parsed_module).len(), 0);
+    let parsed_ast = result.unwrap();
+    assert_eq!(analyze_dependencies(parsed_ast).len(), 6);
+    assert_eq!(analyze_ts_references(parsed_ast).len(), 0);
   }
 
   #[test]
@@ -385,14 +426,14 @@ mod tests {
     import type { i } from "./i.d.ts";
     export type { j } from "./j.d.ts";
     "#;
-    let result = parse(&specifier, source, MediaType::TypeScript);
+    let mut parser = DefaultAstParser::new();
+    let result = parser.parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
-    let parsed_module = result.unwrap();
-    let dependencies = analyze_dependencies(&parsed_module);
+    let parsed_ast = result.unwrap();
+    let dependencies = analyze_dependencies(parsed_ast);
     assert_eq!(dependencies.len(), 10);
     assert_eq!(dependencies[0].specifier.to_string(), "./a.ts");
-    let range =
-      Range::from_span(&parsed_module, &dependencies[0].specifier_span);
+    let range = Range::from_span(parsed_ast, &dependencies[0].specifier_span);
     assert_eq!(
       range,
       Range {
@@ -408,8 +449,7 @@ mod tests {
     );
     assert!(!dependencies[0].is_dynamic);
     assert_eq!(dependencies[1].specifier.to_string(), "./b.ts");
-    let range =
-      Range::from_span(&parsed_module, &dependencies[1].specifier_span);
+    let range = Range::from_span(parsed_ast, &dependencies[1].specifier_span);
     assert_eq!(
       range,
       Range {
