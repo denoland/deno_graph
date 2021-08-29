@@ -134,11 +134,7 @@ pub async fn js_create_graph(
   maybe_get_checksum: Option<js_sys::Function>,
 ) -> Result<js_graph::ModuleGraph, JsValue> {
   let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
-  let maybe_resolver = if let Some(resolve) = maybe_resolve {
-    Some(js_graph::JsResolver::new(resolve))
-  } else {
-    None
-  };
+  let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
   let maybe_locker: Option<Rc<RefCell<dyn Locker>>> =
     if maybe_check.is_some() || maybe_get_checksum.is_some() {
       let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum);
@@ -175,11 +171,7 @@ pub fn js_parse_module(
     .map_err(|err| js_sys::Error::new(&err.to_string()))?;
   let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
     .map_err(|err| js_sys::Error::new(&err.to_string()))?;
-  let maybe_resolver = if let Some(resolve) = maybe_resolve {
-    Some(js_graph::JsResolver::new(resolve))
-  } else {
-    None
-  };
+  let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
   let mut ast_parser = ast::DefaultAstParser::new();
   match graph::parse_module(
     &specifier,
