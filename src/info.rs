@@ -352,7 +352,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_info_graph() {
-    let loader = Box::new(MemoryLoader::new(
+    let mut loader = MemoryLoader::new(
       vec![
         (
           "https://deno.land/x/example/a.ts",
@@ -430,12 +430,18 @@ mod tests {
           ..Default::default()
         },
       )],
-    ));
+    );
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
     let mut ast_parser = DefaultAstParser::new();
-    let builder =
-      Builder::new(root_specifier, false, loader, None, None, &mut ast_parser);
+    let builder = Builder::new(
+      root_specifier,
+      false,
+      &mut loader,
+      None,
+      None,
+      &mut ast_parser,
+    );
     let graph = builder.build().await;
     assert_eq!(
       strip_ansi_codes(format!("{}", graph)),

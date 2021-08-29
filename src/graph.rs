@@ -360,7 +360,7 @@ fn resolve(
   specifier: &str,
   referrer: &ModuleSpecifier,
   range: &ast::Range,
-  maybe_resolver: Option<&Box<dyn Resolver>>,
+  maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolved {
   let mut remapped = false;
   let resolved_specifier = if let Some(resolver) = maybe_resolver {
@@ -400,7 +400,7 @@ pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
   content: &str,
-  maybe_resolver: Option<&Box<dyn Resolver>>,
+  maybe_resolver: Option<&dyn Resolver>,
   ast_parser: &mut dyn AstParser,
 ) -> ModuleSlot {
   // Parse the module and start analyzing the module.
@@ -428,7 +428,7 @@ pub(crate) fn parse_module_from_ast(
   maybe_headers: Option<&HashMap<String, String>>,
   content: &str,
   parsed_ast: &dyn ParsedAst,
-  maybe_resolver: Option<&Box<dyn Resolver>>,
+  maybe_resolver: Option<&dyn Resolver>,
 ) -> Module {
   // Init the module and determine its media type
   let mut module = Module::new(specifier.clone(), content.to_string());
@@ -520,8 +520,8 @@ fn get_media_type(
 pub(crate) struct Builder<'a> {
   is_dynamic_root: bool,
   graph: ModuleGraph,
-  loader: Box<dyn Loader>,
-  maybe_resolver: Option<Box<dyn Resolver>>,
+  loader: &'a mut dyn Loader,
+  maybe_resolver: Option<&'a dyn Resolver>,
   pending: FuturesUnordered<LoadFuture>,
   ast_parser: &'a mut dyn AstParser,
 }
@@ -530,8 +530,8 @@ impl<'a> Builder<'a> {
   pub fn new(
     root_specifier: ModuleSpecifier,
     is_dynamic_root: bool,
-    loader: Box<dyn Loader>,
-    maybe_resolver: Option<Box<dyn Resolver>>,
+    loader: &'a mut dyn Loader,
+    maybe_resolver: Option<&'a dyn Resolver>,
     maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
     ast_parser: &'a mut dyn AstParser,
   ) -> Self {
@@ -628,7 +628,7 @@ impl<'a> Builder<'a> {
       &specifier,
       maybe_headers.as_ref(),
       &response.content,
-      self.maybe_resolver.as_ref(),
+      self.maybe_resolver,
       self.ast_parser,
     );
 

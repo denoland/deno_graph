@@ -320,12 +320,13 @@ pub fn analyze_ts_references(
   references
 }
 
+/// The default implementation of `AstParser` used by this crate.
+#[derive(Default)]
 pub struct DefaultAstParser {
   modules: HashMap<ModuleSpecifier, DefaultParsedAst>,
 }
 
 impl DefaultAstParser {
-  /// Creates a default implementation of `AstParser`.
   pub fn new() -> Self {
     Self {
       modules: HashMap::new(),
@@ -372,7 +373,7 @@ impl AstParser for DefaultAstParser {
       },
     );
 
-    Ok(self.modules.get(&specifier).unwrap())
+    Ok(self.modules.get(specifier).unwrap())
   }
 }
 
