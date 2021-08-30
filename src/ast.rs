@@ -2,21 +2,20 @@
 
 use crate::media_type::MediaType;
 use crate::module_specifier::ModuleSpecifier;
-use crate::text_encoding::strip_bom;
 
 use anyhow::Result;
 use lazy_static::lazy_static;
 use regex::Match;
 use regex::Regex;
 use serde::Serialize;
+use std::collections::HashMap;
 use std::fmt;
+use std::sync::Arc;
 use swc_common::comments::Comment;
-use swc_common::comments::Comments;
 use swc_common::comments::SingleThreadedComments;
 use swc_common::BytePos;
 use swc_common::Spanned;
 use swc_ecmascript::ast::Module;
-use swc_ecmascript::dep_graph::analyze_dependencies;
 use swc_ecmascript::dep_graph::DependencyDescriptor;
 use swc_ecmascript::dep_graph::DependencyKind;
 use swc_ecmascript::parser::lexer::Lexer;
@@ -130,16 +129,24 @@ impl Default for Range {
 }
 
 impl Range {
+  pub(crate) fn from_span(
+    parsed_ast: &dyn ParsedAst,
+    span: &swc_common::Span,
+  ) -> Range {
+    Range {
+      start: parsed_ast.get_position(span.lo),
+      end: parsed_ast.get_position(span.hi),
+    }
+  }
+
   fn from_comment_match(
     comment: &Comment,
-    parsed_module: &ParsedModule,
     m: &Match,
+    get_position: impl Fn(BytePos) -> Position,
   ) -> Self {
     Self {
-      start: parsed_module
-        .get_position(comment.span.lo + BytePos((m.start() + 1) as u32)),
-      end: parsed_module
-        .get_position(comment.span.lo + BytePos((m.end() + 1) as u32)),
+      start: get_position(comment.span.lo + BytePos((m.start() + 1) as u32)),
+      end: get_position(comment.span.lo + BytePos((m.end() + 1) as u32)),
     }
   }
 }
@@ -201,21 +208,45 @@ impl fmt::Display for Diagnostic {
   }
 }
 
-pub(crate) struct ParsedModule {
-  comments: SingleThreadedComments,
-  module: Module,
-  text_lines: TextLines,
-}
+/// A parsed module with comments.
+pub trait ParsedAst {
+  /// Gets the module specifier of the module.
+  fn specifier(&self) -> &ModuleSpecifier;
+  /// Gets the media type of the module.
+  fn media_type(&self) -> MediaType;
+  /// Gets the text content of the module.
+  fn source(&self) -> Arc<String>;
+  /// Gets the comments found in the source file.
+  fn comments(&self) -> &dyn swc_common::comments::Comments;
+  /// Gets the parsed module—AST.
+  fn module(&self) -> &swc_ecmascript::ast::Module;
+  /// Gets a position from the specified byte position.
+  /// Note: This should/will panic when the byte position is
+  // outside the bounds of the source file.
+  fn get_position(&self, pos: BytePos) -> Position;
 
-impl ParsedModule {
-  pub fn analyze_dependencies(&self) -> Vec<DependencyDescriptor> {
-    analyze_dependencies(&self.module, &self.comments)
-      .into_iter()
-      .filter(|desc| desc.kind != DependencyKind::Require)
-      .collect()
+  /// Get the module's leading comments, where triple slash directives might
+  /// be located.
+  fn get_leading_comments(&self) -> Vec<Comment> {
+    self
+      .comments()
+      .get_leading(self.module().span.lo)
+      .unwrap_or_else(Vec::new)
   }
 
-  pub fn analyze_deno_types(
+  /// Gets all the dependencies of this module.
+  fn analyze_dependencies(&self) -> Vec<DependencyDescriptor> {
+    swc_ecmascript::dep_graph::analyze_dependencies(
+      self.module(),
+      self.comments(),
+    )
+    .into_iter()
+    .filter(|desc| desc.kind != DependencyKind::Require)
+    .collect()
+  }
+
+  /// Searches comments for any `@deno-types` compiler hints.
+  fn analyze_deno_types(
     &self,
     desc: &DependencyDescriptor,
   ) -> Option<(String, Range)> {
@@ -224,19 +255,20 @@ impl ParsedModule {
     if let Some(m) = captures.get(1) {
       Some((
         m.as_str().to_string(),
-        Range::from_comment_match(comment, self, &m),
+        Range::from_comment_match(comment, &m, |pos| self.get_position(pos)),
       ))
     } else if let Some(m) = captures.get(2) {
       Some((
         m.as_str().to_string(),
-        Range::from_comment_match(comment, self, &m),
+        Range::from_comment_match(comment, &m, |pos| self.get_position(pos)),
       ))
     } else {
       unreachable!("Unexpected captures from deno types regex")
     }
   }
 
-  pub fn analyze_ts_references(&self) -> Vec<TypeScriptReference> {
+  /// Searches comments for any triple slash references.
+  fn analyze_ts_references(&self) -> Vec<TypeScriptReference> {
     let mut references = Vec::new();
     for comment in self.get_leading_comments().iter() {
       if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
@@ -244,7 +276,9 @@ impl ParsedModule {
           let m = captures.get(1).unwrap();
           references.push(TypeScriptReference::Path(
             m.as_str().to_string(),
-            Range::from_comment_match(comment, self, &m),
+            Range::from_comment_match(comment, &m, |pos| {
+              self.get_position(pos)
+            }),
           ));
         } else if let Some(captures) =
           TYPES_REFERENCE_RE.captures(&comment.text)
@@ -252,60 +286,120 @@ impl ParsedModule {
           let m = captures.get(1).unwrap();
           references.push(TypeScriptReference::Types(
             m.as_str().to_string(),
-            Range::from_comment_match(comment, self, &m),
+            Range::from_comment_match(comment, &m, |pos| {
+              self.get_position(pos)
+            }),
           ));
         }
       }
     }
     references
   }
+}
 
-  /// Get the module's leading comments, where triple slash directives might
-  /// be located.
-  pub fn get_leading_comments(&self) -> Vec<Comment> {
-    self
-      .comments
-      .get_leading(self.module.span.lo)
-      .unwrap_or_else(Vec::new)
+/// Parses modules.
+pub trait AstParser {
+  /// Parses the provided information to a `ParsedAst` and returns a reference.
+  fn parse(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    source: Arc<String>,
+    media_type: MediaType,
+  ) -> Result<&dyn ParsedAst, Diagnostic>;
+}
+
+pub struct DefaultParsedAst {
+  specifier: ModuleSpecifier,
+  media_type: MediaType,
+  source: Arc<String>,
+  comments: SingleThreadedComments,
+  module: Module,
+  text_lines: TextLines,
+}
+
+impl ParsedAst for DefaultParsedAst {
+  fn specifier(&self) -> &ModuleSpecifier {
+    &self.specifier
   }
 
-  pub fn range_from_span(&self, span: &swc_common::Span) -> Range {
-    Range {
-      start: self.get_position(span.lo),
-      end: self.get_position(span.hi),
-    }
+  fn media_type(&self) -> MediaType {
+    self.media_type
   }
 
-  pub fn get_position(&self, pos: BytePos) -> Position {
+  fn source(&self) -> Arc<String> {
+    self.source.clone()
+  }
+
+  fn comments(&self) -> &dyn swc_common::comments::Comments {
+    &self.comments
+  }
+
+  fn module(&self) -> &swc_ecmascript::ast::Module {
+    &self.module
+  }
+
+  fn get_position(&self, pos: BytePos) -> Position {
     Position::from_pos(&self.text_lines, pos)
   }
 }
 
-pub(crate) fn parse(
-  specifier: &ModuleSpecifier,
-  source: &str,
-  media_type: MediaType,
-) -> Result<ParsedModule, Diagnostic> {
-  let source = strip_bom(source);
-  let text_lines = TextLines::new(source);
-  let input =
-    StringInput::new(source, BytePos(0), BytePos(source.len() as u32));
-  let comments = SingleThreadedComments::default();
-  let lexer = Lexer::new(media_type.into(), TARGET, input, Some(&comments));
-  let mut parser = Parser::new_from(lexer);
-  let module = parser.parse_module().map_err(|err| Diagnostic {
-    location: Location {
-      specifier: specifier.clone(),
-      position: Position::from_pos(&text_lines, err.span().lo),
-    },
-    message: err.into_kind().msg().to_string(),
-  })?;
+/// The default implementation of `AstParser` used by this crate.
+#[derive(Default)]
+pub struct DefaultAstParser {
+  modules: HashMap<ModuleSpecifier, DefaultParsedAst>,
+}
 
-  Ok(ParsedModule {
-    comments,
-    module,
-    text_lines,
-  })
+impl DefaultAstParser {
+  pub fn new() -> Self {
+    Self {
+      modules: HashMap::new(),
+    }
+  }
+
+  /// Gets an AST by a module specifier if it was previously parsed.
+  pub fn get_ast(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<&DefaultParsedAst> {
+    self.modules.get(specifier)
+  }
+}
+
+impl AstParser for DefaultAstParser {
+  fn parse(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    source: Arc<String>,
+    media_type: MediaType,
+  ) -> Result<&dyn ParsedAst, Diagnostic> {
+    let text_lines = TextLines::new(&source);
+    let input =
+      StringInput::new(&source, BytePos(0), BytePos(source.len() as u32));
+    let comments = SingleThreadedComments::default();
+    let lexer = Lexer::new(media_type.into(), TARGET, input, Some(&comments));
+    let mut parser = Parser::new_from(lexer);
+    let module = parser.parse_module().map_err(|err| Diagnostic {
+      location: Location {
+        specifier: specifier.clone(),
+        position: Position::from_pos(&text_lines, err.span().lo),
+      },
+      message: err.into_kind().msg().to_string(),
+    })?;
+
+    self.modules.insert(
+      specifier.clone(),
+      DefaultParsedAst {
+        specifier: specifier.clone(),
+        media_type,
+        source,
+        comments,
+        module,
+        text_lines,
+      },
+    );
+
+    Ok(self.modules.get(specifier).unwrap())
+  }
 }
 
 #[cfg(test)]
@@ -316,7 +410,8 @@ mod tests {
   fn test_parse() {
     let specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad specifier");
-    let source = r#"import {
+    let source = Arc::new(
+      r#"import {
       A,
       B,
       C,
@@ -332,19 +427,23 @@ mod tests {
     import React from "https://cdn.skypack.dev/react";
 
     const a = await import("./a.ts");
-    "#;
-    let result = parse(&specifier, source, MediaType::TypeScript);
+    "#
+      .to_string(),
+    );
+    let mut parser = DefaultAstParser::new();
+    let result = parser.parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
-    let parsed_module = result.unwrap();
-    assert_eq!(parsed_module.analyze_dependencies().len(), 6);
-    assert_eq!(parsed_module.analyze_ts_references().len(), 0);
+    let parsed_ast = result.unwrap();
+    assert_eq!(parsed_ast.analyze_dependencies().len(), 6);
+    assert_eq!(parsed_ast.analyze_ts_references().len(), 0);
   }
 
   #[test]
   fn test_analyze_dependencies() {
     let specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad specifier");
-    let source = r#"
+    let source = Arc::new(
+      r#"
     import * as a from "./a.ts";
     import "./b.ts";
     import { c } from "./c.ts";
@@ -356,14 +455,17 @@ mod tests {
 
     import type { i } from "./i.d.ts";
     export type { j } from "./j.d.ts";
-    "#;
-    let result = parse(&specifier, source, MediaType::TypeScript);
+    "#
+      .to_string(),
+    );
+    let mut parser = DefaultAstParser::new();
+    let result = parser.parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
-    let parsed_module = result.unwrap();
-    let dependencies = parsed_module.analyze_dependencies();
+    let parsed_ast = result.unwrap();
+    let dependencies = parsed_ast.analyze_dependencies();
     assert_eq!(dependencies.len(), 10);
     assert_eq!(dependencies[0].specifier.to_string(), "./a.ts");
-    let range = parsed_module.range_from_span(&dependencies[0].specifier_span);
+    let range = Range::from_span(parsed_ast, &dependencies[0].specifier_span);
     assert_eq!(
       range,
       Range {
@@ -379,7 +481,7 @@ mod tests {
     );
     assert!(!dependencies[0].is_dynamic);
     assert_eq!(dependencies[1].specifier.to_string(), "./b.ts");
-    let range = parsed_module.range_from_span(&dependencies[1].specifier_span);
+    let range = Range::from_span(parsed_ast, &dependencies[1].specifier_span);
     assert_eq!(
       range,
       Range {

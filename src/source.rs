@@ -16,6 +16,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
 use std::pin::Pin;
+use std::sync::Arc;
 
 /// Information that comes from an external source which can be optionally
 /// included in the module graph.
@@ -45,7 +46,7 @@ pub struct LoadResponse {
   #[serde(rename = "headers", skip_serializing_if = "Option::is_none")]
   pub maybe_headers: Option<HashMap<String, String>>,
   /// The content of the remote module.
-  pub content: String,
+  pub content: Arc<String>,
 }
 
 pub type LoadResult = (ModuleSpecifier, Result<Option<LoadResponse>>);
@@ -121,7 +122,7 @@ impl MemoryLoader {
                 .map(|(k, v)| (k.as_ref().to_string(), v.as_ref().to_string()))
                 .collect()
             }),
-            content: c.as_ref().to_string(),
+            content: Arc::new(c.as_ref().to_string()),
           });
           (specifier, result)
         })

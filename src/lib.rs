@@ -13,6 +13,16 @@ mod module_specifier;
 pub mod source;
 mod text_encoding;
 
+#[cfg(feature = "rust")]
+pub use ast::AstParser;
+#[cfg(feature = "rust")]
+pub use ast::DefaultAstParser;
+#[cfg(feature = "rust")]
+pub use ast::DefaultParsedAst;
+#[cfg(feature = "rust")]
+pub use ast::ParsedAst;
+#[cfg(feature = "rust")]
+pub use ast::Position;
 use graph::Builder;
 #[cfg(feature = "rust")]
 pub use graph::Module;
@@ -39,6 +49,7 @@ use source::Resolver;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::sync::Arc;
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
 
@@ -47,12 +58,23 @@ use wasm_bindgen::prelude::*;
 #[cfg(feature = "rust")]
 pub async fn create_graph(
   root_specifier: ModuleSpecifier,
-  loader: Box<dyn Loader>,
-  maybe_resolver: Option<Box<dyn Resolver>>,
+  loader: &mut dyn Loader,
+  maybe_resolver: Option<&dyn Resolver>,
   maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+  maybe_parser: Option<&mut dyn AstParser>,
 ) -> ModuleGraph {
-  let builder =
-    Builder::new(root_specifier, false, loader, maybe_resolver, maybe_locker);
+  let mut default_parser = ast::DefaultAstParser::new();
+  let builder = Builder::new(
+    root_specifier,
+    false,
+    loader,
+    maybe_resolver,
+    maybe_locker,
+    match maybe_parser {
+      Some(parser) => parser,
+      None => &mut default_parser,
+    },
+  );
   builder.build().await
 }
 
@@ -61,15 +83,43 @@ pub async fn create_graph(
 #[cfg(feature = "rust")]
 pub fn parse_module(
   specifier: &ModuleSpecifier,
-  maybe_headers: &Option<HashMap<String, String>>,
-  content: &str,
-  maybe_resolver: &Option<Box<dyn Resolver>>,
+  maybe_headers: Option<&HashMap<String, String>>,
+  content: Arc<String>,
+  maybe_resolver: Option<&dyn Resolver>,
+  maybe_parser: Option<&mut dyn AstParser>,
 ) -> Result<Module, ModuleGraphError> {
-  match graph::parse_module(specifier, maybe_headers, content, maybe_resolver) {
+  let mut default_parser = ast::DefaultAstParser::new();
+  match graph::parse_module(
+    specifier,
+    maybe_headers,
+    content,
+    maybe_resolver,
+    if let Some(parser) = maybe_parser {
+      parser
+    } else {
+      &mut default_parser
+    },
+  ) {
     ModuleSlot::Module(module) => Ok(module),
     ModuleSlot::Err(err) => Err(err),
     _ => unreachable!("unreachable ModuleSlot variant"),
   }
+}
+
+/// Parse an individual module from an AST, returning the module.
+#[cfg(feature = "rust")]
+pub fn parse_module_from_ast(
+  specifier: &ModuleSpecifier,
+  maybe_headers: Option<&HashMap<String, String>>,
+  parsed_ast: &dyn ParsedAst,
+  maybe_resolver: Option<&dyn Resolver>,
+) -> Module {
+  graph::parse_module_from_ast(
+    specifier,
+    maybe_headers,
+    parsed_ast,
+    maybe_resolver,
+  )
 }
 
 #[cfg(feature = "wasm")]
@@ -82,13 +132,8 @@ pub async fn js_create_graph(
   maybe_check: Option<js_sys::Function>,
   maybe_get_checksum: Option<js_sys::Function>,
 ) -> Result<js_graph::ModuleGraph, JsValue> {
-  let loader = Box::new(js_graph::JsLoader::new(load, maybe_cache_info));
-  let maybe_resolver: Option<Box<dyn Resolver>> =
-    if let Some(resolve) = maybe_resolve {
-      Some(Box::new(js_graph::JsResolver::new(resolve)))
-    } else {
-      None
-    };
+  let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
+  let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
   let maybe_locker: Option<Rc<RefCell<dyn Locker>>> =
     if maybe_check.is_some() || maybe_get_checksum.is_some() {
       let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum);
@@ -99,8 +144,15 @@ pub async fn js_create_graph(
   let root_specifier =
     module_specifier::ModuleSpecifier::parse(&root_specifier)
       .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-  let builder =
-    Builder::new(root_specifier, false, loader, maybe_resolver, maybe_locker);
+  let mut ast_parser = ast::DefaultAstParser::new();
+  let builder = Builder::new(
+    root_specifier,
+    false,
+    &mut loader,
+    maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+    maybe_locker,
+    &mut ast_parser,
+  );
   let graph = builder.build().await;
   Ok(js_graph::ModuleGraph(graph))
 }
@@ -118,17 +170,14 @@ pub fn js_parse_module(
     .map_err(|err| js_sys::Error::new(&err.to_string()))?;
   let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
     .map_err(|err| js_sys::Error::new(&err.to_string()))?;
-  let maybe_resolver: Option<Box<dyn Resolver>> =
-    if let Some(resolve) = maybe_resolve {
-      Some(Box::new(js_graph::JsResolver::new(resolve)))
-    } else {
-      None
-    };
+  let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
+  let mut ast_parser = ast::DefaultAstParser::new();
   match graph::parse_module(
     &specifier,
-    &maybe_headers,
-    &content,
-    &maybe_resolver,
+    maybe_headers.as_ref(),
+    Arc::new(content),
+    maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+    &mut ast_parser,
   ) {
     ModuleSlot::Module(module) => Ok(js_graph::Module(module)),
     ModuleSlot::Err(err) => Err(js_sys::Error::new(&err.to_string()).into()),
@@ -153,13 +202,13 @@ mod tests {
   fn setup(
     sources: Sources,
     cache_info: Vec<(&str, CacheInfo)>,
-  ) -> Box<dyn Loader> {
-    Box::new(MemoryLoader::new(sources, cache_info))
+  ) -> MemoryLoader {
+    MemoryLoader::new(sources, cache_info)
   }
 
   #[tokio::test]
   async fn test_create_graph() {
-    let loader = setup(
+    let mut loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -178,7 +227,8 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let graph = create_graph(root_specifier.clone(), loader, None, None).await;
+    let graph =
+      create_graph(root_specifier.clone(), &mut loader, None, None, None).await;
     assert_eq!(graph.modules.len(), 2);
     assert_eq!(graph.root, root_specifier);
     let maybe_root_module = graph.modules.get(&root_specifier);
@@ -208,7 +258,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_create_graph_with_headers() {
-    let loader = setup(
+    let mut loader = setup(
       vec![(
         "https://example.com/a",
         Ok((
@@ -224,7 +274,8 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
-    let graph = create_graph(root_specifier.clone(), loader, None, None).await;
+    let graph =
+      create_graph(root_specifier.clone(), &mut loader, None, None, None).await;
     assert_eq!(graph.modules.len(), 1);
     assert_eq!(graph.root, root_specifier);
     let maybe_root_module = graph.modules.get(&root_specifier);
@@ -239,7 +290,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_create_graph_with_data_url() {
-    let loader = setup(
+    let mut loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -258,21 +309,22 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let graph = create_graph(root_specifier.clone(), loader, None, None).await;
+    let graph =
+      create_graph(root_specifier.clone(), &mut loader, None, None, None).await;
     assert_eq!(graph.modules.len(), 3);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
     let maybe_module = graph.get(&data_specifier);
     assert!(maybe_module.is_some());
     let module = maybe_module.unwrap();
     assert_eq!(
-      module.source,
+      module.source.as_str(),
       r#"export * from "https://example.com/c.ts";"#
     );
   }
 
   #[tokio::test]
   async fn test_create_graph_with_resolver() {
-    let loader = setup(
+    let mut loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -289,10 +341,11 @@ mod tests {
       "file:///a/test01.ts",
       vec![("b", "file:///a/test02.ts")],
     )]);
-    let maybe_resolver: Option<Box<dyn Resolver>> = Some(Box::new(resolver));
+    let maybe_resolver: Option<&dyn Resolver> = Some(&resolver);
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let graph =
-      create_graph(root_specifier, loader, maybe_resolver, None).await;
+      create_graph(root_specifier, &mut loader, maybe_resolver, None, None)
+        .await;
     let maybe_module = graph.get(&graph.root);
     assert!(maybe_module.is_some());
     let module = maybe_module.unwrap();
@@ -309,19 +362,69 @@ mod tests {
     }
   }
 
+  #[tokio::test]
+  async fn test_create_graph_with_parser() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"import * as b from "./test02.ts";"#,
+          )),
+        ),
+        (
+          "file:///a/test02.ts",
+          Ok((
+            "file:///a/test02.ts",
+            None,
+            r#"export const b = "b"; let t;"#,
+          )),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let test02_specifier =
+      ModuleSpecifier::parse("file:///a/test02.ts").expect("bad url");
+    let mut parser = crate::ast::DefaultAstParser::new();
+    create_graph(
+      root_specifier.clone(),
+      &mut loader,
+      None,
+      None,
+      Some(&mut parser),
+    )
+    .await;
+    let root_ast = parser.get_ast(&root_specifier).unwrap();
+    let test02_ast = parser.get_ast(&test02_specifier).unwrap();
+    assert_eq!(root_ast.module().body.len(), 1);
+    assert_eq!(test02_ast.module().body.len(), 2);
+
+    let non_existent =
+      ModuleSpecifier::parse("file:///a/test03.ts").expect("bad url");
+    assert!(parser.get_ast(&non_existent).is_none());
+  }
+
   #[test]
   fn test_parse_module() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let result = parse_module(
       &specifier,
-      &None,
-      r#"
+      None,
+      Arc::new(
+        r#"
     import { a } from "./a.ts";
     import * as b from "./b.ts";
     export { c } from "./c.ts";
     const d = await import("./d.ts");
-    "#,
-      &None,
+    "#
+        .to_string(),
+      ),
+      None,
+      None,
     );
     assert!(result.is_ok());
     let actual = result.unwrap();
@@ -338,14 +441,18 @@ mod tests {
       "content-type".to_string(),
       "application/typescript; charset=utf-8".to_string(),
     );
-    let maybe_headers = Some(headers);
+    let maybe_headers = Some(&headers);
     let result = parse_module(
       &specifier,
-      &maybe_headers,
-      r#"declare interface A {
+      maybe_headers,
+      Arc::new(
+        r#"declare interface A {
   a: string;
-}"#,
-      &None,
+}"#
+          .to_string(),
+      ),
+      None,
+      None,
     );
     assert!(result.is_ok());
   }

@@ -1,11 +1,15 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 use crate::ast;
+use crate::ast::AstParser;
+use crate::ast::ParsedAst;
+use crate::ast::Range;
 use crate::media_type::MediaType;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
 use crate::source::*;
+use crate::text_encoding::strip_bom_mut;
 
 use anyhow::anyhow;
 use anyhow::Result;
@@ -23,6 +27,7 @@ use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub enum ModuleGraphError {
@@ -187,12 +192,12 @@ pub struct Module {
   pub maybe_types_dependency: Option<(String, Resolved)>,
   pub media_type: MediaType,
   #[serde(rename = "size", serialize_with = "serialize_source")]
-  pub source: String,
+  pub source: Arc<String>,
   pub specifier: ModuleSpecifier,
 }
 
 impl Module {
-  pub fn new(specifier: ModuleSpecifier, source: String) -> Self {
+  pub fn new(specifier: ModuleSpecifier, source: Arc<String>) -> Self {
     Self {
       dependencies: Default::default(),
       maybe_cache_info: None,
@@ -340,11 +345,12 @@ fn load_data_url(specifier: &ModuleSpecifier) -> Result<Option<LoadResponse>> {
     .map_err(|_| anyhow!("Unable to decode data url."))?;
   let mut headers: HashMap<String, String> = HashMap::new();
   headers.insert("content-type".to_string(), url.mime_type().to_string());
-  let content = String::from_utf8(bytes)?;
+  let mut content = String::from_utf8(bytes)?;
+  strip_bom_mut(&mut content);
   Ok(Some(LoadResponse {
     specifier: specifier.clone(),
     maybe_headers: Some(headers),
-    content,
+    content: Arc::new(content),
   }))
 }
 
@@ -354,7 +360,7 @@ fn resolve(
   specifier: &str,
   referrer: &ModuleSpecifier,
   range: &ast::Range,
-  maybe_resolver: &Option<Box<dyn Resolver>>,
+  maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolved {
   let mut remapped = false;
   let resolved_specifier = if let Some(resolver) = maybe_resolver {
@@ -392,112 +398,141 @@ fn resolve(
 /// With the provided information, parse a module and return its "module slot"
 pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
-  maybe_headers: &Option<HashMap<String, String>>,
-  content: &str,
-  maybe_resolver: &Option<Box<dyn Resolver>>,
+  maybe_headers: Option<&HashMap<String, String>>,
+  content: Arc<String>,
+  maybe_resolver: Option<&dyn Resolver>,
+  ast_parser: &mut dyn AstParser,
 ) -> ModuleSlot {
-  // Init the module and determine its media type
-  let mut module = Module::new(specifier.clone(), content.to_string());
-  module.media_type = if let Some(headers) = maybe_headers {
-    if let Some(content_type) = headers.get("content-type") {
-      MediaType::from_content_type(&module.specifier, content_type)
-    } else {
-      MediaType::from(&module.specifier)
-    }
-  } else {
-    MediaType::from(&module.specifier)
-  };
-
   // Parse the module and start analyzing the module.
-  match ast::parse(&module.specifier, &module.source, module.media_type) {
-    Ok(parsed_module) => {
-      // Analyze the TypeScript triple-slash references
-      for reference in parsed_module.analyze_ts_references() {
-        match reference {
-          ast::TypeScriptReference::Path(specifier, range) => {
-            let resolved_dependency =
-              resolve(&specifier, &module.specifier, &range, maybe_resolver);
-            let dep = module.dependencies.entry(specifier).or_default();
-            dep.maybe_code = resolved_dependency;
-          }
-          ast::TypeScriptReference::Types(specifier, range) => {
-            let resolved_dependency =
-              resolve(&specifier, &module.specifier, &range, maybe_resolver);
-            if module.media_type == MediaType::JavaScript
-              || module.media_type == MediaType::Jsx
-            {
-              module.maybe_types_dependency =
-                Some((specifier, resolved_dependency));
-            } else {
-              let dep = module.dependencies.entry(specifier).or_default();
-              dep.maybe_type = resolved_dependency;
-            }
-          }
-        }
-      }
-
-      // Analyze the X-TypeScript-Types header
-      if module.maybe_types_dependency.is_none() {
-        if let Some(headers) = maybe_headers {
-          if let Some(types_header) = headers.get("x-typescript-types") {
-            let resolved_dependency = resolve(
-              types_header,
-              &module.specifier,
-              &ast::Range::default(),
-              maybe_resolver,
-            );
-            module.maybe_types_dependency =
-              Some((types_header.clone(), resolved_dependency));
-          }
-        }
-      }
-
-      // Analyze ES dependencies
-      let descriptors = parsed_module.analyze_dependencies();
-      for desc in descriptors {
-        let dep = module
-          .dependencies
-          .entry(desc.specifier.to_string())
-          .or_default();
-        let resolved_dependency = resolve(
-          &desc.specifier,
-          &module.specifier,
-          &parsed_module.range_from_span(&desc.specifier_span),
-          maybe_resolver,
-        );
-        dep.maybe_code = resolved_dependency;
-        let specifier = module.specifier.clone();
-        let maybe_type = parsed_module
-          .analyze_deno_types(&desc)
-          .map(|(s, r)| resolve(&s, &specifier, &r, maybe_resolver))
-          .unwrap_or_else(|| Resolved::None);
-        if dep.maybe_type.is_none() {
-          dep.maybe_type = maybe_type
-        }
-      }
-
+  match ast_parser.parse(
+    specifier,
+    content,
+    get_media_type(specifier, maybe_headers),
+  ) {
+    Ok(parsed_ast) => {
       // Return the module as a valid module
-      ModuleSlot::Module(module)
+      ModuleSlot::Module(parse_module_from_ast(
+        specifier,
+        maybe_headers,
+        parsed_ast,
+        maybe_resolver,
+      ))
     }
     Err(diagnostic) => ModuleSlot::Err(diagnostic.into()),
   }
 }
 
-pub(crate) struct Builder {
-  is_dynamic_root: bool,
-  graph: ModuleGraph,
-  loader: Box<dyn Loader>,
-  maybe_resolver: Option<Box<dyn Resolver>>,
-  pending: FuturesUnordered<LoadFuture>,
+pub(crate) fn parse_module_from_ast(
+  specifier: &ModuleSpecifier,
+  maybe_headers: Option<&HashMap<String, String>>,
+  parsed_ast: &dyn ParsedAst,
+  maybe_resolver: Option<&dyn Resolver>,
+) -> Module {
+  // Init the module and determine its media type
+  let mut module = Module::new(specifier.clone(), parsed_ast.source());
+  module.media_type = get_media_type(specifier, maybe_headers);
+
+  // Analyze the TypeScript triple-slash references
+  for reference in parsed_ast.analyze_ts_references() {
+    match reference {
+      ast::TypeScriptReference::Path(specifier, range) => {
+        let resolved_dependency =
+          resolve(&specifier, &module.specifier, &range, maybe_resolver);
+        let dep = module.dependencies.entry(specifier).or_default();
+        dep.maybe_code = resolved_dependency;
+      }
+      ast::TypeScriptReference::Types(specifier, range) => {
+        let resolved_dependency =
+          resolve(&specifier, &module.specifier, &range, maybe_resolver);
+        if module.media_type == MediaType::JavaScript
+          || module.media_type == MediaType::Jsx
+        {
+          module.maybe_types_dependency =
+            Some((specifier, resolved_dependency));
+        } else {
+          let dep = module.dependencies.entry(specifier).or_default();
+          dep.maybe_type = resolved_dependency;
+        }
+      }
+    }
+  }
+
+  // Analyze the X-TypeScript-Types header
+  if module.maybe_types_dependency.is_none() {
+    if let Some(headers) = maybe_headers {
+      if let Some(types_header) = headers.get("x-typescript-types") {
+        let resolved_dependency = resolve(
+          types_header,
+          &module.specifier,
+          &ast::Range::default(),
+          maybe_resolver,
+        );
+        module.maybe_types_dependency =
+          Some((types_header.clone(), resolved_dependency));
+      }
+    }
+  }
+
+  // Analyze ES dependencies
+  let descriptors = parsed_ast.analyze_dependencies();
+  for desc in descriptors {
+    let dep = module
+      .dependencies
+      .entry(desc.specifier.to_string())
+      .or_default();
+    let resolved_dependency = resolve(
+      &desc.specifier,
+      &module.specifier,
+      &Range::from_span(parsed_ast, &desc.specifier_span),
+      maybe_resolver,
+    );
+    dep.maybe_code = resolved_dependency;
+    let specifier = module.specifier.clone();
+    let maybe_type = parsed_ast
+      .analyze_deno_types(&desc)
+      .map(|(s, r)| resolve(&s, &specifier, &r, maybe_resolver))
+      .unwrap_or_else(|| Resolved::None);
+    if dep.maybe_type.is_none() {
+      dep.maybe_type = maybe_type
+    }
+  }
+
+  // Return the module as a valid module
+  module
 }
 
-impl Builder {
+fn get_media_type(
+  specifier: &ModuleSpecifier,
+  maybe_headers: Option<&HashMap<String, String>>,
+) -> MediaType {
+  if let Some(headers) = maybe_headers {
+    if let Some(content_type) = headers.get("content-type") {
+      MediaType::from_content_type(specifier, content_type)
+    } else {
+      MediaType::from(specifier)
+    }
+  } else {
+    MediaType::from(specifier)
+  }
+}
+
+pub(crate) struct Builder<'a> {
+  is_dynamic_root: bool,
+  graph: ModuleGraph,
+  loader: &'a mut dyn Loader,
+  maybe_resolver: Option<&'a dyn Resolver>,
+  pending: FuturesUnordered<LoadFuture>,
+  ast_parser: &'a mut dyn AstParser,
+}
+
+impl<'a> Builder<'a> {
   pub fn new(
     root_specifier: ModuleSpecifier,
     is_dynamic_root: bool,
-    loader: Box<dyn Loader>,
-    maybe_resolver: Option<Box<dyn Resolver>>,
+    loader: &'a mut dyn Loader,
+    maybe_resolver: Option<&'a dyn Resolver>,
     maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+    ast_parser: &'a mut dyn AstParser,
   ) -> Self {
     Self {
       is_dynamic_root,
@@ -505,6 +540,7 @@ impl Builder {
       loader,
       maybe_resolver,
       pending: FuturesUnordered::new(),
+      ast_parser,
     }
   }
 
@@ -589,9 +625,10 @@ impl Builder {
 
     let module_slot = parse_module(
       &specifier,
-      &maybe_headers,
-      &response.content,
-      &self.maybe_resolver,
+      maybe_headers.as_ref(),
+      response.content,
+      self.maybe_resolver,
+      self.ast_parser,
     );
 
     if let ModuleSlot::Module(module) = &module_slot {
@@ -725,5 +762,5 @@ fn serialize_source<S>(source: &str, serializer: S) -> Result<S::Ok, S::Error>
 where
   S: Serializer,
 {
-  serializer.serialize_u32(source.as_bytes().iter().count() as u32)
+  serializer.serialize_u32(source.len() as u32)
 }

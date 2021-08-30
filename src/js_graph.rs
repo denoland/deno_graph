@@ -282,7 +282,7 @@ impl Module {
 
   #[wasm_bindgen(getter)]
   pub fn source(&self) -> String {
-    self.0.source.clone()
+    self.0.source.to_string()
   }
 
   #[wasm_bindgen(getter)]

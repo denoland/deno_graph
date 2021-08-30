@@ -61,15 +61,15 @@ use deno_graph::source::MemoryLoader;
 use futures::executor::block_on;
 
 fn main() {
-  let loader = Box::new(MemoryLoader::new(
+  let mut loader = MemoryLoader::new(
     vec![
       ("file:///test.ts", Ok(("file:///test.ts", None, "import * as a from \"./a.ts\";"))),
       ("file:///a.ts", Ok(("file:///a.ts", None, "export const a = \"a\";"))),
     ]
-  ));
+  );
   let root_specifier = ModuleSpecifier::parse("file:///test.ts").unwrap();
   let future = async move {
-    let graph = create_graph(root_specifier, loader, None, None).await;
+    let graph = create_graph(root_specifier, &mut loader, None, None).await;
     println!("{}", graph);
   };
   block_on()
