@@ -1,9 +1,6 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 use crate::ast;
-use crate::ast::analyze_deno_types;
-use crate::ast::analyze_dependencies;
-use crate::ast::analyze_ts_references;
 use crate::ast::AstParser;
 use crate::ast::ParsedAst;
 use crate::ast::Range;
@@ -435,7 +432,7 @@ pub(crate) fn parse_module_from_ast(
   module.media_type = get_media_type(specifier, maybe_headers);
 
   // Analyze the TypeScript triple-slash references
-  for reference in analyze_ts_references(parsed_ast) {
+  for reference in parsed_ast.analyze_ts_references() {
     match reference {
       ast::TypeScriptReference::Path(specifier, range) => {
         let resolved_dependency =
@@ -476,7 +473,7 @@ pub(crate) fn parse_module_from_ast(
   }
 
   // Analyze ES dependencies
-  let descriptors = analyze_dependencies(parsed_ast);
+  let descriptors = parsed_ast.analyze_dependencies();
   for desc in descriptors {
     let dep = module
       .dependencies
@@ -490,7 +487,8 @@ pub(crate) fn parse_module_from_ast(
     );
     dep.maybe_code = resolved_dependency;
     let specifier = module.specifier.clone();
-    let maybe_type = analyze_deno_types(parsed_ast, &desc)
+    let maybe_type = parsed_ast
+      .analyze_deno_types(&desc)
       .map(|(s, r)| resolve(&s, &specifier, &r, maybe_resolver))
       .unwrap_or_else(|| Resolved::None);
     if dep.maybe_type.is_none() {

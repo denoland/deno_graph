@@ -141,14 +141,12 @@ impl Range {
 
   fn from_comment_match(
     comment: &Comment,
-    parsed_ast: &dyn ParsedAst,
     m: &Match,
+    get_position: impl Fn(BytePos) -> Position,
   ) -> Self {
     Self {
-      start: parsed_ast
-        .get_position(comment.span.lo + BytePos((m.start() + 1) as u32)),
-      end: parsed_ast
-        .get_position(comment.span.lo + BytePos((m.end() + 1) as u32)),
+      start: get_position(comment.span.lo + BytePos((m.start() + 1) as u32)),
+      end: get_position(comment.span.lo + BytePos((m.end() + 1) as u32)),
     }
   }
 }
@@ -220,6 +218,77 @@ pub trait ParsedAst {
   /// Note: This should/will panic when the byte position is
   // outside the bounds of the source file.
   fn get_position(&self, pos: BytePos) -> Position;
+
+  /// Get the module's leading comments, where triple slash directives might
+  /// be located.
+  fn get_leading_comments(&self) -> Vec<Comment> {
+    self
+      .comments()
+      .get_leading(self.module().span.lo)
+      .unwrap_or_else(Vec::new)
+  }
+
+  /// Gets all the dependencies of this module.
+  fn analyze_dependencies(&self) -> Vec<DependencyDescriptor> {
+    swc_ecmascript::dep_graph::analyze_dependencies(
+      self.module(),
+      self.comments(),
+    )
+    .into_iter()
+    .filter(|desc| desc.kind != DependencyKind::Require)
+    .collect()
+  }
+
+  /// Searches comments for any `@deno-types` compiler hints.
+  fn analyze_deno_types(
+    &self,
+    desc: &DependencyDescriptor,
+  ) -> Option<(String, Range)> {
+    let comment = desc.leading_comments.last()?;
+    let captures = DENO_TYPES_RE.captures(&comment.text)?;
+    if let Some(m) = captures.get(1) {
+      Some((
+        m.as_str().to_string(),
+        Range::from_comment_match(comment, &m, |pos| self.get_position(pos)),
+      ))
+    } else if let Some(m) = captures.get(2) {
+      Some((
+        m.as_str().to_string(),
+        Range::from_comment_match(comment, &m, |pos| self.get_position(pos)),
+      ))
+    } else {
+      unreachable!("Unexpected captures from deno types regex")
+    }
+  }
+
+  /// Searches comments for any triple slash references.
+  fn analyze_ts_references(&self) -> Vec<TypeScriptReference> {
+    let mut references = Vec::new();
+    for comment in self.get_leading_comments().iter() {
+      if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
+        if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
+          let m = captures.get(1).unwrap();
+          references.push(TypeScriptReference::Path(
+            m.as_str().to_string(),
+            Range::from_comment_match(comment, &m, |pos| {
+              self.get_position(pos)
+            }),
+          ));
+        } else if let Some(captures) =
+          TYPES_REFERENCE_RE.captures(&comment.text)
+        {
+          let m = captures.get(1).unwrap();
+          references.push(TypeScriptReference::Types(
+            m.as_str().to_string(),
+            Range::from_comment_match(comment, &m, |pos| {
+              self.get_position(pos)
+            }),
+          ));
+        }
+      }
+    }
+    references
+  }
 }
 
 /// Parses modules.
@@ -251,73 +320,6 @@ impl ParsedAst for DefaultParsedAst {
   fn get_position(&self, pos: BytePos) -> Position {
     Position::from_pos(&self.text_lines, pos)
   }
-}
-
-/// Get the module's leading comments, where triple slash directives might
-/// be located.
-pub(crate) fn get_leading_comments(parsed_ast: &dyn ParsedAst) -> Vec<Comment> {
-  parsed_ast
-    .comments()
-    .get_leading(parsed_ast.module().span.lo)
-    .unwrap_or_else(Vec::new)
-}
-
-pub(crate) fn analyze_dependencies(
-  parsed_ast: &dyn ParsedAst,
-) -> Vec<DependencyDescriptor> {
-  swc_ecmascript::dep_graph::analyze_dependencies(
-    parsed_ast.module(),
-    parsed_ast.comments(),
-  )
-  .into_iter()
-  .filter(|desc| desc.kind != DependencyKind::Require)
-  .collect()
-}
-
-pub(crate) fn analyze_deno_types(
-  parsed_ast: &dyn ParsedAst,
-  desc: &DependencyDescriptor,
-) -> Option<(String, Range)> {
-  let comment = desc.leading_comments.last()?;
-  let captures = DENO_TYPES_RE.captures(&comment.text)?;
-  if let Some(m) = captures.get(1) {
-    Some((
-      m.as_str().to_string(),
-      Range::from_comment_match(comment, parsed_ast, &m),
-    ))
-  } else if let Some(m) = captures.get(2) {
-    Some((
-      m.as_str().to_string(),
-      Range::from_comment_match(comment, parsed_ast, &m),
-    ))
-  } else {
-    unreachable!("Unexpected captures from deno types regex")
-  }
-}
-
-pub fn analyze_ts_references(
-  parsed_ast: &dyn ParsedAst,
-) -> Vec<TypeScriptReference> {
-  let mut references = Vec::new();
-  for comment in get_leading_comments(parsed_ast).iter() {
-    if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
-      if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
-        let m = captures.get(1).unwrap();
-        references.push(TypeScriptReference::Path(
-          m.as_str().to_string(),
-          Range::from_comment_match(comment, parsed_ast, &m),
-        ));
-      } else if let Some(captures) = TYPES_REFERENCE_RE.captures(&comment.text)
-      {
-        let m = captures.get(1).unwrap();
-        references.push(TypeScriptReference::Types(
-          m.as_str().to_string(),
-          Range::from_comment_match(comment, parsed_ast, &m),
-        ));
-      }
-    }
-  }
-  references
 }
 
 /// The default implementation of `AstParser` used by this crate.
@@ -406,8 +408,8 @@ mod tests {
     let result = parser.parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_ast = result.unwrap();
-    assert_eq!(analyze_dependencies(parsed_ast).len(), 6);
-    assert_eq!(analyze_ts_references(parsed_ast).len(), 0);
+    assert_eq!(parsed_ast.analyze_dependencies().len(), 6);
+    assert_eq!(parsed_ast.analyze_ts_references().len(), 0);
   }
 
   #[test]
@@ -431,7 +433,7 @@ mod tests {
     let result = parser.parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_ast = result.unwrap();
-    let dependencies = analyze_dependencies(parsed_ast);
+    let dependencies = parsed_ast.analyze_dependencies();
     assert_eq!(dependencies.len(), 10);
     assert_eq!(dependencies[0].specifier.to_string(), "./a.ts");
     let range = Range::from_span(parsed_ast, &dependencies[0].specifier_span);
