@@ -218,6 +218,8 @@ pub trait ParsedAst {
   /// Note: This should/will panic when the byte position is
   // outside the bounds of the source file.
   fn get_position(&self, pos: BytePos) -> Position;
+  /// Gets the media type of the module.
+  fn media_type(&self) -> MediaType;
 
   /// Get the module's leading comments, where triple slash directives might
   /// be located.
@@ -306,6 +308,7 @@ pub struct DefaultParsedAst {
   comments: SingleThreadedComments,
   module: Module,
   text_lines: TextLines,
+  media_type: MediaType,
 }
 
 impl ParsedAst for DefaultParsedAst {
@@ -319,6 +322,10 @@ impl ParsedAst for DefaultParsedAst {
 
   fn get_position(&self, pos: BytePos) -> Position {
     Position::from_pos(&self.text_lines, pos)
+  }
+
+  fn media_type(&self) -> MediaType {
+    self.media_type
   }
 }
 
@@ -372,6 +379,7 @@ impl AstParser for DefaultAstParser {
         comments,
         module,
         text_lines,
+        media_type,
       },
     );
 
