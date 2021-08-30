@@ -18,6 +18,8 @@ pub use ast::AstParser;
 #[cfg(feature = "rust")]
 pub use ast::CapturingAstParser;
 #[cfg(feature = "rust")]
+pub use ast::DefaultAstParser;
+#[cfg(feature = "rust")]
 pub use ast::DefaultParsedAst;
 #[cfg(feature = "rust")]
 pub use ast::ParsedAst;
