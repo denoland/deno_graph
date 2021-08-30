@@ -343,13 +343,13 @@ impl ParsedAst for DefaultParsedAst {
   }
 }
 
-/// The default implementation of `AstParser` used by this crate.
+/// An implementation of `AstParser` that stores the parsed ASTs.
 #[derive(Default)]
-pub struct DefaultAstParser {
+pub struct CapturingAstParser {
   modules: HashMap<ModuleSpecifier, DefaultParsedAst>,
 }
 
-impl DefaultAstParser {
+impl CapturingAstParser {
   pub fn new() -> Self {
     Self {
       modules: HashMap::new(),
@@ -365,6 +365,33 @@ impl DefaultAstParser {
   }
 }
 
+impl AstParser for CapturingAstParser {
+  fn parse(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    source: Arc<String>,
+    media_type: MediaType,
+  ) -> Result<&dyn ParsedAst, Diagnostic> {
+    let ast = parse_default_ast(specifier, source, media_type)?;
+
+    self.modules.insert(specifier.clone(), ast);
+
+    Ok(self.modules.get(specifier).unwrap())
+  }
+}
+
+/// The default implementation of `AstParser` used by this crate.
+#[derive(Default)]
+pub struct DefaultAstParser {
+  module: Option<DefaultParsedAst>,
+}
+
+impl DefaultAstParser {
+  pub fn new() -> Self {
+    Self { module: None }
+  }
+}
+
 impl AstParser for DefaultAstParser {
   fn parse(
     &mut self,
@@ -372,34 +399,41 @@ impl AstParser for DefaultAstParser {
     source: Arc<String>,
     media_type: MediaType,
   ) -> Result<&dyn ParsedAst, Diagnostic> {
-    let text_lines = TextLines::new(&source);
-    let input =
-      StringInput::new(&source, BytePos(0), BytePos(source.len() as u32));
-    let comments = SingleThreadedComments::default();
-    let lexer = Lexer::new(media_type.into(), TARGET, input, Some(&comments));
-    let mut parser = Parser::new_from(lexer);
-    let module = parser.parse_module().map_err(|err| Diagnostic {
-      location: Location {
-        specifier: specifier.clone(),
-        position: Position::from_pos(&text_lines, err.span().lo),
-      },
-      message: err.into_kind().msg().to_string(),
-    })?;
+    let ast = parse_default_ast(specifier, source, media_type)?;
 
-    self.modules.insert(
-      specifier.clone(),
-      DefaultParsedAst {
-        specifier: specifier.clone(),
-        media_type,
-        source,
-        comments,
-        module,
-        text_lines,
-      },
-    );
+    self.module.replace(ast);
 
-    Ok(self.modules.get(specifier).unwrap())
+    Ok(self.module.as_ref().unwrap())
   }
+}
+
+fn parse_default_ast(
+  specifier: &ModuleSpecifier,
+  source: Arc<String>,
+  media_type: MediaType,
+) -> Result<DefaultParsedAst, Diagnostic> {
+  let text_lines = TextLines::new(&source);
+  let input =
+    StringInput::new(&source, BytePos(0), BytePos(source.len() as u32));
+  let comments = SingleThreadedComments::default();
+  let lexer = Lexer::new(media_type.into(), TARGET, input, Some(&comments));
+  let mut parser = Parser::new_from(lexer);
+  let module = parser.parse_module().map_err(|err| Diagnostic {
+    location: Location {
+      specifier: specifier.clone(),
+      position: Position::from_pos(&text_lines, err.span().lo),
+    },
+    message: err.into_kind().msg().to_string(),
+  })?;
+
+  Ok(DefaultParsedAst {
+    specifier: specifier.clone(),
+    media_type,
+    source,
+    comments,
+    module,
+    text_lines,
+  })
 }
 
 #[cfg(test)]
