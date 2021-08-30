@@ -9,6 +9,7 @@ use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
 use crate::source::*;
+use crate::text_encoding::strip_bom_mut;
 
 use anyhow::anyhow;
 use anyhow::Result;
@@ -26,6 +27,7 @@ use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub enum ModuleGraphError {
@@ -190,12 +192,12 @@ pub struct Module {
   pub maybe_types_dependency: Option<(String, Resolved)>,
   pub media_type: MediaType,
   #[serde(rename = "size", serialize_with = "serialize_source")]
-  pub source: String,
+  pub source: Arc<String>,
   pub specifier: ModuleSpecifier,
 }
 
 impl Module {
-  pub fn new(specifier: ModuleSpecifier, source: String) -> Self {
+  pub fn new(specifier: ModuleSpecifier, source: Arc<String>) -> Self {
     Self {
       dependencies: Default::default(),
       maybe_cache_info: None,
@@ -343,11 +345,12 @@ fn load_data_url(specifier: &ModuleSpecifier) -> Result<Option<LoadResponse>> {
     .map_err(|_| anyhow!("Unable to decode data url."))?;
   let mut headers: HashMap<String, String> = HashMap::new();
   headers.insert("content-type".to_string(), url.mime_type().to_string());
-  let content = String::from_utf8(bytes)?;
+  let mut content = String::from_utf8(bytes)?;
+  strip_bom_mut(&mut content);
   Ok(Some(LoadResponse {
     specifier: specifier.clone(),
     maybe_headers: Some(headers),
-    content,
+    content: Arc::new(content),
   }))
 }
 
@@ -396,7 +399,7 @@ fn resolve(
 pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  content: &str,
+  content: Arc<String>,
   maybe_resolver: Option<&dyn Resolver>,
   ast_parser: &mut dyn AstParser,
 ) -> ModuleSlot {
@@ -411,7 +414,6 @@ pub(crate) fn parse_module(
       ModuleSlot::Module(parse_module_from_ast(
         specifier,
         maybe_headers,
-        content,
         parsed_ast,
         maybe_resolver,
       ))
@@ -423,12 +425,11 @@ pub(crate) fn parse_module(
 pub(crate) fn parse_module_from_ast(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  content: &str,
   parsed_ast: &dyn ParsedAst,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Module {
   // Init the module and determine its media type
-  let mut module = Module::new(specifier.clone(), content.to_string());
+  let mut module = Module::new(specifier.clone(), parsed_ast.source());
   module.media_type = get_media_type(specifier, maybe_headers);
 
   // Analyze the TypeScript triple-slash references
@@ -625,7 +626,7 @@ impl<'a> Builder<'a> {
     let module_slot = parse_module(
       &specifier,
       maybe_headers.as_ref(),
-      &response.content,
+      response.content,
       self.maybe_resolver,
       self.ast_parser,
     );
@@ -761,5 +762,5 @@ fn serialize_source<S>(source: &str, serializer: S) -> Result<S::Ok, S::Error>
 where
   S: Serializer,
 {
-  serializer.serialize_u32(source.as_bytes().iter().count() as u32)
+  serializer.serialize_u32(source.len() as u32)
 }

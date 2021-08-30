@@ -49,6 +49,7 @@ use source::Resolver;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::sync::Arc;
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
 
@@ -83,7 +84,7 @@ pub async fn create_graph(
 pub fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  content: &str,
+  content: Arc<String>,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_parser: Option<&mut dyn AstParser>,
 ) -> Result<Module, ModuleGraphError> {
@@ -110,14 +111,12 @@ pub fn parse_module(
 pub fn parse_module_from_ast(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  content: &str,
   parsed_ast: &dyn ParsedAst,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Module {
   graph::parse_module_from_ast(
     specifier,
     maybe_headers,
-    content,
     parsed_ast,
     maybe_resolver,
   )
@@ -176,7 +175,7 @@ pub fn js_parse_module(
   match graph::parse_module(
     &specifier,
     maybe_headers.as_ref(),
-    &content,
+    Arc::new(content),
     maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
     &mut ast_parser,
   ) {
@@ -318,7 +317,7 @@ mod tests {
     assert!(maybe_module.is_some());
     let module = maybe_module.unwrap();
     assert_eq!(
-      module.source,
+      module.source.as_str(),
       r#"export * from "https://example.com/c.ts";"#
     );
   }
@@ -415,12 +414,15 @@ mod tests {
     let result = parse_module(
       &specifier,
       None,
-      r#"
+      Arc::new(
+        r#"
     import { a } from "./a.ts";
     import * as b from "./b.ts";
     export { c } from "./c.ts";
     const d = await import("./d.ts");
-    "#,
+    "#
+        .to_string(),
+      ),
       None,
       None,
     );
@@ -443,9 +445,12 @@ mod tests {
     let result = parse_module(
       &specifier,
       maybe_headers,
-      r#"declare interface A {
+      Arc::new(
+        r#"declare interface A {
   a: string;
-}"#,
+}"#
+          .to_string(),
+      ),
       None,
       None,
     );

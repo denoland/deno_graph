@@ -2,7 +2,6 @@
 
 use crate::media_type::MediaType;
 use crate::module_specifier::ModuleSpecifier;
-use crate::text_encoding::strip_bom;
 
 use anyhow::Result;
 use lazy_static::lazy_static;
@@ -11,6 +10,7 @@ use regex::Regex;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fmt;
+use std::sync::Arc;
 use swc_common::comments::Comment;
 use swc_common::comments::SingleThreadedComments;
 use swc_common::BytePos;
@@ -210,6 +210,12 @@ impl fmt::Display for Diagnostic {
 
 /// A parsed module with comments.
 pub trait ParsedAst {
+  /// Gets the module specifier of the module.
+  fn specifier(&self) -> &ModuleSpecifier;
+  /// Gets the media type of the module.
+  fn media_type(&self) -> MediaType;
+  /// Gets the text content of the module.
+  fn source(&self) -> Arc<String>;
   /// Gets the comments found in the source file.
   fn comments(&self) -> &dyn swc_common::comments::Comments;
   /// Gets the parsed module—AST.
@@ -218,8 +224,6 @@ pub trait ParsedAst {
   /// Note: This should/will panic when the byte position is
   // outside the bounds of the source file.
   fn get_position(&self, pos: BytePos) -> Position;
-  /// Gets the media type of the module.
-  fn media_type(&self) -> MediaType;
 
   /// Get the module's leading comments, where triple slash directives might
   /// be located.
@@ -299,19 +303,33 @@ pub trait AstParser {
   fn parse(
     &mut self,
     specifier: &ModuleSpecifier,
-    source: &str,
+    source: Arc<String>,
     media_type: MediaType,
   ) -> Result<&dyn ParsedAst, Diagnostic>;
 }
 
 pub struct DefaultParsedAst {
+  specifier: ModuleSpecifier,
+  media_type: MediaType,
+  source: Arc<String>,
   comments: SingleThreadedComments,
   module: Module,
   text_lines: TextLines,
-  media_type: MediaType,
 }
 
 impl ParsedAst for DefaultParsedAst {
+  fn specifier(&self) -> &ModuleSpecifier {
+    &self.specifier
+  }
+
+  fn media_type(&self) -> MediaType {
+    self.media_type
+  }
+
+  fn source(&self) -> Arc<String> {
+    self.source.clone()
+  }
+
   fn comments(&self) -> &dyn swc_common::comments::Comments {
     &self.comments
   }
@@ -322,10 +340,6 @@ impl ParsedAst for DefaultParsedAst {
 
   fn get_position(&self, pos: BytePos) -> Position {
     Position::from_pos(&self.text_lines, pos)
-  }
-
-  fn media_type(&self) -> MediaType {
-    self.media_type
   }
 }
 
@@ -355,13 +369,12 @@ impl AstParser for DefaultAstParser {
   fn parse(
     &mut self,
     specifier: &ModuleSpecifier,
-    source: &str,
+    source: Arc<String>,
     media_type: MediaType,
   ) -> Result<&dyn ParsedAst, Diagnostic> {
-    let source = strip_bom(source);
-    let text_lines = TextLines::new(source);
+    let text_lines = TextLines::new(&source);
     let input =
-      StringInput::new(source, BytePos(0), BytePos(source.len() as u32));
+      StringInput::new(&source, BytePos(0), BytePos(source.len() as u32));
     let comments = SingleThreadedComments::default();
     let lexer = Lexer::new(media_type.into(), TARGET, input, Some(&comments));
     let mut parser = Parser::new_from(lexer);
@@ -376,10 +389,12 @@ impl AstParser for DefaultAstParser {
     self.modules.insert(
       specifier.clone(),
       DefaultParsedAst {
+        specifier: specifier.clone(),
+        media_type,
+        source,
         comments,
         module,
         text_lines,
-        media_type,
       },
     );
 
@@ -395,7 +410,8 @@ mod tests {
   fn test_parse() {
     let specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad specifier");
-    let source = r#"import {
+    let source = Arc::new(
+      r#"import {
       A,
       B,
       C,
@@ -411,7 +427,9 @@ mod tests {
     import React from "https://cdn.skypack.dev/react";
 
     const a = await import("./a.ts");
-    "#;
+    "#
+      .to_string(),
+    );
     let mut parser = DefaultAstParser::new();
     let result = parser.parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
@@ -424,7 +442,8 @@ mod tests {
   fn test_analyze_dependencies() {
     let specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad specifier");
-    let source = r#"
+    let source = Arc::new(
+      r#"
     import * as a from "./a.ts";
     import "./b.ts";
     import { c } from "./c.ts";
@@ -436,7 +455,9 @@ mod tests {
 
     import type { i } from "./i.d.ts";
     export type { j } from "./j.d.ts";
-    "#;
+    "#
+      .to_string(),
+    );
     let mut parser = DefaultAstParser::new();
     let result = parser.parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
