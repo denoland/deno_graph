@@ -104,6 +104,7 @@ console.log(
 const loader = `let wasmInstantiatePromise;
 switch (wasm_url.protocol) {
   case "file:": {
+    if ("permissions" in Deno) Deno.permissions.request({ name: "read", path: wasm_url });
     const wasmCode = await Deno.readFile(wasm_url);
     wasmInstantiatePromise = WebAssembly.instantiate(wasmCode, imports);
     break;
