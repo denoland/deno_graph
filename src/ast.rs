@@ -349,6 +349,7 @@ pub struct CapturingAstParser {
   modules: HashMap<ModuleSpecifier, DefaultParsedAst>,
 }
 
+#[cfg(feature = "rust")]
 impl CapturingAstParser {
   pub fn new() -> Self {
     Self {
@@ -357,7 +358,6 @@ impl CapturingAstParser {
   }
 
   /// Gets an AST by a module specifier if it was previously parsed.
-  #[cfg(feature = "rust")]
   pub fn get_ast(
     &self,
     specifier: &ModuleSpecifier,
