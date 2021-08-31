@@ -6,12 +6,12 @@ const hasPermissions = "permissions" in Deno;
 let readRequested = false;
 const netRequested = new Set<string>();
 
-async function requestRead(): Promise<void> {
+async function requestRead(path: URL): Promise<void> {
   if (readRequested || !hasPermissions) {
     return;
   }
   readRequested = true;
-  await Deno.permissions.request({ name: "read" });
+  await Deno.permissions.request({ name: "read", path });
 }
 
 async function requestNet(host: string): Promise<void> {
@@ -35,7 +35,7 @@ export async function load(
   try {
     switch (url.protocol) {
       case "file:": {
-        await requestRead();
+        await requestRead(url);
         const content = await Deno.readTextFile(url);
         return {
           specifier,

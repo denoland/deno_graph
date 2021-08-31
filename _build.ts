@@ -101,6 +101,33 @@ console.log(
   `${colors.bold(colors.green("Generating"))} lib JS bindings...`,
 );
 
+const loader = `let wasmInstantiatePromise;
+switch (wasm_url.protocol) {
+  case "file:": {
+    if ("permissions" in Deno) Deno.permissions.request({ name: "read", path: wasm_url });
+    const wasmCode = await Deno.readFile(wasm_url);
+    wasmInstantiatePromise = WebAssembly.instantiate(wasmCode, imports);
+    break;
+  }
+  case "https:":
+  case "http:": {
+    if ("permissions" in Deno) Deno.permissions.request({ name: "net", host: wasm_url.host });
+    const wasmResponse = await fetch(wasm_url);
+    if (wasmResponse.headers.get("content-type")?.toLowerCase().startsWith("application/wasm")) {
+      wasmInstantiatePromise = WebAssembly.instantiateStreaming(wasmResponse, imports);
+    } else {
+      wasmInstantiatePromise = WebAssembly.instantiate(await wasmResponse.arrayBuffer(), imports);
+    }
+    break;
+  }
+  default:
+    throw new Error(\`Unsupported protocol: \${wasm_url.protocol}\`);
+}
+
+const wasmInstance = (await wasmInstantiatePromise).instance;
+const wasm = wasmInstance.exports;
+`;
+
 const generatedJs = await Deno.readTextFile(
   "./target/wasm32-bindgen-deno-js/deno_graph.js",
 );
@@ -108,21 +135,13 @@ const bindingJs = `${copyrightHeader}
 // @generated file from build script, do not edit
 // deno-lint-ignore-file
 
-${
-  generatedJs.replace(
-    /^\s*wasmCode\s=\sawait Deno\.readFile\(wasm_url\);$/sm,
-    `if ("permissions" in Deno) {\nDeno.permissions.request({ name: "read" });\n}\nwasmCode = await Deno.readFile(wasm_url);`,
-  ).replace(
-    /^\s*wasmCode\s=\sawait\s\(await\sfetch\(wasm_url\)\)\.arrayBuffer\(\);$/sm,
-    `if ("permissions" in Deno) {\nDeno.permissions.request({ name: "net", host: wasm_url.host });\n}\nwasmCode = await (await fetch(wasm_url)).arrayBuffer();`,
-  )
-}
+${generatedJs.replace(/^let\swasmCode\s.+/ms, loader)}
 
 /* for testing and debugging */
 export const _wasm = wasm;
 export const _wasmInstance = wasmInstance;
 `;
-const libDenoGraphJs = "./lib/deno_graph.js";
+const libDenoGraphJs = "./lib/deno_graph.generated.js";
 console.log(`  write ${colors.yellow(libDenoGraphJs)}`);
 await Deno.writeTextFile(libDenoGraphJs, bindingJs);
 
@@ -130,8 +149,7 @@ const denoFmtCmd = [
   "deno",
   "fmt",
   "--quiet",
-  "./lib/deno_graph.wasm.js",
-  "./lib/deno_graph.js",
+  "./lib/deno_graph.generated.js",
 ];
 console.log(`  ${colors.bold(colors.gray(denoFmtCmd.join(" ")))}`);
 const denoFmtCmdStatus = Deno.run({ cmd: denoFmtCmd }).status();
