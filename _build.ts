@@ -141,7 +141,7 @@ ${generatedJs.replace(/^let\swasmCode\s.+/ms, loader)}
 export const _wasm = wasm;
 export const _wasmInstance = wasmInstance;
 `;
-const libDenoGraphJs = "./lib/deno_graph.js";
+const libDenoGraphJs = "./lib/deno_graph.generated.js";
 console.log(`  write ${colors.yellow(libDenoGraphJs)}`);
 await Deno.writeTextFile(libDenoGraphJs, bindingJs);
 
@@ -149,8 +149,7 @@ const denoFmtCmd = [
   "deno",
   "fmt",
   "--quiet",
-  "./lib/deno_graph.wasm.js",
-  "./lib/deno_graph.js",
+  "./lib/deno_graph.generated.js",
 ];
 console.log(`  ${colors.bold(colors.gray(denoFmtCmd.join(" ")))}`);
 const denoFmtCmdStatus = Deno.run({ cmd: denoFmtCmd }).status();

@@ -3,7 +3,7 @@
 import {
   createGraph as jsCreateGraph,
   parseModule as jsParseModule,
-} from "./lib/deno_graph.js";
+} from "./lib/deno_graph.generated.js";
 import { load as defaultLoad } from "./lib/loader.ts";
 import type {
   CacheInfo,
