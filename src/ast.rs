@@ -357,6 +357,7 @@ impl CapturingAstParser {
   }
 
   /// Gets an AST by a module specifier if it was previously parsed.
+  #[cfg(feature = "rust")]
   pub fn get_ast(
     &self,
     specifier: &ModuleSpecifier,
