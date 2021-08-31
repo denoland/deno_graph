@@ -16,6 +16,8 @@ mod text_encoding;
 #[cfg(feature = "rust")]
 pub use ast::AstParser;
 #[cfg(feature = "rust")]
+pub use ast::CapturingAstParser;
+#[cfg(feature = "rust")]
 pub use ast::DefaultAstParser;
 #[cfg(feature = "rust")]
 pub use ast::DefaultParsedAst;
@@ -389,7 +391,7 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let test02_specifier =
       ModuleSpecifier::parse("file:///a/test02.ts").expect("bad url");
-    let mut parser = crate::ast::DefaultAstParser::new();
+    let mut parser = crate::ast::CapturingAstParser::new();
     create_graph(
       root_specifier.clone(),
       &mut loader,
