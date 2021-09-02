@@ -64,7 +64,6 @@ cfg_if! {
 
     /// Parse an individual module, returning the module as a result, otherwise
     /// erroring with a module graph error.
-    #[cfg(feature = "rust")]
     pub fn parse_module(
       specifier: &ModuleSpecifier,
       maybe_headers: Option<&HashMap<String, String>>,
@@ -91,7 +90,6 @@ cfg_if! {
     }
 
     /// Parse an individual module from an AST, returning the module.
-    #[cfg(feature = "rust")]
     pub fn parse_module_from_ast(
       specifier: &ModuleSpecifier,
       maybe_headers: Option<&HashMap<String, String>>,
