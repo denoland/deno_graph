@@ -1,50 +1,19 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
+#[macro_use]
+extern crate cfg_if;
+
 mod ast;
-#[cfg(feature = "wasm")]
-mod checksum;
 mod colors;
 mod graph;
 mod info;
-#[cfg(feature = "wasm")]
-mod js_graph;
 mod media_type;
 mod module_specifier;
 pub mod source;
 mod text_encoding;
 
-#[cfg(feature = "rust")]
-pub use ast::AstParser;
-#[cfg(feature = "rust")]
-pub use ast::CapturingAstParser;
-#[cfg(feature = "rust")]
-pub use ast::DefaultAstParser;
-#[cfg(feature = "rust")]
-pub use ast::DefaultParsedAst;
-#[cfg(feature = "rust")]
-pub use ast::ParsedAst;
-#[cfg(feature = "rust")]
-pub use ast::Position;
 use graph::Builder;
-#[cfg(feature = "rust")]
-pub use graph::Module;
-#[cfg(feature = "rust")]
-pub use graph::ModuleGraph;
-#[cfg(feature = "rust")]
-pub use graph::ModuleGraphError;
 use graph::ModuleSlot;
-#[cfg(feature = "wasm")]
-pub use js_graph::JsLoader;
-#[cfg(feature = "wasm")]
-pub use js_graph::JsLocker;
-#[cfg(feature = "wasm")]
-pub use js_graph::JsResolver;
-#[cfg(feature = "rust")]
-pub use media_type::MediaType;
-#[cfg(feature = "rust")]
-pub use module_specifier::ModuleSpecifier;
-#[cfg(feature = "rust")]
-use source::Loader;
 use source::Locker;
 use source::Resolver;
 
@@ -52,138 +21,162 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
-#[cfg(feature = "wasm")]
-use wasm_bindgen::prelude::*;
 
-/// Create a module graph, based on loanding and recursively analyzing the
-/// dependencies of the module, returning the resulting graph.
-#[cfg(feature = "rust")]
-pub async fn create_graph(
-  root_specifier: ModuleSpecifier,
-  loader: &mut dyn Loader,
-  maybe_resolver: Option<&dyn Resolver>,
-  maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
-  maybe_parser: Option<&mut dyn AstParser>,
-) -> ModuleGraph {
-  let mut default_parser = ast::DefaultAstParser::new();
-  let builder = Builder::new(
-    root_specifier,
-    false,
-    loader,
-    maybe_resolver,
-    maybe_locker,
-    match maybe_parser {
-      Some(parser) => parser,
-      None => &mut default_parser,
-    },
-  );
-  builder.build().await
-}
+cfg_if! {
+  if #[cfg(feature = "rust")] {
+    pub use ast::AstParser;
+    pub use ast::CapturingAstParser;
+    pub use ast::DefaultAstParser;
+    pub use ast::DefaultParsedAst;
+    pub use ast::ParsedAst;
+    pub use ast::Position;
+    pub use graph::Module;
+    pub use graph::ModuleGraph;
+    pub use graph::ModuleGraphError;
+    pub use graph::Resolved;
+    pub use media_type::MediaType;
+    pub use module_specifier::ModuleSpecifier;
+    use source::Loader;
 
-/// Parse an individual module, returning the module as a result, otherwise
-/// erroring with a module graph error.
-#[cfg(feature = "rust")]
-pub fn parse_module(
-  specifier: &ModuleSpecifier,
-  maybe_headers: Option<&HashMap<String, String>>,
-  content: Arc<String>,
-  maybe_resolver: Option<&dyn Resolver>,
-  maybe_parser: Option<&mut dyn AstParser>,
-) -> Result<Module, ModuleGraphError> {
-  let mut default_parser = ast::DefaultAstParser::new();
-  match graph::parse_module(
-    specifier,
-    maybe_headers,
-    content,
-    maybe_resolver,
-    if let Some(parser) = maybe_parser {
-      parser
-    } else {
-      &mut default_parser
-    },
-  ) {
-    ModuleSlot::Module(module) => Ok(module),
-    ModuleSlot::Err(err) => Err(err),
-    _ => unreachable!("unreachable ModuleSlot variant"),
+    /// Create a module graph, based on loading and recursively analyzing the
+    /// dependencies of the module, returning the resulting graph.
+    pub async fn create_graph(
+      root_specifier: ModuleSpecifier,
+      loader: &mut dyn Loader,
+      maybe_resolver: Option<&dyn Resolver>,
+      maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+      maybe_parser: Option<&mut dyn AstParser>,
+    ) -> ModuleGraph {
+      let mut default_parser = ast::DefaultAstParser::new();
+      let builder = Builder::new(
+        root_specifier,
+        false,
+        loader,
+        maybe_resolver,
+        maybe_locker,
+        match maybe_parser {
+          Some(parser) => parser,
+          None => &mut default_parser,
+        },
+      );
+      builder.build().await
+    }
+
+    /// Parse an individual module, returning the module as a result, otherwise
+    /// erroring with a module graph error.
+    pub fn parse_module(
+      specifier: &ModuleSpecifier,
+      maybe_headers: Option<&HashMap<String, String>>,
+      content: Arc<String>,
+      maybe_resolver: Option<&dyn Resolver>,
+      maybe_parser: Option<&mut dyn AstParser>,
+    ) -> Result<Module, ModuleGraphError> {
+      let mut default_parser = ast::DefaultAstParser::new();
+      match graph::parse_module(
+        specifier,
+        maybe_headers,
+        content,
+        maybe_resolver,
+        if let Some(parser) = maybe_parser {
+          parser
+        } else {
+          &mut default_parser
+        },
+      ) {
+        ModuleSlot::Module(module) => Ok(module),
+        ModuleSlot::Err(err) => Err(err),
+        _ => unreachable!("unreachable ModuleSlot variant"),
+      }
+    }
+
+    /// Parse an individual module from an AST, returning the module.
+    pub fn parse_module_from_ast(
+      specifier: &ModuleSpecifier,
+      maybe_headers: Option<&HashMap<String, String>>,
+      parsed_ast: &dyn ParsedAst,
+      maybe_resolver: Option<&dyn Resolver>,
+    ) -> Module {
+      graph::parse_module_from_ast(
+        specifier,
+        maybe_headers,
+        parsed_ast,
+        maybe_resolver,
+      )
+    }
   }
 }
 
-/// Parse an individual module from an AST, returning the module.
-#[cfg(feature = "rust")]
-pub fn parse_module_from_ast(
-  specifier: &ModuleSpecifier,
-  maybe_headers: Option<&HashMap<String, String>>,
-  parsed_ast: &dyn ParsedAst,
-  maybe_resolver: Option<&dyn Resolver>,
-) -> Module {
-  graph::parse_module_from_ast(
-    specifier,
-    maybe_headers,
-    parsed_ast,
-    maybe_resolver,
-  )
-}
+cfg_if! {
+  if #[cfg(feature = "wasm")] {
+    mod checksum;
+    mod js_graph;
 
-#[cfg(feature = "wasm")]
-#[wasm_bindgen(js_name = createGraph)]
-pub async fn js_create_graph(
-  root_specifier: String,
-  load: js_sys::Function,
-  maybe_cache_info: Option<js_sys::Function>,
-  maybe_resolve: Option<js_sys::Function>,
-  maybe_check: Option<js_sys::Function>,
-  maybe_get_checksum: Option<js_sys::Function>,
-) -> Result<js_graph::ModuleGraph, JsValue> {
-  let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
-  let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
-  let maybe_locker: Option<Rc<RefCell<dyn Locker>>> =
-    if maybe_check.is_some() || maybe_get_checksum.is_some() {
-      let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum);
-      Some(Rc::new(RefCell::new(locker)))
-    } else {
-      None
-    };
-  let root_specifier =
-    module_specifier::ModuleSpecifier::parse(&root_specifier)
-      .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-  let mut ast_parser = ast::DefaultAstParser::new();
-  let builder = Builder::new(
-    root_specifier,
-    false,
-    &mut loader,
-    maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-    maybe_locker,
-    &mut ast_parser,
-  );
-  let graph = builder.build().await;
-  Ok(js_graph::ModuleGraph(graph))
-}
+    pub use js_graph::JsLoader;
+    pub use js_graph::JsLocker;
+    pub use js_graph::JsResolver;
 
-#[cfg(feature = "wasm")]
-#[wasm_bindgen(js_name = parseModule)]
-pub fn js_parse_module(
-  specifier: String,
-  maybe_headers: JsValue,
-  content: String,
-  maybe_resolve: Option<js_sys::Function>,
-) -> Result<js_graph::Module, JsValue> {
-  let maybe_headers: Option<HashMap<String, String>> = maybe_headers
-    .into_serde()
-    .map_err(|err| js_sys::Error::new(&err.to_string()))?;
-  let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
-    .map_err(|err| js_sys::Error::new(&err.to_string()))?;
-  let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
-  let mut ast_parser = ast::DefaultAstParser::new();
-  match graph::parse_module(
-    &specifier,
-    maybe_headers.as_ref(),
-    Arc::new(content),
-    maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-    &mut ast_parser,
-  ) {
-    ModuleSlot::Module(module) => Ok(js_graph::Module(module)),
-    ModuleSlot::Err(err) => Err(js_sys::Error::new(&err.to_string()).into()),
-    _ => unreachable!("unreachable ModuleSlot variant"),
+    use wasm_bindgen::prelude::*;
+
+    #[wasm_bindgen(js_name = createGraph)]
+    pub async fn js_create_graph(
+      root_specifier: String,
+      load: js_sys::Function,
+      maybe_cache_info: Option<js_sys::Function>,
+      maybe_resolve: Option<js_sys::Function>,
+      maybe_check: Option<js_sys::Function>,
+      maybe_get_checksum: Option<js_sys::Function>,
+    ) -> Result<js_graph::ModuleGraph, JsValue> {
+      let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
+      let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
+      let maybe_locker: Option<Rc<RefCell<dyn Locker>>> =
+        if maybe_check.is_some() || maybe_get_checksum.is_some() {
+          let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum);
+          Some(Rc::new(RefCell::new(locker)))
+        } else {
+          None
+        };
+      let root_specifier =
+        module_specifier::ModuleSpecifier::parse(&root_specifier)
+          .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+      let mut ast_parser = ast::DefaultAstParser::new();
+      let builder = Builder::new(
+        root_specifier,
+        false,
+        &mut loader,
+        maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+        maybe_locker,
+        &mut ast_parser,
+      );
+      let graph = builder.build().await;
+      Ok(js_graph::ModuleGraph(graph))
+    }
+
+    #[wasm_bindgen(js_name = parseModule)]
+    pub fn js_parse_module(
+      specifier: String,
+      maybe_headers: JsValue,
+      content: String,
+      maybe_resolve: Option<js_sys::Function>,
+    ) -> Result<js_graph::Module, JsValue> {
+      let maybe_headers: Option<HashMap<String, String>> = maybe_headers
+        .into_serde()
+        .map_err(|err| js_sys::Error::new(&err.to_string()))?;
+      let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
+        .map_err(|err| js_sys::Error::new(&err.to_string()))?;
+      let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
+      let mut ast_parser = ast::DefaultAstParser::new();
+      match graph::parse_module(
+        &specifier,
+        maybe_headers.as_ref(),
+        Arc::new(content),
+        maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+        &mut ast_parser,
+      ) {
+        ModuleSlot::Module(module) => Ok(js_graph::Module(module)),
+        ModuleSlot::Err(err) => Err(js_sys::Error::new(&err.to_string()).into()),
+        _ => unreachable!("unreachable ModuleSlot variant"),
+      }
+    }
   }
 }
 

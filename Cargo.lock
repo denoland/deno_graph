@@ -149,6 +149,7 @@ name = "deno_graph"
 version = "0.3.0"
 dependencies = [
  "anyhow",
+ "cfg-if 1.0.0",
  "data-url",
  "futures",
  "js-sys",
