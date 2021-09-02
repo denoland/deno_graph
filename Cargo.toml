@@ -1,6 +1,6 @@
 [package]
 name = "deno_graph"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2018"
 description = "module graph analysis for deno"
 homepage = "https://deno.land/"
