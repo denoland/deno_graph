@@ -1,9 +1,11 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
+use crate::analyze_deno_types;
+use crate::analyze_dependencies;
+use crate::analyze_ts_references;
 use crate::ast;
-use crate::ast::AstParser;
-use crate::ast::ParsedAst;
 use crate::ast::Range;
+use crate::ast::SourceParser;
 use crate::media_type::MediaType;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -14,6 +16,7 @@ use crate::text_encoding::strip_bom_mut;
 use anyhow::anyhow;
 use anyhow::Result;
 use data_url::DataUrl;
+use deno_ast::ParsedSource;
 use futures::future;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
@@ -32,7 +35,7 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub enum ModuleGraphError {
   LoadingErr(anyhow::Error),
-  ParseErr(ast::Diagnostic),
+  ParseErr(deno_ast::Diagnostic),
   InvalidSource(ModuleSpecifier),
 }
 
@@ -68,8 +71,8 @@ impl fmt::Display for ModuleGraphError {
   }
 }
 
-impl From<ast::Diagnostic> for ModuleGraphError {
-  fn from(diagnostic: ast::Diagnostic) -> Self {
+impl From<deno_ast::Diagnostic> for ModuleGraphError {
+  fn from(diagnostic: deno_ast::Diagnostic) -> Self {
     Self::ParseErr(diagnostic)
   }
 }
@@ -401,20 +404,20 @@ pub(crate) fn parse_module(
   maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<String>,
   maybe_resolver: Option<&dyn Resolver>,
-  ast_parser: &mut dyn AstParser,
+  source_parser: &mut dyn SourceParser,
 ) -> ModuleSlot {
   // Parse the module and start analyzing the module.
-  match ast_parser.parse(
+  match source_parser.parse(
     specifier,
     content,
     get_media_type(specifier, maybe_headers),
   ) {
-    Ok(parsed_ast) => {
+    Ok(parsed_source) => {
       // Return the module as a valid module
       ModuleSlot::Module(parse_module_from_ast(
         specifier,
         maybe_headers,
-        parsed_ast,
+        &parsed_source,
         maybe_resolver,
       ))
     }
@@ -425,15 +428,16 @@ pub(crate) fn parse_module(
 pub(crate) fn parse_module_from_ast(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  parsed_ast: &dyn ParsedAst,
+  parsed_source: &ParsedSource,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Module {
   // Init the module and determine its media type
-  let mut module = Module::new(specifier.clone(), parsed_ast.source());
+  let mut module =
+    Module::new(specifier.clone(), parsed_source.source().text());
   module.media_type = get_media_type(specifier, maybe_headers);
 
   // Analyze the TypeScript triple-slash references
-  for reference in parsed_ast.analyze_ts_references() {
+  for reference in analyze_ts_references(parsed_source) {
     match reference {
       ast::TypeScriptReference::Path(specifier, range) => {
         let resolved_dependency =
@@ -474,7 +478,7 @@ pub(crate) fn parse_module_from_ast(
   }
 
   // Analyze ES dependencies
-  let descriptors = parsed_ast.analyze_dependencies();
+  let descriptors = analyze_dependencies(parsed_source);
   for desc in descriptors {
     let dep = module
       .dependencies
@@ -483,13 +487,12 @@ pub(crate) fn parse_module_from_ast(
     let resolved_dependency = resolve(
       &desc.specifier,
       &module.specifier,
-      &Range::from_span(parsed_ast, &desc.specifier_span),
+      &Range::from_span(parsed_source, &desc.specifier_span),
       maybe_resolver,
     );
     dep.maybe_code = resolved_dependency;
     let specifier = module.specifier.clone();
-    let maybe_type = parsed_ast
-      .analyze_deno_types(&desc)
+    let maybe_type = analyze_deno_types(parsed_source, &desc)
       .map(|(s, r)| resolve(&s, &specifier, &r, maybe_resolver))
       .unwrap_or_else(|| Resolved::None);
     if dep.maybe_type.is_none() {
@@ -522,7 +525,7 @@ pub(crate) struct Builder<'a> {
   loader: &'a mut dyn Loader,
   maybe_resolver: Option<&'a dyn Resolver>,
   pending: FuturesUnordered<LoadFuture>,
-  ast_parser: &'a mut dyn AstParser,
+  source_parser: &'a mut dyn SourceParser,
 }
 
 impl<'a> Builder<'a> {
@@ -532,7 +535,7 @@ impl<'a> Builder<'a> {
     loader: &'a mut dyn Loader,
     maybe_resolver: Option<&'a dyn Resolver>,
     maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
-    ast_parser: &'a mut dyn AstParser,
+    source_parser: &'a mut dyn SourceParser,
   ) -> Self {
     Self {
       is_dynamic_root,
@@ -540,7 +543,7 @@ impl<'a> Builder<'a> {
       loader,
       maybe_resolver,
       pending: FuturesUnordered::new(),
-      ast_parser,
+      source_parser,
     }
   }
 
@@ -628,7 +631,7 @@ impl<'a> Builder<'a> {
       maybe_headers.as_ref(),
       response.content,
       self.maybe_resolver,
-      self.ast_parser,
+      self.source_parser,
     );
 
     if let ModuleSlot::Module(module) = &module_slot {

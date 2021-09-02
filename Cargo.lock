@@ -145,12 +145,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "deno_ast"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae3e65d075338bd10fc21c3be6acf336f6900f971af28bca31011f12ababe741"
+dependencies = [
+ "serde",
+ "swc_atoms",
+ "swc_common",
+ "swc_ecmascript",
+ "text_lines",
+]
+
+[[package]]
 name = "deno_graph"
 version = "0.3.1"
 dependencies = [
  "anyhow",
  "cfg-if 1.0.0",
  "data-url",
+ "deno_ast",
  "futures",
  "js-sys",
  "lazy_static",
@@ -159,10 +173,7 @@ dependencies = [
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
- "swc_common",
- "swc_ecmascript",
  "termcolor",
- "text_lines",
  "tokio",
  "url",
  "wasm-bindgen",
@@ -933,9 +944,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecmascript"
-version = "0.60.0"
+version = "0.62.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cb79d3e236ce0118e370f75a37a85ccc527338cf8d4697a7d23419711a6169f"
+checksum = "e02533e972700f8d97d293c95d06d83ea353c0ac666ec34b4dc9bef54363568d"
 dependencies = [
  "swc_ecma_ast",
  "swc_ecma_dep_graph",
@@ -1012,9 +1023,12 @@ dependencies = [
 
 [[package]]
 name = "text_lines"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "116279ecd8fa26fbdcf20c79ee6f85a5ce325a953486e11e71c51670bdaa308f"
+checksum = "3491c6ec3ca2e18d814fad93f2c436c83a0086fefbee851771fc7be28519cbd0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "tinyvec"

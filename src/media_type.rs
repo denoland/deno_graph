@@ -172,6 +172,24 @@ impl fmt::Display for MediaType {
   }
 }
 
+impl From<MediaType> for deno_ast::MediaType {
+  fn from(media_type: MediaType) -> Self {
+    use deno_ast::MediaType::*;
+    match media_type {
+      MediaType::JavaScript => JavaScript,
+      MediaType::Jsx => Jsx,
+      MediaType::TypeScript => TypeScript,
+      MediaType::Dts => Dts,
+      MediaType::Tsx => Tsx,
+      MediaType::Json => Json,
+      MediaType::Wasm => Wasm,
+      MediaType::TsBuildInfo => TsBuildInfo,
+      MediaType::SourceMap => SourceMap,
+      MediaType::Unknown => Unknown,
+    }
+  }
+}
+
 impl<'a> From<&'a Path> for MediaType {
   fn from(path: &'a Path) -> Self {
     Self::from_path(path)
