@@ -141,14 +141,14 @@ cfg_if! {
       let root_specifier =
         module_specifier::ModuleSpecifier::parse(&root_specifier)
           .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-      let mut ast_parser = ast::DefaultSourceParser::new();
+      let source_parser = ast::DefaultSourceParser::new();
       let builder = Builder::new(
         root_specifier,
         false,
         &mut loader,
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         maybe_locker,
-        &mut ast_parser,
+        &source_parser,
       );
       let graph = builder.build().await;
       Ok(js_graph::ModuleGraph(graph))
@@ -167,13 +167,13 @@ cfg_if! {
       let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
       let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
-      let mut ast_parser = ast::DefaultSourceParser::new();
+      let source_parser = ast::DefaultSourceParser::new();
       match graph::parse_module(
         &specifier,
         maybe_headers.as_ref(),
         Arc::new(content),
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-        &mut ast_parser,
+        &source_parser,
       ) {
         ModuleSlot::Module(module) => Ok(js_graph::Module(module)),
         ModuleSlot::Err(err) => Err(js_sys::Error::new(&err.to_string()).into()),

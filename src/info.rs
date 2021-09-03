@@ -433,14 +433,14 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
-    let mut source_parser = DefaultSourceParser::new();
+    let source_parser = DefaultSourceParser::new();
     let builder = Builder::new(
       root_specifier,
       false,
       &mut loader,
       None,
       None,
-      &mut source_parser,
+      &source_parser,
     );
     let graph = builder.build().await;
     assert_eq!(
