@@ -404,7 +404,7 @@ pub(crate) fn parse_module(
   maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<String>,
   maybe_resolver: Option<&dyn Resolver>,
-  source_parser: &mut dyn SourceParser,
+  source_parser: &dyn SourceParser,
 ) -> ModuleSlot {
   // Parse the module and start analyzing the module.
   match source_parser.parse(
@@ -525,7 +525,7 @@ pub(crate) struct Builder<'a> {
   loader: &'a mut dyn Loader,
   maybe_resolver: Option<&'a dyn Resolver>,
   pending: FuturesUnordered<LoadFuture>,
-  source_parser: &'a mut dyn SourceParser,
+  source_parser: &'a dyn SourceParser,
 }
 
 impl<'a> Builder<'a> {
@@ -535,7 +535,7 @@ impl<'a> Builder<'a> {
     loader: &'a mut dyn Loader,
     maybe_resolver: Option<&'a dyn Resolver>,
     maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
-    source_parser: &'a mut dyn SourceParser,
+    source_parser: &'a dyn SourceParser,
   ) -> Self {
     Self {
       is_dynamic_root,

@@ -29,6 +29,7 @@ cfg_if! {
     pub use ast::CapturingSourceParser;
     pub use ast::DefaultSourceParser;
     pub use ast::Location;
+    pub use ast::Position;
     pub use ast::analyze_ts_references;
     pub use ast::analyze_dependencies;
     pub use ast::analyze_deno_types;
@@ -49,7 +50,7 @@ cfg_if! {
       maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
       maybe_parser: Option<&mut dyn SourceParser>,
     ) -> ModuleGraph {
-      let mut default_parser = ast::DefaultSourceParser::new();
+      let default_parser = ast::DefaultSourceParser::new();
       let builder = Builder::new(
         root_specifier,
         false,
@@ -58,7 +59,7 @@ cfg_if! {
         maybe_locker,
         match maybe_parser {
           Some(parser) => parser,
-          None => &mut default_parser,
+          None => &default_parser,
         },
       );
       builder.build().await

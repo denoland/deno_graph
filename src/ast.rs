@@ -17,6 +17,7 @@ use lazy_static::lazy_static;
 use regex::Match;
 use regex::Regex;
 use serde::Serialize;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
@@ -216,7 +217,7 @@ pub fn analyze_ts_references(
 pub trait SourceParser {
   /// Parses the provided information to a `ParsedSource`.
   fn parse(
-    &mut self,
+    &self,
     specifier: &ModuleSpecifier,
     source: Arc<String>,
     media_type: MediaType,
@@ -226,14 +227,14 @@ pub trait SourceParser {
 /// An implementation of `SourceParser` that stores the parsed ASTs.
 #[derive(Default)]
 pub struct CapturingSourceParser {
-  modules: HashMap<ModuleSpecifier, ParsedSource>,
+  modules: RefCell<HashMap<ModuleSpecifier, ParsedSource>>,
 }
 
 #[cfg(feature = "rust")]
 impl CapturingSourceParser {
   pub fn new() -> Self {
     Self {
-      modules: HashMap::new(),
+      modules: RefCell::new(HashMap::new()),
     }
   }
 
@@ -242,13 +243,13 @@ impl CapturingSourceParser {
     &self,
     specifier: &ModuleSpecifier,
   ) -> Option<ParsedSource> {
-    self.modules.get(specifier).map(|m| m.to_owned())
+    self.modules.borrow().get(specifier).map(|m| m.to_owned())
   }
 }
 
 impl SourceParser for CapturingSourceParser {
   fn parse(
-    &mut self,
+    &self,
     specifier: &ModuleSpecifier,
     source: Arc<String>,
     media_type: MediaType,
@@ -261,7 +262,10 @@ impl SourceParser for CapturingSourceParser {
       maybe_syntax: None,
     })?;
 
-    self.modules.insert(specifier.clone(), module.clone());
+    self
+      .modules
+      .borrow_mut()
+      .insert(specifier.clone(), module.clone());
 
     Ok(module)
   }
@@ -279,7 +283,7 @@ impl DefaultSourceParser {
 
 impl SourceParser for DefaultSourceParser {
   fn parse(
-    &mut self,
+    &self,
     specifier: &ModuleSpecifier,
     source: Arc<String>,
     media_type: MediaType,
@@ -322,7 +326,7 @@ mod tests {
     "#
       .to_string(),
     );
-    let mut parser = DefaultSourceParser::new();
+    let parser = DefaultSourceParser::new();
     let result = parser.parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_source = result.unwrap();
@@ -350,7 +354,7 @@ mod tests {
     "#
       .to_string(),
     );
-    let mut parser = DefaultSourceParser::new();
+    let parser = DefaultSourceParser::new();
     let result = parser.parse(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_source = result.unwrap();
