@@ -215,8 +215,8 @@ pub fn analyze_ts_references(
 
 /// Parses text to a `ParsedSource`.
 pub trait SourceParser {
-  /// Parses the provided information to a `ParsedSource`.
-  fn parse(
+  /// Parses the provided module to a `ParsedSource`.
+  fn parse_module(
     &self,
     specifier: &ModuleSpecifier,
     source: Arc<String>,
@@ -248,7 +248,7 @@ impl CapturingSourceParser {
 }
 
 impl SourceParser for CapturingSourceParser {
-  fn parse(
+  fn parse_module(
     &self,
     specifier: &ModuleSpecifier,
     source: Arc<String>,
@@ -282,7 +282,7 @@ impl DefaultSourceParser {
 }
 
 impl SourceParser for DefaultSourceParser {
-  fn parse(
+  fn parse_module(
     &self,
     specifier: &ModuleSpecifier,
     source: Arc<String>,
@@ -327,7 +327,7 @@ mod tests {
       .to_string(),
     );
     let parser = DefaultSourceParser::new();
-    let result = parser.parse(&specifier, source, MediaType::TypeScript);
+    let result = parser.parse_module(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_source = result.unwrap();
     assert_eq!(analyze_dependencies(&parsed_source).len(), 6);
@@ -355,7 +355,7 @@ mod tests {
       .to_string(),
     );
     let parser = DefaultSourceParser::new();
-    let result = parser.parse(&specifier, source, MediaType::TypeScript);
+    let result = parser.parse_module(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_source = result.unwrap();
     let dependencies = analyze_dependencies(&parsed_source);

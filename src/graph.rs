@@ -407,7 +407,7 @@ pub(crate) fn parse_module(
   source_parser: &dyn SourceParser,
 ) -> ModuleSlot {
   // Parse the module and start analyzing the module.
-  match source_parser.parse(
+  match source_parser.parse_module(
     specifier,
     content,
     get_media_type(specifier, maybe_headers),
