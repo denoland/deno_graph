@@ -74,7 +74,7 @@ cfg_if! {
       maybe_resolver: Option<&dyn Resolver>,
       maybe_parser: Option<&dyn SourceParser>,
     ) -> Result<Module, ModuleGraphError> {
-      let mut default_parser = ast::DefaultSourceParser::new();
+      let default_parser = ast::DefaultSourceParser::new();
       match graph::parse_module(
         specifier,
         maybe_headers,
@@ -83,7 +83,7 @@ cfg_if! {
         if let Some(parser) = maybe_parser {
           parser
         } else {
-          &mut default_parser
+          &default_parser
         },
       ) {
         ModuleSlot::Module(module) => Ok(module),
@@ -387,13 +387,13 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let test02_specifier =
       ModuleSpecifier::parse("file:///a/test02.ts").expect("bad url");
-    let mut parser = crate::ast::CapturingSourceParser::new();
+    let parser = crate::ast::CapturingSourceParser::new();
     create_graph(
       root_specifier.clone(),
       &mut loader,
       None,
       None,
-      Some(&mut parser),
+      Some(&parser),
     )
     .await;
     let root_ast = parser.get_parsed_source(&root_specifier).unwrap();
