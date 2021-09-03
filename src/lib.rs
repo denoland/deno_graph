@@ -48,7 +48,7 @@ cfg_if! {
       loader: &mut dyn Loader,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
-      maybe_parser: Option<&mut dyn SourceParser>,
+      maybe_parser: Option<&dyn SourceParser>,
     ) -> ModuleGraph {
       let default_parser = ast::DefaultSourceParser::new();
       let builder = Builder::new(
@@ -72,7 +72,7 @@ cfg_if! {
       maybe_headers: Option<&HashMap<String, String>>,
       content: Arc<String>,
       maybe_resolver: Option<&dyn Resolver>,
-      maybe_parser: Option<&mut dyn SourceParser>,
+      maybe_parser: Option<&dyn SourceParser>,
     ) -> Result<Module, ModuleGraphError> {
       let mut default_parser = ast::DefaultSourceParser::new();
       match graph::parse_module(
