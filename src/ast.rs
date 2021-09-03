@@ -12,7 +12,7 @@ use deno_ast::swc::dep_graph::DependencyKind;
 use deno_ast::Diagnostic;
 use deno_ast::ParseParams;
 use deno_ast::ParsedSource;
-use deno_ast::ParsedSourceTextInfo;
+use deno_ast::SourceTextInfo;
 use lazy_static::lazy_static;
 use regex::Match;
 use regex::Regex;
@@ -256,7 +256,7 @@ impl SourceParser for CapturingSourceParser {
   ) -> Result<ParsedSource, Diagnostic> {
     let module = parse_module(ParseParams {
       specifier: specifier.to_string(),
-      source: ParsedSourceTextInfo::new(BytePos(0), source),
+      source: SourceTextInfo::new(BytePos(0), source),
       media_type: media_type.into(),
       capture_tokens: false,
       maybe_syntax: None,
@@ -290,7 +290,7 @@ impl SourceParser for DefaultSourceParser {
   ) -> Result<ParsedSource, Diagnostic> {
     parse_module(ParseParams {
       specifier: specifier.to_string(),
-      source: ParsedSourceTextInfo::new(BytePos(0), source),
+      source: SourceTextInfo::new(BytePos(0), source),
       media_type: media_type.into(),
       capture_tokens: false,
       maybe_syntax: None,
