@@ -343,7 +343,7 @@ impl Resolved {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::ast::DefaultAstParser;
+  use crate::ast::DefaultSourceParser;
   use crate::colors::strip_ansi_codes;
   use crate::graph::Builder;
   use crate::source::CacheInfo;
@@ -433,14 +433,14 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
-    let mut ast_parser = DefaultAstParser::new();
+    let source_parser = DefaultSourceParser::new();
     let builder = Builder::new(
       root_specifier,
       false,
       &mut loader,
       None,
       None,
-      &mut ast_parser,
+      &source_parser,
     );
     let graph = builder.build().await;
     assert_eq!(

@@ -7,11 +7,11 @@ mod ast;
 mod colors;
 mod graph;
 mod info;
-mod media_type;
 mod module_specifier;
 pub mod source;
 mod text_encoding;
 
+use deno_ast::ParsedSource;
 use graph::Builder;
 use graph::ModuleSlot;
 use source::Locker;
@@ -24,17 +24,19 @@ use std::sync::Arc;
 
 cfg_if! {
   if #[cfg(feature = "rust")] {
-    pub use ast::AstParser;
-    pub use ast::CapturingAstParser;
-    pub use ast::DefaultAstParser;
-    pub use ast::DefaultParsedAst;
-    pub use ast::ParsedAst;
+    pub use ast::SourceParser;
+    pub use ast::CapturingSourceParser;
+    pub use ast::DefaultSourceParser;
+    pub use ast::Location;
     pub use ast::Position;
+    pub use ast::analyze_ts_references;
+    pub use ast::analyze_dependencies;
+    pub use ast::analyze_deno_types;
     pub use graph::Module;
     pub use graph::ModuleGraph;
     pub use graph::ModuleGraphError;
     pub use graph::Resolved;
-    pub use media_type::MediaType;
+    pub use deno_ast::MediaType;
     pub use module_specifier::ModuleSpecifier;
     use source::Loader;
 
@@ -45,9 +47,9 @@ cfg_if! {
       loader: &mut dyn Loader,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
-      maybe_parser: Option<&mut dyn AstParser>,
+      maybe_parser: Option<&dyn SourceParser>,
     ) -> ModuleGraph {
-      let mut default_parser = ast::DefaultAstParser::new();
+      let default_parser = ast::DefaultSourceParser::new();
       let builder = Builder::new(
         root_specifier,
         false,
@@ -56,7 +58,7 @@ cfg_if! {
         maybe_locker,
         match maybe_parser {
           Some(parser) => parser,
-          None => &mut default_parser,
+          None => &default_parser,
         },
       );
       builder.build().await
@@ -69,9 +71,9 @@ cfg_if! {
       maybe_headers: Option<&HashMap<String, String>>,
       content: Arc<String>,
       maybe_resolver: Option<&dyn Resolver>,
-      maybe_parser: Option<&mut dyn AstParser>,
+      maybe_parser: Option<&dyn SourceParser>,
     ) -> Result<Module, ModuleGraphError> {
-      let mut default_parser = ast::DefaultAstParser::new();
+      let default_parser = ast::DefaultSourceParser::new();
       match graph::parse_module(
         specifier,
         maybe_headers,
@@ -80,7 +82,7 @@ cfg_if! {
         if let Some(parser) = maybe_parser {
           parser
         } else {
-          &mut default_parser
+          &default_parser
         },
       ) {
         ModuleSlot::Module(module) => Ok(module),
@@ -93,7 +95,7 @@ cfg_if! {
     pub fn parse_module_from_ast(
       specifier: &ModuleSpecifier,
       maybe_headers: Option<&HashMap<String, String>>,
-      parsed_ast: &dyn ParsedAst,
+      parsed_ast: &ParsedSource,
       maybe_resolver: Option<&dyn Resolver>,
     ) -> Module {
       graph::parse_module_from_ast(
@@ -138,14 +140,14 @@ cfg_if! {
       let root_specifier =
         module_specifier::ModuleSpecifier::parse(&root_specifier)
           .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-      let mut ast_parser = ast::DefaultAstParser::new();
+      let source_parser = ast::DefaultSourceParser::new();
       let builder = Builder::new(
         root_specifier,
         false,
         &mut loader,
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         maybe_locker,
-        &mut ast_parser,
+        &source_parser,
       );
       let graph = builder.build().await;
       Ok(js_graph::ModuleGraph(graph))
@@ -164,13 +166,13 @@ cfg_if! {
       let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
       let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
-      let mut ast_parser = ast::DefaultAstParser::new();
+      let source_parser = ast::DefaultSourceParser::new();
       match graph::parse_module(
         &specifier,
         maybe_headers.as_ref(),
         Arc::new(content),
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-        &mut ast_parser,
+        &source_parser,
       ) {
         ModuleSlot::Module(module) => Ok(js_graph::Module(module)),
         ModuleSlot::Err(err) => Err(js_sys::Error::new(&err.to_string()).into()),
@@ -384,23 +386,23 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let test02_specifier =
       ModuleSpecifier::parse("file:///a/test02.ts").expect("bad url");
-    let mut parser = crate::ast::CapturingAstParser::new();
+    let parser = crate::ast::CapturingSourceParser::new();
     create_graph(
       root_specifier.clone(),
       &mut loader,
       None,
       None,
-      Some(&mut parser),
+      Some(&parser),
     )
     .await;
-    let root_ast = parser.get_ast(&root_specifier).unwrap();
-    let test02_ast = parser.get_ast(&test02_specifier).unwrap();
+    let root_ast = parser.get_parsed_source(&root_specifier).unwrap();
+    let test02_ast = parser.get_parsed_source(&test02_specifier).unwrap();
     assert_eq!(root_ast.module().body.len(), 1);
     assert_eq!(test02_ast.module().body.len(), 2);
 
     let non_existent =
       ModuleSpecifier::parse("file:///a/test03.ts").expect("bad url");
-    assert!(parser.get_ast(&non_existent).is_none());
+    assert!(parser.get_parsed_source(&non_existent).is_none());
   }
 
   #[test]

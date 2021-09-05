@@ -6,7 +6,7 @@ use std::fmt;
 use std::path::PathBuf;
 use url::ParseError;
 
-pub type ModuleSpecifier = url::Url;
+pub type ModuleSpecifier = deno_ast::ModuleSpecifier;
 
 pub const EMPTY_SPECIFIER: &str = "deno://empty";
 
