@@ -11,7 +11,6 @@ mod module_specifier;
 pub mod source;
 mod text_encoding;
 
-use deno_ast::ParsedSource;
 use graph::Builder;
 use graph::ModuleSlot;
 use source::Locker;
@@ -38,6 +37,7 @@ cfg_if! {
     pub use graph::Resolved;
     pub use deno_ast::MediaType;
     pub use module_specifier::ModuleSpecifier;
+
     use source::Loader;
 
     /// Create a module graph, based on loading and recursively analyzing the
@@ -95,7 +95,7 @@ cfg_if! {
     pub fn parse_module_from_ast(
       specifier: &ModuleSpecifier,
       maybe_headers: Option<&HashMap<String, String>>,
-      parsed_ast: &ParsedSource,
+      parsed_ast: &deno_ast::ParsedSource,
       maybe_resolver: Option<&dyn Resolver>,
     ) -> Module {
       graph::parse_module_from_ast(
