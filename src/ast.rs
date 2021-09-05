@@ -1,6 +1,5 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-use crate::media_type::MediaType;
 use crate::module_specifier::ModuleSpecifier;
 
 use anyhow::Result;
@@ -10,6 +9,7 @@ use deno_ast::swc::common::BytePos;
 use deno_ast::swc::dep_graph::DependencyDescriptor;
 use deno_ast::swc::dep_graph::DependencyKind;
 use deno_ast::Diagnostic;
+use deno_ast::MediaType;
 use deno_ast::ParseParams;
 use deno_ast::ParsedSource;
 use deno_ast::SourceTextInfo;
@@ -257,7 +257,7 @@ impl SourceParser for CapturingSourceParser {
     let module = parse_module(ParseParams {
       specifier: specifier.to_string(),
       source: SourceTextInfo::new(BytePos(0), source),
-      media_type: media_type.into(),
+      media_type,
       capture_tokens: false,
       maybe_syntax: None,
     })?;
@@ -291,7 +291,7 @@ impl SourceParser for DefaultSourceParser {
     parse_module(ParseParams {
       specifier: specifier.to_string(),
       source: SourceTextInfo::new(BytePos(0), source),
-      media_type: media_type.into(),
+      media_type,
       capture_tokens: false,
       maybe_syntax: None,
     })

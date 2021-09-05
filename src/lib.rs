@@ -7,7 +7,6 @@ mod ast;
 mod colors;
 mod graph;
 mod info;
-mod media_type;
 mod module_specifier;
 pub mod source;
 mod text_encoding;
@@ -37,7 +36,7 @@ cfg_if! {
     pub use graph::ModuleGraph;
     pub use graph::ModuleGraphError;
     pub use graph::Resolved;
-    pub use media_type::MediaType;
+    pub use deno_ast::MediaType;
     pub use module_specifier::ModuleSpecifier;
     use source::Loader;
 
