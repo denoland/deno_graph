@@ -14,6 +14,12 @@ jobs:
       matrix:
         os: [macOS-latest, ubuntu-latest, windows-2019]
     
+    env:
+      CARGO_INCREMENTAL: 0
+      GH_ACTIONS: 1
+      RUST_BACKTRACE: full
+      RUSTFLAGS: -D warnings
+
     steps:
       - name: ☑️ clone repository
         uses: actions/checkout@v2
@@ -29,14 +35,7 @@ jobs:
           rustup component add rustfmt
       
       - name: 🗃️  cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target/
-          key: ${{ runner.os }}-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-
+        uses: Swatinem/rust-cache@v1
 
       - name: ➡️  install up Deno
         uses: denoland/setup-deno@v1.0.0
