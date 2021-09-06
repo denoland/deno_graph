@@ -1,9 +1,9 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-use crate::analyze_deno_types;
-use crate::analyze_dependencies;
-use crate::analyze_ts_references;
 use crate::ast;
+use crate::ast::analyze_deno_types;
+use crate::ast::analyze_dependencies;
+use crate::ast::analyze_ts_references;
 use crate::ast::Range;
 use crate::ast::SourceParser;
 use crate::module_specifier::resolve_import;
