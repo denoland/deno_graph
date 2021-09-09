@@ -4,7 +4,6 @@ use crate::ast;
 use crate::ast::analyze_deno_types;
 use crate::ast::analyze_dependencies;
 use crate::ast::analyze_ts_references;
-use crate::ast::Range;
 use crate::ast::SourceParser;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -31,6 +30,62 @@ use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
 use std::sync::Arc;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Position {
+  /// The 0-indexed line index.
+  pub line: usize,
+  /// The 0-indexed character index.
+  pub character: usize,
+}
+
+impl Position {
+  fn from_pos(
+    parsed_source: &ParsedSource,
+    pos: deno_ast::swc::common::BytePos,
+  ) -> Self {
+    let line_and_column_index =
+      parsed_source.source().line_and_column_index(pos);
+    Self {
+      line: line_and_column_index.line_index,
+      character: line_and_column_index.column_index,
+    }
+  }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Range {
+  #[serde(skip_serializing)]
+  pub specifier: ModuleSpecifier,
+  pub start: Position,
+  pub end: Position,
+}
+
+impl fmt::Display for Range {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(
+      f,
+      "{}:{}:{}",
+      self.specifier,
+      self.start.line + 1,
+      self.start.character + 1
+    )
+  }
+}
+
+impl Range {
+  pub(crate) fn from_swc_span(
+    specifier: &ModuleSpecifier,
+    parsed_source: &ParsedSource,
+    span: &deno_ast::swc::common::Span,
+  ) -> Range {
+    Range {
+      specifier: specifier.clone(),
+      start: Position::from_pos(parsed_source, span.lo),
+      end: Position::from_pos(parsed_source, span.hi),
+    }
+  }
+}
 
 #[derive(Debug)]
 pub enum ModuleGraphError {
@@ -123,8 +178,8 @@ impl fmt::Display for ResolutionError {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Resolved {
-  Specifier(ModuleSpecifier, ast::Span),
-  Err(ResolutionError, ast::Span),
+  Specifier(ModuleSpecifier, Range),
+  Err(ResolutionError, Range),
   None,
 }
 
@@ -361,40 +416,38 @@ fn load_data_url(specifier: &ModuleSpecifier) -> Result<Option<LoadResponse>> {
 /// present, returning the resolution result.
 fn resolve(
   specifier: &str,
-  referrer: &ModuleSpecifier,
-  range: &ast::Range,
+  referrer_range: &Range,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolved {
   let mut remapped = false;
   let resolved_specifier = if let Some(resolver) = maybe_resolver {
     remapped = true;
     resolver
-      .resolve(specifier, referrer)
+      .resolve(specifier, &referrer_range.specifier)
       .map_err(ResolutionError::ResolverError)
   } else {
-    resolve_import(specifier, referrer)
+    resolve_import(specifier, &referrer_range.specifier)
       .map_err(ResolutionError::InvalidSpecifier)
-  };
-  let span = ast::Span {
-    specifier: referrer.clone(),
-    range: range.clone(),
   };
   match resolved_specifier {
     Ok(specifier) => {
-      let referrer_scheme = referrer.scheme();
+      let referrer_scheme = referrer_range.specifier.scheme();
       let specifier_scheme = specifier.scheme();
       if referrer_scheme == "https" && specifier_scheme == "http" {
-        Resolved::Err(ResolutionError::InvalidDowngrade, span)
+        Resolved::Err(ResolutionError::InvalidDowngrade, referrer_range.clone())
       } else if (referrer_scheme == "https" || referrer_scheme == "http")
         && !(specifier_scheme == "https" || specifier_scheme == "http")
         && !remapped
       {
-        Resolved::Err(ResolutionError::InvalidLocalImport, span)
+        Resolved::Err(
+          ResolutionError::InvalidLocalImport,
+          referrer_range.clone(),
+        )
       } else {
-        Resolved::Specifier(specifier, span)
+        Resolved::Specifier(specifier, referrer_range.clone())
       }
     }
-    Err(err) => Resolved::Err(err, span),
+    Err(err) => Resolved::Err(err, referrer_range.clone()),
   }
 }
 
@@ -439,15 +492,17 @@ pub(crate) fn parse_module_from_ast(
   // Analyze the TypeScript triple-slash references
   for reference in analyze_ts_references(parsed_source) {
     match reference {
-      ast::TypeScriptReference::Path(specifier, range) => {
-        let resolved_dependency =
-          resolve(&specifier, &module.specifier, &range, maybe_resolver);
+      ast::TypeScriptReference::Path(specifier, span) => {
+        let range =
+          Range::from_swc_span(&module.specifier, parsed_source, &span);
+        let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
         let dep = module.dependencies.entry(specifier).or_default();
         dep.maybe_code = resolved_dependency;
       }
-      ast::TypeScriptReference::Types(specifier, range) => {
-        let resolved_dependency =
-          resolve(&specifier, &module.specifier, &range, maybe_resolver);
+      ast::TypeScriptReference::Types(specifier, span) => {
+        let range =
+          Range::from_swc_span(&module.specifier, parsed_source, &span);
+        let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
         if module.media_type == MediaType::JavaScript
           || module.media_type == MediaType::Jsx
         {
@@ -465,12 +520,16 @@ pub(crate) fn parse_module_from_ast(
   if module.maybe_types_dependency.is_none() {
     if let Some(headers) = maybe_headers {
       if let Some(types_header) = headers.get("x-typescript-types") {
-        let resolved_dependency = resolve(
-          types_header,
-          &module.specifier,
-          &ast::Range::default(),
-          maybe_resolver,
-        );
+        let zero_position = Position {
+          line: 0,
+          character: 0,
+        };
+        let range = Range {
+          specifier: module.specifier.clone(),
+          start: zero_position.clone(),
+          end: zero_position,
+        };
+        let resolved_dependency = resolve(types_header, &range, maybe_resolver);
         module.maybe_types_dependency =
           Some((types_header.clone(), resolved_dependency));
       }
@@ -486,14 +545,23 @@ pub(crate) fn parse_module_from_ast(
       .or_default();
     let resolved_dependency = resolve(
       &desc.specifier,
-      &module.specifier,
-      &Range::from_span(parsed_source, &desc.specifier_span),
+      &Range::from_swc_span(
+        &module.specifier,
+        parsed_source,
+        &desc.specifier_span,
+      ),
       maybe_resolver,
     );
     dep.maybe_code = resolved_dependency;
     let specifier = module.specifier.clone();
-    let maybe_type = analyze_deno_types(parsed_source, &desc)
-      .map(|(s, r)| resolve(&s, &specifier, &r, maybe_resolver))
+    let maybe_type = analyze_deno_types(&desc)
+      .map(|(text, span)| {
+        resolve(
+          &text,
+          &Range::from_swc_span(&specifier, parsed_source, &span),
+          maybe_resolver,
+        )
+      })
       .unwrap_or_else(|| Resolved::None);
     if dep.maybe_type.is_none() {
       dep.maybe_type = maybe_type
