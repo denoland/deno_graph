@@ -256,7 +256,7 @@ impl SourceParser for CapturingSourceParser {
   ) -> Result<ParsedSource, Diagnostic> {
     let module = parse_module(ParseParams {
       specifier: specifier.to_string(),
-      source: SourceTextInfo::new(BytePos(0), source),
+      source: SourceTextInfo::new(source),
       media_type,
       capture_tokens: false,
       maybe_syntax: None,
@@ -290,7 +290,7 @@ impl SourceParser for DefaultSourceParser {
   ) -> Result<ParsedSource, Diagnostic> {
     parse_module(ParseParams {
       specifier: specifier.to_string(),
-      source: SourceTextInfo::new(BytePos(0), source),
+      source: SourceTextInfo::new(source),
       media_type,
       capture_tokens: false,
       maybe_syntax: None,
