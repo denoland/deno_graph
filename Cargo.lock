@@ -146,9 +146,9 @@ dependencies = [
 
 [[package]]
 name = "deno_ast"
-version = "0.1.4"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6db880205b739a131285ad935d747121011b67cf756222a0c3ab31f39d5ea1a"
+checksum = "427e7091c1fd8a13b002824f43773b6ef2d5c8ded445ee20013bea7f6ca8bc5b"
 dependencies = [
  "data-url",
  "serde",
@@ -161,7 +161,7 @@ dependencies = [
 
 [[package]]
 name = "deno_graph"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "cfg-if 1.0.0",
@@ -901,9 +901,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_dep_graph"
-version = "0.39.0"
+version = "0.39.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4361e5514224618db7aed966268fd6afe2b9a04d353197a3ab3cefc272c7c6a"
+checksum = "c20a594158fbaa00e039867f96183e4daa5a867fa21331a3655c90789f2df6b3"
 dependencies = [
  "swc_atoms",
  "swc_common",
@@ -913,9 +913,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_parser"
-version = "0.70.1"
+version = "0.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd061e1df02f5cf2a8ec788d79a9c5bd90b4deb3e59c849a325dce6ca8725ef8"
+checksum = "042a901352b84cefbb64916a010ee33f621a7e341ced2b2fa60035858f3146a5"
 dependencies = [
  "either",
  "enum_kind",
@@ -934,9 +934,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_visit"
-version = "0.38.0"
+version = "0.38.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b007dfbb41e090fd9d5704d86c9b56a73b6a5b201adf2aed14715a003917df04"
+checksum = "78c6721dfbcb8bea64383edb0d59ccb02bc1e140024f2e0f8766792a14f5f466"
 dependencies = [
  "num-bigint",
  "swc_atoms",
@@ -947,9 +947,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecmascript"
-version = "0.63.0"
+version = "0.63.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a4a6b2c048fb7740fd84c4974049d31e2b5ba423c580b2794fad2efd7fdfa4e"
+checksum = "ba53c5582d6e5881b093ece9aaa4b561465afab0560abb19948f2c4bbff1bdb9"
 dependencies = [
  "swc_ecma_ast",
  "swc_ecma_dep_graph",
