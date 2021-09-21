@@ -171,9 +171,9 @@ fn is_false(v: &bool) -> bool {
 #[serde(rename_all = "camelCase")]
 pub struct Dependency {
   #[serde(rename = "code", skip_serializing_if = "Resolved::is_none")]
-  pub(crate) maybe_code: Resolved,
+  pub maybe_code: Resolved,
   #[serde(rename = "type", skip_serializing_if = "Resolved::is_none")]
-  pub(crate) maybe_type: Resolved,
+  pub maybe_type: Resolved,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
 }
