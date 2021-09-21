@@ -30,6 +30,8 @@ cfg_if! {
     pub use ast::Position;
     pub use ast::analyze_ts_references;
     pub use ast::analyze_dependencies;
+    pub use ast::DependencyDescriptor;
+    pub use ast::DependencyKind;
     pub use ast::analyze_deno_types;
     pub use graph::Module;
     pub use graph::ModuleGraph;
