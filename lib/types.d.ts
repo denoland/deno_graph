@@ -203,6 +203,6 @@ export class ModuleGraph {
    * `true` and not provide ANSI color escape sequences.
    *
    * @param noColor An optional flag indicating if ANSI color escape codes
-   *                should be included in the returned string.*/
+   *                should be included in the returned string. */
   toString(noColor?: boolean): string;
 }
