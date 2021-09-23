@@ -28,6 +28,7 @@ use serde::Serializer;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -232,6 +233,29 @@ impl ModuleSlot {
   }
 }
 
+#[cfg(feature = "rust")]
+fn to_result(
+  (specifier, module_slot): (&ModuleSpecifier, &ModuleSlot),
+) -> (
+  ModuleSpecifier,
+  Result<(ModuleSpecifier, MediaType), ModuleGraphError>,
+) {
+  match module_slot {
+    ModuleSlot::Err(err) => (specifier.clone(), Err(err.clone())),
+    ModuleSlot::Module(module) => (
+      specifier.clone(),
+      Ok((module.specifier.clone(), module.media_type.clone())),
+    ),
+    _ => (
+      specifier.clone(),
+      Err(ModuleGraphError::LoadingErr(anyhow!(
+        "Module \"{}\" is unavailable.",
+        specifier
+      ))),
+    ),
+  }
+}
+
 #[derive(Debug, Serialize)]
 pub struct ModuleGraph {
   pub root: ModuleSpecifier,
@@ -292,8 +316,18 @@ impl ModuleGraph {
   /// returning the "final" module.
   pub fn resolve(&self, specifier: &ModuleSpecifier) -> ModuleSpecifier {
     let mut redirected_specifier = specifier;
+    let mut seen = HashSet::new();
+    seen.insert(redirected_specifier);
     while let Some(specifier) = self.redirects.get(redirected_specifier) {
+      if !seen.insert(specifier) {
+        eprintln!("An infinite loop of redirections detected.\n  Original specifier: {}", specifier);
+        break;
+      }
       redirected_specifier = specifier;
+      if seen.len() > 5 {
+        eprintln!("An excessive number of redirections detected.\n  Original specifier: {}", specifier);
+        break;
+      }
     }
     redirected_specifier.clone()
   }
@@ -322,6 +356,31 @@ impl ModuleGraph {
     }
   }
 
+  /// Return a map representation of the specifiers in the graph, where each key
+  /// is a module specifier and each value is a result that contains a tuple of
+  /// the module specifier and media type, or the module graph error.
+  #[cfg(feature = "rust")]
+  pub fn specifiers(
+    &self,
+  ) -> HashMap<
+    ModuleSpecifier,
+    Result<(ModuleSpecifier, MediaType), ModuleGraphError>,
+  > {
+    let mut map: HashMap<
+      ModuleSpecifier,
+      Result<(ModuleSpecifier, MediaType), ModuleGraphError>,
+    > = self.modules.iter().map(to_result).collect();
+    for (specifier, _) in &self.redirects {
+      if let Some(module) = self.get(&specifier) {
+        map.insert(
+          specifier.clone(),
+          Ok((module.specifier.clone(), module.media_type.clone())),
+        );
+      }
+    }
+    map
+  }
+
   /// Retrieve a module from the module graph. If the module identified as a
   /// dependency of the graph, but resolving or loading that module resulted in
   /// an error, the error will be returned as the `Err` of the result. If the
@@ -337,6 +396,60 @@ impl ModuleGraph {
       Some(ModuleSlot::Err(err)) => Err(err.clone()),
       _ => Ok(None),
     }
+  }
+
+  /// Walk the graph from the root, checking to see if there are any module
+  /// graph errors on non-dynamic imports. The first error is returned as an
+  /// error result, otherwise ok if there are no errors.
+  #[cfg(feature = "rust")]
+  pub fn valid(&self) -> Result<(), (ModuleSpecifier, ModuleGraphError)> {
+    fn validate<F>(
+      specifier: &ModuleSpecifier,
+      seen: &mut HashSet<ModuleSpecifier>,
+      get_module: &F,
+    ) -> Result<(), (ModuleSpecifier, ModuleGraphError)>
+    where
+      F: Fn(&ModuleSpecifier) -> Result<Option<Module>, ModuleGraphError>,
+    {
+      if seen.contains(specifier) {
+        return Ok(());
+      }
+      seen.insert(specifier.clone());
+      match get_module(specifier) {
+        Ok(Some(module)) => {
+          if let Some((_, Resolved::Specifier(specifier, _))) =
+            &module.maybe_types_dependency
+          {
+            validate(specifier, seen, get_module)?;
+          }
+          for (_, dep) in &module.dependencies {
+            if !dep.is_dynamic {
+              if let Resolved::Specifier(specifier, _) = &dep.maybe_code {
+                validate(specifier, seen, get_module)?;
+              }
+              if let Resolved::Specifier(specifier, _) = &dep.maybe_type {
+                validate(specifier, seen, get_module)?;
+              }
+            }
+          }
+          Ok(())
+        }
+        Ok(None) => Err((
+          specifier.clone(),
+          ModuleGraphError::LoadingErr(anyhow!(
+            "The specifier \"{}\" is unexpectedly missing from the graph.",
+            specifier
+          )),
+        )),
+        Err(err) => Err((specifier.clone(), err)),
+      }
+    }
+
+    let mut seen = HashSet::new();
+    validate(&self.root, &mut seen, &|s| {
+      self.try_get(s).map(|o| o.cloned())
+    })?;
+    Ok(())
   }
 }
 
