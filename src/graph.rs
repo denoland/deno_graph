@@ -333,7 +333,7 @@ impl ModuleGraph {
   }
 
   /// Resolve a dependency of a referring module providing the string specifier
-  /// of the depdency and returning an optional fully qualified module
+  /// of the dependency and returning an optional fully qualified module
   /// specifier.
   pub fn resolve_dependency(
     &self,
