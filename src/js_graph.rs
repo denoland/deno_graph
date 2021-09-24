@@ -219,11 +219,12 @@ impl ModuleGraph {
     &self,
     specifier: String,
     referrer: String,
+    prefer_types: bool,
   ) -> Option<String> {
     let referrer = ModuleSpecifier::parse(&referrer).unwrap();
     self
       .0
-      .resolve_dependency(&specifier, &referrer)
+      .resolve_dependency(&specifier, &referrer, prefer_types)
       .map(|s| s.to_string())
   }
 

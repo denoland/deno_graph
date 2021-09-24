@@ -346,18 +346,30 @@ impl ModuleGraph {
   /// Resolve a dependency of a referring module providing the string specifier
   /// of the dependency and returning an optional fully qualified module
   /// specifier.
+  ///
+  /// The `prefer_types` flags indicates if a type dependency is preferred over
+  /// a code dependency. If `true`, a type dependency will be returned in favor
+  /// of a code dependency. If `false` a code dependency will be returned in
+  /// favor of a type dependency. The value should be set to `true` when
+  /// resolving specifiers for type checking, or otherwise `false`.
   pub fn resolve_dependency(
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
+    prefer_types: bool,
   ) -> Option<&ModuleSpecifier> {
     let referrer = self.resolve(referrer);
     let referring_module_slot = self.modules.get(&referrer)?;
     if let ModuleSlot::Module(referring_module) = referring_module_slot {
       let dependency = referring_module.dependencies.get(specifier)?;
-      if let Resolved::Specifier(specifier, _) = &dependency.maybe_type {
+      let (maybe_first, maybe_second) = if prefer_types {
+        (&dependency.maybe_type, &dependency.maybe_code)
+      } else {
+        (&dependency.maybe_code, &dependency.maybe_type)
+      };
+      if let Resolved::Specifier(specifier, _) = maybe_first {
         Some(specifier)
-      } else if let Resolved::Specifier(specifier, _) = &dependency.maybe_code {
+      } else if let Resolved::Specifier(specifier, _) = maybe_second {
         Some(specifier)
       } else {
         None
