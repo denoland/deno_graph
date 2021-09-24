@@ -279,6 +279,17 @@ impl ModuleGraph {
     }
   }
 
+  /// Returns `true` if the specifier resolves to a module within a graph,
+  /// otherwise returns `false`.
+  #[cfg(feature = "rust")]
+  pub fn contains(&self, specifier: &ModuleSpecifier) -> bool {
+    let specifier = self.resolve(specifier);
+    self
+      .modules
+      .get(&specifier)
+      .map_or(false, |ms| matches!(ms, ModuleSlot::Module(_)))
+  }
+
   /// Get a module from the module graph, returning `None` if the module is not
   /// part of the graph, or if when loading the module it errored. If any module
   /// resolution error is needed, then use the `try_get()` method which will

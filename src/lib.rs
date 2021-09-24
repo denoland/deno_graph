@@ -230,6 +230,10 @@ mod tests {
       create_graph(root_specifier.clone(), &mut loader, None, None, None).await;
     assert_eq!(graph.modules.len(), 2);
     assert_eq!(graph.root, root_specifier);
+    assert!(graph.contains(&root_specifier));
+    assert!(
+      !graph.contains(&ModuleSpecifier::parse("file:///a/test03.ts").unwrap())
+    );
     let maybe_root_module = graph.modules.get(&root_specifier);
     assert!(maybe_root_module.is_some());
     let root_module_slot = maybe_root_module.unwrap();
