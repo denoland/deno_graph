@@ -195,7 +195,7 @@ impl ModuleGraph {
   pub fn modules(&self) -> js_sys::Array {
     self
       .0
-      .modules
+      .module_slots
       .values()
       .filter_map(|ms| {
         if let graph::ModuleSlot::Module(m) = ms {

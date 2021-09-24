@@ -228,13 +228,13 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph =
       create_graph(root_specifier.clone(), &mut loader, None, None, None).await;
-    assert_eq!(graph.modules.len(), 2);
+    assert_eq!(graph.module_slots.len(), 2);
     assert_eq!(graph.root, root_specifier);
     assert!(graph.contains(&root_specifier));
     assert!(
       !graph.contains(&ModuleSpecifier::parse("file:///a/test03.ts").unwrap())
     );
-    let maybe_root_module = graph.modules.get(&root_specifier);
+    let maybe_root_module = graph.module_slots.get(&root_specifier);
     assert!(maybe_root_module.is_some());
     let root_module_slot = maybe_root_module.unwrap();
     if let ModuleSlot::Module(module) = root_module_slot {
@@ -279,9 +279,9 @@ mod tests {
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let graph =
       create_graph(root_specifier.clone(), &mut loader, None, None, None).await;
-    assert_eq!(graph.modules.len(), 1);
+    assert_eq!(graph.module_slots.len(), 1);
     assert_eq!(graph.root, root_specifier);
-    let maybe_root_module = graph.modules.get(&root_specifier);
+    let maybe_root_module = graph.module_slots.get(&root_specifier);
     assert!(maybe_root_module.is_some());
     let root_module_slot = maybe_root_module.unwrap();
     if let ModuleSlot::Module(module) = root_module_slot {
@@ -314,7 +314,7 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph =
       create_graph(root_specifier.clone(), &mut loader, None, None, None).await;
-    assert_eq!(graph.modules.len(), 3);
+    assert_eq!(graph.module_slots.len(), 3);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
     let maybe_module = graph.get(&data_specifier);
     assert!(maybe_module.is_some());

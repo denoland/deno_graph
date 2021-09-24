@@ -43,7 +43,7 @@ fn human_size(size: f64) -> String {
 
 impl fmt::Display for ModuleGraph {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    match self.modules.get(&self.root) {
+    match self.module_slots.get(&self.root) {
       Some(ModuleSlot::Module(root)) => {
         writeln!(f, "{} {}", colors::bold("type:"), root.media_type)?;
         if let Some(cache_info) = &root.maybe_cache_info {
@@ -68,7 +68,7 @@ impl fmt::Display for ModuleGraph {
           }
         }
         let total_size: f64 = self
-          .modules
+          .module_slots
           .iter()
           .filter_map(|(_, m)| {
             if let ModuleSlot::Module(module) = m {
@@ -78,8 +78,12 @@ impl fmt::Display for ModuleGraph {
             }
           })
           .sum();
-        let dep_count =
-          self.modules.iter().filter(|(_, m)| m.is_module()).count() - 1;
+        let dep_count = self
+          .module_slots
+          .iter()
+          .filter(|(_, m)| m.is_module())
+          .count()
+          - 1;
         writeln!(
           f,
           "{} {} unique {}",

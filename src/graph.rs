@@ -261,8 +261,8 @@ pub struct ModuleGraph {
   pub root: ModuleSpecifier,
   #[serde(skip_serializing)]
   maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
-  #[serde(serialize_with = "serialize_modules")]
-  pub(crate) modules: BTreeMap<ModuleSpecifier, ModuleSlot>,
+  #[serde(serialize_with = "serialize_modules", rename = "modules")]
+  pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
   redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
 }
 
@@ -274,7 +274,7 @@ impl ModuleGraph {
     Self {
       root,
       maybe_locker,
-      modules: Default::default(),
+      module_slots: Default::default(),
       redirects: Default::default(),
     }
   }
@@ -285,7 +285,7 @@ impl ModuleGraph {
   pub fn contains(&self, specifier: &ModuleSpecifier) -> bool {
     let specifier = self.resolve(specifier);
     self
-      .modules
+      .module_slots
       .get(&specifier)
       .map_or(false, |ms| matches!(ms, ModuleSlot::Module(_)))
   }
@@ -297,7 +297,7 @@ impl ModuleGraph {
   #[cfg(feature = "rust")]
   pub fn get(&self, specifier: &ModuleSpecifier) -> Option<&Module> {
     let specifier = self.resolve(specifier);
-    match self.modules.get(&specifier) {
+    match self.module_slots.get(&specifier) {
       Some(ModuleSlot::Module(module)) => Some(module),
       _ => None,
     }
@@ -310,7 +310,7 @@ impl ModuleGraph {
   pub fn lock(&self) -> Result<(), ModuleGraphError> {
     if let Some(locker) = &self.maybe_locker {
       let mut locker = locker.borrow_mut();
-      for (_, module_slot) in self.modules.iter() {
+      for (_, module_slot) in self.module_slots.iter() {
         if let ModuleSlot::Module(module) = module_slot {
           if !locker.check_or_insert(&module.specifier, &module.source) {
             return Err(ModuleGraphError::InvalidSource(
@@ -321,6 +321,18 @@ impl ModuleGraph {
       }
     }
     Ok(())
+  }
+
+  #[cfg(feature = "rust")]
+  pub fn modules(&self) -> Vec<&Module> {
+    self
+      .module_slots
+      .iter()
+      .filter_map(|(_, ms)| match ms {
+        ModuleSlot::Module(m) => Some(m),
+        _ => None,
+      })
+      .collect()
   }
 
   /// Resolve a specifier from the module graph following any possible redirects
@@ -359,7 +371,7 @@ impl ModuleGraph {
     prefer_types: bool,
   ) -> Option<&ModuleSpecifier> {
     let referrer = self.resolve(referrer);
-    let referring_module_slot = self.modules.get(&referrer)?;
+    let referring_module_slot = self.module_slots.get(&referrer)?;
     if let ModuleSlot::Module(referring_module) = referring_module_slot {
       let dependency = referring_module.dependencies.get(specifier)?;
       let (maybe_first, maybe_second) = if prefer_types {
@@ -392,7 +404,7 @@ impl ModuleGraph {
     let mut map: HashMap<
       ModuleSpecifier,
       Result<(ModuleSpecifier, MediaType), ModuleGraphError>,
-    > = self.modules.iter().map(to_result).collect();
+    > = self.module_slots.iter().map(to_result).collect();
     for (specifier, _) in &self.redirects {
       if let Some(module) = self.get(&specifier) {
         map.insert(
@@ -414,7 +426,7 @@ impl ModuleGraph {
     specifier: &ModuleSpecifier,
   ) -> Result<Option<&Module>, ModuleGraphError> {
     let specifier = self.resolve(specifier);
-    match self.modules.get(&specifier) {
+    match self.module_slots.get(&specifier) {
       Some(ModuleSlot::Module(module)) => Ok(Some(module)),
       Some(ModuleSlot::Err(err)) => Err(err.clone()),
       _ => Ok(None),
@@ -693,10 +705,13 @@ impl<'a> Builder<'a> {
           self.visit(specifier, response)
         }
         Some((specifier, Ok(None))) => {
-          self.graph.modules.insert(specifier, ModuleSlot::Missing);
+          self
+            .graph
+            .module_slots
+            .insert(specifier, ModuleSlot::Missing);
         }
         Some((specifier, Err(err))) => {
-          self.graph.modules.insert(
+          self.graph.module_slots.insert(
             specifier,
             ModuleSlot::Err(ModuleGraphError::LoadingErr(err)),
           );
@@ -709,7 +724,7 @@ impl<'a> Builder<'a> {
     }
 
     // Enrich with cache info from the loader
-    for slot in self.graph.modules.values_mut() {
+    for slot in self.graph.module_slots.values_mut() {
       if let ModuleSlot::Module(ref mut module) = slot {
         module.maybe_cache_info = self.loader.get_cache_info(&module.specifier);
       }
@@ -720,10 +735,10 @@ impl<'a> Builder<'a> {
 
   /// Enqueue a request to load the specifier via the loader.
   fn load(&mut self, specifier: &ModuleSpecifier, is_dynamic: bool) {
-    if !self.graph.modules.contains_key(specifier) {
+    if !self.graph.module_slots.contains_key(specifier) {
       self
         .graph
-        .modules
+        .module_slots
         .insert(specifier.clone(), ModuleSlot::Pending);
       let f: LoadFuture = if specifier.scheme() == "data" {
         let load_response = load_data_url(specifier);
@@ -747,9 +762,9 @@ impl<'a> Builder<'a> {
     // If the response was redirected, then we add the module to the redirects
     if requested_specifier != specifier {
       // remove a potentially pending redirect that will never resolve
-      if let Some(slot) = self.graph.modules.get(&requested_specifier) {
+      if let Some(slot) = self.graph.module_slots.get(&requested_specifier) {
         if matches!(slot, ModuleSlot::Pending) {
-          self.graph.modules.remove(&requested_specifier);
+          self.graph.module_slots.remove(&requested_specifier);
         }
       }
       // if the root has been redirected, update the root
@@ -786,7 +801,7 @@ impl<'a> Builder<'a> {
         self.load(specifier, false);
       }
     }
-    self.graph.modules.insert(specifier, module_slot);
+    self.graph.module_slots.insert(specifier, module_slot);
   }
 }
 
