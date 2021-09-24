@@ -195,19 +195,23 @@ pub struct Module {
   )]
   pub maybe_types_dependency: Option<(String, Resolved)>,
   pub media_type: MediaType,
+  #[serde(skip_serializing)]
+  pub parsed_source: ParsedSource,
   #[serde(rename = "size", serialize_with = "serialize_source")]
   pub source: Arc<String>,
   pub specifier: ModuleSpecifier,
 }
 
 impl Module {
-  pub fn new(specifier: ModuleSpecifier, source: Arc<String>) -> Self {
+  pub fn new(specifier: ModuleSpecifier, parsed_source: ParsedSource) -> Self {
+    let source = parsed_source.source().text();
     Self {
       dependencies: Default::default(),
       maybe_cache_info: None,
       maybe_checksum: None,
       maybe_types_dependency: None,
       media_type: MediaType::Unknown,
+      parsed_source,
       source,
       specifier,
     }
@@ -580,8 +584,7 @@ pub(crate) fn parse_module_from_ast(
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Module {
   // Init the module and determine its media type
-  let mut module =
-    Module::new(specifier.clone(), parsed_source.source().text());
+  let mut module = Module::new(specifier.clone(), parsed_source.clone());
   module.media_type = get_media_type(specifier, maybe_headers);
 
   // Analyze the TypeScript triple-slash references
