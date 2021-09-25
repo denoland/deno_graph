@@ -384,15 +384,48 @@ impl ModuleGraph {
         (&dependency.maybe_code, &dependency.maybe_type)
       };
       if let Resolved::Specifier(specifier, _) = maybe_first {
-        Some(specifier)
+        if prefer_types {
+          Some(
+            self
+              .resolve_types_dependency(specifier)
+              .unwrap_or(specifier),
+          )
+        } else {
+          Some(specifier)
+        }
       } else if let Resolved::Specifier(specifier, _) = maybe_second {
-        Some(specifier)
+        if prefer_types {
+          Some(
+            self
+              .resolve_types_dependency(specifier)
+              .unwrap_or(specifier),
+          )
+        } else {
+          Some(specifier)
+        }
       } else {
         None
       }
     } else {
       None
     }
+  }
+
+  /// For a given specifier, return optionally if it has a types only dependency
+  /// assigned on the module. This occurs when there is a header or text in the
+  /// module that assigns expresses the types only dependency.
+  fn resolve_types_dependency(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<&ModuleSpecifier> {
+    if let Some(module) = self.get(specifier) {
+      if let Some((_, Resolved::Specifier(specifier, _))) =
+        &module.maybe_types_dependency
+      {
+        return Some(specifier);
+      }
+    }
+    None
   }
 
   /// Return a map representation of the specifiers in the graph, where each key
