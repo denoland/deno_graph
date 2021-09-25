@@ -16,9 +16,8 @@ use graph::ModuleSlot;
 use source::Locker;
 use source::Resolver;
 
-use std::cell::RefCell;
+use parking_lot::Mutex;
 use std::collections::HashMap;
-use std::rc::Rc;
 use std::sync::Arc;
 
 cfg_if! {
@@ -48,7 +47,7 @@ cfg_if! {
       root_specifier: ModuleSpecifier,
       loader: &mut dyn Loader,
       maybe_resolver: Option<&dyn Resolver>,
-      maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+      maybe_locker: Option<Arc<Mutex<dyn Locker>>>,
       maybe_parser: Option<&dyn SourceParser>,
     ) -> ModuleGraph {
       let default_parser = ast::DefaultSourceParser::new();
@@ -132,10 +131,10 @@ cfg_if! {
     ) -> Result<js_graph::ModuleGraph, JsValue> {
       let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
       let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
-      let maybe_locker: Option<Rc<RefCell<dyn Locker>>> =
+      let maybe_locker: Option<Arc<Mutex<dyn Locker>>> =
         if maybe_check.is_some() || maybe_get_checksum.is_some() {
           let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum);
-          Some(Rc::new(RefCell::new(locker)))
+          Some(Arc::new(Mutex::new(locker)))
         } else {
           None
         };

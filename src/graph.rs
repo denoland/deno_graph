@@ -20,17 +20,16 @@ use deno_ast::ParsedSource;
 use futures::future;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
+use parking_lot::Mutex;
 use serde::ser::SerializeMap;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
 use serde::Serialize;
 use serde::Serializer;
-use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt;
-use std::rc::Rc;
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -264,7 +263,7 @@ fn to_result(
 pub struct ModuleGraph {
   pub root: ModuleSpecifier,
   #[serde(skip_serializing)]
-  maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+  maybe_locker: Option<Arc<Mutex<dyn Locker>>>,
   #[serde(serialize_with = "serialize_modules", rename = "modules")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
   redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
@@ -273,7 +272,7 @@ pub struct ModuleGraph {
 impl ModuleGraph {
   pub fn new(
     root: ModuleSpecifier,
-    maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+    maybe_locker: Option<Arc<Mutex<dyn Locker>>>,
   ) -> Self {
     Self {
       root,
@@ -313,7 +312,7 @@ impl ModuleGraph {
   /// the first specifier that failed the integrity check.
   pub fn lock(&self) -> Result<(), ModuleGraphError> {
     if let Some(locker) = &self.maybe_locker {
-      let mut locker = locker.borrow_mut();
+      let mut locker = locker.lock();
       for (_, module_slot) in self.module_slots.iter() {
         if let ModuleSlot::Module(module) = module_slot {
           if !locker.check_or_insert(&module.specifier, &module.source) {
@@ -418,7 +417,7 @@ impl ModuleGraph {
     &self,
     specifier: &ModuleSpecifier,
   ) -> Option<&ModuleSpecifier> {
-    if let Some(module) = self.get(specifier) {
+    if let Some(ModuleSlot::Module(module)) = self.module_slots.get(specifier) {
       if let Some((_, Resolved::Specifier(specifier, _))) =
         &module.maybe_types_dependency
       {
@@ -718,7 +717,7 @@ impl<'a> Builder<'a> {
     is_dynamic_root: bool,
     loader: &'a mut dyn Loader,
     maybe_resolver: Option<&'a dyn Resolver>,
-    maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+    maybe_locker: Option<Arc<Mutex<dyn Locker>>>,
     source_parser: &'a dyn SourceParser,
   ) -> Self {
     Self {
