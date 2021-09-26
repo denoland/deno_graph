@@ -16,8 +16,9 @@ use graph::ModuleSlot;
 use source::Locker;
 use source::Resolver;
 
-use parking_lot::Mutex;
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::sync::Arc;
 
 cfg_if! {
@@ -44,20 +45,21 @@ cfg_if! {
     /// Create a module graph, based on loading and recursively analyzing the
     /// dependencies of the module, returning the resulting graph.
     pub async fn create_graph<'a>(
-      root_specifier: ModuleSpecifier,
+      roots: Vec<ModuleSpecifier>,
       loader: &mut dyn Loader,
-      maybe_resolver: Option<Box<dyn 'a + Resolver>>,
-      maybe_locker: Option<Arc<Mutex<dyn Locker>>>,
-      maybe_parser: Option<Arc<Mutex<dyn SourceParser>>>,
+      maybe_resolver: Option<&'a dyn Resolver>,
+      maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+      maybe_parser: Option<&'a dyn SourceParser>,
     ) -> ModuleGraph {
-      let parser = maybe_parser.unwrap_or_else(|| Arc::new(Mutex::new(ast::DefaultSourceParser::new())));
+      let default_parser = ast::DefaultSourceParser::new();
+      let source_parser = maybe_parser.unwrap_or(&default_parser);
       let builder = Builder::new(
-        root_specifier,
+        roots,
         false,
         loader,
         maybe_resolver,
         maybe_locker,
-        parser,
+        source_parser,
       );
       builder.build().await
     }
@@ -68,15 +70,16 @@ cfg_if! {
       specifier: &'a ModuleSpecifier,
       maybe_headers: Option<&'a HashMap<String, String>>,
       content: Arc<String>,
-      maybe_resolver: Option<Box<dyn 'a + Resolver>>,
-      maybe_parser: Option<Arc<Mutex<dyn SourceParser>>>,
+      maybe_resolver: Option<&'a dyn Resolver>,
+      maybe_parser: Option<&'a dyn SourceParser>,
     ) -> Result<Module, ModuleGraphError> {
-      let source_parser = maybe_parser.unwrap_or_else(|| Arc::new(Mutex::new(ast::DefaultSourceParser::new())));
+      let default_parser = ast::DefaultSourceParser::new();
+      let source_parser = maybe_parser.unwrap_or(&default_parser);
       match graph::parse_module(
         specifier,
         maybe_headers,
         content,
-        &maybe_resolver,
+        maybe_resolver,
         source_parser,
       ) {
         ModuleSlot::Module(module) => Ok(module),
@@ -90,13 +93,13 @@ cfg_if! {
       specifier: &'a ModuleSpecifier,
       maybe_headers: Option<&'a HashMap<String, String>>,
       parsed_ast: &'a deno_ast::ParsedSource,
-      maybe_resolver: Option<Box<dyn 'a + Resolver>>,
+      maybe_resolver: Option<&'a dyn Resolver>,
     ) -> Module {
       graph::parse_module_from_ast(
         specifier,
         maybe_headers,
         parsed_ast,
-        &maybe_resolver,
+        maybe_resolver,
       )
     }
   }
@@ -115,33 +118,38 @@ cfg_if! {
 
     #[wasm_bindgen(js_name = createGraph)]
     pub async fn js_create_graph(
-      root_specifier: String,
+      roots: JsValue,
       load: js_sys::Function,
       maybe_cache_info: Option<js_sys::Function>,
       maybe_resolve: Option<js_sys::Function>,
       maybe_check: Option<js_sys::Function>,
       maybe_get_checksum: Option<js_sys::Function>,
     ) -> Result<js_graph::ModuleGraph, JsValue> {
+      let roots_vec: Vec<String> = roots.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
       let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
-      let maybe_resolver = maybe_resolve.map(|r| Box::new(js_graph::JsResolver::new(r)) as Box<dyn Resolver>);
-      let maybe_locker: Option<Arc<Mutex<dyn Locker>>> =
+      let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
+      let maybe_locker: Option<Rc<RefCell<dyn Locker>>> =
         if maybe_check.is_some() || maybe_get_checksum.is_some() {
           let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum);
-          Some(Arc::new(Mutex::new(locker)))
+          Some(Rc::new(RefCell::new(locker)))
         } else {
           None
         };
-      let root_specifier =
-        module_specifier::ModuleSpecifier::parse(&root_specifier)
+      let mut roots = Vec::new();
+      for root_str in &roots_vec {
+        let root = module_specifier::ModuleSpecifier::parse(root_str)
           .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-      let source_parser = Arc::new(Mutex::new(ast::DefaultSourceParser::new()));
+        roots.push(root);
+      }
+
+      let source_parser = ast::DefaultSourceParser::new();
       let builder = Builder::new(
-        root_specifier,
+        roots,
         false,
         &mut loader,
-        maybe_resolver,
+        maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         maybe_locker,
-        source_parser,
+        &source_parser,
       );
       let graph = builder.build().await;
       Ok(js_graph::ModuleGraph(graph))
@@ -159,14 +167,14 @@ cfg_if! {
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
       let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
-      let maybe_resolver = maybe_resolve.map(|r| Box::new(js_graph::JsResolver::new(r)) as Box<dyn Resolver>);
-      let source_parser = Arc::new(Mutex::new(ast::DefaultSourceParser::new()));
+      let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
+      let source_parser = ast::DefaultSourceParser::new();
       match graph::parse_module(
         &specifier,
         maybe_headers.as_ref(),
         Arc::new(content),
-        &maybe_resolver,
-        source_parser,
+        maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+        &source_parser,
       ) {
         ModuleSlot::Module(module) => Ok(js_graph::Module(module)),
         ModuleSlot::Err(err) => Err(js_sys::Error::new(&err.to_string()).into()),
@@ -219,9 +227,10 @@ mod tests {
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph =
-      create_graph(root_specifier.clone(), &mut loader, None, None, None).await;
+      create_graph(vec![root_specifier.clone()], &mut loader, None, None, None)
+        .await;
     assert_eq!(graph.module_slots.len(), 2);
-    assert_eq!(graph.root, root_specifier);
+    assert_eq!(graph.roots, vec![root_specifier.clone()]);
     assert!(graph.contains(&root_specifier));
     assert!(
       !graph.contains(&ModuleSpecifier::parse("file:///a/test03.ts").unwrap())
@@ -270,9 +279,10 @@ mod tests {
     let root_specifier =
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let graph =
-      create_graph(root_specifier.clone(), &mut loader, None, None, None).await;
+      create_graph(vec![root_specifier.clone()], &mut loader, None, None, None)
+        .await;
     assert_eq!(graph.module_slots.len(), 1);
-    assert_eq!(graph.root, root_specifier);
+    assert_eq!(graph.roots, vec![root_specifier.clone()]);
     let maybe_root_module = graph.module_slots.get(&root_specifier);
     assert!(maybe_root_module.is_some());
     let root_module_slot = maybe_root_module.unwrap();
@@ -305,7 +315,8 @@ mod tests {
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph =
-      create_graph(root_specifier.clone(), &mut loader, None, None, None).await;
+      create_graph(vec![root_specifier.clone()], &mut loader, None, None, None)
+        .await;
     assert_eq!(graph.module_slots.len(), 3);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
     let maybe_module = graph.get(&data_specifier);
@@ -336,12 +347,17 @@ mod tests {
       "file:///a/test01.ts",
       vec![("b", "file:///a/test02.ts")],
     )]);
-    let maybe_resolver: Option<Box<dyn Resolver>> = Some(Box::new(resolver));
+    let maybe_resolver: Option<&dyn Resolver> = Some(&resolver);
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
-    let graph =
-      create_graph(root_specifier, &mut loader, maybe_resolver, None, None)
-        .await;
-    let maybe_module = graph.get(&graph.root);
+    let graph = create_graph(
+      vec![root_specifier],
+      &mut loader,
+      maybe_resolver,
+      None,
+      None,
+    )
+    .await;
+    let maybe_module = graph.get(&graph.roots[0]);
     assert!(maybe_module.is_some());
     let module = maybe_module.unwrap();
     let maybe_dep = module.dependencies.get("b");
@@ -384,16 +400,15 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let test02_specifier =
       ModuleSpecifier::parse("file:///a/test02.ts").expect("bad url");
-    let parser = Arc::new(Mutex::new(crate::ast::CapturingSourceParser::new()));
+    let parser = crate::ast::CapturingSourceParser::new();
     create_graph(
-      root_specifier.clone(),
+      vec![root_specifier.clone()],
       &mut loader,
       None,
       None,
-      Some(parser.clone()),
+      Some(&parser),
     )
     .await;
-    let parser = parser.lock();
     let root_ast = parser.get_parsed_source(&root_specifier).unwrap();
     let test02_ast = parser.get_parsed_source(&test02_specifier).unwrap();
     assert_eq!(root_ast.module().body.len(), 1);

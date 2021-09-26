@@ -82,7 +82,7 @@ export interface ModuleJson extends CacheInfo {
   specifier: string;
   /** Any error encountered when attempting to load the module. */
   error?: string;
-  /** An array of dependendencies that were identified in the module. */
+  /** An array of dependencies that were identified in the module. */
   dependencies?: DependencyJson[];
   /** If the module had a types dependency, the information about that
    * dependency. */
@@ -100,9 +100,9 @@ export interface ModuleJson extends CacheInfo {
 /** The plain-object representation of a module graph that is suitable for
  * serialization to JSON. */
 export interface ModuleGraphJson {
-  /** The module specifier (URL string) of the _root_ of the module graph of
+  /** The module specifiers (URL string) of the _roots_ of the module graph of
    * which the module graph was built for. */
-  root: string;
+  roots: string[];
   /** An array of modules that are part of the module graph. */
   modules: ModuleJson[];
   /** A record/map of any redirects encountered when resolving modules. The
@@ -133,7 +133,7 @@ export class Module {
    * graph was built. */
   readonly checksum: string | undefined;
   /** A record of the dependencies, where the key is the string specifier of
-   * the dependency and the value is the dependecy object. */
+   * the dependency and the value is the dependency object. */
   readonly dependencies: Record<string, Dependency>;
   /** The media type assigned to the module. This determines how Deno will
    * handle the module. */
@@ -164,10 +164,10 @@ export class ModuleGraph {
   /** The modules that are part of the module graph. */
   readonly modules: Module[];
 
-  /** The root specifier that was used to build the module graph from. */
-  readonly root: string;
+  /** The root specifiers that were used to build the module graph from. */
+  readonly roots: string[];
 
-  /** Explictly free the memory used by the module graph. The web assembly
+  /** Explicitly free the memory used by the module graph. The web assembly
    * bindings does use weak references, meaning that the memory should be
    * automatically garbage collected when the graph falls out of use. */
   free(): void;
@@ -182,7 +182,7 @@ export class ModuleGraph {
   lock(): void;
 
   /** Given a string URL, return the resolved string URL accounting for any
-   * redirections that might have occured when resolving the module graph. */
+   * redirections that might have occurred when resolving the module graph. */
   resolve(specifier: string): string;
 
   /** Given a string specifier of a module's dependency and the referring
@@ -191,7 +191,7 @@ export class ModuleGraph {
   resolveDependency(specifier: string, referrer: string): string | undefined;
 
   /** Returns a plain-object representation of the module graph suitable for
-   * serialization as JSON, similiar to the `deno info --json` output. */
+   * serialization as JSON, similar to the `deno info --json` output. */
   toJSON(): ModuleGraphJson;
 
   /** Provides a string output representation of the module graph similar to

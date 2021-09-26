@@ -20,16 +20,17 @@ use deno_ast::ParsedSource;
 use futures::future;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
-use parking_lot::Mutex;
 use serde::ser::SerializeMap;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
 use serde::Serialize;
 use serde::Serializer;
+use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt;
+use std::rc::Rc;
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -261,9 +262,9 @@ fn to_result(
 
 #[derive(Debug, Serialize)]
 pub struct ModuleGraph {
-  pub root: ModuleSpecifier,
+  pub roots: Vec<ModuleSpecifier>,
   #[serde(skip_serializing)]
-  maybe_locker: Option<Arc<Mutex<dyn Locker>>>,
+  maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
   #[serde(serialize_with = "serialize_modules", rename = "modules")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
   redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
@@ -271,11 +272,11 @@ pub struct ModuleGraph {
 
 impl ModuleGraph {
   pub fn new(
-    root: ModuleSpecifier,
-    maybe_locker: Option<Arc<Mutex<dyn Locker>>>,
+    roots: Vec<ModuleSpecifier>,
+    maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
   ) -> Self {
     Self {
-      root,
+      roots,
       maybe_locker,
       module_slots: Default::default(),
       redirects: Default::default(),
@@ -312,7 +313,7 @@ impl ModuleGraph {
   /// the first specifier that failed the integrity check.
   pub fn lock(&self) -> Result<(), ModuleGraphError> {
     if let Some(locker) = &self.maybe_locker {
-      let mut locker = locker.lock();
+      let mut locker = locker.borrow_mut();
       for (_, module_slot) in self.module_slots.iter() {
         if let ModuleSlot::Module(module) = module_slot {
           if !locker.check_or_insert(&module.specifier, &module.source) {
@@ -517,10 +518,10 @@ impl ModuleGraph {
     }
 
     let mut seen = HashSet::new();
-    validate(&self.root, &mut seen, &|s| {
-      self.try_get(s).map(|o| o.cloned())
-    })
-    .map_err(|(s, err)| anyhow!("{}\n  from \"{}\"", err, s))?;
+    for root in &self.roots {
+      validate(root, &mut seen, &|s| self.try_get(s).map(|o| o.cloned()))
+        .map_err(|(s, err)| anyhow!("{}\n  from \"{}\"", err, s))?;
+    }
     Ok(())
   }
 }
@@ -548,7 +549,7 @@ fn resolve<'a>(
   specifier: &'a str,
   referrer: &'a ModuleSpecifier,
   range: &'a ast::Range,
-  maybe_resolver: &'a Option<Box<dyn 'a + Resolver>>,
+  maybe_resolver: Option<&'a dyn Resolver>,
 ) -> Resolved {
   let mut remapped = false;
   let resolved_specifier = if let Some(resolver) = maybe_resolver {
@@ -588,11 +589,11 @@ pub(crate) fn parse_module<'a>(
   specifier: &'a ModuleSpecifier,
   maybe_headers: Option<&'a HashMap<String, String>>,
   content: Arc<String>,
-  maybe_resolver: &'a Option<Box<dyn 'a + Resolver>>,
-  source_parser: Arc<Mutex<dyn SourceParser>>,
+  maybe_resolver: Option<&'a dyn Resolver>,
+  source_parser: &dyn SourceParser,
 ) -> ModuleSlot {
   // Parse the module and start analyzing the module.
-  match source_parser.lock().parse_module(
+  match source_parser.parse_module(
     specifier,
     content,
     get_media_type(specifier, maybe_headers),
@@ -614,7 +615,7 @@ pub(crate) fn parse_module_from_ast<'a>(
   specifier: &'a ModuleSpecifier,
   maybe_headers: Option<&'a HashMap<String, String>>,
   parsed_source: &'a ParsedSource,
-  maybe_resolver: &'a Option<Box<dyn 'a + Resolver>>,
+  maybe_resolver: Option<&'a dyn Resolver>,
 ) -> Module {
   // Init the module and determine its media type
   let mut module = Module::new(specifier.clone(), parsed_source.clone());
@@ -625,13 +626,13 @@ pub(crate) fn parse_module_from_ast<'a>(
     match reference {
       ast::TypeScriptReference::Path(specifier, range) => {
         let resolved_dependency =
-          resolve(&specifier, &module.specifier, &range, &maybe_resolver);
+          resolve(&specifier, &module.specifier, &range, maybe_resolver);
         let dep = module.dependencies.entry(specifier).or_default();
         dep.maybe_code = resolved_dependency;
       }
       ast::TypeScriptReference::Types(specifier, range) => {
         let resolved_dependency =
-          resolve(&specifier, &module.specifier, &range, &maybe_resolver);
+          resolve(&specifier, &module.specifier, &range, maybe_resolver);
         if module.media_type == MediaType::JavaScript
           || module.media_type == MediaType::Jsx
         {
@@ -653,7 +654,7 @@ pub(crate) fn parse_module_from_ast<'a>(
           types_header,
           &module.specifier,
           &ast::Range::default(),
-          &maybe_resolver,
+          maybe_resolver,
         );
         module.maybe_types_dependency =
           Some((types_header.clone(), resolved_dependency));
@@ -672,12 +673,12 @@ pub(crate) fn parse_module_from_ast<'a>(
       &desc.specifier,
       &module.specifier,
       &Range::from_span(parsed_source, &desc.specifier_span),
-      &maybe_resolver,
+      maybe_resolver,
     );
     dep.maybe_code = resolved_dependency;
     let specifier = module.specifier.clone();
     let maybe_type = analyze_deno_types(parsed_source, &desc)
-      .map(|(s, r)| resolve(&s, &specifier, &r, &maybe_resolver))
+      .map(|(s, r)| resolve(&s, &specifier, &r, maybe_resolver))
       .unwrap_or_else(|| Resolved::None);
     if dep.maybe_type.is_none() {
       dep.maybe_type = maybe_type
@@ -707,23 +708,23 @@ pub(crate) struct Builder<'a> {
   is_dynamic_root: bool,
   graph: ModuleGraph,
   loader: &'a mut dyn Loader,
-  maybe_resolver: Option<Box<dyn 'a + Resolver>>,
+  maybe_resolver: Option<&'a dyn Resolver>,
   pending: FuturesUnordered<LoadFuture>,
-  source_parser: Arc<Mutex<dyn SourceParser>>,
+  source_parser: &'a dyn SourceParser,
 }
 
 impl<'a> Builder<'a> {
   pub fn new(
-    root_specifier: ModuleSpecifier,
+    roots: Vec<ModuleSpecifier>,
     is_dynamic_root: bool,
     loader: &'a mut dyn Loader,
-    maybe_resolver: Option<Box<dyn 'a + Resolver>>,
-    maybe_locker: Option<Arc<Mutex<dyn Locker>>>,
-    source_parser: Arc<Mutex<dyn SourceParser>>,
+    maybe_resolver: Option<&'a dyn Resolver>,
+    maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+    source_parser: &'a dyn SourceParser,
   ) -> Self {
     Self {
       is_dynamic_root,
-      graph: ModuleGraph::new(root_specifier, maybe_locker),
+      graph: ModuleGraph::new(roots, maybe_locker),
       loader,
       maybe_resolver,
       pending: FuturesUnordered::new(),
@@ -732,8 +733,10 @@ impl<'a> Builder<'a> {
   }
 
   pub async fn build(mut self) -> ModuleGraph {
-    let root = self.graph.root.clone();
-    self.load(&root, self.is_dynamic_root);
+    let roots = self.graph.roots.clone();
+    for root in roots {
+      self.load(&root, self.is_dynamic_root);
+    }
 
     loop {
       match self.pending.next().await {
@@ -803,21 +806,23 @@ impl<'a> Builder<'a> {
           self.graph.module_slots.remove(&requested_specifier);
         }
       }
-      // if the root has been redirected, update the root
-      if self.graph.root == requested_specifier {
-        self.graph.root = specifier.clone();
-      }
-      self
+      // if a root has been redirected, update the root
+      if let Some(index) = self
         .graph
-        .redirects
-        .insert(requested_specifier, specifier.clone());
+        .roots
+        .iter()
+        .position(|s| *s == requested_specifier)
+      {
+        let _got =
+          std::mem::replace(&mut self.graph.roots[index], specifier.clone());
+      }
     }
 
     let module_slot = parse_module(
       &specifier,
       maybe_headers.as_ref(),
       response.content,
-      &self.maybe_resolver,
+      self.maybe_resolver,
       self.source_parser.clone(),
     );
 

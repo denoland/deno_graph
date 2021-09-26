@@ -43,7 +43,14 @@ fn human_size(size: f64) -> String {
 
 impl fmt::Display for ModuleGraph {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    match self.module_slots.get(&self.root) {
+    if self.roots.is_empty() || self.roots.len() > 1 {
+      return writeln!(
+        f,
+        "{} displaying graphs that have multiple roots is not supported.",
+        colors::red("error:")
+      );
+    }
+    match self.module_slots.get(&self.roots[0]) {
       Some(ModuleSlot::Module(root)) => {
         writeln!(f, "{} {}", colors::bold("type:"), root.media_type)?;
         if let Some(cache_info) = &root.maybe_cache_info {
@@ -94,7 +101,7 @@ impl fmt::Display for ModuleGraph {
         writeln!(
           f,
           "\n{} {}",
-          self.root,
+          self.roots[0],
           colors::gray(format!("({})", human_size(root.size() as f64)))
         )?;
         let mut seen = HashSet::new();
@@ -352,9 +359,7 @@ mod tests {
   use crate::graph::Builder;
   use crate::source::CacheInfo;
   use crate::source::MemoryLoader;
-  use parking_lot::Mutex;
   use std::path::PathBuf;
-  use std::sync::Arc;
 
   #[tokio::test]
   async fn test_info_graph() {
@@ -439,14 +444,14 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
-    let source_parser = Arc::new(Mutex::new(DefaultSourceParser::new()));
+    let source_parser = DefaultSourceParser::new();
     let builder = Builder::new(
-      root_specifier,
+      vec![root_specifier],
       false,
       &mut loader,
       None,
       None,
-      source_parser,
+      &source_parser,
     );
     let graph = builder.build().await;
     assert_eq!(

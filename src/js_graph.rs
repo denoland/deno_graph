@@ -168,8 +168,13 @@ pub struct ModuleGraph(pub(crate) graph::ModuleGraph);
 #[wasm_bindgen]
 impl ModuleGraph {
   #[wasm_bindgen(getter)]
-  pub fn root(&self) -> String {
-    self.0.root.to_string()
+  pub fn roots(&self) -> js_sys::Array {
+    self
+      .0
+      .roots
+      .iter()
+      .map(|s| JsValue::from(s.to_string()))
+      .collect()
   }
 
   #[wasm_bindgen]

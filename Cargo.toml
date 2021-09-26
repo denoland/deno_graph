@@ -20,7 +20,6 @@ data-url = "0.1.0"
 futures = "0.3.17"
 js-sys = { version = "0.3.53", optional = true }
 lazy_static = "1.4.0"
-parking_lot = "0.11.1"
 regex = "1.5.4"
 ring = "0.16.20"
 serde = { version = "1.0.130", features = ["derive", "rc"] }
