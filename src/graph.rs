@@ -473,7 +473,7 @@ impl ModuleGraph {
   /// graph errors on non-dynamic imports. The first error is returned as an
   /// error result, otherwise ok if there are no errors.
   #[cfg(feature = "rust")]
-  pub fn valid(&self) -> Result<(), (ModuleSpecifier, ModuleGraphError)> {
+  pub fn valid(&self) -> Result<()> {
     fn validate<F>(
       specifier: &ModuleSpecifier,
       seen: &mut HashSet<ModuleSpecifier>,
@@ -519,7 +519,8 @@ impl ModuleGraph {
     let mut seen = HashSet::new();
     validate(&self.root, &mut seen, &|s| {
       self.try_get(s).map(|o| o.cloned())
-    })?;
+    })
+    .map_err(|(s, err)| anyhow!("{}\n  from \"{}\"", err, s))?;
     Ok(())
   }
 }
