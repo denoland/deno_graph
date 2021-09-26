@@ -352,7 +352,9 @@ mod tests {
   use crate::graph::Builder;
   use crate::source::CacheInfo;
   use crate::source::MemoryLoader;
+  use parking_lot::Mutex;
   use std::path::PathBuf;
+  use std::sync::Arc;
 
   #[tokio::test]
   async fn test_info_graph() {
@@ -437,14 +439,14 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
-    let source_parser = DefaultSourceParser::new();
+    let source_parser = Arc::new(Mutex::new(DefaultSourceParser::new()));
     let builder = Builder::new(
       root_specifier,
       false,
       &mut loader,
       None,
       None,
-      &source_parser,
+      source_parser,
     );
     let graph = builder.build().await;
     assert_eq!(

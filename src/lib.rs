@@ -43,48 +43,41 @@ cfg_if! {
 
     /// Create a module graph, based on loading and recursively analyzing the
     /// dependencies of the module, returning the resulting graph.
-    pub async fn create_graph(
+    pub async fn create_graph<'a>(
       root_specifier: ModuleSpecifier,
       loader: &mut dyn Loader,
-      maybe_resolver: Option<&dyn Resolver>,
+      maybe_resolver: Option<Box<dyn 'a + Resolver>>,
       maybe_locker: Option<Arc<Mutex<dyn Locker>>>,
-      maybe_parser: Option<&dyn SourceParser>,
+      maybe_parser: Option<Arc<Mutex<dyn SourceParser>>>,
     ) -> ModuleGraph {
-      let default_parser = ast::DefaultSourceParser::new();
+      let parser = maybe_parser.unwrap_or_else(|| Arc::new(Mutex::new(ast::DefaultSourceParser::new())));
       let builder = Builder::new(
         root_specifier,
         false,
         loader,
         maybe_resolver,
         maybe_locker,
-        match maybe_parser {
-          Some(parser) => parser,
-          None => &default_parser,
-        },
+        parser,
       );
       builder.build().await
     }
 
     /// Parse an individual module, returning the module as a result, otherwise
     /// erroring with a module graph error.
-    pub fn parse_module(
-      specifier: &ModuleSpecifier,
-      maybe_headers: Option<&HashMap<String, String>>,
+    pub fn parse_module<'a>(
+      specifier: &'a ModuleSpecifier,
+      maybe_headers: Option<&'a HashMap<String, String>>,
       content: Arc<String>,
-      maybe_resolver: Option<&dyn Resolver>,
-      maybe_parser: Option<&dyn SourceParser>,
+      maybe_resolver: Option<Box<dyn 'a + Resolver>>,
+      maybe_parser: Option<Arc<Mutex<dyn SourceParser>>>,
     ) -> Result<Module, ModuleGraphError> {
-      let default_parser = ast::DefaultSourceParser::new();
+      let source_parser = maybe_parser.unwrap_or_else(|| Arc::new(Mutex::new(ast::DefaultSourceParser::new())));
       match graph::parse_module(
         specifier,
         maybe_headers,
         content,
-        maybe_resolver,
-        if let Some(parser) = maybe_parser {
-          parser
-        } else {
-          &default_parser
-        },
+        &maybe_resolver,
+        source_parser,
       ) {
         ModuleSlot::Module(module) => Ok(module),
         ModuleSlot::Err(err) => Err(err),
@@ -93,17 +86,17 @@ cfg_if! {
     }
 
     /// Parse an individual module from an AST, returning the module.
-    pub fn parse_module_from_ast(
-      specifier: &ModuleSpecifier,
-      maybe_headers: Option<&HashMap<String, String>>,
-      parsed_ast: &deno_ast::ParsedSource,
-      maybe_resolver: Option<&dyn Resolver>,
+    pub fn parse_module_from_ast<'a>(
+      specifier: &'a ModuleSpecifier,
+      maybe_headers: Option<&'a HashMap<String, String>>,
+      parsed_ast: &'a deno_ast::ParsedSource,
+      maybe_resolver: Option<Box<dyn 'a + Resolver>>,
     ) -> Module {
       graph::parse_module_from_ast(
         specifier,
         maybe_headers,
         parsed_ast,
-        maybe_resolver,
+        &maybe_resolver,
       )
     }
   }
@@ -130,7 +123,7 @@ cfg_if! {
       maybe_get_checksum: Option<js_sys::Function>,
     ) -> Result<js_graph::ModuleGraph, JsValue> {
       let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
-      let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
+      let maybe_resolver = maybe_resolve.map(|r| Box::new(js_graph::JsResolver::new(r)) as Box<dyn Resolver>);
       let maybe_locker: Option<Arc<Mutex<dyn Locker>>> =
         if maybe_check.is_some() || maybe_get_checksum.is_some() {
           let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum);
@@ -141,14 +134,14 @@ cfg_if! {
       let root_specifier =
         module_specifier::ModuleSpecifier::parse(&root_specifier)
           .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-      let source_parser = ast::DefaultSourceParser::new();
+      let source_parser = Arc::new(Mutex::new(ast::DefaultSourceParser::new()));
       let builder = Builder::new(
         root_specifier,
         false,
         &mut loader,
-        maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+        maybe_resolver,
         maybe_locker,
-        &source_parser,
+        source_parser,
       );
       let graph = builder.build().await;
       Ok(js_graph::ModuleGraph(graph))
@@ -166,14 +159,14 @@ cfg_if! {
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
       let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
-      let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
-      let source_parser = ast::DefaultSourceParser::new();
+      let maybe_resolver = maybe_resolve.map(|r| Box::new(js_graph::JsResolver::new(r)) as Box<dyn Resolver>);
+      let source_parser = Arc::new(Mutex::new(ast::DefaultSourceParser::new()));
       match graph::parse_module(
         &specifier,
         maybe_headers.as_ref(),
         Arc::new(content),
-        maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-        &source_parser,
+        &maybe_resolver,
+        source_parser,
       ) {
         ModuleSlot::Module(module) => Ok(js_graph::Module(module)),
         ModuleSlot::Err(err) => Err(js_sys::Error::new(&err.to_string()).into()),
@@ -343,7 +336,7 @@ mod tests {
       "file:///a/test01.ts",
       vec![("b", "file:///a/test02.ts")],
     )]);
-    let maybe_resolver: Option<&dyn Resolver> = Some(&resolver);
+    let maybe_resolver: Option<Box<dyn Resolver>> = Some(Box::new(resolver));
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let graph =
       create_graph(root_specifier, &mut loader, maybe_resolver, None, None)
@@ -391,15 +384,16 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let test02_specifier =
       ModuleSpecifier::parse("file:///a/test02.ts").expect("bad url");
-    let parser = crate::ast::CapturingSourceParser::new();
+    let parser = Arc::new(Mutex::new(crate::ast::CapturingSourceParser::new()));
     create_graph(
       root_specifier.clone(),
       &mut loader,
       None,
       None,
-      Some(&parser),
+      Some(parser.clone()),
     )
     .await;
+    let parser = parser.lock();
     let root_ast = parser.get_parsed_source(&root_specifier).unwrap();
     let test02_ast = parser.get_parsed_source(&test02_specifier).unwrap();
     assert_eq!(root_ast.module().body.len(), 1);
