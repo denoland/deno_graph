@@ -264,7 +264,7 @@ fn to_result(
 pub struct ModuleGraph {
   pub roots: Vec<ModuleSpecifier>,
   #[serde(skip_serializing)]
-  maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+  maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
   #[serde(serialize_with = "serialize_modules", rename = "modules")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
   redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
@@ -273,7 +273,7 @@ pub struct ModuleGraph {
 impl ModuleGraph {
   pub fn new(
     roots: Vec<ModuleSpecifier>,
-    maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+    maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
   ) -> Self {
     Self {
       roots,
@@ -719,7 +719,7 @@ impl<'a> Builder<'a> {
     is_dynamic_root: bool,
     loader: &'a mut dyn Loader,
     maybe_resolver: Option<&'a dyn Resolver>,
-    maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+    maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
     source_parser: &'a dyn SourceParser,
   ) -> Self {
     Self {
