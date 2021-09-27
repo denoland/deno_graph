@@ -46,6 +46,7 @@ cfg_if! {
     /// dependencies of the module, returning the resulting graph.
     pub async fn create_graph<'a>(
       roots: Vec<ModuleSpecifier>,
+      is_dynamic: bool,
       loader: &mut dyn Loader,
       maybe_resolver: Option<&'a dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
@@ -55,7 +56,7 @@ cfg_if! {
       let source_parser = maybe_parser.unwrap_or(&default_parser);
       let builder = Builder::new(
         roots,
-        false,
+        is_dynamic,
         loader,
         maybe_resolver,
         maybe_locker,
@@ -226,9 +227,15 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let graph =
-      create_graph(vec![root_specifier.clone()], &mut loader, None, None, None)
-        .await;
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
     assert_eq!(graph.module_slots.len(), 2);
     assert_eq!(graph.roots, vec![root_specifier.clone()]);
     assert!(graph.contains(&root_specifier));
@@ -278,9 +285,15 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
-    let graph =
-      create_graph(vec![root_specifier.clone()], &mut loader, None, None, None)
-        .await;
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
     assert_eq!(graph.module_slots.len(), 1);
     assert_eq!(graph.roots, vec![root_specifier.clone()]);
     let maybe_root_module = graph.module_slots.get(&root_specifier);
@@ -314,9 +327,15 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let graph =
-      create_graph(vec![root_specifier.clone()], &mut loader, None, None, None)
-        .await;
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
     assert_eq!(graph.module_slots.len(), 3);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
     let maybe_module = graph.get(&data_specifier);
@@ -351,6 +370,7 @@ mod tests {
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let graph = create_graph(
       vec![root_specifier],
+      false,
       &mut loader,
       maybe_resolver,
       None,
@@ -403,6 +423,7 @@ mod tests {
     let parser = crate::ast::CapturingSourceParser::new();
     create_graph(
       vec![root_specifier.clone()],
+      false,
       &mut loader,
       None,
       None,
