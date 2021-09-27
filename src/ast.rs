@@ -259,6 +259,7 @@ impl SourceParser for CapturingSourceParser {
       source: SourceTextInfo::new(source),
       media_type,
       capture_tokens: false,
+      scope_analysis: false,
       maybe_syntax: None,
     })?;
 
@@ -293,6 +294,7 @@ impl SourceParser for DefaultSourceParser {
       source: SourceTextInfo::new(source),
       media_type,
       capture_tokens: false,
+      scope_analysis: false,
       maybe_syntax: None,
     })
   }
