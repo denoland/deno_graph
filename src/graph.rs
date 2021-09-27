@@ -428,6 +428,18 @@ impl ModuleGraph {
     None
   }
 
+  fn set_checksums(&mut self) {
+    if let Some(locker) = &self.maybe_locker {
+      let locker = locker.borrow();
+      for (_, module_slot) in self.module_slots.iter_mut() {
+        if let ModuleSlot::Module(module) = module_slot {
+          module.maybe_checksum =
+            Some(locker.get_checksum(module.source.as_str()));
+        }
+      }
+    }
+  }
+
   /// Return a map representation of the specifiers in the graph, where each key
   /// is a module specifier and each value is a result that contains a tuple of
   /// the module specifier and media type, or the module graph error.
@@ -768,6 +780,8 @@ impl<'a> Builder<'a> {
         module.maybe_cache_info = self.loader.get_cache_info(&module.specifier);
       }
     }
+    // Enrich with checksums from locker
+    self.graph.set_checksums();
 
     self.graph
   }
