@@ -179,6 +179,23 @@ pub struct Dependency {
   pub is_dynamic: bool,
 }
 
+#[cfg(feature = "rust")]
+impl Dependency {
+  pub fn get_code(&self) -> Option<&ModuleSpecifier> {
+    match &self.maybe_code {
+      Resolved::Specifier(specifier, _) => Some(specifier),
+      _ => None,
+    }
+  }
+
+  pub fn get_type(&self) -> Option<&ModuleSpecifier> {
+    match &self.maybe_type {
+      Resolved::Specifier(specifier, _) => Some(specifier),
+      _ => None,
+    }
+  }
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Module {
@@ -248,7 +265,7 @@ fn to_result(
     ModuleSlot::Err(err) => (specifier.clone(), Err(err.clone())),
     ModuleSlot::Module(module) => (
       specifier.clone(),
-      Ok((module.specifier.clone(), module.media_type.clone())),
+      Ok((module.specifier.clone(), module.media_type)),
     ),
     _ => (
       specifier.clone(),
@@ -468,11 +485,11 @@ impl ModuleGraph {
       ModuleSpecifier,
       Result<(ModuleSpecifier, MediaType), ModuleGraphError>,
     > = self.module_slots.iter().map(to_result).collect();
-    for (specifier, _) in &self.redirects {
-      if let Some(module) = self.get(&specifier) {
+    for specifier in self.redirects.keys() {
+      if let Some(module) = self.get(specifier) {
         map.insert(
           specifier.clone(),
-          Ok((module.specifier.clone(), module.media_type.clone())),
+          Ok((module.specifier.clone(), module.media_type)),
         );
       }
     }
@@ -520,7 +537,7 @@ impl ModuleGraph {
           {
             validate(specifier, seen, get_module)?;
           }
-          for (_, dep) in &module.dependencies {
+          for dep in module.dependencies.values() {
             if !dep.is_dynamic {
               if let Resolved::Specifier(specifier, _) = &dep.maybe_code {
                 validate(specifier, seen, get_module)?;
@@ -851,7 +868,7 @@ impl<'a> Builder<'a> {
       maybe_headers.as_ref(),
       response.content,
       self.maybe_resolver,
-      self.source_parser.clone(),
+      self.source_parser,
     );
 
     if let ModuleSlot::Module(module) = &module_slot {
