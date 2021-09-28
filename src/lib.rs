@@ -268,6 +268,57 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn test_create_graph_multiple_roots() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"import * as b from "./test02.ts";"#,
+          )),
+        ),
+        (
+          "file:///a/test02.ts",
+          Ok(("file:///a/test02.ts", None, r#"export const b = "b";"#)),
+        ),
+        (
+          "https://example.com/a.ts",
+          Ok((
+            "https://example.com/a.ts",
+            None,
+            r#"import * as c from "./c.ts";"#,
+          )),
+        ),
+        (
+          "https://example.com/c.ts",
+          Ok(("https://example.com/c.ts", None, r#"export const c = "c";"#)),
+        ),
+      ],
+      vec![],
+    );
+    let roots = vec![
+      ModuleSpecifier::parse("file:///a/test01.ts").unwrap(),
+      ModuleSpecifier::parse("https://example.com/a.ts").unwrap(),
+    ];
+    let graph =
+      create_graph(roots.clone(), false, &mut loader, None, None, None).await;
+    assert_eq!(graph.module_slots.len(), 4);
+    assert_eq!(graph.roots, roots);
+    assert!(
+      graph.contains(&ModuleSpecifier::parse("file:///a/test01.ts").unwrap())
+    );
+    assert!(
+      graph.contains(&ModuleSpecifier::parse("file:///a/test02.ts").unwrap())
+    );
+    assert!(graph
+      .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap()));
+    assert!(graph
+      .contains(&ModuleSpecifier::parse("https://example.com/c.ts").unwrap()));
+  }
+
+  #[tokio::test]
   async fn test_create_graph_with_headers() {
     let mut loader = setup(
       vec![(
