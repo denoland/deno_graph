@@ -294,6 +294,20 @@ impl ModuleGraph {
       .map_or(false, |ms| matches!(ms, ModuleSlot::Module(_)))
   }
 
+  /// Returns any errors that are in the module graph, along with the associated
+  /// specifier
+  #[cfg(feature = "rust")]
+  pub fn errors(&self) -> Vec<(&ModuleSpecifier, &ModuleGraphError)> {
+    self
+      .module_slots
+      .iter()
+      .filter_map(|(s, ms)| match ms {
+        ModuleSlot::Err(err) => Some((s, err)),
+        _ => None,
+      })
+      .collect()
+  }
+
   /// Get a module from the module graph, returning `None` if the module is not
   /// part of the graph, or if when loading the module it errored. If any module
   /// resolution error is needed, then use the `try_get()` method which will
