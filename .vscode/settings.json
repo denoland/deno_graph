@@ -4,8 +4,5 @@
   "deno.unstable": true,
   "rust-analyzer.cargo.features": [
     "wasm"
-  ],
-  "cSpell.words": [
-    "redirections"
   ]
 }

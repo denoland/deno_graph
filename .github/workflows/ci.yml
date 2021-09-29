@@ -45,8 +45,8 @@ jobs:
       - name: 💄  format
         if: contains(matrix.os, 'ubuntu')
         run: |
-          rustfmt --check src/lib.rs
-          deno fmt --check *.ts lib schemas
+          cargo fmt -- --check
+          deno fmt --check *.ts lib schemas .vscode .github
 
       - name: 💄  lint
         if: contains(matrix.os, 'ubuntu')
