@@ -295,7 +295,7 @@ pub struct ModuleGraph {
   maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
   #[serde(serialize_with = "serialize_modules", rename = "modules")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
-  redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
+  pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
 }
 
 impl ModuleGraph {
@@ -867,16 +867,10 @@ impl<'a> Builder<'a> {
           self.graph.module_slots.remove(&requested_specifier);
         }
       }
-      // if a root has been redirected, update the root
-      if let Some(index) = self
+      self
         .graph
-        .roots
-        .iter()
-        .position(|s| *s == requested_specifier)
-      {
-        let _got =
-          std::mem::replace(&mut self.graph.roots[index], specifier.clone());
-      }
+        .redirects
+        .insert(requested_specifier, specifier.clone());
     }
 
     let module_slot = parse_module(
