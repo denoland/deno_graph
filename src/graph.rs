@@ -37,6 +37,7 @@ use std::sync::Arc;
 pub enum ModuleGraphError {
   LoadingErr(anyhow::Error),
   ParseErr(deno_ast::Diagnostic),
+  ResolutionError(ResolutionError, ast::Span),
   InvalidSource(ModuleSpecifier),
 }
 
@@ -45,6 +46,9 @@ impl Clone for ModuleGraphError {
     match self {
       Self::LoadingErr(err) => Self::LoadingErr(anyhow!(err.to_string())),
       Self::ParseErr(err) => Self::ParseErr(err.clone()),
+      Self::ResolutionError(err, span) => {
+        Self::ResolutionError(err.clone(), span.clone())
+      }
       Self::InvalidSource(specifier) => Self::InvalidSource(specifier.clone()),
     }
   }
@@ -63,6 +67,9 @@ impl fmt::Display for ModuleGraphError {
           "The module's source code would not be parsed: {}",
           diagnostic
         )
+      }
+      Self::ResolutionError(err, _) => {
+        format!("{}", err)
       }
       Self::InvalidSource(specifier) => {
         format!("The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}", specifier)
@@ -533,7 +540,7 @@ impl ModuleGraph {
   /// graph errors on non-dynamic imports. The first error is returned as an
   /// error result, otherwise ok if there are no errors.
   #[cfg(feature = "rust")]
-  pub fn valid(&self) -> Result<()> {
+  pub fn valid(&self) -> Result<(), (ModuleSpecifier, ModuleGraphError)> {
     fn validate<F>(
       specifier: &ModuleSpecifier,
       seen: &mut HashSet<ModuleSpecifier>,
@@ -555,11 +562,35 @@ impl ModuleGraph {
           }
           for dep in module.dependencies.values() {
             if !dep.is_dynamic {
-              if let Resolved::Specifier(specifier, _) = &dep.maybe_code {
-                validate(specifier, seen, get_module)?;
+              match &dep.maybe_code {
+                Resolved::Specifier(specifier, _) => {
+                  validate(specifier, seen, get_module)?
+                }
+                Resolved::Err(err, span) => {
+                  return Err((
+                    specifier.clone(),
+                    ModuleGraphError::ResolutionError(
+                      err.clone(),
+                      span.clone(),
+                    ),
+                  ))
+                }
+                _ => (),
               }
-              if let Resolved::Specifier(specifier, _) = &dep.maybe_type {
-                validate(specifier, seen, get_module)?;
+              match &dep.maybe_type {
+                Resolved::Specifier(specifier, _) => {
+                  validate(specifier, seen, get_module)?
+                }
+                Resolved::Err(err, span) => {
+                  return Err((
+                    specifier.clone(),
+                    ModuleGraphError::ResolutionError(
+                      err.clone(),
+                      span.clone(),
+                    ),
+                  ))
+                }
+                _ => (),
               }
             }
           }
@@ -578,8 +609,7 @@ impl ModuleGraph {
 
     let mut seen = HashSet::new();
     for root in &self.roots {
-      validate(root, &mut seen, &|s| self.try_get(s).map(|o| o.cloned()))
-        .map_err(|(s, err)| anyhow!("{}\n  from \"{}\"", err, s))?;
+      validate(root, &mut seen, &|s| self.try_get(s).map(|o| o.cloned()))?;
     }
     Ok(())
   }

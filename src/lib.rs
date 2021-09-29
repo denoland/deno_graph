@@ -359,6 +359,31 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn test_bare_specifier_error() {
+    let mut loader = setup(
+      vec![(
+        "file:///a/test.ts",
+        Ok(("file:///a/test.ts", None, r#"import "foo";"#)),
+      )],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    let result = graph.valid();
+    println!("{}", serde_json::json!(graph));
+    println!("{:?}", result);
+  }
+
+  #[tokio::test]
   async fn test_create_graph_with_redirects() {
     let mut loader = setup(
       vec![

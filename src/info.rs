@@ -268,6 +268,17 @@ impl ModuleGraphError {
           colors::red_bold("(parsing error)")
         ),
       ),
+      Self::ResolutionError(_, _) => fmt_info_msg(
+        f,
+        prefix,
+        last,
+        false,
+        format!(
+          "{} {}",
+          colors::red(specifier),
+          colors::red_bold("(resolution error)")
+        ),
+      ),
     }
   }
 }
