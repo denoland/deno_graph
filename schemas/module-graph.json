@@ -3,20 +3,25 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "description": "A JSON representation of a Deno module dependency graph.",
   "required": [
-    "root",
+    "roots",
     "modules",
     "redirects"
   ],
   "title": "Deno Dependency Graph Schema",
   "type": "object",
   "properties": {
-    "root": {
+    "roots": {
       "default": "",
-      "description": "The root specifier for the graph.",
+      "description": "The root specifiers for the graph.",
       "examples": [
-        "https://deno.land/x/mod.ts"
+        [
+          "https://deno.land/x/mod.ts"
+        ]
       ],
-      "type": "string"
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "modules": {
       "default": [],

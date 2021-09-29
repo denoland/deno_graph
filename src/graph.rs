@@ -181,6 +181,8 @@ pub struct Dependency {
 
 #[cfg(feature = "rust")]
 impl Dependency {
+  /// Optionally return the module specifier in the module graph that points to
+  /// the "code" dependency in the graph.
   pub fn get_code(&self) -> Option<&ModuleSpecifier> {
     match &self.maybe_code {
       Resolved::Specifier(specifier, _) => Some(specifier),
@@ -188,6 +190,8 @@ impl Dependency {
     }
   }
 
+  /// Optionally return the module specifier in the module graph that points to
+  /// the type only dependency in the graph.
   pub fn get_type(&self) -> Option<&ModuleSpecifier> {
     match &self.maybe_type {
       Resolved::Specifier(specifier, _) => Some(specifier),
@@ -220,7 +224,7 @@ pub struct Module {
 }
 
 impl Module {
-  pub fn new(specifier: ModuleSpecifier, parsed_source: ParsedSource) -> Self {
+  fn new(specifier: ModuleSpecifier, parsed_source: ParsedSource) -> Self {
     let source = parsed_source.source().text();
     Self {
       dependencies: Default::default(),
@@ -254,6 +258,8 @@ impl ModuleSlot {
   }
 }
 
+/// Convert a module slot entry into a result which contains the resolved
+/// module specifier and media type or the module graph error.
 #[cfg(feature = "rust")]
 fn to_result(
   (specifier, module_slot): (&ModuleSpecifier, &ModuleSlot),
@@ -277,6 +283,11 @@ fn to_result(
   }
 }
 
+/// The structure which represents a module graph, which can be serialized as
+/// well as "printed".  The roots of the graph represent the "starting" point
+/// which can be located in the module "slots" in the graph. The graph also
+/// contains any redirects where the requested module specifier was redirected
+/// to another module specifier when being loaded.
 #[derive(Debug, Serialize)]
 pub struct ModuleGraph {
   pub roots: Vec<ModuleSpecifier>,
@@ -288,7 +299,7 @@ pub struct ModuleGraph {
 }
 
 impl ModuleGraph {
-  pub fn new(
+  fn new(
     roots: Vec<ModuleSpecifier>,
     maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
   ) -> Self {
@@ -312,7 +323,7 @@ impl ModuleGraph {
   }
 
   /// Returns any errors that are in the module graph, along with the associated
-  /// specifier
+  /// specifier.
   #[cfg(feature = "rust")]
   pub fn errors(&self) -> Vec<(&ModuleSpecifier, &ModuleGraphError)> {
     self
@@ -358,6 +369,11 @@ impl ModuleGraph {
     Ok(())
   }
 
+  /// Return a vector of references to module objects in the graph. Only modules
+  /// that were fully resolved are present, as "errors" are omitted. If you need
+  /// to know what errors are in the graph, use the `.errors()` method, or if
+  /// you just need to check if everything is "ok" with the graph, use the
+  /// `.valid()` method.
   #[cfg(feature = "rust")]
   pub fn modules(&self) -> Vec<&Module> {
     self
@@ -588,11 +604,11 @@ fn load_data_url(specifier: &ModuleSpecifier) -> Result<Option<LoadResponse>> {
 
 /// Resolve a string specifier from a referring module, using the resolver if
 /// present, returning the resolution result.
-fn resolve<'a>(
-  specifier: &'a str,
-  referrer: &'a ModuleSpecifier,
-  range: &'a ast::Range,
-  maybe_resolver: Option<&'a dyn Resolver>,
+fn resolve(
+  specifier: &str,
+  referrer: &ModuleSpecifier,
+  range: &ast::Range,
+  maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolved {
   let mut remapped = false;
   let resolved_specifier = if let Some(resolver) = maybe_resolver {
@@ -628,11 +644,11 @@ fn resolve<'a>(
 }
 
 /// With the provided information, parse a module and return its "module slot"
-pub(crate) fn parse_module<'a>(
-  specifier: &'a ModuleSpecifier,
-  maybe_headers: Option<&'a HashMap<String, String>>,
+pub(crate) fn parse_module(
+  specifier: &ModuleSpecifier,
+  maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<String>,
-  maybe_resolver: Option<&'a dyn Resolver>,
+  maybe_resolver: Option<&dyn Resolver>,
   source_parser: &dyn SourceParser,
 ) -> ModuleSlot {
   // Parse the module and start analyzing the module.
@@ -654,11 +670,11 @@ pub(crate) fn parse_module<'a>(
   }
 }
 
-pub(crate) fn parse_module_from_ast<'a>(
-  specifier: &'a ModuleSpecifier,
-  maybe_headers: Option<&'a HashMap<String, String>>,
-  parsed_source: &'a ParsedSource,
-  maybe_resolver: Option<&'a dyn Resolver>,
+pub(crate) fn parse_module_from_ast(
+  specifier: &ModuleSpecifier,
+  maybe_headers: Option<&HashMap<String, String>>,
+  parsed_source: &ParsedSource,
+  maybe_resolver: Option<&dyn Resolver>,
 ) -> Module {
   // Init the module and determine its media type
   let mut module = Module::new(specifier.clone(), parsed_source.clone());

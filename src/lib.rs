@@ -44,13 +44,13 @@ cfg_if! {
 
     /// Create a module graph, based on loading and recursively analyzing the
     /// dependencies of the module, returning the resulting graph.
-    pub async fn create_graph<'a>(
+    pub async fn create_graph(
       roots: Vec<ModuleSpecifier>,
       is_dynamic: bool,
       loader: &mut dyn Loader,
-      maybe_resolver: Option<&'a dyn Resolver>,
+      maybe_resolver: Option<&dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
-      maybe_parser: Option<&'a dyn SourceParser>,
+      maybe_parser: Option<&dyn SourceParser>,
     ) -> ModuleGraph {
       let default_parser = ast::DefaultSourceParser::new();
       let source_parser = maybe_parser.unwrap_or(&default_parser);
@@ -67,12 +67,12 @@ cfg_if! {
 
     /// Parse an individual module, returning the module as a result, otherwise
     /// erroring with a module graph error.
-    pub fn parse_module<'a>(
-      specifier: &'a ModuleSpecifier,
-      maybe_headers: Option<&'a HashMap<String, String>>,
+    pub fn parse_module(
+      specifier: &ModuleSpecifier,
+      maybe_headers: Option<&HashMap<String, String>>,
       content: Arc<String>,
-      maybe_resolver: Option<&'a dyn Resolver>,
-      maybe_parser: Option<&'a dyn SourceParser>,
+      maybe_resolver: Option<&dyn Resolver>,
+      maybe_parser: Option<&dyn SourceParser>,
     ) -> Result<Module, ModuleGraphError> {
       let default_parser = ast::DefaultSourceParser::new();
       let source_parser = maybe_parser.unwrap_or(&default_parser);
@@ -90,11 +90,11 @@ cfg_if! {
     }
 
     /// Parse an individual module from an AST, returning the module.
-    pub fn parse_module_from_ast<'a>(
-      specifier: &'a ModuleSpecifier,
-      maybe_headers: Option<&'a HashMap<String, String>>,
-      parsed_ast: &'a deno_ast::ParsedSource,
-      maybe_resolver: Option<&'a dyn Resolver>,
+    pub fn parse_module_from_ast(
+      specifier: &ModuleSpecifier,
+      maybe_headers: Option<&HashMap<String, String>>,
+      parsed_ast: &deno_ast::ParsedSource,
+      maybe_resolver: Option<&dyn Resolver>,
     ) -> Module {
       graph::parse_module_from_ast(
         specifier,
