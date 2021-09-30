@@ -60,16 +60,7 @@ impl Clone for ModuleGraphError {
   }
 }
 
-impl std::error::Error for ModuleGraphError {
-  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-    match self {
-      Self::LoadingErr(err) => Some(err.as_ref().as_ref()),
-      Self::ParseErr(err) => Some(err),
-      Self::ResolutionError(err, _) => Some(err),
-      _ => None,
-    }
-  }
-}
+impl std::error::Error for ModuleGraphError {}
 
 impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -101,15 +92,7 @@ pub enum ResolutionError {
   InvalidSpecifier(SpecifierError),
 }
 
-impl std::error::Error for ResolutionError {
-  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-    match self {
-      Self::ResolverError(err) => Some(err.as_ref().as_ref()),
-      Self::InvalidSpecifier(err) => Some(err),
-      _ => None,
-    }
-  }
-}
+impl std::error::Error for ResolutionError {}
 
 impl Clone for ResolutionError {
   fn clone(&self) -> Self {
@@ -141,8 +124,8 @@ impl fmt::Display for ResolutionError {
     match self {
       Self::InvalidDowngrade => write!(f, "Modules imported via https are not allowed to import http modules."),
       Self::InvalidLocalImport => write!(f, "Remote modules are not allowed to import local modules. Consider using a dynamic import instead."),
-      Self::ResolverError(err) => write!(f, "Error returned from resolved: {}", err),
-      Self::InvalidSpecifier(err) => write!(f, "Invalid specifier error: {}", err),
+      Self::ResolverError(err) => write!(f, "{}", err),
+      Self::InvalidSpecifier(err) => write!(f, "{}", err),
     }
   }
 }
