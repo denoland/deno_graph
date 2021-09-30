@@ -35,7 +35,7 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub enum ModuleGraphError {
-  LoadingErr(anyhow::Error),
+  LoadingErr(Arc<anyhow::Error>),
   ParseErr(deno_ast::Diagnostic),
   ResolutionError(ResolutionError, ast::Span),
   InvalidSource(ModuleSpecifier, Option<String>),
@@ -45,7 +45,7 @@ pub enum ModuleGraphError {
 impl Clone for ModuleGraphError {
   fn clone(&self) -> Self {
     match self {
-      Self::LoadingErr(err) => Self::LoadingErr(anyhow!(err.to_string())),
+      Self::LoadingErr(err) => Self::LoadingErr(err.clone()),
       Self::ParseErr(err) => Self::ParseErr(err.clone()),
       Self::ResolutionError(err, span) => {
         Self::ResolutionError(err.clone(), span.clone())
@@ -60,7 +60,16 @@ impl Clone for ModuleGraphError {
   }
 }
 
-impl std::error::Error for ModuleGraphError {}
+impl std::error::Error for ModuleGraphError {
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    match self {
+      Self::LoadingErr(err) => Some(err.as_ref().as_ref()),
+      Self::ParseErr(err) => Some(err),
+      Self::ResolutionError(err, _) => Some(err),
+      _ => None,
+    }
+  }
+}
 
 impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -88,8 +97,18 @@ impl From<deno_ast::Diagnostic> for ModuleGraphError {
 pub enum ResolutionError {
   InvalidDowngrade,
   InvalidLocalImport,
-  ResolverError(anyhow::Error),
+  ResolverError(Arc<anyhow::Error>),
   InvalidSpecifier(SpecifierError),
+}
+
+impl std::error::Error for ResolutionError {
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    match self {
+      Self::ResolverError(err) => Some(err.as_ref().as_ref()),
+      Self::InvalidSpecifier(err) => Some(err),
+      _ => None,
+    }
+  }
 }
 
 impl Clone for ResolutionError {
@@ -97,7 +116,7 @@ impl Clone for ResolutionError {
     match self {
       Self::InvalidDowngrade => Self::InvalidDowngrade,
       Self::InvalidLocalImport => Self::InvalidLocalImport,
-      Self::ResolverError(err) => Self::ResolverError(anyhow!(err.to_string())),
+      Self::ResolverError(err) => Self::ResolverError(err.clone()),
       Self::InvalidSpecifier(err) => Self::InvalidSpecifier(err.clone()),
     }
   }
@@ -281,10 +300,10 @@ fn to_result(
     ),
     _ => (
       specifier.clone(),
-      Err(ModuleGraphError::LoadingErr(anyhow!(
+      Err(ModuleGraphError::LoadingErr(Arc::new(anyhow!(
         "Module \"{}\" is unavailable.",
         specifier
-      ))),
+      )))),
     ),
   }
 }
@@ -598,10 +617,10 @@ impl ModuleGraph {
         }
         Ok(None) => Err((
           specifier.clone(),
-          ModuleGraphError::LoadingErr(anyhow!(
+          ModuleGraphError::LoadingErr(Arc::new(anyhow!(
             "The specifier \"{}\" is unexpectedly missing from the graph.",
             specifier
-          )),
+          ))),
         )),
         Err(err) => Err((specifier.clone(), err)),
       }
@@ -645,7 +664,7 @@ fn resolve(
     remapped = true;
     resolver
       .resolve(specifier, referrer)
-      .map_err(ResolutionError::ResolverError)
+      .map_err(|err| ResolutionError::ResolverError(Arc::new(err)))
   } else {
     resolve_import(specifier, referrer)
       .map_err(ResolutionError::InvalidSpecifier)
@@ -869,7 +888,7 @@ impl<'a> Builder<'a> {
         Some((specifier, Err(err))) => {
           self.graph.module_slots.insert(
             specifier,
-            ModuleSlot::Err(ModuleGraphError::LoadingErr(err)),
+            ModuleSlot::Err(ModuleGraphError::LoadingErr(Arc::new(err))),
           );
         }
         _ => {}
