@@ -36,6 +36,7 @@ cfg_if! {
     pub use graph::Module;
     pub use graph::ModuleGraph;
     pub use graph::ModuleGraphError;
+    pub use graph::ResolutionError;
     pub use graph::Resolved;
     pub use deno_ast::MediaType;
     pub use module_specifier::ModuleSpecifier;
