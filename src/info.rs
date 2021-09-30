@@ -52,7 +52,6 @@ impl fmt::Display for ModuleGraph {
     }
     match self.module_slots.get(&self.roots[0]) {
       Some(ModuleSlot::Module(root)) => {
-        writeln!(f, "{} {}", colors::bold("type:"), root.media_type)?;
         if let Some(cache_info) = &root.maybe_cache_info {
           if let Some(local) = &cache_info.local {
             writeln!(
@@ -74,6 +73,7 @@ impl fmt::Display for ModuleGraph {
             writeln!(f, "{} {}", colors::bold("map:"), map.to_string_lossy())?;
           }
         }
+        writeln!(f, "{} {}", colors::bold("type:"), root.media_type)?;
         let total_size: f64 = self
           .module_slots
           .iter()
@@ -467,9 +467,9 @@ mod tests {
     let graph = builder.build().await;
     assert_eq!(
       strip_ansi_codes(format!("{}", graph)),
-      r#"type: TypeScript
-local: /cache/deps/https/deno.land/x/example/a.ts
+      r#"local: /cache/deps/https/deno.land/x/example/a.ts
 emit: /cache/deps/https/deno.land/x/example/a.js
+type: TypeScript
 dependencies: 6 unique (total 395B)
 
 https://deno.land/x/example/a.ts (88B)
