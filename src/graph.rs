@@ -680,6 +680,7 @@ pub(crate) fn parse_module(
   content: Arc<String>,
   maybe_resolver: Option<&dyn Resolver>,
   source_parser: &dyn SourceParser,
+  is_root: bool,
 ) -> ModuleSlot {
   let media_type = get_media_type(specifier, maybe_headers);
   match &media_type {
@@ -690,6 +691,24 @@ pub(crate) fn parse_module(
     | MediaType::Dts => {
       // Parse the module and start analyzing the module.
       match source_parser.parse_module(specifier, content, media_type) {
+        Ok(parsed_source) => {
+          // Return the module as a valid module
+          ModuleSlot::Module(parse_module_from_ast(
+            specifier,
+            maybe_headers,
+            &parsed_source,
+            maybe_resolver,
+          ))
+        }
+        Err(diagnostic) => ModuleSlot::Err(diagnostic.into()),
+      }
+    }
+    MediaType::Unknown if is_root => {
+      match source_parser.parse_module(
+        specifier,
+        content,
+        MediaType::JavaScript,
+      ) {
         Ok(parsed_source) => {
           // Return the module as a valid module
           ModuleSlot::Module(parse_module_from_ast(
@@ -912,12 +931,15 @@ impl<'a> Builder<'a> {
         .insert(requested_specifier, specifier.clone());
     }
 
+    let is_root = self.graph.roots.contains(&specifier);
+
     let module_slot = parse_module(
       &specifier,
       maybe_headers.as_ref(),
       response.content,
       self.maybe_resolver,
       self.source_parser,
+      is_root,
     );
 
     if let ModuleSlot::Module(module) = &module_slot {

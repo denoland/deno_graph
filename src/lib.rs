@@ -82,6 +82,7 @@ cfg_if! {
         content,
         maybe_resolver,
         source_parser,
+        true,
       ) {
         ModuleSlot::Module(module) => Ok(module),
         ModuleSlot::Err(err) => Err(err),
@@ -177,6 +178,7 @@ cfg_if! {
         Arc::new(content),
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         &source_parser,
+        true,
       ) {
         ModuleSlot::Module(module) => Ok(js_graph::Module(module)),
         ModuleSlot::Err(err) => Err(js_sys::Error::new(&err.to_string()).into()),
@@ -419,6 +421,39 @@ mod tests {
       err,
       ModuleGraphError::UnsupportedMediaType(_, MediaType::Json)
     ));
+  }
+
+  #[tokio::test]
+  async fn test_root_is_extensionless() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01",
+          Ok((
+            "file:///a/test01",
+            None,
+            r#"import * as b from "./test02.ts";"#,
+          )),
+        ),
+        (
+          "file:///a/test02.ts",
+          Ok(("file:///a/test02.ts", None, r#"export const b = "b";"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert!(graph.valid().is_ok());
   }
 
   #[tokio::test]
