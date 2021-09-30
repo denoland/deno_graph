@@ -39,6 +39,7 @@ pub enum ModuleGraphError {
   ParseErr(deno_ast::Diagnostic),
   ResolutionError(ResolutionError, ast::Span),
   InvalidSource(ModuleSpecifier, Option<String>),
+  UnsupportedMediaType(ModuleSpecifier, MediaType),
 }
 
 impl Clone for ModuleGraphError {
@@ -52,6 +53,9 @@ impl Clone for ModuleGraphError {
       Self::InvalidSource(specifier, maybe_filename) => {
         Self::InvalidSource(specifier.clone(), maybe_filename.clone())
       }
+      Self::UnsupportedMediaType(specifier, media_type) => {
+        Self::UnsupportedMediaType(specifier.clone(), media_type.clone())
+      }
     }
   }
 }
@@ -60,26 +64,17 @@ impl std::error::Error for ModuleGraphError {}
 
 impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let msg = match self {
-      Self::LoadingErr(err) => format!("{}", err),
-      Self::ParseErr(diagnostic) => {
-        format!(
-          "The module's source code would not be parsed: {}",
-          diagnostic
-        )
-      }
-      Self::ResolutionError(err, _) => {
-        format!("{}", err)
-      }
-      Self::InvalidSource(specifier, maybe_filename) => {
-        if let Some(filename) = maybe_filename {
-          format!("The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}\n  Lock file: {}", specifier, filename)
-        } else {
-          format!("The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}", specifier)
-        }
-      }
-    };
-    write!(f, "{}", msg)
+    match self {
+      Self::LoadingErr(err) => write!(f, "{}", err),
+      Self::ParseErr(diagnostic) => write!(f, "The module's source code would not be parsed: {}", diagnostic),
+      Self::ResolutionError(err, _) => write!(f, "{}", err),
+      Self::InvalidSource(specifier, maybe_filename) => if let Some(filename) = maybe_filename {
+        write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}\n  Lock file: {}", specifier, filename)
+      } else {
+        write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}", specifier)
+      },
+      Self::UnsupportedMediaType(specifier, media_type) => write!(f, "An unsupported media type was attempted to be imported as a module.\n  Specifier: {}\n  MediaType: {}", specifier, media_type)
+    }
   }
 }
 
@@ -686,22 +681,31 @@ pub(crate) fn parse_module(
   maybe_resolver: Option<&dyn Resolver>,
   source_parser: &dyn SourceParser,
 ) -> ModuleSlot {
-  // Parse the module and start analyzing the module.
-  match source_parser.parse_module(
-    specifier,
-    content,
-    get_media_type(specifier, maybe_headers),
-  ) {
-    Ok(parsed_source) => {
-      // Return the module as a valid module
-      ModuleSlot::Module(parse_module_from_ast(
-        specifier,
-        maybe_headers,
-        &parsed_source,
-        maybe_resolver,
-      ))
+  let media_type = get_media_type(specifier, maybe_headers);
+  match &media_type {
+    MediaType::JavaScript
+    | MediaType::Jsx
+    | MediaType::TypeScript
+    | MediaType::Tsx
+    | MediaType::Dts => {
+      // Parse the module and start analyzing the module.
+      match source_parser.parse_module(specifier, content, media_type) {
+        Ok(parsed_source) => {
+          // Return the module as a valid module
+          ModuleSlot::Module(parse_module_from_ast(
+            specifier,
+            maybe_headers,
+            &parsed_source,
+            maybe_resolver,
+          ))
+        }
+        Err(diagnostic) => ModuleSlot::Err(diagnostic.into()),
+      }
     }
-    Err(diagnostic) => ModuleSlot::Err(diagnostic.into()),
+    _ => ModuleSlot::Err(ModuleGraphError::UnsupportedMediaType(
+      specifier.clone(),
+      media_type,
+    )),
   }
 }
 

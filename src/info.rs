@@ -279,6 +279,17 @@ impl ModuleGraphError {
           colors::red_bold("(resolution error)")
         ),
       ),
+      Self::UnsupportedMediaType(_, _) => fmt_info_msg(
+        f,
+        prefix,
+        last,
+        false,
+        format!(
+          "{} {}",
+          colors::red(specifier),
+          colors::red_bold("(unsupported)")
+        ),
+      ),
     }
   }
 }

@@ -380,8 +380,45 @@ mod tests {
     )
     .await;
     let result = graph.valid();
-    println!("{}", serde_json::json!(graph));
-    println!("{:?}", result);
+    assert!(result.is_err());
+    let (specifier, err) = result.unwrap_err();
+    assert_eq!(specifier, root_specifier);
+    assert!(matches!(err, ModuleGraphError::ResolutionError(_, _)));
+  }
+
+  #[tokio::test]
+  async fn test_unsupported_media_type() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test.ts",
+          Ok(("file:///a/test.ts", None, r#"import "./test.json";"#)),
+        ),
+        (
+          "file:///a/test.json",
+          Ok(("file:///a/test.json", None, r#"{"hello":"world"}"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    let result = graph.valid();
+    assert!(result.is_err());
+    let (_, err) = result.unwrap_err();
+    assert!(matches!(
+      err,
+      ModuleGraphError::UnsupportedMediaType(_, MediaType::Json)
+    ));
   }
 
   #[tokio::test]
