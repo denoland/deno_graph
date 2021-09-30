@@ -79,6 +79,7 @@ impl Loader for JsLoader {
 #[derive(Debug)]
 pub struct JsLocker {
   maybe_check: Option<js_sys::Function>,
+  maybe_filename: Option<String>,
   maybe_get_checksum: Option<js_sys::Function>,
 }
 
@@ -86,10 +87,12 @@ impl JsLocker {
   pub fn new(
     maybe_check: Option<js_sys::Function>,
     maybe_get_checksum: Option<js_sys::Function>,
+    maybe_filename: Option<String>,
   ) -> Self {
     Self {
       maybe_check,
       maybe_get_checksum,
+      maybe_filename,
     }
   }
 }
@@ -124,6 +127,10 @@ impl Locker for JsLocker {
       }
     }
     checksum::gen(&[content.as_bytes()])
+  }
+
+  fn get_filename(&self) -> Option<String> {
+    self.maybe_filename.clone()
   }
 }
 

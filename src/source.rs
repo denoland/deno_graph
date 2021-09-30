@@ -78,6 +78,9 @@ pub trait Locker: fmt::Debug {
     source: &str,
   ) -> bool;
   fn get_checksum(&self, content: &str) -> String;
+  fn get_filename(&self) -> Option<String> {
+    None
+  }
 }
 
 /// A trait which allows the module graph to resolve specifiers is a dynamic

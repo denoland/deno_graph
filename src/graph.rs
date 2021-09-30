@@ -38,7 +38,7 @@ pub enum ModuleGraphError {
   LoadingErr(anyhow::Error),
   ParseErr(deno_ast::Diagnostic),
   ResolutionError(ResolutionError, ast::Span),
-  InvalidSource(ModuleSpecifier),
+  InvalidSource(ModuleSpecifier, Option<String>),
 }
 
 impl Clone for ModuleGraphError {
@@ -49,7 +49,9 @@ impl Clone for ModuleGraphError {
       Self::ResolutionError(err, span) => {
         Self::ResolutionError(err.clone(), span.clone())
       }
-      Self::InvalidSource(specifier) => Self::InvalidSource(specifier.clone()),
+      Self::InvalidSource(specifier, maybe_filename) => {
+        Self::InvalidSource(specifier.clone(), maybe_filename.clone())
+      }
     }
   }
 }
@@ -71,8 +73,12 @@ impl fmt::Display for ModuleGraphError {
       Self::ResolutionError(err, _) => {
         format!("{}", err)
       }
-      Self::InvalidSource(specifier) => {
-        format!("The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}", specifier)
+      Self::InvalidSource(specifier, maybe_filename) => {
+        if let Some(filename) = maybe_filename {
+          format!("The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}\n  Lock file: {}", specifier, filename)
+        } else {
+          format!("The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}", specifier)
+        }
       }
     };
     write!(f, "{}", msg)
@@ -368,6 +374,7 @@ impl ModuleGraph {
           if !locker.check_or_insert(&module.specifier, &module.source) {
             return Err(ModuleGraphError::InvalidSource(
               module.specifier.clone(),
+              locker.get_filename(),
             ));
           }
         }

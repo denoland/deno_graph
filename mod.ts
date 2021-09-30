@@ -58,6 +58,9 @@ export interface CreateGraphOptions {
   /** An optional callback that returns the sub-resource integrity checksum for
    * a given set of content. */
   getChecksum?(content: Uint8Array): string;
+  /** An optional string to be used when generating an error when the integrity
+   * check of the module graph fails. */
+  lockFilename?: string;
 }
 
 /** Create a module graph using the same algorithms that are used in the Deno
@@ -120,8 +123,14 @@ export function createGraph(
   rootSpecifiers = Array.isArray(rootSpecifiers)
     ? rootSpecifiers
     : [rootSpecifiers];
-  const { load = defaultLoad, cacheInfo, resolve, check, getChecksum } =
-    options;
+  const {
+    load = defaultLoad,
+    cacheInfo,
+    resolve,
+    check,
+    getChecksum,
+    lockFilename,
+  } = options;
   return jsCreateGraph(
     rootSpecifiers,
     load,
@@ -129,6 +138,7 @@ export function createGraph(
     resolve,
     check,
     getChecksum,
+    lockFilename,
   );
 }
 

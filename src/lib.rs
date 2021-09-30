@@ -125,13 +125,14 @@ cfg_if! {
       maybe_resolve: Option<js_sys::Function>,
       maybe_check: Option<js_sys::Function>,
       maybe_get_checksum: Option<js_sys::Function>,
+      maybe_lockfile_name: Option<String>,
     ) -> Result<js_graph::ModuleGraph, JsValue> {
       let roots_vec: Vec<String> = roots.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
       let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
       let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
       let maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>> =
         if maybe_check.is_some() || maybe_get_checksum.is_some() {
-          let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum);
+          let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum, maybe_lockfile_name);
           Some(Rc::new(RefCell::new(Box::new(locker))))
         } else {
           None

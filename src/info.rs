@@ -235,7 +235,7 @@ impl ModuleGraphError {
   ) -> fmt::Result {
     seen.insert(specifier.clone());
     match self {
-      Self::InvalidSource(_) => fmt_info_msg(
+      Self::InvalidSource(_, _) => fmt_info_msg(
         f,
         prefix,
         last,
