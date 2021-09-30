@@ -61,9 +61,7 @@ impl std::error::Error for ModuleGraphError {}
 impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let msg = match self {
-      Self::LoadingErr(err) => {
-        format!("An error was returned from the loader: {}", err)
-      }
+      Self::LoadingErr(err) => format!("{}", err),
       Self::ParseErr(diagnostic) => {
         format!(
           "The module's source code would not be parsed: {}",
