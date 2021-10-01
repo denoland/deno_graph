@@ -23,16 +23,17 @@ use std::sync::Arc;
 
 cfg_if! {
   if #[cfg(feature = "rust")] {
+    pub use ast::analyze_dependencies;
+    pub use ast::analyze_deno_types;
+    pub use ast::analyze_ts_references;
     pub use ast::SourceParser;
     pub use ast::CapturingSourceParser;
     pub use ast::DefaultSourceParser;
-    pub use ast::Location;
-    pub use ast::Position;
-    pub use ast::analyze_ts_references;
-    pub use ast::analyze_dependencies;
     pub use ast::DependencyDescriptor;
     pub use ast::DependencyKind;
-    pub use ast::analyze_deno_types;
+    pub use ast::Location;
+    pub use ast::Position;
+    pub use ast::Span;
     pub use graph::Module;
     pub use graph::ModuleGraph;
     pub use graph::ModuleGraphError;
