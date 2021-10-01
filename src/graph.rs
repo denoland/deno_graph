@@ -389,6 +389,43 @@ impl ModuleGraph {
       .collect()
   }
 
+  /// Return all resolution errors from the graph. Used when trying to determine
+  /// the reason a module might not be available to be loaded.
+  #[cfg(feature = "rust")]
+  pub fn resolution_errors(
+    &self,
+  ) -> HashMap<ModuleSpecifier, HashMap<String, (&ResolutionError, &ast::Span)>>
+  {
+    let mut errors = HashMap::new();
+    for (specifier, module_slot) in &self.module_slots {
+      if let ModuleSlot::Module(module) = module_slot {
+        for (specifier_str, dep) in &module.dependencies {
+          if let Resolved::Err(err, span) = &dep.maybe_code {
+            let dep_errors = errors
+              .entry(specifier.clone())
+              .or_insert_with(|| HashMap::new());
+            dep_errors.insert(specifier_str.clone(), (err, span));
+          }
+          if let Resolved::Err(err, span) = &dep.maybe_type {
+            let dep_errors = errors
+              .entry(specifier.clone())
+              .or_insert_with(|| HashMap::new());
+            dep_errors.insert(specifier_str.clone(), (err, span));
+          }
+        }
+        if let Some((specifier_str, Resolved::Err(err, span))) =
+          &module.maybe_types_dependency
+        {
+          let dep_errors = errors
+            .entry(specifier.clone())
+            .or_insert_with(|| HashMap::new());
+          dep_errors.insert(specifier_str.clone(), (err, span));
+        }
+      }
+    }
+    errors
+  }
+
   /// Resolve a specifier from the module graph following any possible redirects
   /// returning the "final" module.
   pub fn resolve(&self, specifier: &ModuleSpecifier) -> ModuleSpecifier {
