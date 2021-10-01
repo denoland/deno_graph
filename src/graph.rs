@@ -601,7 +601,7 @@ impl ModuleGraph {
         Ok(None) => Err((
           specifier.clone(),
           ModuleGraphError::LoadingErr(Arc::new(anyhow!(
-            "The specifier \"{}\" is unexpectedly missing from the graph.",
+            "Cannot resolve module \"{}\".",
             specifier
           ))),
         )),
