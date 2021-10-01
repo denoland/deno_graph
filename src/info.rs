@@ -350,9 +350,9 @@ impl Resolved {
             last,
             false,
             format!(
-              "{} missing: {}",
-              colors::red_bold("[internal error]"),
-              specifier
+              "{} {}",
+              colors::red(specifier),
+              colors::red_bold("(missing)")
             ),
           ),
         }
