@@ -271,23 +271,17 @@ impl ModuleSlot {
 #[cfg(feature = "rust")]
 fn to_result(
   (specifier, module_slot): (&ModuleSpecifier, &ModuleSlot),
-) -> (
+) -> Option<(
   ModuleSpecifier,
   Result<(ModuleSpecifier, MediaType), ModuleGraphError>,
-) {
+)> {
   match module_slot {
-    ModuleSlot::Err(err) => (specifier.clone(), Err(err.clone())),
-    ModuleSlot::Module(module) => (
+    ModuleSlot::Err(err) => Some((specifier.clone(), Err(err.clone()))),
+    ModuleSlot::Module(module) => Some((
       specifier.clone(),
       Ok((module.specifier.clone(), module.media_type)),
-    ),
-    _ => (
-      specifier.clone(),
-      Err(ModuleGraphError::LoadingErr(Arc::new(anyhow!(
-        "Module \"{}\" is unavailable.",
-        specifier
-      )))),
-    ),
+    )),
+    _ => None,
   }
 }
 
@@ -520,7 +514,7 @@ impl ModuleGraph {
     let mut map: HashMap<
       ModuleSpecifier,
       Result<(ModuleSpecifier, MediaType), ModuleGraphError>,
-    > = self.module_slots.iter().map(to_result).collect();
+    > = self.module_slots.iter().filter_map(to_result).collect();
     for specifier in self.redirects.keys() {
       if let Some(module) = self.get(specifier) {
         map.insert(
