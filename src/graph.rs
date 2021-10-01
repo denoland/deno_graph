@@ -394,7 +394,7 @@ impl ModuleGraph {
   #[cfg(feature = "rust")]
   pub fn resolution_errors(
     &self,
-  ) -> HashMap<ModuleSpecifier, HashMap<String, (&ResolutionError, &ast::Span)>>
+  ) -> HashMap<ModuleSpecifier, HashMap<String, (ResolutionError, ast::Span)>>
   {
     let mut errors = HashMap::new();
     for (specifier, module_slot) in &self.module_slots {
@@ -404,13 +404,15 @@ impl ModuleGraph {
             let dep_errors = errors
               .entry(specifier.clone())
               .or_insert_with(|| HashMap::new());
-            dep_errors.insert(specifier_str.clone(), (err, span));
+            dep_errors
+              .insert(specifier_str.clone(), (err.clone(), span.clone()));
           }
           if let Resolved::Err(err, span) = &dep.maybe_type {
             let dep_errors = errors
               .entry(specifier.clone())
               .or_insert_with(|| HashMap::new());
-            dep_errors.insert(specifier_str.clone(), (err, span));
+            dep_errors
+              .insert(specifier_str.clone(), (err.clone(), span.clone()));
           }
         }
         if let Some((specifier_str, Resolved::Err(err, span))) =
@@ -419,7 +421,7 @@ impl ModuleGraph {
           let dep_errors = errors
             .entry(specifier.clone())
             .or_insert_with(|| HashMap::new());
-          dep_errors.insert(specifier_str.clone(), (err, span));
+          dep_errors.insert(specifier_str.clone(), (err.clone(), span.clone()));
         }
       }
     }
