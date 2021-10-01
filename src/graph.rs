@@ -86,8 +86,8 @@ impl From<deno_ast::Diagnostic> for ModuleGraphError {
 
 #[derive(Debug)]
 pub enum ResolutionError {
-  InvalidDowngrade,
-  InvalidLocalImport,
+  InvalidDowngrade(ModuleSpecifier),
+  InvalidLocalImport(ModuleSpecifier),
   ResolverError(Arc<anyhow::Error>),
   InvalidSpecifier(SpecifierError),
 }
@@ -97,8 +97,8 @@ impl std::error::Error for ResolutionError {}
 impl Clone for ResolutionError {
   fn clone(&self) -> Self {
     match self {
-      Self::InvalidDowngrade => Self::InvalidDowngrade,
-      Self::InvalidLocalImport => Self::InvalidLocalImport,
+      Self::InvalidDowngrade(s) => Self::InvalidDowngrade(s.clone()),
+      Self::InvalidLocalImport(s) => Self::InvalidLocalImport(s.clone()),
       Self::ResolverError(err) => Self::ResolverError(err.clone()),
       Self::InvalidSpecifier(err) => Self::InvalidSpecifier(err.clone()),
     }
@@ -108,10 +108,10 @@ impl Clone for ResolutionError {
 impl PartialEq for ResolutionError {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
-      (Self::ResolverError(_), Self::ResolverError(_))
-      | (Self::InvalidDowngrade, Self::InvalidDowngrade)
-      | (Self::InvalidLocalImport, Self::InvalidLocalImport) => true,
-      (Self::InvalidSpecifier(s), Self::InvalidSpecifier(o)) => s == o,
+      (Self::ResolverError(_), Self::ResolverError(_)) => true,
+      (Self::InvalidDowngrade(a), Self::InvalidDowngrade(b))
+      | (Self::InvalidLocalImport(a), Self::InvalidLocalImport(b)) => a == b,
+      (Self::InvalidSpecifier(a), Self::InvalidSpecifier(b)) => a == b,
       _ => false,
     }
   }
@@ -122,8 +122,8 @@ impl Eq for ResolutionError {}
 impl fmt::Display for ResolutionError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::InvalidDowngrade => write!(f, "Modules imported via https are not allowed to import http modules."),
-      Self::InvalidLocalImport => write!(f, "Remote modules are not allowed to import local modules. Consider using a dynamic import instead."),
+      Self::InvalidDowngrade(specifier) => write!(f, "Modules imported via https are not allowed to import http modules.\n  Importing: {}", specifier),
+      Self::InvalidLocalImport(specifier) => write!(f, "Remote modules are not allowed to import local modules. Consider using a dynamic import instead.\n  Importing: {}", specifier),
       Self::ResolverError(err) => write!(f, "{}", err),
       Self::InvalidSpecifier(err) => write!(f, "{}", err),
     }
@@ -661,12 +661,12 @@ fn resolve(
       let referrer_scheme = referrer.scheme();
       let specifier_scheme = specifier.scheme();
       if referrer_scheme == "https" && specifier_scheme == "http" {
-        Resolved::Err(ResolutionError::InvalidDowngrade, span)
+        Resolved::Err(ResolutionError::InvalidDowngrade(specifier), span)
       } else if (referrer_scheme == "https" || referrer_scheme == "http")
         && !(specifier_scheme == "https" || specifier_scheme == "http")
         && !remapped
       {
-        Resolved::Err(ResolutionError::InvalidLocalImport, span)
+        Resolved::Err(ResolutionError::InvalidLocalImport(specifier), span)
       } else {
         Resolved::Specifier(specifier, span)
       }
