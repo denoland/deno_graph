@@ -625,7 +625,7 @@ impl ModuleGraph {
         Ok(None) => Err((
           specifier.clone(),
           ModuleGraphError::LoadingErr(Arc::new(anyhow!(
-            "Cannot resolve module \"{}\".",
+            "Cannot load module \"{}\".",
             specifier
           ))),
         )),
