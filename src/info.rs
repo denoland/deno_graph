@@ -210,6 +210,9 @@ impl Module {
       }
       prefix.push(EMPTY_CONNECTOR);
       let dep_len = self.dependencies.len();
+      if let Some((_, type_dep)) = &self.maybe_types_dependency {
+        type_dep.fmt_info(f, &prefix, dep_len == 0, graph, true, seen)?;
+      }
       for (idx, (_, dep)) in self.dependencies.iter().enumerate() {
         dep.fmt_info(
           f,
@@ -394,6 +397,7 @@ mod tests {
             Some(vec![("content-type", "application/typescript")]),
             r#"import * as b from "./b.ts";
             import type { F } from "./f.d.ts";
+            import * as g from "./g.js";
             "#,
           )),
         ),
@@ -450,6 +454,25 @@ mod tests {
             r#"export interface F { }"#,
           )),
         ),
+        (
+          "https://deno.land/x/example/g.js",
+          Ok((
+            "https://deno.land/x/example/g.js",
+            Some(vec![
+              ("content-type", "application/javascript"),
+              ("x-typescript-types", "./g.d.ts"),
+            ]),
+            r#"export const g = "g";"#,
+          )),
+        ),
+        (
+          "https://deno.land/x/example/g.d.ts",
+          Ok((
+            "https://deno.land/x/example/g.d.ts",
+            Some(vec![("content-type", "application/typescript")]),
+            r#"export const g: "g";"#,
+          )),
+        ),
       ],
       vec![(
         "https://deno.land/x/example/a.ts",
@@ -481,16 +504,18 @@ mod tests {
       r#"local: /cache/deps/https/deno.land/x/example/a.ts
 emit: /cache/deps/https/deno.land/x/example/a.js
 type: TypeScript
-dependencies: 6 unique (total 395B)
+dependencies: 8 unique (total 477B)
 
-https://deno.land/x/example/a.ts (88B)
+https://deno.land/x/example/a.ts (129B)
 ├─┬ https://deno.land/x/example/b.ts (120B)
 │ ├── https://deno.land/x/example/c.js (21B)
 │ ├── https://deno.land/x/example/c.d.ts (20B)
 │ └─┬ https://deno.land/x/example/d.ts (62B)
 │   └─┬ https://deno.land/x/example/e.ts (62B)
 │     └── https://deno.land/x/example/b.ts *
-└── https://deno.land/x/example/f.d.ts (22B)
+├── https://deno.land/x/example/f.d.ts (22B)
+└─┬ https://deno.land/x/example/g.js (21B)
+  └── https://deno.land/x/example/g.d.ts (20B)
 "#
     );
   }
