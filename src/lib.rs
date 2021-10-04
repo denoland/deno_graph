@@ -274,8 +274,7 @@ mod tests {
         ModuleSpecifier::parse("file:///a/test02.ts").unwrap();
       let dependency = maybe_dependency.unwrap();
       assert!(!dependency.is_dynamic);
-      if let Resolved::Specifier(resolved_specifier, _) = &dependency.maybe_code
-      {
+      if let Some(Ok((resolved_specifier, _))) = &dependency.maybe_code {
         assert_eq!(resolved_specifier, &dependency_specifier);
       } else {
         panic!("unexpected resolved slot");
@@ -510,7 +509,7 @@ mod tests {
     assert!(result.is_err());
     let (specifier, err) = result.unwrap_err();
     assert_eq!(specifier, root_specifier);
-    assert!(matches!(err, ModuleGraphError::ResolutionError(_, _)));
+    assert!(matches!(err, ModuleGraphError::ResolutionError(_)));
   }
 
   #[tokio::test]
@@ -721,7 +720,7 @@ mod tests {
     let maybe_dep = module.dependencies.get("b");
     assert!(maybe_dep.is_some());
     let dep = maybe_dep.unwrap();
-    if let Resolved::Specifier(dep_sepcifier, _) = &dep.maybe_code {
+    if let Some(Ok((dep_sepcifier, _))) = &dep.maybe_code {
       assert_eq!(
         dep_sepcifier,
         &ModuleSpecifier::parse("file:///a/test02.ts").unwrap()

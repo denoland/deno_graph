@@ -313,11 +313,11 @@ impl Module {
   pub fn maybe_types_dependency(&self) -> JsValue {
     let serializer =
       serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    self
-      .0
-      .maybe_types_dependency
-      .serialize(&serializer)
-      .unwrap()
+    graph::serialize_type_dependency(
+      &self.0.maybe_types_dependency,
+      &serializer,
+    )
+    .unwrap()
   }
 
   #[wasm_bindgen(js_name = toJSON)]

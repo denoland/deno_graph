@@ -33,7 +33,7 @@ use std::sync::Arc;
 pub enum ModuleGraphError {
   LoadingErr(Arc<anyhow::Error>),
   ParseErr(deno_ast::Diagnostic),
-  ResolutionError(ResolutionError, ast::Span),
+  ResolutionError(ResolutionError),
   InvalidSource(ModuleSpecifier, Option<String>),
   UnsupportedMediaType(ModuleSpecifier, MediaType),
   Missing(ModuleSpecifier),
@@ -44,9 +44,7 @@ impl Clone for ModuleGraphError {
     match self {
       Self::LoadingErr(err) => Self::LoadingErr(err.clone()),
       Self::ParseErr(err) => Self::ParseErr(err.clone()),
-      Self::ResolutionError(err, span) => {
-        Self::ResolutionError(err.clone(), span.clone())
-      }
+      Self::ResolutionError(err) => Self::ResolutionError(err.clone()),
       Self::InvalidSource(specifier, maybe_filename) => {
         Self::InvalidSource(specifier.clone(), maybe_filename.clone())
       }
@@ -63,9 +61,9 @@ impl std::error::Error for ModuleGraphError {}
 impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::LoadingErr(err) => write!(f, "{}", err),
+      Self::LoadingErr(err) => err.fmt(f),
       Self::ParseErr(diagnostic) => write!(f, "The module's source code would not be parsed: {}", diagnostic),
-      Self::ResolutionError(err, _) => write!(f, "{}", err),
+      Self::ResolutionError(err) => err.fmt(f),
       Self::InvalidSource(specifier, maybe_filename) => if let Some(filename) = maybe_filename {
         write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}\n  Lock file: {}", specifier, filename)
       } else {
@@ -83,34 +81,62 @@ impl From<deno_ast::Diagnostic> for ModuleGraphError {
   }
 }
 
-#[derive(Debug)]
-pub enum ResolutionError {
-  InvalidDowngrade(ModuleSpecifier),
-  InvalidLocalImport(ModuleSpecifier),
-  ResolverError(Arc<anyhow::Error>),
-  InvalidSpecifier(SpecifierError),
+impl<'a> From<&'a ResolutionError> for ModuleGraphError {
+  fn from(err: &'a ResolutionError) -> Self {
+    Self::ResolutionError(err.clone())
+  }
 }
 
-impl std::error::Error for ResolutionError {}
+#[derive(Debug, Clone)]
+pub enum ResolutionError {
+  InvalidDowngrade(ModuleSpecifier, ast::Span),
+  InvalidLocalImport(ModuleSpecifier, ast::Span),
+  InvalidSpecifier(SpecifierError, ast::Span),
+  ResolverError(Arc<anyhow::Error>, String, ast::Span),
+}
 
-impl Clone for ResolutionError {
-  fn clone(&self) -> Self {
+impl ResolutionError {
+  pub fn get_span(&self) -> &ast::Span {
     match self {
-      Self::InvalidDowngrade(s) => Self::InvalidDowngrade(s.clone()),
-      Self::InvalidLocalImport(s) => Self::InvalidLocalImport(s.clone()),
-      Self::ResolverError(err) => Self::ResolverError(err.clone()),
-      Self::InvalidSpecifier(err) => Self::InvalidSpecifier(err.clone()),
+      Self::InvalidDowngrade(_, span)
+      | Self::InvalidLocalImport(_, span)
+      | Self::InvalidSpecifier(_, span)
+      | Self::ResolverError(_, _, span) => span,
+    }
+  }
+
+  #[cfg(feature = "rust")]
+  pub fn to_string_with_span(&self) -> String {
+    match self {
+      Self::InvalidDowngrade(_, span)
+      | Self::InvalidLocalImport(_, span)
+      | Self::InvalidSpecifier(_, span)
+      | Self::ResolverError(_, _, span) => format!("{}\n    at {}", self, span),
     }
   }
 }
 
+impl std::error::Error for ResolutionError {}
+
 impl PartialEq for ResolutionError {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
-      (Self::ResolverError(_), Self::ResolverError(_)) => true,
-      (Self::InvalidDowngrade(a), Self::InvalidDowngrade(b))
-      | (Self::InvalidLocalImport(a), Self::InvalidLocalImport(b)) => a == b,
-      (Self::InvalidSpecifier(a), Self::InvalidSpecifier(b)) => a == b,
+      (
+        Self::ResolverError(_, a, a_span),
+        Self::ResolverError(_, b, b_span),
+      ) => a == b && a_span == b_span,
+      (
+        Self::InvalidDowngrade(a, a_span),
+        Self::InvalidDowngrade(b, b_span),
+      )
+      | (
+        Self::InvalidLocalImport(a, a_span),
+        Self::InvalidLocalImport(b, b_span),
+      ) => a == b && a_span == b_span,
+      (
+        Self::InvalidSpecifier(a, a_span),
+        Self::InvalidSpecifier(b, b_span),
+      ) => a == b && a_span == b_span,
       _ => false,
     }
   }
@@ -121,53 +147,38 @@ impl Eq for ResolutionError {}
 impl fmt::Display for ResolutionError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::InvalidDowngrade(specifier) => write!(f, "Modules imported via https are not allowed to import http modules.\n  Importing: {}", specifier),
-      Self::InvalidLocalImport(specifier) => write!(f, "Remote modules are not allowed to import local modules. Consider using a dynamic import instead.\n  Importing: {}", specifier),
-      Self::ResolverError(err) => write!(f, "{}", err),
-      Self::InvalidSpecifier(err) => write!(f, "{}", err),
+      Self::InvalidDowngrade(specifier, _) => write!(f, "Modules imported via https are not allowed to import http modules.\n  Importing: {}", specifier),
+      Self::InvalidLocalImport(specifier, _) => write!(f, "Remote modules are not allowed to import local modules. Consider using a dynamic import instead.\n  Importing: {}", specifier),
+      Self::ResolverError(err, _, _) => err.fmt(f),
+      Self::InvalidSpecifier(err, _) => err.fmt(f),
     }
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Resolved {
-  Specifier(ModuleSpecifier, ast::Span),
-  Err(ResolutionError, ast::Span),
-  None,
-}
+pub type Resolved =
+  Option<Result<(ModuleSpecifier, ast::Span), ResolutionError>>;
 
-impl Default for Resolved {
-  fn default() -> Self {
-    Self::None
-  }
-}
-
-impl Serialize for Resolved {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    match self {
-      Self::Specifier(specifier, span) => {
-        let mut state = serializer.serialize_struct("ResolvedSpecifier", 2)?;
-        state.serialize_field("specifier", specifier)?;
-        state.serialize_field("span", span)?;
-        state.end()
-      }
-      Self::Err(err, span) => {
-        let mut state = serializer.serialize_struct("ResolvedError", 2)?;
-        state.serialize_field("error", &err.to_string())?;
-        state.serialize_field("span", span)?;
-        state.end()
-      }
-      _ => Serialize::serialize(&None::<Resolved>, serializer),
+fn serialize_resolved<S>(
+  resolved: &Resolved,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  match resolved {
+    Some(Ok((specifier, span))) => {
+      let mut state = serializer.serialize_struct("ResolvedSpecifier", 2)?;
+      state.serialize_field("specifier", specifier)?;
+      state.serialize_field("span", span)?;
+      state.end()
     }
-  }
-}
-
-impl Resolved {
-  pub fn is_none(&self) -> bool {
-    self == &Self::None
+    Some(Err(err)) => {
+      let mut state = serializer.serialize_struct("ResolvedError", 2)?;
+      state.serialize_field("error", &err.to_string())?;
+      state.serialize_field("span", err.get_span())?;
+      state.end()
+    }
+    _ => Serialize::serialize(&serde_json::Value::Null, serializer),
   }
 }
 
@@ -178,9 +189,17 @@ fn is_false(v: &bool) -> bool {
 #[derive(Debug, Default, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Dependency {
-  #[serde(rename = "code", skip_serializing_if = "Resolved::is_none")]
+  #[serde(
+    rename = "code",
+    skip_serializing_if = "Option::is_none",
+    serialize_with = "serialize_resolved"
+  )]
   pub(crate) maybe_code: Resolved,
-  #[serde(rename = "type", skip_serializing_if = "Resolved::is_none")]
+  #[serde(
+    rename = "type",
+    skip_serializing_if = "Option::is_none",
+    serialize_with = "serialize_resolved"
+  )]
   pub(crate) maybe_type: Resolved,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
@@ -192,7 +211,7 @@ impl Dependency {
   /// the "code" dependency in the graph.
   pub fn get_code(&self) -> Option<&ModuleSpecifier> {
     match &self.maybe_code {
-      Resolved::Specifier(specifier, _) => Some(specifier),
+      Some(Ok((specifier, _))) => Some(specifier),
       _ => None,
     }
   }
@@ -201,7 +220,7 @@ impl Dependency {
   /// the type only dependency in the graph.
   pub fn get_type(&self) -> Option<&ModuleSpecifier> {
     match &self.maybe_type {
-      Resolved::Specifier(specifier, _) => Some(specifier),
+      Some(Ok((specifier, _))) => Some(specifier),
       _ => None,
     }
   }
@@ -290,7 +309,8 @@ impl Serialize for SerializeableSyntheticDependency<'_> {
   {
     let mut dep = serializer.serialize_map(Some(2))?;
     dep.serialize_entry("specifier", self.0)?;
-    dep.serialize_entry("type", self.1)?;
+    let serializeable_resolved = SerializeableResolved(self.1);
+    dep.serialize_entry("type", &serializeable_resolved)?;
     dep.end()
   }
 }
@@ -525,7 +545,7 @@ impl ModuleGraph {
         } else {
           (&dependency.maybe_code, &dependency.maybe_type)
         };
-        if let Resolved::Specifier(specifier, _) = maybe_first {
+        if let Some(Ok((specifier, _))) = maybe_first {
           if prefer_types {
             Some(
               self
@@ -535,7 +555,7 @@ impl ModuleGraph {
           } else {
             Some(specifier)
           }
-        } else if let Resolved::Specifier(specifier, _) = maybe_second {
+        } else if let Some(Ok((specifier, _))) = maybe_second {
           if prefer_types {
             Some(
               self
@@ -571,7 +591,7 @@ impl ModuleGraph {
     specifier: &ModuleSpecifier,
   ) -> Option<&ModuleSpecifier> {
     if let Some(ModuleSlot::Module(module)) = self.module_slots.get(specifier) {
-      if let Some((_, Resolved::Specifier(specifier, _))) =
+      if let Some((_, Some(Ok((specifier, _))))) =
         &module.maybe_types_dependency
       {
         return Some(specifier);
@@ -653,7 +673,7 @@ impl ModuleGraph {
       seen.insert(specifier.clone());
       match get_module(specifier) {
         Ok(Some(module)) => {
-          if let Some((_, Resolved::Specifier(specifier, _))) =
+          if let Some((_, Some(Ok((specifier, _))))) =
             &module.maybe_types_dependency
           {
             validate(specifier, seen, get_module)?;
@@ -661,32 +681,20 @@ impl ModuleGraph {
           for dep in module.dependencies.values() {
             if !dep.is_dynamic {
               match &dep.maybe_code {
-                Resolved::Specifier(specifier, _) => {
+                Some(Ok((specifier, _))) => {
                   validate(specifier, seen, get_module)?
                 }
-                Resolved::Err(err, span) => {
-                  return Err((
-                    specifier.clone(),
-                    ModuleGraphError::ResolutionError(
-                      err.clone(),
-                      span.clone(),
-                    ),
-                  ))
+                Some(Err(err)) => {
+                  return Err((specifier.clone(), err.into()));
                 }
                 _ => (),
               }
               match &dep.maybe_type {
-                Resolved::Specifier(specifier, _) => {
+                Some(Ok((specifier, _))) => {
                   validate(specifier, seen, get_module)?
                 }
-                Resolved::Err(err, span) => {
-                  return Err((
-                    specifier.clone(),
-                    ModuleGraphError::ResolutionError(
-                      err.clone(),
-                      span.clone(),
-                    ),
-                  ))
+                Some(Err(err)) => {
+                  return Err((specifier.clone(), err.into()));
                 }
                 _ => (),
               }
@@ -719,36 +727,41 @@ fn resolve(
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolved {
   let mut remapped = false;
-  let resolved_specifier = if let Some(resolver) = maybe_resolver {
-    remapped = true;
-    resolver
-      .resolve(specifier, referrer)
-      .map_err(|err| ResolutionError::ResolverError(Arc::new(err)))
-  } else {
-    resolve_import(specifier, referrer)
-      .map_err(ResolutionError::InvalidSpecifier)
-  };
   let span = ast::Span {
     specifier: referrer.clone(),
     range: range.clone(),
   };
-  match resolved_specifier {
+  let resolved_specifier = if let Some(resolver) = maybe_resolver {
+    remapped = true;
+    resolver.resolve(specifier, referrer).map_err(|err| {
+      ResolutionError::ResolverError(
+        Arc::new(err),
+        specifier.to_string(),
+        span.clone(),
+      )
+    })
+  } else {
+    resolve_import(specifier, referrer)
+      .map_err(|err| ResolutionError::InvalidSpecifier(err, span.clone()))
+  };
+  let result = match resolved_specifier {
     Ok(specifier) => {
       let referrer_scheme = referrer.scheme();
       let specifier_scheme = specifier.scheme();
       if referrer_scheme == "https" && specifier_scheme == "http" {
-        Resolved::Err(ResolutionError::InvalidDowngrade(specifier), span)
+        Err(ResolutionError::InvalidDowngrade(specifier, span))
       } else if (referrer_scheme == "https" || referrer_scheme == "http")
         && !(specifier_scheme == "https" || specifier_scheme == "http")
         && !remapped
       {
-        Resolved::Err(ResolutionError::InvalidLocalImport(specifier), span)
+        Err(ResolutionError::InvalidLocalImport(specifier, span))
       } else {
-        Resolved::Specifier(specifier, span)
+        Ok((specifier, span))
       }
     }
-    Err(err) => Resolved::Err(err, span),
-  }
+    Err(err) => Err(err),
+  };
+  Some(result)
 }
 
 /// With the provided information, parse a module and return its "module slot"
@@ -945,7 +958,7 @@ impl<'a> Builder<'a> {
           &self.maybe_resolver,
         );
         for resolved in synthetic_module.dependencies.values() {
-          if let Resolved::Specifier(specifier, _) = resolved {
+          if let Some(Ok((specifier, _))) = resolved {
             self.load(specifier, self.is_dynamic_root);
           }
         }
@@ -1039,21 +1052,32 @@ impl<'a> Builder<'a> {
 
     if let ModuleSlot::Module(module) = &module_slot {
       for dep in module.dependencies.values() {
-        if let Resolved::Specifier(specifier, _) = &dep.maybe_code {
+        if let Some(Ok((specifier, _))) = &dep.maybe_code {
           self.load(specifier, dep.is_dynamic);
         }
-        if let Resolved::Specifier(specifier, _) = &dep.maybe_type {
+        if let Some(Ok((specifier, _))) = &dep.maybe_type {
           self.load(specifier, dep.is_dynamic);
         }
       }
 
-      if let Some((_, Resolved::Specifier(specifier, _))) =
+      if let Some((_, Some(Ok((specifier, _))))) =
         &module.maybe_types_dependency
       {
         self.load(specifier, false);
       }
     }
     self.graph.module_slots.insert(specifier, module_slot);
+  }
+}
+
+struct SerializeableResolved<'a>(&'a Resolved);
+
+impl<'a> Serialize for SerializeableResolved<'a> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    serialize_resolved(self.0, serializer)
   }
 }
 
@@ -1067,10 +1091,12 @@ impl<'a> Serialize for SerializeableDependency<'a> {
     let mut map = serializer.serialize_map(None)?;
     map.serialize_entry("specifier", self.0)?;
     if !self.1.maybe_code.is_none() {
-      map.serialize_entry("code", &self.1.maybe_code)?;
+      let serializeable_resolved = SerializeableResolved(&self.1.maybe_code);
+      map.serialize_entry("code", &serializeable_resolved)?;
     }
     if !self.1.maybe_type.is_none() {
-      map.serialize_entry("type", &self.1.maybe_type)?;
+      let serializeable_resolved = SerializeableResolved(&self.1.maybe_code);
+      map.serialize_entry("type", &serializeable_resolved)?;
     }
     if self.1.is_dynamic {
       map.serialize_entry("isDynamic", &self.1.is_dynamic)?;
@@ -1149,7 +1175,7 @@ where
   seq.end()
 }
 
-fn serialize_type_dependency<S>(
+pub(crate) fn serialize_type_dependency<S>(
   maybe_types_dependency: &Option<(String, Resolved)>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
@@ -1160,7 +1186,8 @@ where
     Some((ref specifier, ref resolved)) => {
       let mut state = serializer.serialize_struct("TypesDependency", 2)?;
       state.serialize_field("specifier", specifier)?;
-      state.serialize_field("dependency", resolved)?;
+      let serializeable_resolved = SerializeableResolved(resolved);
+      state.serialize_field("dependency", &serializeable_resolved)?;
       state.end()
     }
     None => serializer.serialize_none(),

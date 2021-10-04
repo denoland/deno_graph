@@ -140,7 +140,8 @@ impl Dependency {
     seen: &mut HashSet<ModuleSpecifier>,
   ) -> fmt::Result {
     if !self.maybe_code.is_none() {
-      self.maybe_code.fmt_info(
+      fmt_resolved_info(
+        &self.maybe_code,
         f,
         prefix.clone(),
         self.maybe_type.is_none() && last,
@@ -150,9 +151,7 @@ impl Dependency {
       )?;
     }
     if !self.maybe_type.is_none() {
-      self
-        .maybe_type
-        .fmt_info(f, prefix, last, graph, true, seen)?;
+      fmt_resolved_info(&self.maybe_type, f, prefix, last, graph, true, seen)?;
     }
     Ok(())
   }
@@ -211,7 +210,15 @@ impl Module {
       prefix.push(EMPTY_CONNECTOR);
       let dep_len = self.dependencies.len();
       if let Some((_, type_dep)) = &self.maybe_types_dependency {
-        type_dep.fmt_info(f, &prefix, dep_len == 0, graph, true, seen)?;
+        fmt_resolved_info(
+          type_dep,
+          f,
+          &prefix,
+          dep_len == 0,
+          graph,
+          true,
+          seen,
+        )?;
       }
       for (idx, (_, dep)) in self.dependencies.iter().enumerate() {
         dep.fmt_info(
@@ -271,7 +278,7 @@ impl ModuleGraphError {
           colors::red_bold("(parsing error)")
         ),
       ),
-      Self::ResolutionError(_, _) => fmt_info_msg(
+      Self::ResolutionError(_) => fmt_info_msg(
         f,
         prefix,
         last,
@@ -340,50 +347,48 @@ where
   )
 }
 
-impl Resolved {
-  fn fmt_info<S: AsRef<str> + fmt::Display + Clone>(
-    &self,
-    f: &mut fmt::Formatter,
-    prefix: S,
-    last: bool,
-    graph: &ModuleGraph,
-    type_dep: bool,
-    seen: &mut HashSet<ModuleSpecifier>,
-  ) -> fmt::Result {
-    match self {
-      Self::Specifier(specifier, _) => {
-        let resolved_specifier = graph.resolve(specifier);
-        match graph.try_get(&resolved_specifier) {
-          Ok(Some(module)) => {
-            module.fmt_info(f, prefix, last, graph, type_dep, seen)
-          }
-          Err(err) => err.fmt_info(f, prefix, last, &resolved_specifier, seen),
-          Ok(None) => fmt_info_msg(
-            f,
-            prefix,
-            last,
-            false,
-            format!(
-              "{} {}",
-              colors::red(specifier),
-              colors::red_bold("(missing)")
-            ),
-          ),
+fn fmt_resolved_info<S: AsRef<str> + fmt::Display + Clone>(
+  resolved: &Resolved,
+  f: &mut fmt::Formatter,
+  prefix: S,
+  last: bool,
+  graph: &ModuleGraph,
+  type_dep: bool,
+  seen: &mut HashSet<ModuleSpecifier>,
+) -> fmt::Result {
+  match resolved {
+    Some(Ok((specifier, _))) => {
+      let resolved_specifier = graph.resolve(specifier);
+      match graph.try_get(&resolved_specifier) {
+        Ok(Some(module)) => {
+          module.fmt_info(f, prefix, last, graph, type_dep, seen)
         }
-      }
-      Self::Err(err, _) => fmt_info_msg(
-        f,
-        prefix,
-        last,
-        false,
-        format!(
-          "{} {}",
-          colors::italic(err.to_string()),
-          colors::red_bold("(resolve error)")
+        Err(err) => err.fmt_info(f, prefix, last, &resolved_specifier, seen),
+        Ok(None) => fmt_info_msg(
+          f,
+          prefix,
+          last,
+          false,
+          format!(
+            "{} {}",
+            colors::red(specifier),
+            colors::red_bold("(missing)")
+          ),
         ),
-      ),
-      _ => Ok(()),
+      }
     }
+    Some(Err(err)) => fmt_info_msg(
+      f,
+      prefix,
+      last,
+      false,
+      format!(
+        "{} {}",
+        colors::italic(err.to_string()),
+        colors::red_bold("(resolve error)")
+      ),
+    ),
+    _ => Ok(()),
   }
 }
 
