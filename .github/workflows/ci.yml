@@ -46,13 +46,13 @@ jobs:
         if: contains(matrix.os, 'ubuntu')
         run: |
           cargo fmt -- --check
-          deno fmt --check *.ts lib schemas .vscode .github
+          deno fmt --check *.ts lib/*.ts schemas .vscode .github
 
       - name: 💄  lint
         if: contains(matrix.os, 'ubuntu')
         run: |
           cargo clippy --locked --release --all-features --all-targets -- -D clippy::all
-          deno lint *.ts lib
+          deno lint *.ts lib/
 
       - name: 🏗️  build
         run: cargo build --locked --release --all-features --all-targets
