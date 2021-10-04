@@ -11,8 +11,6 @@ use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
 use crate::source::*;
 
-#[cfg(feature = "rust")]
-use anyhow::anyhow;
 use anyhow::Result;
 use deno_ast::MediaType;
 use deno_ast::ParsedSource;
@@ -38,6 +36,7 @@ pub enum ModuleGraphError {
   ResolutionError(ResolutionError, ast::Span),
   InvalidSource(ModuleSpecifier, Option<String>),
   UnsupportedMediaType(ModuleSpecifier, MediaType),
+  Missing(ModuleSpecifier),
 }
 
 impl Clone for ModuleGraphError {
@@ -54,6 +53,7 @@ impl Clone for ModuleGraphError {
       Self::UnsupportedMediaType(specifier, media_type) => {
         Self::UnsupportedMediaType(specifier.clone(), *media_type)
       }
+      Self::Missing(specifier) => Self::Missing(specifier.clone()),
     }
   }
 }
@@ -71,7 +71,8 @@ impl fmt::Display for ModuleGraphError {
       } else {
         write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}", specifier)
       },
-      Self::UnsupportedMediaType(specifier, media_type) => write!(f, "An unsupported media type was attempted to be imported as a module.\n  Specifier: {}\n  MediaType: {}", specifier, media_type)
+      Self::UnsupportedMediaType(specifier, media_type) => write!(f, "An unsupported media type was attempted to be imported as a module.\n  Specifier: {}\n  MediaType: {}", specifier, media_type),
+      Self::Missing(specifier) => write!(f, "Cannot load module \"{}\".", specifier),
     }
   }
 }
@@ -692,10 +693,7 @@ impl ModuleGraph {
         }
         Ok(None) => Err((
           specifier.clone(),
-          ModuleGraphError::LoadingErr(Arc::new(anyhow!(
-            "Cannot load module \"{}\".",
-            specifier
-          ))),
+          ModuleGraphError::Missing(specifier.clone()),
         )),
         Err(err) => Err((specifier.clone(), err)),
       }

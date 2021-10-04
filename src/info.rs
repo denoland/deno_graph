@@ -293,6 +293,17 @@ impl ModuleGraphError {
           colors::red_bold("(unsupported)")
         ),
       ),
+      Self::Missing(_) => fmt_info_msg(
+        f,
+        prefix,
+        last,
+        false,
+        format!(
+          "{} {}",
+          colors::red(specifier),
+          colors::red_bold("(missing)")
+        ),
+      ),
     }
   }
 }
