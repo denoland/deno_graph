@@ -498,7 +498,7 @@ mod tests {
       None,
       &source_parser,
     );
-    let graph = builder.build().await;
+    let graph = builder.build(None).await;
     assert_eq!(
       strip_ansi_codes(format!("{}", graph)),
       r#"local: /cache/deps/https/deno.land/x/example/a.ts

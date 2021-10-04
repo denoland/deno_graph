@@ -54,7 +54,7 @@ impl Clone for ModuleGraphError {
         Self::InvalidSource(specifier.clone(), maybe_filename.clone())
       }
       Self::UnsupportedMediaType(specifier, media_type) => {
-        Self::UnsupportedMediaType(specifier.clone(), media_type.clone())
+        Self::UnsupportedMediaType(specifier.clone(), *media_type)
       }
     }
   }
@@ -252,11 +252,78 @@ impl Module {
   }
 }
 
+/// A synthetic module is a module that is "injected" into the graph that
+/// doesn't have any source code, and the dependencies are injected into the
+/// graph externally.  This is designed to accommodate loading dependencies into
+/// the graph from configuration meta data, like TypeScript `"types"`.
+#[derive(Debug, Clone)]
+pub struct SyntheticModule {
+  dependencies: BTreeMap<String, Resolved>,
+  specifier: ModuleSpecifier,
+}
+
+impl SyntheticModule {
+  pub fn new(
+    specifier: ModuleSpecifier,
+    dependencies: Vec<String>,
+    maybe_resolver: &Option<&dyn Resolver>,
+  ) -> Self {
+    let dependencies = dependencies
+      .iter()
+      .map(|s| {
+        let result = resolve(s, &specifier, &Range::default(), *maybe_resolver);
+        (s.clone(), result)
+      })
+      .collect();
+    Self {
+      dependencies,
+      specifier,
+    }
+  }
+}
+
+struct SerializeableSyntheticDependency<'a>(&'a str, &'a Resolved);
+
+impl Serialize for SerializeableSyntheticDependency<'_> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let mut dep = serializer.serialize_map(Some(2))?;
+    dep.serialize_entry("specifier", self.0)?;
+    dep.serialize_entry("type", self.1)?;
+    dep.end()
+  }
+}
+
+impl Serialize for SyntheticModule {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let deps: Vec<SerializeableSyntheticDependency> = self
+      .dependencies
+      .iter()
+      .map(|(s, r)| SerializeableSyntheticDependency(s, r))
+      .collect();
+    let mut sm = serializer.serialize_struct("SyntheticModule", 2)?;
+    sm.serialize_field("specifier", &self.specifier)?;
+    sm.serialize_field("dependencies", &deps)?;
+    sm.end()
+  }
+}
+
 #[derive(Debug)]
 pub(crate) enum ModuleSlot {
+  /// A module, with source code.
   Module(Module),
+  /// A module "injected" into the graph without source code.
+  SyntheticModule(SyntheticModule),
+  /// When trying to load or parse the module, an error occurred.
   Err(ModuleGraphError),
+  /// The module was requested but could not be loaded.
   Missing,
+  /// An internal state set when loading a module asynchronously.
   Pending,
 }
 
@@ -266,15 +333,18 @@ impl ModuleSlot {
   }
 }
 
+#[cfg(feature = "rust")]
+type ModuleResult = (
+  ModuleSpecifier,
+  Result<(ModuleSpecifier, MediaType), ModuleGraphError>,
+);
+
 /// Convert a module slot entry into a result which contains the resolved
 /// module specifier and media type or the module graph error.
 #[cfg(feature = "rust")]
 fn to_result(
   (specifier, module_slot): (&ModuleSpecifier, &ModuleSlot),
-) -> Option<(
-  ModuleSpecifier,
-  Result<(ModuleSpecifier, MediaType), ModuleGraphError>,
-)> {
+) -> Option<ModuleResult> {
   match module_slot {
     ModuleSlot::Err(err) => Some((specifier.clone(), Err(err.clone()))),
     ModuleSlot::Module(module) => Some((
@@ -875,10 +945,33 @@ impl<'a> Builder<'a> {
     }
   }
 
-  pub async fn build(mut self) -> ModuleGraph {
+  pub async fn build(
+    mut self,
+    maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
+  ) -> ModuleGraph {
     let roots = self.graph.roots.clone();
     for root in roots {
       self.load(&root, self.is_dynamic_root);
+    }
+
+    // Process any imports that are being added to the graph.
+    if let Some(imports) = maybe_imports {
+      for (referrer, specifiers) in imports {
+        let synthetic_module = SyntheticModule::new(
+          referrer.clone(),
+          specifiers,
+          &self.maybe_resolver,
+        );
+        for resolved in synthetic_module.dependencies.values() {
+          if let Resolved::Specifier(specifier, _) = resolved {
+            self.load(specifier, self.is_dynamic_root);
+          }
+        }
+        self
+          .graph
+          .module_slots
+          .insert(referrer, ModuleSlot::SyntheticModule(synthetic_module));
+      }
     }
 
     loop {
@@ -1034,6 +1127,9 @@ impl<'a> Serialize for SerializeableModuleSlot<'a> {
   {
     match self.1 {
       ModuleSlot::Module(module) => Serialize::serialize(module, serializer),
+      ModuleSlot::SyntheticModule(synthetic_module) => {
+        Serialize::serialize(synthetic_module, serializer)
+      }
       ModuleSlot::Err(err) => {
         let mut state = serializer.serialize_struct("ModuleSlot", 2)?;
         state.serialize_field("specifier", self.0)?;

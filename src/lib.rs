@@ -49,6 +49,7 @@ cfg_if! {
     pub async fn create_graph(
       roots: Vec<ModuleSpecifier>,
       is_dynamic: bool,
+      maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
       loader: &mut dyn Loader,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
@@ -64,7 +65,7 @@ cfg_if! {
         maybe_locker,
         source_parser,
       );
-      builder.build().await
+      builder.build(maybe_imports).await
     }
 
     /// Parse an individual module, returning the module as a result, otherwise
@@ -121,6 +122,7 @@ cfg_if! {
     use wasm_bindgen::prelude::*;
 
     #[wasm_bindgen(js_name = createGraph)]
+    #[allow(clippy::too_many_arguments)]
     pub async fn js_create_graph(
       roots: JsValue,
       load: js_sys::Function,
@@ -129,8 +131,10 @@ cfg_if! {
       maybe_check: Option<js_sys::Function>,
       maybe_get_checksum: Option<js_sys::Function>,
       maybe_lockfile_name: Option<String>,
+      maybe_imports: JsValue,
     ) -> Result<js_graph::ModuleGraph, JsValue> {
       let roots_vec: Vec<String> = roots.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+      let maybe_imports_map: Option<HashMap<String, Vec<String>>> = maybe_imports.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
       let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
       let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
       let maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>> =
@@ -146,6 +150,16 @@ cfg_if! {
           .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
         roots.push(root);
       }
+      let mut maybe_imports = None;
+      if let Some(imports_map) = maybe_imports_map {
+        let mut imports = Vec::new();
+        for (referrer_str, specifier_vec) in imports_map.into_iter() {
+          let referrer = module_specifier::ModuleSpecifier::parse(&referrer_str)
+            .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+          imports.push((referrer, specifier_vec));
+        }
+        maybe_imports = Some(imports);
+      }
 
       let source_parser = ast::DefaultSourceParser::new();
       let builder = Builder::new(
@@ -156,7 +170,7 @@ cfg_if! {
         maybe_locker,
         &source_parser,
       );
-      let graph = builder.build().await;
+      let graph = builder.build(maybe_imports).await;
       Ok(js_graph::ModuleGraph(graph))
     }
 
@@ -236,6 +250,7 @@ mod tests {
     let graph = create_graph(
       vec![root_specifier.clone()],
       false,
+      None,
       &mut loader,
       None,
       None,
@@ -309,7 +324,8 @@ mod tests {
       ModuleSpecifier::parse("https://example.com/a.ts").unwrap(),
     ];
     let graph =
-      create_graph(roots.clone(), false, &mut loader, None, None, None).await;
+      create_graph(roots.clone(), false, None, &mut loader, None, None, None)
+        .await;
     assert_eq!(graph.module_slots.len(), 4);
     assert_eq!(graph.roots, roots);
     assert!(
@@ -322,6 +338,111 @@ mod tests {
       .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap()));
     assert!(graph
       .contains(&ModuleSpecifier::parse("https://example.com/c.ts").unwrap()));
+  }
+
+  #[tokio::test]
+  async fn test_create_graph_imports() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok(("file:///a/test01.ts", None, r#"console.log("a");"#)),
+        ),
+        (
+          "file:///a/types.d.ts",
+          Ok((
+            "file:///a/types.d.ts",
+            None,
+            r#"export type { A } from "./types_01.d.ts";"#,
+          )),
+        ),
+        (
+          "file:///a/types_01.d.ts",
+          Ok(("file:///a/types_01.d.ts", None, r#"export class A {};"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
+    let config_specifier =
+      ModuleSpecifier::parse("file:///a/tsconfig.json").unwrap();
+    let maybe_imports =
+      Some(vec![(config_specifier, vec!["./types.d.ts".to_string()])]);
+    let graph = create_graph(
+      vec![root_specifier],
+      false,
+      maybe_imports,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": ["file:///a/test01.ts"],
+        "modules": [
+          {
+            "dependencies": [],
+            "mediaType": "TypeScript",
+            "size": 17,
+            "specifier": "file:///a/test01.ts"
+          },
+          {
+            "specifier": "file:///a/tsconfig.json",
+            "dependencies": [
+              {
+                "specifier": "./types.d.ts",
+                "type": {
+                  "specifier": "file:///a/types.d.ts",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 0
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 0
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "./types_01.d.ts",
+                "code": {
+                  "specifier": "file:///a/types_01.d.ts",
+                  "span": {
+                    "start": {
+                      "line":0,
+                      "character":23
+                    },
+                    "end": {
+                      "line":0,
+                      "character":40
+                    }
+                  }
+                }
+              }
+            ],
+            "mediaType": "Dts",
+            "size": 41,
+            "specifier": "file:///a/types.d.ts"
+          },
+          {
+            "dependencies": [],
+            "mediaType": "Dts",
+            "size": 18,
+            "specifier": "file:///a/types_01.d.ts"
+          }
+        ],
+        "redirects":{},
+      })
+    );
   }
 
   #[tokio::test]
@@ -345,6 +466,7 @@ mod tests {
     let graph = create_graph(
       vec![root_specifier.clone()],
       false,
+      None,
       &mut loader,
       None,
       None,
@@ -377,6 +499,7 @@ mod tests {
     let graph = create_graph(
       vec![root_specifier.clone()],
       false,
+      None,
       &mut loader,
       None,
       None,
@@ -410,6 +533,7 @@ mod tests {
     let graph = create_graph(
       vec![root_specifier.clone()],
       false,
+      None,
       &mut loader,
       None,
       None,
@@ -449,6 +573,7 @@ mod tests {
     let graph = create_graph(
       vec![root_specifier.clone()],
       false,
+      None,
       &mut loader,
       None,
       None,
@@ -486,6 +611,7 @@ mod tests {
     let graph = create_graph(
       vec![root_specifier.clone()],
       false,
+      None,
       &mut loader,
       None,
       None,
@@ -540,6 +666,7 @@ mod tests {
     let graph = create_graph(
       vec![root_specifier.clone()],
       false,
+      None,
       &mut loader,
       None,
       None,
@@ -581,6 +708,7 @@ mod tests {
     let graph = create_graph(
       vec![root_specifier],
       false,
+      None,
       &mut loader,
       maybe_resolver,
       None,
@@ -634,6 +762,7 @@ mod tests {
     create_graph(
       vec![root_specifier.clone()],
       false,
+      None,
       &mut loader,
       None,
       None,

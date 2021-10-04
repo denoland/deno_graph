@@ -46,8 +46,7 @@
     "module": {
       "type": "object",
       "required": [
-        "specifier",
-        "dependencies"
+        "specifier"
       ],
       "properties": {
         "specifier": {

@@ -61,6 +61,9 @@ export interface CreateGraphOptions {
   /** An optional string to be used when generating an error when the integrity
    * check of the module graph fails. */
   lockFilename?: string;
+  /** An optional record of "injected" dependencies to the module graph. This
+   * allows adding things like TypeScript's `"types"` values into the graph. */
+  imports?: Record<string, string[]>;
 }
 
 /** Create a module graph using the same algorithms that are used in the Deno
@@ -130,6 +133,7 @@ export function createGraph(
     check,
     getChecksum,
     lockFilename,
+    imports,
   } = options;
   return jsCreateGraph(
     rootSpecifiers,
@@ -139,6 +143,7 @@ export function createGraph(
     check,
     getChecksum,
     lockFilename,
+    imports,
   );
 }
 
