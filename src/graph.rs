@@ -96,7 +96,8 @@ pub enum ResolutionError {
 }
 
 impl ResolutionError {
-  pub fn get_span(&self) -> &ast::Span {
+  /// Return a reference to the span that the error applies to.
+  pub fn span(&self) -> &ast::Span {
     match self {
       Self::InvalidDowngrade(_, span)
       | Self::InvalidLocalImport(_, span)
@@ -105,6 +106,7 @@ impl ResolutionError {
     }
   }
 
+  /// Converts the error into a string along with the span related to the error.
   #[cfg(feature = "rust")]
   pub fn to_string_with_span(&self) -> String {
     match self {
@@ -175,7 +177,7 @@ where
     Some(Err(err)) => {
       let mut state = serializer.serialize_struct("ResolvedError", 2)?;
       state.serialize_field("error", &err.to_string())?;
-      state.serialize_field("span", err.get_span())?;
+      state.serialize_field("span", err.span())?;
       state.end()
     }
     _ => Serialize::serialize(&serde_json::Value::Null, serializer),
