@@ -256,7 +256,7 @@ impl ModuleGraphError {
           colors::red_bold("(invalid source)")
         ),
       ),
-      Self::LoadingErr(_) => fmt_info_msg(
+      Self::LoadingErr(_, _) => fmt_info_msg(
         f,
         prefix,
         last,
@@ -267,7 +267,7 @@ impl ModuleGraphError {
           colors::red_bold("(loading error)")
         ),
       ),
-      Self::ParseErr(_) => fmt_info_msg(
+      Self::ParseErr(_, _) => fmt_info_msg(
         f,
         prefix,
         last,

@@ -31,8 +31,8 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub enum ModuleGraphError {
-  LoadingErr(Arc<anyhow::Error>),
-  ParseErr(deno_ast::Diagnostic),
+  LoadingErr(ModuleSpecifier, Arc<anyhow::Error>),
+  ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
   ResolutionError(ResolutionError),
   InvalidSource(ModuleSpecifier, Option<String>),
   UnsupportedMediaType(ModuleSpecifier, MediaType),
@@ -42,8 +42,12 @@ pub enum ModuleGraphError {
 impl Clone for ModuleGraphError {
   fn clone(&self) -> Self {
     match self {
-      Self::LoadingErr(err) => Self::LoadingErr(err.clone()),
-      Self::ParseErr(err) => Self::ParseErr(err.clone()),
+      Self::LoadingErr(specifier, err) => {
+        Self::LoadingErr(specifier.clone(), err.clone())
+      }
+      Self::ParseErr(specifier, err) => {
+        Self::ParseErr(specifier.clone(), err.clone())
+      }
       Self::ResolutionError(err) => Self::ResolutionError(err.clone()),
       Self::InvalidSource(specifier, maybe_filename) => {
         Self::InvalidSource(specifier.clone(), maybe_filename.clone())
@@ -56,13 +60,27 @@ impl Clone for ModuleGraphError {
   }
 }
 
+impl ModuleGraphError {
+  #[cfg(feature = "rust")]
+  pub fn specifier(&self) -> &ModuleSpecifier {
+    match self {
+      Self::ResolutionError(err) => &err.span().specifier,
+      Self::LoadingErr(s, _)
+      | Self::ParseErr(s, _)
+      | Self::InvalidSource(s, _)
+      | Self::UnsupportedMediaType(s, _)
+      | Self::Missing(s) => s,
+    }
+  }
+}
+
 impl std::error::Error for ModuleGraphError {}
 
 impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::LoadingErr(err) => err.fmt(f),
-      Self::ParseErr(diagnostic) => write!(f, "The module's source code would not be parsed: {}", diagnostic),
+      Self::LoadingErr(_, err) => err.fmt(f),
+      Self::ParseErr(_, diagnostic) => write!(f, "The module's source code would not be parsed: {}", diagnostic),
       Self::ResolutionError(err) => err.fmt(f),
       Self::InvalidSource(specifier, maybe_filename) => if let Some(filename) = maybe_filename {
         write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}\n  Lock file: {}", specifier, filename)
@@ -72,12 +90,6 @@ impl fmt::Display for ModuleGraphError {
       Self::UnsupportedMediaType(specifier, media_type) => write!(f, "An unsupported media type was attempted to be imported as a module.\n  Specifier: {}\n  MediaType: {}", specifier, media_type),
       Self::Missing(specifier) => write!(f, "Cannot load module \"{}\".", specifier),
     }
-  }
-}
-
-impl From<deno_ast::Diagnostic> for ModuleGraphError {
-  fn from(diagnostic: deno_ast::Diagnostic) -> Self {
-    Self::ParseErr(diagnostic)
   }
 }
 
@@ -418,15 +430,13 @@ impl ModuleGraph {
   /// Returns any errors that are in the module graph, along with the associated
   /// specifier.
   #[cfg(feature = "rust")]
-  pub fn errors(&self) -> Vec<(ModuleSpecifier, ModuleGraphError)> {
+  pub fn errors(&self) -> Vec<ModuleGraphError> {
     self
       .module_slots
       .iter()
       .filter_map(|(s, ms)| match ms {
-        ModuleSlot::Err(err) => Some((s.clone(), err.clone())),
-        ModuleSlot::Missing => {
-          Some((s.clone(), ModuleGraphError::Missing(s.clone())))
-        }
+        ModuleSlot::Err(err) => Some(err.clone()),
+        ModuleSlot::Missing => Some(ModuleGraphError::Missing(s.clone())),
         _ => None,
       })
       .collect()
@@ -793,7 +803,10 @@ pub(crate) fn parse_module(
             maybe_resolver,
           ))
         }
-        Err(diagnostic) => ModuleSlot::Err(diagnostic.into()),
+        Err(diagnostic) => ModuleSlot::Err(ModuleGraphError::ParseErr(
+          specifier.clone(),
+          diagnostic,
+        )),
       }
     }
     MediaType::Unknown if is_root => {
@@ -811,7 +824,10 @@ pub(crate) fn parse_module(
             maybe_resolver,
           ))
         }
-        Err(diagnostic) => ModuleSlot::Err(diagnostic.into()),
+        Err(diagnostic) => ModuleSlot::Err(ModuleGraphError::ParseErr(
+          specifier.clone(),
+          diagnostic,
+        )),
       }
     }
     _ => ModuleSlot::Err(ModuleGraphError::UnsupportedMediaType(
@@ -984,8 +1000,11 @@ impl<'a> Builder<'a> {
         }
         Some((specifier, Err(err))) => {
           self.graph.module_slots.insert(
-            specifier,
-            ModuleSlot::Err(ModuleGraphError::LoadingErr(Arc::new(err))),
+            specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::LoadingErr(
+              specifier,
+              Arc::new(err),
+            )),
           );
         }
         _ => {}
