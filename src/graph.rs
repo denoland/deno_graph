@@ -396,12 +396,15 @@ impl ModuleGraph {
   /// Returns any errors that are in the module graph, along with the associated
   /// specifier.
   #[cfg(feature = "rust")]
-  pub fn errors(&self) -> Vec<(&ModuleSpecifier, &ModuleGraphError)> {
+  pub fn errors(&self) -> Vec<(ModuleSpecifier, ModuleGraphError)> {
     self
       .module_slots
       .iter()
       .filter_map(|(s, ms)| match ms {
-        ModuleSlot::Err(err) => Some((s, err)),
+        ModuleSlot::Err(err) => Some((s.clone(), err.clone())),
+        ModuleSlot::Missing => {
+          Some((s.clone(), ModuleGraphError::Missing(s.clone())))
+        }
         _ => None,
       })
       .collect()
