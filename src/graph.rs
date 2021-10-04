@@ -10,14 +10,12 @@ use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
 use crate::source::*;
-use crate::text_encoding::strip_bom_mut;
 
+#[cfg(feature = "rust")]
 use anyhow::anyhow;
 use anyhow::Result;
-use data_url::DataUrl;
 use deno_ast::MediaType;
 use deno_ast::ParsedSource;
-use futures::future;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
 use serde::ser::SerializeMap;
@@ -711,23 +709,6 @@ impl ModuleGraph {
   }
 }
 
-fn load_data_url(specifier: &ModuleSpecifier) -> Result<Option<LoadResponse>> {
-  let url = DataUrl::process(specifier.as_str())
-    .map_err(|_| anyhow!("Unable to decode data url."))?;
-  let (bytes, _) = url
-    .decode_to_vec()
-    .map_err(|_| anyhow!("Unable to decode data url."))?;
-  let mut headers: HashMap<String, String> = HashMap::new();
-  headers.insert("content-type".to_string(), url.mime_type().to_string());
-  let mut content = String::from_utf8(bytes)?;
-  strip_bom_mut(&mut content);
-  Ok(Some(LoadResponse {
-    specifier: specifier.clone(),
-    maybe_headers: Some(headers),
-    content: Arc::new(content),
-  }))
-}
-
 /// Resolve a string specifier from a referring module, using the resolver if
 /// present, returning the resolution result.
 fn resolve(
@@ -1017,13 +998,7 @@ impl<'a> Builder<'a> {
         .graph
         .module_slots
         .insert(specifier.clone(), ModuleSlot::Pending);
-      let f: LoadFuture = if specifier.scheme() == "data" {
-        let load_response = load_data_url(specifier);
-        Box::pin(future::ready((specifier.clone(), load_response)))
-      } else {
-        self.loader.load(specifier, is_dynamic)
-      };
-      self.pending.push(f);
+      self.pending.push(self.loader.load(specifier, is_dynamic));
     }
   }
 

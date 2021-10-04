@@ -4,6 +4,7 @@ use crate::checksum;
 use crate::colors::strip_ansi_codes;
 use crate::graph;
 use crate::module_specifier::ModuleSpecifier;
+use crate::source::load_data_url;
 use crate::source::CacheInfo;
 use crate::source::LoadFuture;
 use crate::source::Loader;
@@ -12,6 +13,7 @@ use crate::source::Resolver;
 
 use anyhow::anyhow;
 use anyhow::Result;
+use futures::future;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
@@ -50,29 +52,33 @@ impl Loader for JsLoader {
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
   ) -> LoadFuture {
-    let specifier = specifier.clone();
-    let this = JsValue::null();
-    let arg0 = JsValue::from(specifier.to_string());
-    let arg1 = JsValue::from(is_dynamic);
-    let result = self.load.call2(&this, &arg0, &arg1);
-    let f = async move {
-      let response = match result {
-        Ok(result) => {
-          wasm_bindgen_futures::JsFuture::from(js_sys::Promise::resolve(
-            &result,
-          ))
-          .await
-        }
-        Err(err) => Err(err),
+    if specifier.scheme() == "data" {
+      Box::pin(future::ready((specifier.clone(), load_data_url(specifier))))
+    } else {
+      let specifier = specifier.clone();
+      let this = JsValue::null();
+      let arg0 = JsValue::from(specifier.to_string());
+      let arg1 = JsValue::from(is_dynamic);
+      let result = self.load.call2(&this, &arg0, &arg1);
+      let f = async move {
+        let response = match result {
+          Ok(result) => {
+            wasm_bindgen_futures::JsFuture::from(js_sys::Promise::resolve(
+              &result,
+            ))
+            .await
+          }
+          Err(err) => Err(err),
+        };
+        (
+          specifier,
+          response
+            .map(|value| value.into_serde().unwrap())
+            .map_err(|_| anyhow!("load rejected or errored")),
+        )
       };
-      (
-        specifier,
-        response
-          .map(|value| value.into_serde().unwrap())
-          .map_err(|_| anyhow!("load rejected or errored")),
-      )
-    };
-    Box::pin(f)
+      Box::pin(f)
+    }
   }
 }
 
