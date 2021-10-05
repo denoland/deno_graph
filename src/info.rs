@@ -139,7 +139,7 @@ impl Dependency {
     graph: &ModuleGraph,
     seen: &mut HashSet<ModuleSpecifier>,
   ) -> fmt::Result {
-    if !self.maybe_code.is_none() {
+    if self.maybe_code.is_some() {
       fmt_resolved_info(
         &self.maybe_code,
         f,
@@ -150,7 +150,7 @@ impl Dependency {
         seen,
       )?;
     }
-    if !self.maybe_type.is_none() {
+    if self.maybe_type.is_some() {
       fmt_resolved_info(&self.maybe_type, f, prefix, last, graph, true, seen)?;
     }
     Ok(())

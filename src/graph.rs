@@ -558,7 +558,7 @@ impl ModuleGraph {
           (&dependency.maybe_code, &dependency.maybe_type)
         };
         if let Some(Ok((specifier, _))) =
-          maybe_first.as_ref().or(maybe_second.as_ref())
+          maybe_first.as_ref().or_else(|| maybe_second.as_ref())
         {
           if prefer_types {
             Some(
@@ -968,10 +968,10 @@ impl<'a> Builder<'a> {
           specifiers,
           &self.maybe_resolver,
         );
-        for resolved in synthetic_module.dependencies.values() {
-          if let Some(Ok((specifier, _))) = resolved {
-            self.load(specifier, self.is_dynamic_root);
-          }
+        for (specifier, _) in
+          synthetic_module.dependencies.values().flatten().flatten()
+        {
+          self.load(specifier, self.is_dynamic_root);
         }
         self
           .graph
@@ -1104,11 +1104,11 @@ impl<'a> Serialize for SerializeableDependency<'a> {
   {
     let mut map = serializer.serialize_map(None)?;
     map.serialize_entry("specifier", self.0)?;
-    if !self.1.maybe_code.is_none() {
+    if self.1.maybe_code.is_some() {
       let serializeable_resolved = SerializeableResolved(&self.1.maybe_code);
       map.serialize_entry("code", &serializeable_resolved)?;
     }
-    if !self.1.maybe_type.is_none() {
+    if self.1.maybe_type.is_some() {
       let serializeable_resolved = SerializeableResolved(&self.1.maybe_code);
       map.serialize_entry("type", &serializeable_resolved)?;
     }
