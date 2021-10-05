@@ -659,12 +659,30 @@ impl ModuleGraph {
   }
 
   /// Walk the graph from the root, checking to see if there are any module
-  /// graph errors on non-dynamic imports. The first error is returned as an
-  /// error result, otherwise ok if there are no errors.
+  /// graph errors on non-type only, non-dynamic imports. The first error is
+  /// returned as as error result, otherwise ok if there are no errors.
   #[cfg(feature = "rust")]
   pub fn valid(&self) -> Result<(), ModuleGraphError> {
+    self.validate(false)
+  }
+
+  /// Walk the graph from the root, checking to see if there are any module
+  /// graph errors on non-dynamic imports that are type only related. The first
+  /// error is returned as an error result, otherwise ok if there are no errors.
+  ///
+  /// This is designed to be used in cases where the graph needs to be validated
+  /// from a type checking perspective, prior to type checking the graph.
+  #[cfg(feature = "rust")]
+  pub fn valid_types_only(&self) -> Result<(), ModuleGraphError> {
+    self.validate(true)
+  }
+
+  #[cfg(feature = "rust")]
+  fn validate(&self, types_only: bool) -> Result<(), ModuleGraphError> {
     fn validate<F>(
       specifier: &ModuleSpecifier,
+      types_only: bool,
+      is_type: bool,
       seen: &mut HashSet<ModuleSpecifier>,
       get_module: &F,
     ) -> Result<(), ModuleGraphError>
@@ -675,30 +693,31 @@ impl ModuleGraph {
         return Ok(());
       }
       seen.insert(specifier.clone());
+      let should_error = (is_type && types_only) || (!is_type && !types_only);
       match get_module(specifier) {
         Ok(Some(module)) => {
           if let Some((_, Some(Ok((specifier, _))))) =
             &module.maybe_types_dependency
           {
-            validate(specifier, seen, get_module)?;
+            validate(specifier, types_only, true, seen, get_module)?;
           }
           for dep in module.dependencies.values() {
             if !dep.is_dynamic {
               // TODO(@kitsonk) eliminate duplication with maybe_code below
               match &dep.maybe_type {
                 Some(Ok((specifier, _))) => {
-                  validate(specifier, seen, get_module)?
+                  validate(specifier, types_only, true, seen, get_module)?
                 }
-                Some(Err(err)) => {
+                Some(Err(err)) if types_only => {
                   return Err(err.into());
                 }
                 _ => (),
               }
               match &dep.maybe_code {
                 Some(Ok((specifier, _))) => {
-                  validate(specifier, seen, get_module)?
+                  validate(specifier, types_only, false, seen, get_module)?
                 }
-                Some(Err(err)) => {
+                Some(Err(err)) if !types_only => {
                   return Err(err.into());
                 }
                 _ => (),
@@ -707,14 +726,19 @@ impl ModuleGraph {
           }
           Ok(())
         }
-        Ok(None) => Err(ModuleGraphError::Missing(specifier.clone())),
-        Err(err) => Err(err),
+        Ok(None) if should_error => {
+          Err(ModuleGraphError::Missing(specifier.clone()))
+        }
+        Err(err) if should_error => Err(err),
+        _ => Ok(()),
       }
     }
 
     let mut seen = HashSet::new();
     for root in &self.roots {
-      validate(root, &mut seen, &|s| self.try_get(s).map(|o| o.cloned()))?;
+      validate(root, types_only, false, &mut seen, &|s| {
+        self.try_get(s).map(|o| o.cloned())
+      })?;
     }
     Ok(())
   }
@@ -1106,7 +1130,7 @@ impl<'a> Serialize for SerializeableDependency<'a> {
       map.serialize_entry("code", &serializeable_resolved)?;
     }
     if self.1.maybe_type.is_some() {
-      let serializeable_resolved = SerializeableResolved(&self.1.maybe_code);
+      let serializeable_resolved = SerializeableResolved(&self.1.maybe_type);
       map.serialize_entry("type", &serializeable_resolved)?;
     }
     if self.1.is_dynamic {

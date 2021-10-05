@@ -340,6 +340,77 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn test_valid_type_missing() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"// @deno-types=./test02.d.ts
+import * as a from "./test02.js";
+
+console.log(a);
+"#,
+          )),
+        ),
+        (
+          "file:///a/test02.js",
+          Ok(("file:///a/test02.js", None, r#"export const b = "b";"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert!(graph.valid().is_ok());
+    assert!(graph.valid_types_only().is_err());
+  }
+
+  #[tokio::test]
+  async fn test_valid_code_missing() {
+    let mut loader = setup(
+      vec![(
+        "file:///a/test01.ts",
+        Ok((
+          "file:///a/test01.ts",
+          None,
+          r#"import * as a from "./test02.js";
+
+console.log(a);
+"#,
+        )),
+      )],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert!(graph.valid().is_err());
+    assert!(graph.valid_types_only().is_ok());
+  }
+
+  #[tokio::test]
   async fn test_create_graph_imports() {
     let mut loader = setup(
       vec![
