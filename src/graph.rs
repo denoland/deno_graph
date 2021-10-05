@@ -557,17 +557,9 @@ impl ModuleGraph {
         } else {
           (&dependency.maybe_code, &dependency.maybe_type)
         };
-        if let Some(Ok((specifier, _))) = maybe_first {
-          if prefer_types {
-            Some(
-              self
-                .resolve_types_dependency(specifier)
-                .unwrap_or(specifier),
-            )
-          } else {
-            Some(specifier)
-          }
-        } else if let Some(Ok((specifier, _))) = maybe_second {
+        if let Some(Ok((specifier, _))) =
+          maybe_first.as_ref().or(maybe_second.as_ref())
+        {
           if prefer_types {
             Some(
               self
@@ -692,6 +684,7 @@ impl ModuleGraph {
           }
           for dep in module.dependencies.values() {
             if !dep.is_dynamic {
+              // TODO(@kitsonk) eliminate duplication with maybe_type below
               match &dep.maybe_code {
                 Some(Ok((specifier, _))) => {
                   validate(specifier, seen, get_module)?
