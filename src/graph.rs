@@ -31,12 +31,12 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub enum ModuleGraphError {
+  InvalidSource(ModuleSpecifier, Option<String>),
   LoadingErr(ModuleSpecifier, Arc<anyhow::Error>),
+  Missing(ModuleSpecifier),
   ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
   ResolutionError(ResolutionError),
-  InvalidSource(ModuleSpecifier, Option<String>),
   UnsupportedMediaType(ModuleSpecifier, MediaType),
-  Missing(ModuleSpecifier),
 }
 
 impl Clone for ModuleGraphError {
@@ -662,12 +662,12 @@ impl ModuleGraph {
   /// graph errors on non-dynamic imports. The first error is returned as an
   /// error result, otherwise ok if there are no errors.
   #[cfg(feature = "rust")]
-  pub fn valid(&self) -> Result<(), (ModuleSpecifier, ModuleGraphError)> {
+  pub fn valid(&self) -> Result<(), ModuleGraphError> {
     fn validate<F>(
       specifier: &ModuleSpecifier,
       seen: &mut HashSet<ModuleSpecifier>,
       get_module: &F,
-    ) -> Result<(), (ModuleSpecifier, ModuleGraphError)>
+    ) -> Result<(), ModuleGraphError>
     where
       F: Fn(&ModuleSpecifier) -> Result<Option<Module>, ModuleGraphError>,
     {
@@ -684,22 +684,22 @@ impl ModuleGraph {
           }
           for dep in module.dependencies.values() {
             if !dep.is_dynamic {
-              // TODO(@kitsonk) eliminate duplication with maybe_type below
-              match &dep.maybe_code {
-                Some(Ok((specifier, _))) => {
-                  validate(specifier, seen, get_module)?
-                }
-                Some(Err(err)) => {
-                  return Err((specifier.clone(), err.into()));
-                }
-                _ => (),
-              }
+              // TODO(@kitsonk) eliminate duplication with maybe_code below
               match &dep.maybe_type {
                 Some(Ok((specifier, _))) => {
                   validate(specifier, seen, get_module)?
                 }
                 Some(Err(err)) => {
-                  return Err((specifier.clone(), err.into()));
+                  return Err(err.into());
+                }
+                _ => (),
+              }
+              match &dep.maybe_code {
+                Some(Ok((specifier, _))) => {
+                  validate(specifier, seen, get_module)?
+                }
+                Some(Err(err)) => {
+                  return Err(err.into());
                 }
                 _ => (),
               }
@@ -707,11 +707,8 @@ impl ModuleGraph {
           }
           Ok(())
         }
-        Ok(None) => Err((
-          specifier.clone(),
-          ModuleGraphError::Missing(specifier.clone()),
-        )),
-        Err(err) => Err((specifier.clone(), err)),
+        Ok(None) => Err(ModuleGraphError::Missing(specifier.clone())),
+        Err(err) => Err(err),
       }
     }
 

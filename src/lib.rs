@@ -507,8 +507,8 @@ mod tests {
     .await;
     let result = graph.valid();
     assert!(result.is_err());
-    let (specifier, err) = result.unwrap_err();
-    assert_eq!(specifier, root_specifier);
+    let err = result.unwrap_err();
+    assert_eq!(err.specifier(), &root_specifier);
     assert!(matches!(err, ModuleGraphError::ResolutionError(_)));
   }
 
@@ -541,7 +541,7 @@ mod tests {
     .await;
     let result = graph.valid();
     assert!(result.is_err());
-    let (_, err) = result.unwrap_err();
+    let err = result.unwrap_err();
     assert!(matches!(
       err,
       ModuleGraphError::UnsupportedMediaType(_, MediaType::Json)
