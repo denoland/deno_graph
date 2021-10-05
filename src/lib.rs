@@ -52,7 +52,7 @@ cfg_if! {
       maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
       loader: &mut dyn Loader,
       maybe_resolver: Option<&dyn Resolver>,
-      maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
+      maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
       maybe_parser: Option<&dyn SourceParser>,
     ) -> ModuleGraph {
       let default_parser = ast::DefaultSourceParser::new();
@@ -137,10 +137,10 @@ cfg_if! {
       let maybe_imports_map: Option<HashMap<String, Vec<String>>> = maybe_imports.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
       let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
       let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
-      let maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>> =
+      let maybe_locker: Option<Rc<RefCell<dyn Locker>>> =
         if maybe_check.is_some() || maybe_get_checksum.is_some() {
           let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum, maybe_lockfile_name);
-          Some(Rc::new(RefCell::new(Box::new(locker))))
+          Some(Rc::new(RefCell::new(locker)))
         } else {
           None
         };
