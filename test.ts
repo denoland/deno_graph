@@ -255,7 +255,7 @@ Deno.test({
         parseModule("file:///a/test.md", `# Some Markdown\n\n**bold**`);
       },
       Error,
-      "The module's source code would not be parsed",
+      "The module's source code could not be parsed",
     );
   },
 });
