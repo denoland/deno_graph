@@ -80,7 +80,7 @@ impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::LoadingErr(_, err) => err.fmt(f),
-      Self::ParseErr(_, diagnostic) => write!(f, "The module's source code would not be parsed: {}", diagnostic),
+      Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {}", diagnostic),
       Self::ResolutionError(err) => err.fmt(f),
       Self::InvalidSource(specifier, maybe_filename) => if let Some(filename) = maybe_filename {
         write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}\n  Lock file: {}", specifier, filename)
