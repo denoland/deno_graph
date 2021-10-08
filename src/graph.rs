@@ -427,8 +427,7 @@ impl ModuleGraph {
       .map_or(false, |ms| matches!(ms, ModuleSlot::Module(_)))
   }
 
-  /// Returns any errors that are in the module graph, along with the associated
-  /// specifier.
+  /// Returns any errors that are in the module graph.
   #[cfg(feature = "rust")]
   pub fn errors(&self) -> Vec<ModuleGraphError> {
     self
