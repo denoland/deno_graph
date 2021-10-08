@@ -43,9 +43,15 @@ fn human_size(size: f64) -> String {
 
 impl fmt::Display for ModuleGraph {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    match self.modules.get(&self.root) {
+    if self.roots.is_empty() || self.roots.len() > 1 {
+      return writeln!(
+        f,
+        "{} displaying graphs that have multiple roots is not supported.",
+        colors::red("error:")
+      );
+    }
+    match self.module_slots.get(&self.roots[0]) {
       Some(ModuleSlot::Module(root)) => {
-        writeln!(f, "{} {}", colors::bold("type:"), root.media_type)?;
         if let Some(cache_info) = &root.maybe_cache_info {
           if let Some(local) = &cache_info.local {
             writeln!(
@@ -67,8 +73,9 @@ impl fmt::Display for ModuleGraph {
             writeln!(f, "{} {}", colors::bold("map:"), map.to_string_lossy())?;
           }
         }
+        writeln!(f, "{} {}", colors::bold("type:"), root.media_type)?;
         let total_size: f64 = self
-          .modules
+          .module_slots
           .iter()
           .filter_map(|(_, m)| {
             if let ModuleSlot::Module(module) = m {
@@ -78,8 +85,12 @@ impl fmt::Display for ModuleGraph {
             }
           })
           .sum();
-        let dep_count =
-          self.modules.iter().filter(|(_, m)| m.is_module()).count() - 1;
+        let dep_count = self
+          .module_slots
+          .iter()
+          .filter(|(_, m)| m.is_module())
+          .count()
+          - 1;
         writeln!(
           f,
           "{} {} unique {}",
@@ -90,7 +101,7 @@ impl fmt::Display for ModuleGraph {
         writeln!(
           f,
           "\n{} {}",
-          self.root,
+          self.roots[0],
           colors::gray(format!("({})", human_size(root.size() as f64)))
         )?;
         let mut seen = HashSet::new();
@@ -128,8 +139,9 @@ impl Dependency {
     graph: &ModuleGraph,
     seen: &mut HashSet<ModuleSpecifier>,
   ) -> fmt::Result {
-    if !self.maybe_code.is_none() {
-      self.maybe_code.fmt_info(
+    if self.maybe_code.is_some() {
+      fmt_resolved_info(
+        &self.maybe_code,
         f,
         prefix.clone(),
         self.maybe_type.is_none() && last,
@@ -138,10 +150,8 @@ impl Dependency {
         seen,
       )?;
     }
-    if !self.maybe_type.is_none() {
-      self
-        .maybe_type
-        .fmt_info(f, prefix, last, graph, true, seen)?;
+    if self.maybe_type.is_some() {
+      fmt_resolved_info(&self.maybe_type, f, prefix, last, graph, true, seen)?;
     }
     Ok(())
   }
@@ -199,6 +209,17 @@ impl Module {
       }
       prefix.push(EMPTY_CONNECTOR);
       let dep_len = self.dependencies.len();
+      if let Some((_, type_dep)) = &self.maybe_types_dependency {
+        fmt_resolved_info(
+          type_dep,
+          f,
+          &prefix,
+          dep_len == 0,
+          graph,
+          true,
+          seen,
+        )?;
+      }
       for (idx, (_, dep)) in self.dependencies.iter().enumerate() {
         dep.fmt_info(
           f,
@@ -224,7 +245,7 @@ impl ModuleGraphError {
   ) -> fmt::Result {
     seen.insert(specifier.clone());
     match self {
-      Self::InvalidSource(_) => fmt_info_msg(
+      Self::InvalidSource(_, _) => fmt_info_msg(
         f,
         prefix,
         last,
@@ -235,7 +256,7 @@ impl ModuleGraphError {
           colors::red_bold("(invalid source)")
         ),
       ),
-      Self::LoadingErr(_) => fmt_info_msg(
+      Self::LoadingErr(_, _) => fmt_info_msg(
         f,
         prefix,
         last,
@@ -246,7 +267,7 @@ impl ModuleGraphError {
           colors::red_bold("(loading error)")
         ),
       ),
-      Self::ParseErr(_) => fmt_info_msg(
+      Self::ParseErr(_, _) => fmt_info_msg(
         f,
         prefix,
         last,
@@ -255,6 +276,39 @@ impl ModuleGraphError {
           "{} {}",
           colors::red(specifier),
           colors::red_bold("(parsing error)")
+        ),
+      ),
+      Self::ResolutionError(_) => fmt_info_msg(
+        f,
+        prefix,
+        last,
+        false,
+        format!(
+          "{} {}",
+          colors::red(specifier),
+          colors::red_bold("(resolution error)")
+        ),
+      ),
+      Self::UnsupportedMediaType(_, _) => fmt_info_msg(
+        f,
+        prefix,
+        last,
+        false,
+        format!(
+          "{} {}",
+          colors::red(specifier),
+          colors::red_bold("(unsupported)")
+        ),
+      ),
+      Self::Missing(_) => fmt_info_msg(
+        f,
+        prefix,
+        last,
+        false,
+        format!(
+          "{} {}",
+          colors::red(specifier),
+          colors::red_bold("(missing)")
         ),
       ),
     }
@@ -293,50 +347,48 @@ where
   )
 }
 
-impl Resolved {
-  fn fmt_info<S: AsRef<str> + fmt::Display + Clone>(
-    &self,
-    f: &mut fmt::Formatter,
-    prefix: S,
-    last: bool,
-    graph: &ModuleGraph,
-    type_dep: bool,
-    seen: &mut HashSet<ModuleSpecifier>,
-  ) -> fmt::Result {
-    match self {
-      Self::Specifier(specifier, _) => {
-        let resolved_specifier = graph.resolve(specifier);
-        match graph.try_get(&resolved_specifier) {
-          Ok(Some(module)) => {
-            module.fmt_info(f, prefix, last, graph, type_dep, seen)
-          }
-          Err(err) => err.fmt_info(f, prefix, last, &resolved_specifier, seen),
-          Ok(None) => fmt_info_msg(
-            f,
-            prefix,
-            last,
-            false,
-            format!(
-              "{} missing: {}",
-              colors::red_bold("[internal error]"),
-              specifier
-            ),
-          ),
+fn fmt_resolved_info<S: AsRef<str> + fmt::Display + Clone>(
+  resolved: &Resolved,
+  f: &mut fmt::Formatter,
+  prefix: S,
+  last: bool,
+  graph: &ModuleGraph,
+  type_dep: bool,
+  seen: &mut HashSet<ModuleSpecifier>,
+) -> fmt::Result {
+  match resolved {
+    Some(Ok((specifier, _))) => {
+      let resolved_specifier = graph.resolve(specifier);
+      match graph.try_get(&resolved_specifier) {
+        Ok(Some(module)) => {
+          module.fmt_info(f, prefix, last, graph, type_dep, seen)
         }
-      }
-      Self::Err(err, _) => fmt_info_msg(
-        f,
-        prefix,
-        last,
-        false,
-        format!(
-          "{} {}",
-          colors::italic(err.to_string()),
-          colors::red_bold("(resolve error)")
+        Err(err) => err.fmt_info(f, prefix, last, &resolved_specifier, seen),
+        Ok(None) => fmt_info_msg(
+          f,
+          prefix,
+          last,
+          false,
+          format!(
+            "{} {}",
+            colors::red(specifier),
+            colors::red_bold("(missing)")
+          ),
         ),
-      ),
-      _ => Ok(()),
+      }
     }
+    Some(Err(err)) => fmt_info_msg(
+      f,
+      prefix,
+      last,
+      false,
+      format!(
+        "{} {}",
+        colors::italic(err.to_string()),
+        colors::red_bold("(resolve error)")
+      ),
+    ),
+    _ => Ok(()),
   }
 }
 
@@ -361,6 +413,7 @@ mod tests {
             Some(vec![("content-type", "application/typescript")]),
             r#"import * as b from "./b.ts";
             import type { F } from "./f.d.ts";
+            import * as g from "./g.js";
             "#,
           )),
         ),
@@ -417,6 +470,25 @@ mod tests {
             r#"export interface F { }"#,
           )),
         ),
+        (
+          "https://deno.land/x/example/g.js",
+          Ok((
+            "https://deno.land/x/example/g.js",
+            Some(vec![
+              ("content-type", "application/javascript"),
+              ("x-typescript-types", "./g.d.ts"),
+            ]),
+            r#"export const g = "g";"#,
+          )),
+        ),
+        (
+          "https://deno.land/x/example/g.d.ts",
+          Ok((
+            "https://deno.land/x/example/g.d.ts",
+            Some(vec![("content-type", "application/typescript")]),
+            r#"export const g: "g";"#,
+          )),
+        ),
       ],
       vec![(
         "https://deno.land/x/example/a.ts",
@@ -435,29 +507,31 @@ mod tests {
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
     let source_parser = DefaultSourceParser::new();
     let builder = Builder::new(
-      root_specifier,
+      vec![root_specifier],
       false,
       &mut loader,
       None,
       None,
       &source_parser,
     );
-    let graph = builder.build().await;
+    let graph = builder.build(None).await;
     assert_eq!(
       strip_ansi_codes(format!("{}", graph)),
-      r#"type: TypeScript
-local: /cache/deps/https/deno.land/x/example/a.ts
+      r#"local: /cache/deps/https/deno.land/x/example/a.ts
 emit: /cache/deps/https/deno.land/x/example/a.js
-dependencies: 6 unique (total 395B)
+type: TypeScript
+dependencies: 8 unique (total 477B)
 
-https://deno.land/x/example/a.ts (88B)
+https://deno.land/x/example/a.ts (129B)
 ├─┬ https://deno.land/x/example/b.ts (120B)
 │ ├── https://deno.land/x/example/c.js (21B)
 │ ├── https://deno.land/x/example/c.d.ts (20B)
 │ └─┬ https://deno.land/x/example/d.ts (62B)
 │   └─┬ https://deno.land/x/example/e.ts (62B)
 │     └── https://deno.land/x/example/b.ts *
-└── https://deno.land/x/example/f.d.ts (22B)
+├── https://deno.land/x/example/f.d.ts (22B)
+└─┬ https://deno.land/x/example/g.js (21B)
+  └── https://deno.land/x/example/g.d.ts (20B)
 "#
     );
   }

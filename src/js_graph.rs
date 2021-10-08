@@ -4,6 +4,7 @@ use crate::checksum;
 use crate::colors::strip_ansi_codes;
 use crate::graph;
 use crate::module_specifier::ModuleSpecifier;
+use crate::source::load_data_url;
 use crate::source::CacheInfo;
 use crate::source::LoadFuture;
 use crate::source::Loader;
@@ -12,6 +13,7 @@ use crate::source::Resolver;
 
 use anyhow::anyhow;
 use anyhow::Result;
+use futures::future;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
@@ -50,35 +52,40 @@ impl Loader for JsLoader {
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
   ) -> LoadFuture {
-    let specifier = specifier.clone();
-    let this = JsValue::null();
-    let arg0 = JsValue::from(specifier.to_string());
-    let arg1 = JsValue::from(is_dynamic);
-    let result = self.load.call2(&this, &arg0, &arg1);
-    let f = async move {
-      let response = match result {
-        Ok(result) => {
-          wasm_bindgen_futures::JsFuture::from(js_sys::Promise::resolve(
-            &result,
-          ))
-          .await
-        }
-        Err(err) => Err(err),
+    if specifier.scheme() == "data" {
+      Box::pin(future::ready((specifier.clone(), load_data_url(specifier))))
+    } else {
+      let specifier = specifier.clone();
+      let this = JsValue::null();
+      let arg0 = JsValue::from(specifier.to_string());
+      let arg1 = JsValue::from(is_dynamic);
+      let result = self.load.call2(&this, &arg0, &arg1);
+      let f = async move {
+        let response = match result {
+          Ok(result) => {
+            wasm_bindgen_futures::JsFuture::from(js_sys::Promise::resolve(
+              &result,
+            ))
+            .await
+          }
+          Err(err) => Err(err),
+        };
+        (
+          specifier,
+          response
+            .map(|value| value.into_serde().unwrap())
+            .map_err(|_| anyhow!("load rejected or errored")),
+        )
       };
-      (
-        specifier,
-        response
-          .map(|value| value.into_serde().unwrap())
-          .map_err(|_| anyhow!("load rejected or errored")),
-      )
-    };
-    Box::pin(f)
+      Box::pin(f)
+    }
   }
 }
 
 #[derive(Debug)]
 pub struct JsLocker {
   maybe_check: Option<js_sys::Function>,
+  maybe_filename: Option<String>,
   maybe_get_checksum: Option<js_sys::Function>,
 }
 
@@ -86,10 +93,12 @@ impl JsLocker {
   pub fn new(
     maybe_check: Option<js_sys::Function>,
     maybe_get_checksum: Option<js_sys::Function>,
+    maybe_filename: Option<String>,
   ) -> Self {
     Self {
       maybe_check,
       maybe_get_checksum,
+      maybe_filename,
     }
   }
 }
@@ -124,6 +133,10 @@ impl Locker for JsLocker {
       }
     }
     checksum::gen(&[content.as_bytes()])
+  }
+
+  fn get_filename(&self) -> Option<String> {
+    self.maybe_filename.clone()
   }
 }
 
@@ -168,8 +181,13 @@ pub struct ModuleGraph(pub(crate) graph::ModuleGraph);
 #[wasm_bindgen]
 impl ModuleGraph {
   #[wasm_bindgen(getter)]
-  pub fn root(&self) -> String {
-    self.0.root.to_string()
+  pub fn roots(&self) -> js_sys::Array {
+    self
+      .0
+      .roots
+      .iter()
+      .map(|s| JsValue::from(s.to_string()))
+      .collect()
   }
 
   #[wasm_bindgen]
@@ -195,7 +213,7 @@ impl ModuleGraph {
   pub fn modules(&self) -> js_sys::Array {
     self
       .0
-      .modules
+      .module_slots
       .values()
       .filter_map(|ms| {
         if let graph::ModuleSlot::Module(m) = ms {
@@ -219,11 +237,12 @@ impl ModuleGraph {
     &self,
     specifier: String,
     referrer: String,
+    prefer_types: bool,
   ) -> Option<String> {
     let referrer = ModuleSpecifier::parse(&referrer).unwrap();
     self
       .0
-      .resolve_dependency(&specifier, &referrer)
+      .resolve_dependency(&specifier, &referrer, prefer_types)
       .map(|s| s.to_string())
   }
 
@@ -294,11 +313,11 @@ impl Module {
   pub fn maybe_types_dependency(&self) -> JsValue {
     let serializer =
       serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    self
-      .0
-      .maybe_types_dependency
-      .serialize(&serializer)
-      .unwrap()
+    graph::serialize_type_dependency(
+      &self.0.maybe_types_dependency,
+      &serializer,
+    )
+    .unwrap()
   }
 
   #[wasm_bindgen(js_name = toJSON)]
