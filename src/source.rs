@@ -1,12 +1,13 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 use crate::module_specifier::ModuleSpecifier;
+use crate::text_encoding::strip_bom_mut;
 
-#[cfg(feature = "rust")]
 use anyhow::anyhow;
 #[cfg(feature = "rust")]
 use anyhow::Error;
 use anyhow::Result;
+use data_url::DataUrl;
 #[cfg(feature = "rust")]
 use futures::future;
 use futures::future::Future;
@@ -78,6 +79,9 @@ pub trait Locker: fmt::Debug {
     source: &str,
   ) -> bool;
   fn get_checksum(&self, content: &str) -> String;
+  fn get_filename(&self) -> Option<String> {
+    None
+  }
 }
 
 /// A trait which allows the module graph to resolve specifiers is a dynamic
@@ -90,6 +94,25 @@ pub trait Resolver: fmt::Debug {
     specifier: &str,
     referrer: &ModuleSpecifier,
   ) -> Result<ModuleSpecifier>;
+}
+
+pub(crate) fn load_data_url(
+  specifier: &ModuleSpecifier,
+) -> Result<Option<LoadResponse>> {
+  let url = DataUrl::process(specifier.as_str())
+    .map_err(|_| anyhow!("Unable to decode data url."))?;
+  let (bytes, _) = url
+    .decode_to_vec()
+    .map_err(|_| anyhow!("Unable to decode data url."))?;
+  let mut headers: HashMap<String, String> = HashMap::new();
+  headers.insert("content-type".to_string(), url.mime_type().to_string());
+  let mut content = String::from_utf8(bytes)?;
+  strip_bom_mut(&mut content);
+  Ok(Some(LoadResponse {
+    specifier: specifier.clone(),
+    maybe_headers: Some(headers),
+    content: Arc::new(content),
+  }))
 }
 
 /// An implementation of the loader attribute where the responses are provided
@@ -152,6 +175,7 @@ impl Loader for MemoryLoader {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),
       Some(Err(err)) => Err(anyhow!("{}", err)),
+      None if specifier.scheme() == "data" => load_data_url(specifier),
       _ => Ok(None),
     };
     Box::pin(future::ready((specifier.clone(), response)))

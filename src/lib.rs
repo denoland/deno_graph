@@ -23,19 +23,21 @@ use std::sync::Arc;
 
 cfg_if! {
   if #[cfg(feature = "rust")] {
+    pub use ast::analyze_dependencies;
+    pub use ast::analyze_deno_types;
+    pub use ast::analyze_ts_references;
     pub use ast::SourceParser;
     pub use ast::CapturingSourceParser;
     pub use ast::DefaultSourceParser;
-    pub use ast::Location;
-    pub use ast::Position;
-    pub use ast::analyze_ts_references;
-    pub use ast::analyze_dependencies;
     pub use ast::DependencyDescriptor;
     pub use ast::DependencyKind;
-    pub use ast::analyze_deno_types;
+    pub use ast::Location;
+    pub use ast::Position;
+    pub use ast::Span;
     pub use graph::Module;
     pub use graph::ModuleGraph;
     pub use graph::ModuleGraphError;
+    pub use graph::ResolutionError;
     pub use graph::Resolved;
     pub use deno_ast::MediaType;
     pub use module_specifier::ModuleSpecifier;
@@ -45,25 +47,25 @@ cfg_if! {
     /// Create a module graph, based on loading and recursively analyzing the
     /// dependencies of the module, returning the resulting graph.
     pub async fn create_graph(
-      root_specifier: ModuleSpecifier,
+      roots: Vec<ModuleSpecifier>,
+      is_dynamic: bool,
+      maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
       loader: &mut dyn Loader,
       maybe_resolver: Option<&dyn Resolver>,
-      maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
+      maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
       maybe_parser: Option<&dyn SourceParser>,
     ) -> ModuleGraph {
       let default_parser = ast::DefaultSourceParser::new();
+      let source_parser = maybe_parser.unwrap_or(&default_parser);
       let builder = Builder::new(
-        root_specifier,
-        false,
+        roots,
+        is_dynamic,
         loader,
         maybe_resolver,
         maybe_locker,
-        match maybe_parser {
-          Some(parser) => parser,
-          None => &default_parser,
-        },
+        source_parser,
       );
-      builder.build().await
+      builder.build(maybe_imports).await
     }
 
     /// Parse an individual module, returning the module as a result, otherwise
@@ -76,16 +78,14 @@ cfg_if! {
       maybe_parser: Option<&dyn SourceParser>,
     ) -> Result<Module, ModuleGraphError> {
       let default_parser = ast::DefaultSourceParser::new();
+      let source_parser = maybe_parser.unwrap_or(&default_parser);
       match graph::parse_module(
         specifier,
         maybe_headers,
         content,
         maybe_resolver,
-        if let Some(parser) = maybe_parser {
-          parser
-        } else {
-          &default_parser
-        },
+        source_parser,
+        true,
       ) {
         ModuleSlot::Module(module) => Ok(module),
         ModuleSlot::Err(err) => Err(err),
@@ -122,36 +122,55 @@ cfg_if! {
     use wasm_bindgen::prelude::*;
 
     #[wasm_bindgen(js_name = createGraph)]
+    #[allow(clippy::too_many_arguments)]
     pub async fn js_create_graph(
-      root_specifier: String,
+      roots: JsValue,
       load: js_sys::Function,
       maybe_cache_info: Option<js_sys::Function>,
       maybe_resolve: Option<js_sys::Function>,
       maybe_check: Option<js_sys::Function>,
       maybe_get_checksum: Option<js_sys::Function>,
+      maybe_lockfile_name: Option<String>,
+      maybe_imports: JsValue,
     ) -> Result<js_graph::ModuleGraph, JsValue> {
+      let roots_vec: Vec<String> = roots.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+      let maybe_imports_map: Option<HashMap<String, Vec<String>>> = maybe_imports.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
       let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
       let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
-      let maybe_locker: Option<Rc<RefCell<dyn Locker>>> =
+      let maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>> =
         if maybe_check.is_some() || maybe_get_checksum.is_some() {
-          let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum);
-          Some(Rc::new(RefCell::new(locker)))
+          let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum, maybe_lockfile_name);
+          Some(Rc::new(RefCell::new(Box::new(locker))))
         } else {
           None
         };
-      let root_specifier =
-        module_specifier::ModuleSpecifier::parse(&root_specifier)
+      let mut roots = Vec::new();
+      for root_str in &roots_vec {
+        let root = module_specifier::ModuleSpecifier::parse(root_str)
           .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+        roots.push(root);
+      }
+      let mut maybe_imports = None;
+      if let Some(imports_map) = maybe_imports_map {
+        let mut imports = Vec::new();
+        for (referrer_str, specifier_vec) in imports_map.into_iter() {
+          let referrer = module_specifier::ModuleSpecifier::parse(&referrer_str)
+            .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+          imports.push((referrer, specifier_vec));
+        }
+        maybe_imports = Some(imports);
+      }
+
       let source_parser = ast::DefaultSourceParser::new();
       let builder = Builder::new(
-        root_specifier,
+        roots,
         false,
         &mut loader,
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         maybe_locker,
         &source_parser,
       );
-      let graph = builder.build().await;
+      let graph = builder.build(maybe_imports).await;
       Ok(js_graph::ModuleGraph(graph))
     }
 
@@ -175,6 +194,7 @@ cfg_if! {
         Arc::new(content),
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         &source_parser,
+        true,
       ) {
         ModuleSlot::Module(module) => Ok(js_graph::Module(module)),
         ModuleSlot::Err(err) => Err(js_sys::Error::new(&err.to_string()).into()),
@@ -189,6 +209,7 @@ mod tests {
   use super::*;
   use crate::graph::Resolved;
   use anyhow::Error;
+  use serde_json::json;
   use source::tests::MockResolver;
   use source::CacheInfo;
   use source::MemoryLoader;
@@ -226,11 +247,23 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let graph =
-      create_graph(root_specifier.clone(), &mut loader, None, None, None).await;
-    assert_eq!(graph.modules.len(), 2);
-    assert_eq!(graph.root, root_specifier);
-    let maybe_root_module = graph.modules.get(&root_specifier);
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(graph.module_slots.len(), 2);
+    assert_eq!(graph.roots, vec![root_specifier.clone()]);
+    assert!(graph.contains(&root_specifier));
+    assert!(
+      !graph.contains(&ModuleSpecifier::parse("file:///a/test03.ts").unwrap())
+    );
+    let maybe_root_module = graph.module_slots.get(&root_specifier);
     assert!(maybe_root_module.is_some());
     let root_module_slot = maybe_root_module.unwrap();
     if let ModuleSlot::Module(module) = root_module_slot {
@@ -241,8 +274,7 @@ mod tests {
         ModuleSpecifier::parse("file:///a/test02.ts").unwrap();
       let dependency = maybe_dependency.unwrap();
       assert!(!dependency.is_dynamic);
-      if let Resolved::Specifier(resolved_specifier, _) = &dependency.maybe_code
-      {
+      if let Some(Ok((resolved_specifier, _))) = &dependency.maybe_code {
         assert_eq!(resolved_specifier, &dependency_specifier);
       } else {
         panic!("unexpected resolved slot");
@@ -253,6 +285,234 @@ mod tests {
     } else {
       panic!("unspected module slot");
     }
+  }
+
+  #[tokio::test]
+  async fn test_create_graph_multiple_roots() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"import * as b from "./test02.ts";"#,
+          )),
+        ),
+        (
+          "file:///a/test02.ts",
+          Ok(("file:///a/test02.ts", None, r#"export const b = "b";"#)),
+        ),
+        (
+          "https://example.com/a.ts",
+          Ok((
+            "https://example.com/a.ts",
+            None,
+            r#"import * as c from "./c.ts";"#,
+          )),
+        ),
+        (
+          "https://example.com/c.ts",
+          Ok(("https://example.com/c.ts", None, r#"export const c = "c";"#)),
+        ),
+      ],
+      vec![],
+    );
+    let roots = vec![
+      ModuleSpecifier::parse("file:///a/test01.ts").unwrap(),
+      ModuleSpecifier::parse("https://example.com/a.ts").unwrap(),
+    ];
+    let graph =
+      create_graph(roots.clone(), false, None, &mut loader, None, None, None)
+        .await;
+    assert_eq!(graph.module_slots.len(), 4);
+    assert_eq!(graph.roots, roots);
+    assert!(
+      graph.contains(&ModuleSpecifier::parse("file:///a/test01.ts").unwrap())
+    );
+    assert!(
+      graph.contains(&ModuleSpecifier::parse("file:///a/test02.ts").unwrap())
+    );
+    assert!(graph
+      .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap()));
+    assert!(graph
+      .contains(&ModuleSpecifier::parse("https://example.com/c.ts").unwrap()));
+  }
+
+  #[tokio::test]
+  async fn test_valid_type_missing() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"// @deno-types=./test02.d.ts
+import * as a from "./test02.js";
+
+console.log(a);
+"#,
+          )),
+        ),
+        (
+          "file:///a/test02.js",
+          Ok(("file:///a/test02.js", None, r#"export const b = "b";"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert!(graph.valid().is_ok());
+    assert!(graph.valid_types_only().is_err());
+  }
+
+  #[tokio::test]
+  async fn test_valid_code_missing() {
+    let mut loader = setup(
+      vec![(
+        "file:///a/test01.ts",
+        Ok((
+          "file:///a/test01.ts",
+          None,
+          r#"import * as a from "./test02.js";
+
+console.log(a);
+"#,
+        )),
+      )],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert!(graph.valid().is_err());
+    assert!(graph.valid_types_only().is_ok());
+  }
+
+  #[tokio::test]
+  async fn test_create_graph_imports() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok(("file:///a/test01.ts", None, r#"console.log("a");"#)),
+        ),
+        (
+          "file:///a/types.d.ts",
+          Ok((
+            "file:///a/types.d.ts",
+            None,
+            r#"export type { A } from "./types_01.d.ts";"#,
+          )),
+        ),
+        (
+          "file:///a/types_01.d.ts",
+          Ok(("file:///a/types_01.d.ts", None, r#"export class A {};"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
+    let config_specifier =
+      ModuleSpecifier::parse("file:///a/tsconfig.json").unwrap();
+    let maybe_imports =
+      Some(vec![(config_specifier, vec!["./types.d.ts".to_string()])]);
+    let graph = create_graph(
+      vec![root_specifier],
+      false,
+      maybe_imports,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": ["file:///a/test01.ts"],
+        "modules": [
+          {
+            "dependencies": [],
+            "mediaType": "TypeScript",
+            "size": 17,
+            "specifier": "file:///a/test01.ts"
+          },
+          {
+            "specifier": "file:///a/tsconfig.json",
+            "dependencies": [
+              {
+                "specifier": "./types.d.ts",
+                "type": {
+                  "specifier": "file:///a/types.d.ts",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 0
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 0
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "./types_01.d.ts",
+                "code": {
+                  "specifier": "file:///a/types_01.d.ts",
+                  "span": {
+                    "start": {
+                      "line":0,
+                      "character":23
+                    },
+                    "end": {
+                      "line":0,
+                      "character":40
+                    }
+                  }
+                }
+              }
+            ],
+            "mediaType": "Dts",
+            "size": 41,
+            "specifier": "file:///a/types.d.ts"
+          },
+          {
+            "dependencies": [],
+            "mediaType": "Dts",
+            "size": 18,
+            "specifier": "file:///a/types_01.d.ts"
+          }
+        ],
+        "redirects":{},
+      })
+    );
   }
 
   #[tokio::test]
@@ -273,11 +533,19 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
-    let graph =
-      create_graph(root_specifier.clone(), &mut loader, None, None, None).await;
-    assert_eq!(graph.modules.len(), 1);
-    assert_eq!(graph.root, root_specifier);
-    let maybe_root_module = graph.modules.get(&root_specifier);
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(graph.module_slots.len(), 1);
+    assert_eq!(graph.roots, vec![root_specifier.clone()]);
+    let maybe_root_module = graph.module_slots.get(&root_specifier);
     assert!(maybe_root_module.is_some());
     let root_module_slot = maybe_root_module.unwrap();
     if let ModuleSlot::Module(module) = root_module_slot {
@@ -285,6 +553,163 @@ mod tests {
     } else {
       panic!("unspected module slot");
     }
+  }
+
+  #[tokio::test]
+  async fn test_bare_specifier_error() {
+    let mut loader = setup(
+      vec![(
+        "file:///a/test.ts",
+        Ok(("file:///a/test.ts", None, r#"import "foo";"#)),
+      )],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    let result = graph.valid();
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert_eq!(err.specifier(), &root_specifier);
+    assert!(matches!(err, ModuleGraphError::ResolutionError(_)));
+  }
+
+  #[tokio::test]
+  async fn test_unsupported_media_type() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test.ts",
+          Ok(("file:///a/test.ts", None, r#"import "./test.json";"#)),
+        ),
+        (
+          "file:///a/test.json",
+          Ok(("file:///a/test.json", None, r#"{"hello":"world"}"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    let result = graph.valid();
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert!(matches!(
+      err,
+      ModuleGraphError::UnsupportedMediaType(_, MediaType::Json)
+    ));
+  }
+
+  #[tokio::test]
+  async fn test_root_is_extensionless() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01",
+          Ok((
+            "file:///a/test01",
+            None,
+            r#"import * as b from "./test02.ts";"#,
+          )),
+        ),
+        (
+          "file:///a/test02.ts",
+          Ok(("file:///a/test02.ts", None, r#"export const b = "b";"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert!(graph.valid().is_ok());
+  }
+
+  #[tokio::test]
+  async fn test_create_graph_with_redirects() {
+    let mut loader = setup(
+      vec![
+        (
+          "https://example.com/a",
+          Ok((
+            "https://example.com/a.ts",
+            Some(vec![("content-type", "application/typescript")]),
+            r#"import * as b from "./b";"#,
+          )),
+        ),
+        (
+          "https://example.com/b",
+          Ok((
+            "https://example.com/b.ts",
+            Some(vec![("content-type", "application/typescript")]),
+            r#"export const b = "b";"#,
+          )),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("https://example.com/a").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      graph.roots,
+      vec![ModuleSpecifier::parse("https://example.com/a").unwrap()]
+    );
+    assert_eq!(graph.module_slots.len(), 2);
+    assert!(
+      graph.contains(&ModuleSpecifier::parse("https://example.com/a").unwrap())
+    );
+    assert!(graph
+      .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap()));
+    assert!(
+      graph.contains(&ModuleSpecifier::parse("https://example.com/b").unwrap())
+    );
+    assert!(graph
+      .contains(&ModuleSpecifier::parse("https://example.com/b.ts").unwrap()));
+    assert_eq!(
+      json!(graph.redirects),
+      json!({
+        "https://example.com/a": "https://example.com/a.ts",
+        "https://example.com/b": "https://example.com/b.ts",
+      })
+    );
   }
 
   #[tokio::test]
@@ -308,9 +733,17 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let graph =
-      create_graph(root_specifier.clone(), &mut loader, None, None, None).await;
-    assert_eq!(graph.modules.len(), 3);
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(graph.module_slots.len(), 3);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
     let maybe_module = graph.get(&data_specifier);
     assert!(maybe_module.is_some());
@@ -342,16 +775,23 @@ mod tests {
     )]);
     let maybe_resolver: Option<&dyn Resolver> = Some(&resolver);
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
-    let graph =
-      create_graph(root_specifier, &mut loader, maybe_resolver, None, None)
-        .await;
-    let maybe_module = graph.get(&graph.root);
+    let graph = create_graph(
+      vec![root_specifier],
+      false,
+      None,
+      &mut loader,
+      maybe_resolver,
+      None,
+      None,
+    )
+    .await;
+    let maybe_module = graph.get(&graph.roots[0]);
     assert!(maybe_module.is_some());
     let module = maybe_module.unwrap();
     let maybe_dep = module.dependencies.get("b");
     assert!(maybe_dep.is_some());
     let dep = maybe_dep.unwrap();
-    if let Resolved::Specifier(dep_sepcifier, _) = &dep.maybe_code {
+    if let Some(Ok((dep_sepcifier, _))) = &dep.maybe_code {
       assert_eq!(
         dep_sepcifier,
         &ModuleSpecifier::parse("file:///a/test02.ts").unwrap()
@@ -390,7 +830,9 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test02.ts").expect("bad url");
     let parser = crate::ast::CapturingSourceParser::new();
     create_graph(
-      root_specifier.clone(),
+      vec![root_specifier.clone()],
+      false,
+      None,
       &mut loader,
       None,
       None,

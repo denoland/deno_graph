@@ -224,6 +224,8 @@ pub trait SourceParser {
   ) -> Result<ParsedSource, Diagnostic>;
 }
 
+// TODO(@dsherret) remove CapturingSourceParser
+
 /// An implementation of `SourceParser` that stores the parsed ASTs.
 #[derive(Default)]
 pub struct CapturingSourceParser {

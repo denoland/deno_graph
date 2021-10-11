@@ -58,6 +58,12 @@ export interface CreateGraphOptions {
   /** An optional callback that returns the sub-resource integrity checksum for
    * a given set of content. */
   getChecksum?(content: Uint8Array): string;
+  /** An optional string to be used when generating an error when the integrity
+   * check of the module graph fails. */
+  lockFilename?: string;
+  /** An optional record of "injected" dependencies to the module graph. This
+   * allows adding things like TypeScript's `"types"` values into the graph. */
+  imports?: Record<string, string[]>;
 }
 
 /** Create a module graph using the same algorithms that are used in the Deno
@@ -83,17 +89,61 @@ export interface CreateGraphOptions {
  */
 export function createGraph(
   rootSpecifier: string,
+  options?: CreateGraphOptions,
+): Promise<ModuleGraph>;
+/** Create a module graph using the same algorithms that are used in the Deno
+ * CLI, resolving with the module graph for further processing.
+ *
+ * A default `load()` function is provided which will attempt to load local
+ * modules via `Deno.readFile()` and will use `fetch()` to load remote
+ * modules. An alternative `load()` function can be provided via the options.
+ *
+ * ### Example
+ *
+ * ```ts
+ * import { createGraph } from "https://deno.land/x/deno_graph/mod.ts";
+ *
+ * const graph = await createGraph([
+ *   "https://example.com/a.ts",
+ *   "https://example.com/a.ts"
+ * ]);
+ *
+ * console.log(graph.toJSON());
+ * ```
+ *
+ * @param rootSpecifiers  An array of URL string of the root module specifiers
+ *                        to build the graph from.
+ * @param options A set of options for building the graph
+ */
+export function createGraph(
+  rootSpecifiers: string[],
+  options?: CreateGraphOptions,
+): Promise<ModuleGraph>;
+export function createGraph(
+  rootSpecifiers: string | string[],
   options: CreateGraphOptions = {},
 ): Promise<ModuleGraph> {
-  const { load = defaultLoad, cacheInfo, resolve, check, getChecksum } =
-    options;
+  rootSpecifiers = Array.isArray(rootSpecifiers)
+    ? rootSpecifiers
+    : [rootSpecifiers];
+  const {
+    load = defaultLoad,
+    cacheInfo,
+    resolve,
+    check,
+    getChecksum,
+    lockFilename,
+    imports,
+  } = options;
   return jsCreateGraph(
-    rootSpecifier,
+    rootSpecifiers,
     load,
     cacheInfo,
     resolve,
     check,
     getChecksum,
+    lockFilename,
+    imports,
   );
 }
 
