@@ -180,14 +180,16 @@ impl ResolutionError {
     }
   }
 
-  /// Converts the error into a string along with the span related to the error.
+  /// Converts the error into a string along with the range related to the error.
   #[cfg(feature = "rust")]
-  pub fn to_string_with_span(&self) -> String {
+  pub fn to_string_with_range(&self) -> String {
     match self {
-      Self::InvalidDowngrade(_, span)
-      | Self::InvalidLocalImport(_, span)
-      | Self::InvalidSpecifier(_, span)
-      | Self::ResolverError(_, _, span) => format!("{}\n    at {}", self, span),
+      Self::InvalidDowngrade(_, range)
+      | Self::InvalidLocalImport(_, range)
+      | Self::InvalidSpecifier(_, range)
+      | Self::ResolverError(_, _, range) => {
+        format!("{}\n    at {}", self, range)
+      }
     }
   }
 }
@@ -198,21 +200,21 @@ impl PartialEq for ResolutionError {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
       (
-        Self::ResolverError(_, a, a_span),
-        Self::ResolverError(_, b, b_span),
-      ) => a == b && a_span == b_span,
+        Self::ResolverError(_, a, a_range),
+        Self::ResolverError(_, b, b_range),
+      ) => a == b && a_range == b_range,
       (
-        Self::InvalidDowngrade(a, a_span),
-        Self::InvalidDowngrade(b, b_span),
+        Self::InvalidDowngrade(a, a_range),
+        Self::InvalidDowngrade(b, b_range),
       )
       | (
-        Self::InvalidLocalImport(a, a_span),
-        Self::InvalidLocalImport(b, b_span),
-      ) => a == b && a_span == b_span,
+        Self::InvalidLocalImport(a, a_range),
+        Self::InvalidLocalImport(b, b_range),
+      ) => a == b && a_range == b_range,
       (
-        Self::InvalidSpecifier(a, a_span),
-        Self::InvalidSpecifier(b, b_span),
-      ) => a == b && a_span == b_span,
+        Self::InvalidSpecifier(a, a_range),
+        Self::InvalidSpecifier(b, b_range),
+      ) => a == b && a_range == b_range,
       _ => false,
     }
   }
@@ -241,10 +243,10 @@ where
   S: Serializer,
 {
   match resolved {
-    Some(Ok((specifier, span))) => {
+    Some(Ok((specifier, range))) => {
       let mut state = serializer.serialize_struct("ResolvedSpecifier", 2)?;
       state.serialize_field("specifier", specifier)?;
-      state.serialize_field("span", span)?;
+      state.serialize_field("span", range)?;
       state.end()
     }
     Some(Err(err)) => {
