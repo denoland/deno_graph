@@ -7,9 +7,9 @@ pub use deno_ast::swc::dep_graph::DependencyKind;
 
 use anyhow::Result;
 use deno_ast::parse_module;
-use deno_ast::swc::common::Span;
 use deno_ast::swc::common::comments::Comment;
 use deno_ast::swc::common::BytePos;
+use deno_ast::swc::common::Span;
 use deno_ast::Diagnostic;
 use deno_ast::MediaType;
 use deno_ast::ParseParams;

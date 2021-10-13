@@ -38,7 +38,10 @@ pub struct Position {
 
 impl Position {
   fn zeroed() -> Position {
-    Position { line: 0, character: 0 }
+    Position {
+      line: 0,
+      character: 0,
+    }
   }
 
   fn from_pos(
@@ -228,8 +231,7 @@ impl fmt::Display for ResolutionError {
   }
 }
 
-pub type Resolved =
-  Option<Result<(ModuleSpecifier, Range), ResolutionError>>;
+pub type Resolved = Option<Result<(ModuleSpecifier, Range), ResolutionError>>;
 
 fn serialize_resolved<S>(
   resolved: &Resolved,
@@ -817,28 +819,37 @@ fn resolve(
   let mut remapped = false;
   let resolved_specifier = if let Some(resolver) = maybe_resolver {
     remapped = true;
-    resolver.resolve(specifier, &referrer_range.specifier).map_err(|err| {
-      ResolutionError::ResolverError(
-        Arc::new(err),
-        specifier.to_string(),
-        referrer_range.clone(),
-      )
-    })
+    resolver
+      .resolve(specifier, &referrer_range.specifier)
+      .map_err(|err| {
+        ResolutionError::ResolverError(
+          Arc::new(err),
+          specifier.to_string(),
+          referrer_range.clone(),
+        )
+      })
   } else {
-    resolve_import(specifier, &referrer_range.specifier)
-      .map_err(|err| ResolutionError::InvalidSpecifier(err, referrer_range.clone()))
+    resolve_import(specifier, &referrer_range.specifier).map_err(|err| {
+      ResolutionError::InvalidSpecifier(err, referrer_range.clone())
+    })
   };
   let result = match resolved_specifier {
     Ok(specifier) => {
       let referrer_scheme = referrer_range.specifier.scheme();
       let specifier_scheme = specifier.scheme();
       if referrer_scheme == "https" && specifier_scheme == "http" {
-        Err(ResolutionError::InvalidDowngrade(specifier, referrer_range.clone()))
+        Err(ResolutionError::InvalidDowngrade(
+          specifier,
+          referrer_range.clone(),
+        ))
       } else if (referrer_scheme == "https" || referrer_scheme == "http")
         && !(specifier_scheme == "https" || specifier_scheme == "http")
         && !remapped
       {
-        Err(ResolutionError::InvalidLocalImport(specifier, referrer_range.clone()))
+        Err(ResolutionError::InvalidLocalImport(
+          specifier,
+          referrer_range.clone(),
+        ))
       } else {
         Ok((specifier, referrer_range.clone()))
       }
