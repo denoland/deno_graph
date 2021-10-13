@@ -37,6 +37,10 @@ pub struct Position {
 }
 
 impl Position {
+  fn zeroed() -> Position {
+    Position { line: 0, character: 0 }
+  }
+
   fn from_pos(
     parsed_source: &ParsedSource,
     pos: deno_ast::swc::common::BytePos,
@@ -119,7 +123,7 @@ impl ModuleGraphError {
   #[cfg(feature = "rust")]
   pub fn specifier(&self) -> &ModuleSpecifier {
     match self {
-      Self::ResolutionError(err) => &err.span().specifier,
+      Self::ResolutionError(err) => &err.range().specifier,
       Self::LoadingErr(s, _)
       | Self::ParseErr(s, _)
       | Self::InvalidSource(s, _)
@@ -156,20 +160,20 @@ impl<'a> From<&'a ResolutionError> for ModuleGraphError {
 
 #[derive(Debug, Clone)]
 pub enum ResolutionError {
-  InvalidDowngrade(ModuleSpecifier, ast::Span),
-  InvalidLocalImport(ModuleSpecifier, ast::Span),
-  InvalidSpecifier(SpecifierError, ast::Span),
-  ResolverError(Arc<anyhow::Error>, String, ast::Span),
+  InvalidDowngrade(ModuleSpecifier, Range),
+  InvalidLocalImport(ModuleSpecifier, Range),
+  InvalidSpecifier(SpecifierError, Range),
+  ResolverError(Arc<anyhow::Error>, String, Range),
 }
 
 impl ResolutionError {
-  /// Return a reference to the span that the error applies to.
-  pub fn span(&self) -> &ast::Span {
+  /// Return a reference to the range that the error applies to.
+  pub fn range(&self) -> &Range {
     match self {
-      Self::InvalidDowngrade(_, span)
-      | Self::InvalidLocalImport(_, span)
-      | Self::InvalidSpecifier(_, span)
-      | Self::ResolverError(_, _, span) => span,
+      Self::InvalidDowngrade(_, range)
+      | Self::InvalidLocalImport(_, range)
+      | Self::InvalidSpecifier(_, range)
+      | Self::ResolverError(_, _, range) => range,
     }
   }
 
@@ -225,7 +229,7 @@ impl fmt::Display for ResolutionError {
 }
 
 pub type Resolved =
-  Option<Result<(ModuleSpecifier, ast::Span), ResolutionError>>;
+  Option<Result<(ModuleSpecifier, Range), ResolutionError>>;
 
 fn serialize_resolved<S>(
   resolved: &Resolved,
@@ -244,7 +248,7 @@ where
     Some(Err(err)) => {
       let mut state = serializer.serialize_struct("ResolvedError", 2)?;
       state.serialize_field("error", &err.to_string())?;
-      state.serialize_field("span", err.span())?;
+      state.serialize_field("span", err.range())?;
       state.end()
     }
     _ => Serialize::serialize(&serde_json::Value::Null, serializer),
@@ -358,7 +362,12 @@ impl SyntheticModule {
     let dependencies = dependencies
       .iter()
       .map(|s| {
-        let result = resolve(s, &specifier, &Range::default(), *maybe_resolver);
+        let referrer_range = Range {
+          specifier: specifier.clone(),
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        };
+        let result = resolve(s, &referrer_range, *maybe_resolver);
         (s.clone(), result)
       })
       .collect();
@@ -806,36 +815,32 @@ fn resolve(
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolved {
   let mut remapped = false;
-  let span = ast::Span {
-    specifier: referrer.clone(),
-    range: range.clone(),
-  };
   let resolved_specifier = if let Some(resolver) = maybe_resolver {
     remapped = true;
-    resolver.resolve(specifier, referrer).map_err(|err| {
+    resolver.resolve(specifier, &referrer_range.specifier).map_err(|err| {
       ResolutionError::ResolverError(
         Arc::new(err),
         specifier.to_string(),
-        span.clone(),
+        referrer_range.clone(),
       )
     })
   } else {
     resolve_import(specifier, &referrer_range.specifier)
-      .map_err(|err| ResolutionError::InvalidSpecifier(err, span.clone()))
+      .map_err(|err| ResolutionError::InvalidSpecifier(err, referrer_range.clone()))
   };
   let result = match resolved_specifier {
     Ok(specifier) => {
       let referrer_scheme = referrer_range.specifier.scheme();
       let specifier_scheme = specifier.scheme();
       if referrer_scheme == "https" && specifier_scheme == "http" {
-        Err(ResolutionError::InvalidDowngrade(specifier, span))
+        Err(ResolutionError::InvalidDowngrade(specifier, referrer_range.clone()))
       } else if (referrer_scheme == "https" || referrer_scheme == "http")
         && !(specifier_scheme == "https" || specifier_scheme == "http")
         && !remapped
       {
-        Err(ResolutionError::InvalidLocalImport(specifier, span))
+        Err(ResolutionError::InvalidLocalImport(specifier, referrer_range.clone()))
       } else {
-        Ok((specifier, span))
+        Ok((specifier, referrer_range.clone()))
       }
     }
     Err(err) => Err(err),

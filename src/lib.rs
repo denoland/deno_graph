@@ -31,9 +31,6 @@ cfg_if! {
     pub use ast::DefaultSourceParser;
     pub use ast::DependencyDescriptor;
     pub use ast::DependencyKind;
-    pub use ast::Location;
-    pub use ast::Position;
-    pub use ast::Span;
     pub use graph::Position;
     pub use graph::Range;
     pub use graph::Module;

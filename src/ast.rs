@@ -2,12 +2,14 @@
 
 use crate::module_specifier::ModuleSpecifier;
 
-use anyhow::Result;
-use deno_ast::parse_module;
-use deno_ast::swc::common::comments::Comment;
-use deno_ast::swc::common::BytePos;
 pub use deno_ast::swc::dep_graph::DependencyDescriptor;
 pub use deno_ast::swc::dep_graph::DependencyKind;
+
+use anyhow::Result;
+use deno_ast::parse_module;
+use deno_ast::swc::common::Span;
+use deno_ast::swc::common::comments::Comment;
+use deno_ast::swc::common::BytePos;
 use deno_ast::Diagnostic;
 use deno_ast::MediaType;
 use deno_ast::ParseParams;
@@ -245,7 +247,7 @@ mod tests {
     match &ts_references[0] {
       TypeScriptReference::Path(text, span) => {
         assert_eq!(text, "./ref.d.ts");
-        assert_eq!(parsed_source.source().get_span_text(span), "./ref.d.ts");
+        assert_eq!(parsed_source.source().span_text(span), "./ref.d.ts");
       }
       TypeScriptReference::Types(_, _) => panic!("expected path"),
     }
@@ -253,7 +255,7 @@ mod tests {
       TypeScriptReference::Path(_, _) => panic!("expected types"),
       TypeScriptReference::Types(text, span) => {
         assert_eq!(text, "./types.d.ts");
-        assert_eq!(parsed_source.source().get_span_text(span), "./types.d.ts");
+        assert_eq!(parsed_source.source().span_text(span), "./types.d.ts");
       }
     }
 
@@ -263,7 +265,7 @@ mod tests {
       "https://deno.land/x/types/react/index.d.ts"
     );
     assert_eq!(
-      parsed_source.source().get_span_text(&dep_deno_types.1),
+      parsed_source.source().span_text(&dep_deno_types.1),
       "https://deno.land/x/types/react/index.d.ts"
     );
   }
@@ -298,7 +300,7 @@ mod tests {
     assert_eq!(
       parsed_source
         .source()
-        .get_span_text(&dependencies[0].specifier_span),
+        .span_text(&dependencies[0].specifier_span),
       "\"./a.ts\""
     );
     assert!(!dependencies[0].is_dynamic);
@@ -306,7 +308,7 @@ mod tests {
     assert_eq!(
       parsed_source
         .source()
-        .get_span_text(&dependencies[1].specifier_span),
+        .span_text(&dependencies[1].specifier_span),
       "\"./b.ts\""
     );
     assert!(!dependencies[1].is_dynamic);
