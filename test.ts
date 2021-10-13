@@ -27,7 +27,7 @@ Deno.test({
       },
     });
     assertEquals(graph.toJSON(), {
-      root: "https://example.com/a",
+      roots: ["https://example.com/a"],
       modules: [
         {
           specifier: "https://example.com/a",
@@ -116,7 +116,7 @@ Deno.test({
       "https://deno.land/std@0.103.0/examples/chat/server.ts",
     );
     assertEquals(graph.modules.length, 37);
-    const rootModule = graph.get(graph.root);
+    const rootModule = graph.get(graph.roots[0]);
     assert(rootModule);
     assertEquals(rootModule.mediaType, "TypeScript");
     assertEquals(Object.entries(rootModule.dependencies).length, 3);
@@ -255,7 +255,7 @@ Deno.test({
         parseModule("file:///a/test.md", `# Some Markdown\n\n**bold**`);
       },
       Error,
-      "The module's source code would not be parsed",
+      "The module's source code could not be parsed",
     );
   },
 });

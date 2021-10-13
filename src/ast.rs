@@ -6,9 +6,8 @@ use anyhow::Result;
 use deno_ast::parse_module;
 use deno_ast::swc::common::comments::Comment;
 use deno_ast::swc::common::BytePos;
-use deno_ast::swc::common::Span;
-use deno_ast::swc::dep_graph::DependencyDescriptor;
-use deno_ast::swc::dep_graph::DependencyKind;
+pub use deno_ast::swc::dep_graph::DependencyDescriptor;
+pub use deno_ast::swc::dep_graph::DependencyKind;
 use deno_ast::Diagnostic;
 use deno_ast::MediaType;
 use deno_ast::ParseParams;
@@ -125,6 +124,8 @@ pub trait SourceParser {
   ) -> Result<ParsedSource, Diagnostic>;
 }
 
+// TODO(@dsherret) remove CapturingSourceParser
+
 /// An implementation of `SourceParser` that stores the parsed ASTs.
 #[derive(Default)]
 pub struct CapturingSourceParser {
@@ -157,9 +158,10 @@ impl SourceParser for CapturingSourceParser {
   ) -> Result<ParsedSource, Diagnostic> {
     let module = parse_module(ParseParams {
       specifier: specifier.to_string(),
-      source: SourceTextInfo::new(BytePos(0), source),
+      source: SourceTextInfo::new(source),
       media_type,
       capture_tokens: false,
+      scope_analysis: false,
       maybe_syntax: None,
     })?;
 
@@ -191,9 +193,10 @@ impl SourceParser for DefaultSourceParser {
   ) -> Result<ParsedSource, Diagnostic> {
     parse_module(ParseParams {
       specifier: specifier.to_string(),
-      source: SourceTextInfo::new(BytePos(0), source),
+      source: SourceTextInfo::new(source),
       media_type,
       capture_tokens: false,
+      scope_analysis: false,
       maybe_syntax: None,
     })
   }

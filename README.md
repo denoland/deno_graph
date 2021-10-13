@@ -15,10 +15,10 @@ leverage the logic outside of the Deno CLI from JavaScript/TypeScript.
 ### `create_graph()`
 
 `create_graph()` is the main way of interfacing with the crate. It requires the
-root module specifier/URL for the graph and an implementation of the
+root module specifiers/URLs for the graph and an implementation of the
 `source::Loader` trait. It also optionally takes implementations of the
 `source::Resolver` and `source::Locker` traits. It will load and parse the root
-module and recursively all of its dependencies, returning asyncronously a
+module and recursively all of its dependencies, returning asynchronously a
 resulting `ModuleGraph`.
 
 ### `source::Loader` trait
@@ -48,8 +48,8 @@ module graph.
 
 `MemoryLoader` is a structure that implements the `source::Loader` trait and is
 designed so that a cache of modules can be stored in memory to be parsed and
-retrived when building a module graph. This is useful for testing purposes or in
-situations where the module contents is already available and _dynamically_
+retrieved when building a module graph. This is useful for testing purposes or
+in situations where the module contents is already available and _dynamically_
 loading them is not practical or desirable.
 
 A minimal example would look like this:
@@ -67,9 +67,9 @@ fn main() {
       ("file:///a.ts", Ok(("file:///a.ts", None, "export const a = \"a\";"))),
     ]
   );
-  let root_specifier = ModuleSpecifier::parse("file:///test.ts").unwrap();
+  let roots = vec![ModuleSpecifier::parse("file:///test.ts").unwrap()];
   let future = async move {
-    let graph = create_graph(root_specifier, &mut loader, None, None).await;
+    let graph = create_graph(roots, &mut loader, None, None).await;
     println!("{}", graph);
   };
   block_on()
@@ -102,14 +102,14 @@ and can be imported like:
 import * as denoGraph from "https://deno.land/x/deno_graph@{VERSION}/mod.ts";
 ```
 
-Where `{VERSION}` should be subtituted with the specific version you want to
+Where `{VERSION}` should be substituted with the specific version you want to
 use.
 
 ### `createGraph()`
 
-The `createGraph()` function allows a module graph to be built asyncronously. It
-requires a root specifier to be passed, which will serve as the root of the
-module graph.
+The `createGraph()` function allows a module graph to be built asynchronously.
+It requires a root specifier or any array of root specifiers to be passed, which
+will serve as the roots of the module graph.
 
 There are several options that can be passed the function in the optional
 `options` argument:
@@ -120,7 +120,7 @@ There are several options that can be passed the function in the optional
   default a `load()` function that will attempt to load local modules via
   `Deno.readFile()` and load remote modules via `fetch()`.
 - `cacheInfo` - a callback function that takes a URL string and returns a
-  `CaheInfo` object. In the Deno CLI, the `DENO_DIR` cache info is passed back
+  `CacheInfo` object. In the Deno CLI, the `DENO_DIR` cache info is passed back
   using this interface. If the function is not provided, the information is not
   present in the module graph.
 - `resolve` - a callback function that takes a string and a referring URL string
@@ -198,8 +198,8 @@ be added as follows:
 > cargo install -f wasm-bindgen-cli
 ```
 
-Note that the `wasm-bindgen-cli` should match the version of `wasm-bindgen` in
-this crate and be explicitly set using the `--version` flag on install.
+> ⚠️ Note that the `wasm-bindgen-cli` should match the version of `wasm-bindgen`
+> in this crate and be explicitly set using the `--version` flag on install.
 
 Also, the build script (`_build.ts`) requires the Deno CLI to be installed and
 available in the path. If it is, the script should _just work_:
