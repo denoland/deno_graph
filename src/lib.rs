@@ -209,6 +209,7 @@ mod tests {
   use super::*;
   use crate::graph::Resolved;
   use anyhow::Error;
+  use pretty_assertions::assert_eq;
   use serde_json::json;
   use source::tests::MockResolver;
   use source::CacheInfo;
@@ -651,6 +652,76 @@ console.log(a);
     )
     .await;
     assert!(graph.valid().is_ok());
+  }
+
+  #[tokio::test]
+  async fn test_crate_graph_with_dynamic_imports() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a.ts",
+          Ok(("file:///a.ts", None, r#"const b = await import("./b.ts");"#)),
+        ),
+        (
+          "file:///b.ts",
+          Ok(("file:///b.ts", None, r#"export const b = "b";"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a.ts"
+        ],
+        "modules": [
+          {
+            "dependencies": [
+              {
+                "specifier": "./b.ts",
+                "code": {
+                  "specifier": "file:///b.ts",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 23
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 31
+                    }
+                  }
+                },
+                "isDynamic": true
+              }
+            ],
+            "mediaType": "TypeScript",
+            "size": 33,
+            "specifier": "file:///a.ts"
+          },
+          {
+            "dependencies": [],
+            "mediaType": "TypeScript",
+            "size": 21,
+            "specifier": "file:///b.ts"
+          }
+        ],
+        "redirects": {}
+      })
+    );
   }
 
   #[tokio::test]
