@@ -201,6 +201,7 @@ Deno.test({
             "end": { "line": 5, "character": 39 },
           },
         },
+        "isDynamic": true,
       }],
       "typesDependency": {
         "specifier": "./test01.d.ts",

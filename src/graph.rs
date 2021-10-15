@@ -908,6 +908,7 @@ pub(crate) fn parse_module_from_ast(
       .dependencies
       .entry(desc.specifier.to_string())
       .or_default();
+    dep.is_dynamic = desc.is_dynamic;
     let resolved_dependency = resolve(
       &desc.specifier,
       &module.specifier,

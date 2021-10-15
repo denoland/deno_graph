@@ -33,6 +33,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ansi_term"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d52a9bb7ec0cf484c551830a7ce27bd20d67eac647e1befb56b0be4ee39a55d2"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -93,6 +102,16 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
+name = "ctor"
+version = "0.1.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ccc0a48a9b826acdf4028595adc9db92caea352f7af011a3034acd172a52a0aa"
+dependencies = [
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "darling"
@@ -164,6 +183,7 @@ dependencies = [
  "futures",
  "js-sys",
  "lazy_static",
+ "pretty_assertions",
  "regex",
  "ring",
  "serde",
@@ -175,6 +195,12 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
 ]
+
+[[package]]
+name = "diff"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e25ea47919b1560c4e3b7fe0aaab9becf5b84a10325ddf7db0f0ba5e1026499"
 
 [[package]]
 name = "either"
@@ -518,6 +544,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "692fcb63b64b1758029e0a96ee63e049ce8c5948587f2f7208df04625e5f6b56"
 
 [[package]]
+name = "output_vt100"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53cdc5b785b7a58c5aad8216b3dfa114df64b0b06ae6e1501cef91df2fbdf8f9"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
 name = "owning_ref"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -585,6 +620,18 @@ name = "precomputed-hash"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "925383efa346730478fb4838dbe9137d2a47675ad789c546d150a6e1dd4ab31c"
+
+[[package]]
+name = "pretty_assertions"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec0cfe1b2403f172ba0f234e500906ee0a3e493fb81092dac23ebefe129301cc"
+dependencies = [
+ "ansi_term",
+ "ctor",
+ "diff",
+ "output_vt100",
+]
 
 [[package]]
 name = "proc-macro-hack"
