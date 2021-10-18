@@ -759,11 +759,15 @@ fn resolve(
   let resolved_specifier = if let Some(resolver) = maybe_resolver {
     remapped = true;
     resolver.resolve(specifier, referrer).map_err(|err| {
-      ResolutionError::ResolverError(
-        Arc::new(err),
-        specifier.to_string(),
-        span.clone(),
-      )
+      if let Some(specifier_error) = err.downcast_ref::<SpecifierError>() {
+        ResolutionError::InvalidSpecifier(specifier_error.clone(), span.clone())
+      } else {
+        ResolutionError::ResolverError(
+          Arc::new(err),
+          specifier.to_string(),
+          span.clone(),
+        )
+      }
     })
   } else {
     resolve_import(specifier, referrer)
@@ -872,9 +876,7 @@ pub(crate) fn parse_module_from_ast(
       ast::TypeScriptReference::Types(specifier, range) => {
         let resolved_dependency =
           resolve(&specifier, &module.specifier, &range, maybe_resolver);
-        if module.media_type == MediaType::JavaScript
-          || module.media_type == MediaType::Jsx
-        {
+        if is_untyped(&module.media_type) {
           module.maybe_types_dependency =
             Some((specifier, resolved_dependency));
         } else {
@@ -898,6 +900,40 @@ pub(crate) fn parse_module_from_ast(
         module.maybe_types_dependency =
           Some((types_header.clone(), resolved_dependency));
       }
+    }
+  }
+
+  // Use resolve_types from maybe_resolver
+  if let Some(resolver) = maybe_resolver {
+    // this will only get called if there is no other types dependency and
+    // the media type is untyped.
+    if module.maybe_types_dependency.is_none() && is_untyped(&module.media_type)
+    {
+      module.maybe_types_dependency =
+        match resolver.resolve_types(&module.specifier) {
+          Ok(Some((specifier, maybe_span))) => Some((
+            module.specifier.to_string(),
+            Some(Ok((
+              specifier.clone(),
+              maybe_span.unwrap_or_else(|| ast::Span {
+                specifier,
+                range: ast::Range::default(),
+              }),
+            ))),
+          )),
+          Ok(None) => None,
+          Err(err) => Some((
+            module.specifier.to_string(),
+            Some(Err(ResolutionError::ResolverError(
+              Arc::new(err),
+              module.specifier.to_string(),
+              ast::Span {
+                specifier: module.specifier.clone(),
+                range: ast::Range::default(),
+              },
+            ))),
+          )),
+        };
     }
   }
 
@@ -942,6 +978,12 @@ fn get_media_type(
   } else {
     MediaType::from(specifier)
   }
+}
+
+/// Determine if a media type is "untyped" and should be checked to see if there
+/// are types provided.
+fn is_untyped(media_type: &MediaType) -> bool {
+  matches!(media_type, MediaType::JavaScript | MediaType::Jsx)
 }
 
 pub(crate) struct Builder<'a> {

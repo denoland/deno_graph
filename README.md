@@ -37,7 +37,22 @@ resolved module in the graph to see if the additional information is available.
 ### `source::Resolver` trait
 
 This trait "replaces" the default resolution logic of the module graph. It is
-intended to allow concepts like import maps to "plug" into the module graph.
+intended to allow concepts like import maps and alternative resolution logic to
+"plug" into the module graph.
+
+It has two methods, `resolve` and `resolve_types`, which both have default
+implementations. `resolve` takes the string specifier from the source and the
+referring specifier and is expected to return a result with the resolved
+specifier.
+
+`resolve_types` takes a specifier and is expected to return a result with an
+optional module specifier and optional source span of the types that should be
+used. For example, if you are trying represent the `"typings"` field from a
+`package.json` file, when you receive the request on `resolve_types` for the
+main module of the package, you would respond with the absolute specifier to the
+types along with a span that indicates the file URL to the `package.json` and
+the range where it was specified. Including the span is useful to allow errors
+produced from the graph to indicate "where" the dependency came from.
 
 ### `source::Locker` trait
 
@@ -127,6 +142,13 @@ There are several options that can be passed the function in the optional
   and returns a fully qualified URL string. In the Deno CLI, import maps provide
   this callback functionality of potentially resolving modules differently than
   the default resolution.
+- `resolveTypes` - a callback function that takes a URL string and returns the
+  types dependency for the specifier, along with optionally the source of the
+  types dependency. This only gets called in situations where the module is
+  potentially untyped (e.g. JavaScript, JSX) and no other type dependency was
+  detected. This is intended to enrich the module graph with external types that
+  are resolved in some other fashion, like from a `package.json` or via
+  detecting an `@types` typings package is available.
 - `check` - a callback function that takes a URL string and an `Uint8Array` of
   the byte content of a module to validate if that module sub resource integrity
   is valid. The callback should return `true` if it is, otherwise `false`. If
