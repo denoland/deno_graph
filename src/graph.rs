@@ -971,14 +971,10 @@ pub(crate) fn parse_module_from_ast(
   if module.maybe_types_dependency.is_none() {
     if let Some(headers) = maybe_headers {
       if let Some(types_header) = headers.get("x-typescript-types") {
-        let zero_position = Position {
-          line: 0,
-          character: 0,
-        };
         let range = Range {
           specifier: module.specifier.clone(),
-          start: zero_position.clone(),
-          end: zero_position,
+          start: Position::zeroed(),
+          end: Position::zeroed(),
         };
         let resolved_dependency = resolve(types_header, &range, maybe_resolver);
         module.maybe_types_dependency =
