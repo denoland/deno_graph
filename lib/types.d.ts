@@ -20,8 +20,8 @@ export interface CacheInfo {
 export interface TypesDependency {
   /** The string URL to the type information for the module. */
   types: string;
-  /** An optional span which indicates the source of the dependency. */
-  source?: Span;
+  /** An optional range which indicates the source of the dependency. */
+  source?: Range;
 }
 
 export interface LoadResponse {
@@ -35,29 +35,29 @@ export interface LoadResponse {
   content: string;
 }
 
-export interface LocationJson {
-  /** The line number of a location within a source file. The number is a zero
+export interface PositionJson {
+  /** The line number of a position within a source file. The number is a zero
    * based index. */
   line: number;
-  /** The character number of a location within a source file. The number is a
+  /** The character number of a position within a source file. The number is a
    * zero based index. */
   character: number;
 }
 
-export interface Span {
+export interface Range {
   /** A string URL representing a source of a dependency. */
   specifier: string;
-  /** The start location of a span of text in a source file. */
-  start?: LocationJson;
-  /** The end location of a span of text in a source file. */
-  end?: LocationJson;
+  /** The start location of a range of text in a source file. */
+  start?: PositionJson;
+  /** The end location of a range of text in a source file. */
+  end?: PositionJson;
 }
 
-export interface SpanJson {
-  /** The start location of a span of text in a source file. */
-  start: LocationJson;
-  /** The end location of a span of text in a source file. */
-  end: LocationJson;
+export interface RangeJson {
+  /** The start location of a range of text in a source file. */
+  start: PositionJson;
+  /** The end location of a range of text in a source file. */
+  end: PositionJson;
 }
 
 export interface ResolvedDependency {
@@ -68,8 +68,8 @@ export interface ResolvedDependency {
   /** Any error encountered when trying to resolved the specifier. If this is
    * defined, `specifier` will be undefined. */
   error?: string;
-  /** The span within the source code where the specifier was identified. */
-  span: SpanJson;
+  /** The range within the source code where the specifier was identified. */
+  range: RangeJson;
 }
 
 export interface TypesDependencyJson {

@@ -4,7 +4,6 @@ use crate::ast;
 use crate::ast::analyze_deno_types;
 use crate::ast::analyze_dependencies;
 use crate::ast::analyze_ts_references;
-use crate::ast::Range;
 use crate::ast::SourceParser;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -19,6 +18,7 @@ use futures::stream::StreamExt;
 use serde::ser::SerializeMap;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
+use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
 use std::cell::RefCell;
@@ -28,6 +28,71 @@ use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
 use std::sync::Arc;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Position {
+  /// The 0-indexed line index.
+  pub line: usize,
+  /// The 0-indexed character index.
+  pub character: usize,
+}
+
+impl Position {
+  pub fn zeroed() -> Position {
+    Position {
+      line: 0,
+      character: 0,
+    }
+  }
+
+  fn from_pos(
+    parsed_source: &ParsedSource,
+    pos: deno_ast::swc::common::BytePos,
+  ) -> Self {
+    let line_and_column_index =
+      parsed_source.source().line_and_column_index(pos);
+    Self {
+      line: line_and_column_index.line_index,
+      character: line_and_column_index.column_index,
+    }
+  }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Range {
+  #[serde(skip_serializing)]
+  pub specifier: ModuleSpecifier,
+  #[serde(default = "Position::zeroed")]
+  pub start: Position,
+  #[serde(default = "Position::zeroed")]
+  pub end: Position,
+}
+
+impl fmt::Display for Range {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(
+      f,
+      "{}:{}:{}",
+      self.specifier,
+      self.start.line + 1,
+      self.start.character + 1
+    )
+  }
+}
+
+impl Range {
+  pub(crate) fn from_swc_span(
+    specifier: &ModuleSpecifier,
+    parsed_source: &ParsedSource,
+    span: &deno_ast::swc::common::Span,
+  ) -> Range {
+    Range {
+      specifier: specifier.clone(),
+      start: Position::from_pos(parsed_source, span.lo),
+      end: Position::from_pos(parsed_source, span.hi),
+    }
+  }
+}
 
 #[derive(Debug)]
 pub enum ModuleGraphError {
@@ -64,7 +129,7 @@ impl ModuleGraphError {
   #[cfg(feature = "rust")]
   pub fn specifier(&self) -> &ModuleSpecifier {
     match self {
-      Self::ResolutionError(err) => &err.span().specifier,
+      Self::ResolutionError(err) => &err.range().specifier,
       Self::LoadingErr(s, _)
       | Self::ParseErr(s, _)
       | Self::InvalidSource(s, _)
@@ -101,31 +166,33 @@ impl<'a> From<&'a ResolutionError> for ModuleGraphError {
 
 #[derive(Debug, Clone)]
 pub enum ResolutionError {
-  InvalidDowngrade(ModuleSpecifier, ast::Span),
-  InvalidLocalImport(ModuleSpecifier, ast::Span),
-  InvalidSpecifier(SpecifierError, ast::Span),
-  ResolverError(Arc<anyhow::Error>, String, ast::Span),
+  InvalidDowngrade(ModuleSpecifier, Range),
+  InvalidLocalImport(ModuleSpecifier, Range),
+  InvalidSpecifier(SpecifierError, Range),
+  ResolverError(Arc<anyhow::Error>, String, Range),
 }
 
 impl ResolutionError {
-  /// Return a reference to the span that the error applies to.
-  pub fn span(&self) -> &ast::Span {
+  /// Return a reference to the range that the error applies to.
+  pub fn range(&self) -> &Range {
     match self {
-      Self::InvalidDowngrade(_, span)
-      | Self::InvalidLocalImport(_, span)
-      | Self::InvalidSpecifier(_, span)
-      | Self::ResolverError(_, _, span) => span,
+      Self::InvalidDowngrade(_, range)
+      | Self::InvalidLocalImport(_, range)
+      | Self::InvalidSpecifier(_, range)
+      | Self::ResolverError(_, _, range) => range,
     }
   }
 
-  /// Converts the error into a string along with the span related to the error.
+  /// Converts the error into a string along with the range related to the error.
   #[cfg(feature = "rust")]
-  pub fn to_string_with_span(&self) -> String {
+  pub fn to_string_with_range(&self) -> String {
     match self {
-      Self::InvalidDowngrade(_, span)
-      | Self::InvalidLocalImport(_, span)
-      | Self::InvalidSpecifier(_, span)
-      | Self::ResolverError(_, _, span) => format!("{}\n    at {}", self, span),
+      Self::InvalidDowngrade(_, range)
+      | Self::InvalidLocalImport(_, range)
+      | Self::InvalidSpecifier(_, range)
+      | Self::ResolverError(_, _, range) => {
+        format!("{}\n    at {}", self, range)
+      }
     }
   }
 }
@@ -136,21 +203,21 @@ impl PartialEq for ResolutionError {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
       (
-        Self::ResolverError(_, a, a_span),
-        Self::ResolverError(_, b, b_span),
-      ) => a == b && a_span == b_span,
+        Self::ResolverError(_, a, a_range),
+        Self::ResolverError(_, b, b_range),
+      ) => a == b && a_range == b_range,
       (
-        Self::InvalidDowngrade(a, a_span),
-        Self::InvalidDowngrade(b, b_span),
+        Self::InvalidDowngrade(a, a_range),
+        Self::InvalidDowngrade(b, b_range),
       )
       | (
-        Self::InvalidLocalImport(a, a_span),
-        Self::InvalidLocalImport(b, b_span),
-      ) => a == b && a_span == b_span,
+        Self::InvalidLocalImport(a, a_range),
+        Self::InvalidLocalImport(b, b_range),
+      ) => a == b && a_range == b_range,
       (
-        Self::InvalidSpecifier(a, a_span),
-        Self::InvalidSpecifier(b, b_span),
-      ) => a == b && a_span == b_span,
+        Self::InvalidSpecifier(a, a_range),
+        Self::InvalidSpecifier(b, b_range),
+      ) => a == b && a_range == b_range,
       _ => false,
     }
   }
@@ -169,8 +236,7 @@ impl fmt::Display for ResolutionError {
   }
 }
 
-pub type Resolved =
-  Option<Result<(ModuleSpecifier, ast::Span), ResolutionError>>;
+pub type Resolved = Option<Result<(ModuleSpecifier, Range), ResolutionError>>;
 
 fn serialize_resolved<S>(
   resolved: &Resolved,
@@ -180,16 +246,16 @@ where
   S: Serializer,
 {
   match resolved {
-    Some(Ok((specifier, span))) => {
+    Some(Ok((specifier, range))) => {
       let mut state = serializer.serialize_struct("ResolvedSpecifier", 2)?;
       state.serialize_field("specifier", specifier)?;
-      state.serialize_field("span", span)?;
+      state.serialize_field("range", range)?;
       state.end()
     }
     Some(Err(err)) => {
       let mut state = serializer.serialize_struct("ResolvedError", 2)?;
       state.serialize_field("error", &err.to_string())?;
-      state.serialize_field("span", err.span())?;
+      state.serialize_field("range", err.range())?;
       state.end()
     }
     _ => Serialize::serialize(&serde_json::Value::Null, serializer),
@@ -303,7 +369,12 @@ impl SyntheticModule {
     let dependencies = dependencies
       .iter()
       .map(|s| {
-        let result = resolve(s, &specifier, &Range::default(), *maybe_resolver);
+        let referrer_range = Range {
+          specifier: specifier.clone(),
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        };
+        let result = resolve(s, &referrer_range, *maybe_resolver);
         (s.clone(), result)
       })
       .collect();
@@ -747,45 +818,52 @@ impl ModuleGraph {
 /// present, returning the resolution result.
 fn resolve(
   specifier: &str,
-  referrer: &ModuleSpecifier,
-  range: &ast::Range,
+  referrer_range: &Range,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolved {
   let mut remapped = false;
-  let span = ast::Span {
-    specifier: referrer.clone(),
-    range: range.clone(),
-  };
   let resolved_specifier = if let Some(resolver) = maybe_resolver {
     remapped = true;
-    resolver.resolve(specifier, referrer).map_err(|err| {
-      if let Some(specifier_error) = err.downcast_ref::<SpecifierError>() {
-        ResolutionError::InvalidSpecifier(specifier_error.clone(), span.clone())
-      } else {
-        ResolutionError::ResolverError(
-          Arc::new(err),
-          specifier.to_string(),
-          span.clone(),
-        )
-      }
-    })
+    resolver
+      .resolve(specifier, &referrer_range.specifier)
+      .map_err(|err| {
+        if let Some(specifier_error) = err.downcast_ref::<SpecifierError>() {
+          ResolutionError::InvalidSpecifier(
+            specifier_error.clone(),
+            referrer_range.clone(),
+          )
+        } else {
+          ResolutionError::ResolverError(
+            Arc::new(err),
+            specifier.to_string(),
+            referrer_range.clone(),
+          )
+        }
+      })
   } else {
-    resolve_import(specifier, referrer)
-      .map_err(|err| ResolutionError::InvalidSpecifier(err, span.clone()))
+    resolve_import(specifier, &referrer_range.specifier).map_err(|err| {
+      ResolutionError::InvalidSpecifier(err, referrer_range.clone())
+    })
   };
   let result = match resolved_specifier {
     Ok(specifier) => {
-      let referrer_scheme = referrer.scheme();
+      let referrer_scheme = referrer_range.specifier.scheme();
       let specifier_scheme = specifier.scheme();
       if referrer_scheme == "https" && specifier_scheme == "http" {
-        Err(ResolutionError::InvalidDowngrade(specifier, span))
+        Err(ResolutionError::InvalidDowngrade(
+          specifier,
+          referrer_range.clone(),
+        ))
       } else if (referrer_scheme == "https" || referrer_scheme == "http")
         && !(specifier_scheme == "https" || specifier_scheme == "http")
         && !remapped
       {
-        Err(ResolutionError::InvalidLocalImport(specifier, span))
+        Err(ResolutionError::InvalidLocalImport(
+          specifier,
+          referrer_range.clone(),
+        ))
       } else {
-        Ok((specifier, span))
+        Ok((specifier, referrer_range.clone()))
       }
     }
     Err(err) => Err(err),
@@ -867,15 +945,17 @@ pub(crate) fn parse_module_from_ast(
   // Analyze the TypeScript triple-slash references
   for reference in analyze_ts_references(parsed_source) {
     match reference {
-      ast::TypeScriptReference::Path(specifier, range) => {
-        let resolved_dependency =
-          resolve(&specifier, &module.specifier, &range, maybe_resolver);
+      ast::TypeScriptReference::Path(specifier, span) => {
+        let range =
+          Range::from_swc_span(&module.specifier, parsed_source, &span);
+        let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
         let dep = module.dependencies.entry(specifier).or_default();
         dep.maybe_code = resolved_dependency;
       }
-      ast::TypeScriptReference::Types(specifier, range) => {
-        let resolved_dependency =
-          resolve(&specifier, &module.specifier, &range, maybe_resolver);
+      ast::TypeScriptReference::Types(specifier, span) => {
+        let range =
+          Range::from_swc_span(&module.specifier, parsed_source, &span);
+        let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
         if is_untyped(&module.media_type) {
           module.maybe_types_dependency =
             Some((specifier, resolved_dependency));
@@ -891,12 +971,12 @@ pub(crate) fn parse_module_from_ast(
   if module.maybe_types_dependency.is_none() {
     if let Some(headers) = maybe_headers {
       if let Some(types_header) = headers.get("x-typescript-types") {
-        let resolved_dependency = resolve(
-          types_header,
-          &module.specifier,
-          &ast::Range::default(),
-          maybe_resolver,
-        );
+        let range = Range {
+          specifier: module.specifier.clone(),
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        };
+        let resolved_dependency = resolve(types_header, &range, maybe_resolver);
         module.maybe_types_dependency =
           Some((types_header.clone(), resolved_dependency));
       }
@@ -911,13 +991,14 @@ pub(crate) fn parse_module_from_ast(
     {
       module.maybe_types_dependency =
         match resolver.resolve_types(&module.specifier) {
-          Ok(Some((specifier, maybe_span))) => Some((
+          Ok(Some((specifier, maybe_range))) => Some((
             module.specifier.to_string(),
             Some(Ok((
               specifier.clone(),
-              maybe_span.unwrap_or_else(|| ast::Span {
+              maybe_range.unwrap_or_else(|| Range {
                 specifier,
-                range: ast::Range::default(),
+                start: Position::zeroed(),
+                end: Position::zeroed(),
               }),
             ))),
           )),
@@ -927,9 +1008,10 @@ pub(crate) fn parse_module_from_ast(
             Some(Err(ResolutionError::ResolverError(
               Arc::new(err),
               module.specifier.to_string(),
-              ast::Span {
+              Range {
                 specifier: module.specifier.clone(),
-                range: ast::Range::default(),
+                start: Position::zeroed(),
+                end: Position::zeroed(),
               },
             ))),
           )),
@@ -947,14 +1029,23 @@ pub(crate) fn parse_module_from_ast(
     dep.is_dynamic = desc.is_dynamic;
     let resolved_dependency = resolve(
       &desc.specifier,
-      &module.specifier,
-      &Range::from_span(parsed_source, &desc.specifier_span),
+      &Range::from_swc_span(
+        &module.specifier,
+        parsed_source,
+        &desc.specifier_span,
+      ),
       maybe_resolver,
     );
     dep.maybe_code = resolved_dependency;
     let specifier = module.specifier.clone();
-    let maybe_type = analyze_deno_types(parsed_source, &desc)
-      .map(|(s, r)| resolve(&s, &specifier, &r, maybe_resolver))
+    let maybe_type = analyze_deno_types(&desc)
+      .map(|(text, span)| {
+        resolve(
+          &text,
+          &Range::from_swc_span(&specifier, parsed_source, &span),
+          maybe_resolver,
+        )
+      })
       .unwrap_or_else(|| Resolved::None);
     if dep.maybe_type.is_none() {
       dep.maybe_type = maybe_type

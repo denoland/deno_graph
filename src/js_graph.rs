@@ -1,9 +1,9 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-use crate::ast;
 use crate::checksum;
 use crate::colors::strip_ansi_codes;
 use crate::graph;
+use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::source::load_data_url;
@@ -164,7 +164,7 @@ impl JsResolver {
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 struct JsResolveTypesResponse {
   types: ModuleSpecifier,
-  source: Option<ast::Span>,
+  source: Option<Range>,
 }
 
 impl Resolver for JsResolver {
@@ -191,7 +191,7 @@ impl Resolver for JsResolver {
   fn resolve_types(
     &self,
     specifier: &ModuleSpecifier,
-  ) -> Result<Option<(ModuleSpecifier, Option<ast::Span>)>> {
+  ) -> Result<Option<(ModuleSpecifier, Option<Range>)>> {
     if let Some(resolve_types) = &self.maybe_resolve_types {
       let this = JsValue::null();
       let arg1 = JsValue::from(specifier.to_string());
@@ -366,6 +366,8 @@ impl Module {
 
 #[cfg(test)]
 mod tests {
+  use crate::Position;
+
   use super::*;
   use serde_json::from_value;
   use serde_json::json;
@@ -383,9 +385,10 @@ mod tests {
       actual,
       Some(JsResolveTypesResponse {
         types: ModuleSpecifier::parse("https://deno.land/x/mod.d.ts").unwrap(),
-        source: Some(ast::Span {
+        source: Some(Range {
           specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
-          range: ast::Range::default(),
+          start: Position::zeroed(),
+          end: Position::zeroed(),
         })
       })
     );

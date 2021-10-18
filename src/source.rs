@@ -1,6 +1,6 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-use crate::ast;
+use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::text_encoding::strip_bom_mut;
@@ -101,7 +101,7 @@ pub trait Resolver: fmt::Debug {
   }
 
   /// Given a module specifier, return an optional tuple which provides a module
-  /// specifier that contains the types for the module and an optional span
+  /// specifier that contains the types for the module and an optional range
   /// which contains information about the source of the dependency. This will
   /// only be called for module specifiers are resolved to a non-typed input
   /// (e.g. JavaScript and JSX) and there is not yet types resolved for this
@@ -110,7 +110,7 @@ pub trait Resolver: fmt::Debug {
   fn resolve_types(
     &self,
     _specifier: &ModuleSpecifier,
-  ) -> Result<Option<(ModuleSpecifier, Option<ast::Span>)>> {
+  ) -> Result<Option<(ModuleSpecifier, Option<Range>)>> {
     Ok(None)
   }
 }
@@ -209,13 +209,13 @@ pub mod tests {
   #[derive(Debug)]
   pub(crate) struct MockResolver {
     map: HashMap<ModuleSpecifier, HashMap<String, ModuleSpecifier>>,
-    types: HashMap<ModuleSpecifier, (ModuleSpecifier, Option<ast::Span>)>,
+    types: HashMap<ModuleSpecifier, (ModuleSpecifier, Option<Range>)>,
   }
 
   impl MockResolver {
     pub fn new<S: AsRef<str>>(
       map: Vec<(S, Vec<(S, S)>)>,
-      types: Vec<(S, (S, Option<ast::Span>))>,
+      types: Vec<(S, (S, Option<Range>))>,
     ) -> Self {
       Self {
         map: map
@@ -262,7 +262,7 @@ pub mod tests {
     fn resolve_types(
       &self,
       specifier: &ModuleSpecifier,
-    ) -> Result<Option<(ModuleSpecifier, Option<ast::Span>)>> {
+    ) -> Result<Option<(ModuleSpecifier, Option<Range>)>> {
       Ok(self.types.get(specifier).cloned())
     }
   }

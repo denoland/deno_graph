@@ -46,12 +46,12 @@ referring specifier and is expected to return a result with the resolved
 specifier.
 
 `resolve_types` takes a specifier and is expected to return a result with an
-optional module specifier and optional source span of the types that should be
+optional module specifier and optional source range of the types that should be
 used. For example, if you are trying represent the `"typings"` field from a
 `package.json` file, when you receive the request on `resolve_types` for the
 main module of the package, you would respond with the absolute specifier to the
-types along with a span that indicates the file URL to the `package.json` and
-the range where it was specified. Including the span is useful to allow errors
+types along with a range that indicates the file URL to the `package.json` and
+the range where it was specified. Including the range is useful to allow errors
 produced from the graph to indicate "where" the dependency came from.
 
 ### `source::Locker` trait

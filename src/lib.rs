@@ -31,9 +31,8 @@ cfg_if! {
     pub use ast::DefaultSourceParser;
     pub use ast::DependencyDescriptor;
     pub use ast::DependencyKind;
-    pub use ast::Location;
-    pub use ast::Position;
-    pub use ast::Span;
+    pub use graph::Position;
+    pub use graph::Range;
     pub use graph::Module;
     pub use graph::ModuleGraph;
     pub use graph::ModuleGraphError;
@@ -477,7 +476,7 @@ console.log(a);
                 "specifier": "./types.d.ts",
                 "type": {
                   "specifier": "file:///a/types.d.ts",
-                  "span": {
+                  "range": {
                     "start": {
                       "line": 0,
                       "character": 0
@@ -497,7 +496,7 @@ console.log(a);
                 "specifier": "./types_01.d.ts",
                 "code": {
                   "specifier": "file:///a/types_01.d.ts",
-                  "span": {
+                  "range": {
                     "start": {
                       "line":0,
                       "character":23
@@ -704,7 +703,7 @@ console.log(a);
                 "specifier": "./b.ts",
                 "code": {
                   "specifier": "file:///b.ts",
-                  "span": {
+                  "range": {
                     "start": {
                       "line": 0,
                       "character": 23
@@ -903,9 +902,10 @@ console.log(a);
         "file:///a.js",
         (
           "file:///a.d.ts",
-          Some(ast::Span {
+          Some(Range {
             specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
-            range: ast::Range::default(),
+            start: Position::zeroed(),
+            end: Position::zeroed(),
           }),
         ),
       )],
@@ -931,9 +931,10 @@ console.log(a);
         "file:///a.js".to_string(),
         Some(Ok((
           ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
-          ast::Span {
+          Range {
             specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
-            range: ast::Range::default(),
+            start: Position::zeroed(),
+            end: Position::zeroed(),
           }
         )))
       ))

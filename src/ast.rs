@@ -2,12 +2,14 @@
 
 use crate::module_specifier::ModuleSpecifier;
 
+pub use deno_ast::swc::dep_graph::DependencyDescriptor;
+pub use deno_ast::swc::dep_graph::DependencyKind;
+
 use anyhow::Result;
 use deno_ast::parse_module;
 use deno_ast::swc::common::comments::Comment;
 use deno_ast::swc::common::BytePos;
-pub use deno_ast::swc::dep_graph::DependencyDescriptor;
-pub use deno_ast::swc::dep_graph::DependencyKind;
+use deno_ast::swc::common::Span;
 use deno_ast::Diagnostic;
 use deno_ast::MediaType;
 use deno_ast::ParseParams;
@@ -16,11 +18,8 @@ use deno_ast::SourceTextInfo;
 use lazy_static::lazy_static;
 use regex::Match;
 use regex::Regex;
-use serde::Deserialize;
-use serde::Serialize;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::fmt;
 use std::sync::Arc;
 
 lazy_static! {
@@ -41,118 +40,9 @@ lazy_static! {
     Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap();
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct Position {
-  /// The 0-indexed line index.
-  pub line: usize,
-  /// The 0-indexed character index.
-  pub character: usize,
-}
-
-impl Position {
-  fn from_pos(parsed_source: &ParsedSource, pos: BytePos) -> Self {
-    let line_and_column_index =
-      parsed_source.source().line_and_column_index(pos);
-    Self {
-      line: line_and_column_index.line_index,
-      character: line_and_column_index.column_index,
-    }
-  }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct Range {
-  #[serde(default)]
-  pub start: Position,
-  #[serde(default)]
-  pub end: Position,
-}
-
-impl Default for Range {
-  fn default() -> Self {
-    Self {
-      start: Position {
-        line: 0,
-        character: 0,
-      },
-      end: Position {
-        line: 0,
-        character: 0,
-      },
-    }
-  }
-}
-
-impl Range {
-  pub(crate) fn from_span(
-    parsed_source: &ParsedSource,
-    span: &deno_ast::swc::common::Span,
-  ) -> Range {
-    Range {
-      start: Position::from_pos(parsed_source, span.lo),
-      end: Position::from_pos(parsed_source, span.hi),
-    }
-  }
-
-  fn from_comment_match(
-    comment: &Comment,
-    m: &Match,
-    parsed_source: &ParsedSource,
-  ) -> Self {
-    Self {
-      start: Position::from_pos(
-        parsed_source,
-        comment.span.lo + BytePos((m.start() + 1) as u32),
-      ),
-      end: Position::from_pos(
-        parsed_source,
-        comment.span.lo + BytePos((m.end() + 1) as u32),
-      ),
-    }
-  }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct Span {
-  #[serde(skip_serializing)]
-  pub specifier: ModuleSpecifier,
-  #[serde(flatten)]
-  pub range: Range,
-}
-
-impl fmt::Display for Span {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(
-      f,
-      "{}:{}:{}",
-      self.specifier,
-      self.range.start.line + 1,
-      self.range.start.character + 1
-    )
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct Location {
-  pub specifier: ModuleSpecifier,
-  pub position: Position,
-}
-
-impl fmt::Display for Location {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(
-      f,
-      "{}:{}:{}",
-      self.specifier,
-      self.position.line + 1,
-      self.position.character + 1
-    )
-  }
-}
-
 pub enum TypeScriptReference {
-  Path(String, Range),
-  Types(String, Range),
+  Path(String, Span),
+  Types(String, Span),
 }
 
 /// Gets all the dependencies of this module.
@@ -170,24 +60,33 @@ pub fn analyze_dependencies(
 
 /// Searches comments for any `@deno-types` compiler hints.
 pub fn analyze_deno_types(
-  parsed_source: &ParsedSource,
   desc: &DependencyDescriptor,
-) -> Option<(String, Range)> {
+) -> Option<(String, Span)> {
   let comment = desc.leading_comments.last()?;
   let captures = DENO_TYPES_RE.captures(&comment.text)?;
   if let Some(m) = captures.get(1) {
     Some((
       m.as_str().to_string(),
-      Range::from_comment_match(comment, &m, parsed_source),
+      comment_match_to_swc_span(comment, &m),
     ))
   } else if let Some(m) = captures.get(2) {
     Some((
       m.as_str().to_string(),
-      Range::from_comment_match(comment, &m, parsed_source),
+      comment_match_to_swc_span(comment, &m),
     ))
   } else {
     unreachable!("Unexpected captures from deno types regex")
   }
+}
+
+fn comment_match_to_swc_span(comment: &Comment, m: &Match) -> Span {
+  // the comment text starts after the double slash or slash star, so add 2
+  let comment_start = comment.span.lo + BytePos(2);
+  Span::new(
+    comment_start + BytePos(m.start() as u32),
+    comment_start + BytePos(m.end() as u32),
+    Default::default(),
+  )
 }
 
 /// Searches comments for any triple slash references.
@@ -201,14 +100,14 @@ pub fn analyze_ts_references(
         let m = captures.get(1).unwrap();
         references.push(TypeScriptReference::Path(
           m.as_str().to_string(),
-          Range::from_comment_match(comment, &m, parsed_source),
+          comment_match_to_swc_span(comment, &m),
         ));
       } else if let Some(captures) = TYPES_REFERENCE_RE.captures(&comment.text)
       {
         let m = captures.get(1).unwrap();
         references.push(TypeScriptReference::Types(
           m.as_str().to_string(),
-          Range::from_comment_match(comment, &m, parsed_source),
+          comment_match_to_swc_span(comment, &m),
         ));
       }
     }
@@ -314,7 +213,10 @@ mod tests {
     let specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad specifier");
     let source = Arc::new(
-      r#"import {
+      r#"
+    /// <reference path="./ref.d.ts" />
+    /// <reference types="./types.d.ts" />
+    import {
       A,
       B,
       C,
@@ -337,8 +239,35 @@ mod tests {
     let result = parser.parse_module(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_source = result.unwrap();
-    assert_eq!(analyze_dependencies(&parsed_source).len(), 6);
-    assert_eq!(analyze_ts_references(&parsed_source).len(), 0);
+    let dependencies = analyze_dependencies(&parsed_source);
+    assert_eq!(dependencies.len(), 6);
+
+    let ts_references = analyze_ts_references(&parsed_source);
+    assert_eq!(ts_references.len(), 2);
+    match &ts_references[0] {
+      TypeScriptReference::Path(text, span) => {
+        assert_eq!(text, "./ref.d.ts");
+        assert_eq!(parsed_source.source().span_text(span), "./ref.d.ts");
+      }
+      TypeScriptReference::Types(_, _) => panic!("expected path"),
+    }
+    match &ts_references[1] {
+      TypeScriptReference::Path(_, _) => panic!("expected types"),
+      TypeScriptReference::Types(text, span) => {
+        assert_eq!(text, "./types.d.ts");
+        assert_eq!(parsed_source.source().span_text(span), "./types.d.ts");
+      }
+    }
+
+    let dep_deno_types = analyze_deno_types(&dependencies[4]).unwrap();
+    assert_eq!(
+      dep_deno_types.0,
+      "https://deno.land/x/types/react/index.d.ts"
+    );
+    assert_eq!(
+      parsed_source.source().span_text(&dep_deno_types.1),
+      "https://deno.land/x/types/react/index.d.ts"
+    );
   }
 
   #[test]
@@ -368,37 +297,19 @@ mod tests {
     let dependencies = analyze_dependencies(&parsed_source);
     assert_eq!(dependencies.len(), 10);
     assert_eq!(dependencies[0].specifier.to_string(), "./a.ts");
-    let range =
-      Range::from_span(&parsed_source, &dependencies[0].specifier_span);
     assert_eq!(
-      range,
-      Range {
-        start: Position {
-          line: 1,
-          character: 23
-        },
-        end: Position {
-          line: 1,
-          character: 31
-        },
-      }
+      parsed_source
+        .source()
+        .span_text(&dependencies[0].specifier_span),
+      "\"./a.ts\""
     );
     assert!(!dependencies[0].is_dynamic);
     assert_eq!(dependencies[1].specifier.to_string(), "./b.ts");
-    let range =
-      Range::from_span(&parsed_source, &dependencies[1].specifier_span);
     assert_eq!(
-      range,
-      Range {
-        start: Position {
-          line: 2,
-          character: 11
-        },
-        end: Position {
-          line: 2,
-          character: 19
-        },
-      }
+      parsed_source
+        .source()
+        .span_text(&dependencies[1].specifier_span),
+      "\"./b.ts\""
     );
     assert!(!dependencies[1].is_dynamic);
   }
