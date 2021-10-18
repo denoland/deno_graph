@@ -249,13 +249,13 @@ where
     Some(Ok((specifier, range))) => {
       let mut state = serializer.serialize_struct("ResolvedSpecifier", 2)?;
       state.serialize_field("specifier", specifier)?;
-      state.serialize_field("span", range)?;
+      state.serialize_field("range", range)?;
       state.end()
     }
     Some(Err(err)) => {
       let mut state = serializer.serialize_struct("ResolvedError", 2)?;
       state.serialize_field("error", &err.to_string())?;
-      state.serialize_field("span", err.range())?;
+      state.serialize_field("range", err.range())?;
       state.end()
     }
     _ => Serialize::serialize(&serde_json::Value::Null, serializer),

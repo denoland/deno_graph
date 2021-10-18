@@ -476,7 +476,7 @@ console.log(a);
                 "specifier": "./types.d.ts",
                 "type": {
                   "specifier": "file:///a/types.d.ts",
-                  "span": {
+                  "range": {
                     "start": {
                       "line": 0,
                       "character": 0
@@ -496,7 +496,7 @@ console.log(a);
                 "specifier": "./types_01.d.ts",
                 "code": {
                   "specifier": "file:///a/types_01.d.ts",
-                  "span": {
+                  "range": {
                     "start": {
                       "line":0,
                       "character":23
@@ -703,7 +703,7 @@ console.log(a);
                 "specifier": "./b.ts",
                 "code": {
                   "specifier": "file:///b.ts",
-                  "span": {
+                  "range": {
                     "start": {
                       "line": 0,
                       "character": 23

@@ -200,7 +200,7 @@ Deno.test({
         "specifier": "./a.ts",
         "code": {
           "specifier": "file:///a/a.ts",
-          "span": {
+          "range": {
             "start": { "line": 2, "character": 26 },
             "end": { "line": 2, "character": 34 },
           },
@@ -209,7 +209,7 @@ Deno.test({
         "specifier": "./b.ts",
         "code": {
           "specifier": "file:///a/b.ts",
-          "span": {
+          "range": {
             "start": { "line": 3, "character": 27 },
             "end": { "line": 3, "character": 35 },
           },
@@ -218,7 +218,7 @@ Deno.test({
         "specifier": "./c.ts",
         "code": {
           "specifier": "file:///a/c.ts",
-          "span": {
+          "range": {
             "start": { "line": 4, "character": 26 },
             "end": { "line": 4, "character": 34 },
           },
@@ -227,7 +227,7 @@ Deno.test({
         "specifier": "./d.ts",
         "code": {
           "specifier": "file:///a/d.ts",
-          "span": {
+          "range": {
             "start": { "line": 5, "character": 31 },
             "end": { "line": 5, "character": 39 },
           },
@@ -238,9 +238,9 @@ Deno.test({
         "specifier": "./test01.d.ts",
         "dependency": {
           "specifier": "file:///a/test01.d.ts",
-          "span": {
-            "start": { "line": 1, "character": 29 },
-            "end": { "line": 1, "character": 42 },
+          "range": {
+            "start": { "line": 1, "character": 30 },
+            "end": { "line": 1, "character": 43 },
           },
         },
       },

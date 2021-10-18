@@ -18,14 +18,8 @@ export type {
   CacheInfo,
   Dependency,
   LoadResponse,
-  LocationJson,
   Module,
   ModuleGraph,
-  ModuleGraphJson,
-  ModuleJson,
-  ResolvedDependency,
-  Span,
-  SpanJson,
   TypesDependency,
 } from "./lib/types.d.ts";
 

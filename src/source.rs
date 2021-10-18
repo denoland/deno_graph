@@ -101,7 +101,7 @@ pub trait Resolver: fmt::Debug {
   }
 
   /// Given a module specifier, return an optional tuple which provides a module
-  /// specifier that contains the types for the module and an optional span
+  /// specifier that contains the types for the module and an optional range
   /// which contains information about the source of the dependency. This will
   /// only be called for module specifiers are resolved to a non-typed input
   /// (e.g. JavaScript and JSX) and there is not yet types resolved for this
