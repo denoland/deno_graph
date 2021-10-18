@@ -62,7 +62,9 @@ impl Position {
 pub struct Range {
   #[serde(skip_serializing)]
   pub specifier: ModuleSpecifier,
+  #[serde(default = "Position::zeroed")]
   pub start: Position,
+  #[serde(default = "Position::zeroed")]
   pub end: Position,
 }
 
@@ -822,20 +824,26 @@ fn resolve(
   let mut remapped = false;
   let resolved_specifier = if let Some(resolver) = maybe_resolver {
     remapped = true;
-    resolver.resolve(specifier, &referrer_range.specifier).map_err(|err| {
-      if let Some(specifier_error) = err.downcast_ref::<SpecifierError>() {
-        ResolutionError::InvalidSpecifier(specifier_error.clone(), referrer_range.clone())
-      } else {
-        ResolutionError::ResolverError(
-          Arc::new(err),
-          specifier.to_string(),
-          referrer_range.clone(),
-        )
-      }
-    })
+    resolver
+      .resolve(specifier, &referrer_range.specifier)
+      .map_err(|err| {
+        if let Some(specifier_error) = err.downcast_ref::<SpecifierError>() {
+          ResolutionError::InvalidSpecifier(
+            specifier_error.clone(),
+            referrer_range.clone(),
+          )
+        } else {
+          ResolutionError::ResolverError(
+            Arc::new(err),
+            specifier.to_string(),
+            referrer_range.clone(),
+          )
+        }
+      })
   } else {
-    resolve_import(specifier, &referrer_range.specifier)
-      .map_err(|err| ResolutionError::InvalidSpecifier(err, referrer_range.clone()))
+    resolve_import(specifier, &referrer_range.specifier).map_err(|err| {
+      ResolutionError::InvalidSpecifier(err, referrer_range.clone())
+    })
   };
   let result = match resolved_specifier {
     Ok(specifier) => {

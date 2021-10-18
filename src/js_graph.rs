@@ -1,9 +1,9 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-use crate::Range;
 use crate::checksum;
 use crate::colors::strip_ansi_codes;
 use crate::graph;
+use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::source::load_data_url;
@@ -368,7 +368,7 @@ impl Module {
 mod tests {
   use crate::Position;
 
-use super::*;
+  use super::*;
   use serde_json::from_value;
   use serde_json::json;
 
