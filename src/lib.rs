@@ -127,6 +127,7 @@ cfg_if! {
       load: js_sys::Function,
       maybe_cache_info: Option<js_sys::Function>,
       maybe_resolve: Option<js_sys::Function>,
+      maybe_resolve_types: Option<js_sys::Function>,
       maybe_check: Option<js_sys::Function>,
       maybe_get_checksum: Option<js_sys::Function>,
       maybe_lockfile_name: Option<String>,
@@ -135,7 +136,11 @@ cfg_if! {
       let roots_vec: Vec<String> = roots.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
       let maybe_imports_map: Option<HashMap<String, Vec<String>>> = maybe_imports.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
       let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
-      let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
+      let maybe_resolver = if maybe_resolve.is_some() || maybe_resolve_types.is_some() {
+        Some(js_graph::JsResolver::new(maybe_resolve, maybe_resolve_types))
+      } else {
+        None
+      };
       let maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>> =
         if maybe_check.is_some() || maybe_get_checksum.is_some() {
           let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum, maybe_lockfile_name);
@@ -179,13 +184,18 @@ cfg_if! {
       maybe_headers: JsValue,
       content: String,
       maybe_resolve: Option<js_sys::Function>,
+      maybe_resolve_types: Option<js_sys::Function>,
     ) -> Result<js_graph::Module, JsValue> {
       let maybe_headers: Option<HashMap<String, String>> = maybe_headers
         .into_serde()
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
       let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
-      let maybe_resolver = maybe_resolve.map(js_graph::JsResolver::new);
+      let maybe_resolver = if maybe_resolve.is_some() || maybe_resolve_types.is_some() {
+        Some(js_graph::JsResolver::new(maybe_resolve, maybe_resolve_types))
+      } else {
+        None
+      };
       let source_parser = ast::DefaultSourceParser::new();
       match graph::parse_module(
         &specifier,
@@ -208,6 +218,7 @@ mod tests {
   use super::*;
   use crate::graph::Resolved;
   use anyhow::Error;
+  use pretty_assertions::assert_eq;
   use serde_json::json;
   use source::tests::MockResolver;
   use source::CacheInfo;
@@ -653,6 +664,76 @@ console.log(a);
   }
 
   #[tokio::test]
+  async fn test_crate_graph_with_dynamic_imports() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a.ts",
+          Ok(("file:///a.ts", None, r#"const b = await import("./b.ts");"#)),
+        ),
+        (
+          "file:///b.ts",
+          Ok(("file:///b.ts", None, r#"export const b = "b";"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a.ts"
+        ],
+        "modules": [
+          {
+            "dependencies": [
+              {
+                "specifier": "./b.ts",
+                "code": {
+                  "specifier": "file:///b.ts",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 23
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 31
+                    }
+                  }
+                },
+                "isDynamic": true
+              }
+            ],
+            "mediaType": "TypeScript",
+            "size": 33,
+            "specifier": "file:///a.ts"
+          },
+          {
+            "dependencies": [],
+            "mediaType": "TypeScript",
+            "size": 21,
+            "specifier": "file:///b.ts"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
+
+  #[tokio::test]
   async fn test_create_graph_with_redirects() {
     let mut loader = setup(
       vec![
@@ -768,10 +849,10 @@ console.log(a);
       ],
       vec![],
     );
-    let resolver = MockResolver::new(vec![(
-      "file:///a/test01.ts",
-      vec![("b", "file:///a/test02.ts")],
-    )]);
+    let resolver = MockResolver::new(
+      vec![("file:///a/test01.ts", vec![("b", "file:///a/test02.ts")])],
+      vec![],
+    );
     let maybe_resolver: Option<&dyn Resolver> = Some(&resolver);
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let graph = create_graph(
@@ -796,8 +877,68 @@ console.log(a);
         &ModuleSpecifier::parse("file:///a/test02.ts").unwrap()
       );
     } else {
-      panic!("unspected resolved type");
+      panic!("unexpected resolved type");
     }
+  }
+
+  #[tokio::test]
+  async fn test_create_graph_with_resolve_types() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a.js",
+          Ok(("file:///a.js", None, r#"export const a = "a";"#)),
+        ),
+        (
+          "file:///a.d.ts",
+          Ok(("file:///a.d.ts", None, r#"export const a: "a";"#)),
+        ),
+      ],
+      vec![],
+    );
+    let resolver = MockResolver::new(
+      vec![],
+      vec![(
+        "file:///a.js",
+        (
+          "file:///a.d.ts",
+          Some(Range {
+            specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          }),
+        ),
+      )],
+    );
+    let maybe_resolver: Option<&dyn Resolver> = Some(&resolver);
+    let root_specifier = ModuleSpecifier::parse("file:///a.js").unwrap();
+    let graph = create_graph(
+      vec![root_specifier],
+      false,
+      None,
+      &mut loader,
+      maybe_resolver,
+      None,
+      None,
+    )
+    .await;
+    let maybe_module = graph.get(&graph.roots[0]);
+    assert!(maybe_module.is_some());
+    let module = maybe_module.unwrap();
+    assert_eq!(
+      module.maybe_types_dependency,
+      Some((
+        "file:///a.js".to_string(),
+        Some(Ok((
+          ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
+          Range {
+            specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          }
+        )))
+      ))
+    );
   }
 
   #[tokio::test]

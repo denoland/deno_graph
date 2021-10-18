@@ -18,6 +18,7 @@ use futures::stream::StreamExt;
 use serde::ser::SerializeMap;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
+use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
 use std::cell::RefCell;
@@ -28,7 +29,7 @@ use std::fmt;
 use std::rc::Rc;
 use std::sync::Arc;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Position {
   /// The 0-indexed line index.
   pub line: usize,
@@ -37,7 +38,7 @@ pub struct Position {
 }
 
 impl Position {
-  fn zeroed() -> Position {
+  pub fn zeroed() -> Position {
     Position {
       line: 0,
       character: 0,
@@ -57,7 +58,7 @@ impl Position {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Range {
   #[serde(skip_serializing)]
   pub specifier: ModuleSpecifier,
@@ -821,19 +822,20 @@ fn resolve(
   let mut remapped = false;
   let resolved_specifier = if let Some(resolver) = maybe_resolver {
     remapped = true;
-    resolver
-      .resolve(specifier, &referrer_range.specifier)
-      .map_err(|err| {
+    resolver.resolve(specifier, &referrer_range.specifier).map_err(|err| {
+      if let Some(specifier_error) = err.downcast_ref::<SpecifierError>() {
+        ResolutionError::InvalidSpecifier(specifier_error.clone(), referrer_range.clone())
+      } else {
         ResolutionError::ResolverError(
           Arc::new(err),
           specifier.to_string(),
           referrer_range.clone(),
         )
-      })
-  } else {
-    resolve_import(specifier, &referrer_range.specifier).map_err(|err| {
-      ResolutionError::InvalidSpecifier(err, referrer_range.clone())
+      }
     })
+  } else {
+    resolve_import(specifier, &referrer_range.specifier)
+      .map_err(|err| ResolutionError::InvalidSpecifier(err, referrer_range.clone()))
   };
   let result = match resolved_specifier {
     Ok(specifier) => {
@@ -946,9 +948,7 @@ pub(crate) fn parse_module_from_ast(
         let range =
           Range::from_swc_span(&module.specifier, parsed_source, &span);
         let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
-        if module.media_type == MediaType::JavaScript
-          || module.media_type == MediaType::Jsx
-        {
+        if is_untyped(&module.media_type) {
           module.maybe_types_dependency =
             Some((specifier, resolved_dependency));
         } else {
@@ -979,6 +979,42 @@ pub(crate) fn parse_module_from_ast(
     }
   }
 
+  // Use resolve_types from maybe_resolver
+  if let Some(resolver) = maybe_resolver {
+    // this will only get called if there is no other types dependency and
+    // the media type is untyped.
+    if module.maybe_types_dependency.is_none() && is_untyped(&module.media_type)
+    {
+      module.maybe_types_dependency =
+        match resolver.resolve_types(&module.specifier) {
+          Ok(Some((specifier, maybe_range))) => Some((
+            module.specifier.to_string(),
+            Some(Ok((
+              specifier.clone(),
+              maybe_range.unwrap_or_else(|| Range {
+                specifier,
+                start: Position::zeroed(),
+                end: Position::zeroed(),
+              }),
+            ))),
+          )),
+          Ok(None) => None,
+          Err(err) => Some((
+            module.specifier.to_string(),
+            Some(Err(ResolutionError::ResolverError(
+              Arc::new(err),
+              module.specifier.to_string(),
+              Range {
+                specifier: module.specifier.clone(),
+                start: Position::zeroed(),
+                end: Position::zeroed(),
+              },
+            ))),
+          )),
+        };
+    }
+  }
+
   // Analyze ES dependencies
   let descriptors = analyze_dependencies(parsed_source);
   for desc in descriptors {
@@ -986,6 +1022,7 @@ pub(crate) fn parse_module_from_ast(
       .dependencies
       .entry(desc.specifier.to_string())
       .or_default();
+    dep.is_dynamic = desc.is_dynamic;
     let resolved_dependency = resolve(
       &desc.specifier,
       &Range::from_swc_span(
@@ -1028,6 +1065,12 @@ fn get_media_type(
   } else {
     MediaType::from(specifier)
   }
+}
+
+/// Determine if a media type is "untyped" and should be checked to see if there
+/// are types provided.
+fn is_untyped(media_type: &MediaType) -> bool {
+  matches!(media_type, MediaType::JavaScript | MediaType::Jsx)
 }
 
 pub(crate) struct Builder<'a> {

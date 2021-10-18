@@ -17,6 +17,13 @@ export interface CacheInfo {
   map?: string;
 }
 
+export interface TypesDependency {
+  /** The string URL to the type information for the module. */
+  types: string;
+  /** An optional span which indicates the source of the dependency. */
+  source?: Span;
+}
+
 export interface LoadResponse {
   /** The string URL of the resource. If there were redirects, the final
    * specifier should be set here, otherwise the requested specifier. */
@@ -35,6 +42,15 @@ export interface LocationJson {
   /** The character number of a location within a source file. The number is a
    * zero based index. */
   character: number;
+}
+
+export interface Span {
+  /** A string URL representing a source of a dependency. */
+  specifier: string;
+  /** The start location of a span of text in a source file. */
+  start?: LocationJson;
+  /** The end location of a span of text in a source file. */
+  end?: LocationJson;
 }
 
 export interface SpanJson {

@@ -10,6 +10,7 @@ import type {
   LoadResponse,
   Module,
   ModuleGraph,
+  TypesDependency,
 } from "./lib/types.d.ts";
 
 export { load } from "./lib/loader.ts";
@@ -23,7 +24,9 @@ export type {
   ModuleGraphJson,
   ModuleJson,
   ResolvedDependency,
+  Span,
   SpanJson,
+  TypesDependency,
 } from "./lib/types.d.ts";
 
 export interface CreateGraphOptions {
@@ -51,6 +54,12 @@ export interface CreateGraphOptions {
    * of the module specifier from the referrer and the string URL of the
    * referrer. The callback then returns a resolved URL string specifier. */
   resolve?(specifier: string, referrer: string): string;
+  /** An optional callback that can allow custom logic of how type dependencies
+   * of a module to be provided. This will be called if a module is being added
+   * to the graph that is is non-typed source code (e.g. JavaScript/JSX) and
+   * allow resolution of a type only dependency for the module (e.g. `@types`
+   * or a `.d.ts` file). */
+  resolveTypes?(specifier: string): TypesDependency | undefined;
   /** An optional callback that returns `true` if the sub-resource integrity of
    * the provided specifier and content is valid, otherwise `false`. This allows
    * for items like lock files to be applied to the module graph. */
@@ -130,6 +139,7 @@ export function createGraph(
     load = defaultLoad,
     cacheInfo,
     resolve,
+    resolveTypes,
     check,
     getChecksum,
     lockFilename,
@@ -140,6 +150,7 @@ export function createGraph(
     load,
     cacheInfo,
     resolve,
+    resolveTypes,
     check,
     getChecksum,
     lockFilename,
@@ -157,6 +168,12 @@ export interface ParseModuleOptions {
    * of the module specifier from the referrer and the string URL of the
    * referrer. The callback then returns a resolved URL string specifier. */
   resolve?(specifier: string, referrer: string): string;
+  /** An optional callback that can allow custom logic of how type dependencies
+   * of a module to be provided. This will be called if a module is being added
+   * to the graph that is is non-typed source code (e.g. JavaScript/JSX) and
+   * allow resolution of a type only dependency for the module (e.g. `@types`
+   * or a `.d.ts` file). */
+  resolveTypes?(specifier: string): string | undefined;
 }
 
 /** Parse a module based on the supplied information and return its analyzed
@@ -172,6 +189,12 @@ export function parseModule(
   content: string,
   options: ParseModuleOptions = {},
 ): Module {
-  const { headers, resolve } = options;
-  return jsParseModule(specifier, headers, content, resolve) as Module;
+  const { headers, resolve, resolveTypes } = options;
+  return jsParseModule(
+    specifier,
+    headers,
+    content,
+    resolve,
+    resolveTypes,
+  ) as Module;
 }
