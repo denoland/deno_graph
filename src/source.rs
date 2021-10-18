@@ -1,5 +1,7 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
+use crate::ast;
+use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::text_encoding::strip_bom_mut;
 
@@ -84,8 +86,9 @@ pub trait Locker: fmt::Debug {
   }
 }
 
-/// A trait which allows the module graph to resolve specifiers is a dynamic
-/// way, like with import maps.
+/// A trait which allows the module graph to resolve specifiers and type only
+/// dependencies. This can be use to provide import maps and override other
+/// default resolution logic used by `deno_graph`.
 pub trait Resolver: fmt::Debug {
   /// Given a string specifier and a referring module specifier, return a
   /// resolved module specifier.
@@ -93,7 +96,23 @@ pub trait Resolver: fmt::Debug {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
-  ) -> Result<ModuleSpecifier>;
+  ) -> Result<ModuleSpecifier> {
+    resolve_import(specifier, referrer).map_err(|err| err.into())
+  }
+
+  /// Given a module specifier, return an optional tuple which provides a module
+  /// specifier that contains the types for the module and an optional span
+  /// which contains information about the source of the dependency. This will
+  /// only be called for module specifiers are resolved to a non-typed input
+  /// (e.g. JavaScript and JSX) and there is not yet types resolved for this
+  /// module. Any result will be set on the modules `maybe_types_dependency`
+  /// property.
+  fn resolve_types(
+    &self,
+    _specifier: &ModuleSpecifier,
+  ) -> Result<Option<(ModuleSpecifier, Option<ast::Span>)>> {
+    Ok(None)
+  }
 }
 
 pub(crate) fn load_data_url(
@@ -190,10 +209,14 @@ pub mod tests {
   #[derive(Debug)]
   pub(crate) struct MockResolver {
     map: HashMap<ModuleSpecifier, HashMap<String, ModuleSpecifier>>,
+    types: HashMap<ModuleSpecifier, (ModuleSpecifier, Option<ast::Span>)>,
   }
 
   impl MockResolver {
-    pub fn new<S: AsRef<str>>(map: Vec<(S, Vec<(S, S)>)>) -> Self {
+    pub fn new<S: AsRef<str>>(
+      map: Vec<(S, Vec<(S, S)>)>,
+      types: Vec<(S, (S, Option<ast::Span>))>,
+    ) -> Self {
       Self {
         map: map
           .into_iter()
@@ -208,6 +231,14 @@ pub mod tests {
               })
               .collect();
             (referrer, map)
+          })
+          .collect(),
+        types: types
+          .into_iter()
+          .map(|(s, (t, ms))| {
+            let specifier = ModuleSpecifier::parse(s.as_ref()).unwrap();
+            let types_specifier = ModuleSpecifier::parse(t.as_ref()).unwrap();
+            (specifier, (types_specifier, ms))
           })
           .collect(),
       }
@@ -226,6 +257,13 @@ pub mod tests {
         }
       }
       resolve_import(specifier, referrer).map_err(|err| err.into())
+    }
+
+    fn resolve_types(
+      &self,
+      specifier: &ModuleSpecifier,
+    ) -> Result<Option<(ModuleSpecifier, Option<ast::Span>)>> {
+      Ok(self.types.get(specifier).cloned())
     }
   }
 }

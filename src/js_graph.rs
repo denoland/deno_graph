@@ -1,8 +1,10 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
+use crate::ast;
 use crate::checksum;
 use crate::colors::strip_ansi_codes;
 use crate::graph;
+use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::source::load_data_url;
 use crate::source::CacheInfo;
@@ -14,6 +16,7 @@ use crate::source::Resolver;
 use anyhow::anyhow;
 use anyhow::Result;
 use futures::future;
+use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
@@ -142,13 +145,26 @@ impl Locker for JsLocker {
 
 #[derive(Debug)]
 pub struct JsResolver {
-  resolve: js_sys::Function,
+  maybe_resolve: Option<js_sys::Function>,
+  maybe_resolve_types: Option<js_sys::Function>,
 }
 
 impl JsResolver {
-  pub fn new(resolve: js_sys::Function) -> Self {
-    Self { resolve }
+  pub fn new(
+    maybe_resolve: Option<js_sys::Function>,
+    maybe_resolve_types: Option<js_sys::Function>,
+  ) -> Self {
+    Self {
+      maybe_resolve,
+      maybe_resolve_types,
+    }
   }
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+struct JsResolveTypesResponse {
+  types: ModuleSpecifier,
+  source: Option<ast::Span>,
 }
 
 impl Resolver for JsResolver {
@@ -157,16 +173,36 @@ impl Resolver for JsResolver {
     specifier: &str,
     referrer: &ModuleSpecifier,
   ) -> Result<ModuleSpecifier> {
-    let this = JsValue::null();
-    let arg0 = JsValue::from(specifier);
-    let arg1 = JsValue::from(referrer.to_string());
-    let value = self
-      .resolve
-      .call2(&this, &arg0, &arg1)
-      .map_err(|_| anyhow!("JavaScript resolve() function threw."))?;
-    let value: String = value.into_serde()?;
-    let resolved_specifier = ModuleSpecifier::parse(&value)?;
-    Ok(resolved_specifier)
+    if let Some(resolve) = &self.maybe_resolve {
+      let this = JsValue::null();
+      let arg1 = JsValue::from(specifier);
+      let arg2 = JsValue::from(referrer.to_string());
+      let value = resolve
+        .call2(&this, &arg1, &arg2)
+        .map_err(|_| anyhow!("JavaScript resolve() function threw."))?;
+      let value: String = value.into_serde()?;
+      let resolved_specifier = ModuleSpecifier::parse(&value)?;
+      Ok(resolved_specifier)
+    } else {
+      resolve_import(specifier, referrer).map_err(|err| err.into())
+    }
+  }
+
+  fn resolve_types(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Result<Option<(ModuleSpecifier, Option<ast::Span>)>> {
+    if let Some(resolve_types) = &self.maybe_resolve_types {
+      let this = JsValue::null();
+      let arg1 = JsValue::from(specifier.to_string());
+      let value = resolve_types
+        .call1(&this, &arg1)
+        .map_err(|_| anyhow!("JavaScript resolveTypes() function threw."))?;
+      let result: Option<JsResolveTypesResponse> = value.into_serde()?;
+      Ok(result.map(|v| (v.types, v.source)))
+    } else {
+      Ok(None)
+    }
   }
 }
 
@@ -325,5 +361,44 @@ impl Module {
     let serializer =
       serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
     self.0.serialize(&serializer).unwrap()
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use serde_json::from_value;
+  use serde_json::json;
+
+  #[test]
+  fn test_deserialize_types_response() {
+    let actual: Option<JsResolveTypesResponse> = from_value(json!({
+      "types": "https://deno.land/x/mod.d.ts",
+      "source": {
+        "specifier": "file:///package.json"
+      }
+    }))
+    .unwrap();
+    assert_eq!(
+      actual,
+      Some(JsResolveTypesResponse {
+        types: ModuleSpecifier::parse("https://deno.land/x/mod.d.ts").unwrap(),
+        source: Some(ast::Span {
+          specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
+          range: ast::Range::default(),
+        })
+      })
+    );
+    let actual: Option<JsResolveTypesResponse> = from_value(json!({
+      "types": "https://deno.land/x/mod.d.ts",
+    }))
+    .unwrap();
+    assert_eq!(
+      actual,
+      Some(JsResolveTypesResponse {
+        types: ModuleSpecifier::parse("https://deno.land/x/mod.d.ts").unwrap(),
+        source: None
+      })
+    );
   }
 }

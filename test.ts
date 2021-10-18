@@ -124,6 +124,37 @@ Deno.test({
 });
 
 Deno.test({
+  name: "createGraph() - resolveTypes",
+  async fn() {
+    const graph = await createGraph(
+      "file:///a.js",
+      {
+        load(specifier) {
+          if (specifier === "file:///a.js") {
+            return Promise.resolve({
+              specifier: "file:///a.js",
+              content: `export const a = "a";`,
+            });
+          } else {
+            return Promise.resolve({
+              specifier: "file:///a.d.ts",
+              content: `export const a: "a";`,
+            });
+          }
+        },
+        resolveTypes(specifier) {
+          assertEquals(specifier, "file:///a.js");
+          return {
+            types: "file:///a.d.ts",
+          };
+        },
+      },
+    );
+    assertEquals(graph.modules.length, 2);
+  },
+});
+
+Deno.test({
   name: "load() - remote module",
   async fn() {
     const response = await load(

@@ -16,6 +16,7 @@ use deno_ast::SourceTextInfo;
 use lazy_static::lazy_static;
 use regex::Match;
 use regex::Regex;
+use serde::Deserialize;
 use serde::Serialize;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -40,7 +41,7 @@ lazy_static! {
     Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap();
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Position {
   /// The 0-indexed line index.
   pub line: usize,
@@ -59,9 +60,11 @@ impl Position {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Range {
+  #[serde(default)]
   pub start: Position,
+  #[serde(default)]
   pub end: Position,
 }
 
@@ -109,7 +112,7 @@ impl Range {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Span {
   #[serde(skip_serializing)]
   pub specifier: ModuleSpecifier,
