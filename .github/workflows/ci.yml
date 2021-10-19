@@ -61,3 +61,61 @@ jobs:
         run: |
           cargo test --locked --release --all-features --all-targets
           deno test --allow-read --allow-net
+
+  wasm:
+    name: "wasm/"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2
+        with:
+          # required to check for changes
+          fetch-depth: 2
+          submodules: false
+          persist-credentials: false
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v1.0.0
+
+      - name: Set up Rust
+        uses: hecrj/setup-rust-action@v1
+        with:
+          # This must match the version in hash/_wasm/rust-toolchain:
+          rust-version: 1.55.0
+          targets: wasm32-unknown-unknown
+          components: rustfmt
+
+      - name: Set up wasm-bindgen-cli
+        run: |-
+          # This must match the version in Cargo.lock:
+          cargo install -f wasm-bindgen-cli --version 0.2.74
+
+      - name: Rebuild WASM
+        run: |-
+          ./_build.ts
+
+      - name: Verify WASM hasn't changed
+        id: build
+        run: |-
+          set -o errexit
+          shopt -s inherit_errexit
+          declare modifications="$(git status --porcelain)"
+          declare modified="$([[ "$(git status --porcelain)" ]] && echo true || echo false)"
+          echo "::set-output name=modified::$modified"
+          echo "Generated code modified? $modified"
+          echo "$modifications"
+
+          if [[ "$modified" = "true" ]]; then
+            echo "::error ::Rebuilt WASM doesn't match committed WASM. Please rebuild and commit."
+            exit 1
+          fi
+
+      - name: Upload rebuilt ./lib/ as artifact if it didn't match committed
+        if: failure() && steps.build.outputs.modified == 'true'
+        uses: actions/upload-artifact@v2
+        with:
+          name: Rebuilt _wasm_crypto
+          path: |-
+            ./lib/deno_graph_bg.wasm
+            ./lib/deno_graph.generated.js
+            ./lib/snippets
