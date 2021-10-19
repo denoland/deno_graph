@@ -31,6 +31,9 @@ url = { version = "2.2.2", features = ["serde"] }
 wasm-bindgen = { version = "0.2.76", features = ["serde-serialize"], optional = true }
 wasm-bindgen-futures = { version = "0.4.26", optional = true }
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+parking_lot_core = "=0.8.0" # https://github.com/Amanieu/parking_lot/issues/269 todo(dsherret): submit pr to parking_lot
+
 [dev-dependencies]
 pretty_assertions = "1.0.0"
 tokio = { version = "1.10.1", features = ["macros", "rt-multi-thread"] }
