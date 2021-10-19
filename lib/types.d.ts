@@ -69,7 +69,7 @@ export interface ResolvedDependency {
    * defined, `specifier` will be undefined. */
   error?: string;
   /** The range within the source code where the specifier was identified. */
-  range: RangeJson;
+  span: RangeJson;
 }
 
 export interface TypesDependencyJson {

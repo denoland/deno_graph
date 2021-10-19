@@ -150,7 +150,7 @@
     "resolvedDependency": {
       "type": "object",
       "required": [
-        "range"
+        "span"
       ],
       "properties": {
         "specifier": {
@@ -161,12 +161,12 @@
           "type": "string",
           "description": "If the specifier could not be resolved, the resulting error message"
         },
-        "range": {
-          "$ref": "#/definitions/range"
+        "span": {
+          "$ref": "#/definitions/span"
         }
       }
     },
-    "range": {
+    "span": {
       "type": "object",
       "required": [
         "start",
