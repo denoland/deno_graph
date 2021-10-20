@@ -1485,7 +1485,7 @@ mod tests {
       assert!(dependency.is_ok());
       let (dep_specifier, range) = dependency.unwrap();
       let expected_specifier = ModuleSpecifier::parse("file:///b.ts").unwrap();
-      assert_eq!(dep_specifier, expected_specifier.clone());
+      assert_eq!(dep_specifier, expected_specifier);
       assert_eq!(
         range,
         Range {
