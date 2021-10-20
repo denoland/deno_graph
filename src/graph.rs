@@ -22,6 +22,8 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
 use std::cell::RefCell;
+#[cfg(feature = "rust")]
+use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -35,6 +37,24 @@ pub struct Position {
   pub line: usize,
   /// The 0-indexed character index.
   pub character: usize,
+}
+
+#[cfg(feature = "rust")]
+impl PartialOrd for Position {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    Some(self.cmp(other))
+  }
+}
+
+#[cfg(feature = "rust")]
+impl Ord for Position {
+  fn cmp(&self, other: &Self) -> Ordering {
+    match self.line.cmp(&other.line) {
+      Ordering::Equal => self.character.cmp(&other.character),
+      Ordering::Greater => Ordering::Greater,
+      Ordering::Less => Ordering::Less,
+    }
+  }
 }
 
 impl Position {
@@ -91,6 +111,11 @@ impl Range {
       start: Position::from_pos(parsed_source, span.lo),
       end: Position::from_pos(parsed_source, span.hi),
     }
+  }
+
+  #[cfg(feature = "rust")]
+  pub fn includes(&self, position: &Position) -> bool {
+    (position >= &self.start) && (position <= &self.end)
   }
 }
 
@@ -304,6 +329,28 @@ impl Dependency {
       _ => None,
     }
   }
+
+  pub fn includes(&self, position: &Position) -> Resolved {
+    match &self.maybe_code {
+      Some(Ok((specifier, range))) if range.includes(position) => {
+        return Some(Ok((specifier.clone(), range.clone())))
+      }
+      Some(Err(err)) if err.range().includes(position) => {
+        return Some(Err(err.clone()))
+      }
+      _ => (),
+    }
+    match &self.maybe_type {
+      Some(Ok((specifier, range))) if range.includes(position) => {
+        return Some(Ok((specifier.clone(), range.clone())))
+      }
+      Some(Err(err)) if err.range().includes(position) => {
+        return Some(Err(err.clone()))
+      }
+      _ => (),
+    }
+    None
+  }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -342,6 +389,19 @@ impl Module {
       source,
       specifier,
     }
+  }
+
+  /// Checks if the position falls within the range of any parsed dependencies
+  /// for the module and returns the resolution result, otherwise none.
+  #[cfg(feature = "rust")]
+  pub fn includes_dependency(&self, position: &Position) -> Resolved {
+    for dep in self.dependencies.values() {
+      let maybe_resolved = dep.includes(position);
+      if maybe_resolved.is_some() {
+        return maybe_resolved;
+      }
+    }
+    None
   }
 
   /// Return the size in bytes of the content of the module.
@@ -1367,4 +1427,86 @@ where
   S: Serializer,
 {
   serializer.serialize_u32(source.len() as u32)
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_range_includes() {
+    let range = Range {
+      specifier: ModuleSpecifier::parse("file:///a.ts").unwrap(),
+      start: Position {
+        line: 1,
+        character: 20,
+      },
+      end: Position {
+        line: 1,
+        character: 30,
+      },
+    };
+    assert!(range.includes(&Position {
+      line: 1,
+      character: 20
+    }));
+    assert!(range.includes(&Position {
+      line: 1,
+      character: 25
+    }));
+    assert!(range.includes(&Position {
+      line: 1,
+      character: 30
+    }));
+    assert!(!range.includes(&Position {
+      line: 0,
+      character: 25
+    }));
+    assert!(!range.includes(&Position {
+      line: 2,
+      character: 25
+    }));
+  }
+
+  #[test]
+  fn test_module_includes_dependency() {
+    let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
+    let source_parser = ast::DefaultSourceParser::default();
+    let content = Arc::new(r#"import * as b from "./b.ts";"#.to_string());
+    let slot =
+      parse_module(&specifier, None, content, None, &source_parser, true);
+    if let ModuleSlot::Module(module) = slot {
+      let maybe_dependency = module.includes_dependency(&Position {
+        line: 0,
+        character: 21,
+      });
+      assert!(maybe_dependency.is_some());
+      let dependency = maybe_dependency.unwrap();
+      assert!(dependency.is_ok());
+      let (dep_specifier, range) = dependency.unwrap();
+      let expected_specifier = ModuleSpecifier::parse("file:///b.ts").unwrap();
+      assert_eq!(dep_specifier, expected_specifier.clone());
+      assert_eq!(
+        range,
+        Range {
+          specifier,
+          start: Position {
+            line: 0,
+            character: 19,
+          },
+          end: Position {
+            line: 0,
+            character: 27,
+          },
+        }
+      );
+      let maybe_dependency = module.includes_dependency(&Position {
+        line: 0,
+        character: 18,
+      });
+      assert!(maybe_dependency.is_none());
+    } else {
+      panic!("no module returned");
+    }
+  }
 }
