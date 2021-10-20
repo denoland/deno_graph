@@ -330,16 +330,18 @@ impl Dependency {
     }
   }
 
-  pub fn includes(&self, position: &Position) -> bool {
+  pub fn includes(&self, position: &Position) -> Option<&Range> {
     match &self.maybe_code {
-      Some(Ok((_, range))) if range.includes(position) => return true,
-      Some(Err(err)) if err.range().includes(position) => return true,
+      Some(Ok((_, range))) if range.includes(position) => return Some(range),
+      Some(Err(err)) if err.range().includes(position) => {
+        return Some(err.range())
+      }
       _ => (),
     }
     match &self.maybe_type {
-      Some(Ok((_, range))) if range.includes(position) => true,
-      Some(Err(err)) if err.range().includes(position) => true,
-      _ => false,
+      Some(Ok((_, range))) if range.includes(position) => Some(range),
+      Some(Err(err)) if err.range().includes(position) => Some(err.range()),
+      _ => None,
     }
   }
 }
@@ -1454,20 +1456,21 @@ mod tests {
     let slot =
       parse_module(&specifier, None, content, None, &source_parser, true);
     if let ModuleSlot::Module(module) = slot {
-      let maybe_dependency = module.dependencies.values().find(|d| {
+      let maybe_dependency = module.dependencies.values().find_map(|d| {
         d.includes(&Position {
           line: 0,
           character: 21,
         })
+        .map(|r| (d, r))
       });
       assert!(maybe_dependency.is_some());
-      let dependency = maybe_dependency.unwrap();
+      let (dependency, range) = maybe_dependency.unwrap();
       assert_eq!(
         dependency.maybe_code,
         Some(Ok((
           ModuleSpecifier::parse("file:///b.ts").unwrap(),
           Range {
-            specifier,
+            specifier: specifier.clone(),
             start: Position {
               line: 0,
               character: 19
@@ -1479,8 +1482,22 @@ mod tests {
           }
         )))
       );
+      assert_eq!(
+        range,
+        &Range {
+          specifier,
+          start: Position {
+            line: 0,
+            character: 19
+          },
+          end: Position {
+            line: 0,
+            character: 27
+          },
+        }
+      );
 
-      let maybe_dependency = module.dependencies.values().find(|d| {
+      let maybe_dependency = module.dependencies.values().find_map(|d| {
         d.includes(&Position {
           line: 0,
           character: 18,
