@@ -299,13 +299,13 @@ pub struct Dependency {
     skip_serializing_if = "Option::is_none",
     serialize_with = "serialize_resolved"
   )]
-  pub(crate) maybe_code: Resolved,
+  pub maybe_code: Resolved,
   #[serde(
     rename = "type",
     skip_serializing_if = "Option::is_none",
     serialize_with = "serialize_resolved"
   )]
-  pub(crate) maybe_type: Resolved,
+  pub maybe_type: Resolved,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
 }
@@ -330,26 +330,17 @@ impl Dependency {
     }
   }
 
-  pub fn includes(&self, position: &Position) -> Resolved {
+  pub fn includes(&self, position: &Position) -> bool {
     match &self.maybe_code {
-      Some(Ok((specifier, range))) if range.includes(position) => {
-        return Some(Ok((specifier.clone(), range.clone())))
-      }
-      Some(Err(err)) if err.range().includes(position) => {
-        return Some(Err(err.clone()))
-      }
+      Some(Ok((_, range))) if range.includes(position) => return true,
+      Some(Err(err)) if err.range().includes(position) => return true,
       _ => (),
     }
     match &self.maybe_type {
-      Some(Ok((specifier, range))) if range.includes(position) => {
-        return Some(Ok((specifier.clone(), range.clone())))
-      }
-      Some(Err(err)) if err.range().includes(position) => {
-        return Some(Err(err.clone()))
-      }
-      _ => (),
+      Some(Ok((_, range))) if range.includes(position) => true,
+      Some(Err(err)) if err.range().includes(position) => true,
+      _ => false,
     }
-    None
   }
 }
 
@@ -389,19 +380,6 @@ impl Module {
       source,
       specifier,
     }
-  }
-
-  /// Checks if the position falls within the range of any parsed dependencies
-  /// for the module and returns the resolution result, otherwise none.
-  #[cfg(feature = "rust")]
-  pub fn includes_dependency(&self, position: &Position) -> Resolved {
-    for dep in self.dependencies.values() {
-      let maybe_resolved = dep.includes(position);
-      if maybe_resolved.is_some() {
-        return maybe_resolved;
-      }
-    }
-    None
   }
 
   /// Return the size in bytes of the content of the module.
@@ -1469,40 +1447,44 @@ mod tests {
   }
 
   #[test]
-  fn test_module_includes_dependency() {
+  fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let source_parser = ast::DefaultSourceParser::default();
     let content = Arc::new(r#"import * as b from "./b.ts";"#.to_string());
     let slot =
       parse_module(&specifier, None, content, None, &source_parser, true);
     if let ModuleSlot::Module(module) = slot {
-      let maybe_dependency = module.includes_dependency(&Position {
-        line: 0,
-        character: 21,
+      let maybe_dependency = module.dependencies.values().find(|d| {
+        d.includes(&Position {
+          line: 0,
+          character: 21,
+        })
       });
       assert!(maybe_dependency.is_some());
       let dependency = maybe_dependency.unwrap();
-      assert!(dependency.is_ok());
-      let (dep_specifier, range) = dependency.unwrap();
-      let expected_specifier = ModuleSpecifier::parse("file:///b.ts").unwrap();
-      assert_eq!(dep_specifier, expected_specifier);
       assert_eq!(
-        range,
-        Range {
-          specifier,
-          start: Position {
-            line: 0,
-            character: 19,
-          },
-          end: Position {
-            line: 0,
-            character: 27,
-          },
-        }
+        dependency.maybe_code,
+        Some(Ok((
+          ModuleSpecifier::parse("file:///b.ts").unwrap(),
+          Range {
+            specifier,
+            start: Position {
+              line: 0,
+              character: 19
+            },
+            end: Position {
+              line: 0,
+              character: 27
+            },
+          }
+        )))
       );
-      let maybe_dependency = module.includes_dependency(&Position {
-        line: 0,
-        character: 18,
+
+      let maybe_dependency = module.dependencies.values().find(|d| {
+        d.includes(&Position {
+          line: 0,
+          character: 18,
+        })
       });
       assert!(maybe_dependency.is_none());
     } else {
