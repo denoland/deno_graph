@@ -41,6 +41,7 @@ cfg_if! {
     pub use graph::Resolved;
     pub use deno_ast::MediaType;
     pub use module_specifier::ModuleSpecifier;
+    pub use module_specifier::SpecifierError;
 
     use source::Loader;
 
