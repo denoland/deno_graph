@@ -363,7 +363,7 @@ pub struct Module {
   pub maybe_types_dependency: Option<(String, Resolved)>,
   pub media_type: MediaType,
   #[serde(skip_serializing)]
-  pub parsed_source: ParsedSource,
+  pub parsed_source: Arc<ParsedSource>,
   #[serde(rename = "size", serialize_with = "serialize_source")]
   pub source: Arc<String>,
   pub specifier: ModuleSpecifier,
@@ -372,6 +372,7 @@ pub struct Module {
 impl Module {
   fn new(specifier: ModuleSpecifier, parsed_source: ParsedSource) -> Self {
     let source = parsed_source.source().text();
+    let parsed_source = Arc::new(parsed_source);
     Self {
       dependencies: Default::default(),
       maybe_cache_info: None,
