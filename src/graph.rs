@@ -113,6 +113,7 @@ impl Range {
     }
   }
 
+  /// Determines if a given position is within the range.
   #[cfg(feature = "rust")]
   pub fn includes(&self, position: &Position) -> bool {
     (position >= &self.start) && (position <= &self.end)
@@ -330,6 +331,9 @@ impl Dependency {
     }
   }
 
+  /// Check to see if the position falls within the range of the code or types
+  /// entry for the dependency, returning a reference to the range if true,
+  /// otherwise none.
   pub fn includes(&self, position: &Position) -> Option<&Range> {
     match &self.maybe_code {
       Some(Ok((_, range))) if range.includes(position) => return Some(range),
@@ -372,7 +376,6 @@ pub struct Module {
 impl Module {
   fn new(specifier: ModuleSpecifier, parsed_source: ParsedSource) -> Self {
     let source = parsed_source.source().text();
-    let parsed_source = parsed_source;
     Self {
       dependencies: Default::default(),
       maybe_cache_info: None,
