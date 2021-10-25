@@ -31,15 +31,17 @@ cfg_if! {
     pub use ast::DefaultSourceParser;
     pub use ast::DependencyDescriptor;
     pub use ast::DependencyKind;
-    pub use graph::Position;
-    pub use graph::Range;
+    pub use graph::Dependency;
     pub use graph::Module;
     pub use graph::ModuleGraph;
     pub use graph::ModuleGraphError;
+    pub use graph::Position;
+    pub use graph::Range;
     pub use graph::ResolutionError;
     pub use graph::Resolved;
     pub use deno_ast::MediaType;
     pub use module_specifier::ModuleSpecifier;
+    pub use module_specifier::SpecifierError;
 
     use source::Loader;
 
