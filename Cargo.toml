@@ -1,7 +1,7 @@
 [package]
 name = "deno_graph"
-version = "0.8.2"
-edition = "2018"
+version = "0.9.0"
+edition = "2021"
 description = "module graph analysis for deno"
 homepage = "https://deno.land/"
 repository = "https://github.com/denoland/deno_graph"
@@ -18,8 +18,9 @@ anyhow = "1.0.43"
 cfg-if = "1.0.0"
 data-url = "0.1.0"
 futures = "0.3.17"
-js-sys = { version = "0.3.53", optional = true }
+js-sys = { version = "0.3.55", optional = true }
 lazy_static = "1.4.0"
+parking_lot = { version = "0.11.2", features = ["wasm-bindgen"] }
 regex = "1.5.4"
 ring = "0.16.20"
 serde = { version = "1.0.130", features = ["derive", "rc"] }
@@ -28,11 +29,8 @@ serde-wasm-bindgen = { version = "0.3.1", optional = true }
 termcolor = "1.1.2"
 deno_ast = { version = "0.4.1", features = ["dep_graph", "module_specifier"] }
 url = { version = "2.2.2", features = ["serde"] }
-wasm-bindgen = { version = "0.2.76", features = ["serde-serialize"], optional = true }
-wasm-bindgen-futures = { version = "0.4.26", optional = true }
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-parking_lot_core = "=0.8.0" # https://github.com/Amanieu/parking_lot/issues/269 todo(dsherret): submit pr to parking_lot
+wasm-bindgen = { version = "0.2.78", features = ["serde-serialize"], optional = true }
+wasm-bindgen-futures = { version = "0.4.28", optional = true }
 
 [dev-dependencies]
 pretty_assertions = "1.0.0"
