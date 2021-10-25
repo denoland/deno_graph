@@ -149,7 +149,8 @@ export function createGraph(
     getChecksum,
     lockFilename,
     imports,
-  );
+    // deno-lint-ignore no-explicit-any
+  ) as any;
 }
 
 export interface ParseModuleOptions {
