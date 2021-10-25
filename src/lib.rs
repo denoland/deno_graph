@@ -792,6 +792,8 @@ console.log(a);
         "https://example.com/b": "https://example.com/b.ts",
       })
     );
+    assert!(graph.to_string().contains("https://example.com/a.ts "));
+    assert!(graph.to_string().contains("https://example.com/b.ts"));
   }
 
   #[tokio::test]
