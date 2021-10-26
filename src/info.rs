@@ -50,7 +50,8 @@ impl fmt::Display for ModuleGraph {
         colors::red("error:")
       );
     }
-    match self.module_slots.get(&self.roots[0]) {
+    let root_specifier = self.resolve(&self.roots[0]);
+    match self.module_slots.get(&root_specifier) {
       Some(ModuleSlot::Module(root)) => {
         if let Some(cache_info) = &root.maybe_cache_info {
           if let Some(local) = &cache_info.local {
@@ -101,7 +102,7 @@ impl fmt::Display for ModuleGraph {
         writeln!(
           f,
           "\n{} {}",
-          self.roots[0],
+          root_specifier,
           colors::gray(format!("({})", human_size(root.size() as f64)))
         )?;
         let mut seen = HashSet::new();
@@ -124,7 +125,7 @@ impl fmt::Display for ModuleGraph {
         writeln!(f, "{} module could not be found", colors::red("error:"))
       }
       _ => {
-        writeln!(f, "{} an internal error occured", colors::red("error:"))
+        writeln!(f, "{} an internal error occurred", colors::red("error:"))
       }
     }
   }
