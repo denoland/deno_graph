@@ -927,10 +927,16 @@ pub(crate) fn parse_module(
   let media_type = get_media_type(specifier, maybe_headers);
   match &media_type {
     MediaType::JavaScript
+    | MediaType::Mjs
+    | MediaType::Cjs
     | MediaType::Jsx
     | MediaType::TypeScript
+    | MediaType::Mts
+    | MediaType::Cts
     | MediaType::Tsx
-    | MediaType::Dts => {
+    | MediaType::Dts
+    | MediaType::Dmts
+    | MediaType::Dcts => {
       // Parse the module and start analyzing the module.
       match source_parser.parse_module(specifier, content, media_type) {
         Ok(parsed_source) => {
@@ -1118,7 +1124,10 @@ fn get_media_type(
 /// Determine if a media type is "untyped" and should be checked to see if there
 /// are types provided.
 fn is_untyped(media_type: &MediaType) -> bool {
-  matches!(media_type, MediaType::JavaScript | MediaType::Jsx)
+  matches!(
+    media_type,
+    MediaType::JavaScript | MediaType::Jsx | MediaType::Mjs | MediaType::Cjs
+  )
 }
 
 pub(crate) struct Builder<'a> {
