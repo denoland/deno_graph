@@ -1219,6 +1219,7 @@ impl<'a> Builder<'a> {
 
   /// Enqueue a request to load the specifier via the loader.
   fn load(&mut self, specifier: &ModuleSpecifier, is_dynamic: bool) {
+    let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     if !self.graph.module_slots.contains_key(specifier) {
       self
         .graph
