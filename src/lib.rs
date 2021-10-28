@@ -797,6 +797,68 @@ console.log(a);
   }
 
   #[tokio::test]
+  async fn test_create_graph_with_circular_redirects() {
+    let mut loader = setup(
+      vec![
+        (
+          "https://example.com/a",
+          Ok((
+            "https://example.com/a.ts",
+            Some(vec![("content-type", "application/typescript")]),
+            r#"import * as b from "./b";"#,
+          )),
+        ),
+        (
+          "https://example.com/b",
+          Ok((
+            "https://example.com/b.ts",
+            Some(vec![("content-type", "application/typescript")]),
+            r#"import * as a from "./a";
+            export const b = "b";"#,
+          )),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("https://example.com/a").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      graph.roots,
+      vec![ModuleSpecifier::parse("https://example.com/a").unwrap()]
+    );
+    assert_eq!(graph.module_slots.len(), 2);
+    assert!(
+      graph.contains(&ModuleSpecifier::parse("https://example.com/a").unwrap())
+    );
+    assert!(graph
+      .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap()));
+    assert!(
+      graph.contains(&ModuleSpecifier::parse("https://example.com/b").unwrap())
+    );
+    assert!(graph
+      .contains(&ModuleSpecifier::parse("https://example.com/b.ts").unwrap()));
+    assert_eq!(
+      json!(graph.redirects),
+      json!({
+        "https://example.com/a": "https://example.com/a.ts",
+        "https://example.com/b": "https://example.com/b.ts",
+      })
+    );
+    assert!(graph.to_string().contains("https://example.com/a.ts "));
+    assert!(graph.to_string().contains("https://example.com/b.ts"));
+  }
+
+  #[tokio::test]
   async fn test_create_graph_with_data_url() {
     let mut loader = setup(
       vec![
