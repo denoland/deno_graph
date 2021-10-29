@@ -159,8 +159,9 @@ dependencies = [
 
 [[package]]
 name = "deno_ast"
-version = "0.4.1"
-source = "git+https://github.com/kitsonk/deno_ast?branch=feat_support_mts#f0e85222d4d3ac3371881499b9975834e7de4f43"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ee37af956e0efce7863828eb055208965be06f47959b73c47466e0b5f9a1a9e"
 dependencies = [
  "data-url",
  "serde",
