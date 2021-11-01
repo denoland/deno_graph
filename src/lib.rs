@@ -568,6 +568,90 @@ console.log(a);
   }
 
   #[tokio::test]
+  async fn test_create_graph_jsx_import_source() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.tsx",
+          Ok((
+            "file:///a/test01.tsx",
+            None,
+            r#"/* @jsxImportSource https://example.com/preact */
+            
+            export function A() {
+              <div>Hello Deno</div>
+            }
+            "#,
+          )),
+        ),
+        (
+          "https://example.com/preact/jsx-runtime",
+          Ok((
+            "https://example.com/preact/jsx-runtime/index.js",
+            Some(vec![("content-type", "application/javascript")]),
+            r#"export function jsx() {}"#,
+          )),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.tsx").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test01.tsx"
+        ],
+        "modules": [
+          {
+            "dependencies": [
+              {
+                "specifier": "https://example.com/preact/jsx-runtime",
+                "code": {
+                  "specifier": "https://example.com/preact/jsx-runtime",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 20
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 46
+                    }
+                  }
+                }
+              }
+            ],
+            "mediaType": "TSX",
+            "size": 159,
+            "specifier": "file:///a/test01.tsx"
+          },
+          {
+            "dependencies": [],
+            "mediaType": "JavaScript",
+            "size": 24,
+            "specifier": "https://example.com/preact/jsx-runtime/index.js"
+          }
+        ],
+        "redirects": {
+          "https://example.com/preact/jsx-runtime": "https://example.com/preact/jsx-runtime/index.js"
+        }
+      })
+    );
+  }
+
+  #[tokio::test]
   async fn test_bare_specifier_error() {
     let mut loader = setup(
       vec![(
@@ -1078,6 +1162,45 @@ console.log(a);
     assert_eq!(actual.dependencies.len(), 4);
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::TypeScript);
+  }
+
+  #[test]
+  fn test_parse_module_jsx_import_source() {
+    let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
+    let result = parse_module(
+      &specifier,
+      None,
+      Arc::new(
+        r#"
+    /** @jsxImportSource https://example.com/preact */
+
+    export function A() {
+      return <div>Hello Deno</div>;
+    }
+    "#
+        .to_string(),
+      ),
+      None,
+      None,
+    );
+    assert!(result.is_ok());
+    let actual = result.unwrap();
+    assert_eq!(actual.dependencies.len(), 1);
+    let dep = actual
+      .dependencies
+      .get("https://example.com/preact/jsx-runtime")
+      .unwrap();
+    assert!(dep.maybe_code.is_some());
+    let code_dep = dep.maybe_code.clone().unwrap();
+    assert!(code_dep.is_ok());
+    let (dep_specifier, _) = code_dep.unwrap();
+    assert_eq!(
+      dep_specifier,
+      ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
+    );
+    assert!(dep.maybe_type.is_none());
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::Tsx);
   }
 
   #[test]

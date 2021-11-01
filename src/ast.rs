@@ -23,10 +23,12 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 lazy_static! {
-  /// Matched the `@deno-types` pragma.
+  /// Matches the `@deno-types` pragma.
   static ref DENO_TYPES_RE: Regex =
     Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#)
       .unwrap();
+  /// Matches the `@jsxImportSource` pragma.
+  static ref JSX_IMPORT_SOURCE_RE: Regex = Regex::new(r#"(?i)^[\s*]*@jsxImportSource\s+(\S+)"#).unwrap();
   /// Matches a `/// <reference ... />` comment reference.
   static ref TRIPLE_SLASH_REFERENCE_RE: Regex =
     Regex::new(r"(?i)^/\s*<reference\s.*?/>").unwrap();
@@ -76,6 +78,22 @@ pub fn analyze_deno_types(
     ))
   } else {
     unreachable!("Unexpected captures from deno types regex")
+  }
+}
+
+/// Searches comments for a `@jsxImportSource` pragma on JSX/TSX media types
+pub fn analyze_jsx_import_sources(
+  parsed_source: &ParsedSource,
+) -> Option<(String, Span)> {
+  match parsed_source.media_type() {
+    MediaType::Jsx | MediaType::Tsx => {
+      parsed_source.get_leading_comments().iter().find_map(|c| {
+        let captures = JSX_IMPORT_SOURCE_RE.captures(&c.text)?;
+        let m = captures.get(1)?;
+        Some((m.as_str().to_string(), comment_match_to_swc_span(c, &m)))
+      })
+    }
+    _ => None,
   }
 }
 
@@ -211,11 +229,12 @@ mod tests {
   #[test]
   fn test_parse() {
     let specifier =
-      ModuleSpecifier::parse("file:///a/test.ts").expect("bad specifier");
+      ModuleSpecifier::parse("file:///a/test.tsx").expect("bad specifier");
     let source = Arc::new(
       r#"
     /// <reference path="./ref.d.ts" />
     /// <reference types="./types.d.ts" />
+    /* @jsxImportSource http://example.com/preact */
     import {
       A,
       B,
@@ -236,7 +255,7 @@ mod tests {
       .to_string(),
     );
     let parser = DefaultSourceParser::new();
-    let result = parser.parse_module(&specifier, source, MediaType::TypeScript);
+    let result = parser.parse_module(&specifier, source, MediaType::Tsx);
     assert!(result.is_ok());
     let parsed_source = result.unwrap();
     let dependencies = analyze_dependencies(&parsed_source);
@@ -267,6 +286,13 @@ mod tests {
     assert_eq!(
       parsed_source.source().span_text(&dep_deno_types.1),
       "https://deno.land/x/types/react/index.d.ts"
+    );
+
+    let (specifier, span) = analyze_jsx_import_sources(&parsed_source).unwrap();
+    assert_eq!(specifier, "http://example.com/preact");
+    assert_eq!(
+      parsed_source.source().span_text(&span),
+      "http://example.com/preact"
     );
   }
 
