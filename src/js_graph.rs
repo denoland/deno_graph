@@ -22,16 +22,19 @@ use wasm_bindgen::prelude::*;
 
 pub struct JsLoader {
   load: js_sys::Function,
+  jsx_import_source_module: String,
   maybe_cache_info: Option<js_sys::Function>,
 }
 
 impl JsLoader {
   pub fn new(
     load: js_sys::Function,
+    jsx_import_source_module: String,
     maybe_cache_info: Option<js_sys::Function>,
   ) -> Self {
     Self {
       load,
+      jsx_import_source_module,
       maybe_cache_info,
     }
   }
@@ -48,6 +51,10 @@ impl Loader for JsLoader {
     } else {
       None
     }
+  }
+
+  fn jsx_import_source_module(&self) -> &str {
+    self.jsx_import_source_module.as_str()
   }
 
   fn load(

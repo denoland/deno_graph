@@ -63,6 +63,11 @@ pub trait Loader {
   fn get_cache_info(&self, _specifier: &ModuleSpecifier) -> Option<CacheInfo> {
     None
   }
+  /// An optional method which returns the JSX import source module which will
+  /// be appended to any JSX import source pragmas identified.
+  fn jsx_import_source_module(&self) -> &str {
+    "jsx-runtime"
+  }
   /// A method that given a specifier that asynchronously returns a response
   fn load(
     &mut self,
