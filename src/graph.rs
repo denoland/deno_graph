@@ -1131,11 +1131,12 @@ fn is_untyped(media_type: &MediaType) -> bool {
 }
 
 pub(crate) struct Builder<'a> {
-  is_dynamic_root: bool,
+  in_dynamic_branch: bool,
   graph: ModuleGraph,
   loader: &'a mut dyn Loader,
   maybe_resolver: Option<&'a dyn Resolver>,
   pending: FuturesUnordered<LoadFuture>,
+  dynamic_branches: HashSet<ModuleSpecifier>,
   source_parser: &'a dyn SourceParser,
 }
 
@@ -1149,11 +1150,12 @@ impl<'a> Builder<'a> {
     source_parser: &'a dyn SourceParser,
   ) -> Self {
     Self {
-      is_dynamic_root,
+      in_dynamic_branch: is_dynamic_root,
       graph: ModuleGraph::new(roots, maybe_locker),
       loader,
       maybe_resolver,
       pending: FuturesUnordered::new(),
+      dynamic_branches: HashSet::new(),
       source_parser,
     }
   }
@@ -1164,7 +1166,7 @@ impl<'a> Builder<'a> {
   ) -> ModuleGraph {
     let roots = self.graph.roots.clone();
     for root in roots {
-      self.load(&root, self.is_dynamic_root);
+      self.load(&root, self.in_dynamic_branch);
     }
 
     // Process any imports that are being added to the graph.
@@ -1178,7 +1180,7 @@ impl<'a> Builder<'a> {
         for (specifier, _) in
           synthetic_module.dependencies.values().flatten().flatten()
         {
-          self.load(specifier, self.is_dynamic_root);
+          self.load(specifier, self.in_dynamic_branch);
         }
         self
           .graph
@@ -1210,7 +1212,23 @@ impl<'a> Builder<'a> {
         _ => {}
       }
       if self.pending.is_empty() {
-        break;
+        // Start visiting queued up dynamic branches. We do this in a separate
+        // pass after all static dependencies have been visited because:
+        // - If a module is both statically and dynamically imported, we want
+        //   the static import to take precedence and only load it with
+        //   `is_dynamic: false`.
+        // - It's more convenient for tracking whether or not we are currently
+        //   visiting a dynamic branch.
+        if !self.in_dynamic_branch {
+          self.in_dynamic_branch = true;
+          for specifier in std::mem::take(&mut self.dynamic_branches) {
+            if !self.graph.module_slots.contains_key(&specifier) {
+              self.load(&specifier, true);
+            }
+          }
+        } else {
+          break;
+        }
       }
     }
 
@@ -1274,11 +1292,22 @@ impl<'a> Builder<'a> {
 
     if let ModuleSlot::Module(module) = &module_slot {
       for dep in module.dependencies.values() {
-        if let Some(Ok((specifier, _))) = &dep.maybe_code {
-          self.load(specifier, dep.is_dynamic);
-        }
-        if let Some(Ok((specifier, _))) = &dep.maybe_type {
-          self.load(specifier, dep.is_dynamic);
+        // Queue up dynamic dependencies to be visited later, unless we are
+        // already visiting a dynamic branch.
+        if dep.is_dynamic && !self.in_dynamic_branch {
+          if let Some(Ok((specifier, _))) = &dep.maybe_code {
+            self.dynamic_branches.insert(specifier.clone());
+          }
+          if let Some(Ok((specifier, _))) = &dep.maybe_type {
+            self.dynamic_branches.insert(specifier.clone());
+          }
+        } else {
+          if let Some(Ok((specifier, _))) = &dep.maybe_code {
+            self.load(specifier, self.in_dynamic_branch);
+          }
+          if let Some(Ok((specifier, _))) = &dep.maybe_type {
+            self.load(specifier, self.in_dynamic_branch);
+          }
         }
       }
 
@@ -1426,6 +1455,8 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::ast::DefaultSourceParser;
+  use url::Url;
 
   #[test]
   fn test_range_includes() {
@@ -1521,5 +1552,88 @@ mod tests {
     } else {
       panic!("no module returned");
     }
+  }
+
+  #[tokio::test]
+  async fn static_dep_of_dynamic_dep_is_dynamic() {
+    struct TestLoader {
+      loaded_foo: bool,
+      loaded_bar: bool,
+      loaded_baz: bool,
+    }
+    impl Loader for TestLoader {
+      fn load(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        is_dynamic: bool,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///foo.js" => {
+            assert!(!is_dynamic);
+            self.loaded_foo = true;
+            Box::pin(async move {
+              (
+                specifier.clone(),
+                Ok(Some(LoadResponse {
+                  specifier: specifier.clone(),
+                  maybe_headers: None,
+                  content: Arc::new(
+                    "await import('file:///bar.js')".to_string(),
+                  ),
+                })),
+              )
+            })
+          }
+          "file:///bar.js" => {
+            assert!(is_dynamic);
+            self.loaded_bar = true;
+            Box::pin(async move {
+              (
+                specifier.clone(),
+                Ok(Some(LoadResponse {
+                  specifier: specifier.clone(),
+                  maybe_headers: None,
+                  content: Arc::new("import 'file:///baz.js'".to_string()),
+                })),
+              )
+            })
+          }
+          "file:///baz.js" => {
+            assert!(is_dynamic);
+            self.loaded_baz = true;
+            Box::pin(async move {
+              (
+                specifier.clone(),
+                Ok(Some(LoadResponse {
+                  specifier: specifier.clone(),
+                  maybe_headers: None,
+                  content: Arc::new("console.log('Hello, world!')".to_string()),
+                })),
+              )
+            })
+          }
+          _ => unreachable!(),
+        }
+      }
+    }
+    let mut loader = TestLoader {
+      loaded_foo: false,
+      loaded_bar: false,
+      loaded_baz: false,
+    };
+    let source_parser = DefaultSourceParser::new();
+    let builder = Builder::new(
+      vec![Url::parse("file:///foo.js").unwrap()],
+      false,
+      &mut loader,
+      None,
+      None,
+      &source_parser,
+    );
+    builder.build(None).await;
+    assert!(loader.loaded_foo);
+    assert!(loader.loaded_bar);
+    assert!(loader.loaded_baz);
   }
 }
