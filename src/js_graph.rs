@@ -175,8 +175,7 @@ impl Resolver for JsResolver {
   fn jsx_import_source_module(&self) -> &str {
     self
       .maybe_jsx_import_source_module
-      .as_ref()
-      .map(|s| s.as_str())
+      .as_deref()
       .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE)
   }
 
