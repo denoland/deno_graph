@@ -12,6 +12,7 @@ use crate::source::LoadFuture;
 use crate::source::Loader;
 use crate::source::Locker;
 use crate::source::Resolver;
+use crate::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
 
 use anyhow::anyhow;
 use anyhow::Result;
@@ -22,19 +23,16 @@ use wasm_bindgen::prelude::*;
 
 pub struct JsLoader {
   load: js_sys::Function,
-  jsx_import_source_module: String,
   maybe_cache_info: Option<js_sys::Function>,
 }
 
 impl JsLoader {
   pub fn new(
     load: js_sys::Function,
-    jsx_import_source_module: String,
     maybe_cache_info: Option<js_sys::Function>,
   ) -> Self {
     Self {
       load,
-      jsx_import_source_module,
       maybe_cache_info,
     }
   }
@@ -51,10 +49,6 @@ impl Loader for JsLoader {
     } else {
       None
     }
-  }
-
-  fn jsx_import_source_module(&self) -> &str {
-    self.jsx_import_source_module.as_str()
   }
 
   fn load(
@@ -152,16 +146,19 @@ impl Locker for JsLocker {
 
 #[derive(Debug)]
 pub struct JsResolver {
+  maybe_jsx_import_source_module: Option<String>,
   maybe_resolve: Option<js_sys::Function>,
   maybe_resolve_types: Option<js_sys::Function>,
 }
 
 impl JsResolver {
   pub fn new(
+    maybe_jsx_import_source_module: Option<String>,
     maybe_resolve: Option<js_sys::Function>,
     maybe_resolve_types: Option<js_sys::Function>,
   ) -> Self {
     Self {
+      maybe_jsx_import_source_module,
       maybe_resolve,
       maybe_resolve_types,
     }
@@ -175,6 +172,14 @@ struct JsResolveTypesResponse {
 }
 
 impl Resolver for JsResolver {
+  fn jsx_import_source_module(&self) -> &str {
+    self
+      .maybe_jsx_import_source_module
+      .as_ref()
+      .map(|s| s.as_str())
+      .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE)
+  }
+
   fn resolve(
     &self,
     specifier: &str,

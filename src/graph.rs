@@ -920,7 +920,6 @@ fn resolve(
 pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  jsx_import_source_module: &str,
   content: Arc<String>,
   maybe_resolver: Option<&dyn Resolver>,
   source_parser: &dyn SourceParser,
@@ -946,7 +945,6 @@ pub(crate) fn parse_module(
           ModuleSlot::Module(parse_module_from_ast(
             specifier,
             maybe_headers,
-            jsx_import_source_module,
             &parsed_source,
             maybe_resolver,
           ))
@@ -968,7 +966,6 @@ pub(crate) fn parse_module(
           ModuleSlot::Module(parse_module_from_ast(
             specifier,
             maybe_headers,
-            jsx_import_source_module,
             &parsed_source,
             maybe_resolver,
           ))
@@ -989,7 +986,6 @@ pub(crate) fn parse_module(
 pub(crate) fn parse_module_from_ast(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  jsx_import_source_module: &str,
   parsed_source: &ParsedSource,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Module {
@@ -1025,6 +1021,9 @@ pub(crate) fn parse_module_from_ast(
   // Analyze any JSX Import Source pragma
   if let Some((import_source, span)) = analyze_jsx_import_sources(parsed_source)
   {
+    let jsx_import_source_module = maybe_resolver
+      .map(|r| r.jsx_import_source_module())
+      .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE);
     let specifier = format!("{}/{}", import_source, jsx_import_source_module);
     let range = Range::from_swc_span(&module.specifier, parsed_source, &span);
     let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
@@ -1299,7 +1298,6 @@ impl<'a> Builder<'a> {
     let module_slot = parse_module(
       &specifier,
       maybe_headers.as_ref(),
-      self.loader.jsx_import_source_module(),
       response.content,
       self.maybe_resolver,
       self.source_parser,
@@ -1514,15 +1512,8 @@ mod tests {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let source_parser = ast::DefaultSourceParser::default();
     let content = Arc::new(r#"import * as b from "./b.ts";"#.to_string());
-    let slot = parse_module(
-      &specifier,
-      None,
-      "jsx-runtime",
-      content,
-      None,
-      &source_parser,
-      true,
-    );
+    let slot =
+      parse_module(&specifier, None, content, None, &source_parser, true);
     if let ModuleSlot::Module(module) = slot {
       let maybe_dependency = module.dependencies.values().find_map(|d| {
         d.includes(&Position {

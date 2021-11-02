@@ -74,7 +74,6 @@ cfg_if! {
     pub fn parse_module(
       specifier: &ModuleSpecifier,
       maybe_headers: Option<&HashMap<String, String>>,
-      jsx_import_source_module: &str,
       content: Arc<String>,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_parser: Option<&dyn SourceParser>,
@@ -84,7 +83,6 @@ cfg_if! {
       match graph::parse_module(
         specifier,
         maybe_headers,
-        jsx_import_source_module,
         content,
         maybe_resolver,
         source_parser,
@@ -100,14 +98,12 @@ cfg_if! {
     pub fn parse_module_from_ast(
       specifier: &ModuleSpecifier,
       maybe_headers: Option<&HashMap<String, String>>,
-      jsx_import_source_module: &str,
       parsed_ast: &deno_ast::ParsedSource,
       maybe_resolver: Option<&dyn Resolver>,
     ) -> Module {
       graph::parse_module_from_ast(
         specifier,
         maybe_headers,
-        jsx_import_source_module,
         parsed_ast,
         maybe_resolver,
       )
@@ -142,10 +138,9 @@ cfg_if! {
     ) -> Result<js_graph::ModuleGraph, JsValue> {
       let roots_vec: Vec<String> = roots.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
       let maybe_imports_map: Option<HashMap<String, Vec<String>>> = maybe_imports.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-      let jsx_import_source_module = maybe_jsx_import_source_module.unwrap_or_else(|| "jsx-runtime".to_string());
-      let mut loader = js_graph::JsLoader::new(load, jsx_import_source_module, maybe_cache_info);
-      let maybe_resolver = if maybe_resolve.is_some() || maybe_resolve_types.is_some() {
-        Some(js_graph::JsResolver::new(maybe_resolve, maybe_resolve_types))
+      let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
+      let maybe_resolver = if maybe_jsx_import_source_module.is_some() || maybe_resolve.is_some() || maybe_resolve_types.is_some() {
+        Some(js_graph::JsResolver::new(maybe_jsx_import_source_module, maybe_resolve, maybe_resolve_types))
       } else {
         None
       };
@@ -200,17 +195,15 @@ cfg_if! {
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
       let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
-      let maybe_resolver = if maybe_resolve.is_some() || maybe_resolve_types.is_some() {
-        Some(js_graph::JsResolver::new(maybe_resolve, maybe_resolve_types))
+      let maybe_resolver = if maybe_jsx_import_source_module.is_some() || maybe_resolve.is_some() || maybe_resolve_types.is_some() {
+        Some(js_graph::JsResolver::new(maybe_jsx_import_source_module, maybe_resolve, maybe_resolve_types))
       } else {
         None
       };
-      let jsx_import_source_module = maybe_jsx_import_source_module.unwrap_or_else(|| "jsx-runtime".to_string());
       let source_parser = ast::DefaultSourceParser::new();
       match graph::parse_module(
         &specifier,
         maybe_headers.as_ref(),
-        &jsx_import_source_module,
         Arc::new(content),
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         &source_parser,
@@ -1154,7 +1147,6 @@ console.log(a);
     let result = parse_module(
       &specifier,
       None,
-      "jsx-runtime",
       Arc::new(
         r#"
     import { a } from "./a.ts";
@@ -1180,7 +1172,6 @@ console.log(a);
     let result = parse_module(
       &specifier,
       None,
-      "jsx-dev-runtime",
       Arc::new(
         r#"
     /** @jsxImportSource https://example.com/preact */
@@ -1199,7 +1190,7 @@ console.log(a);
     assert_eq!(actual.dependencies.len(), 1);
     let dep = actual
       .dependencies
-      .get("https://example.com/preact/jsx-dev-runtime")
+      .get("https://example.com/preact/jsx-runtime")
       .unwrap();
     assert!(dep.maybe_code.is_some());
     let code_dep = dep.maybe_code.clone().unwrap();
@@ -1207,8 +1198,7 @@ console.log(a);
     let (dep_specifier, _) = code_dep.unwrap();
     assert_eq!(
       dep_specifier,
-      ModuleSpecifier::parse("https://example.com/preact/jsx-dev-runtime")
-        .unwrap()
+      ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
     );
     assert!(dep.maybe_type.is_none());
     assert_eq!(actual.specifier, specifier);
@@ -1227,7 +1217,6 @@ console.log(a);
     let result = parse_module(
       &specifier,
       maybe_headers,
-      "jsx-runtime",
       Arc::new(
         r#"declare interface A {
   a: string;
