@@ -21,6 +21,8 @@ use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::Arc;
 
+pub static DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
+
 /// Information that comes from an external source which can be optionally
 /// included in the module graph.
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -90,6 +92,12 @@ pub trait Locker: fmt::Debug {
 /// dependencies. This can be use to provide import maps and override other
 /// default resolution logic used by `deno_graph`.
 pub trait Resolver: fmt::Debug {
+  /// An optional method which returns the JSX import source module which will
+  /// be appended to any JSX import source pragmas identified.
+  fn jsx_import_source_module(&self) -> &str {
+    DEFAULT_JSX_IMPORT_SOURCE_MODULE
+  }
+
   /// Given a string specifier and a referring module specifier, return a
   /// resolved module specifier.
   fn resolve(

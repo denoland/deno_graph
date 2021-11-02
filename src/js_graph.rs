@@ -12,6 +12,7 @@ use crate::source::LoadFuture;
 use crate::source::Loader;
 use crate::source::Locker;
 use crate::source::Resolver;
+use crate::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
 
 use anyhow::anyhow;
 use anyhow::Result;
@@ -145,16 +146,19 @@ impl Locker for JsLocker {
 
 #[derive(Debug)]
 pub struct JsResolver {
+  maybe_jsx_import_source_module: Option<String>,
   maybe_resolve: Option<js_sys::Function>,
   maybe_resolve_types: Option<js_sys::Function>,
 }
 
 impl JsResolver {
   pub fn new(
+    maybe_jsx_import_source_module: Option<String>,
     maybe_resolve: Option<js_sys::Function>,
     maybe_resolve_types: Option<js_sys::Function>,
   ) -> Self {
     Self {
+      maybe_jsx_import_source_module,
       maybe_resolve,
       maybe_resolve_types,
     }
@@ -168,6 +172,13 @@ struct JsResolveTypesResponse {
 }
 
 impl Resolver for JsResolver {
+  fn jsx_import_source_module(&self) -> &str {
+    self
+      .maybe_jsx_import_source_module
+      .as_deref()
+      .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE)
+  }
+
   fn resolve(
     &self,
     specifier: &str,

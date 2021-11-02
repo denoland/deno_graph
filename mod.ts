@@ -38,6 +38,9 @@ export interface CreateGraphOptions {
     specifier: string,
     isDynamic: boolean,
   ): Promise<LoadResponse | undefined>;
+  /** When identifying a `@jsxImportSource` pragma, what module name will be
+   * appended to the import source. This defaults to `jsx-runtime`. */
+  jsxImportSourceModule?: string;
   /** An optional callback that will be called with a URL string of the resource
    * to provide additional meta data about the resource to enrich the module
    * graph. */
@@ -131,6 +134,7 @@ export function createGraph(
     : [rootSpecifiers];
   const {
     load = defaultLoad,
+    jsxImportSourceModule,
     cacheInfo,
     resolve,
     resolveTypes,
@@ -142,6 +146,7 @@ export function createGraph(
   return jsCreateGraph(
     rootSpecifiers,
     load,
+    jsxImportSourceModule,
     cacheInfo,
     resolve,
     resolveTypes,
@@ -157,6 +162,9 @@ export interface ParseModuleOptions {
   /** For remote resources, a record of headers should be set, where the key's
    * have been normalized to be lower case values. */
   headers?: Record<string, string>;
+  /** When identifying a `@jsxImportSource` pragma, what module name will be
+   * appended to the import source. This defaults to `jsx-runtime`. */
+  jsxImportSourceModule?: string;
   /** An optional callback that allows the default resolution logic of the
    * module graph to be "overridden". This is intended to allow items like an
    * import map to be used with the module graph. The callback takes the string
@@ -184,10 +192,11 @@ export function parseModule(
   content: string,
   options: ParseModuleOptions = {},
 ): Module {
-  const { headers, resolve, resolveTypes } = options;
+  const { headers, jsxImportSourceModule, resolve, resolveTypes } = options;
   return jsParseModule(
     specifier,
     headers,
+    jsxImportSourceModule,
     content,
     resolve,
     resolveTypes,
