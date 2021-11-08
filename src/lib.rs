@@ -530,6 +530,74 @@ console.log(a);
   }
 
   #[tokio::test]
+  async fn test_create_graph_imports_resolve_dependency() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok(("file:///a/test01.ts", None, r#"console.log("a");"#)),
+        ),
+        (
+          "https://example.com/jsx-runtime",
+          Ok((
+            "https://example.com/jsx-runtime",
+            Some(vec![
+              ("content-type", "application/javascript"),
+              ("x-typescript-types", "./jsx-runtime.d.ts"),
+            ]),
+            r#"export const a = "a";"#,
+          )),
+        ),
+        (
+          "https://example.com/jsx-runtime.d.ts",
+          Ok((
+            "https://example.com/jsx-runtime.d.ts",
+            Some(vec![("content-type", "application/typescript")]),
+            r#"export const a: "a";"#,
+          )),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
+    let config_specifier =
+      ModuleSpecifier::parse("file:///a/tsconfig.json").unwrap();
+    let maybe_imports = Some(vec![(
+      config_specifier.clone(),
+      vec!["https://example.com/jsx-runtime".to_string()],
+    )]);
+    let graph = create_graph(
+      vec![root_specifier],
+      false,
+      maybe_imports,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      graph.resolve_dependency(
+        "https://example.com/jsx-runtime",
+        &config_specifier,
+        false
+      ),
+      Some(&ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
+    );
+    assert_eq!(
+      graph.resolve_dependency(
+        "https://example.com/jsx-runtime",
+        &config_specifier,
+        true
+      ),
+      Some(
+        &ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts")
+          .unwrap()
+      )
+    );
+  }
+
+  #[tokio::test]
   async fn test_create_graph_with_headers() {
     let mut loader = setup(
       vec![(
