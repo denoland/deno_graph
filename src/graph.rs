@@ -664,8 +664,8 @@ impl ModuleGraph {
   ) -> Option<&ModuleSpecifier> {
     let referrer = self.resolve(referrer);
     let referring_module_slot = self.module_slots.get(&referrer)?;
-    let maybe_specifier =
-      if let ModuleSlot::Module(referring_module) = referring_module_slot {
+    let maybe_specifier = match referring_module_slot {
+      ModuleSlot::Module(referring_module) => {
         let dependency = referring_module.dependencies.get(specifier)?;
         let (maybe_first, maybe_second) = if prefer_types {
           (&dependency.maybe_type, &dependency.maybe_code)
@@ -687,18 +687,31 @@ impl ModuleGraph {
         } else {
           None
         }
-      } else {
-        None
-      };
+      }
+      ModuleSlot::SyntheticModule(referring_module) => {
+        match referring_module.dependencies.get(specifier) {
+          Some(Some(Ok((specifier, _)))) => {
+            if prefer_types {
+              Some(
+                self
+                  .resolve_types_dependency(specifier)
+                  .unwrap_or(specifier),
+              )
+            } else {
+              Some(specifier)
+            }
+          }
+          _ => None,
+        }
+      }
+      _ => return None,
+    };
     // Even if we resolved the specifier, it doesn't mean the module is actually
     // there, and so we will return the final final specifier.
-    if let Some(specifier) = maybe_specifier {
-      match self.module_slots.get(&self.resolve(specifier)) {
-        Some(ModuleSlot::Module(m)) => Some(&m.specifier),
-        _ => None,
-      }
-    } else {
-      None
+    let specifier = maybe_specifier?;
+    match self.module_slots.get(&self.resolve(specifier)) {
+      Some(ModuleSlot::Module(m)) => Some(&m.specifier),
+      _ => None,
     }
   }
 
