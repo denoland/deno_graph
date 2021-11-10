@@ -786,6 +786,9 @@ impl ModuleGraph {
     match self.module_slots.get(&specifier) {
       Some(ModuleSlot::Module(module)) => Ok(Some(module)),
       Some(ModuleSlot::Err(err)) => Err(err.clone()),
+      Some(ModuleSlot::Missing) => {
+        Err(ModuleGraphError::Missing(specifier.clone()))
+      }
       _ => Ok(None),
     }
   }
@@ -1721,6 +1724,15 @@ mod tests {
     let graph = builder.build(None).await;
     assert!(loader.loaded_foo);
     assert!(loader.loaded_bar);
+    assert!(graph
+      .try_get(&Url::parse("file:///foo.js").unwrap())
+      .is_ok());
+    assert!(matches!(
+      graph
+        .try_get(&Url::parse("file:///bar.js").unwrap())
+        .unwrap_err(),
+      ModuleGraphError::Missing(..)
+    ));
     let specifiers = graph.specifiers();
     assert_eq!(specifiers.len(), 2);
     assert!(specifiers
