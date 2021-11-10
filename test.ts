@@ -205,6 +205,7 @@ Deno.test({
             "end": { "line": 2, "character": 34 },
           },
         },
+        "kind": "Import",
       }, {
         "specifier": "./b.ts",
         "code": {
@@ -214,6 +215,7 @@ Deno.test({
             "end": { "line": 3, "character": 35 },
           },
         },
+        "kind": "Import",
       }, {
         "specifier": "./c.ts",
         "code": {
@@ -223,6 +225,7 @@ Deno.test({
             "end": { "line": 4, "character": 34 },
           },
         },
+        "kind": "Export",
       }, {
         "specifier": "./d.ts",
         "code": {
@@ -232,7 +235,7 @@ Deno.test({
             "end": { "line": 5, "character": 39 },
           },
         },
-        "isDynamic": true,
+        "kind": "DynamicImport",
       }],
       "typesDependency": {
         "specifier": "./test01.d.ts",

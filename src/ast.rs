@@ -2,8 +2,7 @@
 
 use crate::module_specifier::ModuleSpecifier;
 
-pub use deno_ast::swc::dep_graph::DependencyDescriptor;
-pub use deno_ast::swc::dep_graph::DependencyKind;
+use deno_ast::swc::dep_graph::DependencyDescriptor;
 
 use anyhow::Result;
 use deno_ast::parse_module;
@@ -45,19 +44,6 @@ lazy_static! {
 pub enum TypeScriptReference {
   Path(String, Span),
   Types(String, Span),
-}
-
-/// Gets all the dependencies of this module.
-pub fn analyze_dependencies(
-  source: &ParsedSource,
-) -> Vec<DependencyDescriptor> {
-  deno_ast::swc::dep_graph::analyze_dependencies(
-    source.module(),
-    source.comments(),
-  )
-  .into_iter()
-  .filter(|desc| desc.kind != DependencyKind::Require)
-  .collect()
 }
 
 /// Searches comments for any `@deno-types` compiler hints.
@@ -258,7 +244,10 @@ mod tests {
     let result = parser.parse_module(&specifier, source, MediaType::Tsx);
     assert!(result.is_ok());
     let parsed_source = result.unwrap();
-    let dependencies = analyze_dependencies(&parsed_source);
+    let dependencies = deno_ast::swc::dep_graph::analyze_dependencies(
+      parsed_source.module(),
+      parsed_source.comments(),
+    );
     assert_eq!(dependencies.len(), 6);
 
     let ts_references = analyze_ts_references(&parsed_source);
@@ -320,7 +309,10 @@ mod tests {
     let result = parser.parse_module(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_source = result.unwrap();
-    let dependencies = analyze_dependencies(&parsed_source);
+    let dependencies = deno_ast::swc::dep_graph::analyze_dependencies(
+      parsed_source.module(),
+      parsed_source.comments(),
+    );
     assert_eq!(dependencies.len(), 10);
     assert_eq!(dependencies[0].specifier.to_string(), "./a.ts");
     assert_eq!(

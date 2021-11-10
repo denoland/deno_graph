@@ -55,15 +55,17 @@ impl Loader for JsLoader {
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
+    kind: &graph::DependencyKind,
   ) -> LoadFuture {
     if specifier.scheme() == "data" {
       Box::pin(future::ready((specifier.clone(), load_data_url(specifier))))
     } else {
       let specifier = specifier.clone();
-      let this = JsValue::null();
-      let arg0 = JsValue::from(specifier.to_string());
-      let arg1 = JsValue::from(is_dynamic);
-      let result = self.load.call2(&this, &arg0, &arg1);
+      let context = JsValue::null();
+      let arg1 = JsValue::from(specifier.to_string());
+      let arg2 = JsValue::from(is_dynamic);
+      let arg3 = JsValue::from(kind.to_string());
+      let result = self.load.call3(&context, &arg1, &arg2, &arg3);
       let f = async move {
         let response = match result {
           Ok(result) => {
@@ -183,13 +185,15 @@ impl Resolver for JsResolver {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
+    kind: &graph::DependencyKind,
   ) -> Result<ModuleSpecifier> {
     if let Some(resolve) = &self.maybe_resolve {
-      let this = JsValue::null();
+      let context = JsValue::null();
       let arg1 = JsValue::from(specifier);
       let arg2 = JsValue::from(referrer.to_string());
+      let arg3 = JsValue::from(kind.to_string());
       let value = resolve
-        .call2(&this, &arg1, &arg2)
+        .call3(&context, &arg1, &arg2, &arg3)
         .map_err(|_| anyhow!("JavaScript resolve() function threw."))?;
       let value: String = value.into_serde()?;
       let resolved_specifier = ModuleSpecifier::parse(&value)?;

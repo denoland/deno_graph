@@ -5,15 +5,17 @@ import {
   parseModule as jsParseModule,
 } from "./lib/deno_graph.generated.js";
 import { load as defaultLoad } from "./lib/loader.ts";
+import { DependencyKind } from "./lib/types.ts";
 import type {
   CacheInfo,
   LoadResponse,
   Module,
   ModuleGraph,
   TypesDependency,
-} from "./lib/types.d.ts";
+} from "./lib/types.ts";
 
 export { load } from "./lib/loader.ts";
+export { DependencyKind } from "./lib/types.ts";
 export type {
   CacheInfo,
   Dependency,
@@ -21,7 +23,7 @@ export type {
   Module,
   ModuleGraph,
   TypesDependency,
-} from "./lib/types.d.ts";
+} from "./lib/types.ts";
 
 export interface CreateGraphOptions {
   /**
@@ -32,11 +34,15 @@ export interface CreateGraphOptions {
    * returned.
    *
    * @param specifier The URL string of the resource to be loaded and resolved
-   * @param isDynamic A flag that indicates if the module was being loaded dynamically
+   * @param isDynamic A flag that indicates if the module or its parent was
+   *                  being loaded dynamically
+   * @param kind An enumerated value/string which indicates why the module is
+   *             being loaded into the graph
    */
   load?(
     specifier: string,
     isDynamic: boolean,
+    kind: DependencyKind,
   ): Promise<LoadResponse | undefined>;
   /** When identifying a `@jsxImportSource` pragma, what module name will be
    * appended to the import source. This defaults to `jsx-runtime`. */
@@ -49,8 +55,16 @@ export interface CreateGraphOptions {
    * module graph to be "overridden". This is intended to allow items like an
    * import map to be used with the module graph. The callback takes the string
    * of the module specifier from the referrer and the string URL of the
-   * referrer. The callback then returns a resolved URL string specifier. */
-  resolve?(specifier: string, referrer: string): string;
+   * referrer. The callback then returns a resolved URL string specifier.
+   *
+   * @param specifier The string used to specify a dependency within
+   *                  the referrer
+   * @param referrer The URL string of the referrer that resolving the
+   *                 dependency should be used as a base
+   * @param kind A enum/string that indicates how the module is being asked to
+   *             be resolved.
+   */
+  resolve?(specifier: string, referrer: string, kind: DependencyKind): string;
   /** An optional callback that can allow custom logic of how type dependencies
    * of a module to be provided. This will be called if a module is being added
    * to the graph that is is non-typed source code (e.g. JavaScript/JSX) and
@@ -170,7 +184,7 @@ export interface ParseModuleOptions {
    * import map to be used with the module graph. The callback takes the string
    * of the module specifier from the referrer and the string URL of the
    * referrer. The callback then returns a resolved URL string specifier. */
-  resolve?(specifier: string, referrer: string): string;
+  resolve?(specifier: string, referrer: string, kind: DependencyKind): string;
   /** An optional callback that can allow custom logic of how type dependencies
    * of a module to be provided. This will be called if a module is being added
    * to the graph that is is non-typed source code (e.g. JavaScript/JSX) and

@@ -23,14 +23,11 @@ use std::sync::Arc;
 
 cfg_if! {
   if #[cfg(feature = "rust")] {
-    pub use ast::analyze_dependencies;
     pub use ast::analyze_deno_types;
     pub use ast::analyze_ts_references;
     pub use ast::SourceParser;
     pub use ast::CapturingSourceParser;
     pub use ast::DefaultSourceParser;
-    pub use ast::DependencyDescriptor;
-    pub use ast::DependencyKind;
     pub use graph::Dependency;
     pub use graph::Module;
     pub use graph::ModuleGraph;
@@ -220,6 +217,7 @@ cfg_if! {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::graph::DependencyKind;
   use crate::graph::Resolved;
   use anyhow::Error;
   use pretty_assertions::assert_eq;
@@ -287,7 +285,7 @@ mod tests {
       let dependency_specifier =
         ModuleSpecifier::parse("file:///a/test02.ts").unwrap();
       let dependency = maybe_dependency.unwrap();
-      assert!(!dependency.is_dynamic);
+      assert_ne!(dependency.kind, DependencyKind::DynamicImport);
       if let Some(Ok((resolved_specifier, _))) = &dependency.maybe_code {
         assert_eq!(resolved_specifier, &dependency_specifier);
       } else {
@@ -297,7 +295,7 @@ mod tests {
       let maybe_dep_module_slot = graph.get(&dependency_specifier);
       assert!(maybe_dep_module_slot.is_some());
     } else {
-      panic!("unspected module slot");
+      panic!("unexpected module slot");
     }
   }
 
@@ -510,7 +508,8 @@ console.log(a);
                       "character":40
                     }
                   }
-                }
+                },
+                "kind": "Export"
               }
             ],
             "mediaType": "Dts",
@@ -700,7 +699,8 @@ console.log(a);
                       "character": 46
                     }
                   }
-                }
+                },
+                "kind": "Pragma"
               }
             ],
             "mediaType": "TSX",
@@ -870,7 +870,7 @@ console.log(a);
                     }
                   }
                 },
-                "isDynamic": true
+                "kind": "DynamicImport"
               }
             ],
             "mediaType": "TypeScript",
@@ -882,6 +882,76 @@ console.log(a);
             "mediaType": "TypeScript",
             "size": 21,
             "specifier": "file:///b.ts"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
+
+  #[tokio::test]
+  async fn test_crate_graph_with_require() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a.js",
+          Ok(("file:///a.js", None, r#"const b = require("./b.cjs");"#)),
+        ),
+        (
+          "file:///b.cjs",
+          Ok(("file:///b.cjs", None, r#"exports = { b: "b" };"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a.js").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a.js"
+        ],
+        "modules": [
+          {
+            "dependencies": [
+              {
+                "specifier": "./b.cjs",
+                "code": {
+                  "specifier": "file:///b.cjs",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 18
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 27
+                    }
+                  }
+                },
+                "kind": "Require"
+              }
+            ],
+            "mediaType": "JavaScript",
+            "size": 29,
+            "specifier": "file:///a.js"
+          },
+          {
+            "dependencies": [],
+            "mediaType": "Cjs",
+            "size": 21,
+            "specifier": "file:///b.cjs"
           }
         ],
         "redirects": {}
@@ -1271,6 +1341,116 @@ console.log(a);
     assert!(dep.maybe_type.is_none());
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::Tsx);
+  }
+
+  #[test]
+  fn test_parse_module_with_require() {
+    let specifier = ModuleSpecifier::parse("file:///a/test01.js").unwrap();
+    let resolver = source::tests::MockResolver::new(
+      vec![(
+        "file:///a/test01.js",
+        vec![
+          ("fs", "https://deno.land/std/node/fs.ts"),
+          ("lodash", "file:///node_modules/lodash/index.js"),
+        ],
+      )],
+      vec![],
+    );
+    let result = parse_module(
+      &specifier,
+      None,
+      Arc::new(
+        r#"
+        const fs = require("fs");
+        const jsdom = require("https://deno.land/x/jsdom");
+        const _ = require("lodash");
+        const b = require("./test02.mjs");
+      "#
+        .to_string(),
+      ),
+      Some(&resolver),
+      None,
+    );
+    assert!(result.is_ok());
+    let actual = result.unwrap();
+    assert_eq!(
+      json!(actual),
+      json!({
+        "dependencies": [
+          {
+            "specifier": "./test02.mjs",
+            "code": {
+              "specifier": "file:///a/test02.mjs",
+              "span": {
+                "start": {
+                  "line": 4,
+                  "character": 26
+                },
+                "end": {
+                  "line": 4,
+                  "character": 40
+                }
+              }
+            },
+            "kind": "Require"
+          },
+          {
+            "specifier": "fs",
+            "code": {
+              "specifier": "https://deno.land/std/node/fs.ts",
+              "span": {
+                "start": {
+                  "line": 1,
+                  "character": 27
+                },
+                "end": {
+                  "line": 1,
+                  "character": 31
+                }
+              }
+            },
+            "kind": "Require"
+          },
+          {
+            "specifier": "https://deno.land/x/jsdom",
+            "code": {
+              "specifier": "https://deno.land/x/jsdom",
+              "span": {
+                "start": {
+                  "line": 2,
+                  "character": 30
+                },
+                "end": {
+                  "line": 2,
+                  "character": 57
+                }
+              }
+            },
+            "kind": "Require"
+          },
+          {
+            "specifier": "lodash",
+            "code": {
+              "specifier": "file:///node_modules/lodash/index.js",
+              "span": {
+                "start": {
+                  "line": 3,
+                  "character": 26
+                },
+                "end": {
+                  "line": 3,
+                  "character": 34
+                }
+              }
+            },
+            "kind": "Require"
+          }
+        ],
+        "mediaType": "JavaScript",
+        "size": 181,
+        "specifier": "file:///a/test01.js"
+      })
+    );
   }
 
   #[test]

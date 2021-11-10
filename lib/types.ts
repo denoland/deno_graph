@@ -134,12 +134,29 @@ export interface Dependency {
    * populated when the `@deno-types` directive was used to supply a type
    * definition file for a dependency. */
   type?: ResolvedDependency;
-  /** A flag indicating if the dependency was dynamic. (e.g.
-   * `await import("mod.ts")`) */
-  isDynamic?: true;
+  /** An enum/string that indicates the kind of dependency. */
+  kind: DependencyKind;
 }
 
-export class Module {
+export enum DependencyKind {
+  /** The dependency was provided as an explicit import into the graph, either a
+   * root module or via a synthetic import */
+  Explicit = "Explicit",
+  /** The dependency was identified via an `import` or `import type`
+   * statement */
+  Import = "Import",
+  /** The dependency was identified via an `export` or `export type`
+   * statement */
+  Export = "Export",
+  /** The dependency was identified via a dynamic `import()` statement */
+  DynamicImport = "DynamicImport",
+  /** The dependency was identified via a `require` statement */
+  Require = "Require",
+  /** The dependency was identified via a pragma within the file */
+  Pragma = "Pragma",
+}
+
+export declare class Module {
   private constructor();
 
   /** Any cache information that was available on the module when the graph
@@ -174,7 +191,7 @@ export class Module {
 }
 
 /** An interface to the web assembly structure of a built module graph. */
-export class ModuleGraph {
+export declare class ModuleGraph {
   private constructor();
 
   /** The modules that are part of the module graph. */
