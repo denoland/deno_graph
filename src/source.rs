@@ -1,5 +1,6 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
+use crate::graph::DependencyKind;
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -65,11 +66,13 @@ pub trait Loader {
   fn get_cache_info(&self, _specifier: &ModuleSpecifier) -> Option<CacheInfo> {
     None
   }
-  /// A method that given a specifier that asynchronously returns a response
+  /// A method that given a specifier, if the module is being loaded dynamically
+  /// and the kind of dependency and returns a load result future.
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
+    kind: &DependencyKind,
   ) -> LoadFuture;
 }
 
@@ -104,6 +107,7 @@ pub trait Resolver: fmt::Debug {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
+    _kind: &DependencyKind,
   ) -> Result<ModuleSpecifier> {
     resolve_import(specifier, referrer).map_err(|err| err.into())
   }
@@ -198,6 +202,7 @@ impl Loader for MemoryLoader {
     &mut self,
     specifier: &ModuleSpecifier,
     _is_dynamic: bool,
+    _kind: &DependencyKind,
   ) -> LoadFuture {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),
@@ -258,6 +263,7 @@ pub mod tests {
       &self,
       specifier: &str,
       referrer: &ModuleSpecifier,
+      _kind: &DependencyKind,
     ) -> Result<ModuleSpecifier> {
       if let Some(map) = self.map.get(referrer) {
         if let Some(resolved_specifier) = map.get(specifier) {

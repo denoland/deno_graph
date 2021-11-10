@@ -2,7 +2,6 @@
 
 use crate::ast;
 use crate::ast::analyze_deno_types;
-use crate::ast::analyze_dependencies;
 use crate::ast::analyze_jsx_import_sources;
 use crate::ast::analyze_ts_references;
 use crate::ast::SourceParser;
@@ -12,6 +11,8 @@ use crate::module_specifier::SpecifierError;
 use crate::source::*;
 
 use anyhow::Result;
+use deno_ast::swc::dep_graph::DependencyDescriptor;
+use deno_ast::swc::dep_graph::DependencyKind as SwcDependencyKind;
 use deno_ast::MediaType;
 use deno_ast::ParsedSource;
 use futures::stream::FuturesUnordered;
@@ -289,8 +290,55 @@ where
   }
 }
 
-fn is_false(v: &bool) -> bool {
-  !v
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub enum DependencyKind {
+  /// The dependency was provided as an explicit import into the graph, either a
+  /// root module or via a synthetic import
+  Explicit,
+  /// The dependency was identified via an `import` or `import type` statement
+  Import,
+  /// The dependency was identified via an `export` or `export type` statement
+  Export,
+  /// The dependency was identified via a dynamic `import()` statement
+  DynamicImport,
+  /// The dependency was identified via a `require` statement
+  Require,
+  /// The dependency was identified via a pragma within the file
+  Pragma,
+}
+
+impl Default for DependencyKind {
+  fn default() -> Self {
+    Self::Import
+  }
+}
+
+impl From<&DependencyDescriptor> for DependencyKind {
+  fn from(desc: &DependencyDescriptor) -> Self {
+    match desc.kind {
+      SwcDependencyKind::Import | SwcDependencyKind::ImportType
+        if desc.is_dynamic =>
+      {
+        Self::DynamicImport
+      }
+      SwcDependencyKind::Import | SwcDependencyKind::ImportType => Self::Import,
+      SwcDependencyKind::Export | SwcDependencyKind::ExportType => Self::Export,
+      SwcDependencyKind::Require => Self::Require,
+    }
+  }
+}
+
+impl fmt::Display for DependencyKind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Self::DynamicImport => write!(f, "DynamicImport"),
+      Self::Explicit => write!(f, "Explicit"),
+      Self::Export => write!(f, "Export"),
+      Self::Import => write!(f, "Import"),
+      Self::Pragma => write!(f, "Pragma"),
+      Self::Require => write!(f, "Require"),
+    }
+  }
 }
 
 #[derive(Debug, Default, Clone, Serialize)]
@@ -308,8 +356,7 @@ pub struct Dependency {
     serialize_with = "serialize_resolved"
   )]
   pub maybe_type: Resolved,
-  #[serde(skip_serializing_if = "is_false")]
-  pub is_dynamic: bool,
+  pub kind: DependencyKind,
 }
 
 #[cfg(feature = "rust")]
@@ -419,7 +466,8 @@ impl SyntheticModule {
           start: Position::zeroed(),
           end: Position::zeroed(),
         };
-        let result = resolve(s, &referrer_range, *maybe_resolver);
+        let result =
+          resolve(s, &referrer_range, &DependencyKind::Pragma, *maybe_resolver);
         (s.clone(), result)
       })
       .collect();
@@ -830,7 +878,10 @@ impl ModuleGraph {
             validate(specifier, types_only, true, seen, get_module)?;
           }
           for dep in module.dependencies.values() {
-            if !dep.is_dynamic {
+            if !matches!(
+              dep.kind,
+              DependencyKind::DynamicImport | DependencyKind::Require
+            ) {
               // TODO(@kitsonk) eliminate duplication with maybe_code below
               match &dep.maybe_type {
                 Some(Ok((specifier, _))) => {
@@ -877,13 +928,14 @@ impl ModuleGraph {
 fn resolve(
   specifier: &str,
   referrer_range: &Range,
+  kind: &DependencyKind,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolved {
   let mut remapped = false;
   let resolved_specifier = if let Some(resolver) = maybe_resolver {
     remapped = true;
     resolver
-      .resolve(specifier, &referrer_range.specifier)
+      .resolve(specifier, &referrer_range.specifier, kind)
       .map_err(|err| {
         if let Some(specifier_error) = err.downcast_ref::<SpecifierError>() {
           ResolutionError::InvalidSpecifier(
@@ -1008,23 +1060,32 @@ pub(crate) fn parse_module_from_ast(
 
   // Analyze the TypeScript triple-slash references
   for reference in analyze_ts_references(parsed_source) {
+    let kind = DependencyKind::Pragma;
     match reference {
       ast::TypeScriptReference::Path(specifier, span) => {
         let range =
           Range::from_swc_span(&module.specifier, parsed_source, &span);
-        let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
+        let resolved_dependency =
+          resolve(&specifier, &range, &kind, maybe_resolver);
         let dep = module.dependencies.entry(specifier).or_default();
         dep.maybe_code = resolved_dependency;
+        dep.kind = kind;
       }
       ast::TypeScriptReference::Types(specifier, span) => {
         let range =
           Range::from_swc_span(&module.specifier, parsed_source, &span);
-        let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
+        let resolved_dependency =
+          resolve(&specifier, &range, &kind, maybe_resolver);
         if is_untyped(&module.media_type) {
           module.maybe_types_dependency =
             Some((specifier, resolved_dependency));
         } else {
-          let dep = module.dependencies.entry(specifier).or_default();
+          let dep = module.dependencies.entry(specifier).or_insert_with(|| {
+            Dependency {
+              kind,
+              ..Default::default()
+            }
+          });
           dep.maybe_type = resolved_dependency;
         }
       }
@@ -1039,9 +1100,12 @@ pub(crate) fn parse_module_from_ast(
       .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE);
     let specifier = format!("{}/{}", import_source, jsx_import_source_module);
     let range = Range::from_swc_span(&module.specifier, parsed_source, &span);
-    let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
+    let kind = DependencyKind::Pragma;
+    let resolved_dependency =
+      resolve(&specifier, &range, &kind, maybe_resolver);
     let dep = module.dependencies.entry(specifier).or_default();
     dep.maybe_code = resolved_dependency;
+    dep.kind = kind;
   }
 
   // Analyze the X-TypeScript-Types header
@@ -1053,7 +1117,12 @@ pub(crate) fn parse_module_from_ast(
           start: Position::zeroed(),
           end: Position::zeroed(),
         };
-        let resolved_dependency = resolve(types_header, &range, maybe_resolver);
+        let resolved_dependency = resolve(
+          types_header,
+          &range,
+          &DependencyKind::Pragma,
+          maybe_resolver,
+        );
         module.maybe_types_dependency =
           Some((types_header.clone(), resolved_dependency));
       }
@@ -1097,13 +1166,18 @@ pub(crate) fn parse_module_from_ast(
   }
 
   // Analyze ES dependencies
-  let descriptors = analyze_dependencies(parsed_source);
+  let descriptors = deno_ast::swc::dep_graph::analyze_dependencies(
+    parsed_source.module(),
+    parsed_source.comments(),
+  );
   for desc in descriptors {
     let dep = module
       .dependencies
       .entry(desc.specifier.to_string())
-      .or_default();
-    dep.is_dynamic = desc.is_dynamic;
+      .or_insert_with(|| Dependency {
+        kind: (&desc).into(),
+        ..Default::default()
+      });
     let resolved_dependency = resolve(
       &desc.specifier,
       &Range::from_swc_span(
@@ -1111,6 +1185,7 @@ pub(crate) fn parse_module_from_ast(
         parsed_source,
         &desc.specifier_span,
       ),
+      &dep.kind,
       maybe_resolver,
     );
     dep.maybe_code = resolved_dependency;
@@ -1120,6 +1195,7 @@ pub(crate) fn parse_module_from_ast(
         resolve(
           &text,
           &Range::from_swc_span(&specifier, parsed_source, &span),
+          &dep.kind,
           maybe_resolver,
         )
       })
@@ -1163,7 +1239,7 @@ pub(crate) struct Builder<'a> {
   loader: &'a mut dyn Loader,
   maybe_resolver: Option<&'a dyn Resolver>,
   pending: FuturesUnordered<LoadFuture>,
-  dynamic_branches: HashSet<ModuleSpecifier>,
+  dynamic_branches: HashMap<ModuleSpecifier, DependencyKind>,
   source_parser: &'a dyn SourceParser,
 }
 
@@ -1182,7 +1258,7 @@ impl<'a> Builder<'a> {
       loader,
       maybe_resolver,
       pending: FuturesUnordered::new(),
-      dynamic_branches: HashSet::new(),
+      dynamic_branches: HashMap::new(),
       source_parser,
     }
   }
@@ -1193,7 +1269,7 @@ impl<'a> Builder<'a> {
   ) -> ModuleGraph {
     let roots = self.graph.roots.clone();
     for root in roots {
-      self.load(&root, self.in_dynamic_branch);
+      self.load(&root, self.in_dynamic_branch, &DependencyKind::Explicit);
     }
 
     // Process any imports that are being added to the graph.
@@ -1207,7 +1283,11 @@ impl<'a> Builder<'a> {
         for (specifier, _) in
           synthetic_module.dependencies.values().flatten().flatten()
         {
-          self.load(specifier, self.in_dynamic_branch);
+          self.load(
+            specifier,
+            self.in_dynamic_branch,
+            &DependencyKind::Explicit,
+          );
         }
         self
           .graph
@@ -1248,9 +1328,9 @@ impl<'a> Builder<'a> {
         //   visiting a dynamic branch.
         if !self.in_dynamic_branch {
           self.in_dynamic_branch = true;
-          for specifier in std::mem::take(&mut self.dynamic_branches) {
+          for (specifier, kind) in std::mem::take(&mut self.dynamic_branches) {
             if !self.graph.module_slots.contains_key(&specifier) {
-              self.load(&specifier, true);
+              self.load(&specifier, true, &kind);
             }
           }
         } else {
@@ -1272,14 +1352,21 @@ impl<'a> Builder<'a> {
   }
 
   /// Enqueue a request to load the specifier via the loader.
-  fn load(&mut self, specifier: &ModuleSpecifier, is_dynamic: bool) {
+  fn load(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    is_dynamic: bool,
+    kind: &DependencyKind,
+  ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     if !self.graph.module_slots.contains_key(specifier) {
       self
         .graph
         .module_slots
         .insert(specifier.clone(), ModuleSlot::Pending);
-      self.pending.push(self.loader.load(specifier, is_dynamic));
+      self
+        .pending
+        .push(self.loader.load(specifier, is_dynamic, kind));
     }
   }
 
@@ -1321,19 +1408,27 @@ impl<'a> Builder<'a> {
       for dep in module.dependencies.values() {
         // Queue up dynamic dependencies to be visited later, unless we are
         // already visiting a dynamic branch.
-        if dep.is_dynamic && !self.in_dynamic_branch {
+        if matches!(
+          dep.kind,
+          DependencyKind::DynamicImport | DependencyKind::Require
+        ) && !self.in_dynamic_branch
+        {
           if let Some(Ok((specifier, _))) = &dep.maybe_code {
-            self.dynamic_branches.insert(specifier.clone());
+            self
+              .dynamic_branches
+              .insert(specifier.clone(), dep.kind.clone());
           }
           if let Some(Ok((specifier, _))) = &dep.maybe_type {
-            self.dynamic_branches.insert(specifier.clone());
+            self
+              .dynamic_branches
+              .insert(specifier.clone(), dep.kind.clone());
           }
         } else {
           if let Some(Ok((specifier, _))) = &dep.maybe_code {
-            self.load(specifier, self.in_dynamic_branch);
+            self.load(specifier, self.in_dynamic_branch, &dep.kind);
           }
           if let Some(Ok((specifier, _))) = &dep.maybe_type {
-            self.load(specifier, self.in_dynamic_branch);
+            self.load(specifier, self.in_dynamic_branch, &dep.kind);
           }
         }
       }
@@ -1341,7 +1436,7 @@ impl<'a> Builder<'a> {
       if let Some((_, Some(Ok((specifier, _))))) =
         &module.maybe_types_dependency
       {
-        self.load(specifier, false);
+        self.load(specifier, false, &DependencyKind::Pragma);
       }
     }
     self.graph.module_slots.insert(specifier, module_slot);
@@ -1376,9 +1471,7 @@ impl<'a> Serialize for SerializeableDependency<'a> {
       let serializeable_resolved = SerializeableResolved(&self.1.maybe_type);
       map.serialize_entry("type", &serializeable_resolved)?;
     }
-    if self.1.is_dynamic {
-      map.serialize_entry("isDynamic", &self.1.is_dynamic)?;
-    }
+    map.serialize_entry("kind", &self.1.kind)?;
     map.end()
   }
 }
@@ -1593,6 +1686,7 @@ mod tests {
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
+        _kind: &DependencyKind,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {

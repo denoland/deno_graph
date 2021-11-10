@@ -41,9 +41,9 @@ intended to allow concepts like import maps and alternative resolution logic to
 "plug" into the module graph.
 
 It has two methods, `resolve` and `resolve_types`, which both have default
-implementations. `resolve` takes the string specifier from the source and the
-referring specifier and is expected to return a result with the resolved
-specifier.
+implementations. `resolve` takes the string specifier from the source, the
+referring specifier, and the dependency kind. It is expected to return a result
+with the resolved specifier.
 
 `resolve_types` takes a specifier and is expected to return a result with an
 optional module specifier and optional source range of the types that should be
@@ -99,14 +99,6 @@ Currently part of the the `deno_core` crate. `deno_graph` explicitly doesn't
 depend on `deno_core` or any part of the Deno CLI. It exports the type alias
 publicably for re-use by other crates.
 
-#### `MediaType` enum
-
-Currently part of the `deno_cli` crate, this enum represents the various media
-types that the Deno CLI can resolve and handle. Since `deno_graph` doesn't rely
-upon any part of the Deno CLI, it was necessary to implement this in this crate,
-and the implementation here will eventually replace the implementation in
-`deno_cli`.
-
 ## Usage from Deno CLI or Deploy
 
 This repository includes a compiled version of the Rust crate as Web Assembly
@@ -129,19 +121,19 @@ will serve as the roots of the module graph.
 There are several options that can be passed the function in the optional
 `options` argument:
 
-- `load` - a callback function that takes a URL string and a flag indicating if
-  the dependency was required dynamically (e.g.
-  `const m = await import("mod.ts")`) and resolves with a `LoadResponse`. By
-  default a `load()` function that will attempt to load local modules via
+- `load` - a callback function that takes a URL string, a flag indicating if the
+  dependency was required dynamically (e.g. `const m = await import("mod.ts")`),
+  and a dependency kind. It resolves with a `LoadResponse`. By default a
+  `load()` function that will attempt to load local modules via
   `Deno.readFile()` and load remote modules via `fetch()`.
 - `cacheInfo` - a callback function that takes a URL string and returns a
   `CacheInfo` object. In the Deno CLI, the `DENO_DIR` cache info is passed back
   using this interface. If the function is not provided, the information is not
   present in the module graph.
-- `resolve` - a callback function that takes a string and a referring URL string
-  and returns a fully qualified URL string. In the Deno CLI, import maps provide
-  this callback functionality of potentially resolving modules differently than
-  the default resolution.
+- `resolve` - a callback function that takes a string, a referring URL string,
+  and a dependency kind enum/string. It returns a fully qualified URL string. In
+  the Deno CLI, import maps provide this callback functionality of potentially
+  resolving modules differently than the default resolution.
 - `resolveTypes` - a callback function that takes a URL string and returns the
   types dependency for the specifier, along with optionally the source of the
   types dependency. This only gets called in situations where the module is
