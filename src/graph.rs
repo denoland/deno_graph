@@ -496,6 +496,10 @@ fn to_result(
 ) -> Option<ModuleResult> {
   match module_slot {
     ModuleSlot::Err(err) => Some((specifier.clone(), Err(err.clone()))),
+    ModuleSlot::Missing => Some((
+      specifier.clone(),
+      Err(ModuleGraphError::Missing(specifier.clone())),
+    )),
     ModuleSlot::Module(module) => Some((
       specifier.clone(),
       Ok((module.specifier.clone(), module.media_type)),
@@ -782,6 +786,9 @@ impl ModuleGraph {
     match self.module_slots.get(&specifier) {
       Some(ModuleSlot::Module(module)) => Ok(Some(module)),
       Some(ModuleSlot::Err(err)) => Err(err.clone()),
+      Some(ModuleSlot::Missing) => {
+        Err(ModuleGraphError::Missing(specifier.clone()))
+      }
       _ => Ok(None),
     }
   }
@@ -1662,5 +1669,83 @@ mod tests {
     assert!(loader.loaded_foo);
     assert!(loader.loaded_bar);
     assert!(loader.loaded_baz);
+  }
+
+  #[tokio::test]
+  async fn missing_module_is_error() {
+    struct TestLoader {
+      loaded_foo: bool,
+      loaded_bar: bool,
+    }
+    impl Loader for TestLoader {
+      fn load(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        _is_dynamic: bool,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///foo.js" => {
+            self.loaded_foo = true;
+            Box::pin(async move {
+              (
+                specifier.clone(),
+                Ok(Some(LoadResponse {
+                  specifier: specifier.clone(),
+                  maybe_headers: None,
+                  content: Arc::new(
+                    "await import('file:///bar.js')".to_string(),
+                  ),
+                })),
+              )
+            })
+          }
+          "file:///bar.js" => {
+            self.loaded_bar = true;
+            Box::pin(async move { (specifier.clone(), Ok(None)) })
+          }
+          _ => unreachable!(),
+        }
+      }
+    }
+    let mut loader = TestLoader {
+      loaded_foo: false,
+      loaded_bar: false,
+    };
+    let source_parser = DefaultSourceParser::new();
+    let builder = Builder::new(
+      vec![Url::parse("file:///foo.js").unwrap()],
+      false,
+      &mut loader,
+      None,
+      None,
+      &source_parser,
+    );
+    let graph = builder.build(None).await;
+    assert!(loader.loaded_foo);
+    assert!(loader.loaded_bar);
+    assert!(graph
+      .try_get(&Url::parse("file:///foo.js").unwrap())
+      .is_ok());
+    assert!(matches!(
+      graph
+        .try_get(&Url::parse("file:///bar.js").unwrap())
+        .unwrap_err(),
+      ModuleGraphError::Missing(..)
+    ));
+    let specifiers = graph.specifiers();
+    assert_eq!(specifiers.len(), 2);
+    assert!(specifiers
+      .get(&Url::parse("file:///foo.js").unwrap())
+      .unwrap()
+      .is_ok());
+    assert!(matches!(
+      specifiers
+        .get(&Url::parse("file:///bar.js").unwrap())
+        .unwrap()
+        .as_ref()
+        .unwrap_err(),
+      ModuleGraphError::Missing(..)
+    ));
   }
 }
