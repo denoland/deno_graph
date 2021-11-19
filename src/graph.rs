@@ -521,6 +521,8 @@ pub struct ModuleGraph {
   #[serde(serialize_with = "serialize_modules", rename = "modules")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
+  #[serde(skip_serializing)]
+  referrer_map: HashMap<ModuleSpecifier, Range>,
 }
 
 impl ModuleGraph {
@@ -533,6 +535,7 @@ impl ModuleGraph {
       maybe_locker,
       module_slots: Default::default(),
       redirects: Default::default(),
+      referrer_map: HashMap::new(),
     }
   }
 
@@ -629,6 +632,13 @@ impl ModuleGraph {
       }
     }
     map
+  }
+
+  // Get the first encountered import location of a module. Returns `None` for
+  // roots and modules not present in the graph.
+  #[cfg(feature = "rust")]
+  pub fn get_referrer(&self, specifier: &ModuleSpecifier) -> Option<Range> {
+    self.referrer_map.get(specifier).cloned()
   }
 
   /// Resolve a specifier from the module graph following any possible redirects
@@ -1307,6 +1317,15 @@ impl<'a> Builder<'a> {
           self.graph.module_slots.remove(&requested_specifier);
         }
       }
+      if let Some(referrer) =
+        self.graph.referrer_map.get(&requested_specifier).cloned()
+      {
+        self
+          .graph
+          .referrer_map
+          .entry(specifier.clone())
+          .or_insert(referrer);
+      }
       self
         .graph
         .redirects
@@ -1326,21 +1345,21 @@ impl<'a> Builder<'a> {
 
     if let ModuleSlot::Module(module) = &module_slot {
       for dep in module.dependencies.values() {
-        // Queue up dynamic dependencies to be visited later, unless we are
-        // already visiting a dynamic branch.
-        if dep.is_dynamic && !self.in_dynamic_branch {
-          if let Some(Ok((specifier, _))) = &dep.maybe_code {
-            self.dynamic_branches.insert(specifier.clone());
-          }
-          if let Some(Ok((specifier, _))) = &dep.maybe_type {
-            self.dynamic_branches.insert(specifier.clone());
-          }
-        } else {
-          if let Some(Ok((specifier, _))) = &dep.maybe_code {
-            self.load(specifier, self.in_dynamic_branch);
-          }
-          if let Some(Ok((specifier, _))) = &dep.maybe_type {
-            self.load(specifier, self.in_dynamic_branch);
+        #[allow(clippy::manual_flatten)]
+        for resolution in [&dep.maybe_code, &dep.maybe_type] {
+          if let Some(Ok((specifier, range))) = resolution {
+            self
+              .graph
+              .referrer_map
+              .entry(specifier.clone())
+              .or_insert_with(|| range.clone());
+            // Queue up dynamic dependencies to be visited later, unless we are
+            // already visiting a dynamic branch.
+            if dep.is_dynamic && !self.in_dynamic_branch {
+              self.dynamic_branches.insert(specifier.clone());
+            } else {
+              self.load(specifier, self.in_dynamic_branch);
+            }
           }
         }
       }
@@ -1747,5 +1766,95 @@ mod tests {
         .unwrap_err(),
       ModuleGraphError::Missing(..)
     ));
+  }
+
+  #[tokio::test]
+  async fn get_referrer() {
+    struct TestLoader;
+    impl Loader for TestLoader {
+      fn load(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        _is_dynamic: bool,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///foo.js" => Box::pin(async move {
+            (
+              specifier.clone(),
+              Ok(Some(LoadResponse {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: Arc::new("await import('file:///bar.js')".to_string()),
+              })),
+            )
+          }),
+          "file:///bar.js" => Box::pin(async move {
+            (
+              specifier.clone(),
+              Ok(Some(LoadResponse {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: Arc::new("import 'file:///baz.js'".to_string()),
+              })),
+            )
+          }),
+          "file:///baz.js" => Box::pin(async move {
+            (
+              specifier.clone(),
+              Ok(Some(LoadResponse {
+                specifier: Url::parse("file:///baz_actual.js").unwrap(),
+                maybe_headers: None,
+                content: Arc::new("console.log('Hello, world!')".to_string()),
+              })),
+            )
+          }),
+          _ => unreachable!(),
+        }
+      }
+    }
+    let mut loader = TestLoader;
+    let source_parser = DefaultSourceParser::new();
+    let builder = Builder::new(
+      vec![Url::parse("file:///foo.js").unwrap()],
+      false,
+      &mut loader,
+      None,
+      None,
+      &source_parser,
+    );
+    let graph = builder.build(None).await;
+    assert_eq!(
+      graph.get_referrer(&Url::parse("file:///bar.js").unwrap()),
+      Some(Range {
+        specifier: Url::parse("file:///foo.js").unwrap(),
+        start: Position {
+          line: 0,
+          character: 13
+        },
+        end: Position {
+          line: 0,
+          character: 29
+        }
+      })
+    );
+    assert_eq!(
+      graph.get_referrer(&Url::parse("file:///baz.js").unwrap()),
+      Some(Range {
+        specifier: Url::parse("file:///bar.js").unwrap(),
+        start: Position {
+          line: 0,
+          character: 7
+        },
+        end: Position {
+          line: 0,
+          character: 23
+        }
+      })
+    );
+    assert_eq!(
+      graph.get_referrer(&Url::parse("file:///baz_actual.js").unwrap()),
+      graph.get_referrer(&Url::parse("file:///baz.js").unwrap()),
+    );
   }
 }
