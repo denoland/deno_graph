@@ -612,6 +612,18 @@ impl ModuleGraph {
       .collect()
   }
 
+  #[cfg(feature = "rust")]
+  pub fn synthetic_modules(&self) -> Vec<&SyntheticModule> {
+    self
+      .module_slots
+      .iter()
+      .filter_map(|(_, ms)| match ms {
+        ModuleSlot::SyntheticModule(m) => Some(m),
+        _ => None,
+      })
+      .collect()
+  }
+
   /// Returns a map of the fully resolved dependency graph of the module graph.
   #[cfg(feature = "rust")]
   pub fn resolution_map(
