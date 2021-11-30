@@ -401,8 +401,8 @@ impl Module {
 /// the graph from configuration meta data, like TypeScript `"types"`.
 #[derive(Debug, Clone)]
 pub struct SyntheticModule {
-  dependencies: BTreeMap<String, Resolved>,
-  specifier: ModuleSpecifier,
+  pub dependencies: BTreeMap<String, Resolved>,
+  pub specifier: ModuleSpecifier,
 }
 
 impl SyntheticModule {
