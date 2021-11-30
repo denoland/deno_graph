@@ -401,8 +401,8 @@ impl Module {
 /// the graph from configuration meta data, like TypeScript `"types"`.
 #[derive(Debug, Clone)]
 pub struct SyntheticModule {
-  dependencies: BTreeMap<String, Resolved>,
-  specifier: ModuleSpecifier,
+  pub dependencies: BTreeMap<String, Resolved>,
+  pub specifier: ModuleSpecifier,
 }
 
 impl SyntheticModule {
@@ -607,6 +607,18 @@ impl ModuleGraph {
       .iter()
       .filter_map(|(_, ms)| match ms {
         ModuleSlot::Module(m) => Some(m),
+        _ => None,
+      })
+      .collect()
+  }
+
+  #[cfg(feature = "rust")]
+  pub fn synthetic_modules(&self) -> Vec<&SyntheticModule> {
+    self
+      .module_slots
+      .iter()
+      .filter_map(|(_, ms)| match ms {
+        ModuleSlot::SyntheticModule(m) => Some(m),
         _ => None,
       })
       .collect()
