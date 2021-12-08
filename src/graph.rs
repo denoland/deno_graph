@@ -462,6 +462,7 @@ impl Serialize for SyntheticModule {
   }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
 pub(crate) enum ModuleSlot {
   /// A module, with source code.
