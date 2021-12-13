@@ -56,17 +56,15 @@ impl Loader for JsLoader {
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
-    maybe_assert_type: Option<&str>,
   ) -> LoadFuture {
     if specifier.scheme() == "data" {
       Box::pin(future::ready((specifier.clone(), load_data_url(specifier))))
     } else {
       let specifier = specifier.clone();
-      let this = JsValue::null();
+      let context = JsValue::null();
       let arg1 = JsValue::from(specifier.to_string());
       let arg2 = JsValue::from(is_dynamic);
-      let arg3 = JsValue::from(maybe_assert_type);
-      let result = self.load.call3(&this, &arg1, &arg2, &arg3);
+      let result = self.load.call2(&context, &arg1, &arg2);
       let f = async move {
         let response = match result {
           Ok(result) => {

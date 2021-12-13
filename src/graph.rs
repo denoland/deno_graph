@@ -1389,11 +1389,7 @@ impl<'a> Builder<'a> {
           .pending_assert_types
           .insert(specifier.clone(), assert_type.to_string());
       }
-      self.pending.push(self.loader.load(
-        specifier,
-        is_dynamic,
-        maybe_assert_type,
-      ));
+      self.pending.push(self.loader.load(specifier, is_dynamic));
     }
   }
 
@@ -1721,13 +1717,11 @@ mod tests {
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
-        maybe_assert_type: Option<&str>,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
           "file:///foo.js" => {
             assert!(!is_dynamic);
-            assert!(maybe_assert_type.is_none());
             self.loaded_foo = true;
             Box::pin(async move {
               (
@@ -1744,7 +1738,6 @@ mod tests {
           }
           "file:///bar.js" => {
             assert!(is_dynamic);
-            assert!(maybe_assert_type.is_none());
             self.loaded_bar = true;
             Box::pin(async move {
               (
@@ -1759,7 +1752,6 @@ mod tests {
           }
           "file:///baz.js" => {
             assert!(is_dynamic);
-            assert!(maybe_assert_type.is_none());
             self.loaded_baz = true;
             Box::pin(async move {
               (
@@ -1804,7 +1796,6 @@ mod tests {
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
-        _maybe_assert_type: Option<&str>,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -1869,7 +1860,6 @@ mod tests {
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
-        _maybe_assert_type: Option<&str>,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
