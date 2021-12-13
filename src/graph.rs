@@ -356,9 +356,9 @@ impl Dependency {
 #[derive(Debug, Clone, Serialize)]
 #[serde(untagged)]
 pub enum Module {
-  Es(EsModule),
-  Asserted(AssertedModule),
-  Synthetic(SyntheticModule),
+  Es(Box<EsModule>),
+  Asserted(Box<AssertedModule>),
+  Synthetic(Box<SyntheticModule>),
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -677,7 +677,7 @@ impl ModuleGraph {
       .module_slots
       .iter()
       .filter_map(|(_, ms)| match ms {
-        ModuleSlot::Module(Module::Synthetic(m)) => Some(m),
+        ModuleSlot::Module(Module::Synthetic(m)) => Some(m.as_ref()),
         _ => None,
       })
       .collect()
@@ -1020,11 +1020,13 @@ pub(crate) fn parse_module(
   // otherwise we just continue
   match maybe_assert_type {
     Some("json") if media_type == MediaType::Json => {
-      return ModuleSlot::Module(Module::Asserted(AssertedModule::new(
-        specifier.clone(),
-        "json".to_string(),
-        MediaType::Json,
-        content,
+      return ModuleSlot::Module(Module::Asserted(Box::new(
+        AssertedModule::new(
+          specifier.clone(),
+          "json".to_string(),
+          MediaType::Json,
+          content,
+        ),
       )));
     }
     _ => (),
@@ -1223,7 +1225,7 @@ pub(crate) fn parse_module_from_ast(
   }
 
   // Return the module as a valid module
-  Module::Es(module)
+  Module::Es(Box::new(module))
 }
 
 fn get_media_type(
@@ -1306,7 +1308,7 @@ impl<'a> Builder<'a> {
         }
         self.graph.module_slots.insert(
           referrer,
-          ModuleSlot::Module(Module::Synthetic(synthetic_module)),
+          ModuleSlot::Module(Module::Synthetic(Box::new(synthetic_module))),
         );
       }
     }
