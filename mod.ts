@@ -32,11 +32,17 @@ export interface CreateGraphOptions {
    * returned.
    *
    * @param specifier The URL string of the resource to be loaded and resolved
-   * @param isDynamic A flag that indicates if the module was being loaded dynamically
+   * @param isDynamic A flag that indicates if the module was being loaded
+   *   dynamically
+   * @param assertType When an import is being loaded with an import assertion,
+   *   value of the `type` will be present. If not present an import assertion
+   *   was not used, or in the case of dynamic imports, the import assertion
+   *   could not be statically determined.
    */
   load?(
     specifier: string,
     isDynamic: boolean,
+    assertType?: string,
   ): Promise<LoadResponse | undefined>;
   /** When identifying a `@jsxImportSource` pragma, what module name will be
    * appended to the import source. This defaults to `jsx-runtime`. */

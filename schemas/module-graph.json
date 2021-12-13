@@ -60,6 +60,10 @@
             "$ref": "#/definitions/dependency"
           }
         },
+        "assertType": {
+          "type": "string",
+          "description": "Populated when an ES module imported the module with an asserted type."
+        },
         "typeDependency": {
           "$ref": "#/definitions/typeDependency",
           "description": "The type dependency for the module. This is set when the file contains a reference to its types or the module was supplied with a types header."
@@ -144,6 +148,10 @@
         "type": {
           "$ref": "#/definitions/resolvedDependency",
           "description": "The fully qualified module specifier (URL) for the type only dependency."
+        },
+        "assertType": {
+          "type": "string",
+          "description": "A value that provides the type attribute of an import assertion."
         }
       }
     },

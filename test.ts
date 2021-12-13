@@ -119,7 +119,7 @@ Deno.test({
     const rootModule = graph.get(graph.roots[0]);
     assert(rootModule);
     assertEquals(rootModule.mediaType, "TypeScript");
-    assertEquals(Object.entries(rootModule.dependencies).length, 3);
+    assertEquals(Object.entries(rootModule.dependencies ?? {}).length, 3);
   },
 });
 
@@ -279,7 +279,10 @@ Deno.test({
         jsxImportSourceModule: "jsx-dev-runtime",
       },
     );
-    assert(module.dependencies["http://example.com/preact/jsx-dev-runtime"]);
+    assert(
+      module.dependencies &&
+        module.dependencies["http://example.com/preact/jsx-dev-runtime"],
+    );
   },
 });
 
@@ -306,5 +309,60 @@ Deno.test({
       Error,
       "The module's source code could not be parsed",
     );
+  },
+});
+
+Deno.test({
+  name: "parseModule() - import assertions",
+  fn() {
+    const module = parseModule(
+      "file:///a/test01.js",
+      `
+        import a from "./a.json" assert { type: "json" };
+        await import("./b.json", { assert: { type: "json" } });
+      `,
+    );
+    assertEquals(module.toJSON(), {
+      "dependencies": [
+        {
+          "specifier": "./a.json",
+          "code": {
+            "specifier": "file:///a/a.json",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 22,
+              },
+              "end": {
+                "line": 1,
+                "character": 32,
+              },
+            },
+          },
+          "assertionType": "json",
+        },
+        {
+          "specifier": "./b.json",
+          "code": {
+            "specifier": "file:///a/b.json",
+            "span": {
+              "start": {
+                "line": 2,
+                "character": 21,
+              },
+              "end": {
+                "line": 2,
+                "character": 31,
+              },
+            },
+          },
+          "isDynamic": true,
+          "assertionType": "json",
+        },
+      ],
+      "mediaType": "JavaScript",
+      "size": 129,
+      "specifier": "file:///a/test01.js",
+    });
   },
 });

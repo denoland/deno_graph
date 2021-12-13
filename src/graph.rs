@@ -310,6 +310,8 @@ pub struct Dependency {
   pub maybe_type: Resolved,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
+  #[serde(rename = "assertType", skip_serializing_if = "Option::is_none")]
+  pub maybe_assert_type: Option<String>,
 }
 
 #[cfg(feature = "rust")]
@@ -352,8 +354,16 @@ impl Dependency {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(untagged)]
+pub enum Module {
+  Es(EsModule),
+  Asserted(AssertedModule),
+  Synthetic(SyntheticModule),
+}
+
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Module {
+pub struct EsModule {
   #[serde(serialize_with = "serialize_dependencies")]
   pub dependencies: BTreeMap<String, Dependency>,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
@@ -374,7 +384,7 @@ pub struct Module {
   pub specifier: ModuleSpecifier,
 }
 
-impl Module {
+impl EsModule {
   fn new(specifier: ModuleSpecifier, parsed_source: ParsedSource) -> Self {
     let source = parsed_source.source().text();
     Self {
@@ -462,13 +472,49 @@ impl Serialize for SyntheticModule {
   }
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssertedModule {
+  /// The asserted type of the module when it was imported
+  pub(crate) assert_type: String,
+  #[serde(flatten, skip_serializing_if = "Option::is_none")]
+  pub maybe_cache_info: Option<CacheInfo>,
+  #[serde(rename = "checksum", skip_serializing_if = "Option::is_none")]
+  pub maybe_checksum: Option<String>,
+  pub media_type: MediaType,
+  #[serde(rename = "size", serialize_with = "serialize_source")]
+  pub source: Arc<String>,
+  pub specifier: ModuleSpecifier,
+}
+
+impl AssertedModule {
+  fn new(
+    specifier: ModuleSpecifier,
+    assert_type: String,
+    media_type: MediaType,
+    source: Arc<String>,
+  ) -> Self {
+    Self {
+      assert_type,
+      maybe_cache_info: None,
+      maybe_checksum: None,
+      media_type,
+      source,
+      specifier,
+    }
+  }
+
+  /// Return the size in bytes of the content of the module.
+  pub fn size(&self) -> usize {
+    self.source.as_bytes().len()
+  }
+}
+
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
 pub(crate) enum ModuleSlot {
   /// A module, with source code.
   Module(Module),
-  /// A module "injected" into the graph without source code.
-  SyntheticModule(SyntheticModule),
   /// When trying to load or parse the module, an error occurred.
   Err(ModuleGraphError),
   /// The module was requested but could not be loaded.
@@ -501,7 +547,11 @@ fn to_result(
       specifier.clone(),
       Err(ModuleGraphError::Missing(specifier.clone())),
     )),
-    ModuleSlot::Module(module) => Some((
+    ModuleSlot::Module(Module::Es(module)) => Some((
+      specifier.clone(),
+      Ok((module.specifier.clone(), module.media_type)),
+    )),
+    ModuleSlot::Module(Module::Asserted(module)) => Some((
       specifier.clone(),
       Ok((module.specifier.clone(), module.media_type)),
     )),
@@ -583,10 +633,18 @@ impl ModuleGraph {
     if let Some(locker) = &self.maybe_locker {
       let mut locker = locker.borrow_mut();
       for (_, module_slot) in self.module_slots.iter() {
-        if let ModuleSlot::Module(module) = module_slot {
-          if !locker.check_or_insert(&module.specifier, &module.source) {
+        if let Some((specifier, source)) = match module_slot {
+          ModuleSlot::Module(Module::Es(module)) => {
+            Some((&module.specifier, module.source.as_ref()))
+          }
+          ModuleSlot::Module(Module::Asserted(module)) => {
+            Some((&module.specifier, module.source.as_ref()))
+          }
+          _ => None,
+        } {
+          if !locker.check_or_insert(specifier, source) {
             return Err(ModuleGraphError::InvalidSource(
-              module.specifier.clone(),
+              specifier.clone(),
               locker.get_filename(),
             ));
           }
@@ -619,7 +677,7 @@ impl ModuleGraph {
       .module_slots
       .iter()
       .filter_map(|(_, ms)| match ms {
-        ModuleSlot::SyntheticModule(m) => Some(m),
+        ModuleSlot::Module(Module::Synthetic(m)) => Some(m),
         _ => None,
       })
       .collect()
@@ -632,7 +690,7 @@ impl ModuleGraph {
   ) -> HashMap<ModuleSpecifier, HashMap<String, Resolved>> {
     let mut map = HashMap::new();
     for (referrer, module_slot) in &self.module_slots {
-      if let ModuleSlot::Module(module) = module_slot {
+      if let ModuleSlot::Module(Module::Es(module)) = module_slot {
         let deps = module
           .dependencies
           .iter()
@@ -682,7 +740,7 @@ impl ModuleGraph {
     let referrer = self.resolve(referrer);
     let referring_module_slot = self.module_slots.get(&referrer)?;
     let maybe_specifier = match referring_module_slot {
-      ModuleSlot::Module(referring_module) => {
+      ModuleSlot::Module(Module::Es(referring_module)) => {
         let dependency = referring_module.dependencies.get(specifier)?;
         let (maybe_first, maybe_second) = if prefer_types {
           (&dependency.maybe_type, &dependency.maybe_code)
@@ -705,7 +763,7 @@ impl ModuleGraph {
           None
         }
       }
-      ModuleSlot::SyntheticModule(referring_module) => {
+      ModuleSlot::Module(Module::Synthetic(referring_module)) => {
         match referring_module.dependencies.get(specifier) {
           Some(Some(Ok((specifier, _)))) => {
             if prefer_types {
@@ -727,7 +785,8 @@ impl ModuleGraph {
     // there, and so we will return the final final specifier.
     let specifier = maybe_specifier?;
     match self.module_slots.get(&self.resolve(specifier)) {
-      Some(ModuleSlot::Module(m)) => Some(&m.specifier),
+      Some(ModuleSlot::Module(Module::Es(m))) => Some(&m.specifier),
+      Some(ModuleSlot::Module(Module::Asserted(m))) => Some(&m.specifier),
       _ => None,
     }
   }
@@ -739,7 +798,9 @@ impl ModuleGraph {
     &self,
     specifier: &ModuleSpecifier,
   ) -> Option<&ModuleSpecifier> {
-    if let Some(ModuleSlot::Module(module)) = self.module_slots.get(specifier) {
+    if let Some(ModuleSlot::Module(Module::Es(module))) =
+      self.module_slots.get(specifier)
+    {
       if let Some((_, Some(Ok((specifier, _))))) =
         &module.maybe_types_dependency
       {
@@ -753,7 +814,7 @@ impl ModuleGraph {
     if let Some(locker) = &self.maybe_locker {
       let locker = locker.borrow();
       for (_, module_slot) in self.module_slots.iter_mut() {
-        if let ModuleSlot::Module(module) = module_slot {
+        if let ModuleSlot::Module(Module::Es(module)) = module_slot {
           module.maybe_checksum =
             Some(locker.get_checksum(module.source.as_str()));
         }
@@ -838,7 +899,7 @@ impl ModuleGraph {
       seen.insert(specifier.clone());
       let should_error = (is_type && types_only) || (!is_type && !types_only);
       match get_module(specifier) {
-        Ok(Some(module)) => {
+        Ok(Some(Module::Es(module))) => {
           if let Some((_, Some(Ok((specifier, _))))) =
             &module.maybe_types_dependency
           {
@@ -949,11 +1010,27 @@ pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<String>,
+  maybe_assert_type: Option<&str>,
   maybe_resolver: Option<&dyn Resolver>,
   source_parser: &dyn SourceParser,
   is_root: bool,
 ) -> ModuleSlot {
   let media_type = get_media_type(specifier, maybe_headers);
+  // here we check any known import assertions and add them to the graph,
+  // otherwise we just continue
+  match maybe_assert_type {
+    Some("json") if media_type == MediaType::Json => {
+      return ModuleSlot::Module(Module::Asserted(AssertedModule::new(
+        specifier.clone(),
+        "json".to_string(),
+        MediaType::Json,
+        content,
+      )));
+    }
+    _ => (),
+  }
+
+  // Here we check for known ES Modules that we will analyze the dependencies of
   match &media_type {
     MediaType::JavaScript
     | MediaType::Mjs
@@ -1018,7 +1095,7 @@ pub(crate) fn parse_module_from_ast(
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Module {
   // Init the module and determine its media type
-  let mut module = Module::new(specifier.clone(), parsed_source.clone());
+  let mut module = EsModule::new(specifier.clone(), parsed_source.clone());
   module.media_type = get_media_type(specifier, maybe_headers);
 
   // Analyze the TypeScript triple-slash references
@@ -1119,6 +1196,7 @@ pub(crate) fn parse_module_from_ast(
       .entry(desc.specifier.to_string())
       .or_default();
     dep.is_dynamic = desc.is_dynamic;
+    dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
     let resolved_dependency = resolve(
       &desc.specifier,
       &Range::from_swc_span(
@@ -1145,7 +1223,7 @@ pub(crate) fn parse_module_from_ast(
   }
 
   // Return the module as a valid module
-  module
+  Module::Es(module)
 }
 
 fn get_media_type(
@@ -1178,7 +1256,8 @@ pub(crate) struct Builder<'a> {
   loader: &'a mut dyn Loader,
   maybe_resolver: Option<&'a dyn Resolver>,
   pending: FuturesUnordered<LoadFuture>,
-  dynamic_branches: HashSet<ModuleSpecifier>,
+  pending_assert_types: HashMap<ModuleSpecifier, String>,
+  dynamic_branches: HashMap<ModuleSpecifier, Option<String>>,
   source_parser: &'a dyn SourceParser,
 }
 
@@ -1197,7 +1276,8 @@ impl<'a> Builder<'a> {
       loader,
       maybe_resolver,
       pending: FuturesUnordered::new(),
-      dynamic_branches: HashSet::new(),
+      pending_assert_types: HashMap::new(),
+      dynamic_branches: HashMap::new(),
       source_parser,
     }
   }
@@ -1208,7 +1288,7 @@ impl<'a> Builder<'a> {
   ) -> ModuleGraph {
     let roots = self.graph.roots.clone();
     for root in roots {
-      self.load(&root, self.in_dynamic_branch);
+      self.load(&root, self.in_dynamic_branch, None);
     }
 
     // Process any imports that are being added to the graph.
@@ -1222,19 +1302,20 @@ impl<'a> Builder<'a> {
         for (specifier, _) in
           synthetic_module.dependencies.values().flatten().flatten()
         {
-          self.load(specifier, self.in_dynamic_branch);
+          self.load(specifier, self.in_dynamic_branch, None);
         }
-        self
-          .graph
-          .module_slots
-          .insert(referrer, ModuleSlot::SyntheticModule(synthetic_module));
+        self.graph.module_slots.insert(
+          referrer,
+          ModuleSlot::Module(Module::Synthetic(synthetic_module)),
+        );
       }
     }
 
     loop {
       match self.pending.next().await {
         Some((specifier, Ok(Some(response)))) => {
-          self.visit(specifier, response)
+          let maybe_assert_type = self.pending_assert_types.remove(&specifier);
+          self.visit(specifier, response, maybe_assert_type)
         }
         Some((specifier, Ok(None))) => {
           self
@@ -1263,9 +1344,11 @@ impl<'a> Builder<'a> {
         //   visiting a dynamic branch.
         if !self.in_dynamic_branch {
           self.in_dynamic_branch = true;
-          for specifier in std::mem::take(&mut self.dynamic_branches) {
+          for (specifier, maybe_assert_type) in
+            std::mem::take(&mut self.dynamic_branches)
+          {
             if !self.graph.module_slots.contains_key(&specifier) {
-              self.load(&specifier, true);
+              self.load(&specifier, true, maybe_assert_type.as_deref());
             }
           }
         } else {
@@ -1276,7 +1359,7 @@ impl<'a> Builder<'a> {
 
     // Enrich with cache info from the loader
     for slot in self.graph.module_slots.values_mut() {
-      if let ModuleSlot::Module(ref mut module) = slot {
+      if let ModuleSlot::Module(Module::Es(ref mut module)) = slot {
         module.maybe_cache_info = self.loader.get_cache_info(&module.specifier);
       }
     }
@@ -1287,14 +1370,28 @@ impl<'a> Builder<'a> {
   }
 
   /// Enqueue a request to load the specifier via the loader.
-  fn load(&mut self, specifier: &ModuleSpecifier, is_dynamic: bool) {
+  fn load(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    is_dynamic: bool,
+    maybe_assert_type: Option<&str>,
+  ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     if !self.graph.module_slots.contains_key(specifier) {
       self
         .graph
         .module_slots
         .insert(specifier.clone(), ModuleSlot::Pending);
-      self.pending.push(self.loader.load(specifier, is_dynamic));
+      if let Some(assert_type) = &maybe_assert_type {
+        self
+          .pending_assert_types
+          .insert(specifier.clone(), assert_type.to_string());
+      }
+      self.pending.push(self.loader.load(
+        specifier,
+        is_dynamic,
+        maybe_assert_type,
+      ));
     }
   }
 
@@ -1303,6 +1400,7 @@ impl<'a> Builder<'a> {
     &mut self,
     requested_specifier: ModuleSpecifier,
     response: LoadResponse,
+    maybe_assert_type: Option<String>,
   ) {
     let maybe_headers = response.maybe_headers;
     let specifier = response.specifier.clone();
@@ -1327,28 +1425,41 @@ impl<'a> Builder<'a> {
       &specifier,
       maybe_headers.as_ref(),
       response.content,
+      maybe_assert_type.as_deref(),
       self.maybe_resolver,
       self.source_parser,
       is_root,
     );
 
-    if let ModuleSlot::Module(module) = &module_slot {
+    if let ModuleSlot::Module(Module::Es(module)) = &module_slot {
       for dep in module.dependencies.values() {
         // Queue up dynamic dependencies to be visited later, unless we are
         // already visiting a dynamic branch.
         if dep.is_dynamic && !self.in_dynamic_branch {
           if let Some(Ok((specifier, _))) = &dep.maybe_code {
-            self.dynamic_branches.insert(specifier.clone());
+            self
+              .dynamic_branches
+              .insert(specifier.clone(), dep.maybe_assert_type.clone());
           }
           if let Some(Ok((specifier, _))) = &dep.maybe_type {
-            self.dynamic_branches.insert(specifier.clone());
+            self
+              .dynamic_branches
+              .insert(specifier.clone(), dep.maybe_assert_type.clone());
           }
         } else {
           if let Some(Ok((specifier, _))) = &dep.maybe_code {
-            self.load(specifier, self.in_dynamic_branch);
+            self.load(
+              specifier,
+              self.in_dynamic_branch,
+              dep.maybe_assert_type.as_deref(),
+            );
           }
           if let Some(Ok((specifier, _))) = &dep.maybe_type {
-            self.load(specifier, self.in_dynamic_branch);
+            self.load(
+              specifier,
+              self.in_dynamic_branch,
+              dep.maybe_assert_type.as_deref(),
+            );
           }
         }
       }
@@ -1356,7 +1467,7 @@ impl<'a> Builder<'a> {
       if let Some((_, Some(Ok((specifier, _))))) =
         &module.maybe_types_dependency
       {
-        self.load(specifier, false);
+        self.load(specifier, false, None);
       }
     }
     self.graph.module_slots.insert(specifier, module_slot);
@@ -1394,6 +1505,9 @@ impl<'a> Serialize for SerializeableDependency<'a> {
     if self.1.is_dynamic {
       map.serialize_entry("isDynamic", &self.1.is_dynamic)?;
     }
+    if self.1.maybe_assert_type.is_some() {
+      map.serialize_entry("assertionType", &self.1.maybe_assert_type)?;
+    }
     map.end()
   }
 }
@@ -1422,9 +1536,6 @@ impl<'a> Serialize for SerializeableModuleSlot<'a> {
   {
     match self.1 {
       ModuleSlot::Module(module) => Serialize::serialize(module, serializer),
-      ModuleSlot::SyntheticModule(synthetic_module) => {
-        Serialize::serialize(synthetic_module, serializer)
-      }
       ModuleSlot::Err(err) => {
         let mut state = serializer.serialize_struct("ModuleSlot", 2)?;
         state.serialize_field("specifier", self.0)?;
@@ -1541,8 +1652,8 @@ mod tests {
     let source_parser = ast::DefaultSourceParser::default();
     let content = Arc::new(r#"import * as b from "./b.ts";"#.to_string());
     let slot =
-      parse_module(&specifier, None, content, None, &source_parser, true);
-    if let ModuleSlot::Module(module) = slot {
+      parse_module(&specifier, None, content, None, None, &source_parser, true);
+    if let ModuleSlot::Module(Module::Es(module)) = slot {
       let maybe_dependency = module.dependencies.values().find_map(|d| {
         d.includes(&Position {
           line: 0,
@@ -1608,11 +1719,13 @@ mod tests {
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
+        maybe_assert_type: Option<&str>,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
           "file:///foo.js" => {
             assert!(!is_dynamic);
+            assert!(maybe_assert_type.is_none());
             self.loaded_foo = true;
             Box::pin(async move {
               (
@@ -1629,6 +1742,7 @@ mod tests {
           }
           "file:///bar.js" => {
             assert!(is_dynamic);
+            assert!(maybe_assert_type.is_none());
             self.loaded_bar = true;
             Box::pin(async move {
               (
@@ -1643,6 +1757,7 @@ mod tests {
           }
           "file:///baz.js" => {
             assert!(is_dynamic);
+            assert!(maybe_assert_type.is_none());
             self.loaded_baz = true;
             Box::pin(async move {
               (
@@ -1687,6 +1802,7 @@ mod tests {
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
+        _maybe_assert_type: Option<&str>,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -1751,6 +1867,7 @@ mod tests {
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
+        _maybe_assert_type: Option<&str>,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {

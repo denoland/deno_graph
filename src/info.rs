@@ -1,7 +1,9 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 use crate::colors;
+use crate::graph::AssertedModule;
 use crate::graph::Dependency;
+use crate::graph::EsModule;
 use crate::graph::Module;
 use crate::graph::ModuleGraph;
 use crate::graph::ModuleGraphError;
@@ -52,7 +54,7 @@ impl fmt::Display for ModuleGraph {
     }
     let root_specifier = self.resolve(&self.roots[0]);
     match self.module_slots.get(&root_specifier) {
-      Some(ModuleSlot::Module(root)) => {
+      Some(ModuleSlot::Module(Module::Es(root))) => {
         if let Some(cache_info) = &root.maybe_cache_info {
           if let Some(local) = &cache_info.local {
             writeln!(
@@ -78,12 +80,14 @@ impl fmt::Display for ModuleGraph {
         let total_size: f64 = self
           .module_slots
           .iter()
-          .filter_map(|(_, m)| {
-            if let ModuleSlot::Module(module) = m {
+          .filter_map(|(_, m)| match m {
+            ModuleSlot::Module(Module::Es(module)) => {
               Some(module.size() as f64)
-            } else {
-              None
             }
+            ModuleSlot::Module(Module::Asserted(module)) => {
+              Some(module.size() as f64)
+            }
+            _ => None,
           })
           .sum();
         let dep_count = self
@@ -159,6 +163,56 @@ impl Dependency {
 }
 
 impl Module {
+  fn fmt_info<S: AsRef<str> + fmt::Display + Clone>(
+    &self,
+    f: &mut fmt::Formatter,
+    prefix: S,
+    last: bool,
+    graph: &ModuleGraph,
+    type_dep: bool,
+    seen: &mut HashSet<ModuleSpecifier>,
+  ) -> fmt::Result {
+    match self {
+      Self::Asserted(m) => m.fmt_info(f, prefix, last, seen),
+      Self::Es(m) => m.fmt_info(f, prefix, last, graph, type_dep, seen),
+      _ => Ok(()),
+    }
+  }
+}
+
+impl AssertedModule {
+  fn fmt_info<S: AsRef<str> + fmt::Display + Clone>(
+    &self,
+    f: &mut fmt::Formatter,
+    prefix: S,
+    last: bool,
+    seen: &mut HashSet<ModuleSpecifier>,
+  ) -> fmt::Result {
+    let was_seen = seen.contains(&self.specifier);
+    let (specifier_str, size_str) = if was_seen {
+      let specifier_str = colors::gray(&self.specifier).to_string();
+      (specifier_str, colors::gray(" *").to_string())
+    } else {
+      let specifier_str = self.specifier.to_string();
+      let size_str =
+        colors::gray(format!(" ({})", human_size(self.size() as f64)))
+          .to_string();
+      (specifier_str, size_str)
+    };
+
+    seen.insert(self.specifier.clone());
+
+    fmt_info_msg(
+      f,
+      prefix,
+      last,
+      false,
+      format!("{}{}", specifier_str, size_str),
+    )
+  }
+}
+
+impl EsModule {
   fn fmt_info<S: AsRef<str> + fmt::Display + Clone>(
     &self,
     f: &mut fmt::Formatter,
@@ -533,6 +587,77 @@ https://deno.land/x/example/a.ts (129B)
 ├── https://deno.land/x/example/f.d.ts (22B)
 └─┬ https://deno.land/x/example/g.js (21B)
   └── https://deno.land/x/example/g.d.ts (20B)
+"#
+    );
+  }
+
+  #[tokio::test]
+  async fn test_info_graph_import_assertion() {
+    let mut loader = MemoryLoader::new(
+      vec![
+        (
+          "https://deno.land/x/example/a.ts",
+          Ok((
+            "https://deno.land/x/example/a.ts",
+            Some(vec![("content-type", "application/typescript")]),
+            r#"import b from "./b.json" assert { type: "json" };
+            const c = await import("./c.json", { assert: { type: "json" } });
+            "#,
+          )),
+        ),
+        (
+          "https://deno.land/x/example/b.json",
+          Ok((
+            "https://deno.land/x/example/b.json",
+            Some(vec![("content-type", "application/json")]),
+            r#"{"b":"c"}"#,
+          )),
+        ),
+        (
+          "https://deno.land/x/example/c.json",
+          Ok((
+            "https://deno.land/x/example/c.json",
+            Some(vec![("content-type", "application/json")]),
+            r#"{"c":1}"#,
+          )),
+        ),
+      ],
+      vec![(
+        "https://deno.land/x/example/a.ts",
+        CacheInfo {
+          local: Some(PathBuf::from(
+            "/cache/deps/https/deno.land/x/example/a.ts",
+          )),
+          emit: Some(PathBuf::from(
+            "/cache/deps/https/deno.land/x/example/a.js",
+          )),
+          ..Default::default()
+        },
+      )],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
+    let source_parser = DefaultSourceParser::new();
+    let builder = Builder::new(
+      vec![root_specifier],
+      false,
+      &mut loader,
+      None,
+      None,
+      &source_parser,
+    );
+    let graph = builder.build(None).await;
+    println!("{}", graph);
+    assert_eq!(
+      strip_ansi_codes(format!("{}", graph)),
+      r#"local: /cache/deps/https/deno.land/x/example/a.ts
+emit: /cache/deps/https/deno.land/x/example/a.js
+type: TypeScript
+dependencies: 2 unique (total 156B)
+
+https://deno.land/x/example/a.ts (140B)
+├── https://deno.land/x/example/b.json (9B)
+└── https://deno.land/x/example/c.json (7B)
 "#
     );
   }

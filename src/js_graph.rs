@@ -16,6 +16,7 @@ use crate::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
 
 use anyhow::anyhow;
 use anyhow::Result;
+use deno_ast::MediaType;
 use futures::future;
 use serde::Deserialize;
 use serde::Serialize;
@@ -55,15 +56,17 @@ impl Loader for JsLoader {
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
+    maybe_assert_type: Option<&str>,
   ) -> LoadFuture {
     if specifier.scheme() == "data" {
       Box::pin(future::ready((specifier.clone(), load_data_url(specifier))))
     } else {
       let specifier = specifier.clone();
       let this = JsValue::null();
-      let arg0 = JsValue::from(specifier.to_string());
-      let arg1 = JsValue::from(is_dynamic);
-      let result = self.load.call2(&this, &arg0, &arg1);
+      let arg1 = JsValue::from(specifier.to_string());
+      let arg2 = JsValue::from(is_dynamic);
+      let arg3 = JsValue::from(maybe_assert_type);
+      let result = self.load.call3(&this, &arg1, &arg2, &arg3);
       let f = async move {
         let response = match result {
           Ok(result) => {
@@ -317,54 +320,92 @@ pub struct Module(pub(crate) graph::Module);
 
 #[wasm_bindgen]
 impl Module {
+  #[wasm_bindgen(getter, js_name = assertType)]
+  pub fn assert_type(&self) -> Option<String> {
+    match &self.0 {
+      graph::Module::Asserted(module) => Some(module.assert_type.clone()),
+      _ => None,
+    }
+  }
+
   #[wasm_bindgen(getter, js_name = cacheInfo)]
   pub fn cache_info(&self) -> JsValue {
+    let maybe_cache_info = match &self.0 {
+      graph::Module::Es(module) => module.maybe_cache_info.clone(),
+      graph::Module::Asserted(module) => module.maybe_cache_info.clone(),
+      _ => None,
+    };
     let serializer =
       serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    self.0.maybe_cache_info.serialize(&serializer).unwrap()
+    maybe_cache_info.serialize(&serializer).unwrap()
   }
 
   #[wasm_bindgen(getter)]
   pub fn checksum(&self) -> Option<String> {
-    self.0.maybe_checksum.clone()
+    match &self.0 {
+      graph::Module::Es(module) => module.maybe_checksum.clone(),
+      graph::Module::Asserted(module) => module.maybe_checksum.clone(),
+      _ => None,
+    }
   }
 
   #[wasm_bindgen(getter)]
   pub fn dependencies(&self) -> JsValue {
+    let maybe_dependencies = match &self.0 {
+      graph::Module::Es(module) => Some(module.dependencies.clone()),
+      _ => None,
+    };
     let serializer =
       serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    self.0.dependencies.serialize(&serializer).unwrap()
+    maybe_dependencies.serialize(&serializer).unwrap()
   }
 
   #[wasm_bindgen(getter, js_name = mediaType)]
   pub fn media_type(&self) -> String {
-    self.0.media_type.to_string()
+    match &self.0 {
+      graph::Module::Es(module) => module.media_type.to_string(),
+      graph::Module::Asserted(module) => module.media_type.to_string(),
+      _ => MediaType::Unknown.to_string(),
+    }
   }
 
   #[wasm_bindgen(getter)]
   pub fn size(&self) -> usize {
-    self.0.size()
+    match &self.0 {
+      graph::Module::Es(module) => module.size(),
+      graph::Module::Asserted(module) => module.size(),
+      _ => 0,
+    }
   }
 
   #[wasm_bindgen(getter)]
   pub fn source(&self) -> String {
-    self.0.source.to_string()
+    match &self.0 {
+      graph::Module::Es(module) => module.source.to_string(),
+      graph::Module::Asserted(module) => module.source.to_string(),
+      _ => "".to_string(),
+    }
   }
 
   #[wasm_bindgen(getter)]
   pub fn specifier(&self) -> String {
-    self.0.specifier.to_string()
+    match &self.0 {
+      graph::Module::Es(module) => module.specifier.to_string(),
+      graph::Module::Asserted(module) => module.specifier.to_string(),
+      graph::Module::Synthetic(module) => module.specifier.to_string(),
+    }
   }
 
   #[wasm_bindgen(getter, js_name = typesDependency)]
   pub fn maybe_types_dependency(&self) -> JsValue {
+    let maybe_types_dependency = match &self.0 {
+      graph::Module::Es(module) => &module.maybe_types_dependency,
+      _ => &None,
+    };
     let serializer =
       serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    graph::serialize_type_dependency(
-      &self.0.maybe_types_dependency,
-      &serializer,
-    )
-    .unwrap()
+    graph::serialize_type_dependency(maybe_types_dependency, &serializer)
+      .unwrap()
   }
 
   #[wasm_bindgen(js_name = toJSON)]

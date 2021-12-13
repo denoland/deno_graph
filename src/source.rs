@@ -70,6 +70,7 @@ pub trait Loader {
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
+    maybe_assert_type: Option<&str>,
   ) -> LoadFuture;
 }
 
@@ -198,6 +199,7 @@ impl Loader for MemoryLoader {
     &mut self,
     specifier: &ModuleSpecifier,
     _is_dynamic: bool,
+    _maybe_assert_type: Option<&str>,
   ) -> LoadFuture {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),
