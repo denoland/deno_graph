@@ -1267,13 +1267,11 @@ console.log(a);
         ],
         "modules": [
           {
-            "assertType": "json",
             "mediaType": "Json",
             "size": 9,
             "specifier": "file:///a/a.json"
           },
           {
-            "assertType": "json",
             "mediaType": "Json",
             "size": 7,
             "specifier": "file:///a/b.json"
@@ -1318,6 +1316,82 @@ console.log(a);
             ],
             "mediaType": "TypeScript",
             "size": 153,
+            "specifier": "file:///a/test01.ts"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
+
+  #[tokio::test]
+  async fn test_create_graph_mixed_assertions() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"
+            import a from "./a.json";
+            import b from "./a.json" assert { type: "json" };
+            "#,
+          )),
+        ),
+        (
+          "file:///a/a.json",
+          Ok(("file:///a/a.json", None, r#"{"a":"b"}"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test01.ts"
+        ],
+        "modules": [
+          {
+            "size": 9,
+            "mediaType": "Json",
+            "specifier": "file:///a/a.json"
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "./a.json",
+                "code": {
+                  "specifier": "file:///a/a.json",
+                  "span": {
+                    "start": {
+                      "line": 2,
+                      "character": 26
+                    },
+                    "end": {
+                      "line": 2,
+                      "character": 36
+                    }
+                  }
+                },
+                "assertionType": "json"
+              }
+            ],
+            "mediaType": "TypeScript",
+            "size": 113,
             "specifier": "file:///a/test01.ts"
           }
         ],

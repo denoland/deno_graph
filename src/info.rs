@@ -1,7 +1,6 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
 use crate::colors;
-use crate::graph::AssertedModule;
 use crate::graph::Dependency;
 use crate::graph::EsModule;
 use crate::graph::Module;
@@ -9,6 +8,7 @@ use crate::graph::ModuleGraph;
 use crate::graph::ModuleGraphError;
 use crate::graph::ModuleSlot;
 use crate::graph::Resolved;
+use crate::graph::SyntheticModule;
 use crate::module_specifier::ModuleSpecifier;
 
 use std::collections::HashSet;
@@ -54,8 +54,8 @@ impl fmt::Display for ModuleGraph {
     }
     let root_specifier = self.resolve(&self.roots[0]);
     match self.module_slots.get(&root_specifier) {
-      Some(ModuleSlot::Module(Module::Es(root))) => {
-        if let Some(cache_info) = &root.maybe_cache_info {
+      Some(ModuleSlot::Module(root)) => {
+        if let Some(cache_info) = root.maybe_cache_info() {
           if let Some(local) = &cache_info.local {
             writeln!(
               f,
@@ -76,17 +76,12 @@ impl fmt::Display for ModuleGraph {
             writeln!(f, "{} {}", colors::bold("map:"), map.to_string_lossy())?;
           }
         }
-        writeln!(f, "{} {}", colors::bold("type:"), root.media_type)?;
+        writeln!(f, "{} {}", colors::bold("type:"), root.media_type())?;
         let total_size: f64 = self
           .module_slots
           .iter()
           .filter_map(|(_, m)| match m {
-            ModuleSlot::Module(Module::Es(module)) => {
-              Some(module.size() as f64)
-            }
-            ModuleSlot::Module(Module::Asserted(module)) => {
-              Some(module.size() as f64)
-            }
+            ModuleSlot::Module(module) => Some(module.size() as f64),
             _ => None,
           })
           .sum();
@@ -110,15 +105,17 @@ impl fmt::Display for ModuleGraph {
           colors::gray(format!("({})", human_size(root.size() as f64)))
         )?;
         let mut seen = HashSet::new();
-        let dep_len = root.dependencies.len();
-        for (idx, (_, dep)) in root.dependencies.iter().enumerate() {
-          dep.fmt_info(
-            f,
-            "",
-            idx == dep_len - 1 && root.maybe_types_dependency.is_none(),
-            self,
-            &mut seen,
-          )?;
+        if let Some(dependencies) = root.maybe_dependencies() {
+          let dep_len = dependencies.len();
+          for (idx, (_, dep)) in dependencies.iter().enumerate() {
+            dep.fmt_info(
+              f,
+              "",
+              idx == dep_len - 1 && root.maybe_types_dependency().is_none(),
+              self,
+              &mut seen,
+            )?;
+          }
         }
         Ok(())
       }
@@ -173,14 +170,13 @@ impl Module {
     seen: &mut HashSet<ModuleSpecifier>,
   ) -> fmt::Result {
     match self {
-      Self::Asserted(m) => m.fmt_info(f, prefix, last, seen),
       Self::Es(m) => m.fmt_info(f, prefix, last, graph, type_dep, seen),
-      _ => Ok(()),
+      Self::Synthetic(m) => m.fmt_info(f, prefix, last, seen),
     }
   }
 }
 
-impl AssertedModule {
+impl SyntheticModule {
   fn fmt_info<S: AsRef<str> + fmt::Display + Clone>(
     &self,
     f: &mut fmt::Formatter,

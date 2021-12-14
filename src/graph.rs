@@ -293,6 +293,10 @@ fn is_false(v: &bool) -> bool {
   !v
 }
 
+fn is_media_type_unknown(media_type: &MediaType) -> bool {
+  matches!(media_type, MediaType::Unknown)
+}
+
 #[derive(Debug, Default, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Dependency {
@@ -357,8 +361,65 @@ impl Dependency {
 #[serde(untagged)]
 pub enum Module {
   Es(Box<EsModule>),
-  Asserted(Box<AssertedModule>),
   Synthetic(Box<SyntheticModule>),
+}
+
+impl Module {
+  pub fn maybe_cache_info(&self) -> Option<&CacheInfo> {
+    match self {
+      Self::Es(m) => m.maybe_cache_info.as_ref(),
+      Self::Synthetic(m) => m.maybe_cache_info.as_ref(),
+    }
+  }
+
+  pub fn maybe_checksum(&self) -> Option<&str> {
+    match self {
+      Self::Es(m) => m.maybe_checksum.as_deref(),
+      Self::Synthetic(m) => m.maybe_checksum.as_deref(),
+    }
+  }
+
+  pub fn maybe_dependencies(&self) -> Option<&BTreeMap<String, Dependency>> {
+    match self {
+      Self::Es(m) => Some(&m.dependencies),
+      _ => None,
+    }
+  }
+
+  pub fn maybe_source(&self) -> Option<&str> {
+    match self {
+      Self::Es(m) => Some(m.source.as_str()),
+      Self::Synthetic(m) => m.maybe_source.as_ref().map(|s| s.as_str()),
+    }
+  }
+
+  pub fn maybe_types_dependency(&self) -> Option<&(String, Resolved)> {
+    match self {
+      Self::Es(m) => m.maybe_types_dependency.as_ref(),
+      _ => None,
+    }
+  }
+
+  pub fn media_type(&self) -> &MediaType {
+    match self {
+      Self::Es(m) => &m.media_type,
+      Self::Synthetic(m) => &m.media_type,
+    }
+  }
+
+  pub fn size(&self) -> usize {
+    match self {
+      Self::Es(m) => m.size(),
+      Self::Synthetic(m) => m.size(),
+    }
+  }
+
+  pub fn specifier(&self) -> &ModuleSpecifier {
+    match self {
+      Self::Es(m) => &m.specifier,
+      Self::Synthetic(m) => &m.specifier,
+    }
+  }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -405,23 +466,43 @@ impl EsModule {
   }
 }
 
-/// A synthetic module is a module that is "injected" into the graph that
-/// doesn't have any source code, and the dependencies are injected into the
-/// graph externally.  This is designed to accommodate loading dependencies into
-/// the graph from configuration meta data, like TypeScript `"types"`.
-#[derive(Debug, Clone)]
+/// A synthetic module is a module that is not an ES module. These modules serve
+/// two purposes, the ability to inject modules and their dependencies into the
+/// graph (like config files and TypeScript "types") as well as provide a way
+/// for the graph to contain asserted modules, like JSON modules.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SyntheticModule {
+  #[serde(
+    skip_serializing_if = "BTreeMap::is_empty",
+    serialize_with = "serialize_synthetic_dependencies"
+  )]
   pub dependencies: BTreeMap<String, Resolved>,
+  #[serde(flatten, skip_serializing_if = "Option::is_none")]
+  pub maybe_cache_info: Option<CacheInfo>,
+  #[serde(rename = "checksum", skip_serializing_if = "Option::is_none")]
+  pub maybe_checksum: Option<String>,
+  #[serde(
+    rename = "size",
+    skip_serializing_if = "Option::is_none",
+    serialize_with = "serialize_maybe_source"
+  )]
+  pub maybe_source: Option<Arc<String>>,
+  #[serde(skip_serializing_if = "is_media_type_unknown")]
+  pub media_type: MediaType,
   pub specifier: ModuleSpecifier,
 }
 
 impl SyntheticModule {
   pub fn new(
     specifier: ModuleSpecifier,
-    dependencies: Vec<String>,
-    maybe_resolver: &Option<&dyn Resolver>,
+    media_type: MediaType,
+    maybe_dependencies: Option<Vec<String>>,
+    maybe_source: Option<Arc<String>>,
+    maybe_resolver: Option<&dyn Resolver>,
   ) -> Self {
-    let dependencies = dependencies
+    let dependencies = maybe_dependencies
+      .unwrap_or_default()
       .iter()
       .map(|s| {
         let referrer_range = Range {
@@ -429,14 +510,26 @@ impl SyntheticModule {
           start: Position::zeroed(),
           end: Position::zeroed(),
         };
-        let result = resolve(s, &referrer_range, *maybe_resolver);
+        let result = resolve(s, &referrer_range, maybe_resolver.clone());
         (s.clone(), result)
       })
       .collect();
     Self {
       dependencies,
+      maybe_cache_info: None,
+      maybe_checksum: None,
+      maybe_source,
+      media_type,
       specifier,
     }
+  }
+
+  pub fn size(&self) -> usize {
+    self
+      .maybe_source
+      .as_ref()
+      .map(|s| s.as_bytes().len())
+      .unwrap_or(0)
   }
 }
 
@@ -452,61 +545,6 @@ impl Serialize for SerializeableSyntheticDependency<'_> {
     let serializeable_resolved = SerializeableResolved(self.1);
     dep.serialize_entry("type", &serializeable_resolved)?;
     dep.end()
-  }
-}
-
-impl Serialize for SyntheticModule {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    let deps: Vec<SerializeableSyntheticDependency> = self
-      .dependencies
-      .iter()
-      .map(|(s, r)| SerializeableSyntheticDependency(s, r))
-      .collect();
-    let mut sm = serializer.serialize_struct("SyntheticModule", 2)?;
-    sm.serialize_field("specifier", &self.specifier)?;
-    sm.serialize_field("dependencies", &deps)?;
-    sm.end()
-  }
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AssertedModule {
-  /// The asserted type of the module when it was imported
-  pub(crate) assert_type: String,
-  #[serde(flatten, skip_serializing_if = "Option::is_none")]
-  pub maybe_cache_info: Option<CacheInfo>,
-  #[serde(rename = "checksum", skip_serializing_if = "Option::is_none")]
-  pub maybe_checksum: Option<String>,
-  pub media_type: MediaType,
-  #[serde(rename = "size", serialize_with = "serialize_source")]
-  pub source: Arc<String>,
-  pub specifier: ModuleSpecifier,
-}
-
-impl AssertedModule {
-  fn new(
-    specifier: ModuleSpecifier,
-    assert_type: String,
-    media_type: MediaType,
-    source: Arc<String>,
-  ) -> Self {
-    Self {
-      assert_type,
-      maybe_cache_info: None,
-      maybe_checksum: None,
-      media_type,
-      source,
-      specifier,
-    }
-  }
-
-  /// Return the size in bytes of the content of the module.
-  pub fn size(&self) -> usize {
-    self.source.as_bytes().len()
   }
 }
 
@@ -551,7 +589,7 @@ fn to_result(
       specifier.clone(),
       Ok((module.specifier.clone(), module.media_type)),
     )),
-    ModuleSlot::Module(Module::Asserted(module)) => Some((
+    ModuleSlot::Module(Module::Synthetic(module)) => Some((
       specifier.clone(),
       Ok((module.specifier.clone(), module.media_type)),
     )),
@@ -637,8 +675,12 @@ impl ModuleGraph {
           ModuleSlot::Module(Module::Es(module)) => {
             Some((&module.specifier, module.source.as_ref()))
           }
-          ModuleSlot::Module(Module::Asserted(module)) => {
-            Some((&module.specifier, module.source.as_ref()))
+          ModuleSlot::Module(Module::Synthetic(module)) => {
+            if let Some(source) = &module.maybe_source {
+              Some((&module.specifier, source.as_ref()))
+            } else {
+              None
+            }
           }
           _ => None,
         } {
@@ -786,7 +828,7 @@ impl ModuleGraph {
     let specifier = maybe_specifier?;
     match self.module_slots.get(&self.resolve(specifier)) {
       Some(ModuleSlot::Module(Module::Es(m))) => Some(&m.specifier),
-      Some(ModuleSlot::Module(Module::Asserted(m))) => Some(&m.specifier),
+      Some(ModuleSlot::Module(Module::Synthetic(m))) => Some(&m.specifier),
       _ => None,
     }
   }
@@ -1020,12 +1062,13 @@ pub(crate) fn parse_module(
   // otherwise we just continue
   match maybe_assert_type {
     Some("json") if media_type == MediaType::Json => {
-      return ModuleSlot::Module(Module::Asserted(Box::new(
-        AssertedModule::new(
+      return ModuleSlot::Module(Module::Synthetic(Box::new(
+        SyntheticModule::new(
           specifier.clone(),
-          "json".to_string(),
           MediaType::Json,
-          content,
+          None,
+          Some(content),
+          None,
         ),
       )));
     }
@@ -1258,7 +1301,7 @@ pub(crate) struct Builder<'a> {
   loader: &'a mut dyn Loader,
   maybe_resolver: Option<&'a dyn Resolver>,
   pending: FuturesUnordered<LoadFuture>,
-  pending_assert_types: HashMap<ModuleSpecifier, String>,
+  pending_assert_types: HashMap<ModuleSpecifier, Vec<Option<String>>>,
   dynamic_branches: HashMap<ModuleSpecifier, Option<String>>,
   source_parser: &'a dyn SourceParser,
 }
@@ -1298,8 +1341,10 @@ impl<'a> Builder<'a> {
       for (referrer, specifiers) in imports {
         let synthetic_module = SyntheticModule::new(
           referrer.clone(),
-          specifiers,
-          &self.maybe_resolver,
+          MediaType::Unknown,
+          Some(specifiers),
+          None,
+          self.maybe_resolver.clone(),
         );
         for (specifier, _) in
           synthetic_module.dependencies.values().flatten().flatten()
@@ -1316,8 +1361,11 @@ impl<'a> Builder<'a> {
     loop {
       match self.pending.next().await {
         Some((specifier, Ok(Some(response)))) => {
-          let maybe_assert_type = self.pending_assert_types.remove(&specifier);
-          self.visit(specifier, response, maybe_assert_type)
+          let assert_types =
+            self.pending_assert_types.remove(&specifier).unwrap();
+          for maybe_assert_type in assert_types {
+            self.visit(&specifier, &response, maybe_assert_type)
+          }
         }
         Some((specifier, Ok(None))) => {
           self
@@ -1379,16 +1427,16 @@ impl<'a> Builder<'a> {
     maybe_assert_type: Option<&str>,
   ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
+    let assert_types = self
+      .pending_assert_types
+      .entry(specifier.clone())
+      .or_default();
+    assert_types.push(maybe_assert_type.map(String::from));
     if !self.graph.module_slots.contains_key(specifier) {
       self
         .graph
         .module_slots
         .insert(specifier.clone(), ModuleSlot::Pending);
-      if let Some(assert_type) = &maybe_assert_type {
-        self
-          .pending_assert_types
-          .insert(specifier.clone(), assert_type.to_string());
-      }
       self.pending.push(self.loader.load(specifier, is_dynamic));
     }
   }
@@ -1396,15 +1444,15 @@ impl<'a> Builder<'a> {
   /// Visit a module, parsing it and resolving any dependencies.
   fn visit(
     &mut self,
-    requested_specifier: ModuleSpecifier,
-    response: LoadResponse,
+    requested_specifier: &ModuleSpecifier,
+    response: &LoadResponse,
     maybe_assert_type: Option<String>,
   ) {
-    let maybe_headers = response.maybe_headers;
+    let maybe_headers = response.maybe_headers.as_ref();
     let specifier = response.specifier.clone();
 
     // If the response was redirected, then we add the module to the redirects
-    if requested_specifier != specifier {
+    if *requested_specifier != specifier {
       // remove a potentially pending redirect that will never resolve
       if let Some(slot) = self.graph.module_slots.get(&requested_specifier) {
         if matches!(slot, ModuleSlot::Pending) {
@@ -1414,15 +1462,15 @@ impl<'a> Builder<'a> {
       self
         .graph
         .redirects
-        .insert(requested_specifier, specifier.clone());
+        .insert(requested_specifier.clone(), specifier.clone());
     }
 
     let is_root = self.graph.roots.contains(&specifier);
 
     let module_slot = parse_module(
       &specifier,
-      maybe_headers.as_ref(),
-      response.content,
+      maybe_headers,
+      response.content.clone(),
       maybe_assert_type.as_deref(),
       self.maybe_resolver,
       self.source_parser,
@@ -1525,6 +1573,22 @@ where
   seq.end()
 }
 
+fn serialize_synthetic_dependencies<S>(
+  dependencies: &BTreeMap<String, Resolved>,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  let mut seq = serializer.serialize_seq(Some(dependencies.iter().count()))?;
+  for (specifier_str, res) in dependencies.iter() {
+    let serializeable_dep =
+      SerializeableSyntheticDependency(specifier_str, res);
+    seq.serialize_element(&serializeable_dep)?;
+  }
+  seq.end()
+}
+
 struct SerializeableModuleSlot<'a>(&'a ModuleSpecifier, &'a ModuleSlot);
 
 impl<'a> Serialize for SerializeableModuleSlot<'a> {
@@ -1601,6 +1665,20 @@ where
   S: Serializer,
 {
   serializer.serialize_u32(source.len() as u32)
+}
+
+fn serialize_maybe_source<S>(
+  source: &Option<Arc<String>>,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  if let Some(source) = source {
+    serializer.serialize_u32(source.len() as u32)
+  } else {
+    serializer.serialize_none()
+  }
 }
 
 #[cfg(test)]
