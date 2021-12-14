@@ -31,14 +31,10 @@ impl fmt::Display for SpecifierError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match self {
       InvalidUrl(ref err) => write!(f, "invalid URL: {}", err),
-      ImportPrefixMissing(ref specifier, ref maybe_referrer) => write!(
+      ImportPrefixMissing(ref specifier, _) => write!(
         f,
-        "Relative import path \"{}\" not prefixed with / or ./ or ../{}",
+        "Relative import path \"{}\" not prefixed with / or ./ or ../",
         specifier,
-        match maybe_referrer {
-          Some(referrer) => format!(" from \"{}\"", referrer),
-          None => format!(""),
-        }
       ),
     }
   }
