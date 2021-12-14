@@ -32,7 +32,8 @@ export interface CreateGraphOptions {
    * returned.
    *
    * @param specifier The URL string of the resource to be loaded and resolved
-   * @param isDynamic A flag that indicates if the module was being loaded dynamically
+   * @param isDynamic A flag that indicates if the module was being loaded
+   *   dynamically
    */
   load?(
     specifier: string,
