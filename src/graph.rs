@@ -510,7 +510,7 @@ impl SyntheticModule {
           start: Position::zeroed(),
           end: Position::zeroed(),
         };
-        let result = resolve(s, &referrer_range, maybe_resolver.clone());
+        let result = resolve(s, &referrer_range, maybe_resolver);
         (s.clone(), result)
       })
       .collect();
@@ -675,13 +675,10 @@ impl ModuleGraph {
           ModuleSlot::Module(Module::Es(module)) => {
             Some((&module.specifier, module.source.as_ref()))
           }
-          ModuleSlot::Module(Module::Synthetic(module)) => {
-            if let Some(source) = &module.maybe_source {
-              Some((&module.specifier, source.as_ref()))
-            } else {
-              None
-            }
-          }
+          ModuleSlot::Module(Module::Synthetic(module)) => module
+            .maybe_source
+            .as_ref()
+            .map(|source| (&module.specifier, source.as_ref())),
           _ => None,
         } {
           if !locker.check_or_insert(specifier, source) {
@@ -1344,7 +1341,7 @@ impl<'a> Builder<'a> {
           MediaType::Unknown,
           Some(specifiers),
           None,
-          self.maybe_resolver.clone(),
+          self.maybe_resolver,
         );
         for (specifier, _) in
           synthetic_module.dependencies.values().flatten().flatten()
@@ -1454,9 +1451,9 @@ impl<'a> Builder<'a> {
     // If the response was redirected, then we add the module to the redirects
     if *requested_specifier != specifier {
       // remove a potentially pending redirect that will never resolve
-      if let Some(slot) = self.graph.module_slots.get(&requested_specifier) {
+      if let Some(slot) = self.graph.module_slots.get(requested_specifier) {
         if matches!(slot, ModuleSlot::Pending) {
-          self.graph.module_slots.remove(&requested_specifier);
+          self.graph.module_slots.remove(requested_specifier);
         }
       }
       self
