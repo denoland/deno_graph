@@ -420,6 +420,14 @@ impl Module {
       Self::Synthetic(m) => &m.specifier,
     }
   }
+
+  #[cfg(feature = "rust")]
+  pub fn to_maybe_es_module(self) -> Option<EsModule> {
+    match self {
+      Self::Es(m) => Some(*m),
+      _ => None,
+    }
+  }
 }
 
 #[derive(Debug, Clone, Serialize)]
