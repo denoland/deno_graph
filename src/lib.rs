@@ -1233,6 +1233,9 @@ console.log(a);
             r#"
             import a from "./a.json" assert { type: "json" };
             const b = await import("./b.json", { assert: { type: "json" } });
+            export * as c from "./c.json" assert { type: "json" };
+            const json = "json";
+            const d = await import("./d.json", { assert: { type: json } });
             "#,
           )),
         ),
@@ -1243,6 +1246,14 @@ console.log(a);
         (
           "file:///a/b.json",
           Ok(("file:///a/b.json", None, r#"{"b":1}"#)),
+        ),
+        (
+          "file:///a/c.json",
+          Ok(("file:///a/c.json", None, r#"{"c":"d"}"#)),
+        ),
+        (
+          "file:///a/d.json",
+          Ok(("file:///a/d.json", None, r#"{"d":4}"#)),
         ),
       ],
       vec![],
@@ -1267,14 +1278,23 @@ console.log(a);
         ],
         "modules": [
           {
-            "mediaType": "Json",
             "size": 9,
+            "mediaType": "Json",
             "specifier": "file:///a/a.json"
           },
           {
-            "mediaType": "Json",
             "size": 7,
+            "mediaType": "Json",
             "specifier": "file:///a/b.json"
+          },
+          {
+            "size": 9,
+            "mediaType": "Json",
+            "specifier": "file:///a/c.json"
+          },
+          {
+            "specifier": "file:///a/d.json",
+            "error": "An unsupported media type was attempted to be imported as a module.\n  Specifier: file:///a/d.json\n  MediaType: Json"
           },
           {
             "dependencies": [
@@ -1312,10 +1332,44 @@ console.log(a);
                 },
                 "isDynamic": true,
                 "assertionType": "json"
+              },
+              {
+                "specifier": "./c.json",
+                "code": {
+                  "specifier": "file:///a/c.json",
+                  "span": {
+                    "start": {
+                      "line": 3,
+                      "character": 31
+                    },
+                    "end": {
+                      "line": 3,
+                      "character": 41
+                    }
+                  }
+                },
+                "assertionType": "json"
+              },
+              {
+                "specifier": "./d.json",
+                "code": {
+                  "specifier": "file:///a/d.json",
+                  "span": {
+                    "start": {
+                      "line": 5,
+                      "character": 35
+                    },
+                    "end": {
+                      "line": 5,
+                      "character": 45
+                    }
+                  }
+                },
+                "isDynamic": true
               }
             ],
             "mediaType": "TypeScript",
-            "size": 153,
+            "size": 329,
             "specifier": "file:///a/test01.ts"
           }
         ],
