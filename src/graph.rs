@@ -701,18 +701,18 @@ impl ModuleGraph {
     Ok(())
   }
 
-  /// Return a vector of references to module objects in the graph. Only modules
-  /// that were fully resolved are present, as "errors" are omitted. If you need
-  /// to know what errors are in the graph, use the `.errors()` method, or if
-  /// you just need to check if everything is "ok" with the graph, use the
+  /// Return a vector of references to ES module objects in the graph. Only ES
+  /// modules that were fully resolved are present, as "errors" are omitted. If
+  /// you need to know what errors are in the graph, use the `.errors()` method,
+  /// or if you just need to check if everything is "ok" with the graph, use the
   /// `.valid()` method.
   #[cfg(feature = "rust")]
-  pub fn modules(&self) -> Vec<&Module> {
+  pub fn modules(&self) -> Vec<&EsModule> {
     self
       .module_slots
       .iter()
       .filter_map(|(_, ms)| match ms {
-        ModuleSlot::Module(m) => Some(m),
+        ModuleSlot::Module(Module::Es(m)) => Some(m.as_ref()),
         _ => None,
       })
       .collect()
