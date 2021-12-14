@@ -32,6 +32,7 @@ cfg_if! {
     pub use ast::DependencyDescriptor;
     pub use ast::DependencyKind;
     pub use graph::Dependency;
+    pub use graph::EsModule;
     pub use graph::Module;
     pub use graph::ModuleGraph;
     pub use graph::ModuleGraphError;
@@ -39,6 +40,7 @@ cfg_if! {
     pub use graph::Range;
     pub use graph::ResolutionError;
     pub use graph::Resolved;
+    pub use graph::SyntheticModule;
     pub use deno_ast::MediaType;
     pub use module_specifier::ModuleSpecifier;
     pub use module_specifier::SpecifierError;
@@ -84,6 +86,7 @@ cfg_if! {
         specifier,
         maybe_headers,
         content,
+        None,
         maybe_resolver,
         source_parser,
         true,
@@ -205,6 +208,7 @@ cfg_if! {
         &specifier,
         maybe_headers.as_ref(),
         Arc::new(content),
+        None,
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         &source_parser,
         true,
@@ -280,7 +284,7 @@ mod tests {
     let maybe_root_module = graph.module_slots.get(&root_specifier);
     assert!(maybe_root_module.is_some());
     let root_module_slot = maybe_root_module.unwrap();
-    if let ModuleSlot::Module(module) = root_module_slot {
+    if let ModuleSlot::Module(Module::Es(module)) = root_module_slot {
       assert_eq!(module.dependencies.len(), 1);
       let maybe_dependency = module.dependencies.get("./test02.ts");
       assert!(maybe_dependency.is_some());
@@ -297,7 +301,7 @@ mod tests {
       let maybe_dep_module_slot = graph.get(&dependency_specifier);
       assert!(maybe_dep_module_slot.is_some());
     } else {
-      panic!("unspected module slot");
+      panic!("unexpected module slot");
     }
   }
 
@@ -630,7 +634,7 @@ console.log(a);
     let maybe_root_module = graph.module_slots.get(&root_specifier);
     assert!(maybe_root_module.is_some());
     let root_module_slot = maybe_root_module.unwrap();
-    if let ModuleSlot::Module(module) = root_module_slot {
+    if let ModuleSlot::Module(Module::Es(module)) = root_module_slot {
       assert_eq!(module.media_type, MediaType::TypeScript);
     } else {
       panic!("unspected module slot");
@@ -1047,11 +1051,14 @@ console.log(a);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
     let maybe_module = graph.get(&data_specifier);
     assert!(maybe_module.is_some());
-    let module = maybe_module.unwrap();
-    assert_eq!(
-      module.source.as_str(),
-      r#"export * from "https://example.com/c.ts";"#
-    );
+    if let Module::Es(module) = maybe_module.unwrap() {
+      assert_eq!(
+        module.source.as_str(),
+        r#"export * from "https://example.com/c.ts";"#
+      );
+    } else {
+      panic!("unexpected module type");
+    }
   }
 
   #[tokio::test]
@@ -1087,17 +1094,20 @@ console.log(a);
     .await;
     let maybe_module = graph.get(&graph.roots[0]);
     assert!(maybe_module.is_some());
-    let module = maybe_module.unwrap();
-    let maybe_dep = module.dependencies.get("b");
-    assert!(maybe_dep.is_some());
-    let dep = maybe_dep.unwrap();
-    if let Some(Ok((dep_sepcifier, _))) = &dep.maybe_code {
-      assert_eq!(
-        dep_sepcifier,
-        &ModuleSpecifier::parse("file:///a/test02.ts").unwrap()
-      );
+    if let Module::Es(module) = maybe_module.unwrap() {
+      let maybe_dep = module.dependencies.get("b");
+      assert!(maybe_dep.is_some());
+      let dep = maybe_dep.unwrap();
+      if let Some(Ok((dep_sepcifier, _))) = &dep.maybe_code {
+        assert_eq!(
+          dep_sepcifier,
+          &ModuleSpecifier::parse("file:///a/test02.ts").unwrap()
+        );
+      } else {
+        panic!("unexpected resolved type");
+      }
     } else {
-      panic!("unexpected resolved type");
+      panic!("unexpected module type");
     }
   }
 
@@ -1144,21 +1154,25 @@ console.log(a);
     .await;
     let maybe_module = graph.get(&graph.roots[0]);
     assert!(maybe_module.is_some());
-    let module = maybe_module.unwrap();
-    assert_eq!(
-      module.maybe_types_dependency,
-      Some((
-        "file:///a.js".to_string(),
-        Some(Ok((
-          ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
-          Range {
-            specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
-            start: Position::zeroed(),
-            end: Position::zeroed(),
-          }
-        )))
-      ))
-    );
+    if let Module::Es(module) = maybe_module.unwrap() {
+      assert_eq!(
+        module.maybe_types_dependency,
+        Some((
+          "file:///a.js".to_string(),
+          Some(Ok((
+            ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
+            Range {
+              specifier: ModuleSpecifier::parse("file:///package.json")
+                .unwrap(),
+              start: Position::zeroed(),
+              end: Position::zeroed(),
+            }
+          )))
+        ))
+      );
+    } else {
+      panic!("unexpected module type");
+    }
   }
 
   #[tokio::test]
@@ -1209,6 +1223,239 @@ console.log(a);
     assert!(parser.get_parsed_source(&non_existent).is_none());
   }
 
+  #[tokio::test]
+  async fn test_create_graph_import_assertions() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"
+            import a from "./a.json" assert { type: "json" };
+            const b = await import("./b.json", { assert: { type: "json" } });
+            export * as c from "./c.json" assert { type: "json" };
+            const json = "json";
+            const d = await import("./d.json", { assert: { type: json } });
+            "#,
+          )),
+        ),
+        (
+          "file:///a/a.json",
+          Ok(("file:///a/a.json", None, r#"{"a":"b"}"#)),
+        ),
+        (
+          "file:///a/b.json",
+          Ok(("file:///a/b.json", None, r#"{"b":1}"#)),
+        ),
+        (
+          "file:///a/c.json",
+          Ok(("file:///a/c.json", None, r#"{"c":"d"}"#)),
+        ),
+        (
+          "file:///a/d.json",
+          Ok(("file:///a/d.json", None, r#"{"d":4}"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test01.ts"
+        ],
+        "modules": [
+          {
+            "size": 9,
+            "mediaType": "Json",
+            "specifier": "file:///a/a.json"
+          },
+          {
+            "size": 7,
+            "mediaType": "Json",
+            "specifier": "file:///a/b.json"
+          },
+          {
+            "size": 9,
+            "mediaType": "Json",
+            "specifier": "file:///a/c.json"
+          },
+          {
+            "specifier": "file:///a/d.json",
+            "error": "An unsupported media type was attempted to be imported as a module.\n  Specifier: file:///a/d.json\n  MediaType: Json"
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "./a.json",
+                "code": {
+                  "specifier": "file:///a/a.json",
+                  "span": {
+                    "start": {
+                      "line": 1,
+                      "character": 26
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 36
+                    }
+                  }
+                },
+                "assertionType": "json"
+              },
+              {
+                "specifier": "./b.json",
+                "code": {
+                  "specifier": "file:///a/b.json",
+                  "span": {
+                    "start": {
+                      "line": 2,
+                      "character": 35
+                    },
+                    "end": {
+                      "line": 2,
+                      "character": 45
+                    }
+                  }
+                },
+                "isDynamic": true,
+                "assertionType": "json"
+              },
+              {
+                "specifier": "./c.json",
+                "code": {
+                  "specifier": "file:///a/c.json",
+                  "span": {
+                    "start": {
+                      "line": 3,
+                      "character": 31
+                    },
+                    "end": {
+                      "line": 3,
+                      "character": 41
+                    }
+                  }
+                },
+                "assertionType": "json"
+              },
+              {
+                "specifier": "./d.json",
+                "code": {
+                  "specifier": "file:///a/d.json",
+                  "span": {
+                    "start": {
+                      "line": 5,
+                      "character": 35
+                    },
+                    "end": {
+                      "line": 5,
+                      "character": 45
+                    }
+                  }
+                },
+                "isDynamic": true
+              }
+            ],
+            "mediaType": "TypeScript",
+            "size": 329,
+            "specifier": "file:///a/test01.ts"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
+
+  #[tokio::test]
+  async fn test_create_graph_mixed_assertions() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"
+            import a from "./a.json";
+            import b from "./a.json" assert { type: "json" };
+            "#,
+          )),
+        ),
+        (
+          "file:///a/a.json",
+          Ok(("file:///a/a.json", None, r#"{"a":"b"}"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test01.ts"
+        ],
+        "modules": [
+          {
+            "size": 9,
+            "mediaType": "Json",
+            "specifier": "file:///a/a.json"
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "./a.json",
+                "code": {
+                  "specifier": "file:///a/a.json",
+                  "span": {
+                    "start": {
+                      "line": 2,
+                      "character": 26
+                    },
+                    "end": {
+                      "line": 2,
+                      "character": 36
+                    }
+                  }
+                },
+                "assertionType": "json"
+              }
+            ],
+            "mediaType": "TypeScript",
+            "size": 113,
+            "specifier": "file:///a/test01.ts"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
+
   #[test]
   fn test_parse_module() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
@@ -1228,10 +1475,78 @@ console.log(a);
       None,
     );
     assert!(result.is_ok());
+    if let Module::Es(actual) = result.unwrap() {
+      assert_eq!(actual.dependencies.len(), 4);
+      assert_eq!(actual.specifier, specifier);
+      assert_eq!(actual.media_type, MediaType::TypeScript);
+    } else {
+      panic!("unexpected module type");
+    }
+  }
+
+  #[test]
+  fn test_parse_module_import_assertions() {
+    let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
+    let result = parse_module(
+      &specifier,
+      None,
+      Arc::new(
+        r#"
+    import a from "./a.json" assert { type: "json" };
+    await import("./b.json", { assert: { type: "json" } });
+    "#
+        .to_string(),
+      ),
+      None,
+      None,
+    );
+    assert!(result.is_ok());
     let actual = result.unwrap();
-    assert_eq!(actual.dependencies.len(), 4);
-    assert_eq!(actual.specifier, specifier);
-    assert_eq!(actual.media_type, MediaType::TypeScript);
+    assert_eq!(
+      json!(actual),
+      json!({
+        "dependencies": [
+          {
+            "specifier": "./a.json",
+            "code": {
+              "specifier": "file:///a/a.json",
+              "span": {
+                "start": {
+                  "line": 1,
+                  "character": 18
+                },
+                "end": {
+                  "line": 1,
+                  "character": 28
+                }
+              }
+            },
+            "assertionType": "json"
+          },
+          {
+            "specifier": "./b.json",
+            "code": {
+              "specifier": "file:///a/b.json",
+              "span": {
+                "start": {
+                  "line": 2,
+                  "character": 17
+                },
+                "end": {
+                  "line": 2,
+                  "character": 27
+                }
+              }
+            },
+            "isDynamic": true,
+            "assertionType": "json"
+          }
+        ],
+        "mediaType": "TypeScript",
+        "size": 119,
+        "specifier": "file:///a/test01.ts"
+      })
+    );
   }
 
   #[test]
@@ -1254,23 +1569,27 @@ console.log(a);
       None,
     );
     assert!(result.is_ok());
-    let actual = result.unwrap();
-    assert_eq!(actual.dependencies.len(), 1);
-    let dep = actual
-      .dependencies
-      .get("https://example.com/preact/jsx-runtime")
-      .unwrap();
-    assert!(dep.maybe_code.is_some());
-    let code_dep = dep.maybe_code.clone().unwrap();
-    assert!(code_dep.is_ok());
-    let (dep_specifier, _) = code_dep.unwrap();
-    assert_eq!(
-      dep_specifier,
-      ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
-    );
-    assert!(dep.maybe_type.is_none());
-    assert_eq!(actual.specifier, specifier);
-    assert_eq!(actual.media_type, MediaType::Tsx);
+    if let Module::Es(actual) = result.unwrap() {
+      assert_eq!(actual.dependencies.len(), 1);
+      let dep = actual
+        .dependencies
+        .get("https://example.com/preact/jsx-runtime")
+        .unwrap();
+      assert!(dep.maybe_code.is_some());
+      let code_dep = dep.maybe_code.clone().unwrap();
+      assert!(code_dep.is_ok());
+      let (dep_specifier, _) = code_dep.unwrap();
+      assert_eq!(
+        dep_specifier,
+        ModuleSpecifier::parse("https://example.com/preact/jsx-runtime")
+          .unwrap()
+      );
+      assert!(dep.maybe_type.is_none());
+      assert_eq!(actual.specifier, specifier);
+      assert_eq!(actual.media_type, MediaType::Tsx);
+    } else {
+      panic!("unexpected module type");
+    }
   }
 
   #[test]

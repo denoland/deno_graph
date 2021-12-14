@@ -144,13 +144,13 @@ export class Module {
 
   /** Any cache information that was available on the module when the graph
    * was built. */
-  readonly cacheInfo: CacheInfo | undefined;
+  readonly cacheInfo?: CacheInfo;
   /** The calculated checksum of the source of the module if available when the
    * graph was built. */
-  readonly checksum: string | undefined;
+  readonly checksum?: string;
   /** A record of the dependencies, where the key is the string specifier of
    * the dependency and the value is the dependency object. */
-  readonly dependencies: Record<string, Dependency>;
+  readonly dependencies?: Record<string, Dependency>;
   /** The media type assigned to the module. This determines how Deno will
    * handle the module. */
   readonly mediaType: MediaType;

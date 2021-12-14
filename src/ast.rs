@@ -339,4 +339,35 @@ mod tests {
     );
     assert!(!dependencies[1].is_dynamic);
   }
+
+  #[test]
+  fn test_analyze_dependencies_import_assertions() {
+    let specifier =
+      ModuleSpecifier::parse("file:///a/test.ts").expect("bad specifier");
+    let source = Arc::new(
+      r#"
+    import a from "./a.json" assert { type: "json" };
+    await import("./b.json", { assert: { type: "json" } });
+    "#
+      .to_string(),
+    );
+    let parser = DefaultSourceParser::new();
+    let result = parser.parse_module(&specifier, source, MediaType::TypeScript);
+    assert!(result.is_ok());
+    let parsed_source = result.unwrap();
+    let dependencies = analyze_dependencies(&parsed_source);
+    assert_eq!(dependencies.len(), 2);
+    assert!(!dependencies[0].is_dynamic);
+    assert_eq!(dependencies[0].specifier.to_string(), "./a.json");
+    assert_eq!(
+      dependencies[0].import_assertions.get("type"),
+      Some(&"json".to_string())
+    );
+    assert!(dependencies[1].is_dynamic);
+    assert_eq!(dependencies[1].specifier.to_string(), "./b.json");
+    assert_eq!(
+      dependencies[1].import_assertions.get("type"),
+      Some(&"json".to_string())
+    );
+  }
 }
