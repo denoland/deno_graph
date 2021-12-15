@@ -180,7 +180,7 @@ impl fmt::Display for ModuleGraphError {
         write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}", specifier)
       },
       Self::UnsupportedMediaType(specifier, media_type) => write!(f, "An unsupported media type was attempted to be imported as a module.\n  Specifier: {}\n  MediaType: {}", specifier, media_type),
-      Self::Missing(specifier) => write!(f, "Cannot load module \"{}\".", specifier),
+      Self::Missing(specifier) => write!(f, "Module not found \"{}\".", specifier),
     }
   }
 }
