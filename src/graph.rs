@@ -1063,21 +1063,21 @@ pub(crate) fn parse_module(
   is_root: bool,
 ) -> ModuleSlot {
   let media_type = get_media_type(specifier, maybe_headers);
-  // here we check any known import assertions and add them to the graph,
-  // otherwise we just continue
-  match maybe_assert_type {
-    Some("json") if media_type == MediaType::Json => {
-      return ModuleSlot::Module(Module::Synthetic(Box::new(
-        SyntheticModule::new(
-          specifier.clone(),
-          MediaType::Json,
-          None,
-          Some(content),
-          None,
-        ),
-      )));
-    }
-    _ => (),
+
+  // here we check any media types that should have assertions made against them
+  // if they aren't the root and add them to the graph, otherwise we continue
+  if media_type == MediaType::Json
+    && (is_root || matches!(maybe_assert_type, Some("json")))
+  {
+    return ModuleSlot::Module(Module::Synthetic(Box::new(
+      SyntheticModule::new(
+        specifier.clone(),
+        MediaType::Json,
+        None,
+        Some(content),
+        None,
+      ),
+    )));
   }
 
   // Here we check for known ES Modules that we will analyze the dependencies of
