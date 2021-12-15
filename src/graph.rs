@@ -1053,6 +1053,7 @@ fn resolve(
 }
 
 /// With the provided information, parse a module and return its "module slot"
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
