@@ -1395,8 +1395,9 @@ console.log(a);
             "specifier": "file:///a/c.json"
           },
           {
-            "specifier": "file:///a/d.json",
-            "error": "An unsupported media type was attempted to be imported as a module.\n  Specifier: file:///a/d.json\n  MediaType: Json"
+            "size": 7,
+            "mediaType": "Json",
+            "specifier": "file:///a/d.json"
           },
           {
             "dependencies": [
