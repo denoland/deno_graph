@@ -90,6 +90,7 @@ cfg_if! {
         maybe_resolver,
         source_parser,
         true,
+        false,
       ) {
         ModuleSlot::Module(module) => Ok(module),
         ModuleSlot::Err(err) => Err(err),
@@ -212,6 +213,7 @@ cfg_if! {
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         &source_parser,
         true,
+        false,
       ) {
         ModuleSlot::Module(module) => Ok(js_graph::Module(module)),
         ModuleSlot::Err(err) => Err(js_sys::Error::new(&err.to_string()).into()),
@@ -381,6 +383,73 @@ mod tests {
             "size": 18,
             "mediaType": "Json",
             "specifier": "file:///a/test.json"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
+
+  #[tokio::test]
+  async fn test_create_graph_dynamic_json_ignores_assert() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test.js",
+          Ok((
+            "file:///a/test.js",
+            None,
+            r#"
+        const a = await import("./a.json");
+        "#,
+          )),
+        ),
+        (
+          "file:///a/a.json",
+          Ok(("file:///a/a.json", None, r#"{"a":"b"}"#)),
+        ),
+      ],
+      vec![],
+    );
+    let roots = vec![ModuleSpecifier::parse("file:///a/test.js").unwrap()];
+    let graph =
+      create_graph(roots.clone(), true, None, &mut loader, None, None, None)
+        .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test.js"
+        ],
+        "modules": [
+          {
+            "size": 9,
+            "mediaType": "Json",
+            "specifier": "file:///a/a.json"
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "./a.json",
+                "code": {
+                  "specifier": "file:///a/a.json",
+                  "span": {
+                    "start": {
+                      "line": 1,
+                      "character": 31
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 41
+                    }
+                  }
+                },
+                "isDynamic": true
+              }
+            ],
+            "mediaType": "JavaScript",
+            "size": 53,
+            "specifier": "file:///a/test.js"
           }
         ],
         "redirects": {}
@@ -1326,8 +1395,9 @@ console.log(a);
             "specifier": "file:///a/c.json"
           },
           {
-            "specifier": "file:///a/d.json",
-            "error": "An unsupported media type was attempted to be imported as a module.\n  Specifier: file:///a/d.json\n  MediaType: Json"
+            "size": 7,
+            "mediaType": "Json",
+            "specifier": "file:///a/d.json"
           },
           {
             "dependencies": [

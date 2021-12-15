@@ -1053,6 +1053,7 @@ fn resolve(
 }
 
 /// With the provided information, parse a module and return its "module slot"
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
@@ -1061,13 +1062,16 @@ pub(crate) fn parse_module(
   maybe_resolver: Option<&dyn Resolver>,
   source_parser: &dyn SourceParser,
   is_root: bool,
+  is_dynamic_branch: bool,
 ) -> ModuleSlot {
   let media_type = get_media_type(specifier, maybe_headers);
 
   // here we check any media types that should have assertions made against them
   // if they aren't the root and add them to the graph, otherwise we continue
   if media_type == MediaType::Json
-    && (is_root || matches!(maybe_assert_type, Some("json")))
+    && (is_root
+      || is_dynamic_branch
+      || matches!(maybe_assert_type, Some("json")))
   {
     return ModuleSlot::Module(Module::Synthetic(Box::new(
       SyntheticModule::new(
@@ -1480,6 +1484,7 @@ impl<'a> Builder<'a> {
       self.maybe_resolver,
       self.source_parser,
       is_root,
+      self.in_dynamic_branch,
     );
 
     if let ModuleSlot::Module(Module::Es(module)) = &module_slot {
@@ -1732,8 +1737,16 @@ mod tests {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let source_parser = ast::DefaultSourceParser::default();
     let content = Arc::new(r#"import * as b from "./b.ts";"#.to_string());
-    let slot =
-      parse_module(&specifier, None, content, None, None, &source_parser, true);
+    let slot = parse_module(
+      &specifier,
+      None,
+      content,
+      None,
+      None,
+      &source_parser,
+      true,
+      false,
+    );
     if let ModuleSlot::Module(Module::Es(module)) = slot {
       let maybe_dependency = module.dependencies.values().find_map(|d| {
         d.includes(&Position {
