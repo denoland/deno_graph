@@ -358,6 +358,37 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn test_create_graph_json_module_root() {
+    let mut loader = setup(
+      vec![(
+        "file:///a/test.json",
+        Ok(("file:///a/test.json", None, r#"{"a": 1, "b": "c"}"#)),
+      )],
+      vec![],
+    );
+    let roots = vec![ModuleSpecifier::parse("file:///a/test.json").unwrap()];
+    let graph =
+      create_graph(roots.clone(), true, None, &mut loader, None, None, None)
+        .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test.json"
+        ],
+        "modules": [
+          {
+            "size": 18,
+            "mediaType": "Json",
+            "specifier": "file:///a/test.json"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
+
+  #[tokio::test]
   async fn test_valid_type_missing() {
     let mut loader = setup(
       vec![
