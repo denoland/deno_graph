@@ -525,6 +525,10 @@ console.log(a);
     )
     .await;
     assert!(graph.valid().is_err());
+    assert_eq!(
+      graph.valid().err().unwrap().to_string(),
+      r#"Module not found "file:///a/test02.js"."#
+    );
     assert!(graph.valid_types_only().is_ok());
   }
 
@@ -751,7 +755,7 @@ console.log(a);
             "file:///a/test01.tsx",
             None,
             r#"/* @jsxImportSource https://example.com/preact */
-            
+
             export function A() {
               <div>Hello Deno</div>
             }
@@ -808,7 +812,7 @@ console.log(a);
               }
             ],
             "mediaType": "TSX",
-            "size": 159,
+            "size": 147,
             "specifier": "file:///a/test01.tsx"
           },
           {
