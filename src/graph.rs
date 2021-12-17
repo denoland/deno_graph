@@ -1310,7 +1310,7 @@ pub(crate) struct Builder<'a> {
   loader: &'a mut dyn Loader,
   maybe_resolver: Option<&'a dyn Resolver>,
   pending: FuturesUnordered<LoadFuture>,
-  pending_assert_types: HashMap<ModuleSpecifier, Vec<Option<String>>>,
+  pending_assert_types: HashMap<ModuleSpecifier, HashSet<Option<String>>>,
   dynamic_branches: HashMap<ModuleSpecifier, Option<String>>,
   source_parser: &'a dyn SourceParser,
 }
@@ -1440,7 +1440,7 @@ impl<'a> Builder<'a> {
       .pending_assert_types
       .entry(specifier.clone())
       .or_default();
-    assert_types.push(maybe_assert_type.map(String::from));
+    assert_types.insert(maybe_assert_type.map(String::from));
     if !self.graph.module_slots.contains_key(specifier) {
       self
         .graph
