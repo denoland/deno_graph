@@ -3,6 +3,7 @@
 use crate::ast;
 use crate::ast::analyze_deno_types;
 use crate::ast::analyze_dependencies;
+use crate::ast::analyze_jsdoc_imports;
 use crate::ast::analyze_jsx_import_sources;
 use crate::ast::analyze_ts_references;
 use crate::ast::SourceParser;
@@ -1188,6 +1189,14 @@ pub(crate) fn parse_module_from_ast(
     let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
     let dep = module.dependencies.entry(specifier).or_default();
     dep.maybe_code = resolved_dependency;
+  }
+
+  // Analyze any JSDoc type imports
+  for (import_source, span) in analyze_jsdoc_imports(parsed_source) {
+    let range = Range::from_swc_span(&module.specifier, parsed_source, &span);
+    let resolved_dependency = resolve(&import_source, &range, maybe_resolver);
+    let dep = module.dependencies.entry(import_source).or_default();
+    dep.maybe_type = resolved_dependency;
   }
 
   // Analyze the X-TypeScript-Types header
