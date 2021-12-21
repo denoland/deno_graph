@@ -8,6 +8,7 @@ pub use deno_ast::swc::dep_graph::DependencyKind;
 use anyhow::Result;
 use deno_ast::parse_module;
 use deno_ast::swc::common::comments::Comment;
+use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::common::BytePos;
 use deno_ast::swc::common::Span;
 use deno_ast::Diagnostic;
@@ -83,11 +84,17 @@ pub fn analyze_deno_types(
   }
 }
 
+/// Searches JSDoc comment blocks for type imports
+/// (e.g. `{import("./types.d.ts").Type}`) and returns a vector of tuples of
+/// the specifier and the span of the import.
 pub fn analyze_jsdoc_imports(
   parsed_source: &ParsedSource,
 ) -> Vec<(String, Span)> {
   let mut deps = Vec::new();
   for comment in parsed_source.comments().get_vec().iter() {
+    if comment.kind != CommentKind::Block || !comment.text.starts_with('*') {
+      continue;
+    }
     for captures in JSDOC_IMPORT_RE.captures_iter(&comment.text) {
       if let Some(m) = captures.get(1) {
         deps.push((
