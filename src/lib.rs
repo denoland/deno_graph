@@ -998,6 +998,118 @@ console.log(a);
   }
 
   #[tokio::test]
+  async fn test_create_graph_with_jsdoc_imports() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test.js",
+          Ok((
+            "file:///a/test.js",
+            None,
+            r#"
+/**
+ * Some js doc
+ * 
+ * @param {import("./types.d.ts").A} a
+ * @return {import("./other.ts").B}
+ */
+export function a(a) {
+  return;
+}
+"#,
+          )),
+        ),
+        (
+          "file:///a/types.d.ts",
+          Ok(("file:///a/types.d.ts", None, r#"export type A = string;"#)),
+        ),
+        (
+          "file:///a/other.ts",
+          Ok((
+            "file:///a/other.ts",
+            None,
+            r#"export type B = string | undefined;"#,
+          )),
+        ),
+      ],
+      vec![],
+    );
+    let root = ModuleSpecifier::parse("file:///a/test.js").unwrap();
+    let graph = create_graph(
+      vec![root.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test.js"
+        ],
+        "modules": [
+          {
+            "dependencies": [],
+            "mediaType": "TypeScript",
+            "size": 35,
+            "specifier": "file:///a/other.ts"
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "./other.ts",
+                "type": {
+                  "specifier": "file:///a/other.ts",
+                  "span": {
+                    "start": {
+                      "line": 5,
+                      "character": 20
+                    },
+                    "end": {
+                      "line": 5,
+                      "character": 30
+                    }
+                  }
+                }
+              },
+              {
+                "specifier": "./types.d.ts",
+                "type": {
+                  "specifier": "file:///a/types.d.ts",
+                  "span": {
+                    "start": {
+                      "line": 4,
+                      "character": 19
+                    },
+                    "end": {
+                      "line": 4,
+                      "character": 31
+                    }
+                  }
+                }
+              }
+            ],
+            "mediaType": "JavaScript",
+            "size": 138,
+            "specifier": "file:///a/test.js"
+          },
+          {
+            "dependencies": [],
+            "mediaType": "Dts",
+            "size": 23,
+            "specifier": "file:///a/types.d.ts"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
+
+  #[tokio::test]
   async fn test_create_graph_with_redirects() {
     let mut loader = setup(
       vec![
@@ -1719,5 +1831,74 @@ console.log(a);
       None,
     );
     assert!(result.is_ok());
+  }
+
+  #[test]
+  fn test_parse_module_with_jsdoc_imports() {
+    let specifier = ModuleSpecifier::parse("file:///a/test.js").unwrap();
+    let result = parse_module(
+      &specifier,
+      None,
+      Arc::new(
+        r#"
+/**
+ * Some js doc
+ * 
+ * @param {import("./types.d.ts").A} a
+ * @return {import("./other.ts").B}
+ */
+export function a(a) {
+  return;
+}
+"#
+        .to_string(),
+      ),
+      None,
+      None,
+    );
+    assert!(result.is_ok());
+    let actual = result.unwrap();
+    assert_eq!(
+      json!(actual),
+      json!({
+        "dependencies": [
+          {
+            "specifier": "./other.ts",
+            "type": {
+              "specifier": "file:///a/other.ts",
+              "span": {
+                "start": {
+                  "line": 5,
+                  "character": 20,
+                },
+                "end": {
+                  "line": 5,
+                  "character": 30
+                }
+              }
+            }
+          },
+          {
+            "specifier": "./types.d.ts",
+            "type": {
+              "specifier": "file:///a/types.d.ts",
+              "span": {
+                "start": {
+                  "line": 4,
+                  "character": 19,
+                },
+                "end": {
+                  "line": 4,
+                  "character": 31,
+                }
+              }
+            }
+          }
+        ],
+        "mediaType": "JavaScript",
+        "size": 138,
+        "specifier": "file:///a/test.js"
+      })
+    );
   }
 }

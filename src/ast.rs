@@ -27,6 +27,8 @@ lazy_static! {
   static ref DENO_TYPES_RE: Regex =
     Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#)
       .unwrap();
+  /// Matches a JSDoc import type reference (`{import("./example.js")}`).
+  static ref JSDOC_IMPORT_RE: Regex = Regex::new(r#"\{\s*import\(['"]([^'"]+)['"]\)[^}]*}"#).unwrap();
   /// Matches the `@jsxImportSource` pragma.
   static ref JSX_IMPORT_SOURCE_RE: Regex = Regex::new(r#"(?i)^[\s*]*@jsxImportSource\s+(\S+)"#).unwrap();
   /// Matches a `/// <reference ... />` comment reference.
@@ -79,6 +81,23 @@ pub fn analyze_deno_types(
   } else {
     unreachable!("Unexpected captures from deno types regex")
   }
+}
+
+pub fn analyze_jsdoc_imports(
+  parsed_source: &ParsedSource,
+) -> Vec<(String, Span)> {
+  let mut deps = Vec::new();
+  for comment in parsed_source.comments().get_vec().iter() {
+    for captures in JSDOC_IMPORT_RE.captures_iter(&comment.text) {
+      if let Some(m) = captures.get(1) {
+        deps.push((
+          m.as_str().to_string(),
+          comment_match_to_swc_span(comment, &m),
+        ));
+      }
+    }
+  }
+  deps
 }
 
 /// Searches comments for a `@jsxImportSource` pragma on JSX/TSX media types
@@ -369,5 +388,39 @@ mod tests {
       dependencies[1].import_assertions.get("type"),
       Some(&"json".to_string())
     );
+  }
+
+  #[test]
+  fn test_analyze_jsdoc_imports() {
+    let specifier = ModuleSpecifier::parse("file:///a/test.js").unwrap();
+    let source = Arc::new(
+      r#"
+/** @module */
+
+/**
+ * Some stuff here
+ * 
+ * @type {import("./a.js").A}
+ */
+const a = "a";
+
+/**
+ * Some other stuff here
+ * 
+ * @param {import('./b.js').C}
+ * @returns {import("./d.js")}
+ */
+function b(c) {
+  return;
+}
+"#
+      .to_string(),
+    );
+    let parser = DefaultSourceParser::new();
+    let result = parser.parse_module(&specifier, source, MediaType::TypeScript);
+    assert!(result.is_ok());
+    let parsed_source = result.unwrap();
+    let dependencies = analyze_jsdoc_imports(&parsed_source);
+    println!("{:?}", dependencies);
   }
 }
