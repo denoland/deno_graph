@@ -125,10 +125,16 @@ impl Range {
 #[derive(Debug)]
 pub enum ModuleGraphError {
   InvalidSource(ModuleSpecifier, Option<String>),
+  InvalidTypeAssertion {
+    specifier: ModuleSpecifier,
+    actual_media_type: MediaType,
+    expected_media_type: MediaType,
+  },
   LoadingErr(ModuleSpecifier, Arc<anyhow::Error>),
   Missing(ModuleSpecifier),
   ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
   ResolutionError(ResolutionError),
+  UnsupportedImportAssertionType(ModuleSpecifier, String),
   UnsupportedMediaType(ModuleSpecifier, MediaType),
 }
 
@@ -144,6 +150,18 @@ impl Clone for ModuleGraphError {
       Self::ResolutionError(err) => Self::ResolutionError(err.clone()),
       Self::InvalidSource(specifier, maybe_filename) => {
         Self::InvalidSource(specifier.clone(), maybe_filename.clone())
+      }
+      Self::InvalidTypeAssertion {
+        specifier,
+        actual_media_type,
+        expected_media_type,
+      } => Self::InvalidTypeAssertion {
+        specifier: specifier.clone(),
+        actual_media_type: *actual_media_type,
+        expected_media_type: *expected_media_type,
+      },
+      Self::UnsupportedImportAssertionType(specifier, kind) => {
+        Self::UnsupportedImportAssertionType(specifier.clone(), kind.clone())
       }
       Self::UnsupportedMediaType(specifier, media_type) => {
         Self::UnsupportedMediaType(specifier.clone(), *media_type)
@@ -162,7 +180,9 @@ impl ModuleGraphError {
       | Self::ParseErr(s, _)
       | Self::InvalidSource(s, _)
       | Self::UnsupportedMediaType(s, _)
+      | Self::UnsupportedImportAssertionType(s, _)
       | Self::Missing(s) => s,
+      Self::InvalidTypeAssertion { specifier, .. } => specifier,
     }
   }
 }
@@ -175,12 +195,12 @@ impl fmt::Display for ModuleGraphError {
       Self::LoadingErr(_, err) => err.fmt(f),
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {}", diagnostic),
       Self::ResolutionError(err) => err.fmt(f),
-      Self::InvalidSource(specifier, maybe_filename) => if let Some(filename) = maybe_filename {
-        write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}\n  Lock file: {}", specifier, filename)
-      } else {
-        write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}", specifier)
-      },
-      Self::UnsupportedMediaType(specifier, media_type) => write!(f, "An unsupported media type was attempted to be imported as a module.\n  Specifier: {}\n  MediaType: {}", specifier, media_type),
+      Self::InvalidSource(specifier, Some(filename)) => write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}\n  Lock file: {}", specifier, filename),
+      Self::InvalidSource(specifier, None) => write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}", specifier),
+      Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type } => write!(f, "Expected a {} module, but identified a {} module.\n  Specifier: {}", expected_media_type, actual_media_type, specifier),
+      Self::UnsupportedMediaType(specifier, MediaType::Json) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {}", specifier),
+      Self::UnsupportedMediaType(specifier, media_type) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {} module. Importing these types of modules is currently not supported.\n  Specifier: {}", media_type, specifier),
+      Self::UnsupportedImportAssertionType(_, kind) => write!(f, "The import assertion type of \"{}\" is unsupported.", kind),
       Self::Missing(specifier) => write!(f, "Module not found \"{}\".", specifier),
     }
   }
@@ -1083,6 +1103,23 @@ pub(crate) fn parse_module(
         None,
       ),
     )));
+  }
+
+  match maybe_assert_type {
+    Some("json") => {
+      return ModuleSlot::Err(ModuleGraphError::InvalidTypeAssertion {
+        specifier: specifier.clone(),
+        actual_media_type: media_type,
+        expected_media_type: MediaType::Json,
+      })
+    }
+    Some(assert_type) => {
+      return ModuleSlot::Err(ModuleGraphError::UnsupportedImportAssertionType(
+        specifier.clone(),
+        assert_type.to_string(),
+      ))
+    }
+    _ => (),
   }
 
   // Here we check for known ES Modules that we will analyze the dependencies of

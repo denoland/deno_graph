@@ -296,72 +296,34 @@ impl ModuleGraphError {
   ) -> fmt::Result {
     seen.insert(specifier.clone());
     match self {
-      Self::InvalidSource(_, _) => fmt_info_msg(
+      Self::InvalidSource(_, _) => {
+        fmt_error_msg(f, prefix, last, specifier, "(invalid source)")
+      }
+      Self::InvalidTypeAssertion { .. } => {
+        fmt_error_msg(f, prefix, last, specifier, "(invalid import assertion)")
+      }
+      Self::LoadingErr(_, _) => {
+        fmt_error_msg(f, prefix, last, specifier, "(loading error)")
+      }
+      Self::ParseErr(_, _) => {
+        fmt_error_msg(f, prefix, last, specifier, "(parsing error)")
+      }
+      Self::ResolutionError(_) => {
+        fmt_error_msg(f, prefix, last, specifier, "(resolution error)")
+      }
+      Self::UnsupportedImportAssertionType(_, _) => fmt_error_msg(
         f,
         prefix,
         last,
-        false,
-        format!(
-          "{} {}",
-          colors::red(specifier),
-          colors::red_bold("(invalid source)")
-        ),
+        specifier,
+        "(unsupported import assertion)",
       ),
-      Self::LoadingErr(_, _) => fmt_info_msg(
-        f,
-        prefix,
-        last,
-        false,
-        format!(
-          "{} {}",
-          colors::red(specifier),
-          colors::red_bold("(loading error)")
-        ),
-      ),
-      Self::ParseErr(_, _) => fmt_info_msg(
-        f,
-        prefix,
-        last,
-        false,
-        format!(
-          "{} {}",
-          colors::red(specifier),
-          colors::red_bold("(parsing error)")
-        ),
-      ),
-      Self::ResolutionError(_) => fmt_info_msg(
-        f,
-        prefix,
-        last,
-        false,
-        format!(
-          "{} {}",
-          colors::red(specifier),
-          colors::red_bold("(resolution error)")
-        ),
-      ),
-      Self::UnsupportedMediaType(_, _) => fmt_info_msg(
-        f,
-        prefix,
-        last,
-        false,
-        format!(
-          "{} {}",
-          colors::red(specifier),
-          colors::red_bold("(unsupported)")
-        ),
-      ),
-      Self::Missing(_) => fmt_info_msg(
-        f,
-        prefix,
-        last,
-        false,
-        format!(
-          "{} {}",
-          colors::red(specifier),
-          colors::red_bold("(missing)")
-        ),
-      ),
+      Self::UnsupportedMediaType(_, _) => {
+        fmt_error_msg(f, prefix, last, specifier, "(unsupported)")
+      }
+      Self::Missing(_) => {
+        fmt_error_msg(f, prefix, last, specifier, "(missing)")
+      }
     }
   }
 }
@@ -395,6 +357,26 @@ where
       prefix, sibling_connector, child_connector
     )),
     msg
+  )
+}
+
+fn fmt_error_msg<S, M>(
+  f: &mut fmt::Formatter,
+  prefix: S,
+  last: bool,
+  specifier: &ModuleSpecifier,
+  error_msg: M,
+) -> fmt::Result
+where
+  S: AsRef<str> + fmt::Display + Clone,
+  M: AsRef<str> + fmt::Display,
+{
+  fmt_info_msg(
+    f,
+    prefix,
+    last,
+    false,
+    format!("{} {}", colors::red(specifier), colors::red_bold(error_msg)),
   )
 }
 
