@@ -1673,6 +1673,180 @@ export function a(a) {
     );
   }
 
+  #[tokio::test]
+  async fn test_create_graph_import_assertion_errors() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"
+            import a from "./a.json";
+            import b from "./b.json" assert { type: "json" };
+            import c from "./c.js" assert { type: "json" };
+            import d from "./d.json" assert { type: "css" };
+            import e from "./e.wasm";
+            "#,
+          )),
+        ),
+        (
+          "file:///a/a.json",
+          Ok(("file:///a/a.json", None, r#"{"a":"b"}"#)),
+        ),
+        (
+          "file:///a/b.json",
+          Ok(("file:///a/b.json", None, r#"{"a":"b"}"#)),
+        ),
+        (
+          "file:///a/c.js",
+          Ok(("file:///a/c.js", None, r#"export const c = "c";"#)),
+        ),
+        (
+          "file:///a/d.json",
+          Ok(("file:///a/d.json", None, r#"{"a":"b"}"#)),
+        ),
+        ("file:///a/e.wasm", Ok(("file:///a/e.wasm", None, ""))),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test01.ts"
+        ],
+        "modules": [
+          {
+            "specifier": "file:///a/a.json",
+            "error": "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: file:///a/a.json"
+          },
+          {
+            "size": 9,
+            "mediaType": "Json",
+            "specifier": "file:///a/b.json"
+          },
+          {
+            "specifier": "file:///a/c.js",
+            "error": "Expected a Json module, but identified a JavaScript module.\n  Specifier: file:///a/c.js"
+          },
+          {
+            "specifier": "file:///a/d.json",
+            "error": "The import assertion type of \"css\" is unsupported."
+          },
+          {
+            "specifier": "file:///a/e.wasm",
+            "error": "Expected a JavaScript or TypeScript module, but identified a Wasm module. Importing these types of modules is currently not supported.\n  Specifier: file:///a/e.wasm"
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "./a.json",
+                "code": {
+                  "specifier": "file:///a/a.json",
+                  "span": {
+                    "start": {
+                      "line": 1,
+                      "character": 26
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 36
+                    }
+                  }
+                }
+              },
+              {
+                "specifier": "./b.json",
+                "code": {
+                  "specifier": "file:///a/b.json",
+                  "span": {
+                    "start": {
+                      "line": 2,
+                      "character": 26
+                    },
+                    "end": {
+                      "line": 2,
+                      "character": 36
+                    }
+                  }
+                },
+                "assertionType": "json"
+              },
+              {
+                "specifier": "./c.js",
+                "code": {
+                  "specifier": "file:///a/c.js",
+                  "span": {
+                    "start": {
+                      "line": 3,
+                      "character": 26
+                    },
+                    "end": {
+                      "line": 3,
+                      "character": 34
+                    }
+                  }
+                },
+                "assertionType": "json"
+              },
+              {
+                "specifier": "./d.json",
+                "code": {
+                  "specifier": "file:///a/d.json",
+                  "span": {
+                    "start": {
+                      "line": 4,
+                      "character": 26
+                    },
+                    "end": {
+                      "line": 4,
+                      "character": 36
+                    }
+                  }
+                },
+                "assertionType": "css"
+              },
+              {
+                "specifier": "./e.wasm",
+                "code": {
+                  "specifier": "file:///a/e.wasm",
+                  "span": {
+                    "start": {
+                      "line": 5,
+                      "character": 26
+                    },
+                    "end": {
+                      "line": 5,
+                      "character": 36
+                    }
+                  }
+                }
+              }
+            ],
+            "mediaType": "TypeScript",
+            "size": 272,
+            "specifier": "file:///a/test01.ts"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
+
   #[test]
   fn test_parse_module() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
