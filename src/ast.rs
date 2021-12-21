@@ -429,31 +429,34 @@ function b(c) {
     assert!(result.is_ok());
     let parsed_source = result.unwrap();
     let dependencies = analyze_jsdoc_imports(&parsed_source);
-    assert_eq!(json!(dependencies), json!([
-      [
-        "./a.js",
-        {
-          "start": 62,
-          "end": 68,
-          "ctxt": 0
-        }
-      ],
-      [
-        "./b.js",
-        {
-          "start": 146,
-          "end": 152,
-          "ctxt": 0
-        }
-      ],
-      [
-        "./d.js",
-        {
-          "start": 179,
-          "end": 185,
-          "ctxt": 0
-        }
-      ]
-    ]));
+    assert_eq!(
+      json!(dependencies),
+      json!([
+        [
+          "./a.js",
+          {
+            "start": 62,
+            "end": 68,
+            "ctxt": 0
+          }
+        ],
+        [
+          "./b.js",
+          {
+            "start": 146,
+            "end": 152,
+            "ctxt": 0
+          }
+        ],
+        [
+          "./d.js",
+          {
+            "start": 179,
+            "end": 185,
+            "ctxt": 0
+          }
+        ]
+      ])
+    );
   }
 }
