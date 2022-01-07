@@ -39,6 +39,11 @@ export interface CreateGraphOptions {
     specifier: string,
     isDynamic: boolean,
   ): Promise<LoadResponse | undefined>;
+  /** The type of graph to build. `"all"` includes all dependencies of the
+   * roots. `"typesOnly"` skips any code only dependencies that do not impact
+   * the types of the graph, and `"codeOnly"` only includes dependencies that
+   * are runnable code. */
+  kind?: "all" | "typesOnly" | "codeOnly";
   /** When identifying a `@jsxImportSource` pragma, what module name will be
    * appended to the import source. This defaults to `jsx-runtime`. */
   jsxImportSourceModule?: string;
@@ -142,6 +147,7 @@ export function createGraph(
     check,
     getChecksum,
     lockFilename,
+    kind,
     imports,
   } = options;
   return jsCreateGraph(
@@ -154,6 +160,7 @@ export function createGraph(
     check,
     getChecksum,
     lockFilename,
+    kind,
     imports,
     // deno-lint-ignore no-explicit-any
   ) as any;

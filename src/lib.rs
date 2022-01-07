@@ -11,6 +11,7 @@ mod module_specifier;
 pub mod source;
 mod text_encoding;
 
+use graph::BuildKind;
 use graph::Builder;
 use graph::ModuleSlot;
 use source::Locker;
@@ -68,7 +69,64 @@ cfg_if! {
         maybe_locker,
         source_parser,
       );
-      builder.build(maybe_imports).await
+      builder.build(BuildKind::All, maybe_imports).await
+    }
+
+    /// Create a module graph, including only dependencies of the roots that
+    /// would contain code that would be executed, skipping any type only
+    /// dependencies. This is useful when wanting to build a graph of code for
+    /// loading in runtime that doesn't care about type only dependencies.
+    pub async fn create_code_graph(
+      roots: Vec<ModuleSpecifier>,
+      is_dynamic: bool,
+      maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
+      loader: &mut dyn Loader,
+      maybe_resolver: Option<&dyn Resolver>,
+      maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
+      maybe_parser: Option<&dyn SourceParser>,
+    ) -> ModuleGraph {
+      let default_parser = ast::DefaultSourceParser::new();
+      let source_parser = maybe_parser.unwrap_or(&default_parser);
+      let builder = Builder::new(
+        roots,
+        is_dynamic,
+        loader,
+        maybe_resolver,
+        maybe_locker,
+        source_parser,
+      );
+      builder.build(BuildKind::CodeOnly, maybe_imports).await
+    }
+
+    /// Create a module graph, including only dependencies that might affect
+    /// the types of the graph, skipping any "code only" imports. This is
+    /// useful in situations where only the types are being used, like when
+    /// type checking code or generating documentation.
+    ///
+    /// Note that code which is overloaded with types upon access (like the
+    /// `X-TypeScript-Types` header or types defined in the code itself) will
+    /// still be loaded into the graph, but further code only dependencies will
+    /// not be followed.
+    pub async fn create_type_graph(
+      roots: Vec<ModuleSpecifier>,
+      is_dynamic: bool,
+      maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
+      loader: &mut dyn Loader,
+      maybe_resolver: Option<&dyn Resolver>,
+      maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
+      maybe_parser: Option<&dyn SourceParser>,
+    ) -> ModuleGraph {
+      let default_parser = ast::DefaultSourceParser::new();
+      let source_parser = maybe_parser.unwrap_or(&default_parser);
+      let builder = Builder::new(
+        roots,
+        is_dynamic,
+        loader,
+        maybe_resolver,
+        maybe_locker,
+        source_parser,
+      );
+      builder.build(BuildKind::TypesOnly, maybe_imports).await
     }
 
     /// Parse an individual module, returning the module as a result, otherwise
@@ -138,6 +196,7 @@ cfg_if! {
       maybe_check: Option<js_sys::Function>,
       maybe_get_checksum: Option<js_sys::Function>,
       maybe_lockfile_name: Option<String>,
+      maybe_build_kind: Option<String>,
       maybe_imports: JsValue,
     ) -> Result<js_graph::ModuleGraph, JsValue> {
       let roots_vec: Vec<String> = roots.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
@@ -161,6 +220,11 @@ cfg_if! {
           .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
         roots.push(root);
       }
+      let build_kind = match maybe_build_kind.as_deref() {
+        Some("typesOnly") => BuildKind::TypesOnly,
+        Some("codeOnly") => BuildKind::CodeOnly,
+        _ => BuildKind::All,
+      };
       let mut maybe_imports = None;
       if let Some(imports_map) = maybe_imports_map {
         let mut imports = Vec::new();
@@ -181,7 +245,7 @@ cfg_if! {
         maybe_locker,
         &source_parser,
       );
-      let graph = builder.build(maybe_imports).await;
+      let graph = builder.build(build_kind, maybe_imports).await;
       Ok(js_graph::ModuleGraph(graph))
     }
 
@@ -606,7 +670,7 @@ console.log(a);
             "dependencies": [
               {
                 "specifier": "./types_01.d.ts",
-                "code": {
+                "type": {
                   "specifier": "file:///a/types_01.d.ts",
                   "span": {
                     "start": {
@@ -1840,6 +1904,401 @@ export function a(a) {
             "mediaType": "TypeScript",
             "size": 272,
             "specifier": "file:///a/test01.ts"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
+
+  #[tokio::test]
+  async fn test_create_type_graph() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"
+            // @deno-types="./a.d.ts"
+            import * as a from "./a.js";
+            import type { B } from "./b.d.ts";
+            import * as c from "https://example.com/c";
+            import * as d from "./d.js";
+            "#,
+          )),
+        ),
+        (
+          "file:///a/a.js",
+          Ok(("file:///a/a.js", None, r#"export const a = "a""#)),
+        ),
+        (
+          "file:///a/a.d.ts",
+          Ok(("file:///a/a.d.ts", None, r#"export const a: "a";"#)),
+        ),
+        (
+          "file:///a/b.d.ts",
+          Ok(("file:///a/b.d.ts", None, r#"export interface B {}"#)),
+        ),
+        (
+          "https://example.com/c",
+          Ok((
+            "https://example.com/c",
+            Some(vec![
+              ("x-typescript-types", "./c.d.ts"),
+              ("content-type", "application/javascript"),
+            ]),
+            r#"export { c } from "./c.js";"#,
+          )),
+        ),
+        (
+          "https://example.com/c.d.ts",
+          Ok((
+            "https://example.com/c.d.ts",
+            Some(vec![("content-type", "application/typescript")]),
+            r#"export const c: "c";"#,
+          )),
+        ),
+        (
+          "https://example.com/c.js",
+          Ok((
+            "https://example.com/c.js",
+            Some(vec![("content-type", "application/javascript")]),
+            r#"export const c = "c";"#,
+          )),
+        ),
+        (
+          "file:///a/d.js",
+          Ok(("file:///a/d.js", None, r#"export const d = "d";"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let graph = create_type_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test01.ts"
+        ],
+        "modules": [
+          {
+            "dependencies": [],
+            "mediaType": "Dts",
+            "size": 20,
+            "specifier": "file:///a/a.d.ts"
+          },
+          {
+            "dependencies": [],
+            "mediaType": "Dts",
+            "size": 21,
+            "specifier": "file:///a/b.d.ts"
+          },
+          {
+            "dependencies": [],
+            "mediaType": "JavaScript",
+            "size": 21,
+            "specifier": "file:///a/d.js"
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "./a.js",
+                "type": {
+                  "specifier": "file:///a/a.d.ts",
+                  "span": {
+                    "start": {
+                      "line": 1,
+                      "character": 28
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 36
+                    }
+                  }
+                }
+              },
+              {
+                "specifier": "./b.d.ts",
+                "type": {
+                  "specifier": "file:///a/b.d.ts",
+                  "span": {
+                    "start": {
+                      "line": 3,
+                      "character": 35
+                    },
+                    "end": {
+                      "line": 3,
+                      "character": 45
+                    }
+                  }
+                }
+              },
+              {
+                "specifier": "./d.js",
+                "code": {
+                  "specifier": "file:///a/d.js",
+                  "span": {
+                    "start": {
+                      "line": 5,
+                      "character": 31
+                    },
+                    "end": {
+                      "line": 5,
+                      "character": 39
+                    }
+                  }
+                }
+              },
+              {
+                "specifier": "https://example.com/c",
+                "code": {
+                  "specifier": "https://example.com/c",
+                  "span": {
+                    "start": {
+                      "line": 4,
+                      "character": 31
+                    },
+                    "end": {
+                      "line": 4,
+                      "character": 54
+                    }
+                  }
+                }
+              }
+            ],
+            "mediaType": "TypeScript",
+            "size": 236,
+            "specifier": "file:///a/test01.ts"
+          },
+          {
+            "dependencies": [],
+            "typesDependency": {
+              "specifier": "./c.d.ts",
+              "dependency": {
+                "specifier": "https://example.com/c.d.ts",
+                "span": {
+                  "start": {
+                    "line": 0,
+                    "character": 0
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 0
+                  }
+                }
+              }
+            },
+            "mediaType": "JavaScript",
+            "size": 27,
+            "specifier": "https://example.com/c"
+          },
+          {
+            "dependencies": [],
+            "mediaType": "Dts",
+            "size": 20,
+            "specifier": "https://example.com/c.d.ts"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
+
+  #[tokio::test]
+  async fn test_create_code_graph() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"
+            // @deno-types="./a.d.ts"
+            import * as a from "./a.js";
+            import type { B } from "./b.d.ts";
+            import * as c from "https://example.com/c";
+            import * as d from "./d.js";
+            "#,
+          )),
+        ),
+        (
+          "file:///a/a.js",
+          Ok(("file:///a/a.js", None, r#"export const a = "a""#)),
+        ),
+        (
+          "file:///a/a.d.ts",
+          Ok(("file:///a/a.d.ts", None, r#"export const a: "a";"#)),
+        ),
+        (
+          "file:///a/b.d.ts",
+          Ok(("file:///a/b.d.ts", None, r#"export interface B {}"#)),
+        ),
+        (
+          "https://example.com/c",
+          Ok((
+            "https://example.com/c",
+            Some(vec![
+              ("x-typescript-types", "./c.d.ts"),
+              ("content-type", "application/javascript"),
+            ]),
+            r#"export { c } from "./c.js";"#,
+          )),
+        ),
+        (
+          "https://example.com/c.d.ts",
+          Ok((
+            "https://example.com/c.d.ts",
+            Some(vec![("content-type", "application/typescript")]),
+            r#"export const c: "c";"#,
+          )),
+        ),
+        (
+          "https://example.com/c.js",
+          Ok((
+            "https://example.com/c.js",
+            Some(vec![("content-type", "application/javascript")]),
+            r#"export const c = "c";"#,
+          )),
+        ),
+        (
+          "file:///a/d.js",
+          Ok(("file:///a/d.js", None, r#"export const d = "d";"#)),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let graph = create_code_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+    )
+    .await;
+    // println!("{}", serde_json::to_string_pretty(&graph).unwrap());
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test01.ts"
+        ],
+        "modules": [
+          {
+            "dependencies": [],
+            "mediaType": "JavaScript",
+            "size": 20,
+            "specifier": "file:///a/a.js"
+          },
+          {
+            "dependencies": [],
+            "mediaType": "JavaScript",
+            "size": 21,
+            "specifier": "file:///a/d.js"
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "./a.js",
+                "code": {
+                  "specifier": "file:///a/a.js",
+                  "span": {
+                    "start": {
+                      "line": 2,
+                      "character": 31
+                    },
+                    "end": {
+                      "line": 2,
+                      "character": 39
+                    }
+                  }
+                }
+              },
+              {
+                "specifier": "./b.d.ts",
+              },
+              {
+                "specifier": "./d.js",
+                "code": {
+                  "specifier": "file:///a/d.js",
+                  "span": {
+                    "start": {
+                      "line": 5,
+                      "character": 31
+                    },
+                    "end": {
+                      "line": 5,
+                      "character": 39
+                    }
+                  }
+                }
+              },
+              {
+                "specifier": "https://example.com/c",
+                "code": {
+                  "specifier": "https://example.com/c",
+                  "span": {
+                    "start": {
+                      "line": 4,
+                      "character": 31
+                    },
+                    "end": {
+                      "line": 4,
+                      "character": 54
+                    }
+                  }
+                }
+              }
+            ],
+            "mediaType": "TypeScript",
+            "size": 236,
+            "specifier": "file:///a/test01.ts"
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "./c.js",
+                "code": {
+                  "specifier": "https://example.com/c.js",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 18
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 26
+                    }
+                  }
+                }
+              }
+            ],
+            "mediaType": "JavaScript",
+            "size": 27,
+            "specifier": "https://example.com/c"
+          },
+          {
+            "dependencies": [],
+            "mediaType": "JavaScript",
+            "size": 21,
+            "specifier": "https://example.com/c.js"
           }
         ],
         "redirects": {}
