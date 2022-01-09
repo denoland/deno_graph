@@ -6,6 +6,7 @@ use crate::ast::analyze_dependencies;
 use crate::ast::analyze_jsdoc_imports;
 use crate::ast::analyze_jsx_import_sources;
 use crate::ast::analyze_ts_references;
+use crate::ast::DependencyKind;
 use crate::ast::SourceParser;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -1306,7 +1307,14 @@ pub(crate) fn parse_module_from_ast(
       ),
       maybe_resolver,
     );
-    dep.maybe_code = resolved_dependency;
+    if matches!(
+      desc.kind,
+      DependencyKind::ImportType | DependencyKind::ExportType
+    ) {
+      dep.maybe_type = resolved_dependency;
+    } else {
+      dep.maybe_code = resolved_dependency;
+    }
     let specifier = module.specifier.clone();
     let maybe_type = analyze_deno_types(&desc)
       .map(|(text, span)| {
@@ -1350,6 +1358,20 @@ fn is_untyped(media_type: &MediaType) -> bool {
   )
 }
 
+/// The kind of build to perform.
+pub(crate) enum BuildKind {
+  /// All types of dependencies should be analyzed and included in the graph.
+  All,
+  /// Only code dependencies should be analyzed and included in the graph. This
+  /// is useful when transpiling and running code, but not caring about type
+  /// only dependnecies.
+  CodeOnly,
+  /// Only type dependencies should be analyzed and included in the graph. This
+  /// is useful when assessing types, like documentation or type checking, when
+  /// the code will not be executed.
+  TypesOnly,
+}
+
 pub(crate) struct Builder<'a> {
   in_dynamic_branch: bool,
   graph: ModuleGraph,
@@ -1384,6 +1406,7 @@ impl<'a> Builder<'a> {
 
   pub async fn build(
     mut self,
+    kind: BuildKind,
     maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
   ) -> ModuleGraph {
     let roots = self.graph.roots.clone();
@@ -1419,7 +1442,7 @@ impl<'a> Builder<'a> {
           let assert_types =
             self.pending_assert_types.remove(&specifier).unwrap();
           for maybe_assert_type in assert_types {
-            self.visit(&specifier, &response, maybe_assert_type)
+            self.visit(&specifier, &response, &kind, maybe_assert_type)
           }
         }
         Some((specifier, Ok(None))) => {
@@ -1501,8 +1524,11 @@ impl<'a> Builder<'a> {
     &mut self,
     requested_specifier: &ModuleSpecifier,
     response: &LoadResponse,
+    kind: &BuildKind,
     maybe_assert_type: Option<String>,
   ) {
+    use std::borrow::BorrowMut;
+
     let maybe_headers = response.maybe_headers.as_ref();
     let specifier = response.specifier.clone();
 
@@ -1522,7 +1548,7 @@ impl<'a> Builder<'a> {
 
     let is_root = self.graph.roots.contains(&specifier);
 
-    let module_slot = parse_module(
+    let mut module_slot = parse_module(
       &specifier,
       maybe_headers,
       response.content.clone(),
@@ -1533,43 +1559,61 @@ impl<'a> Builder<'a> {
       self.in_dynamic_branch,
     );
 
-    if let ModuleSlot::Module(Module::Es(module)) = &module_slot {
-      for dep in module.dependencies.values() {
-        // Queue up dynamic dependencies to be visited later, unless we are
-        // already visiting a dynamic branch.
-        if dep.is_dynamic && !self.in_dynamic_branch {
-          if let Some(Ok((specifier, _))) = &dep.maybe_code {
-            self
-              .dynamic_branches
-              .insert(specifier.clone(), dep.maybe_assert_type.clone());
+    if let ModuleSlot::Module(Module::Es(module)) = module_slot.borrow_mut() {
+      if matches!(kind, BuildKind::All | BuildKind::CodeOnly)
+        || module.maybe_types_dependency.is_none()
+      {
+        for dep in module.dependencies.values_mut() {
+          if matches!(kind, BuildKind::All | BuildKind::CodeOnly)
+            || dep.maybe_type.is_none()
+          {
+            if let Some(Ok((specifier, _))) = &dep.maybe_code {
+              if dep.is_dynamic && !self.in_dynamic_branch {
+                self
+                  .dynamic_branches
+                  .insert(specifier.clone(), dep.maybe_assert_type.clone());
+              } else {
+                self.load(
+                  specifier,
+                  self.in_dynamic_branch,
+                  dep.maybe_assert_type.as_deref(),
+                );
+              }
+            }
+          } else {
+            dep.maybe_code = None;
           }
-          if let Some(Ok((specifier, _))) = &dep.maybe_type {
-            self
-              .dynamic_branches
-              .insert(specifier.clone(), dep.maybe_assert_type.clone());
-          }
-        } else {
-          if let Some(Ok((specifier, _))) = &dep.maybe_code {
-            self.load(
-              specifier,
-              self.in_dynamic_branch,
-              dep.maybe_assert_type.as_deref(),
-            );
-          }
-          if let Some(Ok((specifier, _))) = &dep.maybe_type {
-            self.load(
-              specifier,
-              self.in_dynamic_branch,
-              dep.maybe_assert_type.as_deref(),
-            );
+
+          if matches!(kind, BuildKind::All | BuildKind::TypesOnly) {
+            if let Some(Ok((specifier, _))) = &dep.maybe_type {
+              if dep.is_dynamic && !self.in_dynamic_branch {
+                self
+                  .dynamic_branches
+                  .insert(specifier.clone(), dep.maybe_assert_type.clone());
+              } else {
+                self.load(
+                  specifier,
+                  self.in_dynamic_branch,
+                  dep.maybe_assert_type.as_deref(),
+                );
+              }
+            }
+          } else {
+            dep.maybe_type = None;
           }
         }
+      } else {
+        module.dependencies.clear();
       }
 
-      if let Some((_, Some(Ok((specifier, _))))) =
-        &module.maybe_types_dependency
-      {
-        self.load(specifier, false, None);
+      if matches!(kind, BuildKind::All | BuildKind::TypesOnly) {
+        if let Some((_, Some(Ok((specifier, _))))) =
+          &module.maybe_types_dependency
+        {
+          self.load(specifier, false, None);
+        }
+      } else {
+        module.maybe_types_dependency = None;
       }
     }
     self.graph.module_slots.insert(specifier, module_slot);
@@ -1924,7 +1968,7 @@ mod tests {
       None,
       &source_parser,
     );
-    builder.build(None).await;
+    builder.build(BuildKind::All, None).await;
     assert!(loader.loaded_foo);
     assert!(loader.loaded_bar);
     assert!(loader.loaded_baz);
@@ -1968,7 +2012,7 @@ mod tests {
       None,
       &source_parser,
     );
-    let graph = builder.build(None).await;
+    let graph = builder.build(BuildKind::All, None).await;
     assert!(graph
       .try_get(&Url::parse("file:///foo.js").unwrap())
       .is_ok());
@@ -2039,7 +2083,7 @@ mod tests {
       None,
       &source_parser,
     );
-    let graph = builder.build(None).await;
+    let graph = builder.build(BuildKind::All, None).await;
     let specifiers = graph.specifiers();
     dbg!(&specifiers);
     assert_eq!(specifiers.len(), 4);

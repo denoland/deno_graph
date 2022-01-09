@@ -430,6 +430,7 @@ mod tests {
   use super::*;
   use crate::ast::DefaultSourceParser;
   use crate::colors::strip_ansi_codes;
+  use crate::graph::BuildKind;
   use crate::graph::Builder;
   use crate::source::CacheInfo;
   use crate::source::MemoryLoader;
@@ -547,7 +548,7 @@ mod tests {
       None,
       &source_parser,
     );
-    let graph = builder.build(None).await;
+    let graph = builder.build(BuildKind::All, None).await;
     assert_eq!(
       strip_ansi_codes(format!("{}", graph)),
       r#"local: /cache/deps/https/deno.land/x/example/a.ts
@@ -624,7 +625,7 @@ https://deno.land/x/example/a.ts (129B)
       None,
       &source_parser,
     );
-    let graph = builder.build(None).await;
+    let graph = builder.build(BuildKind::All, None).await;
     println!("{}", graph);
     assert_eq!(
       strip_ansi_codes(format!("{}", graph)),
