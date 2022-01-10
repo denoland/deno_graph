@@ -20,6 +20,7 @@ export type {
   LoadResponse,
   Module,
   ModuleGraph,
+  ModuleGraphJson,
   TypesDependency,
 } from "./lib/types.d.ts";
 
