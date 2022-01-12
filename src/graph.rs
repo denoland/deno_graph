@@ -1387,6 +1387,7 @@ pub(crate) struct Builder<'a> {
   pending_assert_types: HashMap<ModuleSpecifier, HashSet<Option<String>>>,
   dynamic_branches: HashMap<ModuleSpecifier, Option<String>>,
   source_parser: &'a dyn SourceParser,
+  maybe_reporter: Option<&'a dyn Reporter>,
 }
 
 impl<'a> Builder<'a> {
@@ -1397,6 +1398,7 @@ impl<'a> Builder<'a> {
     maybe_resolver: Option<&'a dyn Resolver>,
     maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
     source_parser: &'a dyn SourceParser,
+    maybe_reporter: Option<&'a dyn Reporter>,
   ) -> Self {
     Self {
       in_dynamic_branch: is_dynamic_root,
@@ -1407,6 +1409,7 @@ impl<'a> Builder<'a> {
       pending_assert_types: HashMap::new(),
       dynamic_branches: HashMap::new(),
       source_parser,
+      maybe_reporter,
     }
   }
 
@@ -1443,28 +1446,39 @@ impl<'a> Builder<'a> {
     }
 
     loop {
-      match self.pending.next().await {
+      let specifier = match self.pending.next().await {
         Some((specifier, Ok(Some(response)))) => {
           let assert_types =
             self.pending_assert_types.remove(&specifier).unwrap();
           for maybe_assert_type in assert_types {
             self.visit(&specifier, &response, &kind, maybe_assert_type)
           }
+          Some(specifier)
         }
         Some((specifier, Ok(None))) => {
           self
             .graph
             .module_slots
-            .insert(specifier, ModuleSlot::Missing);
+            .insert(specifier.clone(), ModuleSlot::Missing);
+          Some(specifier)
         }
         Some((specifier, Err(err))) => {
           self.graph.module_slots.insert(
             specifier.clone(),
             ModuleSlot::Err(ModuleGraphError::LoadingErr(
-              specifier,
+              specifier.clone(),
               Arc::new(err),
             )),
           );
+          Some(specifier)
+        }
+        _ => None,
+      };
+      match (specifier, self.maybe_reporter) {
+        (Some(specifier), Some(reporter)) => {
+          let modules_total = self.graph.module_slots.len();
+          let modules_done = modules_total - self.pending.len();
+          reporter.on_load(&specifier, modules_done, modules_total);
         }
         _ => {}
       }
@@ -1967,6 +1981,7 @@ mod tests {
       None,
       None,
       &source_parser,
+      None,
     );
     builder.build(BuildKind::All, None).await;
     assert!(loader.loaded_foo);
@@ -2006,6 +2021,7 @@ mod tests {
       None,
       None,
       &source_parser,
+      None,
     );
     let graph = builder.build(BuildKind::All, None).await;
     assert!(graph
@@ -2071,6 +2087,7 @@ mod tests {
       None,
       None,
       &source_parser,
+      None,
     );
     let graph = builder.build(BuildKind::All, None).await;
     let specifiers = graph.specifiers();

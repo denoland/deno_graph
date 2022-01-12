@@ -209,6 +209,22 @@ impl Loader for MemoryLoader {
   }
 }
 
+/// A trait which can be used to allow the module graph to report status events
+/// to the user.
+pub trait Reporter: fmt::Debug {
+  /// A handler that is called after each load of a module. It contains the
+  /// module specifier of the module that was loaded, and the number of modules
+  /// seen (total number of unique specifiers seen), and the number of modules
+  /// loaded (where [Loader::load] has been called, and the returned future is
+  /// ready).
+  fn on_load(
+    &self,
+    specifier: &ModuleSpecifier,
+    modules_done: usize,
+    modules_total: usize,
+  );
+}
+
 #[cfg(test)]
 pub mod tests {
   use super::*;
