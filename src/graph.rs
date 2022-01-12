@@ -18,6 +18,8 @@ use deno_ast::MediaType;
 use deno_ast::ParsedSource;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
+use futures::Future;
+use futures::FutureExt;
 use serde::ser::SerializeMap;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
@@ -31,6 +33,7 @@ use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt;
+use std::pin::Pin;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -1372,12 +1375,15 @@ pub(crate) enum BuildKind {
   TypesOnly,
 }
 
+pub type LoadWithSpecifierFuture =
+  Pin<Box<dyn Future<Output = (ModuleSpecifier, LoadResult)> + 'static>>;
+
 pub(crate) struct Builder<'a> {
   in_dynamic_branch: bool,
   graph: ModuleGraph,
   loader: &'a mut dyn Loader,
   maybe_resolver: Option<&'a dyn Resolver>,
-  pending: FuturesUnordered<LoadFuture>,
+  pending: FuturesUnordered<LoadWithSpecifierFuture>,
   pending_assert_types: HashMap<ModuleSpecifier, HashSet<Option<String>>>,
   dynamic_branches: HashMap<ModuleSpecifier, Option<String>>,
   source_parser: &'a dyn SourceParser,
@@ -1515,7 +1521,12 @@ impl<'a> Builder<'a> {
         .graph
         .module_slots
         .insert(specifier.clone(), ModuleSlot::Pending);
-      self.pending.push(self.loader.load(specifier, is_dynamic));
+      let specifier = specifier.clone();
+      let fut = self
+        .loader
+        .load(&specifier, is_dynamic)
+        .map(move |res| (specifier.clone(), res));
+      self.pending.push(Box::pin(fut));
     }
   }
 
@@ -1910,44 +1921,33 @@ mod tests {
             assert!(!is_dynamic);
             self.loaded_foo = true;
             Box::pin(async move {
-              (
-                specifier.clone(),
-                Ok(Some(LoadResponse {
-                  specifier: specifier.clone(),
-                  maybe_headers: None,
-                  content: Arc::new(
-                    "await import('file:///bar.js')".to_string(),
-                  ),
-                })),
-              )
+              Ok(Some(LoadResponse {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: Arc::new("await import('file:///bar.js')".to_string()),
+              }))
             })
           }
           "file:///bar.js" => {
             assert!(is_dynamic);
             self.loaded_bar = true;
             Box::pin(async move {
-              (
-                specifier.clone(),
-                Ok(Some(LoadResponse {
-                  specifier: specifier.clone(),
-                  maybe_headers: None,
-                  content: Arc::new("import 'file:///baz.js'".to_string()),
-                })),
-              )
+              Ok(Some(LoadResponse {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: Arc::new("import 'file:///baz.js'".to_string()),
+              }))
             })
           }
           "file:///baz.js" => {
             assert!(is_dynamic);
             self.loaded_baz = true;
             Box::pin(async move {
-              (
-                specifier.clone(),
-                Ok(Some(LoadResponse {
-                  specifier: specifier.clone(),
-                  maybe_headers: None,
-                  content: Arc::new("console.log('Hello, world!')".to_string()),
-                })),
-              )
+              Ok(Some(LoadResponse {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: Arc::new("console.log('Hello, world!')".to_string()),
+              }))
             })
           }
           _ => unreachable!(),
@@ -1986,18 +1986,13 @@ mod tests {
         let specifier = specifier.clone();
         match specifier.as_str() {
           "file:///foo.js" => Box::pin(async move {
-            (
-              specifier.clone(),
-              Ok(Some(LoadResponse {
-                specifier: specifier.clone(),
-                maybe_headers: None,
-                content: Arc::new("await import('file:///bar.js')".to_string()),
-              })),
-            )
+            Ok(Some(LoadResponse {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: Arc::new("await import('file:///bar.js')".to_string()),
+            }))
           }),
-          "file:///bar.js" => {
-            Box::pin(async move { (specifier.clone(), Ok(None)) })
-          }
+          "file:///bar.js" => Box::pin(async move { Ok(None) }),
           _ => unreachable!(),
         }
       }
@@ -2050,24 +2045,18 @@ mod tests {
         let specifier = specifier.clone();
         match specifier.as_str() {
           "file:///foo.js" => Box::pin(async move {
-            (
-              specifier.clone(),
-              Ok(Some(LoadResponse {
-                specifier: Url::parse("file:///foo_actual.js").unwrap(),
-                maybe_headers: None,
-                content: Arc::new("import 'file:///bar.js'".to_string()),
-              })),
-            )
+            Ok(Some(LoadResponse {
+              specifier: Url::parse("file:///foo_actual.js").unwrap(),
+              maybe_headers: None,
+              content: Arc::new("import 'file:///bar.js'".to_string()),
+            }))
           }),
           "file:///bar.js" => Box::pin(async move {
-            (
-              specifier.clone(),
-              Ok(Some(LoadResponse {
-                specifier: Url::parse("file:///bar_actual.js").unwrap(),
-                maybe_headers: None,
-                content: Arc::new("(".to_string()),
-              })),
-            )
+            Ok(Some(LoadResponse {
+              specifier: Url::parse("file:///bar_actual.js").unwrap(),
+              maybe_headers: None,
+              content: Arc::new("(".to_string()),
+            }))
           }),
           _ => unreachable!(),
         }

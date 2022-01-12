@@ -57,7 +57,7 @@ impl Loader for JsLoader {
     is_dynamic: bool,
   ) -> LoadFuture {
     if specifier.scheme() == "data" {
-      Box::pin(future::ready((specifier.clone(), load_data_url(specifier))))
+      Box::pin(future::ready(load_data_url(specifier)))
     } else {
       let specifier = specifier.clone();
       let context = JsValue::null();
@@ -74,12 +74,9 @@ impl Loader for JsLoader {
           }
           Err(err) => Err(err),
         };
-        (
-          specifier,
-          response
-            .map(|value| value.into_serde().unwrap())
-            .map_err(|_| anyhow!("load rejected or errored")),
-        )
+        response
+          .map(|value| value.into_serde().unwrap())
+          .map_err(|_| anyhow!("load rejected or errored"))
       };
       Box::pin(f)
     }
