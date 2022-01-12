@@ -1525,7 +1525,7 @@ impl<'a> Builder<'a> {
       let fut = self
         .loader
         .load(&specifier, is_dynamic)
-        .map(move |res| (specifier.clone(), res));
+        .map(move |res| (specifier, res));
       self.pending.push(Box::pin(fut));
     }
   }
