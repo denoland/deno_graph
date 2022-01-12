@@ -123,7 +123,7 @@ pub trait Resolver: fmt::Debug {
   }
 }
 
-pub(crate) fn load_data_url(
+pub fn load_data_url(
   specifier: &ModuleSpecifier,
 ) -> Result<Option<LoadResponse>> {
   let url = DataUrl::process(specifier.as_str())
