@@ -54,7 +54,7 @@ pub struct LoadResponse {
   pub content: Arc<String>,
 }
 
-pub type LoadResult = (ModuleSpecifier, Result<Option<LoadResponse>>);
+pub type LoadResult = Result<Option<LoadResponse>>;
 pub type LoadFuture = Pin<Box<dyn Future<Output = LoadResult> + 'static>>;
 
 /// A trait which allows asynchronous loading of source files into a module
@@ -205,7 +205,7 @@ impl Loader for MemoryLoader {
       None if specifier.scheme() == "data" => load_data_url(specifier),
       _ => Ok(None),
     };
-    Box::pin(future::ready((specifier.clone(), response)))
+    Box::pin(future::ready(response))
   }
 }
 
