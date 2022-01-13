@@ -1119,7 +1119,7 @@ console.log(a);
             r#"
 /**
  * Some js doc
- * 
+ *
  * @param {import("./types.d.ts").A} a
  * @return {import("./other.ts").B}
  */
@@ -1205,7 +1205,7 @@ export function a(a) {
               }
             ],
             "mediaType": "JavaScript",
-            "size": 138,
+            "size": 137,
             "specifier": "file:///a/test.js"
           },
           {
@@ -2640,7 +2640,7 @@ export function a(a) {
         r#"
 /**
  * Some js doc
- * 
+ *
  * @param {import("./types.d.ts").A} a
  * @return {import("./other.ts").B}
  */
@@ -2693,7 +2693,7 @@ export function a(a) {
           }
         ],
         "mediaType": "JavaScript",
-        "size": 138,
+        "size": 137,
         "specifier": "file:///a/test.js"
       })
     );
