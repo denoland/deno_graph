@@ -1474,13 +1474,12 @@ impl<'a> Builder<'a> {
         }
         _ => None,
       };
-      match (specifier, self.maybe_reporter) {
-        (Some(specifier), Some(reporter)) => {
-          let modules_total = self.graph.module_slots.len();
-          let modules_done = modules_total - self.pending.len();
-          reporter.on_load(&specifier, modules_done, modules_total);
-        }
-        _ => {}
+      if let (Some(specifier), Some(reporter)) =
+        (specifier, self.maybe_reporter)
+      {
+        let modules_total = self.graph.module_slots.len();
+        let modules_done = modules_total - self.pending.len();
+        reporter.on_load(&specifier, modules_done, modules_total);
       }
       if self.pending.is_empty() {
         // Start visiting queued up dynamic branches. We do this in a separate

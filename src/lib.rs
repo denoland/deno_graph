@@ -51,6 +51,7 @@ cfg_if! {
 
     /// Create a module graph, based on loading and recursively analyzing the
     /// dependencies of the module, returning the resulting graph.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_graph(
       roots: Vec<ModuleSpecifier>,
       is_dynamic: bool,
@@ -79,6 +80,7 @@ cfg_if! {
     /// would contain code that would be executed, skipping any type only
     /// dependencies. This is useful when wanting to build a graph of code for
     /// loading in runtime that doesn't care about type only dependencies.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_code_graph(
       roots: Vec<ModuleSpecifier>,
       is_dynamic: bool,
@@ -112,6 +114,7 @@ cfg_if! {
     /// `X-TypeScript-Types` header or types defined in the code itself) will
     /// still be loaded into the graph, but further code only dependencies will
     /// not be followed.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_type_graph(
       roots: Vec<ModuleSpecifier>,
       is_dynamic: bool,
