@@ -47,9 +47,11 @@ cfg_if! {
     pub use module_specifier::SpecifierError;
 
     use source::Loader;
+    use source::Reporter;
 
     /// Create a module graph, based on loading and recursively analyzing the
     /// dependencies of the module, returning the resulting graph.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_graph(
       roots: Vec<ModuleSpecifier>,
       is_dynamic: bool,
@@ -58,6 +60,7 @@ cfg_if! {
       maybe_resolver: Option<&dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
       maybe_parser: Option<&dyn SourceParser>,
+      maybe_reporter: Option<&dyn Reporter>,
     ) -> ModuleGraph {
       let default_parser = ast::DefaultSourceParser::new();
       let source_parser = maybe_parser.unwrap_or(&default_parser);
@@ -68,6 +71,7 @@ cfg_if! {
         maybe_resolver,
         maybe_locker,
         source_parser,
+        maybe_reporter,
       );
       builder.build(BuildKind::All, maybe_imports).await
     }
@@ -76,6 +80,7 @@ cfg_if! {
     /// would contain code that would be executed, skipping any type only
     /// dependencies. This is useful when wanting to build a graph of code for
     /// loading in runtime that doesn't care about type only dependencies.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_code_graph(
       roots: Vec<ModuleSpecifier>,
       is_dynamic: bool,
@@ -84,6 +89,7 @@ cfg_if! {
       maybe_resolver: Option<&dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
       maybe_parser: Option<&dyn SourceParser>,
+      maybe_reporter: Option<&dyn Reporter>,
     ) -> ModuleGraph {
       let default_parser = ast::DefaultSourceParser::new();
       let source_parser = maybe_parser.unwrap_or(&default_parser);
@@ -94,6 +100,7 @@ cfg_if! {
         maybe_resolver,
         maybe_locker,
         source_parser,
+        maybe_reporter,
       );
       builder.build(BuildKind::CodeOnly, maybe_imports).await
     }
@@ -107,6 +114,7 @@ cfg_if! {
     /// `X-TypeScript-Types` header or types defined in the code itself) will
     /// still be loaded into the graph, but further code only dependencies will
     /// not be followed.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_type_graph(
       roots: Vec<ModuleSpecifier>,
       is_dynamic: bool,
@@ -115,6 +123,7 @@ cfg_if! {
       maybe_resolver: Option<&dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
       maybe_parser: Option<&dyn SourceParser>,
+      maybe_reporter: Option<&dyn Reporter>,
     ) -> ModuleGraph {
       let default_parser = ast::DefaultSourceParser::new();
       let source_parser = maybe_parser.unwrap_or(&default_parser);
@@ -125,6 +134,7 @@ cfg_if! {
         maybe_resolver,
         maybe_locker,
         source_parser,
+        maybe_reporter,
       );
       builder.build(BuildKind::TypesOnly, maybe_imports).await
     }
@@ -244,6 +254,7 @@ cfg_if! {
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         maybe_locker,
         &source_parser,
+        None,
       );
       let graph = builder.build(build_kind, maybe_imports).await;
       Ok(js_graph::ModuleGraph(graph))
@@ -339,6 +350,7 @@ mod tests {
       None,
       None,
       None,
+      None,
     )
     .await;
     assert_eq!(graph.module_slots.len(), 2);
@@ -406,9 +418,17 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test01.ts").unwrap(),
       ModuleSpecifier::parse("https://example.com/a.ts").unwrap(),
     ];
-    let graph =
-      create_graph(roots.clone(), false, None, &mut loader, None, None, None)
-        .await;
+    let graph = create_graph(
+      roots.clone(),
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+      None,
+    )
+    .await;
     assert_eq!(graph.module_slots.len(), 4);
     assert_eq!(graph.roots, roots);
     assert!(
@@ -433,9 +453,17 @@ mod tests {
       vec![],
     );
     let roots = vec![ModuleSpecifier::parse("file:///a/test.json").unwrap()];
-    let graph =
-      create_graph(roots.clone(), true, None, &mut loader, None, None, None)
-        .await;
+    let graph = create_graph(
+      roots.clone(),
+      true,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+      None,
+    )
+    .await;
     assert_eq!(
       json!(graph),
       json!({
@@ -476,9 +504,17 @@ mod tests {
       vec![],
     );
     let roots = vec![ModuleSpecifier::parse("file:///a/test.js").unwrap()];
-    let graph =
-      create_graph(roots.clone(), true, None, &mut loader, None, None, None)
-        .await;
+    let graph = create_graph(
+      roots.clone(),
+      true,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+      None,
+    )
+    .await;
     assert_eq!(
       json!(graph),
       json!({
@@ -554,6 +590,7 @@ console.log(a);
       None,
       None,
       None,
+      None,
     )
     .await;
     assert!(graph.valid().is_ok());
@@ -583,6 +620,7 @@ console.log(a);
       false,
       None,
       &mut loader,
+      None,
       None,
       None,
       None,
@@ -629,6 +667,7 @@ console.log(a);
       false,
       maybe_imports,
       &mut loader,
+      None,
       None,
       None,
       None,
@@ -746,6 +785,7 @@ console.log(a);
       None,
       None,
       None,
+      None,
     )
     .await;
     assert_eq!(
@@ -792,6 +832,7 @@ console.log(a);
       false,
       None,
       &mut loader,
+      None,
       None,
       None,
       None,
@@ -844,6 +885,7 @@ console.log(a);
       false,
       None,
       &mut loader,
+      None,
       None,
       None,
       None,
@@ -912,6 +954,7 @@ console.log(a);
       None,
       None,
       None,
+      None,
     )
     .await;
     let result = graph.valid();
@@ -943,6 +986,7 @@ console.log(a);
       false,
       None,
       &mut loader,
+      None,
       None,
       None,
       None,
@@ -986,6 +1030,7 @@ console.log(a);
       None,
       None,
       None,
+      None,
     )
     .await;
     assert!(graph.valid().is_ok());
@@ -1013,6 +1058,7 @@ console.log(a);
       false,
       None,
       &mut loader,
+      None,
       None,
       None,
       None,
@@ -1104,6 +1150,7 @@ export function a(a) {
       false,
       None,
       &mut loader,
+      None,
       None,
       None,
       None,
@@ -1206,6 +1253,7 @@ export function a(a) {
       None,
       None,
       None,
+      None,
     )
     .await;
     assert_eq!(
@@ -1268,6 +1316,7 @@ export function a(a) {
       None,
       None,
       None,
+      None,
     )
     .await;
     assert_eq!(
@@ -1325,6 +1374,7 @@ export function a(a) {
       None,
       None,
       None,
+      None,
     )
     .await;
     assert_eq!(graph.module_slots.len(), 3);
@@ -1368,6 +1418,7 @@ export function a(a) {
       None,
       &mut loader,
       maybe_resolver,
+      None,
       None,
       None,
     )
@@ -1428,6 +1479,7 @@ export function a(a) {
       None,
       &mut loader,
       maybe_resolver,
+      None,
       None,
       None,
     )
@@ -1491,6 +1543,7 @@ export function a(a) {
       None,
       None,
       Some(&parser),
+      None,
     )
     .await;
     let root_ast = parser.get_parsed_source(&root_specifier).unwrap();
@@ -1547,6 +1600,7 @@ export function a(a) {
       false,
       None,
       &mut loader,
+      None,
       None,
       None,
       None,
@@ -1693,6 +1747,7 @@ export function a(a) {
       None,
       None,
       None,
+      None,
     )
     .await;
     assert_eq!(
@@ -1782,6 +1837,7 @@ export function a(a) {
       false,
       None,
       &mut loader,
+      None,
       None,
       None,
       None,
@@ -1911,6 +1967,112 @@ export function a(a) {
     );
   }
 
+  #[derive(Debug)]
+  struct CollectingReporter {
+    on_loads: RefCell<Vec<(ModuleSpecifier, usize, usize)>>,
+  }
+
+  impl source::Reporter for CollectingReporter {
+    fn on_load(
+      &self,
+      specifier: &ModuleSpecifier,
+      modules_done: usize,
+      modules_total: usize,
+    ) {
+      self.on_loads.borrow_mut().push((
+        specifier.clone(),
+        modules_done,
+        modules_total,
+      ));
+    }
+  }
+
+  #[tokio::test]
+  async fn test_create_graph_with_reporter() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Ok((
+            "file:///a/test01.ts",
+            None,
+            r#"
+            import "./a.js";
+            "#,
+          )),
+        ),
+        (
+          "file:///a/a.js",
+          Ok(("file:///a/a.js", None, r#"import "./b.js";"#)),
+        ),
+        (
+          "file:///a/b.js",
+          Ok((
+            "file:///a/b.js",
+            None,
+            r#"import "./c.js"; import "./d.js""#,
+          )),
+        ),
+        ("file:///a/c.js", Ok(("file:///a/c.js", None, r#""#))),
+        ("file:///a/d.js", Ok(("file:///a/d.js", None, r#""#))),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let reporter = CollectingReporter {
+      on_loads: RefCell::new(vec![]),
+    };
+    let graph = create_graph(
+      vec![root_specifier.clone()],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+      Some(&reporter),
+    )
+    .await;
+    assert_eq!(graph.modules().len(), 5);
+
+    let on_loads = reporter.on_loads.into_inner();
+    assert_eq!(on_loads.len(), 5);
+
+    assert_eq!(
+      on_loads[0],
+      (ModuleSpecifier::parse("file:///a/test01.ts").unwrap(), 1, 2)
+    );
+    assert_eq!(
+      on_loads[1],
+      (ModuleSpecifier::parse("file:///a/a.js").unwrap(), 2, 3)
+    );
+    assert_eq!(
+      on_loads[2],
+      (ModuleSpecifier::parse("file:///a/b.js").unwrap(), 3, 5)
+    );
+    let c = ModuleSpecifier::parse("file:///a/c.js").unwrap();
+    if on_loads[3].0 == c {
+      assert_eq!(
+        on_loads[3],
+        (ModuleSpecifier::parse("file:///a/c.js").unwrap(), 4, 5)
+      );
+      assert_eq!(
+        on_loads[4],
+        (ModuleSpecifier::parse("file:///a/d.js").unwrap(), 5, 5)
+      );
+    } else {
+      assert_eq!(
+        on_loads[3],
+        (ModuleSpecifier::parse("file:///a/d.js").unwrap(), 4, 5)
+      );
+      assert_eq!(
+        on_loads[4],
+        (ModuleSpecifier::parse("file:///a/c.js").unwrap(), 5, 5)
+      );
+    }
+  }
+
   #[tokio::test]
   async fn test_create_type_graph() {
     let mut loader = setup(
@@ -1982,6 +2144,7 @@ export function a(a) {
       false,
       None,
       &mut loader,
+      None,
       None,
       None,
       None,
@@ -2188,6 +2351,7 @@ export function a(a) {
       false,
       None,
       &mut loader,
+      None,
       None,
       None,
       None,

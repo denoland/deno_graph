@@ -547,6 +547,7 @@ mod tests {
       None,
       None,
       &source_parser,
+      None,
     );
     let graph = builder.build(BuildKind::All, None).await;
     assert_eq!(
@@ -624,6 +625,7 @@ https://deno.land/x/example/a.ts (129B)
       None,
       None,
       &source_parser,
+      None,
     );
     let graph = builder.build(BuildKind::All, None).await;
     println!("{}", graph);
