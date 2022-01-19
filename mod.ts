@@ -1,5 +1,23 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
+/**
+ * A JavaScript/TypeScript interface to the Deno CLI's module graph logic.
+ *
+ * ### Example
+ *
+ * To build and output a graph as a JSON structure to the console:
+ *
+ * ```ts
+ * import { createGraph } from "https://deno.land/x/deno_graph@{VERSION}/mod.ts";
+ *
+ * const graph = await createGraph("https://deno.land/x/std/testing/asserts.ts");
+ *
+ * console.log(JSON.stringify(graph, undefined, "  "));
+ * ```
+ *
+ * @module
+ */
+
 import {
   createGraph as jsCreateGraph,
   parseModule as jsParseModule,
@@ -10,6 +28,8 @@ import type {
   LoadResponse,
   Module,
   ModuleGraph,
+  ModuleKind,
+  ResolveResult,
   TypesDependency,
 } from "./lib/types.d.ts";
 
@@ -21,6 +41,8 @@ export type {
   Module,
   ModuleGraph,
   ModuleGraphJson,
+  ModuleKind,
+  ResolveResult,
   TypesDependency,
 } from "./lib/types.d.ts";
 
@@ -56,8 +78,10 @@ export interface CreateGraphOptions {
    * module graph to be "overridden". This is intended to allow items like an
    * import map to be used with the module graph. The callback takes the string
    * of the module specifier from the referrer and the string URL of the
-   * referrer. The callback then returns a resolved URL string specifier. */
-  resolve?(specifier: string, referrer: string): string;
+   * referrer. The callback then returns a fully qualified resolved URL string
+   * specifier or an object which contains the URL string and the module kind.
+   * If just the string is returned, the module kind is inferred to be ESM. */
+  resolve?(specifier: string, referrer: string): string | ResolveResult;
   /** An optional callback that can allow custom logic of how type dependencies
    * of a module to be provided. This will be called if a module is being added
    * to the graph that is is non-typed source code (e.g. JavaScript/JSX) and
@@ -117,23 +141,24 @@ export function createGraph(
  * import { createGraph } from "https://deno.land/x/deno_graph/mod.ts";
  *
  * const graph = await createGraph([
- *   "https://example.com/a.ts",
- *   "https://example.com/a.ts"
+ *   ["https://example.com/a.ts", "esm"],
+ *   ["https://example.com/a.ts", "esm"],
  * ]);
  *
  * console.log(graph.toJSON());
  * ```
  *
- * @param rootSpecifiers  An array of URL string of the root module specifiers
- *                        to build the graph from.
+ * @param rootSpecifiers  An array of URL strings or tuples of URL strings and
+ *                        module kinds of the root module specifiers to build
+ *                        the graph from.
  * @param options A set of options for building the graph
  */
 export function createGraph(
-  rootSpecifiers: string[],
+  rootSpecifiers: string[] | [string, ModuleKind][],
   options?: CreateGraphOptions,
 ): Promise<ModuleGraph>;
 export function createGraph(
-  rootSpecifiers: string | string[],
+  rootSpecifiers: string | string[] | [string, ModuleKind][],
   options: CreateGraphOptions = {},
 ): Promise<ModuleGraph> {
   rootSpecifiers = Array.isArray(rootSpecifiers)
@@ -174,12 +199,16 @@ export interface ParseModuleOptions {
   /** When identifying a `@jsxImportSource` pragma, what module name will be
    * appended to the import source. This defaults to `jsx-runtime`. */
   jsxImportSourceModule?: string;
+  /** The kind of module to set on the resulting parsed module. */
+  kind?: ModuleKind;
   /** An optional callback that allows the default resolution logic of the
    * module graph to be "overridden". This is intended to allow items like an
    * import map to be used with the module graph. The callback takes the string
    * of the module specifier from the referrer and the string URL of the
-   * referrer. The callback then returns a resolved URL string specifier. */
-  resolve?(specifier: string, referrer: string): string;
+   * referrer. The callback then returns a fully qualified resolved URL string
+   * specifier or an object which contains the URL string and the module kind.
+   * If just the string is returned, the module kind is inferred to be ESM. */
+  resolve?(specifier: string, referrer: string): string | ResolveResult;
   /** An optional callback that can allow custom logic of how type dependencies
    * of a module to be provided. This will be called if a module is being added
    * to the graph that is is non-typed source code (e.g. JavaScript/JSX) and
@@ -201,12 +230,14 @@ export function parseModule(
   content: string,
   options: ParseModuleOptions = {},
 ): Module {
-  const { headers, jsxImportSourceModule, resolve, resolveTypes } = options;
+  const { headers, jsxImportSourceModule, kind, resolve, resolveTypes } =
+    options;
   return jsParseModule(
     specifier,
     headers,
     jsxImportSourceModule,
     content,
+    kind,
     resolve,
     resolveTypes,
   ) as Module;

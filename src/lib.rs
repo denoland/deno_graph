@@ -13,6 +13,7 @@ mod text_encoding;
 
 use graph::BuildKind;
 use graph::Builder;
+pub use graph::ModuleKind;
 use graph::ModuleSlot;
 use source::Locker;
 use source::Resolver;
@@ -33,7 +34,6 @@ cfg_if! {
     pub use ast::DependencyDescriptor;
     pub use ast::DependencyKind;
     pub use graph::Dependency;
-    pub use graph::EsModule;
     pub use graph::Module;
     pub use graph::ModuleGraph;
     pub use graph::ModuleGraphError;
@@ -41,7 +41,6 @@ cfg_if! {
     pub use graph::Range;
     pub use graph::ResolutionError;
     pub use graph::Resolved;
-    pub use graph::SyntheticModule;
     pub use deno_ast::MediaType;
     pub use module_specifier::ModuleSpecifier;
     pub use module_specifier::SpecifierError;
@@ -53,7 +52,7 @@ cfg_if! {
     /// dependencies of the module, returning the resulting graph.
     #[allow(clippy::too_many_arguments)]
     pub async fn create_graph(
-      roots: Vec<ModuleSpecifier>,
+      roots: Vec<(ModuleSpecifier, ModuleKind)>,
       is_dynamic: bool,
       maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
       loader: &mut dyn Loader,
@@ -82,7 +81,7 @@ cfg_if! {
     /// loading in runtime that doesn't care about type only dependencies.
     #[allow(clippy::too_many_arguments)]
     pub async fn create_code_graph(
-      roots: Vec<ModuleSpecifier>,
+      roots: Vec<(ModuleSpecifier, ModuleKind)>,
       is_dynamic: bool,
       maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
       loader: &mut dyn Loader,
@@ -127,6 +126,7 @@ cfg_if! {
     ) -> ModuleGraph {
       let default_parser = ast::DefaultSourceParser::new();
       let source_parser = maybe_parser.unwrap_or(&default_parser);
+      let roots = roots.into_iter().map(|s| (s, ModuleKind::Esm)).collect();
       let builder = Builder::new(
         roots,
         is_dynamic,
@@ -145,6 +145,7 @@ cfg_if! {
       specifier: &ModuleSpecifier,
       maybe_headers: Option<&HashMap<String, String>>,
       content: Arc<String>,
+      maybe_kind: Option<&ModuleKind>,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_parser: Option<&dyn SourceParser>,
     ) -> Result<Module, ModuleGraphError> {
@@ -155,6 +156,7 @@ cfg_if! {
         maybe_headers,
         content,
         None,
+        maybe_kind,
         maybe_resolver,
         source_parser,
         true,
@@ -169,12 +171,14 @@ cfg_if! {
     /// Parse an individual module from an AST, returning the module.
     pub fn parse_module_from_ast(
       specifier: &ModuleSpecifier,
+      kind: &ModuleKind,
       maybe_headers: Option<&HashMap<String, String>>,
       parsed_ast: &deno_ast::ParsedSource,
       maybe_resolver: Option<&dyn Resolver>,
     ) -> Module {
       graph::parse_module_from_ast(
         specifier,
+        kind,
         maybe_headers,
         parsed_ast,
         maybe_resolver,
@@ -191,6 +195,7 @@ cfg_if! {
     pub use js_graph::JsLoader;
     pub use js_graph::JsLocker;
     pub use js_graph::JsResolver;
+    use js_graph::StringOrTuple;
 
     use wasm_bindgen::prelude::*;
 
@@ -209,7 +214,7 @@ cfg_if! {
       maybe_build_kind: Option<String>,
       maybe_imports: JsValue,
     ) -> Result<js_graph::ModuleGraph, JsValue> {
-      let roots_vec: Vec<String> = roots.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+      let roots_vec: Vec<StringOrTuple> = roots.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
       let maybe_imports_map: Option<HashMap<String, Vec<String>>> = maybe_imports.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
       let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
       let maybe_resolver = if maybe_jsx_import_source_module.is_some() || maybe_resolve.is_some() || maybe_resolve_types.is_some() {
@@ -225,9 +230,8 @@ cfg_if! {
           None
         };
       let mut roots = Vec::new();
-      for root_str in &roots_vec {
-        let root = module_specifier::ModuleSpecifier::parse(root_str)
-          .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+      for root in roots_vec.into_iter() {
+        let root = root.to_tuple_result().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
         roots.push(root);
       }
       let build_kind = match maybe_build_kind.as_deref() {
@@ -266,6 +270,7 @@ cfg_if! {
       maybe_headers: JsValue,
       maybe_jsx_import_source_module: Option<String>,
       content: String,
+      maybe_kind: JsValue,
       maybe_resolve: Option<js_sys::Function>,
       maybe_resolve_types: Option<js_sys::Function>,
     ) -> Result<js_graph::Module, JsValue> {
@@ -279,12 +284,14 @@ cfg_if! {
       } else {
         None
       };
+      let maybe_kind: Option<ModuleKind> = maybe_kind.into_serde().map_err(|err| js_sys::Error::new(&err.to_string()))?;
       let source_parser = ast::DefaultSourceParser::new();
       match graph::parse_module(
         &specifier,
         maybe_headers.as_ref(),
         Arc::new(content),
         None,
+        maybe_kind.as_ref(),
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         &source_parser,
         true,
@@ -308,6 +315,7 @@ mod tests {
   use source::tests::MockResolver;
   use source::CacheInfo;
   use source::MemoryLoader;
+  use source::ResolveResult;
 
   type Sources<'a> = Vec<(
     &'a str,
@@ -343,7 +351,7 @@ mod tests {
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -354,7 +362,7 @@ mod tests {
     )
     .await;
     assert_eq!(graph.module_slots.len(), 2);
-    assert_eq!(graph.roots, vec![root_specifier.clone()]);
+    assert_eq!(graph.roots, vec![(root_specifier.clone(), ModuleKind::Esm)]);
     assert!(graph.contains(&root_specifier));
     assert!(
       !graph.contains(&ModuleSpecifier::parse("file:///a/test03.ts").unwrap())
@@ -362,7 +370,7 @@ mod tests {
     let maybe_root_module = graph.module_slots.get(&root_specifier);
     assert!(maybe_root_module.is_some());
     let root_module_slot = maybe_root_module.unwrap();
-    if let ModuleSlot::Module(Module::Es(module)) = root_module_slot {
+    if let ModuleSlot::Module(module) = root_module_slot {
       assert_eq!(module.dependencies.len(), 1);
       let maybe_dependency = module.dependencies.get("./test02.ts");
       assert!(maybe_dependency.is_some());
@@ -370,8 +378,12 @@ mod tests {
         ModuleSpecifier::parse("file:///a/test02.ts").unwrap();
       let dependency = maybe_dependency.unwrap();
       assert!(!dependency.is_dynamic);
-      if let Some(Ok((resolved_specifier, _))) = &dependency.maybe_code {
-        assert_eq!(resolved_specifier, &dependency_specifier);
+      if let Resolved::Ok {
+        resolve_result: ResolveResult { specifier, .. },
+        ..
+      } = &dependency.maybe_code
+      {
+        assert_eq!(specifier, &dependency_specifier);
       } else {
         panic!("unexpected resolved slot");
       }
@@ -415,8 +427,14 @@ mod tests {
       vec![],
     );
     let roots = vec![
-      ModuleSpecifier::parse("file:///a/test01.ts").unwrap(),
-      ModuleSpecifier::parse("https://example.com/a.ts").unwrap(),
+      (
+        ModuleSpecifier::parse("file:///a/test01.ts").unwrap(),
+        ModuleKind::Esm,
+      ),
+      (
+        ModuleSpecifier::parse("https://example.com/a.ts").unwrap(),
+        ModuleKind::Esm,
+      ),
     ];
     let graph = create_graph(
       roots.clone(),
@@ -452,7 +470,10 @@ mod tests {
       )],
       vec![],
     );
-    let roots = vec![ModuleSpecifier::parse("file:///a/test.json").unwrap()];
+    let roots = vec![(
+      ModuleSpecifier::parse("file:///a/test.json").unwrap(),
+      ModuleKind::Asserted("json".to_string()),
+    )];
     let graph = create_graph(
       roots.clone(),
       true,
@@ -473,6 +494,7 @@ mod tests {
         "modules": [
           {
             "size": 18,
+            "kind": { "asserted": "json" },
             "mediaType": "Json",
             "specifier": "file:///a/test.json"
           }
@@ -503,7 +525,10 @@ mod tests {
       ],
       vec![],
     );
-    let roots = vec![ModuleSpecifier::parse("file:///a/test.js").unwrap()];
+    let roots = vec![(
+      ModuleSpecifier::parse("file:///a/test.js").unwrap(),
+      ModuleKind::Esm,
+    )];
     let graph = create_graph(
       roots.clone(),
       true,
@@ -519,10 +544,13 @@ mod tests {
       json!(graph),
       json!({
         "roots": [
-          "file:///a/test.js"
+          "file:///a/test.js",
         ],
         "modules": [
           {
+            "kind": {
+              "asserted": "json"
+            },
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/a.json"
@@ -547,6 +575,7 @@ mod tests {
                 "isDynamic": true
               }
             ],
+            "kind": "esm",
             "mediaType": "JavaScript",
             "size": 53,
             "specifier": "file:///a/test.js"
@@ -583,7 +612,7 @@ console.log(a);
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -616,7 +645,7 @@ console.log(a);
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -663,7 +692,7 @@ console.log(a);
     let maybe_imports =
       Some(vec![(config_specifier, vec!["./types.d.ts".to_string()])]);
     let graph = create_graph(
-      vec![root_specifier],
+      vec![(root_specifier, ModuleKind::Esm)],
       false,
       maybe_imports,
       &mut loader,
@@ -679,13 +708,14 @@ console.log(a);
         "roots": ["file:///a/test01.ts"],
         "modules": [
           {
-            "dependencies": [],
+            "kind": "esm",
             "mediaType": "TypeScript",
             "size": 17,
             "specifier": "file:///a/test01.ts"
           },
           {
             "specifier": "file:///a/tsconfig.json",
+            "kind": "synthetic",
             "dependencies": [
               {
                 "specifier": "./types.d.ts",
@@ -724,12 +754,13 @@ console.log(a);
                 }
               }
             ],
+            "kind": "esm",
             "mediaType": "Dts",
             "size": 41,
             "specifier": "file:///a/types.d.ts"
           },
           {
-            "dependencies": [],
+            "kind": "esm",
             "mediaType": "Dts",
             "size": 18,
             "specifier": "file:///a/types_01.d.ts"
@@ -778,7 +809,7 @@ console.log(a);
       vec!["https://example.com/jsx-runtime".to_string()],
     )]);
     let graph = create_graph(
-      vec![root_specifier],
+      vec![(root_specifier, ModuleKind::Esm)],
       false,
       maybe_imports,
       &mut loader,
@@ -828,7 +859,7 @@ console.log(a);
     let root_specifier =
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -839,11 +870,11 @@ console.log(a);
     )
     .await;
     assert_eq!(graph.module_slots.len(), 1);
-    assert_eq!(graph.roots, vec![root_specifier.clone()]);
+    assert_eq!(graph.roots, vec![(root_specifier.clone(), ModuleKind::Esm)]);
     let maybe_root_module = graph.module_slots.get(&root_specifier);
     assert!(maybe_root_module.is_some());
     let root_module_slot = maybe_root_module.unwrap();
-    if let ModuleSlot::Module(Module::Es(module)) = root_module_slot {
+    if let ModuleSlot::Module(module) = root_module_slot {
       assert_eq!(module.media_type, MediaType::TypeScript);
     } else {
       panic!("unspected module slot");
@@ -881,7 +912,7 @@ console.log(a);
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.tsx").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -917,12 +948,13 @@ console.log(a);
                 }
               }
             ],
+            "kind": "esm",
             "mediaType": "TSX",
             "size": 147,
             "specifier": "file:///a/test01.tsx"
           },
           {
-            "dependencies": [],
+            "kind": "esm",
             "mediaType": "JavaScript",
             "size": 24,
             "specifier": "https://example.com/preact/jsx-runtime/index.js"
@@ -947,7 +979,7 @@ console.log(a);
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -982,7 +1014,7 @@ console.log(a);
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -1023,7 +1055,7 @@ console.log(a);
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -1054,7 +1086,7 @@ console.log(a);
     let root_specifier =
       ModuleSpecifier::parse("file:///a.ts").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -1091,12 +1123,13 @@ console.log(a);
                 "isDynamic": true
               }
             ],
+            "kind": "esm",
             "mediaType": "TypeScript",
             "size": 33,
             "specifier": "file:///a.ts"
           },
           {
-            "dependencies": [],
+            "kind": "esm",
             "mediaType": "TypeScript",
             "size": 21,
             "specifier": "file:///b.ts"
@@ -1146,7 +1179,7 @@ export function a(a) {
     );
     let root = ModuleSpecifier::parse("file:///a/test.js").unwrap();
     let graph = create_graph(
-      vec![root.clone()],
+      vec![(root.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -1164,7 +1197,7 @@ export function a(a) {
         ],
         "modules": [
           {
-            "dependencies": [],
+            "kind": "esm",
             "mediaType": "TypeScript",
             "size": 35,
             "specifier": "file:///a/other.ts"
@@ -1204,12 +1237,13 @@ export function a(a) {
                 }
               }
             ],
+            "kind": "esm",
             "mediaType": "JavaScript",
             "size": 137,
             "specifier": "file:///a/test.js"
           },
           {
-            "dependencies": [],
+            "kind": "esm",
             "mediaType": "Dts",
             "size": 23,
             "specifier": "file:///a/types.d.ts"
@@ -1246,7 +1280,7 @@ export function a(a) {
     let root_specifier =
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -1258,7 +1292,10 @@ export function a(a) {
     .await;
     assert_eq!(
       graph.roots,
-      vec![ModuleSpecifier::parse("https://example.com/a").unwrap()]
+      vec![(
+        ModuleSpecifier::parse("https://example.com/a").unwrap(),
+        ModuleKind::Esm
+      )]
     );
     assert_eq!(graph.module_slots.len(), 2);
     assert!(
@@ -1309,7 +1346,7 @@ export function a(a) {
     let root_specifier =
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -1321,7 +1358,10 @@ export function a(a) {
     .await;
     assert_eq!(
       graph.roots,
-      vec![ModuleSpecifier::parse("https://example.com/a").unwrap()]
+      vec![(
+        ModuleSpecifier::parse("https://example.com/a").unwrap(),
+        ModuleKind::Esm
+      )]
     );
     assert_eq!(graph.module_slots.len(), 2);
     assert!(
@@ -1367,7 +1407,7 @@ export function a(a) {
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -1381,14 +1421,11 @@ export function a(a) {
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
     let maybe_module = graph.get(&data_specifier);
     assert!(maybe_module.is_some());
-    if let Module::Es(module) = maybe_module.unwrap() {
-      assert_eq!(
-        module.source.as_str(),
-        r#"export * from "https://example.com/c.ts";"#
-      );
-    } else {
-      panic!("unexpected module type");
-    }
+    let module = maybe_module.unwrap();
+    assert_eq!(
+      module.maybe_source.as_ref().unwrap().as_str(),
+      r#"export * from "https://example.com/c.ts";"#
+    );
   }
 
   #[tokio::test]
@@ -1413,7 +1450,7 @@ export function a(a) {
     let maybe_resolver: Option<&dyn Resolver> = Some(&resolver);
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let graph = create_graph(
-      vec![root_specifier],
+      vec![(root_specifier, ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -1423,22 +1460,19 @@ export function a(a) {
       None,
     )
     .await;
-    let maybe_module = graph.get(&graph.roots[0]);
+    let maybe_module = graph.get(&graph.roots[0].0);
     assert!(maybe_module.is_some());
-    if let Module::Es(module) = maybe_module.unwrap() {
-      let maybe_dep = module.dependencies.get("b");
-      assert!(maybe_dep.is_some());
-      let dep = maybe_dep.unwrap();
-      if let Some(Ok((dep_sepcifier, _))) = &dep.maybe_code {
-        assert_eq!(
-          dep_sepcifier,
-          &ModuleSpecifier::parse("file:///a/test02.ts").unwrap()
-        );
-      } else {
-        panic!("unexpected resolved type");
-      }
+    let module = maybe_module.unwrap();
+    let maybe_dep = module.dependencies.get("b");
+    assert!(maybe_dep.is_some());
+    let dep = maybe_dep.unwrap();
+    if let Some(dep_specifier) = dep.maybe_code.maybe_specifier() {
+      assert_eq!(
+        dep_specifier,
+        &ModuleSpecifier::parse("file:///a/test02.ts").unwrap()
+      );
     } else {
-      panic!("unexpected module type");
+      panic!("unexpected resolved type");
     }
   }
 
@@ -1474,7 +1508,7 @@ export function a(a) {
     let maybe_resolver: Option<&dyn Resolver> = Some(&resolver);
     let root_specifier = ModuleSpecifier::parse("file:///a.js").unwrap();
     let graph = create_graph(
-      vec![root_specifier],
+      vec![(root_specifier, ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -1484,27 +1518,26 @@ export function a(a) {
       None,
     )
     .await;
-    let maybe_module = graph.get(&graph.roots[0]);
+    let maybe_module = graph.get(&graph.roots[0].0);
     assert!(maybe_module.is_some());
-    if let Module::Es(module) = maybe_module.unwrap() {
-      assert_eq!(
-        module.maybe_types_dependency,
-        Some((
-          "file:///a.js".to_string(),
-          Some(Ok((
-            ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
-            Range {
-              specifier: ModuleSpecifier::parse("file:///package.json")
-                .unwrap(),
-              start: Position::zeroed(),
-              end: Position::zeroed(),
-            }
-          )))
-        ))
-      );
-    } else {
-      panic!("unexpected module type");
-    }
+    let module = maybe_module.unwrap();
+    assert_eq!(
+      module.maybe_types_dependency,
+      Some((
+        "file:///a.js".to_string(),
+        Resolved::Ok {
+          resolve_result: ResolveResult {
+            specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
+            kind: ModuleKind::Esm,
+          },
+          range: Range {
+            specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          }
+        }
+      ))
+    );
   }
 
   #[tokio::test]
@@ -1536,7 +1569,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test02.ts").expect("bad url");
     let parser = crate::ast::CapturingSourceParser::new();
     create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -1596,7 +1629,7 @@ export function a(a) {
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -1614,21 +1647,25 @@ export function a(a) {
         ],
         "modules": [
           {
+            "kind": { "asserted": "json" },
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/a.json"
           },
           {
+            "kind": { "asserted": "json" },
             "size": 7,
             "mediaType": "Json",
             "specifier": "file:///a/b.json"
           },
           {
+            "kind": { "asserted": "json" },
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/c.json"
           },
           {
+            "kind": { "asserted": "json" },
             "size": 7,
             "mediaType": "Json",
             "specifier": "file:///a/d.json"
@@ -1705,6 +1742,7 @@ export function a(a) {
                 "isDynamic": true
               }
             ],
+            "kind": "esm",
             "mediaType": "TypeScript",
             "size": 329,
             "specifier": "file:///a/test01.ts"
@@ -1740,7 +1778,7 @@ export function a(a) {
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -1758,6 +1796,7 @@ export function a(a) {
         ],
         "modules": [
           {
+            "kind": { "asserted": "json" },
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/a.json"
@@ -1782,6 +1821,7 @@ export function a(a) {
                 "assertionType": "json"
               }
             ],
+            "kind": "esm",
             "mediaType": "TypeScript",
             "size": 113,
             "specifier": "file:///a/test01.ts"
@@ -1833,7 +1873,7 @@ export function a(a) {
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -1855,6 +1895,7 @@ export function a(a) {
             "error": "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: file:///a/a.json"
           },
           {
+            "kind": { "asserted": "json" },
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/b.json"
@@ -1958,6 +1999,7 @@ export function a(a) {
               }
             ],
             "mediaType": "TypeScript",
+            "kind": "esm",
             "size": 272,
             "specifier": "file:///a/test01.ts"
           }
@@ -2024,7 +2066,7 @@ export function a(a) {
       on_loads: RefCell::new(vec![]),
     };
     let graph = create_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -2158,19 +2200,19 @@ export function a(a) {
         ],
         "modules": [
           {
-            "dependencies": [],
+            "kind": "esm",
             "mediaType": "Dts",
             "size": 20,
             "specifier": "file:///a/a.d.ts"
           },
           {
-            "dependencies": [],
+            "kind": "esm",
             "mediaType": "Dts",
             "size": 21,
             "specifier": "file:///a/b.d.ts"
           },
           {
-            "dependencies": [],
+            "kind": "esm",
             "mediaType": "JavaScript",
             "size": 21,
             "specifier": "file:///a/d.js"
@@ -2242,12 +2284,12 @@ export function a(a) {
                 }
               }
             ],
+            "kind": "esm",
             "mediaType": "TypeScript",
             "size": 236,
             "specifier": "file:///a/test01.ts"
           },
           {
-            "dependencies": [],
             "typesDependency": {
               "specifier": "./c.d.ts",
               "dependency": {
@@ -2264,12 +2306,13 @@ export function a(a) {
                 }
               }
             },
+            "kind": "esm",
             "mediaType": "JavaScript",
             "size": 27,
             "specifier": "https://example.com/c"
           },
           {
-            "dependencies": [],
+            "kind": "esm",
             "mediaType": "Dts",
             "size": 20,
             "specifier": "https://example.com/c.d.ts"
@@ -2347,7 +2390,7 @@ export function a(a) {
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_code_graph(
-      vec![root_specifier.clone()],
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
       None,
       &mut loader,
@@ -2366,14 +2409,14 @@ export function a(a) {
         ],
         "modules": [
           {
-            "dependencies": [],
             "mediaType": "JavaScript",
+            "kind": "esm",
             "size": 20,
             "specifier": "file:///a/a.js"
           },
           {
-            "dependencies": [],
             "mediaType": "JavaScript",
+            "kind": "esm",
             "size": 21,
             "specifier": "file:///a/d.js"
           },
@@ -2432,6 +2475,7 @@ export function a(a) {
               }
             ],
             "mediaType": "TypeScript",
+            "kind": "esm",
             "size": 236,
             "specifier": "file:///a/test01.ts"
           },
@@ -2455,12 +2499,13 @@ export function a(a) {
               }
             ],
             "mediaType": "JavaScript",
+            "kind": "esm",
             "size": 27,
             "specifier": "https://example.com/c"
           },
           {
-            "dependencies": [],
             "mediaType": "JavaScript",
+            "kind": "esm",
             "size": 21,
             "specifier": "https://example.com/c.js"
           }
@@ -2487,15 +2532,13 @@ export function a(a) {
       ),
       None,
       None,
+      None,
     );
     assert!(result.is_ok());
-    if let Module::Es(actual) = result.unwrap() {
-      assert_eq!(actual.dependencies.len(), 4);
-      assert_eq!(actual.specifier, specifier);
-      assert_eq!(actual.media_type, MediaType::TypeScript);
-    } else {
-      panic!("unexpected module type");
-    }
+    let actual = result.unwrap();
+    assert_eq!(actual.dependencies.len(), 4);
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::TypeScript);
   }
 
   #[test]
@@ -2511,6 +2554,7 @@ export function a(a) {
     "#
         .to_string(),
       ),
+      Some(&ModuleKind::Esm),
       None,
       None,
     );
@@ -2556,6 +2600,7 @@ export function a(a) {
             "assertionType": "json"
           }
         ],
+        "kind": "esm",
         "mediaType": "TypeScript",
         "size": 119,
         "specifier": "file:///a/test01.ts"
@@ -2579,31 +2624,32 @@ export function a(a) {
     "#
         .to_string(),
       ),
+      Some(&ModuleKind::Esm),
       None,
       None,
     );
     assert!(result.is_ok());
-    if let Module::Es(actual) = result.unwrap() {
-      assert_eq!(actual.dependencies.len(), 1);
-      let dep = actual
-        .dependencies
-        .get("https://example.com/preact/jsx-runtime")
-        .unwrap();
-      assert!(dep.maybe_code.is_some());
-      let code_dep = dep.maybe_code.clone().unwrap();
-      assert!(code_dep.is_ok());
-      let (dep_specifier, _) = code_dep.unwrap();
+    let actual = result.unwrap();
+    assert_eq!(actual.dependencies.len(), 1);
+    let dep = actual
+      .dependencies
+      .get("https://example.com/preact/jsx-runtime")
+      .unwrap();
+    assert!(!dep.maybe_code.is_none());
+    if let Resolved::Ok {
+      resolve_result: ResolveResult { specifier, .. },
+      ..
+    } = &dep.maybe_code
+    {
       assert_eq!(
-        dep_specifier,
-        ModuleSpecifier::parse("https://example.com/preact/jsx-runtime")
+        specifier,
+        &ModuleSpecifier::parse("https://example.com/preact/jsx-runtime")
           .unwrap()
       );
-      assert!(dep.maybe_type.is_none());
-      assert_eq!(actual.specifier, specifier);
-      assert_eq!(actual.media_type, MediaType::Tsx);
-    } else {
-      panic!("unexpected module type");
     }
+    assert!(dep.maybe_type.is_none());
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::Tsx);
   }
 
   #[test]
@@ -2624,6 +2670,7 @@ export function a(a) {
 }"#
           .to_string(),
       ),
+      Some(&ModuleKind::Esm),
       None,
       None,
     );
@@ -2650,6 +2697,7 @@ export function a(a) {
 "#
         .to_string(),
       ),
+      Some(&ModuleKind::Esm),
       None,
       None,
     );
@@ -2692,6 +2740,7 @@ export function a(a) {
             }
           }
         ],
+        "kind": "esm",
         "mediaType": "JavaScript",
         "size": 137,
         "specifier": "file:///a/test.js"

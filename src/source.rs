@@ -1,5 +1,6 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
+use crate::graph::ModuleKind;
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -88,6 +89,12 @@ pub trait Locker: fmt::Debug {
   }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct ResolveResult {
+  pub specifier: ModuleSpecifier,
+  pub(crate) kind: ModuleKind,
+}
+
 /// A trait which allows the module graph to resolve specifiers and type only
 /// dependencies. This can be use to provide import maps and override other
 /// default resolution logic used by `deno_graph`.
@@ -104,8 +111,13 @@ pub trait Resolver: fmt::Debug {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
-  ) -> Result<ModuleSpecifier> {
-    resolve_import(specifier, referrer).map_err(|err| err.into())
+  ) -> Result<ResolveResult> {
+    resolve_import(specifier, referrer)
+      .map(|specifier| ResolveResult {
+        specifier,
+        kind: ModuleKind::Esm,
+      })
+      .map_err(|err| err.into())
   }
 
   /// Given a module specifier, return an optional tuple which provides a module
@@ -274,13 +286,21 @@ pub mod tests {
       &self,
       specifier: &str,
       referrer: &ModuleSpecifier,
-    ) -> Result<ModuleSpecifier> {
+    ) -> Result<ResolveResult> {
       if let Some(map) = self.map.get(referrer) {
         if let Some(resolved_specifier) = map.get(specifier) {
-          return Ok(resolved_specifier.clone());
+          return Ok(ResolveResult {
+            specifier: resolved_specifier.clone(),
+            kind: ModuleKind::Esm,
+          });
         }
       }
-      resolve_import(specifier, referrer).map_err(|err| err.into())
+      resolve_import(specifier, referrer)
+        .map(|specifier| ResolveResult {
+          specifier,
+          kind: ModuleKind::Esm,
+        })
+        .map_err(|err| err.into())
     }
 
     fn resolve_types(

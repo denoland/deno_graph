@@ -2,15 +2,14 @@
 
 use crate::colors;
 use crate::graph::Dependency;
-use crate::graph::EsModule;
 use crate::graph::Module;
 use crate::graph::ModuleGraph;
 use crate::graph::ModuleGraphError;
 use crate::graph::ModuleSlot;
 use crate::graph::Resolved;
-use crate::graph::SyntheticModule;
-use crate::module_specifier::ModuleSpecifier;
+use crate::source::ResolveResult;
 
+use deno_ast::ModuleSpecifier;
 use std::collections::HashSet;
 use std::fmt;
 
@@ -52,10 +51,10 @@ impl fmt::Display for ModuleGraph {
         colors::red("error:")
       );
     }
-    let root_specifier = self.resolve(&self.roots[0]);
+    let root_specifier = self.resolve(&self.roots[0].0);
     match self.module_slots.get(&root_specifier) {
       Some(ModuleSlot::Module(root)) => {
-        if let Some(cache_info) = root.maybe_cache_info() {
+        if let Some(cache_info) = root.maybe_cache_info.as_ref() {
           if let Some(local) = &cache_info.local {
             writeln!(
               f,
@@ -76,7 +75,7 @@ impl fmt::Display for ModuleGraph {
             writeln!(f, "{} {}", colors::bold("map:"), map.to_string_lossy())?;
           }
         }
-        writeln!(f, "{} {}", colors::bold("type:"), root.media_type())?;
+        writeln!(f, "{} {}", colors::bold("type:"), root.media_type)?;
         let total_size: f64 = self
           .module_slots
           .iter()
@@ -105,17 +104,15 @@ impl fmt::Display for ModuleGraph {
           colors::gray(format!("({})", human_size(root.size() as f64)))
         )?;
         let mut seen = HashSet::new();
-        if let Some(dependencies) = root.maybe_dependencies() {
-          let dep_len = dependencies.len();
-          for (idx, (_, dep)) in dependencies.iter().enumerate() {
-            dep.fmt_info(
-              f,
-              "",
-              idx == dep_len - 1 && root.maybe_types_dependency().is_none(),
-              self,
-              &mut seen,
-            )?;
-          }
+        let dep_len = root.dependencies.len();
+        for (idx, (_, dep)) in root.dependencies.iter().enumerate() {
+          dep.fmt_info(
+            f,
+            "",
+            idx == dep_len - 1 && root.maybe_types_dependency.is_none(),
+            self,
+            &mut seen,
+          )?;
         }
         Ok(())
       }
@@ -141,7 +138,7 @@ impl Dependency {
     graph: &ModuleGraph,
     seen: &mut HashSet<ModuleSpecifier>,
   ) -> fmt::Result {
-    if self.maybe_code.is_some() {
+    if !self.maybe_code.is_none() {
       fmt_resolved_info(
         &self.maybe_code,
         f,
@@ -152,7 +149,7 @@ impl Dependency {
         seen,
       )?;
     }
-    if self.maybe_type.is_some() {
+    if !self.maybe_type.is_none() {
       fmt_resolved_info(&self.maybe_type, f, prefix, last, graph, true, seen)?;
     }
     Ok(())
@@ -160,55 +157,6 @@ impl Dependency {
 }
 
 impl Module {
-  fn fmt_info<S: AsRef<str> + fmt::Display + Clone>(
-    &self,
-    f: &mut fmt::Formatter,
-    prefix: S,
-    last: bool,
-    graph: &ModuleGraph,
-    type_dep: bool,
-    seen: &mut HashSet<ModuleSpecifier>,
-  ) -> fmt::Result {
-    match self {
-      Self::Es(m) => m.fmt_info(f, prefix, last, graph, type_dep, seen),
-      Self::Synthetic(m) => m.fmt_info(f, prefix, last, seen),
-    }
-  }
-}
-
-impl SyntheticModule {
-  fn fmt_info<S: AsRef<str> + fmt::Display + Clone>(
-    &self,
-    f: &mut fmt::Formatter,
-    prefix: S,
-    last: bool,
-    seen: &mut HashSet<ModuleSpecifier>,
-  ) -> fmt::Result {
-    let was_seen = seen.contains(&self.specifier);
-    let (specifier_str, size_str) = if was_seen {
-      let specifier_str = colors::gray(&self.specifier).to_string();
-      (specifier_str, colors::gray(" *").to_string())
-    } else {
-      let specifier_str = self.specifier.to_string();
-      let size_str =
-        colors::gray(format!(" ({})", human_size(self.size() as f64)))
-          .to_string();
-      (specifier_str, size_str)
-    };
-
-    seen.insert(self.specifier.clone());
-
-    fmt_info_msg(
-      f,
-      prefix,
-      last,
-      false,
-      format!("{}{}", specifier_str, size_str),
-    )
-  }
-}
-
-impl EsModule {
   fn fmt_info<S: AsRef<str> + fmt::Display + Clone>(
     &self,
     f: &mut fmt::Formatter,
@@ -390,7 +338,10 @@ fn fmt_resolved_info<S: AsRef<str> + fmt::Display + Clone>(
   seen: &mut HashSet<ModuleSpecifier>,
 ) -> fmt::Result {
   match resolved {
-    Some(Ok((specifier, _))) => {
+    Resolved::Ok {
+      resolve_result: ResolveResult { specifier, .. },
+      ..
+    } => {
       let resolved_specifier = graph.resolve(specifier);
       match graph.try_get(&resolved_specifier) {
         Ok(Some(module)) => {
@@ -410,7 +361,7 @@ fn fmt_resolved_info<S: AsRef<str> + fmt::Display + Clone>(
         ),
       }
     }
-    Some(Err(err)) => fmt_info_msg(
+    Resolved::Err(err) => fmt_info_msg(
       f,
       prefix,
       last,
@@ -432,6 +383,7 @@ mod tests {
   use crate::colors::strip_ansi_codes;
   use crate::graph::BuildKind;
   use crate::graph::Builder;
+  use crate::graph::ModuleKind;
   use crate::source::CacheInfo;
   use crate::source::MemoryLoader;
   use std::path::PathBuf;
@@ -541,7 +493,7 @@ mod tests {
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
     let source_parser = DefaultSourceParser::new();
     let builder = Builder::new(
-      vec![root_specifier],
+      vec![(root_specifier, ModuleKind::Esm)],
       false,
       &mut loader,
       None,
@@ -619,7 +571,7 @@ https://deno.land/x/example/a.ts (129B)
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
     let source_parser = DefaultSourceParser::new();
     let builder = Builder::new(
-      vec![root_specifier],
+      vec![(root_specifier, ModuleKind::Esm)],
       false,
       &mut loader,
       None,

@@ -1,5 +1,6 @@
 # deno_graph
 
+[![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https://deno.land/x/deno_graph/mod.ts)
 [![Build Status - Cirrus][]][Build status] [![Twitter handle][]][Twitter badge]
 [![Discord Chat](https://img.shields.io/discord/684898665143206084?logo=discord&style=social)](https://discord.gg/deno)
 
@@ -170,10 +171,6 @@ The module graph has two methods which provide the output of `deno info`. The
 method `toString()` provides the text output from `deno info` and `toJSON()`
 provides the JSON object structure from `deno info --json`.
 
-> ℹ️ currently, the Deno CLI hasn't been refactored to consume the `deno_graph`
-> crate and there are minor differences in the output, specifically with the
-> JSON output, and the current `deno info` command.
-
 > ℹ️ currently, there is no runtime access to the `DENO_DIR`/Deno cache, and
 > there is no default implementation of the API when creating a module graph,
 > therefore cache information is missing from the output. An implementation of
@@ -193,8 +190,8 @@ console.log(graph.toString());
 
 This would output to stdout and would respect the `NO_COLOR`/`Deno.noColor`
 setting. If colors are allowed, the string will include the ANSI color escape
-sequences, otherwise they will be omitted. This behaviour can be explicitly
-overriden by passing `true` to always remove ANSI colors or `false` to force
+sequences, otherwise they will be omitted. This behavior can be explicitly
+overridden by passing `true` to always remove ANSI colors or `false` to force
 them.
 
 To replicate `deno info --json https://deno.land/x/std/testing/asserts.ts`, you
