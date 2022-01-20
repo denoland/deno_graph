@@ -45,6 +45,7 @@ cfg_if! {
     pub use deno_ast::MediaType;
     pub use module_specifier::ModuleSpecifier;
     pub use module_specifier::SpecifierError;
+    pub use module_specifier::resolve_import;
 
     use source::Loader;
     use source::Reporter;
