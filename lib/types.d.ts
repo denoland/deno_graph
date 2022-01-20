@@ -24,6 +24,13 @@ export interface TypesDependency {
   source?: Range;
 }
 
+export interface ResolveResult {
+  /** The string URL of the fully qualified specifier for a module. */
+  specifier: string;
+  /** The module kind of the resolved module. */
+  kind: ModuleKind;
+}
+
 export interface LoadResponse {
   /** The string URL of the resource. If there were redirects, the final
    * specifier should be set here, otherwise the requested specifier. */
@@ -79,6 +86,24 @@ export interface TypesDependencyJson {
   dependency: ResolvedDependency;
 }
 
+/** The kind of module.
+ *
+ * For asserted modules, the value of the `asserted` property is set to the
+ * `type` value of the assertion.
+ *
+ * Dependency analysis is not performed for asserted, AMD, Script, SystemJS, or
+ * UMD modules currently. Synthetic modules were injected into the graph with
+ * their own dependencies provided. */
+export type ModuleKind =
+  | "amd"
+  | "asserted"
+  | "commonJs"
+  | "esm"
+  | "script"
+  | "synthetic"
+  | "systemJs"
+  | "umd";
+
 export interface DependencyJson {
   /** The string specifier that was used for the dependency. */
   specifier: string;
@@ -98,6 +123,9 @@ export interface ModuleJson extends CacheInfo {
   specifier: string;
   /** Any error encountered when attempting to load the module. */
   error?: string;
+  /** The module kind that was determined when the module was resolved. This is
+   * used by loaders to indicate how a module needs to be loaded at runtime. */
+  kind?: ModuleKind;
   /** An array of dependencies that were identified in the module. */
   dependencies?: DependencyJson[];
   /** If the module had a types dependency, the information about that
@@ -151,6 +179,9 @@ export class Module {
   /** A record of the dependencies, where the key is the string specifier of
    * the dependency and the value is the dependency object. */
   readonly dependencies?: Record<string, Dependency>;
+  /** A module kind that can be used to determine how a module should be loaded
+   * at runtime. */
+  readonly kind: ModuleKind;
   /** The media type assigned to the module. This determines how Deno will
    * handle the module. */
   readonly mediaType: MediaType;

@@ -3,6 +3,7 @@
 use crate::checksum;
 use crate::colors::strip_ansi_codes;
 use crate::graph;
+use crate::graph::ModuleKind;
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -11,6 +12,7 @@ use crate::source::CacheInfo;
 use crate::source::LoadFuture;
 use crate::source::Loader;
 use crate::source::Locker;
+use crate::source::ResolveResult;
 use crate::source::Resolver;
 use crate::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
 
@@ -180,7 +182,7 @@ impl Resolver for JsResolver {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
-  ) -> Result<ModuleSpecifier> {
+  ) -> Result<ResolveResult> {
     if let Some(resolve) = &self.maybe_resolve {
       let this = JsValue::null();
       let arg1 = JsValue::from(specifier);
@@ -188,11 +190,15 @@ impl Resolver for JsResolver {
       let value = resolve
         .call2(&this, &arg1, &arg2)
         .map_err(|_| anyhow!("JavaScript resolve() function threw."))?;
-      let value: String = value.into_serde()?;
-      let resolved_specifier = ModuleSpecifier::parse(&value)?;
-      Ok(resolved_specifier)
+      let value: StringOrResolveResult = value.into_serde()?;
+      value.to_resolve_result()
     } else {
-      resolve_import(specifier, referrer).map_err(|err| err.into())
+      resolve_import(specifier, referrer)
+        .map(|specifier| ResolveResult {
+          specifier,
+          kind: ModuleKind::Esm,
+        })
+        .map_err(|err| err.into())
     }
   }
 
@@ -214,6 +220,56 @@ impl Resolver for JsResolver {
   }
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub(crate) enum StringOrTuple {
+  Str(String),
+  Tuple(String, ModuleKind),
+}
+
+impl StringOrTuple {
+  pub fn to_tuple_result(&self) -> Result<(ModuleSpecifier, ModuleKind)> {
+    match self {
+      Self::Str(specifier) => {
+        let specifier = ModuleSpecifier::parse(specifier)?;
+        Ok((specifier, ModuleKind::Esm))
+      }
+      Self::Tuple(specifier, kind) => {
+        let specifier = ModuleSpecifier::parse(specifier)?;
+        Ok((specifier, kind.clone()))
+      }
+    }
+  }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum StringOrResolveResult {
+  Str(String),
+  Result { specifier: String, kind: ModuleKind },
+}
+
+impl StringOrResolveResult {
+  fn to_resolve_result(&self) -> Result<ResolveResult> {
+    match self {
+      Self::Str(specifier) => {
+        let specifier = ModuleSpecifier::parse(specifier)?;
+        Ok(ResolveResult {
+          specifier,
+          kind: ModuleKind::Esm,
+        })
+      }
+      Self::Result { specifier, kind } => {
+        let specifier = ModuleSpecifier::parse(specifier)?;
+        Ok(ResolveResult {
+          specifier,
+          kind: kind.clone(),
+        })
+      }
+    }
+  }
+}
+
 #[wasm_bindgen(module = "/src/deno_apis.js")]
 extern "C" {
   fn get_no_color() -> bool;
@@ -230,7 +286,7 @@ impl ModuleGraph {
       .0
       .roots
       .iter()
-      .map(|s| JsValue::from(s.to_string()))
+      .map(|(s, _)| JsValue::from(s.to_string()))
       .collect()
   }
 
@@ -318,28 +374,31 @@ impl Module {
   pub fn cache_info(&self) -> JsValue {
     let serializer =
       serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    self.0.maybe_cache_info().serialize(&serializer).unwrap()
+    self.0.maybe_cache_info.serialize(&serializer).unwrap()
   }
 
   #[wasm_bindgen(getter)]
   pub fn checksum(&self) -> Option<String> {
-    self.0.maybe_checksum().map(String::from)
+    self.0.maybe_checksum.as_ref().map(String::from)
   }
 
   #[wasm_bindgen(getter)]
   pub fn dependencies(&self) -> JsValue {
-    let maybe_dependencies = match &self.0 {
-      graph::Module::Es(module) => Some(module.dependencies.clone()),
-      _ => None,
-    };
     let serializer =
       serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    maybe_dependencies.serialize(&serializer).unwrap()
+    self.0.dependencies.serialize(&serializer).unwrap()
+  }
+
+  #[wasm_bindgen(getter)]
+  pub fn kind(&self) -> JsValue {
+    let serializer =
+      serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
+    self.0.kind.serialize(&serializer).unwrap()
   }
 
   #[wasm_bindgen(getter, js_name = mediaType)]
   pub fn media_type(&self) -> String {
-    self.0.media_type().to_string()
+    self.0.media_type.to_string()
   }
 
   #[wasm_bindgen(getter)]
@@ -349,12 +408,17 @@ impl Module {
 
   #[wasm_bindgen(getter)]
   pub fn source(&self) -> String {
-    self.0.maybe_source().unwrap_or("").to_string()
+    self
+      .0
+      .maybe_source
+      .as_ref()
+      .map(|s| s.to_string())
+      .unwrap_or_else(|| "".to_string())
   }
 
   #[wasm_bindgen(getter)]
   pub fn specifier(&self) -> String {
-    self.0.specifier().to_string()
+    self.0.specifier.to_string()
   }
 
   #[wasm_bindgen(getter, js_name = typesDependency)]
@@ -362,7 +426,7 @@ impl Module {
     let serializer =
       serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
     graph::serialize_type_dependency(
-      &self.0.maybe_types_dependency().cloned(),
+      &self.0.maybe_types_dependency,
       &serializer,
     )
     .unwrap()

@@ -7,6 +7,7 @@ import {
   assertThrowsAsync,
 } from "https://deno.land/std@0.104.0/testing/asserts.ts";
 import { createGraph, load, parseModule } from "./mod.ts";
+import type { LoadResponse } from "./mod.ts";
 
 Deno.test({
   name: "createGraph()",
@@ -31,7 +32,7 @@ Deno.test({
       modules: [
         {
           specifier: "https://example.com/a",
-          dependencies: [],
+          kind: "esm",
           mediaType: "TypeScript",
           size: 56,
         },
@@ -124,6 +125,139 @@ Deno.test({
 });
 
 Deno.test({
+  name: "createGraph() - resolve - specifier only",
+  async fn() {
+    const fixtures: Record<string, LoadResponse> = {
+      "file:///a/test.js": {
+        specifier: "file:///a/test.js",
+        content: `import * as b from "./b.js";`,
+      },
+      "file:///a/b.js": {
+        specifier: "file:///a/b.js",
+        content: `export const b = "b";`,
+      },
+    };
+    let resolveCount = 0;
+    const graph = await createGraph("file:///a/test.js", {
+      resolve(specifier, referrer) {
+        resolveCount++;
+        return new URL(specifier, referrer).toString();
+      },
+      load(specifier) {
+        return Promise.resolve(fixtures[specifier]);
+      },
+    });
+    assertEquals(resolveCount, 1);
+    assertEquals(graph.toJSON(), {
+      "roots": [
+        "file:///a/test.js",
+      ],
+      "modules": [
+        {
+          "kind": "esm",
+          "size": 21,
+          "mediaType": "JavaScript",
+          "specifier": "file:///a/b.js",
+        },
+        {
+          "dependencies": [
+            {
+              "specifier": "./b.js",
+              "code": {
+                "specifier": "file:///a/b.js",
+                "span": {
+                  "start": {
+                    "line": 0,
+                    "character": 19,
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 27,
+                  },
+                },
+              },
+            },
+          ],
+          "kind": "esm",
+          "size": 28,
+          "mediaType": "JavaScript",
+          "specifier": "file:///a/test.js",
+        },
+      ],
+      "redirects": {},
+    });
+  },
+});
+
+Deno.test({
+  name: "createGraph() - resolve - resolve result",
+  async fn() {
+    const fixtures: Record<string, LoadResponse> = {
+      "file:///a/test.js": {
+        specifier: "file:///a/test.js",
+        content: `import * as b from "./b.js";`,
+      },
+      "file:///a/b.js": {
+        specifier: "file:///a/b.js",
+        content: `export const b = "b";`,
+      },
+    };
+    let resolveCount = 0;
+    const graph = await createGraph("file:///a/test.js", {
+      resolve(specifier, referrer) {
+        resolveCount++;
+        return {
+          specifier: new URL(specifier, referrer).toString(),
+          kind: "esm",
+        };
+      },
+      load(specifier) {
+        return Promise.resolve(fixtures[specifier]);
+      },
+    });
+    assertEquals(resolveCount, 1);
+    assertEquals(graph.toJSON(), {
+      "roots": [
+        "file:///a/test.js",
+      ],
+      "modules": [
+        {
+          "kind": "esm",
+          "size": 21,
+          "mediaType": "JavaScript",
+          "specifier": "file:///a/b.js",
+        },
+        {
+          "dependencies": [
+            {
+              "specifier": "./b.js",
+              "code": {
+                "specifier": "file:///a/b.js",
+                "span": {
+                  "start": {
+                    "line": 0,
+                    "character": 19,
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 27,
+                  },
+                },
+              },
+            },
+          ],
+          "kind": "esm",
+          "size": 28,
+          "mediaType": "JavaScript",
+          "specifier": "file:///a/test.js",
+        },
+      ],
+      "redirects": {},
+    });
+  },
+});
+
+Deno.test({
   name: "createGraph() - resolveTypes",
   async fn() {
     const graph = await createGraph(
@@ -195,6 +329,7 @@ Deno.test({
     assertEquals(module.toJSON(), {
       "specifier": "file:///a/test01.js",
       "mediaType": "JavaScript",
+      "kind": "esm",
       "size": 206,
       "dependencies": [{
         "specifier": "./a.ts",
@@ -360,6 +495,7 @@ Deno.test({
           "assertionType": "json",
         },
       ],
+      "kind": "esm",
       "mediaType": "JavaScript",
       "size": 129,
       "specifier": "file:///a/test01.js",
