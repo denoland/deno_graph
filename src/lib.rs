@@ -472,7 +472,7 @@ mod tests {
     );
     let roots = vec![(
       ModuleSpecifier::parse("file:///a/test.json").unwrap(),
-      ModuleKind::Asserted("json".to_string()),
+      ModuleKind::Asserted,
     )];
     let graph = create_graph(
       roots.clone(),
@@ -494,7 +494,7 @@ mod tests {
         "modules": [
           {
             "size": 18,
-            "kind": { "asserted": "json" },
+            "kind": "asserted",
             "mediaType": "Json",
             "specifier": "file:///a/test.json"
           }
@@ -548,9 +548,7 @@ mod tests {
         ],
         "modules": [
           {
-            "kind": {
-              "asserted": "json"
-            },
+            "kind": "asserted",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/a.json"
@@ -1647,25 +1645,25 @@ export function a(a) {
         ],
         "modules": [
           {
-            "kind": { "asserted": "json" },
+            "kind": "asserted",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/a.json"
           },
           {
-            "kind": { "asserted": "json" },
+            "kind": "asserted",
             "size": 7,
             "mediaType": "Json",
             "specifier": "file:///a/b.json"
           },
           {
-            "kind": { "asserted": "json" },
+            "kind": "asserted",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/c.json"
           },
           {
-            "kind": { "asserted": "json" },
+            "kind": "asserted",
             "size": 7,
             "mediaType": "Json",
             "specifier": "file:///a/d.json"
@@ -1796,7 +1794,7 @@ export function a(a) {
         ],
         "modules": [
           {
-            "kind": { "asserted": "json" },
+            "kind": "asserted",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/a.json"
@@ -1895,7 +1893,7 @@ export function a(a) {
             "error": "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: file:///a/a.json"
           },
           {
-            "kind": { "asserted": "json" },
+            "kind": "asserted",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/b.json"

@@ -453,12 +453,14 @@ impl Dependency {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum ModuleKind {
-  /// An asserted module, associated with the specific type (e.g. "JSON").
-  /// Dependency analysis does not occur on asserted modules.
-  Asserted(String),
   /// An AMD module. Currently dependency analysis is not supported for these
   /// kinds of modules.
-  AMD,
+  Amd,
+  /// An asserted module. The import location is required to determine what the
+  /// asserted type is as well as a loader/runtime would want to ensure the
+  /// `MediaType` matches the assertion. Dependency analysis does not occur on
+  /// asserted modules.
+  Asserted,
   /// A CommonJS module.
   CommonJs,
   /// An ECMAScript Module (JavaScript Module).
@@ -467,9 +469,9 @@ pub enum ModuleKind {
   /// scripts to be imported into the module graph, but without supporting any
   /// dependency analysis.
   Script,
-  /// An injected module where the any dependencies are asserted and no
-  /// dependency analysis occurs. This allows external meta data files which
-  /// add dependencies to be represented in the graph.
+  /// An injected module where any dependencies are asserted and no dependency
+  /// analysis occurs. This allows external meta data files which add
+  /// dependencies to be represented in the graph.
   Synthetic,
   /// A SystemJS module. Currently dependency analysis is not supported for
   /// these kinds of modules.
@@ -1110,7 +1112,7 @@ pub(crate) fn parse_module(
   {
     return ModuleSlot::Module(Module {
       dependencies: Default::default(),
-      kind: ModuleKind::Asserted("json".to_string()),
+      kind: ModuleKind::Asserted,
       maybe_cache_info: None,
       maybe_checksum: None,
       maybe_parsed_source: None,

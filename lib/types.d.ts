@@ -95,8 +95,8 @@ export interface TypesDependencyJson {
  * UMD modules currently. Synthetic modules were injected into the graph with
  * their own dependencies provided. */
 export type ModuleKind =
-  | { asserted: string }
   | "amd"
+  | "asserted"
   | "commonJs"
   | "esm"
   | "script"
