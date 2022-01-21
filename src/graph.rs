@@ -1383,7 +1383,7 @@ fn is_untyped(media_type: &MediaType) -> bool {
 }
 
 /// The kind of build to perform.
-pub(crate) enum BuildKind {
+pub enum BuildKind {
   /// All types of dependencies should be analyzed and included in the graph.
   All,
   /// Only code dependencies should be analyzed and included in the graph. This
