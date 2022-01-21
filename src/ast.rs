@@ -28,8 +28,8 @@ lazy_static! {
   static ref DENO_TYPES_RE: Regex =
     Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#)
       .unwrap();
-  /// Matches a JSDoc import type reference (`{import("./example.js")}`).
-  static ref JSDOC_IMPORT_RE: Regex = Regex::new(r#"\{\s*import\(['"]([^'"]+)['"]\)[^}]*}"#).unwrap();
+  /// Matches a JSDoc import type reference (`{import("./example.js")}`
+  static ref JSDOC_IMPORT_RE: Regex = Regex::new(r#"\{[^}]*import\(['"]([^'"]+)['"]\)[^}]*}"#).unwrap();
   /// Matches the `@jsxImportSource` pragma.
   static ref JSX_IMPORT_SOURCE_RE: Regex = Regex::new(r#"(?i)^[\s*]*@jsxImportSource\s+(\S+)"#).unwrap();
   /// Matches a `/// <reference ... />` comment reference.
@@ -421,6 +421,11 @@ const a = "a";
 function b(c) {
   return;
 }
+
+/**
+ * @type {Set<import("./e.js").F>}
+ */
+const f = new Set();
 "#
       .to_string(),
     );
@@ -455,7 +460,15 @@ function b(c) {
             "end": 185,
             "ctxt": 0
           }
-        ]
+        ],
+        [
+          "./e.js",
+          {
+            "start": 248,
+            "end": 254,
+            "ctxt": 0
+          }
+        ],
       ])
     );
   }
