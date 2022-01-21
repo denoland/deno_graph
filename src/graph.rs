@@ -1400,13 +1400,11 @@ pub type LoadWithSpecifierFuture = Pin<
   Box<dyn Future<Output = (ModuleSpecifier, ModuleKind, LoadResult)> + 'static>,
 >;
 
+#[derive(Default)]
 pub(crate) struct BuilderOptions<'a> {
-  pub roots: Vec<(ModuleSpecifier, ModuleKind)>,
   pub is_dynamic_root: bool,
-  pub loader: &'a mut dyn Loader,
   pub maybe_resolver: Option<&'a dyn Resolver>,
   pub maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
-  pub source_parser: &'a dyn SourceParser,
   pub maybe_reporter: Option<&'a dyn Reporter>,
 }
 
@@ -1423,16 +1421,21 @@ pub(crate) struct Builder<'a> {
 }
 
 impl<'a> Builder<'a> {
-  pub fn new(options: BuilderOptions<'a>) -> Self {
+  pub fn new(
+    roots: Vec<(ModuleSpecifier, ModuleKind)>,
+    loader: &'a mut dyn Loader,
+    source_parser: &'a dyn SourceParser,
+    options: BuilderOptions<'a>,
+  ) -> Self {
     Self {
       in_dynamic_branch: options.is_dynamic_root,
-      graph: ModuleGraph::new(options.roots, options.maybe_locker),
-      loader: options.loader,
+      graph: ModuleGraph::new(roots, options.maybe_locker),
+      loader,
       maybe_resolver: options.maybe_resolver,
       pending: FuturesUnordered::new(),
       pending_assert_types: HashMap::new(),
       dynamic_branches: HashMap::new(),
-      source_parser: options.source_parser,
+      source_parser,
       maybe_reporter: options.maybe_reporter,
     }
   }
@@ -2030,15 +2033,12 @@ mod tests {
       loaded_baz: false,
     };
     let source_parser = DefaultSourceParser::new();
-    let builder = Builder::new(BuilderOptions {
-      roots: vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
-      is_dynamic_root: false,
-      loader: &mut loader,
-      maybe_resolver: None,
-      maybe_locker: None,
-      source_parser: &source_parser,
-      maybe_reporter: None,
-    });
+    let builder = Builder::new(
+      vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
+      &mut loader,
+      &source_parser,
+      Default::default(),
+    );
     builder.build(BuildKind::All, None).await;
     assert!(loader.loaded_foo);
     assert!(loader.loaded_bar);
@@ -2070,15 +2070,12 @@ mod tests {
     }
     let mut loader = TestLoader;
     let source_parser = DefaultSourceParser::new();
-    let builder = Builder::new(BuilderOptions {
-      roots: vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
-      is_dynamic_root: false,
-      loader: &mut loader,
-      maybe_resolver: None,
-      maybe_locker: None,
-      source_parser: &source_parser,
-      maybe_reporter: None,
-    });
+    let builder = Builder::new(
+      vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
+      &mut loader,
+      &source_parser,
+      Default::default(),
+    );
     let graph = builder.build(BuildKind::All, None).await;
     assert!(graph
       .try_get(&Url::parse("file:///foo.js").unwrap())
@@ -2136,15 +2133,12 @@ mod tests {
     }
     let mut loader = TestLoader;
     let source_parser = DefaultSourceParser::new();
-    let builder = Builder::new(BuilderOptions {
-      roots: vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
-      is_dynamic_root: false,
-      loader: &mut loader,
-      maybe_resolver: None,
-      maybe_locker: None,
-      source_parser: &source_parser,
-      maybe_reporter: None,
-    });
+    let builder = Builder::new(
+      vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
+      &mut loader,
+      &source_parser,
+      Default::default(),
+    );
     let graph = builder.build(BuildKind::All, None).await;
     let specifiers = graph.specifiers();
     dbg!(&specifiers);

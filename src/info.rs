@@ -383,7 +383,6 @@ mod tests {
   use crate::colors::strip_ansi_codes;
   use crate::graph::BuildKind;
   use crate::graph::Builder;
-  use crate::graph::BuilderOptions;
   use crate::graph::ModuleKind;
   use crate::source::CacheInfo;
   use crate::source::MemoryLoader;
@@ -493,15 +492,12 @@ mod tests {
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
     let source_parser = DefaultSourceParser::new();
-    let builder = Builder::new(BuilderOptions {
-      roots: vec![(root_specifier, ModuleKind::Esm)],
-      is_dynamic_root: false,
-      loader: &mut loader,
-      maybe_resolver: None,
-      maybe_locker: None,
-      source_parser: &source_parser,
-      maybe_reporter: None,
-    });
+    let builder = Builder::new(
+      vec![(root_specifier, ModuleKind::Esm)],
+      &mut loader,
+      &source_parser,
+      Default::default(),
+    );
     let graph = builder.build(BuildKind::All, None).await;
     assert_eq!(
       strip_ansi_codes(format!("{}", graph)),
@@ -571,15 +567,12 @@ https://deno.land/x/example/a.ts (129B)
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
     let source_parser = DefaultSourceParser::new();
-    let builder = Builder::new(BuilderOptions {
-      roots: vec![(root_specifier, ModuleKind::Esm)],
-      is_dynamic_root: false,
-      loader: &mut loader,
-      maybe_resolver: None,
-      maybe_locker: None,
-      source_parser: &source_parser,
-      maybe_reporter: None,
-    });
+    let builder = Builder::new(
+      vec![(root_specifier, ModuleKind::Esm)],
+      &mut loader,
+      &source_parser,
+      Default::default(),
+    );
     let graph = builder.build(BuildKind::All, None).await;
     println!("{}", graph);
     assert_eq!(

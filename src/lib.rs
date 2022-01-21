@@ -86,13 +86,14 @@ cfg_if! {
     ) -> ModuleGraph {
       let default_parser = ast::DefaultSourceParser::new();
       let source_parser = options.maybe_parser.unwrap_or(&default_parser);
-      let builder = Builder::new(BuilderOptions {
+      let builder = Builder::new(
         roots,
-        is_dynamic_root: options.is_dynamic,
         loader,
+        source_parser,
+        BuilderOptions {
+        is_dynamic_root: options.is_dynamic,
         maybe_resolver: options.maybe_resolver,
         maybe_locker: options.maybe_locker,
-        source_parser,
         maybe_reporter: options.maybe_reporter,
       });
       builder.build(build_kind, options.maybe_imports).await
@@ -210,13 +211,14 @@ cfg_if! {
       }
 
       let source_parser = ast::DefaultSourceParser::new();
-      let builder = Builder::new(BuilderOptions {
+      let builder = Builder::new(
         roots,
+        &mut loader,
+        &source_parser,
+        BuilderOptions {
         is_dynamic_root: false,
-        loader: &mut loader,
         maybe_resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         maybe_locker,
-        source_parser: &source_parser,
         maybe_reporter: None,
       });
       let graph = builder.build(build_kind, maybe_imports).await;
