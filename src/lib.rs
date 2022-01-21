@@ -13,6 +13,7 @@ mod text_encoding;
 
 use graph::BuildKind;
 use graph::Builder;
+use graph::BuilderOptions;
 pub use graph::ModuleKind;
 use graph::ModuleSlot;
 use source::Locker;
@@ -85,15 +86,15 @@ cfg_if! {
     ) -> ModuleGraph {
       let default_parser = ast::DefaultSourceParser::new();
       let source_parser = options.maybe_parser.unwrap_or(&default_parser);
-      let builder = Builder::new(
+      let builder = Builder::new(BuilderOptions {
         roots,
-        options.is_dynamic,
+        is_dynamic_root: options.is_dynamic,
         loader,
-        options.maybe_resolver,
-        options.maybe_locker,
+        maybe_resolver: options.maybe_resolver,
+        maybe_locker: options.maybe_locker,
         source_parser,
-        options.maybe_reporter,
-      );
+        maybe_reporter: options.maybe_reporter,
+      });
       builder.build(build_kind, options.maybe_imports).await
     }
 
@@ -209,15 +210,15 @@ cfg_if! {
       }
 
       let source_parser = ast::DefaultSourceParser::new();
-      let builder = Builder::new(
+      let builder = Builder::new(BuilderOptions {
         roots,
-        false,
-        &mut loader,
-        maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+        is_dynamic_root: false,
+        loader: &mut loader,
+        maybe_resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         maybe_locker,
-        &source_parser,
-        None,
-      );
+        source_parser: &source_parser,
+        maybe_reporter: None,
+      });
       let graph = builder.build(build_kind, maybe_imports).await;
       Ok(js_graph::ModuleGraph(graph))
     }
