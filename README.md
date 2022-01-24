@@ -87,7 +87,7 @@ fn main() {
   );
   let roots = vec![(ModuleSpecifier::parse("file:///test.ts").unwrap(), ModuleKind::Esm)];
   let future = async move {
-    let graph = create_graph(BuildKind::All, roots, &mut loader, Default::default()).await;
+    let graph = create_graph(BuildKind::All(roots), &mut loader, Default::default()).await;
     println!("{}", graph);
   };
   block_on()
