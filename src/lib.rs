@@ -95,8 +95,9 @@ cfg_if! {
         maybe_resolver: options.maybe_resolver,
         maybe_locker: options.maybe_locker,
         maybe_reporter: options.maybe_reporter,
+        maybe_type_imports: options.maybe_imports,
       });
-      builder.build(build_kind, options.maybe_imports).await
+      builder.build(build_kind).await
     }
 
     /// Parse an individual module, returning the module as a result, otherwise
@@ -220,8 +221,9 @@ cfg_if! {
         maybe_resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         maybe_locker,
         maybe_reporter: None,
+        maybe_type_imports: maybe_imports,
       });
-      let graph = builder.build(build_kind, maybe_imports).await;
+      let graph = builder.build(build_kind).await;
       Ok(js_graph::ModuleGraph(graph))
     }
 

@@ -1406,6 +1406,7 @@ pub(crate) struct BuilderOptions<'a> {
   pub maybe_resolver: Option<&'a dyn Resolver>,
   pub maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
   pub maybe_reporter: Option<&'a dyn Reporter>,
+  pub maybe_type_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
 }
 
 pub(crate) struct Builder<'a> {
@@ -1418,6 +1419,7 @@ pub(crate) struct Builder<'a> {
   dynamic_branches: HashMap<ModuleSpecifier, (ModuleKind, Option<String>)>,
   source_parser: &'a dyn SourceParser,
   maybe_reporter: Option<&'a dyn Reporter>,
+  maybe_type_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
 }
 
 impl<'a> Builder<'a> {
@@ -1437,21 +1439,18 @@ impl<'a> Builder<'a> {
       dynamic_branches: HashMap::new(),
       source_parser,
       maybe_reporter: options.maybe_reporter,
+      maybe_type_imports: options.maybe_type_imports,
     }
   }
 
-  pub async fn build(
-    mut self,
-    build_kind: BuildKind,
-    maybe_type_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
-  ) -> ModuleGraph {
+  pub async fn build(mut self, build_kind: BuildKind) -> ModuleGraph {
     let roots = self.graph.roots.clone();
     for (root, kind) in roots {
       self.load(&root, &kind, self.in_dynamic_branch, None);
     }
 
     // Process any type imports that are being added to the graph.
-    if let Some(imports) = maybe_type_imports {
+    if let Some(imports) = self.maybe_type_imports.take() {
       for (referrer, type_imports) in imports {
         let synthetic_module = Module::new_from_type_imports(
           referrer.clone(),
@@ -2039,7 +2038,7 @@ mod tests {
       &source_parser,
       Default::default(),
     );
-    builder.build(BuildKind::All, None).await;
+    builder.build(BuildKind::All).await;
     assert!(loader.loaded_foo);
     assert!(loader.loaded_bar);
     assert!(loader.loaded_baz);
@@ -2076,7 +2075,7 @@ mod tests {
       &source_parser,
       Default::default(),
     );
-    let graph = builder.build(BuildKind::All, None).await;
+    let graph = builder.build(BuildKind::All).await;
     assert!(graph
       .try_get(&Url::parse("file:///foo.js").unwrap())
       .is_ok());
@@ -2139,7 +2138,7 @@ mod tests {
       &source_parser,
       Default::default(),
     );
-    let graph = builder.build(BuildKind::All, None).await;
+    let graph = builder.build(BuildKind::All).await;
     let specifiers = graph.specifiers();
     dbg!(&specifiers);
     assert_eq!(specifiers.len(), 4);

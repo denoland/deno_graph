@@ -498,7 +498,7 @@ mod tests {
       &source_parser,
       Default::default(),
     );
-    let graph = builder.build(BuildKind::All, None).await;
+    let graph = builder.build(BuildKind::All).await;
     assert_eq!(
       strip_ansi_codes(format!("{}", graph)),
       r#"local: /cache/deps/https/deno.land/x/example/a.ts
@@ -573,7 +573,7 @@ https://deno.land/x/example/a.ts (129B)
       &source_parser,
       Default::default(),
     );
-    let graph = builder.build(BuildKind::All, None).await;
+    let graph = builder.build(BuildKind::All).await;
     println!("{}", graph);
     assert_eq!(
       strip_ansi_codes(format!("{}", graph)),
