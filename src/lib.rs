@@ -2746,4 +2746,41 @@ export function a(a) {
       })
     );
   }
+
+  #[test]
+  fn test_parse_ts_jsdoc_imports_ignored() {
+    let specifier = ModuleSpecifier::parse("file:///a/test.ts").unwrap();
+    let result = parse_module(
+      &specifier,
+      None,
+      Arc::new(
+        r#"
+/**
+ * Some js doc
+ *
+ * @param {import("./types.d.ts").A} a
+ * @return {import("./other.ts").B}
+ */
+export function a(a: A): B {
+  return;
+}
+"#
+        .to_string(),
+      ),
+      Some(&ModuleKind::Esm),
+      None,
+      None,
+    );
+    assert!(result.is_ok());
+    let actual = result.unwrap();
+    assert_eq!(
+      json!(actual),
+      json!({
+        "kind": "esm",
+        "mediaType": "TypeScript",
+        "size": 143,
+        "specifier": "file:///a/test.ts"
+      })
+    );
+  }
 }

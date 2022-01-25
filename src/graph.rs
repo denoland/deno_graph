@@ -1251,11 +1251,19 @@ pub(crate) fn parse_module_from_ast(
   }
 
   // Analyze any JSDoc type imports
-  for (import_source, span) in analyze_jsdoc_imports(parsed_source) {
-    let range = Range::from_swc_span(&module.specifier, parsed_source, &span);
-    let resolved_dependency = resolve(&import_source, &range, maybe_resolver);
-    let dep = module.dependencies.entry(import_source).or_default();
-    dep.maybe_type = resolved_dependency;
+  // We only analyze these on JavaScript types of modules, since they are
+  // ignored by TypeScript when type checking anyway and really shouldn't be
+  // there, but some people do strange things.
+  if matches!(
+    module.media_type,
+    MediaType::JavaScript | MediaType::Jsx | MediaType::Mjs | MediaType::Cjs
+  ) {
+    for (import_source, span) in analyze_jsdoc_imports(parsed_source) {
+      let range = Range::from_swc_span(&module.specifier, parsed_source, &span);
+      let resolved_dependency = resolve(&import_source, &range, maybe_resolver);
+      let dep = module.dependencies.entry(import_source).or_default();
+      dep.maybe_type = resolved_dependency;
+    }
   }
 
   // Analyze the X-TypeScript-Types header
