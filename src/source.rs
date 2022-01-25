@@ -92,7 +92,7 @@ pub trait Locker: fmt::Debug {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ResolveResult {
   pub specifier: ModuleSpecifier,
-  pub(crate) kind: ModuleKind,
+  pub kind: ModuleKind,
 }
 
 /// A trait which allows the module graph to resolve specifiers and type only
