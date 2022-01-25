@@ -88,15 +88,27 @@ pub trait Locker: fmt::Debug {
   }
 }
 
+/// The response from a `Resolver::resolve()` function which combines the type
+/// of the module with the resolved specifier, or an error.
 #[derive(Debug)]
 pub enum ResolveResponse {
+  /// The resolved specifier where the module is an AMD module.
   Amd(ModuleSpecifier),
+  /// The resolved specifier where the module is a CommonJS module.
   CommonJs(ModuleSpecifier),
+  /// The specifier cannot be resolved or some other errors occurred.
   Err(Error),
+  /// A resolved specifier where the module is an ES module.
   Esm(ModuleSpecifier),
+  /// A resolved specifier where the module is a plain JavaScript module.
   Script(ModuleSpecifier),
+  /// Where the resolver does not have specific information to what type of
+  /// module is being resolved. Currently the module graph assumes these modules
+  /// are ESM modules, but this may change in the future.
   Specifier(ModuleSpecifier),
+  /// A resolved specifier where the module is a SystemJS module.
   SystemJs(ModuleSpecifier),
+  /// A resolved specifier where the module is a UMD module.
   Umd(ModuleSpecifier),
 }
 
