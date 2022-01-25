@@ -316,7 +316,6 @@ mod tests {
   use source::tests::MockResolver;
   use source::CacheInfo;
   use source::MemoryLoader;
-  use source::ResolveResult;
 
   type Sources<'a> = Vec<(
     &'a str,
@@ -379,11 +378,7 @@ mod tests {
         ModuleSpecifier::parse("file:///a/test02.ts").unwrap();
       let dependency = maybe_dependency.unwrap();
       assert!(!dependency.is_dynamic);
-      if let Resolved::Ok {
-        resolve_result: ResolveResult { specifier, .. },
-        ..
-      } = &dependency.maybe_code
-      {
+      if let Resolved::Ok { specifier, .. } = &dependency.maybe_code {
         assert_eq!(specifier, &dependency_specifier);
       } else {
         panic!("unexpected resolved slot");
@@ -1525,10 +1520,8 @@ export function a(a) {
       Some((
         "file:///a.js".to_string(),
         Resolved::Ok {
-          resolve_result: ResolveResult {
-            specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
-            kind: ModuleKind::Esm,
-          },
+          specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
+          kind: ModuleKind::Esm,
           range: Range {
             specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
             start: Position::zeroed(),
@@ -2635,11 +2628,7 @@ export function a(a) {
       .get("https://example.com/preact/jsx-runtime")
       .unwrap();
     assert!(!dep.maybe_code.is_none());
-    if let Resolved::Ok {
-      resolve_result: ResolveResult { specifier, .. },
-      ..
-    } = &dep.maybe_code
-    {
+    if let Resolved::Ok { specifier, .. } = &dep.maybe_code {
       assert_eq!(
         specifier,
         &ModuleSpecifier::parse("https://example.com/preact/jsx-runtime")
