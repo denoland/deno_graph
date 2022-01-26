@@ -7,7 +7,6 @@ use crate::graph::ModuleGraph;
 use crate::graph::ModuleGraphError;
 use crate::graph::ModuleSlot;
 use crate::graph::Resolved;
-use crate::source::ResolveResult;
 
 use deno_ast::ModuleSpecifier;
 use std::collections::HashSet;
@@ -338,10 +337,7 @@ fn fmt_resolved_info<S: AsRef<str> + fmt::Display + Clone>(
   seen: &mut HashSet<ModuleSpecifier>,
 ) -> fmt::Result {
   match resolved {
-    Resolved::Ok {
-      resolve_result: ResolveResult { specifier, .. },
-      ..
-    } => {
+    Resolved::Ok { specifier, .. } => {
       let resolved_specifier = graph.resolve(specifier);
       match graph.try_get(&resolved_specifier) {
         Ok(Some(module)) => {

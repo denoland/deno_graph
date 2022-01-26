@@ -12,7 +12,7 @@ use crate::source::CacheInfo;
 use crate::source::LoadFuture;
 use crate::source::Loader;
 use crate::source::Locker;
-use crate::source::ResolveResult;
+use crate::source::ResolveResponse;
 use crate::source::Resolver;
 use crate::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
 
@@ -182,23 +182,24 @@ impl Resolver for JsResolver {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
-  ) -> Result<ResolveResult> {
+  ) -> ResolveResponse {
     if let Some(resolve) = &self.maybe_resolve {
       let this = JsValue::null();
       let arg1 = JsValue::from(specifier);
       let arg2 = JsValue::from(referrer.to_string());
-      let value = resolve
-        .call2(&this, &arg1, &arg2)
-        .map_err(|_| anyhow!("JavaScript resolve() function threw."))?;
-      let value: StringOrResolveResult = value.into_serde()?;
-      value.to_resolve_result()
+      let value = match resolve.call2(&this, &arg1, &arg2) {
+        Ok(value) => value,
+        Err(_) => {
+          return ResolveResponse::Err(anyhow!("JavaScript resolve threw."))
+        }
+      };
+      let value: StringOrResolveResponse = match value.into_serde() {
+        Ok(value) => value,
+        Err(err) => return ResolveResponse::Err(err.into()),
+      };
+      value.to_resolve_response()
     } else {
-      resolve_import(specifier, referrer)
-        .map(|specifier| ResolveResult {
-          specifier,
-          kind: ModuleKind::Esm,
-        })
-        .map_err(|err| err.into())
+      resolve_import(specifier, referrer).into()
     }
   }
 
@@ -244,27 +245,30 @@ impl StringOrTuple {
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
-enum StringOrResolveResult {
+enum StringOrResolveResponse {
   Str(String),
-  Result { specifier: String, kind: ModuleKind },
+  Response { specifier: String, kind: ModuleKind },
 }
 
-impl StringOrResolveResult {
-  fn to_resolve_result(&self) -> Result<ResolveResult> {
+impl StringOrResolveResponse {
+  fn to_resolve_response(&self) -> ResolveResponse {
     match self {
-      Self::Str(specifier) => {
-        let specifier = ModuleSpecifier::parse(specifier)?;
-        Ok(ResolveResult {
-          specifier,
-          kind: ModuleKind::Esm,
-        })
-      }
-      Self::Result { specifier, kind } => {
-        let specifier = ModuleSpecifier::parse(specifier)?;
-        Ok(ResolveResult {
-          specifier,
-          kind: kind.clone(),
-        })
+      Self::Str(specifier) => ModuleSpecifier::parse(specifier).into(),
+      Self::Response { specifier, kind } => {
+        match ModuleSpecifier::parse(specifier) {
+          Ok(specifier) => match kind {
+            ModuleKind::Amd => ResolveResponse::Amd(specifier),
+            ModuleKind::Asserted | ModuleKind::Synthetic => {
+              ResolveResponse::Specifier(specifier)
+            }
+            ModuleKind::CommonJs => ResolveResponse::CommonJs(specifier),
+            ModuleKind::Esm => ResolveResponse::Esm(specifier),
+            ModuleKind::Script => ResolveResponse::Script(specifier),
+            ModuleKind::SystemJs => ResolveResponse::SystemJs(specifier),
+            ModuleKind::Umd => ResolveResponse::Umd(specifier),
+          },
+          Err(err) => ResolveResponse::Err(err.into()),
+        }
       }
     }
   }

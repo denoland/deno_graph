@@ -277,7 +277,6 @@ mod tests {
   use source::tests::MockResolver;
   use source::CacheInfo;
   use source::MemoryLoader;
-  use source::ResolveResult;
 
   type Sources<'a> = Vec<(
     &'a str,
@@ -335,11 +334,7 @@ mod tests {
         ModuleSpecifier::parse("file:///a/test02.ts").unwrap();
       let dependency = maybe_dependency.unwrap();
       assert!(!dependency.is_dynamic);
-      if let Resolved::Ok {
-        resolve_result: ResolveResult { specifier, .. },
-        ..
-      } = &dependency.maybe_code
-      {
+      if let Resolved::Ok { specifier, .. } = &dependency.maybe_code {
         assert_eq!(specifier, &dependency_specifier);
       } else {
         panic!("unexpected resolved slot");
@@ -1404,10 +1399,8 @@ export function a(a) {
       Some((
         "file:///a.js".to_string(),
         Resolved::Ok {
-          resolve_result: ResolveResult {
-            specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
-            kind: ModuleKind::Esm,
-          },
+          specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
+          kind: ModuleKind::Esm,
           range: Range {
             specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
             start: Position::zeroed(),
@@ -2485,11 +2478,7 @@ export function a(a) {
       .get("https://example.com/preact/jsx-runtime")
       .unwrap();
     assert!(!dep.maybe_code.is_none());
-    if let Resolved::Ok {
-      resolve_result: ResolveResult { specifier, .. },
-      ..
-    } = &dep.maybe_code
-    {
+    if let Resolved::Ok { specifier, .. } = &dep.maybe_code {
       assert_eq!(
         specifier,
         &ModuleSpecifier::parse("https://example.com/preact/jsx-runtime")
@@ -2593,6 +2582,43 @@ export function a(a) {
         "mediaType": "JavaScript",
         "size": 137,
         "specifier": "file:///a/test.js"
+      })
+    );
+  }
+
+  #[test]
+  fn test_parse_ts_jsdoc_imports_ignored() {
+    let specifier = ModuleSpecifier::parse("file:///a/test.ts").unwrap();
+    let result = parse_module(
+      &specifier,
+      None,
+      Arc::new(
+        r#"
+/**
+ * Some js doc
+ *
+ * @param {import("./types.d.ts").A} a
+ * @return {import("./other.ts").B}
+ */
+export function a(a: A): B {
+  return;
+}
+"#
+        .to_string(),
+      ),
+      Some(&ModuleKind::Esm),
+      None,
+      None,
+    );
+    assert!(result.is_ok());
+    let actual = result.unwrap();
+    assert_eq!(
+      json!(actual),
+      json!({
+        "kind": "esm",
+        "mediaType": "TypeScript",
+        "size": 143,
+        "specifier": "file:///a/test.ts"
       })
     );
   }

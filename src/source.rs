@@ -1,16 +1,15 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-use crate::graph::ModuleKind;
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
-use crate::module_specifier::ModuleSpecifier;
+use crate::module_specifier::SpecifierError;
 use crate::text_encoding::strip_bom_mut;
 
 use anyhow::anyhow;
-#[cfg(feature = "rust")]
 use anyhow::Error;
 use anyhow::Result;
 use data_url::DataUrl;
+use deno_ast::ModuleSpecifier;
 #[cfg(feature = "rust")]
 use futures::future;
 use futures::future::Future;
@@ -89,10 +88,52 @@ pub trait Locker: fmt::Debug {
   }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct ResolveResult {
-  pub specifier: ModuleSpecifier,
-  pub kind: ModuleKind,
+/// The response from a `Resolver::resolve()` function which combines the type
+/// of the module with the resolved specifier, or an error.
+#[derive(Debug)]
+pub enum ResolveResponse {
+  /// The resolved specifier where the module is an AMD module.
+  Amd(ModuleSpecifier),
+  /// The resolved specifier where the module is a CommonJS module.
+  CommonJs(ModuleSpecifier),
+  /// The specifier cannot be resolved or some other errors occurred.
+  Err(Error),
+  /// A resolved specifier where the module is an ES module.
+  Esm(ModuleSpecifier),
+  /// A resolved specifier where the module is a plain JavaScript module.
+  Script(ModuleSpecifier),
+  /// Where the resolver does not have specific information to what type of
+  /// module is being resolved. Currently the module graph assumes these modules
+  /// are ESM modules, but this may change in the future.
+  Specifier(ModuleSpecifier),
+  /// A resolved specifier where the module is a SystemJS module.
+  SystemJs(ModuleSpecifier),
+  /// A resolved specifier where the module is a UMD module.
+  Umd(ModuleSpecifier),
+}
+
+impl From<ModuleSpecifier> for ResolveResponse {
+  fn from(specifier: ModuleSpecifier) -> Self {
+    Self::Specifier(specifier)
+  }
+}
+
+impl From<Result<ModuleSpecifier, SpecifierError>> for ResolveResponse {
+  fn from(result: Result<ModuleSpecifier, SpecifierError>) -> Self {
+    match result {
+      Ok(specifier) => Self::Specifier(specifier),
+      Err(err) => Self::Err(err.into()),
+    }
+  }
+}
+
+impl From<Result<ModuleSpecifier, url::ParseError>> for ResolveResponse {
+  fn from(result: Result<ModuleSpecifier, url::ParseError>) -> Self {
+    match result {
+      Ok(specifier) => Self::Specifier(specifier),
+      Err(err) => Self::Err(err.into()),
+    }
+  }
 }
 
 /// A trait which allows the module graph to resolve specifiers and type only
@@ -111,13 +152,8 @@ pub trait Resolver: fmt::Debug {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
-  ) -> Result<ResolveResult> {
-    resolve_import(specifier, referrer)
-      .map(|specifier| ResolveResult {
-        specifier,
-        kind: ModuleKind::Esm,
-      })
-      .map_err(|err| err.into())
+  ) -> ResolveResponse {
+    resolve_import(specifier, referrer).into()
   }
 
   /// Given a module specifier, return an optional tuple which provides a module
@@ -286,21 +322,13 @@ pub mod tests {
       &self,
       specifier: &str,
       referrer: &ModuleSpecifier,
-    ) -> Result<ResolveResult> {
+    ) -> ResolveResponse {
       if let Some(map) = self.map.get(referrer) {
         if let Some(resolved_specifier) = map.get(specifier) {
-          return Ok(ResolveResult {
-            specifier: resolved_specifier.clone(),
-            kind: ModuleKind::Esm,
-          });
+          return ResolveResponse::Esm(resolved_specifier.clone());
         }
       }
-      resolve_import(specifier, referrer)
-        .map(|specifier| ResolveResult {
-          specifier,
-          kind: ModuleKind::Esm,
-        })
-        .map_err(|err| err.into())
+      resolve_import(specifier, referrer).into()
     }
 
     fn resolve_types(
