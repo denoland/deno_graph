@@ -1422,24 +1422,34 @@ fn is_untyped(media_type: &MediaType) -> bool {
 }
 
 /// The kind of build to perform.
-pub(crate) enum BuildKind {
+pub enum BuildKind {
   /// All types of dependencies should be analyzed and included in the graph.
-  All,
+  All(Vec<(ModuleSpecifier, ModuleKind)>),
   /// Only code dependencies should be analyzed and included in the graph. This
   /// is useful when transpiling and running code, but not caring about type
   /// only dependnecies.
-  CodeOnly,
+  CodeOnly(Vec<(ModuleSpecifier, ModuleKind)>),
   /// Only type dependencies should be analyzed and included in the graph. This
   /// is useful when assessing types, like documentation or type checking, when
   /// the code will not be executed.
-  TypesOnly,
+  TypesOnly(Vec<ModuleSpecifier>),
 }
 
 pub type LoadWithSpecifierFuture = Pin<
   Box<dyn Future<Output = (ModuleSpecifier, ModuleKind, LoadResult)> + 'static>,
 >;
 
+#[derive(Default)]
+pub(crate) struct BuilderOptions<'a> {
+  pub is_dynamic_root: bool,
+  pub maybe_resolver: Option<&'a dyn Resolver>,
+  pub maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
+  pub maybe_reporter: Option<&'a dyn Reporter>,
+  pub maybe_type_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
+}
+
 pub(crate) struct Builder<'a> {
+  build_kind: BuildKind,
   in_dynamic_branch: bool,
   graph: ModuleGraph,
   loader: &'a mut dyn Loader,
@@ -1449,43 +1459,48 @@ pub(crate) struct Builder<'a> {
   dynamic_branches: HashMap<ModuleSpecifier, (ModuleKind, Option<String>)>,
   source_parser: &'a dyn SourceParser,
   maybe_reporter: Option<&'a dyn Reporter>,
+  maybe_type_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
 }
 
 impl<'a> Builder<'a> {
   pub fn new(
-    roots: Vec<(ModuleSpecifier, ModuleKind)>,
-    is_dynamic_root: bool,
+    build_kind: BuildKind,
     loader: &'a mut dyn Loader,
-    maybe_resolver: Option<&'a dyn Resolver>,
-    maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
     source_parser: &'a dyn SourceParser,
-    maybe_reporter: Option<&'a dyn Reporter>,
+    options: BuilderOptions<'a>,
   ) -> Self {
+    let (build_kind, roots) = match build_kind {
+      BuildKind::All(r) => (BuildKind::All(vec![]), r),
+      BuildKind::CodeOnly(r) => (BuildKind::CodeOnly(vec![]), r),
+      BuildKind::TypesOnly(r) => (
+        BuildKind::TypesOnly(vec![]),
+        r.into_iter().map(|s| (s, ModuleKind::Esm)).collect(),
+      ),
+    };
+
     Self {
-      in_dynamic_branch: is_dynamic_root,
-      graph: ModuleGraph::new(roots, maybe_locker),
+      build_kind,
+      in_dynamic_branch: options.is_dynamic_root,
+      graph: ModuleGraph::new(roots, options.maybe_locker),
       loader,
-      maybe_resolver,
+      maybe_resolver: options.maybe_resolver,
       pending: FuturesUnordered::new(),
       pending_assert_types: HashMap::new(),
       dynamic_branches: HashMap::new(),
       source_parser,
-      maybe_reporter,
+      maybe_reporter: options.maybe_reporter,
+      maybe_type_imports: options.maybe_type_imports,
     }
   }
 
-  pub async fn build(
-    mut self,
-    build_kind: BuildKind,
-    maybe_type_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
-  ) -> ModuleGraph {
+  pub async fn build(mut self) -> ModuleGraph {
     let roots = self.graph.roots.clone();
     for (root, kind) in roots {
       self.load(&root, &kind, self.in_dynamic_branch, None);
     }
 
     // Process any type imports that are being added to the graph.
-    if let Some(imports) = maybe_type_imports {
+    if let Some(imports) = self.maybe_type_imports.take() {
       for (referrer, type_imports) in imports {
         let synthetic_module = Module::new_from_type_imports(
           referrer.clone(),
@@ -1513,13 +1528,7 @@ impl<'a> Builder<'a> {
           let assert_types =
             self.pending_assert_types.remove(&specifier).unwrap();
           for maybe_assert_type in assert_types {
-            self.visit(
-              &specifier,
-              &kind,
-              &response,
-              &build_kind,
-              maybe_assert_type,
-            )
+            self.visit(&specifier, &kind, &response, maybe_assert_type)
           }
           Some(specifier)
         }
@@ -1628,7 +1637,6 @@ impl<'a> Builder<'a> {
     requested_specifier: &ModuleSpecifier,
     kind: &ModuleKind,
     response: &LoadResponse,
-    build_kind: &BuildKind,
     maybe_assert_type: Option<String>,
   ) {
     use std::borrow::BorrowMut;
@@ -1665,12 +1673,14 @@ impl<'a> Builder<'a> {
     );
 
     if let ModuleSlot::Module(module) = module_slot.borrow_mut() {
-      if matches!(build_kind, BuildKind::All | BuildKind::CodeOnly)
+      if matches!(self.build_kind, BuildKind::All(_) | BuildKind::CodeOnly(_))
         || module.maybe_types_dependency.is_none()
       {
         for dep in module.dependencies.values_mut() {
-          if matches!(build_kind, BuildKind::All | BuildKind::CodeOnly)
-            || dep.maybe_type.is_none()
+          if matches!(
+            self.build_kind,
+            BuildKind::All(_) | BuildKind::CodeOnly(_)
+          ) || dep.maybe_type.is_none()
           {
             if let Resolved::Ok {
               specifier, kind, ..
@@ -1694,7 +1704,10 @@ impl<'a> Builder<'a> {
             dep.maybe_code = Resolved::None;
           }
 
-          if matches!(build_kind, BuildKind::All | BuildKind::TypesOnly) {
+          if matches!(
+            self.build_kind,
+            BuildKind::All(_) | BuildKind::TypesOnly(_)
+          ) {
             if let Resolved::Ok {
               specifier, kind, ..
             } = &dep.maybe_type
@@ -1721,7 +1734,8 @@ impl<'a> Builder<'a> {
         module.dependencies.clear();
       }
 
-      if matches!(build_kind, BuildKind::All | BuildKind::TypesOnly) {
+      if matches!(self.build_kind, BuildKind::All(_) | BuildKind::TypesOnly(_))
+      {
         if let Some((
           _,
           Resolved::Ok {
@@ -2061,16 +2075,17 @@ mod tests {
       loaded_baz: false,
     };
     let source_parser = DefaultSourceParser::new();
-    let builder = Builder::new(
-      vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
-      false,
+    Builder::new(
+      BuildKind::All(vec![(
+        Url::parse("file:///foo.js").unwrap(),
+        ModuleKind::Esm,
+      )]),
       &mut loader,
-      None,
-      None,
       &source_parser,
-      None,
-    );
-    builder.build(BuildKind::All, None).await;
+      Default::default(),
+    )
+    .build()
+    .await;
     assert!(loader.loaded_foo);
     assert!(loader.loaded_bar);
     assert!(loader.loaded_baz);
@@ -2101,16 +2116,17 @@ mod tests {
     }
     let mut loader = TestLoader;
     let source_parser = DefaultSourceParser::new();
-    let builder = Builder::new(
-      vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
-      false,
+    let graph = Builder::new(
+      BuildKind::All(vec![(
+        Url::parse("file:///foo.js").unwrap(),
+        ModuleKind::Esm,
+      )]),
       &mut loader,
-      None,
-      None,
       &source_parser,
-      None,
-    );
-    let graph = builder.build(BuildKind::All, None).await;
+      Default::default(),
+    )
+    .build()
+    .await;
     assert!(graph
       .try_get(&Url::parse("file:///foo.js").unwrap())
       .is_ok());
@@ -2167,16 +2183,17 @@ mod tests {
     }
     let mut loader = TestLoader;
     let source_parser = DefaultSourceParser::new();
-    let builder = Builder::new(
-      vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
-      false,
+    let graph = Builder::new(
+      BuildKind::All(vec![(
+        Url::parse("file:///foo.js").unwrap(),
+        ModuleKind::Esm,
+      )]),
       &mut loader,
-      None,
-      None,
       &source_parser,
-      None,
-    );
-    let graph = builder.build(BuildKind::All, None).await;
+      Default::default(),
+    )
+    .build()
+    .await;
     let specifiers = graph.specifiers();
     dbg!(&specifiers);
     assert_eq!(specifiers.len(), 4);

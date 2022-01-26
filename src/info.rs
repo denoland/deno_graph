@@ -488,16 +488,14 @@ mod tests {
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
     let source_parser = DefaultSourceParser::new();
-    let builder = Builder::new(
-      vec![(root_specifier, ModuleKind::Esm)],
-      false,
+    let graph = Builder::new(
+      BuildKind::All(vec![(root_specifier, ModuleKind::Esm)]),
       &mut loader,
-      None,
-      None,
       &source_parser,
-      None,
-    );
-    let graph = builder.build(BuildKind::All, None).await;
+      Default::default(),
+    )
+    .build()
+    .await;
     assert_eq!(
       strip_ansi_codes(format!("{}", graph)),
       r#"local: /cache/deps/https/deno.land/x/example/a.ts
@@ -566,16 +564,14 @@ https://deno.land/x/example/a.ts (129B)
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
     let source_parser = DefaultSourceParser::new();
-    let builder = Builder::new(
-      vec![(root_specifier, ModuleKind::Esm)],
-      false,
+    let graph = Builder::new(
+      BuildKind::All(vec![(root_specifier, ModuleKind::Esm)]),
       &mut loader,
-      None,
-      None,
       &source_parser,
-      None,
-    );
-    let graph = builder.build(BuildKind::All, None).await;
+      Default::default(),
+    )
+    .build()
+    .await;
     println!("{}", graph);
     assert_eq!(
       strip_ansi_codes(format!("{}", graph)),
