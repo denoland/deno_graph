@@ -112,6 +112,21 @@ pub enum ResolveResponse {
   Umd(ModuleSpecifier),
 }
 
+impl ResolveResponse {
+  pub fn to_result(self) -> Result<ModuleSpecifier, Error> {
+    match self {
+      Self::Amd(specifier)
+      | Self::CommonJs(specifier)
+      | Self::Esm(specifier)
+      | Self::Script(specifier)
+      | Self::Specifier(specifier)
+      | Self::SystemJs(specifier)
+      | Self::Umd(specifier) => Ok(specifier),
+      Self::Err(err) => Err(err),
+    }
+  }
+}
+
 impl From<ModuleSpecifier> for ResolveResponse {
   fn from(specifier: ModuleSpecifier) -> Self {
     Self::Specifier(specifier)
