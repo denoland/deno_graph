@@ -621,7 +621,8 @@ impl Module {
     }
   }
 
-  fn new_from_type_imports(
+  /// Create a synthetic module from a vector of type imports
+  pub fn new_from_type_imports(
     specifier: ModuleSpecifier,
     type_imports: Vec<String>,
     maybe_resolver: Option<&dyn Resolver>,
