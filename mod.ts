@@ -42,10 +42,10 @@ export type {
   ModuleGraph,
   ModuleGraphJson,
   ModuleKind,
-  ResolveResult,
-  TypesDependency,
   ParsedSource,
+  ResolveResult,
   TranspiledSource,
+  TypesDependency,
 } from "./lib/types.d.ts";
 
 export interface CreateGraphOptions {

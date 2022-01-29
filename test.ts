@@ -289,6 +289,23 @@ Deno.test({
 });
 
 Deno.test({
+  name: "createGraph() - parsed source",
+  async fn() {
+    const graph = await createGraph(
+      "https://deno.land/std@0.103.0/examples/chat/server.ts",
+    );
+    const rootModule = graph.get(graph.roots[0]);
+    assert(rootModule);
+    assertEquals(rootModule.mediaType, "TypeScript");
+    const parsedSource = rootModule.parsedSource;
+    assert(parsedSource);
+    const transpiledSource = parsedSource.transpile();
+    assert(transpiledSource);
+    assert(typeof transpiledSource.text == "string");
+  },
+});
+
+Deno.test({
   name: "load() - remote module",
   async fn() {
     const response = await load(
