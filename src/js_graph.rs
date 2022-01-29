@@ -420,6 +420,15 @@ impl Module {
       .unwrap_or_else(|| "".to_string())
   }
 
+  #[wasm_bindgen(getter, js_name = parsedSource)]
+  pub fn parsed_source(&self) -> Option<ParsedSource> {
+    self
+      .0
+      .maybe_parsed_source
+      .as_ref()
+      .map(|ps| ParsedSource(ps.clone()))
+  }
+
   #[wasm_bindgen(getter)]
   pub fn specifier(&self) -> String {
     self.0.specifier.to_string()
@@ -441,6 +450,39 @@ impl Module {
     let serializer =
       serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
     self.0.serialize(&serializer).unwrap()
+  }
+}
+
+#[wasm_bindgen]
+pub struct ParsedSource(pub(crate) deno_ast::ParsedSource);
+
+#[wasm_bindgen]
+pub struct TranspiledSource {
+  text: String,
+  source_map: Option<String>,
+}
+
+#[wasm_bindgen]
+impl TranspiledSource {
+  #[wasm_bindgen(getter)]
+  pub fn text(&self) -> String {
+    self.text.clone()
+  }
+
+  #[wasm_bindgen(getter, js_name = sourceMap)]
+  pub fn source_map(&self) -> Option<String> {
+    self.source_map.clone()
+  }
+}
+
+#[wasm_bindgen]
+impl ParsedSource {
+  pub fn transpile(&self) -> TranspiledSource {
+    let source = self.0.transpile(&Default::default()).unwrap();
+    TranspiledSource {
+      text: source.text,
+      source_map: source.source_map,
+    }
   }
 }
 

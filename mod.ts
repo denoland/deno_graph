@@ -44,6 +44,8 @@ export type {
   ModuleKind,
   ResolveResult,
   TypesDependency,
+  ParsedSource,
+  TranspiledSource,
 } from "./lib/types.d.ts";
 
 export interface CreateGraphOptions {

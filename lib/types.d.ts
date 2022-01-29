@@ -189,6 +189,8 @@ export class Module {
   readonly size: number;
   /** The source content of the module. */
   readonly source: string;
+  /** The parsed source content of the module. */
+  readonly parsedSource?: ParsedSource;
   /** The fully qualified string URL of the module. */
   readonly specifier: string;
   /** The types dependency for the module, where the first value in the tuple
@@ -252,4 +254,13 @@ export class ModuleGraph {
    * @param noColor An optional flag indicating if ANSI color escape codes
    *                should be included in the returned string. */
   toString(noColor?: boolean): string;
+}
+
+export class TranspiledSource {
+  readonly text: string;
+  readonly sourceMap?: string;
+}
+
+export class ParsedSource {
+  transpile(): TranspiledSource;
 }
