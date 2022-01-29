@@ -1,9 +1,5 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-// TODO(@littledivy: remove this on the next wasm-bindgen release.
-// https://github.com/rustwasm/wasm-bindgen/pull/2778
-#![allow(clippy::unused_unit)]
-
 use crate::checksum;
 use crate::colors::strip_ansi_codes;
 use crate::graph;
