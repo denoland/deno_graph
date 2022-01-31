@@ -215,7 +215,7 @@ be added as follows:
 ```
 > rustup target add wasm32-unknown-unknown
 > cargo install -f wasm-bindgen-cli
-> deno install --unstable -A -f -n wasmbuild https://raw.githubusercontent.com/denoland/wasmbuild/7b714ee749e4dc1e4ed1bc6f7258235a6c289aec/main.ts 
+> deno install --unstable -A -f -n wasmbuild https://raw.githubusercontent.com/denoland/wasmbuild/d51c673a321ecf4f336a467bb1a4a5327e783481/main.ts
 ```
 
 > ⚠️ Note that the `wasm-bindgen-cli` should match the version of `wasm-bindgen`
