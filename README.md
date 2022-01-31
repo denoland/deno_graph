@@ -215,26 +215,15 @@ be added as follows:
 ```
 > rustup target add wasm32-unknown-unknown
 > cargo install -f wasm-bindgen-cli
+> deno install --unstable -A -f -n wasmbuild https://raw.githubusercontent.com/denoland/wasmbuild/7b714ee749e4dc1e4ed1bc6f7258235a6c289aec/main.ts 
 ```
 
 > ⚠️ Note that the `wasm-bindgen-cli` should match the version of `wasm-bindgen`
 > in this crate and be explicitly set using the `--version` flag on install.
 
-Also, the build script (`_build.ts`) requires the Deno CLI to be installed and
-available in the path. If it is, the script should _just work_:
-
 ```
-> ./_build.ts
+> wasmbuild --no-default-features --features wasm
 ```
-
-But can be manually invoked like:
-
-```
-> deno run --unstable _build.ts
-```
-
-And you will be prompted for the permissions that Deno needs to perform the
-build.
 
 ### Contributing
 
