@@ -1576,7 +1576,10 @@ impl<'a> Builder<'a> {
     // Enrich with cache info from the loader
     for slot in self.graph.module_slots.values_mut() {
       if let ModuleSlot::Module(ref mut module) = slot {
-        module.maybe_cache_info = self.loader.get_cache_info(&module.specifier);
+        if !matches!(module.kind, ModuleKind::Synthetic) {
+          module.maybe_cache_info =
+            self.loader.get_cache_info(&module.specifier);
+        }
       }
     }
     // Enrich with checksums from locker
