@@ -17,6 +17,7 @@ Deno.test({
         assert(!isDynamic);
         assertEquals(specifier, "https://example.com/a");
         return Promise.resolve({
+          kind: "module",
           specifier,
           headers: {
             "content-type": "application/typescript; charset=utf-8",
@@ -129,10 +130,12 @@ Deno.test({
   async fn() {
     const fixtures: Record<string, LoadResponse> = {
       "file:///a/test.js": {
+        kind: "module",
         specifier: "file:///a/test.js",
         content: `import * as b from "./b.js";`,
       },
       "file:///a/b.js": {
+        kind: "module",
         specifier: "file:///a/b.js",
         content: `export const b = "b";`,
       },
@@ -194,10 +197,12 @@ Deno.test({
   async fn() {
     const fixtures: Record<string, LoadResponse> = {
       "file:///a/test.js": {
+        kind: "module",
         specifier: "file:///a/test.js",
         content: `import * as b from "./b.js";`,
       },
       "file:///a/b.js": {
+        kind: "module",
         specifier: "file:///a/b.js",
         content: `export const b = "b";`,
       },
@@ -266,11 +271,13 @@ Deno.test({
         load(specifier) {
           if (specifier === "file:///a.js") {
             return Promise.resolve({
+              kind: "module",
               specifier: "file:///a.js",
               content: `export const a = "a";`,
             });
           } else {
             return Promise.resolve({
+              kind: "module",
               specifier: "file:///a.d.ts",
               content: `export const a: "a";`,
             });
@@ -295,6 +302,7 @@ Deno.test({
       "https://deno.land/std@0.103.0/examples/chat/server.ts",
     );
     assert(response);
+    assert(response.kind === "module");
     assertEquals(
       response.specifier,
       "https://deno.land/std@0.103.0/examples/chat/server.ts",

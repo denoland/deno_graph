@@ -258,9 +258,10 @@ impl StringOrResolveResponse {
         match ModuleSpecifier::parse(specifier) {
           Ok(specifier) => match kind {
             ModuleKind::Amd => ResolveResponse::Amd(specifier),
-            ModuleKind::Asserted | ModuleKind::Synthetic => {
-              ResolveResponse::Specifier(specifier)
-            }
+            ModuleKind::Asserted
+            | ModuleKind::BuiltIn
+            | ModuleKind::External
+            | ModuleKind::Synthetic => ResolveResponse::Specifier(specifier),
             ModuleKind::CommonJs => ResolveResponse::CommonJs(specifier),
             ModuleKind::Esm => ResolveResponse::Esm(specifier),
             ModuleKind::Script => ResolveResponse::Script(specifier),

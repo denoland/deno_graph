@@ -31,7 +31,9 @@ export interface ResolveResult {
   kind: ModuleKind;
 }
 
-export interface LoadResponse {
+export interface LoadResponseModule {
+  /** A module with code has been loaded. */
+  kind: "module";
   /** The string URL of the resource. If there were redirects, the final
    * specifier should be set here, otherwise the requested specifier. */
   specifier: string;
@@ -41,6 +43,16 @@ export interface LoadResponse {
   /** The string value of the loaded resources. */
   content: string;
 }
+
+export interface LoadResponseExternalBuiltIn {
+  /** The loaded module is either _external_ or _built-in_ to the runtime. */
+  kind: "external" | "builtIn";
+  /** The strung URL of the resource. If there were redirects, the final
+   * specifier should be set here, otherwise the requested specifier. */
+  specifier: string;
+}
+
+export type LoadResponse = LoadResponseModule | LoadResponseExternalBuiltIn;
 
 export interface PositionJson {
   /** The line number of a position within a source file. The number is a zero
