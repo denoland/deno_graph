@@ -1737,7 +1737,7 @@ impl<'a> Builder<'a> {
     let is_root = self.roots_contain(specifier);
 
     let mut module_slot = parse_module(
-      &specifier,
+      specifier,
       maybe_headers,
       content,
       maybe_assert_type.as_deref(),
