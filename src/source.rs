@@ -43,16 +43,16 @@ pub struct CacheInfo {
 ///
 /// The returned specifier is the final specifier. This can differ from the
 /// requested specifier (e.g. if a redirect was encountered when loading)
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum LoadResponse {
   /// A module which is built into the runtime. The module will be marked as
   /// `ModuleKind::BuiltIn` and no dependency analysis will be performed.
-  BuiltIn(ModuleSpecifier),
+  BuiltIn { specifier: ModuleSpecifier },
   /// A module where the content is not available when building the graph, but
   /// will be available at runtime. The module will be marked as
   /// `ModuleKind::External` and no dependency analysis will be performed.
-  External(ModuleSpecifier),
+  External { specifier: ModuleSpecifier },
   /// A loaded module.
   Module {
     /// The content of the remote module.
@@ -226,8 +226,19 @@ pub struct MemoryLoader {
 }
 
 #[cfg(feature = "rust")]
-type MemoryLoaderSources<S> =
-  Vec<(S, Result<(S, Option<Vec<(S, S)>>, S), Error>)>;
+pub enum Source<S> {
+  Module {
+    specifier: S,
+    maybe_headers: Option<Vec<(S, S)>>,
+    content: S,
+  },
+  External(S),
+  BuiltIn(S),
+  Err(Error),
+}
+
+#[cfg(feature = "rust")]
+pub type MemoryLoaderSources<S> = Vec<(S, Source<S>)>;
 
 #[cfg(feature = "rust")]
 impl MemoryLoader {
@@ -240,15 +251,30 @@ impl MemoryLoader {
         .into_iter()
         .map(|(s, r)| {
           let specifier = ModuleSpecifier::parse(s.as_ref()).unwrap();
-          let result = r.map(|(s, mh, c)| LoadResponse::Module {
-            specifier: ModuleSpecifier::parse(s.as_ref()).unwrap(),
-            maybe_headers: mh.map(|h| {
-              h.into_iter()
-                .map(|(k, v)| (k.as_ref().to_string(), v.as_ref().to_string()))
-                .collect()
+          let result = match r {
+            Source::Module {
+              specifier,
+              maybe_headers,
+              content,
+            } => Ok(LoadResponse::Module {
+              specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
+              maybe_headers: maybe_headers.map(|h| {
+                h.into_iter()
+                  .map(|(k, v)| {
+                    (k.as_ref().to_string(), v.as_ref().to_string())
+                  })
+                  .collect()
+              }),
+              content: Arc::new(content.as_ref().to_string()),
             }),
-            content: Arc::new(c.as_ref().to_string()),
-          });
+            Source::BuiltIn(specifier) => Ok(LoadResponse::BuiltIn {
+              specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
+            }),
+            Source::External(specifier) => Ok(LoadResponse::External {
+              specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
+            }),
+            Source::Err(error) => Err(error),
+          };
           (specifier, result)
         })
         .collect(),
@@ -304,6 +330,7 @@ pub trait Reporter: fmt::Debug {
 pub mod tests {
   use super::*;
   use crate::module_specifier::resolve_import;
+  use serde_json::json;
 
   #[derive(Debug)]
   pub(crate) struct MockResolver {
@@ -364,5 +391,20 @@ pub mod tests {
     ) -> Result<Option<(ModuleSpecifier, Option<Range>)>> {
       Ok(self.types.get(specifier).cloned())
     }
+  }
+
+  #[test]
+  fn test_deserialize_load_response() {
+    let actual: LoadResponse = serde_json::from_value(
+      json!({ "kind": "external", "specifier": "https://example.com/bundle" }),
+    )
+    .unwrap();
+    assert_eq!(
+      actual,
+      LoadResponse::External {
+        specifier: ModuleSpecifier::parse("https://example.com/bundle")
+          .unwrap()
+      }
+    );
   }
 }

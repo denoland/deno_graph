@@ -1682,7 +1682,7 @@ impl<'a> Builder<'a> {
     maybe_assert_type: Option<String>,
   ) {
     let (specifier, module_slot) = match response {
-      LoadResponse::BuiltIn(specifier) => {
+      LoadResponse::BuiltIn { specifier } => {
         self.check_specifier(requested_specifier, specifier);
         let module_slot = ModuleSlot::Module(Module::new_without_source(
           specifier.clone(),
@@ -1690,7 +1690,7 @@ impl<'a> Builder<'a> {
         ));
         (specifier, module_slot)
       }
-      LoadResponse::External(specifier) => {
+      LoadResponse::External { specifier } => {
         self.check_specifier(requested_specifier, specifier);
         let module_slot = ModuleSlot::Module(Module::new_without_source(
           specifier.clone(),

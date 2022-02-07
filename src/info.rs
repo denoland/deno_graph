@@ -382,6 +382,7 @@ mod tests {
   use crate::graph::ModuleKind;
   use crate::source::CacheInfo;
   use crate::source::MemoryLoader;
+  use crate::source::Source;
   use std::path::PathBuf;
 
   #[tokio::test]
@@ -390,86 +391,110 @@ mod tests {
       vec![
         (
           "https://deno.land/x/example/a.ts",
-          Ok((
-            "https://deno.land/x/example/a.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"import * as b from "./b.ts";
+          Source::Module {
+            specifier: "https://deno.land/x/example/a.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"import * as b from "./b.ts";
             import type { F } from "./f.d.ts";
             import * as g from "./g.js";
             "#,
-          )),
+          },
         ),
         (
           "https://deno.land/x/example/b.ts",
-          Ok((
-            "https://deno.land/x/example/b.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"
+          Source::Module {
+            specifier: "https://deno.land/x/example/b.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"
             // @deno-types="./c.d.ts"
             import * as c from "./c.js";
             import * as d from "./d.ts";"#,
-          )),
+          },
         ),
         (
           "https://deno.land/x/example/c.js",
-          Ok((
-            "https://deno.land/x/example/c.js",
-            Some(vec![("content-type", "application/javascript")]),
-            r#"export const c = "c";"#,
-          )),
+          Source::Module {
+            specifier: "https://deno.land/x/example/c.js",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/javascript",
+            )]),
+            content: r#"export const c = "c";"#,
+          },
         ),
         (
           "https://deno.land/x/example/c.d.ts",
-          Ok((
-            "https://deno.land/x/example/c.d.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"export const c: "c";"#,
-          )),
+          Source::Module {
+            specifier: "https://deno.land/x/example/c.d.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"export const c: "c";"#,
+          },
         ),
         (
           "https://deno.land/x/example/d.ts",
-          Ok((
-            "https://deno.land/x/example/d.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"import * as e from "./e.ts";
+          Source::Module {
+            specifier: "https://deno.land/x/example/d.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"import * as e from "./e.ts";
             export const d = "d";"#,
-          )),
+          },
         ),
         (
           "https://deno.land/x/example/e.ts",
-          Ok((
-            "https://deno.land/x/example/e.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"import * as b from "./b.ts";
+          Source::Module {
+            specifier: "https://deno.land/x/example/e.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"import * as b from "./b.ts";
             export const e = "e";"#,
-          )),
+          },
         ),
         (
           "https://deno.land/x/example/f.d.ts",
-          Ok((
-            "https://deno.land/x/example/f.d.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"export interface F { }"#,
-          )),
+          Source::Module {
+            specifier: "https://deno.land/x/example/f.d.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"export interface F { }"#,
+          },
         ),
         (
           "https://deno.land/x/example/g.js",
-          Ok((
-            "https://deno.land/x/example/g.js",
-            Some(vec![
+          Source::Module {
+            specifier: "https://deno.land/x/example/g.js",
+            maybe_headers: Some(vec![
               ("content-type", "application/javascript"),
               ("x-typescript-types", "./g.d.ts"),
             ]),
-            r#"export const g = "g";"#,
-          )),
+            content: r#"export const g = "g";"#,
+          },
         ),
         (
           "https://deno.land/x/example/g.d.ts",
-          Ok((
-            "https://deno.land/x/example/g.d.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"export const g: "g";"#,
-          )),
+          Source::Module {
+            specifier: "https://deno.land/x/example/g.d.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"export const g: "g";"#,
+          },
         ),
       ],
       vec![(
@@ -525,29 +550,32 @@ https://deno.land/x/example/a.ts (129B)
       vec![
         (
           "https://deno.land/x/example/a.ts",
-          Ok((
-            "https://deno.land/x/example/a.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"import b from "./b.json" assert { type: "json" };
+          Source::Module {
+            specifier: "https://deno.land/x/example/a.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"import b from "./b.json" assert { type: "json" };
             const c = await import("./c.json", { assert: { type: "json" } });
             "#,
-          )),
+          },
         ),
         (
           "https://deno.land/x/example/b.json",
-          Ok((
-            "https://deno.land/x/example/b.json",
-            Some(vec![("content-type", "application/json")]),
-            r#"{"b":"c"}"#,
-          )),
+          Source::Module {
+            specifier: "https://deno.land/x/example/b.json",
+            maybe_headers: Some(vec![("content-type", "application/json")]),
+            content: r#"{"b":"c"}"#,
+          },
         ),
         (
           "https://deno.land/x/example/c.json",
-          Ok((
-            "https://deno.land/x/example/c.json",
-            Some(vec![("content-type", "application/json")]),
-            r#"{"c":1}"#,
-          )),
+          Source::Module {
+            specifier: "https://deno.land/x/example/c.json",
+            maybe_headers: Some(vec![("content-type", "application/json")]),
+            content: r#"{"c":1}"#,
+          },
         ),
       ],
       vec![(

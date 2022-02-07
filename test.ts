@@ -296,6 +296,89 @@ Deno.test({
 });
 
 Deno.test({
+  name: "createGraph() - load - external and builtin",
+  async fn() {
+    const fixtures: Record<string, LoadResponse> = {
+      "file:///a/test.js": {
+        kind: "module",
+        specifier: "file:///a/test.js",
+        content: `import * as fs from "builtin:fs";
+          import * as bundle from "https://example.com/bundle";`,
+      },
+      "builtin:fs": {
+        kind: "builtIn",
+        specifier: "builtin:fs",
+      },
+      "https://example.com/bundle": {
+        kind: "external",
+        specifier: "https://example.com/bundle",
+      },
+    };
+    const graph = await createGraph("file:///a/test.js", {
+      load(specifier) {
+        return Promise.resolve(fixtures[specifier]);
+      },
+    });
+    assertEquals(graph.toJSON(), {
+      "roots": [
+        "file:///a/test.js",
+      ],
+      "modules": [
+        {
+          "kind": "builtIn",
+          "specifier": "builtin:fs",
+        },
+        {
+          "dependencies": [
+            {
+              "specifier": "builtin:fs",
+              "code": {
+                "specifier": "builtin:fs",
+                "span": {
+                  "start": {
+                    "line": 0,
+                    "character": 20,
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 32,
+                  },
+                },
+              },
+            },
+            {
+              "specifier": "https://example.com/bundle",
+              "code": {
+                "specifier": "https://example.com/bundle",
+                "span": {
+                  "start": {
+                    "line": 1,
+                    "character": 34,
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 62,
+                  },
+                },
+              },
+            },
+          ],
+          "kind": "esm",
+          "size": 97,
+          "mediaType": "JavaScript",
+          "specifier": "file:///a/test.js",
+        },
+        {
+          "kind": "external",
+          "specifier": "https://example.com/bundle",
+        },
+      ],
+      "redirects": {},
+    });
+  },
+});
+
+Deno.test({
   name: "load() - remote module",
   async fn() {
     const response = await load(
