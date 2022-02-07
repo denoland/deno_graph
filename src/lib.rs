@@ -310,17 +310,14 @@ cfg_if! {
 mod tests {
   use super::*;
   use crate::graph::Resolved;
-  use anyhow::Error;
   use pretty_assertions::assert_eq;
   use serde_json::json;
   use source::tests::MockResolver;
   use source::CacheInfo;
   use source::MemoryLoader;
+  use source::Source;
 
-  type Sources<'a> = Vec<(
-    &'a str,
-    Result<(&'a str, Option<Vec<(&'a str, &'a str)>>, &'a str), Error>,
-  )>;
+  type Sources<'a> = Vec<(&'a str, Source<&'a str>)>;
 
   fn setup(
     sources: Sources,
@@ -335,15 +332,19 @@ mod tests {
       vec![
         (
           "file:///a/test01.ts",
-          Ok((
-            "file:///a/test01.ts",
-            None,
-            r#"import * as b from "./test02.ts";"#,
-          )),
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"import * as b from "./test02.ts";"#,
+          },
         ),
         (
           "file:///a/test02.ts",
-          Ok(("file:///a/test02.ts", None, r#"export const b = "b";"#)),
+          Source::Module {
+            specifier: "file:///a/test02.ts",
+            maybe_headers: None,
+            content: r#"export const b = "b";"#,
+          },
         ),
       ],
       vec![],
@@ -397,27 +398,35 @@ mod tests {
       vec![
         (
           "file:///a/test01.ts",
-          Ok((
-            "file:///a/test01.ts",
-            None,
-            r#"import * as b from "./test02.ts";"#,
-          )),
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"import * as b from "./test02.ts";"#,
+          },
         ),
         (
           "file:///a/test02.ts",
-          Ok(("file:///a/test02.ts", None, r#"export const b = "b";"#)),
+          Source::Module {
+            specifier: "file:///a/test02.ts",
+            maybe_headers: None,
+            content: r#"export const b = "b";"#,
+          },
         ),
         (
           "https://example.com/a.ts",
-          Ok((
-            "https://example.com/a.ts",
-            None,
-            r#"import * as c from "./c.ts";"#,
-          )),
+          Source::Module {
+            specifier: "https://example.com/a.ts",
+            maybe_headers: None,
+            content: r#"import * as c from "./c.ts";"#,
+          },
         ),
         (
           "https://example.com/c.ts",
-          Ok(("https://example.com/c.ts", None, r#"export const c = "c";"#)),
+          Source::Module {
+            specifier: "https://example.com/c.ts",
+            maybe_headers: None,
+            content: r#"export const c = "c";"#,
+          },
         ),
       ],
       vec![],
@@ -462,7 +471,11 @@ mod tests {
     let mut loader = setup(
       vec![(
         "file:///a/test.json",
-        Ok(("file:///a/test.json", None, r#"{"a": 1, "b": "c"}"#)),
+        Source::Module {
+          specifier: "file:///a/test.json",
+          maybe_headers: None,
+          content: r#"{"a": 1, "b": "c"}"#,
+        },
       )],
       vec![],
     );
@@ -506,17 +519,21 @@ mod tests {
       vec![
         (
           "file:///a/test.js",
-          Ok((
-            "file:///a/test.js",
-            None,
-            r#"
+          Source::Module {
+            specifier: "file:///a/test.js",
+            maybe_headers: None,
+            content: r#"
         const a = await import("./a.json");
         "#,
-          )),
+          },
         ),
         (
           "file:///a/a.json",
-          Ok(("file:///a/a.json", None, r#"{"a":"b"}"#)),
+          Source::Module {
+            specifier: "file:///a/a.json",
+            maybe_headers: None,
+            content: r#"{"a":"b"}"#,
+          },
         ),
       ],
       vec![],
@@ -586,19 +603,23 @@ mod tests {
       vec![
         (
           "file:///a/test01.ts",
-          Ok((
-            "file:///a/test01.ts",
-            None,
-            r#"// @deno-types=./test02.d.ts
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"// @deno-types=./test02.d.ts
 import * as a from "./test02.js";
 
 console.log(a);
 "#,
-          )),
+          },
         ),
         (
           "file:///a/test02.js",
-          Ok(("file:///a/test02.js", None, r#"export const b = "b";"#)),
+          Source::Module {
+            specifier: "file:///a/test02.js",
+            maybe_headers: None,
+            content: r#"export const b = "b";"#,
+          },
         ),
       ],
       vec![],
@@ -625,14 +646,14 @@ console.log(a);
     let mut loader = setup(
       vec![(
         "file:///a/test01.ts",
-        Ok((
-          "file:///a/test01.ts",
-          None,
-          r#"import * as a from "./test02.js";
+        Source::Module {
+          specifier: "file:///a/test01.ts",
+          maybe_headers: None,
+          content: r#"import * as a from "./test02.js";
 
 console.log(a);
 "#,
-        )),
+        },
       )],
       vec![],
     );
@@ -663,19 +684,27 @@ console.log(a);
       vec![
         (
           "file:///a/test01.ts",
-          Ok(("file:///a/test01.ts", None, r#"console.log("a");"#)),
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"console.log("a");"#,
+          },
         ),
         (
           "file:///a/types.d.ts",
-          Ok((
-            "file:///a/types.d.ts",
-            None,
-            r#"export type { A } from "./types_01.d.ts";"#,
-          )),
+          Source::Module {
+            specifier: "file:///a/types.d.ts",
+            maybe_headers: None,
+            content: r#"export type { A } from "./types_01.d.ts";"#,
+          },
         ),
         (
           "file:///a/types_01.d.ts",
-          Ok(("file:///a/types_01.d.ts", None, r#"export class A {};"#)),
+          Source::Module {
+            specifier: "file:///a/types_01.d.ts",
+            maybe_headers: None,
+            content: r#"export class A {};"#,
+          },
         ),
       ],
       vec![],
@@ -771,26 +800,33 @@ console.log(a);
       vec![
         (
           "file:///a/test01.ts",
-          Ok(("file:///a/test01.ts", None, r#"console.log("a");"#)),
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"console.log("a");"#,
+          },
         ),
         (
           "https://example.com/jsx-runtime",
-          Ok((
-            "https://example.com/jsx-runtime",
-            Some(vec![
+          Source::Module {
+            specifier: "https://example.com/jsx-runtime",
+            maybe_headers: Some(vec![
               ("content-type", "application/javascript"),
               ("x-typescript-types", "./jsx-runtime.d.ts"),
             ]),
-            r#"export const a = "a";"#,
-          )),
+            content: r#"export const a = "a";"#,
+          },
         ),
         (
           "https://example.com/jsx-runtime.d.ts",
-          Ok((
-            "https://example.com/jsx-runtime.d.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"export const a: "a";"#,
-          )),
+          Source::Module {
+            specifier: "https://example.com/jsx-runtime.d.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"export const a: "a";"#,
+          },
         ),
       ],
       vec![],
@@ -839,14 +875,14 @@ console.log(a);
     let mut loader = setup(
       vec![(
         "https://example.com/a",
-        Ok((
-          "https://example.com/a",
-          Some(vec![(
+        Source::Module {
+          specifier: "https://example.com/a",
+          maybe_headers: Some(vec![(
             "content-type",
             "application/typescript; charset=utf-8",
           )]),
-          r#"declare interface A { a: string; }"#,
-        )),
+          content: r#"declare interface A { a: string; }"#,
+        },
       )],
       vec![],
     );
@@ -881,24 +917,27 @@ console.log(a);
       vec![
         (
           "file:///a/test01.tsx",
-          Ok((
-            "file:///a/test01.tsx",
-            None,
-            r#"/* @jsxImportSource https://example.com/preact */
+          Source::Module {
+            specifier: "file:///a/test01.tsx",
+            maybe_headers: None,
+            content: r#"/* @jsxImportSource https://example.com/preact */
 
             export function A() {
               <div>Hello Deno</div>
             }
             "#,
-          )),
+          },
         ),
         (
           "https://example.com/preact/jsx-runtime",
-          Ok((
-            "https://example.com/preact/jsx-runtime/index.js",
-            Some(vec![("content-type", "application/javascript")]),
-            r#"export function jsx() {}"#,
-          )),
+          Source::Module {
+            specifier: "https://example.com/preact/jsx-runtime/index.js",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/javascript",
+            )]),
+            content: r#"export function jsx() {}"#,
+          },
         ),
       ],
       vec![],
@@ -966,7 +1005,11 @@ console.log(a);
     let mut loader = setup(
       vec![(
         "file:///a/test.ts",
-        Ok(("file:///a/test.ts", None, r#"import "foo";"#)),
+        Source::Module {
+          specifier: "file:///a/test.ts",
+          maybe_headers: None,
+          content: r#"import "foo";"#,
+        },
       )],
       vec![],
     );
@@ -996,11 +1039,19 @@ console.log(a);
       vec![
         (
           "file:///a/test.ts",
-          Ok(("file:///a/test.ts", None, r#"import "./test.json";"#)),
+          Source::Module {
+            specifier: "file:///a/test.ts",
+            maybe_headers: None,
+            content: r#"import "./test.json";"#,
+          },
         ),
         (
           "file:///a/test.json",
-          Ok(("file:///a/test.json", None, r#"{"hello":"world"}"#)),
+          Source::Module {
+            specifier: "file:///a/test.json",
+            maybe_headers: None,
+            content: r#"{"hello":"world"}"#,
+          },
         ),
       ],
       vec![],
@@ -1033,15 +1084,19 @@ console.log(a);
       vec![
         (
           "file:///a/test01",
-          Ok((
-            "file:///a/test01",
-            None,
-            r#"import * as b from "./test02.ts";"#,
-          )),
+          Source::Module {
+            specifier: "file:///a/test01",
+            maybe_headers: None,
+            content: r#"import * as b from "./test02.ts";"#,
+          },
         ),
         (
           "file:///a/test02.ts",
-          Ok(("file:///a/test02.ts", None, r#"export const b = "b";"#)),
+          Source::Module {
+            specifier: "file:///a/test02.ts",
+            maybe_headers: None,
+            content: r#"export const b = "b";"#,
+          },
         ),
       ],
       vec![],
@@ -1068,11 +1123,19 @@ console.log(a);
       vec![
         (
           "file:///a.ts",
-          Ok(("file:///a.ts", None, r#"const b = await import("./b.ts");"#)),
+          Source::Module {
+            specifier: "file:///a.ts",
+            maybe_headers: None,
+            content: r#"const b = await import("./b.ts");"#,
+          },
         ),
         (
           "file:///b.ts",
-          Ok(("file:///b.ts", None, r#"export const b = "b";"#)),
+          Source::Module {
+            specifier: "file:///b.ts",
+            maybe_headers: None,
+            content: r#"export const b = "b";"#,
+          },
         ),
       ],
       vec![],
@@ -1140,10 +1203,10 @@ console.log(a);
       vec![
         (
           "file:///a/test.js",
-          Ok((
-            "file:///a/test.js",
-            None,
-            r#"
+          Source::Module {
+            specifier: "file:///a/test.js",
+            maybe_headers: None,
+            content: r#"
 /**
  * Some js doc
  *
@@ -1154,19 +1217,23 @@ export function a(a) {
   return;
 }
 "#,
-          )),
+          },
         ),
         (
           "file:///a/types.d.ts",
-          Ok(("file:///a/types.d.ts", None, r#"export type A = string;"#)),
+          Source::Module {
+            specifier: "file:///a/types.d.ts",
+            maybe_headers: None,
+            content: r#"export type A = string;"#,
+          },
         ),
         (
           "file:///a/other.ts",
-          Ok((
-            "file:///a/other.ts",
-            None,
-            r#"export type B = string | undefined;"#,
-          )),
+          Source::Module {
+            specifier: "file:///a/other.ts",
+            maybe_headers: None,
+            content: r#"export type B = string | undefined;"#,
+          },
         ),
       ],
       vec![],
@@ -1254,19 +1321,25 @@ export function a(a) {
       vec![
         (
           "https://example.com/a",
-          Ok((
-            "https://example.com/a.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"import * as b from "./b";"#,
-          )),
+          Source::Module {
+            specifier: "https://example.com/a.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"import * as b from "./b";"#,
+          },
         ),
         (
           "https://example.com/b",
-          Ok((
-            "https://example.com/b.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"export const b = "b";"#,
-          )),
+          Source::Module {
+            specifier: "https://example.com/b.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"export const b = "b";"#,
+          },
         ),
       ],
       vec![],
@@ -1319,20 +1392,26 @@ export function a(a) {
       vec![
         (
           "https://example.com/a",
-          Ok((
-            "https://example.com/a.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"import * as b from "./b";"#,
-          )),
+          Source::Module {
+            specifier: "https://example.com/a.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"import * as b from "./b";"#,
+          },
         ),
         (
           "https://example.com/b",
-          Ok((
-            "https://example.com/b.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"import * as a from "./a";
+          Source::Module {
+            specifier: "https://example.com/b.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"import * as a from "./a";
             export const b = "b";"#,
-          )),
+          },
         ),
       ],
       vec![],
@@ -1385,15 +1464,19 @@ export function a(a) {
       vec![
         (
           "file:///a/test01.ts",
-          Ok((
-            "file:///a/test01.ts",
-            None,
-            r#"import * as b from "data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;";"#,
-          )),
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"import * as b from "data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;";"#,
+          },
         ),
         (
           "https://example.com/c.ts",
-          Ok(("https://example.com/c.ts", None, r#"export const c = """#)),
+          Source::Module {
+            specifier: "https://example.com/c.ts",
+            maybe_headers: None,
+            content: r#"export const c = """#,
+          },
         ),
       ],
       vec![],
@@ -1428,11 +1511,19 @@ export function a(a) {
       vec![
         (
           "file:///a/test01.ts",
-          Ok(("file:///a/test01.ts", None, r#"import * as b from "b";"#)),
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"import * as b from "b";"#,
+          },
         ),
         (
           "file:///a/test02.ts",
-          Ok(("file:///a/test02.ts", None, r#"export const b = "b";"#)),
+          Source::Module {
+            specifier: "file:///a/test02.ts",
+            maybe_headers: None,
+            content: r#"export const b = "b";"#,
+          },
         ),
       ],
       vec![],
@@ -1476,11 +1567,19 @@ export function a(a) {
       vec![
         (
           "file:///a.js",
-          Ok(("file:///a.js", None, r#"export const a = "a";"#)),
+          Source::Module {
+            specifier: "file:///a.js",
+            maybe_headers: None,
+            content: r#"export const a = "a";"#,
+          },
         ),
         (
           "file:///a.d.ts",
-          Ok(("file:///a.d.ts", None, r#"export const a: "a";"#)),
+          Source::Module {
+            specifier: "file:///a.d.ts",
+            maybe_headers: None,
+            content: r#"export const a: "a";"#,
+          },
         ),
       ],
       vec![],
@@ -1538,19 +1637,19 @@ export function a(a) {
       vec![
         (
           "file:///a/test01.ts",
-          Ok((
-            "file:///a/test01.ts",
-            None,
-            r#"import * as b from "./test02.ts";"#,
-          )),
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"import * as b from "./test02.ts";"#,
+          },
         ),
         (
           "file:///a/test02.ts",
-          Ok((
-            "file:///a/test02.ts",
-            None,
-            r#"export const b = "b"; let t;"#,
-          )),
+          Source::Module {
+            specifier: "file:///a/test02.ts",
+            maybe_headers: None,
+            content: r#"export const b = "b"; let t;"#,
+          },
         ),
       ],
       vec![],
@@ -1587,33 +1686,49 @@ export function a(a) {
       vec![
         (
           "file:///a/test01.ts",
-          Ok((
-            "file:///a/test01.ts",
-            None,
-            r#"
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"
             import a from "./a.json" assert { type: "json" };
             const b = await import("./b.json", { assert: { type: "json" } });
             export * as c from "./c.json" assert { type: "json" };
             const json = "json";
             const d = await import("./d.json", { assert: { type: json } });
             "#,
-          )),
+          },
         ),
         (
           "file:///a/a.json",
-          Ok(("file:///a/a.json", None, r#"{"a":"b"}"#)),
+          Source::Module {
+            specifier: "file:///a/a.json",
+            maybe_headers: None,
+            content: r#"{"a":"b"}"#,
+          },
         ),
         (
           "file:///a/b.json",
-          Ok(("file:///a/b.json", None, r#"{"b":1}"#)),
+          Source::Module {
+            specifier: "file:///a/b.json",
+            maybe_headers: None,
+            content: r#"{"b":1}"#,
+          },
         ),
         (
           "file:///a/c.json",
-          Ok(("file:///a/c.json", None, r#"{"c":"d"}"#)),
+          Source::Module {
+            specifier: "file:///a/c.json",
+            maybe_headers: None,
+            content: r#"{"c":"d"}"#,
+          },
         ),
         (
           "file:///a/d.json",
-          Ok(("file:///a/d.json", None, r#"{"d":4}"#)),
+          Source::Module {
+            specifier: "file:///a/d.json",
+            maybe_headers: None,
+            content: r#"{"d":4}"#,
+          },
         ),
       ],
       vec![],
@@ -1751,18 +1866,22 @@ export function a(a) {
       vec![
         (
           "file:///a/test01.ts",
-          Ok((
-            "file:///a/test01.ts",
-            None,
-            r#"
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"
             import a from "./a.json";
             import b from "./a.json" assert { type: "json" };
             "#,
-          )),
+          },
         ),
         (
           "file:///a/a.json",
-          Ok(("file:///a/a.json", None, r#"{"a":"b"}"#)),
+          Source::Module {
+            specifier: "file:///a/a.json",
+            maybe_headers: None,
+            content: r#"{"a":"b"}"#,
+          },
         ),
       ],
       vec![],
@@ -1830,35 +1949,58 @@ export function a(a) {
       vec![
         (
           "file:///a/test01.ts",
-          Ok((
-            "file:///a/test01.ts",
-            None,
-            r#"
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"
             import a from "./a.json";
             import b from "./b.json" assert { type: "json" };
             import c from "./c.js" assert { type: "json" };
             import d from "./d.json" assert { type: "css" };
             import e from "./e.wasm";
             "#,
-          )),
+          },
         ),
         (
           "file:///a/a.json",
-          Ok(("file:///a/a.json", None, r#"{"a":"b"}"#)),
+          Source::Module {
+            specifier: "file:///a/a.json",
+            maybe_headers: None,
+            content: r#"{"a":"b"}"#,
+          },
         ),
         (
           "file:///a/b.json",
-          Ok(("file:///a/b.json", None, r#"{"a":"b"}"#)),
+          Source::Module {
+            specifier: "file:///a/b.json",
+            maybe_headers: None,
+            content: r#"{"a":"b"}"#,
+          },
         ),
         (
           "file:///a/c.js",
-          Ok(("file:///a/c.js", None, r#"export const c = "c";"#)),
+          Source::Module {
+            specifier: "file:///a/c.js",
+            maybe_headers: None,
+            content: r#"export const c = "c";"#,
+          },
         ),
         (
           "file:///a/d.json",
-          Ok(("file:///a/d.json", None, r#"{"a":"b"}"#)),
+          Source::Module {
+            specifier: "file:///a/d.json",
+            maybe_headers: None,
+            content: r#"{"a":"b"}"#,
+          },
         ),
-        ("file:///a/e.wasm", Ok(("file:///a/e.wasm", None, ""))),
+        (
+          "file:///a/e.wasm",
+          Source::Module {
+            specifier: "file:///a/e.wasm",
+            maybe_headers: None,
+            content: "",
+          },
+        ),
       ],
       vec![],
     );
@@ -2027,28 +2169,46 @@ export function a(a) {
       vec![
         (
           "file:///a/test01.ts",
-          Ok((
-            "file:///a/test01.ts",
-            None,
-            r#"
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"
             import "./a.js";
             "#,
-          )),
+          },
         ),
         (
           "file:///a/a.js",
-          Ok(("file:///a/a.js", None, r#"import "./b.js";"#)),
+          Source::Module {
+            specifier: "file:///a/a.js",
+            maybe_headers: None,
+            content: r#"import "./b.js";"#,
+          },
         ),
         (
           "file:///a/b.js",
-          Ok((
-            "file:///a/b.js",
-            None,
-            r#"import "./c.js"; import "./d.js""#,
-          )),
+          Source::Module {
+            specifier: "file:///a/b.js",
+            maybe_headers: None,
+            content: r#"import "./c.js"; import "./d.js""#,
+          },
         ),
-        ("file:///a/c.js", Ok(("file:///a/c.js", None, r#""#))),
-        ("file:///a/d.js", Ok(("file:///a/d.js", None, r#""#))),
+        (
+          "file:///a/c.js",
+          Source::Module {
+            specifier: "file:///a/c.js",
+            maybe_headers: None,
+            content: r#""#,
+          },
+        ),
+        (
+          "file:///a/d.js",
+          Source::Module {
+            specifier: "file:///a/d.js",
+            maybe_headers: None,
+            content: r#""#,
+          },
+        ),
       ],
       vec![],
     );
@@ -2113,60 +2273,82 @@ export function a(a) {
       vec![
         (
           "file:///a/test01.ts",
-          Ok((
-            "file:///a/test01.ts",
-            None,
-            r#"
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"
             // @deno-types="./a.d.ts"
             import * as a from "./a.js";
             import type { B } from "./b.d.ts";
             import * as c from "https://example.com/c";
             import * as d from "./d.js";
             "#,
-          )),
+          },
         ),
         (
           "file:///a/a.js",
-          Ok(("file:///a/a.js", None, r#"export const a = "a""#)),
+          Source::Module {
+            specifier: "file:///a/a.js",
+            maybe_headers: None,
+            content: r#"export const a = "a""#,
+          },
         ),
         (
           "file:///a/a.d.ts",
-          Ok(("file:///a/a.d.ts", None, r#"export const a: "a";"#)),
+          Source::Module {
+            specifier: "file:///a/a.d.ts",
+            maybe_headers: None,
+            content: r#"export const a: "a";"#,
+          },
         ),
         (
           "file:///a/b.d.ts",
-          Ok(("file:///a/b.d.ts", None, r#"export interface B {}"#)),
+          Source::Module {
+            specifier: "file:///a/b.d.ts",
+            maybe_headers: None,
+            content: r#"export interface B {}"#,
+          },
         ),
         (
           "https://example.com/c",
-          Ok((
-            "https://example.com/c",
-            Some(vec![
+          Source::Module {
+            specifier: "https://example.com/c",
+            maybe_headers: Some(vec![
               ("x-typescript-types", "./c.d.ts"),
               ("content-type", "application/javascript"),
             ]),
-            r#"export { c } from "./c.js";"#,
-          )),
+            content: r#"export { c } from "./c.js";"#,
+          },
         ),
         (
           "https://example.com/c.d.ts",
-          Ok((
-            "https://example.com/c.d.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"export const c: "c";"#,
-          )),
+          Source::Module {
+            specifier: "https://example.com/c.d.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"export const c: "c";"#,
+          },
         ),
         (
           "https://example.com/c.js",
-          Ok((
-            "https://example.com/c.js",
-            Some(vec![("content-type", "application/javascript")]),
-            r#"export const c = "c";"#,
-          )),
+          Source::Module {
+            specifier: "https://example.com/c.js",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/javascript",
+            )]),
+            content: r#"export const c = "c";"#,
+          },
         ),
         (
           "file:///a/d.js",
-          Ok(("file:///a/d.js", None, r#"export const d = "d";"#)),
+          Source::Module {
+            specifier: "file:///a/d.js",
+            maybe_headers: None,
+            content: r#"export const d = "d";"#,
+          },
         ),
       ],
       vec![],
@@ -2321,60 +2503,82 @@ export function a(a) {
       vec![
         (
           "file:///a/test01.ts",
-          Ok((
-            "file:///a/test01.ts",
-            None,
-            r#"
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"
             // @deno-types="./a.d.ts"
             import * as a from "./a.js";
             import type { B } from "./b.d.ts";
             import * as c from "https://example.com/c";
             import * as d from "./d.js";
             "#,
-          )),
+          },
         ),
         (
           "file:///a/a.js",
-          Ok(("file:///a/a.js", None, r#"export const a = "a""#)),
+          Source::Module {
+            specifier: "file:///a/a.js",
+            maybe_headers: None,
+            content: r#"export const a = "a""#,
+          },
         ),
         (
           "file:///a/a.d.ts",
-          Ok(("file:///a/a.d.ts", None, r#"export const a: "a";"#)),
+          Source::Module {
+            specifier: "file:///a/a.d.ts",
+            maybe_headers: None,
+            content: r#"export const a: "a";"#,
+          },
         ),
         (
           "file:///a/b.d.ts",
-          Ok(("file:///a/b.d.ts", None, r#"export interface B {}"#)),
+          Source::Module {
+            specifier: "file:///a/b.d.ts",
+            maybe_headers: None,
+            content: r#"export interface B {}"#,
+          },
         ),
         (
           "https://example.com/c",
-          Ok((
-            "https://example.com/c",
-            Some(vec![
+          Source::Module {
+            specifier: "https://example.com/c",
+            maybe_headers: Some(vec![
               ("x-typescript-types", "./c.d.ts"),
               ("content-type", "application/javascript"),
             ]),
-            r#"export { c } from "./c.js";"#,
-          )),
+            content: r#"export { c } from "./c.js";"#,
+          },
         ),
         (
           "https://example.com/c.d.ts",
-          Ok((
-            "https://example.com/c.d.ts",
-            Some(vec![("content-type", "application/typescript")]),
-            r#"export const c: "c";"#,
-          )),
+          Source::Module {
+            specifier: "https://example.com/c.d.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"export const c: "c";"#,
+          },
         ),
         (
           "https://example.com/c.js",
-          Ok((
-            "https://example.com/c.js",
-            Some(vec![("content-type", "application/javascript")]),
-            r#"export const c = "c";"#,
-          )),
+          Source::Module {
+            specifier: "https://example.com/c.js",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/javascript",
+            )]),
+            content: r#"export const c = "c";"#,
+          },
         ),
         (
           "file:///a/d.js",
-          Ok(("file:///a/d.js", None, r#"export const d = "d";"#)),
+          Source::Module {
+            specifier: "file:///a/d.js",
+            maybe_headers: None,
+            content: r#"export const d = "d";"#,
+          },
         ),
       ],
       vec![],
@@ -2392,7 +2596,6 @@ export function a(a) {
       None,
     )
     .await;
-    // println!("{}", serde_json::to_string_pretty(&graph).unwrap());
     assert_eq!(
       json!(graph),
       json!({
@@ -2500,6 +2703,103 @@ export function a(a) {
             "kind": "esm",
             "size": 21,
             "specifier": "https://example.com/c.js"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
+
+  #[tokio::test]
+  async fn test_create_graph_with_builtin_external() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"
+            import * as fs from "builtin:fs";
+            import * as bundle from "https://example.com/bundle";
+            "#,
+          },
+        ),
+        ("builtin:fs", Source::BuiltIn("builtin:fs")),
+        (
+          "https://example.com/bundle",
+          Source::External("https://example.com/bundle"),
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let graph = create_graph(
+      vec![(root_specifier.clone(), ModuleKind::Esm)],
+      false,
+      None,
+      &mut loader,
+      None,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test01.ts"
+        ],
+        "modules": [
+          {
+            "kind": "builtIn",
+            "specifier": "builtin:fs"
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "builtin:fs",
+                "code": {
+                  "specifier": "builtin:fs",
+                  "span": {
+                    "start": {
+                      "line": 1,
+                      "character": 32
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 44
+                    }
+                  }
+                }
+              },
+              {
+                "specifier": "https://example.com/bundle",
+                "code": {
+                  "specifier": "https://example.com/bundle",
+                  "span": {
+                    "start": {
+                      "line": 2,
+                      "character": 36
+                    },
+                    "end": {
+                      "line": 2,
+                      "character": 64
+                    }
+                  }
+                }
+              }
+            ],
+            "kind": "esm",
+            "size": 125,
+            "mediaType": "TypeScript",
+            "specifier": "file:///a/test01.ts"
+          },
+          {
+            "kind": "external",
+            "specifier": "https://example.com/bundle"
           }
         ],
         "redirects": {}

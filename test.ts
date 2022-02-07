@@ -17,6 +17,7 @@ Deno.test({
         assert(!isDynamic);
         assertEquals(specifier, "https://example.com/a");
         return Promise.resolve({
+          kind: "module",
           specifier,
           headers: {
             "content-type": "application/typescript; charset=utf-8",
@@ -129,10 +130,12 @@ Deno.test({
   async fn() {
     const fixtures: Record<string, LoadResponse> = {
       "file:///a/test.js": {
+        kind: "module",
         specifier: "file:///a/test.js",
         content: `import * as b from "./b.js";`,
       },
       "file:///a/b.js": {
+        kind: "module",
         specifier: "file:///a/b.js",
         content: `export const b = "b";`,
       },
@@ -194,10 +197,12 @@ Deno.test({
   async fn() {
     const fixtures: Record<string, LoadResponse> = {
       "file:///a/test.js": {
+        kind: "module",
         specifier: "file:///a/test.js",
         content: `import * as b from "./b.js";`,
       },
       "file:///a/b.js": {
+        kind: "module",
         specifier: "file:///a/b.js",
         content: `export const b = "b";`,
       },
@@ -266,11 +271,13 @@ Deno.test({
         load(specifier) {
           if (specifier === "file:///a.js") {
             return Promise.resolve({
+              kind: "module",
               specifier: "file:///a.js",
               content: `export const a = "a";`,
             });
           } else {
             return Promise.resolve({
+              kind: "module",
               specifier: "file:///a.d.ts",
               content: `export const a: "a";`,
             });
@@ -289,12 +296,96 @@ Deno.test({
 });
 
 Deno.test({
+  name: "createGraph() - load - external and builtin",
+  async fn() {
+    const fixtures: Record<string, LoadResponse> = {
+      "file:///a/test.js": {
+        kind: "module",
+        specifier: "file:///a/test.js",
+        content: `import * as fs from "builtin:fs";
+          import * as bundle from "https://example.com/bundle";`,
+      },
+      "builtin:fs": {
+        kind: "builtIn",
+        specifier: "builtin:fs",
+      },
+      "https://example.com/bundle": {
+        kind: "external",
+        specifier: "https://example.com/bundle",
+      },
+    };
+    const graph = await createGraph("file:///a/test.js", {
+      load(specifier) {
+        return Promise.resolve(fixtures[specifier]);
+      },
+    });
+    assertEquals(graph.toJSON(), {
+      "roots": [
+        "file:///a/test.js",
+      ],
+      "modules": [
+        {
+          "kind": "builtIn",
+          "specifier": "builtin:fs",
+        },
+        {
+          "dependencies": [
+            {
+              "specifier": "builtin:fs",
+              "code": {
+                "specifier": "builtin:fs",
+                "span": {
+                  "start": {
+                    "line": 0,
+                    "character": 20,
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 32,
+                  },
+                },
+              },
+            },
+            {
+              "specifier": "https://example.com/bundle",
+              "code": {
+                "specifier": "https://example.com/bundle",
+                "span": {
+                  "start": {
+                    "line": 1,
+                    "character": 34,
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 62,
+                  },
+                },
+              },
+            },
+          ],
+          "kind": "esm",
+          "size": 97,
+          "mediaType": "JavaScript",
+          "specifier": "file:///a/test.js",
+        },
+        {
+          "kind": "external",
+          "specifier": "https://example.com/bundle",
+        },
+      ],
+      "redirects": {},
+    });
+  },
+});
+
+Deno.test({
   name: "load() - remote module",
   async fn() {
     const response = await load(
       "https://deno.land/std@0.103.0/examples/chat/server.ts",
     );
     assert(response);
+    assert(response.kind === "module");
     assertEquals(
       response.specifier,
       "https://deno.land/std@0.103.0/examples/chat/server.ts",

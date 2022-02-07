@@ -545,10 +545,18 @@ pub enum ModuleKind {
   /// `MediaType` matches the assertion. Dependency analysis does not occur on
   /// asserted modules.
   Asserted,
+  /// Represents a module which is built in to a runtime. The module does not
+  /// contain source and will have no dependencies.
+  BuiltIn,
   /// A CommonJS module.
   CommonJs,
   /// An ECMAScript Module (JavaScript Module).
   Esm,
+  /// Represents a module which is not statically analyzed and is only available
+  /// at runtime. It is up to the implementor to ensure that the module is
+  /// loaded and available as a dependency. The module does not contain source
+  /// code and will have no dependencies.
+  External,
   /// A JavaScript script module. A slight misnomer, but it allows "plain"
   /// scripts to be imported into the module graph, but without supporting any
   /// dependency analysis.
@@ -615,6 +623,23 @@ impl Module {
       maybe_checksum: None,
       maybe_parsed_source: Some(parsed_source),
       maybe_source: Some(source),
+      maybe_types_dependency: None,
+      media_type: MediaType::Unknown,
+      specifier,
+    }
+  }
+
+  pub fn new_without_source(
+    specifier: ModuleSpecifier,
+    kind: ModuleKind,
+  ) -> Self {
+    Self {
+      dependencies: Default::default(),
+      kind,
+      maybe_cache_info: None,
+      maybe_checksum: None,
+      maybe_parsed_source: None,
+      maybe_source: None,
       maybe_types_dependency: None,
       media_type: MediaType::Unknown,
       specifier,
@@ -1588,6 +1613,28 @@ impl<'a> Builder<'a> {
     self.graph
   }
 
+  /// Checks if the specifier is redirected or not and updates any redirects in
+  /// the graph.
+  fn check_specifier(
+    &mut self,
+    requested_specifier: &ModuleSpecifier,
+    specifier: &ModuleSpecifier,
+  ) {
+    // If the response was redirected, then we add the module to the redirects
+    if requested_specifier != specifier {
+      // remove a potentially pending redirect that will never resolve
+      if let Some(slot) = self.graph.module_slots.get(requested_specifier) {
+        if matches!(slot, ModuleSlot::Pending) {
+          self.graph.module_slots.remove(requested_specifier);
+        }
+      }
+      self
+        .graph
+        .redirects
+        .insert(requested_specifier.clone(), specifier.clone());
+    }
+  }
+
   /// Enqueue a request to load the specifier via the loader.
   fn load(
     &mut self,
@@ -1626,7 +1673,6 @@ impl<'a> Builder<'a> {
     false
   }
 
-  /// Visit a module, parsing it and resolving any dependencies.
   fn visit(
     &mut self,
     requested_specifier: &ModuleSpecifier,
@@ -1635,31 +1681,65 @@ impl<'a> Builder<'a> {
     build_kind: &BuildKind,
     maybe_assert_type: Option<String>,
   ) {
-    use std::borrow::BorrowMut;
-
-    let maybe_headers = response.maybe_headers.as_ref();
-    let specifier = response.specifier.clone();
-
-    // If the response was redirected, then we add the module to the redirects
-    if *requested_specifier != specifier {
-      // remove a potentially pending redirect that will never resolve
-      if let Some(slot) = self.graph.module_slots.get(requested_specifier) {
-        if matches!(slot, ModuleSlot::Pending) {
-          self.graph.module_slots.remove(requested_specifier);
-        }
+    let (specifier, module_slot) = match response {
+      LoadResponse::BuiltIn { specifier } => {
+        self.check_specifier(requested_specifier, specifier);
+        let module_slot = ModuleSlot::Module(Module::new_without_source(
+          specifier.clone(),
+          ModuleKind::BuiltIn,
+        ));
+        (specifier, module_slot)
       }
-      self
-        .graph
-        .redirects
-        .insert(requested_specifier.clone(), specifier.clone());
-    }
+      LoadResponse::External { specifier } => {
+        self.check_specifier(requested_specifier, specifier);
+        let module_slot = ModuleSlot::Module(Module::new_without_source(
+          specifier.clone(),
+          ModuleKind::External,
+        ));
+        (specifier, module_slot)
+      }
+      LoadResponse::Module {
+        specifier,
+        content,
+        maybe_headers,
+      } => {
+        self.check_specifier(requested_specifier, specifier);
+        (
+          specifier,
+          self.visit_module(
+            specifier,
+            kind,
+            maybe_headers.as_ref(),
+            content.clone(),
+            build_kind,
+            maybe_assert_type,
+          ),
+        )
+      }
+    };
+    self
+      .graph
+      .module_slots
+      .insert(specifier.clone(), module_slot);
+  }
 
-    let is_root = self.roots_contain(&specifier);
+  /// Visit a module, parsing it and resolving any dependencies.
+  fn visit_module(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    kind: &ModuleKind,
+    maybe_headers: Option<&HashMap<String, String>>,
+    content: Arc<String>,
+    build_kind: &BuildKind,
+    maybe_assert_type: Option<String>,
+  ) -> ModuleSlot {
+    use std::borrow::BorrowMut;
+    let is_root = self.roots_contain(specifier);
 
     let mut module_slot = parse_module(
-      &specifier,
+      specifier,
       maybe_headers,
-      response.content.clone(),
+      content,
       maybe_assert_type.as_deref(),
       Some(kind),
       self.maybe_resolver,
@@ -1739,7 +1819,7 @@ impl<'a> Builder<'a> {
         module.maybe_types_dependency = None;
       }
     }
-    self.graph.module_slots.insert(specifier, module_slot);
+    module_slot
   }
 }
 
@@ -2026,7 +2106,7 @@ mod tests {
             assert!(!is_dynamic);
             self.loaded_foo = true;
             Box::pin(async move {
-              Ok(Some(LoadResponse {
+              Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
                 content: Arc::new("await import('file:///bar.js')".to_string()),
@@ -2037,7 +2117,7 @@ mod tests {
             assert!(is_dynamic);
             self.loaded_bar = true;
             Box::pin(async move {
-              Ok(Some(LoadResponse {
+              Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
                 content: Arc::new("import 'file:///baz.js'".to_string()),
@@ -2048,7 +2128,7 @@ mod tests {
             assert!(is_dynamic);
             self.loaded_baz = true;
             Box::pin(async move {
-              Ok(Some(LoadResponse {
+              Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
                 content: Arc::new("console.log('Hello, world!')".to_string()),
@@ -2092,7 +2172,7 @@ mod tests {
         let specifier = specifier.clone();
         match specifier.as_str() {
           "file:///foo.js" => Box::pin(async move {
-            Ok(Some(LoadResponse {
+            Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
               content: Arc::new("await import('file:///bar.js')".to_string()),
@@ -2152,14 +2232,14 @@ mod tests {
         let specifier = specifier.clone();
         match specifier.as_str() {
           "file:///foo.js" => Box::pin(async move {
-            Ok(Some(LoadResponse {
+            Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///foo_actual.js").unwrap(),
               maybe_headers: None,
               content: Arc::new("import 'file:///bar.js'".to_string()),
             }))
           }),
           "file:///bar.js" => Box::pin(async move {
-            Ok(Some(LoadResponse {
+            Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///bar_actual.js").unwrap(),
               maybe_headers: None,
               content: Arc::new("(".to_string()),
