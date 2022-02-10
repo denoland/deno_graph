@@ -1,6 +1,6 @@
 [package]
 name = "deno_graph"
-version = "0.22.0"
+version = "0.23.0"
 edition = "2021"
 description = "module graph analysis for deno"
 homepage = "https://deno.land/"
@@ -20,12 +20,12 @@ data-url = "0.1.0"
 futures = "0.3.17"
 js-sys = { version = "0.3.55", optional = true }
 lazy_static = "1.4.0"
-parking_lot = { version = "0.11.1", features = ["wasm-bindgen"] }
+parking_lot = { version = "0.11.2", features = ["wasm-bindgen"] }
 regex = "1.5.4"
 ring = "0.16.20"
 serde = { version = "1.0.130", features = ["derive", "rc"] }
 serde_json = { version = "1.0.67", features = ["preserve_order"] }
-serde-wasm-bindgen = { version = "0.3.1", optional = true }
+serde-wasm-bindgen = { version = "0.4.2", optional = true }
 termcolor = "1.1.2"
 deno_ast = { version = "0.11.0", features = ["dep_graph", "module_specifier"] }
 url = { version = "2.2.2", features = ["serde"] }
