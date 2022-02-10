@@ -183,7 +183,7 @@ dependencies = [
 
 [[package]]
 name = "deno_graph"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "anyhow",
  "cfg-if 1.0.0",
@@ -493,9 +493,9 @@ checksum = "869d572136620d55835903746bcb5cdc54cb2851fd0aeec53220b4bb65ef3013"
 
 [[package]]
 name = "lock_api"
-version = "0.4.5"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "712a4d093c9976e24e7dbca41db895dabcbac38eb5f4045393d17a95bdfb1109"
+checksum = "88943dd7ef4a2e5a4bfa2753aaab3013e34ce2533d1996fb18ef591e315e2b3b"
 dependencies = [
  "scopeguard",
 ]
@@ -846,9 +846,9 @@ dependencies = [
 
 [[package]]
 name = "serde-wasm-bindgen"
-version = "0.3.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "618365e8e586c22123d692b72a7d791d5ee697817b65a218cdf12a98870af0f7"
+checksum = "d5d0927d4115e78b52dfd4cabcb3cc79bd56b94a53cf27c074bf8b83af1765d1"
 dependencies = [
  "fnv",
  "js-sys",
