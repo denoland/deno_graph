@@ -1920,11 +1920,11 @@ export function a(a) {
                   "specifier": "file:///a/a.json",
                   "span": {
                     "start": {
-                      "line": 2,
+                      "line": 1,
                       "character": 26
                     },
                     "end": {
-                      "line": 2,
+                      "line": 1,
                       "character": 36
                     }
                   }
@@ -1933,8 +1933,8 @@ export function a(a) {
               }
             ],
             "kind": "esm",
-            "mediaType": "TypeScript",
             "size": 113,
+            "mediaType": "TypeScript",
             "specifier": "file:///a/test01.ts"
           }
         ],
