@@ -1275,11 +1275,13 @@ pub(crate) fn parse_module_from_ast(
   for reference in analyze_ts_references(parsed_source) {
     match reference {
       ast::TypeScriptReference::Path(specifier, span) => {
-        let range =
-          Range::from_swc_span(&module.specifier, parsed_source, &span);
-        let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
-        let dep = module.dependencies.entry(specifier).or_default();
-        dep.maybe_code = resolved_dependency;
+        let dep = module.dependencies.entry(specifier.clone()).or_default();
+        if dep.maybe_code.is_none() {
+          let range =
+            Range::from_swc_span(&module.specifier, parsed_source, &span);
+          let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
+          dep.maybe_code = resolved_dependency;
+        }
       }
       ast::TypeScriptReference::Types(specifier, span) => {
         let range =
@@ -1290,7 +1292,9 @@ pub(crate) fn parse_module_from_ast(
             Some((specifier, resolved_dependency));
         } else {
           let dep = module.dependencies.entry(specifier).or_default();
-          dep.maybe_type = resolved_dependency;
+          if dep.maybe_type.is_none() {
+            dep.maybe_type = resolved_dependency;
+          }
         }
       }
     }
@@ -1303,10 +1307,12 @@ pub(crate) fn parse_module_from_ast(
       .map(|r| r.jsx_import_source_module())
       .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE);
     let specifier = format!("{}/{}", import_source, jsx_import_source_module);
-    let range = Range::from_swc_span(&module.specifier, parsed_source, &span);
-    let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
-    let dep = module.dependencies.entry(specifier).or_default();
-    dep.maybe_code = resolved_dependency;
+    let dep = module.dependencies.entry(specifier.clone()).or_default();
+    if dep.maybe_code.is_none() {
+      let range = Range::from_swc_span(&module.specifier, parsed_source, &span);
+      let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
+      dep.maybe_code = resolved_dependency;
+    }
   }
 
   // Analyze any JSDoc type imports
@@ -1318,10 +1324,17 @@ pub(crate) fn parse_module_from_ast(
     MediaType::JavaScript | MediaType::Jsx | MediaType::Mjs | MediaType::Cjs
   ) {
     for (import_source, span) in analyze_jsdoc_imports(parsed_source) {
-      let range = Range::from_swc_span(&module.specifier, parsed_source, &span);
-      let resolved_dependency = resolve(&import_source, &range, maybe_resolver);
-      let dep = module.dependencies.entry(import_source).or_default();
-      dep.maybe_type = resolved_dependency;
+      let dep = module
+        .dependencies
+        .entry(import_source.clone())
+        .or_default();
+      if dep.maybe_type.is_none() {
+        let range =
+          Range::from_swc_span(&module.specifier, parsed_source, &span);
+        let resolved_dependency =
+          resolve(&import_source, &range, maybe_resolver);
+        dep.maybe_type = resolved_dependency;
+      }
     }
   }
 
@@ -1385,8 +1398,9 @@ pub(crate) fn parse_module_from_ast(
       .dependencies
       .entry(desc.specifier.to_string())
       .or_default();
-    dep.is_dynamic = desc.is_dynamic;
-    dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
+    if dep.maybe_assert_type.is_none() {
+      dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
+    }
     let resolved_dependency = resolve(
       &desc.specifier,
       &Range::from_swc_span(
@@ -1400,21 +1414,32 @@ pub(crate) fn parse_module_from_ast(
       desc.kind,
       DependencyKind::ImportType | DependencyKind::ExportType
     ) {
-      dep.maybe_type = resolved_dependency;
-    } else {
+      if dep.maybe_type.is_none() {
+        dep.maybe_type = resolved_dependency;
+      }
+    } else if dep.maybe_code.is_none() {
+      // This is a code import, the first one of that specifier in this module.
+      // Resolve and determine the initial `is_dynamic` value from it.
       dep.maybe_code = resolved_dependency;
+      dep.is_dynamic = desc.is_dynamic;
+    } else {
+      // This is a code import, but not the first one of that specifier in this
+      // module. Maybe update the `is_dynamic` value. Static imports take
+      // precedence. Note that `@jsxImportSource` and `/// <reference path />`
+      // count as static imports for this purpose.
+      dep.is_dynamic = dep.is_dynamic && desc.is_dynamic;
     }
-    let specifier = module.specifier.clone();
-    let maybe_type = analyze_deno_types(&desc)
-      .map(|(text, span)| {
-        resolve(
-          &text,
-          &Range::from_swc_span(&specifier, parsed_source, &span),
-          maybe_resolver,
-        )
-      })
-      .unwrap_or_else(|| Resolved::None);
     if dep.maybe_type.is_none() {
+      let specifier = module.specifier.clone();
+      let maybe_type = analyze_deno_types(&desc)
+        .map(|(text, span)| {
+          resolve(
+            &text,
+            &Range::from_swc_span(&specifier, parsed_source, &span),
+            maybe_resolver,
+          )
+        })
+        .unwrap_or_else(|| Resolved::None);
       dep.maybe_type = maybe_type
     }
   }
@@ -2288,5 +2313,58 @@ mod tests {
         .unwrap_err(),
       ModuleGraphError::ParseErr(..)
     ));
+  }
+
+  #[tokio::test]
+  async fn static_and_dynamic_dep_is_static() {
+    struct TestLoader {
+      loaded_bar: bool,
+    }
+    impl Loader for TestLoader {
+      fn load(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        is_dynamic: bool,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///foo.js" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: Arc::new(
+                "import 'file:///bar.js'; await import('file:///bar.js')"
+                  .to_string(),
+              ),
+            }))
+          }),
+          "file:///bar.js" => {
+            assert!(!is_dynamic);
+            self.loaded_bar = true;
+            Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: Arc::new("console.log('Hello, world!')".to_string()),
+              }))
+            })
+          }
+          _ => unreachable!(),
+        }
+      }
+    }
+    let mut loader = TestLoader { loaded_bar: false };
+    let source_parser = DefaultSourceParser::new();
+    let builder = Builder::new(
+      vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
+      false,
+      &mut loader,
+      None,
+      None,
+      &source_parser,
+      None,
+    );
+    builder.build(BuildKind::All, None).await;
+    assert!(loader.loaded_bar);
   }
 }
