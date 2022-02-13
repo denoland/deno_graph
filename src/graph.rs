@@ -1398,6 +1398,8 @@ pub(crate) fn parse_module_from_ast(
       .dependencies
       .entry(desc.specifier.to_string())
       .or_default();
+    // TODO(nayeemrmn): Import assertions should be visited and checked for
+    // every import, not one per specifier.
     if dep.maybe_assert_type.is_none() {
       dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
     }
