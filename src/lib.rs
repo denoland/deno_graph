@@ -1,5 +1,8 @@
 // Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
+// remove this after https://github.com/rustwasm/wasm-bindgen/issues/2774 is released
+#![allow(clippy::unused_unit)]
+
 #[macro_use]
 extern crate cfg_if;
 
