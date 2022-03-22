@@ -32,20 +32,18 @@ jobs:
 
       - name: ➡️  install up Deno
         uses: denoland/setup-deno@v1.0.0
-        with:
-          deno-version: 1.x
 
       - name: 💄  format
         if: contains(matrix.os, 'ubuntu')
         run: |
           cargo fmt -- --check
-          deno fmt --check *.ts lib/*.ts schemas .vscode .github
+          deno fmt --check
 
       - name: 💄  lint
         if: contains(matrix.os, 'ubuntu')
         run: |
           cargo clippy --locked --release --all-features --all-targets -- -D clippy::all
-          deno lint *.ts lib/
+          deno lint
 
       - name: 🏗️  build
         run: cargo build --locked --release --all-features --all-targets
