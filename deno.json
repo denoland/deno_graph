@@ -1,0 +1,23 @@
+{
+  "tasks": {
+    "build": "deno run --unstable --allow-run --allow-read --allow-write --allow-env _build.ts"
+  },
+  "fmt": {
+    "files": {
+      "exclude": [
+        "lib/deno_graph.generated.js",
+        "target",
+        "temp"
+      ]
+    }
+  },
+  "lint": {
+    "files": {
+      "exclude": [
+        "lib/deno_graph.generated.js",
+        "target",
+        "temp"
+      ]
+    }
+  }
+}

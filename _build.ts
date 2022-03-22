@@ -150,11 +150,15 @@ const denoFmtCmd = [
   "deno",
   "fmt",
   "--quiet",
+  // There is a double format bug in deno fmt with this file,
+  // so we're formatting it once and ignoring it in the deno.json
+  "--ignore=",
+  "--",
   "./lib/deno_graph.generated.js",
 ];
 console.log(`  ${colors.bold(colors.gray(denoFmtCmd.join(" ")))}`);
-const denoFmtCmdStatus = Deno.run({ cmd: denoFmtCmd }).status();
-if (!(await denoFmtCmdStatus).success) {
+const denoFmtCmdStatus = await Deno.run({ cmd: denoFmtCmd }).status();
+if (!denoFmtCmdStatus.success) {
   console.error("deno fmt command failed");
   Deno.exit(1);
 }
