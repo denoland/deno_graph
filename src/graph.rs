@@ -12,6 +12,8 @@ use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
 use crate::source::*;
+use crate::source_map::parse_sourcemap;
+use crate::source_map::ParsedSourceMap;
 
 use anyhow::Result;
 use deno_ast::MediaType;
@@ -26,6 +28,7 @@ use serde::ser::SerializeStruct;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
+use serde_json::Value;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
@@ -598,6 +601,10 @@ pub struct Module {
     serialize_with = "serialize_maybe_source"
   )]
   pub maybe_source: Option<Arc<String>>,
+  #[serde(rename = "sourceMap", skip_serializing_if = "Option::is_none")]
+  pub maybe_source_map: Option<Value>,
+  #[serde(rename = "sourceMapUrl", skip_serializing_if = "Option::is_none")]
+  pub maybe_source_map_url: Option<ModuleSpecifier>,
   #[serde(
     rename = "typesDependency",
     skip_serializing_if = "Option::is_none",
@@ -616,6 +623,12 @@ impl Module {
     parsed_source: ParsedSource,
   ) -> Self {
     let source = parsed_source.source().text();
+    let (maybe_source_map, maybe_source_map_url) =
+      match parse_sourcemap(&specifier, &parsed_source) {
+        Some(ParsedSourceMap::Url(url)) => (None, Some(url)),
+        Some(ParsedSourceMap::Value(value)) => (Some(value), None),
+        _ => (None, None),
+      };
     Self {
       dependencies: Default::default(),
       kind,
@@ -623,6 +636,8 @@ impl Module {
       maybe_checksum: None,
       maybe_parsed_source: Some(parsed_source),
       maybe_source: Some(source),
+      maybe_source_map,
+      maybe_source_map_url,
       maybe_types_dependency: None,
       media_type: MediaType::Unknown,
       specifier,
@@ -640,6 +655,8 @@ impl Module {
       maybe_checksum: None,
       maybe_parsed_source: None,
       maybe_source: None,
+      maybe_source_map: None,
+      maybe_source_map_url: None,
       maybe_types_dependency: None,
       media_type: MediaType::Unknown,
       specifier,
@@ -679,6 +696,8 @@ impl Module {
       maybe_checksum: None,
       maybe_parsed_source: None,
       maybe_source: None,
+      maybe_source_map: None,
+      maybe_source_map_url: None,
       maybe_types_dependency: None,
       media_type: MediaType::Unknown,
       specifier,
@@ -1176,6 +1195,8 @@ pub(crate) fn parse_module(
       maybe_checksum: None,
       maybe_parsed_source: None,
       maybe_source: Some(content),
+      maybe_source_map: None,
+      maybe_source_map_url: None,
       maybe_types_dependency: None,
       media_type: MediaType::Json,
       specifier: specifier.clone(),

@@ -26,6 +26,7 @@ ring = "0.16.20"
 serde = { version = "1.0.130", features = ["derive", "rc"] }
 serde_json = { version = "1.0.67", features = ["preserve_order"] }
 serde-wasm-bindgen = { version = "0.4.2", optional = true }
+sourcemap = "=6.0.1"
 termcolor = "1.1.2"
 deno_ast = { version = "0.14.0", features = ["dep_graph", "module_specifier"] }
 url = { version = "2.2.2", features = ["serde"] }

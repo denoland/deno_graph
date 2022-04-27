@@ -100,6 +100,14 @@
           "type": "string",
           "description": "The path to an optionally emitted source map between the original and emitted version of the file."
         },
+        "sourceMap": {
+          "description": "The source map that was parsed from the source of the module, which indicates an \"upstream\" source map that applies to the module.",
+          "$ref": "https://json.schemastore.org/sourcemap-v3.json"
+        },
+        "sourceMapUrl": {
+          "type": "string",
+          "description": "The source map URL parsed from the source of the module, which indicates there is an \"upstream\" source map that applies to the module."
+        },
         "error": {
           "type": "string",
           "description": "If when resolving the module, Deno encountered an error and the module is unavailable, the text of that error will be indicated here."
