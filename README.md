@@ -224,7 +224,7 @@ Also, the build script (`_build.ts`) requires the Deno CLI to be installed and
 available in the path. If it is, the script should _just work_:
 
 ```
-> ./_build.ts
+> deno task build
 ```
 
 But can be manually invoked like:

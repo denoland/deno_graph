@@ -1,6 +1,10 @@
 // Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
 import type { MediaType } from "./media_type.ts";
+import {
+  type RawSourceMap,
+  type SourceMapUrl,
+} from "https://esm.sh/source-map@0.7.3/source-map.d.ts";
 
 /** Additional meta data that is used to enrich the output of the module
  * graph. */
@@ -151,6 +155,12 @@ export interface ModuleJson extends CacheInfo {
   /** If available, the calculated checksum of the module which can be used for
    * validating the integrity of the module. */
   checksum?: string;
+  /** If available, the upstream source map from the module. If present,
+   * `sourceMapUrl` will be undefined. */
+  sourceMap?: RawSourceMap;
+  /** If available, the upstream source map URL from the module. If present,
+   * `sourceMap` will be undefined. */
+  sourceMapUrl?: SourceMapUrl;
 }
 
 /** The plain-object representation of a module graph that is suitable for
