@@ -255,6 +255,9 @@ impl ModuleGraphError {
       Self::ParseErr(_, _) => {
         fmt_error_msg(f, prefix, last, specifier, "(parsing error)")
       }
+      Self::WasmParseError(_, _) => {
+        fmt_error_msg(f, prefix, last, specifier, "(wasm parsing error)")
+      }
       Self::ResolutionError(_) => {
         fmt_error_msg(f, prefix, last, specifier, "(resolution error)")
       }

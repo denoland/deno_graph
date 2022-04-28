@@ -56,7 +56,7 @@ pub enum LoadResponse {
   /// A loaded module.
   Module {
     /// The content of the remote module.
-    content: Arc<String>,
+    content: Arc<[u8]>,
     /// The final specifier of the module.
     specifier: ModuleSpecifier,
     /// If the module is a remote module, the headers should be returned as a
@@ -92,9 +92,9 @@ pub trait Locker: fmt::Debug {
   fn check_or_insert(
     &mut self,
     specifier: &ModuleSpecifier,
-    source: &str,
+    source: &[u8],
   ) -> bool;
-  fn get_checksum(&self, content: &str) -> String;
+  fn get_checksum(&self, content: &[u8]) -> String;
   fn get_filename(&self) -> Option<String> {
     None
   }
@@ -213,7 +213,7 @@ pub fn load_data_url(
   Ok(Some(LoadResponse::Module {
     specifier: specifier.clone(),
     maybe_headers: Some(headers),
-    content: Arc::new(content),
+    content: content.into_bytes().into(),
   }))
 }
 
@@ -226,11 +226,11 @@ pub struct MemoryLoader {
 }
 
 #[cfg(feature = "rust")]
-pub enum Source<S> {
+pub enum Source<S, B> {
   Module {
     specifier: S,
     maybe_headers: Option<Vec<(S, S)>>,
-    content: S,
+    content: B,
   },
   External(S),
   BuiltIn(S),
@@ -238,12 +238,12 @@ pub enum Source<S> {
 }
 
 #[cfg(feature = "rust")]
-pub type MemoryLoaderSources<S> = Vec<(S, Source<S>)>;
+pub type MemoryLoaderSources<S, B> = Vec<(S, Source<S, B>)>;
 
 #[cfg(feature = "rust")]
 impl MemoryLoader {
-  pub fn new<S: AsRef<str>>(
-    sources: MemoryLoaderSources<S>,
+  pub fn new<S: AsRef<str>, B: AsRef<[u8]>>(
+    sources: MemoryLoaderSources<S, B>,
     cache_info: Vec<(S, CacheInfo)>,
   ) -> Self {
     Self {
@@ -265,7 +265,7 @@ impl MemoryLoader {
                   })
                   .collect()
               }),
-              content: Arc::new(content.as_ref().to_string()),
+              content: content.as_ref().to_owned().into(),
             }),
             Source::BuiltIn(specifier) => Ok(LoadResponse::BuiltIn {
               specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),

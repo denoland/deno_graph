@@ -72,16 +72,15 @@ mod tests {
   use crate::SourceParser;
   use deno_ast::MediaType;
   use serde_json::json;
-  use std::sync::Arc;
 
   #[test]
   fn test_parse_sourcemap_data() {
     let source_parser = ast::DefaultSourceParser::default();
     let specifier =
       ModuleSpecifier::parse("https://deno.land/x/tst/mod.ts").unwrap();
-    let source = Arc::new(r#"console.log("hello deno");
+    let source = br#"console.log("hello deno");
 export {};
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5wdXQuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbnB1dC50c3giXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQ0EsT0FBTyxDQUFDLEdBQUcsQ0FBQyxZQUFZLENBQUMsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCB7fTtcbmNvbnNvbGUubG9nKFwiaGVsbG8gZGVub1wiKTtcbiJdfQ=="#.to_string());
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5wdXQuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbnB1dC50c3giXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQ0EsT0FBTyxDQUFDLEdBQUcsQ0FBQyxZQUFZLENBQUMsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCB7fTtcbmNvbnNvbGUubG9nKFwiaGVsbG8gZGVub1wiKTtcbiJdfQ=="#.to_vec().into();
     let res =
       source_parser.parse_module(&specifier, source, MediaType::JavaScript);
     assert!(res.is_ok());
@@ -105,12 +104,11 @@ export {};
     let source_parser = ast::DefaultSourceParser::default();
     let specifier =
       ModuleSpecifier::parse("https://deno.land/x/tst/input.js").unwrap();
-    let source = Arc::new(
-      r#"console.log("hello deno");
+    let source = br#"console.log("hello deno");
 export {};
 //# sourceMappingURL=./input.js.map"#
-        .to_string(),
-    );
+      .to_vec()
+      .into();
     let res =
       source_parser.parse_module(&specifier, source, MediaType::JavaScript);
     assert!(res.is_ok());

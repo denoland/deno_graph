@@ -38,6 +38,7 @@ use std::fmt;
 use std::pin::Pin;
 use std::rc::Rc;
 use std::sync::Arc;
+use wasmparser::BinaryReaderError;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Position {
@@ -136,6 +137,7 @@ pub enum ModuleGraphError {
   LoadingErr(ModuleSpecifier, Arc<anyhow::Error>),
   Missing(ModuleSpecifier),
   ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
+  WasmParseError(ModuleSpecifier, wasmparser::BinaryReaderError),
   ResolutionError(ResolutionError),
   UnsupportedImportAssertionType(ModuleSpecifier, String),
   UnsupportedMediaType(ModuleSpecifier, MediaType),
@@ -149,6 +151,9 @@ impl Clone for ModuleGraphError {
       }
       Self::ParseErr(specifier, err) => {
         Self::ParseErr(specifier.clone(), err.clone())
+      }
+      Self::WasmParseError(specifier, err) => {
+        Self::WasmParseError(specifier.clone(), err.clone())
       }
       Self::ResolutionError(err) => Self::ResolutionError(err.clone()),
       Self::InvalidSource(specifier, maybe_filename) => {
@@ -181,6 +186,7 @@ impl ModuleGraphError {
       Self::ResolutionError(err) => &err.range().specifier,
       Self::LoadingErr(s, _)
       | Self::ParseErr(s, _)
+      | Self::WasmParseError(s, _)
       | Self::InvalidSource(s, _)
       | Self::UnsupportedMediaType(s, _)
       | Self::UnsupportedImportAssertionType(s, _)
@@ -197,6 +203,7 @@ impl fmt::Display for ModuleGraphError {
     match self {
       Self::LoadingErr(_, err) => err.fmt(f),
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {}", diagnostic),
+      Self::WasmParseError(_, err) => write!(f, "The WASM binary could not be parsed: {}", err),
       Self::ResolutionError(err) => err.fmt(f),
       Self::InvalidSource(specifier, Some(filename)) => write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}\n  Lock file: {}", specifier, filename),
       Self::InvalidSource(specifier, None) => write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}", specifier),
@@ -600,7 +607,7 @@ pub struct Module {
     skip_serializing_if = "Option::is_none",
     serialize_with = "serialize_maybe_source"
   )]
-  pub maybe_source: Option<Arc<String>>,
+  pub maybe_source: Option<Arc<[u8]>>,
   #[serde(rename = "sourceMap", skip_serializing_if = "Option::is_none")]
   pub maybe_source_map: Option<Value>,
   #[serde(rename = "sourceMapUrl", skip_serializing_if = "Option::is_none")]
@@ -622,7 +629,7 @@ impl Module {
     kind: ModuleKind,
     parsed_source: ParsedSource,
   ) -> Self {
-    let source = parsed_source.source().text();
+    let source = parsed_source.source().text_str().as_bytes().to_vec();
     let (maybe_source_map, maybe_source_map_url) =
       match parse_sourcemap(&specifier, &parsed_source) {
         Some(ParsedSourceMap::Url(url)) => (None, Some(url)),
@@ -635,7 +642,7 @@ impl Module {
       maybe_cache_info: None,
       maybe_checksum: None,
       maybe_parsed_source: Some(parsed_source),
-      maybe_source: Some(source),
+      maybe_source: Some(source.into()),
       maybe_source_map,
       maybe_source_map_url,
       maybe_types_dependency: None,
@@ -706,11 +713,7 @@ impl Module {
 
   /// Return the size in bytes of the content of the module.
   pub fn size(&self) -> usize {
-    self
-      .maybe_source
-      .as_ref()
-      .map(|s| s.as_bytes().len())
-      .unwrap_or(0)
+    self.maybe_source.as_ref().map(|s| s.len()).unwrap_or(0)
   }
 }
 
@@ -1007,7 +1010,7 @@ impl ModuleGraph {
           module.maybe_checksum = module
             .maybe_source
             .as_ref()
-            .map(|s| locker.get_checksum(s.as_str()));
+            .map(|s| locker.get_checksum(s.as_ref()));
         }
       }
     }
@@ -1171,7 +1174,7 @@ fn resolve(
 pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  content: Arc<String>,
+  content: Arc<[u8]>,
   maybe_assert_type: Option<&str>,
   maybe_kind: Option<&ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
@@ -1272,6 +1275,23 @@ pub(crate) fn parse_module(
           diagnostic,
         )),
       }
+    }
+    MediaType::Wasm => {
+      let res = parse_wasm_module_from_ast(
+        specifier,
+        maybe_kind.unwrap_or(&ModuleKind::Esm),
+        content,
+        maybe_resolver,
+      );
+      match res {
+        Ok(module) => ModuleSlot::Module(module),
+        Err(err) => ModuleSlot::Err(ModuleGraphError::WasmParseError(
+          specifier.clone(),
+          err,
+        )),
+      }
+
+      // Return the module as a valid module
     }
     _ => ModuleSlot::Err(ModuleGraphError::UnsupportedMediaType(
       specifier.clone(),
@@ -1442,6 +1462,52 @@ pub(crate) fn parse_module_from_ast(
 
   // Return the module as a valid module
   module
+}
+
+pub(crate) fn parse_wasm_module_from_ast(
+  specifier: &ModuleSpecifier,
+  kind: &ModuleKind,
+  content: Arc<[u8]>,
+  maybe_resolver: Option<&dyn Resolver>,
+) -> Result<Module, BinaryReaderError> {
+  let mut dependencies = BTreeMap::<String, Dependency>::new();
+
+  let parser = wasmparser::Parser::new(0);
+  for res in parser.parse_all(&content) {
+    match res? {
+      wasmparser::Payload::ImportSection(import_section) => {
+        for res in import_section {
+          let import = res?;
+          let dep = dependencies.entry(import.module.to_string()).or_default();
+          dep.is_dynamic = false;
+          dep.maybe_code = resolve(
+            import.module,
+            &Range {
+              specifier: specifier.clone(),
+              start: Position::zeroed(),
+              end: Position::zeroed(),
+            },
+            maybe_resolver,
+          );
+        }
+      }
+      _ => {} // ignore other sections
+    }
+  }
+
+  Ok(Module {
+    dependencies,
+    kind: kind.clone(),
+    maybe_cache_info: None,
+    maybe_checksum: None,
+    maybe_parsed_source: None,
+    maybe_source: Some(content),
+    maybe_source_map: None,
+    maybe_source_map_url: None,
+    maybe_types_dependency: None,
+    media_type: MediaType::Wasm,
+    specifier: specifier.clone(),
+  })
 }
 
 fn get_media_type(
@@ -1750,7 +1816,7 @@ impl<'a> Builder<'a> {
     specifier: &ModuleSpecifier,
     kind: &ModuleKind,
     maybe_headers: Option<&HashMap<String, String>>,
-    content: Arc<String>,
+    content: Arc<[u8]>,
     build_kind: &BuildKind,
     maybe_assert_type: Option<String>,
   ) -> ModuleSlot {
@@ -1983,7 +2049,7 @@ where
 }
 
 fn serialize_maybe_source<S>(
-  source: &Option<Arc<String>>,
+  source: &Option<Arc<[u8]>>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
@@ -2041,7 +2107,7 @@ mod tests {
   fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let source_parser = ast::DefaultSourceParser::default();
-    let content = Arc::new(r#"import * as b from "./b.ts";"#.to_string());
+    let content = br#"import * as b from "./b.ts";"#.to_vec().into();
     let slot = parse_module(
       &specifier,
       None,
@@ -2130,7 +2196,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: Arc::new("await import('file:///bar.js')".to_string()),
+                content: b"await import('file:///bar.js')".to_vec().into(),
               }))
             })
           }
@@ -2141,7 +2207,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: Arc::new("import 'file:///baz.js'".to_string()),
+                content: b"import 'file:///baz.js'".to_vec().into(),
               }))
             })
           }
@@ -2152,7 +2218,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: Arc::new("console.log('Hello, world!')".to_string()),
+                content: b"console.log('Hello, world!')".to_vec().into(),
               }))
             })
           }
@@ -2196,7 +2262,7 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: Arc::new("await import('file:///bar.js')".to_string()),
+              content: b"await import('file:///bar.js')".to_vec().into(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move { Ok(None) }),
@@ -2256,14 +2322,14 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///foo_actual.js").unwrap(),
               maybe_headers: None,
-              content: Arc::new("import 'file:///bar.js'".to_string()),
+              content: b"import 'file:///bar.js'".to_vec().into(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///bar_actual.js").unwrap(),
               maybe_headers: None,
-              content: Arc::new("(".to_string()),
+              content: b"(".to_vec().into(),
             }))
           }),
           _ => unreachable!(),

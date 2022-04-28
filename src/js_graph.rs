@@ -110,12 +110,12 @@ impl Locker for JsLocker {
   fn check_or_insert(
     &mut self,
     specifier: &ModuleSpecifier,
-    source: &str,
+    source: &[u8],
   ) -> bool {
     if let Some(check) = &self.maybe_check {
       let this = JsValue::null();
       let arg0 = JsValue::from(specifier.to_string());
-      let arg1 = JsValue::from(source);
+      let arg1 = JsValue::from(String::from_utf8_lossy(source).to_string());
       if let Ok(value) = check.call2(&this, &arg0, &arg1) {
         if let Ok(value) = value.into_serde::<bool>() {
           return value;
@@ -125,17 +125,17 @@ impl Locker for JsLocker {
     true
   }
 
-  fn get_checksum(&self, content: &str) -> String {
+  fn get_checksum(&self, content: &[u8]) -> String {
     if let Some(get_checksum) = &self.maybe_get_checksum {
       let this = JsValue::null();
-      let arg0 = JsValue::from(content);
+      let arg0 = JsValue::from(String::from_utf8_lossy(content).to_string());
       if let Ok(value) = get_checksum.call1(&this, &arg0) {
         if let Ok(value) = value.into_serde::<String>() {
           return value;
         }
       }
     }
-    checksum::gen(&[content.as_bytes()])
+    checksum::gen(&[content])
   }
 
   fn get_filename(&self) -> Option<String> {
@@ -417,7 +417,7 @@ impl Module {
       .0
       .maybe_source
       .as_ref()
-      .map(|s| s.to_string())
+      .map(|s| String::from_utf8_lossy(s.as_ref()).to_string())
       .unwrap_or_else(|| "".to_string())
   }
 
