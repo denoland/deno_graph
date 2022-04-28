@@ -26,17 +26,14 @@ fn find_source_map_url(parsed_source: &ParsedSource) -> Option<String> {
   let program = parsed_source.program();
   let pos = if let Some(module) = program.as_module() {
     Some(module.span.hi)
-  } else if let Some(script) = program.as_script() {
-    Some(script.span.hi)
   } else {
-    None
+    program.as_script().map(|s| s.span.hi)
   }?;
-  for comment in parsed_source.comments().get_trailing(pos) {
-    for item in comment.iter().rev() {
-      if let Some(caps) = SOURCE_MAP_URL_RE.captures(&item.text) {
-        if let Some(m) = caps.get(1) {
-          return Some(m.as_str().to_string());
-        }
+  let comments = parsed_source.comments().get_trailing(pos)?;
+  for item in comments.iter().rev() {
+    if let Some(caps) = SOURCE_MAP_URL_RE.captures(&item.text) {
+      if let Some(m) = caps.get(1) {
+        return Some(m.as_str().to_string());
       }
     }
   }
