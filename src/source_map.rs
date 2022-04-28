@@ -2,6 +2,7 @@
 
 use crate::module_specifier::ModuleSpecifier;
 
+use deno_ast::swc::common::comments::Comments;
 use deno_ast::ParsedSource;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -22,7 +23,15 @@ pub(crate) enum ParsedSourceMap {
 }
 
 fn find_source_map_url(parsed_source: &ParsedSource) -> Option<String> {
-  for comment in parsed_source.comments().trailing_map().values() {
+  let program = parsed_source.program();
+  let pos = if let Some(module) = program.as_module() {
+    Some(module.span.hi)
+  } else if let Some(script) = program.as_script() {
+    Some(script.span.hi)
+  } else {
+    None
+  }?;
+  for comment in parsed_source.comments().get_trailing(pos) {
     for item in comment.iter().rev() {
       if let Some(caps) = SOURCE_MAP_URL_RE.captures(&item.text) {
         if let Some(m) = caps.get(1) {
@@ -41,14 +50,9 @@ pub(crate) fn parse_sourcemap(
   parsed_source: &ParsedSource,
 ) -> Option<ParsedSourceMap> {
   let source_map_url = find_source_map_url(parsed_source)?;
-  let source_map_specifier =
-    if let Ok(url) = ModuleSpecifier::parse(&source_map_url) {
-      Some(url)
-    } else if let Ok(url) = specifier.join(&source_map_url) {
-      Some(url)
-    } else {
-      None
-    }?;
+  let source_map_specifier = ModuleSpecifier::parse(&source_map_url)
+    .or_else(|_| specifier.join(&source_map_url))
+    .ok()?;
   if source_map_specifier.scheme() == "data" {
     let decoded_map = decode_data_url(source_map_specifier.as_str()).ok()?;
     if let DecodedMap::Regular(source_map) = decoded_map {
