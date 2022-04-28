@@ -606,7 +606,7 @@ pub struct Module {
     skip_serializing_if = "Option::is_none",
     serialize_with = "serialize_maybe_source"
   )]
-  pub maybe_source: Option<Arc<String>>,
+  pub maybe_source: Option<ModuleSource>,
   #[serde(rename = "sourceMap", skip_serializing_if = "Option::is_none")]
   pub maybe_source_map: Option<Value>,
   #[serde(rename = "sourceMapUrl", skip_serializing_if = "Option::is_none")]
@@ -620,6 +620,32 @@ pub struct Module {
   #[serde(skip_serializing_if = "is_media_type_unknown")]
   pub media_type: MediaType,
   pub specifier: ModuleSpecifier,
+}
+
+#[derive(Debug, Clone)]
+pub enum ModuleSource {
+  String(Arc<str>),
+  Bytes(Arc<[u8]>),
+}
+
+impl ModuleSource {
+  fn len(&self) -> usize {
+    match self {
+      ModuleSource::String(s) => s.len(),
+      ModuleSource::Bytes(b) => b.len(),
+    }
+  }
+}
+
+impl std::ops::Deref for ModuleSource {
+  type Target = [u8];
+
+  fn deref(&self) -> &Self::Target {
+    match self {
+      ModuleSource::String(s) => s.as_bytes(),
+      ModuleSource::Bytes(b) => b,
+    }
+  }
 }
 
 impl Module {
@@ -641,7 +667,7 @@ impl Module {
       maybe_cache_info: None,
       maybe_checksum: None,
       maybe_parsed_source: Some(parsed_source),
-      maybe_source: Some(source),
+      maybe_source: Some(ModuleSource::String(source)),
       maybe_source_map,
       maybe_source_map_url,
       maybe_types_dependency: None,
@@ -712,11 +738,7 @@ impl Module {
 
   /// Return the size in bytes of the content of the module.
   pub fn size(&self) -> usize {
-    self
-      .maybe_source
-      .as_ref()
-      .map(|s| s.as_bytes().len())
-      .unwrap_or(0)
+    self.maybe_source.as_ref().map(|s| s.len()).unwrap_or(0)
   }
 }
 
@@ -1013,7 +1035,7 @@ impl ModuleGraph {
           module.maybe_checksum = module
             .maybe_source
             .as_ref()
-            .map(|s| locker.get_checksum(s.as_str()));
+            .map(|s| locker.get_checksum(s.as_ref()));
         }
       }
     }
@@ -1177,7 +1199,7 @@ fn resolve(
 pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  content: String,
+  content: Vec<u8>,
   maybe_assert_type: Option<&str>,
   maybe_kind: Option<&ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
@@ -1186,8 +1208,6 @@ pub(crate) fn parse_module(
   is_dynamic_branch: bool,
 ) -> ModuleSlot {
   let media_type = get_media_type(specifier, maybe_headers);
-
-  let content = content.into();
 
   // here we check any media types that should have assertions made against them
   // if they aren't the root and add them to the graph, otherwise we continue
@@ -1202,7 +1222,7 @@ pub(crate) fn parse_module(
       maybe_cache_info: None,
       maybe_checksum: None,
       maybe_parsed_source: None,
-      maybe_source: Some(content),
+      maybe_source: Some(ModuleSource::Bytes(content.into())),
       maybe_source_map: None,
       maybe_source_map_url: None,
       maybe_types_dependency: None,
@@ -1225,7 +1245,7 @@ pub(crate) fn parse_module(
         assert_type.to_string(),
       ))
     }
-    _ => (),
+    None => (),
   }
 
   // Here we check for known ES Modules that we will analyze the dependencies of
@@ -1477,6 +1497,7 @@ fn is_untyped(media_type: &MediaType) -> bool {
 }
 
 /// The kind of build to perform.
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum BuildKind {
   /// All types of dependencies should be analyzed and included in the graph.
   All,
@@ -1763,7 +1784,7 @@ impl<'a> Builder<'a> {
     specifier: &ModuleSpecifier,
     kind: &ModuleKind,
     maybe_headers: Option<&HashMap<String, String>>,
-    content: String,
+    content: Vec<u8>,
     build_kind: &BuildKind,
     maybe_assert_type: Option<String>,
   ) -> ModuleSlot {
@@ -1996,7 +2017,7 @@ where
 }
 
 fn serialize_maybe_source<S>(
-  source: &Option<Arc<String>>,
+  source: &Option<ModuleSource>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
@@ -2054,7 +2075,7 @@ mod tests {
   fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let source_parser = ast::DefaultSourceParser::default();
-    let content = r#"import * as b from "./b.ts";"#.to_string();
+    let content = br#"import * as b from "./b.ts";"#.to_vec();
     let slot = parse_module(
       &specifier,
       None,
@@ -2143,7 +2164,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "await import('file:///bar.js')".to_string(),
+                content: b"await import('file:///bar.js')".to_vec(),
               }))
             })
           }
@@ -2154,7 +2175,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "import 'file:///baz.js'".to_string(),
+                content: b"import 'file:///baz.js'".to_vec(),
               }))
             })
           }
@@ -2165,7 +2186,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "console.log('Hello, world!')".to_string(),
+                content: b"console.log('Hello, world!')".to_vec(),
               }))
             })
           }
@@ -2209,7 +2230,7 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: "await import('file:///bar.js')".to_string(),
+              content: b"await import('file:///bar.js')".to_vec(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move { Ok(None) }),
@@ -2269,14 +2290,14 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///foo_actual.js").unwrap(),
               maybe_headers: None,
-              content: "import 'file:///bar.js'".to_string(),
+              content: b"import 'file:///bar.js'".to_vec(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///bar_actual.js").unwrap(),
               maybe_headers: None,
-              content: "(".to_string(),
+              content: b"(".to_vec(),
             }))
           }),
           _ => unreachable!(),

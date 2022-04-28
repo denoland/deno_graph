@@ -45,7 +45,7 @@ export interface LoadResponseModule {
    * have been normalized to be lower case values. */
   headers?: Record<string, string>;
   /** The string value of the loaded resources. */
-  content: string;
+  content: Uint8Array;
 }
 
 export interface LoadResponseExternalBuiltIn {
@@ -210,7 +210,7 @@ export class Module {
   /** The size of the source content in bytes. */
   readonly size: number;
   /** The source content of the module. */
-  readonly source: string;
+  readonly source: Uint8Array;
   /** The fully qualified string URL of the module. */
   readonly specifier: string;
   /** The types dependency for the module, where the first value in the tuple

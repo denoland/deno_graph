@@ -9,6 +9,8 @@ import {
 import { createGraph, load, parseModule } from "./mod.ts";
 import type { LoadResponse } from "./mod.ts";
 
+const encoder = new TextEncoder();
+
 Deno.test({
   name: "createGraph()",
   async fn() {
@@ -22,9 +24,9 @@ Deno.test({
           headers: {
             "content-type": "application/typescript; charset=utf-8",
           },
-          content: `declare interface A {
+          content: encoder.encode(`declare interface A {
             a: string;
-          }`,
+          }`),
         });
       },
     });
@@ -58,7 +60,8 @@ Deno.test({
       `data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs=`,
     );
     assertEquals(graph.modules.length, 1);
-    assertEquals(graph.modules[0].source, `console.log("hello deno_graph");`);
+    const source = new TextDecoder().decode(graph.modules[0].source);
+    assertEquals(source, `console.log("hello deno_graph");`);
   },
 });
 
@@ -132,12 +135,12 @@ Deno.test({
       "file:///a/test.js": {
         kind: "module",
         specifier: "file:///a/test.js",
-        content: `import * as b from "./b.js";`,
+        content: encoder.encode(`import * as b from "./b.js";`),
       },
       "file:///a/b.js": {
         kind: "module",
         specifier: "file:///a/b.js",
-        content: `export const b = "b";`,
+        content: encoder.encode(`export const b = "b";`),
       },
     };
     let resolveCount = 0;
@@ -199,12 +202,12 @@ Deno.test({
       "file:///a/test.js": {
         kind: "module",
         specifier: "file:///a/test.js",
-        content: `import * as b from "./b.js";`,
+        content: encoder.encode(`import * as b from "./b.js";`),
       },
       "file:///a/b.js": {
         kind: "module",
         specifier: "file:///a/b.js",
-        content: `export const b = "b";`,
+        content: encoder.encode(`export const b = "b";`),
       },
     };
     let resolveCount = 0;
@@ -273,13 +276,13 @@ Deno.test({
             return Promise.resolve({
               kind: "module",
               specifier: "file:///a.js",
-              content: `export const a = "a";`,
+              content: encoder.encode(`export const a = "a";`),
             });
           } else {
             return Promise.resolve({
               kind: "module",
               specifier: "file:///a.d.ts",
-              content: `export const a: "a";`,
+              content: encoder.encode(`export const a: "a";`),
             });
           }
         },
@@ -302,8 +305,8 @@ Deno.test({
       "file:///a/test.js": {
         kind: "module",
         specifier: "file:///a/test.js",
-        content: `import * as fs from "builtin:fs";
-          import * as bundle from "https://example.com/bundle";`,
+        content: encoder.encode(`import * as fs from "builtin:fs";
+          import * as bundle from "https://example.com/bundle";`),
       },
       "builtin:fs": {
         kind: "builtIn",
@@ -391,9 +394,9 @@ Deno.test({
           headers: {
             "content-type": "application/javascript; charset=utf-8",
           },
-          content: `console.log("hello deno");
+          content: encoder.encode(`console.log("hello deno");
 export {};
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5wdXQuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbnB1dC50c3giXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQ0EsT0FBTyxDQUFDLEdBQUcsQ0FBQyxZQUFZLENBQUMsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCB7fTtcbmNvbnNvbGUubG9nKFwiaGVsbG8gZGVub1wiKTtcbiJdfQ==`,
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5wdXQuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbnB1dC50c3giXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQ0EsT0FBTyxDQUFDLEdBQUcsQ0FBQyxZQUFZLENBQUMsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCB7fTtcbmNvbnNvbGUubG9nKFwiaGVsbG8gZGVub1wiKTtcbiJdfQ==`),
         });
       },
     });
@@ -433,9 +436,9 @@ Deno.test({
           headers: {
             "content-type": "application/javascript; charset=utf-8",
           },
-          content: `console.log("hello deno");
+          content: encoder.encode(`console.log("hello deno");
 export {};
-//# sourceMappingURL=./index.js.map`,
+//# sourceMappingURL=./index.js.map`),
         });
       },
     });

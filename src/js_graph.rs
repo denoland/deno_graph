@@ -10,6 +10,7 @@ use crate::module_specifier::ModuleSpecifier;
 use crate::source::load_data_url;
 use crate::source::CacheInfo;
 use crate::source::LoadFuture;
+use crate::source::LoadResponse;
 use crate::source::Loader;
 use crate::source::Locker;
 use crate::source::ResolveResponse;
@@ -19,6 +20,7 @@ use crate::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
 use anyhow::anyhow;
 use anyhow::Result;
 use futures::future;
+use js_sys::Uint8Array;
 use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
@@ -76,11 +78,57 @@ impl Loader for JsLoader {
           }
           Err(err) => Err(err),
         };
+
         response
-          .map(|value| value.into_serde().unwrap())
+          .map(|value| {
+            if value.is_falsy() {
+              None
+            } else {
+              Some(LoadResponse::try_from(JsLoadResponse::from(value)).unwrap())
+            }
+          })
           .map_err(|_| anyhow!("load rejected or errored"))
       };
       Box::pin(f)
+    }
+  }
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
+extern "C" {
+  pub type JsLoadResponse;
+
+  #[wasm_bindgen(structural, method, getter)]
+  pub fn kind(this: &JsLoadResponse) -> String;
+
+  #[wasm_bindgen(structural, method, getter)]
+  pub fn specifier(this: &JsLoadResponse) -> String;
+
+  #[wasm_bindgen(structural, method, getter)]
+  pub fn content(this: &JsLoadResponse) -> Uint8Array;
+
+  #[wasm_bindgen(structural, method, getter)]
+  pub fn headers(this: &JsLoadResponse) -> JsValue;
+}
+
+impl TryFrom<JsLoadResponse> for LoadResponse {
+  type Error = anyhow::Error;
+
+  fn try_from(value: JsLoadResponse) -> Result<Self, Self::Error> {
+    let specifier = value.specifier().parse()?;
+    match &*value.kind() {
+      "builtIn" => Ok(LoadResponse::BuiltIn { specifier }),
+      "external" => Ok(LoadResponse::External { specifier }),
+      "module" => {
+        let maybe_headers = value.headers().into_serde()?;
+        let content = value.content().to_vec().into();
+        Ok(LoadResponse::Module {
+          specifier,
+          maybe_headers,
+          content,
+        })
+      }
+      _ => Err(anyhow!("unknown kind: {}", value.kind())),
     }
   }
 }
@@ -110,12 +158,12 @@ impl Locker for JsLocker {
   fn check_or_insert(
     &mut self,
     specifier: &ModuleSpecifier,
-    source: &str,
+    source: &[u8],
   ) -> bool {
     if let Some(check) = &self.maybe_check {
       let this = JsValue::null();
       let arg0 = JsValue::from(specifier.to_string());
-      let arg1 = JsValue::from(source);
+      let arg1 = Uint8Array::from(source);
       if let Ok(value) = check.call2(&this, &arg0, &arg1) {
         if let Ok(value) = value.into_serde::<bool>() {
           return value;
@@ -125,17 +173,17 @@ impl Locker for JsLocker {
     true
   }
 
-  fn get_checksum(&self, content: &str) -> String {
+  fn get_checksum(&self, content: &[u8]) -> String {
     if let Some(get_checksum) = &self.maybe_get_checksum {
       let this = JsValue::null();
-      let arg0 = JsValue::from(content);
+      let arg0 = Uint8Array::from(content);
       if let Ok(value) = get_checksum.call1(&this, &arg0) {
         if let Ok(value) = value.into_serde::<String>() {
           return value;
         }
       }
     }
-    checksum::gen(&[content.as_bytes()])
+    checksum::gen(&[content])
   }
 
   fn get_filename(&self) -> Option<String> {
@@ -412,13 +460,13 @@ impl Module {
   }
 
   #[wasm_bindgen(getter)]
-  pub fn source(&self) -> String {
+  pub fn source(&self) -> Uint8Array {
     self
       .0
       .maybe_source
       .as_ref()
-      .map(|s| s.to_string())
-      .unwrap_or_else(|| "".to_string())
+      .map(|s| Uint8Array::from(&**s))
+      .unwrap_or_else(|| Uint8Array::new_with_length(0))
   }
 
   #[wasm_bindgen(getter)]
