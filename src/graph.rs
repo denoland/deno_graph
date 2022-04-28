@@ -1474,24 +1474,21 @@ pub(crate) fn parse_wasm_module_from_ast(
 
   let parser = wasmparser::Parser::new(0);
   for res in parser.parse_all(&content) {
-    match res? {
-      wasmparser::Payload::ImportSection(import_section) => {
-        for res in import_section {
-          let import = res?;
-          let dep = dependencies.entry(import.module.to_string()).or_default();
-          dep.is_dynamic = false;
-          dep.maybe_code = resolve(
-            import.module,
-            &Range {
-              specifier: specifier.clone(),
-              start: Position::zeroed(),
-              end: Position::zeroed(),
-            },
-            maybe_resolver,
-          );
-        }
+    if let wasmparser::Payload::ImportSection(import_section) = res? {
+      for res in import_section {
+        let import = res?;
+        let dep = dependencies.entry(import.module.to_string()).or_default();
+        dep.is_dynamic = false;
+        dep.maybe_code = resolve(
+          import.module,
+          &Range {
+            specifier: specifier.clone(),
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+          maybe_resolver,
+        );
       }
-      _ => {} // ignore other sections
     }
   }
 
