@@ -13,6 +13,7 @@ use deno_ast::ModuleSpecifier;
 #[cfg(feature = "rust")]
 use futures::future;
 use futures::future::Future;
+use serde::de;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -22,6 +23,30 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 pub static DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
+
+fn deserialize_content<'de, D>(deserializer: D) -> Result<Arc<[u8]>, D::Error>
+where
+  D: de::Deserializer<'de>,
+{
+  struct ContentVisitor;
+
+  impl<'de> de::Visitor<'de> for ContentVisitor {
+    type Value = Arc<[u8]>;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+      formatter.write_str("a string that needs to be converted to bytes")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+      E: de::Error,
+    {
+      Ok(v.as_bytes().to_vec().into())
+    }
+  }
+
+  deserializer.deserialize_any(ContentVisitor)
+}
 
 /// Information that comes from an external source which can be optionally
 /// included in the module graph.
@@ -56,6 +81,7 @@ pub enum LoadResponse {
   /// A loaded module.
   Module {
     /// The content of the remote module.
+    #[serde(deserialize_with = "deserialize_content")]
     content: Arc<[u8]>,
     /// The final specifier of the module.
     specifier: ModuleSpecifier,

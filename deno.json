@@ -1,6 +1,7 @@
 {
   "tasks": {
-    "build": "deno run --unstable --allow-run --allow-read --allow-write --allow-env _build.ts"
+    "build": "deno run --unstable --allow-run --allow-read --allow-write --allow-env _build.ts",
+    "test": "deno test --allow-read --allow-net test.ts"
   },
   "fmt": {
     "files": {
