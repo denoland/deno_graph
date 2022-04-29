@@ -13,6 +13,7 @@ use deno_ast::ModuleSpecifier;
 #[cfg(feature = "rust")]
 use futures::future;
 use futures::future::Future;
+use serde::de;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -22,6 +23,30 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 pub static DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
+
+fn deserialize_content<'de, D>(deserializer: D) -> Result<Arc<[u8]>, D::Error>
+where
+  D: de::Deserializer<'de>,
+{
+  struct ContentVisitor;
+
+  impl<'de> de::Visitor<'de> for ContentVisitor {
+    type Value = Arc<[u8]>;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+      formatter.write_str("a string that needs to be converted to bytes")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+      E: de::Error,
+    {
+      Ok(v.as_bytes().to_vec().into())
+    }
+  }
+
+  deserializer.deserialize_any(ContentVisitor)
+}
 
 /// Information that comes from an external source which can be optionally
 /// included in the module graph.
@@ -56,7 +81,8 @@ pub enum LoadResponse {
   /// A loaded module.
   Module {
     /// The content of the remote module.
-    content: Arc<String>,
+    #[serde(deserialize_with = "deserialize_content")]
+    content: Arc<[u8]>,
     /// The final specifier of the module.
     specifier: ModuleSpecifier,
     /// If the module is a remote module, the headers should be returned as a
@@ -92,9 +118,9 @@ pub trait Locker: fmt::Debug {
   fn check_or_insert(
     &mut self,
     specifier: &ModuleSpecifier,
-    source: &str,
+    source: &[u8],
   ) -> bool;
-  fn get_checksum(&self, content: &str) -> String;
+  fn get_checksum(&self, content: &[u8]) -> String;
   fn get_filename(&self) -> Option<String> {
     None
   }
@@ -213,7 +239,7 @@ pub fn load_data_url(
   Ok(Some(LoadResponse::Module {
     specifier: specifier.clone(),
     maybe_headers: Some(headers),
-    content: Arc::new(content),
+    content: content.into_bytes().into(),
   }))
 }
 
@@ -226,11 +252,11 @@ pub struct MemoryLoader {
 }
 
 #[cfg(feature = "rust")]
-pub enum Source<S> {
+pub enum Source<S, B> {
   Module {
     specifier: S,
     maybe_headers: Option<Vec<(S, S)>>,
-    content: S,
+    content: B,
   },
   External(S),
   BuiltIn(S),
@@ -238,12 +264,12 @@ pub enum Source<S> {
 }
 
 #[cfg(feature = "rust")]
-pub type MemoryLoaderSources<S> = Vec<(S, Source<S>)>;
+pub type MemoryLoaderSources<S, B> = Vec<(S, Source<S, B>)>;
 
 #[cfg(feature = "rust")]
 impl MemoryLoader {
-  pub fn new<S: AsRef<str>>(
-    sources: MemoryLoaderSources<S>,
+  pub fn new<S: AsRef<str>, B: AsRef<[u8]>>(
+    sources: MemoryLoaderSources<S, B>,
     cache_info: Vec<(S, CacheInfo)>,
   ) -> Self {
     Self {
@@ -265,7 +291,7 @@ impl MemoryLoader {
                   })
                   .collect()
               }),
-              content: Arc::new(content.as_ref().to_string()),
+              content: content.as_ref().to_owned().into(),
             }),
             Source::BuiltIn(specifier) => Ok(LoadResponse::BuiltIn {
               specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),

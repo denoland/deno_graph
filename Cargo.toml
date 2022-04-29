@@ -32,6 +32,7 @@ deno_ast = { version = "0.14.0", features = ["dep_graph", "module_specifier"] }
 url = { version = "2.2.2", features = ["serde"] }
 wasm-bindgen = { version = "0.2.79", features = ["serde-serialize"], optional = true }
 wasm-bindgen-futures = { version = "0.4.29", optional = true }
+wasmparser = "0.84.0"
 
 [dev-dependencies]
 pretty_assertions = "1.0.0"

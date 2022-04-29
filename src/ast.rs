@@ -165,7 +165,7 @@ pub trait SourceParser {
   fn parse_module(
     &self,
     specifier: &ModuleSpecifier,
-    source: Arc<String>,
+    source: Arc<[u8]>,
     media_type: MediaType,
   ) -> Result<ParsedSource, Diagnostic>;
 }
@@ -199,9 +199,10 @@ impl SourceParser for CapturingSourceParser {
   fn parse_module(
     &self,
     specifier: &ModuleSpecifier,
-    source: Arc<String>,
+    source: Arc<[u8]>,
     media_type: MediaType,
   ) -> Result<ParsedSource, Diagnostic> {
+    let source = Arc::new(String::from_utf8_lossy(source.as_ref()).to_string());
     let module = parse_module(ParseParams {
       specifier: specifier.to_string(),
       source: SourceTextInfo::new(source),
@@ -234,9 +235,10 @@ impl SourceParser for DefaultSourceParser {
   fn parse_module(
     &self,
     specifier: &ModuleSpecifier,
-    source: Arc<String>,
+    source: Arc<[u8]>,
     media_type: MediaType,
   ) -> Result<ParsedSource, Diagnostic> {
+    let source = Arc::new(String::from_utf8_lossy(source.as_ref()).to_string());
     parse_module(ParseParams {
       specifier: specifier.to_string(),
       source: SourceTextInfo::new(source),
@@ -257,8 +259,7 @@ mod tests {
   fn test_parse() {
     let specifier =
       ModuleSpecifier::parse("file:///a/test.tsx").expect("bad specifier");
-    let source = Arc::new(
-      r#"
+    let source = br#"
     /// <reference path="./ref.d.ts" />
     /// <reference types="./types.d.ts" />
     /* @jsxImportSource http://example.com/preact */
@@ -279,8 +280,8 @@ mod tests {
 
     const a = await import("./a.ts");
     "#
-      .to_string(),
-    );
+    .to_vec()
+    .into();
     let parser = DefaultSourceParser::new();
     let result = parser.parse_module(&specifier, source, MediaType::Tsx);
     assert!(result.is_ok());
@@ -327,8 +328,7 @@ mod tests {
   fn test_analyze_dependencies() {
     let specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad specifier");
-    let source = Arc::new(
-      r#"
+    let source = br#"
     import * as a from "./a.ts";
     import "./b.ts";
     import { c } from "./c.ts";
@@ -341,8 +341,8 @@ mod tests {
     import type { i } from "./i.d.ts";
     export type { j } from "./j.d.ts";
     "#
-      .to_string(),
-    );
+    .to_vec()
+    .into();
     let parser = DefaultSourceParser::new();
     let result = parser.parse_module(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
@@ -371,13 +371,12 @@ mod tests {
   fn test_analyze_dependencies_import_assertions() {
     let specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad specifier");
-    let source = Arc::new(
-      r#"
+    let source = br#"
     import a from "./a.json" assert { type: "json" };
     await import("./b.json", { assert: { type: "json" } });
     "#
-      .to_string(),
-    );
+    .to_vec()
+    .into();
     let parser = DefaultSourceParser::new();
     let result = parser.parse_module(&specifier, source, MediaType::TypeScript);
     assert!(result.is_ok());
@@ -401,8 +400,7 @@ mod tests {
   #[test]
   fn test_analyze_jsdoc_imports() {
     let specifier = ModuleSpecifier::parse("file:///a/test.js").unwrap();
-    let source = Arc::new(
-      r#"
+    let source = br#"
 /** @module */
 
 /**
@@ -427,10 +425,10 @@ function b(c) {
  */
 const f = new Set();
 "#
-      .to_string(),
-    );
+    .to_vec();
     let parser = DefaultSourceParser::new();
-    let result = parser.parse_module(&specifier, source, MediaType::TypeScript);
+    let result =
+      parser.parse_module(&specifier, source.into(), MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_source = result.unwrap();
     let dependencies = analyze_jsdoc_imports(&parsed_source);
