@@ -56,7 +56,7 @@ pub enum LoadResponse {
   /// A loaded module.
   Module {
     /// The content of the remote module.
-    content: Arc<String>,
+    content: Arc<str>,
     /// The final specifier of the module.
     specifier: ModuleSpecifier,
     /// If the module is a remote module, the headers should be returned as a
@@ -213,7 +213,7 @@ pub fn load_data_url(
   Ok(Some(LoadResponse::Module {
     specifier: specifier.clone(),
     maybe_headers: Some(headers),
-    content: Arc::new(content),
+    content: content.into(),
   }))
 }
 
@@ -265,7 +265,7 @@ impl MemoryLoader {
                   })
                   .collect()
               }),
-              content: Arc::new(content.as_ref().to_string()),
+              content: content.as_ref().into(),
             }),
             Source::BuiltIn(specifier) => Ok(LoadResponse::BuiltIn {
               specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),

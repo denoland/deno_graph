@@ -2,7 +2,7 @@
 
 use crate::module_specifier::ModuleSpecifier;
 
-use deno_ast::swc::common::comments::Comments;
+use deno_ast::SwcSourceRanged;
 use deno_ast::ParsedSource;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -23,12 +23,8 @@ pub(crate) enum ParsedSourceMap {
 }
 
 fn find_source_map_url(parsed_source: &ParsedSource) -> Option<String> {
-  let program = parsed_source.program();
-  let pos = if let Some(module) = program.as_module() {
-    Some(module.span.hi)
-  } else {
-    program.as_script().map(|s| s.span.hi)
-  }?;
+  let program = parsed_source.program_ref();
+  let pos = program.range().end;
   let comments = parsed_source.comments().get_trailing(pos)?;
   for item in comments.iter().rev() {
     if let Some(caps) = SOURCE_MAP_URL_RE.captures(&item.text) {
@@ -72,18 +68,17 @@ mod tests {
   use crate::SourceParser;
   use deno_ast::MediaType;
   use serde_json::json;
-  use std::sync::Arc;
 
   #[test]
   fn test_parse_sourcemap_data() {
     let source_parser = ast::DefaultSourceParser::default();
     let specifier =
       ModuleSpecifier::parse("https://deno.land/x/tst/mod.ts").unwrap();
-    let source = Arc::new(r#"console.log("hello deno");
+    let source = r#"console.log("hello deno");
 export {};
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5wdXQuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbnB1dC50c3giXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQ0EsT0FBTyxDQUFDLEdBQUcsQ0FBQyxZQUFZLENBQUMsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCB7fTtcbmNvbnNvbGUubG9nKFwiaGVsbG8gZGVub1wiKTtcbiJdfQ=="#.to_string());
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5wdXQuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbnB1dC50c3giXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQ0EsT0FBTyxDQUFDLEdBQUcsQ0FBQyxZQUFZLENBQUMsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCB7fTtcbmNvbnNvbGUubG9nKFwiaGVsbG8gZGVub1wiKTtcbiJdfQ=="#;
     let res =
-      source_parser.parse_module(&specifier, source, MediaType::JavaScript);
+      source_parser.parse_module(&specifier, source.into(), MediaType::JavaScript);
     assert!(res.is_ok());
     let parsed_source = res.unwrap();
     let maybe_parsed_source_map = parse_sourcemap(&specifier, &parsed_source);
@@ -105,14 +100,11 @@ export {};
     let source_parser = ast::DefaultSourceParser::default();
     let specifier =
       ModuleSpecifier::parse("https://deno.land/x/tst/input.js").unwrap();
-    let source = Arc::new(
-      r#"console.log("hello deno");
+    let source = r#"console.log("hello deno");
 export {};
-//# sourceMappingURL=./input.js.map"#
-        .to_string(),
-    );
+//# sourceMappingURL=./input.js.map"#;
     let res =
-      source_parser.parse_module(&specifier, source, MediaType::JavaScript);
+      source_parser.parse_module(&specifier, source.into(), MediaType::JavaScript);
     assert!(res.is_ok());
     let parsed_source = res.unwrap();
     let maybe_parsed_source_map = parse_sourcemap(&specifier, &parsed_source);
