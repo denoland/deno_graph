@@ -1003,10 +1003,8 @@ impl ModuleGraph {
       let locker = locker.borrow();
       for (_, module_slot) in self.module_slots.iter_mut() {
         if let ModuleSlot::Module(module) = module_slot {
-          module.maybe_checksum = module
-            .maybe_source
-            .as_ref()
-            .map(|s| locker.get_checksum(s));
+          module.maybe_checksum =
+            module.maybe_source.as_ref().map(|s| locker.get_checksum(s));
         }
       }
     }
