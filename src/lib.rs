@@ -25,7 +25,6 @@ use source::Resolver;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::sync::Arc;
 
 cfg_if! {
   if #[cfg(feature = "rust")] {
@@ -149,7 +148,7 @@ cfg_if! {
     pub fn parse_module(
       specifier: &ModuleSpecifier,
       maybe_headers: Option<&HashMap<String, String>>,
-      content: Arc<String>,
+      content: String,
       maybe_kind: Option<&ModuleKind>,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_parser: Option<&dyn SourceParser>,
@@ -294,7 +293,7 @@ cfg_if! {
       match graph::parse_module(
         &specifier,
         maybe_headers.as_ref(),
-        Arc::new(content),
+        content,
         None,
         maybe_kind.as_ref(),
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
@@ -2817,15 +2816,13 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      r#"
     import { a } from "./a.ts";
     import * as b from "./b.ts";
     export { c } from "./c.ts";
     const d = await import("./d.ts");
     "#
-        .to_string(),
-      ),
+      .to_string(),
       None,
       None,
       None,
@@ -2843,13 +2840,11 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      r#"
     import a from "./a.json" assert { type: "json" };
     await import("./b.json", { assert: { type: "json" } });
     "#
-        .to_string(),
-      ),
+      .to_string(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2910,16 +2905,14 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      r#"
     /** @jsxImportSource https://example.com/preact */
 
     export function A() {
       return <div>Hello Deno</div>;
     }
     "#
-        .to_string(),
-      ),
+      .to_string(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2956,12 +2949,10 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       maybe_headers,
-      Arc::new(
-        r#"declare interface A {
+      r#"declare interface A {
   a: string;
 }"#
-          .to_string(),
-      ),
+        .to_string(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2975,8 +2966,7 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      r#"
 /**
  * Some js doc
  *
@@ -2987,8 +2977,7 @@ export function a(a) {
   return;
 }
 "#
-        .to_string(),
-      ),
+      .to_string(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -3046,8 +3035,7 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      r#"
 /**
  * Some js doc
  *
@@ -3058,8 +3046,7 @@ export function a(a: A): B {
   return;
 }
 "#
-        .to_string(),
-      ),
+      .to_string(),
       Some(&ModuleKind::Esm),
       None,
       None,

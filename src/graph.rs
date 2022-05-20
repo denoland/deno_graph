@@ -1177,7 +1177,7 @@ fn resolve(
 pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  content: Arc<String>,
+  content: String,
   maybe_assert_type: Option<&str>,
   maybe_kind: Option<&ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
@@ -1186,6 +1186,8 @@ pub(crate) fn parse_module(
   is_dynamic_branch: bool,
 ) -> ModuleSlot {
   let media_type = get_media_type(specifier, maybe_headers);
+
+  let content = content.into();
 
   // here we check any media types that should have assertions made against them
   // if they aren't the root and add them to the graph, otherwise we continue
@@ -1565,7 +1567,7 @@ impl<'a> Builder<'a> {
         Some((specifier, kind, Ok(Some(response)))) => {
           let assert_types =
             self.pending_assert_types.remove(&specifier).unwrap();
-          self.visit(&specifier, &kind, &response, &build_kind, assert_types);
+          self.visit(&specifier, &kind, response, &build_kind, assert_types);
           Some(specifier)
         }
         Some((specifier, _, Ok(None))) => {
@@ -1696,7 +1698,7 @@ impl<'a> Builder<'a> {
     &mut self,
     requested_specifier: &ModuleSpecifier,
     kind: &ModuleKind,
-    response: &LoadResponse,
+    response: LoadResponse,
     build_kind: &BuildKind,
     assert_types: HashSet<Option<String>>,
   ) {
@@ -1744,7 +1746,7 @@ impl<'a> Builder<'a> {
             &specifier,
             kind,
             maybe_headers.as_ref(),
-            content.clone(),
+            content,
             build_kind,
             assert_types.into_iter().next().unwrap(),
           )
@@ -1752,10 +1754,7 @@ impl<'a> Builder<'a> {
         (specifier, module_slot)
       }
     };
-    self
-      .graph
-      .module_slots
-      .insert(specifier.clone(), module_slot);
+    self.graph.module_slots.insert(specifier, module_slot);
   }
 
   /// Visit a module, parsing it and resolving any dependencies.
@@ -1764,7 +1763,7 @@ impl<'a> Builder<'a> {
     specifier: &ModuleSpecifier,
     kind: &ModuleKind,
     maybe_headers: Option<&HashMap<String, String>>,
-    content: Arc<String>,
+    content: String,
     build_kind: &BuildKind,
     maybe_assert_type: Option<String>,
   ) -> ModuleSlot {
@@ -2055,7 +2054,7 @@ mod tests {
   fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let source_parser = ast::DefaultSourceParser::default();
-    let content = Arc::new(r#"import * as b from "./b.ts";"#.to_string());
+    let content = r#"import * as b from "./b.ts";"#.to_string();
     let slot = parse_module(
       &specifier,
       None,
@@ -2144,7 +2143,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: Arc::new("await import('file:///bar.js')".to_string()),
+                content: "await import('file:///bar.js')".to_string(),
               }))
             })
           }
@@ -2155,7 +2154,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: Arc::new("import 'file:///baz.js'".to_string()),
+                content: "import 'file:///baz.js'".to_string(),
               }))
             })
           }
@@ -2166,7 +2165,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: Arc::new("console.log('Hello, world!')".to_string()),
+                content: "console.log('Hello, world!')".to_string(),
               }))
             })
           }
@@ -2210,7 +2209,7 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: Arc::new("await import('file:///bar.js')".to_string()),
+              content: "await import('file:///bar.js')".to_string(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move { Ok(None) }),
@@ -2270,14 +2269,14 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///foo_actual.js").unwrap(),
               maybe_headers: None,
-              content: Arc::new("import 'file:///bar.js'".to_string()),
+              content: "import 'file:///bar.js'".to_string(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///bar_actual.js").unwrap(),
               maybe_headers: None,
-              content: Arc::new("(".to_string()),
+              content: "(".to_string(),
             }))
           }),
           _ => unreachable!(),
