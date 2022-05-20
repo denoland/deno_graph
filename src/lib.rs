@@ -149,7 +149,7 @@ cfg_if! {
     pub fn parse_module(
       specifier: &ModuleSpecifier,
       maybe_headers: Option<&HashMap<String, String>>,
-      content: Arc<String>,
+      content: Arc<str>,
       maybe_kind: Option<&ModuleKind>,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_parser: Option<&dyn SourceParser>,
@@ -294,7 +294,7 @@ cfg_if! {
       match graph::parse_module(
         &specifier,
         maybe_headers.as_ref(),
-        Arc::new(content),
+        content.into(),
         None,
         maybe_kind.as_ref(),
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
@@ -1503,10 +1503,8 @@ export function a(a) {
     let maybe_module = graph.get(&data_specifier);
     assert!(maybe_module.is_some());
     let module = maybe_module.unwrap();
-    assert_eq!(
-      module.maybe_source.as_ref().unwrap().as_str(),
-      r#"export * from "https://example.com/c.ts";"#
-    );
+    let source: &str = module.maybe_source.as_ref().unwrap();
+    assert_eq!(source, r#"export * from "https://example.com/c.ts";"#,);
   }
 
   #[tokio::test]
@@ -2817,15 +2815,13 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      r#"
     import { a } from "./a.ts";
     import * as b from "./b.ts";
     export { c } from "./c.ts";
     const d = await import("./d.ts");
     "#
-        .to_string(),
-      ),
+      .into(),
       None,
       None,
       None,
@@ -2843,13 +2839,11 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      r#"
     import a from "./a.json" assert { type: "json" };
     await import("./b.json", { assert: { type: "json" } });
     "#
-        .to_string(),
-      ),
+      .into(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2910,16 +2904,14 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      r#"
     /** @jsxImportSource https://example.com/preact */
 
     export function A() {
       return <div>Hello Deno</div>;
     }
     "#
-        .to_string(),
-      ),
+      .into(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2956,12 +2948,10 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       maybe_headers,
-      Arc::new(
-        r#"declare interface A {
+      r#"declare interface A {
   a: string;
 }"#
-          .to_string(),
-      ),
+        .into(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2975,8 +2965,7 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      r#"
 /**
  * Some js doc
  *
@@ -2987,8 +2976,7 @@ export function a(a) {
   return;
 }
 "#
-        .to_string(),
-      ),
+      .into(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -3046,8 +3034,7 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      r#"
 /**
  * Some js doc
  *
@@ -3058,8 +3045,7 @@ export function a(a: A): B {
   return;
 }
 "#
-        .to_string(),
-      ),
+      .into(),
       Some(&ModuleKind::Esm),
       None,
       None,

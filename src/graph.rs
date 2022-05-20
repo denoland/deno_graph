@@ -18,6 +18,8 @@ use crate::source_map::ParsedSourceMap;
 use anyhow::Result;
 use deno_ast::MediaType;
 use deno_ast::ParsedSource;
+use deno_ast::SourcePos;
+use deno_ast::SourceRange;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
 use futures::Future;
@@ -71,12 +73,9 @@ impl Position {
     }
   }
 
-  fn from_pos(
-    parsed_source: &ParsedSource,
-    pos: deno_ast::swc::common::BytePos,
-  ) -> Self {
+  fn from_pos(parsed_source: &ParsedSource, pos: SourcePos) -> Self {
     let line_and_column_index =
-      parsed_source.source().line_and_column_index(pos);
+      parsed_source.text_info().line_and_column_index(pos);
     Self {
       line: line_and_column_index.line_index,
       character: line_and_column_index.column_index,
@@ -107,15 +106,15 @@ impl fmt::Display for Range {
 }
 
 impl Range {
-  pub(crate) fn from_swc_span(
+  pub(crate) fn from_source_range(
     specifier: &ModuleSpecifier,
     parsed_source: &ParsedSource,
-    span: &deno_ast::swc::common::Span,
+    range: &SourceRange,
   ) -> Range {
     Range {
       specifier: specifier.clone(),
-      start: Position::from_pos(parsed_source, span.lo),
-      end: Position::from_pos(parsed_source, span.hi),
+      start: Position::from_pos(parsed_source, range.start),
+      end: Position::from_pos(parsed_source, range.end),
     }
   }
 
@@ -600,7 +599,7 @@ pub struct Module {
     skip_serializing_if = "Option::is_none",
     serialize_with = "serialize_maybe_source"
   )]
-  pub maybe_source: Option<Arc<String>>,
+  pub maybe_source: Option<Arc<str>>,
   #[serde(rename = "sourceMap", skip_serializing_if = "Option::is_none")]
   pub maybe_source_map: Option<Value>,
   #[serde(rename = "sourceMapUrl", skip_serializing_if = "Option::is_none")]
@@ -622,7 +621,7 @@ impl Module {
     kind: ModuleKind,
     parsed_source: ParsedSource,
   ) -> Self {
-    let source = parsed_source.source().text();
+    let source = parsed_source.text_info().text();
     let (maybe_source_map, maybe_source_map_url) =
       match parse_sourcemap(&specifier, &parsed_source) {
         Some(ParsedSourceMap::Url(url)) => (None, Some(url)),
@@ -1004,10 +1003,8 @@ impl ModuleGraph {
       let locker = locker.borrow();
       for (_, module_slot) in self.module_slots.iter_mut() {
         if let ModuleSlot::Module(module) = module_slot {
-          module.maybe_checksum = module
-            .maybe_source
-            .as_ref()
-            .map(|s| locker.get_checksum(s.as_str()));
+          module.maybe_checksum =
+            module.maybe_source.as_ref().map(|s| locker.get_checksum(s));
         }
       }
     }
@@ -1171,7 +1168,7 @@ fn resolve(
 pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  content: Arc<String>,
+  content: Arc<str>,
   maybe_assert_type: Option<&str>,
   maybe_kind: Option<&ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
@@ -1295,16 +1292,16 @@ pub(crate) fn parse_module_from_ast(
   // Analyze the TypeScript triple-slash references
   for reference in analyze_ts_references(parsed_source) {
     match reference {
-      ast::TypeScriptReference::Path(specifier, span) => {
+      ast::TypeScriptReference::Path(specifier, range) => {
         let range =
-          Range::from_swc_span(&module.specifier, parsed_source, &span);
+          Range::from_source_range(&module.specifier, parsed_source, &range);
         let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
         let dep = module.dependencies.entry(specifier).or_default();
         dep.maybe_code = resolved_dependency;
       }
-      ast::TypeScriptReference::Types(specifier, span) => {
+      ast::TypeScriptReference::Types(specifier, range) => {
         let range =
-          Range::from_swc_span(&module.specifier, parsed_source, &span);
+          Range::from_source_range(&module.specifier, parsed_source, &range);
         let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
         if is_untyped(&module.media_type) {
           module.maybe_types_dependency =
@@ -1318,13 +1315,15 @@ pub(crate) fn parse_module_from_ast(
   }
 
   // Analyze any JSX Import Source pragma
-  if let Some((import_source, span)) = analyze_jsx_import_sources(parsed_source)
+  if let Some((import_source, range)) =
+    analyze_jsx_import_sources(parsed_source)
   {
     let jsx_import_source_module = maybe_resolver
       .map(|r| r.jsx_import_source_module())
       .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE);
     let specifier = format!("{}/{}", import_source, jsx_import_source_module);
-    let range = Range::from_swc_span(&module.specifier, parsed_source, &span);
+    let range =
+      Range::from_source_range(&module.specifier, parsed_source, &range);
     let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
     let dep = module.dependencies.entry(specifier).or_default();
     dep.maybe_code = resolved_dependency;
@@ -1338,8 +1337,9 @@ pub(crate) fn parse_module_from_ast(
     module.media_type,
     MediaType::JavaScript | MediaType::Jsx | MediaType::Mjs | MediaType::Cjs
   ) {
-    for (import_source, span) in analyze_jsdoc_imports(parsed_source) {
-      let range = Range::from_swc_span(&module.specifier, parsed_source, &span);
+    for (import_source, range) in analyze_jsdoc_imports(parsed_source) {
+      let range =
+        Range::from_source_range(&module.specifier, parsed_source, &range);
       let resolved_dependency = resolve(&import_source, &range, maybe_resolver);
       let dep = module.dependencies.entry(import_source).or_default();
       dep.maybe_type = resolved_dependency;
@@ -1410,10 +1410,10 @@ pub(crate) fn parse_module_from_ast(
     dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
     let resolved_dependency = resolve(
       &desc.specifier,
-      &Range::from_swc_span(
+      &Range::from_source_range(
         &module.specifier,
         parsed_source,
-        &desc.specifier_span,
+        &desc.specifier_range,
       ),
       maybe_resolver,
     );
@@ -1427,10 +1427,10 @@ pub(crate) fn parse_module_from_ast(
     }
     let specifier = module.specifier.clone();
     let maybe_type = analyze_deno_types(&desc)
-      .map(|(text, span)| {
+      .map(|(text, range)| {
         resolve(
           &text,
-          &Range::from_swc_span(&specifier, parsed_source, &span),
+          &Range::from_source_range(&specifier, parsed_source, &range),
           maybe_resolver,
         )
       })
@@ -1750,7 +1750,7 @@ impl<'a> Builder<'a> {
     specifier: &ModuleSpecifier,
     kind: &ModuleKind,
     maybe_headers: Option<&HashMap<String, String>>,
-    content: Arc<String>,
+    content: Arc<str>,
     build_kind: &BuildKind,
     maybe_assert_type: Option<String>,
   ) -> ModuleSlot {
@@ -1983,7 +1983,7 @@ where
 }
 
 fn serialize_maybe_source<S>(
-  source: &Option<Arc<String>>,
+  source: &Option<Arc<str>>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
@@ -2041,11 +2041,11 @@ mod tests {
   fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let source_parser = ast::DefaultSourceParser::default();
-    let content = Arc::new(r#"import * as b from "./b.ts";"#.to_string());
+    let content = r#"import * as b from "./b.ts";"#;
     let slot = parse_module(
       &specifier,
       None,
-      content,
+      content.into(),
       None,
       Some(&ModuleKind::Esm),
       None,
@@ -2130,7 +2130,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: Arc::new("await import('file:///bar.js')".to_string()),
+                content: "await import('file:///bar.js')".into(),
               }))
             })
           }
@@ -2141,7 +2141,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: Arc::new("import 'file:///baz.js'".to_string()),
+                content: "import 'file:///baz.js'".into(),
               }))
             })
           }
@@ -2152,7 +2152,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: Arc::new("console.log('Hello, world!')".to_string()),
+                content: "console.log('Hello, world!')".into(),
               }))
             })
           }
@@ -2196,7 +2196,7 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: Arc::new("await import('file:///bar.js')".to_string()),
+              content: "await import('file:///bar.js')".into(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move { Ok(None) }),
@@ -2256,14 +2256,14 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///foo_actual.js").unwrap(),
               maybe_headers: None,
-              content: Arc::new("import 'file:///bar.js'".to_string()),
+              content: "import 'file:///bar.js'".into(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///bar_actual.js").unwrap(),
               maybe_headers: None,
-              content: Arc::new("(".to_string()),
+              content: "(".into(),
             }))
           }),
           _ => unreachable!(),
