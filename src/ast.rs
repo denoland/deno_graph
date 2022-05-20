@@ -3,7 +3,7 @@
 use crate::module_specifier::ModuleSpecifier;
 
 use deno_ast::SourceRange;
-use deno_ast::SwcSourceRanged;
+use deno_ast::SourceRangedForSpanned;
 use deno_ast::swc::atoms::JsWord;
 
 use anyhow::Result;
@@ -84,9 +84,10 @@ pub fn analyze_dependencies(
     kind: d.kind,
     is_dynamic: d.is_dynamic,
     leading_comments: d.leading_comments,
-    range: d.span.into(),
+    // ok to use this because we received this span from swc
+    range: SourceRange::unsafely_from_span(d.span),
     specifier: d.specifier,
-    specifier_range: d.specifier_span.into(),
+    specifier_range: SourceRange::unsafely_from_span(d.specifier_span),
     import_assertions: d.import_assertions,
   })
   .collect()

@@ -2,7 +2,7 @@
 
 use crate::module_specifier::ModuleSpecifier;
 
-use deno_ast::SwcSourceRanged;
+use deno_ast::SourceRangedForSpanned;
 use deno_ast::ParsedSource;
 use lazy_static::lazy_static;
 use regex::Regex;
