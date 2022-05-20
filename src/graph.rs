@@ -73,10 +73,7 @@ impl Position {
     }
   }
 
-  fn from_pos(
-    parsed_source: &ParsedSource,
-    pos: SourcePos,
-  ) -> Self {
+  fn from_pos(parsed_source: &ParsedSource, pos: SourcePos) -> Self {
     let line_and_column_index =
       parsed_source.text_info().line_and_column_index(pos);
     Self {
@@ -1009,7 +1006,7 @@ impl ModuleGraph {
           module.maybe_checksum = module
             .maybe_source
             .as_ref()
-            .map(|s| locker.get_checksum(&s));
+            .map(|s| locker.get_checksum(s));
         }
       }
     }
@@ -1320,13 +1317,15 @@ pub(crate) fn parse_module_from_ast(
   }
 
   // Analyze any JSX Import Source pragma
-  if let Some((import_source, range)) = analyze_jsx_import_sources(parsed_source)
+  if let Some((import_source, range)) =
+    analyze_jsx_import_sources(parsed_source)
   {
     let jsx_import_source_module = maybe_resolver
       .map(|r| r.jsx_import_source_module())
       .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE);
     let specifier = format!("{}/{}", import_source, jsx_import_source_module);
-    let range = Range::from_source_range(&module.specifier, parsed_source, &range);
+    let range =
+      Range::from_source_range(&module.specifier, parsed_source, &range);
     let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
     let dep = module.dependencies.entry(specifier).or_default();
     dep.maybe_code = resolved_dependency;
@@ -1341,7 +1340,8 @@ pub(crate) fn parse_module_from_ast(
     MediaType::JavaScript | MediaType::Jsx | MediaType::Mjs | MediaType::Cjs
   ) {
     for (import_source, range) in analyze_jsdoc_imports(parsed_source) {
-      let range = Range::from_source_range(&module.specifier, parsed_source, &range);
+      let range =
+        Range::from_source_range(&module.specifier, parsed_source, &range);
       let resolved_dependency = resolve(&import_source, &range, maybe_resolver);
       let dep = module.dependencies.entry(import_source).or_default();
       dep.maybe_type = resolved_dependency;

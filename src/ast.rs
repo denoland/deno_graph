@@ -2,9 +2,9 @@
 
 use crate::module_specifier::ModuleSpecifier;
 
+use deno_ast::swc::atoms::JsWord;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
-use deno_ast::swc::atoms::JsWord;
 
 use anyhow::Result;
 use deno_ast::parse_module;
@@ -156,10 +156,7 @@ pub fn analyze_jsx_import_sources(
 fn comment_match_to_source_range(comment: &Comment, m: &Match) -> SourceRange {
   // the comment text starts after the double slash or slash star, so add 2
   let comment_start = comment.start() + 2;
-  SourceRange::new(
-    comment_start + m.start(),
-    comment_start + m.end(),
-  )
+  SourceRange::new(comment_start + m.start(), comment_start + m.end())
 }
 
 /// Searches comments for any triple slash references.
@@ -280,14 +277,14 @@ impl SourceParser for DefaultSourceParser {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use deno_ast::SourceRanged;
   use pretty_assertions::assert_eq;
 
   #[test]
   fn test_parse() {
     let specifier =
       ModuleSpecifier::parse("file:///a/test.tsx").expect("bad specifier");
-    let source =
-      r#"
+    let source = r#"
     /// <reference path="./ref.d.ts" />
     /// <reference types="./types.d.ts" />
     /* @jsxImportSource http://example.com/preact */
@@ -320,7 +317,7 @@ mod tests {
     match &ts_references[0] {
       TypeScriptReference::Path(text, range) => {
         assert_eq!(text, "./ref.d.ts");
-        assert_eq!(parsed_source.text_info().range_text(range), "./ref.d.ts");
+        assert_eq!(range.text_fast(&parsed_source.text_info()), "./ref.d.ts");
       }
       TypeScriptReference::Types(_, _) => panic!("expected path"),
     }
@@ -328,7 +325,7 @@ mod tests {
       TypeScriptReference::Path(_, _) => panic!("expected types"),
       TypeScriptReference::Types(text, range) => {
         assert_eq!(text, "./types.d.ts");
-        assert_eq!(parsed_source.text_info().range_text(range), "./types.d.ts");
+        assert_eq!(range.text_fast(&parsed_source.text_info()), "./types.d.ts");
       }
     }
 
@@ -338,14 +335,15 @@ mod tests {
       "https://deno.land/x/types/react/index.d.ts"
     );
     assert_eq!(
-      parsed_source.text_info().range_text(&dep_deno_types.1),
+      dep_deno_types.1.text_fast(&parsed_source.text_info()),
       "https://deno.land/x/types/react/index.d.ts"
     );
 
-    let (specifier, span) = analyze_jsx_import_sources(&parsed_source).unwrap();
+    let (specifier, range) =
+      analyze_jsx_import_sources(&parsed_source).unwrap();
     assert_eq!(specifier, "http://example.com/preact");
     assert_eq!(
-      parsed_source.text_info().range_text(&span),
+      range.text_fast(&parsed_source.text_info()),
       "http://example.com/preact"
     );
   }
@@ -368,24 +366,25 @@ mod tests {
     export type { j } from "./j.d.ts";
     "#;
     let parser = DefaultSourceParser::new();
-    let result = parser.parse_module(&specifier, source.into(), MediaType::TypeScript);
+    let result =
+      parser.parse_module(&specifier, source.into(), MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_source = result.unwrap();
     let dependencies = analyze_dependencies(&parsed_source);
     assert_eq!(dependencies.len(), 10);
     assert_eq!(dependencies[0].specifier.to_string(), "./a.ts");
     assert_eq!(
-      parsed_source
-        .text_info()
-        .range_text(&dependencies[0].specifier_range),
+      dependencies[0]
+        .specifier_range
+        .text_fast(&parsed_source.text_info()),
       "\"./a.ts\""
     );
     assert!(!dependencies[0].is_dynamic);
     assert_eq!(dependencies[1].specifier.to_string(), "./b.ts");
     assert_eq!(
-      parsed_source
-        .text_info()
-        .range_text(&dependencies[1].specifier_range),
+      dependencies[1]
+        .specifier_range
+        .text_fast(&parsed_source.text_info()),
       "\"./b.ts\""
     );
     assert!(!dependencies[1].is_dynamic);
@@ -400,7 +399,8 @@ mod tests {
     await import("./b.json", { assert: { type: "json" } });
     "#;
     let parser = DefaultSourceParser::new();
-    let result = parser.parse_module(&specifier, source.into(), MediaType::TypeScript);
+    let result =
+      parser.parse_module(&specifier, source.into(), MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_source = result.unwrap();
     let dependencies = analyze_dependencies(&parsed_source);
@@ -448,7 +448,8 @@ function b(c) {
 const f = new Set();
 "#;
     let parser = DefaultSourceParser::new();
-    let result = parser.parse_module(&specifier, source.into(), MediaType::TypeScript);
+    let result =
+      parser.parse_module(&specifier, source.into(), MediaType::TypeScript);
     assert!(result.is_ok());
     let parsed_source = result.unwrap();
     let start_pos = parsed_source.text_info().range().start;

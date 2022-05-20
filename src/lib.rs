@@ -1504,10 +1504,7 @@ export function a(a) {
     assert!(maybe_module.is_some());
     let module = maybe_module.unwrap();
     let source: &str = module.maybe_source.as_ref().unwrap();
-    assert_eq!(
-      source,
-      r#"export * from "https://example.com/c.ts";"#,
-    );
+    assert_eq!(source, r#"export * from "https://example.com/c.ts";"#,);
   }
 
   #[tokio::test]
@@ -2818,12 +2815,13 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-        r#"
+      r#"
     import { a } from "./a.ts";
     import * as b from "./b.ts";
     export { c } from "./c.ts";
     const d = await import("./d.ts");
-    "#.into(),
+    "#
+      .into(),
       None,
       None,
       None,
@@ -2841,10 +2839,11 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-        r#"
+      r#"
     import a from "./a.json" assert { type: "json" };
     await import("./b.json", { assert: { type: "json" } });
-    "#.into(),
+    "#
+      .into(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2905,13 +2904,14 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-        r#"
+      r#"
     /** @jsxImportSource https://example.com/preact */
 
     export function A() {
       return <div>Hello Deno</div>;
     }
-    "#.into(),
+    "#
+      .into(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2948,9 +2948,10 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       maybe_headers,
-        r#"declare interface A {
+      r#"declare interface A {
   a: string;
-}"#.into(),
+}"#
+        .into(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2964,7 +2965,7 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-        r#"
+      r#"
 /**
  * Some js doc
  *
@@ -2974,7 +2975,8 @@ export function a(a) {
 export function a(a) {
   return;
 }
-"#.into(),
+"#
+      .into(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -3032,7 +3034,7 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-        r#"
+      r#"
 /**
  * Some js doc
  *
@@ -3042,7 +3044,8 @@ export function a(a) {
 export function a(a: A): B {
   return;
 }
-"#.into(),
+"#
+      .into(),
       Some(&ModuleKind::Esm),
       None,
       None,

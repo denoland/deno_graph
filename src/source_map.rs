@@ -2,8 +2,8 @@
 
 use crate::module_specifier::ModuleSpecifier;
 
-use deno_ast::SourceRangedForSpanned;
 use deno_ast::ParsedSource;
+use deno_ast::SourceRangedForSpanned;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde_json::from_slice;
@@ -77,8 +77,11 @@ mod tests {
     let source = r#"console.log("hello deno");
 export {};
 //# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5wdXQuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbnB1dC50c3giXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQ0EsT0FBTyxDQUFDLEdBQUcsQ0FBQyxZQUFZLENBQUMsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCB7fTtcbmNvbnNvbGUubG9nKFwiaGVsbG8gZGVub1wiKTtcbiJdfQ=="#;
-    let res =
-      source_parser.parse_module(&specifier, source.into(), MediaType::JavaScript);
+    let res = source_parser.parse_module(
+      &specifier,
+      source.into(),
+      MediaType::JavaScript,
+    );
     assert!(res.is_ok());
     let parsed_source = res.unwrap();
     let maybe_parsed_source_map = parse_sourcemap(&specifier, &parsed_source);
@@ -103,8 +106,11 @@ export {};
     let source = r#"console.log("hello deno");
 export {};
 //# sourceMappingURL=./input.js.map"#;
-    let res =
-      source_parser.parse_module(&specifier, source.into(), MediaType::JavaScript);
+    let res = source_parser.parse_module(
+      &specifier,
+      source.into(),
+      MediaType::JavaScript,
+    );
     assert!(res.is_ok());
     let parsed_source = res.unwrap();
     let maybe_parsed_source_map = parse_sourcemap(&specifier, &parsed_source);
