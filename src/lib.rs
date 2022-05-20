@@ -25,7 +25,6 @@ use source::Resolver;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::sync::Arc;
 
 cfg_if! {
   if #[cfg(feature = "rust")] {
@@ -149,7 +148,7 @@ cfg_if! {
     pub fn parse_module(
       specifier: &ModuleSpecifier,
       maybe_headers: Option<&HashMap<String, String>>,
-      content: Arc<String>,
+      content: Vec<u8>,
       maybe_kind: Option<&ModuleKind>,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_parser: Option<&dyn SourceParser>,
@@ -294,7 +293,7 @@ cfg_if! {
       match graph::parse_module(
         &specifier,
         maybe_headers.as_ref(),
-        Arc::new(content),
+        content.as_bytes().to_vec(),
         None,
         maybe_kind.as_ref(),
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
@@ -321,7 +320,7 @@ mod tests {
   use source::MemoryLoader;
   use source::Source;
 
-  type Sources<'a> = Vec<(&'a str, Source<&'a str>)>;
+  type Sources<'a> = Vec<(&'a str, Source<&'a str, &'a [u8]>)>;
 
   fn setup(
     sources: Sources,
@@ -339,7 +338,7 @@ mod tests {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"import * as b from "./test02.ts";"#,
+            content: br#"import * as b from "./test02.ts";"#,
           },
         ),
         (
@@ -347,7 +346,7 @@ mod tests {
           Source::Module {
             specifier: "file:///a/test02.ts",
             maybe_headers: None,
-            content: r#"export const b = "b";"#,
+            content: br#"export const b = "b";"#,
           },
         ),
       ],
@@ -405,7 +404,7 @@ mod tests {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"import * as b from "./test02.ts";"#,
+            content: br#"import * as b from "./test02.ts";"#,
           },
         ),
         (
@@ -413,7 +412,7 @@ mod tests {
           Source::Module {
             specifier: "file:///a/test02.ts",
             maybe_headers: None,
-            content: r#"export const b = "b";"#,
+            content: br#"export const b = "b";"#,
           },
         ),
         (
@@ -421,7 +420,7 @@ mod tests {
           Source::Module {
             specifier: "https://example.com/a.ts",
             maybe_headers: None,
-            content: r#"import * as c from "./c.ts";"#,
+            content: br#"import * as c from "./c.ts";"#,
           },
         ),
         (
@@ -429,7 +428,7 @@ mod tests {
           Source::Module {
             specifier: "https://example.com/c.ts",
             maybe_headers: None,
-            content: r#"export const c = "c";"#,
+            content: br#"export const c = "c";"#,
           },
         ),
       ],
@@ -478,7 +477,7 @@ mod tests {
         Source::Module {
           specifier: "file:///a/test.json",
           maybe_headers: None,
-          content: r#"{"a": 1, "b": "c"}"#,
+          content: br#"{"a": 1, "b": "c"}"#,
         },
       )],
       vec![],
@@ -526,7 +525,7 @@ mod tests {
           Source::Module {
             specifier: "file:///a/test.js",
             maybe_headers: None,
-            content: r#"
+            content: br#"
         const a = await import("./a.json");
         "#,
           },
@@ -536,7 +535,7 @@ mod tests {
           Source::Module {
             specifier: "file:///a/a.json",
             maybe_headers: None,
-            content: r#"{"a":"b"}"#,
+            content: br#"{"a":"b"}"#,
           },
         ),
       ],
@@ -610,7 +609,7 @@ mod tests {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"// @deno-types=./test02.d.ts
+            content: br#"// @deno-types=./test02.d.ts
 import * as a from "./test02.js";
 
 console.log(a);
@@ -622,7 +621,7 @@ console.log(a);
           Source::Module {
             specifier: "file:///a/test02.js",
             maybe_headers: None,
-            content: r#"export const b = "b";"#,
+            content: br#"export const b = "b";"#,
           },
         ),
       ],
@@ -653,7 +652,7 @@ console.log(a);
         Source::Module {
           specifier: "file:///a/test01.ts",
           maybe_headers: None,
-          content: r#"import * as a from "./test02.js";
+          content: br#"import * as a from "./test02.js";
 
 console.log(a);
 "#,
@@ -691,7 +690,7 @@ console.log(a);
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"console.log("a");"#,
+            content: br#"console.log("a");"#,
           },
         ),
         (
@@ -699,7 +698,7 @@ console.log(a);
           Source::Module {
             specifier: "file:///a/types.d.ts",
             maybe_headers: None,
-            content: r#"export type { A } from "./types_01.d.ts";"#,
+            content: br#"export type { A } from "./types_01.d.ts";"#,
           },
         ),
         (
@@ -707,7 +706,7 @@ console.log(a);
           Source::Module {
             specifier: "file:///a/types_01.d.ts",
             maybe_headers: None,
-            content: r#"export class A {};"#,
+            content: br#"export class A {};"#,
           },
         ),
       ],
@@ -807,7 +806,7 @@ console.log(a);
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"console.log("a");"#,
+            content: br#"console.log("a");"#,
           },
         ),
         (
@@ -818,7 +817,7 @@ console.log(a);
               ("content-type", "application/javascript"),
               ("x-typescript-types", "./jsx-runtime.d.ts"),
             ]),
-            content: r#"export const a = "a";"#,
+            content: br#"export const a = "a";"#,
           },
         ),
         (
@@ -829,7 +828,7 @@ console.log(a);
               "content-type",
               "application/typescript",
             )]),
-            content: r#"export const a: "a";"#,
+            content: br#"export const a: "a";"#,
           },
         ),
       ],
@@ -885,7 +884,7 @@ console.log(a);
             "content-type",
             "application/typescript; charset=utf-8",
           )]),
-          content: r#"declare interface A { a: string; }"#,
+          content: br#"declare interface A { a: string; }"#,
         },
       )],
       vec![],
@@ -924,7 +923,7 @@ console.log(a);
           Source::Module {
             specifier: "file:///a/test01.tsx",
             maybe_headers: None,
-            content: r#"/* @jsxImportSource https://example.com/preact */
+            content: br#"/* @jsxImportSource https://example.com/preact */
 
             export function A() {
               <div>Hello Deno</div>
@@ -940,7 +939,7 @@ console.log(a);
               "content-type",
               "application/javascript",
             )]),
-            content: r#"export function jsx() {}"#,
+            content: br#"export function jsx() {}"#,
           },
         ),
       ],
@@ -1012,7 +1011,7 @@ console.log(a);
         Source::Module {
           specifier: "file:///a/test.ts",
           maybe_headers: None,
-          content: r#"import "foo";"#,
+          content: br#"import "foo";"#,
         },
       )],
       vec![],
@@ -1046,7 +1045,7 @@ console.log(a);
           Source::Module {
             specifier: "file:///a/test.ts",
             maybe_headers: None,
-            content: r#"import "./test.json";"#,
+            content: br#"import "./test.json";"#,
           },
         ),
         (
@@ -1054,7 +1053,7 @@ console.log(a);
           Source::Module {
             specifier: "file:///a/test.json",
             maybe_headers: None,
-            content: r#"{"hello":"world"}"#,
+            content: br#"{"hello":"world"}"#,
           },
         ),
       ],
@@ -1091,7 +1090,7 @@ console.log(a);
           Source::Module {
             specifier: "file:///a/test01",
             maybe_headers: None,
-            content: r#"import * as b from "./test02.ts";"#,
+            content: br#"import * as b from "./test02.ts";"#,
           },
         ),
         (
@@ -1099,7 +1098,7 @@ console.log(a);
           Source::Module {
             specifier: "file:///a/test02.ts",
             maybe_headers: None,
-            content: r#"export const b = "b";"#,
+            content: br#"export const b = "b";"#,
           },
         ),
       ],
@@ -1130,7 +1129,7 @@ console.log(a);
           Source::Module {
             specifier: "file:///a.ts",
             maybe_headers: None,
-            content: r#"const b = await import("./b.ts");"#,
+            content: br#"const b = await import("./b.ts");"#,
           },
         ),
         (
@@ -1138,7 +1137,7 @@ console.log(a);
           Source::Module {
             specifier: "file:///b.ts",
             maybe_headers: None,
-            content: r#"export const b = "b";"#,
+            content: br#"export const b = "b";"#,
           },
         ),
       ],
@@ -1210,7 +1209,7 @@ console.log(a);
           Source::Module {
             specifier: "file:///a/test.js",
             maybe_headers: None,
-            content: r#"
+            content: br#"
 /**
  * Some js doc
  *
@@ -1228,7 +1227,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/types.d.ts",
             maybe_headers: None,
-            content: r#"export type A = string;"#,
+            content: br#"export type A = string;"#,
           },
         ),
         (
@@ -1236,7 +1235,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/other.ts",
             maybe_headers: None,
-            content: r#"export type B = string | undefined;"#,
+            content: br#"export type B = string | undefined;"#,
           },
         ),
       ],
@@ -1331,7 +1330,7 @@ export function a(a) {
               "content-type",
               "application/typescript",
             )]),
-            content: r#"import * as b from "./b";"#,
+            content: br#"import * as b from "./b";"#,
           },
         ),
         (
@@ -1342,7 +1341,7 @@ export function a(a) {
               "content-type",
               "application/typescript",
             )]),
-            content: r#"export const b = "b";"#,
+            content: br#"export const b = "b";"#,
           },
         ),
       ],
@@ -1402,7 +1401,7 @@ export function a(a) {
               "content-type",
               "application/typescript",
             )]),
-            content: r#"import * as b from "./b";"#,
+            content: br#"import * as b from "./b";"#,
           },
         ),
         (
@@ -1413,7 +1412,7 @@ export function a(a) {
               "content-type",
               "application/typescript",
             )]),
-            content: r#"import * as a from "./a";
+            content: br#"import * as a from "./a";
             export const b = "b";"#,
           },
         ),
@@ -1471,7 +1470,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"import * as b from "data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;";"#,
+            content: br#"import * as b from "data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;";"#,
           },
         ),
         (
@@ -1479,7 +1478,7 @@ export function a(a) {
           Source::Module {
             specifier: "https://example.com/c.ts",
             maybe_headers: None,
-            content: r#"export const c = """#,
+            content: br#"export const c = """#,
           },
         ),
       ],
@@ -1504,8 +1503,8 @@ export function a(a) {
     assert!(maybe_module.is_some());
     let module = maybe_module.unwrap();
     assert_eq!(
-      module.maybe_source.as_ref().unwrap().as_str(),
-      r#"export * from "https://example.com/c.ts";"#
+      &**module.maybe_source.as_ref().unwrap(),
+      br#"export * from "https://example.com/c.ts";"#
     );
   }
 
@@ -1518,7 +1517,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"import * as b from "b";"#,
+            content: br#"import * as b from "b";"#,
           },
         ),
         (
@@ -1526,7 +1525,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/test02.ts",
             maybe_headers: None,
-            content: r#"export const b = "b";"#,
+            content: br#"export const b = "b";"#,
           },
         ),
       ],
@@ -1574,7 +1573,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a.js",
             maybe_headers: None,
-            content: r#"export const a = "a";"#,
+            content: br#"export const a = "a";"#,
           },
         ),
         (
@@ -1582,7 +1581,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a.d.ts",
             maybe_headers: None,
-            content: r#"export const a: "a";"#,
+            content: br#"export const a: "a";"#,
           },
         ),
       ],
@@ -1644,7 +1643,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"import * as b from "./test02.ts";"#,
+            content: br#"import * as b from "./test02.ts";"#,
           },
         ),
         (
@@ -1652,7 +1651,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/test02.ts",
             maybe_headers: None,
-            content: r#"export const b = "b"; let t;"#,
+            content: br#"export const b = "b"; let t;"#,
           },
         ),
       ],
@@ -1693,7 +1692,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"
+            content: br#"
             import a from "./a.json" assert { type: "json" };
             const b = await import("./b.json", { assert: { type: "json" } });
             export * as c from "./c.json" assert { type: "json" };
@@ -1707,7 +1706,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/a.json",
             maybe_headers: None,
-            content: r#"{"a":"b"}"#,
+            content: br#"{"a":"b"}"#,
           },
         ),
         (
@@ -1715,7 +1714,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/b.json",
             maybe_headers: None,
-            content: r#"{"b":1}"#,
+            content: br#"{"b":1}"#,
           },
         ),
         (
@@ -1723,7 +1722,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/c.json",
             maybe_headers: None,
-            content: r#"{"c":"d"}"#,
+            content: br#"{"c":"d"}"#,
           },
         ),
         (
@@ -1731,7 +1730,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/d.json",
             maybe_headers: None,
-            content: r#"{"d":4}"#,
+            content: br#"{"d":4}"#,
           },
         ),
       ],
@@ -1873,7 +1872,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"
+            content: br#"
             import a from "./a.json";
             import b from "./a.json" assert { type: "json" };
             "#,
@@ -1884,7 +1883,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/a.json",
             maybe_headers: None,
-            content: r#"{"a":"b"}"#,
+            content: br#"{"a":"b"}"#,
           },
         ),
       ],
@@ -1956,7 +1955,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"
+            content: br#"
             import a from "./a.json";
             import b from "./b.json" assert { type: "json" };
             import c from "./c.js" assert { type: "json" };
@@ -1970,7 +1969,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/a.json",
             maybe_headers: None,
-            content: r#"{"a":"b"}"#,
+            content: br#"{"a":"b"}"#,
           },
         ),
         (
@@ -1978,7 +1977,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/b.json",
             maybe_headers: None,
-            content: r#"{"a":"b"}"#,
+            content: br#"{"a":"b"}"#,
           },
         ),
         (
@@ -1986,7 +1985,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/c.js",
             maybe_headers: None,
-            content: r#"export const c = "c";"#,
+            content: br#"export const c = "c";"#,
           },
         ),
         (
@@ -1994,7 +1993,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/d.json",
             maybe_headers: None,
-            content: r#"{"a":"b"}"#,
+            content: br#"{"a":"b"}"#,
           },
         ),
         (
@@ -2002,7 +2001,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/e.wasm",
             maybe_headers: None,
-            content: "",
+            content: b"",
           },
         ),
       ],
@@ -2176,7 +2175,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"
+            content: br#"
             import "./a.js";
             "#,
           },
@@ -2186,7 +2185,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/a.js",
             maybe_headers: None,
-            content: r#"import "./b.js";"#,
+            content: br#"import "./b.js";"#,
           },
         ),
         (
@@ -2194,7 +2193,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/b.js",
             maybe_headers: None,
-            content: r#"import "./c.js"; import "./d.js""#,
+            content: br#"import "./c.js"; import "./d.js""#,
           },
         ),
         (
@@ -2202,7 +2201,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/c.js",
             maybe_headers: None,
-            content: r#""#,
+            content: br#""#,
           },
         ),
         (
@@ -2210,7 +2209,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/d.js",
             maybe_headers: None,
-            content: r#""#,
+            content: br#""#,
           },
         ),
       ],
@@ -2280,7 +2279,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"
+            content: br#"
             // @deno-types="./a.d.ts"
             import * as a from "./a.js";
             import type { B } from "./b.d.ts";
@@ -2294,7 +2293,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/a.js",
             maybe_headers: None,
-            content: r#"export const a = "a""#,
+            content: br#"export const a = "a""#,
           },
         ),
         (
@@ -2302,7 +2301,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/a.d.ts",
             maybe_headers: None,
-            content: r#"export const a: "a";"#,
+            content: br#"export const a: "a";"#,
           },
         ),
         (
@@ -2310,7 +2309,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/b.d.ts",
             maybe_headers: None,
-            content: r#"export interface B {}"#,
+            content: br#"export interface B {}"#,
           },
         ),
         (
@@ -2321,7 +2320,7 @@ export function a(a) {
               ("x-typescript-types", "./c.d.ts"),
               ("content-type", "application/javascript"),
             ]),
-            content: r#"export { c } from "./c.js";"#,
+            content: br#"export { c } from "./c.js";"#,
           },
         ),
         (
@@ -2332,7 +2331,7 @@ export function a(a) {
               "content-type",
               "application/typescript",
             )]),
-            content: r#"export const c: "c";"#,
+            content: br#"export const c: "c";"#,
           },
         ),
         (
@@ -2343,7 +2342,7 @@ export function a(a) {
               "content-type",
               "application/javascript",
             )]),
-            content: r#"export const c = "c";"#,
+            content: br#"export const c = "c";"#,
           },
         ),
         (
@@ -2351,7 +2350,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/d.js",
             maybe_headers: None,
-            content: r#"export const d = "d";"#,
+            content: br#"export const d = "d";"#,
           },
         ),
       ],
@@ -2510,7 +2509,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"
+            content: br#"
             // @deno-types="./a.d.ts"
             import * as a from "./a.js";
             import type { B } from "./b.d.ts";
@@ -2524,7 +2523,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/a.js",
             maybe_headers: None,
-            content: r#"export const a = "a""#,
+            content: br#"export const a = "a""#,
           },
         ),
         (
@@ -2532,7 +2531,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/a.d.ts",
             maybe_headers: None,
-            content: r#"export const a: "a";"#,
+            content: br#"export const a: "a";"#,
           },
         ),
         (
@@ -2540,7 +2539,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/b.d.ts",
             maybe_headers: None,
-            content: r#"export interface B {}"#,
+            content: br#"export interface B {}"#,
           },
         ),
         (
@@ -2551,7 +2550,7 @@ export function a(a) {
               ("x-typescript-types", "./c.d.ts"),
               ("content-type", "application/javascript"),
             ]),
-            content: r#"export { c } from "./c.js";"#,
+            content: br#"export { c } from "./c.js";"#,
           },
         ),
         (
@@ -2562,7 +2561,7 @@ export function a(a) {
               "content-type",
               "application/typescript",
             )]),
-            content: r#"export const c: "c";"#,
+            content: br#"export const c: "c";"#,
           },
         ),
         (
@@ -2573,7 +2572,7 @@ export function a(a) {
               "content-type",
               "application/javascript",
             )]),
-            content: r#"export const c = "c";"#,
+            content: br#"export const c = "c";"#,
           },
         ),
         (
@@ -2581,7 +2580,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/d.js",
             maybe_headers: None,
-            content: r#"export const d = "d";"#,
+            content: br#"export const d = "d";"#,
           },
         ),
       ],
@@ -2723,7 +2722,7 @@ export function a(a) {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"
+            content: br#"
             import * as fs from "builtin:fs";
             import * as bundle from "https://example.com/bundle";
             "#,
@@ -2817,15 +2816,13 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      br#"
     import { a } from "./a.ts";
     import * as b from "./b.ts";
     export { c } from "./c.ts";
     const d = await import("./d.ts");
     "#
-        .to_string(),
-      ),
+      .to_vec(),
       None,
       None,
       None,
@@ -2843,13 +2840,11 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      br#"
     import a from "./a.json" assert { type: "json" };
     await import("./b.json", { assert: { type: "json" } });
     "#
-        .to_string(),
-      ),
+      .to_vec(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2910,16 +2905,14 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      br#"
     /** @jsxImportSource https://example.com/preact */
 
     export function A() {
       return <div>Hello Deno</div>;
     }
     "#
-        .to_string(),
-      ),
+      .to_vec(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2956,12 +2949,10 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       maybe_headers,
-      Arc::new(
-        r#"declare interface A {
+      br#"declare interface A {
   a: string;
 }"#
-          .to_string(),
-      ),
+        .to_vec(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2975,8 +2966,7 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      br#"
 /**
  * Some js doc
  *
@@ -2987,8 +2977,7 @@ export function a(a) {
   return;
 }
 "#
-        .to_string(),
-      ),
+      .to_vec(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -3046,8 +3035,7 @@ export function a(a) {
     let result = parse_module(
       &specifier,
       None,
-      Arc::new(
-        r#"
+      br#"
 /**
  * Some js doc
  *
@@ -3058,8 +3046,7 @@ export function a(a: A): B {
   return;
 }
 "#
-        .to_string(),
-      ),
+      .to_vec(),
       Some(&ModuleKind::Esm),
       None,
       None,

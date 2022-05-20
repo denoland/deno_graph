@@ -36,7 +36,7 @@ export async function load(
     switch (url.protocol) {
       case "file:": {
         await requestRead(url);
-        const content = await Deno.readTextFile(url);
+        const content = await Deno.readFile(url);
         return {
           kind: "module",
           specifier,
@@ -52,7 +52,7 @@ export async function load(
           await response.arrayBuffer();
           return undefined;
         }
-        const content = await response.text();
+        const content = await response.arrayBuffer();
         const headers: Record<string, string> = {};
         for (const [key, value] of response.headers) {
           headers[key.toLowerCase()] = value;
@@ -61,7 +61,7 @@ export async function load(
           kind: "module",
           specifier: response.url,
           headers,
-          content,
+          content: new Uint8Array(content),
         };
       }
       default:
