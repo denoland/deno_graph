@@ -2058,7 +2058,7 @@ mod tests {
     let slot = parse_module(
       &specifier,
       None,
-      content.into(),
+      content,
       None,
       Some(&ModuleKind::Esm),
       None,
