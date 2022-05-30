@@ -1502,10 +1502,8 @@ export function a(a) {
     let maybe_module = graph.get(&data_specifier);
     assert!(maybe_module.is_some());
     let module = maybe_module.unwrap();
-    assert_eq!(
-      module.maybe_source.as_ref().unwrap().as_str(),
-      r#"export * from "https://example.com/c.ts";"#
-    );
+    let source: &str = module.maybe_source.as_ref().unwrap();
+    assert_eq!(source, r#"export * from "https://example.com/c.ts";"#,);
   }
 
   #[tokio::test]
