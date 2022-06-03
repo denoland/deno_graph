@@ -6,8 +6,13 @@ import {
   assertRejects,
   assertThrows,
 } from "https://deno.land/std@0.142.0/testing/asserts.ts";
-import { createGraph, load, parseModule } from "./mod.ts";
-import type { LoadResponse, MediaType } from "./mod.ts";
+import {
+  createGraph,
+  load,
+  LoadResponse,
+  MediaType,
+  parseModule,
+} from "./mod.ts";
 
 Deno.test({
   name: "createGraph()",
