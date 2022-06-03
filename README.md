@@ -209,32 +209,12 @@ This would output to stdout the JSON structure of the module graph.
 
 ## Building Web Assembly
 
-To build the web assembly library, you need a couple pre-requisites, which can
-be added as follows:
-
-```
-> rustup target add wasm32-unknown-unknown
-> cargo install -f wasm-bindgen-cli
-```
-
-> ⚠️ Note that the `wasm-bindgen-cli` should match the version of `wasm-bindgen`
-> in this crate and be explicitly set using the `--version` flag on install.
-
-Also, the build script (`_build.ts`) requires the Deno CLI to be installed and
+The build script (`_build.ts`) requires the Deno CLI to be installed and
 available in the path. If it is, the script should _just work_:
 
 ```
 > deno task build
 ```
-
-But can be manually invoked like:
-
-```
-> deno run --unstable _build.ts
-```
-
-And you will be prompted for the permissions that Deno needs to perform the
-build.
 
 ### Contributing
 
