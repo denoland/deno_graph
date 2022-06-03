@@ -210,7 +210,7 @@ This would output to stdout the JSON structure of the module graph.
 ## Building Web Assembly
 
 The build script (`_build.ts`) requires the Deno CLI to be installed and
-available in the path. If it is, the script should _just work_:
+available in the path. If it is, the following command should _just work_:
 
 ```
 > deno task build
