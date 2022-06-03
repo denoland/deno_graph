@@ -113,8 +113,10 @@ export interface TypesDependencyJson {
 export type ModuleKind =
   | "amd"
   | "asserted"
+  | "builtIn"
   | "commonJs"
   | "esm"
+  | "external"
   | "script"
   | "synthetic"
   | "systemJs"
@@ -132,6 +134,7 @@ export interface DependencyJson {
   /** A flag indicating if the dependency was dynamic. (e.g.
    * `await import("mod.ts")`) */
   isDynamic?: true;
+  assertionType?: string;
 }
 
 export interface ModuleJson extends CacheInfo {

@@ -3,11 +3,11 @@
 import {
   assert,
   assertEquals,
-  assertThrows,
-  assertThrowsAsync,
-} from "https://deno.land/std@0.104.0/testing/asserts.ts";
+  assertRejects,
+} from "https://deno.land/std@0.142.0/testing/asserts.ts";
 import { createGraph, load, parseModule } from "./mod.ts";
 import type { LoadResponse } from "./mod.ts";
+import { MediaType } from "./lib/media_type.ts";
 
 Deno.test({
   name: "createGraph()",
@@ -34,7 +34,7 @@ Deno.test({
         {
           specifier: "https://example.com/a",
           kind: "esm",
-          mediaType: "TypeScript",
+          mediaType: MediaType.TypeScript,
           size: 56,
         },
       ],
@@ -76,8 +76,8 @@ Deno.test({
 
 Deno.test({
   name: "createGraph() - invalid URL",
-  fn() {
-    return assertThrowsAsync(
+  async fn() {
+    await assertRejects(
       async () => {
         await createGraph("./bad.ts");
       },
@@ -159,7 +159,7 @@ Deno.test({
         {
           "kind": "esm",
           "size": 21,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/b.js",
         },
         {
@@ -183,7 +183,7 @@ Deno.test({
           ],
           "kind": "esm",
           "size": 28,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/test.js",
         },
       ],
@@ -229,7 +229,7 @@ Deno.test({
         {
           "kind": "esm",
           "size": 21,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/b.js",
         },
         {
@@ -253,7 +253,7 @@ Deno.test({
           ],
           "kind": "esm",
           "size": 28,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/test.js",
         },
       ],
@@ -365,7 +365,7 @@ Deno.test({
           ],
           "kind": "esm",
           "size": 97,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/test.js",
         },
         {
@@ -403,7 +403,7 @@ export {};
         {
           specifier: "https://example.com/index.js",
           kind: "esm",
-          mediaType: "JavaScript",
+          mediaType: MediaType.JavaScript,
           sourceMap: {
             file: "input.js",
             mappings: "AACA,OAAO,CAAC,GAAG,CAAC,YAAY,CAAC,CAAC",
@@ -445,7 +445,7 @@ export {};
         {
           specifier: "https://example.com/index.js",
           kind: "esm",
-          mediaType: "JavaScript",
+          mediaType: MediaType.JavaScript,
           sourceMapUrl: "https://example.com/index.js.map",
           size: 73,
         },
@@ -483,8 +483,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule()",
-  fn() {
-    const module = parseModule(
+  async fn() {
+    const module = await parseModule(
       "file:///a/test01.js",
       `
         /// <reference types="./test01.d.ts" />
@@ -496,7 +496,7 @@ Deno.test({
     );
     assertEquals(module.toJSON(), {
       "specifier": "file:///a/test01.js",
-      "mediaType": "JavaScript",
+      "mediaType": MediaType.JavaScript,
       "kind": "esm",
       "size": 206,
       "dependencies": [{
@@ -553,8 +553,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - with headers",
-  fn() {
-    const module = parseModule(
+  async fn() {
+    const module = await parseModule(
       `https://example.com/a`,
       `declare interface A {
       a: string;
@@ -571,8 +571,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - with jsxImportSource pragma",
-  fn() {
-    const module = parseModule(
+  async fn() {
+    const module = await parseModule(
       `file:///a/test01.tsx`,
       `/* @jsxImportSource http://example.com/preact */
     export function A() {
@@ -591,10 +591,10 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - invalid URL",
-  fn() {
-    return assertThrows(
-      () => {
-        parseModule("./bad.ts", `console.log("hello");`);
+  async fn() {
+    await assertRejects(
+      async () => {
+        await parseModule("./bad.ts", `console.log("hello");`);
       },
       Error,
       "relative URL without a base",
@@ -604,10 +604,10 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - syntax error",
-  fn() {
-    return assertThrows(
-      () => {
-        parseModule("file:///a/test.md", `# Some Markdown\n\n**bold**`);
+  async fn() {
+    await assertRejects(
+      async () => {
+        await parseModule("file:///a/test.md", `# Some Markdown\n\n**bold**`);
       },
       Error,
       "The module's source code could not be parsed",
@@ -617,8 +617,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - import assertions",
-  fn() {
-    const module = parseModule(
+  async fn() {
+    const module = await parseModule(
       "file:///a/test01.js",
       `
         import a from "./a.json" assert { type: "json" };
@@ -664,7 +664,7 @@ Deno.test({
         },
       ],
       "kind": "esm",
-      "mediaType": "JavaScript",
+      "mediaType": MediaType.JavaScript,
       "size": 129,
       "specifier": "file:///a/test01.js",
     });
