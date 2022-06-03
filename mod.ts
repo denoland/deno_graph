@@ -34,6 +34,7 @@ import type {
 } from "./lib/types.d.ts";
 
 export { load } from "./lib/loader.ts";
+export { MediaType } from "./lib/media_type.ts";
 export type {
   CacheInfo,
   Dependency,
