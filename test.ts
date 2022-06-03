@@ -4,6 +4,7 @@ import {
   assert,
   assertEquals,
   assertRejects,
+assertThrows,
 } from "https://deno.land/std@0.142.0/testing/asserts.ts";
 import { createGraph, load, parseModule } from "./mod.ts";
 import type { LoadResponse } from "./mod.ts";
@@ -483,8 +484,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule()",
-  async fn() {
-    const module = await parseModule(
+  fn() {
+    const module = parseModule(
       "file:///a/test01.js",
       `
         /// <reference types="./test01.d.ts" />
@@ -553,8 +554,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - with headers",
-  async fn() {
-    const module = await parseModule(
+  fn() {
+    const module = parseModule(
       `https://example.com/a`,
       `declare interface A {
       a: string;
@@ -571,8 +572,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - with jsxImportSource pragma",
-  async fn() {
-    const module = await parseModule(
+  fn() {
+    const module = parseModule(
       `file:///a/test01.tsx`,
       `/* @jsxImportSource http://example.com/preact */
     export function A() {
@@ -591,10 +592,10 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - invalid URL",
-  async fn() {
-    await assertRejects(
-      async () => {
-        await parseModule("./bad.ts", `console.log("hello");`);
+  fn() {
+    assertThrows(
+      () => {
+        parseModule("./bad.ts", `console.log("hello");`);
       },
       Error,
       "relative URL without a base",
@@ -604,10 +605,10 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - syntax error",
-  async fn() {
-    await assertRejects(
-      async () => {
-        await parseModule("file:///a/test.md", `# Some Markdown\n\n**bold**`);
+  fn() {
+    assertThrows(
+      () => {
+        parseModule("file:///a/test.md", `# Some Markdown\n\n**bold**`);
       },
       Error,
       "The module's source code could not be parsed",
@@ -617,8 +618,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - import assertions",
-  async fn() {
-    const module = await parseModule(
+  fn() {
+    const module = parseModule(
       "file:///a/test01.js",
       `
         import a from "./a.json" assert { type: "json" };
