@@ -237,7 +237,9 @@ export function parseModule(
     options;
 
   if (!wasm.isInstantiated()) {
-    throw new Error("Please call `instantiate()` at least once before calling `parseModule`.");
+    throw new Error(
+      "Please call `instantiate()` at least once before calling `parseModule`.",
+    );
   }
 
   return wasm.parseModule(
