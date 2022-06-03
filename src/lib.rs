@@ -2,6 +2,8 @@
 
 // remove this after https://github.com/rustwasm/wasm-bindgen/issues/2774 is released
 #![allow(clippy::unused_unit)]
+#![deny(clippy::disallowed_methods)]
+#![deny(clippy::disallowed_types)]
 
 #[macro_use]
 extern crate cfg_if;
