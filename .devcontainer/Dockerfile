@@ -11,6 +11,6 @@ ENV PATH=${DENO_INSTALL}/bin:${PATH} \
     DENO_DIR=${DENO_INSTALL}/.cache/deno
 
 RUN rustup target add wasm32-unknown-unknown
-RUN cargo install -f wasm-bindgen-cli --version 0.2.78
+RUN cargo install -f wasm-bindgen-cli --version 0.2.79
 
 RUN chown -R vscode /usr/local/cargo

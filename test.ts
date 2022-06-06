@@ -1,13 +1,18 @@
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
 import {
   assert,
   assertEquals,
+  assertRejects,
   assertThrows,
-  assertThrowsAsync,
-} from "https://deno.land/std@0.104.0/testing/asserts.ts";
-import { createGraph, load, parseModule } from "./mod.ts";
-import type { LoadResponse } from "./mod.ts";
+} from "https://deno.land/std@0.142.0/testing/asserts.ts";
+import {
+  createGraph,
+  load,
+  LoadResponse,
+  MediaType,
+  parseModule,
+} from "./mod.ts";
 
 Deno.test({
   name: "createGraph()",
@@ -17,6 +22,7 @@ Deno.test({
         assert(!isDynamic);
         assertEquals(specifier, "https://example.com/a");
         return Promise.resolve({
+          kind: "module",
           specifier,
           headers: {
             "content-type": "application/typescript; charset=utf-8",
@@ -33,7 +39,7 @@ Deno.test({
         {
           specifier: "https://example.com/a",
           kind: "esm",
-          mediaType: "TypeScript",
+          mediaType: MediaType.TypeScript,
           size: 56,
         },
       ],
@@ -75,8 +81,8 @@ Deno.test({
 
 Deno.test({
   name: "createGraph() - invalid URL",
-  fn() {
-    return assertThrowsAsync(
+  async fn() {
+    await assertRejects(
       async () => {
         await createGraph("./bad.ts");
       },
@@ -129,10 +135,12 @@ Deno.test({
   async fn() {
     const fixtures: Record<string, LoadResponse> = {
       "file:///a/test.js": {
+        kind: "module",
         specifier: "file:///a/test.js",
         content: `import * as b from "./b.js";`,
       },
       "file:///a/b.js": {
+        kind: "module",
         specifier: "file:///a/b.js",
         content: `export const b = "b";`,
       },
@@ -156,7 +164,7 @@ Deno.test({
         {
           "kind": "esm",
           "size": 21,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/b.js",
         },
         {
@@ -180,7 +188,7 @@ Deno.test({
           ],
           "kind": "esm",
           "size": 28,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/test.js",
         },
       ],
@@ -194,10 +202,12 @@ Deno.test({
   async fn() {
     const fixtures: Record<string, LoadResponse> = {
       "file:///a/test.js": {
+        kind: "module",
         specifier: "file:///a/test.js",
         content: `import * as b from "./b.js";`,
       },
       "file:///a/b.js": {
+        kind: "module",
         specifier: "file:///a/b.js",
         content: `export const b = "b";`,
       },
@@ -224,7 +234,7 @@ Deno.test({
         {
           "kind": "esm",
           "size": 21,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/b.js",
         },
         {
@@ -248,7 +258,7 @@ Deno.test({
           ],
           "kind": "esm",
           "size": 28,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/test.js",
         },
       ],
@@ -266,11 +276,13 @@ Deno.test({
         load(specifier) {
           if (specifier === "file:///a.js") {
             return Promise.resolve({
+              kind: "module",
               specifier: "file:///a.js",
               content: `export const a = "a";`,
             });
           } else {
             return Promise.resolve({
+              kind: "module",
               specifier: "file:///a.d.ts",
               content: `export const a: "a";`,
             });
@@ -289,12 +301,173 @@ Deno.test({
 });
 
 Deno.test({
+  name: "createGraph() - load - external and builtin",
+  async fn() {
+    const fixtures: Record<string, LoadResponse> = {
+      "file:///a/test.js": {
+        kind: "module",
+        specifier: "file:///a/test.js",
+        content: `import * as fs from "builtin:fs";
+          import * as bundle from "https://example.com/bundle";`,
+      },
+      "builtin:fs": {
+        kind: "builtIn",
+        specifier: "builtin:fs",
+      },
+      "https://example.com/bundle": {
+        kind: "external",
+        specifier: "https://example.com/bundle",
+      },
+    };
+    const graph = await createGraph("file:///a/test.js", {
+      load(specifier) {
+        return Promise.resolve(fixtures[specifier]);
+      },
+    });
+    assertEquals(graph.toJSON(), {
+      "roots": [
+        "file:///a/test.js",
+      ],
+      "modules": [
+        {
+          "kind": "builtIn",
+          "specifier": "builtin:fs",
+        },
+        {
+          "dependencies": [
+            {
+              "specifier": "builtin:fs",
+              "code": {
+                "specifier": "builtin:fs",
+                "span": {
+                  "start": {
+                    "line": 0,
+                    "character": 20,
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 32,
+                  },
+                },
+              },
+            },
+            {
+              "specifier": "https://example.com/bundle",
+              "code": {
+                "specifier": "https://example.com/bundle",
+                "span": {
+                  "start": {
+                    "line": 1,
+                    "character": 34,
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 62,
+                  },
+                },
+              },
+            },
+          ],
+          "kind": "esm",
+          "size": 97,
+          "mediaType": MediaType.JavaScript,
+          "specifier": "file:///a/test.js",
+        },
+        {
+          "kind": "external",
+          "specifier": "https://example.com/bundle",
+        },
+      ],
+      "redirects": {},
+    });
+  },
+});
+
+Deno.test({
+  name: "createGraph() - source maps - data url",
+  async fn() {
+    const graph = await createGraph("https://example.com/index.js", {
+      load(specifier, isDynamic) {
+        assert(!isDynamic);
+        assertEquals(specifier, "https://example.com/index.js");
+        return Promise.resolve({
+          kind: "module",
+          specifier,
+          headers: {
+            "content-type": "application/javascript; charset=utf-8",
+          },
+          content: `console.log("hello deno");
+export {};
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5wdXQuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbnB1dC50c3giXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQ0EsT0FBTyxDQUFDLEdBQUcsQ0FBQyxZQUFZLENBQUMsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCB7fTtcbmNvbnNvbGUubG9nKFwiaGVsbG8gZGVub1wiKTtcbiJdfQ==`,
+        });
+      },
+    });
+    assertEquals(graph.toJSON(), {
+      roots: ["https://example.com/index.js"],
+      modules: [
+        {
+          specifier: "https://example.com/index.js",
+          kind: "esm",
+          mediaType: MediaType.JavaScript,
+          sourceMap: {
+            file: "input.js",
+            mappings: "AACA,OAAO,CAAC,GAAG,CAAC,YAAY,CAAC,CAAC",
+            names: [],
+            sources: ["input.tsx"],
+            sourcesContent: [`export {};\nconsole.log("hello deno");\n`],
+            version: 3,
+          },
+          size: 356,
+        },
+      ],
+      redirects: {},
+    });
+  },
+});
+
+Deno.test({
+  name: "createGraph() - source maps - data url",
+  async fn() {
+    const graph = await createGraph("https://example.com/index.js", {
+      load(specifier, isDynamic) {
+        assert(!isDynamic);
+        assertEquals(specifier, "https://example.com/index.js");
+        return Promise.resolve({
+          kind: "module",
+          specifier,
+          headers: {
+            "content-type": "application/javascript; charset=utf-8",
+          },
+          content: `console.log("hello deno");
+export {};
+//# sourceMappingURL=./index.js.map`,
+        });
+      },
+    });
+    assertEquals(graph.toJSON(), {
+      roots: ["https://example.com/index.js"],
+      modules: [
+        {
+          specifier: "https://example.com/index.js",
+          kind: "esm",
+          mediaType: MediaType.JavaScript,
+          sourceMapUrl: "https://example.com/index.js.map",
+          size: 73,
+        },
+      ],
+      redirects: {},
+    });
+  },
+});
+
+Deno.test({
   name: "load() - remote module",
   async fn() {
     const response = await load(
       "https://deno.land/std@0.103.0/examples/chat/server.ts",
     );
     assert(response);
+    assert(response.kind === "module");
     assertEquals(
       response.specifier,
       "https://deno.land/std@0.103.0/examples/chat/server.ts",
@@ -328,7 +501,7 @@ Deno.test({
     );
     assertEquals(module.toJSON(), {
       "specifier": "file:///a/test01.js",
-      "mediaType": "JavaScript",
+      "mediaType": MediaType.JavaScript,
       "kind": "esm",
       "size": 206,
       "dependencies": [{
@@ -424,7 +597,7 @@ Deno.test({
 Deno.test({
   name: "parseModule() - invalid URL",
   fn() {
-    return assertThrows(
+    assertThrows(
       () => {
         parseModule("./bad.ts", `console.log("hello");`);
       },
@@ -437,7 +610,7 @@ Deno.test({
 Deno.test({
   name: "parseModule() - syntax error",
   fn() {
-    return assertThrows(
+    assertThrows(
       () => {
         parseModule("file:///a/test.md", `# Some Markdown\n\n**bold**`);
       },
@@ -496,7 +669,7 @@ Deno.test({
         },
       ],
       "kind": "esm",
-      "mediaType": "JavaScript",
+      "mediaType": MediaType.JavaScript,
       "size": 129,
       "specifier": "file:///a/test01.js",
     });

@@ -1,4 +1,4 @@
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
 import type { LoadResponse } from "./types.d.ts";
 
@@ -38,6 +38,7 @@ export async function load(
         await requestRead(url);
         const content = await Deno.readTextFile(url);
         return {
+          kind: "module",
           specifier,
           content,
         };
@@ -57,6 +58,7 @@ export async function load(
           headers[key.toLowerCase()] = value;
         }
         return {
+          kind: "module",
           specifier: response.url,
           headers,
           content,

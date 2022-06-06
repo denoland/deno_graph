@@ -1,4 +1,4 @@
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
 /**
  * A JavaScript/TypeScript interface to the Deno CLI's module graph logic.
@@ -18,10 +18,7 @@
  * @module
  */
 
-import {
-  createGraph as jsCreateGraph,
-  parseModule as jsParseModule,
-} from "./lib/deno_graph.generated.js";
+import * as wasm from "./lib/deno_graph.generated.js";
 import { load as defaultLoad } from "./lib/loader.ts";
 import type {
   CacheInfo,
@@ -34,6 +31,7 @@ import type {
 } from "./lib/types.d.ts";
 
 export { load } from "./lib/loader.ts";
+export { MediaType } from "./lib/media_type.ts";
 export type {
   CacheInfo,
   Dependency,
@@ -157,7 +155,7 @@ export function createGraph(
   rootSpecifiers: string[] | [string, ModuleKind][],
   options?: CreateGraphOptions,
 ): Promise<ModuleGraph>;
-export function createGraph(
+export async function createGraph(
   rootSpecifiers: string | string[] | [string, ModuleKind][],
   options: CreateGraphOptions = {},
 ): Promise<ModuleGraph> {
@@ -176,7 +174,8 @@ export function createGraph(
     kind,
     imports,
   } = options;
-  return jsCreateGraph(
+  const { createGraph } = await wasm.instantiate();
+  return createGraph(
     rootSpecifiers,
     load,
     jsxImportSourceModule,
@@ -217,6 +216,11 @@ export interface ParseModuleOptions {
   resolveTypes?(specifier: string): string | undefined;
 }
 
+/** Instantiates the Wasm module used within deno_graph. */
+export async function instantiate() {
+  await wasm.instantiate();
+}
+
 /** Parse a module based on the supplied information and return its analyzed
  * representation. If an error is encountered when parsing, the function will
  * throw.
@@ -232,7 +236,14 @@ export function parseModule(
 ): Module {
   const { headers, jsxImportSourceModule, kind, resolve, resolveTypes } =
     options;
-  return jsParseModule(
+
+  if (!wasm.isInstantiated()) {
+    throw new Error(
+      "Please call `instantiate()` at least once before calling `parseModule`.",
+    );
+  }
+
+  return wasm.parseModule(
     specifier,
     headers,
     jsxImportSourceModule,

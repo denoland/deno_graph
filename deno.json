@@ -1,0 +1,22 @@
+{
+  "tasks": {
+    "build": "deno run --unstable -A --no-check https://deno.land/x/wasmbuild@0.4.0/main.ts --no-default-features --features wasm"
+  },
+  "fmt": {
+    "files": {
+      "exclude": [
+        "target",
+        "temp"
+      ]
+    }
+  },
+  "lint": {
+    "files": {
+      "exclude": [
+        "lib/deno_graph.generated.js",
+        "target",
+        "temp"
+      ]
+    }
+  }
+}

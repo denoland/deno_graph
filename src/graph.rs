@@ -1,4 +1,4 @@
-// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
 use crate::ast;
 use crate::ast::analyze_deno_types;
@@ -12,10 +12,14 @@ use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
 use crate::source::*;
+use crate::source_map::parse_sourcemap;
+use crate::source_map::ParsedSourceMap;
 
 use anyhow::Result;
 use deno_ast::MediaType;
 use deno_ast::ParsedSource;
+use deno_ast::SourcePos;
+use deno_ast::SourceRange;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
 use futures::Future;
@@ -26,6 +30,7 @@ use serde::ser::SerializeStruct;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
+use serde_json::Value;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
@@ -68,12 +73,9 @@ impl Position {
     }
   }
 
-  fn from_pos(
-    parsed_source: &ParsedSource,
-    pos: deno_ast::swc::common::BytePos,
-  ) -> Self {
+  fn from_pos(parsed_source: &ParsedSource, pos: SourcePos) -> Self {
     let line_and_column_index =
-      parsed_source.source().line_and_column_index(pos);
+      parsed_source.text_info().line_and_column_index(pos);
     Self {
       line: line_and_column_index.line_index,
       character: line_and_column_index.column_index,
@@ -104,15 +106,15 @@ impl fmt::Display for Range {
 }
 
 impl Range {
-  pub(crate) fn from_swc_span(
+  pub(crate) fn from_source_range(
     specifier: &ModuleSpecifier,
     parsed_source: &ParsedSource,
-    span: &deno_ast::swc::common::Span,
+    range: &SourceRange,
   ) -> Range {
     Range {
       specifier: specifier.clone(),
-      start: Position::from_pos(parsed_source, span.lo),
-      end: Position::from_pos(parsed_source, span.hi),
+      start: Position::from_pos(parsed_source, range.start),
+      end: Position::from_pos(parsed_source, range.end),
     }
   }
 
@@ -215,11 +217,11 @@ impl<'a> From<&'a ResolutionError> for ModuleGraphError {
 #[derive(Debug, Clone)]
 pub enum ResolutionError {
   InvalidDowngrade {
-    resolve_result: ResolveResult,
+    specifier: ModuleSpecifier,
     range: Range,
   },
   InvalidLocalImport {
-    resolve_result: ResolveResult,
+    specifier: ModuleSpecifier,
     range: Range,
   },
   InvalidSpecifier {
@@ -270,24 +272,24 @@ impl PartialEq for ResolutionError {
       ) => a == b && a_range == b_range,
       (
         Self::InvalidDowngrade {
-          resolve_result: a,
+          specifier: a,
           range: a_range,
           ..
         },
         Self::InvalidDowngrade {
-          resolve_result: b,
+          specifier: b,
           range: b_range,
           ..
         },
       )
       | (
         Self::InvalidLocalImport {
-          resolve_result: a,
+          specifier: a,
           range: a_range,
           ..
         },
         Self::InvalidLocalImport {
-          resolve_result: b,
+          specifier: b,
           range: b_range,
           ..
         },
@@ -314,8 +316,8 @@ impl Eq for ResolutionError {}
 impl fmt::Display for ResolutionError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::InvalidDowngrade { resolve_result, .. } => write!(f, "Modules imported via https are not allowed to import http modules.\n  Importing: {}", resolve_result.specifier),
-      Self::InvalidLocalImport { resolve_result, .. } => write!(f, "Remote modules are not allowed to import local modules. Consider using a dynamic import instead.\n  Importing: {}", resolve_result.specifier),
+      Self::InvalidDowngrade { specifier, .. } => write!(f, "Modules imported via https are not allowed to import http modules.\n  Importing: {}", specifier),
+      Self::InvalidLocalImport { specifier, .. } => write!(f, "Remote modules are not allowed to import local modules. Consider using a dynamic import instead.\n  Importing: {}", specifier),
       Self::ResolverError { error, .. } => error.fmt(f),
       Self::InvalidSpecifier { error, .. } => error.fmt(f),
     }
@@ -326,13 +328,101 @@ impl fmt::Display for ResolutionError {
 pub enum Resolved {
   None,
   Ok {
-    resolve_result: ResolveResult,
+    specifier: ModuleSpecifier,
+    kind: ModuleKind,
     range: Range,
   },
   Err(ResolutionError),
 }
 
 impl Resolved {
+  pub fn from_resolve_response(
+    response: ResolveResponse,
+    range: Range,
+    specifier: &str,
+    remapped: bool,
+  ) -> Self {
+    match response {
+      ResolveResponse::Specifier(specifier)
+      | ResolveResponse::Esm(specifier) => Self::from_specifier_and_kind(
+        specifier,
+        ModuleKind::Esm,
+        range,
+        remapped,
+      ),
+      ResolveResponse::Amd(specifier) => Self::from_specifier_and_kind(
+        specifier,
+        ModuleKind::Amd,
+        range,
+        remapped,
+      ),
+      ResolveResponse::CommonJs(specifier) => Self::from_specifier_and_kind(
+        specifier,
+        ModuleKind::CommonJs,
+        range,
+        remapped,
+      ),
+      ResolveResponse::Script(specifier) => Self::from_specifier_and_kind(
+        specifier,
+        ModuleKind::Script,
+        range,
+        remapped,
+      ),
+      ResolveResponse::SystemJs(specifier) => Self::from_specifier_and_kind(
+        specifier,
+        ModuleKind::SystemJs,
+        range,
+        remapped,
+      ),
+      ResolveResponse::Umd(specifier) => Self::from_specifier_and_kind(
+        specifier,
+        ModuleKind::Umd,
+        range,
+        remapped,
+      ),
+      ResolveResponse::Err(err) => {
+        let resolution_error =
+          if let Some(specifier_error) = err.downcast_ref::<SpecifierError>() {
+            ResolutionError::InvalidSpecifier {
+              error: specifier_error.clone(),
+              range,
+            }
+          } else {
+            ResolutionError::ResolverError {
+              error: Arc::new(err),
+              specifier: specifier.to_string(),
+              range,
+            }
+          };
+        Self::Err(resolution_error)
+      }
+    }
+  }
+
+  fn from_specifier_and_kind(
+    specifier: ModuleSpecifier,
+    kind: ModuleKind,
+    range: Range,
+    remapped: bool,
+  ) -> Self {
+    let referrer_scheme = range.specifier.scheme();
+    let specifier_scheme = specifier.scheme();
+    if referrer_scheme == "https" && specifier_scheme == "http" {
+      Resolved::Err(ResolutionError::InvalidDowngrade { specifier, range })
+    } else if (referrer_scheme == "https" || referrer_scheme == "http")
+      && !(specifier_scheme == "https" || specifier_scheme == "http")
+      && !remapped
+    {
+      Resolved::Err(ResolutionError::InvalidLocalImport { specifier, range })
+    } else {
+      Resolved::Ok {
+        specifier,
+        kind,
+        range,
+      }
+    }
+  }
+
   #[cfg(feature = "rust")]
   pub fn includes(&self, position: &Position) -> Option<&Range> {
     match self {
@@ -348,16 +438,13 @@ impl Resolved {
       _ => None,
     }
   }
+
   pub fn is_none(&self) -> bool {
     matches!(self, Self::None)
   }
 
   pub fn maybe_specifier(&self) -> Option<&ModuleSpecifier> {
-    if let Self::Ok {
-      resolve_result: ResolveResult { specifier, .. },
-      ..
-    } = self
-    {
+    if let Self::Ok { specifier, .. } = self {
       Some(specifier)
     } else {
       None
@@ -380,11 +467,10 @@ where
 {
   match resolved {
     Resolved::Ok {
-      resolve_result,
-      range,
+      specifier, range, ..
     } => {
       let mut state = serializer.serialize_struct("ResolvedSpecifier", 2)?;
-      state.serialize_field("specifier", &resolve_result.specifier)?;
+      state.serialize_field("specifier", specifier)?;
       state.serialize_field("span", range)?;
       state.end()
     }
@@ -461,10 +547,18 @@ pub enum ModuleKind {
   /// `MediaType` matches the assertion. Dependency analysis does not occur on
   /// asserted modules.
   Asserted,
+  /// Represents a module which is built in to a runtime. The module does not
+  /// contain source and will have no dependencies.
+  BuiltIn,
   /// A CommonJS module.
   CommonJs,
   /// An ECMAScript Module (JavaScript Module).
   Esm,
+  /// Represents a module which is not statically analyzed and is only available
+  /// at runtime. It is up to the implementor to ensure that the module is
+  /// loaded and available as a dependency. The module does not contain source
+  /// code and will have no dependencies.
+  External,
   /// A JavaScript script module. A slight misnomer, but it allows "plain"
   /// scripts to be imported into the module graph, but without supporting any
   /// dependency analysis.
@@ -505,7 +599,11 @@ pub struct Module {
     skip_serializing_if = "Option::is_none",
     serialize_with = "serialize_maybe_source"
   )]
-  pub maybe_source: Option<Arc<String>>,
+  pub maybe_source: Option<Arc<str>>,
+  #[serde(rename = "sourceMap", skip_serializing_if = "Option::is_none")]
+  pub maybe_source_map: Option<Value>,
+  #[serde(rename = "sourceMapUrl", skip_serializing_if = "Option::is_none")]
+  pub maybe_source_map_url: Option<ModuleSpecifier>,
   #[serde(
     rename = "typesDependency",
     skip_serializing_if = "Option::is_none",
@@ -523,7 +621,13 @@ impl Module {
     kind: ModuleKind,
     parsed_source: ParsedSource,
   ) -> Self {
-    let source = parsed_source.source().text();
+    let source = parsed_source.text_info().text();
+    let (maybe_source_map, maybe_source_map_url) =
+      match parse_sourcemap(&specifier, &parsed_source) {
+        Some(ParsedSourceMap::Url(url)) => (None, Some(url)),
+        Some(ParsedSourceMap::Value(value)) => (Some(value), None),
+        _ => (None, None),
+      };
     Self {
       dependencies: Default::default(),
       kind,
@@ -531,13 +635,35 @@ impl Module {
       maybe_checksum: None,
       maybe_parsed_source: Some(parsed_source),
       maybe_source: Some(source),
+      maybe_source_map,
+      maybe_source_map_url,
       maybe_types_dependency: None,
       media_type: MediaType::Unknown,
       specifier,
     }
   }
 
-  fn new_from_type_imports(
+  pub fn new_without_source(
+    specifier: ModuleSpecifier,
+    kind: ModuleKind,
+  ) -> Self {
+    Self {
+      dependencies: Default::default(),
+      kind,
+      maybe_cache_info: None,
+      maybe_checksum: None,
+      maybe_parsed_source: None,
+      maybe_source: None,
+      maybe_source_map: None,
+      maybe_source_map_url: None,
+      maybe_types_dependency: None,
+      media_type: MediaType::Unknown,
+      specifier,
+    }
+  }
+
+  /// Create a synthetic module from a vector of type imports
+  pub fn new_from_type_imports(
     specifier: ModuleSpecifier,
     type_imports: Vec<String>,
     maybe_resolver: Option<&dyn Resolver>,
@@ -569,6 +695,8 @@ impl Module {
       maybe_checksum: None,
       maybe_parsed_source: None,
       maybe_source: None,
+      maybe_source_map: None,
+      maybe_source_map_url: None,
       maybe_types_dependency: None,
       media_type: MediaType::Unknown,
       specifier,
@@ -861,13 +989,8 @@ impl ModuleGraph {
     specifier: &ModuleSpecifier,
   ) -> Option<&ModuleSpecifier> {
     if let Some(ModuleSlot::Module(module)) = self.module_slots.get(specifier) {
-      if let Some((
-        _,
-        Resolved::Ok {
-          resolve_result: ResolveResult { specifier, .. },
-          ..
-        },
-      )) = &module.maybe_types_dependency
+      if let Some((_, Resolved::Ok { specifier, .. })) =
+        &module.maybe_types_dependency
       {
         return Some(specifier);
       }
@@ -880,10 +1003,8 @@ impl ModuleGraph {
       let locker = locker.borrow();
       for (_, module_slot) in self.module_slots.iter_mut() {
         if let ModuleSlot::Module(module) = module_slot {
-          module.maybe_checksum = module
-            .maybe_source
-            .as_ref()
-            .map(|s| locker.get_checksum(s.as_str()));
+          module.maybe_checksum =
+            module.maybe_source.as_ref().map(|s| locker.get_checksum(s));
         }
       }
     }
@@ -968,13 +1089,8 @@ impl ModuleGraph {
       let should_error = (is_type && types_only) || (!is_type && !types_only);
       match get_module(specifier) {
         Ok(Some(module)) => {
-          if let Some((
-            _,
-            Resolved::Ok {
-              resolve_result: ResolveResult { specifier, .. },
-              ..
-            },
-          )) = &module.maybe_types_dependency
+          if let Some((_, Resolved::Ok { specifier, .. })) =
+            &module.maybe_types_dependency
           {
             validate(specifier, types_only, true, seen, get_module)?;
           }
@@ -982,20 +1098,18 @@ impl ModuleGraph {
             if !dep.is_dynamic {
               // TODO(@kitsonk) eliminate duplication with maybe_code below
               match &dep.maybe_type {
-                Resolved::Ok {
-                  resolve_result: ResolveResult { specifier, .. },
-                  ..
-                } => validate(specifier, types_only, true, seen, get_module)?,
+                Resolved::Ok { specifier, .. } => {
+                  validate(specifier, types_only, true, seen, get_module)?
+                }
                 Resolved::Err(err) if types_only => {
                   return Err(err.into());
                 }
                 _ => (),
               }
               match &dep.maybe_code {
-                Resolved::Ok {
-                  resolve_result: ResolveResult { specifier, .. },
-                  ..
-                } => validate(specifier, types_only, false, seen, get_module)?,
+                Resolved::Ok { specifier, .. } => {
+                  validate(specifier, types_only, false, seen, get_module)?
+                }
                 Resolved::Err(err) if !types_only => {
                   return Err(err.into());
                 }
@@ -1030,61 +1144,22 @@ fn resolve(
   referrer_range: &Range,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolved {
-  let mut remapped = false;
-  let resolved_specifier = if let Some(resolver) = maybe_resolver {
-    remapped = true;
-    resolver
-      .resolve(specifier, &referrer_range.specifier)
-      .map_err(|err| {
-        if let Some(specifier_error) = err.downcast_ref::<SpecifierError>() {
-          ResolutionError::InvalidSpecifier {
-            error: specifier_error.clone(),
-            range: referrer_range.clone(),
-          }
-        } else {
-          ResolutionError::ResolverError {
-            error: Arc::new(err),
-            specifier: specifier.to_string(),
-            range: referrer_range.clone(),
-          }
-        }
-      })
+  if let Some(resolver) = maybe_resolver {
+    let response = resolver.resolve(specifier, &referrer_range.specifier);
+    Resolved::from_resolve_response(
+      response,
+      referrer_range.clone(),
+      specifier,
+      true,
+    )
   } else {
-    resolve_import(specifier, &referrer_range.specifier)
-      .map(|specifier| ResolveResult {
-        specifier,
-        kind: ModuleKind::Esm,
-      })
-      .map_err(|error| ResolutionError::InvalidSpecifier {
-        error,
-        range: referrer_range.clone(),
-      })
-  };
-  match resolved_specifier {
-    Ok(resolve_result) => {
-      let referrer_scheme = referrer_range.specifier.scheme();
-      let specifier_scheme = resolve_result.specifier.scheme();
-      if referrer_scheme == "https" && specifier_scheme == "http" {
-        Resolved::Err(ResolutionError::InvalidDowngrade {
-          resolve_result,
-          range: referrer_range.clone(),
-        })
-      } else if (referrer_scheme == "https" || referrer_scheme == "http")
-        && !(specifier_scheme == "https" || specifier_scheme == "http")
-        && !remapped
-      {
-        Resolved::Err(ResolutionError::InvalidLocalImport {
-          resolve_result,
-          range: referrer_range.clone(),
-        })
-      } else {
-        Resolved::Ok {
-          resolve_result,
-          range: referrer_range.clone(),
-        }
-      }
-    }
-    Err(err) => Resolved::Err(err),
+    let response = resolve_import(specifier, &referrer_range.specifier).into();
+    Resolved::from_resolve_response(
+      response,
+      referrer_range.clone(),
+      specifier,
+      false,
+    )
   }
 }
 
@@ -1093,7 +1168,7 @@ fn resolve(
 pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  content: Arc<String>,
+  content: Arc<str>,
   maybe_assert_type: Option<&str>,
   maybe_kind: Option<&ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
@@ -1117,6 +1192,8 @@ pub(crate) fn parse_module(
       maybe_checksum: None,
       maybe_parsed_source: None,
       maybe_source: Some(content),
+      maybe_source_map: None,
+      maybe_source_map_url: None,
       maybe_types_dependency: None,
       media_type: MediaType::Json,
       specifier: specifier.clone(),
@@ -1215,16 +1292,16 @@ pub(crate) fn parse_module_from_ast(
   // Analyze the TypeScript triple-slash references
   for reference in analyze_ts_references(parsed_source) {
     match reference {
-      ast::TypeScriptReference::Path(specifier, span) => {
+      ast::TypeScriptReference::Path(specifier, range) => {
         let range =
-          Range::from_swc_span(&module.specifier, parsed_source, &span);
+          Range::from_source_range(&module.specifier, parsed_source, &range);
         let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
         let dep = module.dependencies.entry(specifier).or_default();
         dep.maybe_code = resolved_dependency;
       }
-      ast::TypeScriptReference::Types(specifier, span) => {
+      ast::TypeScriptReference::Types(specifier, range) => {
         let range =
-          Range::from_swc_span(&module.specifier, parsed_source, &span);
+          Range::from_source_range(&module.specifier, parsed_source, &range);
         let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
         if is_untyped(&module.media_type) {
           module.maybe_types_dependency =
@@ -1238,24 +1315,35 @@ pub(crate) fn parse_module_from_ast(
   }
 
   // Analyze any JSX Import Source pragma
-  if let Some((import_source, span)) = analyze_jsx_import_sources(parsed_source)
+  if let Some((import_source, range)) =
+    analyze_jsx_import_sources(parsed_source)
   {
     let jsx_import_source_module = maybe_resolver
       .map(|r| r.jsx_import_source_module())
       .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE);
     let specifier = format!("{}/{}", import_source, jsx_import_source_module);
-    let range = Range::from_swc_span(&module.specifier, parsed_source, &span);
+    let range =
+      Range::from_source_range(&module.specifier, parsed_source, &range);
     let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
     let dep = module.dependencies.entry(specifier).or_default();
     dep.maybe_code = resolved_dependency;
   }
 
   // Analyze any JSDoc type imports
-  for (import_source, span) in analyze_jsdoc_imports(parsed_source) {
-    let range = Range::from_swc_span(&module.specifier, parsed_source, &span);
-    let resolved_dependency = resolve(&import_source, &range, maybe_resolver);
-    let dep = module.dependencies.entry(import_source).or_default();
-    dep.maybe_type = resolved_dependency;
+  // We only analyze these on JavaScript types of modules, since they are
+  // ignored by TypeScript when type checking anyway and really shouldn't be
+  // there, but some people do strange things.
+  if matches!(
+    module.media_type,
+    MediaType::JavaScript | MediaType::Jsx | MediaType::Mjs | MediaType::Cjs
+  ) {
+    for (import_source, range) in analyze_jsdoc_imports(parsed_source) {
+      let range =
+        Range::from_source_range(&module.specifier, parsed_source, &range);
+      let resolved_dependency = resolve(&import_source, &range, maybe_resolver);
+      let dep = module.dependencies.entry(import_source).or_default();
+      dep.maybe_type = resolved_dependency;
+    }
   }
 
   // Analyze the X-TypeScript-Types header
@@ -1285,10 +1373,8 @@ pub(crate) fn parse_module_from_ast(
           Ok(Some((specifier, maybe_range))) => Some((
             module.specifier.to_string(),
             Resolved::Ok {
-              resolve_result: ResolveResult {
-                specifier: specifier.clone(),
-                kind: kind.clone(),
-              },
+              specifier: specifier.clone(),
+              kind: kind.clone(),
               range: maybe_range.unwrap_or_else(|| Range {
                 specifier,
                 start: Position::zeroed(),
@@ -1324,10 +1410,10 @@ pub(crate) fn parse_module_from_ast(
     dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
     let resolved_dependency = resolve(
       &desc.specifier,
-      &Range::from_swc_span(
+      &Range::from_source_range(
         &module.specifier,
         parsed_source,
-        &desc.specifier_span,
+        &desc.specifier_range,
       ),
       maybe_resolver,
     );
@@ -1341,10 +1427,10 @@ pub(crate) fn parse_module_from_ast(
     }
     let specifier = module.specifier.clone();
     let maybe_type = analyze_deno_types(&desc)
-      .map(|(text, span)| {
+      .map(|(text, range)| {
         resolve(
           &text,
-          &Range::from_swc_span(&specifier, parsed_source, &span),
+          &Range::from_source_range(&specifier, parsed_source, &range),
           maybe_resolver,
         )
       })
@@ -1455,8 +1541,7 @@ impl<'a> Builder<'a> {
         );
         for dep in synthetic_module.dependencies.values() {
           if let Resolved::Ok {
-            resolve_result: ResolveResult { specifier, kind },
-            ..
+            specifier, kind, ..
           } = &dep.maybe_type
           {
             self.load(specifier, kind, self.in_dynamic_branch, None);
@@ -1537,13 +1622,38 @@ impl<'a> Builder<'a> {
     // Enrich with cache info from the loader
     for slot in self.graph.module_slots.values_mut() {
       if let ModuleSlot::Module(ref mut module) = slot {
-        module.maybe_cache_info = self.loader.get_cache_info(&module.specifier);
+        if !matches!(module.kind, ModuleKind::Synthetic) {
+          module.maybe_cache_info =
+            self.loader.get_cache_info(&module.specifier);
+        }
       }
     }
     // Enrich with checksums from locker
     self.graph.set_checksums();
 
     self.graph
+  }
+
+  /// Checks if the specifier is redirected or not and updates any redirects in
+  /// the graph.
+  fn check_specifier(
+    &mut self,
+    requested_specifier: &ModuleSpecifier,
+    specifier: &ModuleSpecifier,
+  ) {
+    // If the response was redirected, then we add the module to the redirects
+    if requested_specifier != specifier {
+      // remove a potentially pending redirect that will never resolve
+      if let Some(slot) = self.graph.module_slots.get(requested_specifier) {
+        if matches!(slot, ModuleSlot::Pending) {
+          self.graph.module_slots.remove(requested_specifier);
+        }
+      }
+      self
+        .graph
+        .redirects
+        .insert(requested_specifier.clone(), specifier.clone());
+    }
   }
 
   /// Enqueue a request to load the specifier via the loader.
@@ -1584,7 +1694,6 @@ impl<'a> Builder<'a> {
     false
   }
 
-  /// Visit a module, parsing it and resolving any dependencies.
   fn visit(
     &mut self,
     requested_specifier: &ModuleSpecifier,
@@ -1593,31 +1702,65 @@ impl<'a> Builder<'a> {
     build_kind: &BuildKind,
     maybe_assert_type: Option<String>,
   ) {
-    use std::borrow::BorrowMut;
-
-    let maybe_headers = response.maybe_headers.as_ref();
-    let specifier = response.specifier.clone();
-
-    // If the response was redirected, then we add the module to the redirects
-    if *requested_specifier != specifier {
-      // remove a potentially pending redirect that will never resolve
-      if let Some(slot) = self.graph.module_slots.get(requested_specifier) {
-        if matches!(slot, ModuleSlot::Pending) {
-          self.graph.module_slots.remove(requested_specifier);
-        }
+    let (specifier, module_slot) = match response {
+      LoadResponse::BuiltIn { specifier } => {
+        self.check_specifier(requested_specifier, specifier);
+        let module_slot = ModuleSlot::Module(Module::new_without_source(
+          specifier.clone(),
+          ModuleKind::BuiltIn,
+        ));
+        (specifier, module_slot)
       }
-      self
-        .graph
-        .redirects
-        .insert(requested_specifier.clone(), specifier.clone());
-    }
+      LoadResponse::External { specifier } => {
+        self.check_specifier(requested_specifier, specifier);
+        let module_slot = ModuleSlot::Module(Module::new_without_source(
+          specifier.clone(),
+          ModuleKind::External,
+        ));
+        (specifier, module_slot)
+      }
+      LoadResponse::Module {
+        specifier,
+        content,
+        maybe_headers,
+      } => {
+        self.check_specifier(requested_specifier, specifier);
+        (
+          specifier,
+          self.visit_module(
+            specifier,
+            kind,
+            maybe_headers.as_ref(),
+            content.clone(),
+            build_kind,
+            maybe_assert_type,
+          ),
+        )
+      }
+    };
+    self
+      .graph
+      .module_slots
+      .insert(specifier.clone(), module_slot);
+  }
 
-    let is_root = self.roots_contain(&specifier);
+  /// Visit a module, parsing it and resolving any dependencies.
+  fn visit_module(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    kind: &ModuleKind,
+    maybe_headers: Option<&HashMap<String, String>>,
+    content: Arc<str>,
+    build_kind: &BuildKind,
+    maybe_assert_type: Option<String>,
+  ) -> ModuleSlot {
+    use std::borrow::BorrowMut;
+    let is_root = self.roots_contain(specifier);
 
     let mut module_slot = parse_module(
-      &specifier,
+      specifier,
       maybe_headers,
-      response.content.clone(),
+      content,
       maybe_assert_type.as_deref(),
       Some(kind),
       self.maybe_resolver,
@@ -1635,8 +1778,7 @@ impl<'a> Builder<'a> {
             || dep.maybe_type.is_none()
           {
             if let Resolved::Ok {
-              resolve_result: ResolveResult { specifier, kind },
-              ..
+              specifier, kind, ..
             } = &dep.maybe_code
             {
               if dep.is_dynamic && !self.in_dynamic_branch {
@@ -1659,8 +1801,7 @@ impl<'a> Builder<'a> {
 
           if matches!(build_kind, BuildKind::All | BuildKind::TypesOnly) {
             if let Resolved::Ok {
-              resolve_result: ResolveResult { specifier, kind },
-              ..
+              specifier, kind, ..
             } = &dep.maybe_type
             {
               if dep.is_dynamic && !self.in_dynamic_branch {
@@ -1689,8 +1830,7 @@ impl<'a> Builder<'a> {
         if let Some((
           _,
           Resolved::Ok {
-            resolve_result: ResolveResult { specifier, kind },
-            ..
+            specifier, kind, ..
           },
         )) = &module.maybe_types_dependency
         {
@@ -1700,7 +1840,7 @@ impl<'a> Builder<'a> {
         module.maybe_types_dependency = None;
       }
     }
-    self.graph.module_slots.insert(specifier, module_slot);
+    module_slot
   }
 }
 
@@ -1843,7 +1983,7 @@ where
 }
 
 fn serialize_maybe_source<S>(
-  source: &Option<Arc<String>>,
+  source: &Option<Arc<str>>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
@@ -1901,11 +2041,11 @@ mod tests {
   fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let source_parser = ast::DefaultSourceParser::default();
-    let content = Arc::new(r#"import * as b from "./b.ts";"#.to_string());
+    let content = r#"import * as b from "./b.ts";"#;
     let slot = parse_module(
       &specifier,
       None,
-      content,
+      content.into(),
       None,
       Some(&ModuleKind::Esm),
       None,
@@ -1926,10 +2066,8 @@ mod tests {
       assert_eq!(
         dependency.maybe_code,
         Resolved::Ok {
-          resolve_result: ResolveResult {
-            specifier: ModuleSpecifier::parse("file:///b.ts").unwrap(),
-            kind: ModuleKind::Esm,
-          },
+          specifier: ModuleSpecifier::parse("file:///b.ts").unwrap(),
+          kind: ModuleKind::Esm,
           range: Range {
             specifier: specifier.clone(),
             start: Position {
@@ -1989,10 +2127,10 @@ mod tests {
             assert!(!is_dynamic);
             self.loaded_foo = true;
             Box::pin(async move {
-              Ok(Some(LoadResponse {
+              Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: Arc::new("await import('file:///bar.js')".to_string()),
+                content: "await import('file:///bar.js')".into(),
               }))
             })
           }
@@ -2000,10 +2138,10 @@ mod tests {
             assert!(is_dynamic);
             self.loaded_bar = true;
             Box::pin(async move {
-              Ok(Some(LoadResponse {
+              Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: Arc::new("import 'file:///baz.js'".to_string()),
+                content: "import 'file:///baz.js'".into(),
               }))
             })
           }
@@ -2011,10 +2149,10 @@ mod tests {
             assert!(is_dynamic);
             self.loaded_baz = true;
             Box::pin(async move {
-              Ok(Some(LoadResponse {
+              Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: Arc::new("console.log('Hello, world!')".to_string()),
+                content: "console.log('Hello, world!')".into(),
               }))
             })
           }
@@ -2055,10 +2193,10 @@ mod tests {
         let specifier = specifier.clone();
         match specifier.as_str() {
           "file:///foo.js" => Box::pin(async move {
-            Ok(Some(LoadResponse {
+            Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: Arc::new("await import('file:///bar.js')".to_string()),
+              content: "await import('file:///bar.js')".into(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move { Ok(None) }),
@@ -2115,17 +2253,17 @@ mod tests {
         let specifier = specifier.clone();
         match specifier.as_str() {
           "file:///foo.js" => Box::pin(async move {
-            Ok(Some(LoadResponse {
+            Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///foo_actual.js").unwrap(),
               maybe_headers: None,
-              content: Arc::new("import 'file:///bar.js'".to_string()),
+              content: "import 'file:///bar.js'".into(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move {
-            Ok(Some(LoadResponse {
+            Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///bar_actual.js").unwrap(),
               maybe_headers: None,
-              content: Arc::new("(".to_string()),
+              content: "(".into(),
             }))
           }),
           _ => unreachable!(),
