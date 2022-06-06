@@ -8,6 +8,7 @@ import {
 } from "https://deno.land/std@0.142.0/testing/asserts.ts";
 import {
   createGraph,
+  init,
   load,
   LoadResponse,
   MediaType,
@@ -488,7 +489,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule()",
-  fn() {
+  async fn() {
+    await init();
     const module = parseModule(
       "file:///a/test01.js",
       `
@@ -558,7 +560,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - with headers",
-  fn() {
+  async fn() {
+    await init();
     const module = parseModule(
       `https://example.com/a`,
       `declare interface A {
@@ -576,7 +579,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - with jsxImportSource pragma",
-  fn() {
+  async fn() {
+    await init();
     const module = parseModule(
       `file:///a/test01.tsx`,
       `/* @jsxImportSource http://example.com/preact */
@@ -596,7 +600,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - invalid URL",
-  fn() {
+  async fn() {
+    await init();
     assertThrows(
       () => {
         parseModule("./bad.ts", `console.log("hello");`);
@@ -609,7 +614,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - syntax error",
-  fn() {
+  async fn() {
+    await init();
     assertThrows(
       () => {
         parseModule("file:///a/test.md", `# Some Markdown\n\n**bold**`);
@@ -622,7 +628,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - import assertions",
-  fn() {
+  async fn() {
+    await init();
     const module = parseModule(
       "file:///a/test01.js",
       `

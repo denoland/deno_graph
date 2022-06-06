@@ -78,7 +78,7 @@ jobs:
 
       - name: 🏗️ build npm
         if: contains(matrix.os, 'ubuntu')
-        run: deno run -A _build_npm.ts ${{steps.get_tag_version.outputs.TAG_VERSION}}
+        run: deno task build:npm ${{steps.get_tag_version.outputs.TAG_VERSION}}
 
       - name: 📦 npm publish
         if: contains(matrix.os, 'ubuntu') && startsWith(github.ref, 'refs/tags/')

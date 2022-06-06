@@ -217,7 +217,7 @@ export interface ParseModuleOptions {
 }
 
 /** Instantiates the Wasm module used within deno_graph. */
-export async function instantiate() {
+export async function init() {
   await wasm.instantiate();
 }
 
@@ -239,7 +239,7 @@ export function parseModule(
 
   if (!wasm.isInstantiated()) {
     throw new Error(
-      "Please call `instantiate()` at least once before calling `parseModule`.",
+      "Please call `init()` at least once before calling `parseModule`.",
     );
   }
 
