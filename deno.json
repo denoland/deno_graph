@@ -6,6 +6,7 @@
   "fmt": {
     "files": {
       "exclude": [
+        "npm",
         "target",
         "temp"
       ]
@@ -15,6 +16,7 @@
     "files": {
       "exclude": [
         "lib/deno_graph.generated.js",
+        "npm",
         "target",
         "temp"
       ]
