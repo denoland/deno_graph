@@ -19,7 +19,6 @@ use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
 use std::pin::Pin;
-use std::sync::Arc;
 
 pub static DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
 
@@ -56,7 +55,7 @@ pub enum LoadResponse {
   /// A loaded module.
   Module {
     /// The content of the remote module.
-    content: Arc<str>,
+    content: String,
     /// The final specifier of the module.
     specifier: ModuleSpecifier,
     /// If the module is a remote module, the headers should be returned as a
@@ -213,7 +212,7 @@ pub fn load_data_url(
   Ok(Some(LoadResponse::Module {
     specifier: specifier.clone(),
     maybe_headers: Some(headers),
-    content: content.into(),
+    content,
   }))
 }
 
@@ -265,7 +264,7 @@ impl MemoryLoader {
                   })
                   .collect()
               }),
-              content: content.as_ref().into(),
+              content: content.as_ref().to_string(),
             }),
             Source::BuiltIn(specifier) => Ok(LoadResponse::BuiltIn {
               specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),

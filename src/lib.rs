@@ -27,7 +27,6 @@ use source::Resolver;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::sync::Arc;
 
 cfg_if! {
   if #[cfg(feature = "rust")] {
@@ -151,7 +150,7 @@ cfg_if! {
     pub fn parse_module(
       specifier: &ModuleSpecifier,
       maybe_headers: Option<&HashMap<String, String>>,
-      content: Arc<str>,
+      content: String,
       maybe_kind: Option<&ModuleKind>,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_parser: Option<&dyn SourceParser>,
@@ -296,7 +295,7 @@ cfg_if! {
       match graph::parse_module(
         &specifier,
         maybe_headers.as_ref(),
-        content.into(),
+        content,
         None,
         maybe_kind.as_ref(),
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
@@ -2823,7 +2822,7 @@ export function a(a) {
     export { c } from "./c.ts";
     const d = await import("./d.ts");
     "#
-      .into(),
+      .to_string(),
       None,
       None,
       None,
@@ -2845,7 +2844,7 @@ export function a(a) {
     import a from "./a.json" assert { type: "json" };
     await import("./b.json", { assert: { type: "json" } });
     "#
-      .into(),
+      .to_string(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2913,7 +2912,7 @@ export function a(a) {
       return <div>Hello Deno</div>;
     }
     "#
-      .into(),
+      .to_string(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2953,7 +2952,7 @@ export function a(a) {
       r#"declare interface A {
   a: string;
 }"#
-        .into(),
+        .to_string(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -2978,7 +2977,7 @@ export function a(a) {
   return;
 }
 "#
-      .into(),
+      .to_string(),
       Some(&ModuleKind::Esm),
       None,
       None,
@@ -3047,7 +3046,7 @@ export function a(a: A): B {
   return;
 }
 "#
-      .into(),
+      .to_string(),
       Some(&ModuleKind::Esm),
       None,
       None,
