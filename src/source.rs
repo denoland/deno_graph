@@ -1,6 +1,7 @@
 // Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
 use crate::graph::Range;
+use crate::graph::ModuleKind;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::SpecifierError;
 use crate::text_encoding::strip_bom_mut;
@@ -134,6 +135,19 @@ impl ResolveResponse {
       | Self::Specifier(specifier)
       | Self::SystemJs(specifier)
       | Self::Umd(specifier) => Ok(specifier),
+      Self::Err(err) => Err(err),
+    }
+  }
+
+  pub fn as_root(self) -> Result<(ModuleSpecifier, ModuleKind), Error> {
+    match self {
+      Self::Amd(specifier) => Ok((specifier, ModuleKind::Amd)),
+      Self::CommonJs(specifier) => Ok((specifier, ModuleKind::CommonJs)),
+      Self::Esm(specifier) => Ok((specifier, ModuleKind::Esm)),
+      Self::Script(specifier) => Ok((specifier, ModuleKind::Script)),
+      Self::Specifier(specifier) => Ok((specifier, ModuleKind::Esm)),
+      Self::SystemJs(specifier) => Ok((specifier, ModuleKind::SystemJs)),
+      Self::Umd(specifier) => Ok((specifier, ModuleKind::Umd)),
       Self::Err(err) => Err(err),
     }
   }
