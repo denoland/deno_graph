@@ -27,10 +27,11 @@ use source::Resolver;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::sync::Arc;
 
 cfg_if! {
   if #[cfg(feature = "rust")] {
+    use std::sync::Arc;
+
     pub use ast::analyze_dependencies;
     pub use ast::analyze_deno_types;
     pub use ast::analyze_ts_references;
