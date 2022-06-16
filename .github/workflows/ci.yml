@@ -53,7 +53,7 @@ jobs:
           cargo test --locked --release --all-features --all-targets
           deno test --allow-read --allow-net
 
-      - name: Ensure Wasm up to date
+      - name: 💄 Ensure Wasm up to date
         if: contains(matrix.os, 'ubuntu')
         run: deno task build --check
 
