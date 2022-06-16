@@ -53,7 +53,7 @@ jobs:
           cargo test --locked --release --all-features --all-targets
           deno test --allow-read --allow-net
 
-      - name: ��  ensure Wasm up to date
+      - name: ensure Wasm up to date
         run: deno task build --check
 
       - name: 📦  publish
