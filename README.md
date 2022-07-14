@@ -72,23 +72,51 @@ A minimal example would look like this:
 
 ```rust
 use deno_graph::create_graph;
-use deno_graph::ModuleSpecifier;
-use deno_graph::source::MemoryLoader;
+use deno_graph::source::{MemoryLoader, Source};
+use deno_graph::{ModuleKind, ModuleSpecifier};
 use futures::executor::block_on;
 
 fn main() {
-  let mut loader = MemoryLoader::new(
-    vec![
-      ("file:///test.ts", Ok(("file:///test.ts", None, "import * as a from \"./a.ts\";"))),
-      ("file:///a.ts", Ok(("file:///a.ts", None, "export const a = \"a\";"))),
-    ]
-  );
-  let roots = vec![ModuleSpecifier::parse("file:///test.ts").unwrap()];
-  let future = async move {
-    let graph = create_graph(roots, &mut loader, None, None).await;
-    println!("{}", graph);
-  };
-  block_on()
+    let mut loader = MemoryLoader::new(
+        vec![
+            (
+                "file:///test.ts",
+                Source::Module {
+                    specifier: "file:///test.ts",
+                    maybe_headers: None,
+                    content: "import * as a from \"./a.ts\";",
+                },
+            ),
+            (
+                "file:///a.ts",
+                Source::Module {
+                    specifier: "file:///a.ts",
+                    maybe_headers: None,
+                    content: "export const a = \"a\";",
+                },
+            ),
+        ],
+        vec![],
+    );
+    let root_specifier = vec![(
+        ModuleSpecifier::parse("file:///test.ts").unwrap(),
+        ModuleKind::Esm,
+    )];
+    let future = async move {
+        let graph = create_graph(
+            root_specifier,
+            false,
+            None,
+            &mut loader,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await;
+        println!("{}", graph);
+    };
+    block_on(future)
 }
 ```
 
