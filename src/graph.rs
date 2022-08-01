@@ -563,10 +563,6 @@ pub enum ModuleKind {
   /// scripts to be imported into the module graph, but without supporting any
   /// dependency analysis.
   Script,
-  /// An injected module where any dependencies are asserted and no dependency
-  /// analysis occurs. This allows external meta data files which add
-  /// dependencies to be represented in the graph.
-  Synthetic,
   /// A SystemJS module. Currently dependency analysis is not supported for
   /// these kinds of modules.
   SystemJs,
@@ -662,47 +658,6 @@ impl Module {
     }
   }
 
-  /// Create a synthetic module from a vector of type imports
-  pub fn new_from_type_imports(
-    specifier: ModuleSpecifier,
-    type_imports: Vec<String>,
-    maybe_resolver: Option<&dyn Resolver>,
-  ) -> Self {
-    let dependencies = type_imports
-      .iter()
-      .map(|type_import| {
-        let referrer_range = Range {
-          specifier: specifier.clone(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
-        };
-        let maybe_type = resolve(type_import, &referrer_range, maybe_resolver);
-        (
-          type_import.clone(),
-          Dependency {
-            is_dynamic: false,
-            maybe_code: Resolved::None,
-            maybe_type,
-            maybe_assert_type: None,
-          },
-        )
-      })
-      .collect();
-    Self {
-      dependencies,
-      kind: ModuleKind::Synthetic,
-      maybe_cache_info: None,
-      maybe_checksum: None,
-      maybe_parsed_source: None,
-      maybe_source: None,
-      maybe_source_map: None,
-      maybe_source_map_url: None,
-      maybe_types_dependency: None,
-      media_type: MediaType::Unknown,
-      specifier,
-    }
-  }
-
   /// Return the size in bytes of the content of the module.
   pub fn size(&self) -> usize {
     self
@@ -762,6 +717,20 @@ fn to_result(
   }
 }
 
+/// Provides a way for imports, through configuration, to be imported to the
+/// module graph without requiring the dependencies to be analyzed. This is
+/// intended to be used for importing type dependencies or other externally
+/// defined dependencies, like JSX runtimes.
+#[derive(Debug, Serialize)]
+pub struct GraphImport {
+  /// The referring module specifier to be used to resolve relative dependencies
+  /// from. This is typically the meta data file that defined the dependency,
+  /// such as a configuration file.
+  referrer: ModuleSpecifier,
+  #[serde(serialize_with = "serialize_dependencies")]
+  dependencies: BTreeMap<String, Dependency>,
+}
+
 /// The structure which represents a module graph, which can be serialized as
 /// well as "printed".  The roots of the graph represent the "starting" point
 /// which can be located in the module "slots" in the graph. The graph also
@@ -775,6 +744,8 @@ pub struct ModuleGraph {
   maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
   #[serde(serialize_with = "serialize_modules", rename = "modules")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
+  #[serde(skip_serializing_if = "Vec::is_empty")]
+  pub imports: Vec<GraphImport>,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
 }
 
@@ -787,6 +758,7 @@ impl ModuleGraph {
       roots,
       maybe_locker,
       module_slots: Default::default(),
+      imports: Default::default(),
       redirects: Default::default(),
     }
   }
@@ -867,23 +839,7 @@ impl ModuleGraph {
       .module_slots
       .iter()
       .filter_map(|(_, ms)| match ms {
-        ModuleSlot::Module(m) if !matches!(m.kind, ModuleKind::Synthetic) => {
-          Some(m)
-        }
-        _ => None,
-      })
-      .collect()
-  }
-
-  #[cfg(feature = "rust")]
-  pub fn synthetic_modules(&self) -> Vec<&Module> {
-    self
-      .module_slots
-      .iter()
-      .filter_map(|(_, ms)| match ms {
-        ModuleSlot::Module(m) if matches!(m.kind, ModuleKind::Synthetic) => {
-          Some(m)
-        }
+        ModuleSlot::Module(m) => Some(m),
         _ => None,
       })
       .collect()
@@ -944,40 +900,52 @@ impl ModuleGraph {
     prefer_types: bool,
   ) -> Option<&ModuleSpecifier> {
     let referrer = self.resolve(referrer);
-    let referring_module_slot = self.module_slots.get(&referrer)?;
-    let maybe_specifier =
-      if let ModuleSlot::Module(referring_module) = referring_module_slot {
-        let dependency = referring_module.dependencies.get(specifier)?;
-        let (maybe_first, maybe_second) = if prefer_types {
-          (&dependency.maybe_type, &dependency.maybe_code)
-        } else {
-          (&dependency.maybe_code, &dependency.maybe_type)
-        };
-        if let Some(specifier) = maybe_first
-          .maybe_specifier()
-          .or_else(|| maybe_second.maybe_specifier())
-        {
-          if prefer_types {
-            Some(
-              self
-                .resolve_types_dependency(specifier)
-                .unwrap_or(specifier),
-            )
-          } else {
-            Some(specifier)
-          }
-        } else {
-          None
-        }
-      } else {
-        None
-      };
+    let specifier = if let Some(ModuleSlot::Module(referring_module)) =
+      self.module_slots.get(&referrer)
+    {
+      let dependency = referring_module.dependencies.get(specifier)?;
+      self.resolve_dependency_specifier(dependency, prefer_types)
+    } else if let Some(graph_import) =
+      self.imports.iter().find(|i| i.referrer == referrer)
+    {
+      let dependency = graph_import.dependencies.get(specifier)?;
+      self.resolve_dependency_specifier(dependency, prefer_types)
+    } else {
+      None
+    }?;
     // Even if we resolved the specifier, it doesn't mean the module is actually
     // there, and so we will return the final final specifier.
-    let specifier = maybe_specifier?;
     match self.module_slots.get(&self.resolve(specifier)) {
       Some(ModuleSlot::Module(m)) => Some(&m.specifier),
       _ => None,
+    }
+  }
+
+  fn resolve_dependency_specifier<'a>(
+    &'a self,
+    dependency: &'a Dependency,
+    prefer_types: bool,
+  ) -> Option<&'a ModuleSpecifier> {
+    let (maybe_first, maybe_second) = if prefer_types {
+      (&dependency.maybe_type, &dependency.maybe_code)
+    } else {
+      (&dependency.maybe_code, &dependency.maybe_type)
+    };
+    if let Some(specifier) = maybe_first
+      .maybe_specifier()
+      .or_else(|| maybe_second.maybe_specifier())
+    {
+      if prefer_types {
+        Some(
+          self
+            .resolve_types_dependency(specifier)
+            .unwrap_or(specifier),
+        )
+      } else {
+        Some(specifier)
+      }
+    } else {
+      None
     }
   }
 
@@ -1524,33 +1492,47 @@ impl<'a> Builder<'a> {
   pub async fn build(
     mut self,
     build_kind: BuildKind,
-    maybe_type_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
+    maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
   ) -> ModuleGraph {
     let roots = self.graph.roots.clone();
     for (root, kind) in roots {
       self.load(&root, &kind, self.in_dynamic_branch, None);
     }
 
-    // Process any type imports that are being added to the graph.
-    if let Some(imports) = maybe_type_imports {
-      for (referrer, type_imports) in imports {
-        let synthetic_module = Module::new_from_type_imports(
-          referrer.clone(),
-          type_imports,
-          self.maybe_resolver,
-        );
-        for dep in synthetic_module.dependencies.values() {
-          if let Resolved::Ok {
-            specifier, kind, ..
-          } = &dep.maybe_type
-          {
-            self.load(specifier, kind, self.in_dynamic_branch, None);
-          }
-        }
-        self
-          .graph
-          .module_slots
-          .insert(referrer, ModuleSlot::Module(synthetic_module));
+    // Process any imports that are being added to the graph.
+    if let Some(imports) = maybe_imports {
+      for (referrer, imports) in imports {
+        let dependencies = imports
+          .iter()
+          .map(|import| {
+            let referrer_range = Range {
+              specifier: referrer.clone(),
+              start: Position::zeroed(),
+              end: Position::zeroed(),
+            };
+            let maybe_type =
+              resolve(import, &referrer_range, self.maybe_resolver);
+            if let Resolved::Ok {
+              specifier, kind, ..
+            } = &maybe_type
+            {
+              self.load(specifier, kind, self.in_dynamic_branch, None);
+            }
+            (
+              import.clone(),
+              Dependency {
+                is_dynamic: false,
+                maybe_code: Resolved::None,
+                maybe_type,
+                maybe_assert_type: None,
+              },
+            )
+          })
+          .collect();
+        self.graph.imports.push(GraphImport {
+          referrer,
+          dependencies,
+        });
       }
     }
 
@@ -1622,10 +1604,7 @@ impl<'a> Builder<'a> {
     // Enrich with cache info from the loader
     for slot in self.graph.module_slots.values_mut() {
       if let ModuleSlot::Module(ref mut module) = slot {
-        if !matches!(module.kind, ModuleKind::Synthetic) {
-          module.maybe_cache_info =
-            self.loader.get_cache_info(&module.specifier);
-        }
+        module.maybe_cache_info = self.loader.get_cache_info(&module.specifier);
       }
     }
     // Enrich with checksums from locker

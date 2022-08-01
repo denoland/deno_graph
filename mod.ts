@@ -97,7 +97,10 @@ export interface CreateGraphOptions {
    * check of the module graph fails. */
   lockFilename?: string;
   /** An optional record of "injected" dependencies to the module graph. This
-   * allows adding things like TypeScript's `"types"` values into the graph. */
+   * allows adding things like TypeScript's `"types"` values into the graph or
+   * a JSX runtime. The key is the referrer specifier to use as a base when
+   * resolving relative specifiers. The value is any module specifiers that are
+   * being imported. */
   imports?: Record<string, string[]>;
 }
 

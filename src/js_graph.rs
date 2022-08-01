@@ -260,8 +260,7 @@ impl StringOrResolveResponse {
             ModuleKind::Amd => ResolveResponse::Amd(specifier),
             ModuleKind::Asserted
             | ModuleKind::BuiltIn
-            | ModuleKind::External
-            | ModuleKind::Synthetic => ResolveResponse::Specifier(specifier),
+            | ModuleKind::External => ResolveResponse::Specifier(specifier),
             ModuleKind::CommonJs => ResolveResponse::CommonJs(specifier),
             ModuleKind::Esm => ResolveResponse::Esm(specifier),
             ModuleKind::Script => ResolveResponse::Script(specifier),

@@ -199,6 +199,115 @@ Deno.test({
 });
 
 Deno.test({
+  name: "createGraph() - imports",
+  async fn() {
+    const fixtures: Record<string, LoadResponse> = {
+      "file:///a/test.ts": {
+        kind: "module",
+        specifier: "file:///a/test.ts",
+        content: `import config from "./deno.json" assert { type: "json" };`,
+      },
+      "file:///a/deno.json": {
+        kind: "module",
+        specifier: "file:///a/deno.json",
+        content: `{}`,
+      },
+      "https://esm.sh/preact/jsx-runtime": {
+        kind: "module",
+        specifier: "https://esm.sh/preact/jsx-runtime",
+        headers: { "content-type": "application/javascript " },
+        content: `export function jsx() {}`,
+      },
+    };
+    let resolveCount = 0;
+    const graph = await createGraph("file:///a/test.ts", {
+      resolve(specifier, referrer) {
+        resolveCount++;
+        return {
+          specifier: new URL(specifier, referrer).toString(),
+          kind: "esm",
+        };
+      },
+      load(specifier) {
+        return Promise.resolve(fixtures[specifier]);
+      },
+      imports: {
+        "file:///a/deno.json": ["https://esm.sh/preact/jsx-runtime"],
+      },
+    });
+    assertEquals(resolveCount, 2);
+    assertEquals(graph.toJSON(), {
+      "roots": [
+        "file:///a/test.ts",
+      ],
+      "modules": [
+        {
+          "specifier": "file:///a/deno.json",
+          "kind": "asserted",
+          "mediaType": MediaType.Json,
+          "size": 2,
+        },
+        {
+          "specifier": "file:///a/test.ts",
+          "kind": "esm",
+          "dependencies": [
+            {
+              "specifier": "./deno.json",
+              "code": {
+                "specifier": "file:///a/deno.json",
+                "span": {
+                  "start": {
+                    "line": 0,
+                    "character": 19,
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 32,
+                  },
+                },
+              },
+              "assertionType": "json",
+            },
+          ],
+          "mediaType": MediaType.TypeScript,
+          "size": 57,
+        },
+        {
+          "specifier": "https://esm.sh/preact/jsx-runtime",
+          "kind": "esm",
+          "mediaType": MediaType.JavaScript,
+          "size": 24,
+        },
+      ],
+      "imports": [
+        {
+          "referrer": "file:///a/deno.json",
+          "dependencies": [
+            {
+              "specifier": "https://esm.sh/preact/jsx-runtime",
+              "type": {
+                "span": {
+                  "start": {
+                    "character": 0,
+                    "line": 0,
+                  },
+                  "end": {
+                    "character": 0,
+                    "line": 0,
+                  },
+                },
+                "specifier": "https://esm.sh/preact/jsx-runtime",
+              },
+            },
+          ],
+        },
+      ],
+      "redirects": {},
+    });
+  },
+});
+
+Deno.test({
   name: "createGraph() - resolve - resolve result",
   async fn() {
     const fixtures: Record<string, LoadResponse> = {
