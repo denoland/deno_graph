@@ -732,7 +732,7 @@ pub struct GraphImport {
 }
 
 impl GraphImport {
-  fn new(
+  pub fn new(
     referrer: ModuleSpecifier,
     imports: Vec<String>,
     maybe_resolver: Option<&dyn Resolver>,
