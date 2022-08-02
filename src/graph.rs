@@ -726,9 +726,11 @@ pub struct GraphImport {
   /// The referring module specifier to be used to resolve relative dependencies
   /// from. This is typically the meta data file that defined the dependency,
   /// such as a configuration file.
-  referrer: ModuleSpecifier,
+  pub referrer: ModuleSpecifier,
+  /// A map of resolved dependencies, where the key is the value originally
+  /// provided for the import and the value is the resolved dependency.
   #[serde(serialize_with = "serialize_dependencies")]
-  dependencies: BTreeMap<String, Dependency>,
+  pub dependencies: BTreeMap<String, Dependency>,
 }
 
 impl GraphImport {
