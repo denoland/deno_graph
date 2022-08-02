@@ -1539,7 +1539,7 @@ impl<'a> Builder<'a> {
       for (referrer, imports) in imports {
         let graph_import =
           GraphImport::new(referrer, imports, self.maybe_resolver);
-        for (_, dep) in &graph_import.dependencies {
+        for dep in graph_import.dependencies.values() {
           if let Resolved::Ok {
             specifier, kind, ..
           } = &dep.maybe_type
