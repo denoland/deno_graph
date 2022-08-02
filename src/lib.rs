@@ -744,28 +744,6 @@ console.log(a);
             "specifier": "file:///a/test01.ts"
           },
           {
-            "specifier": "file:///a/tsconfig.json",
-            "kind": "synthetic",
-            "dependencies": [
-              {
-                "specifier": "./types.d.ts",
-                "type": {
-                  "specifier": "file:///a/types.d.ts",
-                  "span": {
-                    "start": {
-                      "line": 0,
-                      "character": 0
-                    },
-                    "end": {
-                      "line": 0,
-                      "character": 0
-                    }
-                  }
-                }
-              }
-            ]
-          },
-          {
             "dependencies": [
               {
                 "specifier": "./types_01.d.ts",
@@ -794,6 +772,158 @@ console.log(a);
             "mediaType": "Dts",
             "size": 18,
             "specifier": "file:///a/types_01.d.ts"
+          }
+        ],
+        "imports": [
+          {
+            "referrer": "file:///a/tsconfig.json",
+            "dependencies": [
+              {
+                "specifier": "./types.d.ts",
+                "type": {
+                  "specifier": "file:///a/types.d.ts",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 0
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 0
+                    }
+                  }
+                }
+              }
+            ]
+          },
+        ],
+        "redirects":{},
+      })
+    );
+  }
+
+  #[tokio::test]
+  async fn test_create_graph_imports_imported() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"import config from "./deno.json" assert { type: "json" };
+            
+            console.log(config);"#,
+          },
+        ),
+        (
+          "file:///a/deno.json",
+          Source::Module {
+            specifier: "file:///a/deno.json",
+            maybe_headers: None,
+            content: r#"{
+              "compilerOptions": {
+                "jsxImportSource": "https://esm.sh/preact"
+              }
+            }"#,
+          },
+        ),
+        (
+          "https://esm.sh/preact/runtime-jsx",
+          Source::Module {
+            specifier: "https://esm.sh/preact/runtime-jsx",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/javascript",
+            )]),
+            content: r#"export function jsx() {}"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
+    let config_specifier =
+      ModuleSpecifier::parse("file:///a/deno.json").unwrap();
+    let maybe_imports = Some(vec![(
+      config_specifier,
+      vec!["https://esm.sh/preact/runtime-jsx".to_string()],
+    )]);
+    let graph = create_graph(
+      vec![(root_specifier, ModuleKind::Esm)],
+      false,
+      maybe_imports,
+      &mut loader,
+      None,
+      None,
+      None,
+      None,
+    )
+    .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": ["file:///a/test01.ts"],
+        "modules": [
+          {
+            "kind": "asserted",
+            "size": 125,
+            "mediaType": "Json",
+            "specifier": "file:///a/deno.json",
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "./deno.json",
+                "code": {
+                  "specifier": "file:///a/deno.json",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 19,
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 32,
+                    }
+                  }
+                },
+                "assertionType": "json"
+              }
+            ],
+            "kind": "esm",
+            "size": 103,
+            "mediaType": "TypeScript",
+            "specifier": "file:///a/test01.ts",
+          },
+          {
+            "kind": "esm",
+            "size": 24,
+            "mediaType": "JavaScript",
+            "specifier": "https://esm.sh/preact/runtime-jsx",
+          },
+        ],
+        "imports": [
+          {
+            "referrer": "file:///a/deno.json",
+            "dependencies": [
+              {
+                "specifier": "https://esm.sh/preact/runtime-jsx",
+                "type": {
+                  "specifier": "https://esm.sh/preact/runtime-jsx",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 0,
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 0,
+                    }
+                  }
+                },
+              }
+            ],
           }
         ],
         "redirects":{},

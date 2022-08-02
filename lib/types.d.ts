@@ -118,7 +118,6 @@ export type ModuleKind =
   | "esm"
   | "external"
   | "script"
-  | "synthetic"
   | "systemJs"
   | "umd";
 
@@ -166,6 +165,15 @@ export interface ModuleJson extends CacheInfo {
   sourceMapUrl?: SourceMapUrl;
 }
 
+export interface GraphImportJson {
+  /** The referrer (URL string) that was used as a base when resolving the
+   * imports added to the graph. */
+  referrer: string;
+  /** An array of resolved dependencies which were imported using the
+   * referrer. */
+  dependencies?: DependencyJson[];
+}
+
 /** The plain-object representation of a module graph that is suitable for
  * serialization to JSON. */
 export interface ModuleGraphJson {
@@ -174,6 +182,10 @@ export interface ModuleGraphJson {
   roots: string[];
   /** An array of modules that are part of the module graph. */
   modules: ModuleJson[];
+  /** External imports that were added to the graph when it was being built.
+   * The key is the referrer which was used as a base to resolve the
+   * dependency. The value is the resolved dependency. */
+  imports?: GraphImportJson[];
   /** A record/map of any redirects encountered when resolving modules. The
    * key was the requested module specifier and the value is the redirected
    * module specifier. */

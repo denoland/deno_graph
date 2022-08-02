@@ -51,7 +51,7 @@ jobs:
       - name: 🧪 Test
         run: |
           cargo test --locked --release --all-features --all-targets
-          deno test --allow-read --allow-net
+          deno task test
 
       - name: 💄 Ensure Wasm up to date
         if: contains(matrix.os, 'ubuntu')
