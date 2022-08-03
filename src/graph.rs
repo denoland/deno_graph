@@ -726,9 +726,44 @@ pub struct GraphImport {
   /// The referring module specifier to be used to resolve relative dependencies
   /// from. This is typically the meta data file that defined the dependency,
   /// such as a configuration file.
-  referrer: ModuleSpecifier,
+  pub referrer: ModuleSpecifier,
+  /// A map of resolved dependencies, where the key is the value originally
+  /// provided for the import and the value is the resolved dependency.
   #[serde(serialize_with = "serialize_dependencies")]
-  dependencies: BTreeMap<String, Dependency>,
+  pub dependencies: BTreeMap<String, Dependency>,
+}
+
+impl GraphImport {
+  pub fn new(
+    referrer: ModuleSpecifier,
+    imports: Vec<String>,
+    maybe_resolver: Option<&dyn Resolver>,
+  ) -> Self {
+    let dependencies = imports
+      .iter()
+      .map(|import| {
+        let referrer_range = Range {
+          specifier: referrer.clone(),
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        };
+        let maybe_type = resolve(import, &referrer_range, maybe_resolver);
+        (
+          import.clone(),
+          Dependency {
+            is_dynamic: false,
+            maybe_code: Resolved::None,
+            maybe_type,
+            maybe_assert_type: None,
+          },
+        )
+      })
+      .collect();
+    Self {
+      referrer,
+      dependencies,
+    }
+  }
 }
 
 /// The structure which represents a module graph, which can be serialized as
@@ -1502,37 +1537,17 @@ impl<'a> Builder<'a> {
     // Process any imports that are being added to the graph.
     if let Some(imports) = maybe_imports {
       for (referrer, imports) in imports {
-        let dependencies = imports
-          .iter()
-          .map(|import| {
-            let referrer_range = Range {
-              specifier: referrer.clone(),
-              start: Position::zeroed(),
-              end: Position::zeroed(),
-            };
-            let maybe_type =
-              resolve(import, &referrer_range, self.maybe_resolver);
-            if let Resolved::Ok {
-              specifier, kind, ..
-            } = &maybe_type
-            {
-              self.load(specifier, kind, self.in_dynamic_branch, None);
-            }
-            (
-              import.clone(),
-              Dependency {
-                is_dynamic: false,
-                maybe_code: Resolved::None,
-                maybe_type,
-                maybe_assert_type: None,
-              },
-            )
-          })
-          .collect();
-        self.graph.imports.push(GraphImport {
-          referrer,
-          dependencies,
-        });
+        let graph_import =
+          GraphImport::new(referrer, imports, self.maybe_resolver);
+        for dep in graph_import.dependencies.values() {
+          if let Resolved::Ok {
+            specifier, kind, ..
+          } = &dep.maybe_type
+          {
+            self.load(specifier, kind, self.in_dynamic_branch, None);
+          }
+        }
+        self.graph.imports.push(graph_import);
       }
     }
 

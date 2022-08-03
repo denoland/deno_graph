@@ -41,6 +41,7 @@ cfg_if! {
     pub use ast::DependencyDescriptor;
     pub use ast::DependencyKind;
     pub use graph::Dependency;
+    pub use graph::GraphImport;
     pub use graph::Module;
     pub use graph::ModuleGraph;
     pub use graph::ModuleGraphError;
