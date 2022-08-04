@@ -132,6 +132,7 @@ pub enum ModuleGraphError {
     actual_media_type: MediaType,
     expected_media_type: MediaType,
   },
+  ConflictingAssertions(ModuleSpecifier),
   LoadingErr(ModuleSpecifier, Arc<anyhow::Error>),
   Missing(ModuleSpecifier),
   ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
@@ -162,6 +163,9 @@ impl Clone for ModuleGraphError {
         actual_media_type: *actual_media_type,
         expected_media_type: *expected_media_type,
       },
+      Self::ConflictingAssertions(specifier) => {
+        Self::ConflictingAssertions(specifier.clone())
+      }
       Self::UnsupportedImportAssertionType(specifier, kind) => {
         Self::UnsupportedImportAssertionType(specifier.clone(), kind.clone())
       }
@@ -183,7 +187,8 @@ impl ModuleGraphError {
       | Self::InvalidSource(s, _)
       | Self::UnsupportedMediaType(s, _)
       | Self::UnsupportedImportAssertionType(s, _)
-      | Self::Missing(s) => s,
+      | Self::Missing(s)
+      | Self::ConflictingAssertions(s) => s,
       Self::InvalidTypeAssertion { specifier, .. } => specifier,
     }
   }
@@ -200,6 +205,7 @@ impl fmt::Display for ModuleGraphError {
       Self::InvalidSource(specifier, Some(filename)) => write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}\n  Lock file: {}", specifier, filename),
       Self::InvalidSource(specifier, None) => write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}", specifier),
       Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type } => write!(f, "Expected a {} module, but identified a {} module.\n  Specifier: {}", expected_media_type, actual_media_type, specifier),
+      Self::ConflictingAssertions(specifier) => write!(f, "Module \"{specifier}\" was imported with conflicting assertions."),
       Self::UnsupportedMediaType(specifier, MediaType::Json) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {}", specifier),
       Self::UnsupportedMediaType(specifier, media_type) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {} module. Importing these types of modules is currently not supported.\n  Specifier: {}", media_type, specifier),
       Self::UnsupportedImportAssertionType(_, kind) => write!(f, "The import assertion type of \"{}\" is unsupported.", kind),
@@ -1171,7 +1177,7 @@ fn resolve(
 pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  content: Arc<str>,
+  content: String,
   maybe_assert_type: Option<&str>,
   maybe_kind: Option<&ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
@@ -1180,6 +1186,8 @@ pub(crate) fn parse_module(
   is_dynamic_branch: bool,
 ) -> ModuleSlot {
   let media_type = get_media_type(specifier, maybe_headers);
+
+  let content = content.into();
 
   // here we check any media types that should have assertions made against them
   // if they aren't the root and add them to the graph, otherwise we continue
@@ -1556,15 +1564,7 @@ impl<'a> Builder<'a> {
         Some((specifier, kind, Ok(Some(response)))) => {
           let assert_types =
             self.pending_assert_types.remove(&specifier).unwrap();
-          for maybe_assert_type in assert_types {
-            self.visit(
-              &specifier,
-              &kind,
-              &response,
-              &build_kind,
-              maybe_assert_type,
-            )
-          }
+          self.visit(&specifier, &kind, response, &build_kind, assert_types);
           Some(specifier)
         }
         Some((specifier, _, Ok(None))) => {
@@ -1692,25 +1692,37 @@ impl<'a> Builder<'a> {
     &mut self,
     requested_specifier: &ModuleSpecifier,
     kind: &ModuleKind,
-    response: &LoadResponse,
+    response: LoadResponse,
     build_kind: &BuildKind,
-    maybe_assert_type: Option<String>,
+    assert_types: HashSet<Option<String>>,
   ) {
     let (specifier, module_slot) = match response {
       LoadResponse::BuiltIn { specifier } => {
-        self.check_specifier(requested_specifier, specifier);
-        let module_slot = ModuleSlot::Module(Module::new_without_source(
-          specifier.clone(),
-          ModuleKind::BuiltIn,
-        ));
+        self.check_specifier(requested_specifier, &specifier);
+        let module_slot = if assert_types.len() != 1 {
+          ModuleSlot::Err(ModuleGraphError::ConflictingAssertions(
+            specifier.clone(),
+          ))
+        } else {
+          ModuleSlot::Module(Module::new_without_source(
+            specifier.clone(),
+            ModuleKind::BuiltIn,
+          ))
+        };
         (specifier, module_slot)
       }
       LoadResponse::External { specifier } => {
-        self.check_specifier(requested_specifier, specifier);
-        let module_slot = ModuleSlot::Module(Module::new_without_source(
-          specifier.clone(),
-          ModuleKind::External,
-        ));
+        self.check_specifier(requested_specifier, &specifier);
+        let module_slot = if assert_types.len() != 1 {
+          ModuleSlot::Err(ModuleGraphError::ConflictingAssertions(
+            specifier.clone(),
+          ))
+        } else {
+          ModuleSlot::Module(Module::new_without_source(
+            specifier.clone(),
+            ModuleKind::External,
+          ))
+        };
         (specifier, module_slot)
       }
       LoadResponse::Module {
@@ -1718,24 +1730,25 @@ impl<'a> Builder<'a> {
         content,
         maybe_headers,
       } => {
-        self.check_specifier(requested_specifier, specifier);
-        (
-          specifier,
+        self.check_specifier(requested_specifier, &specifier);
+        let module_slot = if assert_types.len() != 1 {
+          ModuleSlot::Err(ModuleGraphError::ConflictingAssertions(
+            specifier.clone(),
+          ))
+        } else {
           self.visit_module(
-            specifier,
+            &specifier,
             kind,
             maybe_headers.as_ref(),
-            content.clone(),
+            content,
             build_kind,
-            maybe_assert_type,
-          ),
-        )
+            assert_types.into_iter().next().unwrap(),
+          )
+        };
+        (specifier, module_slot)
       }
     };
-    self
-      .graph
-      .module_slots
-      .insert(specifier.clone(), module_slot);
+    self.graph.module_slots.insert(specifier, module_slot);
   }
 
   /// Visit a module, parsing it and resolving any dependencies.
@@ -1744,7 +1757,7 @@ impl<'a> Builder<'a> {
     specifier: &ModuleSpecifier,
     kind: &ModuleKind,
     maybe_headers: Option<&HashMap<String, String>>,
-    content: Arc<str>,
+    content: String,
     build_kind: &BuildKind,
     maybe_assert_type: Option<String>,
   ) -> ModuleSlot {
@@ -2035,11 +2048,11 @@ mod tests {
   fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let source_parser = ast::DefaultSourceParser::default();
-    let content = r#"import * as b from "./b.ts";"#;
+    let content = r#"import * as b from "./b.ts";"#.to_string();
     let slot = parse_module(
       &specifier,
       None,
-      content.into(),
+      content,
       None,
       Some(&ModuleKind::Esm),
       None,
@@ -2124,7 +2137,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "await import('file:///bar.js')".into(),
+                content: "await import('file:///bar.js')".to_string(),
               }))
             })
           }
@@ -2135,7 +2148,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "import 'file:///baz.js'".into(),
+                content: "import 'file:///baz.js'".to_string(),
               }))
             })
           }
@@ -2146,7 +2159,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "console.log('Hello, world!')".into(),
+                content: "console.log('Hello, world!')".to_string(),
               }))
             })
           }
@@ -2190,7 +2203,7 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: "await import('file:///bar.js')".into(),
+              content: "await import('file:///bar.js')".to_string(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move { Ok(None) }),
@@ -2250,14 +2263,14 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///foo_actual.js").unwrap(),
               maybe_headers: None,
-              content: "import 'file:///bar.js'".into(),
+              content: "import 'file:///bar.js'".to_string(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///bar_actual.js").unwrap(),
               maybe_headers: None,
-              content: "(".into(),
+              content: "(".to_string(),
             }))
           }),
           _ => unreachable!(),

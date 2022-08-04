@@ -249,6 +249,9 @@ impl ModuleGraphError {
       Self::InvalidTypeAssertion { .. } => {
         fmt_error_msg(f, prefix, last, specifier, "(invalid import assertion)")
       }
+      Self::ConflictingAssertions { .. } => {
+        fmt_error_msg(f, prefix, last, specifier, "(conflicting assertions)")
+      }
       Self::LoadingErr(_, _) => {
         fmt_error_msg(f, prefix, last, specifier, "(loading error)")
       }
