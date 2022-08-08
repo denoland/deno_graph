@@ -189,7 +189,20 @@ impl ModuleGraphError {
   }
 }
 
-impl std::error::Error for ModuleGraphError {}
+impl std::error::Error for ModuleGraphError {
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    match self {
+      Self::LoadingErr(_, err) => Some(err.as_ref().as_ref()),
+      Self::ResolutionError(ref err) => Some(err),
+      Self::InvalidSource(_, _)
+      | Self::InvalidTypeAssertion { .. }
+      | Self::Missing(_)
+      | Self::ParseErr(_, _)
+      | Self::UnsupportedImportAssertionType(_, _)
+      | Self::UnsupportedMediaType(_, _) => None,
+    }
+  }
+}
 
 impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -253,7 +266,15 @@ impl ResolutionError {
   }
 }
 
-impl std::error::Error for ResolutionError {}
+impl std::error::Error for ResolutionError {
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    match self {
+      Self::InvalidDowngrade { .. } | Self::InvalidLocalImport { .. } => None,
+      Self::InvalidSpecifier { ref error, .. } => Some(error),
+      Self::ResolverError { error, .. } => Some(error.as_ref().as_ref()),
+    }
+  }
+}
 
 impl PartialEq for ResolutionError {
   fn eq(&self, other: &Self) -> bool {
