@@ -3,12 +3,9 @@
 use anyhow::Result;
 use std::error::Error;
 use std::fmt;
-use std::path::PathBuf;
 use url::ParseError;
 
 pub type ModuleSpecifier = deno_ast::ModuleSpecifier;
-
-pub const EMPTY_SPECIFIER: &str = "deno://empty";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SpecifierError {
@@ -40,16 +37,6 @@ impl fmt::Display for SpecifierError {
   }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-fn specifier_from_path(path: PathBuf) -> ModuleSpecifier {
-  ModuleSpecifier::from_file_path(path).unwrap()
-}
-
-#[cfg(target_arch = "wasm32")]
-fn specifier_from_path(_path: PathBuf) -> ModuleSpecifier {
-  ModuleSpecifier::parse(EMPTY_SPECIFIER).unwrap()
-}
-
 /// Given a specifier string and a referring module specifier, try to resolve
 /// the target module specifier, erroring if it cannot be resolved.
 pub fn resolve_import(
@@ -79,18 +66,6 @@ pub fn resolve_import(
     // 3. Return the result of applying the URL parser to specifier with base
     //    URL as the base URL.
     Err(ParseError::RelativeUrlWithoutBase) => {
-      let referrer = if referrer.as_str() == EMPTY_SPECIFIER {
-        // Handle <unknown> case, happening under e.g. repl.
-        // Use CWD for such case.
-
-        // Forcefully join base to current dir.
-        // Otherwise, later joining in Url would be interpreted in
-        // the parent directory (appending trailing slash does not work)
-        let path = std::env::current_dir().unwrap().join("empty");
-        specifier_from_path(path)
-      } else {
-        referrer.clone()
-      };
       referrer.join(specifier).map_err(InvalidUrl)?
     }
 
