@@ -1,14 +1,21 @@
 // Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
+use crate::analyzer::ByteRange;
+use crate::analyzer::Comment;
+use crate::analyzer::DependencyDescriptor;
+use crate::analyzer::ModuleAnalyzer;
+use crate::analyzer::ModuleAnalyzerProvider;
+use crate::analyzer::SpecifierWithRange;
+use crate::analyzer::TypeScriptReference;
 use crate::module_specifier::ModuleSpecifier;
+use crate::graph::ModuleGraphError;
+use crate::graph::Position;
 
-use deno_ast::swc::atoms::JsWord;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 
 use anyhow::Result;
 use deno_ast::parse_module;
-use deno_ast::swc::common::comments::Comment;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::Diagnostic;
 use deno_ast::MediaType;
@@ -18,8 +25,6 @@ use deno_ast::SourceTextInfo;
 use lazy_static::lazy_static;
 use regex::Match;
 use regex::Regex;
-use std::cell::RefCell;
-use std::collections::HashMap;
 use std::sync::Arc;
 
 lazy_static! {
@@ -44,191 +49,17 @@ lazy_static! {
     Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap();
 }
 
-pub enum TypeScriptReference {
-  Path(String, SourceRange),
-  Types(String, SourceRange),
-}
+#[derive(Default, Clone)]
+pub struct ParsedSourceAnalyzerProvider;
 
-pub type ImportAssertions = deno_ast::swc::dep_graph::ImportAssertions;
-pub type DependencyKind = deno_ast::swc::dep_graph::DependencyKind;
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct DependencyDescriptor {
-  pub kind: DependencyKind,
-  /// A flag indicating if the import is dynamic or not.
-  pub is_dynamic: bool,
-  /// Any leading comments associated with the dependency.  This is used for
-  /// further processing of supported pragma that impact the dependency.
-  pub leading_comments: Vec<Comment>,
-  /// The range of the import/export statement.
-  pub range: SourceRange,
-  /// The text specifier associated with the import/export statement.
-  pub specifier: JsWord,
-  /// The range of the specifier.
-  pub specifier_range: SourceRange,
-  /// Import assertions for this dependency.
-  pub import_assertions: ImportAssertions,
-}
-
-/// Gets all the dependencies of this module.
-pub fn analyze_dependencies(
-  source: &ParsedSource,
-) -> Vec<DependencyDescriptor> {
-  deno_ast::swc::dep_graph::analyze_dependencies(
-    source.module(),
-    &source.comments().as_swc_comments(),
-  )
-  .into_iter()
-  .filter(|desc| desc.kind != DependencyKind::Require)
-  .map(|d| DependencyDescriptor {
-    kind: d.kind,
-    is_dynamic: d.is_dynamic,
-    leading_comments: d.leading_comments,
-    // ok to use this because we received this span from swc
-    range: SourceRange::unsafely_from_span(d.span),
-    specifier: d.specifier,
-    specifier_range: SourceRange::unsafely_from_span(d.specifier_span),
-    import_assertions: d.import_assertions,
-  })
-  .collect()
-}
-
-/// Searches comments for any `@deno-types` compiler hints.
-pub fn analyze_deno_types(
-  desc: &DependencyDescriptor,
-) -> Option<(String, SourceRange)> {
-  let comment = desc.leading_comments.last()?;
-  let captures = DENO_TYPES_RE.captures(&comment.text)?;
-  if let Some(m) = captures.get(1) {
-    Some((
-      m.as_str().to_string(),
-      comment_match_to_source_range(comment, &m),
-    ))
-  } else if let Some(m) = captures.get(2) {
-    Some((
-      m.as_str().to_string(),
-      comment_match_to_source_range(comment, &m),
-    ))
-  } else {
-    unreachable!("Unexpected captures from deno types regex")
-  }
-}
-
-/// Searches JSDoc comment blocks for type imports
-/// (e.g. `{import("./types.d.ts").Type}`) and returns a vector of tuples of
-/// the specifier and the span of the import.
-pub fn analyze_jsdoc_imports(
-  parsed_source: &ParsedSource,
-) -> Vec<(String, SourceRange)> {
-  let mut deps = Vec::new();
-  for comment in parsed_source.comments().get_vec().iter() {
-    if comment.kind != CommentKind::Block || !comment.text.starts_with('*') {
-      continue;
-    }
-    for captures in JSDOC_IMPORT_RE.captures_iter(&comment.text) {
-      if let Some(m) = captures.get(1) {
-        deps.push((
-          m.as_str().to_string(),
-          comment_match_to_source_range(comment, &m),
-        ));
-      }
-    }
-  }
-  deps
-}
-
-/// Searches comments for a `@jsxImportSource` pragma on JSX/TSX media types
-pub fn analyze_jsx_import_sources(
-  parsed_source: &ParsedSource,
-) -> Option<(String, SourceRange)> {
-  match parsed_source.media_type() {
-    MediaType::Jsx | MediaType::Tsx => {
-      parsed_source.get_leading_comments().iter().find_map(|c| {
-        let captures = JSX_IMPORT_SOURCE_RE.captures(&c.text)?;
-        let m = captures.get(1)?;
-        Some((m.as_str().to_string(), comment_match_to_source_range(c, &m)))
-      })
-    }
-    _ => None,
-  }
-}
-
-fn comment_match_to_source_range(comment: &Comment, m: &Match) -> SourceRange {
-  // the comment text starts after the double slash or slash star, so add 2
-  let comment_start = comment.start() + 2;
-  SourceRange::new(comment_start + m.start(), comment_start + m.end())
-}
-
-/// Searches comments for any triple slash references.
-pub fn analyze_ts_references(
-  parsed_source: &ParsedSource,
-) -> Vec<TypeScriptReference> {
-  let mut references = Vec::new();
-  for comment in parsed_source.get_leading_comments().iter() {
-    if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
-      if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
-        let m = captures.get(1).unwrap();
-        references.push(TypeScriptReference::Path(
-          m.as_str().to_string(),
-          comment_match_to_source_range(comment, &m),
-        ));
-      } else if let Some(captures) = TYPES_REFERENCE_RE.captures(&comment.text)
-      {
-        let m = captures.get(1).unwrap();
-        references.push(TypeScriptReference::Types(
-          m.as_str().to_string(),
-          comment_match_to_source_range(comment, &m),
-        ));
-      }
-    }
-  }
-  references
-}
-
-/// Parses text to a `ParsedSource`.
-pub trait SourceParser {
-  /// Parses the provided module to a `ParsedSource`.
-  fn parse_module(
+impl ParsedSourceAnalyzerProvider {
+  pub fn get_concrete_analyzer(
     &self,
     specifier: &ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ParsedSource, Diagnostic>;
-}
-
-// TODO(@dsherret) remove CapturingSourceParser
-
-/// An implementation of `SourceParser` that stores the parsed ASTs.
-#[derive(Default)]
-pub struct CapturingSourceParser {
-  modules: RefCell<HashMap<ModuleSpecifier, ParsedSource>>,
-}
-
-#[cfg(feature = "rust")]
-impl CapturingSourceParser {
-  pub fn new() -> Self {
-    Self {
-      modules: RefCell::new(HashMap::new()),
-    }
-  }
-
-  /// Gets a parsed source by module specifier if it was previously parsed.
-  pub fn get_parsed_source(
-    &self,
-    specifier: &ModuleSpecifier,
-  ) -> Option<ParsedSource> {
-    self.modules.borrow().get(specifier).map(|m| m.to_owned())
-  }
-}
-
-impl SourceParser for CapturingSourceParser {
-  fn parse_module(
-    &self,
-    specifier: &ModuleSpecifier,
-    source: Arc<str>,
-    media_type: MediaType,
-  ) -> Result<ParsedSource, Diagnostic> {
-    let module = parse_module(ParseParams {
+  ) -> Result<ParsedSourceAnalyzer, Diagnostic> {
+    let parsed_source = parse_module(ParseParams {
       specifier: specifier.to_string(),
       text_info: SourceTextInfo::new(source),
       media_type,
@@ -236,48 +67,183 @@ impl SourceParser for CapturingSourceParser {
       scope_analysis: false,
       maybe_syntax: None,
     })?;
-
-    self
-      .modules
-      .borrow_mut()
-      .insert(specifier.clone(), module.clone());
-
-    Ok(module)
+    Ok(ParsedSourceAnalyzer(parsed_source))
   }
 }
 
-/// The default implementation of `SourceParser` used by this crate.
-#[derive(Default)]
-pub struct DefaultSourceParser;
-
-impl DefaultSourceParser {
-  pub fn new() -> Self {
-    Self
-  }
-}
-
-impl SourceParser for DefaultSourceParser {
-  fn parse_module(
+impl ModuleAnalyzerProvider for ParsedSourceAnalyzerProvider {
+  fn get_analyzer(
     &self,
     specifier: &ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ParsedSource, Diagnostic> {
-    parse_module(ParseParams {
-      specifier: specifier.to_string(),
-      text_info: SourceTextInfo::new(source),
-      media_type,
-      capture_tokens: false,
-      scope_analysis: false,
-      maybe_syntax: None,
-    })
+  ) -> Result<Box<dyn ModuleAnalyzer>, ModuleGraphError> {
+    let result = self.get_concrete_analyzer(specifier, source, media_type);
+    match result {
+      Ok(analyzer) => Ok(Box::new(analyzer)),
+      Err(diagnostic) => {
+        Err(ModuleGraphError::ParseErr(specifier.clone(), diagnostic))
+      }
+    }
   }
+}
+
+pub struct ParsedSourceAnalyzer(ParsedSource);
+
+impl ParsedSourceAnalyzer {
+  pub fn new(source: ParsedSource) -> Self {
+    Self(source)
+  }
+
+  pub fn parsed_source(&self) -> &ParsedSource {
+    &self.0
+  }
+}
+
+impl ModuleAnalyzer for ParsedSourceAnalyzer {
+  fn byte_index_to_position(&self, byte_index: usize) -> Position {
+    let text_info = self.0.text_info();
+    let pos = text_info.range().start + byte_index;
+    let line_and_column_index = text_info.line_and_column_index(pos);
+    Position {
+      line: line_and_column_index.line_index,
+      character: line_and_column_index.column_index,
+    }
+  }
+
+  fn analyze_dependencies(&self) -> Vec<DependencyDescriptor> {
+    deno_ast::swc::dep_graph::analyze_dependencies(
+      self.0.module(),
+      &self.0.comments().as_swc_comments(),
+    )
+    .into_iter()
+    .filter(|desc| {
+      desc.kind != deno_ast::swc::dep_graph::DependencyKind::Require
+    })
+    .map(|d| DependencyDescriptor {
+      kind: d.kind.into(),
+      is_dynamic: d.is_dynamic,
+      leading_comments: d
+        .leading_comments
+        .into_iter()
+        .map(|c| Comment::from_swc(c, &self.0))
+        .collect(),
+      // ok to use this because we received this span from swc
+      range: ByteRange::from_source_range(
+        SourceRange::unsafely_from_span(d.span),
+        &self.0,
+      ),
+      specifier: d.specifier.to_string(),
+      specifier_range: ByteRange::from_source_range(
+        SourceRange::unsafely_from_span(d.specifier_span),
+        &self.0,
+      ),
+      import_assertions: d.import_assertions.into(),
+    })
+    .collect()
+  }
+
+  fn analyze_ts_references(&self) -> Vec<crate::analyzer::TypeScriptReference> {
+    let mut references = Vec::new();
+    for comment in self.0.get_leading_comments().iter() {
+      if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
+        let comment_start = comment
+          .start()
+          .as_byte_index(self.0.text_info().range().start);
+        if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
+          let m = captures.get(1).unwrap();
+          references.push(TypeScriptReference::Path(SpecifierWithRange {
+            text: m.as_str().to_string(),
+            range: comment_match_to_byte_range(comment_start, &m),
+          }));
+        } else if let Some(captures) =
+          TYPES_REFERENCE_RE.captures(&comment.text)
+        {
+          let m = captures.get(1).unwrap();
+          references.push(TypeScriptReference::Types(SpecifierWithRange {
+            text: m.as_str().to_string(),
+            range: comment_match_to_byte_range(comment_start, &m),
+          }));
+        }
+      }
+    }
+    references
+  }
+
+  fn analyze_jsx_import_source(&self) -> Option<SpecifierWithRange> {
+    match self.0.media_type() {
+      MediaType::Jsx | MediaType::Tsx => {
+        self.0.get_leading_comments().iter().find_map(|c| {
+          let captures = JSX_IMPORT_SOURCE_RE.captures(&c.text)?;
+          let m = captures.get(1)?;
+          Some(SpecifierWithRange {
+            text: m.as_str().to_string(),
+            range: comment_match_to_byte_range(
+              c.start().as_byte_index(self.0.text_info().range().start),
+              &m,
+            ),
+          })
+        })
+      }
+      _ => None,
+    }
+  }
+
+  fn analyze_jsdoc_imports(&self) -> Vec<SpecifierWithRange> {
+    let mut deps = Vec::new();
+    for comment in self.0.comments().get_vec().iter() {
+      if comment.kind != CommentKind::Block || !comment.text.starts_with('*') {
+        continue;
+      }
+      for captures in JSDOC_IMPORT_RE.captures_iter(&comment.text) {
+        if let Some(m) = captures.get(1) {
+          deps.push(SpecifierWithRange {
+            text: m.as_str().to_string(),
+            range: comment_match_to_byte_range(
+              comment
+                .range()
+                .start
+                .as_byte_index(self.0.text_info().range().start),
+              &m,
+            ),
+          });
+        }
+      }
+    }
+    deps
+  }
+}
+
+/// Searches comments for any `@deno-types` compiler hints.
+pub fn analyze_deno_types(
+  desc: &DependencyDescriptor,
+) -> Option<(String, ByteRange)> {
+  let comment = desc.leading_comments.last()?;
+  let captures = DENO_TYPES_RE.captures(&comment.text)?;
+  if let Some(m) = captures.get(1) {
+    Some((
+      m.as_str().to_string(),
+      comment_match_to_byte_range(comment.range.start, &m),
+    ))
+  } else if let Some(m) = captures.get(2) {
+    Some((
+      m.as_str().to_string(),
+      comment_match_to_byte_range(comment.range.start, &m),
+    ))
+  } else {
+    unreachable!("Unexpected captures from deno types regex")
+  }
+}
+
+fn comment_match_to_byte_range(comment_start: usize, m: &Match) -> ByteRange {
+  // the comment text starts after the double slash or slash star, so add 2
+  let comment_start = comment_start + 2;
+  (comment_start + m.start()..comment_start + m.end()).into()
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
-  use deno_ast::SourceRanged;
   use pretty_assertions::assert_eq;
 
   #[test]
@@ -305,27 +271,28 @@ mod tests {
 
     const a = await import("./a.ts");
     "#;
-    let parser = DefaultSourceParser::new();
-    let result = parser.parse_module(&specifier, source.into(), MediaType::Tsx);
-    assert!(result.is_ok());
-    let parsed_source = result.unwrap();
-    let dependencies = analyze_dependencies(&parsed_source);
+    let analyzer_provider = ParsedSourceAnalyzerProvider::default();
+    let analyzer = analyzer_provider
+      .get_concrete_analyzer(&specifier, source.into(), MediaType::Tsx)
+      .unwrap();
+    let file_text = analyzer.parsed_source().text_info().text_str();
+    let dependencies = analyzer.analyze_dependencies();
     assert_eq!(dependencies.len(), 6);
 
-    let ts_references = analyze_ts_references(&parsed_source);
+    let ts_references = analyzer.analyze_ts_references();
     assert_eq!(ts_references.len(), 2);
     match &ts_references[0] {
-      TypeScriptReference::Path(text, range) => {
-        assert_eq!(text, "./ref.d.ts");
-        assert_eq!(range.text_fast(&parsed_source.text_info()), "./ref.d.ts");
+      TypeScriptReference::Path(specifier) => {
+        assert_eq!(specifier.text, "./ref.d.ts");
+        assert_eq!(&file_text[specifier.range.into_std()], "./ref.d.ts");
       }
-      TypeScriptReference::Types(_, _) => panic!("expected path"),
+      TypeScriptReference::Types(_) => panic!("expected path"),
     }
     match &ts_references[1] {
-      TypeScriptReference::Path(_, _) => panic!("expected types"),
-      TypeScriptReference::Types(text, range) => {
-        assert_eq!(text, "./types.d.ts");
-        assert_eq!(range.text_fast(&parsed_source.text_info()), "./types.d.ts");
+      TypeScriptReference::Path(_) => panic!("expected types"),
+      TypeScriptReference::Types(specifier) => {
+        assert_eq!(specifier.text, "./types.d.ts");
+        assert_eq!(&file_text[specifier.range.into_std()], "./types.d.ts");
       }
     }
 
@@ -335,15 +302,14 @@ mod tests {
       "https://deno.land/x/types/react/index.d.ts"
     );
     assert_eq!(
-      dep_deno_types.1.text_fast(&parsed_source.text_info()),
+      &file_text[dep_deno_types.1.into_std()],
       "https://deno.land/x/types/react/index.d.ts"
     );
 
-    let (specifier, range) =
-      analyze_jsx_import_sources(&parsed_source).unwrap();
-    assert_eq!(specifier, "http://example.com/preact");
+    let specifier = analyzer.analyze_jsx_import_source().unwrap();
+    assert_eq!(specifier.text, "http://example.com/preact");
     assert_eq!(
-      range.text_fast(&parsed_source.text_info()),
+      &file_text[specifier.range.into_std()],
       "http://example.com/preact"
     );
   }
@@ -365,26 +331,22 @@ mod tests {
     import type { i } from "./i.d.ts";
     export type { j } from "./j.d.ts";
     "#;
-    let parser = DefaultSourceParser::new();
-    let result =
-      parser.parse_module(&specifier, source.into(), MediaType::TypeScript);
-    assert!(result.is_ok());
-    let parsed_source = result.unwrap();
-    let dependencies = analyze_dependencies(&parsed_source);
+    let analyzer_provider = ParsedSourceAnalyzerProvider::default();
+    let analyzer = analyzer_provider
+      .get_concrete_analyzer(&specifier, source.into(), MediaType::TypeScript)
+      .unwrap();
+    let file_text = analyzer.parsed_source().text_info().text_str();
+    let dependencies = analyzer.analyze_dependencies();
     assert_eq!(dependencies.len(), 10);
     assert_eq!(dependencies[0].specifier.to_string(), "./a.ts");
     assert_eq!(
-      dependencies[0]
-        .specifier_range
-        .text_fast(&parsed_source.text_info()),
+      &file_text[dependencies[0].specifier_range.into_std()],
       "\"./a.ts\""
     );
     assert!(!dependencies[0].is_dynamic);
     assert_eq!(dependencies[1].specifier.to_string(), "./b.ts");
     assert_eq!(
-      dependencies[1]
-        .specifier_range
-        .text_fast(&parsed_source.text_info()),
+      &file_text[dependencies[1].specifier_range.into_std()],
       "\"./b.ts\""
     );
     assert!(!dependencies[1].is_dynamic);
@@ -398,12 +360,11 @@ mod tests {
     import a from "./a.json" assert { type: "json" };
     await import("./b.json", { assert: { type: "json" } });
     "#;
-    let parser = DefaultSourceParser::new();
-    let result =
-      parser.parse_module(&specifier, source.into(), MediaType::TypeScript);
-    assert!(result.is_ok());
-    let parsed_source = result.unwrap();
-    let dependencies = analyze_dependencies(&parsed_source);
+    let analyzer_provider = ParsedSourceAnalyzerProvider::default();
+    let analyzer = analyzer_provider
+      .get_concrete_analyzer(&specifier, source.into(), MediaType::TypeScript)
+      .unwrap();
+    let dependencies = analyzer.analyze_dependencies();
     assert_eq!(dependencies.len(), 2);
     assert!(!dependencies[0].is_dynamic);
     assert_eq!(dependencies[0].specifier.to_string(), "./a.json");
@@ -447,44 +408,39 @@ function b(c) {
  */
 const f = new Set();
 "#;
-    let parser = DefaultSourceParser::new();
-    let result =
-      parser.parse_module(&specifier, source.into(), MediaType::TypeScript);
-    assert!(result.is_ok());
-    let parsed_source = result.unwrap();
-    let start_pos = parsed_source.text_info().range().start;
-    let dependencies = analyze_jsdoc_imports(&parsed_source);
+    let analyzer_provider = ParsedSourceAnalyzerProvider::default();
+    let analyzer = analyzer_provider
+      .get_concrete_analyzer(&specifier, source.into(), MediaType::TypeScript)
+      .unwrap();
+    let dependencies = analyzer.analyze_jsdoc_imports();
     assert_eq!(
       dependencies,
       [
-        (
-          "./a.js".to_string(),
-          SourceRange {
-            start: start_pos + 61,
-            end: start_pos + 67,
+        SpecifierWithRange {
+          text: "./a.js".to_string(),
+          range: ByteRange { start: 61, end: 67 }
+        },
+        SpecifierWithRange {
+          text: "./b.js".to_string(),
+          range: ByteRange {
+            start: 144,
+            end: 150,
           }
-        ),
-        (
-          "./b.js".to_string(),
-          SourceRange {
-            start: start_pos + 144,
-            end: start_pos + 150,
+        },
+        SpecifierWithRange {
+          text: "./d.js".to_string(),
+          range: ByteRange {
+            start: 177,
+            end: 183,
           }
-        ),
-        (
-          "./d.js".to_string(),
-          SourceRange {
-            start: start_pos + 177,
-            end: start_pos + 183,
+        },
+        SpecifierWithRange {
+          text: "./e.js".to_string(),
+          range: ByteRange {
+            start: 246,
+            end: 252,
           }
-        ),
-        (
-          "./e.js".to_string(),
-          SourceRange {
-            start: start_pos + 246,
-            end: start_pos + 252,
-          }
-        ),
+        },
       ]
     );
   }

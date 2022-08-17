@@ -375,7 +375,7 @@ fn fmt_resolved_info<S: AsRef<str> + fmt::Display + Clone>(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::ast::DefaultSourceParser;
+  use crate::ast::ParsedSourceAnalyzerProvider;
   use crate::colors::strip_ansi_codes;
   use crate::graph::BuildKind;
   use crate::graph::Builder;
@@ -512,14 +512,14 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
-    let source_parser = DefaultSourceParser::new();
+    let analyzer_provider = ParsedSourceAnalyzerProvider::default();
     let builder = Builder::new(
       vec![(root_specifier, ModuleKind::Esm)],
       false,
       &mut loader,
       None,
       None,
-      &source_parser,
+      &analyzer_provider,
       None,
     );
     let graph = builder.build(BuildKind::All, None).await;
@@ -593,14 +593,14 @@ https://deno.land/x/example/a.ts (129B)
     );
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
-    let source_parser = DefaultSourceParser::new();
+    let analyzer_provider = ParsedSourceAnalyzerProvider::default();
     let builder = Builder::new(
       vec![(root_specifier, ModuleKind::Esm)],
       false,
       &mut loader,
       None,
       None,
-      &source_parser,
+      &analyzer_provider,
       None,
     );
     let graph = builder.build(BuildKind::All, None).await;
