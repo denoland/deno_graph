@@ -30,6 +30,7 @@ impl ByteRange {
     byte_range.into()
   }
 
+  #[cfg(feature = "rust")]
   pub fn into_std(&self) -> std::ops::Range<usize> {
     self.start..self.end
   }

@@ -90,6 +90,7 @@ impl ModuleAnalyzerProvider for ParsedSourceAnalyzerProvider {
 
 pub struct ParsedSourceAnalyzer(ParsedSource);
 
+#[cfg(feature = "rust")]
 impl ParsedSourceAnalyzer {
   pub fn new(source: ParsedSource) -> Self {
     Self(source)
