@@ -55,7 +55,7 @@ jobs:
 
       - name: 💄 Ensure Wasm up to date
         if: contains(matrix.os, 'ubuntu')
-        run: RUSTFLAGS= deno task build --check
+        run: deno task build --check
 
       - name: 📦 Publish
         if: |
