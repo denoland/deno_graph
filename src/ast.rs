@@ -7,9 +7,9 @@ use crate::analyzer::ModuleAnalyzer;
 use crate::analyzer::ModuleAnalyzerProvider;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
-use crate::module_specifier::ModuleSpecifier;
 use crate::graph::ModuleGraphError;
 use crate::graph::Position;
+use crate::module_specifier::ModuleSpecifier;
 
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
