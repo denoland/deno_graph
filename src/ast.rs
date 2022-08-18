@@ -5,6 +5,7 @@ use crate::analyzer::Comment;
 use crate::analyzer::DependencyDescriptor;
 use crate::analyzer::ModuleAnalyzer;
 use crate::analyzer::ModuleAnalyzerProvider;
+use crate::analyzer::ModuleInfo;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
 use crate::graph::ModuleGraphError;
@@ -99,18 +100,6 @@ impl ParsedSourceAnalyzer {
   pub fn parsed_source(&self) -> &ParsedSource {
     &self.0
   }
-}
-
-impl ModuleAnalyzer for ParsedSourceAnalyzer {
-  fn byte_index_to_position(&self, byte_index: usize) -> Position {
-    let text_info = self.0.text_info();
-    let pos = text_info.range().start + byte_index;
-    let line_and_column_index = text_info.line_and_column_index(pos);
-    Position {
-      line: line_and_column_index.line_index,
-      character: line_and_column_index.column_index,
-    }
-  }
 
   fn analyze_dependencies(&self) -> Vec<DependencyDescriptor> {
     deno_ast::swc::dep_graph::analyze_dependencies(
@@ -191,6 +180,16 @@ impl ModuleAnalyzer for ParsedSourceAnalyzer {
   }
 
   fn analyze_jsdoc_imports(&self) -> Vec<SpecifierWithRange> {
+    // Analyze any JSDoc type imports
+    // We only analyze these on JavaScript types of modules, since they are
+    // ignored by TypeScript when type checking anyway and really shouldn't be
+    // there, but some people do strange things.
+    if !matches!(
+      self.0.media_type(),
+      MediaType::JavaScript | MediaType::Jsx | MediaType::Mjs | MediaType::Cjs
+    ) {
+      return Vec::new();
+    }
     let mut deps = Vec::new();
     for comment in self.0.comments().get_vec().iter() {
       if comment.kind != CommentKind::Block || !comment.text.starts_with('*') {
@@ -212,6 +211,27 @@ impl ModuleAnalyzer for ParsedSourceAnalyzer {
       }
     }
     deps
+  }
+}
+
+impl ModuleAnalyzer for ParsedSourceAnalyzer {
+  fn byte_index_to_position(&self, byte_index: usize) -> Position {
+    let text_info = self.0.text_info();
+    let pos = text_info.range().start + byte_index;
+    let line_and_column_index = text_info.line_and_column_index(pos);
+    Position {
+      line: line_and_column_index.line_index,
+      character: line_and_column_index.column_index,
+    }
+  }
+
+  fn analyze(&self) -> ModuleInfo {
+    ModuleInfo {
+      dependencies: self.analyze_dependencies(),
+      ts_references: self.analyze_ts_references(),
+      jsx_import_source: self.analyze_jsx_import_source(),
+      jsdoc_imports: self.analyze_jsdoc_imports(),
+    }
   }
 }
 
@@ -277,10 +297,11 @@ mod tests {
       .get_concrete_analyzer(&specifier, source.into(), MediaType::Tsx)
       .unwrap();
     let file_text = analyzer.parsed_source().text_info().text_str();
-    let dependencies = analyzer.analyze_dependencies();
+    let module_info = analyzer.analyze();
+    let dependencies = module_info.dependencies;
     assert_eq!(dependencies.len(), 6);
 
-    let ts_references = analyzer.analyze_ts_references();
+    let ts_references = module_info.ts_references;
     assert_eq!(ts_references.len(), 2);
     match &ts_references[0] {
       TypeScriptReference::Path(specifier) => {
@@ -307,10 +328,10 @@ mod tests {
       "https://deno.land/x/types/react/index.d.ts"
     );
 
-    let specifier = analyzer.analyze_jsx_import_source().unwrap();
-    assert_eq!(specifier.text, "http://example.com/preact");
+    let jsx_import_source = module_info.jsx_import_source.unwrap();
+    assert_eq!(jsx_import_source.text, "http://example.com/preact");
     assert_eq!(
-      &file_text[specifier.range.into_std()],
+      &file_text[jsx_import_source.range.into_std()],
       "http://example.com/preact"
     );
   }

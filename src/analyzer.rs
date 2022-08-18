@@ -180,6 +180,19 @@ pub enum TypeScriptReference {
   Types(SpecifierWithRange),
 }
 
+/// Information about the module.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModuleInfo {
+  /// Dependencies of the module.
+  pub dependencies: Vec<DependencyDescriptor>,
+  /// Triple slash references.
+  pub ts_references: Vec<TypeScriptReference>,
+  /// Comment with a `@jsxImportSource` pragma on JSX/TSX media types
+  pub jsx_import_source: Option<SpecifierWithRange>,
+  /// Type imports in JSDoc comment blocks (e.g. `{import("./types.d.ts").Type}`).
+  pub jsdoc_imports: Vec<SpecifierWithRange>,
+}
+
 /// Provides a ModuleAnalyzer for the provided specifier.
 ///
 /// It can be assumed that the source has not changed since
@@ -197,16 +210,6 @@ pub trait ModuleAnalyzer {
   /// Converts a byte index to a `deno_graph::Position`.
   fn byte_index_to_position(&self, byte_index: usize) -> Position;
 
-  fn analyze_dependencies(&self) -> Vec<DependencyDescriptor>;
-
-  /// Searches comments for any triple slash references.
-  fn analyze_ts_references(&self) -> Vec<TypeScriptReference>;
-
-  /// Searches comments for a `@jsxImportSource` pragma on JSX/TSX media types
-  fn analyze_jsx_import_source(&self) -> Option<SpecifierWithRange>;
-
-  /// Searches JSDoc comment blocks for type imports
-  /// (e.g. `{import("./types.d.ts").Type}`) and returns a vector of tuples of
-  /// the specifier and the span of the import.
-  fn analyze_jsdoc_imports(&self) -> Vec<SpecifierWithRange>;
+  /// Analyzes the module.
+  fn analyze(&self) -> ModuleInfo;
 }

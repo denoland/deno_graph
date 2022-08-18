@@ -1245,6 +1245,7 @@ pub(crate) fn parse_module(
           ModuleSlot::Module(parse_module_from_analyzer(
             specifier,
             maybe_kind.unwrap_or(&ModuleKind::Esm),
+            media_type,
             maybe_headers,
             &*analyzer,
             content,
@@ -1265,6 +1266,7 @@ pub(crate) fn parse_module(
           ModuleSlot::Module(parse_module_from_analyzer(
             specifier,
             maybe_kind.unwrap_or(&ModuleKind::Esm),
+            media_type,
             maybe_headers,
             &*analyzer,
             content,
@@ -1284,6 +1286,7 @@ pub(crate) fn parse_module(
 pub(crate) fn parse_module_from_analyzer(
   specifier: &ModuleSpecifier,
   kind: &ModuleKind,
+  media_type: MediaType,
   maybe_headers: Option<&HashMap<String, String>>,
   analyzer: &dyn ModuleAnalyzer,
   source: Arc<str>,
@@ -1291,10 +1294,11 @@ pub(crate) fn parse_module_from_analyzer(
 ) -> Module {
   // Init the module and determine its media type
   let mut module = Module::new(specifier.clone(), kind.clone(), source);
-  module.media_type = get_media_type(specifier, maybe_headers);
+  module.media_type = media_type;
+  let module_info = analyzer.analyze();
 
   // Analyze the TypeScript triple-slash references
-  for reference in analyzer.analyze_ts_references() {
+  for reference in module_info.ts_references {
     match reference {
       TypeScriptReference::Path(specifier) => {
         let range =
@@ -1321,7 +1325,7 @@ pub(crate) fn parse_module_from_analyzer(
   }
 
   // Analyze any JSX Import Source pragma
-  if let Some(import_source) = analyzer.analyze_jsx_import_source() {
+  if let Some(import_source) = module_info.jsx_import_source {
     let jsx_import_source_module = maybe_resolver
       .map(|r| r.jsx_import_source_module())
       .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE);
@@ -1335,21 +1339,12 @@ pub(crate) fn parse_module_from_analyzer(
   }
 
   // Analyze any JSDoc type imports
-  // We only analyze these on JavaScript types of modules, since they are
-  // ignored by TypeScript when type checking anyway and really shouldn't be
-  // there, but some people do strange things.
-  if matches!(
-    module.media_type,
-    MediaType::JavaScript | MediaType::Jsx | MediaType::Mjs | MediaType::Cjs
-  ) {
-    for specifier in analyzer.analyze_jsdoc_imports() {
-      let range =
-        Range::from_byte_range(&module.specifier, analyzer, &specifier.range);
-      let resolved_dependency =
-        resolve(&specifier.text, &range, maybe_resolver);
-      let dep = module.dependencies.entry(specifier.text).or_default();
-      dep.maybe_type = resolved_dependency;
-    }
+  for specifier in module_info.jsdoc_imports {
+    let range =
+      Range::from_byte_range(&module.specifier, analyzer, &specifier.range);
+    let resolved_dependency = resolve(&specifier.text, &range, maybe_resolver);
+    let dep = module.dependencies.entry(specifier.text).or_default();
+    dep.maybe_type = resolved_dependency;
   }
 
   // Analyze the X-TypeScript-Types header
@@ -1406,8 +1401,7 @@ pub(crate) fn parse_module_from_analyzer(
   }
 
   // Analyze ES dependencies
-  let descriptors = analyzer.analyze_dependencies();
-  for desc in descriptors {
+  for desc in module_info.dependencies {
     let dep = module
       .dependencies
       .entry(desc.specifier.to_string())

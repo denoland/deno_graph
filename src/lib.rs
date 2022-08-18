@@ -43,6 +43,7 @@ cfg_if! {
     pub use analyzer::ModuleAnalyzerProvider;
     pub use analyzer::SpecifierWithRange;
     pub use analyzer::TypeScriptReference;
+    pub use analyzer::ModuleInfo;
     pub use ast::analyze_deno_types;
     pub use ast::ParsedSourceAnalyzerProvider;
     pub use ast::ParsedSourceAnalyzer;
@@ -194,9 +195,10 @@ cfg_if! {
       graph::parse_module_from_analyzer(
         specifier,
         kind,
+        parsed_source.media_type(),
         maybe_headers,
         &ParsedSourceAnalyzer::new(parsed_source.clone()),
-parsed_source.text_info().text(),
+        parsed_source.text_info().text(),
         maybe_resolver,
       )
     }
