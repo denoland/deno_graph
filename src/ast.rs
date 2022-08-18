@@ -25,6 +25,8 @@ use deno_ast::SourceTextInfo;
 use lazy_static::lazy_static;
 use regex::Match;
 use regex::Regex;
+use std::cell::RefCell;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 lazy_static! {
@@ -226,6 +228,46 @@ fn comment_source_to_position_range(
   PositionRange {
     start: Position::from_source_pos(comment_start + m.start(), text_info),
     end: Position::from_source_pos(comment_start + m.end(), text_info),
+  }
+}
+
+/// A `deno_graph::ModuleAnalyzer` that captures parsed sources.
+#[derive(Default)]
+pub struct CapturingParsedSourceAnalyzer {
+  sources: RefCell<HashMap<ModuleSpecifier, ParsedSource>>,
+}
+
+impl CapturingParsedSourceAnalyzer {
+  pub fn parsed_source(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Result<ParsedSource, anyhow::Error> {
+    self
+      .sources
+      .borrow()
+      .get(specifier)
+      .cloned()
+      .ok_or_else(|| {
+        anyhow::anyhow!("Could not find parsed source: {}", specifier)
+      })
+  }
+}
+
+impl ModuleAnalyzer for CapturingParsedSourceAnalyzer {
+  fn analyze(
+    &self,
+    specifier: &ModuleSpecifier,
+    source: Arc<str>,
+    media_type: deno_ast::MediaType,
+  ) -> Result<ModuleInfo, deno_ast::Diagnostic> {
+    let parsed_source =
+      ParsedSourceAnalyzer::parse_module(specifier, source, media_type)?;
+    let module_info = ParsedSourceAnalyzer::module_info(&parsed_source);
+    self
+      .sources
+      .borrow_mut()
+      .insert(specifier.clone(), parsed_source);
+    Ok(module_info)
   }
 }
 

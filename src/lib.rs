@@ -33,17 +33,18 @@ cfg_if! {
   if #[cfg(feature = "rust")] {
     use std::sync::Arc;
 
-    pub use analyzer::PositionRange;
     pub use analyzer::Comment;
     pub use analyzer::DependencyDescriptor;
     pub use analyzer::DependencyKind;
     pub use analyzer::ImportAssertion;
     pub use analyzer::ImportAssertions;
     pub use analyzer::ModuleAnalyzer;
+    pub use analyzer::PositionRange;
     pub use analyzer::SpecifierWithRange;
     pub use analyzer::TypeScriptReference;
     pub use analyzer::ModuleInfo;
     pub use analyzer::analyze_deno_types;
+    pub use ast::CapturingParsedSourceAnalyzer;
     pub use ast::ParsedSourceAnalyzer;
     pub use graph::Dependency;
     pub use graph::GraphImport;
