@@ -231,14 +231,22 @@ fn comment_source_to_position_range(
   }
 }
 
-/// A `deno_graph::ModuleAnalyzer` that captures parsed sources.
+/// A `ModuleAnalyzer` that caches the `deno_ast::ParsedSource` objects it creates.
+pub trait CapturingParsedSourceAnalyzer: ModuleAnalyzer {
+  fn parsed_source(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Result<ParsedSource, anyhow::Error>;
+}
+
+/// Implementation of `CapturingParsedSourceAnalyzer` that stores the sources in a RefCell.
 #[derive(Default)]
-pub struct CapturingParsedSourceAnalyzer {
+pub struct RefCellCapturingParsedSourceAnalyzer {
   sources: RefCell<HashMap<ModuleSpecifier, ParsedSource>>,
 }
 
-impl CapturingParsedSourceAnalyzer {
-  pub fn parsed_source(
+impl CapturingParsedSourceAnalyzer for RefCellCapturingParsedSourceAnalyzer {
+  fn parsed_source(
     &self,
     specifier: &ModuleSpecifier,
   ) -> Result<ParsedSource, anyhow::Error> {
@@ -253,7 +261,7 @@ impl CapturingParsedSourceAnalyzer {
   }
 }
 
-impl ModuleAnalyzer for CapturingParsedSourceAnalyzer {
+impl ModuleAnalyzer for RefCellCapturingParsedSourceAnalyzer {
   fn analyze(
     &self,
     specifier: &ModuleSpecifier,

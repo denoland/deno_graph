@@ -1457,6 +1457,8 @@ pub(crate) fn parse_module_from_module_info(
   module
 }
 
+// todo(dsherret): use `MediaType::from_specifier_and_headers` once
+// https://github.com/denoland/deno_ast/pull/108 is merged
 fn get_media_type(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,

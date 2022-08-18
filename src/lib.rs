@@ -45,6 +45,7 @@ cfg_if! {
     pub use analyzer::ModuleInfo;
     pub use analyzer::analyze_deno_types;
     pub use ast::CapturingParsedSourceAnalyzer;
+    pub use ast::RefCellCapturingParsedSourceAnalyzer;
     pub use ast::ParsedSourceAnalyzer;
     pub use graph::Dependency;
     pub use graph::GraphImport;
