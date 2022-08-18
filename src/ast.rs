@@ -1,6 +1,5 @@
 // Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
-use crate::analyzer::ByteRange;
 use crate::analyzer::Comment;
 use crate::analyzer::DependencyDescriptor;
 use crate::analyzer::ModuleAnalyzer;
@@ -11,7 +10,9 @@ use crate::analyzer::TypeScriptReference;
 use crate::graph::ModuleGraphError;
 use crate::graph::Position;
 use crate::module_specifier::ModuleSpecifier;
+use crate::PositionRange;
 
+use deno_ast::SourcePos;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 
@@ -116,17 +117,17 @@ impl ParsedSourceAnalyzer {
       leading_comments: d
         .leading_comments
         .into_iter()
-        .map(|c| Comment::from_swc(c, &self.0))
+        .map(|c| Comment::from_swc(c, self.0.text_info()))
         .collect(),
       // ok to use this because we received this span from swc
-      range: ByteRange::from_source_range(
+      range: PositionRange::from_source_range(
         SourceRange::unsafely_from_span(d.span),
-        &self.0,
+        self.0.text_info(),
       ),
       specifier: d.specifier.to_string(),
-      specifier_range: ByteRange::from_source_range(
+      specifier_range: PositionRange::from_source_range(
         SourceRange::unsafely_from_span(d.specifier_span),
-        &self.0,
+        self.0.text_info(),
       ),
       import_assertions: d.import_assertions.into(),
     })
@@ -137,14 +138,16 @@ impl ParsedSourceAnalyzer {
     let mut references = Vec::new();
     for comment in self.0.get_leading_comments().iter() {
       if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
-        let comment_start = comment
-          .start()
-          .as_byte_index(self.0.text_info().range().start);
+        let comment_start = comment.start();
         if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
           let m = captures.get(1).unwrap();
           references.push(TypeScriptReference::Path(SpecifierWithRange {
             text: m.as_str().to_string(),
-            range: comment_match_to_byte_range(comment_start, &m),
+            range: comment_source_to_position_range(
+              comment_start,
+              &m,
+              self.0.text_info(),
+            ),
           }));
         } else if let Some(captures) =
           TYPES_REFERENCE_RE.captures(&comment.text)
@@ -152,7 +155,11 @@ impl ParsedSourceAnalyzer {
           let m = captures.get(1).unwrap();
           references.push(TypeScriptReference::Types(SpecifierWithRange {
             text: m.as_str().to_string(),
-            range: comment_match_to_byte_range(comment_start, &m),
+            range: comment_source_to_position_range(
+              comment_start,
+              &m,
+              self.0.text_info(),
+            ),
           }));
         }
       }
@@ -168,9 +175,10 @@ impl ParsedSourceAnalyzer {
           let m = captures.get(1)?;
           Some(SpecifierWithRange {
             text: m.as_str().to_string(),
-            range: comment_match_to_byte_range(
-              c.start().as_byte_index(self.0.text_info().range().start),
+            range: comment_source_to_position_range(
+              c.start(),
               &m,
+              self.0.text_info(),
             ),
           })
         })
@@ -190,6 +198,7 @@ impl ParsedSourceAnalyzer {
     ) {
       return Vec::new();
     }
+
     let mut deps = Vec::new();
     for comment in self.0.comments().get_vec().iter() {
       if comment.kind != CommentKind::Block || !comment.text.starts_with('*') {
@@ -199,12 +208,10 @@ impl ParsedSourceAnalyzer {
         if let Some(m) = captures.get(1) {
           deps.push(SpecifierWithRange {
             text: m.as_str().to_string(),
-            range: comment_match_to_byte_range(
-              comment
-                .range()
-                .start
-                .as_byte_index(self.0.text_info().range().start),
+            range: comment_source_to_position_range(
+              comment.range().start,
               &m,
+              self.0.text_info(),
             ),
           });
         }
@@ -215,16 +222,6 @@ impl ParsedSourceAnalyzer {
 }
 
 impl ModuleAnalyzer for ParsedSourceAnalyzer {
-  fn byte_index_to_position(&self, byte_index: usize) -> Position {
-    let text_info = self.0.text_info();
-    let pos = text_info.range().start + byte_index;
-    let line_and_column_index = text_info.line_and_column_index(pos);
-    Position {
-      line: line_and_column_index.line_index,
-      character: line_and_column_index.column_index,
-    }
-  }
-
   fn analyze(&self) -> ModuleInfo {
     ModuleInfo {
       dependencies: self.analyze_dependencies(),
@@ -235,35 +232,23 @@ impl ModuleAnalyzer for ParsedSourceAnalyzer {
   }
 }
 
-/// Searches comments for any `@deno-types` compiler hints.
-pub fn analyze_deno_types(
-  desc: &DependencyDescriptor,
-) -> Option<(String, ByteRange)> {
-  let comment = desc.leading_comments.last()?;
-  let captures = DENO_TYPES_RE.captures(&comment.text)?;
-  if let Some(m) = captures.get(1) {
-    Some((
-      m.as_str().to_string(),
-      comment_match_to_byte_range(comment.range.start, &m),
-    ))
-  } else if let Some(m) = captures.get(2) {
-    Some((
-      m.as_str().to_string(),
-      comment_match_to_byte_range(comment.range.start, &m),
-    ))
-  } else {
-    unreachable!("Unexpected captures from deno types regex")
-  }
-}
-
-fn comment_match_to_byte_range(comment_start: usize, m: &Match) -> ByteRange {
+fn comment_source_to_position_range(
+  comment_start: SourcePos,
+  m: &Match,
+  text_info: &SourceTextInfo,
+) -> PositionRange {
   // the comment text starts after the double slash or slash star, so add 2
   let comment_start = comment_start + 2;
-  (comment_start + m.start()..comment_start + m.end()).into()
+  PositionRange {
+    start: Position::from_source_pos(comment_start + m.start(), text_info),
+    end: Position::from_source_pos(comment_start + m.end(), text_info),
+  }
 }
 
 #[cfg(test)]
 mod tests {
+  use crate::analyzer::analyze_deno_types;
+
   use super::*;
   use pretty_assertions::assert_eq;
 
@@ -296,7 +281,7 @@ mod tests {
     let analyzer = analyzer_provider
       .get_concrete_analyzer(&specifier, source.into(), MediaType::Tsx)
       .unwrap();
-    let file_text = analyzer.parsed_source().text_info().text_str();
+    let text_info = analyzer.parsed_source().text_info();
     let module_info = analyzer.analyze();
     let dependencies = module_info.dependencies;
     assert_eq!(dependencies.len(), 6);
@@ -306,7 +291,10 @@ mod tests {
     match &ts_references[0] {
       TypeScriptReference::Path(specifier) => {
         assert_eq!(specifier.text, "./ref.d.ts");
-        assert_eq!(&file_text[specifier.range.into_std()], "./ref.d.ts");
+        assert_eq!(
+          text_info.range_text(&specifier.range.as_source_range(text_info)),
+          "./ref.d.ts"
+        );
       }
       TypeScriptReference::Types(_) => panic!("expected path"),
     }
@@ -314,7 +302,10 @@ mod tests {
       TypeScriptReference::Path(_) => panic!("expected types"),
       TypeScriptReference::Types(specifier) => {
         assert_eq!(specifier.text, "./types.d.ts");
-        assert_eq!(&file_text[specifier.range.into_std()], "./types.d.ts");
+        assert_eq!(
+          text_info.range_text(&specifier.range.as_source_range(text_info)),
+          "./types.d.ts"
+        );
       }
     }
 
@@ -324,14 +315,14 @@ mod tests {
       "https://deno.land/x/types/react/index.d.ts"
     );
     assert_eq!(
-      &file_text[dep_deno_types.1.into_std()],
+      text_info.range_text(&dep_deno_types.1.as_source_range(text_info)),
       "https://deno.land/x/types/react/index.d.ts"
     );
 
     let jsx_import_source = module_info.jsx_import_source.unwrap();
     assert_eq!(jsx_import_source.text, "http://example.com/preact");
     assert_eq!(
-      &file_text[jsx_import_source.range.into_std()],
+      text_info.range_text(&jsx_import_source.range.as_source_range(text_info)),
       "http://example.com/preact"
     );
   }
@@ -357,18 +348,22 @@ mod tests {
     let analyzer = analyzer_provider
       .get_concrete_analyzer(&specifier, source.into(), MediaType::TypeScript)
       .unwrap();
-    let file_text = analyzer.parsed_source().text_info().text_str();
+    let text_info = analyzer.parsed_source().text_info();
     let dependencies = analyzer.analyze_dependencies();
     assert_eq!(dependencies.len(), 10);
     assert_eq!(dependencies[0].specifier.to_string(), "./a.ts");
     assert_eq!(
-      &file_text[dependencies[0].specifier_range.into_std()],
+      text_info.range_text(
+        &dependencies[0].specifier_range.as_source_range(text_info)
+      ),
       "\"./a.ts\""
     );
     assert!(!dependencies[0].is_dynamic);
     assert_eq!(dependencies[1].specifier.to_string(), "./b.ts");
     assert_eq!(
-      &file_text[dependencies[1].specifier_range.into_std()],
+      text_info.range_text(
+        &dependencies[1].specifier_range.as_source_range(text_info)
+      ),
       "\"./b.ts\""
     );
     assert!(!dependencies[1].is_dynamic);
@@ -432,7 +427,7 @@ const f = new Set();
 "#;
     let analyzer_provider = ParsedSourceAnalyzerProvider::default();
     let analyzer = analyzer_provider
-      .get_concrete_analyzer(&specifier, source.into(), MediaType::TypeScript)
+      .get_concrete_analyzer(&specifier, source.into(), MediaType::JavaScript)
       .unwrap();
     let dependencies = analyzer.analyze_jsdoc_imports();
     assert_eq!(
@@ -440,27 +435,54 @@ const f = new Set();
       [
         SpecifierWithRange {
           text: "./a.js".to_string(),
-          range: ByteRange { start: 61, end: 67 }
+          range: PositionRange {
+            start: Position {
+              line: 6,
+              character: 18
+            },
+            end: Position {
+              line: 6,
+              character: 24
+            }
+          }
         },
         SpecifierWithRange {
           text: "./b.js".to_string(),
-          range: ByteRange {
-            start: 144,
-            end: 150,
+          range: PositionRange {
+            start: Position {
+              line: 13,
+              character: 19
+            },
+            end: Position {
+              line: 13,
+              character: 25
+            }
           }
         },
         SpecifierWithRange {
           text: "./d.js".to_string(),
-          range: ByteRange {
-            start: 177,
-            end: 183,
+          range: PositionRange {
+            start: Position {
+              line: 14,
+              character: 21
+            },
+            end: Position {
+              line: 14,
+              character: 27
+            }
           }
         },
         SpecifierWithRange {
           text: "./e.js".to_string(),
-          range: ByteRange {
-            start: 246,
-            end: 252,
+          range: PositionRange {
+            start: Position {
+              line: 21,
+              character: 22
+            },
+            end: Position {
+              line: 21,
+              character: 28
+            }
           }
         },
       ]

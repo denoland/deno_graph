@@ -5,43 +5,87 @@ use std::sync::Arc;
 
 use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
-use deno_ast::ParsedSource;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
+use deno_ast::SourceTextInfo;
+use lazy_static::lazy_static;
+use regex::Match;
+use regex::Regex;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::graph::ModuleGraphError;
 use crate::graph::Position;
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct ByteRange {
-  pub start: usize,
-  pub end: usize,
+lazy_static! {
+  /// Matches the `@deno-types` pragma.
+  static ref DENO_TYPES_RE: Regex =
+    Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#)
+      .unwrap();
 }
 
-impl ByteRange {
+/// Searches comments for any `@deno-types` compiler hints.
+pub fn analyze_deno_types(
+  desc: &DependencyDescriptor,
+) -> Option<(String, PositionRange)> {
+  fn comment_position_to_position_range(
+    mut comment_start: Position,
+    m: &Match,
+  ) -> PositionRange {
+    // the comment text starts after the double slash or slash star, so add 2
+    comment_start.character += 2;
+    PositionRange {
+      // this will always be on the same line
+      start: Position {
+        line: comment_start.line,
+        character: comment_start.character + m.start(),
+      },
+      end: Position {
+        line: comment_start.line,
+        character: comment_start.character + m.end(),
+      },
+    }
+  }
+
+  let comment = desc.leading_comments.last()?;
+  let captures = DENO_TYPES_RE.captures(&comment.text)?;
+  if let Some(m) = captures.get(1) {
+    Some((
+      m.as_str().to_string(),
+      comment_position_to_position_range(comment.range.start.clone(), &m),
+    ))
+  } else if let Some(m) = captures.get(2) {
+    Some((
+      m.as_str().to_string(),
+      comment_position_to_position_range(comment.range.start.clone(), &m),
+    ))
+  } else {
+    unreachable!("Unexpected captures from deno types regex")
+  }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct PositionRange {
+  pub start: Position,
+  pub end: Position,
+}
+
+impl PositionRange {
   pub fn from_source_range(
     range: SourceRange,
-    parsed_source: &ParsedSource,
+    text_info: &SourceTextInfo,
   ) -> Self {
-    let byte_range =
-      range.as_byte_range(parsed_source.text_info().range().start);
-    byte_range.into()
-  }
-
-  #[cfg(feature = "rust")]
-  pub fn into_std(&self) -> std::ops::Range<usize> {
-    self.start..self.end
-  }
-}
-
-impl From<std::ops::Range<usize>> for ByteRange {
-  fn from(range: std::ops::Range<usize>) -> Self {
     Self {
-      start: range.start,
-      end: range.end,
+      start: Position::from_source_pos(range.start, text_info),
+      end: Position::from_source_pos(range.end, text_info),
     }
+  }
+
+  pub fn as_source_range(&self, text_info: &SourceTextInfo) -> SourceRange {
+    SourceRange::new(
+      self.start.as_source_pos(text_info),
+      self.end.as_source_pos(text_info),
+    )
   }
 }
 
@@ -134,15 +178,15 @@ impl From<deno_ast::swc::dep_graph::ImportAssertions> for ImportAssertions {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Comment {
   pub text: String,
-  pub range: ByteRange,
+  pub range: PositionRange,
 }
 
 impl Comment {
   pub fn from_swc(
     comment: deno_ast::swc::common::comments::Comment,
-    parsed_source: &ParsedSource,
+    text_info: &SourceTextInfo,
   ) -> Comment {
-    let range = ByteRange::from_source_range(comment.range(), parsed_source);
+    let range = PositionRange::from_source_range(comment.range(), text_info);
     Comment {
       text: comment.text,
       range,
@@ -159,11 +203,11 @@ pub struct DependencyDescriptor {
   /// further processing of supported pragma that impact the dependency.
   pub leading_comments: Vec<Comment>,
   /// The range of the import/export statement.
-  pub range: ByteRange,
+  pub range: PositionRange,
   /// The text specifier associated with the import/export statement.
   pub specifier: String,
   /// The range of the specifier.
-  pub specifier_range: ByteRange,
+  pub specifier_range: PositionRange,
   /// Import assertions for this dependency.
   pub import_assertions: ImportAssertions,
 }
@@ -171,7 +215,7 @@ pub struct DependencyDescriptor {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SpecifierWithRange {
   pub text: String,
-  pub range: ByteRange,
+  pub range: PositionRange,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -207,9 +251,6 @@ pub trait ModuleAnalyzerProvider {
 }
 
 pub trait ModuleAnalyzer {
-  /// Converts a byte index to a `deno_graph::Position`.
-  fn byte_index_to_position(&self, byte_index: usize) -> Position;
-
   /// Analyzes the module.
   fn analyze(&self) -> ModuleInfo;
 }

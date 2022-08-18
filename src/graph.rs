@@ -1,11 +1,11 @@
 // Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
-use crate::analyzer::ByteRange;
+use crate::analyzer::analyze_deno_types;
 use crate::analyzer::DependencyKind;
 use crate::analyzer::ModuleAnalyzer;
 use crate::analyzer::ModuleAnalyzerProvider;
 use crate::analyzer::TypeScriptReference;
-use crate::ast::analyze_deno_types;
+use crate::PositionRange;
 
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -15,7 +15,10 @@ use crate::source_map::parse_sourcemap;
 use crate::source_map::ParsedSourceMap;
 
 use anyhow::Result;
+use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
+use deno_ast::SourcePos;
+use deno_ast::SourceTextInfo;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
 use futures::Future;
@@ -62,11 +65,26 @@ impl Ord for Position {
 }
 
 impl Position {
-  pub fn zeroed() -> Position {
+  pub fn zeroed() -> Self {
     Position {
       line: 0,
       character: 0,
     }
+  }
+
+  pub fn from_source_pos(pos: SourcePos, text_info: &SourceTextInfo) -> Self {
+    let line_and_column_index = text_info.line_and_column_index(pos);
+    Position {
+      line: line_and_column_index.line_index,
+      character: line_and_column_index.column_index,
+    }
+  }
+
+  pub fn as_source_pos(&self, text_info: &SourceTextInfo) -> SourcePos {
+    text_info.loc_to_source_pos(LineAndColumnIndex {
+      line_index: self.line,
+      column_index: self.character,
+    })
   }
 }
 
@@ -93,15 +111,14 @@ impl fmt::Display for Range {
 }
 
 impl Range {
-  pub(crate) fn from_byte_range(
+  pub(crate) fn from_position_range(
     specifier: &ModuleSpecifier,
-    analyzer: &dyn ModuleAnalyzer,
-    range: &ByteRange,
+    range: &PositionRange,
   ) -> Range {
     Range {
       specifier: specifier.clone(),
-      start: analyzer.byte_index_to_position(range.start),
-      end: analyzer.byte_index_to_position(range.end),
+      start: range.start.clone(),
+      end: range.end.clone(),
     }
   }
 
@@ -1302,7 +1319,7 @@ pub(crate) fn parse_module_from_analyzer(
     match reference {
       TypeScriptReference::Path(specifier) => {
         let range =
-          Range::from_byte_range(&module.specifier, analyzer, &specifier.range);
+          Range::from_position_range(&module.specifier, &specifier.range);
         let resolved_dependency =
           resolve(&specifier.text, &range, maybe_resolver);
         let dep = module.dependencies.entry(specifier.text).or_default();
@@ -1310,7 +1327,7 @@ pub(crate) fn parse_module_from_analyzer(
       }
       TypeScriptReference::Types(specifier) => {
         let range =
-          Range::from_byte_range(&module.specifier, analyzer, &specifier.range);
+          Range::from_position_range(&module.specifier, &specifier.range);
         let resolved_dependency =
           resolve(&specifier.text, &range, maybe_resolver);
         if is_untyped(&module.media_type) {
@@ -1332,7 +1349,7 @@ pub(crate) fn parse_module_from_analyzer(
     let specifier =
       format!("{}/{}", import_source.text, jsx_import_source_module);
     let range =
-      Range::from_byte_range(&module.specifier, analyzer, &import_source.range);
+      Range::from_position_range(&module.specifier, &import_source.range);
     let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
     let dep = module.dependencies.entry(specifier).or_default();
     dep.maybe_code = resolved_dependency;
@@ -1340,8 +1357,7 @@ pub(crate) fn parse_module_from_analyzer(
 
   // Analyze any JSDoc type imports
   for specifier in module_info.jsdoc_imports {
-    let range =
-      Range::from_byte_range(&module.specifier, analyzer, &specifier.range);
+    let range = Range::from_position_range(&module.specifier, &specifier.range);
     let resolved_dependency = resolve(&specifier.text, &range, maybe_resolver);
     let dep = module.dependencies.entry(specifier.text).or_default();
     dep.maybe_type = resolved_dependency;
@@ -1410,11 +1426,7 @@ pub(crate) fn parse_module_from_analyzer(
     dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
     let resolved_dependency = resolve(
       &desc.specifier,
-      &Range::from_byte_range(
-        &module.specifier,
-        analyzer,
-        &desc.specifier_range,
-      ),
+      &Range::from_position_range(&module.specifier, &desc.specifier_range),
       maybe_resolver,
     );
     if matches!(
@@ -1430,7 +1442,7 @@ pub(crate) fn parse_module_from_analyzer(
       .map(|(text, range)| {
         resolve(
           &text,
-          &Range::from_byte_range(&specifier, analyzer, &range),
+          &Range::from_position_range(&specifier, &range),
           maybe_resolver,
         )
       })
