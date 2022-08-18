@@ -4,12 +4,12 @@ use crate::analyzer::Comment;
 use crate::analyzer::DependencyDescriptor;
 use crate::analyzer::ModuleAnalyzer;
 use crate::analyzer::ModuleInfo;
+use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
 use crate::graph::ModuleGraphError;
 use crate::graph::Position;
 use crate::module_specifier::ModuleSpecifier;
-use crate::analyzer::PositionRange;
 
 use deno_ast::SourcePos;
 use deno_ast::SourceRange;
