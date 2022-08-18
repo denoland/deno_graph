@@ -4,8 +4,8 @@ use crate::analyzer::analyze_deno_types;
 use crate::analyzer::DependencyKind;
 use crate::analyzer::ModuleAnalyzer;
 use crate::analyzer::TypeScriptReference;
-use crate::ModuleInfo;
-use crate::PositionRange;
+use crate::analyzer::ModuleInfo;
+use crate::analyzer::PositionRange;
 
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
