@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use deno_ast::Diagnostic;
 use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
 use deno_ast::SourceRange;
@@ -14,7 +15,6 @@ use regex::Regex;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::graph::ModuleGraphError;
 use crate::graph::Position;
 
 lazy_static! {
@@ -249,5 +249,5 @@ pub trait ModuleAnalyzer {
     specifier: &ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, ModuleGraphError>;
+  ) -> Result<ModuleInfo, Diagnostic>;
 }

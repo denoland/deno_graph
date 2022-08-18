@@ -7,7 +7,6 @@ use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
-use crate::graph::ModuleGraphError;
 use crate::graph::Position;
 use crate::module_specifier::ModuleSpecifier;
 
@@ -87,17 +86,10 @@ impl ModuleAnalyzer for ParsedSourceAnalyzer {
     specifier: &ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, ModuleGraphError> {
-    let result =
-      ParsedSourceAnalyzer::parse_module(specifier, source, media_type);
-    match result {
-      Ok(parsed_source) => {
-        Ok(ParsedSourceAnalyzer::module_info(&parsed_source))
-      }
-      Err(diagnostic) => {
-        Err(ModuleGraphError::ParseErr(specifier.clone(), diagnostic))
-      }
-    }
+  ) -> Result<ModuleInfo, Diagnostic> {
+    let parsed_source =
+      ParsedSourceAnalyzer::parse_module(specifier, source, media_type)?;
+    Ok(ParsedSourceAnalyzer::module_info(&parsed_source))
   }
 }
 

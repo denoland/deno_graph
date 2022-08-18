@@ -1265,7 +1265,10 @@ pub(crate) fn parse_module(
             maybe_resolver,
           ))
         }
-        Err(err) => ModuleSlot::Err(err),
+        Err(diagnostic) => ModuleSlot::Err(ModuleGraphError::ParseErr(
+          specifier.clone(),
+          diagnostic,
+        )),
       }
     }
     MediaType::Unknown if is_root => {
@@ -1286,7 +1289,10 @@ pub(crate) fn parse_module(
             maybe_resolver,
           ))
         }
-        Err(err) => ModuleSlot::Err(err),
+        Err(diagnostic) => ModuleSlot::Err(ModuleGraphError::ParseErr(
+          specifier.clone(),
+          diagnostic,
+        )),
       }
     }
     _ => ModuleSlot::Err(ModuleGraphError::UnsupportedMediaType(
