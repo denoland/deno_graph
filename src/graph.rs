@@ -3,8 +3,8 @@
 use crate::analyzer::analyze_deno_types;
 use crate::analyzer::DependencyKind;
 use crate::analyzer::ModuleAnalyzer;
-use crate::analyzer::ModuleAnalyzerProvider;
 use crate::analyzer::TypeScriptReference;
+use crate::ModuleInfo;
 use crate::PositionRange;
 
 use crate::module_specifier::resolve_import;
@@ -1195,7 +1195,7 @@ pub(crate) fn parse_module(
   maybe_assert_type: Option<&str>,
   maybe_kind: Option<&ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
-  analyzer_provider: &dyn ModuleAnalyzerProvider,
+  module_analyzer: &dyn ModuleAnalyzer,
   is_root: bool,
   is_dynamic_branch: bool,
 ) -> ModuleSlot {
@@ -1252,19 +1252,15 @@ pub(crate) fn parse_module(
     | MediaType::Dts
     | MediaType::Dmts
     | MediaType::Dcts => {
-      match analyzer_provider.get_analyzer(
-        specifier,
-        content.clone(),
-        media_type,
-      ) {
-        Ok(analyzer) => {
+      match module_analyzer.analyze(specifier, content.clone(), media_type) {
+        Ok(module_info) => {
           // Return the module as a valid module
-          ModuleSlot::Module(parse_module_from_analyzer(
+          ModuleSlot::Module(parse_module_from_module_info(
             specifier,
             maybe_kind.unwrap_or(&ModuleKind::Esm),
             media_type,
             maybe_headers,
-            &*analyzer,
+            module_info,
             content,
             maybe_resolver,
           ))
@@ -1273,19 +1269,19 @@ pub(crate) fn parse_module(
       }
     }
     MediaType::Unknown if is_root => {
-      match analyzer_provider.get_analyzer(
+      match module_analyzer.analyze(
         specifier,
         content.clone(),
         MediaType::JavaScript,
       ) {
-        Ok(analyzer) => {
+        Ok(module_info) => {
           // Return the module as a valid module
-          ModuleSlot::Module(parse_module_from_analyzer(
+          ModuleSlot::Module(parse_module_from_module_info(
             specifier,
             maybe_kind.unwrap_or(&ModuleKind::Esm),
             media_type,
             maybe_headers,
-            &*analyzer,
+            module_info,
             content,
             maybe_resolver,
           ))
@@ -1300,19 +1296,18 @@ pub(crate) fn parse_module(
   }
 }
 
-pub(crate) fn parse_module_from_analyzer(
+pub(crate) fn parse_module_from_module_info(
   specifier: &ModuleSpecifier,
   kind: &ModuleKind,
   media_type: MediaType,
   maybe_headers: Option<&HashMap<String, String>>,
-  analyzer: &dyn ModuleAnalyzer,
+  module_info: ModuleInfo,
   source: Arc<str>,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Module {
   // Init the module and determine its media type
   let mut module = Module::new(specifier.clone(), kind.clone(), source);
   module.media_type = media_type;
-  let module_info = analyzer.analyze();
 
   // Analyze the TypeScript triple-slash references
   for reference in module_info.ts_references {
@@ -1506,7 +1501,7 @@ pub(crate) struct Builder<'a> {
   pending: FuturesUnordered<LoadWithSpecifierFuture>,
   pending_assert_types: HashMap<ModuleSpecifier, HashSet<Option<String>>>,
   dynamic_branches: HashMap<ModuleSpecifier, (ModuleKind, Option<String>)>,
-  analyzer_provider: &'a dyn ModuleAnalyzerProvider,
+  module_analyzer: &'a dyn ModuleAnalyzer,
   maybe_reporter: Option<&'a dyn Reporter>,
 }
 
@@ -1517,7 +1512,7 @@ impl<'a> Builder<'a> {
     loader: &'a mut dyn Loader,
     maybe_resolver: Option<&'a dyn Resolver>,
     maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
-    analyzer_provider: &'a dyn ModuleAnalyzerProvider,
+    module_analyzer: &'a dyn ModuleAnalyzer,
     maybe_reporter: Option<&'a dyn Reporter>,
   ) -> Self {
     Self {
@@ -1528,7 +1523,7 @@ impl<'a> Builder<'a> {
       pending: FuturesUnordered::new(),
       pending_assert_types: HashMap::new(),
       dynamic_branches: HashMap::new(),
-      analyzer_provider,
+      module_analyzer,
       maybe_reporter,
     }
   }
@@ -1767,7 +1762,7 @@ impl<'a> Builder<'a> {
       maybe_assert_type.as_deref(),
       Some(kind),
       self.maybe_resolver,
-      self.analyzer_provider,
+      self.module_analyzer,
       is_root,
       self.in_dynamic_branch,
     );
@@ -2001,8 +1996,9 @@ where
 
 #[cfg(test)]
 mod tests {
+  use crate::ParsedSourceAnalyzer;
+
   use super::*;
-  use crate::ast::ParsedSourceAnalyzerProvider;
   use url::Url;
 
   #[test]
@@ -2043,7 +2039,7 @@ mod tests {
   #[test]
   fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
-    let analyzer_provider = ParsedSourceAnalyzerProvider::default();
+    let module_analyzer = ParsedSourceAnalyzer::default();
     let content = r#"import * as b from "./b.ts";"#;
     let slot = parse_module(
       &specifier,
@@ -2052,7 +2048,7 @@ mod tests {
       None,
       Some(&ModuleKind::Esm),
       None,
-      &analyzer_provider,
+      &module_analyzer,
       true,
       false,
     );
@@ -2168,14 +2164,14 @@ mod tests {
       loaded_bar: false,
       loaded_baz: false,
     };
-    let analyzer_provider = ParsedSourceAnalyzerProvider::default();
+    let module_analyzer = ParsedSourceAnalyzer::default();
     let builder = Builder::new(
       vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
       false,
       &mut loader,
       None,
       None,
-      &analyzer_provider,
+      &module_analyzer,
       None,
     );
     builder.build(BuildKind::All, None).await;
@@ -2208,14 +2204,14 @@ mod tests {
       }
     }
     let mut loader = TestLoader;
-    let analyzer_provider = ParsedSourceAnalyzerProvider::default();
+    let module_analyzer = ParsedSourceAnalyzer::default();
     let builder = Builder::new(
       vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
       false,
       &mut loader,
       None,
       None,
-      &analyzer_provider,
+      &module_analyzer,
       None,
     );
     let graph = builder.build(BuildKind::All, None).await;
@@ -2274,14 +2270,14 @@ mod tests {
       }
     }
     let mut loader = TestLoader;
-    let analyzer_provider = ParsedSourceAnalyzerProvider::default();
+    let module_analyzer = ParsedSourceAnalyzer::default();
     let builder = Builder::new(
       vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
       false,
       &mut loader,
       None,
       None,
-      &analyzer_provider,
+      &module_analyzer,
       None,
     );
     let graph = builder.build(BuildKind::All, None).await;

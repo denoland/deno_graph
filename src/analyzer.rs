@@ -237,20 +237,16 @@ pub struct ModuleInfo {
   pub jsdoc_imports: Vec<SpecifierWithRange>,
 }
 
-/// Provides a ModuleAnalyzer for the provided specifier.
+/// Analyzes the provided module.
 ///
 /// It can be assumed that the source has not changed since
 /// it was loaded by deno_graph.
-pub trait ModuleAnalyzerProvider {
-  fn get_analyzer(
+pub trait ModuleAnalyzer {
+  /// Analyzes the module.
+  fn analyze(
     &self,
     specifier: &ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<Box<dyn ModuleAnalyzer>, ModuleGraphError>;
-}
-
-pub trait ModuleAnalyzer {
-  /// Analyzes the module.
-  fn analyze(&self) -> ModuleInfo;
+  ) -> Result<ModuleInfo, ModuleGraphError>;
 }

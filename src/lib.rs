@@ -40,12 +40,10 @@ cfg_if! {
     pub use analyzer::ImportAssertion;
     pub use analyzer::ImportAssertions;
     pub use analyzer::ModuleAnalyzer;
-    pub use analyzer::ModuleAnalyzerProvider;
     pub use analyzer::SpecifierWithRange;
     pub use analyzer::TypeScriptReference;
     pub use analyzer::ModuleInfo;
     pub use analyzer::analyze_deno_types;
-    pub use ast::ParsedSourceAnalyzerProvider;
     pub use ast::ParsedSourceAnalyzer;
     pub use graph::Dependency;
     pub use graph::GraphImport;
@@ -74,18 +72,18 @@ cfg_if! {
       loader: &mut dyn Loader,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
-      maybe_analyzer_provider: Option<&dyn ModuleAnalyzerProvider>,
+      maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
       maybe_reporter: Option<&dyn Reporter>,
     ) -> ModuleGraph {
-      let default_analyzer_provider = ast::ParsedSourceAnalyzerProvider::default();
-      let analyzer_provider = maybe_analyzer_provider.unwrap_or(&default_analyzer_provider);
+      let default_module_analyzer = ast::ParsedSourceAnalyzer::default();
+      let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
       let builder = Builder::new(
         roots,
         is_dynamic,
         loader,
         maybe_resolver,
         maybe_locker,
-        analyzer_provider,
+        module_analyzer,
         maybe_reporter,
       );
       builder.build(BuildKind::All, maybe_imports).await
@@ -103,18 +101,18 @@ cfg_if! {
       loader: &mut dyn Loader,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
-      maybe_analyzer_provider: Option<&dyn ModuleAnalyzerProvider>,
+      maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
       maybe_reporter: Option<&dyn Reporter>,
     ) -> ModuleGraph {
-      let default_analyzer_provider = ast::ParsedSourceAnalyzerProvider::default();
-      let analyzer_provider = maybe_analyzer_provider.unwrap_or(&default_analyzer_provider);
+      let default_module_analyzer = ast::ParsedSourceAnalyzer::default();
+      let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
       let builder = Builder::new(
         roots,
         is_dynamic,
         loader,
         maybe_resolver,
         maybe_locker,
-        analyzer_provider,
+        module_analyzer,
         maybe_reporter,
       );
       builder.build(BuildKind::CodeOnly, maybe_imports).await
@@ -137,11 +135,11 @@ cfg_if! {
       loader: &mut dyn Loader,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
-      maybe_analyzer_provider: Option<&dyn ModuleAnalyzerProvider>,
+      maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
       maybe_reporter: Option<&dyn Reporter>,
     ) -> ModuleGraph {
-      let default_analyzer_provider = ast::ParsedSourceAnalyzerProvider::default();
-      let analyzer_provider = maybe_analyzer_provider.unwrap_or(&default_analyzer_provider);
+      let default_module_analyzer = ast::ParsedSourceAnalyzer::default();
+      let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
       let roots = roots.into_iter().map(|s| (s, ModuleKind::Esm)).collect();
       let builder = Builder::new(
         roots,
@@ -149,7 +147,7 @@ cfg_if! {
         loader,
         maybe_resolver,
         maybe_locker,
-        analyzer_provider,
+        module_analyzer,
         maybe_reporter,
       );
       builder.build(BuildKind::TypesOnly, maybe_imports).await
@@ -163,10 +161,10 @@ cfg_if! {
       content: Arc<str>,
       maybe_kind: Option<&ModuleKind>,
       maybe_resolver: Option<&dyn Resolver>,
-      maybe_analyzer_provider: Option<&dyn ModuleAnalyzerProvider>,
+      maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
     ) -> Result<Module, ModuleGraphError> {
-      let default_analyzer_provider = ast::ParsedSourceAnalyzerProvider::default();
-      let analyzer_provider = maybe_analyzer_provider.unwrap_or(&default_analyzer_provider);
+      let default_module_analyzer = ast::ParsedSourceAnalyzer::default();
+      let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
       match graph::parse_module(
         specifier,
         maybe_headers,
@@ -174,7 +172,7 @@ cfg_if! {
         None,
         maybe_kind,
         maybe_resolver,
-        analyzer_provider,
+        module_analyzer,
         true,
         false,
       ) {
@@ -192,12 +190,12 @@ cfg_if! {
       parsed_source: &deno_ast::ParsedSource,
       maybe_resolver: Option<&dyn Resolver>,
     ) -> Module {
-      graph::parse_module_from_analyzer(
+      graph::parse_module_from_module_info(
         specifier,
         kind,
         parsed_source.media_type(),
         maybe_headers,
-        &ParsedSourceAnalyzer::new(parsed_source.clone()),
+        ParsedSourceAnalyzer::module_info(parsed_source),
         parsed_source.text_info().text(),
         maybe_resolver,
       )
@@ -268,14 +266,14 @@ cfg_if! {
         maybe_imports = Some(imports);
       }
 
-      let analyzer_provider = ast::ParsedSourceAnalyzerProvider::default();
+      let module_analyzer = ast::ParsedSourceAnalyzer::default();
       let builder = Builder::new(
         roots,
         false,
         &mut loader,
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         maybe_locker,
-        &analyzer_provider,
+        &module_analyzer,
         None,
       );
       let graph = builder.build(build_kind, maybe_imports).await;
@@ -303,7 +301,7 @@ cfg_if! {
         None
       };
       let maybe_kind: Option<ModuleKind> = maybe_kind.into_serde().map_err(|err| js_sys::Error::new(&err.to_string()))?;
-      let analyzer_provider = ast::ParsedSourceAnalyzerProvider::default();
+      let module_analyzer = ast::ParsedSourceAnalyzer::default();
       match graph::parse_module(
         &specifier,
         maybe_headers.as_ref(),
@@ -311,7 +309,7 @@ cfg_if! {
         None,
         maybe_kind.as_ref(),
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-        &analyzer_provider,
+        &module_analyzer,
         true,
         false,
       ) {

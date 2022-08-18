@@ -375,7 +375,6 @@ fn fmt_resolved_info<S: AsRef<str> + fmt::Display + Clone>(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::ast::ParsedSourceAnalyzerProvider;
   use crate::colors::strip_ansi_codes;
   use crate::graph::BuildKind;
   use crate::graph::Builder;
@@ -383,6 +382,7 @@ mod tests {
   use crate::source::CacheInfo;
   use crate::source::MemoryLoader;
   use crate::source::Source;
+  use crate::ParsedSourceAnalyzer;
   use std::path::PathBuf;
 
   #[tokio::test]
@@ -512,14 +512,14 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
-    let analyzer_provider = ParsedSourceAnalyzerProvider::default();
+    let module_analyzer = ParsedSourceAnalyzer::default();
     let builder = Builder::new(
       vec![(root_specifier, ModuleKind::Esm)],
       false,
       &mut loader,
       None,
       None,
-      &analyzer_provider,
+      &module_analyzer,
       None,
     );
     let graph = builder.build(BuildKind::All, None).await;
@@ -593,14 +593,14 @@ https://deno.land/x/example/a.ts (129B)
     );
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
-    let analyzer_provider = ParsedSourceAnalyzerProvider::default();
+    let module_analyzer = ParsedSourceAnalyzer::default();
     let builder = Builder::new(
       vec![(root_specifier, ModuleKind::Esm)],
       false,
       &mut loader,
       None,
       None,
-      &analyzer_provider,
+      &module_analyzer,
       None,
     );
     let graph = builder.build(BuildKind::All, None).await;
