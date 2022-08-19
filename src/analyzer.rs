@@ -219,22 +219,26 @@ pub struct SpecifierWithRange {
   pub range: PositionRange,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TypeScriptReference {
   Path(SpecifierWithRange),
   Types(SpecifierWithRange),
 }
 
 /// Information about the module.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ModuleInfo {
   /// Dependencies of the module.
+  #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub dependencies: Vec<DependencyDescriptor>,
   /// Triple slash references.
+  #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub ts_references: Vec<TypeScriptReference>,
   /// Comment with a `@jsxImportSource` pragma on JSX/TSX media types
+  #[serde(skip_serializing_if = "Option::is_none", default)]
   pub jsx_import_source: Option<SpecifierWithRange>,
   /// Type imports in JSDoc comment blocks (e.g. `{import("./types.d.ts").Type}`).
+  #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub jsdoc_imports: Vec<SpecifierWithRange>,
 }
 

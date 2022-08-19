@@ -124,7 +124,8 @@ impl ParsedSourceStore for DefaultParsedSourceStore {
 }
 
 /// Stores parsed files in the provided store after parsing.
-/// in a provided store.
+/// in a provided store. Parses that match the previous one
+/// will be cached.
 ///
 /// Note that this will insert into the store whatever was
 /// last parsed, so if two threads race to parse, when they're
@@ -222,18 +223,17 @@ impl<'a> ModuleAnalyzer for DefaultModuleAnalyzer<'a> {
 }
 
 /// Helper struct for creating a single object that implements
-/// both `deno_graph::ModuleAnalyzer` and `deno_graph::ParsedSourceStore`.
+/// `deno_graph::ModuleAnalyzer`, `deno_graph::ModuleParser`,
+/// and `deno_graph::ParsedSourceStore`. All parses will be captured
+/// to prevent them from occuring more than one time.
 pub struct CapturingModuleAnalyzer {
-  parser: Option<Box<dyn ModuleParser>>,
+  parser: Box<dyn ModuleParser>,
   store: Box<dyn ParsedSourceStore>,
 }
 
 impl Default for CapturingModuleAnalyzer {
   fn default() -> Self {
-    Self {
-      parser: None,
-      store: Box::new(DefaultParsedSourceStore::default()),
-    }
+    Self::new(None, None)
   }
 }
 
@@ -241,9 +241,9 @@ impl CapturingModuleAnalyzer {
   #[cfg(feature = "rust")]
   pub fn new(
     parser: Option<Box<dyn ModuleParser>>,
-    store: Box<dyn ParsedSourceStore>,
+    store: Option<Box<dyn ParsedSourceStore>>,
   ) -> Self {
-    Self { parser, store }
+    Self { parser: parser.unwrap_or_else(|| Box::new(DefaultModuleParser::default())), store: store.unwrap_or_else(|| Box::new(DefaultParsedSourceStore::default())) }
   }
 }
 
@@ -255,11 +255,26 @@ impl ModuleAnalyzer for CapturingModuleAnalyzer {
     media_type: MediaType,
   ) -> Result<ModuleInfo, Diagnostic> {
     let capturing_parser = CapturingModuleParser::new(
-      self.parser.as_ref().map(|p| &**p),
+      Some(&*self.parser),
       &*self.store,
     );
     let module_analyzer = DefaultModuleAnalyzer::new(&capturing_parser);
     module_analyzer.analyze(specifier, source, media_type)
+  }
+}
+
+impl ModuleParser for CapturingModuleAnalyzer {
+  fn parse_module(
+    &self,
+    specifier: &ModuleSpecifier,
+    source: Arc<str>,
+    media_type: MediaType,
+  ) -> Result<ParsedSource, Diagnostic> {
+    let capturing_parser = CapturingModuleParser::new(
+      Some(&*self.parser),
+      &*self.store,
+    );
+    capturing_parser.parse_module(specifier, source, media_type)
   }
 }
 
