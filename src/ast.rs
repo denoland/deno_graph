@@ -129,24 +129,16 @@ impl ParsedSourceStore for DefaultParsedSourceStore {
 /// Note that this will insert into the store whatever was
 /// last parsed, so if two threads race to parse, when they're
 /// both done it will have whatever was last stored.
-pub struct CapturingModuleParser {
-  parser: Box<dyn ModuleParser>,
-  store: Box<dyn ParsedSourceStore>,
+pub struct CapturingModuleParser<'a> {
+  parser: Option<&'a dyn ModuleParser>,
+  store: &'a dyn ParsedSourceStore,
 }
 
-impl Default for CapturingModuleParser {
-  fn default() -> Self {
-    Self {
-      parser: Box::new(DefaultModuleParser::default()),
-      store: Box::new(DefaultParsedSourceStore::default()),
-    }
-  }
-}
-
-impl CapturingModuleParser {
+impl<'a> CapturingModuleParser<'a> {
+  #[cfg(feature = "rust")]
   pub fn new(
-    parser: Box<dyn ModuleParser>,
-    store: Box<dyn ParsedSourceStore>,
+    parser: Option<&'a dyn ModuleParser>,
+    store: &'a dyn ParsedSourceStore,
   ) -> Self {
     Self { parser, store }
   }
@@ -168,7 +160,7 @@ impl CapturingModuleParser {
   }
 }
 
-impl ModuleParser for CapturingModuleParser {
+impl<'a> ModuleParser for CapturingModuleParser<'a> {
   fn parse_module(
     &self,
     specifier: &ModuleSpecifier,
@@ -180,48 +172,30 @@ impl ModuleParser for CapturingModuleParser {
     {
       Ok(parsed_source)
     } else {
-      let parsed_source =
-        self.parser.parse_module(specifier, source, media_type)?;
-      self.set_parsed_source(specifier.clone(), parsed_source.clone());
+      let default_parser = DefaultModuleParser::default();
+      let parser = self.parser.unwrap_or(&default_parser);
+      let parsed_source = parser.parse_module(specifier, source, media_type)?;
+      self
+        .store
+        .set_parsed_source(specifier.clone(), parsed_source.clone());
       Ok(parsed_source)
     }
   }
 }
 
-impl ParsedSourceStore for CapturingModuleParser {
-  fn set_parsed_source(
-    &self,
-    specifier: ModuleSpecifier,
-    parsed_source: ParsedSource,
-  ) -> Option<ParsedSource> {
-    self.store.set_parsed_source(specifier, parsed_source)
-  }
-
-  fn get_parsed_source(
-    &self,
-    specifier: &ModuleSpecifier,
-  ) -> Option<ParsedSource> {
-    self.store.get_parsed_source(specifier)
-  }
-}
-
 /// Default module analyzer that analyzes based on a deno_ast::ParsedSource.
-pub struct DefaultModuleAnalyzer {
-  parser: Box<dyn ModuleParser>,
+#[derive(Default)]
+pub struct DefaultModuleAnalyzer<'a> {
+  parser: Option<&'a dyn ModuleParser>,
 }
 
-impl Default for DefaultModuleAnalyzer {
-  fn default() -> Self {
-    Self {
-      parser: Box::new(DefaultModuleParser::default()),
-    }
-  }
-}
-
-impl DefaultModuleAnalyzer {
+impl<'a> DefaultModuleAnalyzer<'a> {
   /// Creates a new module analyzer.
-  pub fn new(parser: Box<dyn ModuleParser>) -> Self {
-    Self { parser }
+  #[cfg(feature = "rust")]
+  pub fn new(parser: &'a dyn ModuleParser) -> Self {
+    Self {
+      parser: Some(parser),
+    }
   }
 
   /// Gets the module info from a parsed source.
@@ -235,15 +209,16 @@ impl DefaultModuleAnalyzer {
   }
 }
 
-impl ModuleAnalyzer for DefaultModuleAnalyzer {
+impl<'a> ModuleAnalyzer for DefaultModuleAnalyzer<'a> {
   fn analyze(
     &self,
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ModuleInfo, Diagnostic> {
-    let parsed_source =
-      self.parser.parse_module(specifier, source, media_type)?;
+    let default_parser = DefaultModuleParser::default();
+    let parser = self.parser.unwrap_or(&default_parser);
+    let parsed_source = parser.parse_module(specifier, source, media_type)?;
     Ok(DefaultModuleAnalyzer::module_info(&parsed_source))
   }
 }
