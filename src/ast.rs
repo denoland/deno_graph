@@ -135,7 +135,6 @@ pub struct CapturingModuleParser<'a> {
 }
 
 impl<'a> CapturingModuleParser<'a> {
-  #[cfg(feature = "rust")]
   pub fn new(
     parser: Option<&'a dyn ModuleParser>,
     store: &'a dyn ParsedSourceStore,
@@ -191,7 +190,6 @@ pub struct DefaultModuleAnalyzer<'a> {
 
 impl<'a> DefaultModuleAnalyzer<'a> {
   /// Creates a new module analyzer.
-  #[cfg(feature = "rust")]
   pub fn new(parser: &'a dyn ModuleParser) -> Self {
     Self {
       parser: Some(parser),
@@ -220,6 +218,65 @@ impl<'a> ModuleAnalyzer for DefaultModuleAnalyzer<'a> {
     let parser = self.parser.unwrap_or(&default_parser);
     let parsed_source = parser.parse_module(specifier, source, media_type)?;
     Ok(DefaultModuleAnalyzer::module_info(&parsed_source))
+  }
+}
+
+/// Helper struct for creating a single object that implements
+/// both `deno_graph::ModuleAnalyzer` and `deno_graph::ParsedSourceStore`.
+pub struct CapturingModuleAnalyzer {
+  parser: Option<Box<dyn ModuleParser>>,
+  store: Box<dyn ParsedSourceStore>,
+}
+
+impl Default for CapturingModuleAnalyzer {
+  fn default() -> Self {
+    Self {
+      parser: None,
+      store: Box::new(DefaultParsedSourceStore::default()),
+    }
+  }
+}
+
+impl CapturingModuleAnalyzer {
+  #[cfg(feature = "rust")]
+  pub fn new(
+    parser: Option<Box<dyn ModuleParser>>,
+    store: Box<dyn ParsedSourceStore>,
+  ) -> Self {
+    Self { parser, store }
+  }
+}
+
+impl ModuleAnalyzer for CapturingModuleAnalyzer {
+  fn analyze(
+    &self,
+    specifier: &deno_ast::ModuleSpecifier,
+    source: Arc<str>,
+    media_type: MediaType,
+  ) -> Result<ModuleInfo, Diagnostic> {
+    let capturing_parser = CapturingModuleParser::new(
+      self.parser.as_ref().map(|p| &**p),
+      &*self.store,
+    );
+    let module_analyzer = DefaultModuleAnalyzer::new(&capturing_parser);
+    module_analyzer.analyze(specifier, source, media_type)
+  }
+}
+
+impl ParsedSourceStore for CapturingModuleAnalyzer {
+  fn set_parsed_source(
+    &self,
+    specifier: ModuleSpecifier,
+    parsed_source: ParsedSource,
+  ) -> Option<ParsedSource> {
+    self.store.set_parsed_source(specifier, parsed_source)
+  }
+
+  fn get_parsed_source(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<ParsedSource> {
+    self.store.get_parsed_source(specifier)
   }
 }
 

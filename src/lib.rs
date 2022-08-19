@@ -48,6 +48,7 @@ cfg_if! {
     pub use ast::DefaultModuleParser;
     pub use ast::ModuleParser;
     pub use ast::CapturingModuleParser;
+    pub use ast::CapturingModuleAnalyzer;
     pub use ast::ParsedSourceStore;
     pub use ast::DefaultParsedSourceStore;
     pub use graph::Dependency;
