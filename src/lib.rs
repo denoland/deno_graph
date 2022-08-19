@@ -44,9 +44,12 @@ cfg_if! {
     pub use analyzer::TypeScriptReference;
     pub use analyzer::ModuleInfo;
     pub use analyzer::analyze_deno_types;
-    pub use ast::CapturingParsedSourceAnalyzer;
-    pub use ast::RefCellCapturingParsedSourceAnalyzer;
-    pub use ast::ParsedSourceAnalyzer;
+    pub use ast::DefaultModuleAnalyzer;
+    pub use ast::DefaultModuleParser;
+    pub use ast::ModuleParser;
+    pub use ast::CapturingModuleParser;
+    pub use ast::ParsedSourceStore;
+    pub use ast::DefaultParsedSourceStore;
     pub use graph::Dependency;
     pub use graph::GraphImport;
     pub use graph::Module;
@@ -77,7 +80,7 @@ cfg_if! {
       maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
       maybe_reporter: Option<&dyn Reporter>,
     ) -> ModuleGraph {
-      let default_module_analyzer = ast::ParsedSourceAnalyzer::default();
+      let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
       let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
       let builder = Builder::new(
         roots,
@@ -106,7 +109,7 @@ cfg_if! {
       maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
       maybe_reporter: Option<&dyn Reporter>,
     ) -> ModuleGraph {
-      let default_module_analyzer = ast::ParsedSourceAnalyzer::default();
+      let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
       let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
       let builder = Builder::new(
         roots,
@@ -140,7 +143,7 @@ cfg_if! {
       maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
       maybe_reporter: Option<&dyn Reporter>,
     ) -> ModuleGraph {
-      let default_module_analyzer = ast::ParsedSourceAnalyzer::default();
+      let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
       let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
       let roots = roots.into_iter().map(|s| (s, ModuleKind::Esm)).collect();
       let builder = Builder::new(
@@ -165,7 +168,7 @@ cfg_if! {
       maybe_resolver: Option<&dyn Resolver>,
       maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
     ) -> Result<Module, ModuleGraphError> {
-      let default_module_analyzer = ast::ParsedSourceAnalyzer::default();
+      let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
       let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
       match graph::parse_module(
         specifier,
@@ -197,7 +200,7 @@ cfg_if! {
         kind,
         parsed_source.media_type(),
         maybe_headers,
-        ParsedSourceAnalyzer::module_info(parsed_source),
+        DefaultModuleAnalyzer::module_info(parsed_source),
         parsed_source.text_info().text(),
         maybe_resolver,
       )
@@ -268,7 +271,7 @@ cfg_if! {
         maybe_imports = Some(imports);
       }
 
-      let module_analyzer = ast::ParsedSourceAnalyzer::default();
+      let module_analyzer = ast::DefaultModuleAnalyzer::default();
       let builder = Builder::new(
         roots,
         false,
@@ -303,7 +306,7 @@ cfg_if! {
         None
       };
       let maybe_kind: Option<ModuleKind> = maybe_kind.into_serde().map_err(|err| js_sys::Error::new(&err.to_string()))?;
-      let module_analyzer = ast::ParsedSourceAnalyzer::default();
+      let module_analyzer = ast::DefaultModuleAnalyzer::default();
       match graph::parse_module(
         &specifier,
         maybe_headers.as_ref(),

@@ -382,7 +382,7 @@ mod tests {
   use crate::source::CacheInfo;
   use crate::source::MemoryLoader;
   use crate::source::Source;
-  use crate::ParsedSourceAnalyzer;
+  use crate::DefaultModuleAnalyzer;
   use std::path::PathBuf;
 
   #[tokio::test]
@@ -512,7 +512,7 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
-    let module_analyzer = ParsedSourceAnalyzer::default();
+    let module_analyzer = DefaultModuleAnalyzer::default();
     let builder = Builder::new(
       vec![(root_specifier, ModuleKind::Esm)],
       false,
@@ -593,7 +593,7 @@ https://deno.land/x/example/a.ts (129B)
     );
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/x/example/a.ts").unwrap();
-    let module_analyzer = ParsedSourceAnalyzer::default();
+    let module_analyzer = DefaultModuleAnalyzer::default();
     let builder = Builder::new(
       vec![(root_specifier, ModuleKind::Esm)],
       false,

@@ -2004,7 +2004,7 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::ParsedSourceAnalyzer;
+  use crate::DefaultModuleAnalyzer;
 
   use super::*;
   use url::Url;
@@ -2047,7 +2047,7 @@ mod tests {
   #[test]
   fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
-    let module_analyzer = ParsedSourceAnalyzer::default();
+    let module_analyzer = DefaultModuleAnalyzer::default();
     let content = r#"import * as b from "./b.ts";"#;
     let slot = parse_module(
       &specifier,
@@ -2172,7 +2172,7 @@ mod tests {
       loaded_bar: false,
       loaded_baz: false,
     };
-    let module_analyzer = ParsedSourceAnalyzer::default();
+    let module_analyzer = DefaultModuleAnalyzer::default();
     let builder = Builder::new(
       vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
       false,
@@ -2212,7 +2212,7 @@ mod tests {
       }
     }
     let mut loader = TestLoader;
-    let module_analyzer = ParsedSourceAnalyzer::default();
+    let module_analyzer = DefaultModuleAnalyzer::default();
     let builder = Builder::new(
       vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
       false,
@@ -2278,7 +2278,7 @@ mod tests {
       }
     }
     let mut loader = TestLoader;
-    let module_analyzer = ParsedSourceAnalyzer::default();
+    let module_analyzer = DefaultModuleAnalyzer::default();
     let builder = Builder::new(
       vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
       false,

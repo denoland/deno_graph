@@ -15,11 +15,9 @@ use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 
 use anyhow::Result;
-use deno_ast::parse_module;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::Diagnostic;
 use deno_ast::MediaType;
-use deno_ast::ParseParams;
 use deno_ast::ParsedSource;
 use deno_ast::SourceTextInfo;
 use lazy_static::lazy_static;
@@ -51,17 +49,29 @@ lazy_static! {
     Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap();
 }
 
-#[derive(Default, Clone)]
-pub struct ParsedSourceAnalyzer;
+/// Parses modules to a ParsedSource.
+pub trait ModuleParser {
+  fn parse_module(
+    &self,
+    specifier: &ModuleSpecifier,
+    source: Arc<str>,
+    media_type: MediaType,
+  ) -> Result<ParsedSource, Diagnostic>;
+}
 
-impl ParsedSourceAnalyzer {
-  /// Parse a module with the settings necessary for analysis.
-  pub fn parse_module(
+/// Default parser that parses using only settings necessary
+/// for deno_graph to analyze the modules.
+#[derive(Default, Clone)]
+pub struct DefaultModuleParser;
+
+impl ModuleParser for DefaultModuleParser {
+  fn parse_module(
+    &self,
     specifier: &ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ParsedSource, Diagnostic> {
-    parse_module(ParseParams {
+    deno_ast::parse_module(deno_ast::ParseParams {
       specifier: specifier.to_string(),
       text_info: SourceTextInfo::new(source),
       media_type,
@@ -69,6 +79,149 @@ impl ParsedSourceAnalyzer {
       scope_analysis: false,
       maybe_syntax: None,
     })
+  }
+}
+
+/// Stores parsed sources.
+///
+/// Note: This interface is racy and not thread safe, as it's assumed
+/// it will only store the latest changes or that the source text
+/// will never change.
+pub trait ParsedSourceStore {
+  /// Sets the parsed source, potentially returning the previous value.
+  fn set_parsed_source(
+    &self,
+    specifier: ModuleSpecifier,
+    parsed_source: ParsedSource,
+  ) -> Option<ParsedSource>;
+  fn get_parsed_source(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<ParsedSource>;
+}
+
+/// Default store that works on a single thread.
+#[derive(Default)]
+pub struct DefaultParsedSourceStore {
+  store: RefCell<HashMap<ModuleSpecifier, ParsedSource>>,
+}
+
+impl ParsedSourceStore for DefaultParsedSourceStore {
+  fn set_parsed_source(
+    &self,
+    specifier: ModuleSpecifier,
+    parsed_source: ParsedSource,
+  ) -> Option<ParsedSource> {
+    self.store.borrow_mut().insert(specifier, parsed_source)
+  }
+
+  fn get_parsed_source(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<ParsedSource> {
+    self.store.borrow().get(specifier).cloned()
+  }
+}
+
+/// Stores parsed files in the provided store after parsing.
+/// in a provided store.
+///
+/// Note that this will insert into the store whatever was
+/// last parsed, so if two threads race to parse, when they're
+/// both done it will have whatever was last stored.
+pub struct CapturingModuleParser {
+  parser: Box<dyn ModuleParser>,
+  store: Box<dyn ParsedSourceStore>,
+}
+
+impl Default for CapturingModuleParser {
+  fn default() -> Self {
+    Self {
+      parser: Box::new(DefaultModuleParser::default()),
+      store: Box::new(DefaultParsedSourceStore::default()),
+    }
+  }
+}
+
+impl CapturingModuleParser {
+  pub fn new(
+    parser: Box<dyn ModuleParser>,
+    store: Box<dyn ParsedSourceStore>,
+  ) -> Self {
+    Self { parser, store }
+  }
+
+  fn get_from_store_if_matches(
+    &self,
+    specifier: &ModuleSpecifier,
+    source: &str,
+    media_type: MediaType,
+  ) -> Option<ParsedSource> {
+    let parsed_source = self.store.get_parsed_source(specifier)?;
+    if parsed_source.media_type() == media_type
+      && parsed_source.text_info().text_str() == source
+    {
+      Some(parsed_source)
+    } else {
+      None
+    }
+  }
+}
+
+impl ModuleParser for CapturingModuleParser {
+  fn parse_module(
+    &self,
+    specifier: &ModuleSpecifier,
+    source: Arc<str>,
+    media_type: MediaType,
+  ) -> Result<ParsedSource, Diagnostic> {
+    if let Some(parsed_source) =
+      self.get_from_store_if_matches(specifier, &source, media_type)
+    {
+      Ok(parsed_source)
+    } else {
+      let parsed_source =
+        self.parser.parse_module(specifier, source, media_type)?;
+      self.set_parsed_source(specifier.clone(), parsed_source.clone());
+      Ok(parsed_source)
+    }
+  }
+}
+
+impl ParsedSourceStore for CapturingModuleParser {
+  fn set_parsed_source(
+    &self,
+    specifier: ModuleSpecifier,
+    parsed_source: ParsedSource,
+  ) -> Option<ParsedSource> {
+    self.store.set_parsed_source(specifier, parsed_source)
+  }
+
+  fn get_parsed_source(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<ParsedSource> {
+    self.store.get_parsed_source(specifier)
+  }
+}
+
+/// Default module analyzer that analyzes based on a deno_ast::ParsedSource.
+pub struct DefaultModuleAnalyzer {
+  parser: Box<dyn ModuleParser>,
+}
+
+impl Default for DefaultModuleAnalyzer {
+  fn default() -> Self {
+    Self {
+      parser: Box::new(DefaultModuleParser::default()),
+    }
+  }
+}
+
+impl DefaultModuleAnalyzer {
+  /// Creates a new module analyzer.
+  pub fn new(parser: Box<dyn ModuleParser>) -> Self {
+    Self { parser }
   }
 
   /// Gets the module info from a parsed source.
@@ -82,16 +235,16 @@ impl ParsedSourceAnalyzer {
   }
 }
 
-impl ModuleAnalyzer for ParsedSourceAnalyzer {
+impl ModuleAnalyzer for DefaultModuleAnalyzer {
   fn analyze(
     &self,
-    specifier: &ModuleSpecifier,
+    specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ModuleInfo, Diagnostic> {
     let parsed_source =
-      ParsedSourceAnalyzer::parse_module(specifier, source, media_type)?;
-    Ok(ParsedSourceAnalyzer::module_info(&parsed_source))
+      self.parser.parse_module(specifier, source, media_type)?;
+    Ok(DefaultModuleAnalyzer::module_info(&parsed_source))
   }
 }
 
@@ -231,54 +384,6 @@ fn comment_source_to_position_range(
   }
 }
 
-/// A `ModuleAnalyzer` that caches the `deno_ast::ParsedSource` objects it creates.
-pub trait CapturingParsedSourceAnalyzer: ModuleAnalyzer {
-  fn parsed_source(
-    &self,
-    specifier: &ModuleSpecifier,
-  ) -> Result<ParsedSource, anyhow::Error>;
-}
-
-/// Implementation of `CapturingParsedSourceAnalyzer` that stores the sources in a RefCell.
-#[derive(Default)]
-pub struct RefCellCapturingParsedSourceAnalyzer {
-  sources: RefCell<HashMap<ModuleSpecifier, ParsedSource>>,
-}
-
-impl CapturingParsedSourceAnalyzer for RefCellCapturingParsedSourceAnalyzer {
-  fn parsed_source(
-    &self,
-    specifier: &ModuleSpecifier,
-  ) -> Result<ParsedSource, anyhow::Error> {
-    self
-      .sources
-      .borrow()
-      .get(specifier)
-      .cloned()
-      .ok_or_else(|| {
-        anyhow::anyhow!("Could not find parsed source: {}", specifier)
-      })
-  }
-}
-
-impl ModuleAnalyzer for RefCellCapturingParsedSourceAnalyzer {
-  fn analyze(
-    &self,
-    specifier: &ModuleSpecifier,
-    source: Arc<str>,
-    media_type: deno_ast::MediaType,
-  ) -> Result<ModuleInfo, deno_ast::Diagnostic> {
-    let parsed_source =
-      ParsedSourceAnalyzer::parse_module(specifier, source, media_type)?;
-    let module_info = ParsedSourceAnalyzer::module_info(&parsed_source);
-    self
-      .sources
-      .borrow_mut()
-      .insert(specifier.clone(), parsed_source);
-    Ok(module_info)
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use crate::analyzer::analyze_deno_types;
@@ -311,14 +416,11 @@ mod tests {
 
     const a = await import("./a.ts");
     "#;
-    let parsed_source = ParsedSourceAnalyzer::parse_module(
-      &specifier,
-      source.into(),
-      MediaType::Tsx,
-    )
-    .unwrap();
+    let parsed_source = DefaultModuleParser::default()
+      .parse_module(&specifier, source.into(), MediaType::Tsx)
+      .unwrap();
     let text_info = parsed_source.text_info();
-    let module_info = ParsedSourceAnalyzer::module_info(&parsed_source);
+    let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
     let dependencies = module_info.dependencies;
     assert_eq!(dependencies.len(), 6);
 
@@ -380,13 +482,10 @@ mod tests {
     import type { i } from "./i.d.ts";
     export type { j } from "./j.d.ts";
     "#;
-    let parsed_source = ParsedSourceAnalyzer::parse_module(
-      &specifier,
-      source.into(),
-      MediaType::TypeScript,
-    )
-    .unwrap();
-    let module_info = ParsedSourceAnalyzer::module_info(&parsed_source);
+    let parsed_source = DefaultModuleParser::default()
+      .parse_module(&specifier, source.into(), MediaType::TypeScript)
+      .unwrap();
+    let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
     let text_info = parsed_source.text_info();
     let dependencies = module_info.dependencies;
     assert_eq!(dependencies.len(), 10);
@@ -416,13 +515,10 @@ mod tests {
     import a from "./a.json" assert { type: "json" };
     await import("./b.json", { assert: { type: "json" } });
     "#;
-    let parsed_source = ParsedSourceAnalyzer::parse_module(
-      &specifier,
-      source.into(),
-      MediaType::TypeScript,
-    )
-    .unwrap();
-    let module_info = ParsedSourceAnalyzer::module_info(&parsed_source);
+    let parsed_source = DefaultModuleParser::default()
+      .parse_module(&specifier, source.into(), MediaType::TypeScript)
+      .unwrap();
+    let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
     let dependencies = module_info.dependencies;
     assert_eq!(dependencies.len(), 2);
     assert!(!dependencies[0].is_dynamic);
@@ -467,13 +563,10 @@ function b(c) {
  */
 const f = new Set();
 "#;
-    let parsed_source = ParsedSourceAnalyzer::parse_module(
-      &specifier,
-      source.into(),
-      MediaType::JavaScript,
-    )
-    .unwrap();
-    let module_info = ParsedSourceAnalyzer::module_info(&parsed_source);
+    let parsed_source = DefaultModuleParser::default()
+      .parse_module(&specifier, source.into(), MediaType::JavaScript)
+      .unwrap();
+    let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
     let dependencies = module_info.jsdoc_imports;
     assert_eq!(
       dependencies,
