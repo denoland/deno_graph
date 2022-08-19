@@ -238,12 +238,16 @@ impl Default for CapturingModuleAnalyzer {
 }
 
 impl CapturingModuleAnalyzer {
-  #[cfg(feature = "rust")]
   pub fn new(
     parser: Option<Box<dyn ModuleParser>>,
     store: Option<Box<dyn ParsedSourceStore>>,
   ) -> Self {
-    Self { parser: parser.unwrap_or_else(|| Box::new(DefaultModuleParser::default())), store: store.unwrap_or_else(|| Box::new(DefaultParsedSourceStore::default())) }
+    Self {
+      parser: parser
+        .unwrap_or_else(|| Box::new(DefaultModuleParser::default())),
+      store: store
+        .unwrap_or_else(|| Box::new(DefaultParsedSourceStore::default())),
+    }
   }
 }
 
@@ -254,10 +258,8 @@ impl ModuleAnalyzer for CapturingModuleAnalyzer {
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ModuleInfo, Diagnostic> {
-    let capturing_parser = CapturingModuleParser::new(
-      Some(&*self.parser),
-      &*self.store,
-    );
+    let capturing_parser =
+      CapturingModuleParser::new(Some(&*self.parser), &*self.store);
     let module_analyzer = DefaultModuleAnalyzer::new(&capturing_parser);
     module_analyzer.analyze(specifier, source, media_type)
   }
@@ -270,10 +272,8 @@ impl ModuleParser for CapturingModuleAnalyzer {
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ParsedSource, Diagnostic> {
-    let capturing_parser = CapturingModuleParser::new(
-      Some(&*self.parser),
-      &*self.store,
-    );
+    let capturing_parser =
+      CapturingModuleParser::new(Some(&*self.parser), &*self.store);
     capturing_parser.parse_module(specifier, source, media_type)
   }
 }
