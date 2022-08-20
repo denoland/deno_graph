@@ -66,7 +66,7 @@ impl Ord for Position {
 
 impl Position {
   pub fn zeroed() -> Self {
-    Position {
+    Self {
       line: 0,
       character: 0,
     }
@@ -74,7 +74,7 @@ impl Position {
 
   pub fn from_source_pos(pos: SourcePos, text_info: &SourceTextInfo) -> Self {
     let line_and_column_index = text_info.line_and_column_index(pos);
-    Position {
+    Self {
       line: line_and_column_index.line_index,
       character: line_and_column_index.column_index,
     }
