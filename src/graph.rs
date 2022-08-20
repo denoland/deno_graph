@@ -741,7 +741,7 @@ fn to_result(
 /// module graph without requiring the dependencies to be analyzed. This is
 /// intended to be used for importing type dependencies or other externally
 /// defined dependencies, like JSX runtimes.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct GraphImport {
   /// The referring module specifier to be used to resolve relative dependencies
   /// from. This is typically the meta data file that defined the dependency,
