@@ -8,6 +8,7 @@
 #[macro_use]
 extern crate cfg_if;
 
+mod analyzer;
 mod ast;
 mod colors;
 mod graph;
@@ -32,14 +33,24 @@ cfg_if! {
   if #[cfg(feature = "rust")] {
     use std::sync::Arc;
 
-    pub use ast::analyze_dependencies;
-    pub use ast::analyze_deno_types;
-    pub use ast::analyze_ts_references;
-    pub use ast::SourceParser;
-    pub use ast::CapturingSourceParser;
-    pub use ast::DefaultSourceParser;
-    pub use ast::DependencyDescriptor;
-    pub use ast::DependencyKind;
+    pub use analyzer::Comment;
+    pub use analyzer::DependencyDescriptor;
+    pub use analyzer::DependencyKind;
+    pub use analyzer::ImportAssertion;
+    pub use analyzer::ImportAssertions;
+    pub use analyzer::ModuleAnalyzer;
+    pub use analyzer::PositionRange;
+    pub use analyzer::SpecifierWithRange;
+    pub use analyzer::TypeScriptReference;
+    pub use analyzer::ModuleInfo;
+    pub use analyzer::analyze_deno_types;
+    pub use ast::DefaultModuleAnalyzer;
+    pub use ast::DefaultModuleParser;
+    pub use ast::ModuleParser;
+    pub use ast::CapturingModuleParser;
+    pub use ast::CapturingModuleAnalyzer;
+    pub use ast::ParsedSourceStore;
+    pub use ast::DefaultParsedSourceStore;
     pub use graph::Dependency;
     pub use graph::GraphImport;
     pub use graph::Module;
@@ -67,18 +78,18 @@ cfg_if! {
       loader: &mut dyn Loader,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
-      maybe_parser: Option<&dyn SourceParser>,
+      maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
       maybe_reporter: Option<&dyn Reporter>,
     ) -> ModuleGraph {
-      let default_parser = ast::DefaultSourceParser::new();
-      let source_parser = maybe_parser.unwrap_or(&default_parser);
+      let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
+      let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
       let builder = Builder::new(
         roots,
         is_dynamic,
         loader,
         maybe_resolver,
         maybe_locker,
-        source_parser,
+        module_analyzer,
         maybe_reporter,
       );
       builder.build(BuildKind::All, maybe_imports).await
@@ -96,18 +107,18 @@ cfg_if! {
       loader: &mut dyn Loader,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
-      maybe_parser: Option<&dyn SourceParser>,
+      maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
       maybe_reporter: Option<&dyn Reporter>,
     ) -> ModuleGraph {
-      let default_parser = ast::DefaultSourceParser::new();
-      let source_parser = maybe_parser.unwrap_or(&default_parser);
+      let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
+      let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
       let builder = Builder::new(
         roots,
         is_dynamic,
         loader,
         maybe_resolver,
         maybe_locker,
-        source_parser,
+        module_analyzer,
         maybe_reporter,
       );
       builder.build(BuildKind::CodeOnly, maybe_imports).await
@@ -130,11 +141,11 @@ cfg_if! {
       loader: &mut dyn Loader,
       maybe_resolver: Option<&dyn Resolver>,
       maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
-      maybe_parser: Option<&dyn SourceParser>,
+      maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
       maybe_reporter: Option<&dyn Reporter>,
     ) -> ModuleGraph {
-      let default_parser = ast::DefaultSourceParser::new();
-      let source_parser = maybe_parser.unwrap_or(&default_parser);
+      let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
+      let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
       let roots = roots.into_iter().map(|s| (s, ModuleKind::Esm)).collect();
       let builder = Builder::new(
         roots,
@@ -142,7 +153,7 @@ cfg_if! {
         loader,
         maybe_resolver,
         maybe_locker,
-        source_parser,
+        module_analyzer,
         maybe_reporter,
       );
       builder.build(BuildKind::TypesOnly, maybe_imports).await
@@ -156,10 +167,10 @@ cfg_if! {
       content: Arc<str>,
       maybe_kind: Option<&ModuleKind>,
       maybe_resolver: Option<&dyn Resolver>,
-      maybe_parser: Option<&dyn SourceParser>,
+      maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
     ) -> Result<Module, ModuleGraphError> {
-      let default_parser = ast::DefaultSourceParser::new();
-      let source_parser = maybe_parser.unwrap_or(&default_parser);
+      let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
+      let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
       match graph::parse_module(
         specifier,
         maybe_headers,
@@ -167,7 +178,7 @@ cfg_if! {
         None,
         maybe_kind,
         maybe_resolver,
-        source_parser,
+        module_analyzer,
         true,
         false,
       ) {
@@ -182,14 +193,16 @@ cfg_if! {
       specifier: &ModuleSpecifier,
       kind: &ModuleKind,
       maybe_headers: Option<&HashMap<String, String>>,
-      parsed_ast: &deno_ast::ParsedSource,
+      parsed_source: &deno_ast::ParsedSource,
       maybe_resolver: Option<&dyn Resolver>,
     ) -> Module {
-      graph::parse_module_from_ast(
+      graph::parse_module_from_module_info(
         specifier,
         kind,
+        parsed_source.media_type(),
         maybe_headers,
-        parsed_ast,
+        DefaultModuleAnalyzer::module_info(parsed_source),
+        parsed_source.text_info().text(),
         maybe_resolver,
       )
     }
@@ -259,14 +272,14 @@ cfg_if! {
         maybe_imports = Some(imports);
       }
 
-      let source_parser = ast::DefaultSourceParser::new();
+      let module_analyzer = ast::DefaultModuleAnalyzer::default();
       let builder = Builder::new(
         roots,
         false,
         &mut loader,
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         maybe_locker,
-        &source_parser,
+        &module_analyzer,
         None,
       );
       let graph = builder.build(build_kind, maybe_imports).await;
@@ -294,7 +307,7 @@ cfg_if! {
         None
       };
       let maybe_kind: Option<ModuleKind> = maybe_kind.into_serde().map_err(|err| js_sys::Error::new(&err.to_string()))?;
-      let source_parser = ast::DefaultSourceParser::new();
+      let module_analyzer = ast::DefaultModuleAnalyzer::default();
       match graph::parse_module(
         &specifier,
         maybe_headers.as_ref(),
@@ -302,7 +315,7 @@ cfg_if! {
         None,
         maybe_kind.as_ref(),
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-        &source_parser,
+        &module_analyzer,
         true,
         false,
       ) {
@@ -813,7 +826,7 @@ console.log(a);
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
             content: r#"import config from "./deno.json" assert { type: "json" };
-            
+
             console.log(config);"#,
           },
         ),
@@ -893,7 +906,7 @@ console.log(a);
               }
             ],
             "kind": "esm",
-            "size": 103,
+            "size": 91,
             "mediaType": "TypeScript",
             "specifier": "file:///a/test01.ts",
           },
@@ -1765,55 +1778,6 @@ export function a(a) {
         }
       ))
     );
-  }
-
-  #[tokio::test]
-  async fn test_create_graph_with_parser() {
-    let mut loader = setup(
-      vec![
-        (
-          "file:///a/test01.ts",
-          Source::Module {
-            specifier: "file:///a/test01.ts",
-            maybe_headers: None,
-            content: r#"import * as b from "./test02.ts";"#,
-          },
-        ),
-        (
-          "file:///a/test02.ts",
-          Source::Module {
-            specifier: "file:///a/test02.ts",
-            maybe_headers: None,
-            content: r#"export const b = "b"; let t;"#,
-          },
-        ),
-      ],
-      vec![],
-    );
-    let root_specifier =
-      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let test02_specifier =
-      ModuleSpecifier::parse("file:///a/test02.ts").expect("bad url");
-    let parser = crate::ast::CapturingSourceParser::new();
-    create_graph(
-      vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
-      None,
-      &mut loader,
-      None,
-      None,
-      Some(&parser),
-      None,
-    )
-    .await;
-    let root_ast = parser.get_parsed_source(&root_specifier).unwrap();
-    let test02_ast = parser.get_parsed_source(&test02_specifier).unwrap();
-    assert_eq!(root_ast.module().body.len(), 1);
-    assert_eq!(test02_ast.module().body.len(), 2);
-
-    let non_existent =
-      ModuleSpecifier::parse("file:///a/test03.ts").expect("bad url");
-    assert!(parser.get_parsed_source(&non_existent).is_none());
   }
 
   #[tokio::test]

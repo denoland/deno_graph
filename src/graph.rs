@@ -1,13 +1,12 @@
 // Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
-use crate::ast;
-use crate::ast::analyze_deno_types;
-use crate::ast::analyze_dependencies;
-use crate::ast::analyze_jsdoc_imports;
-use crate::ast::analyze_jsx_import_sources;
-use crate::ast::analyze_ts_references;
-use crate::ast::DependencyKind;
-use crate::ast::SourceParser;
+use crate::analyzer::analyze_deno_types;
+use crate::analyzer::DependencyKind;
+use crate::analyzer::ModuleAnalyzer;
+use crate::analyzer::ModuleInfo;
+use crate::analyzer::PositionRange;
+use crate::analyzer::TypeScriptReference;
+
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
@@ -16,10 +15,10 @@ use crate::source_map::parse_sourcemap;
 use crate::source_map::ParsedSourceMap;
 
 use anyhow::Result;
+use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
-use deno_ast::ParsedSource;
 use deno_ast::SourcePos;
-use deno_ast::SourceRange;
+use deno_ast::SourceTextInfo;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
 use futures::Future;
@@ -66,20 +65,26 @@ impl Ord for Position {
 }
 
 impl Position {
-  pub fn zeroed() -> Position {
-    Position {
+  pub fn zeroed() -> Self {
+    Self {
       line: 0,
       character: 0,
     }
   }
 
-  fn from_pos(parsed_source: &ParsedSource, pos: SourcePos) -> Self {
-    let line_and_column_index =
-      parsed_source.text_info().line_and_column_index(pos);
+  pub fn from_source_pos(pos: SourcePos, text_info: &SourceTextInfo) -> Self {
+    let line_and_column_index = text_info.line_and_column_index(pos);
     Self {
       line: line_and_column_index.line_index,
       character: line_and_column_index.column_index,
     }
+  }
+
+  pub fn as_source_pos(&self, text_info: &SourceTextInfo) -> SourcePos {
+    text_info.loc_to_source_pos(LineAndColumnIndex {
+      line_index: self.line,
+      column_index: self.character,
+    })
   }
 }
 
@@ -106,15 +111,14 @@ impl fmt::Display for Range {
 }
 
 impl Range {
-  pub(crate) fn from_source_range(
+  pub(crate) fn from_position_range(
     specifier: &ModuleSpecifier,
-    parsed_source: &ParsedSource,
-    range: &SourceRange,
+    range: &PositionRange,
   ) -> Range {
     Range {
       specifier: specifier.clone(),
-      start: Position::from_pos(parsed_source, range.start),
-      end: Position::from_pos(parsed_source, range.end),
+      start: range.start.clone(),
+      end: range.end.clone(),
     }
   }
 
@@ -609,8 +613,6 @@ pub struct Module {
   pub maybe_cache_info: Option<CacheInfo>,
   #[serde(rename = "checksum", skip_serializing_if = "Option::is_none")]
   pub maybe_checksum: Option<String>,
-  #[serde(skip_serializing)]
-  pub maybe_parsed_source: Option<ParsedSource>,
   #[serde(
     rename = "size",
     skip_serializing_if = "Option::is_none",
@@ -636,11 +638,10 @@ impl Module {
   fn new(
     specifier: ModuleSpecifier,
     kind: ModuleKind,
-    parsed_source: ParsedSource,
+    source: Arc<str>,
   ) -> Self {
-    let source = parsed_source.text_info().text();
     let (maybe_source_map, maybe_source_map_url) =
-      match parse_sourcemap(&specifier, &parsed_source) {
+      match parse_sourcemap(&specifier, &source) {
         Some(ParsedSourceMap::Url(url)) => (None, Some(url)),
         Some(ParsedSourceMap::Value(value)) => (Some(value), None),
         _ => (None, None),
@@ -650,7 +651,6 @@ impl Module {
       kind,
       maybe_cache_info: None,
       maybe_checksum: None,
-      maybe_parsed_source: Some(parsed_source),
       maybe_source: Some(source),
       maybe_source_map,
       maybe_source_map_url,
@@ -669,7 +669,6 @@ impl Module {
       kind,
       maybe_cache_info: None,
       maybe_checksum: None,
-      maybe_parsed_source: None,
       maybe_source: None,
       maybe_source_map: None,
       maybe_source_map_url: None,
@@ -742,7 +741,7 @@ fn to_result(
 /// module graph without requiring the dependencies to be analyzed. This is
 /// intended to be used for importing type dependencies or other externally
 /// defined dependencies, like JSX runtimes.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct GraphImport {
   /// The referring module specifier to be used to resolve relative dependencies
   /// from. This is typically the meta data file that defined the dependency,
@@ -1196,7 +1195,7 @@ pub(crate) fn parse_module(
   maybe_assert_type: Option<&str>,
   maybe_kind: Option<&ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
-  source_parser: &dyn SourceParser,
+  module_analyzer: &dyn ModuleAnalyzer,
   is_root: bool,
   is_dynamic_branch: bool,
 ) -> ModuleSlot {
@@ -1214,7 +1213,6 @@ pub(crate) fn parse_module(
       kind: ModuleKind::Asserted,
       maybe_cache_info: None,
       maybe_checksum: None,
-      maybe_parsed_source: None,
       maybe_source: Some(content),
       maybe_source_map: None,
       maybe_source_map_url: None,
@@ -1254,15 +1252,16 @@ pub(crate) fn parse_module(
     | MediaType::Dts
     | MediaType::Dmts
     | MediaType::Dcts => {
-      // Parse the module and start analyzing the module.
-      match source_parser.parse_module(specifier, content, media_type) {
-        Ok(parsed_source) => {
+      match module_analyzer.analyze(specifier, content.clone(), media_type) {
+        Ok(module_info) => {
           // Return the module as a valid module
-          ModuleSlot::Module(parse_module_from_ast(
+          ModuleSlot::Module(parse_module_from_module_info(
             specifier,
             maybe_kind.unwrap_or(&ModuleKind::Esm),
+            media_type,
             maybe_headers,
-            &parsed_source,
+            module_info,
+            content,
             maybe_resolver,
           ))
         }
@@ -1273,18 +1272,20 @@ pub(crate) fn parse_module(
       }
     }
     MediaType::Unknown if is_root => {
-      match source_parser.parse_module(
+      match module_analyzer.analyze(
         specifier,
-        content,
+        content.clone(),
         MediaType::JavaScript,
       ) {
-        Ok(parsed_source) => {
+        Ok(module_info) => {
           // Return the module as a valid module
-          ModuleSlot::Module(parse_module_from_ast(
+          ModuleSlot::Module(parse_module_from_module_info(
             specifier,
             maybe_kind.unwrap_or(&ModuleKind::Esm),
+            media_type,
             maybe_headers,
-            &parsed_source,
+            module_info,
+            content,
             maybe_resolver,
           ))
         }
@@ -1301,37 +1302,40 @@ pub(crate) fn parse_module(
   }
 }
 
-pub(crate) fn parse_module_from_ast(
+pub(crate) fn parse_module_from_module_info(
   specifier: &ModuleSpecifier,
   kind: &ModuleKind,
+  media_type: MediaType,
   maybe_headers: Option<&HashMap<String, String>>,
-  parsed_source: &ParsedSource,
+  module_info: ModuleInfo,
+  source: Arc<str>,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Module {
   // Init the module and determine its media type
-  let mut module =
-    Module::new(specifier.clone(), kind.clone(), parsed_source.clone());
-  module.media_type = get_media_type(specifier, maybe_headers);
+  let mut module = Module::new(specifier.clone(), kind.clone(), source);
+  module.media_type = media_type;
 
   // Analyze the TypeScript triple-slash references
-  for reference in analyze_ts_references(parsed_source) {
+  for reference in module_info.ts_references {
     match reference {
-      ast::TypeScriptReference::Path(specifier, range) => {
+      TypeScriptReference::Path(specifier) => {
         let range =
-          Range::from_source_range(&module.specifier, parsed_source, &range);
-        let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
-        let dep = module.dependencies.entry(specifier).or_default();
+          Range::from_position_range(&module.specifier, &specifier.range);
+        let resolved_dependency =
+          resolve(&specifier.text, &range, maybe_resolver);
+        let dep = module.dependencies.entry(specifier.text).or_default();
         dep.maybe_code = resolved_dependency;
       }
-      ast::TypeScriptReference::Types(specifier, range) => {
+      TypeScriptReference::Types(specifier) => {
         let range =
-          Range::from_source_range(&module.specifier, parsed_source, &range);
-        let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
+          Range::from_position_range(&module.specifier, &specifier.range);
+        let resolved_dependency =
+          resolve(&specifier.text, &range, maybe_resolver);
         if is_untyped(&module.media_type) {
           module.maybe_types_dependency =
-            Some((specifier, resolved_dependency));
+            Some((specifier.text, resolved_dependency));
         } else {
-          let dep = module.dependencies.entry(specifier).or_default();
+          let dep = module.dependencies.entry(specifier.text).or_default();
           dep.maybe_type = resolved_dependency;
         }
       }
@@ -1339,35 +1343,25 @@ pub(crate) fn parse_module_from_ast(
   }
 
   // Analyze any JSX Import Source pragma
-  if let Some((import_source, range)) =
-    analyze_jsx_import_sources(parsed_source)
-  {
+  if let Some(import_source) = module_info.jsx_import_source {
     let jsx_import_source_module = maybe_resolver
       .map(|r| r.jsx_import_source_module())
       .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE);
-    let specifier = format!("{}/{}", import_source, jsx_import_source_module);
+    let specifier =
+      format!("{}/{}", import_source.text, jsx_import_source_module);
     let range =
-      Range::from_source_range(&module.specifier, parsed_source, &range);
+      Range::from_position_range(&module.specifier, &import_source.range);
     let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
     let dep = module.dependencies.entry(specifier).or_default();
     dep.maybe_code = resolved_dependency;
   }
 
   // Analyze any JSDoc type imports
-  // We only analyze these on JavaScript types of modules, since they are
-  // ignored by TypeScript when type checking anyway and really shouldn't be
-  // there, but some people do strange things.
-  if matches!(
-    module.media_type,
-    MediaType::JavaScript | MediaType::Jsx | MediaType::Mjs | MediaType::Cjs
-  ) {
-    for (import_source, range) in analyze_jsdoc_imports(parsed_source) {
-      let range =
-        Range::from_source_range(&module.specifier, parsed_source, &range);
-      let resolved_dependency = resolve(&import_source, &range, maybe_resolver);
-      let dep = module.dependencies.entry(import_source).or_default();
-      dep.maybe_type = resolved_dependency;
-    }
+  for specifier in module_info.jsdoc_imports {
+    let range = Range::from_position_range(&module.specifier, &specifier.range);
+    let resolved_dependency = resolve(&specifier.text, &range, maybe_resolver);
+    let dep = module.dependencies.entry(specifier.text).or_default();
+    dep.maybe_type = resolved_dependency;
   }
 
   // Analyze the X-TypeScript-Types header
@@ -1424,8 +1418,7 @@ pub(crate) fn parse_module_from_ast(
   }
 
   // Analyze ES dependencies
-  let descriptors = analyze_dependencies(parsed_source);
-  for desc in descriptors {
+  for desc in module_info.dependencies {
     let dep = module
       .dependencies
       .entry(desc.specifier.to_string())
@@ -1434,11 +1427,7 @@ pub(crate) fn parse_module_from_ast(
     dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
     let resolved_dependency = resolve(
       &desc.specifier,
-      &Range::from_source_range(
-        &module.specifier,
-        parsed_source,
-        &desc.specifier_range,
-      ),
+      &Range::from_position_range(&module.specifier, &desc.specifier_range),
       maybe_resolver,
     );
     if matches!(
@@ -1454,7 +1443,7 @@ pub(crate) fn parse_module_from_ast(
       .map(|(text, range)| {
         resolve(
           &text,
-          &Range::from_source_range(&specifier, parsed_source, &range),
+          &Range::from_position_range(&specifier, &range),
           maybe_resolver,
         )
       })
@@ -1468,6 +1457,8 @@ pub(crate) fn parse_module_from_ast(
   module
 }
 
+// todo(dsherret): use `MediaType::from_specifier_and_headers` once
+// https://github.com/denoland/deno_ast/pull/108 is merged
 fn get_media_type(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
@@ -1518,7 +1509,7 @@ pub(crate) struct Builder<'a> {
   pending: FuturesUnordered<LoadWithSpecifierFuture>,
   pending_assert_types: HashMap<ModuleSpecifier, HashSet<Option<String>>>,
   dynamic_branches: HashMap<ModuleSpecifier, (ModuleKind, Option<String>)>,
-  source_parser: &'a dyn SourceParser,
+  module_analyzer: &'a dyn ModuleAnalyzer,
   maybe_reporter: Option<&'a dyn Reporter>,
 }
 
@@ -1529,7 +1520,7 @@ impl<'a> Builder<'a> {
     loader: &'a mut dyn Loader,
     maybe_resolver: Option<&'a dyn Resolver>,
     maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
-    source_parser: &'a dyn SourceParser,
+    module_analyzer: &'a dyn ModuleAnalyzer,
     maybe_reporter: Option<&'a dyn Reporter>,
   ) -> Self {
     Self {
@@ -1540,7 +1531,7 @@ impl<'a> Builder<'a> {
       pending: FuturesUnordered::new(),
       pending_assert_types: HashMap::new(),
       dynamic_branches: HashMap::new(),
-      source_parser,
+      module_analyzer,
       maybe_reporter,
     }
   }
@@ -1779,7 +1770,7 @@ impl<'a> Builder<'a> {
       maybe_assert_type.as_deref(),
       Some(kind),
       self.maybe_resolver,
-      self.source_parser,
+      self.module_analyzer,
       is_root,
       self.in_dynamic_branch,
     );
@@ -2013,8 +2004,9 @@ where
 
 #[cfg(test)]
 mod tests {
+  use crate::DefaultModuleAnalyzer;
+
   use super::*;
-  use crate::ast::DefaultSourceParser;
   use url::Url;
 
   #[test]
@@ -2055,7 +2047,7 @@ mod tests {
   #[test]
   fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
-    let source_parser = ast::DefaultSourceParser::default();
+    let module_analyzer = DefaultModuleAnalyzer::default();
     let content = r#"import * as b from "./b.ts";"#;
     let slot = parse_module(
       &specifier,
@@ -2064,7 +2056,7 @@ mod tests {
       None,
       Some(&ModuleKind::Esm),
       None,
-      &source_parser,
+      &module_analyzer,
       true,
       false,
     );
@@ -2180,14 +2172,14 @@ mod tests {
       loaded_bar: false,
       loaded_baz: false,
     };
-    let source_parser = DefaultSourceParser::new();
+    let module_analyzer = DefaultModuleAnalyzer::default();
     let builder = Builder::new(
       vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
       false,
       &mut loader,
       None,
       None,
-      &source_parser,
+      &module_analyzer,
       None,
     );
     builder.build(BuildKind::All, None).await;
@@ -2220,14 +2212,14 @@ mod tests {
       }
     }
     let mut loader = TestLoader;
-    let source_parser = DefaultSourceParser::new();
+    let module_analyzer = DefaultModuleAnalyzer::default();
     let builder = Builder::new(
       vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
       false,
       &mut loader,
       None,
       None,
-      &source_parser,
+      &module_analyzer,
       None,
     );
     let graph = builder.build(BuildKind::All, None).await;
@@ -2286,14 +2278,14 @@ mod tests {
       }
     }
     let mut loader = TestLoader;
-    let source_parser = DefaultSourceParser::new();
+    let module_analyzer = DefaultModuleAnalyzer::default();
     let builder = Builder::new(
       vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
       false,
       &mut loader,
       None,
       None,
-      &source_parser,
+      &module_analyzer,
       None,
     );
     let graph = builder.build(BuildKind::All, None).await;
