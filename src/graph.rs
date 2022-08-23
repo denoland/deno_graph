@@ -6,6 +6,7 @@ use crate::analyzer::ModuleAnalyzer;
 use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::TypeScriptReference;
+use crate::SpecifierWithRange;
 
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -1342,18 +1343,38 @@ pub(crate) fn parse_module_from_module_info(
     }
   }
 
-  // Analyze any JSX Import Source pragma
-  if let Some(import_source) = module_info.jsx_import_source {
-    let jsx_import_source_module = maybe_resolver
-      .map(|r| r.jsx_import_source_module())
-      .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE);
-    let specifier =
-      format!("{}/{}", import_source.text, jsx_import_source_module);
-    let range =
-      Range::from_position_range(&module.specifier, &import_source.range);
-    let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
-    let dep = module.dependencies.entry(specifier).or_default();
-    dep.maybe_code = resolved_dependency;
+  // Inject the JSX import source dependency if needed. This is done as follows:
+  // 1. Check that the module is a JSX or TSX module.
+  // 2. If the module has a @jsxImportSource pragma, use that as the import
+  //    source.
+  // 3. If the resolver has a default JSX import source, use that as the import
+  //    source.
+  // 4. If none of the above are true, do not inject a dependency.
+  if matches!(media_type, MediaType::Jsx | MediaType::Tsx) {
+    let res = module_info.jsx_import_source.or_else(|| {
+      maybe_resolver.and_then(|r| {
+        r.default_jsx_import_source()
+          .map(|import_source| SpecifierWithRange {
+            text: import_source,
+            range: PositionRange {
+              start: Position::zeroed(),
+              end: Position::zeroed(),
+            },
+          })
+      })
+    });
+    if let Some(import_source) = res {
+      let jsx_import_source_module = maybe_resolver
+        .map(|r| r.jsx_import_source_module())
+        .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE);
+      let specifier =
+        format!("{}/{}", import_source.text, jsx_import_source_module);
+      let range =
+        Range::from_position_range(&module.specifier, &import_source.range);
+      let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
+      let dep = module.dependencies.entry(specifier).or_default();
+      dep.maybe_code = resolved_dependency;
+    }
   }
 
   // Analyze any JSDoc type imports
