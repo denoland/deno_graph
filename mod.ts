@@ -65,6 +65,11 @@ export interface CreateGraphOptions {
    * the types of the graph, and `"codeOnly"` only includes dependencies that
    * are runnable code. */
   kind?: "all" | "typesOnly" | "codeOnly";
+  /** The default jsxImportSource to use in JSX/TSX files when no
+   * `@jsxImportSource` pragma is specified. In Deno, this is set to the
+   * `compilerOptions.jsxImportSource` value if `compilerOptions.jsx` is set to
+   * `react-jsx` or `react-jsxdev`. */
+  defaultJsxImportSource?: string;
   /** When identifying a `@jsxImportSource` pragma, what module name will be
    * appended to the import source. This defaults to `jsx-runtime`. */
   jsxImportSourceModule?: string;
@@ -167,6 +172,7 @@ export async function createGraph(
     : [rootSpecifiers];
   const {
     load = defaultLoad,
+    defaultJsxImportSource,
     jsxImportSourceModule,
     cacheInfo,
     resolve,
@@ -181,6 +187,7 @@ export async function createGraph(
   return createGraph(
     rootSpecifiers,
     load,
+    defaultJsxImportSource,
     jsxImportSourceModule,
     cacheInfo,
     resolve,
@@ -198,6 +205,11 @@ export interface ParseModuleOptions {
   /** For remote resources, a record of headers should be set, where the key's
    * have been normalized to be lower case values. */
   headers?: Record<string, string>;
+  /** The default jsxImportSource to use in JSX/TSX files when no
+   * `@jsxImportSource` pragma is specified. In Deno, this is set to the
+   * `compilerOptions.jsxImportSource` value if `compilerOptions.jsx` is set to
+   * `react-jsx` or `react-jsxdev`. */
+  defaultJsxImportSource?: string;
   /** When identifying a `@jsxImportSource` pragma, what module name will be
    * appended to the import source. This defaults to `jsx-runtime`. */
   jsxImportSourceModule?: string;
@@ -237,8 +249,14 @@ export function parseModule(
   content: string,
   options: ParseModuleOptions = {},
 ): Module {
-  const { headers, jsxImportSourceModule, kind, resolve, resolveTypes } =
-    options;
+  const {
+    headers,
+    defaultJsxImportSource,
+    jsxImportSourceModule,
+    kind,
+    resolve,
+    resolveTypes,
+  } = options;
 
   if (!wasm.isInstantiated()) {
     throw new Error(
@@ -249,6 +267,7 @@ export function parseModule(
   return wasm.parseModule(
     specifier,
     headers,
+    defaultJsxImportSource,
     jsxImportSourceModule,
     content,
     kind,

@@ -287,6 +287,7 @@ cfg_if! {
       Ok(js_graph::ModuleGraph(graph))
     }
 
+    #[allow(clippy::too_many_arguments)]
     #[wasm_bindgen(js_name = parseModule)]
     pub fn js_parse_module(
       specifier: String,

@@ -5,8 +5,8 @@ use crate::analyzer::DependencyKind;
 use crate::analyzer::ModuleAnalyzer;
 use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
+use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
-use crate::SpecifierWithRange;
 
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
