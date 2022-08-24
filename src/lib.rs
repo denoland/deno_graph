@@ -226,6 +226,7 @@ cfg_if! {
     pub async fn js_create_graph(
       roots: JsValue,
       load: js_sys::Function,
+      maybe_default_jsx_import_source: Option<String>,
       maybe_jsx_import_source_module: Option<String>,
       maybe_cache_info: Option<js_sys::Function>,
       maybe_resolve: Option<js_sys::Function>,
@@ -239,8 +240,8 @@ cfg_if! {
       let roots_vec: Vec<StringOrTuple> = roots.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
       let maybe_imports_map: Option<HashMap<String, Vec<String>>> = maybe_imports.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
       let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
-      let maybe_resolver = if maybe_jsx_import_source_module.is_some() || maybe_resolve.is_some() || maybe_resolve_types.is_some() {
-        Some(js_graph::JsResolver::new(maybe_jsx_import_source_module, maybe_resolve, maybe_resolve_types))
+      let maybe_resolver = if maybe_default_jsx_import_source.is_some() || maybe_jsx_import_source_module.is_some() || maybe_resolve.is_some() || maybe_resolve_types.is_some() {
+        Some(js_graph::JsResolver::new(maybe_default_jsx_import_source, maybe_jsx_import_source_module, maybe_resolve, maybe_resolve_types))
       } else {
         None
       };
@@ -286,10 +287,12 @@ cfg_if! {
       Ok(js_graph::ModuleGraph(graph))
     }
 
+    #[allow(clippy::too_many_arguments)]
     #[wasm_bindgen(js_name = parseModule)]
     pub fn js_parse_module(
       specifier: String,
       maybe_headers: JsValue,
+      maybe_default_jsx_import_source: Option<String>,
       maybe_jsx_import_source_module: Option<String>,
       content: String,
       maybe_kind: JsValue,
@@ -301,8 +304,8 @@ cfg_if! {
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
       let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
-      let maybe_resolver = if maybe_jsx_import_source_module.is_some() || maybe_resolve.is_some() || maybe_resolve_types.is_some() {
-        Some(js_graph::JsResolver::new(maybe_jsx_import_source_module, maybe_resolve, maybe_resolve_types))
+      let maybe_resolver = if maybe_default_jsx_import_source.is_some() || maybe_jsx_import_source_module.is_some() || maybe_resolve.is_some() || maybe_resolve_types.is_some() {
+        Some(js_graph::JsResolver::new(maybe_default_jsx_import_source, maybe_jsx_import_source_module, maybe_resolve, maybe_resolve_types))
       } else {
         None
       };
@@ -3012,6 +3015,50 @@ export function a(a) {
       .into(),
       Some(&ModuleKind::Esm),
       None,
+      None,
+    );
+    assert!(result.is_ok());
+    let actual = result.unwrap();
+    assert_eq!(actual.dependencies.len(), 1);
+    let dep = actual
+      .dependencies
+      .get("https://example.com/preact/jsx-runtime")
+      .unwrap();
+    assert!(!dep.maybe_code.is_none());
+    if let Resolved::Ok { specifier, .. } = &dep.maybe_code {
+      assert_eq!(
+        specifier,
+        &ModuleSpecifier::parse("https://example.com/preact/jsx-runtime")
+          .unwrap()
+      );
+    }
+    assert!(dep.maybe_type.is_none());
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::Tsx);
+  }
+
+  #[test]
+  fn test_default_jsx_import_source() {
+    #[derive(Debug)]
+    struct R;
+    impl Resolver for R {
+      fn default_jsx_import_source(&self) -> Option<String> {
+        Some("https://example.com/preact".into())
+      }
+    }
+
+    let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
+    let result = parse_module(
+      &specifier,
+      None,
+      r#"
+    export function A() {
+      return <div>Hello Deno</div>;
+    }
+    "#
+      .into(),
+      Some(&ModuleKind::Esm),
+      Some(&R),
       None,
     );
     assert!(result.is_ok());
