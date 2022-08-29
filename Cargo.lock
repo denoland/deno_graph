@@ -189,7 +189,7 @@ dependencies = [
 
 [[package]]
 name = "deno_graph"
-version = "0.32.0"
+version = "0.33.0"
 dependencies = [
  "anyhow",
  "cfg-if",
