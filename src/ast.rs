@@ -249,6 +249,10 @@ impl CapturingModuleAnalyzer {
         .unwrap_or_else(|| Box::new(DefaultParsedSourceStore::default())),
     }
   }
+
+  pub fn as_capturing_parser(&self) -> CapturingModuleParser {
+    CapturingModuleParser::new(Some(&*self.parser), &*self.store)
+  }
 }
 
 impl ModuleAnalyzer for CapturingModuleAnalyzer {
@@ -258,8 +262,7 @@ impl ModuleAnalyzer for CapturingModuleAnalyzer {
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ModuleInfo, Diagnostic> {
-    let capturing_parser =
-      CapturingModuleParser::new(Some(&*self.parser), &*self.store);
+    let capturing_parser = self.as_capturing_parser();
     let module_analyzer = DefaultModuleAnalyzer::new(&capturing_parser);
     module_analyzer.analyze(specifier, source, media_type)
   }
@@ -272,8 +275,7 @@ impl ModuleParser for CapturingModuleAnalyzer {
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ParsedSource, Diagnostic> {
-    let capturing_parser =
-      CapturingModuleParser::new(Some(&*self.parser), &*self.store);
+    let capturing_parser = self.as_capturing_parser();
     capturing_parser.parse_module(specifier, source, media_type)
   }
 }
