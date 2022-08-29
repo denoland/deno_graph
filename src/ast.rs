@@ -275,7 +275,8 @@ impl ModuleParser for CapturingModuleAnalyzer {
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ParsedSource, Diagnostic> {
-    self.as_capturing_parser().parse_module(specifier, source, media_type)
+    let capturing_parser = self.as_capturing_parser();
+    capturing_parser.parse_module(specifier, source, media_type)
   }
 }
 
