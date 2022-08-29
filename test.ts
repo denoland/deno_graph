@@ -708,6 +708,27 @@ Deno.test({
 });
 
 Deno.test({
+  name: "parseModule() - with defaultJsxImportSource",
+  async fn() {
+    await init();
+    const module = parseModule(
+      `file:///a/test01.tsx`,
+      `
+    export function A() {
+      <div>Hello Deno</div>
+    }`,
+      {
+        defaultJsxImportSource: "http://example.com/preact",
+      },
+    );
+    assert(
+      module.dependencies &&
+        module.dependencies["http://example.com/preact/jsx-runtime"],
+    );
+  },
+});
+
+Deno.test({
   name: "parseModule() - invalid URL",
   async fn() {
     await init();

@@ -145,6 +145,7 @@ impl Locker for JsLocker {
 
 #[derive(Debug)]
 pub struct JsResolver {
+  maybe_default_jsx_import_source: Option<String>,
   maybe_jsx_import_source_module: Option<String>,
   maybe_resolve: Option<js_sys::Function>,
   maybe_resolve_types: Option<js_sys::Function>,
@@ -152,11 +153,13 @@ pub struct JsResolver {
 
 impl JsResolver {
   pub fn new(
+    maybe_default_jsx_import_source: Option<String>,
     maybe_jsx_import_source_module: Option<String>,
     maybe_resolve: Option<js_sys::Function>,
     maybe_resolve_types: Option<js_sys::Function>,
   ) -> Self {
     Self {
+      maybe_default_jsx_import_source,
       maybe_jsx_import_source_module,
       maybe_resolve,
       maybe_resolve_types,
@@ -171,6 +174,10 @@ struct JsResolveTypesResponse {
 }
 
 impl Resolver for JsResolver {
+  fn default_jsx_import_source(&self) -> Option<String> {
+    self.maybe_default_jsx_import_source.clone()
+  }
+
   fn jsx_import_source_module(&self) -> &str {
     self
       .maybe_jsx_import_source_module
