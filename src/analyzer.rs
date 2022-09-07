@@ -189,7 +189,7 @@ impl Comment {
   ) -> Comment {
     let range = PositionRange::from_source_range(comment.range(), text_info);
     Comment {
-      text: comment.text,
+      text: comment.text.to_string(),
       range,
     }
   }

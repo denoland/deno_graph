@@ -1200,7 +1200,7 @@ pub(crate) fn parse_module(
   is_root: bool,
   is_dynamic_branch: bool,
 ) -> ModuleSlot {
-  let media_type = get_media_type(specifier, maybe_headers);
+  let media_type = MediaType::from_specifier_and_headers(specifier, maybe_headers);
 
   // here we check any media types that should have assertions made against them
   // if they aren't the root and add them to the graph, otherwise we continue
@@ -1476,23 +1476,6 @@ pub(crate) fn parse_module_from_module_info(
 
   // Return the module as a valid module
   module
-}
-
-// todo(dsherret): use `MediaType::from_specifier_and_headers` once
-// https://github.com/denoland/deno_ast/pull/108 is merged
-fn get_media_type(
-  specifier: &ModuleSpecifier,
-  maybe_headers: Option<&HashMap<String, String>>,
-) -> MediaType {
-  if let Some(headers) = maybe_headers {
-    if let Some(content_type) = headers.get("content-type") {
-      MediaType::from_content_type(specifier, content_type)
-    } else {
-      MediaType::from(specifier)
-    }
-  } else {
-    MediaType::from(specifier)
-  }
 }
 
 /// Determine if a media type is "untyped" and should be checked to see if there
