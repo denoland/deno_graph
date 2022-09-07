@@ -1200,7 +1200,8 @@ pub(crate) fn parse_module(
   is_root: bool,
   is_dynamic_branch: bool,
 ) -> ModuleSlot {
-  let media_type = MediaType::from_specifier_and_headers(specifier, maybe_headers);
+  let media_type =
+    MediaType::from_specifier_and_headers(specifier, maybe_headers);
 
   // here we check any media types that should have assertions made against them
   // if they aren't the root and add them to the graph, otherwise we continue
