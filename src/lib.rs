@@ -72,7 +72,7 @@ cfg_if! {
     pub struct GraphOptions<'graph> {
       pub imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
       pub resolver: Option<&'graph dyn Resolver>,
-      pub locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
+      pub locker: Option<Rc<RefCell<dyn Locker>>>,
       pub module_analyzer: Option<&'graph dyn ModuleAnalyzer>,
       pub reporter: Option<&'graph dyn Reporter>,
     }
@@ -239,10 +239,10 @@ cfg_if! {
       } else {
         None
       };
-      let maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>> =
+      let maybe_locker: Option<Rc<RefCell<dyn Locker>>> =
         if maybe_check.is_some() || maybe_get_checksum.is_some() {
           let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum, maybe_lockfile_name);
-          Some(Rc::new(RefCell::new(Box::new(locker))))
+          Some(Rc::new(RefCell::new(locker)))
         } else {
           None
         };
