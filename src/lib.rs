@@ -70,6 +70,7 @@ cfg_if! {
 
     #[derive(Default)]
     pub struct GraphOptions<'graph> {
+      pub is_dynamic: bool,
       pub imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
       pub resolver: Option<&'graph dyn Resolver>,
       pub locker: Option<Rc<RefCell<dyn Locker>>>,
@@ -81,7 +82,6 @@ cfg_if! {
     /// dependencies of the module, returning the resulting graph.
     pub async fn create_graph<'graph>(
       roots: Vec<(ModuleSpecifier, ModuleKind)>,
-      is_dynamic: bool,
       loader: &mut dyn Loader,
       options: GraphOptions<'graph>,
     ) -> ModuleGraph {
@@ -89,7 +89,7 @@ cfg_if! {
       let module_analyzer = options.module_analyzer.unwrap_or(&default_module_analyzer);
       let builder = Builder::new(
         roots,
-        is_dynamic,
+        options.is_dynamic,
         loader,
         options.resolver,
         options.locker,
@@ -105,7 +105,6 @@ cfg_if! {
     /// loading in runtime that doesn't care about type only dependencies.
     pub async fn create_code_graph<'graph>(
       roots: Vec<(ModuleSpecifier, ModuleKind)>,
-      is_dynamic: bool,
       loader: &mut dyn Loader,
       options: GraphOptions<'graph>,
     ) -> ModuleGraph {
@@ -113,7 +112,7 @@ cfg_if! {
       let module_analyzer = options.module_analyzer.unwrap_or(&default_module_analyzer);
       let builder = Builder::new(
         roots,
-        is_dynamic,
+        options.is_dynamic,
         loader,
         options.resolver,
         options.locker,
@@ -134,7 +133,6 @@ cfg_if! {
     /// not be followed.
     pub async fn create_type_graph<'graph>(
       roots: Vec<ModuleSpecifier>,
-      is_dynamic: bool,
       loader: &mut dyn Loader,
       options: GraphOptions<'graph>
     ) -> ModuleGraph {
@@ -143,7 +141,7 @@ cfg_if! {
       let roots = roots.into_iter().map(|s| (s, ModuleKind::Esm)).collect();
       let builder = Builder::new(
         roots,
-        is_dynamic,
+        options.is_dynamic,
         loader,
         options.resolver,
         options.locker,
@@ -371,7 +369,6 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -456,7 +453,7 @@ mod tests {
       ),
     ];
     let graph =
-      create_graph(roots.clone(), false, &mut loader, Default::default()).await;
+      create_graph(roots.clone(), &mut loader, Default::default()).await;
     assert_eq!(graph.module_slots.len(), 4);
     assert_eq!(graph.roots, roots);
     assert!(
@@ -488,8 +485,15 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test.json").unwrap(),
       ModuleKind::Asserted,
     )];
-    let graph =
-      create_graph(roots.clone(), true, &mut loader, Default::default()).await;
+    let graph = create_graph(
+      roots.clone(),
+      &mut loader,
+      GraphOptions {
+        is_dynamic: true,
+        ..Default::default()
+      },
+    )
+    .await;
     assert_eq!(
       json!(graph),
       json!({
@@ -538,8 +542,15 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test.js").unwrap(),
       ModuleKind::Esm,
     )];
-    let graph =
-      create_graph(roots.clone(), true, &mut loader, Default::default()).await;
+    let graph = create_graph(
+      roots.clone(),
+      &mut loader,
+      GraphOptions {
+        is_dynamic: true,
+        ..Default::default()
+      },
+    )
+    .await;
     assert_eq!(
       json!(graph),
       json!({
@@ -615,7 +626,6 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -644,7 +654,6 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -695,7 +704,6 @@ console.log(a);
       Some(vec![(config_specifier, vec!["./types.d.ts".to_string()])]);
     let graph = create_graph(
       vec![(root_specifier, ModuleKind::Esm)],
-      false,
       &mut loader,
       GraphOptions {
         imports: maybe_imports,
@@ -822,7 +830,6 @@ console.log(a);
     )]);
     let graph = create_graph(
       vec![(root_specifier, ModuleKind::Esm)],
-      false,
       &mut loader,
       GraphOptions {
         imports: maybe_imports,
@@ -947,7 +954,6 @@ console.log(a);
     )]);
     let graph = create_graph(
       vec![(root_specifier, ModuleKind::Esm)],
-      false,
       &mut loader,
       GraphOptions {
         imports: maybe_imports,
@@ -996,7 +1002,6 @@ console.log(a);
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -1048,7 +1053,6 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test01.tsx").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -1115,7 +1119,6 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -1154,7 +1157,6 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -1195,7 +1197,6 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test01").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -1230,7 +1231,6 @@ console.log(a);
       ModuleSpecifier::parse("file:///a.ts").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -1323,7 +1323,6 @@ export function a(a) {
     let root = ModuleSpecifier::parse("file:///a/test.js").unwrap();
     let graph = create_graph(
       vec![(root.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -1426,7 +1425,6 @@ export function a(a) {
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -1494,7 +1492,6 @@ export function a(a) {
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -1555,7 +1552,6 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -1600,7 +1596,6 @@ export function a(a) {
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let graph = create_graph(
       vec![(root_specifier, ModuleKind::Esm)],
-      false,
       &mut loader,
       GraphOptions {
         resolver: maybe_resolver,
@@ -1665,7 +1660,6 @@ export function a(a) {
     let root_specifier = ModuleSpecifier::parse("file:///a.js").unwrap();
     let graph = create_graph(
       vec![(root_specifier, ModuleKind::Esm)],
-      false,
       &mut loader,
       GraphOptions {
         resolver: maybe_resolver,
@@ -1750,7 +1744,6 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -1899,7 +1892,6 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -2013,7 +2005,6 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -2220,7 +2211,6 @@ export function a(a) {
     };
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       GraphOptions {
         reporter: Some(&reporter),
@@ -2357,7 +2347,6 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_type_graph(
       vec![root_specifier.clone()],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -2583,7 +2572,6 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_code_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
@@ -2729,7 +2717,6 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
-      false,
       &mut loader,
       Default::default(),
     )
