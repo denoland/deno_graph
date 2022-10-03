@@ -68,60 +68,59 @@ cfg_if! {
     use source::Loader;
     use source::Reporter;
 
+    #[derive(Default)]
+    pub struct GraphOptions<'graph> {
+      pub imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
+      pub resolver: Option<&'graph dyn Resolver>,
+      pub locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
+      pub module_analyzer: Option<&'graph dyn ModuleAnalyzer>,
+      pub reporter: Option<&'graph dyn Reporter>,
+    }
+
     /// Create a module graph, based on loading and recursively analyzing the
     /// dependencies of the module, returning the resulting graph.
-    #[allow(clippy::too_many_arguments)]
-    pub async fn create_graph(
+    pub async fn create_graph<'graph>(
       roots: Vec<(ModuleSpecifier, ModuleKind)>,
       is_dynamic: bool,
-      maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
       loader: &mut dyn Loader,
-      maybe_resolver: Option<&dyn Resolver>,
-      maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
-      maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
-      maybe_reporter: Option<&dyn Reporter>,
+      options: GraphOptions<'graph>,
     ) -> ModuleGraph {
       let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
-      let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
+      let module_analyzer = options.module_analyzer.unwrap_or(&default_module_analyzer);
       let builder = Builder::new(
         roots,
         is_dynamic,
         loader,
-        maybe_resolver,
-        maybe_locker,
+        options.resolver,
+        options.locker,
         module_analyzer,
-        maybe_reporter,
+        options.reporter,
       );
-      builder.build(BuildKind::All, maybe_imports).await
+      builder.build(BuildKind::All, options.imports).await
     }
 
     /// Create a module graph, including only dependencies of the roots that
     /// would contain code that would be executed, skipping any type only
     /// dependencies. This is useful when wanting to build a graph of code for
     /// loading in runtime that doesn't care about type only dependencies.
-    #[allow(clippy::too_many_arguments)]
-    pub async fn create_code_graph(
+    pub async fn create_code_graph<'graph>(
       roots: Vec<(ModuleSpecifier, ModuleKind)>,
       is_dynamic: bool,
-      maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
       loader: &mut dyn Loader,
-      maybe_resolver: Option<&dyn Resolver>,
-      maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
-      maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
-      maybe_reporter: Option<&dyn Reporter>,
+      options: GraphOptions<'graph>,
     ) -> ModuleGraph {
       let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
-      let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
+      let module_analyzer = options.module_analyzer.unwrap_or(&default_module_analyzer);
       let builder = Builder::new(
         roots,
         is_dynamic,
         loader,
-        maybe_resolver,
-        maybe_locker,
+        options.resolver,
+        options.locker,
         module_analyzer,
-        maybe_reporter,
+        options.reporter,
       );
-      builder.build(BuildKind::CodeOnly, maybe_imports).await
+      builder.build(BuildKind::CodeOnly, options.imports).await
     }
 
     /// Create a module graph, including only dependencies that might affect
@@ -133,30 +132,25 @@ cfg_if! {
     /// `X-TypeScript-Types` header or types defined in the code itself) will
     /// still be loaded into the graph, but further code only dependencies will
     /// not be followed.
-    #[allow(clippy::too_many_arguments)]
-    pub async fn create_type_graph(
+    pub async fn create_type_graph<'graph>(
       roots: Vec<ModuleSpecifier>,
       is_dynamic: bool,
-      maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
       loader: &mut dyn Loader,
-      maybe_resolver: Option<&dyn Resolver>,
-      maybe_locker: Option<Rc<RefCell<Box<dyn Locker>>>>,
-      maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
-      maybe_reporter: Option<&dyn Reporter>,
+      options: GraphOptions<'graph>
     ) -> ModuleGraph {
       let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
-      let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
+      let module_analyzer = options.module_analyzer.unwrap_or(&default_module_analyzer);
       let roots = roots.into_iter().map(|s| (s, ModuleKind::Esm)).collect();
       let builder = Builder::new(
         roots,
         is_dynamic,
         loader,
-        maybe_resolver,
-        maybe_locker,
+        options.resolver,
+        options.locker,
         module_analyzer,
-        maybe_reporter,
+        options.reporter,
       );
-      builder.build(BuildKind::TypesOnly, maybe_imports).await
+      builder.build(BuildKind::TypesOnly, options.imports).await
     }
 
     /// Parse an individual module, returning the module as a result, otherwise
@@ -378,12 +372,8 @@ mod tests {
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(graph.module_slots.len(), 2);
@@ -465,17 +455,8 @@ mod tests {
         ModuleKind::Esm,
       ),
     ];
-    let graph = create_graph(
-      roots.clone(),
-      false,
-      None,
-      &mut loader,
-      None,
-      None,
-      None,
-      None,
-    )
-    .await;
+    let graph =
+      create_graph(roots.clone(), false, &mut loader, Default::default()).await;
     assert_eq!(graph.module_slots.len(), 4);
     assert_eq!(graph.roots, roots);
     assert!(
@@ -507,17 +488,8 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test.json").unwrap(),
       ModuleKind::Asserted,
     )];
-    let graph = create_graph(
-      roots.clone(),
-      true,
-      None,
-      &mut loader,
-      None,
-      None,
-      None,
-      None,
-    )
-    .await;
+    let graph =
+      create_graph(roots.clone(), true, &mut loader, Default::default()).await;
     assert_eq!(
       json!(graph),
       json!({
@@ -566,17 +538,8 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test.js").unwrap(),
       ModuleKind::Esm,
     )];
-    let graph = create_graph(
-      roots.clone(),
-      true,
-      None,
-      &mut loader,
-      None,
-      None,
-      None,
-      None,
-    )
-    .await;
+    let graph =
+      create_graph(roots.clone(), true, &mut loader, Default::default()).await;
     assert_eq!(
       json!(graph),
       json!({
@@ -653,12 +616,8 @@ console.log(a);
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert!(graph.valid().is_ok());
@@ -686,12 +645,8 @@ console.log(a);
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert!(graph.valid().is_err());
@@ -741,12 +696,11 @@ console.log(a);
     let graph = create_graph(
       vec![(root_specifier, ModuleKind::Esm)],
       false,
-      maybe_imports,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      GraphOptions {
+        imports: maybe_imports,
+        ..Default::default()
+      },
     )
     .await;
     assert_eq!(
@@ -869,12 +823,11 @@ console.log(a);
     let graph = create_graph(
       vec![(root_specifier, ModuleKind::Esm)],
       false,
-      maybe_imports,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      GraphOptions {
+        imports: maybe_imports,
+        ..Default::default()
+      },
     )
     .await;
     assert_eq!(
@@ -995,12 +948,11 @@ console.log(a);
     let graph = create_graph(
       vec![(root_specifier, ModuleKind::Esm)],
       false,
-      maybe_imports,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      GraphOptions {
+        imports: maybe_imports,
+        ..Default::default()
+      },
     )
     .await;
     assert_eq!(
@@ -1045,12 +997,8 @@ console.log(a);
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(graph.module_slots.len(), 1);
@@ -1101,12 +1049,8 @@ console.log(a);
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(
@@ -1172,12 +1116,8 @@ console.log(a);
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     let result = graph.valid();
@@ -1215,12 +1155,8 @@ console.log(a);
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     let result = graph.valid();
@@ -1260,12 +1196,8 @@ console.log(a);
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert!(graph.valid().is_ok());
@@ -1299,12 +1231,8 @@ console.log(a);
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(
@@ -1396,12 +1324,8 @@ export function a(a) {
     let graph = create_graph(
       vec![(root.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(
@@ -1503,12 +1427,8 @@ export function a(a) {
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(
@@ -1575,12 +1495,8 @@ export function a(a) {
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(
@@ -1640,12 +1556,8 @@ export function a(a) {
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(graph.module_slots.len(), 3);
@@ -1689,12 +1601,11 @@ export function a(a) {
     let graph = create_graph(
       vec![(root_specifier, ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      maybe_resolver,
-      None,
-      None,
-      None,
+      GraphOptions {
+        resolver: maybe_resolver,
+        ..Default::default()
+      },
     )
     .await;
     let maybe_module = graph.get(&graph.roots[0].0);
@@ -1755,12 +1666,11 @@ export function a(a) {
     let graph = create_graph(
       vec![(root_specifier, ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      maybe_resolver,
-      None,
-      None,
-      None,
+      GraphOptions {
+        resolver: maybe_resolver,
+        ..Default::default()
+      },
     )
     .await;
     let maybe_module = graph.get(&graph.roots[0].0);
@@ -1841,12 +1751,8 @@ export function a(a) {
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(
@@ -1994,12 +1900,8 @@ export function a(a) {
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(
@@ -2112,12 +2014,8 @@ export function a(a) {
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(
@@ -2323,12 +2221,11 @@ export function a(a) {
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      Some(&reporter),
+      GraphOptions {
+        reporter: Some(&reporter),
+        ..Default::default()
+      },
     )
     .await;
     assert_eq!(graph.modules().len(), 5);
@@ -2461,12 +2358,8 @@ export function a(a) {
     let graph = create_type_graph(
       vec![root_specifier.clone()],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(
@@ -2691,12 +2584,8 @@ export function a(a) {
     let graph = create_code_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(
@@ -2841,12 +2730,8 @@ export function a(a) {
     let graph = create_graph(
       vec![(root_specifier.clone(), ModuleKind::Esm)],
       false,
-      None,
       &mut loader,
-      None,
-      None,
-      None,
-      None,
+      Default::default(),
     )
     .await;
     assert_eq!(
