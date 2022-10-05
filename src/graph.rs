@@ -137,6 +137,7 @@ pub enum ModuleGraphError {
     actual_media_type: MediaType,
     expected_media_type: MediaType,
   },
+  ConflictingAssertions(ModuleSpecifier),
   LoadingErr(ModuleSpecifier, Arc<anyhow::Error>),
   Missing(ModuleSpecifier),
   ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
@@ -167,6 +168,9 @@ impl Clone for ModuleGraphError {
         actual_media_type: *actual_media_type,
         expected_media_type: *expected_media_type,
       },
+      Self::ConflictingAssertions(specifier) => {
+        Self::ConflictingAssertions(specifier.clone())
+      }
       Self::UnsupportedImportAssertionType(specifier, kind) => {
         Self::UnsupportedImportAssertionType(specifier.clone(), kind.clone())
       }
@@ -188,7 +192,8 @@ impl ModuleGraphError {
       | Self::InvalidSource(s, _)
       | Self::UnsupportedMediaType(s, _)
       | Self::UnsupportedImportAssertionType(s, _)
-      | Self::Missing(s) => s,
+      | Self::Missing(s)
+      | Self::ConflictingAssertions(s) => s,
       Self::InvalidTypeAssertion { specifier, .. } => specifier,
     }
   }
@@ -218,6 +223,7 @@ impl fmt::Display for ModuleGraphError {
       Self::InvalidSource(specifier, Some(filename)) => write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}\n  Lock file: {}", specifier, filename),
       Self::InvalidSource(specifier, None) => write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}", specifier),
       Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type } => write!(f, "Expected a {} module, but identified a {} module.\n  Specifier: {}", expected_media_type, actual_media_type, specifier),
+      Self::ConflictingAssertions(specifier) => write!(f, "Module \"{specifier}\" was imported with conflicting assertions."),
       Self::UnsupportedMediaType(specifier, MediaType::Json) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {}", specifier),
       Self::UnsupportedMediaType(specifier, media_type) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {} module. Importing these types of modules is currently not supported.\n  Specifier: {}", media_type, specifier),
       Self::UnsupportedImportAssertionType(_, kind) => write!(f, "The import assertion type of \"{}\" is unsupported.", kind),
@@ -1573,15 +1579,7 @@ impl<'a> Builder<'a> {
         Some((specifier, kind, Ok(Some(response)))) => {
           let assert_types =
             self.pending_assert_types.remove(&specifier).unwrap();
-          for maybe_assert_type in assert_types {
-            self.visit(
-              &specifier,
-              &kind,
-              &response,
-              &build_kind,
-              maybe_assert_type,
-            )
-          }
+          self.visit(&specifier, &kind, &response, &build_kind, assert_types);
           Some(specifier)
         }
         Some((specifier, _, Ok(None))) => {
@@ -1711,23 +1709,35 @@ impl<'a> Builder<'a> {
     kind: &ModuleKind,
     response: &LoadResponse,
     build_kind: &BuildKind,
-    maybe_assert_type: Option<String>,
+    assert_types: HashSet<Option<String>>,
   ) {
     let (specifier, module_slot) = match response {
       LoadResponse::BuiltIn { specifier } => {
-        self.check_specifier(requested_specifier, specifier);
-        let module_slot = ModuleSlot::Module(Module::new_without_source(
-          specifier.clone(),
-          ModuleKind::BuiltIn,
-        ));
+        self.check_specifier(requested_specifier, &specifier);
+        let module_slot = if assert_types.len() != 1 {
+          ModuleSlot::Err(ModuleGraphError::ConflictingAssertions(
+            specifier.clone(),
+          ))
+        } else {
+          ModuleSlot::Module(Module::new_without_source(
+            specifier.clone(),
+            ModuleKind::BuiltIn,
+          ))
+        };
         (specifier, module_slot)
       }
       LoadResponse::External { specifier } => {
-        self.check_specifier(requested_specifier, specifier);
-        let module_slot = ModuleSlot::Module(Module::new_without_source(
-          specifier.clone(),
-          ModuleKind::External,
-        ));
+        self.check_specifier(requested_specifier, &specifier);
+        let module_slot = if assert_types.len() != 1 {
+          ModuleSlot::Err(ModuleGraphError::ConflictingAssertions(
+            specifier.clone(),
+          ))
+        } else {
+          ModuleSlot::Module(Module::new_without_source(
+            specifier.clone(),
+            ModuleKind::External,
+          ))
+        };
         (specifier, module_slot)
       }
       LoadResponse::Module {
@@ -1735,18 +1745,22 @@ impl<'a> Builder<'a> {
         content,
         maybe_headers,
       } => {
-        self.check_specifier(requested_specifier, specifier);
-        (
-          specifier,
+        self.check_specifier(requested_specifier, &specifier);
+        let module_slot = if assert_types.len() != 1 {
+          ModuleSlot::Err(ModuleGraphError::ConflictingAssertions(
+            specifier.clone(),
+          ))
+        } else {
           self.visit_module(
-            specifier,
+            &specifier,
             kind,
             maybe_headers.as_ref(),
             content.clone(),
             build_kind,
-            maybe_assert_type,
-          ),
-        )
+            assert_types.into_iter().next().unwrap(),
+          )
+        };
+        (specifier, module_slot)
       }
     };
     self
