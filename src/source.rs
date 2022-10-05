@@ -106,8 +106,6 @@ pub trait Locker: fmt::Debug {
 pub enum ResolveResponse {
   /// The resolved specifier where the module is an AMD module.
   Amd(ModuleSpecifier),
-  /// The resolved specifier where the module is a CommonJS module.
-  CommonJs(ModuleSpecifier),
   /// The specifier cannot be resolved or some other errors occurred.
   Err(Error),
   /// A resolved specifier where the module is an ES module.
@@ -128,7 +126,6 @@ impl ResolveResponse {
   pub fn to_result(self) -> Result<ModuleSpecifier, Error> {
     match self {
       Self::Amd(specifier)
-      | Self::CommonJs(specifier)
       | Self::Esm(specifier)
       | Self::Script(specifier)
       | Self::Specifier(specifier)

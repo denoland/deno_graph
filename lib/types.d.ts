@@ -114,7 +114,6 @@ export type ModuleKind =
   | "amd"
   | "asserted"
   | "builtIn"
-  | "commonJs"
   | "esm"
   | "external"
   | "script"

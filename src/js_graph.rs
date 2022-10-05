@@ -268,7 +268,6 @@ impl StringOrResolveResponse {
             ModuleKind::Asserted
             | ModuleKind::BuiltIn
             | ModuleKind::External => ResolveResponse::Specifier(specifier),
-            ModuleKind::CommonJs => ResolveResponse::CommonJs(specifier),
             ModuleKind::Esm => ResolveResponse::Esm(specifier),
             ModuleKind::Script => ResolveResponse::Script(specifier),
             ModuleKind::SystemJs => ResolveResponse::SystemJs(specifier),

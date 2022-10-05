@@ -382,12 +382,6 @@ impl Resolved {
         range,
         remapped,
       ),
-      ResolveResponse::CommonJs(specifier) => Self::from_specifier_and_kind(
-        specifier,
-        ModuleKind::CommonJs,
-        range,
-        remapped,
-      ),
       ResolveResponse::Script(specifier) => Self::from_specifier_and_kind(
         specifier,
         ModuleKind::Script,
@@ -576,8 +570,6 @@ pub enum ModuleKind {
   /// Represents a module which is built in to a runtime. The module does not
   /// contain source and will have no dependencies.
   BuiltIn,
-  /// A CommonJS module.
-  CommonJs,
   /// An ECMAScript Module (JavaScript Module).
   Esm,
   /// Represents a module which is not statically analyzed and is only available
