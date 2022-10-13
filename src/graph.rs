@@ -435,8 +435,8 @@ impl Resolved {
     let specifier_scheme = specifier.scheme();
     if referrer_scheme == "https" && specifier_scheme == "http" {
       Resolved::Err(ResolutionError::InvalidDowngrade { specifier, range })
-    } else if (referrer_scheme == "https" || referrer_scheme == "http")
-      && !(specifier_scheme == "https" || specifier_scheme == "http")
+    } else if matches!(referrer_scheme, "https" | "http")
+      && !matches!(specifier_scheme, "https" | "http" | "npm")
       && !remapped
     {
       Resolved::Err(ResolutionError::InvalidLocalImport { specifier, range })
@@ -2321,5 +2321,38 @@ mod tests {
         .unwrap_err(),
       ModuleGraphError::ParseErr(..)
     ));
+  }
+
+  #[test]
+  fn local_import_remote_module() {
+    let resolved = Resolved::from_specifier_and_kind(
+      Url::parse("file:///local/mod.ts").unwrap(),
+      ModuleKind::External,
+      Range {
+        specifier: Url::parse("https://localhost").unwrap(),
+        start: Position::zeroed(),
+        end: Position::zeroed(),
+      },
+      false,
+    );
+    assert!(matches!(
+      resolved,
+      Resolved::Err(ResolutionError::InvalidLocalImport { .. })
+    ));
+  }
+
+  #[test]
+  fn npm_import_remote_module() {
+    let resolved = Resolved::from_specifier_and_kind(
+      Url::parse("npm:package").unwrap(),
+      ModuleKind::External,
+      Range {
+        specifier: Url::parse("https://localhost").unwrap(),
+        start: Position::zeroed(),
+        end: Position::zeroed(),
+      },
+      false,
+    );
+    assert!(matches!(resolved, Resolved::Ok { .. }));
   }
 }
