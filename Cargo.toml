@@ -16,7 +16,7 @@ name = "deno_graph"
 [dependencies]
 anyhow = "1.0.43"
 cfg-if = "1.0.0"
-data-url = "0.1.0"
+data-url = "0.2.0"
 futures = "0.3.17"
 js-sys = { version = "0.3.55", optional = true }
 lazy_static = "1.4.0"
