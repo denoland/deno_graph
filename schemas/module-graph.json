@@ -180,7 +180,7 @@
           "$ref": "#/definitions/resolvedDependency",
           "description": "The fully qualified module specifier (URL) for the type only dependency."
         },
-        "assertType": {
+        "assertionType": {
           "type": "string",
           "description": "A value that provides the type attribute of an import assertion."
         }

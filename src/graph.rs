@@ -531,7 +531,7 @@ pub struct Dependency {
   pub maybe_type: Resolved,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
-  #[serde(rename = "assertType", skip_serializing_if = "Option::is_none")]
+  #[serde(rename = "assertionType", skip_serializing_if = "Option::is_none")]
   pub maybe_assert_type: Option<String>,
 }
 

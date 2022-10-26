@@ -226,6 +226,10 @@ export class Module {
   readonly size: number;
   /** The source content of the module. */
   readonly source: string;
+  /** The source map, if it exists. */
+  readonly sourceMap: RawSourceMap | undefined;
+  /** The source map's url, if it exists. */
+  readonly sourceMapUrl: SourceMapUrl | undefined;
   /** The fully qualified string URL of the module. */
   readonly specifier: string;
   /** The types dependency for the module, where the first value in the tuple
