@@ -226,9 +226,11 @@ export class Module {
   readonly size: number;
   /** The source content of the module. */
   readonly source: string;
-  /** The source map, if it exists. */
+  /** If available, the upstream source map from the module. If present,
+   * `sourceMapUrl` will be undefined. */
   readonly sourceMap: RawSourceMap | undefined;
-  /** The source map's url, if it exists. */
+  /** If available, the upstream source map URL from the module. If present,
+   * `sourceMap` will be undefined. */
   readonly sourceMapUrl: SourceMapUrl | undefined;
   /** The fully qualified string URL of the module. */
   readonly specifier: string;

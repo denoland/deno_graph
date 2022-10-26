@@ -427,14 +427,14 @@ impl Module {
       .unwrap_or_else(|| "".to_string())
   }
 
-  #[wasm_bindgen(getter)]
+  #[wasm_bindgen(getter, js_name = sourceMap)]
   pub fn source_map(&self) -> JsValue {
     let serializer =
       serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
     self.0.maybe_source_map.serialize(&serializer).unwrap()
   }
 
-  #[wasm_bindgen(getter)]
+  #[wasm_bindgen(getter, js_name = sourceMapUrl)]
   pub fn source_map_url(&self) -> Option<String> {
     self.0.maybe_source_map_url.as_ref().map(|u| u.to_string())
   }
