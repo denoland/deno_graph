@@ -10,9 +10,7 @@ extern crate cfg_if;
 
 mod analyzer;
 mod ast;
-mod colors;
 mod graph;
-mod info;
 mod module_specifier;
 pub mod source;
 mod source_map;
@@ -1454,8 +1452,9 @@ export function a(a) {
         "https://example.com/b": "https://example.com/b.ts",
       })
     );
-    assert!(graph.to_string().contains("https://example.com/a.ts "));
-    assert!(graph.to_string().contains("https://example.com/b.ts"));
+    let graph_json = json!(graph).to_string();
+    assert!(graph_json.contains("https://example.com/a.ts"));
+    assert!(graph_json.contains("https://example.com/b.ts"));
   }
 
   #[tokio::test]
@@ -1521,8 +1520,9 @@ export function a(a) {
         "https://example.com/b": "https://example.com/b.ts",
       })
     );
-    assert!(graph.to_string().contains("https://example.com/a.ts "));
-    assert!(graph.to_string().contains("https://example.com/b.ts"));
+    let graph_json = json!(graph).to_string();
+    assert!(graph_json.contains("https://example.com/a.ts"));
+    assert!(graph_json.contains("https://example.com/b.ts"));
   }
 
   #[tokio::test]

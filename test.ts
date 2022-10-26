@@ -46,14 +46,6 @@ Deno.test({
       ],
       redirects: {},
     });
-    assertEquals(
-      graph.toString(true),
-      `type: TypeScript
-dependencies: 0 unique (total 56B)
-
-https://example.com/a (56B)
-`,
-    );
   },
 });
 
