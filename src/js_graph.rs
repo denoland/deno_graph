@@ -11,7 +11,6 @@ use crate::source::load_data_url;
 use crate::source::CacheInfo;
 use crate::source::LoadFuture;
 use crate::source::Loader;
-use crate::source::Locker;
 use crate::source::ResolveResponse;
 use crate::source::Resolver;
 use crate::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
@@ -82,64 +81,6 @@ impl Loader for JsLoader {
       };
       Box::pin(f)
     }
-  }
-}
-
-#[derive(Debug)]
-pub struct JsLocker {
-  maybe_check: Option<js_sys::Function>,
-  maybe_filename: Option<String>,
-  maybe_get_checksum: Option<js_sys::Function>,
-}
-
-impl JsLocker {
-  pub fn new(
-    maybe_check: Option<js_sys::Function>,
-    maybe_get_checksum: Option<js_sys::Function>,
-    maybe_filename: Option<String>,
-  ) -> Self {
-    Self {
-      maybe_check,
-      maybe_get_checksum,
-      maybe_filename,
-    }
-  }
-}
-
-impl Locker for JsLocker {
-  fn check_or_insert(
-    &mut self,
-    specifier: &ModuleSpecifier,
-    source: &str,
-  ) -> bool {
-    if let Some(check) = &self.maybe_check {
-      let this = JsValue::null();
-      let arg0 = JsValue::from(specifier.to_string());
-      let arg1 = JsValue::from(source);
-      if let Ok(value) = check.call2(&this, &arg0, &arg1) {
-        if let Ok(value) = value.into_serde::<bool>() {
-          return value;
-        }
-      }
-    }
-    true
-  }
-
-  fn get_checksum(&self, content: &str) -> String {
-    if let Some(get_checksum) = &self.maybe_get_checksum {
-      let this = JsValue::null();
-      let arg0 = JsValue::from(content);
-      if let Ok(value) = get_checksum.call1(&this, &arg0) {
-        if let Ok(value) = value.into_serde::<String>() {
-          return value;
-        }
-      }
-    }
-    checksum::gen(&[content.as_bytes()])
-  }
-
-  fn get_filename(&self) -> Option<String> {
-    self.maybe_filename.clone()
   }
 }
 
@@ -309,14 +250,6 @@ impl ModuleGraph {
       .0
       .try_get(&specifier)
       .map(|mm| mm.map(|m| Module(m.clone())))
-      .map_err(|err| js_sys::Error::new(&err.to_string()).into())
-  }
-
-  #[wasm_bindgen]
-  pub fn lock(&self) -> Result<(), JsValue> {
-    self
-      .0
-      .lock()
       .map_err(|err| js_sys::Error::new(&err.to_string()).into())
   }
 

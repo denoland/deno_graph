@@ -796,8 +796,6 @@ impl GraphImport {
 pub struct ModuleGraph {
   #[serde(serialize_with = "serialize_roots")]
   pub roots: Vec<(ModuleSpecifier, ModuleKind)>,
-  #[serde(skip_serializing)]
-  maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
   #[serde(serialize_with = "serialize_modules", rename = "modules")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
   #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -806,13 +804,9 @@ pub struct ModuleGraph {
 }
 
 impl ModuleGraph {
-  fn new(
-    roots: Vec<(ModuleSpecifier, ModuleKind)>,
-    maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
-  ) -> Self {
+  fn new(roots: Vec<(ModuleSpecifier, ModuleKind)>) -> Self {
     Self {
       roots,
-      maybe_locker,
       module_slots: Default::default(),
       imports: Default::default(),
       redirects: Default::default(),
@@ -855,33 +849,6 @@ impl ModuleGraph {
       Some(ModuleSlot::Module(module)) => Some(module),
       _ => None,
     }
-  }
-
-  /// Determine if the graph sources are valid by calling the passed locker. If
-  /// the integrity of all the sources passes or if there is no locker supplied
-  /// the method results in an ok, otherwise returns an error which indicates
-  /// the first specifier that failed the integrity check.
-  pub fn lock(&self) -> Result<(), ModuleGraphError> {
-    if let Some(locker) = &self.maybe_locker {
-      let mut locker = locker.borrow_mut();
-      for (_, module_slot) in self.module_slots.iter() {
-        if let Some((specifier, source)) = match module_slot {
-          ModuleSlot::Module(module) => module
-            .maybe_source
-            .as_ref()
-            .map(|source| (&module.specifier, source.as_ref())),
-          _ => None,
-        } {
-          if !locker.check_or_insert(specifier, source) {
-            return Err(ModuleGraphError::InvalidSource(
-              specifier.clone(),
-              locker.get_filename(),
-            ));
-          }
-        }
-      }
-    }
-    Ok(())
   }
 
   /// Return a vector of references to ES module objects in the graph. Only ES
@@ -1020,18 +987,6 @@ impl ModuleGraph {
       }
     }
     None
-  }
-
-  fn set_checksums(&mut self) {
-    if let Some(locker) = &self.maybe_locker {
-      let locker = locker.borrow();
-      for (_, module_slot) in self.module_slots.iter_mut() {
-        if let ModuleSlot::Module(module) = module_slot {
-          module.maybe_checksum =
-            module.maybe_source.as_ref().map(|s| locker.get_checksum(s));
-        }
-      }
-    }
   }
 
   /// Return a map representation of the specifiers in the graph, where each key
@@ -1524,13 +1479,11 @@ impl<'a> Builder<'a> {
     is_dynamic_root: bool,
     loader: &'a mut dyn Loader,
     maybe_resolver: Option<&'a dyn Resolver>,
-    maybe_locker: Option<Rc<RefCell<dyn Locker>>>,
     module_analyzer: &'a dyn ModuleAnalyzer,
     maybe_reporter: Option<&'a dyn Reporter>,
   ) -> Self {
     Self {
       in_dynamic_branch: is_dynamic_root,
-      graph: ModuleGraph::new(roots, maybe_locker),
       loader,
       maybe_resolver,
       pending: FuturesUnordered::new(),
@@ -1639,8 +1592,6 @@ impl<'a> Builder<'a> {
         module.maybe_cache_info = self.loader.get_cache_info(&module.specifier);
       }
     }
-    // Enrich with checksums from locker
-    self.graph.set_checksums();
 
     self.graph
   }

@@ -260,11 +260,6 @@ export class ModuleGraph {
    * loading the module, this method will throw with that error. */
   get(specifier: string): Module | undefined;
 
-  /** Determine if the graph sources are valid by calling the passed `check()`
-   * function. If any of the modules in the graph fail the check, then an
-   * error is thrown. */
-  lock(): void;
-
   /** Given a string URL, return the resolved string URL accounting for any
    * redirections that might have occurred when resolving the module graph. */
   resolve(specifier: string): string;
