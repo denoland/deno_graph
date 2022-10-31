@@ -702,12 +702,6 @@ pub(crate) enum ModuleSlot {
   Pending,
 }
 
-impl ModuleSlot {
-  pub fn is_module(&self) -> bool {
-    matches!(*self, Self::Module(_))
-  }
-}
-
 #[cfg(feature = "rust")]
 type ModuleResult = (
   ModuleSpecifier,
