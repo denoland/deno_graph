@@ -10,9 +10,7 @@ extern crate cfg_if;
 
 mod analyzer;
 mod ast;
-mod colors;
 mod graph;
-mod info;
 mod module_specifier;
 pub mod source;
 mod source_map;
@@ -24,9 +22,7 @@ pub use graph::ModuleKind;
 use graph::ModuleSlot;
 use source::Resolver;
 
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 cfg_if! {
   if #[cfg(feature = "rust")] {
@@ -217,9 +213,6 @@ cfg_if! {
       maybe_cache_info: Option<js_sys::Function>,
       maybe_resolve: Option<js_sys::Function>,
       maybe_resolve_types: Option<js_sys::Function>,
-      maybe_check: Option<js_sys::Function>,
-      maybe_get_checksum: Option<js_sys::Function>,
-      maybe_lockfile_name: Option<String>,
       maybe_build_kind: Option<String>,
       maybe_imports: JsValue,
     ) -> Result<js_graph::ModuleGraph, JsValue> {
@@ -311,6 +304,7 @@ cfg_if! {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use std::cell::RefCell;
   use crate::graph::Resolved;
   use pretty_assertions::assert_eq;
   use serde_json::json;
@@ -1440,8 +1434,9 @@ export function a(a) {
         "https://example.com/b": "https://example.com/b.ts",
       })
     );
-    assert!(graph.to_string().contains("https://example.com/a.ts "));
-    assert!(graph.to_string().contains("https://example.com/b.ts"));
+    let graph_json = json!(graph).to_string();
+    assert!(graph_json.contains("https://example.com/a.ts"));
+    assert!(graph_json.contains("https://example.com/b.ts"));
   }
 
   #[tokio::test]
@@ -1507,8 +1502,9 @@ export function a(a) {
         "https://example.com/b": "https://example.com/b.ts",
       })
     );
-    assert!(graph.to_string().contains("https://example.com/a.ts "));
-    assert!(graph.to_string().contains("https://example.com/b.ts"));
+    let graph_json = json!(graph).to_string();
+    assert!(graph_json.contains("https://example.com/a.ts"));
+    assert!(graph_json.contains("https://example.com/b.ts"));
   }
 
   #[tokio::test]

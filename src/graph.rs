@@ -31,14 +31,12 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
 use serde_json::Value;
-use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt;
 use std::pin::Pin;
-use std::rc::Rc;
 use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -700,12 +698,6 @@ pub(crate) enum ModuleSlot {
   Missing,
   /// An internal state set when loading a module asynchronously.
   Pending,
-}
-
-impl ModuleSlot {
-  pub fn is_module(&self) -> bool {
-    matches!(*self, Self::Module(_))
-  }
 }
 
 #[cfg(feature = "rust")]
@@ -1484,6 +1476,7 @@ impl<'a> Builder<'a> {
   ) -> Self {
     Self {
       in_dynamic_branch: is_dynamic_root,
+      graph: ModuleGraph::new(roots),
       loader,
       maybe_resolver,
       pending: FuturesUnordered::new(),
@@ -2134,7 +2127,6 @@ mod tests {
       false,
       &mut loader,
       None,
-      None,
       &module_analyzer,
       None,
     );
@@ -2173,7 +2165,6 @@ mod tests {
       vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
       false,
       &mut loader,
-      None,
       None,
       &module_analyzer,
       None,
@@ -2239,7 +2230,6 @@ mod tests {
       vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
       false,
       &mut loader,
-      None,
       None,
       &module_analyzer,
       None,

@@ -1,7 +1,5 @@
 // Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
-use crate::checksum;
-use crate::colors::strip_ansi_codes;
 use crate::graph;
 use crate::graph::ModuleKind;
 use crate::graph::Range;
@@ -295,17 +293,6 @@ impl ModuleGraph {
     let serializer =
       serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
     self.0.serialize(&serializer).unwrap()
-  }
-
-  #[wasm_bindgen(js_name = toString)]
-  pub fn to_string(&self, maybe_no_color: Option<bool>) -> String {
-    let value = self.0.to_string();
-    let no_color = maybe_no_color.unwrap_or_else(get_no_color);
-    if no_color {
-      strip_ansi_codes(value)
-    } else {
-      value
-    }
   }
 }
 
