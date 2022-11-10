@@ -1677,11 +1677,11 @@ export function a(a) {
         Resolved::Ok {
           specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
           kind: ModuleKind::Esm,
-          range: Range {
+          range: Box::new(Range {
             specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
             start: Position::zeroed(),
             end: Position::zeroed(),
-          }
+          })
         }
       ))
     );
