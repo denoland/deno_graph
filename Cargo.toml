@@ -17,7 +17,7 @@ name = "deno_graph"
 anyhow = "1.0.43"
 cfg-if = "1.0.0"
 data-url = "0.2.0"
-deno_ast = { version = "0.20.0", features = ["dep_graph", "module_specifier"] }
+deno_ast = { version = "0.21.0", features = ["dep_graph", "module_specifier"] }
 futures = "0.3.17"
 js-sys = { version = "0.3.55", optional = true }
 lazy_static = "1.4.0"
