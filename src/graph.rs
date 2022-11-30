@@ -350,13 +350,13 @@ impl fmt::Display for ResolutionError {
   }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Resolved {
   None,
   Ok {
     specifier: ModuleSpecifier,
     kind: ModuleKind,
-    range: Range,
+    range: Box<Range>,
   },
   Err(ResolutionError),
 }
@@ -429,8 +429,8 @@ impl Resolved {
     let specifier_scheme = specifier.scheme();
     if referrer_scheme == "https" && specifier_scheme == "http" {
       Resolved::Err(ResolutionError::InvalidDowngrade { specifier, range })
-    } else if (referrer_scheme == "https" || referrer_scheme == "http")
-      && !(specifier_scheme == "https" || specifier_scheme == "http")
+    } else if matches!(referrer_scheme, "https" | "http")
+      && !matches!(specifier_scheme, "https" | "http" | "npm")
       && !remapped
     {
       Resolved::Err(ResolutionError::InvalidLocalImport { specifier, range })
@@ -438,7 +438,7 @@ impl Resolved {
       Resolved::Ok {
         specifier,
         kind,
-        range,
+        range: Box::new(range),
       }
     }
   }
@@ -556,7 +556,7 @@ impl Dependency {
   }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum ModuleKind {
   /// An AMD module. Currently dependency analysis is not supported for these
@@ -692,12 +692,6 @@ pub(crate) enum ModuleSlot {
   Missing,
   /// An internal state set when loading a module asynchronously.
   Pending,
-}
-
-impl ModuleSlot {
-  pub fn is_module(&self) -> bool {
-    matches!(*self, Self::Module(_))
-  }
 }
 
 #[cfg(feature = "rust")]
@@ -1407,11 +1401,11 @@ pub(crate) fn parse_module_from_module_info(
             Resolved::Ok {
               specifier: specifier.clone(),
               kind: kind.clone(),
-              range: maybe_range.unwrap_or_else(|| Range {
+              range: Box::new(maybe_range.unwrap_or_else(|| Range {
                 specifier,
                 start: Position::zeroed(),
                 end: Position::zeroed(),
-              }),
+              })),
             },
           )),
           Ok(None) => None,
@@ -2072,7 +2066,7 @@ mod tests {
         Resolved::Ok {
           specifier: ModuleSpecifier::parse("file:///b.ts").unwrap(),
           kind: ModuleKind::Esm,
-          range: Range {
+          range: Box::new(Range {
             specifier: specifier.clone(),
             start: Position {
               line: 0,
@@ -2082,7 +2076,7 @@ mod tests {
               line: 0,
               character: 27
             },
-          },
+          }),
         }
       );
       assert_eq!(
@@ -2313,5 +2307,38 @@ mod tests {
         .unwrap_err(),
       ModuleGraphError::ParseErr(..)
     ));
+  }
+
+  #[test]
+  fn local_import_remote_module() {
+    let resolved = Resolved::from_specifier_and_kind(
+      Url::parse("file:///local/mod.ts").unwrap(),
+      ModuleKind::External,
+      Range {
+        specifier: Url::parse("https://localhost").unwrap(),
+        start: Position::zeroed(),
+        end: Position::zeroed(),
+      },
+      false,
+    );
+    assert!(matches!(
+      resolved,
+      Resolved::Err(ResolutionError::InvalidLocalImport { .. })
+    ));
+  }
+
+  #[test]
+  fn npm_import_remote_module() {
+    let resolved = Resolved::from_specifier_and_kind(
+      Url::parse("npm:package").unwrap(),
+      ModuleKind::External,
+      Range {
+        specifier: Url::parse("https://localhost").unwrap(),
+        start: Position::zeroed(),
+        end: Position::zeroed(),
+      },
+      false,
+    );
+    assert!(matches!(resolved, Resolved::Ok { .. }));
   }
 }

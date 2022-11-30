@@ -43,7 +43,7 @@ pub struct CacheInfo {
 ///
 /// The returned specifier is the final specifier. This can differ from the
 /// requested specifier (e.g. if a redirect was encountered when loading)
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum LoadResponse {
   /// A module which is built into the runtime. The module will be marked as

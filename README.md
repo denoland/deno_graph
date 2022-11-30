@@ -85,7 +85,7 @@ fn main() {
   );
   let roots = vec![ModuleSpecifier::parse("file:///test.ts").unwrap()];
   let future = async move {
-    let graph = create_graph(roots, &mut loader, None, None).await;
+    let graph = create_graph(roots, &mut loader, Default::default()).await;
     println!("{}", graph);
   };
   block_on()
