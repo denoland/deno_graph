@@ -263,15 +263,11 @@ impl StringOrResolveResponse {
       Self::Response { specifier, kind } => {
         match ModuleSpecifier::parse(specifier) {
           Ok(specifier) => match kind {
-            ModuleKind::Amd => ResolveResponse::Amd(specifier),
             ModuleKind::Asserted
             | ModuleKind::BuiltIn
             | ModuleKind::External => ResolveResponse::Specifier(specifier),
-            ModuleKind::CommonJs => ResolveResponse::CommonJs(specifier),
             ModuleKind::Esm => ResolveResponse::Esm(specifier),
             ModuleKind::Script => ResolveResponse::Script(specifier),
-            ModuleKind::SystemJs => ResolveResponse::SystemJs(specifier),
-            ModuleKind::Umd => ResolveResponse::Umd(specifier),
           },
           Err(err) => ResolveResponse::Err(err.into()),
         }

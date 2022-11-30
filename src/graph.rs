@@ -376,33 +376,9 @@ impl Resolved {
         range,
         remapped,
       ),
-      ResolveResponse::Amd(specifier) => Self::from_specifier_and_kind(
-        specifier,
-        ModuleKind::Amd,
-        range,
-        remapped,
-      ),
-      ResolveResponse::CommonJs(specifier) => Self::from_specifier_and_kind(
-        specifier,
-        ModuleKind::CommonJs,
-        range,
-        remapped,
-      ),
       ResolveResponse::Script(specifier) => Self::from_specifier_and_kind(
         specifier,
         ModuleKind::Script,
-        range,
-        remapped,
-      ),
-      ResolveResponse::SystemJs(specifier) => Self::from_specifier_and_kind(
-        specifier,
-        ModuleKind::SystemJs,
-        range,
-        remapped,
-      ),
-      ResolveResponse::Umd(specifier) => Self::from_specifier_and_kind(
-        specifier,
-        ModuleKind::Umd,
         range,
         remapped,
       ),
@@ -565,9 +541,6 @@ impl Dependency {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum ModuleKind {
-  /// An AMD module. Currently dependency analysis is not supported for these
-  /// kinds of modules.
-  Amd,
   /// An asserted module. The import location is required to determine what the
   /// asserted type is as well as a loader/runtime would want to ensure the
   /// `MediaType` matches the assertion. Dependency analysis does not occur on
@@ -576,8 +549,6 @@ pub enum ModuleKind {
   /// Represents a module which is built in to a runtime. The module does not
   /// contain source and will have no dependencies.
   BuiltIn,
-  /// A CommonJS module.
-  CommonJs,
   /// An ECMAScript Module (JavaScript Module).
   Esm,
   /// Represents a module which is not statically analyzed and is only available
@@ -589,12 +560,6 @@ pub enum ModuleKind {
   /// scripts to be imported into the module graph, but without supporting any
   /// dependency analysis.
   Script,
-  /// A SystemJS module. Currently dependency analysis is not supported for
-  /// these kinds of modules.
-  SystemJs,
-  /// A UMD (a combined CommonJS, AMD and script module). Currently dependency
-  /// analysis is not supported for these kinds of modules.
-  Umd,
 }
 
 fn is_media_type_unknown(media_type: &MediaType) -> bool {
