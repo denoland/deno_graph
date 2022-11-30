@@ -129,7 +129,6 @@ impl Range {
 
 #[derive(Debug)]
 pub enum ModuleGraphError {
-  InvalidSource(ModuleSpecifier, Option<String>),
   InvalidTypeAssertion {
     specifier: ModuleSpecifier,
     actual_media_type: MediaType,
@@ -153,9 +152,6 @@ impl Clone for ModuleGraphError {
         Self::ParseErr(specifier.clone(), err.clone())
       }
       Self::ResolutionError(err) => Self::ResolutionError(err.clone()),
-      Self::InvalidSource(specifier, maybe_filename) => {
-        Self::InvalidSource(specifier.clone(), maybe_filename.clone())
-      }
       Self::InvalidTypeAssertion {
         specifier,
         actual_media_type,
@@ -183,7 +179,6 @@ impl ModuleGraphError {
       Self::ResolutionError(err) => &err.range().specifier,
       Self::LoadingErr(s, _)
       | Self::ParseErr(s, _)
-      | Self::InvalidSource(s, _)
       | Self::UnsupportedMediaType(s, _)
       | Self::UnsupportedImportAssertionType(s, _)
       | Self::Missing(s) => s,
@@ -197,8 +192,7 @@ impl std::error::Error for ModuleGraphError {
     match self {
       Self::LoadingErr(_, err) => Some(err.as_ref().as_ref()),
       Self::ResolutionError(ref err) => Some(err),
-      Self::InvalidSource(_, _)
-      | Self::InvalidTypeAssertion { .. }
+      Self::InvalidTypeAssertion { .. }
       | Self::Missing(_)
       | Self::ParseErr(_, _)
       | Self::UnsupportedImportAssertionType(_, _)
@@ -213,8 +207,6 @@ impl fmt::Display for ModuleGraphError {
       Self::LoadingErr(_, err) => err.fmt(f),
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {}", diagnostic),
       Self::ResolutionError(err) => err.fmt(f),
-      Self::InvalidSource(specifier, Some(filename)) => write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}\n  Lock file: {}", specifier, filename),
-      Self::InvalidSource(specifier, None) => write!(f, "The source code is invalid, as it does not match the expected hash in the lock file.\n  Specifier: {}", specifier),
       Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type } => write!(f, "Expected a {} module, but identified a {} module.\n  Specifier: {}", expected_media_type, actual_media_type, specifier),
       Self::UnsupportedMediaType(specifier, MediaType::Json) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {}", specifier),
       Self::UnsupportedMediaType(specifier, media_type) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {} module. Importing these types of modules is currently not supported.\n  Specifier: {}", media_type, specifier),
