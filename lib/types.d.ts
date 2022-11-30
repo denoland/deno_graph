@@ -107,18 +107,15 @@ export interface TypesDependencyJson {
  * For asserted modules, the value of the `asserted` property is set to the
  * `type` value of the assertion.
  *
- * Dependency analysis is not performed for asserted, AMD, Script, SystemJS, or
- * UMD modules currently. Synthetic modules were injected into the graph with
- * their own dependencies provided. */
+ * Dependency analysis is not performed for asserted or Script modules
+ * currently. Synthetic modules were injected into the graph with their own
+ * dependencies provided. */
 export type ModuleKind =
-  | "amd"
   | "asserted"
   | "builtIn"
   | "esm"
   | "external"
-  | "script"
-  | "systemJs"
-  | "umd";
+  | "script";
 
 export interface DependencyJson {
   /** The string specifier that was used for the dependency. */
