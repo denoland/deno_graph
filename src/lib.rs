@@ -194,7 +194,6 @@ cfg_if! {
 
 cfg_if! {
   if #[cfg(feature = "wasm")] {
-    mod checksum;
     mod js_graph;
 
     pub use js_graph::JsLoader;
@@ -304,7 +303,6 @@ cfg_if! {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use std::cell::RefCell;
   use crate::graph::Resolved;
   use pretty_assertions::assert_eq;
   use serde_json::json;
@@ -312,6 +310,7 @@ mod tests {
   use source::CacheInfo;
   use source::MemoryLoader;
   use source::Source;
+  use std::cell::RefCell;
 
   type Sources<'a> = Vec<(&'a str, Source<&'a str>)>;
 
