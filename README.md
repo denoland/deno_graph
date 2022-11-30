@@ -18,9 +18,8 @@ leverage the logic outside of the Deno CLI from JavaScript/TypeScript.
 `create_graph()` is the main way of interfacing with the crate. It requires the
 root module specifiers/URLs for the graph and an implementation of the
 `source::Loader` trait. It also optionally takes implementation of the
-`source::Resolver` trait. It will load and parse the root
-module and recursively all of its dependencies, returning asynchronously a
-resulting `ModuleGraph`.
+`source::Resolver` trait. It will load and parse the root module and recursively
+all of its dependencies, returning asynchronously a resulting `ModuleGraph`.
 
 ### `source::Loader` trait
 
