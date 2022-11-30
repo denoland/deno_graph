@@ -91,16 +91,6 @@ export interface CreateGraphOptions {
    * allow resolution of a type only dependency for the module (e.g. `@types`
    * or a `.d.ts` file). */
   resolveTypes?(specifier: string): TypesDependency | undefined;
-  /** An optional callback that returns `true` if the sub-resource integrity of
-   * the provided specifier and content is valid, otherwise `false`. This allows
-   * for items like lock files to be applied to the module graph. */
-  check?(specifier: string, content: Uint8Array): boolean;
-  /** An optional callback that returns the sub-resource integrity checksum for
-   * a given set of content. */
-  getChecksum?(content: Uint8Array): string;
-  /** An optional string to be used when generating an error when the integrity
-   * check of the module graph fails. */
-  lockFilename?: string;
   /** An optional record of "injected" dependencies to the module graph. This
    * allows adding things like TypeScript's `"types"` values into the graph or
    * a JSX runtime. The key is the referrer specifier to use as a base when
@@ -177,9 +167,6 @@ export async function createGraph(
     cacheInfo,
     resolve,
     resolveTypes,
-    check,
-    getChecksum,
-    lockFilename,
     kind,
     imports,
   } = options;
@@ -192,9 +179,6 @@ export async function createGraph(
     cacheInfo,
     resolve,
     resolveTypes,
-    check,
-    getChecksum,
-    lockFilename,
     kind,
     imports,
     // deno-lint-ignore no-explicit-any

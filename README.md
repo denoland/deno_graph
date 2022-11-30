@@ -144,14 +144,6 @@ There are several options that can be passed the function in the optional
   detected. This is intended to enrich the module graph with external types that
   are resolved in some other fashion, like from a `package.json` or via
   detecting an `@types` typings package is available.
-- `check` - a callback function that takes a URL string and an `Uint8Array` of
-  the byte content of a module to validate if that module sub resource integrity
-  is valid. The callback should return `true` if it is, otherwise `false`. If
-  the callback is not provided, all checks will pass.
-- `getChecksum` - a callback function that takes an `Uint8Array` of the byte
-  content of a module in order to be able to return a string which represent a
-  checksum of the provided data. If the callback is not provided, the checksum
-  will be generated in line with the way the Deno CLI generates the checksum.
 
 ### Replicating the Deno CLI
 
