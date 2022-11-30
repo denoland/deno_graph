@@ -85,21 +85,6 @@ pub trait Loader {
   ) -> LoadFuture;
 }
 
-/// A trait which allows the module graph to check if a source is "valid" as
-/// well as a way to get the checksum of a source for displaying when printing
-/// a module graph.
-pub trait Locker: fmt::Debug {
-  fn check_or_insert(
-    &mut self,
-    specifier: &ModuleSpecifier,
-    source: &str,
-  ) -> bool;
-  fn get_checksum(&self, content: &str) -> String;
-  fn get_filename(&self) -> Option<String> {
-    None
-  }
-}
-
 /// The response from a `Resolver::resolve()` function which combines the type
 /// of the module with the resolved specifier, or an error.
 #[derive(Debug)]

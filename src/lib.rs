@@ -20,12 +20,9 @@ use graph::BuildKind;
 use graph::Builder;
 pub use graph::ModuleKind;
 use graph::ModuleSlot;
-use source::Locker;
 use source::Resolver;
 
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 cfg_if! {
   if #[cfg(feature = "rust")] {
@@ -71,7 +68,6 @@ cfg_if! {
       pub is_dynamic: bool,
       pub imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
       pub resolver: Option<&'graph dyn Resolver>,
-      pub locker: Option<Rc<RefCell<dyn Locker>>>,
       pub module_analyzer: Option<&'graph dyn ModuleAnalyzer>,
       pub reporter: Option<&'graph dyn Reporter>,
     }
@@ -90,7 +86,6 @@ cfg_if! {
         options.is_dynamic,
         loader,
         options.resolver,
-        options.locker,
         module_analyzer,
         options.reporter,
       );
@@ -113,7 +108,6 @@ cfg_if! {
         options.is_dynamic,
         loader,
         options.resolver,
-        options.locker,
         module_analyzer,
         options.reporter,
       );
@@ -142,7 +136,6 @@ cfg_if! {
         options.is_dynamic,
         loader,
         options.resolver,
-        options.locker,
         module_analyzer,
         options.reporter,
       );
@@ -201,11 +194,9 @@ cfg_if! {
 
 cfg_if! {
   if #[cfg(feature = "wasm")] {
-    mod checksum;
     mod js_graph;
 
     pub use js_graph::JsLoader;
-    pub use js_graph::JsLocker;
     pub use js_graph::JsResolver;
     use js_graph::StringOrTuple;
 
@@ -221,9 +212,6 @@ cfg_if! {
       maybe_cache_info: Option<js_sys::Function>,
       maybe_resolve: Option<js_sys::Function>,
       maybe_resolve_types: Option<js_sys::Function>,
-      maybe_check: Option<js_sys::Function>,
-      maybe_get_checksum: Option<js_sys::Function>,
-      maybe_lockfile_name: Option<String>,
       maybe_build_kind: Option<String>,
       maybe_imports: JsValue,
     ) -> Result<js_graph::ModuleGraph, JsValue> {
@@ -235,13 +223,6 @@ cfg_if! {
       } else {
         None
       };
-      let maybe_locker: Option<Rc<RefCell<dyn Locker>>> =
-        if maybe_check.is_some() || maybe_get_checksum.is_some() {
-          let locker = js_graph::JsLocker::new(maybe_check, maybe_get_checksum, maybe_lockfile_name);
-          Some(Rc::new(RefCell::new(locker)))
-        } else {
-          None
-        };
       let mut roots = Vec::new();
       for root in roots_vec.into_iter() {
         let root = root.to_tuple_result().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
@@ -269,7 +250,6 @@ cfg_if! {
         false,
         &mut loader,
         maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-        maybe_locker,
         &module_analyzer,
         None,
       );
@@ -330,6 +310,7 @@ mod tests {
   use source::CacheInfo;
   use source::MemoryLoader;
   use source::Source;
+  use std::cell::RefCell;
 
   type Sources<'a> = Vec<(&'a str, Source<&'a str>)>;
 

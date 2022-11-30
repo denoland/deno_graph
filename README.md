@@ -17,10 +17,9 @@ leverage the logic outside of the Deno CLI from JavaScript/TypeScript.
 
 `create_graph()` is the main way of interfacing with the crate. It requires the
 root module specifiers/URLs for the graph and an implementation of the
-`source::Loader` trait. It also optionally takes implementations of the
-`source::Resolver` and `source::Locker` traits. It will load and parse the root
-module and recursively all of its dependencies, returning asynchronously a
-resulting `ModuleGraph`.
+`source::Loader` trait. It also optionally takes implementation of the
+`source::Resolver` trait. It will load and parse the root module and recursively
+all of its dependencies, returning asynchronously a resulting `ModuleGraph`.
 
 ### `source::Loader` trait
 
@@ -54,11 +53,6 @@ main module of the package, you would respond with the absolute specifier to the
 types along with a range that indicates the file URL to the `package.json` and
 the range where it was specified. Including the range is useful to allow errors
 produced from the graph to indicate "where" the dependency came from.
-
-### `source::Locker` trait
-
-This trait allows the module graph to perform sub-resource integrity checks on a
-module graph.
 
 ### `source::MemoryLoader` struct
 
@@ -150,14 +144,6 @@ There are several options that can be passed the function in the optional
   detected. This is intended to enrich the module graph with external types that
   are resolved in some other fashion, like from a `package.json` or via
   detecting an `@types` typings package is available.
-- `check` - a callback function that takes a URL string and an `Uint8Array` of
-  the byte content of a module to validate if that module sub resource integrity
-  is valid. The callback should return `true` if it is, otherwise `false`. If
-  the callback is not provided, all checks will pass.
-- `getChecksum` - a callback function that takes an `Uint8Array` of the byte
-  content of a module in order to be able to return a string which represent a
-  checksum of the provided data. If the callback is not provided, the checksum
-  will be generated in line with the way the Deno CLI generates the checksum.
 
 ### Replicating the Deno CLI
 
