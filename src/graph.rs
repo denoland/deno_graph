@@ -348,13 +348,13 @@ impl fmt::Display for ResolutionError {
   }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Resolved {
   None,
   Ok {
     specifier: ModuleSpecifier,
     kind: ModuleKind,
-    range: Range,
+    range: Box<Range>,
   },
   Err(ResolutionError),
 }
@@ -374,33 +374,9 @@ impl Resolved {
         range,
         remapped,
       ),
-      ResolveResponse::Amd(specifier) => Self::from_specifier_and_kind(
-        specifier,
-        ModuleKind::Amd,
-        range,
-        remapped,
-      ),
-      ResolveResponse::CommonJs(specifier) => Self::from_specifier_and_kind(
-        specifier,
-        ModuleKind::CommonJs,
-        range,
-        remapped,
-      ),
       ResolveResponse::Script(specifier) => Self::from_specifier_and_kind(
         specifier,
         ModuleKind::Script,
-        range,
-        remapped,
-      ),
-      ResolveResponse::SystemJs(specifier) => Self::from_specifier_and_kind(
-        specifier,
-        ModuleKind::SystemJs,
-        range,
-        remapped,
-      ),
-      ResolveResponse::Umd(specifier) => Self::from_specifier_and_kind(
-        specifier,
-        ModuleKind::Umd,
         range,
         remapped,
       ),
@@ -442,7 +418,7 @@ impl Resolved {
       Resolved::Ok {
         specifier,
         kind,
-        range,
+        range: Box::new(range),
       }
     }
   }
@@ -560,12 +536,9 @@ impl Dependency {
   }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum ModuleKind {
-  /// An AMD module. Currently dependency analysis is not supported for these
-  /// kinds of modules.
-  Amd,
   /// An asserted module. The import location is required to determine what the
   /// asserted type is as well as a loader/runtime would want to ensure the
   /// `MediaType` matches the assertion. Dependency analysis does not occur on
@@ -574,8 +547,6 @@ pub enum ModuleKind {
   /// Represents a module which is built in to a runtime. The module does not
   /// contain source and will have no dependencies.
   BuiltIn,
-  /// A CommonJS module.
-  CommonJs,
   /// An ECMAScript Module (JavaScript Module).
   Esm,
   /// Represents a module which is not statically analyzed and is only available
@@ -587,12 +558,6 @@ pub enum ModuleKind {
   /// scripts to be imported into the module graph, but without supporting any
   /// dependency analysis.
   Script,
-  /// A SystemJS module. Currently dependency analysis is not supported for
-  /// these kinds of modules.
-  SystemJs,
-  /// A UMD (a combined CommonJS, AMD and script module). Currently dependency
-  /// analysis is not supported for these kinds of modules.
-  Umd,
 }
 
 fn is_media_type_unknown(media_type: &MediaType) -> bool {
@@ -1362,11 +1327,11 @@ pub(crate) fn parse_module_from_module_info(
             Resolved::Ok {
               specifier: specifier.clone(),
               kind: kind.clone(),
-              range: maybe_range.unwrap_or_else(|| Range {
+              range: Box::new(maybe_range.unwrap_or_else(|| Range {
                 specifier,
                 start: Position::zeroed(),
                 end: Position::zeroed(),
-              }),
+              })),
             },
           )),
           Ok(None) => None,
@@ -2024,7 +1989,7 @@ mod tests {
         Resolved::Ok {
           specifier: ModuleSpecifier::parse("file:///b.ts").unwrap(),
           kind: ModuleKind::Esm,
-          range: Range {
+          range: Box::new(Range {
             specifier: specifier.clone(),
             start: Position {
               line: 0,
@@ -2034,7 +1999,7 @@ mod tests {
               line: 0,
               character: 27
             },
-          },
+          }),
         }
       );
       assert_eq!(
