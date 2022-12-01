@@ -651,39 +651,29 @@ pub(crate) enum ModuleSlot {
   Module(Module),
   /// When trying to load or parse the module, an error occurred.
   Err(ModuleGraphError),
-  /// The module was requested but could not be loaded.
-  Missing,
   /// An internal state set when loading a module asynchronously.
   Pending,
 }
 
 #[cfg(feature = "rust")]
-type ModuleResult = (
-  ModuleSpecifier,
-  Result<(ModuleSpecifier, ModuleKind, MediaType), ModuleGraphError>,
+type ModuleResult<'a> = (
+  &'a ModuleSpecifier,
+  Result<(&'a ModuleSpecifier, ModuleKind, MediaType), &'a ModuleGraphError>,
 );
 
 /// Convert a module slot entry into a result which contains the resolved
 /// module specifier, module kind, and media type or the module graph error.
 #[cfg(feature = "rust")]
-fn to_result(
-  (specifier, module_slot): (&ModuleSpecifier, &ModuleSlot),
-) -> Option<ModuleResult> {
+fn to_result<'a>(
+  (specifier, module_slot): (&'a ModuleSpecifier, &'a ModuleSlot),
+) -> Option<ModuleResult<'a>> {
   match module_slot {
-    ModuleSlot::Err(err) => Some((specifier.clone(), Err(err.clone()))),
-    ModuleSlot::Missing => Some((
-      specifier.clone(),
-      Err(ModuleGraphError::Missing(specifier.clone())),
-    )),
+    ModuleSlot::Err(err) => Some((specifier, Err(err))),
     ModuleSlot::Module(module) => Some((
-      specifier.clone(),
-      Ok((
-        module.specifier.clone(),
-        module.kind.clone(),
-        module.media_type,
-      )),
+      specifier,
+      Ok((&module.specifier, module.kind.clone(), module.media_type)),
     )),
-    _ => None,
+    ModuleSlot::Pending => None,
   }
 }
 
@@ -775,16 +765,11 @@ impl ModuleGraph {
 
   /// Returns any errors that are in the module graph.
   #[cfg(feature = "rust")]
-  pub fn errors(&self) -> Vec<ModuleGraphError> {
-    self
-      .module_slots
-      .iter()
-      .filter_map(|(s, ms)| match ms {
-        ModuleSlot::Err(err) => Some(err.clone()),
-        ModuleSlot::Missing => Some(ModuleGraphError::Missing(s.clone())),
-        _ => None,
-      })
-      .collect()
+  pub fn errors(&self) -> impl Iterator<Item = &ModuleGraphError> {
+    self.module_slots.values().filter_map(|ms| match ms {
+      ModuleSlot::Err(err) => Some(err),
+      ModuleSlot::Module(_) | ModuleSlot::Pending => None,
+    })
   }
 
   /// Get a module from the module graph, returning `None` if the module is not
@@ -806,34 +791,11 @@ impl ModuleGraph {
   /// or if you just need to check if everything is "ok" with the graph, use the
   /// `.valid()` method.
   #[cfg(feature = "rust")]
-  pub fn modules(&self) -> Vec<&Module> {
-    self
-      .module_slots
-      .iter()
-      .filter_map(|(_, ms)| match ms {
-        ModuleSlot::Module(m) => Some(m),
-        _ => None,
-      })
-      .collect()
-  }
-
-  /// Returns a map of the fully resolved dependency graph of the module graph.
-  #[cfg(feature = "rust")]
-  pub fn resolution_map(
-    &self,
-  ) -> HashMap<ModuleSpecifier, HashMap<String, Resolved>> {
-    let mut map = HashMap::new();
-    for (referrer, module_slot) in &self.module_slots {
-      if let ModuleSlot::Module(module) = module_slot {
-        let deps = module
-          .dependencies
-          .iter()
-          .map(|(s, dep)| (s.clone(), dep.maybe_code.clone()))
-          .collect();
-        map.insert(referrer.clone(), deps);
-      }
-    }
-    map
+  pub fn modules(&self) -> impl Iterator<Item = &Module> {
+    self.module_slots.values().filter_map(|ms| match ms {
+      ModuleSlot::Module(m) => Some(m),
+      _ => None,
+    })
   }
 
   /// Resolve a specifier from the module graph following any possible redirects
@@ -938,25 +900,25 @@ impl ModuleGraph {
     None
   }
 
-  /// Return a map representation of the specifiers in the graph, where each key
-  /// is a module specifier and each value is a result that contains a tuple of
+  /// Return the entries of the specifiers in the graph, where the first value
+  /// is a module specifier and the second value is a result that contains a tuple of
   /// the module specifier, module kind, and media type, or the module graph
   /// error.
   #[cfg(feature = "rust")]
   pub fn specifiers(
     &self,
-  ) -> HashMap<
-    ModuleSpecifier,
-    Result<(ModuleSpecifier, ModuleKind, MediaType), ModuleGraphError>,
+  ) -> impl Iterator<
+    Item = (
+      &ModuleSpecifier,
+      Result<(&ModuleSpecifier, ModuleKind, MediaType), &ModuleGraphError>,
+    ),
   > {
-    let mut map: HashMap<
-      ModuleSpecifier,
-      Result<(ModuleSpecifier, ModuleKind, MediaType), ModuleGraphError>,
-    > = self.module_slots.iter().filter_map(to_result).collect();
-    for (specifier, found) in &self.redirects {
-      map.insert(specifier.clone(), map.get(found).unwrap().clone());
-    }
-    map
+    self.module_slots.iter().filter_map(to_result).chain(
+      self.redirects.iter().filter_map(|(specifier, found)| {
+        let module_slot = self.module_slots.get(found)?;
+        to_result((specifier, module_slot))
+      }),
+    )
   }
 
   /// Retrieve a module from the module graph. If the module identified as a
@@ -972,9 +934,6 @@ impl ModuleGraph {
     match self.module_slots.get(&specifier) {
       Some(ModuleSlot::Module(module)) => Ok(Some(module)),
       Some(ModuleSlot::Err(err)) => Err(err.clone()),
-      Some(ModuleSlot::Missing) => {
-        Err(ModuleGraphError::Missing(specifier.clone()))
-      }
       _ => Ok(None),
     }
   }
@@ -1488,10 +1447,10 @@ impl<'a> Builder<'a> {
           Some(specifier)
         }
         Some((specifier, _, Ok(None))) => {
-          self
-            .graph
-            .module_slots
-            .insert(specifier.clone(), ModuleSlot::Missing);
+          self.graph.module_slots.insert(
+            specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::Missing(specifier.clone())),
+          );
           Some(specifier)
         }
         Some((specifier, _, Err(err))) => {
@@ -1824,15 +1783,6 @@ impl<'a> Serialize for SerializeableModuleSlot<'a> {
         state.serialize_field("error", &err.to_string())?;
         state.end()
       }
-      ModuleSlot::Missing => {
-        let mut state = serializer.serialize_struct("ModuleSlot", 2)?;
-        state.serialize_field("specifier", self.0)?;
-        state.serialize_field(
-          "error",
-          "The module was missing and could not be loaded.",
-        )?;
-        state.end()
-      }
       ModuleSlot::Pending => {
         let mut state = serializer.serialize_struct("ModuleSlot", 2)?;
         state.serialize_field("specifier", self.0)?;
@@ -2136,7 +2086,7 @@ mod tests {
         .unwrap_err(),
       ModuleGraphError::Missing(..)
     ));
-    let specifiers = graph.specifiers();
+    let specifiers = graph.specifiers().collect::<HashMap<_, _>>();
     assert_eq!(specifiers.len(), 2);
     assert!(specifiers
       .get(&Url::parse("file:///foo.js").unwrap())
@@ -2192,7 +2142,7 @@ mod tests {
       None,
     );
     let graph = builder.build(BuildKind::All, None).await;
-    let specifiers = graph.specifiers();
+    let specifiers = graph.specifiers().collect::<HashMap<_, _>>();
     dbg!(&specifiers);
     assert_eq!(specifiers.len(), 4);
     assert!(specifiers

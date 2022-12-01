@@ -2199,7 +2199,7 @@ export function a(a) {
       },
     )
     .await;
-    assert_eq!(graph.modules().len(), 5);
+    assert_eq!(graph.modules().count(), 5);
 
     let on_loads = reporter.on_loads.into_inner();
     assert_eq!(on_loads.len(), 5);
