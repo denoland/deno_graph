@@ -9,7 +9,7 @@ use deno_ast::ModuleSpecifier;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use regex::Match;
 use regex::Regex;
 use serde::Deserialize;
@@ -17,12 +17,10 @@ use serde::Serialize;
 
 use crate::graph::Position;
 
-lazy_static! {
-  /// Matches the `@deno-types` pragma.
-  static ref DENO_TYPES_RE: Regex =
-    Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#)
-      .unwrap();
-}
+/// Matches the `@deno-types` pragma.
+static DENO_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+  Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#).unwrap()
+});
 
 /// Searches comments for any `@deno-types` compiler hints.
 pub fn analyze_deno_types(

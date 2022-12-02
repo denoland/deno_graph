@@ -20,34 +20,31 @@ use deno_ast::Diagnostic;
 use deno_ast::MediaType;
 use deno_ast::ParsedSource;
 use deno_ast::SourceTextInfo;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use regex::Match;
 use regex::Regex;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-lazy_static! {
-  /// Matches the `@deno-types` pragma.
-  static ref DENO_TYPES_RE: Regex =
-    Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#)
-      .unwrap();
-  /// Matches a JSDoc import type reference (`{import("./example.js")}`
-  static ref JSDOC_IMPORT_RE: Regex = Regex::new(r#"\{[^}]*import\(['"]([^'"]+)['"]\)[^}]*}"#).unwrap();
-  /// Matches the `@jsxImportSource` pragma.
-  static ref JSX_IMPORT_SOURCE_RE: Regex = Regex::new(r#"(?i)^[\s*]*@jsxImportSource\s+(\S+)"#).unwrap();
-  /// Matches a `/// <reference ... />` comment reference.
-  static ref TRIPLE_SLASH_REFERENCE_RE: Regex =
-    Regex::new(r"(?i)^/\s*<reference\s.*?/>").unwrap();
-  /// Matches a path reference, which adds a dependency to a module
-  static ref PATH_REFERENCE_RE: Regex =
-    Regex::new(r#"(?i)\spath\s*=\s*["']([^"']*)["']"#).unwrap();
-  /// Matches a types reference, which for JavaScript files indicates the
-  /// location of types to use when type checking a program that includes it as
-  /// a dependency.
-  static ref TYPES_REFERENCE_RE: Regex =
-    Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap();
-}
+/// Matches a JSDoc import type reference (`{import("./example.js")}`
+static JSDOC_IMPORT_RE: Lazy<Regex> = Lazy::new(|| {
+  Regex::new(r#"\{[^}]*import\(['"]([^'"]+)['"]\)[^}]*}"#).unwrap()
+});
+/// Matches the `@jsxImportSource` pragma.
+static JSX_IMPORT_SOURCE_RE: Lazy<Regex> =
+  Lazy::new(|| Regex::new(r#"(?i)^[\s*]*@jsxImportSource\s+(\S+)"#).unwrap());
+/// Matches a `/// <reference ... />` comment reference.
+static TRIPLE_SLASH_REFERENCE_RE: Lazy<Regex> =
+  Lazy::new(|| Regex::new(r"(?i)^/\s*<reference\s.*?/>").unwrap());
+/// Matches a path reference, which adds a dependency to a module
+static PATH_REFERENCE_RE: Lazy<Regex> =
+  Lazy::new(|| Regex::new(r#"(?i)\spath\s*=\s*["']([^"']*)["']"#).unwrap());
+/// Matches a types reference, which for JavaScript files indicates the
+/// location of types to use when type checking a program that includes it as
+/// a dependency.
+static TYPES_REFERENCE_RE: Lazy<Regex> =
+  Lazy::new(|| Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap());
 
 /// Parses modules to a ParsedSource.
 pub trait ModuleParser {
