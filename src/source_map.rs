@@ -2,17 +2,15 @@
 
 use crate::module_specifier::ModuleSpecifier;
 
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use serde_json::from_slice;
 use serde_json::Value;
 use sourcemap::decode_data_url;
 use sourcemap::DecodedMap;
 
-lazy_static! {
-  static ref SOURCE_MAP_URL_RE: Regex =
-    Regex::new(r#"(?i)^//# sourceMappingURL=([^\s'"]+)"#).unwrap();
-}
+static SOURCE_MAP_URL_RE: Lazy<Regex> =
+  Lazy::new(|| Regex::new(r#"(?i)^//# sourceMappingURL=([^\s'"]+)"#).unwrap());
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum ParsedSourceMap {
