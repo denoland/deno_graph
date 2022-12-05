@@ -28,8 +28,10 @@ serde_json = { version = "1.0.67", features = ["preserve_order"] }
 serde-wasm-bindgen = { version = "0.4.2", optional = true }
 sourcemap = "6.0.1"
 url = { version = "2.2.2", features = ["serde"] }
-wasm-bindgen = { version = "0.2.81", features = ["serde-serialize"], optional = true }
-wasm-bindgen-futures = { version = "0.4.31", optional = true }
+wasm-bindgen = { version = "0.2.83", features = [
+    "serde-serialize",
+], optional = true }
+wasm-bindgen-futures = { version = "0.4.33", optional = true }
 
 [dev-dependencies]
 pretty_assertions = "1.0.0"
