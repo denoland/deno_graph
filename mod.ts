@@ -216,8 +216,8 @@ export interface ParseModuleOptions {
 }
 
 /** Instantiates the Wasm module used within deno_graph. */
-export async function init() {
-  await wasm.instantiate();
+export async function init(opts?: wasm.InstantiateOptions) {
+  await wasm.instantiate(opts);
 }
 
 /** Parse a module based on the supplied information and return its analyzed
