@@ -1,10 +1,6 @@
 // Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
 import type { MediaType } from "./media_type.ts";
-import type {
-  RawSourceMap,
-  SourceMapUrl,
-} from "https://esm.sh/source-map@0.7.3/source-map.d.ts";
 
 /** Additional meta data that is used to enrich the output of the module
  * graph. */
@@ -150,15 +146,6 @@ export interface ModuleJson extends CacheInfo {
   mediaType?: MediaType;
   /** The size of the source content of the module in bytes. */
   size?: number;
-  /** If available, the calculated checksum of the module which can be used for
-   * validating the integrity of the module. */
-  checksum?: string;
-  /** If available, the upstream source map from the module. If present,
-   * `sourceMapUrl` will be undefined. */
-  sourceMap?: RawSourceMap;
-  /** If available, the upstream source map URL from the module. If present,
-   * `sourceMap` will be undefined. */
-  sourceMapUrl?: SourceMapUrl;
 }
 
 export interface GraphImportJson {
@@ -206,9 +193,6 @@ export class Module {
   /** Any cache information that was available on the module when the graph
    * was built. */
   readonly cacheInfo?: CacheInfo;
-  /** The calculated checksum of the source of the module if available when the
-   * graph was built. */
-  readonly checksum?: string;
   /** A record of the dependencies, where the key is the string specifier of
    * the dependency and the value is the dependency object. */
   readonly dependencies?: Record<string, Dependency>;

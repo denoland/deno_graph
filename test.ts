@@ -6,6 +6,7 @@ import {
   assertRejects,
   assertThrows,
 } from "https://deno.land/std@0.142.0/testing/asserts.ts";
+import { LoadResponseModule } from "./lib/types.d.ts";
 import {
   createGraph,
   init,
@@ -118,8 +119,8 @@ Deno.test({
     assertEquals(graph.modules.length, 37);
     const rootModule = graph.get(graph.roots[0]);
     assert(rootModule);
-    assertEquals(rootModule.mediaType, "TypeScript");
-    assertEquals(Object.entries(rootModule.dependencies ?? {}).length, 3);
+    assertEquals(rootModule!.mediaType, "TypeScript");
+    assertEquals(Object.entries(rootModule!.dependencies ?? {}).length, 3);
   },
 });
 
@@ -553,7 +554,6 @@ export {};
           specifier: "https://example.com/index.js",
           kind: "esm",
           mediaType: MediaType.JavaScript,
-          sourceMapUrl: "https://example.com/index.js.map",
           size: 73,
         },
       ],
@@ -567,7 +567,7 @@ Deno.test({
   async fn() {
     const response = await load(
       "https://deno.land/std@0.103.0/examples/chat/server.ts",
-    );
+    ) as LoadResponseModule;
     assert(response);
     assert(response.kind === "module");
     assertEquals(

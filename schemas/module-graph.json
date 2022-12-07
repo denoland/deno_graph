@@ -96,10 +96,6 @@
           "type": "string",
           "description": "The path to the local file. For local modules this will be the local file path, for remote modules and data URLs, this would be the path to the file in the Deno cache."
         },
-        "checksum": {
-          "type": "string",
-          "description": "The checksum of the local source file. This can be used to validate if the current on disk version matches the version described here."
-        },
         "emit": {
           "type": "string",
           "description": "The path to an emitted version of the module, if the module requires transpilation to be loaded into the Deno runtime."
@@ -107,14 +103,6 @@
         "map": {
           "type": "string",
           "description": "The path to an optionally emitted source map between the original and emitted version of the file."
-        },
-        "sourceMap": {
-          "description": "The source map that was parsed from the source of the module, which indicates an \"upstream\" source map that applies to the module.",
-          "$ref": "https://json.schemastore.org/sourcemap-v3.json"
-        },
-        "sourceMapUrl": {
-          "type": "string",
-          "description": "The source map URL parsed from the source of the module, which indicates there is an \"upstream\" source map that applies to the module."
         },
         "error": {
           "type": "string",
