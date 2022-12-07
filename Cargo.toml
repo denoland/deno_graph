@@ -1,6 +1,6 @@
 [package]
 name = "deno_graph"
-version = "0.38.0"
+version = "0.39.0"
 edition = "2021"
 description = "module graph analysis for deno"
 homepage = "https://deno.land/"
@@ -26,7 +26,6 @@ regex = "1.5.4"
 serde = { version = "1.0.130", features = ["derive", "rc"] }
 serde_json = { version = "1.0.67", features = ["preserve_order"] }
 serde-wasm-bindgen = { version = "0.4.2", optional = true }
-sourcemap = "6.0.1"
 url = { version = "2.2.2", features = ["serde"] }
 wasm-bindgen = { version = "0.2.83", features = [
     "serde-serialize",

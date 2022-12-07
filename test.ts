@@ -6,6 +6,7 @@ import {
   assertRejects,
   assertThrows,
 } from "https://deno.land/std@0.142.0/testing/asserts.ts";
+import { LoadResponseModule } from "./lib/types.d.ts";
 import {
   createGraph,
   init,
@@ -118,8 +119,8 @@ Deno.test({
     assertEquals(graph.modules.length, 37);
     const rootModule = graph.get(graph.roots[0]);
     assert(rootModule);
-    assertEquals(rootModule.mediaType, "TypeScript");
-    assertEquals(Object.entries(rootModule.dependencies ?? {}).length, 3);
+    assertEquals(rootModule!.mediaType, "TypeScript");
+    assertEquals(Object.entries(rootModule!.dependencies ?? {}).length, 3);
   },
 });
 
@@ -486,88 +487,11 @@ Deno.test({
 });
 
 Deno.test({
-  name: "createGraph() - source maps - data url",
-  async fn() {
-    const graph = await createGraph("https://example.com/index.js", {
-      load(specifier, isDynamic) {
-        assert(!isDynamic);
-        assertEquals(specifier, "https://example.com/index.js");
-        return Promise.resolve({
-          kind: "module",
-          specifier,
-          headers: {
-            "content-type": "application/javascript; charset=utf-8",
-          },
-          content: `console.log("hello deno");
-export {};
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5wdXQuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbnB1dC50c3giXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQ0EsT0FBTyxDQUFDLEdBQUcsQ0FBQyxZQUFZLENBQUMsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCB7fTtcbmNvbnNvbGUubG9nKFwiaGVsbG8gZGVub1wiKTtcbiJdfQ==`,
-        });
-      },
-    });
-    assertEquals(graph.toJSON(), {
-      roots: ["https://example.com/index.js"],
-      modules: [
-        {
-          specifier: "https://example.com/index.js",
-          kind: "esm",
-          mediaType: MediaType.JavaScript,
-          sourceMap: {
-            file: "input.js",
-            mappings: "AACA,OAAO,CAAC,GAAG,CAAC,YAAY,CAAC,CAAC",
-            names: [],
-            sources: ["input.tsx"],
-            sourcesContent: [`export {};\nconsole.log("hello deno");\n`],
-            version: 3,
-          },
-          size: 356,
-        },
-      ],
-      redirects: {},
-    });
-  },
-});
-
-Deno.test({
-  name: "createGraph() - source maps - data url",
-  async fn() {
-    const graph = await createGraph("https://example.com/index.js", {
-      load(specifier, isDynamic) {
-        assert(!isDynamic);
-        assertEquals(specifier, "https://example.com/index.js");
-        return Promise.resolve({
-          kind: "module",
-          specifier,
-          headers: {
-            "content-type": "application/javascript; charset=utf-8",
-          },
-          content: `console.log("hello deno");
-export {};
-//# sourceMappingURL=./index.js.map`,
-        });
-      },
-    });
-    assertEquals(graph.toJSON(), {
-      roots: ["https://example.com/index.js"],
-      modules: [
-        {
-          specifier: "https://example.com/index.js",
-          kind: "esm",
-          mediaType: MediaType.JavaScript,
-          sourceMapUrl: "https://example.com/index.js.map",
-          size: 73,
-        },
-      ],
-      redirects: {},
-    });
-  },
-});
-
-Deno.test({
   name: "load() - remote module",
   async fn() {
     const response = await load(
       "https://deno.land/std@0.103.0/examples/chat/server.ts",
-    );
+    ) as LoadResponseModule;
     assert(response);
     assert(response.kind === "module");
     assertEquals(
