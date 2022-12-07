@@ -305,11 +305,6 @@ impl Module {
   }
 
   #[wasm_bindgen(getter)]
-  pub fn checksum(&self) -> Option<String> {
-    self.0.maybe_checksum.as_ref().map(String::from)
-  }
-
-  #[wasm_bindgen(getter)]
   pub fn dependencies(&self) -> JsValue {
     let serializer =
       serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);

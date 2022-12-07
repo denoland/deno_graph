@@ -13,7 +13,6 @@ mod ast;
 mod graph;
 mod module_specifier;
 pub mod source;
-mod source_map;
 mod text_encoding;
 
 use graph::BuildKind;
