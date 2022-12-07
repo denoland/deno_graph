@@ -214,8 +214,8 @@ cfg_if! {
       maybe_build_kind: Option<String>,
       maybe_imports: JsValue,
     ) -> Result<js_graph::ModuleGraph, JsValue> {
-      let roots_vec: Vec<StringOrTuple> = roots.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-      let maybe_imports_map: Option<HashMap<String, Vec<String>>> = maybe_imports.into_serde().map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+      let roots_vec: Vec<StringOrTuple> = serde_wasm_bindgen::from_value(roots).map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+      let maybe_imports_map: Option<HashMap<String, Vec<String>>> = serde_wasm_bindgen::from_value(maybe_imports).map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
       let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
       let maybe_resolver = if maybe_default_jsx_import_source.is_some() || maybe_jsx_import_source_module.is_some() || maybe_resolve.is_some() || maybe_resolve_types.is_some() {
         Some(js_graph::JsResolver::new(maybe_default_jsx_import_source, maybe_jsx_import_source_module, maybe_resolve, maybe_resolve_types))
@@ -268,8 +268,7 @@ cfg_if! {
       maybe_resolve: Option<js_sys::Function>,
       maybe_resolve_types: Option<js_sys::Function>,
     ) -> Result<js_graph::Module, JsValue> {
-      let maybe_headers: Option<HashMap<String, String>> = maybe_headers
-        .into_serde()
+      let maybe_headers: Option<HashMap<String, String>> = serde_wasm_bindgen::from_value(maybe_headers)
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
       let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
         .map_err(|err| js_sys::Error::new(&err.to_string()))?;
@@ -278,7 +277,7 @@ cfg_if! {
       } else {
         None
       };
-      let maybe_kind: Option<ModuleKind> = maybe_kind.into_serde().map_err(|err| js_sys::Error::new(&err.to_string()))?;
+      let maybe_kind: Option<ModuleKind> = serde_wasm_bindgen::from_value(maybe_kind).map_err(|err| js_sys::Error::new(&err.to_string()))?;
       let module_analyzer = ast::DefaultModuleAnalyzer::default();
       match graph::parse_module(
         &specifier,

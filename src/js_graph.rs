@@ -43,7 +43,7 @@ impl Loader for JsLoader {
       let this = JsValue::null();
       let arg0 = JsValue::from(specifier.to_string());
       let value = cache_info_fn.call1(&this, &arg0).ok()?;
-      let cache_info: CacheInfo = value.into_serde().ok()?;
+      let cache_info: CacheInfo = serde_wasm_bindgen::from_value(value).ok()?;
       Some(cache_info)
     } else {
       None
@@ -74,7 +74,7 @@ impl Loader for JsLoader {
           Err(err) => Err(err),
         };
         response
-          .map(|value| value.into_serde().unwrap())
+          .map(|value| serde_wasm_bindgen::from_value(value).unwrap())
           .map_err(|_| anyhow!("load rejected or errored"))
       };
       Box::pin(f)
@@ -139,10 +139,13 @@ impl Resolver for JsResolver {
           return ResolveResponse::Err(anyhow!("JavaScript resolve threw."))
         }
       };
-      let value: StringOrResolveResponse = match value.into_serde() {
-        Ok(value) => value,
-        Err(err) => return ResolveResponse::Err(err.into()),
-      };
+      let value: StringOrResolveResponse =
+        match serde_wasm_bindgen::from_value(value) {
+          Ok(value) => value,
+          Err(err) => {
+            return ResolveResponse::Err(anyhow!("{}", err.to_string()))
+          }
+        };
       value.to_resolve_response()
     } else {
       resolve_import(specifier, referrer).into()
@@ -159,7 +162,9 @@ impl Resolver for JsResolver {
       let value = resolve_types
         .call1(&this, &arg1)
         .map_err(|_| anyhow!("JavaScript resolveTypes() function threw."))?;
-      let result: Option<JsResolveTypesResponse> = value.into_serde()?;
+      let result: Option<JsResolveTypesResponse> =
+        serde_wasm_bindgen::from_value(value)
+          .map_err(|err| anyhow!("{}", err.to_string()))?;
       Ok(result.map(|v| (v.types, v.source)))
     } else {
       Ok(None)
