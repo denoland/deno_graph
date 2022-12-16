@@ -240,10 +240,9 @@ impl CapturingModuleAnalyzer {
     store: Option<Box<dyn ParsedSourceStore>>,
   ) -> Self {
     Self {
-      parser: parser
-        .unwrap_or_else(|| Box::new(DefaultModuleParser::default())),
+      parser: parser.unwrap_or_else(|| Box::<DefaultModuleParser>::default()),
       store: store
-        .unwrap_or_else(|| Box::new(DefaultParsedSourceStore::default())),
+        .unwrap_or_else(|| Box::<DefaultParsedSourceStore>::default()),
     }
   }
 
