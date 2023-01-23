@@ -1,7 +1,6 @@
 // Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
 use crate::graph;
-use crate::graph::ModuleKind;
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -9,11 +8,11 @@ use crate::source::load_data_url;
 use crate::source::CacheInfo;
 use crate::source::LoadFuture;
 use crate::source::Loader;
-use crate::source::ResolveResponse;
 use crate::source::Resolver;
 use crate::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
 
 use anyhow::anyhow;
+use anyhow::Error;
 use anyhow::Result;
 use futures::future;
 use serde::Deserialize;
@@ -128,27 +127,22 @@ impl Resolver for JsResolver {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
-  ) -> ResolveResponse {
+  ) -> Result<ModuleSpecifier, Error> {
     if let Some(resolve) = &self.maybe_resolve {
       let this = JsValue::null();
       let arg1 = JsValue::from(specifier);
       let arg2 = JsValue::from(referrer.to_string());
       let value = match resolve.call2(&this, &arg1, &arg2) {
         Ok(value) => value,
-        Err(_) => {
-          return ResolveResponse::Err(anyhow!("JavaScript resolve threw."))
-        }
+        Err(_) => return Err(anyhow!("JavaScript resolve threw.")),
       };
-      let value: StringOrResolveResponse =
-        match serde_wasm_bindgen::from_value(value) {
-          Ok(value) => value,
-          Err(err) => {
-            return ResolveResponse::Err(anyhow!("{}", err.to_string()))
-          }
-        };
-      value.to_resolve_response()
+      let value: String = match serde_wasm_bindgen::from_value(value) {
+        Ok(value) => value,
+        Err(err) => return Err(anyhow!("{}", err.to_string())),
+      };
+      Ok(ModuleSpecifier::parse(&value)?)
     } else {
-      resolve_import(specifier, referrer).into()
+      resolve_import(specifier, referrer).map_err(|err| err.into())
     }
   }
 
@@ -172,55 +166,6 @@ impl Resolver for JsResolver {
   }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-pub(crate) enum StringOrTuple {
-  Str(String),
-  Tuple(String, ModuleKind),
-}
-
-impl StringOrTuple {
-  pub fn to_tuple_result(&self) -> Result<(ModuleSpecifier, ModuleKind)> {
-    match self {
-      Self::Str(specifier) => {
-        let specifier = ModuleSpecifier::parse(specifier)?;
-        Ok((specifier, ModuleKind::Esm))
-      }
-      Self::Tuple(specifier, kind) => {
-        let specifier = ModuleSpecifier::parse(specifier)?;
-        Ok((specifier, kind.clone()))
-      }
-    }
-  }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum StringOrResolveResponse {
-  Str(String),
-  Response { specifier: String, kind: ModuleKind },
-}
-
-impl StringOrResolveResponse {
-  fn to_resolve_response(&self) -> ResolveResponse {
-    match self {
-      Self::Str(specifier) => ModuleSpecifier::parse(specifier).into(),
-      Self::Response { specifier, kind } => {
-        match ModuleSpecifier::parse(specifier) {
-          Ok(specifier) => match kind {
-            ModuleKind::Asserted
-            | ModuleKind::BuiltIn
-            | ModuleKind::External => ResolveResponse::Specifier(specifier),
-            ModuleKind::Esm => ResolveResponse::Esm(specifier),
-            ModuleKind::Script => ResolveResponse::Script(specifier),
-          },
-          Err(err) => ResolveResponse::Err(err.into()),
-        }
-      }
-    }
-  }
-}
-
 #[wasm_bindgen(module = "/src/deno_apis.js")]
 extern "C" {
   fn get_no_color() -> bool;
@@ -237,7 +182,7 @@ impl ModuleGraph {
       .0
       .roots
       .iter()
-      .map(|(s, _)| JsValue::from(s.to_string()))
+      .map(|s| JsValue::from(s.to_string()))
       .collect()
   }
 

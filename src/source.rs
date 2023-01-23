@@ -2,7 +2,6 @@
 
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
-use crate::module_specifier::SpecifierError;
 use crate::text_encoding::strip_bom_mut;
 
 use anyhow::anyhow;
@@ -85,57 +84,6 @@ pub trait Loader {
   ) -> LoadFuture;
 }
 
-/// The response from a `Resolver::resolve()` function which combines the type
-/// of the module with the resolved specifier, or an error.
-#[derive(Debug)]
-pub enum ResolveResponse {
-  /// The specifier cannot be resolved or some other errors occurred.
-  Err(Error),
-  /// A resolved specifier where the module is an ES module.
-  Esm(ModuleSpecifier),
-  /// A resolved specifier where the module is a plain JavaScript module.
-  Script(ModuleSpecifier),
-  /// Where the resolver does not have specific information to what type of
-  /// module is being resolved. Currently the module graph assumes these modules
-  /// are ESM modules, but this may change in the future.
-  Specifier(ModuleSpecifier),
-}
-
-impl ResolveResponse {
-  pub fn to_result(self) -> Result<ModuleSpecifier, Error> {
-    match self {
-      Self::Esm(specifier)
-      | Self::Script(specifier)
-      | Self::Specifier(specifier) => Ok(specifier),
-      Self::Err(err) => Err(err),
-    }
-  }
-}
-
-impl From<ModuleSpecifier> for ResolveResponse {
-  fn from(specifier: ModuleSpecifier) -> Self {
-    Self::Specifier(specifier)
-  }
-}
-
-impl From<Result<ModuleSpecifier, SpecifierError>> for ResolveResponse {
-  fn from(result: Result<ModuleSpecifier, SpecifierError>) -> Self {
-    match result {
-      Ok(specifier) => Self::Specifier(specifier),
-      Err(err) => Self::Err(err.into()),
-    }
-  }
-}
-
-impl From<Result<ModuleSpecifier, url::ParseError>> for ResolveResponse {
-  fn from(result: Result<ModuleSpecifier, url::ParseError>) -> Self {
-    match result {
-      Ok(specifier) => Self::Specifier(specifier),
-      Err(err) => Self::Err(err.into()),
-    }
-  }
-}
-
 /// A trait which allows the module graph to resolve specifiers and type only
 /// dependencies. This can be use to provide import maps and override other
 /// default resolution logic used by `deno_graph`.
@@ -160,8 +108,8 @@ pub trait Resolver: fmt::Debug {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
-  ) -> ResolveResponse {
-    resolve_import(specifier, referrer).into()
+  ) -> Result<ModuleSpecifier, Error> {
+    Ok(resolve_import(specifier, referrer)?)
   }
 
   /// Given a module specifier, return an optional tuple which provides a module
@@ -357,13 +305,13 @@ pub mod tests {
       &self,
       specifier: &str,
       referrer: &ModuleSpecifier,
-    ) -> ResolveResponse {
+    ) -> Result<ModuleSpecifier, Error> {
       if let Some(map) = self.map.get(referrer) {
         if let Some(resolved_specifier) = map.get(specifier) {
-          return ResolveResponse::Esm(resolved_specifier.clone());
+          return Ok(resolved_specifier.clone());
         }
       }
-      resolve_import(specifier, referrer).into()
+      Ok(resolve_import(specifier, referrer)?)
     }
 
     fn resolve_types(

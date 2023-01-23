@@ -26,7 +26,6 @@ import type {
   Module,
   ModuleGraph,
   ModuleKind,
-  ResolveResult,
   TypesDependency,
 } from "./lib/types.d.ts";
 
@@ -40,7 +39,6 @@ export type {
   ModuleGraph,
   ModuleGraphJson,
   ModuleKind,
-  ResolveResult,
   TypesDependency,
 } from "./lib/types.d.ts";
 
@@ -82,9 +80,8 @@ export interface CreateGraphOptions {
    * import map to be used with the module graph. The callback takes the string
    * of the module specifier from the referrer and the string URL of the
    * referrer. The callback then returns a fully qualified resolved URL string
-   * specifier or an object which contains the URL string and the module kind.
-   * If just the string is returned, the module kind is inferred to be ESM. */
-  resolve?(specifier: string, referrer: string): string | ResolveResult;
+   * specifier. */
+  resolve?(specifier: string, referrer: string): string;
   /** An optional callback that can allow custom logic of how type dependencies
    * of a module to be provided. This will be called if a module is being added
    * to the graph that is is non-typed source code (e.g. JavaScript/JSX) and
@@ -116,45 +113,12 @@ export interface CreateGraphOptions {
  * console.log(graph.toString());
  * ```
  *
- * @param rootSpecifier A URL string of the root module specifier to build the
- *                      graph from.
+ * @param rootSpecifiers A URL string of the root module specifier to build the
+ * graph from or array of URL strings.
  * @param options A set of options for building the graph
  */
-export function createGraph(
-  rootSpecifier: string,
-  options?: CreateGraphOptions,
-): Promise<ModuleGraph>;
-/** Create a module graph using the same algorithms that are used in the Deno
- * CLI, resolving with the module graph for further processing.
- *
- * A default `load()` function is provided which will attempt to load local
- * modules via `Deno.readFile()` and will use `fetch()` to load remote
- * modules. An alternative `load()` function can be provided via the options.
- *
- * ### Example
- *
- * ```ts
- * import { createGraph } from "https://deno.land/x/deno_graph/mod.ts";
- *
- * const graph = await createGraph([
- *   ["https://example.com/a.ts", "esm"],
- *   ["https://example.com/a.ts", "esm"],
- * ]);
- *
- * console.log(graph.toJSON());
- * ```
- *
- * @param rootSpecifiers  An array of URL strings or tuples of URL strings and
- *                        module kinds of the root module specifiers to build
- *                        the graph from.
- * @param options A set of options for building the graph
- */
-export function createGraph(
-  rootSpecifiers: string[] | [string, ModuleKind][],
-  options?: CreateGraphOptions,
-): Promise<ModuleGraph>;
 export async function createGraph(
-  rootSpecifiers: string | string[] | [string, ModuleKind][],
+  rootSpecifiers: string | string[],
   options: CreateGraphOptions = {},
 ): Promise<ModuleGraph> {
   rootSpecifiers = Array.isArray(rootSpecifiers)
@@ -204,9 +168,8 @@ export interface ParseModuleOptions {
    * import map to be used with the module graph. The callback takes the string
    * of the module specifier from the referrer and the string URL of the
    * referrer. The callback then returns a fully qualified resolved URL string
-   * specifier or an object which contains the URL string and the module kind.
-   * If just the string is returned, the module kind is inferred to be ESM. */
-  resolve?(specifier: string, referrer: string): string | ResolveResult;
+   * specifier. */
+  resolve?(specifier: string, referrer: string): string;
   /** An optional callback that can allow custom logic of how type dependencies
    * of a module to be provided. This will be called if a module is being added
    * to the graph that is is non-typed source code (e.g. JavaScript/JSX) and

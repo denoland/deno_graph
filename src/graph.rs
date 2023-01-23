@@ -13,6 +13,7 @@ use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
 use crate::source::*;
 
+use anyhow::Error;
 use anyhow::Result;
 use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
@@ -342,34 +343,21 @@ pub enum Resolved {
   None,
   Ok {
     specifier: ModuleSpecifier,
-    kind: ModuleKind,
     range: Box<Range>,
   },
   Err(ResolutionError),
 }
 
 impl Resolved {
-  pub fn from_resolve_response(
-    response: ResolveResponse,
+  pub fn from_resolve_result(
+    result: Result<ModuleSpecifier, Error>,
     range: Range,
     specifier: &str,
     remapped: bool,
   ) -> Self {
-    match response {
-      ResolveResponse::Specifier(specifier)
-      | ResolveResponse::Esm(specifier) => Self::from_specifier_and_kind(
-        specifier,
-        ModuleKind::Esm,
-        range,
-        remapped,
-      ),
-      ResolveResponse::Script(specifier) => Self::from_specifier_and_kind(
-        specifier,
-        ModuleKind::Script,
-        range,
-        remapped,
-      ),
-      ResolveResponse::Err(err) => {
+    match result {
+      Ok(specifier) => Self::from_specifier(specifier, range, remapped),
+      Err(err) => {
         let resolution_error =
           if let Some(specifier_error) = err.downcast_ref::<SpecifierError>() {
             ResolutionError::InvalidSpecifier {
@@ -388,9 +376,8 @@ impl Resolved {
     }
   }
 
-  fn from_specifier_and_kind(
+  fn from_specifier(
     specifier: ModuleSpecifier,
-    kind: ModuleKind,
     range: Range,
     remapped: bool,
   ) -> Self {
@@ -399,14 +386,13 @@ impl Resolved {
     if referrer_scheme == "https" && specifier_scheme == "http" {
       Resolved::Err(ResolutionError::InvalidDowngrade { specifier, range })
     } else if matches!(referrer_scheme, "https" | "http")
-      && !matches!(specifier_scheme, "https" | "http" | "npm")
+      && !matches!(specifier_scheme, "https" | "http" | "npm" | "node")
       && !remapped
     {
       Resolved::Err(ResolutionError::InvalidLocalImport { specifier, range })
     } else {
       Resolved::Ok {
         specifier,
-        kind,
         range: Box::new(range),
       }
     }
@@ -525,7 +511,7 @@ impl Dependency {
   }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum ModuleKind {
   /// An asserted module. The import location is required to determine what the
@@ -650,7 +636,7 @@ fn to_result<'a>(
     ModuleSlot::Err(err) => Some((specifier, Err(err))),
     ModuleSlot::Module(module) => Some((
       specifier,
-      Ok((&module.specifier, module.kind.clone(), module.media_type)),
+      Ok((&module.specifier, module.kind, module.media_type)),
     )),
     ModuleSlot::Pending => None,
   }
@@ -712,8 +698,7 @@ impl GraphImport {
 /// to another module specifier when being loaded.
 #[derive(Debug, Serialize)]
 pub struct ModuleGraph {
-  #[serde(serialize_with = "serialize_roots")]
-  pub roots: Vec<(ModuleSpecifier, ModuleKind)>,
+  pub roots: Vec<ModuleSpecifier>,
   #[serde(serialize_with = "serialize_modules", rename = "modules")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
   #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -722,7 +707,7 @@ pub struct ModuleGraph {
 }
 
 impl ModuleGraph {
-  fn new(roots: Vec<(ModuleSpecifier, ModuleKind)>) -> Self {
+  fn new(roots: Vec<ModuleSpecifier>) -> Self {
     Self {
       roots,
       module_slots: Default::default(),
@@ -994,7 +979,7 @@ impl ModuleGraph {
     }
 
     let mut seen = HashSet::new();
-    for (root, _) in &self.roots {
+    for root in &self.roots {
       validate(root, types_only, false, &mut seen, &|s| {
         self.try_get(s).map(|o| o.cloned())
       })?;
@@ -1012,15 +997,16 @@ fn resolve(
 ) -> Resolved {
   if let Some(resolver) = maybe_resolver {
     let response = resolver.resolve(specifier, &referrer_range.specifier);
-    Resolved::from_resolve_response(
+    Resolved::from_resolve_result(
       response,
       referrer_range.clone(),
       specifier,
       true,
     )
   } else {
-    let response = resolve_import(specifier, &referrer_range.specifier).into();
-    Resolved::from_resolve_response(
+    let response = resolve_import(specifier, &referrer_range.specifier)
+      .map_err(|err| err.into());
+    Resolved::from_resolve_result(
       response,
       referrer_range.clone(),
       specifier,
@@ -1036,7 +1022,7 @@ pub(crate) fn parse_module(
   maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<str>,
   maybe_assert_type: Option<&str>,
-  maybe_kind: Option<&ModuleKind>,
+  maybe_kind: Option<ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
   module_analyzer: &dyn ModuleAnalyzer,
   is_root: bool,
@@ -1098,7 +1084,7 @@ pub(crate) fn parse_module(
           // Return the module as a valid module
           ModuleSlot::Module(parse_module_from_module_info(
             specifier,
-            maybe_kind.unwrap_or(&ModuleKind::Esm),
+            maybe_kind.unwrap_or(ModuleKind::Esm),
             media_type,
             maybe_headers,
             module_info,
@@ -1122,7 +1108,7 @@ pub(crate) fn parse_module(
           // Return the module as a valid module
           ModuleSlot::Module(parse_module_from_module_info(
             specifier,
-            maybe_kind.unwrap_or(&ModuleKind::Esm),
+            maybe_kind.unwrap_or(ModuleKind::Esm),
             media_type,
             maybe_headers,
             module_info,
@@ -1145,7 +1131,7 @@ pub(crate) fn parse_module(
 
 pub(crate) fn parse_module_from_module_info(
   specifier: &ModuleSpecifier,
-  kind: &ModuleKind,
+  kind: ModuleKind,
   media_type: MediaType,
   maybe_headers: Option<&HashMap<String, String>>,
   module_info: ModuleInfo,
@@ -1153,7 +1139,7 @@ pub(crate) fn parse_module_from_module_info(
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Module {
   // Init the module and determine its media type
-  let mut module = Module::new(specifier.clone(), kind.clone(), source);
+  let mut module = Module::new(specifier.clone(), kind, source);
   module.media_type = media_type;
 
   // Analyze the TypeScript triple-slash references
@@ -1253,7 +1239,6 @@ pub(crate) fn parse_module_from_module_info(
             module.specifier.to_string(),
             Resolved::Ok {
               specifier: specifier.clone(),
-              kind: kind.clone(),
               range: Box::new(maybe_range.unwrap_or_else(|| Range {
                 specifier,
                 start: Position::zeroed(),
@@ -1341,9 +1326,8 @@ pub(crate) enum BuildKind {
   TypesOnly,
 }
 
-pub type LoadWithSpecifierFuture = Pin<
-  Box<dyn Future<Output = (ModuleSpecifier, ModuleKind, LoadResult)> + 'static>,
->;
+pub type LoadWithSpecifierFuture =
+  Pin<Box<dyn Future<Output = (ModuleSpecifier, LoadResult)> + 'static>>;
 
 pub(crate) struct Builder<'a> {
   in_dynamic_branch: bool,
@@ -1352,14 +1336,14 @@ pub(crate) struct Builder<'a> {
   maybe_resolver: Option<&'a dyn Resolver>,
   pending: FuturesUnordered<LoadWithSpecifierFuture>,
   pending_assert_types: HashMap<ModuleSpecifier, HashSet<Option<String>>>,
-  dynamic_branches: HashMap<ModuleSpecifier, (ModuleKind, Option<String>)>,
+  dynamic_branches: HashMap<ModuleSpecifier, Option<String>>,
   module_analyzer: &'a dyn ModuleAnalyzer,
   maybe_reporter: Option<&'a dyn Reporter>,
 }
 
 impl<'a> Builder<'a> {
   pub fn new(
-    roots: Vec<(ModuleSpecifier, ModuleKind)>,
+    roots: Vec<ModuleSpecifier>,
     is_dynamic_root: bool,
     loader: &'a mut dyn Loader,
     maybe_resolver: Option<&'a dyn Resolver>,
@@ -1385,8 +1369,8 @@ impl<'a> Builder<'a> {
     maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
   ) -> ModuleGraph {
     let roots = self.graph.roots.clone();
-    for (root, kind) in roots {
-      self.load(&root, &kind, self.in_dynamic_branch, None);
+    for root in roots {
+      self.load(&root, self.in_dynamic_branch, None);
     }
 
     // Process any imports that are being added to the graph.
@@ -1395,11 +1379,8 @@ impl<'a> Builder<'a> {
         let graph_import =
           GraphImport::new(referrer, imports, self.maybe_resolver);
         for dep in graph_import.dependencies.values() {
-          if let Resolved::Ok {
-            specifier, kind, ..
-          } = &dep.maybe_type
-          {
-            self.load(specifier, kind, self.in_dynamic_branch, None);
+          if let Resolved::Ok { specifier, .. } = &dep.maybe_type {
+            self.load(specifier, self.in_dynamic_branch, None);
           }
         }
         self.graph.imports.push(graph_import);
@@ -1408,28 +1389,22 @@ impl<'a> Builder<'a> {
 
     loop {
       let specifier = match self.pending.next().await {
-        Some((specifier, kind, Ok(Some(response)))) => {
+        Some((specifier, Ok(Some(response)))) => {
           let assert_types =
             self.pending_assert_types.remove(&specifier).unwrap();
           for maybe_assert_type in assert_types {
-            self.visit(
-              &specifier,
-              &kind,
-              &response,
-              &build_kind,
-              maybe_assert_type,
-            )
+            self.visit(&specifier, &response, &build_kind, maybe_assert_type)
           }
           Some(specifier)
         }
-        Some((specifier, _, Ok(None))) => {
+        Some((specifier, Ok(None))) => {
           self.graph.module_slots.insert(
             specifier.clone(),
             ModuleSlot::Err(ModuleGraphError::Missing(specifier.clone())),
           );
           Some(specifier)
         }
-        Some((specifier, _, Err(err))) => {
+        Some((specifier, Err(err))) => {
           self.graph.module_slots.insert(
             specifier.clone(),
             ModuleSlot::Err(ModuleGraphError::LoadingErr(
@@ -1458,11 +1433,11 @@ impl<'a> Builder<'a> {
         //   visiting a dynamic branch.
         if !self.in_dynamic_branch {
           self.in_dynamic_branch = true;
-          for (specifier, (kind, maybe_assert_type)) in
+          for (specifier, maybe_assert_type) in
             std::mem::take(&mut self.dynamic_branches)
           {
             if !self.graph.module_slots.contains_key(&specifier) {
-              self.load(&specifier, &kind, true, maybe_assert_type.as_deref());
+              self.load(&specifier, true, maybe_assert_type.as_deref());
             }
           }
         } else {
@@ -1507,7 +1482,6 @@ impl<'a> Builder<'a> {
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
-    kind: &ModuleKind,
     is_dynamic: bool,
     maybe_assert_type: Option<&str>,
   ) {
@@ -1523,17 +1497,16 @@ impl<'a> Builder<'a> {
         .module_slots
         .insert(specifier.clone(), ModuleSlot::Pending);
       let specifier = specifier.clone();
-      let kind = kind.clone();
       let fut = self
         .loader
         .load(&specifier, is_dynamic)
-        .map(move |res| (specifier, kind, res));
+        .map(move |res| (specifier, res));
       self.pending.push(Box::pin(fut));
     }
   }
 
   fn roots_contain(&self, specifier: &ModuleSpecifier) -> bool {
-    for (root, _) in &self.graph.roots {
+    for root in &self.graph.roots {
       if root == specifier {
         return true;
       }
@@ -1544,7 +1517,6 @@ impl<'a> Builder<'a> {
   fn visit(
     &mut self,
     requested_specifier: &ModuleSpecifier,
-    kind: &ModuleKind,
     response: &LoadResponse,
     build_kind: &BuildKind,
     maybe_assert_type: Option<String>,
@@ -1576,7 +1548,7 @@ impl<'a> Builder<'a> {
           specifier,
           self.visit_module(
             specifier,
-            kind,
+            ModuleKind::Esm,
             maybe_headers.as_ref(),
             content.clone(),
             build_kind,
@@ -1595,7 +1567,7 @@ impl<'a> Builder<'a> {
   fn visit_module(
     &mut self,
     specifier: &ModuleSpecifier,
-    kind: &ModuleKind,
+    kind: ModuleKind,
     maybe_headers: Option<&HashMap<String, String>>,
     content: Arc<str>,
     build_kind: &BuildKind,
@@ -1624,19 +1596,14 @@ impl<'a> Builder<'a> {
           if matches!(build_kind, BuildKind::All | BuildKind::CodeOnly)
             || dep.maybe_type.is_none()
           {
-            if let Resolved::Ok {
-              specifier, kind, ..
-            } = &dep.maybe_code
-            {
+            if let Resolved::Ok { specifier, .. } = &dep.maybe_code {
               if dep.is_dynamic && !self.in_dynamic_branch {
-                self.dynamic_branches.insert(
-                  specifier.clone(),
-                  (kind.clone(), dep.maybe_assert_type.clone()),
-                );
+                self
+                  .dynamic_branches
+                  .insert(specifier.clone(), dep.maybe_assert_type.clone());
               } else {
                 self.load(
                   specifier,
-                  kind,
                   self.in_dynamic_branch,
                   dep.maybe_assert_type.as_deref(),
                 );
@@ -1647,19 +1614,14 @@ impl<'a> Builder<'a> {
           }
 
           if matches!(build_kind, BuildKind::All | BuildKind::TypesOnly) {
-            if let Resolved::Ok {
-              specifier, kind, ..
-            } = &dep.maybe_type
-            {
+            if let Resolved::Ok { specifier, .. } = &dep.maybe_type {
               if dep.is_dynamic && !self.in_dynamic_branch {
-                self.dynamic_branches.insert(
-                  specifier.clone(),
-                  (kind.clone(), dep.maybe_assert_type.clone()),
-                );
+                self
+                  .dynamic_branches
+                  .insert(specifier.clone(), dep.maybe_assert_type.clone());
               } else {
                 self.load(
                   specifier,
-                  kind,
                   self.in_dynamic_branch,
                   dep.maybe_assert_type.as_deref(),
                 );
@@ -1674,14 +1636,10 @@ impl<'a> Builder<'a> {
       }
 
       if matches!(build_kind, BuildKind::All | BuildKind::TypesOnly) {
-        if let Some((
-          _,
-          Resolved::Ok {
-            specifier, kind, ..
-          },
-        )) = &module.maybe_types_dependency
+        if let Some((_, Resolved::Ok { specifier, .. })) =
+          &module.maybe_types_dependency
         {
-          self.load(specifier, kind, false, None);
+          self.load(specifier, false, None);
         }
       } else {
         module.maybe_types_dependency = None;
@@ -1787,20 +1745,6 @@ where
   seq.end()
 }
 
-fn serialize_roots<S>(
-  roots: &[(ModuleSpecifier, ModuleKind)],
-  serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-  S: Serializer,
-{
-  let mut seq = serializer.serialize_seq(Some(roots.len()))?;
-  for (specifier, _) in roots {
-    seq.serialize_element(specifier)?;
-  }
-  seq.end()
-}
-
 pub(crate) fn serialize_type_dependency<S>(
   maybe_types_dependency: &Option<(String, Resolved)>,
   serializer: S,
@@ -1886,7 +1830,7 @@ mod tests {
       None,
       content.into(),
       None,
-      Some(&ModuleKind::Esm),
+      Some(ModuleKind::Esm),
       None,
       &module_analyzer,
       true,
@@ -1906,7 +1850,6 @@ mod tests {
         dependency.maybe_code,
         Resolved::Ok {
           specifier: ModuleSpecifier::parse("file:///b.ts").unwrap(),
-          kind: ModuleKind::Esm,
           range: Box::new(Range {
             specifier: specifier.clone(),
             start: Position {
@@ -2006,7 +1949,7 @@ mod tests {
     };
     let module_analyzer = DefaultModuleAnalyzer::default();
     let builder = Builder::new(
-      vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
+      vec![Url::parse("file:///foo.js").unwrap()],
       false,
       &mut loader,
       None,
@@ -2045,7 +1988,7 @@ mod tests {
     let mut loader = TestLoader;
     let module_analyzer = DefaultModuleAnalyzer::default();
     let builder = Builder::new(
-      vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
+      vec![Url::parse("file:///foo.js").unwrap()],
       false,
       &mut loader,
       None,
@@ -2110,7 +2053,7 @@ mod tests {
     let mut loader = TestLoader;
     let module_analyzer = DefaultModuleAnalyzer::default();
     let builder = Builder::new(
-      vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
+      vec![Url::parse("file:///foo.js").unwrap()],
       false,
       &mut loader,
       None,
@@ -2149,9 +2092,8 @@ mod tests {
 
   #[test]
   fn local_import_remote_module() {
-    let resolved = Resolved::from_specifier_and_kind(
+    let resolved = Resolved::from_specifier(
       Url::parse("file:///local/mod.ts").unwrap(),
-      ModuleKind::External,
       Range {
         specifier: Url::parse("https://localhost").unwrap(),
         start: Position::zeroed(),
@@ -2167,9 +2109,8 @@ mod tests {
 
   #[test]
   fn npm_import_remote_module() {
-    let resolved = Resolved::from_specifier_and_kind(
+    let resolved = Resolved::from_specifier(
       Url::parse("npm:package").unwrap(),
-      ModuleKind::External,
       Range {
         specifier: Url::parse("https://localhost").unwrap(),
         start: Position::zeroed(),
