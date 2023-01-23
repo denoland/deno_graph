@@ -216,10 +216,7 @@ Deno.test({
     const graph = await createGraph("file:///a/test.ts", {
       resolve(specifier, referrer) {
         resolveCount++;
-        return {
-          specifier: new URL(specifier, referrer).toString(),
-          kind: "esm",
-        };
+        return new URL(specifier, referrer).toString();
       },
       load(specifier) {
         return Promise.resolve(fixtures[specifier]);
@@ -319,10 +316,7 @@ Deno.test({
     const graph = await createGraph("file:///a/test.js", {
       resolve(specifier, referrer) {
         resolveCount++;
-        return {
-          specifier: new URL(specifier, referrer).toString(),
-          kind: "esm",
-        };
+        return new URL(specifier, referrer).toString();
       },
       load(specifier) {
         return Promise.resolve(fixtures[specifier]);

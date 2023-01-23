@@ -24,13 +24,6 @@ export interface TypesDependency {
   source?: Range;
 }
 
-export interface ResolveResult {
-  /** The string URL of the fully qualified specifier for a module. */
-  specifier: string;
-  /** The module kind of the resolved module. */
-  kind: ModuleKind;
-}
-
 export interface LoadResponseModule {
   /** A module with code has been loaded. */
   kind: "module";
