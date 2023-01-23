@@ -45,9 +45,6 @@ pub struct CacheInfo {
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum LoadResponse {
-  /// A module which is built into the runtime. The module will be marked as
-  /// `ModuleKind::BuiltIn` and no dependency analysis will be performed.
-  BuiltIn { specifier: ModuleSpecifier },
   /// A module where the content is not available when building the graph, but
   /// will be available at runtime. The module will be marked as
   /// `ModuleKind::External` and no dependency analysis will be performed.
@@ -162,7 +159,6 @@ pub enum Source<S> {
     content: S,
   },
   External(S),
-  BuiltIn(S),
   Err(Error),
 }
 
@@ -195,9 +191,6 @@ impl MemoryLoader {
                   .collect()
               }),
               content: content.as_ref().into(),
-            }),
-            Source::BuiltIn(specifier) => Ok(LoadResponse::BuiltIn {
-              specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
             }),
             Source::External(specifier) => Ok(LoadResponse::External {
               specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),

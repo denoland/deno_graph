@@ -398,7 +398,7 @@ Deno.test({
 });
 
 Deno.test({
-  name: "createGraph() - load - external and builtin",
+  name: "createGraph() - load - external",
   async fn() {
     const fixtures: Record<string, LoadResponse> = {
       "file:///a/test.js": {
@@ -408,7 +408,7 @@ Deno.test({
           import * as bundle from "https://example.com/bundle";`,
       },
       "builtin:fs": {
-        kind: "builtIn",
+        kind: "external",
         specifier: "builtin:fs",
       },
       "https://example.com/bundle": {
@@ -427,7 +427,7 @@ Deno.test({
       ],
       "modules": [
         {
-          "kind": "builtIn",
+          "kind": "external",
           "specifier": "builtin:fs",
         },
         {

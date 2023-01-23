@@ -2659,7 +2659,7 @@ export function a(a) {
             "#,
           },
         ),
-        ("builtin:fs", Source::BuiltIn("builtin:fs")),
+        ("builtin:fs", Source::External("builtin:fs")),
         (
           "https://example.com/bundle",
           Source::External("https://example.com/bundle"),
@@ -2683,7 +2683,7 @@ export function a(a) {
         ],
         "modules": [
           {
-            "kind": "builtIn",
+            "kind": "external",
             "specifier": "builtin:fs"
           },
           {
