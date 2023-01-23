@@ -636,7 +636,7 @@ fn to_result<'a>(
     ModuleSlot::Err(err) => Some((specifier, Err(err))),
     ModuleSlot::Module(module) => Some((
       specifier,
-      Ok((&module.specifier, module.kind.clone(), module.media_type)),
+      Ok((&module.specifier, module.kind, module.media_type)),
     )),
     ModuleSlot::Pending => None,
   }
@@ -1139,7 +1139,7 @@ pub(crate) fn parse_module_from_module_info(
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Module {
   // Init the module and determine its media type
-  let mut module = Module::new(specifier.clone(), kind.clone(), source);
+  let mut module = Module::new(specifier.clone(), kind, source);
   module.media_type = media_type;
 
   // Analyze the TypeScript triple-slash references

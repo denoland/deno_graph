@@ -12,6 +12,7 @@ use crate::source::Resolver;
 use crate::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
 
 use anyhow::anyhow;
+use anyhow::Error;
 use anyhow::Result;
 use futures::future;
 use serde::Deserialize;
