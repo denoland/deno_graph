@@ -37,15 +37,15 @@ export interface LoadResponseModule {
   content: string;
 }
 
-export interface LoadResponseExternalBuiltIn {
+export interface LoadResponseExternal {
   /** The loaded module is either _external_ or _built-in_ to the runtime. */
-  kind: "external" | "builtIn";
+  kind: "external";
   /** The strung URL of the resource. If there were redirects, the final
    * specifier should be set here, otherwise the requested specifier. */
   specifier: string;
 }
 
-export type LoadResponse = LoadResponseModule | LoadResponseExternalBuiltIn;
+export type LoadResponse = LoadResponseModule | LoadResponseExternal;
 
 export interface PositionJson {
   /** The line number of a position within a source file. The number is a zero
@@ -101,7 +101,6 @@ export interface TypesDependencyJson {
  * dependencies provided. */
 export type ModuleKind =
   | "asserted"
-  | "builtIn"
   | "esm"
   | "external"
   | "script";

@@ -519,9 +519,6 @@ pub enum ModuleKind {
   /// `MediaType` matches the assertion. Dependency analysis does not occur on
   /// asserted modules.
   Asserted,
-  /// Represents a module which is built in to a runtime. The module does not
-  /// contain source and will have no dependencies.
-  BuiltIn,
   /// An ECMAScript Module (JavaScript Module).
   Esm,
   /// Represents a module which is not statically analyzed and is only available
@@ -1522,14 +1519,6 @@ impl<'a> Builder<'a> {
     maybe_assert_type: Option<String>,
   ) {
     let (specifier, module_slot) = match response {
-      LoadResponse::BuiltIn { specifier } => {
-        self.check_specifier(requested_specifier, specifier);
-        let module_slot = ModuleSlot::Module(Module::new_without_source(
-          specifier.clone(),
-          ModuleKind::BuiltIn,
-        ));
-        (specifier, module_slot)
-      }
       LoadResponse::External { specifier } => {
         self.check_specifier(requested_specifier, specifier);
         let module_slot = ModuleSlot::Module(Module::new_without_source(
