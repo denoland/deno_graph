@@ -844,21 +844,21 @@ impl ModuleGraph {
     } else {
       (&dependency.maybe_code, &dependency.maybe_type)
     };
-    if let Some(specifier) = maybe_first
+    let specifier = maybe_first
       .maybe_specifier()
-      .or_else(|| maybe_second.maybe_specifier())
-    {
-      if prefer_types {
-        Some(
-          self
-            .resolve_types_dependency(specifier)
-            .unwrap_or(specifier),
-        )
-      } else {
+      .or_else(|| maybe_second.maybe_specifier());
+    match specifier {
+      Some(specifier) => {
+        if prefer_types {
+          return Some(
+            self
+              .resolve_types_dependency(specifier)
+              .unwrap_or(specifier),
+          );
+        }
         Some(specifier)
       }
-    } else {
-      None
+      None => None,
     }
   }
 
