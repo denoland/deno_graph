@@ -8,7 +8,6 @@ use crate::source::load_data_url;
 use crate::source::CacheInfo;
 use crate::source::LoadFuture;
 use crate::source::Loader;
-use crate::source::ResolveResponse;
 use crate::source::Resolver;
 use crate::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
 
@@ -127,7 +126,7 @@ impl Resolver for JsResolver {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
-  ) -> ResolveResponse {
+  ) -> Result<ModuleSpecifier, Error> {
     if let Some(resolve) = &self.maybe_resolve {
       let this = JsValue::null();
       let arg1 = JsValue::from(specifier);

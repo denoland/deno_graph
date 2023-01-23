@@ -13,6 +13,7 @@ use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
 use crate::source::*;
 
+use anyhow::Error;
 use anyhow::Result;
 use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
@@ -348,13 +349,13 @@ pub enum Resolved {
 }
 
 impl Resolved {
-  pub fn from_resolve_response(
-    response: ResolveResponse,
+  pub fn from_resolve_result(
+    result: Result<ModuleSpecifier, Error>,
     range: Range,
     specifier: &str,
     remapped: bool,
   ) -> Self {
-    match response {
+    match result {
       Ok(specifier) => Self::from_specifier(specifier, range, remapped),
       Err(err) => {
         let resolution_error =
@@ -385,7 +386,7 @@ impl Resolved {
     if referrer_scheme == "https" && specifier_scheme == "http" {
       Resolved::Err(ResolutionError::InvalidDowngrade { specifier, range })
     } else if matches!(referrer_scheme, "https" | "http")
-      && !matches!(specifier_scheme, "https" | "http" | "npm")
+      && !matches!(specifier_scheme, "https" | "http" | "npm" | "node")
       && !remapped
     {
       Resolved::Err(ResolutionError::InvalidLocalImport { specifier, range })
@@ -996,7 +997,7 @@ fn resolve(
 ) -> Resolved {
   if let Some(resolver) = maybe_resolver {
     let response = resolver.resolve(specifier, &referrer_range.specifier);
-    Resolved::from_resolve_response(
+    Resolved::from_resolve_result(
       response,
       referrer_range.clone(),
       specifier,
@@ -1005,7 +1006,7 @@ fn resolve(
   } else {
     let response = resolve_import(specifier, &referrer_range.specifier)
       .map_err(|err| err.into());
-    Resolved::from_resolve_response(
+    Resolved::from_resolve_result(
       response,
       referrer_range.clone(),
       specifier,

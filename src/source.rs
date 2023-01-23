@@ -84,8 +84,6 @@ pub trait Loader {
   ) -> LoadFuture;
 }
 
-pub type ResolveResponse = Result<ModuleSpecifier, Error>;
-
 /// A trait which allows the module graph to resolve specifiers and type only
 /// dependencies. This can be use to provide import maps and override other
 /// default resolution logic used by `deno_graph`.
@@ -110,8 +108,8 @@ pub trait Resolver: fmt::Debug {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
-  ) -> ResolveResponse {
-    resolve_import(specifier, referrer).map_err(|err| err.into())
+  ) -> Result<ModuleSpecifier, Error> {
+    Ok(resolve_import(specifier, referrer)?)
   }
 
   /// Given a module specifier, return an optional tuple which provides a module
@@ -307,13 +305,13 @@ pub mod tests {
       &self,
       specifier: &str,
       referrer: &ModuleSpecifier,
-    ) -> ResolveResponse {
+    ) -> Result<ModuleSpecifier, Error> {
       if let Some(map) = self.map.get(referrer) {
         if let Some(resolved_specifier) = map.get(specifier) {
           return Ok(resolved_specifier.clone());
         }
       }
-      resolve_import(specifier, referrer).map_err(|err| err.into())
+      Ok(resolve_import(specifier, referrer)?)
     }
 
     fn resolve_types(
