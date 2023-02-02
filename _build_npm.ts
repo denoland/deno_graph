@@ -1,13 +1,13 @@
-import { build, emptyDir } from "https://deno.land/x/dnt@0.29.0/mod.ts";
+import { build, emptyDir } from "https://deno.land/x/dnt@0.33.1/mod.ts";
 
 await emptyDir("./npm");
 Deno.mkdirSync("npm/esm/lib", { recursive: true });
 Deno.mkdirSync("npm/script/lib", { recursive: true });
 // todo(dsherret): don't include this twice
-Deno.copyFileSync("lib/deno_graph_bg.wasm", "npm/esm/lib/deno_graph_bg.wasm");
+Deno.copyFileSync("lib/deno_graph_wasm_bg.wasm", "npm/esm/lib/deno_graph_wasm_bg.wasm");
 Deno.copyFileSync(
-  "lib/deno_graph_bg.wasm",
-  "npm/script/lib/deno_graph_bg.wasm",
+  "lib/deno_graph_wasm_bg.wasm",
+  "npm/script/lib/deno_graph_wasm_bg.wasm",
 );
 
 await build({

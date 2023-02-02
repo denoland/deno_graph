@@ -2048,7 +2048,7 @@ export function a(a) {
   }
 
   #[tokio::test]
-  async fn test_create_type_graph() {
+  async fn test_create_graph_types_only() {
     let mut loader = setup(
       vec![
         (
@@ -2135,10 +2135,13 @@ export function a(a) {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let graph = create_type_graph(
+    let graph = create_graph(
       vec![root_specifier.clone()],
       &mut loader,
-      Default::default(),
+      GraphOptions {
+        build_kind: BuildKind::TypesOnly,
+        ..Default::default()
+      },
     )
     .await;
     assert_eq!(
@@ -2273,7 +2276,7 @@ export function a(a) {
   }
 
   #[tokio::test]
-  async fn test_create_code_graph() {
+  async fn test_create_graph_code_only() {
     let mut loader = setup(
       vec![
         (
@@ -2360,10 +2363,13 @@ export function a(a) {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let graph = create_code_graph(
+    let graph = create_graph(
       vec![root_specifier.clone()],
       &mut loader,
-      Default::default(),
+      GraphOptions {
+        build_kind: BuildKind::CodeOnly,
+        ..Default::default()
+      },
     )
     .await;
     assert_eq!(
