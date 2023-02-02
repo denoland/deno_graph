@@ -23,8 +23,8 @@ import { load as defaultLoad } from "./lib/loader.ts";
 import type {
   CacheInfo,
   LoadResponse,
-  ModuleJson,
   ModuleGraphJson,
+  ModuleJson,
   ModuleKind,
   TypesDependency,
 } from "./lib/types.d.ts";
@@ -35,8 +35,8 @@ export type {
   CacheInfo,
   Dependency,
   LoadResponse,
-  ModuleJson,
   ModuleGraphJson,
+  ModuleJson,
   ModuleKind,
   TypesDependency,
 } from "./lib/types.d.ts";

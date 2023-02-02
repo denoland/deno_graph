@@ -59,13 +59,16 @@ Deno.test({
     assertEquals(graph.modules.length, 1);
     assertEquals(graph, {
       modules: [{
-        specifier: "data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs=",
+        specifier:
+          "data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs=",
         size: 32,
         kind: "esm",
         mediaType: MediaType.JavaScript,
       }],
       redirects: {},
-      roots: ["data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs="],
+      roots: [
+        "data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs=",
+      ],
     });
   },
 });
@@ -79,7 +82,10 @@ Deno.test({
       },
     });
     assertEquals(graph.modules.length, 1);
-    assertEquals(graph.modules[0].error, 'Module not found "file:///a/test.ts".');
+    assertEquals(
+      graph.modules[0].error,
+      'Module not found "file:///a/test.ts".',
+    );
   },
 });
 
@@ -105,7 +111,7 @@ Deno.test({
       },
     });
     assertEquals(graph.modules.length, 1);
-    assertEquals(graph.modules[0].error, 'load rejected or errored');
+    assertEquals(graph.modules[0].error, "load rejected or errored");
   },
 });
 
@@ -118,7 +124,7 @@ Deno.test({
       },
     });
     assertEquals(graph.modules.length, 1);
-    assertEquals(graph.modules[0].error, 'load rejected or errored');
+    assertEquals(graph.modules[0].error, "load rejected or errored");
   },
 });
 
@@ -129,7 +135,9 @@ Deno.test({
       "https://deno.land/std@0.103.0/examples/chat/server.ts",
     );
     assertEquals(graph.modules.length, 37);
-    const rootModule = graph.modules.find(m => m.specifier === graph.roots[0])!;
+    const rootModule = graph.modules.find((m) =>
+      m.specifier === graph.roots[0]
+    )!;
     assert(rootModule);
     assertEquals(rootModule.mediaType, "TypeScript");
     assertEquals(Object.entries(rootModule.dependencies ?? {}).length, 3);
@@ -624,7 +632,9 @@ Deno.test({
     );
 
     assert(
-      module.dependencies?.find(d => d.specifier === "http://example.com/preact/jsx-dev-runtime"),
+      module.dependencies?.find((d) =>
+        d.specifier === "http://example.com/preact/jsx-dev-runtime"
+      ),
     );
   },
 });
@@ -644,7 +654,9 @@ Deno.test({
       },
     );
     assert(
-      module.dependencies?.find(d => d.specifier === "http://example.com/preact/jsx-runtime"),
+      module.dependencies?.find((d) =>
+        d.specifier === "http://example.com/preact/jsx-runtime"
+      ),
     );
   },
 });
