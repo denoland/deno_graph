@@ -16,7 +16,6 @@ use std::collections::HashMap;
 
 use std::sync::Arc;
 
-pub use graph::BuildKind;
 pub use analyzer::analyze_deno_types;
 pub use analyzer::Comment;
 pub use analyzer::DependencyDescriptor;
@@ -36,6 +35,7 @@ pub use ast::DefaultParsedSourceStore;
 pub use ast::ModuleParser;
 pub use ast::ParsedSourceStore;
 pub use deno_ast::MediaType;
+pub use graph::BuildKind;
 pub use graph::Dependency;
 pub use graph::GraphImport;
 pub use graph::Module;
