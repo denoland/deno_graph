@@ -166,11 +166,6 @@ impl Resolver for JsResolver {
   }
 }
 
-#[wasm_bindgen(module = "/src/deno_apis.js")]
-extern "C" {
-  fn get_no_color() -> bool;
-}
-
 #[wasm_bindgen]
 pub struct ModuleGraph(pub(crate) graph::ModuleGraph);
 
