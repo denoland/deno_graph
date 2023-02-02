@@ -35,7 +35,7 @@ Deno.test({
         });
       },
     });
-    assertEquals(graph.toJSON(), {
+    assertEquals(graph, {
       roots: ["https://example.com/a"],
       modules: [
         {
@@ -54,10 +54,19 @@ Deno.test({
   name: "createGraph() - data url",
   async fn() {
     const graph = await createGraph(
-      `data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs=`,
+      "data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs=",
     );
     assertEquals(graph.modules.length, 1);
-    assertEquals(graph.modules[0].source, `console.log("hello deno_graph");`);
+    assertEquals(graph, {
+      modules: [{
+        specifier: "data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs=",
+        size: 32,
+        kind: "esm",
+        mediaType: MediaType.JavaScript,
+      }],
+      redirects: {},
+      roots: ["data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs="],
+    });
   },
 });
 
@@ -69,7 +78,8 @@ Deno.test({
         return Promise.resolve(undefined);
       },
     });
-    assertEquals(graph.modules.length, 0);
+    assertEquals(graph.modules.length, 1);
+    assertEquals(graph.modules[0].error, 'Module not found "file:///a/test.ts".');
   },
 });
 
@@ -94,7 +104,8 @@ Deno.test({
         return Promise.reject(new Error("something bad happened"));
       },
     });
-    assertEquals(graph.modules.length, 0);
+    assertEquals(graph.modules.length, 1);
+    assertEquals(graph.modules[0].error, 'load rejected or errored');
   },
 });
 
@@ -106,7 +117,8 @@ Deno.test({
         throw new Error("something bad happened");
       },
     });
-    assertEquals(graph.modules.length, 0);
+    assertEquals(graph.modules.length, 1);
+    assertEquals(graph.modules[0].error, 'load rejected or errored');
   },
 });
 
@@ -117,10 +129,10 @@ Deno.test({
       "https://deno.land/std@0.103.0/examples/chat/server.ts",
     );
     assertEquals(graph.modules.length, 37);
-    const rootModule = graph.get(graph.roots[0]);
+    const rootModule = graph.modules.find(m => m.specifier === graph.roots[0])!;
     assert(rootModule);
-    assertEquals(rootModule!.mediaType, "TypeScript");
-    assertEquals(Object.entries(rootModule!.dependencies ?? {}).length, 3);
+    assertEquals(rootModule.mediaType, "TypeScript");
+    assertEquals(Object.entries(rootModule.dependencies ?? {}).length, 3);
   },
 });
 
@@ -150,7 +162,7 @@ Deno.test({
       },
     });
     assertEquals(resolveCount, 1);
-    assertEquals(graph.toJSON(), {
+    assertEquals(graph, {
       "roots": [
         "file:///a/test.js",
       ],
@@ -226,7 +238,7 @@ Deno.test({
       },
     });
     assertEquals(resolveCount, 2);
-    assertEquals(graph.toJSON(), {
+    assertEquals(graph, {
       "roots": [
         "file:///a/test.ts",
       ],
@@ -323,7 +335,7 @@ Deno.test({
       },
     });
     assertEquals(resolveCount, 1);
-    assertEquals(graph.toJSON(), {
+    assertEquals(graph, {
       "roots": [
         "file:///a/test.js",
       ],
@@ -421,7 +433,7 @@ Deno.test({
         return Promise.resolve(fixtures[specifier]);
       },
     });
-    assertEquals(graph.toJSON(), {
+    assertEquals(graph, {
       "roots": [
         "file:///a/test.js",
       ],
@@ -520,7 +532,7 @@ Deno.test({
         const d = await import("./d.ts");
       `,
     );
-    assertEquals(module.toJSON(), {
+    assertEquals(module, {
       "specifier": "file:///a/test01.js",
       "mediaType": MediaType.JavaScript,
       "kind": "esm",
@@ -610,9 +622,9 @@ Deno.test({
         jsxImportSourceModule: "jsx-dev-runtime",
       },
     );
+
     assert(
-      module.dependencies &&
-        module.dependencies["http://example.com/preact/jsx-dev-runtime"],
+      module.dependencies?.find(d => d.specifier === "http://example.com/preact/jsx-dev-runtime"),
     );
   },
 });
@@ -632,8 +644,7 @@ Deno.test({
       },
     );
     assert(
-      module.dependencies &&
-        module.dependencies["http://example.com/preact/jsx-runtime"],
+      module.dependencies?.find(d => d.specifier === "http://example.com/preact/jsx-runtime"),
     );
   },
 });
@@ -677,7 +688,7 @@ Deno.test({
         await import("./b.json", { assert: { type: "json" } });
       `,
     );
-    assertEquals(module.toJSON(), {
+    assertEquals(module, {
       "dependencies": [
         {
           "specifier": "./a.json",

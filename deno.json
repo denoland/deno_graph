@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "build": "deno run --unstable -A --no-check https://deno.land/x/wasmbuild@0.10.2/main.ts --no-default-features --features wasm",
+    "build": "deno run --unstable -A --no-check https://deno.land/x/wasmbuild@0.10.3/main.ts --project deno_graph_wasm",
     "build:npm": "deno run -A _build_npm.ts",
     "test": "deno test --allow-read --allow-net"
   },

@@ -18,13 +18,13 @@
  * @module
  */
 
-import * as wasm from "./lib/deno_graph.generated.js";
+import * as wasm from "./lib/deno_graph_wasm.generated.js";
 import { load as defaultLoad } from "./lib/loader.ts";
 import type {
   CacheInfo,
   LoadResponse,
-  Module,
-  ModuleGraph,
+  ModuleJson,
+  ModuleGraphJson,
   ModuleKind,
   TypesDependency,
 } from "./lib/types.d.ts";
@@ -35,8 +35,7 @@ export type {
   CacheInfo,
   Dependency,
   LoadResponse,
-  Module,
-  ModuleGraph,
+  ModuleJson,
   ModuleGraphJson,
   ModuleKind,
   TypesDependency,
@@ -120,7 +119,7 @@ export interface CreateGraphOptions {
 export async function createGraph(
   rootSpecifiers: string | string[],
   options: CreateGraphOptions = {},
-): Promise<ModuleGraph> {
+): Promise<ModuleGraphJson> {
   rootSpecifiers = Array.isArray(rootSpecifiers)
     ? rootSpecifiers
     : [rootSpecifiers];
@@ -135,7 +134,7 @@ export async function createGraph(
     imports,
   } = options;
   const { createGraph } = await wasm.instantiate();
-  return createGraph(
+  return await createGraph(
     rootSpecifiers,
     load,
     defaultJsxImportSource,
@@ -145,8 +144,7 @@ export async function createGraph(
     resolveTypes,
     kind,
     imports,
-    // deno-lint-ignore no-explicit-any
-  ) as any;
+  ) as ModuleGraphJson;
 }
 
 export interface ParseModuleOptions {
@@ -195,7 +193,7 @@ export function parseModule(
   specifier: string,
   content: string,
   options: ParseModuleOptions = {},
-): Module {
+): ModuleJson {
   const {
     headers,
     defaultJsxImportSource,
@@ -220,5 +218,5 @@ export function parseModule(
     kind,
     resolve,
     resolveTypes,
-  ) as Module;
+  ) as ModuleJson;
 }

@@ -79,7 +79,6 @@ impl PositionRange {
     }
   }
 
-  #[cfg(feature = "rust")]
   pub fn as_source_range(&self, text_info: &SourceTextInfo) -> SourceRange {
     SourceRange::new(
       self.start.as_source_pos(text_info),

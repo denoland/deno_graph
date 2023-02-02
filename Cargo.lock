@@ -168,9 +168,27 @@ name = "deno_graph"
 version = "0.42.0"
 dependencies = [
  "anyhow",
- "cfg-if",
  "data-url",
  "deno_ast",
+ "futures",
+ "once_cell",
+ "parking_lot",
+ "pretty_assertions",
+ "regex",
+ "serde",
+ "serde_json",
+ "tokio",
+ "url",
+]
+
+[[package]]
+name = "deno_graph_wasm"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "data-url",
+ "deno_ast",
+ "deno_graph",
  "futures",
  "js-sys",
  "once_cell",
@@ -180,7 +198,6 @@ dependencies = [
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
- "tokio",
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",

@@ -9,7 +9,6 @@ use anyhow::Error;
 use anyhow::Result;
 use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
-#[cfg(feature = "rust")]
 use futures::future;
 use futures::future::Future;
 use serde::Deserialize;
@@ -145,13 +144,11 @@ pub fn load_data_url(
 
 /// An implementation of the loader attribute where the responses are provided
 /// ahead of time. This is useful for testing or
-#[cfg(feature = "rust")]
 pub struct MemoryLoader {
   sources: HashMap<ModuleSpecifier, Result<LoadResponse, Error>>,
   cache_info: HashMap<ModuleSpecifier, CacheInfo>,
 }
 
-#[cfg(feature = "rust")]
 pub enum Source<S> {
   Module {
     specifier: S,
@@ -162,10 +159,8 @@ pub enum Source<S> {
   Err(Error),
 }
 
-#[cfg(feature = "rust")]
 pub type MemoryLoaderSources<S> = Vec<(S, Source<S>)>;
 
-#[cfg(feature = "rust")]
 impl MemoryLoader {
   pub fn new<S: AsRef<str>>(
     sources: MemoryLoaderSources<S>,
@@ -211,7 +206,6 @@ impl MemoryLoader {
   }
 }
 
-#[cfg(feature = "rust")]
 impl Loader for MemoryLoader {
   fn get_cache_info(&self, specifier: &ModuleSpecifier) -> Option<CacheInfo> {
     self.cache_info.get(specifier).cloned()
