@@ -1,13 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-// remove this after https://github.com/rustwasm/wasm-bindgen/issues/2774 is released
-#![allow(clippy::unused_unit)]
-#![deny(clippy::disallowed_methods)]
-#![deny(clippy::disallowed_types)]
-
-#[macro_use]
-extern crate cfg_if;
-
 mod analyzer;
 mod ast;
 mod graph;
@@ -15,7 +7,6 @@ mod module_specifier;
 pub mod source;
 mod text_encoding;
 
-use graph::BuildKind;
 use graph::Builder;
 pub use graph::ModuleKind;
 use graph::ModuleSlot;
@@ -23,277 +14,122 @@ use source::Resolver;
 
 use std::collections::HashMap;
 
-cfg_if! {
-  if #[cfg(feature = "rust")] {
-    use std::sync::Arc;
+use std::sync::Arc;
 
-    pub use analyzer::Comment;
-    pub use analyzer::DependencyDescriptor;
-    pub use analyzer::DependencyKind;
-    pub use analyzer::ImportAssertion;
-    pub use analyzer::ImportAssertions;
-    pub use analyzer::ModuleAnalyzer;
-    pub use analyzer::PositionRange;
-    pub use analyzer::SpecifierWithRange;
-    pub use analyzer::TypeScriptReference;
-    pub use analyzer::ModuleInfo;
-    pub use analyzer::analyze_deno_types;
-    pub use ast::DefaultModuleAnalyzer;
-    pub use ast::DefaultModuleParser;
-    pub use ast::ModuleParser;
-    pub use ast::CapturingModuleParser;
-    pub use ast::CapturingModuleAnalyzer;
-    pub use ast::ParsedSourceStore;
-    pub use ast::DefaultParsedSourceStore;
-    pub use graph::Dependency;
-    pub use graph::GraphImport;
-    pub use graph::Module;
-    pub use graph::ModuleGraph;
-    pub use graph::ModuleGraphError;
-    pub use graph::Position;
-    pub use graph::Range;
-    pub use graph::ResolutionError;
-    pub use graph::Resolved;
-    pub use deno_ast::MediaType;
-    pub use module_specifier::ModuleSpecifier;
-    pub use module_specifier::SpecifierError;
-    pub use module_specifier::resolve_import;
+pub use analyzer::analyze_deno_types;
+pub use analyzer::Comment;
+pub use analyzer::DependencyDescriptor;
+pub use analyzer::DependencyKind;
+pub use analyzer::ImportAssertion;
+pub use analyzer::ImportAssertions;
+pub use analyzer::ModuleAnalyzer;
+pub use analyzer::ModuleInfo;
+pub use analyzer::PositionRange;
+pub use analyzer::SpecifierWithRange;
+pub use analyzer::TypeScriptReference;
+pub use ast::CapturingModuleAnalyzer;
+pub use ast::CapturingModuleParser;
+pub use ast::DefaultModuleAnalyzer;
+pub use ast::DefaultModuleParser;
+pub use ast::DefaultParsedSourceStore;
+pub use ast::ModuleParser;
+pub use ast::ParsedSourceStore;
+pub use deno_ast::MediaType;
+pub use graph::BuildKind;
+pub use graph::Dependency;
+pub use graph::GraphImport;
+pub use graph::Module;
+pub use graph::ModuleGraph;
+pub use graph::ModuleGraphError;
+pub use graph::Position;
+pub use graph::Range;
+pub use graph::ResolutionError;
+pub use graph::Resolved;
+pub use module_specifier::resolve_import;
+pub use module_specifier::ModuleSpecifier;
+pub use module_specifier::SpecifierError;
 
-    use source::Loader;
-    use source::Reporter;
+use source::Loader;
+use source::Reporter;
 
-    #[derive(Default)]
-    pub struct GraphOptions<'graph> {
-      pub is_dynamic: bool,
-      pub imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
-      pub resolver: Option<&'graph dyn Resolver>,
-      pub module_analyzer: Option<&'graph dyn ModuleAnalyzer>,
-      pub reporter: Option<&'graph dyn Reporter>,
-    }
+#[derive(Default)]
+pub struct GraphOptions<'graph> {
+  pub is_dynamic: bool,
+  pub imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
+  pub resolver: Option<&'graph dyn Resolver>,
+  pub module_analyzer: Option<&'graph dyn ModuleAnalyzer>,
+  pub reporter: Option<&'graph dyn Reporter>,
+  pub build_kind: BuildKind,
+}
 
-    /// Create a module graph, based on loading and recursively analyzing the
-    /// dependencies of the module, returning the resulting graph.
-    pub async fn create_graph<'graph>(
-      roots: Vec<ModuleSpecifier>,
-      loader: &mut dyn Loader,
-      options: GraphOptions<'graph>,
-    ) -> ModuleGraph {
-      let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
-      let module_analyzer = options.module_analyzer.unwrap_or(&default_module_analyzer);
-      let builder = Builder::new(
-        roots,
-        options.is_dynamic,
-        loader,
-        options.resolver,
-        module_analyzer,
-        options.reporter,
-      );
-      builder.build(BuildKind::All, options.imports).await
-    }
+/// Create a module graph, based on loading and recursively analyzing the
+/// dependencies of the module, returning the resulting graph.
+pub async fn create_graph<'graph>(
+  roots: Vec<ModuleSpecifier>,
+  loader: &mut dyn Loader,
+  options: GraphOptions<'graph>,
+) -> ModuleGraph {
+  let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
+  let module_analyzer =
+    options.module_analyzer.unwrap_or(&default_module_analyzer);
+  let builder = Builder::new(
+    roots,
+    options.is_dynamic,
+    loader,
+    options.resolver,
+    module_analyzer,
+    options.reporter,
+  );
+  builder.build(options.build_kind, options.imports).await
+}
 
-    /// Create a module graph, including only dependencies of the roots that
-    /// would contain code that would be executed, skipping any type only
-    /// dependencies. This is useful when wanting to build a graph of code for
-    /// loading in runtime that doesn't care about type only dependencies.
-    pub async fn create_code_graph<'graph>(
-      roots: Vec<ModuleSpecifier>,
-      loader: &mut dyn Loader,
-      options: GraphOptions<'graph>,
-    ) -> ModuleGraph {
-      let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
-      let module_analyzer = options.module_analyzer.unwrap_or(&default_module_analyzer);
-      let builder = Builder::new(
-        roots,
-        options.is_dynamic,
-        loader,
-        options.resolver,
-        module_analyzer,
-        options.reporter,
-      );
-      builder.build(BuildKind::CodeOnly, options.imports).await
-    }
-
-    /// Create a module graph, including only dependencies that might affect
-    /// the types of the graph, skipping any "code only" imports. This is
-    /// useful in situations where only the types are being used, like when
-    /// type checking code or generating documentation.
-    ///
-    /// Note that code which is overloaded with types upon access (like the
-    /// `X-TypeScript-Types` header or types defined in the code itself) will
-    /// still be loaded into the graph, but further code only dependencies will
-    /// not be followed.
-    pub async fn create_type_graph<'graph>(
-      roots: Vec<ModuleSpecifier>,
-      loader: &mut dyn Loader,
-      options: GraphOptions<'graph>
-    ) -> ModuleGraph {
-      let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
-      let module_analyzer = options.module_analyzer.unwrap_or(&default_module_analyzer);
-      let builder = Builder::new(
-        roots,
-        options.is_dynamic,
-        loader,
-        options.resolver,
-        module_analyzer,
-        options.reporter,
-      );
-      builder.build(BuildKind::TypesOnly, options.imports).await
-    }
-
-    /// Parse an individual module, returning the module as a result, otherwise
-    /// erroring with a module graph error.
-    pub fn parse_module(
-      specifier: &ModuleSpecifier,
-      maybe_headers: Option<&HashMap<String, String>>,
-      content: Arc<str>,
-      maybe_kind: Option<ModuleKind>,
-      maybe_resolver: Option<&dyn Resolver>,
-      maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
-    ) -> Result<Module, ModuleGraphError> {
-      let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
-      let module_analyzer = maybe_module_analyzer.unwrap_or(&default_module_analyzer);
-      match graph::parse_module(
-        specifier,
-        maybe_headers,
-        content,
-        None,
-        maybe_kind,
-        maybe_resolver,
-        module_analyzer,
-        true,
-        false,
-      ) {
-        ModuleSlot::Module(module) => Ok(module),
-        ModuleSlot::Err(err) => Err(err),
-        _ => unreachable!("unreachable ModuleSlot variant"),
-      }
-    }
-
-    /// Parse an individual module from an AST, returning the module.
-    pub fn parse_module_from_ast(
-      specifier: &ModuleSpecifier,
-      kind: ModuleKind,
-      maybe_headers: Option<&HashMap<String, String>>,
-      parsed_source: &deno_ast::ParsedSource,
-      maybe_resolver: Option<&dyn Resolver>,
-    ) -> Module {
-      graph::parse_module_from_module_info(
-        specifier,
-        kind,
-        parsed_source.media_type(),
-        maybe_headers,
-        DefaultModuleAnalyzer::module_info(parsed_source),
-        parsed_source.text_info().text(),
-        maybe_resolver,
-      )
-    }
+/// Parse an individual module, returning the module as a result, otherwise
+/// erroring with a module graph error.
+pub fn parse_module(
+  specifier: &ModuleSpecifier,
+  maybe_headers: Option<&HashMap<String, String>>,
+  content: Arc<str>,
+  maybe_kind: Option<ModuleKind>,
+  maybe_resolver: Option<&dyn Resolver>,
+  maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
+) -> Result<Module, ModuleGraphError> {
+  let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
+  let module_analyzer =
+    maybe_module_analyzer.unwrap_or(&default_module_analyzer);
+  match graph::parse_module(
+    specifier,
+    maybe_headers,
+    content,
+    None,
+    maybe_kind,
+    maybe_resolver,
+    module_analyzer,
+    true,
+    false,
+  ) {
+    ModuleSlot::Module(module) => Ok(module),
+    ModuleSlot::Err(err) => Err(err),
+    _ => unreachable!("unreachable ModuleSlot variant"),
   }
 }
 
-cfg_if! {
-  if #[cfg(feature = "wasm")] {
-    mod js_graph;
-
-    pub use js_graph::JsLoader;
-    pub use js_graph::JsResolver;
-
-    use wasm_bindgen::prelude::*;
-
-    #[wasm_bindgen(js_name = createGraph)]
-    #[allow(clippy::too_many_arguments)]
-    pub async fn js_create_graph(
-      roots: JsValue,
-      load: js_sys::Function,
-      maybe_default_jsx_import_source: Option<String>,
-      maybe_jsx_import_source_module: Option<String>,
-      maybe_cache_info: Option<js_sys::Function>,
-      maybe_resolve: Option<js_sys::Function>,
-      maybe_resolve_types: Option<js_sys::Function>,
-      maybe_build_kind: Option<String>,
-      maybe_imports: JsValue,
-    ) -> Result<js_graph::ModuleGraph, JsValue> {
-      let roots_vec: Vec<String> = serde_wasm_bindgen::from_value(roots).map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-      let maybe_imports_map: Option<HashMap<String, Vec<String>>> = serde_wasm_bindgen::from_value(maybe_imports).map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-      let mut loader = js_graph::JsLoader::new(load, maybe_cache_info);
-      let maybe_resolver = if maybe_default_jsx_import_source.is_some() || maybe_jsx_import_source_module.is_some() || maybe_resolve.is_some() || maybe_resolve_types.is_some() {
-        Some(js_graph::JsResolver::new(maybe_default_jsx_import_source, maybe_jsx_import_source_module, maybe_resolve, maybe_resolve_types))
-      } else {
-        None
-      };
-      let mut roots = Vec::with_capacity(roots_vec.len());
-      for root in roots_vec.into_iter() {
-        let root = module_specifier::ModuleSpecifier::parse(&root).map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-        roots.push(root);
-      }
-      let build_kind = match maybe_build_kind.as_deref() {
-        Some("typesOnly") => BuildKind::TypesOnly,
-        Some("codeOnly") => BuildKind::CodeOnly,
-        _ => BuildKind::All,
-      };
-      let mut maybe_imports = None;
-      if let Some(imports_map) = maybe_imports_map {
-        let mut imports = Vec::new();
-        for (referrer_str, specifier_vec) in imports_map.into_iter() {
-          let referrer = module_specifier::ModuleSpecifier::parse(&referrer_str)
-            .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-          imports.push((referrer, specifier_vec));
-        }
-        maybe_imports = Some(imports);
-      }
-
-      let module_analyzer = ast::DefaultModuleAnalyzer::default();
-      let builder = Builder::new(
-        roots,
-        false,
-        &mut loader,
-        maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-        &module_analyzer,
-        None,
-      );
-      let graph = builder.build(build_kind, maybe_imports).await;
-      Ok(js_graph::ModuleGraph(graph))
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    #[wasm_bindgen(js_name = parseModule)]
-    pub fn js_parse_module(
-      specifier: String,
-      maybe_headers: JsValue,
-      maybe_default_jsx_import_source: Option<String>,
-      maybe_jsx_import_source_module: Option<String>,
-      content: String,
-      maybe_kind: JsValue,
-      maybe_resolve: Option<js_sys::Function>,
-      maybe_resolve_types: Option<js_sys::Function>,
-    ) -> Result<js_graph::Module, JsValue> {
-      let maybe_headers: Option<HashMap<String, String>> = serde_wasm_bindgen::from_value(maybe_headers)
-        .map_err(|err| js_sys::Error::new(&err.to_string()))?;
-      let specifier = module_specifier::ModuleSpecifier::parse(&specifier)
-        .map_err(|err| js_sys::Error::new(&err.to_string()))?;
-      let maybe_resolver = if maybe_default_jsx_import_source.is_some() || maybe_jsx_import_source_module.is_some() || maybe_resolve.is_some() || maybe_resolve_types.is_some() {
-        Some(js_graph::JsResolver::new(maybe_default_jsx_import_source, maybe_jsx_import_source_module, maybe_resolve, maybe_resolve_types))
-      } else {
-        None
-      };
-      let maybe_kind: Option<ModuleKind> = serde_wasm_bindgen::from_value(maybe_kind).map_err(|err| js_sys::Error::new(&err.to_string()))?;
-      let module_analyzer = ast::DefaultModuleAnalyzer::default();
-      match graph::parse_module(
-        &specifier,
-        maybe_headers.as_ref(),
-        content.into(),
-        None,
-        maybe_kind,
-        maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-        &module_analyzer,
-        true,
-        false,
-      ) {
-        ModuleSlot::Module(module) => Ok(js_graph::Module(module)),
-        ModuleSlot::Err(err) => Err(js_sys::Error::new(&err.to_string()).into()),
-        _ => unreachable!("unreachable ModuleSlot variant"),
-      }
-    }
-  }
+/// Parse an individual module from an AST, returning the module.
+pub fn parse_module_from_ast(
+  specifier: &ModuleSpecifier,
+  kind: ModuleKind,
+  maybe_headers: Option<&HashMap<String, String>>,
+  parsed_source: &deno_ast::ParsedSource,
+  maybe_resolver: Option<&dyn Resolver>,
+) -> Module {
+  graph::parse_module_from_module_info(
+    specifier,
+    kind,
+    parsed_source.media_type(),
+    maybe_headers,
+    DefaultModuleAnalyzer::module_info(parsed_source),
+    parsed_source.text_info().text(),
+    maybe_resolver,
+  )
 }
 
 #[cfg(test)]
@@ -2212,7 +2048,7 @@ export function a(a) {
   }
 
   #[tokio::test]
-  async fn test_create_type_graph() {
+  async fn test_create_graph_types_only() {
     let mut loader = setup(
       vec![
         (
@@ -2299,10 +2135,13 @@ export function a(a) {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let graph = create_type_graph(
+    let graph = create_graph(
       vec![root_specifier.clone()],
       &mut loader,
-      Default::default(),
+      GraphOptions {
+        build_kind: BuildKind::TypesOnly,
+        ..Default::default()
+      },
     )
     .await;
     assert_eq!(
@@ -2437,7 +2276,7 @@ export function a(a) {
   }
 
   #[tokio::test]
-  async fn test_create_code_graph() {
+  async fn test_create_graph_code_only() {
     let mut loader = setup(
       vec![
         (
@@ -2524,10 +2363,13 @@ export function a(a) {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let graph = create_code_graph(
+    let graph = create_graph(
       vec![root_specifier.clone()],
       &mut loader,
-      Default::default(),
+      GraphOptions {
+        build_kind: BuildKind::CodeOnly,
+        ..Default::default()
+      },
     )
     .await;
     assert_eq!(

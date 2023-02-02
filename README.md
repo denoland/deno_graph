@@ -86,26 +86,10 @@ fn main() {
 }
 ```
 
-### Other core concepts
-
-#### `ModuleSpecifier` type alias
-
-Currently part of the the `deno_core` crate. `deno_graph` explicitly doesn't
-depend on `deno_core` or any part of the Deno CLI. It exports the type alias
-publicably for re-use by other crates.
-
-#### `MediaType` enum
-
-Currently part of the `deno_cli` crate, this enum represents the various media
-types that the Deno CLI can resolve and handle. Since `deno_graph` doesn't rely
-upon any part of the Deno CLI, it was necessary to implement this in this crate,
-and the implementation here will eventually replace the implementation in
-`deno_cli`.
-
 ## Usage from Deno CLI or Deploy
 
 This repository includes a compiled version of the Rust crate as Web Assembly
-and exposes an interface which is availble via the `mod.ts` in this repository
+and exposes an interface which is available via the `mod.ts` in this repository
 and can be imported like:
 
 ```js
@@ -117,7 +101,8 @@ use.
 
 ### `createGraph()`
 
-The `createGraph()` function allows a module graph to be built asynchronously.
+The `createGraph()` function allows a module graph to be built asynchronously
+and returns a single JavaScript object containing the module graph information.
 It requires a root specifier or any array of root specifiers to be passed, which
 will serve as the roots of the module graph.
 
@@ -144,54 +129,6 @@ There are several options that can be passed the function in the optional
   detected. This is intended to enrich the module graph with external types that
   are resolved in some other fashion, like from a `package.json` or via
   detecting an `@types` typings package is available.
-
-### Replicating the Deno CLI
-
-`deno_graph` is essentially a refactor of the module graph and related code as a
-stand alone crate which also targets Web Assembly and provides a
-JavaScript/TypeScript interface. This permits users of the package to be able to
-replicate the `deno info` command in Deno CLI within the runtime environment
-without requiring a `Deno` namespace API.
-
-The module graph has two methods which provide the output of `deno info`. The
-method `toString()` provides the text output from `deno info` and `toJSON()`
-provides the JSON object structure from `deno info --json`.
-
-> ℹ️ currently, there is no runtime access to the `DENO_DIR`/Deno cache, and
-> there is no default implementation of the API when creating a module graph,
-> therefore cache information is missing from the output. An implementation of
-> something that read the `DENO_DIR` cache is possible from CLI, but not
-> currently implemented.
-
-To replicate `deno info https://deno.land/x/std/testing/asserts.ts`, you would
-want to do something like this:
-
-```ts
-import { createGraph } from "https://deno.land/x/deno_graph@{VERSION}/mod.ts";
-
-const graph = await createGraph("https://deno.land/x/std/testing/asserts.ts");
-
-console.log(graph.toString());
-```
-
-This would output to stdout and would respect the `NO_COLOR`/`Deno.noColor`
-setting. If colors are allowed, the string will include the ANSI color escape
-sequences, otherwise they will be omitted. This behavior can be explicitly
-overridden by passing `true` to always remove ANSI colors or `false` to force
-them.
-
-To replicate `deno info --json https://deno.land/x/std/testing/asserts.ts`, you
-would want to do something like this:
-
-```ts
-import { createGraph } from "https://deno.land/x/deno_graph@{VERSION}/mod.ts";
-
-const graph = await createGraph("https://deno.land/x/std/testing/asserts.ts");
-
-console.log(JSON.stringify(graph, undefined, "  "));
-```
-
-This would output to stdout the JSON structure of the module graph.
 
 ## Building Web Assembly
 

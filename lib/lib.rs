@@ -1,15 +1,23 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-use crate::graph;
-use crate::graph::Range;
-use crate::module_specifier::resolve_import;
-use crate::module_specifier::ModuleSpecifier;
-use crate::source::load_data_url;
-use crate::source::CacheInfo;
-use crate::source::LoadFuture;
-use crate::source::Loader;
-use crate::source::Resolver;
-use crate::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
+// remove this after https://github.com/rustwasm/wasm-bindgen/issues/2774 is released
+#![allow(clippy::unused_unit)]
+#![deny(clippy::disallowed_methods)]
+#![deny(clippy::disallowed_types)]
+
+use std::collections::HashMap;
+
+use deno_graph::resolve_import;
+use deno_graph::source::load_data_url;
+use deno_graph::source::CacheInfo;
+use deno_graph::source::LoadFuture;
+use deno_graph::source::Loader;
+use deno_graph::source::Resolver;
+use deno_graph::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
+use deno_graph::BuildKind;
+use deno_graph::ModuleKind;
+use deno_graph::ModuleSpecifier;
+use deno_graph::Range;
 
 use anyhow::anyhow;
 use anyhow::Error;
@@ -166,152 +174,135 @@ impl Resolver for JsResolver {
   }
 }
 
-#[wasm_bindgen]
-pub struct ModuleGraph(pub(crate) graph::ModuleGraph);
-
-#[wasm_bindgen]
-impl ModuleGraph {
-  #[wasm_bindgen(getter)]
-  pub fn roots(&self) -> js_sys::Array {
-    self
-      .0
-      .roots
-      .iter()
-      .map(|s| JsValue::from(s.to_string()))
-      .collect()
-  }
-
-  #[wasm_bindgen]
-  pub fn get(&self, specifier: String) -> Result<Option<Module>, JsValue> {
-    let specifier = ModuleSpecifier::parse(&specifier)
+#[wasm_bindgen(js_name = createGraph)]
+#[allow(clippy::too_many_arguments)]
+pub async fn js_create_graph(
+  roots: JsValue,
+  load: js_sys::Function,
+  maybe_default_jsx_import_source: Option<String>,
+  maybe_jsx_import_source_module: Option<String>,
+  maybe_cache_info: Option<js_sys::Function>,
+  maybe_resolve: Option<js_sys::Function>,
+  maybe_resolve_types: Option<js_sys::Function>,
+  maybe_build_kind: Option<String>,
+  maybe_imports: JsValue,
+) -> Result<JsValue, JsValue> {
+  let roots_vec: Vec<String> = serde_wasm_bindgen::from_value(roots)
+    .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+  let maybe_imports_map: Option<HashMap<String, Vec<String>>> =
+    serde_wasm_bindgen::from_value(maybe_imports)
       .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-    self
-      .0
-      .try_get(&specifier)
-      .map(|mm| mm.map(|m| Module(m.clone())))
-      .map_err(|err| js_sys::Error::new(&err.to_string()).into())
+  let mut loader = JsLoader::new(load, maybe_cache_info);
+  let maybe_resolver = if maybe_default_jsx_import_source.is_some()
+    || maybe_jsx_import_source_module.is_some()
+    || maybe_resolve.is_some()
+    || maybe_resolve_types.is_some()
+  {
+    Some(JsResolver::new(
+      maybe_default_jsx_import_source,
+      maybe_jsx_import_source_module,
+      maybe_resolve,
+      maybe_resolve_types,
+    ))
+  } else {
+    None
+  };
+  let mut roots = Vec::with_capacity(roots_vec.len());
+  for root in roots_vec.into_iter() {
+    let root = ModuleSpecifier::parse(&root)
+      .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+    roots.push(root);
+  }
+  let mut maybe_imports = None;
+  if let Some(imports_map) = maybe_imports_map {
+    let mut imports = Vec::new();
+    for (referrer_str, specifier_vec) in imports_map.into_iter() {
+      let referrer = ModuleSpecifier::parse(&referrer_str)
+        .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+      imports.push((referrer, specifier_vec));
+    }
+    maybe_imports = Some(imports);
   }
 
-  #[wasm_bindgen(getter)]
-  pub fn modules(&self) -> js_sys::Array {
-    self
-      .0
-      .module_slots
-      .values()
-      .filter_map(|ms| {
-        if let graph::ModuleSlot::Module(m) = ms {
-          Some(Module(m.clone()))
-        } else {
-          None
-        }
-      })
-      .map(JsValue::from)
-      .collect()
-  }
-
-  #[wasm_bindgen]
-  pub fn resolve(&self, specifier: String) -> String {
-    let specifier = ModuleSpecifier::parse(&specifier).unwrap();
-    self.0.resolve(&specifier).to_string()
-  }
-
-  #[wasm_bindgen(js_name = resolveDependency)]
-  pub fn resolve_dependency(
-    &self,
-    specifier: String,
-    referrer: String,
-    prefer_types: bool,
-  ) -> Option<String> {
-    let referrer = ModuleSpecifier::parse(&referrer).unwrap();
-    self
-      .0
-      .resolve_dependency(&specifier, &referrer, prefer_types)
-      .map(|s| s.to_string())
-  }
-
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> JsValue {
-    let serializer =
-      serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    self.0.serialize(&serializer).unwrap()
-  }
+  let build_kind = match maybe_build_kind.as_deref() {
+    Some("typesOnly") => BuildKind::TypesOnly,
+    Some("codeOnly") => BuildKind::CodeOnly,
+    _ => BuildKind::All,
+  };
+  let graph = deno_graph::create_graph(
+    roots,
+    &mut loader,
+    deno_graph::GraphOptions {
+      is_dynamic: false,
+      resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+      module_analyzer: None,
+      build_kind,
+      imports: maybe_imports,
+      reporter: None,
+    },
+  )
+  .await;
+  let serializer =
+    serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
+  Ok(graph.serialize(&serializer).unwrap())
 }
 
-#[wasm_bindgen]
-pub struct Module(pub(crate) graph::Module);
-
-#[wasm_bindgen]
-impl Module {
-  #[wasm_bindgen(getter, js_name = cacheInfo)]
-  pub fn cache_info(&self) -> JsValue {
-    let serializer =
-      serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    self.0.maybe_cache_info.serialize(&serializer).unwrap()
-  }
-
-  #[wasm_bindgen(getter)]
-  pub fn dependencies(&self) -> JsValue {
-    let serializer =
-      serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    self.0.dependencies.serialize(&serializer).unwrap()
-  }
-
-  #[wasm_bindgen(getter)]
-  pub fn kind(&self) -> JsValue {
-    let serializer =
-      serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    self.0.kind.serialize(&serializer).unwrap()
-  }
-
-  #[wasm_bindgen(getter, js_name = mediaType)]
-  pub fn media_type(&self) -> String {
-    self.0.media_type.to_string()
-  }
-
-  #[wasm_bindgen(getter)]
-  pub fn size(&self) -> usize {
-    self.0.size()
-  }
-
-  #[wasm_bindgen(getter)]
-  pub fn source(&self) -> String {
-    self
-      .0
-      .maybe_source
-      .as_ref()
-      .map(|s| s.to_string())
-      .unwrap_or_else(|| "".to_string())
-  }
-
-  #[wasm_bindgen(getter)]
-  pub fn specifier(&self) -> String {
-    self.0.specifier.to_string()
-  }
-
-  #[wasm_bindgen(getter, js_name = typesDependency)]
-  pub fn maybe_types_dependency(&self) -> JsValue {
-    let serializer =
-      serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    graph::serialize_type_dependency(
-      &self.0.maybe_types_dependency,
-      &serializer,
-    )
-    .unwrap()
-  }
-
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> JsValue {
-    let serializer =
-      serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    self.0.serialize(&serializer).unwrap()
+#[allow(clippy::too_many_arguments)]
+#[wasm_bindgen(js_name = parseModule)]
+pub fn js_parse_module(
+  specifier: String,
+  maybe_headers: JsValue,
+  maybe_default_jsx_import_source: Option<String>,
+  maybe_jsx_import_source_module: Option<String>,
+  content: String,
+  maybe_kind: JsValue,
+  maybe_resolve: Option<js_sys::Function>,
+  maybe_resolve_types: Option<js_sys::Function>,
+) -> Result<JsValue, JsValue> {
+  let maybe_headers: Option<HashMap<String, String>> =
+    serde_wasm_bindgen::from_value(maybe_headers)
+      .map_err(|err| js_sys::Error::new(&err.to_string()))?;
+  let specifier = ModuleSpecifier::parse(&specifier)
+    .map_err(|err| js_sys::Error::new(&err.to_string()))?;
+  let maybe_resolver = if maybe_default_jsx_import_source.is_some()
+    || maybe_jsx_import_source_module.is_some()
+    || maybe_resolve.is_some()
+    || maybe_resolve_types.is_some()
+  {
+    Some(JsResolver::new(
+      maybe_default_jsx_import_source,
+      maybe_jsx_import_source_module,
+      maybe_resolve,
+      maybe_resolve_types,
+    ))
+  } else {
+    None
+  };
+  let maybe_kind: Option<ModuleKind> =
+    serde_wasm_bindgen::from_value(maybe_kind)
+      .map_err(|err| js_sys::Error::new(&err.to_string()))?;
+  match deno_graph::parse_module(
+    &specifier,
+    maybe_headers.as_ref(),
+    content.into(),
+    maybe_kind,
+    maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+    None,
+  ) {
+    Ok(module) => {
+      let serializer =
+        serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
+      Ok(module.serialize(&serializer).unwrap())
+    }
+    Err(err) => Err(js_sys::Error::new(&err.to_string()).into()),
   }
 }
 
 #[cfg(test)]
 mod tests {
-  use crate::Position;
-
   use super::*;
+
+  use deno_graph::Position;
   use serde_json::from_value;
   use serde_json::json;
 

@@ -171,7 +171,6 @@ impl Clone for ModuleGraphError {
 }
 
 impl ModuleGraphError {
-  #[cfg(feature = "rust")]
   pub fn specifier(&self) -> &ModuleSpecifier {
     match self {
       Self::ResolutionError(err) => &err.range().specifier,
@@ -253,7 +252,6 @@ impl ResolutionError {
   }
 
   /// Converts the error into a string along with the range related to the error.
-  #[cfg(feature = "rust")]
   pub fn to_string_with_range(&self) -> String {
     format!("{}\n    at {}", self, self.range())
   }
@@ -398,7 +396,6 @@ impl Resolved {
     }
   }
 
-  #[cfg(feature = "rust")]
   pub fn includes(&self, position: &Position) -> Option<&Range> {
     match self {
       Self::Ok { range, .. } if range.includes(position) => Some(range),
@@ -484,7 +481,6 @@ pub struct Dependency {
   pub maybe_assert_type: Option<String>,
 }
 
-#[cfg(feature = "rust")]
 impl Dependency {
   /// Optionally return the module specifier in the module graph that points to
   /// the "code" dependency in the graph.
@@ -617,7 +613,6 @@ pub(crate) enum ModuleSlot {
   Pending,
 }
 
-#[cfg(feature = "rust")]
 type ModuleResult<'a> = (
   &'a ModuleSpecifier,
   Result<(&'a ModuleSpecifier, ModuleKind, MediaType), &'a ModuleGraphError>,
@@ -625,7 +620,6 @@ type ModuleResult<'a> = (
 
 /// Convert a module slot entry into a result which contains the resolved
 /// module specifier, module kind, and media type or the module graph error.
-#[cfg(feature = "rust")]
 fn to_result<'a>(
   (specifier, module_slot): (&'a ModuleSpecifier, &'a ModuleSlot),
 ) -> Option<ModuleResult<'a>> {
@@ -715,7 +709,6 @@ impl ModuleGraph {
 
   /// Returns `true` if the specifier resolves to a module within a graph,
   /// otherwise returns `false`.
-  #[cfg(feature = "rust")]
   pub fn contains(&self, specifier: &ModuleSpecifier) -> bool {
     let specifier = self.resolve(specifier);
     self
@@ -725,7 +718,6 @@ impl ModuleGraph {
   }
 
   /// Returns any errors that are in the module graph.
-  #[cfg(feature = "rust")]
   pub fn errors(&self) -> impl Iterator<Item = &ModuleGraphError> {
     self.module_slots.values().filter_map(|ms| match ms {
       ModuleSlot::Err(err) => Some(err),
@@ -737,7 +729,6 @@ impl ModuleGraph {
   /// part of the graph, or if when loading the module it errored. If any module
   /// resolution error is needed, then use the `try_get()` method which will
   /// return any resolution error as the error in the result.
-  #[cfg(feature = "rust")]
   pub fn get(&self, specifier: &ModuleSpecifier) -> Option<&Module> {
     let specifier = self.resolve(specifier);
     match self.module_slots.get(&specifier) {
@@ -751,7 +742,6 @@ impl ModuleGraph {
   /// you need to know what errors are in the graph, use the `.errors()` method,
   /// or if you just need to check if everything is "ok" with the graph, use the
   /// `.valid()` method.
-  #[cfg(feature = "rust")]
   pub fn modules(&self) -> impl Iterator<Item = &Module> {
     self.module_slots.values().filter_map(|ms| match ms {
       ModuleSlot::Module(m) => Some(m),
@@ -865,7 +855,6 @@ impl ModuleGraph {
   /// is a module specifier and the second value is a result that contains a tuple of
   /// the module specifier, module kind, and media type, or the module graph
   /// error.
-  #[cfg(feature = "rust")]
   pub fn specifiers(
     &self,
   ) -> impl Iterator<
@@ -902,7 +891,6 @@ impl ModuleGraph {
   /// Walk the graph from the root, checking to see if there are any module
   /// graph errors on non-type only, non-dynamic imports. The first error is
   /// returned as as error result, otherwise ok if there are no errors.
-  #[cfg(feature = "rust")]
   pub fn valid(&self) -> Result<(), ModuleGraphError> {
     self.validate(false)
   }
@@ -913,12 +901,10 @@ impl ModuleGraph {
   ///
   /// This is designed to be used in cases where the graph needs to be validated
   /// from a type checking perspective, prior to type checking the graph.
-  #[cfg(feature = "rust")]
   pub fn valid_types_only(&self) -> Result<(), ModuleGraphError> {
     self.validate(true)
   }
 
-  #[cfg(feature = "rust")]
   fn validate(&self, types_only: bool) -> Result<(), ModuleGraphError> {
     fn validate<F>(
       specifier: &ModuleSpecifier,
@@ -1310,7 +1296,7 @@ fn is_untyped(media_type: &MediaType) -> bool {
 }
 
 /// The kind of build to perform.
-pub(crate) enum BuildKind {
+pub enum BuildKind {
   /// All types of dependencies should be analyzed and included in the graph.
   All,
   /// Only code dependencies should be analyzed and included in the graph. This
@@ -1320,7 +1306,18 @@ pub(crate) enum BuildKind {
   /// Only type dependencies should be analyzed and included in the graph. This
   /// is useful when assessing types, like documentation or type checking, when
   /// the code will not be executed.
+  ///
+  /// Note that code which is overloaded with types upon access (like the
+  /// `X-TypeScript-Types` header or types defined in the code itself) will
+  /// still be loaded into the graph, but further code only dependencies will
+  /// not be followed.
   TypesOnly,
+}
+
+impl Default for BuildKind {
+  fn default() -> Self {
+    Self::All
+  }
 }
 
 pub type LoadWithSpecifierFuture =
