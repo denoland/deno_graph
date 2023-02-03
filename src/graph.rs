@@ -7,6 +7,7 @@ use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
+use crate::DefaultModuleAnalyzer;
 use crate::ReferrerImports;
 
 use crate::module_specifier::resolve_import;
@@ -680,29 +681,62 @@ impl GraphImport {
   }
 }
 
+#[derive(Default)]
+pub struct BuildOptions<'a> {
+  pub is_dynamic: bool,
+  /// Additional imports that should be brought into the scope of
+  /// the module graph to add to the graph's "imports". This may
+  /// be extra modules such as TypeScript's "types" option or JSX
+  /// runtime types.
+  pub imports: Vec<ReferrerImports>,
+  pub resolver: Option<&'a dyn Resolver>,
+  pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
+  pub reporter: Option<&'a dyn Reporter>,
+}
+
 /// The structure which represents a module graph, which can be serialized as
 /// well as "printed".  The roots of the graph represent the "starting" point
 /// which can be located in the module "slots" in the graph. The graph also
 /// contains any redirects where the requested module specifier was redirected
 /// to another module specifier when being loaded.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Default)]
 pub struct ModuleGraph {
+  graph_kind: GraphKind,
   pub roots: Vec<ModuleSpecifier>,
-  #[serde(serialize_with = "serialize_modules", rename = "modules")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
-  #[serde(skip_serializing_if = "Vec::is_empty")]
   pub imports: Vec<GraphImport>,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
 }
 
 impl ModuleGraph {
-  fn new(roots: Vec<ModuleSpecifier>) -> Self {
+  pub fn new(graph_kind: GraphKind) -> Self {
     Self {
-      roots,
+      graph_kind,
+      roots: Default::default(),
       module_slots: Default::default(),
       imports: Default::default(),
       redirects: Default::default(),
     }
+  }
+
+  pub async fn build<'a>(
+    &mut self,
+    roots: Vec<ModuleSpecifier>,
+    loader: &mut dyn Loader,
+    options: BuildOptions<'a>,
+  ) {
+    let default_analyzer = DefaultModuleAnalyzer::default();
+    Builder::build(
+      self,
+      roots,
+      options.imports,
+      options.is_dynamic,
+      options.resolver,
+      loader,
+      options.module_analyzer.unwrap_or(&default_analyzer),
+      options.reporter,
+    )
+    .await
   }
 
   /// Returns `true` if the specifier resolves to a module within a graph,
@@ -989,6 +1023,25 @@ fn resolve(
       specifier,
       false,
     )
+  }
+}
+
+impl Serialize for ModuleGraph {
+  fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let mut graph = serializer.serialize_struct("ModuleGraph", 4)?;
+    graph.serialize_field("roots", &self.roots)?;
+    graph
+      .serialize_field("modules", &SerializableModules(&self.module_slots))?;
+    if self.imports.is_empty() {
+      graph.skip_field("imports")?;
+    } else {
+      graph.serialize_field("imports", &self.imports)?;
+    }
+    graph.serialize_field("redirects", &self.redirects)?;
+    graph.end()
   }
 }
 
@@ -1289,8 +1342,9 @@ fn is_untyped(media_type: &MediaType) -> bool {
   )
 }
 
-/// The kind of build to perform.
-pub enum BuildKind {
+/// The kind of module graph.
+#[derive(Debug)]
+pub enum GraphKind {
   /// All types of dependencies should be analyzed and included in the graph.
   All,
   /// Only code dependencies should be analyzed and included in the graph. This
@@ -1308,7 +1362,7 @@ pub enum BuildKind {
   TypesOnly,
 }
 
-impl Default for BuildKind {
+impl Default for GraphKind {
   fn default() -> Self {
     Self::All
   }
@@ -1317,54 +1371,63 @@ impl Default for BuildKind {
 pub type LoadWithSpecifierFuture =
   Pin<Box<dyn Future<Output = (ModuleSpecifier, LoadResult)> + 'static>>;
 
-pub(crate) struct Builder<'a> {
+struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
-  graph: ModuleGraph,
+  graph: &'graph mut ModuleGraph,
   loader: &'a mut dyn Loader,
-  maybe_resolver: Option<&'a dyn Resolver>,
+  resolver: Option<&'a dyn Resolver>,
   pending: FuturesUnordered<LoadWithSpecifierFuture>,
   pending_assert_types: HashMap<ModuleSpecifier, HashSet<Option<String>>>,
   dynamic_branches: HashMap<ModuleSpecifier, Option<String>>,
   module_analyzer: &'a dyn ModuleAnalyzer,
-  maybe_reporter: Option<&'a dyn Reporter>,
+  reporter: Option<&'a dyn Reporter>,
 }
 
-impl<'a> Builder<'a> {
-  pub fn new(
+impl<'a, 'graph> Builder<'a, 'graph> {
+  #[allow(clippy::too_many_arguments)]
+  pub async fn build(
+    graph: &'graph mut ModuleGraph,
     roots: Vec<ModuleSpecifier>,
-    is_dynamic_root: bool,
+    imports: Vec<ReferrerImports>,
+    is_dynamic: bool,
+    resolver: Option<&'a dyn Resolver>,
     loader: &'a mut dyn Loader,
-    maybe_resolver: Option<&'a dyn Resolver>,
     module_analyzer: &'a dyn ModuleAnalyzer,
-    maybe_reporter: Option<&'a dyn Reporter>,
-  ) -> Self {
+    reporter: Option<&'a dyn Reporter>,
+  ) {
     Self {
-      in_dynamic_branch: is_dynamic_root,
-      graph: ModuleGraph::new(roots),
+      in_dynamic_branch: is_dynamic,
+      graph,
       loader,
-      maybe_resolver,
+      resolver,
+      module_analyzer,
+      reporter,
       pending: FuturesUnordered::new(),
       pending_assert_types: HashMap::new(),
       dynamic_branches: HashMap::new(),
-      module_analyzer,
-      maybe_reporter,
     }
+    .fill(roots, imports)
+    .await
   }
 
-  pub async fn build(
-    mut self,
-    build_kind: BuildKind,
+  async fn fill(
+    &mut self,
+    roots: Vec<ModuleSpecifier>,
     imports: Vec<ReferrerImports>,
-  ) -> ModuleGraph {
-    let roots = self.graph.roots.clone();
+  ) {
+    let roots = roots
+      .into_iter()
+      .filter(|r| !self.graph.roots.contains(r))
+      .collect::<Vec<_>>();
+    self.graph.roots.extend(roots.clone());
     for root in roots {
       self.load(&root, self.in_dynamic_branch, None);
     }
 
     // Process any imports that are being added to the graph.
     for referrer_imports in imports {
-      let graph_import =
-        GraphImport::new(referrer_imports, self.maybe_resolver);
+      // todo(THIS PR): analyze past imports
+      let graph_import = GraphImport::new(referrer_imports, self.resolver);
       for dep in graph_import.dependencies.values() {
         if let Resolved::Ok { specifier, .. } = &dep.maybe_type {
           self.load(specifier, self.in_dynamic_branch, None);
@@ -1379,7 +1442,7 @@ impl<'a> Builder<'a> {
           let assert_types =
             self.pending_assert_types.remove(&specifier).unwrap();
           for maybe_assert_type in assert_types {
-            self.visit(&specifier, &response, &build_kind, maybe_assert_type)
+            self.visit(&specifier, &response, maybe_assert_type)
           }
           Some(specifier)
         }
@@ -1402,9 +1465,7 @@ impl<'a> Builder<'a> {
         }
         _ => None,
       };
-      if let (Some(specifier), Some(reporter)) =
-        (specifier, self.maybe_reporter)
-      {
+      if let (Some(specifier), Some(reporter)) = (specifier, self.reporter) {
         let modules_total = self.graph.module_slots.len();
         let modules_done = modules_total - self.pending.len();
         reporter.on_load(&specifier, modules_done, modules_total);
@@ -1438,8 +1499,6 @@ impl<'a> Builder<'a> {
         module.maybe_cache_info = self.loader.get_cache_info(&module.specifier);
       }
     }
-
-    self.graph
   }
 
   /// Checks if the specifier is redirected or not and updates any redirects in
@@ -1504,7 +1563,6 @@ impl<'a> Builder<'a> {
     &mut self,
     requested_specifier: &ModuleSpecifier,
     response: &LoadResponse,
-    build_kind: &BuildKind,
     maybe_assert_type: Option<String>,
   ) {
     let (specifier, module_slot) = match response {
@@ -1529,7 +1587,6 @@ impl<'a> Builder<'a> {
             ModuleKind::Esm,
             maybe_headers.as_ref(),
             content.clone(),
-            build_kind,
             maybe_assert_type,
           ),
         )
@@ -1548,7 +1605,6 @@ impl<'a> Builder<'a> {
     kind: ModuleKind,
     maybe_headers: Option<&HashMap<String, String>>,
     content: Arc<str>,
-    build_kind: &BuildKind,
     maybe_assert_type: Option<String>,
   ) -> ModuleSlot {
     use std::borrow::BorrowMut;
@@ -1560,19 +1616,21 @@ impl<'a> Builder<'a> {
       content,
       maybe_assert_type.as_deref(),
       Some(kind),
-      self.maybe_resolver,
+      self.resolver,
       self.module_analyzer,
       is_root,
       self.in_dynamic_branch,
     );
 
     if let ModuleSlot::Module(module) = module_slot.borrow_mut() {
-      if matches!(build_kind, BuildKind::All | BuildKind::CodeOnly)
+      if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::CodeOnly)
         || module.maybe_types_dependency.is_none()
       {
         for dep in module.dependencies.values_mut() {
-          if matches!(build_kind, BuildKind::All | BuildKind::CodeOnly)
-            || dep.maybe_type.is_none()
+          if matches!(
+            self.graph.graph_kind,
+            GraphKind::All | GraphKind::CodeOnly
+          ) || dep.maybe_type.is_none()
           {
             if let Resolved::Ok { specifier, .. } = &dep.maybe_code {
               if dep.is_dynamic && !self.in_dynamic_branch {
@@ -1591,7 +1649,10 @@ impl<'a> Builder<'a> {
             dep.maybe_code = Resolved::None;
           }
 
-          if matches!(build_kind, BuildKind::All | BuildKind::TypesOnly) {
+          if matches!(
+            self.graph.graph_kind,
+            GraphKind::All | GraphKind::TypesOnly
+          ) {
             if let Resolved::Ok { specifier, .. } = &dep.maybe_type {
               if dep.is_dynamic && !self.in_dynamic_branch {
                 self
@@ -1613,7 +1674,8 @@ impl<'a> Builder<'a> {
         module.dependencies.clear();
       }
 
-      if matches!(build_kind, BuildKind::All | BuildKind::TypesOnly) {
+      if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::TypesOnly)
+      {
         if let Some((_, Resolved::Ok { specifier, .. })) =
           &module.maybe_types_dependency
         {
@@ -1708,19 +1770,20 @@ impl<'a> Serialize for SerializeableModuleSlot<'a> {
   }
 }
 
-fn serialize_modules<S>(
-  modules: &BTreeMap<ModuleSpecifier, ModuleSlot>,
-  serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-  S: Serializer,
-{
-  let mut seq = serializer.serialize_seq(Some(modules.iter().count()))?;
-  for (specifier, slot) in modules.iter() {
-    let serializeable_module_slot = SerializeableModuleSlot(specifier, slot);
-    seq.serialize_element(&serializeable_module_slot)?;
+struct SerializableModules<'a>(&'a BTreeMap<ModuleSpecifier, ModuleSlot>);
+
+impl<'a> Serialize for SerializableModules<'a> {
+  fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let mut seq = serializer.serialize_seq(Some(self.0.iter().count()))?;
+    for (specifier, slot) in self.0.iter() {
+      let serializeable_module_slot = SerializeableModuleSlot(specifier, slot);
+      seq.serialize_element(&serializeable_module_slot)?;
+    }
+    seq.end()
   }
-  seq.end()
 }
 
 fn serialize_type_dependency<S>(
@@ -1925,16 +1988,14 @@ mod tests {
       loaded_bar: false,
       loaded_baz: false,
     };
-    let module_analyzer = DefaultModuleAnalyzer::default();
-    let builder = Builder::new(
-      vec![Url::parse("file:///foo.js").unwrap()],
-      false,
-      &mut loader,
-      None,
-      &module_analyzer,
-      None,
-    );
-    builder.build(BuildKind::All, Vec::new()).await;
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.js").unwrap()],
+        &mut loader,
+        Default::default(),
+      )
+      .await;
     assert!(loader.loaded_foo);
     assert!(loader.loaded_bar);
     assert!(loader.loaded_baz);
@@ -1964,16 +2025,14 @@ mod tests {
       }
     }
     let mut loader = TestLoader;
-    let module_analyzer = DefaultModuleAnalyzer::default();
-    let builder = Builder::new(
-      vec![Url::parse("file:///foo.js").unwrap()],
-      false,
-      &mut loader,
-      None,
-      &module_analyzer,
-      None,
-    );
-    let graph = builder.build(BuildKind::All, Vec::new()).await;
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.js").unwrap()],
+        &mut loader,
+        Default::default(),
+      )
+      .await;
     assert!(graph
       .try_get(&Url::parse("file:///foo.js").unwrap())
       .is_ok());
@@ -2029,16 +2088,14 @@ mod tests {
       }
     }
     let mut loader = TestLoader;
-    let module_analyzer = DefaultModuleAnalyzer::default();
-    let builder = Builder::new(
-      vec![Url::parse("file:///foo.js").unwrap()],
-      false,
-      &mut loader,
-      None,
-      &module_analyzer,
-      None,
-    );
-    let graph = builder.build(BuildKind::All, Vec::new()).await;
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.js").unwrap()],
+        &mut loader,
+        Default::default(),
+      )
+      .await;
     let specifiers = graph.specifiers().collect::<HashMap<_, _>>();
     dbg!(&specifiers);
     assert_eq!(specifiers.len(), 4);

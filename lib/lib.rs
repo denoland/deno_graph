@@ -14,7 +14,9 @@ use deno_graph::source::LoadFuture;
 use deno_graph::source::Loader;
 use deno_graph::source::Resolver;
 use deno_graph::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
-use deno_graph::BuildKind;
+use deno_graph::BuildOptions;
+use deno_graph::GraphKind;
+use deno_graph::ModuleGraph;
 use deno_graph::ModuleKind;
 use deno_graph::ModuleSpecifier;
 use deno_graph::Range;
@@ -185,7 +187,7 @@ pub async fn js_create_graph(
   maybe_cache_info: Option<js_sys::Function>,
   maybe_resolve: Option<js_sys::Function>,
   maybe_resolve_types: Option<js_sys::Function>,
-  maybe_build_kind: Option<String>,
+  maybe_graph_kind: Option<String>,
   maybe_imports: JsValue,
 ) -> Result<JsValue, JsValue> {
   let roots_vec: Vec<String> = serde_wasm_bindgen::from_value(roots)
@@ -229,24 +231,25 @@ pub async fn js_create_graph(
     Vec::new()
   };
 
-  let build_kind = match maybe_build_kind.as_deref() {
-    Some("typesOnly") => BuildKind::TypesOnly,
-    Some("codeOnly") => BuildKind::CodeOnly,
-    _ => BuildKind::All,
+  let graph_kind = match maybe_graph_kind.as_deref() {
+    Some("typesOnly") => GraphKind::TypesOnly,
+    Some("codeOnly") => GraphKind::CodeOnly,
+    _ => GraphKind::All,
   };
-  let graph = deno_graph::create_graph(
-    roots,
-    &mut loader,
-    deno_graph::GraphOptions {
-      is_dynamic: false,
-      resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-      module_analyzer: None,
-      build_kind,
-      imports,
-      reporter: None,
-    },
-  )
-  .await;
+  let mut graph = ModuleGraph::new(graph_kind);
+  graph
+    .build(
+      roots,
+      &mut loader,
+      BuildOptions {
+        is_dynamic: false,
+        resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+        module_analyzer: None,
+        imports,
+        reporter: None,
+      },
+    )
+    .await;
   let serializer =
     serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
   Ok(graph.serialize(&serializer).unwrap())
