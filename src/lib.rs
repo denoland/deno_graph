@@ -52,10 +52,21 @@ pub use module_specifier::SpecifierError;
 use source::Loader;
 use source::Reporter;
 
+pub struct ReferrerImports {
+  /// The referrer to resolve the imports from.
+  pub referrer: ModuleSpecifier,
+  /// Specifiers relative to the referrer to resolve.
+  pub imports: Vec<String>,
+}
+
 #[derive(Default)]
 pub struct GraphOptions<'graph> {
   pub is_dynamic: bool,
-  pub imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
+  /// Additional imports that should be brought into the scope of
+  /// the module graph to add to the graph's "imports". This may
+  /// be extra modules such as TypeScript's "types" option or JSX
+  /// runtime types.
+  pub imports: Vec<ReferrerImports>,
   pub resolver: Option<&'graph dyn Resolver>,
   pub module_analyzer: Option<&'graph dyn ModuleAnalyzer>,
   pub reporter: Option<&'graph dyn Reporter>,
@@ -499,13 +510,15 @@ console.log(a);
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let config_specifier =
       ModuleSpecifier::parse("file:///a/tsconfig.json").unwrap();
-    let maybe_imports =
-      Some(vec![(config_specifier, vec!["./types.d.ts".to_string()])]);
+    let imports = vec![ReferrerImports {
+      referrer: config_specifier,
+      imports: vec!["./types.d.ts".to_string()],
+    }];
     let graph = create_graph(
       vec![root_specifier],
       &mut loader,
       GraphOptions {
-        imports: maybe_imports,
+        imports,
         ..Default::default()
       },
     )
@@ -623,15 +636,15 @@ console.log(a);
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let config_specifier =
       ModuleSpecifier::parse("file:///a/deno.json").unwrap();
-    let maybe_imports = Some(vec![(
-      config_specifier,
-      vec!["https://esm.sh/preact/runtime-jsx".to_string()],
-    )]);
+    let imports = vec![ReferrerImports {
+      referrer: config_specifier,
+      imports: vec!["https://esm.sh/preact/runtime-jsx".to_string()],
+    }];
     let graph = create_graph(
       vec![root_specifier],
       &mut loader,
       GraphOptions {
-        imports: maybe_imports,
+        imports,
         ..Default::default()
       },
     )
@@ -747,15 +760,15 @@ console.log(a);
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let config_specifier =
       ModuleSpecifier::parse("file:///a/tsconfig.json").unwrap();
-    let maybe_imports = Some(vec![(
-      config_specifier.clone(),
-      vec!["https://example.com/jsx-runtime".to_string()],
-    )]);
+    let imports = vec![ReferrerImports {
+      referrer: config_specifier.clone(),
+      imports: vec!["https://example.com/jsx-runtime".to_string()],
+    }];
     let graph = create_graph(
       vec![root_specifier],
       &mut loader,
       GraphOptions {
-        imports: maybe_imports,
+        imports,
         ..Default::default()
       },
     )

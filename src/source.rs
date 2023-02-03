@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::Arc;
 
-pub static DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
+pub const DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
 
 /// Information that comes from an external source which can be optionally
 /// included in the module graph.

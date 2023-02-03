@@ -9,6 +9,8 @@ use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
 use crate::graph::Position;
 use crate::module_specifier::ModuleSpecifier;
+use crate::DependencyKind;
+use crate::ImportAssertions;
 
 use deno_ast::SourcePos;
 use deno_ast::SourceRange;
@@ -303,7 +305,7 @@ fn analyze_dependencies(
   .into_iter()
   .filter(|desc| desc.kind != deno_ast::swc::dep_graph::DependencyKind::Require)
   .map(|d| DependencyDescriptor {
-    kind: d.kind.into(),
+    kind: DependencyKind::from_swc(d.kind),
     is_dynamic: d.is_dynamic,
     leading_comments: d
       .leading_comments
@@ -320,14 +322,14 @@ fn analyze_dependencies(
       SourceRange::unsafely_from_span(d.specifier_span),
       parsed_source.text_info(),
     ),
-    import_assertions: d.import_assertions.into(),
+    import_assertions: ImportAssertions::from_swc(d.import_assertions),
   })
   .collect()
 }
 
 fn analyze_ts_references(
   parsed_source: &ParsedSource,
-) -> Vec<crate::analyzer::TypeScriptReference> {
+) -> Vec<TypeScriptReference> {
   let mut references = Vec::new();
   for comment in parsed_source.get_leading_comments().iter() {
     if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
@@ -494,11 +496,11 @@ mod tests {
 
     let dep_deno_types = analyze_deno_types(&dependencies[4]).unwrap();
     assert_eq!(
-      dep_deno_types.0,
+      dep_deno_types.specifier,
       "https://deno.land/x/types/react/index.d.ts"
     );
     assert_eq!(
-      text_info.range_text(&dep_deno_types.1.as_source_range(text_info)),
+      text_info.range_text(&dep_deno_types.range.as_source_range(text_info)),
       "https://deno.land/x/types/react/index.d.ts"
     );
 
