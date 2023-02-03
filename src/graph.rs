@@ -1028,7 +1028,8 @@ impl Serialize for ModuleGraph {
     if self.imports.is_empty() {
       graph.skip_field("imports")?;
     } else {
-      graph.serialize_field("imports", &SerializableGraphImports(&self.imports))?;
+      graph
+        .serialize_field("imports", &SerializableGraphImports(&self.imports))?;
     }
     graph.serialize_field("redirects", &self.redirects)?;
     graph.end()
