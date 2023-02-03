@@ -636,32 +636,27 @@ fn to_result<'a>(
 /// module graph without requiring the dependencies to be analyzed. This is
 /// intended to be used for importing type dependencies or other externally
 /// defined dependencies, like JSX runtimes.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct GraphImport {
-  /// The referring module specifier to be used to resolve relative dependencies
-  /// from. This is typically the meta data file that defined the dependency,
-  /// such as a configuration file.
-  pub referrer: ModuleSpecifier,
   /// A map of resolved dependencies, where the key is the value originally
   /// provided for the import and the value is the resolved dependency.
-  #[serde(serialize_with = "serialize_dependencies")]
   pub dependencies: BTreeMap<String, Dependency>,
 }
 
 impl GraphImport {
   pub fn new(
-    referrer_imports: ReferrerImports,
+    referrer: &ModuleSpecifier,
+    imports: Vec<String>,
     maybe_resolver: Option<&dyn Resolver>,
   ) -> Self {
-    let dependencies = referrer_imports
-      .imports
+    let referrer_range = Range {
+      specifier: referrer.clone(),
+      start: Position::zeroed(),
+      end: Position::zeroed(),
+    };
+    let dependencies = imports
       .iter()
       .map(|import| {
-        let referrer_range = Range {
-          specifier: referrer_imports.referrer.clone(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
-        };
         let maybe_type = resolve(import, &referrer_range, maybe_resolver);
         (
           import.clone(),
@@ -674,10 +669,7 @@ impl GraphImport {
         )
       })
       .collect();
-    Self {
-      referrer: referrer_imports.referrer,
-      dependencies,
-    }
+    Self { dependencies }
   }
 }
 
@@ -704,7 +696,7 @@ pub struct ModuleGraph {
   graph_kind: GraphKind,
   pub roots: Vec<ModuleSpecifier>,
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
-  pub imports: Vec<GraphImport>,
+  pub imports: BTreeMap<ModuleSpecifier, GraphImport>,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
 }
 
@@ -822,9 +814,7 @@ impl ModuleGraph {
     {
       let dependency = referring_module.dependencies.get(specifier)?;
       self.resolve_dependency_specifier(dependency, prefer_types)
-    } else if let Some(graph_import) =
-      self.imports.iter().find(|i| i.referrer == referrer)
-    {
+    } else if let Some(graph_import) = self.imports.get(&referrer) {
       let dependency = graph_import.dependencies.get(specifier)?;
       self.resolve_dependency_specifier(dependency, prefer_types)
     } else {
@@ -1027,7 +1017,7 @@ fn resolve(
 }
 
 impl Serialize for ModuleGraph {
-  fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
     S: Serializer,
   {
@@ -1038,7 +1028,7 @@ impl Serialize for ModuleGraph {
     if self.imports.is_empty() {
       graph.skip_field("imports")?;
     } else {
-      graph.serialize_field("imports", &self.imports)?;
+      graph.serialize_field("imports", &SerializableGraphImports(&self.imports))?;
     }
     graph.serialize_field("redirects", &self.redirects)?;
     graph.end()
@@ -1419,6 +1409,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .into_iter()
       .filter(|r| !self.graph.roots.contains(r))
       .collect::<Vec<_>>();
+    let imports = imports
+      .into_iter()
+      .filter(|r| !self.graph.imports.contains_key(&r.referrer))
+      .collect::<Vec<_>>();
     self.graph.roots.extend(roots.clone());
     for root in roots {
       self.load(&root, self.in_dynamic_branch, None);
@@ -1426,14 +1420,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     // Process any imports that are being added to the graph.
     for referrer_imports in imports {
-      // todo(THIS PR): analyze past imports
-      let graph_import = GraphImport::new(referrer_imports, self.resolver);
+      let referrer = referrer_imports.referrer;
+      let imports = referrer_imports.imports;
+      let graph_import = GraphImport::new(&referrer, imports, self.resolver);
       for dep in graph_import.dependencies.values() {
         if let Resolved::Ok { specifier, .. } = &dep.maybe_type {
           self.load(specifier, self.in_dynamic_branch, None);
         }
       }
-      self.graph.imports.push(graph_import);
+      self.graph.imports.insert(referrer, graph_import);
     }
 
     loop {
@@ -1689,9 +1684,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   }
 }
 
-struct SerializeableResolved<'a>(&'a Resolved);
+struct SerializableResolved<'a>(&'a Resolved);
 
-impl<'a> Serialize for SerializeableResolved<'a> {
+impl<'a> Serialize for SerializableResolved<'a> {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
     S: Serializer,
@@ -1700,9 +1695,9 @@ impl<'a> Serialize for SerializeableResolved<'a> {
   }
 }
 
-struct SerializeableDependency<'a>(&'a str, &'a Dependency);
+struct SerializableDependency<'a>(&'a str, &'a Dependency);
 
-impl<'a> Serialize for SerializeableDependency<'a> {
+impl<'a> Serialize for SerializableDependency<'a> {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
     S: Serializer,
@@ -1710,11 +1705,11 @@ impl<'a> Serialize for SerializeableDependency<'a> {
     let mut map = serializer.serialize_map(None)?;
     map.serialize_entry("specifier", self.0)?;
     if !self.1.maybe_code.is_none() {
-      let serializeable_resolved = SerializeableResolved(&self.1.maybe_code);
+      let serializeable_resolved = SerializableResolved(&self.1.maybe_code);
       map.serialize_entry("code", &serializeable_resolved)?;
     }
     if !self.1.maybe_type.is_none() {
-      let serializeable_resolved = SerializeableResolved(&self.1.maybe_type);
+      let serializeable_resolved = SerializableResolved(&self.1.maybe_type);
       map.serialize_entry("type", &serializeable_resolved)?;
     }
     if self.1.is_dynamic {
@@ -1727,6 +1722,17 @@ impl<'a> Serialize for SerializeableDependency<'a> {
   }
 }
 
+struct SerializableDependencies<'a>(&'a BTreeMap<String, Dependency>);
+
+impl<'a> Serialize for SerializableDependencies<'a> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    serialize_dependencies(self.0, serializer)
+  }
+}
+
 fn serialize_dependencies<S>(
   dependencies: &BTreeMap<String, Dependency>,
   serializer: S,
@@ -1736,15 +1742,15 @@ where
 {
   let mut seq = serializer.serialize_seq(Some(dependencies.iter().count()))?;
   for (specifier_str, dep) in dependencies.iter() {
-    let serializeable_dependency = SerializeableDependency(specifier_str, dep);
+    let serializeable_dependency = SerializableDependency(specifier_str, dep);
     seq.serialize_element(&serializeable_dependency)?;
   }
   seq.end()
 }
 
-struct SerializeableModuleSlot<'a>(&'a ModuleSpecifier, &'a ModuleSlot);
+struct SerializableModuleSlot<'a>(&'a ModuleSpecifier, &'a ModuleSlot);
 
-impl<'a> Serialize for SerializeableModuleSlot<'a> {
+impl<'a> Serialize for SerializableModuleSlot<'a> {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
     S: Serializer,
@@ -1773,16 +1779,48 @@ impl<'a> Serialize for SerializeableModuleSlot<'a> {
 struct SerializableModules<'a>(&'a BTreeMap<ModuleSpecifier, ModuleSlot>);
 
 impl<'a> Serialize for SerializableModules<'a> {
-  fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
     S: Serializer,
   {
-    let mut seq = serializer.serialize_seq(Some(self.0.iter().count()))?;
+    let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
     for (specifier, slot) in self.0.iter() {
-      let serializeable_module_slot = SerializeableModuleSlot(specifier, slot);
+      let serializeable_module_slot = SerializableModuleSlot(specifier, slot);
       seq.serialize_element(&serializeable_module_slot)?;
     }
     seq.end()
+  }
+}
+
+struct SerializableGraphImports<'a>(&'a BTreeMap<ModuleSpecifier, GraphImport>);
+
+impl<'a> Serialize for SerializableGraphImports<'a> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
+    for (key, value) in self.0.iter() {
+      seq.serialize_element(&SerializableGraphImport(key, value))?;
+    }
+    seq.end()
+  }
+}
+
+struct SerializableGraphImport<'a>(&'a ModuleSpecifier, &'a GraphImport);
+
+impl<'a> Serialize for SerializableGraphImport<'a> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let mut val = serializer.serialize_struct("GraphImport", 2)?;
+    val.serialize_field("referrer", self.0)?;
+    val.serialize_field(
+      "dependencies",
+      &SerializableDependencies(&self.1.dependencies),
+    )?;
+    val.end()
   }
 }
 
@@ -1797,7 +1835,7 @@ where
     Some((ref specifier, ref resolved)) => {
       let mut state = serializer.serialize_struct("TypesDependency", 2)?;
       state.serialize_field("specifier", specifier)?;
-      let serializeable_resolved = SerializeableResolved(resolved);
+      let serializeable_resolved = SerializableResolved(resolved);
       state.serialize_field("dependency", &serializeable_resolved)?;
       state.end()
     }
