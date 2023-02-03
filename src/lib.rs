@@ -251,6 +251,94 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn test_build_graph_multiple_times() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"import * as b from "./test02.ts";"#,
+          },
+        ),
+        (
+          "file:///a/test02.ts",
+          Source::Module {
+            specifier: "file:///a/test02.ts",
+            maybe_headers: None,
+            content: r#"import "https://example.com/c.ts"; export const b = "b";"#,
+          },
+        ),
+        (
+          "https://example.com/a.ts",
+          Source::Module {
+            specifier: "https://example.com/a.ts",
+            maybe_headers: None,
+            content: r#"import * as c from "./c.ts";"#,
+          },
+        ),
+        (
+          "https://example.com/c.ts",
+          Source::Module {
+            specifier: "https://example.com/c.ts",
+            maybe_headers: None,
+            content: r#"import "./d.ts"; export const c = "c";"#,
+          },
+        ),
+        (
+          "https://example.com/d.ts",
+          Source::Module {
+            specifier: "https://example.com/d.ts",
+            maybe_headers: None,
+            content: r#"export const d = "d";"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let first_root = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
+    let second_root =
+      ModuleSpecifier::parse("https://example.com/a.ts").unwrap();
+    let third_root =
+      ModuleSpecifier::parse("https://example.com/d.ts").unwrap();
+    let mut graph = ModuleGraph::default();
+    graph
+      .build(vec![first_root.clone()], &mut loader, Default::default())
+      .await;
+    assert_eq!(graph.module_slots.len(), 4);
+    assert_eq!(graph.roots, vec![first_root.clone()]);
+
+    // now build with the second root
+    graph
+      .build(vec![second_root.clone()], &mut loader, Default::default())
+      .await;
+    let mut roots = vec![first_root, second_root];
+    assert_eq!(graph.module_slots.len(), 5);
+    assert_eq!(graph.roots, roots);
+    assert!(
+      graph.contains(&ModuleSpecifier::parse("file:///a/test01.ts").unwrap())
+    );
+    assert!(
+      graph.contains(&ModuleSpecifier::parse("file:///a/test02.ts").unwrap())
+    );
+    assert!(graph
+      .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap()));
+    assert!(graph
+      .contains(&ModuleSpecifier::parse("https://example.com/c.ts").unwrap()));
+    assert!(graph
+      .contains(&ModuleSpecifier::parse("https://example.com/d.ts").unwrap()));
+
+    // now try making one of the already existing modules a root
+    graph
+      .build(vec![third_root.clone()], &mut loader, Default::default())
+      .await;
+    roots.push(third_root);
+    assert_eq!(graph.module_slots.len(), 5);
+    assert_eq!(graph.roots, roots);
+  }
+
+  #[tokio::test]
   async fn test_build_graph_json_module_root() {
     let mut loader = setup(
       vec![(
