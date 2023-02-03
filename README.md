@@ -15,8 +15,9 @@ leverage the logic outside of the Deno CLI from JavaScript/TypeScript.
 
 ### `ModuleGraph::new(...)`
 
-`ModuleGraph::new(GraphKind::All)` creates a new module graph. From there, you can use the `.build(...).await` method to add roots. The `build` method requires the
-root module specifiers/URLs for the graph and an implementation of the
+`ModuleGraph::new(GraphKind::All)` creates a new module graph. From there, you
+can use the `.build(...).await` method to add roots. The `build` method requires
+the root module specifiers/URLs for the graph and an implementation of the
 `source::Loader` trait. It also optionally takes implementation of the
 `source::Resolver` trait. It will load and parse the root module and recursively
 all of its dependencies, returning asynchronously a resulting `ModuleGraph`.
