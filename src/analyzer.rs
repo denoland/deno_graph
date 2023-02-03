@@ -22,10 +22,16 @@ static DENO_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
   Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#).unwrap()
 });
 
+/// A `@deno-types` pragma.
+pub struct DenoTypesPragma {
+  pub specifier: String,
+  pub range: PositionRange,
+}
+
 /// Searches comments for any `@deno-types` compiler hints.
 pub fn analyze_deno_types(
   desc: &DependencyDescriptor,
-) -> Option<(String, PositionRange)> {
+) -> Option<DenoTypesPragma> {
   fn comment_position_to_position_range(
     mut comment_start: Position,
     m: &Match,
@@ -48,15 +54,21 @@ pub fn analyze_deno_types(
   let comment = desc.leading_comments.last()?;
   let captures = DENO_TYPES_RE.captures(&comment.text)?;
   if let Some(m) = captures.get(1) {
-    Some((
-      m.as_str().to_string(),
-      comment_position_to_position_range(comment.range.start.clone(), &m),
-    ))
+    Some(DenoTypesPragma {
+      specifier: m.as_str().to_string(),
+      range: comment_position_to_position_range(
+        comment.range.start.clone(),
+        &m,
+      ),
+    })
   } else if let Some(m) = captures.get(2) {
-    Some((
-      m.as_str().to_string(),
-      comment_position_to_position_range(comment.range.start.clone(), &m),
-    ))
+    Some(DenoTypesPragma {
+      specifier: m.as_str().to_string(),
+      range: comment_position_to_position_range(
+        comment.range.start.clone(),
+        &m,
+      ),
+    })
   } else {
     unreachable!("Unexpected captures from deno types regex")
   }
@@ -98,9 +110,9 @@ pub enum DependencyKind {
   Require,
 }
 
-// can't use this type directly because we need to make it serialize & deserialize
-impl From<deno_ast::swc::dep_graph::DependencyKind> for DependencyKind {
-  fn from(value: deno_ast::swc::dep_graph::DependencyKind) -> Self {
+impl DependencyKind {
+  // can't use this type directly because we need to make it serialize & deserialize
+  pub fn from_swc(value: deno_ast::swc::dep_graph::DependencyKind) -> Self {
     use deno_ast::swc::dep_graph::DependencyKind::*;
     match value {
       Import => DependencyKind::Import,
@@ -122,9 +134,9 @@ pub enum ImportAssertion {
   Known(String),
 }
 
-// can't use this type directly because we need to make it serialize & deserialize
-impl From<deno_ast::swc::dep_graph::ImportAssertion> for ImportAssertion {
-  fn from(value: deno_ast::swc::dep_graph::ImportAssertion) -> Self {
+impl ImportAssertion {
+  // can't use swc's type directly because we need to make it serialize & deserialize
+  pub fn from_swc(value: deno_ast::swc::dep_graph::ImportAssertion) -> Self {
     use deno_ast::swc::dep_graph::ImportAssertion::*;
     match value {
       Unknown => ImportAssertion::Unknown,
@@ -145,20 +157,8 @@ pub enum ImportAssertions {
 }
 
 impl ImportAssertions {
-  pub fn get(&self, key: &str) -> Option<&String> {
-    match self {
-      ImportAssertions::Known(map) => match map.get(key) {
-        Some(ImportAssertion::Known(value)) => Some(value),
-        _ => None,
-      },
-      _ => None,
-    }
-  }
-}
-
-// can't use this type directly because we need to make it serialize & deserialize
-impl From<deno_ast::swc::dep_graph::ImportAssertions> for ImportAssertions {
-  fn from(value: deno_ast::swc::dep_graph::ImportAssertions) -> Self {
+  // can't use this type directly because we need to make it serialize & deserialize
+  pub fn from_swc(value: deno_ast::swc::dep_graph::ImportAssertions) -> Self {
     use deno_ast::swc::dep_graph::ImportAssertions::*;
     match value {
       None => ImportAssertions::None,
@@ -166,9 +166,19 @@ impl From<deno_ast::swc::dep_graph::ImportAssertions> for ImportAssertions {
       Known(value) => ImportAssertions::Known(
         value
           .into_iter()
-          .map(|(key, value)| (key, value.into()))
+          .map(|(key, value)| (key, ImportAssertion::from_swc(value)))
           .collect(),
       ),
+    }
+  }
+
+  pub fn get(&self, key: &str) -> Option<&String> {
+    match self {
+      ImportAssertions::Known(map) => match map.get(key) {
+        Some(ImportAssertion::Known(value)) => Some(value),
+        _ => None,
+      },
+      _ => None,
     }
   }
 }

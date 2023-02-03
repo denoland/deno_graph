@@ -7,6 +7,7 @@ use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
+use crate::ReferrerImports;
 
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -615,7 +616,7 @@ pub(crate) enum ModuleSlot {
 
 type ModuleResult<'a> = (
   &'a ModuleSpecifier,
-  Result<(&'a ModuleSpecifier, ModuleKind, MediaType), &'a ModuleGraphError>,
+  Result<&'a Module, &'a ModuleGraphError>,
 );
 
 /// Convert a module slot entry into a result which contains the resolved
@@ -625,10 +626,7 @@ fn to_result<'a>(
 ) -> Option<ModuleResult<'a>> {
   match module_slot {
     ModuleSlot::Err(err) => Some((specifier, Err(err))),
-    ModuleSlot::Module(module) => Some((
-      specifier,
-      Ok((&module.specifier, module.kind, module.media_type)),
-    )),
+    ModuleSlot::Module(module) => Some((specifier, Ok(module))),
     ModuleSlot::Pending => None,
   }
 }
@@ -651,15 +649,15 @@ pub struct GraphImport {
 
 impl GraphImport {
   pub fn new(
-    referrer: ModuleSpecifier,
-    imports: Vec<String>,
+    referrer_imports: ReferrerImports,
     maybe_resolver: Option<&dyn Resolver>,
   ) -> Self {
-    let dependencies = imports
+    let dependencies = referrer_imports
+      .imports
       .iter()
       .map(|import| {
         let referrer_range = Range {
-          specifier: referrer.clone(),
+          specifier: referrer_imports.referrer.clone(),
           start: Position::zeroed(),
           end: Position::zeroed(),
         };
@@ -676,7 +674,7 @@ impl GraphImport {
       })
       .collect();
     Self {
-      referrer,
+      referrer: referrer_imports.referrer,
       dependencies,
     }
   }
@@ -857,12 +855,8 @@ impl ModuleGraph {
   /// error.
   pub fn specifiers(
     &self,
-  ) -> impl Iterator<
-    Item = (
-      &ModuleSpecifier,
-      Result<(&ModuleSpecifier, ModuleKind, MediaType), &ModuleGraphError>,
-    ),
-  > {
+  ) -> impl Iterator<Item = (&ModuleSpecifier, Result<&Module, &ModuleGraphError>)>
+  {
     self.module_slots.iter().filter_map(to_result).chain(
       self.redirects.iter().filter_map(|(specifier, found)| {
         let module_slot = self.module_slots.get(found)?;
@@ -1269,10 +1263,10 @@ pub(crate) fn parse_module_from_module_info(
     }
     let specifier = module.specifier.clone();
     let maybe_type = analyze_deno_types(&desc)
-      .map(|(text, range)| {
+      .map(|pragma| {
         resolve(
-          &text,
-          &Range::from_position_range(&specifier, &range),
+          &pragma.specifier,
+          &Range::from_position_range(&specifier, &pragma.range),
           maybe_resolver,
         )
       })
@@ -1360,7 +1354,7 @@ impl<'a> Builder<'a> {
   pub async fn build(
     mut self,
     build_kind: BuildKind,
-    maybe_imports: Option<Vec<(ModuleSpecifier, Vec<String>)>>,
+    imports: Vec<ReferrerImports>,
   ) -> ModuleGraph {
     let roots = self.graph.roots.clone();
     for root in roots {
@@ -1368,17 +1362,15 @@ impl<'a> Builder<'a> {
     }
 
     // Process any imports that are being added to the graph.
-    if let Some(imports) = maybe_imports {
-      for (referrer, imports) in imports {
-        let graph_import =
-          GraphImport::new(referrer, imports, self.maybe_resolver);
-        for dep in graph_import.dependencies.values() {
-          if let Resolved::Ok { specifier, .. } = &dep.maybe_type {
-            self.load(specifier, self.in_dynamic_branch, None);
-          }
+    for referrer_imports in imports {
+      let graph_import =
+        GraphImport::new(referrer_imports, self.maybe_resolver);
+      for dep in graph_import.dependencies.values() {
+        if let Resolved::Ok { specifier, .. } = &dep.maybe_type {
+          self.load(specifier, self.in_dynamic_branch, None);
         }
-        self.graph.imports.push(graph_import);
       }
+      self.graph.imports.push(graph_import);
     }
 
     loop {
@@ -1731,7 +1723,7 @@ where
   seq.end()
 }
 
-pub(crate) fn serialize_type_dependency<S>(
+fn serialize_type_dependency<S>(
   maybe_types_dependency: &Option<(String, Resolved)>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
@@ -1942,7 +1934,7 @@ mod tests {
       &module_analyzer,
       None,
     );
-    builder.build(BuildKind::All, None).await;
+    builder.build(BuildKind::All, Vec::new()).await;
     assert!(loader.loaded_foo);
     assert!(loader.loaded_bar);
     assert!(loader.loaded_baz);
@@ -1981,7 +1973,7 @@ mod tests {
       &module_analyzer,
       None,
     );
-    let graph = builder.build(BuildKind::All, None).await;
+    let graph = builder.build(BuildKind::All, Vec::new()).await;
     assert!(graph
       .try_get(&Url::parse("file:///foo.js").unwrap())
       .is_ok());
@@ -2046,7 +2038,7 @@ mod tests {
       &module_analyzer,
       None,
     );
-    let graph = builder.build(BuildKind::All, None).await;
+    let graph = builder.build(BuildKind::All, Vec::new()).await;
     let specifiers = graph.specifiers().collect::<HashMap<_, _>>();
     dbg!(&specifiers);
     assert_eq!(specifiers.len(), 4);

@@ -18,6 +18,7 @@ use deno_graph::BuildKind;
 use deno_graph::ModuleKind;
 use deno_graph::ModuleSpecifier;
 use deno_graph::Range;
+use deno_graph::ReferrerImports;
 
 use anyhow::anyhow;
 use anyhow::Error;
@@ -213,16 +214,20 @@ pub async fn js_create_graph(
       .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
     roots.push(root);
   }
-  let mut maybe_imports = None;
-  if let Some(imports_map) = maybe_imports_map {
+  let imports = if let Some(imports_map) = maybe_imports_map {
     let mut imports = Vec::new();
     for (referrer_str, specifier_vec) in imports_map.into_iter() {
       let referrer = ModuleSpecifier::parse(&referrer_str)
         .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-      imports.push((referrer, specifier_vec));
+      imports.push(ReferrerImports {
+        referrer,
+        imports: specifier_vec,
+      });
     }
-    maybe_imports = Some(imports);
-  }
+    imports
+  } else {
+    Vec::new()
+  };
 
   let build_kind = match maybe_build_kind.as_deref() {
     Some("typesOnly") => BuildKind::TypesOnly,
@@ -237,7 +242,7 @@ pub async fn js_create_graph(
       resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
       module_analyzer: None,
       build_kind,
-      imports: maybe_imports,
+      imports,
       reporter: None,
     },
   )
