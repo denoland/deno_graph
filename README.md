@@ -13,10 +13,11 @@ leverage the logic outside of the Deno CLI from JavaScript/TypeScript.
 
 ## Rust usage
 
-### `create_graph()`
+### `ModuleGraph::new(...)`
 
-`create_graph()` is the main way of interfacing with the crate. It requires the
-root module specifiers/URLs for the graph and an implementation of the
+`ModuleGraph::new(GraphKind::All)` creates a new module graph. From there, you
+can use the `.build(...).await` method to add roots. The `build` method requires
+the root module specifiers/URLs for the graph and an implementation of the
 `source::Loader` trait. It also optionally takes implementation of the
 `source::Resolver` trait. It will load and parse the root module and recursively
 all of its dependencies, returning asynchronously a resulting `ModuleGraph`.
@@ -68,21 +69,38 @@ A minimal example would look like this:
 use deno_graph::create_graph;
 use deno_graph::ModuleSpecifier;
 use deno_graph::source::MemoryLoader;
+use deno_graph::source::Source;
 use futures::executor::block_on;
 
 fn main() {
   let mut loader = MemoryLoader::new(
     vec![
-      ("file:///test.ts", Ok(("file:///test.ts", None, "import * as a from \"./a.ts\";"))),
-      ("file:///a.ts", Ok(("file:///a.ts", None, "export const a = \"a\";"))),
-    ]
+      (
+        "file:///test.ts",
+        Source::Module {
+          specifier: "file:///test.ts",
+          maybe_headers: None,
+          content: "import * as a from \"./a.ts\";"
+        }
+      ),
+      (
+        "file:///a.ts",
+        Source::Module {
+          specifier: "file:///a.ts",
+          maybe_headers: None,
+          content: "export const a = \"a\";",
+        }
+      ),
+    ],
+    Vec::new(),
   );
   let roots = vec![ModuleSpecifier::parse("file:///test.ts").unwrap()];
   let future = async move {
-    let graph = create_graph(roots, &mut loader, Default::default()).await;
+    let mut graph = ModuleGraph::default();
+    graph.build(roots, &mut loader, Default::default()).await;
     println!("{}", graph);
   };
-  block_on()
+  block_on(future)
 }
 ```
 
