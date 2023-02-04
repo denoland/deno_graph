@@ -190,11 +190,11 @@ Deno.test({
                 "span": {
                   "start": {
                     "line": 0,
-                    "character": 19,
+                    "character": 20,
                   },
                   "end": {
                     "line": 0,
-                    "character": 27,
+                    "character": 26,
                   },
                 },
               },
@@ -268,11 +268,11 @@ Deno.test({
                 "span": {
                   "start": {
                     "line": 0,
-                    "character": 19,
+                    "character": 20,
                   },
                   "end": {
                     "line": 0,
-                    "character": 32,
+                    "character": 31,
                   },
                 },
               },
@@ -363,11 +363,11 @@ Deno.test({
                 "span": {
                   "start": {
                     "line": 0,
-                    "character": 19,
+                    "character": 20,
                   },
                   "end": {
                     "line": 0,
-                    "character": 27,
+                    "character": 26,
                   },
                 },
               },
@@ -459,11 +459,11 @@ Deno.test({
                 "span": {
                   "start": {
                     "line": 0,
-                    "character": 20,
+                    "character": 21,
                   },
                   "end": {
                     "line": 0,
-                    "character": 32,
+                    "character": 31,
                   },
                 },
               },
@@ -475,11 +475,11 @@ Deno.test({
                 "span": {
                   "start": {
                     "line": 1,
-                    "character": 34,
+                    "character": 35,
                   },
                   "end": {
                     "line": 1,
-                    "character": 62,
+                    "character": 61,
                   },
                 },
               },
@@ -550,8 +550,8 @@ Deno.test({
         "code": {
           "specifier": "file:///a/a.ts",
           "span": {
-            "start": { "line": 2, "character": 26 },
-            "end": { "line": 2, "character": 34 },
+            "start": { "line": 2, "character": 27 },
+            "end": { "line": 2, "character": 33 },
           },
         },
       }, {
@@ -559,8 +559,8 @@ Deno.test({
         "code": {
           "specifier": "file:///a/b.ts",
           "span": {
-            "start": { "line": 3, "character": 27 },
-            "end": { "line": 3, "character": 35 },
+            "start": { "line": 3, "character": 28 },
+            "end": { "line": 3, "character": 34 },
           },
         },
       }, {
@@ -568,8 +568,8 @@ Deno.test({
         "code": {
           "specifier": "file:///a/c.ts",
           "span": {
-            "start": { "line": 4, "character": 26 },
-            "end": { "line": 4, "character": 34 },
+            "start": { "line": 4, "character": 27 },
+            "end": { "line": 4, "character": 33 },
           },
         },
       }, {
@@ -577,8 +577,8 @@ Deno.test({
         "code": {
           "specifier": "file:///a/d.ts",
           "span": {
-            "start": { "line": 5, "character": 31 },
-            "end": { "line": 5, "character": 39 },
+            "start": { "line": 5, "character": 32 },
+            "end": { "line": 5, "character": 38 },
           },
         },
         "isDynamic": true,
@@ -709,11 +709,11 @@ Deno.test({
             "span": {
               "start": {
                 "line": 1,
-                "character": 22,
+                "character": 23,
               },
               "end": {
                 "line": 1,
-                "character": 32,
+                "character": 31,
               },
             },
           },
@@ -726,11 +726,11 @@ Deno.test({
             "span": {
               "start": {
                 "line": 2,
-                "character": 21,
+                "character": 22,
               },
               "end": {
                 "line": 2,
-                "character": 31,
+                "character": 30,
               },
             },
           },

@@ -1934,11 +1934,11 @@ mod tests {
             specifier: specifier.clone(),
             start: Position {
               line: 0,
-              character: 19
+              character: 20,
             },
             end: Position {
               line: 0,
-              character: 27
+              character: 26,
             },
           }),
         }
@@ -1949,11 +1949,11 @@ mod tests {
           specifier,
           start: Position {
             line: 0,
-            character: 19
+            character: 20,
           },
           end: Position {
             line: 0,
-            character: 27
+            character: 26,
           },
         }
       );
