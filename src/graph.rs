@@ -1151,7 +1151,10 @@ pub(crate) fn parse_module_from_module_info(
   for reference in module_info.ts_references {
     match reference {
       TypeScriptReference::Path(specifier) => {
-        let dep = module.dependencies.entry(specifier.clone()).or_default();
+        let dep = module
+          .dependencies
+          .entry(specifier.text.clone())
+          .or_default();
         if dep.maybe_code.is_none() {
           let range =
             Range::from_position_range(&module.specifier, &specifier.range);
@@ -1204,7 +1207,7 @@ pub(crate) fn parse_module_from_module_info(
         .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE);
       let specifier =
         format!("{}/{}", import_source.text, jsx_import_source_module);
-      let dep = module.dependencies.entry(specifier).or_default();
+      let dep = module.dependencies.entry(specifier.clone()).or_default();
       if dep.maybe_code.is_none() {
         let range =
           Range::from_position_range(&module.specifier, &import_source.range);
@@ -1216,7 +1219,10 @@ pub(crate) fn parse_module_from_module_info(
 
   // Analyze any JSDoc type imports
   for specifier in module_info.jsdoc_imports {
-    let dep = module.dependencies.entry(specifier.text).or_default();
+    let dep = module
+      .dependencies
+      .entry(specifier.text.clone())
+      .or_default();
     if dep.maybe_type.is_none() {
       let range =
         Range::from_position_range(&module.specifier, &specifier.range);
@@ -1316,10 +1322,10 @@ pub(crate) fn parse_module_from_module_info(
     if dep.maybe_type.is_none() {
       let specifier = module.specifier.clone();
       let maybe_type = analyze_deno_types(&desc)
-        .map(|(text, span)| {
+        .map(|pragma| {
           resolve(
-            &text,
-            &Range::from_swc_span(&specifier, &pragma.range),
+            &pragma.specifier,
+            &Range::from_position_range(&specifier, &pragma.range),
             maybe_resolver,
           )
         })
@@ -2248,10 +2254,8 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: Arc::new(
-                "import 'file:///bar.js'; await import('file:///bar.js')"
-                  .to_string(),
-              ),
+              content:
+                "import 'file:///bar.js'; await import('file:///bar.js')".into(),
             }))
           }),
           "file:///bar.js" => {
@@ -2261,7 +2265,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: Arc::new("console.log('Hello, world!')".to_string()),
+                content: "console.log('Hello, world!')".into(),
               }))
             })
           }
@@ -2270,17 +2274,14 @@ mod tests {
       }
     }
     let mut loader = TestLoader { loaded_bar: false };
-    let source_parser = DefaultSourceParser::new();
-    let builder = Builder::new(
-      vec![(Url::parse("file:///foo.js").unwrap(), ModuleKind::Esm)],
-      false,
-      &mut loader,
-      None,
-      None,
-      &source_parser,
-      None,
-    );
-    builder.build(BuildKind::All, None).await;
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.js").unwrap()],
+        &mut loader,
+        Default::default(),
+      )
+      .await;
     assert!(loader.loaded_bar);
   }
 }
