@@ -1151,12 +1151,17 @@ pub(crate) fn parse_module_from_module_info(
   for reference in module_info.ts_references {
     match reference {
       TypeScriptReference::Path(specifier) => {
-        let range =
-          Range::from_position_range(&module.specifier, &specifier.range);
-        let resolved_dependency =
-          resolve(&specifier.text, &range, maybe_resolver);
-        let dep = module.dependencies.entry(specifier.text).or_default();
-        dep.maybe_code = resolved_dependency;
+        let dep = module
+          .dependencies
+          .entry(specifier.text.clone())
+          .or_default();
+        if dep.maybe_code.is_none() {
+          let range =
+            Range::from_position_range(&module.specifier, &specifier.range);
+          let resolved_dependency =
+            resolve(&specifier.text, &range, maybe_resolver);
+          dep.maybe_code = resolved_dependency;
+        }
       }
       TypeScriptReference::Types(specifier) => {
         let range =
@@ -1168,7 +1173,9 @@ pub(crate) fn parse_module_from_module_info(
             Some((specifier.text, resolved_dependency));
         } else {
           let dep = module.dependencies.entry(specifier.text).or_default();
-          dep.maybe_type = resolved_dependency;
+          if dep.maybe_type.is_none() {
+            dep.maybe_type = resolved_dependency;
+          }
         }
       }
     }
@@ -1200,20 +1207,29 @@ pub(crate) fn parse_module_from_module_info(
         .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE);
       let specifier =
         format!("{}/{}", import_source.text, jsx_import_source_module);
-      let range =
-        Range::from_position_range(&module.specifier, &import_source.range);
-      let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
-      let dep = module.dependencies.entry(specifier).or_default();
-      dep.maybe_code = resolved_dependency;
+      let dep = module.dependencies.entry(specifier.clone()).or_default();
+      if dep.maybe_code.is_none() {
+        let range =
+          Range::from_position_range(&module.specifier, &import_source.range);
+        let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
+        dep.maybe_code = resolved_dependency;
+      }
     }
   }
 
   // Analyze any JSDoc type imports
   for specifier in module_info.jsdoc_imports {
-    let range = Range::from_position_range(&module.specifier, &specifier.range);
-    let resolved_dependency = resolve(&specifier.text, &range, maybe_resolver);
-    let dep = module.dependencies.entry(specifier.text).or_default();
-    dep.maybe_type = resolved_dependency;
+    let dep = module
+      .dependencies
+      .entry(specifier.text.clone())
+      .or_default();
+    if dep.maybe_type.is_none() {
+      let range =
+        Range::from_position_range(&module.specifier, &specifier.range);
+      let resolved_dependency =
+        resolve(&specifier.text, &range, maybe_resolver);
+      dep.maybe_type = resolved_dependency;
+    }
   }
 
   // Analyze the X-TypeScript-Types header
@@ -1274,8 +1290,11 @@ pub(crate) fn parse_module_from_module_info(
       .dependencies
       .entry(desc.specifier.to_string())
       .or_default();
-    dep.is_dynamic = desc.is_dynamic;
-    dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
+    // TODO(nayeemrmn): Import assertions should be visited and checked for
+    // every import, not one per specifier.
+    if dep.maybe_assert_type.is_none() {
+      dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
+    }
     let resolved_dependency = resolve(
       &desc.specifier,
       &Range::from_position_range(&module.specifier, &desc.specifier_range),
@@ -1285,21 +1304,32 @@ pub(crate) fn parse_module_from_module_info(
       desc.kind,
       DependencyKind::ImportType | DependencyKind::ExportType
     ) {
-      dep.maybe_type = resolved_dependency;
-    } else {
+      if dep.maybe_type.is_none() {
+        dep.maybe_type = resolved_dependency;
+      }
+    } else if dep.maybe_code.is_none() {
+      // This is a code import, the first one of that specifier in this module.
+      // Resolve and determine the initial `is_dynamic` value from it.
       dep.maybe_code = resolved_dependency;
+      dep.is_dynamic = desc.is_dynamic;
+    } else {
+      // This is a code import, but not the first one of that specifier in this
+      // module. Maybe update the `is_dynamic` value. Static imports take
+      // precedence. Note that `@jsxImportSource` and `/// <reference path />`
+      // count as static imports for this purpose.
+      dep.is_dynamic = dep.is_dynamic && desc.is_dynamic;
     }
-    let specifier = module.specifier.clone();
-    let maybe_type = analyze_deno_types(&desc)
-      .map(|pragma| {
-        resolve(
-          &pragma.specifier,
-          &Range::from_position_range(&specifier, &pragma.range),
-          maybe_resolver,
-        )
-      })
-      .unwrap_or_else(|| Resolved::None);
     if dep.maybe_type.is_none() {
+      let specifier = module.specifier.clone();
+      let maybe_type = analyze_deno_types(&desc)
+        .map(|pragma| {
+          resolve(
+            &pragma.specifier,
+            &Range::from_position_range(&specifier, &pragma.range),
+            maybe_resolver,
+          )
+        })
+        .unwrap_or_else(|| Resolved::None);
       dep.maybe_type = maybe_type
     }
   }
@@ -2205,5 +2235,53 @@ mod tests {
       false,
     );
     assert!(matches!(resolved, Resolved::Ok { .. }));
+  }
+
+  #[tokio::test]
+  async fn static_and_dynamic_dep_is_static() {
+    struct TestLoader {
+      loaded_bar: bool,
+    }
+    impl Loader for TestLoader {
+      fn load(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        is_dynamic: bool,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///foo.js" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content:
+                "import 'file:///bar.js'; await import('file:///bar.js')".into(),
+            }))
+          }),
+          "file:///bar.js" => {
+            assert!(!is_dynamic);
+            self.loaded_bar = true;
+            Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: "console.log('Hello, world!')".into(),
+              }))
+            })
+          }
+          _ => unreachable!(),
+        }
+      }
+    }
+    let mut loader = TestLoader { loaded_bar: false };
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.js").unwrap()],
+        &mut loader,
+        Default::default(),
+      )
+      .await;
+    assert!(loader.loaded_bar);
   }
 }
