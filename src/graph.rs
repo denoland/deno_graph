@@ -923,9 +923,10 @@ impl ModuleGraph {
       types_only: bool,
       is_type: bool,
       seen: &mut HashSet<&'a ModuleSpecifier>,
-      get_module: &impl Fn(&ModuleSpecifier) -> Result<Option<&'a Module>, ModuleGraphError>,
-    ) -> Result<(), ModuleGraphError>
-    {
+      get_module: &impl Fn(
+        &ModuleSpecifier,
+      ) -> Result<Option<&'a Module>, ModuleGraphError>,
+    ) -> Result<(), ModuleGraphError> {
       if seen.contains(specifier) {
         return Ok(());
       }
@@ -997,7 +998,8 @@ impl ModuleGraph {
       }
     }
 
-    let mut seen = HashSet::with_capacity(self.module_slots.len() + self.redirects.len());
+    let mut seen =
+      HashSet::with_capacity(self.module_slots.len() + self.redirects.len());
     for root in &self.roots {
       validate(root, None, types_only, false, &mut seen, &|s| {
         self.try_get(s)
