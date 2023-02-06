@@ -1929,11 +1929,11 @@ export function a(a) {
           },
           {
             "specifier": "file:///a/c.js",
-            "error": "Expected a Json module, but identified a JavaScript module.\n  Specifier: file:///a/c.js"
+            "error": "Expected a Json module, but identified a JavaScript module.\n  Specifier: file:///a/c.js\n    at file:///a/test01.ts:4:28"
           },
           {
             "specifier": "file:///a/d.json",
-            "error": "The import assertion type of \"css\" is unsupported."
+            "error": "The import assertion type of \"css\" is unsupported.\n  Specifier: file:///a/d.json\n    at file:///a/test01.ts:5:28"
           },
           {
             "specifier": "file:///a/e.wasm",
