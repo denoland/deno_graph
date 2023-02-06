@@ -533,7 +533,7 @@ console.log(a);
     assert!(graph.valid().is_err());
     assert_eq!(
       graph.valid().err().unwrap().to_string(),
-      r#"Module not found "file:///a/test02.js"."#
+      "Module not found \"file:///a/test02.js\".\n    at file:///a/test01.ts:1:21"
     );
     assert!(graph.valid_types_only().is_ok());
   }
