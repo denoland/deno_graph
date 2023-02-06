@@ -135,8 +135,8 @@ pub enum ModuleGraphError {
     actual_media_type: MediaType,
     expected_media_type: MediaType,
   },
-  LoadingErr(ModuleSpecifier, Arc<anyhow::Error>),
-  Missing(ModuleSpecifier),
+  LoadingErr(ModuleSpecifier, Option<Range>, Arc<anyhow::Error>),
+  Missing(ModuleSpecifier, Option<Range>),
   ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
   ResolutionError(ResolutionError),
   UnsupportedImportAssertionType {
@@ -151,12 +151,12 @@ impl ModuleGraphError {
   pub fn specifier(&self) -> &ModuleSpecifier {
     match self {
       Self::ResolutionError(err) => &err.range().specifier,
-      Self::LoadingErr(s, _)
+      Self::LoadingErr(s, _, _)
       | Self::ParseErr(s, _)
       | Self::UnsupportedMediaType(s, _)
       | Self::UnsupportedImportAssertionType { specifier: s, .. }
       | Self::InvalidTypeAssertion { specifier: s, .. }
-      | Self::Missing(s) => s,
+      | Self::Missing(s, _) => s,
     }
   }
 }
@@ -164,10 +164,10 @@ impl ModuleGraphError {
 impl std::error::Error for ModuleGraphError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
-      Self::LoadingErr(_, err) => Some(err.as_ref().as_ref()),
+      Self::LoadingErr(_, _, err) => Some(err.as_ref().as_ref()),
       Self::ResolutionError(ref err) => Some(err),
       Self::InvalidTypeAssertion { .. }
-      | Self::Missing(_)
+      | Self::Missing(_,_)
       | Self::ParseErr(_, _)
       | Self::UnsupportedImportAssertionType { .. }
       | Self::UnsupportedMediaType(_, _) => None,
@@ -178,7 +178,14 @@ impl std::error::Error for ModuleGraphError {
 impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::LoadingErr(_, err) => err.fmt(f),
+      Self::LoadingErr(specifier, maybe_range, err) => {
+        err.fmt(f)?;
+        write!(f, "\n  Specifier: {}", specifier)?;
+        if let Some(range) = maybe_range {
+          write!(f, "\n    at {}", range)?;
+        }
+        Ok(())
+      },
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {}", diagnostic),
       Self::ResolutionError(err) => err.fmt(f),
       Self::InvalidTypeAssertion { specifier, range, actual_media_type, expected_media_type } =>
@@ -187,7 +194,13 @@ impl fmt::Display for ModuleGraphError {
       Self::UnsupportedMediaType(specifier, media_type) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {} module. Importing these types of modules is currently not supported.\n  Specifier: {}", media_type, specifier),
       Self::UnsupportedImportAssertionType { specifier, range, kind } =>
         write!(f, "The import assertion type of \"{}\" is unsupported.\n  Specifier: {}\n    at {}", kind, specifier, range),
-      Self::Missing(specifier) => write!(f, "Module not found \"{}\".", specifier),
+      Self::Missing(specifier, maybe_range) => {
+        write!(f, "Module not found \"{}\".", specifier)?;
+        if let Some(range) = maybe_range {
+          write!(f, "\n    at {}", range)?;
+        }
+        Ok(())
+      },
     }
   }
 }
@@ -905,6 +918,7 @@ impl ModuleGraph {
   fn validate(&self, types_only: bool) -> Result<(), ModuleGraphError> {
     fn validate<F>(
       specifier: &ModuleSpecifier,
+      maybe_range: Option<&Range>,
       types_only: bool,
       is_type: bool,
       seen: &mut HashSet<ModuleSpecifier>,
@@ -920,17 +934,17 @@ impl ModuleGraph {
       let should_error = (is_type && types_only) || (!is_type && !types_only);
       match get_module(specifier) {
         Ok(Some(module)) => {
-          if let Some((_, Resolved::Ok { specifier, .. })) =
+          if let Some((_, Resolved::Ok { specifier, range, .. })) =
             &module.maybe_types_dependency
           {
-            validate(specifier, types_only, true, seen, get_module)?;
+            validate(specifier, Some(range), types_only, true, seen, get_module)?;
           }
           for dep in module.dependencies.values() {
             if !dep.is_dynamic {
               // TODO(@kitsonk) eliminate duplication with maybe_code below
               match &dep.maybe_type {
-                Resolved::Ok { specifier, .. } => {
-                  validate(specifier, types_only, true, seen, get_module)?
+                Resolved::Ok { specifier, range, .. } => {
+                  validate(specifier, Some(range), types_only, true, seen, get_module)?
                 }
                 Resolved::Err(err) if types_only => {
                   return Err(err.into());
@@ -938,8 +952,8 @@ impl ModuleGraph {
                 _ => (),
               }
               match &dep.maybe_code {
-                Resolved::Ok { specifier, .. } => {
-                  validate(specifier, types_only, false, seen, get_module)?
+                Resolved::Ok { specifier, range, .. } => {
+                  validate(specifier, Some(range), types_only, false, seen, get_module)?
                 }
                 Resolved::Err(err) if !types_only => {
                   return Err(err.into());
@@ -951,7 +965,7 @@ impl ModuleGraph {
           Ok(())
         }
         Ok(None) if should_error => {
-          Err(ModuleGraphError::Missing(specifier.clone()))
+          Err(ModuleGraphError::Missing(specifier.clone(), maybe_range.map(ToOwned::to_owned)))
         }
         Err(err) if should_error => Err(err),
         _ => Ok(()),
@@ -960,7 +974,7 @@ impl ModuleGraph {
 
     let mut seen = HashSet::new();
     for root in &self.roots {
-      validate(root, types_only, false, &mut seen, &|s| {
+      validate(root, None, types_only, false, &mut seen, &|s| {
         self.try_get(s).map(|o| o.cloned())
       })?;
     }
@@ -1343,8 +1357,8 @@ impl Default for GraphKind {
   }
 }
 
-pub type LoadWithSpecifierFuture =
-  Pin<Box<dyn Future<Output = (ModuleSpecifier, LoadResult)> + 'static>>;
+type LoadWithSpecifierFuture =
+  Pin<Box<dyn Future<Output = (ModuleSpecifier, Option<Range>, LoadResult)> + 'static>>;
 
 #[derive(PartialEq, Eq, Hash)]
 pub(crate) struct AssertTypeWithRange {
@@ -1361,7 +1375,7 @@ struct Builder<'a, 'graph> {
   pending: FuturesUnordered<LoadWithSpecifierFuture>,
   pending_assert_types:
     HashMap<ModuleSpecifier, HashSet<Option<AssertTypeWithRange>>>,
-  dynamic_branches: HashMap<ModuleSpecifier, Option<AssertTypeWithRange>>,
+  dynamic_branches: HashMap<ModuleSpecifier, (Range, Option<AssertTypeWithRange>)>,
   module_analyzer: &'a dyn ModuleAnalyzer,
   reporter: Option<&'a dyn Reporter>,
 }
@@ -1408,7 +1422,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .collect::<Vec<_>>();
     self.graph.roots.extend(roots.clone());
     for root in roots {
-      self.load(&root, self.in_dynamic_branch, None);
+      self.load(&root, None, self.in_dynamic_branch, None);
     }
 
     // Process any imports that are being added to the graph.
@@ -1417,8 +1431,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let imports = referrer_imports.imports;
       let graph_import = GraphImport::new(&referrer, imports, self.resolver);
       for dep in graph_import.dependencies.values() {
-        if let Resolved::Ok { specifier, .. } = &dep.maybe_type {
-          self.load(specifier, self.in_dynamic_branch, None);
+        if let Resolved::Ok { specifier, range, .. } = &dep.maybe_type {
+          self.load(specifier, Some(range), self.in_dynamic_branch, None);
         }
       }
       self.graph.imports.insert(referrer, graph_import);
@@ -1426,7 +1440,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     loop {
       let specifier = match self.pending.next().await {
-        Some((specifier, Ok(Some(response)))) => {
+        Some((specifier, _, Ok(Some(response)))) => {
           let assert_types =
             self.pending_assert_types.remove(&specifier).unwrap();
           for maybe_assert_type in assert_types {
@@ -1434,18 +1448,19 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           }
           Some(specifier)
         }
-        Some((specifier, Ok(None))) => {
+        Some((specifier, maybe_range, Ok(None))) => {
           self.graph.module_slots.insert(
             specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::Missing(specifier.clone())),
+            ModuleSlot::Err(ModuleGraphError::Missing(specifier.clone(), maybe_range)),
           );
           Some(specifier)
         }
-        Some((specifier, Err(err))) => {
+        Some((specifier, maybe_range, Err(err))) => {
           self.graph.module_slots.insert(
             specifier.clone(),
             ModuleSlot::Err(ModuleGraphError::LoadingErr(
               specifier.clone(),
+              maybe_range,
               Arc::new(err),
             )),
           );
@@ -1468,11 +1483,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         //   visiting a dynamic branch.
         if !self.in_dynamic_branch {
           self.in_dynamic_branch = true;
-          for (specifier, maybe_assert_type) in
+          for (specifier, (range, maybe_assert_type)) in
             std::mem::take(&mut self.dynamic_branches)
           {
             if !self.graph.module_slots.contains_key(&specifier) {
-              self.load(&specifier, true, maybe_assert_type);
+              self.load(&specifier, Some(&range), true, maybe_assert_type);
             }
           }
         } else {
@@ -1515,6 +1530,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
+    maybe_range: Option<&Range>,
     is_dynamic: bool,
     maybe_assert_type: Option<AssertTypeWithRange>,
   ) {
@@ -1530,10 +1546,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         .module_slots
         .insert(specifier.clone(), ModuleSlot::Pending);
       let specifier = specifier.clone();
+      let maybe_range = maybe_range.map(ToOwned::to_owned);
       let fut = self
         .loader
         .load(&specifier, is_dynamic)
-        .map(move |res| (specifier, res));
+        .map(move |res| (specifier, maybe_range, res));
       self.pending.push(Box::pin(fut));
     }
   }
@@ -1634,10 +1651,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               if dep.is_dynamic && !self.in_dynamic_branch {
                 self
                   .dynamic_branches
-                  .insert(specifier.clone(), maybe_assert_type_with_range);
+                  .insert(specifier.clone(), (*range.clone(), maybe_assert_type_with_range));
               } else {
                 self.load(
                   specifier,
+                  Some(range),
                   self.in_dynamic_branch,
                   maybe_assert_type_with_range,
                 );
@@ -1665,10 +1683,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               if dep.is_dynamic && !self.in_dynamic_branch {
                 self
                   .dynamic_branches
-                  .insert(specifier.clone(), maybe_assert_type_with_range);
+                  .insert(specifier.clone(), (*range.clone(), maybe_assert_type_with_range));
               } else {
                 self.load(
                   specifier,
+                  Some(range),
                   self.in_dynamic_branch,
                   maybe_assert_type_with_range,
                 );
@@ -1684,10 +1703,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
       if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::TypesOnly)
       {
-        if let Some((_, Resolved::Ok { specifier, .. })) =
+        if let Some((_, Resolved::Ok { specifier, range, .. })) =
           &module.maybe_types_dependency
         {
-          self.load(specifier, false, None);
+          self.load(specifier, Some(range), false, None);
         }
       } else {
         module.maybe_types_dependency = None;
