@@ -1218,8 +1218,10 @@ pub(crate) fn parse_module_from_module_info(
   for specifier in module_info.jsdoc_imports {
     let dep = module.dependencies.entry(specifier.text).or_default();
     if dep.maybe_type.is_none() {
-      let range = Range::from_position_range(&module.specifier, &specifier.range);
-      let resolved_dependency = resolve(&specifier.text, &range, maybe_resolver);
+      let range =
+        Range::from_position_range(&module.specifier, &specifier.range);
+      let resolved_dependency =
+        resolve(&specifier.text, &range, maybe_resolver);
       dep.maybe_type = resolved_dependency;
     }
   }
