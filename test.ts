@@ -1,13 +1,20 @@
-// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
 import {
   assert,
   assertEquals,
+  assertRejects,
   assertThrows,
-  assertThrowsAsync,
-} from "https://deno.land/std@0.104.0/testing/asserts.ts";
-import { createGraph, load, parseModule } from "./mod.ts";
-import type { LoadResponse } from "./mod.ts";
+} from "https://deno.land/std@0.142.0/testing/asserts.ts";
+import { LoadResponseModule } from "./lib/types.d.ts";
+import {
+  createGraph,
+  init,
+  load,
+  LoadResponse,
+  MediaType,
+  parseModule,
+} from "./mod.ts";
 
 Deno.test({
   name: "createGraph()",
@@ -28,26 +35,18 @@ Deno.test({
         });
       },
     });
-    assertEquals(graph.toJSON(), {
+    assertEquals(graph, {
       roots: ["https://example.com/a"],
       modules: [
         {
           specifier: "https://example.com/a",
           kind: "esm",
-          mediaType: "TypeScript",
+          mediaType: MediaType.TypeScript,
           size: 56,
         },
       ],
       redirects: {},
     });
-    assertEquals(
-      graph.toString(true),
-      `type: TypeScript
-dependencies: 0 unique (total 56B)
-
-https://example.com/a (56B)
-`,
-    );
   },
 });
 
@@ -55,10 +54,22 @@ Deno.test({
   name: "createGraph() - data url",
   async fn() {
     const graph = await createGraph(
-      `data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs=`,
+      "data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs=",
     );
     assertEquals(graph.modules.length, 1);
-    assertEquals(graph.modules[0].source, `console.log("hello deno_graph");`);
+    assertEquals(graph, {
+      modules: [{
+        specifier:
+          "data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs=",
+        size: 32,
+        kind: "esm",
+        mediaType: MediaType.JavaScript,
+      }],
+      redirects: {},
+      roots: [
+        "data:application/javascript;base64,Y29uc29sZS5sb2coImhlbGxvIGRlbm9fZ3JhcGgiKTs=",
+      ],
+    });
   },
 });
 
@@ -70,14 +81,18 @@ Deno.test({
         return Promise.resolve(undefined);
       },
     });
-    assertEquals(graph.modules.length, 0);
+    assertEquals(graph.modules.length, 1);
+    assertEquals(
+      graph.modules[0].error,
+      'Module not found "file:///a/test.ts".',
+    );
   },
 });
 
 Deno.test({
   name: "createGraph() - invalid URL",
-  fn() {
-    return assertThrowsAsync(
+  async fn() {
+    await assertRejects(
       async () => {
         await createGraph("./bad.ts");
       },
@@ -95,7 +110,8 @@ Deno.test({
         return Promise.reject(new Error("something bad happened"));
       },
     });
-    assertEquals(graph.modules.length, 0);
+    assertEquals(graph.modules.length, 1);
+    assertEquals(graph.modules[0].error, "load rejected or errored");
   },
 });
 
@@ -107,7 +123,8 @@ Deno.test({
         throw new Error("something bad happened");
       },
     });
-    assertEquals(graph.modules.length, 0);
+    assertEquals(graph.modules.length, 1);
+    assertEquals(graph.modules[0].error, "load rejected or errored");
   },
 });
 
@@ -118,7 +135,9 @@ Deno.test({
       "https://deno.land/std@0.103.0/examples/chat/server.ts",
     );
     assertEquals(graph.modules.length, 37);
-    const rootModule = graph.get(graph.roots[0]);
+    const rootModule = graph.modules.find((m) =>
+      m.specifier === graph.roots[0]
+    )!;
     assert(rootModule);
     assertEquals(rootModule.mediaType, "TypeScript");
     assertEquals(Object.entries(rootModule.dependencies ?? {}).length, 3);
@@ -151,7 +170,7 @@ Deno.test({
       },
     });
     assertEquals(resolveCount, 1);
-    assertEquals(graph.toJSON(), {
+    assertEquals(graph, {
       "roots": [
         "file:///a/test.js",
       ],
@@ -159,7 +178,7 @@ Deno.test({
         {
           "kind": "esm",
           "size": 21,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/b.js",
         },
         {
@@ -171,11 +190,11 @@ Deno.test({
                 "span": {
                   "start": {
                     "line": 0,
-                    "character": 19,
+                    "character": 20,
                   },
                   "end": {
                     "line": 0,
-                    "character": 27,
+                    "character": 26,
                   },
                 },
               },
@@ -183,8 +202,114 @@ Deno.test({
           ],
           "kind": "esm",
           "size": 28,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/test.js",
+        },
+      ],
+      "redirects": {},
+    });
+  },
+});
+
+Deno.test({
+  name: "createGraph() - imports",
+  async fn() {
+    const fixtures: Record<string, LoadResponse> = {
+      "file:///a/test.ts": {
+        kind: "module",
+        specifier: "file:///a/test.ts",
+        content: `import config from "./deno.json" assert { type: "json" };`,
+      },
+      "file:///a/deno.json": {
+        kind: "module",
+        specifier: "file:///a/deno.json",
+        content: `{}`,
+      },
+      "https://esm.sh/preact/jsx-runtime": {
+        kind: "module",
+        specifier: "https://esm.sh/preact/jsx-runtime",
+        headers: { "content-type": "application/javascript " },
+        content: `export function jsx() {}`,
+      },
+    };
+    let resolveCount = 0;
+    const graph = await createGraph("file:///a/test.ts", {
+      resolve(specifier, referrer) {
+        resolveCount++;
+        return new URL(specifier, referrer).toString();
+      },
+      load(specifier) {
+        return Promise.resolve(fixtures[specifier]);
+      },
+      imports: {
+        "file:///a/deno.json": ["https://esm.sh/preact/jsx-runtime"],
+      },
+    });
+    assertEquals(resolveCount, 2);
+    assertEquals(graph, {
+      "roots": [
+        "file:///a/test.ts",
+      ],
+      "modules": [
+        {
+          "specifier": "file:///a/deno.json",
+          "kind": "asserted",
+          "mediaType": MediaType.Json,
+          "size": 2,
+        },
+        {
+          "specifier": "file:///a/test.ts",
+          "kind": "esm",
+          "dependencies": [
+            {
+              "specifier": "./deno.json",
+              "code": {
+                "specifier": "file:///a/deno.json",
+                "span": {
+                  "start": {
+                    "line": 0,
+                    "character": 20,
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 31,
+                  },
+                },
+              },
+              "assertionType": "json",
+            },
+          ],
+          "mediaType": MediaType.TypeScript,
+          "size": 57,
+        },
+        {
+          "specifier": "https://esm.sh/preact/jsx-runtime",
+          "kind": "esm",
+          "mediaType": MediaType.JavaScript,
+          "size": 24,
+        },
+      ],
+      "imports": [
+        {
+          "referrer": "file:///a/deno.json",
+          "dependencies": [
+            {
+              "specifier": "https://esm.sh/preact/jsx-runtime",
+              "type": {
+                "span": {
+                  "start": {
+                    "character": 0,
+                    "line": 0,
+                  },
+                  "end": {
+                    "character": 0,
+                    "line": 0,
+                  },
+                },
+                "specifier": "https://esm.sh/preact/jsx-runtime",
+              },
+            },
+          ],
         },
       ],
       "redirects": {},
@@ -211,17 +336,14 @@ Deno.test({
     const graph = await createGraph("file:///a/test.js", {
       resolve(specifier, referrer) {
         resolveCount++;
-        return {
-          specifier: new URL(specifier, referrer).toString(),
-          kind: "esm",
-        };
+        return new URL(specifier, referrer).toString();
       },
       load(specifier) {
         return Promise.resolve(fixtures[specifier]);
       },
     });
     assertEquals(resolveCount, 1);
-    assertEquals(graph.toJSON(), {
+    assertEquals(graph, {
       "roots": [
         "file:///a/test.js",
       ],
@@ -229,7 +351,7 @@ Deno.test({
         {
           "kind": "esm",
           "size": 21,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/b.js",
         },
         {
@@ -241,11 +363,11 @@ Deno.test({
                 "span": {
                   "start": {
                     "line": 0,
-                    "character": 19,
+                    "character": 20,
                   },
                   "end": {
                     "line": 0,
-                    "character": 27,
+                    "character": 26,
                   },
                 },
               },
@@ -253,7 +375,7 @@ Deno.test({
           ],
           "kind": "esm",
           "size": 28,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/test.js",
         },
       ],
@@ -296,7 +418,7 @@ Deno.test({
 });
 
 Deno.test({
-  name: "createGraph() - load - external and builtin",
+  name: "createGraph() - load - external",
   async fn() {
     const fixtures: Record<string, LoadResponse> = {
       "file:///a/test.js": {
@@ -306,7 +428,7 @@ Deno.test({
           import * as bundle from "https://example.com/bundle";`,
       },
       "builtin:fs": {
-        kind: "builtIn",
+        kind: "external",
         specifier: "builtin:fs",
       },
       "https://example.com/bundle": {
@@ -319,13 +441,13 @@ Deno.test({
         return Promise.resolve(fixtures[specifier]);
       },
     });
-    assertEquals(graph.toJSON(), {
+    assertEquals(graph, {
       "roots": [
         "file:///a/test.js",
       ],
       "modules": [
         {
-          "kind": "builtIn",
+          "kind": "external",
           "specifier": "builtin:fs",
         },
         {
@@ -337,11 +459,11 @@ Deno.test({
                 "span": {
                   "start": {
                     "line": 0,
-                    "character": 20,
+                    "character": 21,
                   },
                   "end": {
                     "line": 0,
-                    "character": 32,
+                    "character": 31,
                   },
                 },
               },
@@ -353,11 +475,11 @@ Deno.test({
                 "span": {
                   "start": {
                     "line": 1,
-                    "character": 34,
+                    "character": 35,
                   },
                   "end": {
                     "line": 1,
-                    "character": 62,
+                    "character": 61,
                   },
                 },
               },
@@ -365,7 +487,7 @@ Deno.test({
           ],
           "kind": "esm",
           "size": 97,
-          "mediaType": "JavaScript",
+          "mediaType": MediaType.JavaScript,
           "specifier": "file:///a/test.js",
         },
         {
@@ -383,7 +505,7 @@ Deno.test({
   async fn() {
     const response = await load(
       "https://deno.land/std@0.103.0/examples/chat/server.ts",
-    );
+    ) as LoadResponseModule;
     assert(response);
     assert(response.kind === "module");
     assertEquals(
@@ -406,7 +528,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule()",
-  fn() {
+  async fn() {
+    await init();
     const module = parseModule(
       "file:///a/test01.js",
       `
@@ -417,9 +540,9 @@ Deno.test({
         const d = await import("./d.ts");
       `,
     );
-    assertEquals(module.toJSON(), {
+    assertEquals(module, {
       "specifier": "file:///a/test01.js",
-      "mediaType": "JavaScript",
+      "mediaType": MediaType.JavaScript,
       "kind": "esm",
       "size": 206,
       "dependencies": [{
@@ -427,8 +550,8 @@ Deno.test({
         "code": {
           "specifier": "file:///a/a.ts",
           "span": {
-            "start": { "line": 2, "character": 26 },
-            "end": { "line": 2, "character": 34 },
+            "start": { "line": 2, "character": 27 },
+            "end": { "line": 2, "character": 33 },
           },
         },
       }, {
@@ -436,8 +559,8 @@ Deno.test({
         "code": {
           "specifier": "file:///a/b.ts",
           "span": {
-            "start": { "line": 3, "character": 27 },
-            "end": { "line": 3, "character": 35 },
+            "start": { "line": 3, "character": 28 },
+            "end": { "line": 3, "character": 34 },
           },
         },
       }, {
@@ -445,8 +568,8 @@ Deno.test({
         "code": {
           "specifier": "file:///a/c.ts",
           "span": {
-            "start": { "line": 4, "character": 26 },
-            "end": { "line": 4, "character": 34 },
+            "start": { "line": 4, "character": 27 },
+            "end": { "line": 4, "character": 33 },
           },
         },
       }, {
@@ -454,8 +577,8 @@ Deno.test({
         "code": {
           "specifier": "file:///a/d.ts",
           "span": {
-            "start": { "line": 5, "character": 31 },
-            "end": { "line": 5, "character": 39 },
+            "start": { "line": 5, "character": 32 },
+            "end": { "line": 5, "character": 38 },
           },
         },
         "isDynamic": true,
@@ -476,7 +599,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - with headers",
-  fn() {
+  async fn() {
+    await init();
     const module = parseModule(
       `https://example.com/a`,
       `declare interface A {
@@ -494,7 +618,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - with jsxImportSource pragma",
-  fn() {
+  async fn() {
+    await init();
     const module = parseModule(
       `file:///a/test01.tsx`,
       `/* @jsxImportSource http://example.com/preact */
@@ -505,17 +630,42 @@ Deno.test({
         jsxImportSourceModule: "jsx-dev-runtime",
       },
     );
+
     assert(
-      module.dependencies &&
-        module.dependencies["http://example.com/preact/jsx-dev-runtime"],
+      module.dependencies?.find((d) =>
+        d.specifier === "http://example.com/preact/jsx-dev-runtime"
+      ),
+    );
+  },
+});
+
+Deno.test({
+  name: "parseModule() - with defaultJsxImportSource",
+  async fn() {
+    await init();
+    const module = parseModule(
+      `file:///a/test01.tsx`,
+      `
+    export function A() {
+      <div>Hello Deno</div>
+    }`,
+      {
+        defaultJsxImportSource: "http://example.com/preact",
+      },
+    );
+    assert(
+      module.dependencies?.find((d) =>
+        d.specifier === "http://example.com/preact/jsx-runtime"
+      ),
     );
   },
 });
 
 Deno.test({
   name: "parseModule() - invalid URL",
-  fn() {
-    return assertThrows(
+  async fn() {
+    await init();
+    assertThrows(
       () => {
         parseModule("./bad.ts", `console.log("hello");`);
       },
@@ -527,8 +677,9 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - syntax error",
-  fn() {
-    return assertThrows(
+  async fn() {
+    await init();
+    assertThrows(
       () => {
         parseModule("file:///a/test.md", `# Some Markdown\n\n**bold**`);
       },
@@ -540,7 +691,8 @@ Deno.test({
 
 Deno.test({
   name: "parseModule() - import assertions",
-  fn() {
+  async fn() {
+    await init();
     const module = parseModule(
       "file:///a/test01.js",
       `
@@ -548,7 +700,7 @@ Deno.test({
         await import("./b.json", { assert: { type: "json" } });
       `,
     );
-    assertEquals(module.toJSON(), {
+    assertEquals(module, {
       "dependencies": [
         {
           "specifier": "./a.json",
@@ -557,11 +709,11 @@ Deno.test({
             "span": {
               "start": {
                 "line": 1,
-                "character": 22,
+                "character": 23,
               },
               "end": {
                 "line": 1,
-                "character": 32,
+                "character": 31,
               },
             },
           },
@@ -574,11 +726,11 @@ Deno.test({
             "span": {
               "start": {
                 "line": 2,
-                "character": 21,
+                "character": 22,
               },
               "end": {
                 "line": 2,
-                "character": 31,
+                "character": 30,
               },
             },
           },
@@ -587,7 +739,7 @@ Deno.test({
         },
       ],
       "kind": "esm",
-      "mediaType": "JavaScript",
+      "mediaType": MediaType.JavaScript,
       "size": 129,
       "specifier": "file:///a/test01.js",
     });

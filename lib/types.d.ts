@@ -1,4 +1,4 @@
-// Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
 import type { MediaType } from "./media_type.ts";
 
@@ -24,13 +24,6 @@ export interface TypesDependency {
   source?: Range;
 }
 
-export interface ResolveResult {
-  /** The string URL of the fully qualified specifier for a module. */
-  specifier: string;
-  /** The module kind of the resolved module. */
-  kind: ModuleKind;
-}
-
 export interface LoadResponseModule {
   /** A module with code has been loaded. */
   kind: "module";
@@ -44,15 +37,15 @@ export interface LoadResponseModule {
   content: string;
 }
 
-export interface LoadResponseExternalBuiltIn {
+export interface LoadResponseExternal {
   /** The loaded module is either _external_ or _built-in_ to the runtime. */
-  kind: "external" | "builtIn";
+  kind: "external";
   /** The strung URL of the resource. If there were redirects, the final
    * specifier should be set here, otherwise the requested specifier. */
   specifier: string;
 }
 
-export type LoadResponse = LoadResponseModule | LoadResponseExternalBuiltIn;
+export type LoadResponse = LoadResponseModule | LoadResponseExternal;
 
 export interface PositionJson {
   /** The line number of a position within a source file. The number is a zero
@@ -103,18 +96,14 @@ export interface TypesDependencyJson {
  * For asserted modules, the value of the `asserted` property is set to the
  * `type` value of the assertion.
  *
- * Dependency analysis is not performed for asserted, AMD, Script, SystemJS, or
- * UMD modules currently. Synthetic modules were injected into the graph with
- * their own dependencies provided. */
+ * Dependency analysis is not performed for asserted or Script modules
+ * currently. Synthetic modules were injected into the graph with their own
+ * dependencies provided. */
 export type ModuleKind =
-  | "amd"
   | "asserted"
-  | "commonJs"
   | "esm"
-  | "script"
-  | "synthetic"
-  | "systemJs"
-  | "umd";
+  | "external"
+  | "script";
 
 export interface DependencyJson {
   /** The string specifier that was used for the dependency. */
@@ -128,6 +117,7 @@ export interface DependencyJson {
   /** A flag indicating if the dependency was dynamic. (e.g.
    * `await import("mod.ts")`) */
   isDynamic?: true;
+  assertionType?: string;
 }
 
 export interface ModuleJson extends CacheInfo {
@@ -148,9 +138,15 @@ export interface ModuleJson extends CacheInfo {
   mediaType?: MediaType;
   /** The size of the source content of the module in bytes. */
   size?: number;
-  /** If available, the calculated checksum of the module which can be used for
-   * validating the integrity of the module. */
-  checksum?: string;
+}
+
+export interface GraphImportJson {
+  /** The referrer (URL string) that was used as a base when resolving the
+   * imports added to the graph. */
+  referrer: string;
+  /** An array of resolved dependencies which were imported using the
+   * referrer. */
+  dependencies?: DependencyJson[];
 }
 
 /** The plain-object representation of a module graph that is suitable for
@@ -161,6 +157,10 @@ export interface ModuleGraphJson {
   roots: string[];
   /** An array of modules that are part of the module graph. */
   modules: ModuleJson[];
+  /** External imports that were added to the graph when it was being built.
+   * The key is the referrer which was used as a base to resolve the
+   * dependency. The value is the resolved dependency. */
+  imports?: GraphImportJson[];
   /** A record/map of any redirects encountered when resolving modules. The
    * key was the requested module specifier and the value is the redirected
    * module specifier. */
@@ -177,91 +177,4 @@ export interface Dependency {
   /** A flag indicating if the dependency was dynamic. (e.g.
    * `await import("mod.ts")`) */
   isDynamic?: true;
-}
-
-export class Module {
-  private constructor();
-
-  /** Any cache information that was available on the module when the graph
-   * was built. */
-  readonly cacheInfo?: CacheInfo;
-  /** The calculated checksum of the source of the module if available when the
-   * graph was built. */
-  readonly checksum?: string;
-  /** A record of the dependencies, where the key is the string specifier of
-   * the dependency and the value is the dependency object. */
-  readonly dependencies?: Record<string, Dependency>;
-  /** A module kind that can be used to determine how a module should be loaded
-   * at runtime. */
-  readonly kind: ModuleKind;
-  /** The media type assigned to the module. This determines how Deno will
-   * handle the module. */
-  readonly mediaType: MediaType;
-  /** The size of the source content in bytes. */
-  readonly size: number;
-  /** The source content of the module. */
-  readonly source: string;
-  /** The fully qualified string URL of the module. */
-  readonly specifier: string;
-  /** The types dependency for the module, where the first value in the tuple
-   * was the string specifier used and the second value is the resolved
-   * dependency. */
-  readonly typesDependency?: [string, ResolvedDependency];
-
-  /** Explicitly free the memory used by the module. */
-  free(): void;
-
-  /** Returns a plain-object representation of the module suitable for
-   * serialization as JSON. */
-  toJSON(): ModuleJson;
-}
-
-/** An interface to the web assembly structure of a built module graph. */
-export class ModuleGraph {
-  private constructor();
-
-  /** The modules that are part of the module graph. */
-  readonly modules: Module[];
-
-  /** The root specifiers that were used to build the module graph from. */
-  readonly roots: string[];
-
-  /** Explicitly free the memory used by the module graph. The web assembly
-   * bindings does use weak references, meaning that the memory should be
-   * automatically garbage collected when the graph falls out of use. */
-  free(): void;
-
-  /** Retrieve a module from the module graph, if an error was encountered when
-   * loading the module, this method will throw with that error. */
-  get(specifier: string): Module | undefined;
-
-  /** Determine if the graph sources are valid by calling the passed `check()`
-   * function. If any of the modules in the graph fail the check, then an
-   * error is thrown. */
-  lock(): void;
-
-  /** Given a string URL, return the resolved string URL accounting for any
-   * redirections that might have occurred when resolving the module graph. */
-  resolve(specifier: string): string;
-
-  /** Given a string specifier of a module's dependency and the referring
-   * module's string URL, return the string URL of the dependency, otherwise
-   * return undefined. */
-  resolveDependency(specifier: string, referrer: string): string | undefined;
-
-  /** Returns a plain-object representation of the module graph suitable for
-   * serialization as JSON, similar to the `deno info --json` output. */
-  toJSON(): ModuleGraphJson;
-
-  /** Provides a string output representation of the module graph similar to
-   * `deno info` with or without ANSI color escape sequences. If `noColor` is
-   * expressly `true`, the string will be returned without color escape
-   * sequences. If `noColor` is expressly `false` the returned string will
-   * include ANSI color escape sequences. If not expressly set, `Deno.noColor`
-   * will be used, or if the `Deno` namespace isn't present, will default to
-   * `true` and not provide ANSI color escape sequences.
-   *
-   * @param noColor An optional flag indicating if ANSI color escape codes
-   *                should be included in the returned string. */
-  toString(noColor?: boolean): string;
 }
