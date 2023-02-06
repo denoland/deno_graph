@@ -111,7 +111,10 @@ Deno.test({
       },
     });
     assertEquals(graph.modules.length, 1);
-    assertEquals(graph.modules[0].error, "load rejected or errored\n  Specifier: file:///a/test.ts");
+    assertEquals(
+      graph.modules[0].error,
+      "load rejected or errored\n  Specifier: file:///a/test.ts",
+    );
   },
 });
 
@@ -124,7 +127,10 @@ Deno.test({
       },
     });
     assertEquals(graph.modules.length, 1);
-    assertEquals(graph.modules[0].error, "load rejected or errored\n  Specifier: file:///a/test.ts");
+    assertEquals(
+      graph.modules[0].error,
+      "load rejected or errored\n  Specifier: file:///a/test.ts",
+    );
   },
 });
 
