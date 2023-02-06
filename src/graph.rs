@@ -769,7 +769,8 @@ impl ModuleGraph {
   /// returning the "final" module.
   pub fn resolve(&self, specifier: &ModuleSpecifier) -> ModuleSpecifier {
     let mut redirected_specifier = specifier;
-    let mut seen = HashSet::new();
+    let max_redirects = 6;
+    let mut seen = HashSet::with_capacity(max_redirects);
     seen.insert(redirected_specifier);
     while let Some(specifier) = self.redirects.get(redirected_specifier) {
       if !seen.insert(specifier) {
@@ -777,7 +778,7 @@ impl ModuleGraph {
         break;
       }
       redirected_specifier = specifier;
-      if seen.len() > 5 {
+      if seen.len() >= max_redirects {
         eprintln!("An excessive number of redirections detected.\n  Original specifier: {}", specifier);
         break;
       }
@@ -916,21 +917,19 @@ impl ModuleGraph {
   }
 
   fn validate(&self, types_only: bool) -> Result<(), ModuleGraphError> {
-    fn validate<F>(
-      specifier: &ModuleSpecifier,
+    fn validate<'a>(
+      specifier: &'a ModuleSpecifier,
       maybe_range: Option<&Range>,
       types_only: bool,
       is_type: bool,
-      seen: &mut HashSet<ModuleSpecifier>,
-      get_module: &F,
+      seen: &mut HashSet<&'a ModuleSpecifier>,
+      get_module: &impl Fn(&ModuleSpecifier) -> Result<Option<&'a Module>, ModuleGraphError>,
     ) -> Result<(), ModuleGraphError>
-    where
-      F: Fn(&ModuleSpecifier) -> Result<Option<Module>, ModuleGraphError>,
     {
       if seen.contains(specifier) {
         return Ok(());
       }
-      seen.insert(specifier.clone());
+      seen.insert(specifier);
       let should_error = (is_type && types_only) || (!is_type && !types_only);
       match get_module(specifier) {
         Ok(Some(module)) => {
@@ -998,10 +997,10 @@ impl ModuleGraph {
       }
     }
 
-    let mut seen = HashSet::new();
+    let mut seen = HashSet::with_capacity(self.module_slots.len() + self.redirects.len());
     for root in &self.roots {
       validate(root, None, types_only, false, &mut seen, &|s| {
-        self.try_get(s).map(|o| o.cloned())
+        self.try_get(s)
       })?;
     }
     Ok(())
