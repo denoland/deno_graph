@@ -110,6 +110,7 @@ pub fn parse_module_from_ast(
 mod tests {
   use super::*;
   use crate::graph::Resolved;
+  use crate::graph::WalkOptions;
   use pretty_assertions::assert_eq;
   use serde_json::json;
   use source::tests::MockResolver;
@@ -3038,6 +3039,17 @@ export function a(a: A): B {
             content: r#"export const a = "a";"#,
           },
         ),
+        (
+          "https://example.com/jsx-runtime.d.ts",
+          Source::Module {
+            specifier: "https://example.com/jsx-runtime.d.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"export const a: "a";"#,
+          },
+        ),
       ],
       vec![],
     );
@@ -3059,7 +3071,9 @@ export function a(a: A): B {
         },
       )
       .await;
+    assert!(graph.valid().is_ok());
     assert_eq!(graph.module_slots.len(), 6);
+    assert_eq!(graph.redirects.len(), 1);
 
     let example_a_url =
       ModuleSpecifier::parse("https://example.com/a.ts").unwrap();
@@ -3081,5 +3095,277 @@ export function a(a: A): B {
       .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap()));
     assert!(graph
       .contains(&ModuleSpecifier::parse("https://example.com/c.ts").unwrap()));
+
+    assert_eq!(
+      graph.resolve_dependency(
+        "https://example.com/jsx-runtime",
+        &config_specifier,
+        false
+      ),
+      Some(&ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
+    );
+    assert_eq!(
+      graph.resolve_dependency(
+        "https://example.com/jsx-runtime",
+        &config_specifier,
+        true
+      ),
+      Some(
+        &ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts")
+          .unwrap()
+      )
+    );
+  }
+
+  #[tokio::test]
+  async fn test_walk() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"import * as b from "./test02.ts"; import "https://example.com/a.ts"; import "./test04.js"; await import("./test03.ts");"#,
+          },
+        ),
+        (
+          "file:///a/test02.ts",
+          Source::Module {
+            specifier: "file:///a/test02.ts",
+            maybe_headers: None,
+            content: r#"export const b = "b";"#,
+          },
+        ),
+        (
+          "file:///a/test03.ts",
+          Source::Module {
+            specifier: "file:///a/test03.ts",
+            maybe_headers: None,
+            content: r#"export const c = "c";"#,
+          },
+        ),
+        (
+          "file:///a/test04.js",
+          Source::Module {
+            specifier: "file:///a/test04.js",
+            maybe_headers: None,
+            content: r#"/// <reference types="./test04.d.ts" />\nexport const d = "d";"#,
+          },
+        ),
+        (
+          "file:///a/test04.d.ts",
+          Source::Module {
+            specifier: "file:///a/test04.d.ts",
+            maybe_headers: None,
+            content: r#"export const d: "d";"#,
+          },
+        ),
+        (
+          "https://example.com/a.ts",
+          Source::Module {
+            specifier: "https://example.com/a.ts",
+            maybe_headers: None,
+            content: r#"import * as c from "./c";"#,
+          },
+        ),
+        (
+          "https://example.com/c",
+          Source::Module {
+            specifier: "https://example.com/c.ts",
+            maybe_headers: None,
+            content: r#"export const c = "c";"#,
+          },
+        ),
+        (
+          "https://example.com/jsx-runtime",
+          Source::Module {
+            specifier: "https://example.com/jsx-runtime",
+            maybe_headers: Some(vec![
+              ("content-type", "application/javascript"),
+              ("x-typescript-types", "./jsx-runtime.d.ts"),
+            ]),
+            content: r#"export const a = "a";"#,
+          },
+        ),
+        (
+          "https://example.com/jsx-runtime.d.ts",
+          Source::Module {
+            specifier: "https://example.com/jsx-runtime.d.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"export const a: "a";"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let root = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
+    let mut graph = ModuleGraph::default();
+    let config_specifier =
+      ModuleSpecifier::parse("file:///a/tsconfig.json").unwrap();
+    let imports = vec![ReferrerImports {
+      referrer: config_specifier.clone(),
+      imports: vec!["https://example.com/jsx-runtime".to_string()],
+    }];
+    graph
+      .build(
+        vec![root.clone()],
+        &mut loader,
+        BuildOptions {
+          imports: imports.clone(),
+          ..Default::default()
+        },
+      )
+      .await;
+    assert!(graph.valid().is_ok());
+
+    // all true
+    let result = graph.walk(
+      &[&root],
+      WalkOptions {
+        check_js: true,
+        follow_dynamic: true,
+        follow_type_only: true,
+      },
+    );
+    assert_eq!(
+      result
+        .map(|(specifier, _)| specifier.to_string())
+        .collect::<Vec<_>>(),
+      vec![
+        "https://example.com/jsx-runtime",
+        "https://example.com/jsx-runtime.d.ts",
+        "file:///a/test01.ts",
+        "file:///a/test02.ts",
+        "file:///a/test03.ts",
+        "file:///a/test04.js",
+        "file:///a/test04.d.ts",
+        "https://example.com/a.ts",
+        "https://example.com/c",
+        "https://example.com/c.ts",
+      ]
+    );
+
+    // all false
+    let result = graph.walk(
+      &[&root],
+      WalkOptions {
+        check_js: false,
+        follow_dynamic: false,
+        follow_type_only: false,
+      },
+    );
+    assert_eq!(
+      result
+        .map(|(specifier, _)| specifier.to_string())
+        .collect::<Vec<_>>(),
+      vec![
+        "file:///a/test01.ts",
+        "file:///a/test02.ts",
+        "file:///a/test04.js", // no types
+        "https://example.com/a.ts",
+        "https://example.com/c",
+        "https://example.com/c.ts",
+      ]
+    );
+    // dynamic true
+    let result = graph.walk(
+      &[&root],
+      WalkOptions {
+        check_js: false,
+        follow_dynamic: true,
+        follow_type_only: false,
+      },
+    );
+    assert_eq!(
+      result
+        .map(|(specifier, _)| specifier.to_string())
+        .collect::<Vec<_>>(),
+      vec![
+        "file:///a/test01.ts",
+        "file:///a/test02.ts",
+        "file:///a/test03.ts",
+        "file:///a/test04.js",
+        "https://example.com/a.ts",
+        "https://example.com/c",
+        "https://example.com/c.ts",
+      ]
+    );
+
+    // check_js true (won't have any effect since follow_type_only is false)
+    let result = graph.walk(
+      &[&root],
+      WalkOptions {
+        check_js: true,
+        follow_dynamic: false,
+        follow_type_only: false,
+      },
+    );
+    assert_eq!(
+      result
+        .map(|(specifier, _)| specifier.to_string())
+        .collect::<Vec<_>>(),
+      vec![
+        "file:///a/test01.ts",
+        "file:///a/test02.ts",
+        "file:///a/test04.js",
+        "https://example.com/a.ts",
+        "https://example.com/c",
+        "https://example.com/c.ts",
+      ]
+    );
+
+    // follow_type_only true
+    let result = graph.walk(
+      &[&root],
+      WalkOptions {
+        check_js: false,
+        follow_dynamic: false,
+        follow_type_only: true,
+      },
+    );
+    assert_eq!(
+      result
+        .map(|(specifier, _)| specifier.to_string())
+        .collect::<Vec<_>>(),
+      vec![
+        "https://example.com/jsx-runtime",
+        "file:///a/test01.ts",
+        "file:///a/test02.ts",
+        "file:///a/test04.js",
+        "https://example.com/a.ts",
+        "https://example.com/c",
+        "https://example.com/c.ts",
+      ]
+    );
+
+    // check_js true, follow_type_only true
+    let result = graph.walk(
+      &[&root],
+      WalkOptions {
+        check_js: true,
+        follow_dynamic: false,
+        follow_type_only: true,
+      },
+    );
+    assert_eq!(
+      result
+        .map(|(specifier, _)| specifier.to_string())
+        .collect::<Vec<_>>(),
+      vec![
+        "https://example.com/jsx-runtime",
+        "https://example.com/jsx-runtime.d.ts",
+        "file:///a/test01.ts",
+        "file:///a/test02.ts",
+        "file:///a/test04.js",
+        "file:///a/test04.d.ts",
+        "https://example.com/a.ts",
+        "https://example.com/c",
+        "https://example.com/c.ts",
+      ]
+    );
   }
 }
