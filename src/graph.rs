@@ -769,7 +769,7 @@ impl ModuleGraph {
   /// returning the "final" module.
   pub fn resolve(&self, specifier: &ModuleSpecifier) -> ModuleSpecifier {
     let mut redirected_specifier = specifier;
-    let max_redirects = 6;
+    let max_redirects = 10;
     let mut seen = HashSet::with_capacity(max_redirects);
     seen.insert(redirected_specifier);
     while let Some(specifier) = self.redirects.get(redirected_specifier) {
