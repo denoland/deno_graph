@@ -35,6 +35,7 @@ use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::fmt;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -454,7 +455,7 @@ fn is_false(v: &bool) -> bool {
   !v
 }
 
-#[derive(Debug, Default, Clone, Serialize)]
+#[derive(Debug, Default, Clone, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Dependency {
   #[serde(
@@ -628,7 +629,7 @@ fn to_result<'a>(
 /// module graph without requiring the dependencies to be analyzed. This is
 /// intended to be used for importing type dependencies or other externally
 /// defined dependencies, like JSX runtimes.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GraphImport {
   /// A map of resolved dependencies, where the key is the value originally
   /// provided for the import and the value is the resolved dependency.
@@ -678,6 +679,162 @@ pub struct BuildOptions<'a> {
   pub reporter: Option<&'a dyn Reporter>,
 }
 
+#[derive(Debug, Copy, Clone)]
+pub enum ModuleEntryRef<'a> {
+  Module(&'a Module),
+  Err(&'a ModuleGraphError),
+  Redirect(&'a ModuleSpecifier),
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct WalkOptions {
+  pub follow_dynamic: bool,
+  pub follow_type_only: bool,
+  pub check_js: bool,
+}
+
+impl Default for WalkOptions {
+  fn default() -> Self {
+    Self {
+      follow_dynamic: true,
+      follow_type_only: true,
+      check_js: true,
+    }
+  }
+}
+
+pub struct ModuleEntryIterator<'a> {
+  graph: &'a ModuleGraph,
+  seen: HashSet<&'a ModuleSpecifier>,
+  visiting: VecDeque<&'a ModuleSpecifier>,
+  follow_dynamic: bool,
+  follow_type_only: bool,
+  check_js: bool,
+}
+
+impl<'a> ModuleEntryIterator<'a> {
+  fn new(
+    graph: &'a ModuleGraph,
+    roots: &[&'a ModuleSpecifier],
+    options: WalkOptions,
+  ) -> Self {
+    let mut seen = HashSet::<&'a ModuleSpecifier>::with_capacity(
+      graph.roots.len() + graph.redirects.len(),
+    );
+    let mut visiting = VecDeque::<&'a ModuleSpecifier>::new();
+    for root in roots {
+      seen.insert(root);
+      visiting.push_back(root);
+    }
+    for (_, dep) in graph.imports.values().flat_map(|i| &i.dependencies) {
+      let mut resolutions = Vec::with_capacity(2);
+      resolutions.push(&dep.maybe_code);
+      if options.follow_type_only {
+        resolutions.push(&dep.maybe_type);
+      }
+      #[allow(clippy::manual_flatten)]
+      for resolved in resolutions {
+        if let Resolved::Ok { specifier, .. } = resolved {
+          if !seen.contains(specifier) {
+            seen.insert(specifier);
+            visiting.push_front(specifier);
+          }
+        }
+      }
+    }
+    Self {
+      graph,
+      seen,
+      visiting,
+      follow_dynamic: options.follow_dynamic,
+      follow_type_only: options.follow_type_only,
+      check_js: options.check_js,
+    }
+  }
+}
+
+impl<'a> Iterator for ModuleEntryIterator<'a> {
+  type Item = (&'a ModuleSpecifier, ModuleEntryRef<'a>);
+
+  fn next(&mut self) -> Option<Self::Item> {
+    let (specifier, module_entry) = loop {
+      let specifier = self.visiting.pop_front()?;
+      match self.graph.module_slots.get_key_value(specifier) {
+        Some((specifier, module_slot)) => {
+          match module_slot {
+            ModuleSlot::Pending => {
+              // ignore
+            }
+            ModuleSlot::Module(module) => {
+              break (specifier, ModuleEntryRef::Module(module))
+            }
+            ModuleSlot::Err(err) => {
+              break (specifier, ModuleEntryRef::Err(err))
+            }
+          }
+        }
+        None => {
+          if let Some((specifier, to)) =
+            self.graph.redirects.get_key_value(specifier)
+          {
+            break (specifier, ModuleEntryRef::Redirect(to));
+          }
+        }
+      }
+    };
+
+    match &module_entry {
+      ModuleEntryRef::Module(module) => {
+        let check_types = (self.check_js
+          || !matches!(
+            module.media_type,
+            MediaType::JavaScript
+              | MediaType::Mjs
+              | MediaType::Cjs
+              | MediaType::Jsx
+          ))
+          && self.follow_type_only;
+        if check_types {
+          if let Some((_, Resolved::Ok { specifier, .. })) =
+            &module.maybe_types_dependency
+          {
+            if !self.seen.contains(specifier) {
+              self.seen.insert(specifier);
+              self.visiting.push_front(specifier);
+            }
+          }
+        }
+        for dep in module.dependencies.values().rev() {
+          if !dep.is_dynamic || self.follow_dynamic {
+            let mut resolutions = vec![&dep.maybe_code];
+            if check_types {
+              resolutions.push(&dep.maybe_type);
+            }
+            #[allow(clippy::manual_flatten)]
+            for resolved in resolutions {
+              if let Resolved::Ok { specifier, .. } = resolved {
+                if !self.seen.contains(specifier) {
+                  self.seen.insert(specifier);
+                  self.visiting.push_front(specifier);
+                }
+              }
+            }
+          }
+        }
+      }
+      ModuleEntryRef::Err(_) => {}
+      ModuleEntryRef::Redirect(specifier) => {
+        if !self.seen.contains(specifier) {
+          self.seen.insert(specifier);
+          self.visiting.push_front(specifier);
+        }
+      }
+    }
+
+    Some((specifier, module_entry))
+  }
+}
+
 /// The structure which represents a module graph, which can be serialized as
 /// well as "printed".  The roots of the graph represent the "starting" point
 /// which can be located in the module "slots" in the graph. The graph also
@@ -721,6 +878,52 @@ impl ModuleGraph {
       options.reporter,
     )
     .await
+  }
+
+  /// Creates a new cloned module graph from the provided roots.
+  pub fn segment(&self, roots: &[&ModuleSpecifier]) -> Self {
+    let mut new_graph = ModuleGraph::new(self.graph_kind);
+    let entries = self.walk(
+      roots,
+      WalkOptions {
+        follow_dynamic: true,
+        follow_type_only: true,
+        check_js: true,
+      },
+    );
+
+    for (specifier, module_entry) in entries {
+      match module_entry {
+        ModuleEntryRef::Module(module) => {
+          new_graph
+            .module_slots
+            .insert(specifier.clone(), ModuleSlot::Module(module.clone()));
+        }
+        ModuleEntryRef::Err(err) => {
+          new_graph
+            .module_slots
+            .insert(specifier.clone(), ModuleSlot::Err(err.clone()));
+        }
+        ModuleEntryRef::Redirect(specifier_to) => {
+          new_graph
+            .redirects
+            .insert(specifier.clone(), specifier_to.clone());
+        }
+      }
+    }
+    new_graph.imports = self.imports.clone();
+    new_graph.roots = roots.iter().map(|r| (*r).to_owned()).collect();
+
+    new_graph
+  }
+
+  /// Iterates over all the module entries in the module graph searching from the provided roots.
+  pub fn walk<'a>(
+    &'a self,
+    roots: &[&'a ModuleSpecifier],
+    options: WalkOptions,
+  ) -> ModuleEntryIterator<'a> {
+    ModuleEntryIterator::new(self, roots, options)
   }
 
   /// Returns `true` if the specifier resolves to a module within a graph,
@@ -1389,7 +1592,7 @@ fn is_untyped(media_type: &MediaType) -> bool {
 }
 
 /// The kind of module graph.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum GraphKind {
   /// All types of dependencies should be analyzed and included in the graph.
   All,

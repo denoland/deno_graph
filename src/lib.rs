@@ -49,6 +49,7 @@ pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
 
+#[derive(Debug, Clone)]
 pub struct ReferrerImports {
   /// The referrer to resolve the imports from.
   pub referrer: ModuleSpecifier,
@@ -116,6 +117,7 @@ mod tests {
   use source::MemoryLoader;
   use source::Source;
   use std::cell::RefCell;
+  use std::collections::BTreeMap;
 
   type Sources<'a> = Vec<(&'a str, Source<&'a str>)>;
 
@@ -2987,5 +2989,97 @@ export function a(a: A): B {
         "specifier": "file:///a/test.ts"
       })
     );
+  }
+
+  #[tokio::test]
+  async fn test_segment_graph() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"import * as b from "./test02.ts"; import "https://example.com/a.ts";"#,
+          },
+        ),
+        (
+          "file:///a/test02.ts",
+          Source::Module {
+            specifier: "file:///a/test02.ts",
+            maybe_headers: None,
+            content: r#"export const b = "b";"#,
+          },
+        ),
+        (
+          "https://example.com/a.ts",
+          Source::Module {
+            specifier: "https://example.com/a.ts",
+            maybe_headers: None,
+            content: r#"import * as c from "./c";"#,
+          },
+        ),
+        (
+          "https://example.com/c",
+          Source::Module {
+            specifier: "https://example.com/c.ts",
+            maybe_headers: None,
+            content: r#"export const c = "c";"#,
+          },
+        ),
+        (
+          "https://example.com/jsx-runtime",
+          Source::Module {
+            specifier: "https://example.com/jsx-runtime",
+            maybe_headers: Some(vec![
+              ("content-type", "application/javascript"),
+              ("x-typescript-types", "./jsx-runtime.d.ts"),
+            ]),
+            content: r#"export const a = "a";"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let roots = vec![ModuleSpecifier::parse("file:///a/test01.ts").unwrap()];
+    let mut graph = ModuleGraph::default();
+    let config_specifier =
+      ModuleSpecifier::parse("file:///a/tsconfig.json").unwrap();
+    let imports = vec![ReferrerImports {
+      referrer: config_specifier.clone(),
+      imports: vec!["https://example.com/jsx-runtime".to_string()],
+    }];
+    graph
+      .build(
+        roots.clone(),
+        &mut loader,
+        BuildOptions {
+          imports: imports.clone(),
+          ..Default::default()
+        },
+      )
+      .await;
+    assert_eq!(graph.module_slots.len(), 6);
+
+    let example_a_url =
+      ModuleSpecifier::parse("https://example.com/a.ts").unwrap();
+    let graph = graph.segment(&[&example_a_url]);
+    assert_eq!(graph.roots, vec![example_a_url]);
+    // should get the redirect
+    assert_eq!(
+      graph.redirects,
+      BTreeMap::from([(
+        ModuleSpecifier::parse("https://example.com/c").unwrap(),
+        ModuleSpecifier::parse("https://example.com/c.ts").unwrap(),
+      )])
+    );
+
+    // should copy over the imports
+    assert_eq!(graph.imports.len(), 1);
+
+    assert!(graph
+      .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap()));
+    assert!(graph
+      .contains(&ModuleSpecifier::parse("https://example.com/c.ts").unwrap()));
   }
 }
