@@ -131,7 +131,7 @@ pub fn load_data_url(
   let (bytes, _) = url
     .decode_to_vec()
     .map_err(|_| anyhow!("Unable to decode data url."))?;
-  let mut headers: HashMap<String, String> = HashMap::new();
+  let mut headers: HashMap<String, String> = HashMap::with_capacity(1);
   headers.insert("content-type".to_string(), url.mime_type().to_string());
   let mut content = String::from_utf8(bytes)?;
   strip_bom_mut(&mut content);
