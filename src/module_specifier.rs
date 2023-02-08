@@ -30,11 +30,10 @@ impl Error for SpecifierError {
 impl fmt::Display for SpecifierError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match self {
-      InvalidUrl(ref err) => write!(f, "invalid URL: {}", err),
+      InvalidUrl(ref err) => write!(f, "invalid URL: {err}"),
       ImportPrefixMissing(ref specifier, _) => write!(
         f,
-        "Relative import path \"{}\" not prefixed with / or ./ or ../",
-        specifier,
+        "Relative import path \"{specifier}\" not prefixed with / or ./ or ../",
       ),
     }
   }
