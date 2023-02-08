@@ -171,9 +171,9 @@ impl ModuleGraphError {
   /// not useful in cases like the LSP where the range is given by the editor itself.
   pub fn to_string_with_range(&self) -> String {
     if let Some(range) = self.maybe_range() {
-      format!("{}\n    at {}", self, range)
+      format!("{self}\n    at {range}")
     } else {
-      format!("{}", self)
+      format!("{self}")
     }
   }
 
@@ -210,24 +210,24 @@ impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::LoadingErr(_, _, err) => err.fmt(f),
-      Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {}", diagnostic),
+      Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {diagnostic}"),
       Self::ResolutionError(err) => err.fmt(f),
       Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type, .. } =>
-        write!(f, "Expected a {} module, but identified a {} module.\n  Specifier: {}", expected_media_type, actual_media_type, specifier),
+        write!(f, "Expected a {expected_media_type} module, but identified a {actual_media_type} module.\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType {
         specifier,
         media_type: MediaType::Json,
         ..
-      } => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {}", specifier),
+      } => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType {
         specifier,
         media_type,
         ..
-       } => write!(f, "Expected a JavaScript or TypeScript module, but identified a {} module. Importing these types of modules is currently not supported.\n  Specifier: {}", media_type, specifier),
+       } => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
       Self::UnsupportedImportAssertionType { specifier, kind, .. } =>
-        write!(f, "The import assertion type of \"{}\" is unsupported.\n  Specifier: {}", kind, specifier),
+        write!(f, "The import assertion type of \"{kind}\" is unsupported.\n  Specifier: {specifier}"),
       Self::Missing(specifier, _) => {
-        write!(f, "Module not found \"{}\".", specifier)
+        write!(f, "Module not found \"{specifier}\".")
       },
     }
   }
@@ -348,8 +348,8 @@ impl Eq for ResolutionError {}
 impl fmt::Display for ResolutionError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::InvalidDowngrade { specifier, .. } => write!(f, "Modules imported via https are not allowed to import http modules.\n  Importing: {}", specifier),
-      Self::InvalidLocalImport { specifier, .. } => write!(f, "Remote modules are not allowed to import local modules. Consider using a dynamic import instead.\n  Importing: {}", specifier),
+      Self::InvalidDowngrade { specifier, .. } => write!(f, "Modules imported via https are not allowed to import http modules.\n  Importing: {specifier}"),
+      Self::InvalidLocalImport { specifier, .. } => write!(f, "Remote modules are not allowed to import local modules. Consider using a dynamic import instead.\n  Importing: {specifier}"),
       Self::ResolverError { error, .. } => error.fmt(f),
       Self::InvalidSpecifier { error, .. } => error.fmt(f),
     }
@@ -357,18 +357,21 @@ impl fmt::Display for ResolutionError {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Resolved {
-  None,
-  Ok {
-    /// Specifier to.
-    specifier: ModuleSpecifier,
-    /// Referrer range.
-    range: Box<Range>,
-  },
-  Err(ResolutionError),
+pub struct ResolutionResolved {
+  /// Specifier to.
+  pub specifier: ModuleSpecifier,
+  /// Referrer range.
+  pub range: Range,
 }
 
-impl Resolved {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Resolution {
+  None,
+  Ok(Box<ResolutionResolved>),
+  Err(Box<ResolutionError>),
+}
+
+impl Resolution {
   pub fn from_resolve_result(
     result: Result<ModuleSpecifier, Error>,
     range: Range,
@@ -391,7 +394,7 @@ impl Resolved {
               range,
             }
           };
-        Self::Err(resolution_error)
+        Self::Err(Box::new(resolution_error))
       }
     }
   }
@@ -404,23 +407,28 @@ impl Resolved {
     let referrer_scheme = range.specifier.scheme();
     let specifier_scheme = specifier.scheme();
     if referrer_scheme == "https" && specifier_scheme == "http" {
-      Resolved::Err(ResolutionError::InvalidDowngrade { specifier, range })
+      Resolution::Err(Box::new(ResolutionError::InvalidDowngrade {
+        specifier,
+        range,
+      }))
     } else if matches!(referrer_scheme, "https" | "http")
       && !matches!(specifier_scheme, "https" | "http" | "npm" | "node")
       && !remapped
     {
-      Resolved::Err(ResolutionError::InvalidLocalImport { specifier, range })
-    } else {
-      Resolved::Ok {
+      Resolution::Err(Box::new(ResolutionError::InvalidLocalImport {
         specifier,
-        range: Box::new(range),
-      }
+        range,
+      }))
+    } else {
+      Resolution::Ok(Box::new(ResolutionResolved { specifier, range }))
     }
   }
 
   pub fn includes(&self, position: &Position) -> Option<&Range> {
     match self {
-      Self::Ok { range, .. } if range.includes(position) => Some(range),
+      Self::Ok(resolution) if resolution.range.includes(position) => {
+        Some(&resolution.range)
+      }
       Self::Err(err) => {
         let range = err.range();
         if range.includes(position) {
@@ -438,43 +446,55 @@ impl Resolved {
   }
 
   pub fn maybe_specifier(&self) -> Option<&ModuleSpecifier> {
-    if let Self::Ok { specifier, .. } = self {
-      Some(specifier)
+    self.ok().map(|r| &r.specifier)
+  }
+
+  pub fn ok(&self) -> Option<&ResolutionResolved> {
+    if let Resolution::Ok(resolved) = self {
+      Some(&**resolved)
+    } else {
+      None
+    }
+  }
+
+  pub fn err(&self) -> Option<&ResolutionError> {
+    if let Resolution::Err(err) = self {
+      Some(&**err)
     } else {
       None
     }
   }
 }
 
-impl Default for Resolved {
+impl Default for Resolution {
   fn default() -> Self {
     Self::None
   }
 }
 
-fn serialize_resolved<S>(
-  resolved: &Resolved,
+fn serialize_resolution<S>(
+  resolution: &Resolution,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
   S: Serializer,
 {
-  match resolved {
-    Resolved::Ok {
-      specifier, range, ..
-    } => {
+  match resolution {
+    Resolution::Ok(resolved) => {
       let mut state = serializer.serialize_struct("ResolvedSpecifier", 2)?;
-      state.serialize_field("specifier", specifier)?;
-      state.serialize_field("span", range)?;
+      state.serialize_field("specifier", &resolved.specifier)?;
+      state.serialize_field("span", &resolved.range)?;
       state.end()
     }
-    Resolved::Err(err) => {
+    Resolution::Err(err) => {
       let mut state = serializer.serialize_struct("ResolvedError", 2)?;
       state.serialize_field("error", &err.to_string())?;
       state.serialize_field("span", err.range())?;
       state.end()
     }
-    _ => Serialize::serialize(&serde_json::Value::Null, serializer),
+    Resolution::None => {
+      Serialize::serialize(&serde_json::Value::Null, serializer)
+    }
   }
 }
 
@@ -487,16 +507,16 @@ fn is_false(v: &bool) -> bool {
 pub struct Dependency {
   #[serde(
     rename = "code",
-    skip_serializing_if = "Resolved::is_none",
-    serialize_with = "serialize_resolved"
+    skip_serializing_if = "Resolution::is_none",
+    serialize_with = "serialize_resolution"
   )]
-  pub maybe_code: Resolved,
+  pub maybe_code: Resolution,
   #[serde(
     rename = "type",
-    skip_serializing_if = "Resolved::is_none",
-    serialize_with = "serialize_resolved"
+    skip_serializing_if = "Resolution::is_none",
+    serialize_with = "serialize_resolution"
   )]
-  pub maybe_type: Resolved,
+  pub maybe_type: Resolution,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
   #[serde(rename = "assertType", skip_serializing_if = "Option::is_none")]
@@ -576,7 +596,7 @@ pub struct Module {
     skip_serializing_if = "Option::is_none",
     serialize_with = "serialize_type_dependency"
   )]
-  pub maybe_types_dependency: Option<(String, Resolved)>,
+  pub maybe_types_dependency: Option<(String, Resolution)>,
   #[serde(skip_serializing_if = "is_media_type_unknown")]
   pub media_type: MediaType,
   pub specifier: ModuleSpecifier,
@@ -630,7 +650,7 @@ pub(crate) enum ModuleSlot {
   /// A module, with source code.
   Module(Module),
   /// When trying to load or parse the module, an error occurred.
-  Err(ModuleGraphError),
+  Err(Box<ModuleGraphError>),
   /// An internal state set when loading a module asynchronously.
   Pending,
 }
@@ -682,7 +702,7 @@ impl GraphImport {
           import.clone(),
           Dependency {
             is_dynamic: false,
-            maybe_code: Resolved::None,
+            maybe_code: Resolution::None,
             maybe_type,
             maybe_assert_type: None,
           },
@@ -760,8 +780,9 @@ impl<'a> ModuleEntryIterator<'a> {
         resolutions.push(&dep.maybe_type);
       }
       #[allow(clippy::manual_flatten)]
-      for resolved in resolutions {
-        if let Resolved::Ok { specifier, .. } = resolved {
+      for resolution in resolutions {
+        if let Resolution::Ok(resolved) = resolution {
+          let specifier = &resolved.specifier;
           if !seen.contains(specifier) {
             seen.insert(specifier);
             visiting.push_front(specifier);
@@ -785,7 +806,7 @@ impl<'a> ModuleEntryIterator<'a> {
   /// This is different than calling `.valid()` on a module graph because
   /// it only applies to the roots filtered by the iterator with the provided
   /// options.
-  pub fn validate(self) -> Result<(), ModuleGraphError> {
+  pub fn validate(self) -> Result<(), Box<ModuleGraphError>> {
     let follow_type_only = self.follow_type_only;
     let check_js = self.check_js;
     for (_, module_entry) in self {
@@ -801,10 +822,12 @@ impl<'a> ModuleEntryIterator<'a> {
             ))
             && follow_type_only;
           if check_types {
-            if let Some((_, Resolved::Err(error))) =
+            if let Some((_, Resolution::Err(error))) =
               &module.maybe_types_dependency
             {
-              return Err(ModuleGraphError::ResolutionError(error.clone()));
+              return Err(Box::new(ModuleGraphError::ResolutionError(
+                *error.clone(),
+              )));
             }
           }
           for dep in module.dependencies.values() {
@@ -814,16 +837,18 @@ impl<'a> ModuleEntryIterator<'a> {
                 resolutions.push(&dep.maybe_type);
               }
               #[allow(clippy::manual_flatten)]
-              for resolved in resolutions {
-                if let Resolved::Err(error) = resolved {
-                  return Err(ModuleGraphError::ResolutionError(error.clone()));
+              for resolution in resolutions {
+                if let Resolution::Err(error) = resolution {
+                  return Err(Box::new(ModuleGraphError::ResolutionError(
+                    *error.clone(),
+                  )));
                 }
               }
             }
           }
         }
         ModuleEntryRef::Err(error) => {
-          return Err(error.clone());
+          return Err(Box::new(error.clone()));
         }
         _ => {}
       }
@@ -874,9 +899,10 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
           ))
           && self.follow_type_only;
         if check_types {
-          if let Some((_, Resolved::Ok { specifier, .. })) =
+          if let Some((_, Resolution::Ok(resolved))) =
             &module.maybe_types_dependency
           {
+            let specifier = &resolved.specifier;
             if !self.seen.contains(specifier) {
               self.seen.insert(specifier);
               self.visiting.push_front(specifier);
@@ -890,8 +916,9 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
               resolutions.push(&dep.maybe_type);
             }
             #[allow(clippy::manual_flatten)]
-            for resolved in resolutions {
-              if let Resolved::Ok { specifier, .. } = resolved {
+            for resolution in resolutions {
+              if let Resolution::Ok(resolved) = resolution {
+                let specifier = &resolved.specifier;
                 if !self.seen.contains(specifier) {
                   self.seen.insert(specifier);
                   self.visiting.push_front(specifier);
@@ -986,7 +1013,7 @@ impl ModuleGraph {
         ModuleEntryRef::Err(err) => {
           new_graph
             .module_slots
-            .insert(specifier.clone(), ModuleSlot::Err(err.clone()));
+            .insert(specifier.clone(), ModuleSlot::Err(Box::new(err.clone())));
         }
         ModuleEntryRef::Redirect(specifier_to) => {
           new_graph
@@ -1023,7 +1050,7 @@ impl ModuleGraph {
   /// Returns any errors that are in the module graph.
   pub fn errors(&self) -> impl Iterator<Item = &ModuleGraphError> {
     self.module_slots.values().filter_map(|ms| match ms {
-      ModuleSlot::Err(err) => Some(err),
+      ModuleSlot::Err(err) => Some(&**err),
       ModuleSlot::Module(_) | ModuleSlot::Pending => None,
     })
   }
@@ -1061,12 +1088,12 @@ impl ModuleGraph {
     seen.insert(redirected_specifier);
     while let Some(specifier) = self.redirects.get(redirected_specifier) {
       if !seen.insert(specifier) {
-        eprintln!("An infinite loop of redirections detected.\n  Original specifier: {}", specifier);
+        eprintln!("An infinite loop of redirections detected.\n  Original specifier: {specifier}");
         break;
       }
       redirected_specifier = specifier;
       if seen.len() >= max_redirects {
-        eprintln!("An excessive number of redirections detected.\n  Original specifier: {}", specifier);
+        eprintln!("An excessive number of redirections detected.\n  Original specifier: {specifier}");
         break;
       }
     }
@@ -1144,10 +1171,10 @@ impl ModuleGraph {
     specifier: &ModuleSpecifier,
   ) -> Option<&ModuleSpecifier> {
     if let Some(ModuleSlot::Module(module)) = self.module_slots.get(specifier) {
-      if let Some((_, Resolved::Ok { specifier, .. })) =
+      if let Some((_, Resolution::Ok(resolved))) =
         &module.maybe_types_dependency
       {
-        return Some(specifier);
+        return Some(&resolved.specifier);
       }
     }
     None
@@ -1177,11 +1204,11 @@ impl ModuleGraph {
   pub fn try_get(
     &self,
     specifier: &ModuleSpecifier,
-  ) -> Result<Option<&Module>, ModuleGraphError> {
+  ) -> Result<Option<&Module>, Box<ModuleGraphError>> {
     let specifier = self.resolve(specifier);
     match self.module_slots.get(&specifier) {
       Some(ModuleSlot::Module(module)) => Ok(Some(module)),
-      Some(ModuleSlot::Err(err)) => Err(err.clone()),
+      Some(ModuleSlot::Err(err)) => Err(Box::new(*err.clone())),
       _ => Ok(None),
     }
   }
@@ -1189,7 +1216,7 @@ impl ModuleGraph {
   /// Walk the graph from the root, checking to see if there are any module
   /// graph errors on non-type only, non-dynamic imports. The first error is
   /// returned as as error result, otherwise ok if there are no errors.
-  pub fn valid(&self) -> Result<(), ModuleGraphError> {
+  pub fn valid(&self) -> Result<(), Box<ModuleGraphError>> {
     self
       .walk(
         &self.roots,
@@ -1209,10 +1236,10 @@ fn resolve(
   specifier: &str,
   referrer_range: &Range,
   maybe_resolver: Option<&dyn Resolver>,
-) -> Resolved {
+) -> Resolution {
   if let Some(resolver) = maybe_resolver {
     let response = resolver.resolve(specifier, &referrer_range.specifier);
-    Resolved::from_resolve_result(
+    Resolution::from_resolve_result(
       response,
       referrer_range.clone(),
       specifier,
@@ -1221,7 +1248,7 @@ fn resolve(
   } else {
     let response = resolve_import(specifier, &referrer_range.specifier)
       .map_err(|err| err.into());
-    Resolved::from_resolve_result(
+    Resolution::from_resolve_result(
       response,
       referrer_range.clone(),
       specifier,
@@ -1263,7 +1290,7 @@ pub(crate) fn parse_module(
   module_analyzer: &dyn ModuleAnalyzer,
   is_root: bool,
   is_dynamic_branch: bool,
-) -> ModuleSlot {
+) -> Result<Module, Box<ModuleGraphError>> {
   let media_type =
     MediaType::from_specifier_and_headers(specifier, maybe_headers);
 
@@ -1277,7 +1304,7 @@ pub(crate) fn parse_module(
         Some("json")
       ))
   {
-    return ModuleSlot::Module(Module {
+    return Ok(Module {
       dependencies: Default::default(),
       kind: ModuleKind::Asserted,
       maybe_cache_info: None,
@@ -1290,20 +1317,18 @@ pub(crate) fn parse_module(
 
   if let Some(assert_type) = maybe_assert_type {
     if assert_type.kind == "json" {
-      return ModuleSlot::Err(ModuleGraphError::InvalidTypeAssertion {
+      return Err(Box::new(ModuleGraphError::InvalidTypeAssertion {
         specifier: specifier.clone(),
         range: assert_type.range,
         actual_media_type: media_type,
         expected_media_type: MediaType::Json,
-      });
+      }));
     } else {
-      return ModuleSlot::Err(
-        ModuleGraphError::UnsupportedImportAssertionType {
-          specifier: specifier.clone(),
-          range: assert_type.range,
-          kind: assert_type.kind,
-        },
-      );
+      return Err(Box::new(ModuleGraphError::UnsupportedImportAssertionType {
+        specifier: specifier.clone(),
+        range: assert_type.range,
+        kind: assert_type.kind,
+      }));
     }
   }
 
@@ -1323,7 +1348,7 @@ pub(crate) fn parse_module(
       match module_analyzer.analyze(specifier, content.clone(), media_type) {
         Ok(module_info) => {
           // Return the module as a valid module
-          ModuleSlot::Module(parse_module_from_module_info(
+          Ok(parse_module_from_module_info(
             specifier,
             maybe_kind.unwrap_or(ModuleKind::Esm),
             media_type,
@@ -1333,10 +1358,10 @@ pub(crate) fn parse_module(
             maybe_resolver,
           ))
         }
-        Err(diagnostic) => ModuleSlot::Err(ModuleGraphError::ParseErr(
+        Err(diagnostic) => Err(Box::new(ModuleGraphError::ParseErr(
           specifier.clone(),
           diagnostic,
-        )),
+        ))),
       }
     }
     MediaType::Unknown if is_root => {
@@ -1347,7 +1372,7 @@ pub(crate) fn parse_module(
       ) {
         Ok(module_info) => {
           // Return the module as a valid module
-          ModuleSlot::Module(parse_module_from_module_info(
+          Ok(parse_module_from_module_info(
             specifier,
             maybe_kind.unwrap_or(ModuleKind::Esm),
             media_type,
@@ -1357,17 +1382,17 @@ pub(crate) fn parse_module(
             maybe_resolver,
           ))
         }
-        Err(diagnostic) => ModuleSlot::Err(ModuleGraphError::ParseErr(
+        Err(diagnostic) => Err(Box::new(ModuleGraphError::ParseErr(
           specifier.clone(),
           diagnostic,
-        )),
+        ))),
       }
     }
-    _ => ModuleSlot::Err(ModuleGraphError::UnsupportedMediaType {
+    _ => Err(Box::new(ModuleGraphError::UnsupportedMediaType {
       specifier: specifier.clone(),
       media_type,
       maybe_referrer,
-    }),
+    })),
   }
 }
 
@@ -1395,23 +1420,20 @@ pub(crate) fn parse_module_from_module_info(
         if dep.maybe_code.is_none() {
           let range =
             Range::from_position_range(&module.specifier, &specifier.range);
-          let resolved_dependency =
-            resolve(&specifier.text, &range, maybe_resolver);
-          dep.maybe_code = resolved_dependency;
+          dep.maybe_code = resolve(&specifier.text, &range, maybe_resolver);
         }
       }
       TypeScriptReference::Types(specifier) => {
         let range =
           Range::from_position_range(&module.specifier, &specifier.range);
-        let resolved_dependency =
-          resolve(&specifier.text, &range, maybe_resolver);
+        let dep_resolution = resolve(&specifier.text, &range, maybe_resolver);
         if is_untyped(&module.media_type) {
           module.maybe_types_dependency =
-            Some((specifier.text, resolved_dependency));
+            Some((specifier.text, dep_resolution));
         } else {
           let dep = module.dependencies.entry(specifier.text).or_default();
           if dep.maybe_type.is_none() {
-            dep.maybe_type = resolved_dependency;
+            dep.maybe_type = dep_resolution;
           }
         }
       }
@@ -1448,8 +1470,7 @@ pub(crate) fn parse_module_from_module_info(
       if dep.maybe_code.is_none() {
         let range =
           Range::from_position_range(&module.specifier, &import_source.range);
-        let resolved_dependency = resolve(&specifier, &range, maybe_resolver);
-        dep.maybe_code = resolved_dependency;
+        dep.maybe_code = resolve(&specifier, &range, maybe_resolver);
       }
     }
   }
@@ -1463,9 +1484,7 @@ pub(crate) fn parse_module_from_module_info(
     if dep.maybe_type.is_none() {
       let range =
         Range::from_position_range(&module.specifier, &specifier.range);
-      let resolved_dependency =
-        resolve(&specifier.text, &range, maybe_resolver);
-      dep.maybe_type = resolved_dependency;
+      dep.maybe_type = resolve(&specifier.text, &range, maybe_resolver);
     }
   }
 
@@ -1478,9 +1497,9 @@ pub(crate) fn parse_module_from_module_info(
           start: Position::zeroed(),
           end: Position::zeroed(),
         };
-        let resolved_dependency = resolve(types_header, &range, maybe_resolver);
+        let dep_resolution = resolve(types_header, &range, maybe_resolver);
         module.maybe_types_dependency =
-          Some((types_header.clone(), resolved_dependency));
+          Some((types_header.clone(), dep_resolution));
       }
     }
   }
@@ -1495,19 +1514,19 @@ pub(crate) fn parse_module_from_module_info(
         match resolver.resolve_types(&module.specifier) {
           Ok(Some((specifier, maybe_range))) => Some((
             module.specifier.to_string(),
-            Resolved::Ok {
+            Resolution::Ok(Box::new(ResolutionResolved {
               specifier: specifier.clone(),
-              range: Box::new(maybe_range.unwrap_or_else(|| Range {
+              range: maybe_range.unwrap_or_else(|| Range {
                 specifier,
                 start: Position::zeroed(),
                 end: Position::zeroed(),
-              })),
-            },
+              }),
+            })),
           )),
           Ok(None) => None,
           Err(err) => Some((
             module.specifier.to_string(),
-            Resolved::Err(ResolutionError::ResolverError {
+            Resolution::Err(Box::new(ResolutionError::ResolverError {
               error: Arc::new(err),
               specifier: module.specifier.to_string(),
               range: Range {
@@ -1515,7 +1534,7 @@ pub(crate) fn parse_module_from_module_info(
                 start: Position::zeroed(),
                 end: Position::zeroed(),
               },
-            }),
+            })),
           )),
         };
     }
@@ -1532,7 +1551,7 @@ pub(crate) fn parse_module_from_module_info(
     if dep.maybe_assert_type.is_none() {
       dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
     }
-    let resolved_dependency = resolve(
+    let dep_resolution = resolve(
       &desc.specifier,
       &Range::from_position_range(&module.specifier, &desc.specifier_range),
       maybe_resolver,
@@ -1542,12 +1561,12 @@ pub(crate) fn parse_module_from_module_info(
       DependencyKind::ImportType | DependencyKind::ExportType
     ) {
       if dep.maybe_type.is_none() {
-        dep.maybe_type = resolved_dependency;
+        dep.maybe_type = dep_resolution;
       }
     } else if dep.maybe_code.is_none() {
       // This is a code import, the first one of that specifier in this module.
       // Resolve and determine the initial `is_dynamic` value from it.
-      dep.maybe_code = resolved_dependency;
+      dep.maybe_code = dep_resolution;
       dep.is_dynamic = desc.is_dynamic;
     } else {
       // This is a code import, but not the first one of that specifier in this
@@ -1566,7 +1585,7 @@ pub(crate) fn parse_module_from_module_info(
             maybe_resolver,
           )
         })
-        .unwrap_or_else(|| Resolved::None);
+        .unwrap_or_else(|| Resolution::None);
       dep.maybe_type = maybe_type
     }
   }
@@ -1688,11 +1707,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let imports = referrer_imports.imports;
       let graph_import = GraphImport::new(&referrer, imports, self.resolver);
       for dep in graph_import.dependencies.values() {
-        if let Resolved::Ok {
-          specifier, range, ..
-        } = &dep.maybe_type
-        {
-          self.load(specifier, Some(range), self.in_dynamic_branch, None);
+        if let Resolution::Ok(resolved) = &dep.maybe_type {
+          self.load(
+            &resolved.specifier,
+            Some(&resolved.range),
+            self.in_dynamic_branch,
+            None,
+          );
         }
       }
       self.graph.imports.insert(referrer, graph_import);
@@ -1716,21 +1737,21 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Some((specifier, maybe_range, Ok(None))) => {
           self.graph.module_slots.insert(
             specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::Missing(
+            ModuleSlot::Err(Box::new(ModuleGraphError::Missing(
               specifier.clone(),
               maybe_range,
-            )),
+            ))),
           );
           Some(specifier)
         }
         Some((specifier, maybe_range, Err(err))) => {
           self.graph.module_slots.insert(
             specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::LoadingErr(
+            ModuleSlot::Err(Box::new(ModuleGraphError::LoadingErr(
               specifier.clone(),
               maybe_range,
               Arc::new(err),
-            )),
+            ))),
           );
           Some(specifier)
         }
@@ -1886,7 +1907,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     use std::borrow::BorrowMut;
     let is_root = self.roots_contain(specifier);
 
-    let mut module_slot = parse_module(
+    let mut module_slot = match parse_module(
       specifier,
       maybe_headers,
       content,
@@ -1897,7 +1918,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       self.module_analyzer,
       is_root,
       self.in_dynamic_branch,
-    );
+    ) {
+      Ok(module) => ModuleSlot::Module(module),
+      Err(err) => ModuleSlot::Err(err),
+    };
 
     if let ModuleSlot::Module(module) = module_slot.borrow_mut() {
       if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::CodeOnly)
@@ -1909,21 +1933,20 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             GraphKind::All | GraphKind::CodeOnly
           ) || dep.maybe_type.is_none()
           {
-            if let Resolved::Ok {
-              specifier, range, ..
-            } = &dep.maybe_code
-            {
+            if let Resolution::Ok(resolved) = &dep.maybe_code {
+              let specifier = &resolved.specifier;
+              let range = &resolved.range;
               let maybe_assert_type_with_range = dep
                 .maybe_assert_type
                 .as_ref()
                 .map(|assert_type| AssertTypeWithRange {
-                  range: *range.clone(),
+                  range: range.clone(),
                   kind: assert_type.clone(),
                 });
               if dep.is_dynamic && !self.in_dynamic_branch {
                 self.dynamic_branches.insert(
                   specifier.clone(),
-                  (*range.clone(), maybe_assert_type_with_range),
+                  (range.clone(), maybe_assert_type_with_range),
                 );
               } else {
                 self.load(
@@ -1935,28 +1958,27 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               }
             }
           } else {
-            dep.maybe_code = Resolved::None;
+            dep.maybe_code = Resolution::None;
           }
 
           if matches!(
             self.graph.graph_kind,
             GraphKind::All | GraphKind::TypesOnly
           ) {
-            if let Resolved::Ok {
-              specifier, range, ..
-            } = &dep.maybe_type
-            {
+            if let Resolution::Ok(resolved) = &dep.maybe_type {
+              let specifier = &resolved.specifier;
+              let range = &resolved.range;
               let maybe_assert_type_with_range = dep
                 .maybe_assert_type
                 .as_ref()
                 .map(|assert_type| AssertTypeWithRange {
-                  range: *range.clone(),
+                  range: range.clone(),
                   kind: assert_type.clone(),
                 });
               if dep.is_dynamic && !self.in_dynamic_branch {
                 self.dynamic_branches.insert(
                   specifier.clone(),
-                  (*range.clone(), maybe_assert_type_with_range),
+                  (range.clone(), maybe_assert_type_with_range),
                 );
               } else {
                 self.load(
@@ -1968,7 +1990,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               }
             }
           } else {
-            dep.maybe_type = Resolved::None;
+            dep.maybe_type = Resolution::None;
           }
         }
       } else {
@@ -1977,14 +1999,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
       if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::TypesOnly)
       {
-        if let Some((
-          _,
-          Resolved::Ok {
-            specifier, range, ..
-          },
-        )) = &module.maybe_types_dependency
+        if let Some((_, Resolution::Ok(resolved))) =
+          &module.maybe_types_dependency
         {
-          self.load(specifier, Some(range), false, None);
+          self.load(&resolved.specifier, Some(&resolved.range), false, None);
         }
       } else {
         module.maybe_types_dependency = None;
@@ -1994,14 +2012,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   }
 }
 
-struct SerializableResolved<'a>(&'a Resolved);
+struct SerializableResolution<'a>(&'a Resolution);
 
-impl<'a> Serialize for SerializableResolved<'a> {
+impl<'a> Serialize for SerializableResolution<'a> {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
     S: Serializer,
   {
-    serialize_resolved(self.0, serializer)
+    serialize_resolution(self.0, serializer)
   }
 }
 
@@ -2015,12 +2033,12 @@ impl<'a> Serialize for SerializableDependency<'a> {
     let mut map = serializer.serialize_map(None)?;
     map.serialize_entry("specifier", self.0)?;
     if !self.1.maybe_code.is_none() {
-      let serializeable_resolved = SerializableResolved(&self.1.maybe_code);
-      map.serialize_entry("code", &serializeable_resolved)?;
+      let serializeable_resolution = SerializableResolution(&self.1.maybe_code);
+      map.serialize_entry("code", &serializeable_resolution)?;
     }
     if !self.1.maybe_type.is_none() {
-      let serializeable_resolved = SerializableResolved(&self.1.maybe_type);
-      map.serialize_entry("type", &serializeable_resolved)?;
+      let serializeable_resolution = SerializableResolution(&self.1.maybe_type);
+      map.serialize_entry("type", &serializeable_resolution)?;
     }
     if self.1.is_dynamic {
       map.serialize_entry("isDynamic", &self.1.is_dynamic)?;
@@ -2135,18 +2153,18 @@ impl<'a> Serialize for SerializableGraphImport<'a> {
 }
 
 fn serialize_type_dependency<S>(
-  maybe_types_dependency: &Option<(String, Resolved)>,
+  maybe_types_dependency: &Option<(String, Resolution)>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
   S: Serializer,
 {
   match *maybe_types_dependency {
-    Some((ref specifier, ref resolved)) => {
+    Some((ref specifier, ref resolution)) => {
       let mut state = serializer.serialize_struct("TypesDependency", 2)?;
       state.serialize_field("specifier", specifier)?;
-      let serializeable_resolved = SerializableResolved(resolved);
-      state.serialize_field("dependency", &serializeable_resolved)?;
+      let serializeable_resolution = SerializableResolution(resolution);
+      state.serialize_field("dependency", &serializeable_resolution)?;
       state.end()
     }
     None => serializer.serialize_none(),
@@ -2214,7 +2232,7 @@ mod tests {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let module_analyzer = DefaultModuleAnalyzer::default();
     let content = r#"import * as b from "./b.ts";"#;
-    let slot = parse_module(
+    let module = parse_module(
       &specifier,
       None,
       content.into(),
@@ -2225,38 +2243,23 @@ mod tests {
       &module_analyzer,
       true,
       false,
-    );
-    if let ModuleSlot::Module(module) = slot {
-      let maybe_dependency = module.dependencies.values().find_map(|d| {
-        d.includes(&Position {
-          line: 0,
-          character: 21,
-        })
-        .map(|r| (d, r))
-      });
-      assert!(maybe_dependency.is_some());
-      let (dependency, range) = maybe_dependency.unwrap();
-      assert_eq!(
-        dependency.maybe_code,
-        Resolved::Ok {
-          specifier: ModuleSpecifier::parse("file:///b.ts").unwrap(),
-          range: Box::new(Range {
-            specifier: specifier.clone(),
-            start: Position {
-              line: 0,
-              character: 19
-            },
-            end: Position {
-              line: 0,
-              character: 27
-            },
-          }),
-        }
-      );
-      assert_eq!(
-        range,
-        &Range {
-          specifier,
+    )
+    .unwrap();
+    let maybe_dependency = module.dependencies.values().find_map(|d| {
+      d.includes(&Position {
+        line: 0,
+        character: 21,
+      })
+      .map(|r| (d, r))
+    });
+    assert!(maybe_dependency.is_some());
+    let (dependency, range) = maybe_dependency.unwrap();
+    assert_eq!(
+      dependency.maybe_code,
+      Resolution::Ok(Box::new(ResolutionResolved {
+        specifier: ModuleSpecifier::parse("file:///b.ts").unwrap(),
+        range: Range {
+          specifier: specifier.clone(),
           start: Position {
             line: 0,
             character: 19
@@ -2265,19 +2268,31 @@ mod tests {
             line: 0,
             character: 27
           },
-        }
-      );
-
-      let maybe_dependency = module.dependencies.values().find_map(|d| {
-        d.includes(&Position {
+        },
+      }))
+    );
+    assert_eq!(
+      range,
+      &Range {
+        specifier,
+        start: Position {
           line: 0,
-          character: 18,
-        })
-      });
-      assert!(maybe_dependency.is_none());
-    } else {
-      panic!("no module returned");
-    }
+          character: 19
+        },
+        end: Position {
+          line: 0,
+          character: 27
+        },
+      }
+    );
+
+    let maybe_dependency = module.dependencies.values().find_map(|d| {
+      d.includes(&Position {
+        line: 0,
+        character: 18,
+      })
+    });
+    assert!(maybe_dependency.is_none());
   }
 
   #[tokio::test]
@@ -2386,7 +2401,7 @@ mod tests {
       .try_get(&Url::parse("file:///foo.js").unwrap())
       .is_ok());
     assert!(matches!(
-      graph
+      *graph
         .try_get(&Url::parse("file:///bar.js").unwrap())
         .unwrap_err(),
       ModuleGraphError::Missing(..)
@@ -2476,7 +2491,7 @@ mod tests {
 
   #[test]
   fn local_import_remote_module() {
-    let resolved = Resolved::from_specifier(
+    let resolution = Resolution::from_specifier(
       Url::parse("file:///local/mod.ts").unwrap(),
       Range {
         specifier: Url::parse("https://localhost").unwrap(),
@@ -2486,14 +2501,14 @@ mod tests {
       false,
     );
     assert!(matches!(
-      resolved,
-      Resolved::Err(ResolutionError::InvalidLocalImport { .. })
+      resolution.err().unwrap(),
+      ResolutionError::InvalidLocalImport { .. },
     ));
   }
 
   #[test]
   fn npm_import_remote_module() {
-    let resolved = Resolved::from_specifier(
+    let resolution = Resolution::from_specifier(
       Url::parse("npm:package").unwrap(),
       Range {
         specifier: Url::parse("https://localhost").unwrap(),
@@ -2502,7 +2517,7 @@ mod tests {
       },
       false,
     );
-    assert!(matches!(resolved, Resolved::Ok { .. }));
+    assert!(matches!(resolution, Resolution::Ok { .. }));
   }
 
   #[tokio::test]

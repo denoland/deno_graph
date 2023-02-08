@@ -8,7 +8,6 @@ pub mod source;
 mod text_encoding;
 
 pub use graph::ModuleKind;
-use graph::ModuleSlot;
 use source::Resolver;
 
 use std::collections::HashMap;
@@ -44,8 +43,8 @@ pub use graph::ModuleGraph;
 pub use graph::ModuleGraphError;
 pub use graph::Position;
 pub use graph::Range;
+pub use graph::Resolution;
 pub use graph::ResolutionError;
-pub use graph::Resolved;
 pub use graph::WalkOptions;
 pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
@@ -68,11 +67,11 @@ pub fn parse_module(
   maybe_kind: Option<ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
-) -> Result<Module, ModuleGraphError> {
+) -> Result<Module, Box<ModuleGraphError>> {
   let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
   let module_analyzer =
     maybe_module_analyzer.unwrap_or(&default_module_analyzer);
-  match graph::parse_module(
+  graph::parse_module(
     specifier,
     maybe_headers,
     content,
@@ -83,11 +82,7 @@ pub fn parse_module(
     module_analyzer,
     true,
     false,
-  ) {
-    ModuleSlot::Module(module) => Ok(module),
-    ModuleSlot::Err(err) => Err(err),
-    _ => unreachable!("unreachable ModuleSlot variant"),
-  }
+  )
 }
 
 /// Parse an individual module from an AST, returning the module.
@@ -111,6 +106,9 @@ pub fn parse_module_from_ast(
 
 #[cfg(test)]
 mod tests {
+  use crate::graph::ModuleSlot;
+  use crate::graph::ResolutionResolved;
+
   use super::*;
   use pretty_assertions::assert_eq;
   use serde_json::json;
@@ -180,12 +178,11 @@ mod tests {
         ModuleSpecifier::parse("file:///a/test02.ts").unwrap();
       let dependency = maybe_dependency.unwrap();
       assert!(!dependency.is_dynamic);
-      if let Resolved::Ok { specifier, .. } = &dependency.maybe_code {
-        assert_eq!(specifier, &dependency_specifier);
-      } else {
-        panic!("unexpected resolved slot");
-      }
-      assert_eq!(dependency.maybe_type, Resolved::None);
+      assert_eq!(
+        dependency.maybe_code.ok().unwrap().specifier,
+        dependency_specifier
+      );
+      assert_eq!(dependency.maybe_type, Resolution::None);
       let maybe_dep_module_slot = graph.get(&dependency_specifier);
       assert!(maybe_dep_module_slot.is_some());
     } else {
@@ -1013,7 +1010,7 @@ console.log(a);
       .await;
     let result = graph.valid();
     assert!(result.is_err());
-    let err = result.unwrap_err();
+    let err = *result.unwrap_err();
     assert_eq!(err.specifier(), &root_specifier);
     assert!(matches!(err, ModuleGraphError::ResolutionError(_)));
   }
@@ -1053,7 +1050,7 @@ console.log(a);
       .await;
     let result = graph.valid();
     assert!(result.is_err());
-    let err = result.unwrap_err();
+    let err = *result.unwrap_err();
     assert!(matches!(
       err,
       ModuleGraphError::UnsupportedMediaType {
@@ -1508,14 +1505,10 @@ export function a(a) {
     let maybe_dep = module.dependencies.get("b");
     assert!(maybe_dep.is_some());
     let dep = maybe_dep.unwrap();
-    if let Some(dep_specifier) = dep.maybe_code.maybe_specifier() {
-      assert_eq!(
-        dep_specifier,
-        &ModuleSpecifier::parse("file:///a/test02.ts").unwrap()
-      );
-    } else {
-      panic!("unexpected resolved type");
-    }
+    assert_eq!(
+      dep.maybe_code.maybe_specifier().unwrap(),
+      &ModuleSpecifier::parse("file:///a/test02.ts").unwrap()
+    );
   }
 
   #[tokio::test]
@@ -1571,19 +1564,19 @@ export function a(a) {
     let maybe_module = graph.get(&graph.roots[0]);
     assert!(maybe_module.is_some());
     let module = maybe_module.unwrap();
+    let (specifier, resolution) =
+      module.maybe_types_dependency.as_ref().unwrap();
+    assert_eq!(specifier, "file:///a.js");
     assert_eq!(
-      module.maybe_types_dependency,
-      Some((
-        "file:///a.js".to_string(),
-        Resolved::Ok {
-          specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
-          range: Box::new(Range {
-            specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
-            start: Position::zeroed(),
-            end: Position::zeroed(),
-          })
+      *resolution.ok().unwrap(),
+      ResolutionResolved {
+        specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
+        range: Range {
+          specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
+          start: Position::zeroed(),
+          end: Position::zeroed(),
         }
-      ))
+      }
     );
   }
 
@@ -2810,14 +2803,10 @@ export function a(a) {
       .dependencies
       .get("https://example.com/preact/jsx-runtime")
       .unwrap();
-    assert!(!dep.maybe_code.is_none());
-    if let Resolved::Ok { specifier, .. } = &dep.maybe_code {
-      assert_eq!(
-        specifier,
-        &ModuleSpecifier::parse("https://example.com/preact/jsx-runtime")
-          .unwrap()
-      );
-    }
+    assert_eq!(
+      dep.maybe_code.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
+    );
     assert!(dep.maybe_type.is_none());
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::Tsx);
@@ -2854,14 +2843,10 @@ export function a(a) {
       .dependencies
       .get("https://example.com/preact/jsx-runtime")
       .unwrap();
-    assert!(!dep.maybe_code.is_none());
-    if let Resolved::Ok { specifier, .. } = &dep.maybe_code {
-      assert_eq!(
-        specifier,
-        &ModuleSpecifier::parse("https://example.com/preact/jsx-runtime")
-          .unwrap()
-      );
-    }
+    assert_eq!(
+      dep.maybe_code.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
+    );
     assert!(dep.maybe_type.is_none());
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::Tsx);

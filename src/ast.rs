@@ -432,8 +432,6 @@ fn comment_source_to_position_range(
   let comment_start = comment_start + 2;
   // -1 and +1 to include the quotes, but not for jsx import sources because
   // they don't have quotes
-  // todo(dsherret): remove this attribute after upgrading rust
-  #[allow(clippy::bool_to_int_with_if)]
   let padding = if is_jsx_import_source { 0 } else { 1 };
   PositionRange {
     start: Position::from_source_pos(
