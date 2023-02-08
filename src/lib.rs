@@ -45,6 +45,8 @@ pub use graph::Position;
 pub use graph::Range;
 pub use graph::Resolution;
 pub use graph::ResolutionError;
+pub use graph::ResolutionResolved;
+pub use graph::TypesDependency;
 pub use graph::WalkOptions;
 pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
@@ -1564,11 +1566,10 @@ export function a(a) {
     let maybe_module = graph.get(&graph.roots[0]);
     assert!(maybe_module.is_some());
     let module = maybe_module.unwrap();
-    let (specifier, resolution) =
-      module.maybe_types_dependency.as_ref().unwrap();
-    assert_eq!(specifier, "file:///a.js");
+    let types_dep = module.maybe_types_dependency.as_ref().unwrap();
+    assert_eq!(types_dep.specifier, "file:///a.js");
     assert_eq!(
-      *resolution.ok().unwrap(),
+      *types_dep.dependency.ok().unwrap(),
       ResolutionResolved {
         specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
         range: Range {

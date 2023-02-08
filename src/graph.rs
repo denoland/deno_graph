@@ -549,6 +549,13 @@ impl Dependency {
   }
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TypesDependency {
+  pub specifier: String,
+  pub dependency: Resolution,
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum ModuleKind {
@@ -591,12 +598,8 @@ pub struct Module {
     serialize_with = "serialize_maybe_source"
   )]
   pub maybe_source: Option<Arc<str>>,
-  #[serde(
-    rename = "typesDependency",
-    skip_serializing_if = "Option::is_none",
-    serialize_with = "serialize_type_dependency"
-  )]
-  pub maybe_types_dependency: Option<(String, Resolution)>,
+  #[serde(rename = "typesDependency", skip_serializing_if = "Option::is_none")]
+  pub maybe_types_dependency: Option<TypesDependency>,
   #[serde(skip_serializing_if = "is_media_type_unknown")]
   pub media_type: MediaType,
   pub specifier: ModuleSpecifier,
@@ -822,8 +825,10 @@ impl<'a> ModuleEntryIterator<'a> {
             ))
             && follow_type_only;
           if check_types {
-            if let Some((_, Resolution::Err(error))) =
-              &module.maybe_types_dependency
+            if let Some(Resolution::Err(error)) = module
+              .maybe_types_dependency
+              .as_ref()
+              .map(|d| &d.dependency)
             {
               return Err(Box::new(ModuleGraphError::ResolutionError(
                 *error.clone(),
@@ -899,8 +904,10 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
           ))
           && self.follow_type_only;
         if check_types {
-          if let Some((_, Resolution::Ok(resolved))) =
-            &module.maybe_types_dependency
+          if let Some(Resolution::Ok(resolved)) = module
+            .maybe_types_dependency
+            .as_ref()
+            .map(|d| &d.dependency)
           {
             let specifier = &resolved.specifier;
             if !self.seen.contains(specifier) {
@@ -1171,8 +1178,10 @@ impl ModuleGraph {
     specifier: &ModuleSpecifier,
   ) -> Option<&ModuleSpecifier> {
     if let Some(ModuleSlot::Module(module)) = self.module_slots.get(specifier) {
-      if let Some((_, Resolution::Ok(resolved))) =
-        &module.maybe_types_dependency
+      if let Some(Resolution::Ok(resolved)) = module
+        .maybe_types_dependency
+        .as_ref()
+        .map(|d| &d.dependency)
       {
         return Some(&resolved.specifier);
       }
@@ -1428,8 +1437,10 @@ pub(crate) fn parse_module_from_module_info(
           Range::from_position_range(&module.specifier, &specifier.range);
         let dep_resolution = resolve(&specifier.text, &range, maybe_resolver);
         if is_untyped(&module.media_type) {
-          module.maybe_types_dependency =
-            Some((specifier.text, dep_resolution));
+          module.maybe_types_dependency = Some(TypesDependency {
+            specifier: specifier.text,
+            dependency: dep_resolution,
+          });
         } else {
           let dep = module.dependencies.entry(specifier.text).or_default();
           if dep.maybe_type.is_none() {
@@ -1497,9 +1508,10 @@ pub(crate) fn parse_module_from_module_info(
           start: Position::zeroed(),
           end: Position::zeroed(),
         };
-        let dep_resolution = resolve(types_header, &range, maybe_resolver);
-        module.maybe_types_dependency =
-          Some((types_header.clone(), dep_resolution));
+        module.maybe_types_dependency = Some(TypesDependency {
+          specifier: types_header.clone(),
+          dependency: resolve(types_header, &range, maybe_resolver),
+        });
       }
     }
   }
@@ -1512,9 +1524,9 @@ pub(crate) fn parse_module_from_module_info(
     {
       module.maybe_types_dependency =
         match resolver.resolve_types(&module.specifier) {
-          Ok(Some((specifier, maybe_range))) => Some((
-            module.specifier.to_string(),
-            Resolution::Ok(Box::new(ResolutionResolved {
+          Ok(Some((specifier, maybe_range))) => Some(TypesDependency {
+            specifier: module.specifier.to_string(),
+            dependency: Resolution::Ok(Box::new(ResolutionResolved {
               specifier: specifier.clone(),
               range: maybe_range.unwrap_or_else(|| Range {
                 specifier,
@@ -1522,20 +1534,22 @@ pub(crate) fn parse_module_from_module_info(
                 end: Position::zeroed(),
               }),
             })),
-          )),
+          }),
           Ok(None) => None,
-          Err(err) => Some((
-            module.specifier.to_string(),
-            Resolution::Err(Box::new(ResolutionError::ResolverError {
-              error: Arc::new(err),
-              specifier: module.specifier.to_string(),
-              range: Range {
-                specifier: module.specifier.clone(),
-                start: Position::zeroed(),
-                end: Position::zeroed(),
+          Err(err) => Some(TypesDependency {
+            specifier: module.specifier.to_string(),
+            dependency: Resolution::Err(Box::new(
+              ResolutionError::ResolverError {
+                error: Arc::new(err),
+                specifier: module.specifier.to_string(),
+                range: Range {
+                  specifier: module.specifier.clone(),
+                  start: Position::zeroed(),
+                  end: Position::zeroed(),
+                },
               },
-            })),
-          )),
+            )),
+          }),
         };
     }
   }
@@ -1999,8 +2013,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
       if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::TypesOnly)
       {
-        if let Some((_, Resolution::Ok(resolved))) =
-          &module.maybe_types_dependency
+        if let Some(Resolution::Ok(resolved)) = module
+          .maybe_types_dependency
+          .as_ref()
+          .map(|d| &d.dependency)
         {
           self.load(&resolved.specifier, Some(&resolved.range), false, None);
         }
@@ -2012,14 +2028,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   }
 }
 
-struct SerializableResolution<'a>(&'a Resolution);
-
-impl<'a> Serialize for SerializableResolution<'a> {
+impl Serialize for Resolution {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
     S: Serializer,
   {
-    serialize_resolution(self.0, serializer)
+    serialize_resolution(self, serializer)
   }
 }
 
@@ -2033,12 +2047,10 @@ impl<'a> Serialize for SerializableDependency<'a> {
     let mut map = serializer.serialize_map(None)?;
     map.serialize_entry("specifier", self.0)?;
     if !self.1.maybe_code.is_none() {
-      let serializeable_resolution = SerializableResolution(&self.1.maybe_code);
-      map.serialize_entry("code", &serializeable_resolution)?;
+      map.serialize_entry("code", &self.1.maybe_code)?;
     }
     if !self.1.maybe_type.is_none() {
-      let serializeable_resolution = SerializableResolution(&self.1.maybe_type);
-      map.serialize_entry("type", &serializeable_resolution)?;
+      map.serialize_entry("type", &self.1.maybe_type)?;
     }
     if self.1.is_dynamic {
       map.serialize_entry("isDynamic", &self.1.is_dynamic)?;
@@ -2149,25 +2161,6 @@ impl<'a> Serialize for SerializableGraphImport<'a> {
       &SerializableDependencies(&self.1.dependencies),
     )?;
     val.end()
-  }
-}
-
-fn serialize_type_dependency<S>(
-  maybe_types_dependency: &Option<(String, Resolution)>,
-  serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-  S: Serializer,
-{
-  match *maybe_types_dependency {
-    Some((ref specifier, ref resolution)) => {
-      let mut state = serializer.serialize_struct("TypesDependency", 2)?;
-      state.serialize_field("specifier", specifier)?;
-      let serializeable_resolution = SerializableResolution(resolution);
-      state.serialize_field("dependency", &serializeable_resolution)?;
-      state.end()
-    }
-    None => serializer.serialize_none(),
   }
 }
 
