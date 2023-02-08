@@ -2236,11 +2236,11 @@ mod tests {
             specifier: specifier.clone(),
             start: Position {
               line: 0,
-              character: 20,
+              character: 19
             },
             end: Position {
               line: 0,
-              character: 26,
+              character: 27
             },
           }),
         }
@@ -2251,11 +2251,11 @@ mod tests {
           specifier,
           start: Position {
             line: 0,
-            character: 20,
+            character: 19
           },
           end: Position {
             line: 0,
-            character: 26,
+            character: 27
           },
         }
       );
