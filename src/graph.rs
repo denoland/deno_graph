@@ -145,7 +145,11 @@ pub enum ModuleGraphError {
     range: Range,
     kind: String,
   },
-  UnsupportedMediaType(ModuleSpecifier, MediaType),
+  UnsupportedMediaType {
+    specifier: ModuleSpecifier,
+    media_type: MediaType,
+    maybe_referrer: Option<Range>,
+  },
 }
 
 impl ModuleGraphError {
@@ -154,7 +158,7 @@ impl ModuleGraphError {
       Self::ResolutionError(err) => &err.range().specifier,
       Self::LoadingErr(s, _, _)
       | Self::ParseErr(s, _)
-      | Self::UnsupportedMediaType(s, _)
+      | Self::UnsupportedMediaType { specifier: s, .. }
       | Self::UnsupportedImportAssertionType { specifier: s, .. }
       | Self::InvalidTypeAssertion { specifier: s, .. }
       | Self::Missing(s, _) => s,
@@ -174,10 +178,13 @@ impl ModuleGraphError {
     match self {
       Self::LoadingErr(_, maybe_range, _) => maybe_range.as_ref(),
       Self::ResolutionError(err) => Some(err.range()),
-      Self::InvalidTypeAssertion { range, .. } => Some(range),
-      Self::UnsupportedImportAssertionType { range, .. } => Some(range),
+      Self::InvalidTypeAssertion { range, .. }
+      | Self::UnsupportedImportAssertionType { range, .. } => Some(range),
       Self::Missing(_, maybe_range) => maybe_range.as_ref(),
-      Self::ParseErr(_, _) | Self::UnsupportedMediaType(_, _) => None,
+      Self::UnsupportedMediaType { maybe_referrer, .. } => {
+        maybe_referrer.as_ref()
+      }
+      Self::ParseErr(_, _) => None,
     }
   }
 }
@@ -191,7 +198,7 @@ impl std::error::Error for ModuleGraphError {
       | Self::Missing(_, _)
       | Self::ParseErr(_, _)
       | Self::UnsupportedImportAssertionType { .. }
-      | Self::UnsupportedMediaType(_, _) => None,
+      | Self::UnsupportedMediaType { .. } => None,
     }
   }
 }
@@ -204,8 +211,16 @@ impl fmt::Display for ModuleGraphError {
       Self::ResolutionError(err) => err.fmt(f),
       Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type, .. } =>
         write!(f, "Expected a {} module, but identified a {} module.\n  Specifier: {}", expected_media_type, actual_media_type, specifier),
-      Self::UnsupportedMediaType(specifier, MediaType::Json) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {}", specifier),
-      Self::UnsupportedMediaType(specifier, media_type) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {} module. Importing these types of modules is currently not supported.\n  Specifier: {}", media_type, specifier),
+      Self::UnsupportedMediaType {
+        specifier,
+        media_type: MediaType::Json,
+        ..
+      } => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {}", specifier),
+      Self::UnsupportedMediaType {
+        specifier,
+        media_type,
+        ..
+       } => write!(f, "Expected a JavaScript or TypeScript module, but identified a {} module. Importing these types of modules is currently not supported.\n  Specifier: {}", media_type, specifier),
       Self::UnsupportedImportAssertionType { specifier, kind, .. } =>
         write!(f, "The import assertion type of \"{}\" is unsupported.\n  Specifier: {}", kind, specifier),
       Self::Missing(specifier, _) => {
@@ -1234,6 +1249,7 @@ pub(crate) fn parse_module(
   maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<str>,
   maybe_assert_type: Option<AssertTypeWithRange>,
+  maybe_referrer: Option<Range>,
   maybe_kind: Option<ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
   module_analyzer: &dyn ModuleAnalyzer,
@@ -1339,10 +1355,11 @@ pub(crate) fn parse_module(
         )),
       }
     }
-    _ => ModuleSlot::Err(ModuleGraphError::UnsupportedMediaType(
-      specifier.clone(),
-      media_type,
-    )),
+    _ => ModuleSlot::Err(ModuleGraphError::UnsupportedMediaType {
+      specifier: specifier.clone(),
+      media_type: media_type,
+      maybe_referrer,
+    }),
   }
 }
 
@@ -1604,7 +1621,7 @@ struct Builder<'a, 'graph> {
   loader: &'a mut dyn Loader,
   resolver: Option<&'a dyn Resolver>,
   pending: FuturesUnordered<LoadWithSpecifierFuture>,
-  pending_assert_types:
+  pending_specifiers:
     HashMap<ModuleSpecifier, HashSet<Option<AssertTypeWithRange>>>,
   dynamic_branches:
     HashMap<ModuleSpecifier, (Range, Option<AssertTypeWithRange>)>,
@@ -1632,7 +1649,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       module_analyzer,
       reporter,
       pending: FuturesUnordered::new(),
-      pending_assert_types: HashMap::new(),
+      pending_specifiers: HashMap::new(),
       dynamic_branches: HashMap::new(),
     }
     .fill(roots, imports)
@@ -1675,11 +1692,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     loop {
       let specifier = match self.pending.next().await {
-        Some((specifier, _, Ok(Some(response)))) => {
+        Some((specifier, maybe_referrer, Ok(Some(response)))) => {
           let assert_types =
-            self.pending_assert_types.remove(&specifier).unwrap();
+            self.pending_specifiers.remove(&specifier).unwrap();
           for maybe_assert_type in assert_types {
-            self.visit(&specifier, &response, maybe_assert_type)
+            self.visit(
+              &specifier,
+              &response,
+              maybe_assert_type,
+              maybe_referrer.clone(),
+            )
           }
           Some(specifier)
         }
@@ -1773,11 +1795,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_assert_type: Option<AssertTypeWithRange>,
   ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
-    let assert_types = self
-      .pending_assert_types
+    self
+      .pending_specifiers
       .entry(specifier.clone())
-      .or_default();
-    assert_types.insert(maybe_assert_type);
+      .or_default()
+      .insert(maybe_assert_type);
     if !self.graph.module_slots.contains_key(specifier) {
       self
         .graph
@@ -1807,6 +1829,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     requested_specifier: &ModuleSpecifier,
     response: &LoadResponse,
     maybe_assert_type: Option<AssertTypeWithRange>,
+    maybe_referrer: Option<Range>,
   ) {
     let (specifier, module_slot) = match response {
       LoadResponse::External { specifier } => {
@@ -1831,6 +1854,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             maybe_headers.as_ref(),
             content.clone(),
             maybe_assert_type,
+            maybe_referrer,
           ),
         )
       }
@@ -1849,6 +1873,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_headers: Option<&HashMap<String, String>>,
     content: Arc<str>,
     maybe_assert_type: Option<AssertTypeWithRange>,
+    maybe_referrer: Option<Range>,
   ) -> ModuleSlot {
     use std::borrow::BorrowMut;
     let is_root = self.roots_contain(specifier);
@@ -1858,6 +1883,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       maybe_headers,
       content,
       maybe_assert_type,
+      maybe_referrer,
       Some(kind),
       self.resolver,
       self.module_analyzer,
@@ -2184,6 +2210,7 @@ mod tests {
       &specifier,
       None,
       content.into(),
+      None,
       None,
       Some(ModuleKind::Esm),
       None,

@@ -77,6 +77,7 @@ pub fn parse_module(
     maybe_headers,
     content,
     None,
+    None,
     maybe_kind,
     maybe_resolver,
     module_analyzer,
@@ -535,7 +536,7 @@ console.log(a);
     assert!(graph.valid().is_err());
     assert_eq!(
       graph.valid().err().unwrap().to_string(),
-      "Module not found \"file:///a/test02.js\".\n    at file:///a/test01.ts:1:21"
+      "Module not found \"file:///a/test02.js\"."
     );
   }
 
@@ -1055,7 +1056,10 @@ console.log(a);
     let err = result.unwrap_err();
     assert!(matches!(
       err,
-      ModuleGraphError::UnsupportedMediaType(_, MediaType::Json)
+      ModuleGraphError::UnsupportedMediaType {
+        media_type: MediaType::Json,
+        ..
+      },
     ));
   }
 
@@ -1930,11 +1934,11 @@ export function a(a) {
           },
           {
             "specifier": "file:///a/c.js",
-            "error": "Expected a Json module, but identified a JavaScript module.\n  Specifier: file:///a/c.js\n    at file:///a/test01.ts:4:28"
+            "error": "Expected a Json module, but identified a JavaScript module.\n  Specifier: file:///a/c.js"
           },
           {
             "specifier": "file:///a/d.json",
-            "error": "The import assertion type of \"css\" is unsupported.\n  Specifier: file:///a/d.json\n    at file:///a/test01.ts:5:28"
+            "error": "The import assertion type of \"css\" is unsupported.\n  Specifier: file:///a/d.json"
           },
           {
             "specifier": "file:///a/e.wasm",
