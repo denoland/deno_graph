@@ -1244,11 +1244,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 5,
-                      "character": 20
+                      "character": 19
                     },
                     "end": {
                       "line": 5,
-                      "character": 30
+                      "character": 31
                     }
                   }
                 }
@@ -1260,11 +1260,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 4,
-                      "character": 19
+                      "character": 18
                     },
                     "end": {
                       "line": 4,
-                      "character": 31
+                      "character": 32
                     }
                   }
                 }
@@ -2295,11 +2295,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 1,
-                      "character": 28
+                      "character": 27
                     },
                     "end": {
                       "line": 1,
-                      "character": 36
+                      "character": 37
                     }
                   }
                 }
@@ -2925,11 +2925,11 @@ export function a(a) {
               "span": {
                 "start": {
                   "line": 5,
-                  "character": 20,
+                  "character": 19,
                 },
                 "end": {
                   "line": 5,
-                  "character": 30
+                  "character": 31
                 }
               }
             }
@@ -2941,11 +2941,11 @@ export function a(a) {
               "span": {
                 "start": {
                   "line": 4,
-                  "character": 19,
+                  "character": 18,
                 },
                 "end": {
                   "line": 4,
-                  "character": 31,
+                  "character": 32,
                 }
               }
             }
