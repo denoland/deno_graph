@@ -958,6 +958,11 @@ impl ModuleGraph {
 
   /// Creates a new cloned module graph from the provided roots.
   pub fn segment(&self, roots: &[ModuleSpecifier]) -> Self {
+    if roots == self.roots {
+      // perf - do a straight clone since the roots are the same
+      return self.clone();
+    }
+
     let mut new_graph = ModuleGraph::new(self.graph_kind);
     let entries = self.walk(
       roots,
