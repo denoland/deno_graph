@@ -166,6 +166,9 @@ impl ModuleGraphError {
   }
 
   /// Converts the error into a string along with the range related to the error.
+  ///
+  /// We don't include the range in the error messages by default because they're
+  /// not useful in cases like the LSP where the range is given by the editor itself.
   pub fn to_string_with_range(&self) -> String {
     if let Some(range) = self.maybe_range() {
       format!("{}\n    at {}", self, range)
@@ -1362,7 +1365,7 @@ pub(crate) fn parse_module(
     }
     _ => ModuleSlot::Err(ModuleGraphError::UnsupportedMediaType {
       specifier: specifier.clone(),
-      media_type: media_type,
+      media_type,
       maybe_referrer,
     }),
   }
