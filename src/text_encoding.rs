@@ -13,7 +13,7 @@ mod test {
 
   #[test]
   fn strip_bom_mut_with_bom() {
-    let mut text = format!("{}text", BOM_CHAR);
+    let mut text = format!("{BOM_CHAR}text");
     strip_bom_mut(&mut text);
     assert_eq!(text, "text");
   }
