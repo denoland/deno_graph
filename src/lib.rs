@@ -39,12 +39,14 @@ pub use graph::Dependency;
 pub use graph::GraphImport;
 pub use graph::GraphKind;
 pub use graph::Module;
+pub use graph::ModuleEntryRef;
 pub use graph::ModuleGraph;
 pub use graph::ModuleGraphError;
 pub use graph::Position;
 pub use graph::Range;
 pub use graph::ResolutionError;
 pub use graph::Resolved;
+pub use graph::WalkOptions;
 pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
@@ -109,8 +111,6 @@ pub fn parse_module_from_ast(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::graph::Resolved;
-  use crate::graph::WalkOptions;
   use pretty_assertions::assert_eq;
   use serde_json::json;
   use source::tests::MockResolver;
@@ -504,7 +504,6 @@ console.log(a);
       )
       .await;
     assert!(graph.valid().is_ok());
-    assert!(graph.valid_types_only().is_err());
   }
 
   #[tokio::test]
@@ -538,7 +537,6 @@ console.log(a);
       graph.valid().err().unwrap().to_string(),
       "Module not found \"file:///a/test02.js\".\n    at file:///a/test01.ts:1:21"
     );
-    assert!(graph.valid_types_only().is_ok());
   }
 
   #[tokio::test]
@@ -3077,7 +3075,7 @@ export function a(a: A): B {
 
     let example_a_url =
       ModuleSpecifier::parse("https://example.com/a.ts").unwrap();
-    let graph = graph.segment(&[&example_a_url]);
+    let graph = graph.segment(&[example_a_url.clone()]);
     assert_eq!(graph.roots, vec![example_a_url]);
     // should get the redirect
     assert_eq!(
@@ -3223,8 +3221,9 @@ export function a(a: A): B {
     assert!(graph.valid().is_ok());
 
     // all true
+    let roots = vec![root.clone()];
     let result = graph.walk(
-      &[&root],
+      &roots,
       WalkOptions {
         check_js: true,
         follow_dynamic: true,
@@ -3251,7 +3250,7 @@ export function a(a: A): B {
 
     // all false
     let result = graph.walk(
-      &[&root],
+      &roots,
       WalkOptions {
         check_js: false,
         follow_dynamic: false,
@@ -3273,7 +3272,7 @@ export function a(a: A): B {
     );
     // dynamic true
     let result = graph.walk(
-      &[&root],
+      &roots,
       WalkOptions {
         check_js: false,
         follow_dynamic: true,
@@ -3297,7 +3296,7 @@ export function a(a: A): B {
 
     // check_js true (won't have any effect since follow_type_only is false)
     let result = graph.walk(
-      &[&root],
+      &roots,
       WalkOptions {
         check_js: true,
         follow_dynamic: false,
@@ -3320,7 +3319,7 @@ export function a(a: A): B {
 
     // follow_type_only true
     let result = graph.walk(
-      &[&root],
+      &roots,
       WalkOptions {
         check_js: false,
         follow_dynamic: false,
@@ -3344,7 +3343,7 @@ export function a(a: A): B {
 
     // check_js true, follow_type_only true
     let result = graph.walk(
-      &[&root],
+      &roots,
       WalkOptions {
         check_js: true,
         follow_dynamic: false,

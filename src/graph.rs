@@ -598,7 +598,7 @@ impl Module {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum ModuleSlot {
   /// A module, with source code.
   Module(Module),
@@ -715,7 +715,7 @@ pub struct ModuleEntryIterator<'a> {
 impl<'a> ModuleEntryIterator<'a> {
   fn new(
     graph: &'a ModuleGraph,
-    roots: &[&'a ModuleSpecifier],
+    roots: &'a [ModuleSpecifier],
     options: WalkOptions,
   ) -> Self {
     let mut seen = HashSet::<&'a ModuleSpecifier>::with_capacity(
@@ -750,6 +750,58 @@ impl<'a> ModuleEntryIterator<'a> {
       follow_type_only: options.follow_type_only,
       check_js: options.check_js,
     }
+  }
+
+  /// Consumes the iterator validating all the items for any resolution
+  /// or module graph errors.
+  ///
+  /// This is different than calling `.valid()` on a module graph because
+  /// it only applies to the roots filtered by the iterator with the provided
+  /// options.
+  pub fn validate(self) -> Result<(), ModuleGraphError> {
+    let follow_type_only = self.follow_type_only;
+    let check_js = self.check_js;
+    for (_, module_entry) in self {
+      match module_entry {
+        ModuleEntryRef::Module(module) => {
+          let check_types = (check_js
+            || !matches!(
+              module.media_type,
+              MediaType::JavaScript
+                | MediaType::Mjs
+                | MediaType::Cjs
+                | MediaType::Jsx
+            ))
+            && follow_type_only;
+          if check_types {
+            if let Some((_, Resolved::Err(error))) =
+              &module.maybe_types_dependency
+            {
+              return Err(ModuleGraphError::ResolutionError(error.clone()));
+            }
+          }
+          for dep in module.dependencies.values() {
+            if !dep.is_dynamic {
+              let mut resolutions = vec![&dep.maybe_code];
+              if check_types {
+                resolutions.push(&dep.maybe_type);
+              }
+              #[allow(clippy::manual_flatten)]
+              for resolved in resolutions {
+                if let Resolved::Err(error) = resolved {
+                  return Err(ModuleGraphError::ResolutionError(error.clone()));
+                }
+              }
+            }
+          }
+        }
+        ModuleEntryRef::Err(error) => {
+          return Err(error.clone());
+        }
+        _ => {}
+      }
+    }
+    Ok(())
   }
 }
 
@@ -840,7 +892,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
 /// which can be located in the module "slots" in the graph. The graph also
 /// contains any redirects where the requested module specifier was redirected
 /// to another module specifier when being loaded.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct ModuleGraph {
   graph_kind: GraphKind,
   pub roots: Vec<ModuleSpecifier>,
@@ -881,7 +933,7 @@ impl ModuleGraph {
   }
 
   /// Creates a new cloned module graph from the provided roots.
-  pub fn segment(&self, roots: &[&ModuleSpecifier]) -> Self {
+  pub fn segment(&self, roots: &[ModuleSpecifier]) -> Self {
     let mut new_graph = ModuleGraph::new(self.graph_kind);
     let entries = self.walk(
       roots,
@@ -920,7 +972,7 @@ impl ModuleGraph {
   /// Iterates over all the module entries in the module graph searching from the provided roots.
   pub fn walk<'a>(
     &'a self,
-    roots: &[&'a ModuleSpecifier],
+    roots: &'a [ModuleSpecifier],
     options: WalkOptions,
   ) -> ModuleEntryIterator<'a> {
     ModuleEntryIterator::new(self, roots, options)
@@ -1106,109 +1158,11 @@ impl ModuleGraph {
   /// graph errors on non-type only, non-dynamic imports. The first error is
   /// returned as as error result, otherwise ok if there are no errors.
   pub fn valid(&self) -> Result<(), ModuleGraphError> {
-    self.validate(false)
-  }
-
-  /// Walk the graph from the root, checking to see if there are any module
-  /// graph errors on non-dynamic imports that are type only related. The first
-  /// error is returned as an error result, otherwise ok if there are no errors.
-  ///
-  /// This is designed to be used in cases where the graph needs to be validated
-  /// from a type checking perspective, prior to type checking the graph.
-  pub fn valid_types_only(&self) -> Result<(), ModuleGraphError> {
-    self.validate(true)
-  }
-
-  fn validate(&self, types_only: bool) -> Result<(), ModuleGraphError> {
-    fn validate<'a>(
-      specifier: &'a ModuleSpecifier,
-      maybe_range: Option<&Range>,
-      types_only: bool,
-      is_type: bool,
-      seen: &mut HashSet<&'a ModuleSpecifier>,
-      get_module: &impl Fn(
-        &ModuleSpecifier,
-      ) -> Result<Option<&'a Module>, ModuleGraphError>,
-    ) -> Result<(), ModuleGraphError> {
-      if seen.contains(specifier) {
-        return Ok(());
-      }
-      seen.insert(specifier);
-      let should_error = (is_type && types_only) || (!is_type && !types_only);
-      match get_module(specifier) {
-        Ok(Some(module)) => {
-          if let Some((
-            _,
-            Resolved::Ok {
-              specifier, range, ..
-            },
-          )) = &module.maybe_types_dependency
-          {
-            validate(
-              specifier,
-              Some(range),
-              types_only,
-              true,
-              seen,
-              get_module,
-            )?;
-          }
-          for dep in module.dependencies.values() {
-            if !dep.is_dynamic {
-              // TODO(@kitsonk) eliminate duplication with maybe_code below
-              match &dep.maybe_type {
-                Resolved::Ok {
-                  specifier, range, ..
-                } => validate(
-                  specifier,
-                  Some(range),
-                  types_only,
-                  true,
-                  seen,
-                  get_module,
-                )?,
-                Resolved::Err(err) if types_only => {
-                  return Err(err.into());
-                }
-                _ => (),
-              }
-              match &dep.maybe_code {
-                Resolved::Ok {
-                  specifier, range, ..
-                } => validate(
-                  specifier,
-                  Some(range),
-                  types_only,
-                  false,
-                  seen,
-                  get_module,
-                )?,
-                Resolved::Err(err) if !types_only => {
-                  return Err(err.into());
-                }
-                _ => (),
-              }
-            }
-          }
-          Ok(())
-        }
-        Ok(None) if should_error => Err(ModuleGraphError::Missing(
-          specifier.clone(),
-          maybe_range.map(ToOwned::to_owned),
-        )),
-        Err(err) if should_error => Err(err),
-        _ => Ok(()),
-      }
-    }
-
-    let mut seen =
-      HashSet::with_capacity(self.module_slots.len() + self.redirects.len());
-    for root in &self.roots {
-      validate(root, None, types_only, false, &mut seen, &|s| {
-        self.try_get(s)
-      })?;
-    }
-    Ok(())
+    self.walk(&self.roots, WalkOptions {
+      check_js: true,
+      follow_type_only: false,
+      follow_dynamic: false,
+    }).validate()
   }
 }
 
@@ -1592,7 +1546,7 @@ fn is_untyped(media_type: &MediaType) -> bool {
 }
 
 /// The kind of module graph.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GraphKind {
   /// All types of dependencies should be analyzed and included in the graph.
   All,
