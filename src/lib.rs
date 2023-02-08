@@ -444,11 +444,11 @@ mod tests {
                   "span": {
                     "start": {
                       "line": 1,
-                      "character": 32,
+                      "character": 31
                     },
                     "end": {
                       "line": 1,
-                      "character": 40,
+                      "character": 41
                     }
                   }
                 },
@@ -536,7 +536,7 @@ console.log(a);
     assert!(graph.valid().is_err());
     assert_eq!(
       graph.valid().err().unwrap().to_string(),
-      "Module not found \"file:///a/test02.js\".\n    at file:///a/test01.ts:1:21"
+      "Module not found \"file:///a/test02.js\".\n    at file:///a/test01.ts:1:20"
     );
     assert!(graph.valid_types_only().is_ok());
   }
@@ -609,12 +609,12 @@ console.log(a);
                   "specifier": "file:///a/types_01.d.ts",
                   "span": {
                     "start": {
-                      "line": 0,
-                      "character": 24,
+                      "line":0,
+                      "character":23
                     },
                     "end": {
-                      "line": 0,
-                      "character": 39,
+                      "line":0,
+                      "character":40
                     }
                   }
                 }
@@ -643,11 +643,11 @@ console.log(a);
                   "span": {
                     "start": {
                       "line": 0,
-                      "character": 0,
+                      "character": 0
                     },
                     "end": {
                       "line": 0,
-                      "character": 0,
+                      "character": 0
                     }
                   }
                 }
@@ -738,11 +738,11 @@ console.log(a);
                   "span": {
                     "start": {
                       "line": 0,
-                      "character": 20,
+                      "character": 19,
                     },
                     "end": {
                       "line": 0,
-                      "character": 31,
+                      "character": 32,
                     }
                   }
                 },
@@ -960,11 +960,11 @@ console.log(a);
                   "span": {
                     "start": {
                       "line": 0,
-                      "character": 20,
+                      "character": 20
                     },
                     "end": {
                       "line": 0,
-                      "character": 46,
+                      "character": 46
                     }
                   }
                 }
@@ -1146,11 +1146,11 @@ console.log(a);
                   "span": {
                     "start": {
                       "line": 0,
-                      "character": 24,
+                      "character": 23
                     },
                     "end": {
                       "line": 0,
-                      "character": 30,
+                      "character": 31
                     }
                   }
                 },
@@ -1242,11 +1242,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 5,
-                      "character": 20,
+                      "character": 20
                     },
                     "end": {
                       "line": 5,
-                      "character": 30,
+                      "character": 30
                     }
                   }
                 }
@@ -1258,11 +1258,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 4,
-                      "character": 19,
+                      "character": 19
                     },
                     "end": {
                       "line": 4,
-                      "character": 31,
+                      "character": 31
                     }
                   }
                 }
@@ -1688,11 +1688,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 1,
-                      "character": 27,
+                      "character": 26
                     },
                     "end": {
                       "line": 1,
-                      "character": 35,
+                      "character": 36
                     }
                   }
                 },
@@ -1705,11 +1705,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 2,
-                      "character": 36,
+                      "character": 35
                     },
                     "end": {
                       "line": 2,
-                      "character": 44,
+                      "character": 45
                     }
                   }
                 },
@@ -1723,11 +1723,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 3,
-                      "character": 32,
+                      "character": 31
                     },
                     "end": {
                       "line": 3,
-                      "character": 40,
+                      "character": 41
                     }
                   }
                 },
@@ -1740,11 +1740,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 5,
-                      "character": 36,
+                      "character": 35
                     },
                     "end": {
                       "line": 5,
-                      "character": 44,
+                      "character": 45
                     }
                   }
                 },
@@ -1820,11 +1820,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 1,
-                      "character": 27,
+                      "character": 26
                     },
                     "end": {
                       "line": 1,
-                      "character": 35,
+                      "character": 36
                     }
                   }
                 },
@@ -1932,11 +1932,11 @@ export function a(a) {
           },
           {
             "specifier": "file:///a/c.js",
-            "error": "Expected a Json module, but identified a JavaScript module.\n  Specifier: file:///a/c.js\n    at file:///a/test01.ts:4:28"
+            "error": "Expected a Json module, but identified a JavaScript module.\n  Specifier: file:///a/c.js\n    at file:///a/test01.ts:4:27"
           },
           {
             "specifier": "file:///a/d.json",
-            "error": "The import assertion type of \"css\" is unsupported.\n  Specifier: file:///a/d.json\n    at file:///a/test01.ts:5:28"
+            "error": "The import assertion type of \"css\" is unsupported.\n  Specifier: file:///a/d.json\n    at file:///a/test01.ts:5:27"
           },
           {
             "specifier": "file:///a/e.wasm",
@@ -1951,11 +1951,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 1,
-                      "character": 27,
+                      "character": 26
                     },
                     "end": {
                       "line": 1,
-                      "character": 35,
+                      "character": 36
                     }
                   }
                 }
@@ -1967,11 +1967,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 2,
-                      "character": 27,
+                      "character": 26
                     },
                     "end": {
                       "line": 2,
-                      "character": 35,
+                      "character": 36
                     }
                   }
                 },
@@ -1984,11 +1984,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 3,
-                      "character": 27,
+                      "character": 26
                     },
                     "end": {
                       "line": 3,
-                      "character": 33,
+                      "character": 34
                     }
                   }
                 },
@@ -2001,11 +2001,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 4,
-                      "character": 27,
+                      "character": 26
                     },
                     "end": {
                       "line": 4,
-                      "character": 35,
+                      "character": 36
                     }
                   }
                 },
@@ -2018,11 +2018,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 5,
-                      "character": 27,
+                      "character": 26
                     },
                     "end": {
                       "line": 5,
-                      "character": 35,
+                      "character": 36
                     }
                   }
                 }
@@ -2293,11 +2293,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 1,
-                      "character": 28,
+                      "character": 28
                     },
                     "end": {
                       "line": 1,
-                      "character": 36,
+                      "character": 36
                     }
                   }
                 }
@@ -2309,11 +2309,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 3,
-                      "character": 36,
+                      "character": 35
                     },
                     "end": {
                       "line": 3,
-                      "character": 44,
+                      "character": 45
                     }
                   }
                 }
@@ -2325,11 +2325,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 5,
-                      "character": 32,
+                      "character": 31
                     },
                     "end": {
                       "line": 5,
-                      "character": 38,
+                      "character": 39
                     }
                   }
                 }
@@ -2341,11 +2341,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 4,
-                      "character": 32,
+                      "character": 31
                     },
                     "end": {
                       "line": 4,
-                      "character": 53,
+                      "character": 54
                     }
                   }
                 }
@@ -2364,11 +2364,11 @@ export function a(a) {
                 "span": {
                   "start": {
                     "line": 0,
-                    "character": 0,
+                    "character": 0
                   },
                   "end": {
                     "line": 0,
-                    "character": 0,
+                    "character": 0
                   }
                 }
               }
@@ -2514,11 +2514,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 2,
-                      "character": 32,
+                      "character": 31
                     },
                     "end": {
                       "line": 2,
-                      "character": 38,
+                      "character": 39
                     }
                   }
                 }
@@ -2533,11 +2533,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 5,
-                      "character": 32,
+                      "character": 31
                     },
                     "end": {
                       "line": 5,
-                      "character": 38,
+                      "character": 39
                     }
                   }
                 }
@@ -2549,11 +2549,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 4,
-                      "character": 32,
+                      "character": 31
                     },
                     "end": {
                       "line": 4,
-                      "character": 53,
+                      "character": 54
                     }
                   }
                 }
@@ -2573,11 +2573,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 0,
-                      "character": 19,
+                      "character": 18
                     },
                     "end": {
                       "line": 0,
-                      "character": 25,
+                      "character": 26
                     }
                   }
                 }
@@ -2653,11 +2653,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 1,
-                      "character": 33,
+                      "character": 32
                     },
                     "end": {
                       "line": 1,
-                      "character": 43,
+                      "character": 44
                     }
                   }
                 }
@@ -2669,11 +2669,11 @@ export function a(a) {
                   "span": {
                     "start": {
                       "line": 2,
-                      "character": 37,
+                      "character": 36
                     },
                     "end": {
                       "line": 2,
-                      "character": 63,
+                      "character": 64
                     }
                   }
                 }
@@ -2746,11 +2746,11 @@ export function a(a) {
               "span": {
                 "start": {
                   "line": 1,
-                  "character": 19,
+                  "character": 18
                 },
                 "end": {
                   "line": 1,
-                  "character": 27,
+                  "character": 28
                 }
               }
             },
@@ -2763,11 +2763,11 @@ export function a(a) {
               "span": {
                 "start": {
                   "line": 2,
-                  "character": 18,
+                  "character": 17
                 },
                 "end": {
                   "line": 2,
-                  "character": 26,
+                  "character": 27
                 }
               }
             },
@@ -2927,7 +2927,7 @@ export function a(a) {
                 },
                 "end": {
                   "line": 5,
-                  "character": 30,
+                  "character": 30
                 }
               }
             }

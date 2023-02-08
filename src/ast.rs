@@ -298,12 +298,6 @@ impl ParsedSourceStore for CapturingModuleAnalyzer {
 fn analyze_dependencies(
   parsed_source: &ParsedSource,
 ) -> Vec<DependencyDescriptor> {
-  fn trim_quotes(range: SourceRange) -> SourceRange {
-    // swc provides a span over the import/export specifier including the
-    // enclosing quotes. we want the just specifier without the quotes.
-    SourceRange::new(range.start + 1, range.end - 1)
-  }
-
   deno_ast::swc::dep_graph::analyze_dependencies(
     parsed_source.module(),
     &parsed_source.comments().as_swc_comments(),
@@ -325,7 +319,7 @@ fn analyze_dependencies(
     ),
     specifier: d.specifier.to_string(),
     specifier_range: PositionRange::from_source_range(
-      trim_quotes(SourceRange::unsafely_from_span(d.specifier_span)),
+      SourceRange::unsafely_from_span(d.specifier_span),
       parsed_source.text_info(),
     ),
     import_assertions: ImportAssertions::from_swc(d.import_assertions),
@@ -547,7 +541,7 @@ mod tests {
       text_info.range_text(
         &dependencies[0].specifier_range.as_source_range(text_info)
       ),
-      "./a.ts"
+      "\"./a.ts\""
     );
     assert!(!dependencies[0].is_dynamic);
     assert_eq!(dependencies[1].specifier.to_string(), "./b.ts");
@@ -555,7 +549,7 @@ mod tests {
       text_info.range_text(
         &dependencies[1].specifier_range.as_source_range(text_info)
       ),
-      "./b.ts"
+      "\"./b.ts\""
     );
     assert!(!dependencies[1].is_dynamic);
   }
