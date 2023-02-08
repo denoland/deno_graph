@@ -160,6 +160,26 @@ impl ModuleGraphError {
       | Self::Missing(s, _) => s,
     }
   }
+
+  /// Converts the error into a string along with the range related to the error.
+  pub fn to_string_with_range(&self) -> String {
+    if let Some(range) = self.maybe_range() {
+      format!("{}\n    at {}", self, range)
+    } else {
+      format!("{}", self)
+    }
+  }
+
+  pub fn maybe_range(&self) -> Option<&Range> {
+    match self {
+      Self::LoadingErr(_, maybe_range, _) => maybe_range.as_ref(),
+      Self::ResolutionError(err) => Some(err.range()),
+      Self::InvalidTypeAssertion { range, .. } => Some(range),
+      Self::UnsupportedImportAssertionType { range, .. } => Some(range),
+      Self::Missing(_, maybe_range) => maybe_range.as_ref(),
+      Self::ParseErr(_, _) | Self::UnsupportedMediaType(_, _) => None,
+    }
+  }
 }
 
 impl std::error::Error for ModuleGraphError {
@@ -179,28 +199,17 @@ impl std::error::Error for ModuleGraphError {
 impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::LoadingErr(specifier, maybe_range, err) => {
-        err.fmt(f)?;
-        write!(f, "\n  Specifier: {}", specifier)?;
-        if let Some(range) = maybe_range {
-          write!(f, "\n    at {}", range)?;
-        }
-        Ok(())
-      },
+      Self::LoadingErr(_, _, err) => err.fmt(f),
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {}", diagnostic),
       Self::ResolutionError(err) => err.fmt(f),
-      Self::InvalidTypeAssertion { specifier, range, actual_media_type, expected_media_type } =>
-        write!(f, "Expected a {} module, but identified a {} module.\n  Specifier: {}\n    at {}", expected_media_type, actual_media_type, specifier, range),
+      Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type, .. } =>
+        write!(f, "Expected a {} module, but identified a {} module.\n  Specifier: {}", expected_media_type, actual_media_type, specifier),
       Self::UnsupportedMediaType(specifier, MediaType::Json) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {}", specifier),
       Self::UnsupportedMediaType(specifier, media_type) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {} module. Importing these types of modules is currently not supported.\n  Specifier: {}", media_type, specifier),
-      Self::UnsupportedImportAssertionType { specifier, range, kind } =>
-        write!(f, "The import assertion type of \"{}\" is unsupported.\n  Specifier: {}\n    at {}", kind, specifier, range),
-      Self::Missing(specifier, maybe_range) => {
-        write!(f, "Module not found \"{}\".", specifier)?;
-        if let Some(range) = maybe_range {
-          write!(f, "\n    at {}", range)?;
-        }
-        Ok(())
+      Self::UnsupportedImportAssertionType { specifier, kind, .. } =>
+        write!(f, "The import assertion type of \"{}\" is unsupported.\n  Specifier: {}", kind, specifier),
+      Self::Missing(specifier, _) => {
+        write!(f, "Module not found \"{}\".", specifier)
       },
     }
   }
@@ -1158,11 +1167,16 @@ impl ModuleGraph {
   /// graph errors on non-type only, non-dynamic imports. The first error is
   /// returned as as error result, otherwise ok if there are no errors.
   pub fn valid(&self) -> Result<(), ModuleGraphError> {
-    self.walk(&self.roots, WalkOptions {
-      check_js: true,
-      follow_type_only: false,
-      follow_dynamic: false,
-    }).validate()
+    self
+      .walk(
+        &self.roots,
+        WalkOptions {
+          check_js: true,
+          follow_type_only: false,
+          follow_dynamic: false,
+        },
+      )
+      .validate()
   }
 }
 
