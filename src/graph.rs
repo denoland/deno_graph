@@ -653,7 +653,7 @@ pub(crate) enum ModuleSlot {
   /// A module, with source code.
   Module(Module),
   /// When trying to load or parse the module, an error occurred.
-  Err(Box<ModuleGraphError>),
+  Err(ModuleGraphError),
   /// An internal state set when loading a module asynchronously.
   Pending,
 }
@@ -809,7 +809,8 @@ impl<'a> ModuleEntryIterator<'a> {
   /// This is different than calling `.valid()` on a module graph because
   /// it only applies to the roots filtered by the iterator with the provided
   /// options.
-  pub fn validate(self) -> Result<(), Box<ModuleGraphError>> {
+  #[allow(clippy::result_large_err)]
+  pub fn validate(self) -> Result<(), ModuleGraphError> {
     let follow_type_only = self.follow_type_only;
     let check_js = self.check_js;
     for (_, module_entry) in self {
@@ -830,9 +831,9 @@ impl<'a> ModuleEntryIterator<'a> {
               .as_ref()
               .map(|d| &d.dependency)
             {
-              return Err(Box::new(ModuleGraphError::ResolutionError(
+              return Err(ModuleGraphError::ResolutionError(
                 *error.clone(),
-              )));
+              ));
             }
           }
           for dep in module.dependencies.values() {
@@ -844,16 +845,16 @@ impl<'a> ModuleEntryIterator<'a> {
               #[allow(clippy::manual_flatten)]
               for resolution in resolutions {
                 if let Resolution::Err(error) = resolution {
-                  return Err(Box::new(ModuleGraphError::ResolutionError(
+                  return Err(ModuleGraphError::ResolutionError(
                     *error.clone(),
-                  )));
+                  ));
                 }
               }
             }
           }
         }
         ModuleEntryRef::Err(error) => {
-          return Err(Box::new(error.clone()));
+          return Err(error.clone());
         }
         _ => {}
       }
@@ -1020,7 +1021,7 @@ impl ModuleGraph {
         ModuleEntryRef::Err(err) => {
           new_graph
             .module_slots
-            .insert(specifier.clone(), ModuleSlot::Err(Box::new(err.clone())));
+            .insert(specifier.clone(), ModuleSlot::Err(err.clone()));
         }
         ModuleEntryRef::Redirect(specifier_to) => {
           new_graph
@@ -1057,7 +1058,7 @@ impl ModuleGraph {
   /// Returns any errors that are in the module graph.
   pub fn errors(&self) -> impl Iterator<Item = &ModuleGraphError> {
     self.module_slots.values().filter_map(|ms| match ms {
-      ModuleSlot::Err(err) => Some(&**err),
+      ModuleSlot::Err(err) => Some(err),
       ModuleSlot::Module(_) | ModuleSlot::Pending => None,
     })
   }
@@ -1213,11 +1214,11 @@ impl ModuleGraph {
   pub fn try_get(
     &self,
     specifier: &ModuleSpecifier,
-  ) -> Result<Option<&Module>, Box<ModuleGraphError>> {
+  ) -> Result<Option<&Module>, &ModuleGraphError> {
     let specifier = self.resolve(specifier);
     match self.module_slots.get(&specifier) {
       Some(ModuleSlot::Module(module)) => Ok(Some(module)),
-      Some(ModuleSlot::Err(err)) => Err(Box::new(*err.clone())),
+      Some(ModuleSlot::Err(err)) => Err(err),
       _ => Ok(None),
     }
   }
@@ -1225,7 +1226,8 @@ impl ModuleGraph {
   /// Walk the graph from the root, checking to see if there are any module
   /// graph errors on non-type only, non-dynamic imports. The first error is
   /// returned as as error result, otherwise ok if there are no errors.
-  pub fn valid(&self) -> Result<(), Box<ModuleGraphError>> {
+  #[allow(clippy::result_large_err)]
+  pub fn valid(&self) -> Result<(), ModuleGraphError> {
     self
       .walk(
         &self.roots,
@@ -1288,6 +1290,7 @@ impl Serialize for ModuleGraph {
 
 /// With the provided information, parse a module and return its "module slot"
 #[allow(clippy::too_many_arguments)]
+#[allow(clippy::result_large_err)]
 pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
@@ -1299,7 +1302,7 @@ pub(crate) fn parse_module(
   module_analyzer: &dyn ModuleAnalyzer,
   is_root: bool,
   is_dynamic_branch: bool,
-) -> Result<Module, Box<ModuleGraphError>> {
+) -> Result<Module, ModuleGraphError> {
   let media_type =
     MediaType::from_specifier_and_headers(specifier, maybe_headers);
 
@@ -1326,18 +1329,18 @@ pub(crate) fn parse_module(
 
   if let Some(assert_type) = maybe_assert_type {
     if assert_type.kind == "json" {
-      return Err(Box::new(ModuleGraphError::InvalidTypeAssertion {
+      return Err(ModuleGraphError::InvalidTypeAssertion {
         specifier: specifier.clone(),
         range: assert_type.range,
         actual_media_type: media_type,
         expected_media_type: MediaType::Json,
-      }));
+      });
     } else {
-      return Err(Box::new(ModuleGraphError::UnsupportedImportAssertionType {
+      return Err(ModuleGraphError::UnsupportedImportAssertionType {
         specifier: specifier.clone(),
         range: assert_type.range,
         kind: assert_type.kind,
-      }));
+      });
     }
   }
 
@@ -1367,10 +1370,10 @@ pub(crate) fn parse_module(
             maybe_resolver,
           ))
         }
-        Err(diagnostic) => Err(Box::new(ModuleGraphError::ParseErr(
+        Err(diagnostic) => Err(ModuleGraphError::ParseErr(
           specifier.clone(),
           diagnostic,
-        ))),
+        )),
       }
     }
     MediaType::Unknown if is_root => {
@@ -1391,17 +1394,17 @@ pub(crate) fn parse_module(
             maybe_resolver,
           ))
         }
-        Err(diagnostic) => Err(Box::new(ModuleGraphError::ParseErr(
+        Err(diagnostic) => Err(ModuleGraphError::ParseErr(
           specifier.clone(),
           diagnostic,
-        ))),
+        )),
       }
     }
-    _ => Err(Box::new(ModuleGraphError::UnsupportedMediaType {
+    _ => Err(ModuleGraphError::UnsupportedMediaType {
       specifier: specifier.clone(),
       media_type,
       maybe_referrer,
-    })),
+    }),
   }
 }
 
@@ -1751,21 +1754,21 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Some((specifier, maybe_range, Ok(None))) => {
           self.graph.module_slots.insert(
             specifier.clone(),
-            ModuleSlot::Err(Box::new(ModuleGraphError::Missing(
+            ModuleSlot::Err(ModuleGraphError::Missing(
               specifier.clone(),
               maybe_range,
-            ))),
+            )),
           );
           Some(specifier)
         }
         Some((specifier, maybe_range, Err(err))) => {
           self.graph.module_slots.insert(
             specifier.clone(),
-            ModuleSlot::Err(Box::new(ModuleGraphError::LoadingErr(
+            ModuleSlot::Err(ModuleGraphError::LoadingErr(
               specifier.clone(),
               maybe_range,
               Arc::new(err),
-            ))),
+            )),
           );
           Some(specifier)
         }
@@ -2394,7 +2397,7 @@ mod tests {
       .try_get(&Url::parse("file:///foo.js").unwrap())
       .is_ok());
     assert!(matches!(
-      *graph
+      graph
         .try_get(&Url::parse("file:///bar.js").unwrap())
         .unwrap_err(),
       ModuleGraphError::Missing(..)
