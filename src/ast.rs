@@ -342,6 +342,7 @@ fn analyze_ts_references(
             comment_start,
             &m,
             parsed_source.text_info(),
+            false,
           ),
         }));
       } else if let Some(captures) = TYPES_REFERENCE_RE.captures(&comment.text)
@@ -353,6 +354,7 @@ fn analyze_ts_references(
             comment_start,
             &m,
             parsed_source.text_info(),
+            false,
           ),
         }));
       }
@@ -375,6 +377,7 @@ fn analyze_jsx_import_source(
             c.start(),
             &m,
             parsed_source.text_info(),
+            true,
           ),
         })
       })
@@ -410,6 +413,7 @@ fn analyze_jsdoc_imports(
             comment.range().start,
             &m,
             parsed_source.text_info(),
+            false,
           ),
         });
       }
@@ -422,12 +426,24 @@ fn comment_source_to_position_range(
   comment_start: SourcePos,
   m: &Match,
   text_info: &SourceTextInfo,
+  is_jsx_import_source: bool,
 ) -> PositionRange {
   // the comment text starts after the double slash or slash star, so add 2
   let comment_start = comment_start + 2;
+  // -1 and +1 to include the quotes, but not for jsx import sources because
+  // they don't have quotes
+  // todo(dsherret): remove this attribute after upgrading rust
+  #[allow(clippy::bool_to_int_with_if)]
+  let padding = if is_jsx_import_source { 0 } else { 1 };
   PositionRange {
-    start: Position::from_source_pos(comment_start + m.start(), text_info),
-    end: Position::from_source_pos(comment_start + m.end(), text_info),
+    start: Position::from_source_pos(
+      comment_start + m.start() - padding,
+      text_info,
+    ),
+    end: Position::from_source_pos(
+      comment_start + m.end() + padding,
+      text_info,
+    ),
   }
 }
 
@@ -478,7 +494,7 @@ mod tests {
         assert_eq!(specifier.text, "./ref.d.ts");
         assert_eq!(
           text_info.range_text(&specifier.range.as_source_range(text_info)),
-          "./ref.d.ts"
+          r#""./ref.d.ts""#
         );
       }
       TypeScriptReference::Types(_) => panic!("expected path"),
@@ -489,7 +505,7 @@ mod tests {
         assert_eq!(specifier.text, "./types.d.ts");
         assert_eq!(
           text_info.range_text(&specifier.range.as_source_range(text_info)),
-          "./types.d.ts"
+          r#""./types.d.ts""#
         );
       }
     }
@@ -501,7 +517,7 @@ mod tests {
     );
     assert_eq!(
       text_info.range_text(&dep_deno_types.range.as_source_range(text_info)),
-      "https://deno.land/x/types/react/index.d.ts"
+      r#""https://deno.land/x/types/react/index.d.ts""#
     );
 
     let jsx_import_source = module_info.jsx_import_source.unwrap();
@@ -623,11 +639,11 @@ const f = new Set();
           range: PositionRange {
             start: Position {
               line: 6,
-              character: 18
+              character: 17
             },
             end: Position {
               line: 6,
-              character: 24
+              character: 25
             }
           }
         },
@@ -636,11 +652,11 @@ const f = new Set();
           range: PositionRange {
             start: Position {
               line: 13,
-              character: 19
+              character: 18
             },
             end: Position {
               line: 13,
-              character: 25
+              character: 26
             }
           }
         },
@@ -649,11 +665,11 @@ const f = new Set();
           range: PositionRange {
             start: Position {
               line: 14,
-              character: 21
+              character: 20
             },
             end: Position {
               line: 14,
-              character: 27
+              character: 28
             }
           }
         },
@@ -662,11 +678,11 @@ const f = new Set();
           range: PositionRange {
             start: Position {
               line: 21,
-              character: 22
+              character: 21
             },
             end: Position {
               line: 21,
-              character: 28
+              character: 29
             }
           }
         },

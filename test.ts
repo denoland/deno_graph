@@ -594,8 +594,8 @@ Deno.test({
         "dependency": {
           "specifier": "file:///a/test01.d.ts",
           "span": {
-            "start": { "line": 1, "character": 30 },
-            "end": { "line": 1, "character": 43 },
+            "start": { "line": 1, "character": 29 },
+            "end": { "line": 1, "character": 44 },
           },
         },
       },

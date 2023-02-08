@@ -39,14 +39,15 @@ pub fn analyze_deno_types(
     // the comment text starts after the double slash or slash star, so add 2
     comment_start.character += 2;
     PositionRange {
-      // this will always be on the same line
+      // This will always be on the same line.
+      // Does -1 and +1 to include the quotes
       start: Position {
         line: comment_start.line,
-        character: comment_start.character + m.start(),
+        character: comment_start.character + m.start() - 1,
       },
       end: Position {
         line: comment_start.line,
-        character: comment_start.character + m.end(),
+        character: comment_start.character + m.end() + 1,
       },
     }
   }
