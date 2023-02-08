@@ -831,9 +831,7 @@ impl<'a> ModuleEntryIterator<'a> {
               .as_ref()
               .map(|d| &d.dependency)
             {
-              return Err(ModuleGraphError::ResolutionError(
-                *error.clone(),
-              ));
+              return Err(ModuleGraphError::ResolutionError(*error.clone()));
             }
           }
           for dep in module.dependencies.values() {
@@ -1370,10 +1368,9 @@ pub(crate) fn parse_module(
             maybe_resolver,
           ))
         }
-        Err(diagnostic) => Err(ModuleGraphError::ParseErr(
-          specifier.clone(),
-          diagnostic,
-        )),
+        Err(diagnostic) => {
+          Err(ModuleGraphError::ParseErr(specifier.clone(), diagnostic))
+        }
       }
     }
     MediaType::Unknown if is_root => {
@@ -1394,10 +1391,9 @@ pub(crate) fn parse_module(
             maybe_resolver,
           ))
         }
-        Err(diagnostic) => Err(ModuleGraphError::ParseErr(
-          specifier.clone(),
-          diagnostic,
-        )),
+        Err(diagnostic) => {
+          Err(ModuleGraphError::ParseErr(specifier.clone(), diagnostic))
+        }
       }
     }
     _ => Err(ModuleGraphError::UnsupportedMediaType {
