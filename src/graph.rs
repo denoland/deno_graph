@@ -145,7 +145,11 @@ pub enum ModuleGraphError {
     range: Range,
     kind: String,
   },
-  UnsupportedMediaType(ModuleSpecifier, MediaType),
+  UnsupportedMediaType {
+    specifier: ModuleSpecifier,
+    media_type: MediaType,
+    maybe_referrer: Option<Range>,
+  },
 }
 
 impl ModuleGraphError {
@@ -154,10 +158,36 @@ impl ModuleGraphError {
       Self::ResolutionError(err) => &err.range().specifier,
       Self::LoadingErr(s, _, _)
       | Self::ParseErr(s, _)
-      | Self::UnsupportedMediaType(s, _)
+      | Self::UnsupportedMediaType { specifier: s, .. }
       | Self::UnsupportedImportAssertionType { specifier: s, .. }
       | Self::InvalidTypeAssertion { specifier: s, .. }
       | Self::Missing(s, _) => s,
+    }
+  }
+
+  /// Converts the error into a string along with the range related to the error.
+  ///
+  /// We don't include the range in the error messages by default because they're
+  /// not useful in cases like the LSP where the range is given by the editor itself.
+  pub fn to_string_with_range(&self) -> String {
+    if let Some(range) = self.maybe_range() {
+      format!("{}\n    at {}", self, range)
+    } else {
+      format!("{}", self)
+    }
+  }
+
+  pub fn maybe_range(&self) -> Option<&Range> {
+    match self {
+      Self::LoadingErr(_, maybe_range, _) => maybe_range.as_ref(),
+      Self::ResolutionError(err) => Some(err.range()),
+      Self::InvalidTypeAssertion { range, .. }
+      | Self::UnsupportedImportAssertionType { range, .. } => Some(range),
+      Self::Missing(_, maybe_range) => maybe_range.as_ref(),
+      Self::UnsupportedMediaType { maybe_referrer, .. } => {
+        maybe_referrer.as_ref()
+      }
+      Self::ParseErr(_, _) => None,
     }
   }
 }
@@ -171,7 +201,7 @@ impl std::error::Error for ModuleGraphError {
       | Self::Missing(_, _)
       | Self::ParseErr(_, _)
       | Self::UnsupportedImportAssertionType { .. }
-      | Self::UnsupportedMediaType(_, _) => None,
+      | Self::UnsupportedMediaType { .. } => None,
     }
   }
 }
@@ -179,28 +209,25 @@ impl std::error::Error for ModuleGraphError {
 impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::LoadingErr(specifier, maybe_range, err) => {
-        err.fmt(f)?;
-        write!(f, "\n  Specifier: {}", specifier)?;
-        if let Some(range) = maybe_range {
-          write!(f, "\n    at {}", range)?;
-        }
-        Ok(())
-      },
+      Self::LoadingErr(_, _, err) => err.fmt(f),
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {}", diagnostic),
       Self::ResolutionError(err) => err.fmt(f),
-      Self::InvalidTypeAssertion { specifier, range, actual_media_type, expected_media_type } =>
-        write!(f, "Expected a {} module, but identified a {} module.\n  Specifier: {}\n    at {}", expected_media_type, actual_media_type, specifier, range),
-      Self::UnsupportedMediaType(specifier, MediaType::Json) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {}", specifier),
-      Self::UnsupportedMediaType(specifier, media_type) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {} module. Importing these types of modules is currently not supported.\n  Specifier: {}", media_type, specifier),
-      Self::UnsupportedImportAssertionType { specifier, range, kind } =>
-        write!(f, "The import assertion type of \"{}\" is unsupported.\n  Specifier: {}\n    at {}", kind, specifier, range),
-      Self::Missing(specifier, maybe_range) => {
-        write!(f, "Module not found \"{}\".", specifier)?;
-        if let Some(range) = maybe_range {
-          write!(f, "\n    at {}", range)?;
-        }
-        Ok(())
+      Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type, .. } =>
+        write!(f, "Expected a {} module, but identified a {} module.\n  Specifier: {}", expected_media_type, actual_media_type, specifier),
+      Self::UnsupportedMediaType {
+        specifier,
+        media_type: MediaType::Json,
+        ..
+      } => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {}", specifier),
+      Self::UnsupportedMediaType {
+        specifier,
+        media_type,
+        ..
+       } => write!(f, "Expected a JavaScript or TypeScript module, but identified a {} module. Importing these types of modules is currently not supported.\n  Specifier: {}", media_type, specifier),
+      Self::UnsupportedImportAssertionType { specifier, kind, .. } =>
+        write!(f, "The import assertion type of \"{}\" is unsupported.\n  Specifier: {}", kind, specifier),
+      Self::Missing(specifier, _) => {
+        write!(f, "Module not found \"{}\".", specifier)
       },
     }
   }
@@ -598,7 +625,7 @@ impl Module {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum ModuleSlot {
   /// A module, with source code.
   Module(Module),
@@ -715,7 +742,7 @@ pub struct ModuleEntryIterator<'a> {
 impl<'a> ModuleEntryIterator<'a> {
   fn new(
     graph: &'a ModuleGraph,
-    roots: &[&'a ModuleSpecifier],
+    roots: &'a [ModuleSpecifier],
     options: WalkOptions,
   ) -> Self {
     let mut seen = HashSet::<&'a ModuleSpecifier>::with_capacity(
@@ -750,6 +777,58 @@ impl<'a> ModuleEntryIterator<'a> {
       follow_type_only: options.follow_type_only,
       check_js: options.check_js,
     }
+  }
+
+  /// Consumes the iterator validating all the items for any resolution
+  /// or module graph errors.
+  ///
+  /// This is different than calling `.valid()` on a module graph because
+  /// it only applies to the roots filtered by the iterator with the provided
+  /// options.
+  pub fn validate(self) -> Result<(), ModuleGraphError> {
+    let follow_type_only = self.follow_type_only;
+    let check_js = self.check_js;
+    for (_, module_entry) in self {
+      match module_entry {
+        ModuleEntryRef::Module(module) => {
+          let check_types = (check_js
+            || !matches!(
+              module.media_type,
+              MediaType::JavaScript
+                | MediaType::Mjs
+                | MediaType::Cjs
+                | MediaType::Jsx
+            ))
+            && follow_type_only;
+          if check_types {
+            if let Some((_, Resolved::Err(error))) =
+              &module.maybe_types_dependency
+            {
+              return Err(ModuleGraphError::ResolutionError(error.clone()));
+            }
+          }
+          for dep in module.dependencies.values() {
+            if !dep.is_dynamic {
+              let mut resolutions = vec![&dep.maybe_code];
+              if check_types {
+                resolutions.push(&dep.maybe_type);
+              }
+              #[allow(clippy::manual_flatten)]
+              for resolved in resolutions {
+                if let Resolved::Err(error) = resolved {
+                  return Err(ModuleGraphError::ResolutionError(error.clone()));
+                }
+              }
+            }
+          }
+        }
+        ModuleEntryRef::Err(error) => {
+          return Err(error.clone());
+        }
+        _ => {}
+      }
+    }
+    Ok(())
   }
 }
 
@@ -840,7 +919,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
 /// which can be located in the module "slots" in the graph. The graph also
 /// contains any redirects where the requested module specifier was redirected
 /// to another module specifier when being loaded.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct ModuleGraph {
   graph_kind: GraphKind,
   pub roots: Vec<ModuleSpecifier>,
@@ -881,7 +960,12 @@ impl ModuleGraph {
   }
 
   /// Creates a new cloned module graph from the provided roots.
-  pub fn segment(&self, roots: &[&ModuleSpecifier]) -> Self {
+  pub fn segment(&self, roots: &[ModuleSpecifier]) -> Self {
+    if roots == self.roots {
+      // perf - do a straight clone since the roots are the same
+      return self.clone();
+    }
+
     let mut new_graph = ModuleGraph::new(self.graph_kind);
     let entries = self.walk(
       roots,
@@ -920,7 +1004,7 @@ impl ModuleGraph {
   /// Iterates over all the module entries in the module graph searching from the provided roots.
   pub fn walk<'a>(
     &'a self,
-    roots: &[&'a ModuleSpecifier],
+    roots: &'a [ModuleSpecifier],
     options: WalkOptions,
   ) -> ModuleEntryIterator<'a> {
     ModuleEntryIterator::new(self, roots, options)
@@ -1106,109 +1190,16 @@ impl ModuleGraph {
   /// graph errors on non-type only, non-dynamic imports. The first error is
   /// returned as as error result, otherwise ok if there are no errors.
   pub fn valid(&self) -> Result<(), ModuleGraphError> {
-    self.validate(false)
-  }
-
-  /// Walk the graph from the root, checking to see if there are any module
-  /// graph errors on non-dynamic imports that are type only related. The first
-  /// error is returned as an error result, otherwise ok if there are no errors.
-  ///
-  /// This is designed to be used in cases where the graph needs to be validated
-  /// from a type checking perspective, prior to type checking the graph.
-  pub fn valid_types_only(&self) -> Result<(), ModuleGraphError> {
-    self.validate(true)
-  }
-
-  fn validate(&self, types_only: bool) -> Result<(), ModuleGraphError> {
-    fn validate<'a>(
-      specifier: &'a ModuleSpecifier,
-      maybe_range: Option<&Range>,
-      types_only: bool,
-      is_type: bool,
-      seen: &mut HashSet<&'a ModuleSpecifier>,
-      get_module: &impl Fn(
-        &ModuleSpecifier,
-      ) -> Result<Option<&'a Module>, ModuleGraphError>,
-    ) -> Result<(), ModuleGraphError> {
-      if seen.contains(specifier) {
-        return Ok(());
-      }
-      seen.insert(specifier);
-      let should_error = (is_type && types_only) || (!is_type && !types_only);
-      match get_module(specifier) {
-        Ok(Some(module)) => {
-          if let Some((
-            _,
-            Resolved::Ok {
-              specifier, range, ..
-            },
-          )) = &module.maybe_types_dependency
-          {
-            validate(
-              specifier,
-              Some(range),
-              types_only,
-              true,
-              seen,
-              get_module,
-            )?;
-          }
-          for dep in module.dependencies.values() {
-            if !dep.is_dynamic {
-              // TODO(@kitsonk) eliminate duplication with maybe_code below
-              match &dep.maybe_type {
-                Resolved::Ok {
-                  specifier, range, ..
-                } => validate(
-                  specifier,
-                  Some(range),
-                  types_only,
-                  true,
-                  seen,
-                  get_module,
-                )?,
-                Resolved::Err(err) if types_only => {
-                  return Err(err.into());
-                }
-                _ => (),
-              }
-              match &dep.maybe_code {
-                Resolved::Ok {
-                  specifier, range, ..
-                } => validate(
-                  specifier,
-                  Some(range),
-                  types_only,
-                  false,
-                  seen,
-                  get_module,
-                )?,
-                Resolved::Err(err) if !types_only => {
-                  return Err(err.into());
-                }
-                _ => (),
-              }
-            }
-          }
-          Ok(())
-        }
-        Ok(None) if should_error => Err(ModuleGraphError::Missing(
-          specifier.clone(),
-          maybe_range.map(ToOwned::to_owned),
-        )),
-        Err(err) if should_error => Err(err),
-        _ => Ok(()),
-      }
-    }
-
-    let mut seen =
-      HashSet::with_capacity(self.module_slots.len() + self.redirects.len());
-    for root in &self.roots {
-      validate(root, None, types_only, false, &mut seen, &|s| {
-        self.try_get(s)
-      })?;
-    }
-    Ok(())
+    self
+      .walk(
+        &self.roots,
+        WalkOptions {
+          check_js: true,
+          follow_type_only: false,
+          follow_dynamic: false,
+        },
+      )
+      .validate()
   }
 }
 
@@ -1266,6 +1257,7 @@ pub(crate) fn parse_module(
   maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<str>,
   maybe_assert_type: Option<AssertTypeWithRange>,
+  maybe_referrer: Option<Range>,
   maybe_kind: Option<ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
   module_analyzer: &dyn ModuleAnalyzer,
@@ -1371,10 +1363,11 @@ pub(crate) fn parse_module(
         )),
       }
     }
-    _ => ModuleSlot::Err(ModuleGraphError::UnsupportedMediaType(
-      specifier.clone(),
+    _ => ModuleSlot::Err(ModuleGraphError::UnsupportedMediaType {
+      specifier: specifier.clone(),
       media_type,
-    )),
+      maybe_referrer,
+    }),
   }
 }
 
@@ -1592,7 +1585,7 @@ fn is_untyped(media_type: &MediaType) -> bool {
 }
 
 /// The kind of module graph.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GraphKind {
   /// All types of dependencies should be analyzed and included in the graph.
   All,
@@ -1636,7 +1629,7 @@ struct Builder<'a, 'graph> {
   loader: &'a mut dyn Loader,
   resolver: Option<&'a dyn Resolver>,
   pending: FuturesUnordered<LoadWithSpecifierFuture>,
-  pending_assert_types:
+  pending_specifiers:
     HashMap<ModuleSpecifier, HashSet<Option<AssertTypeWithRange>>>,
   dynamic_branches:
     HashMap<ModuleSpecifier, (Range, Option<AssertTypeWithRange>)>,
@@ -1664,7 +1657,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       module_analyzer,
       reporter,
       pending: FuturesUnordered::new(),
-      pending_assert_types: HashMap::new(),
+      pending_specifiers: HashMap::new(),
       dynamic_branches: HashMap::new(),
     }
     .fill(roots, imports)
@@ -1707,11 +1700,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     loop {
       let specifier = match self.pending.next().await {
-        Some((specifier, _, Ok(Some(response)))) => {
+        Some((specifier, maybe_referrer, Ok(Some(response)))) => {
           let assert_types =
-            self.pending_assert_types.remove(&specifier).unwrap();
+            self.pending_specifiers.remove(&specifier).unwrap();
           for maybe_assert_type in assert_types {
-            self.visit(&specifier, &response, maybe_assert_type)
+            self.visit(
+              &specifier,
+              &response,
+              maybe_assert_type,
+              maybe_referrer.clone(),
+            )
           }
           Some(specifier)
         }
@@ -1805,11 +1803,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_assert_type: Option<AssertTypeWithRange>,
   ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
-    let assert_types = self
-      .pending_assert_types
+    self
+      .pending_specifiers
       .entry(specifier.clone())
-      .or_default();
-    assert_types.insert(maybe_assert_type);
+      .or_default()
+      .insert(maybe_assert_type);
     if !self.graph.module_slots.contains_key(specifier) {
       self
         .graph
@@ -1839,6 +1837,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     requested_specifier: &ModuleSpecifier,
     response: &LoadResponse,
     maybe_assert_type: Option<AssertTypeWithRange>,
+    maybe_referrer: Option<Range>,
   ) {
     let (specifier, module_slot) = match response {
       LoadResponse::External { specifier } => {
@@ -1863,6 +1862,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             maybe_headers.as_ref(),
             content.clone(),
             maybe_assert_type,
+            maybe_referrer,
           ),
         )
       }
@@ -1881,6 +1881,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_headers: Option<&HashMap<String, String>>,
     content: Arc<str>,
     maybe_assert_type: Option<AssertTypeWithRange>,
+    maybe_referrer: Option<Range>,
   ) -> ModuleSlot {
     use std::borrow::BorrowMut;
     let is_root = self.roots_contain(specifier);
@@ -1890,6 +1891,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       maybe_headers,
       content,
       maybe_assert_type,
+      maybe_referrer,
       Some(kind),
       self.resolver,
       self.module_analyzer,
@@ -2216,6 +2218,7 @@ mod tests {
       &specifier,
       None,
       content.into(),
+      None,
       None,
       Some(ModuleKind::Esm),
       None,
