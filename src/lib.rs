@@ -62,6 +62,7 @@ pub struct ReferrerImports {
 
 /// Parse an individual module, returning the module as a result, otherwise
 /// erroring with a module graph error.
+#[allow(clippy::result_large_err)]
 pub fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
@@ -69,7 +70,7 @@ pub fn parse_module(
   maybe_kind: Option<ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
-) -> Result<Module, Box<ModuleGraphError>> {
+) -> Result<Module, ModuleGraphError> {
   let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
   let module_analyzer =
     maybe_module_analyzer.unwrap_or(&default_module_analyzer);
@@ -1012,7 +1013,7 @@ console.log(a);
       .await;
     let result = graph.valid();
     assert!(result.is_err());
-    let err = *result.unwrap_err();
+    let err = result.unwrap_err();
     assert_eq!(err.specifier(), &root_specifier);
     assert!(matches!(err, ModuleGraphError::ResolutionError(_)));
   }
@@ -1052,7 +1053,7 @@ console.log(a);
       .await;
     let result = graph.valid();
     assert!(result.is_err());
-    let err = *result.unwrap_err();
+    let err = result.unwrap_err();
     assert!(matches!(
       err,
       ModuleGraphError::UnsupportedMediaType {
