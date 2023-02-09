@@ -62,9 +62,7 @@ fn parse_deno_types_pragma(
   let original_input = input;
   let (input, _) = skip_whitespace(input)?;
   let (input, _) = tag("@deno-types")(input)?;
-  let (input, _) = skip_whitespace(input)?;
   let (input, _) = ch('=')(input)?;
-  let (input, _) = skip_whitespace(input)?;
   let quote_start_input = input;
   let (input, quote_char) = or(ch('"'), ch('\"'))(input)?;
   let (input, text) = take_while(|c| c != quote_char)(input)?;
