@@ -162,6 +162,7 @@ dependencies = [
  "data-url",
  "deno_ast",
  "futures",
+ "monch",
  "once_cell",
  "parking_lot",
  "pretty_assertions",
@@ -533,6 +534,12 @@ name = "memchr"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
+
+[[package]]
+name = "monch"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f13de1c3edc9a5b9dc3a1029f56e9ab3eba34640010aff4fc01044c42ef67afa"
 
 [[package]]
 name = "new_debug_unreachable"
