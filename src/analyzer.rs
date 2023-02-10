@@ -13,6 +13,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::graph::Position;
+use crate::pragma::parse_deno_types;
 
 /// A `@deno-types` pragma.
 pub struct DenoTypesPragma {
@@ -30,7 +31,7 @@ pub fn analyze_deno_types(
     return None;
   }
 
-  let deno_types = parse_deno_types_pragma(&comment.text).ok()?;
+  let deno_types = parse_deno_types(&comment.text).ok()?;
   // the comment text starts after the double slash or slash star, so add 2
   let start_char = comment.range.start.character + 2;
   Some(DenoTypesPragma {
@@ -45,31 +46,6 @@ pub fn analyze_deno_types(
         character: start_char + deno_types.quote_end,
       },
     },
-  })
-}
-
-struct ParsedDenoTypes<'a> {
-  text: &'a str,
-  quote_start: usize,
-  quote_end: usize,
-}
-
-fn parse_deno_types_pragma(
-  input: &str,
-) -> Result<ParsedDenoTypes, monch::ParseError> {
-  use monch::*;
-
-  let original_input = input;
-  let (input, _) = skip_whitespace(input)?;
-  let (input, _) = tag("@deno-types")(input)?;
-  let (input, _) = ch('=')(input)?;
-  let quote_start_input = input;
-  let (input, quote_char) = or(ch('"'), ch('\"'))(input)?;
-  let (input, text) = take_while(|c| c != quote_char)(input)?;
-  Ok(ParsedDenoTypes {
-    text,
-    quote_start: original_input.len() - quote_start_input.len(),
-    quote_end: original_input.len() - input.len() + 1,
   })
 }
 

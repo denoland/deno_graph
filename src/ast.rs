@@ -9,6 +9,7 @@ use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
 use crate::graph::Position;
 use crate::module_specifier::ModuleSpecifier;
+use crate::pragma::parse_triple_slash_reference;
 use crate::DependencyKind;
 use crate::ImportAssertions;
 
@@ -38,17 +39,6 @@ static JSDOC_IMPORT_RE: Lazy<Regex> = Lazy::new(|| {
 /// Matches the `@jsxImportSource` pragma.
 static JSX_IMPORT_SOURCE_RE: Lazy<Regex> =
   Lazy::new(|| Regex::new(r#"(?i)^[\s*]*@jsxImportSource\s+(\S+)"#).unwrap());
-/// Matches a `/// <reference ... />` comment reference.
-static TRIPLE_SLASH_REFERENCE_RE: Lazy<Regex> =
-  Lazy::new(|| Regex::new(r"(?i)^/\s*<reference\s.*?/>").unwrap());
-/// Matches a path reference, which adds a dependency to a module
-static PATH_REFERENCE_RE: Lazy<Regex> =
-  Lazy::new(|| Regex::new(r#"(?i)\spath\s*=\s*["']([^"']*)["']"#).unwrap());
-/// Matches a types reference, which for JavaScript files indicates the
-/// location of types to use when type checking a program that includes it as
-/// a dependency.
-static TYPES_REFERENCE_RE: Lazy<Regex> =
-  Lazy::new(|| Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap());
 
 /// Parses modules to a ParsedSource.
 pub trait ModuleParser {
@@ -334,30 +324,39 @@ fn analyze_ts_references(
 ) -> Vec<TypeScriptReference> {
   let mut references = Vec::new();
   for comment in parsed_source.get_leading_comments().iter() {
-    if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
-      let comment_start = comment.start();
-      if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
-        let m = captures.get(1).unwrap();
-        references.push(TypeScriptReference::Path(SpecifierWithRange {
-          text: m.as_str().to_string(),
-          range: comment_source_to_position_range(
-            comment_start,
-            &m,
-            parsed_source.text_info(),
-            false,
-          ),
-        }));
-      } else if let Some(captures) = TYPES_REFERENCE_RE.captures(&comment.text)
+    if comment.kind == CommentKind::Line {
+      if let Ok(path_ref) = parse_triple_slash_reference("path", &comment.text)
       {
-        let m = captures.get(1).unwrap();
+        let comment_start = comment.range().start + 2;
+        references.push(TypeScriptReference::Path(SpecifierWithRange {
+          text: path_ref.text.to_string(),
+          range: PositionRange {
+            start: Position::from_source_pos(
+              comment_start + path_ref.quote_start,
+              parsed_source.text_info(),
+            ),
+            end: Position::from_source_pos(
+              comment_start + path_ref.quote_end,
+              parsed_source.text_info(),
+            ),
+          },
+        }));
+      } else if let Ok(path_ref) =
+        parse_triple_slash_reference("types", &comment.text)
+      {
+        let comment_start = comment.range().start + 2;
         references.push(TypeScriptReference::Types(SpecifierWithRange {
-          text: m.as_str().to_string(),
-          range: comment_source_to_position_range(
-            comment_start,
-            &m,
-            parsed_source.text_info(),
-            false,
-          ),
+          text: path_ref.text.to_string(),
+          range: PositionRange {
+            start: Position::from_source_pos(
+              comment_start + path_ref.quote_start,
+              parsed_source.text_info(),
+            ),
+            end: Position::from_source_pos(
+              comment_start + path_ref.quote_end,
+              parsed_source.text_info(),
+            ),
+          },
         }));
       }
     }
