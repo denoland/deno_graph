@@ -4,6 +4,7 @@ mod analyzer;
 mod ast;
 mod graph;
 mod module_specifier;
+pub mod semver;
 pub mod source;
 mod text_encoding;
 
