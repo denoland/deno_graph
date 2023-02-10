@@ -19,7 +19,7 @@ pub use self::range::VersionRange;
 pub use self::range::VersionRangeSet;
 pub use self::range::XRange;
 use self::specifier::parse_version_req_from_specifier;
-use self::specifier::NpmVersionReqSpecifierParseError;
+pub use self::specifier::NpmVersionReqSpecifierParseError;
 
 #[derive(
   Clone, Debug, PartialEq, Eq, Default, Hash, Serialize, Deserialize,
@@ -171,7 +171,7 @@ impl VersionReq {
   }
 
   #[cfg(test)]
-  pub fn inner(&self) -> &RangeSetOrTag {
+  pub(crate) fn inner(&self) -> &RangeSetOrTag {
     &self.inner
   }
 
