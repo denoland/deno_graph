@@ -9,18 +9,11 @@ use deno_ast::ModuleSpecifier;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
-use once_cell::sync::Lazy;
-use regex::Match;
-use regex::Regex;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::graph::Position;
-
-/// Matches the `@deno-types` pragma.
-static DENO_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
-  Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#).unwrap()
-});
+use crate::pragma::parse_deno_types;
 
 /// A `@deno-types` pragma.
 pub struct DenoTypesPragma {
@@ -32,47 +25,28 @@ pub struct DenoTypesPragma {
 pub fn analyze_deno_types(
   desc: &DependencyDescriptor,
 ) -> Option<DenoTypesPragma> {
-  fn comment_position_to_position_range(
-    mut comment_start: Position,
-    m: &Match,
-  ) -> PositionRange {
-    // the comment text starts after the double slash or slash star, so add 2
-    comment_start.character += 2;
-    PositionRange {
-      // This will always be on the same line.
-      // Does -1 and +1 to include the quotes
-      start: Position {
-        line: comment_start.line,
-        character: comment_start.character + m.start() - 1,
-      },
-      end: Position {
-        line: comment_start.line,
-        character: comment_start.character + m.end() + 1,
-      },
-    }
+  let comment = desc.leading_comments.last()?;
+  // @deno-types cannot be on a multi-line comment
+  if comment.range.start.line != comment.range.end.line {
+    return None;
   }
 
-  let comment = desc.leading_comments.last()?;
-  let captures = DENO_TYPES_RE.captures(&comment.text)?;
-  if let Some(m) = captures.get(1) {
-    Some(DenoTypesPragma {
-      specifier: m.as_str().to_string(),
-      range: comment_position_to_position_range(
-        comment.range.start.clone(),
-        &m,
-      ),
-    })
-  } else if let Some(m) = captures.get(2) {
-    Some(DenoTypesPragma {
-      specifier: m.as_str().to_string(),
-      range: comment_position_to_position_range(
-        comment.range.start.clone(),
-        &m,
-      ),
-    })
-  } else {
-    unreachable!("Unexpected captures from deno types regex")
-  }
+  let deno_types = parse_deno_types(&comment.text).ok()?;
+  // the comment text starts after the double slash or slash star, so add 2
+  let start_char = comment.range.start.character + 2;
+  Some(DenoTypesPragma {
+    specifier: deno_types.text.to_string(),
+    range: PositionRange {
+      start: Position {
+        line: comment.range.start.line,
+        character: start_char + deno_types.quote_start,
+      },
+      end: Position {
+        line: comment.range.start.line,
+        character: start_char + deno_types.quote_end,
+      },
+    },
+  })
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]

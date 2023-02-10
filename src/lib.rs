@@ -4,6 +4,7 @@ mod analyzer;
 mod ast;
 mod graph;
 mod module_specifier;
+mod pragma;
 pub mod source;
 mod text_encoding;
 
@@ -476,7 +477,7 @@ mod tests {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"// @deno-types=./test02.d.ts
+            content: r#"// @deno-types="./test02.d.ts"
 import * as a from "./test02.js";
 
 console.log(a);

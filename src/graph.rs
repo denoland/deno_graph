@@ -606,26 +606,7 @@ pub struct Module {
 }
 
 impl Module {
-  fn new(
-    specifier: ModuleSpecifier,
-    kind: ModuleKind,
-    source: Arc<str>,
-  ) -> Self {
-    Self {
-      dependencies: Default::default(),
-      kind,
-      maybe_cache_info: None,
-      maybe_source: Some(source),
-      maybe_types_dependency: None,
-      media_type: MediaType::Unknown,
-      specifier,
-    }
-  }
-
-  pub fn new_without_source(
-    specifier: ModuleSpecifier,
-    kind: ModuleKind,
-  ) -> Self {
+  fn new_without_source(specifier: ModuleSpecifier, kind: ModuleKind) -> Self {
     Self {
       dependencies: Default::default(),
       kind,
@@ -1414,8 +1395,15 @@ pub(crate) fn parse_module_from_module_info(
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Module {
   // Init the module and determine its media type
-  let mut module = Module::new(specifier.clone(), kind, source);
-  module.media_type = media_type;
+  let mut module = Module {
+    dependencies: Default::default(),
+    kind,
+    maybe_cache_info: None,
+    maybe_source: Some(source),
+    maybe_types_dependency: None,
+    media_type,
+    specifier: specifier.clone(),
+  };
 
   // Analyze the TypeScript triple-slash references
   for reference in module_info.ts_references {

@@ -20,6 +20,7 @@ anyhow = "1.0.43"
 data-url = "0.2.0"
 deno_ast = { version = "0.24.0", features = ["dep_graph", "module_specifier"] }
 futures = "0.3.17"
+monch = "0.4.0"
 once_cell = "1.16.0"
 parking_lot = "0.12.0"
 regex = "1.5.4"
