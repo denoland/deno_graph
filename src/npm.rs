@@ -16,6 +16,8 @@ pub struct NpmPackageIdDeserializationError {
   text: String,
 }
 
+/// A resolved unique identifier for an npm package. This contains
+/// the resolved name, version, and peer dependency resolution identifiers.
 #[derive(
   Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize,
 )]
