@@ -152,7 +152,7 @@ impl NpmPackageId {
 
     with_failure_handling(parse_id_at_level(0))(id).map_err(|err| {
       NpmPackageIdDeserializationError {
-        message: format!("{:#}", err),
+        message: format!("{err:#}"),
         text: id.to_string(),
       }
     })
@@ -197,6 +197,7 @@ impl NpmPackageReference {
     Self::from_str(specifier.as_str())
   }
 
+  #[allow(clippy::should_implement_trait)]
   pub fn from_str(
     specifier: &str,
   ) -> Result<NpmPackageReference, NpmPackageReferenceParseError> {
@@ -302,6 +303,7 @@ impl std::fmt::Display for NpmPackageReq {
 }
 
 impl NpmPackageReq {
+  #[allow(clippy::should_implement_trait)]
   pub fn from_str(text: &str) -> Result<Self, NpmPackageReqParseError> {
     let parts = text.split('/').collect::<Vec<_>>();
     match NpmPackageReq::parse_from_parts(&parts) {
