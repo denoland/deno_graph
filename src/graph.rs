@@ -26,7 +26,7 @@ use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
 use futures::Future;
 use futures::FutureExt;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use serde::ser::SerializeMap;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
@@ -42,13 +42,12 @@ use std::fmt;
 use std::pin::Pin;
 use std::sync::Arc;
 
-lazy_static! {
-  static ref SUPPORTED_ASSERT_TYPES: HashMap<String, MediaType> = {
+static SUPPORTED_ASSERT_TYPES: Lazy<HashMap<String, MediaType>> =
+  Lazy::new(|| {
     let mut map = HashMap::new();
     map.insert("json".to_string(), MediaType::Json);
     map
-  };
-}
+  });
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct Position {
@@ -155,14 +154,14 @@ pub enum ModuleGraphError {
 }
 
 impl ModuleGraphError {
-  pub fn specifier(&self) -> &ModuleSpecifier {
+  pub fn specifier(&self) -> Option<&ModuleSpecifier> {
     match self {
-      Self::ImportError(_) => panic!("Import errors don't have specifiers"),
-      Self::ResolutionError(err) => &err.range().specifier,
+      Self::ImportError(_) => None,
+      Self::ResolutionError(_) => None,
       Self::LoadingErr(s, _, _)
       | Self::ParseErr(s, _)
       | Self::UnsupportedMediaType { specifier: s, .. }
-      | Self::Missing(s, _) => s,
+      | Self::Missing(s, _) => Some(s),
     }
   }
 

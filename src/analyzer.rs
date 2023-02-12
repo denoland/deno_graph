@@ -187,32 +187,12 @@ impl ImportAssertions {
     match self {
       ImportAssertions::None => true,
       ImportAssertions::Known(map) => !map.contains_key(key),
-      _ => false,
+      ImportAssertions::Unknown => false,
     }
   }
 
   pub fn is_empty(&self) -> bool {
     matches!(self, ImportAssertions::None)
-  }
-
-  /// Try to get a flat dictionary, successful if there are no unknowns.
-  pub fn maybe_static(&self) -> Option<HashMap<String, String>> {
-    let mut assertions = HashMap::new();
-    match self {
-      ImportAssertions::None => {}
-      ImportAssertions::Known(map) => {
-        for (key, assertion) in map {
-          match assertion {
-            ImportAssertion::Known(value) => {
-              assertions.insert(key.clone(), value.clone());
-            }
-            ImportAssertion::Unknown => return None,
-          }
-        }
-      }
-      _ => return None,
-    }
-    Some(assertions)
   }
 }
 

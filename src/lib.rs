@@ -1044,8 +1044,12 @@ console.log(a);
     let result = graph.valid();
     assert!(result.is_err());
     let err = result.unwrap_err();
-    assert_eq!(err.specifier(), &root_specifier);
-    assert!(matches!(err, ModuleGraphError::ResolutionError(_)));
+    match err {
+      ModuleGraphError::ResolutionError(err) => {
+        assert_eq!(err.range().specifier, root_specifier)
+      }
+      _ => unreachable!(),
+    }
   }
 
   #[tokio::test]
