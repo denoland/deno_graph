@@ -107,14 +107,16 @@ export type ModuleKind =
 
 export type ImportAssertion = "Unknown" | { "Known": string };
 
-export type ImportAssertions = "Unknown" | { "Known": Record<string, ImportAssertion> }
+export type ImportAssertions = "Unknown" | {
+  "Known": Record<string, ImportAssertion>;
+};
 
 export interface ImportJson {
   specifier: string;
   range: RangeJson;
   isDynamic?: true;
-  assertions?: ImportAssertions,
-  errors?: string[],
+  assertions?: ImportAssertions;
+  errors?: string[];
 }
 
 export interface DependencyJson {
