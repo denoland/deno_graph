@@ -183,6 +183,9 @@ impl ImportAssertions {
     }
   }
 
+  /// Check if a assertion key is known to be absent (not set to a value and not
+  /// undeterminable). This is significant because it is the precise case where
+  /// `type: "javascript"` is asserted.
   pub fn is_known_none(&self, key: &str) -> bool {
     match self {
       ImportAssertions::None => true,
