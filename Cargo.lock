@@ -162,6 +162,7 @@ dependencies = [
  "data-url",
  "deno_ast",
  "futures",
+ "lazy_static",
  "monch",
  "once_cell",
  "parking_lot",

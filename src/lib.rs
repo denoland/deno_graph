@@ -80,12 +80,10 @@ pub fn parse_module(
     maybe_headers,
     content,
     None,
-    None,
     maybe_kind,
     maybe_resolver,
     module_analyzer,
     true,
-    false,
   )
 }
 
@@ -116,6 +114,7 @@ mod tests {
   use super::*;
   use pretty_assertions::assert_eq;
   use serde_json::json;
+  use serde_json::Value;
   use source::tests::MockResolver;
   use source::CacheInfo;
   use source::MemoryLoader;
@@ -130,6 +129,21 @@ mod tests {
     cache_info: Vec<(&str, CacheInfo)>,
   ) -> MemoryLoader {
     MemoryLoader::new(sources, cache_info)
+  }
+
+  /// The `dependency.imports` field is a bit verbose for most tests.
+  fn graph_to_json_without_imports(graph: &ModuleGraph) -> Value {
+    let mut value = json!(graph);
+    for module in value.get_mut("modules").unwrap().as_array_mut().unwrap() {
+      let deps = match module.get_mut("dependencies") {
+        None => continue,
+        Some(v) => v.as_array_mut().unwrap(),
+      };
+      for dep in deps {
+        dep.as_object_mut().unwrap().remove("imports");
+      }
+    }
+    value
   }
 
   #[tokio::test]
@@ -369,7 +383,7 @@ mod tests {
       )
       .await;
     assert_eq!(
-      json!(graph),
+      graph_to_json_without_imports(&graph),
       json!({
         "roots": [
           "file:///a/test.json"
@@ -454,7 +468,23 @@ mod tests {
                     }
                   }
                 },
-                "isDynamic": true
+                "isDynamic": true,
+                "imports": [
+                  {
+                    "specifier": "./a.json",
+                    "range": {
+                      "start": {
+                        "line": 1,
+                        "character": 31,
+                      },
+                      "end": {
+                        "line": 1,
+                        "character": 41,
+                      },
+                    },
+                    "isDynamic": true,
+                  },
+                ],
               }
             ],
             "kind": "esm",
@@ -591,7 +621,7 @@ console.log(a);
       )
       .await;
     assert_eq!(
-      json!(graph),
+      graph_to_json_without_imports(&graph),
       json!({
         "roots": ["file:///a/test01.ts"],
         "modules": [
@@ -719,7 +749,7 @@ console.log(a);
       )
       .await;
     assert_eq!(
-      json!(graph),
+      graph_to_json_without_imports(&graph),
       json!({
         "roots": ["file:///a/test01.ts"],
         "modules": [
@@ -746,7 +776,6 @@ console.log(a);
                     }
                   }
                 },
-                "assertionType": "json"
               }
             ],
             "kind": "esm",
@@ -945,7 +974,7 @@ console.log(a);
       )
       .await;
     assert_eq!(
-      json!(graph),
+      graph_to_json_without_imports(&graph),
       json!({
         "roots": [
           "file:///a/test01.tsx"
@@ -1020,51 +1049,6 @@ console.log(a);
   }
 
   #[tokio::test]
-  async fn test_unsupported_media_type() {
-    let mut loader = setup(
-      vec![
-        (
-          "file:///a/test.ts",
-          Source::Module {
-            specifier: "file:///a/test.ts",
-            maybe_headers: None,
-            content: r#"import "./test.json";"#,
-          },
-        ),
-        (
-          "file:///a/test.json",
-          Source::Module {
-            specifier: "file:///a/test.json",
-            maybe_headers: None,
-            content: r#"{"hello":"world"}"#,
-          },
-        ),
-      ],
-      vec![],
-    );
-    let root_specifier =
-      ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
-    let mut graph = ModuleGraph::default();
-    graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
-      .await;
-    let result = graph.valid();
-    assert!(result.is_err());
-    let err = result.unwrap_err();
-    assert!(matches!(
-      err,
-      ModuleGraphError::UnsupportedMediaType {
-        media_type: MediaType::Json,
-        ..
-      },
-    ));
-  }
-
-  #[tokio::test]
   async fn test_root_is_extensionless() {
     let mut loader = setup(
       vec![
@@ -1134,7 +1118,7 @@ console.log(a);
       )
       .await;
     assert_eq!(
-      json!(graph),
+      graph_to_json_without_imports(&graph),
       json!({
         "roots": [
           "file:///a.ts"
@@ -1224,7 +1208,7 @@ export function a(a) {
       .build(vec![root.clone()], &mut loader, Default::default())
       .await;
     assert_eq!(
-      json!(graph),
+      graph_to_json_without_imports(&graph),
       json!({
         "roots": [
           "file:///a/test.js"
@@ -1694,7 +1678,28 @@ export function a(a) {
                     }
                   }
                 },
-                "assertionType": "json"
+                "imports": [
+                  {
+                    "specifier": "./a.json",
+                    "range": {
+                      "start": {
+                        "line": 1,
+                        "character": 26,
+                      },
+                      "end": {
+                        "line": 1,
+                        "character": 36,
+                      },
+                    },
+                    "assertions": {
+                      "Known": {
+                        "type": {
+                          "Known": "json",
+                        },
+                      },
+                    },
+                  },
+                ],
               },
               {
                 "specifier": "./b.json",
@@ -1712,7 +1717,29 @@ export function a(a) {
                   }
                 },
                 "isDynamic": true,
-                "assertionType": "json"
+                "imports": [
+                    {
+                      "specifier": "./b.json",
+                      "range": {
+                        "start": {
+                          "line": 2,
+                          "character": 35,
+                        },
+                        "end": {
+                          "line": 2,
+                          "character": 45,
+                        },
+                      },
+                      "isDynamic": true,
+                      "assertions": {
+                        "Known": {
+                          "type": {
+                            "Known": "json",
+                          },
+                        },
+                      },
+                    },
+                ],
               },
               {
                 "specifier": "./c.json",
@@ -1729,7 +1756,28 @@ export function a(a) {
                     }
                   }
                 },
-                "assertionType": "json"
+                "imports": [
+                  {
+                    "specifier": "./c.json",
+                    "range": {
+                      "start": {
+                        "line": 3,
+                        "character": 31,
+                      },
+                      "end": {
+                        "line": 3,
+                        "character": 41,
+                      },
+                    },
+                    "assertions": {
+                      "Known": {
+                        "type": {
+                          "Known": "json",
+                        },
+                      },
+                    },
+                  },
+                ],
               },
               {
                 "specifier": "./d.json",
@@ -1746,7 +1794,28 @@ export function a(a) {
                     }
                   }
                 },
-                "isDynamic": true
+                "isDynamic": true,
+                "imports": [
+                  {
+                    "specifier": "./d.json",
+                    "range": {
+                      "start": {
+                        "line": 5,
+                        "character": 35,
+                      },
+                      "end": {
+                        "line": 5,
+                        "character": 45,
+                      },
+                    },
+                    "isDynamic": true,
+                    "assertions": {
+                      "Known": {
+                        "type": "Unknown",
+                      },
+                    },
+                  },
+                ],
               }
             ],
             "kind": "esm",
@@ -1797,7 +1866,7 @@ export function a(a) {
       )
       .await;
     assert_eq!(
-      json!(graph),
+      graph_to_json_without_imports(&graph),
       json!({
         "roots": [
           "file:///a/test01.ts"
@@ -1826,7 +1895,6 @@ export function a(a) {
                     }
                   }
                 },
-                "assertionType": "json"
               }
             ],
             "kind": "esm",
@@ -1919,8 +1987,10 @@ export function a(a) {
         ],
         "modules": [
           {
+            "kind": "asserted",
+            "size": 9,
+            "mediaType": "Json",
             "specifier": "file:///a/a.json",
-            "error": "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: file:///a/a.json"
           },
           {
             "kind": "asserted",
@@ -1929,12 +1999,16 @@ export function a(a) {
             "specifier": "file:///a/b.json"
           },
           {
+            "kind": "esm",
+            "size": 21,
+            "mediaType": "JavaScript",
             "specifier": "file:///a/c.js",
-            "error": "Expected a Json module, but identified a JavaScript module.\n  Specifier: file:///a/c.js"
           },
           {
+            "kind": "asserted",
+            "size": 9,
+            "mediaType": "Json",
             "specifier": "file:///a/d.json",
-            "error": "The import assertion type of \"css\" is unsupported.\n  Specifier: file:///a/d.json"
           },
           {
             "specifier": "file:///a/e.wasm",
@@ -1956,7 +2030,23 @@ export function a(a) {
                       "character": 36
                     }
                   }
-                }
+                },
+                "imports": [
+                  {
+                    "specifier": "./a.json",
+                    "range": {
+                      "start": {
+                        "line": 1,
+                        "character": 26,
+                      },
+                      "end": {
+                        "line": 1,
+                        "character": 36,
+                      },
+                    },
+                    "errors": ["Expected a JavaScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: file:///a/a.json"],
+                  },
+                ],
               },
               {
                 "specifier": "./b.json",
@@ -1973,7 +2063,28 @@ export function a(a) {
                     }
                   }
                 },
-                "assertionType": "json"
+                "imports": [
+                  {
+                    "specifier": "./b.json",
+                    "range": {
+                      "start": {
+                        "line": 2,
+                        "character": 26,
+                      },
+                      "end": {
+                        "line": 2,
+                        "character": 36,
+                      },
+                    },
+                    "assertions": {
+                      "Known": {
+                        "type": {
+                          "Known": "json",
+                        },
+                      },
+                    },
+                  },
+                ],
               },
               {
                 "specifier": "./c.js",
@@ -1990,7 +2101,29 @@ export function a(a) {
                     }
                   }
                 },
-                "assertionType": "json"
+                "imports": [
+                  {
+                    "specifier": "./c.js",
+                    "range": {
+                      "start": {
+                        "line": 3,
+                        "character": 26,
+                      },
+                      "end": {
+                        "line": 3,
+                        "character": 34,
+                      },
+                    },
+                    "assertions": {
+                      "Known": {
+                        "type": {
+                          "Known": "json",
+                        },
+                      },
+                    },
+                    "errors": ["Expected a Json module, but identified a JavaScript module.\n  Specifier: file:///a/c.js"],
+                  },
+                ],
               },
               {
                 "specifier": "./d.json",
@@ -2007,7 +2140,29 @@ export function a(a) {
                     }
                   }
                 },
-                "assertionType": "css"
+                "imports": [
+                  {
+                    "specifier": "./d.json",
+                    "range": {
+                      "start": {
+                        "line": 4,
+                        "character": 26,
+                      },
+                      "end": {
+                        "line": 4,
+                        "character": 36,
+                      },
+                    },
+                    "assertions": {
+                      "Known": {
+                        "type": {
+                          "Known": "css",
+                        },
+                      },
+                    },
+                    "errors": ["The import assertion type of \"css\" is unsupported."],
+                  },
+                ],
               },
               {
                 "specifier": "./e.wasm",
@@ -2023,7 +2178,22 @@ export function a(a) {
                       "character": 36
                     }
                   }
-                }
+                },
+                "imports": [
+                  {
+                    "specifier": "./e.wasm",
+                    "range": {
+                      "start": {
+                        "line": 5,
+                        "character": 26,
+                      },
+                      "end": {
+                        "line": 5,
+                        "character": 36,
+                      },
+                    },
+                  },
+                ],
               }
             ],
             "mediaType": "TypeScript",
@@ -2258,7 +2428,7 @@ export function a(a) {
       )
       .await;
     assert_eq!(
-      json!(graph),
+      graph_to_json_without_imports(&graph),
       json!({
         "roots": [
           "file:///a/test01.ts"
@@ -2485,7 +2655,7 @@ export function a(a) {
       )
       .await;
     assert_eq!(
-      json!(graph),
+      graph_to_json_without_imports(&graph),
       json!({
         "roots": [
           "file:///a/test01.ts"
@@ -2632,7 +2802,7 @@ export function a(a) {
       )
       .await;
     assert_eq!(
-      json!(graph),
+      graph_to_json_without_imports(&graph),
       json!({
         "roots": [
           "file:///a/test01.ts"
@@ -2714,71 +2884,6 @@ export function a(a) {
     assert_eq!(actual.dependencies.len(), 4);
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::TypeScript);
-  }
-
-  #[test]
-  fn test_parse_module_import_assertions() {
-    let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
-    let result = parse_module(
-      &specifier,
-      None,
-      r#"
-    import a from "./a.json" assert { type: "json" };
-    await import("./b.json", { assert: { type: "json" } });
-    "#
-      .into(),
-      Some(ModuleKind::Esm),
-      None,
-      None,
-    );
-    assert!(result.is_ok());
-    let actual = result.unwrap();
-    assert_eq!(
-      json!(actual),
-      json!({
-        "dependencies": [
-          {
-            "specifier": "./a.json",
-            "code": {
-              "specifier": "file:///a/a.json",
-              "span": {
-                "start": {
-                  "line": 1,
-                  "character": 18
-                },
-                "end": {
-                  "line": 1,
-                  "character": 28
-                }
-              }
-            },
-            "assertionType": "json"
-          },
-          {
-            "specifier": "./b.json",
-            "code": {
-              "specifier": "file:///a/b.json",
-              "span": {
-                "start": {
-                  "line": 2,
-                  "character": 17
-                },
-                "end": {
-                  "line": 2,
-                  "character": 27
-                }
-              }
-            },
-            "isDynamic": true,
-            "assertionType": "json"
-          }
-        ],
-        "kind": "esm",
-        "mediaType": "TypeScript",
-        "size": 119,
-        "specifier": "file:///a/test01.ts"
-      })
-    );
   }
 
   #[test]

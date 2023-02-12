@@ -105,6 +105,18 @@ export type ModuleKind =
   | "external"
   | "script";
 
+export type ImportAssertion = "Unknown" | { "Known": string };
+
+export type ImportAssertions = "Unknown" | { "Known": Record<string, ImportAssertion> }
+
+export interface ImportJson {
+  specifier: string;
+  range: RangeJson;
+  isDynamic?: true;
+  assertions?: ImportAssertions,
+  errors?: string[],
+}
+
 export interface DependencyJson {
   /** The string specifier that was used for the dependency. */
   specifier: string;
@@ -117,7 +129,7 @@ export interface DependencyJson {
   /** A flag indicating if the dependency was dynamic. (e.g.
    * `await import("mod.ts")`) */
   isDynamic?: true;
-  assertionType?: string;
+  imports?: ImportJson[];
 }
 
 export interface ModuleJson extends CacheInfo {

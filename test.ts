@@ -204,6 +204,21 @@ Deno.test({
                   },
                 },
               },
+              "imports": [
+                {
+                  "range": {
+                    "end": {
+                      "character": 27,
+                      "line": 0,
+                    },
+                    "start": {
+                      "character": 19,
+                      "line": 0,
+                    },
+                  },
+                  "specifier": "./b.js",
+                },
+              ],
             },
           ],
           "kind": "esm",
@@ -282,7 +297,28 @@ Deno.test({
                   },
                 },
               },
-              "assertionType": "json",
+              "imports": [
+                {
+                  "assertions": {
+                    "Known": {
+                      "type": {
+                        "Known": "json",
+                      },
+                    },
+                  },
+                  "range": {
+                    "end": {
+                      "character": 32,
+                      "line": 0,
+                    },
+                    "start": {
+                      "character": 19,
+                      "line": 0,
+                    },
+                  },
+                  "specifier": "./deno.json",
+                },
+              ],
             },
           ],
           "mediaType": MediaType.TypeScript,
@@ -377,6 +413,21 @@ Deno.test({
                   },
                 },
               },
+              "imports": [
+                {
+                  "range": {
+                    "end": {
+                      "character": 27,
+                      "line": 0,
+                    },
+                    "start": {
+                      "character": 19,
+                      "line": 0,
+                    },
+                  },
+                  "specifier": "./b.js",
+                },
+              ],
             },
           ],
           "kind": "esm",
@@ -473,6 +524,21 @@ Deno.test({
                   },
                 },
               },
+              "imports": [
+                {
+                  "range": {
+                    "end": {
+                      "character": 32,
+                      "line": 0,
+                    },
+                    "start": {
+                      "character": 20,
+                      "line": 0,
+                    },
+                  },
+                  "specifier": "builtin:fs",
+                },
+              ],
             },
             {
               "specifier": "https://example.com/bundle",
@@ -489,6 +555,21 @@ Deno.test({
                   },
                 },
               },
+              "imports": [
+                {
+                  "range": {
+                    "end": {
+                      "character": 62,
+                      "line": 1,
+                    },
+                    "start": {
+                      "character": 34,
+                      "line": 1,
+                    },
+                  },
+                  "specifier": "https://example.com/bundle",
+                },
+              ],
             },
           ],
           "kind": "esm",
@@ -560,6 +641,21 @@ Deno.test({
             "end": { "line": 2, "character": 34 },
           },
         },
+        "imports": [
+          {
+            "range": {
+              "end": {
+                "character": 34,
+                "line": 2,
+              },
+              "start": {
+                "character": 26,
+                "line": 2,
+              },
+            },
+            "specifier": "./a.ts",
+          },
+        ],
       }, {
         "specifier": "./b.ts",
         "code": {
@@ -569,6 +665,21 @@ Deno.test({
             "end": { "line": 3, "character": 35 },
           },
         },
+        "imports": [
+          {
+            "range": {
+              "end": {
+                "character": 35,
+                "line": 3,
+              },
+              "start": {
+                "character": 27,
+                "line": 3,
+              },
+            },
+            "specifier": "./b.ts",
+          },
+        ],
       }, {
         "specifier": "./c.ts",
         "code": {
@@ -578,6 +689,21 @@ Deno.test({
             "end": { "line": 4, "character": 34 },
           },
         },
+        "imports": [
+          {
+            "range": {
+              "end": {
+                "character": 34,
+                "line": 4,
+              },
+              "start": {
+                "character": 26,
+                "line": 4,
+              },
+            },
+            "specifier": "./c.ts",
+          },
+        ],
       }, {
         "specifier": "./d.ts",
         "code": {
@@ -588,6 +714,22 @@ Deno.test({
           },
         },
         "isDynamic": true,
+        "imports": [
+          {
+            "isDynamic": true,
+            "range": {
+              "end": {
+                "character": 39,
+                "line": 5,
+              },
+              "start": {
+                "character": 31,
+                "line": 5,
+              },
+            },
+            "specifier": "./d.ts",
+          },
+        ],
       }],
       "typesDependency": {
         "specifier": "./test01.d.ts",
@@ -723,7 +865,28 @@ Deno.test({
               },
             },
           },
-          "assertionType": "json",
+          "imports": [
+            {
+              "assertions": {
+                "Known": {
+                  "type": {
+                    "Known": "json",
+                  },
+                },
+              },
+              "range": {
+                "end": {
+                  "character": 32,
+                  "line": 1,
+                },
+                "start": {
+                  "character": 22,
+                  "line": 1,
+                },
+              },
+              "specifier": "./a.json",
+            },
+          ],
         },
         {
           "specifier": "./b.json",
@@ -741,7 +904,29 @@ Deno.test({
             },
           },
           "isDynamic": true,
-          "assertionType": "json",
+          "imports": [
+            {
+              "assertions": {
+                "Known": {
+                  "type": {
+                    "Known": "json",
+                  },
+                },
+              },
+              "isDynamic": true,
+              "range": {
+                "end": {
+                  "character": 31,
+                  "line": 2,
+                },
+                "start": {
+                  "character": 21,
+                  "line": 2,
+                },
+              },
+              "specifier": "./b.json",
+            },
+          ],
         },
       ],
       "kind": "esm",
