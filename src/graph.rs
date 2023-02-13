@@ -1745,8 +1745,7 @@ pub(crate) struct AssertTypeWithRange {
 }
 
 /// Metadata for modules which should suffice to check assertions on importers
-/// of that module. Needs to be stored separately from `Builder::graph` for
-/// concurrent borrows.
+/// of that module.
 #[derive(Clone, Debug)]
 struct ModuleMetadata {
   specifier: ModuleSpecifier,
@@ -1762,7 +1761,6 @@ struct Builder<'a, 'graph> {
   dynamic_branches: HashMap<ModuleSpecifier, Range>,
   module_analyzer: &'a dyn ModuleAnalyzer,
   reporter: Option<&'a dyn Reporter>,
-  module_metadata: HashMap<ModuleSpecifier, ModuleMetadata>,
 }
 
 impl<'a, 'graph> Builder<'a, 'graph> {
@@ -1786,7 +1784,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       reporter,
       pending: FuturesUnordered::new(),
       dynamic_branches: HashMap::new(),
-      module_metadata: HashMap::new(),
     }
     .fill(roots, imports)
     .await
@@ -1882,6 +1879,20 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
 
+    // Extract module metadata in a separate pass. Needed to avoid borrow issue.
+    let mut module_metadata = HashMap::new();
+    for (specifier, slot) in &self.graph.module_slots {
+      if let ModuleSlot::Module(module) = slot {
+        module_metadata.insert(
+          specifier.clone(),
+          ModuleMetadata {
+            specifier: module.specifier.clone(),
+            media_type: module.media_type,
+          },
+        );
+      }
+    }
+
     for slot in self.graph.module_slots.values_mut() {
       if let ModuleSlot::Module(ref mut module) = slot {
         // Enrich with cache info from the loader
@@ -1892,7 +1903,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           let module_metadata = dep
             .maybe_code
             .maybe_specifier()
-            .and_then(|s| self.module_metadata.get(s));
+            .and_then(|s| module_metadata.get(s));
           for import in &mut dep.imports {
             import.errors = check_import_assertions(import, module_metadata);
           }
@@ -1992,18 +2003,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .graph
       .module_slots
       .insert(specifier.clone(), module_slot);
-    let media_type = self
-      .graph
-      .get(specifier)
-      .map(|m| m.media_type)
-      .unwrap_or(MediaType::Unknown);
-    self.module_metadata.insert(
-      specifier.clone(),
-      ModuleMetadata {
-        specifier: specifier.clone(),
-        media_type,
-      },
-    );
   }
 
   /// Visit a module, parsing it and resolving any dependencies.
