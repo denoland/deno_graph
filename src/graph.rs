@@ -138,29 +138,66 @@ impl Range {
 }
 
 #[derive(Debug, Clone)]
-pub enum ModuleGraphError {
+pub enum ModuleError {
   LoadingErr(ModuleSpecifier, Option<Range>, Arc<anyhow::Error>),
   Missing(ModuleSpecifier, Option<Range>),
   ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
   UnsupportedMediaType(ModuleSpecifier, MediaType, Option<Range>),
-  // Note: Resolution and import errors are special in that they don't occupy
-  // module slots, whereas the other variants do.
+}
+
+impl ModuleError {
+  pub fn specifier(&self) -> &ModuleSpecifier {
+    match self {
+      Self::LoadingErr(s, _, _)
+      | Self::ParseErr(s, _)
+      | Self::UnsupportedMediaType(s, _, _)
+      | Self::Missing(s, _) => s,
+    }
+  }
+
+  pub fn maybe_referrer(&self) -> Option<&Range> {
+    match self {
+      Self::LoadingErr(_, maybe_referrer, _) => maybe_referrer.as_ref(),
+      Self::Missing(_, maybe_referrer) => maybe_referrer.as_ref(),
+      Self::UnsupportedMediaType(_, _, maybe_referrer) => {
+        maybe_referrer.as_ref()
+      }
+      Self::ParseErr(_, _) => None,
+    }
+  }
+}
+
+impl std::error::Error for ModuleError {
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    match self {
+      Self::LoadingErr(_, _, err) => Some(err.as_ref().as_ref()),
+      Self::Missing(_, _)
+      | Self::ParseErr(_, _)
+      | Self::UnsupportedMediaType(_, _, _) => None,
+    }
+  }
+}
+
+impl fmt::Display for ModuleError {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Self::LoadingErr(_, _, err) => err.fmt(f),
+      Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {diagnostic}"),
+      Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
+      Self::Missing(specifier, _) => write!(f, "Module not found \"{specifier}\"."),
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)]
+pub enum ModuleGraphError {
+  ModuleError(ModuleError),
   ResolutionError(ResolutionError),
   ImportError(ImportError),
 }
 
 impl ModuleGraphError {
-  pub fn specifier(&self) -> Option<&ModuleSpecifier> {
-    match self {
-      Self::ImportError(_) => None,
-      Self::ResolutionError(_) => None,
-      Self::LoadingErr(s, _, _)
-      | Self::ParseErr(s, _)
-      | Self::UnsupportedMediaType(s, _, _)
-      | Self::Missing(s, _) => Some(s),
-    }
-  }
-
   /// Converts the error into a string along with the range related to the error.
   ///
   /// We don't include the range in the error messages by default because they're
@@ -175,14 +212,9 @@ impl ModuleGraphError {
 
   pub fn maybe_range(&self) -> Option<&Range> {
     match self {
-      Self::LoadingErr(_, maybe_range, _) => maybe_range.as_ref(),
-      Self::ImportError(_) => None,
+      Self::ModuleError(err) => err.maybe_referrer(),
       Self::ResolutionError(err) => Some(err.range()),
-      Self::Missing(_, maybe_range) => maybe_range.as_ref(),
-      Self::UnsupportedMediaType(_, _, maybe_referrer) => {
-        maybe_referrer.as_ref()
-      }
-      Self::ParseErr(_, _) => None,
+      Self::ImportError(_) => None,
     }
   }
 }
@@ -190,12 +222,9 @@ impl ModuleGraphError {
 impl std::error::Error for ModuleGraphError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
-      Self::LoadingErr(_, _, err) => Some(err.as_ref().as_ref()),
+      Self::ModuleError(ref err) => Some(err),
       Self::ResolutionError(ref err) => Some(err),
       Self::ImportError(ref err) => Some(err),
-      Self::Missing(_, _)
-      | Self::ParseErr(_, _)
-      | Self::UnsupportedMediaType(_, _, _) => None,
     }
   }
 }
@@ -203,21 +232,10 @@ impl std::error::Error for ModuleGraphError {
 impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::LoadingErr(_, _, err) => err.fmt(f),
-      Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {diagnostic}"),
+      Self::ModuleError(err) => err.fmt(f),
       Self::ResolutionError(err) => err.fmt(f),
       Self::ImportError(err) => err.fmt(f),
-      Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
-      Self::Missing(specifier, _) => {
-        write!(f, "Module not found \"{specifier}\".")
-      },
     }
-  }
-}
-
-impl<'a> From<&'a ResolutionError> for ModuleGraphError {
-  fn from(err: &'a ResolutionError) -> Self {
-    Self::ResolutionError(err.clone())
   }
 }
 
@@ -1384,9 +1402,9 @@ pub(crate) fn parse_module(
             maybe_resolver,
           ))
         }
-        Err(diagnostic) => {
-          Err(ModuleGraphError::ParseErr(specifier.clone(), diagnostic))
-        }
+        Err(diagnostic) => Err(ModuleGraphError::ModuleError(
+          ModuleError::ParseErr(specifier.clone(), diagnostic),
+        )),
       }
     }
     MediaType::Unknown if is_root => {
@@ -1407,15 +1425,17 @@ pub(crate) fn parse_module(
             maybe_resolver,
           ))
         }
-        Err(diagnostic) => {
-          Err(ModuleGraphError::ParseErr(specifier.clone(), diagnostic))
-        }
+        Err(diagnostic) => Err(ModuleGraphError::ModuleError(
+          ModuleError::ParseErr(specifier.clone(), diagnostic),
+        )),
       }
     }
-    _ => Err(ModuleGraphError::UnsupportedMediaType(
-      specifier.clone(),
-      media_type,
-      maybe_referrer,
+    _ => Err(ModuleGraphError::ModuleError(
+      ModuleError::UnsupportedMediaType(
+        specifier.clone(),
+        media_type,
+        maybe_referrer,
+      ),
     )),
   }
 }
@@ -1813,9 +1833,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Some((specifier, maybe_range, Ok(None))) => {
           self.graph.module_slots.insert(
             specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::Missing(
-              specifier.clone(),
-              maybe_range,
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::Missing(specifier.clone(), maybe_range),
             )),
           );
           Some(specifier)
@@ -1823,10 +1842,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Some((specifier, maybe_range, Err(err))) => {
           self.graph.module_slots.insert(
             specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::LoadingErr(
-              specifier.clone(),
-              maybe_range,
-              Arc::new(err),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::LoadingErr(
+                specifier.clone(),
+                maybe_range,
+                Arc::new(err),
+              ),
             )),
           );
           Some(specifier)
@@ -2443,7 +2464,7 @@ mod tests {
       graph
         .try_get(&Url::parse("file:///bar.js").unwrap())
         .unwrap_err(),
-      ModuleGraphError::Missing(..)
+      ModuleGraphError::ModuleError(ModuleError::Missing(..))
     ));
     let specifiers = graph.specifiers().collect::<HashMap<_, _>>();
     assert_eq!(specifiers.len(), 2);
@@ -2457,7 +2478,7 @@ mod tests {
         .unwrap()
         .as_ref()
         .unwrap_err(),
-      ModuleGraphError::Missing(..)
+      ModuleGraphError::ModuleError(ModuleError::Missing(..))
     ));
   }
 
@@ -2516,7 +2537,7 @@ mod tests {
         .unwrap()
         .as_ref()
         .unwrap_err(),
-      ModuleGraphError::ParseErr(..)
+      ModuleGraphError::ModuleError(ModuleError::ParseErr(..))
     ));
     assert!(matches!(
       specifiers
@@ -2524,7 +2545,7 @@ mod tests {
         .unwrap()
         .as_ref()
         .unwrap_err(),
-      ModuleGraphError::ParseErr(..)
+      ModuleGraphError::ModuleError(ModuleError::ParseErr(..))
     ));
   }
 
