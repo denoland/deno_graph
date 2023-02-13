@@ -883,8 +883,10 @@ impl<'a> ModuleEntryIterator<'a> {
                 }
               }
               for import in &dep.imports {
-                if let Some(error) = import.errors.first() {
-                  return Err(ModuleGraphError::ImportError(error.clone()));
+                if !import.is_dynamic {
+                  if let Some(error) = import.errors.first() {
+                    return Err(ModuleGraphError::ImportError(error.clone()));
+                  }
                 }
               }
             }
@@ -1648,10 +1650,6 @@ fn check_import_assertions(
   import: &Import,
   maybe_module_metadata: Option<&ModuleMetadata>,
 ) -> Vec<ImportError> {
-  // Skip assertion checks for dynamic imports for now.
-  if import.is_dynamic {
-    return vec![];
-  }
   let mut errors = vec![];
   if let Some(assert_type) = import.assertions.get("type") {
     match SUPPORTED_ASSERT_TYPES.get(assert_type) {
@@ -2658,6 +2656,17 @@ mod tests {
               .into(),
             }))
           }),
+          "file:///foo4.js" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: "
+                import 'file:///bar.json' assert { type: 'json' };
+                await import('file:///bar.json'); // ignored error
+              "
+              .into(),
+            }))
+          }),
           "file:///bar.json" => {
             assert!(!is_dynamic);
             Box::pin(async move {
@@ -2683,6 +2692,7 @@ mod tests {
           Url::parse("file:///foo1.js").unwrap(),
           Url::parse("file:///foo2.js").unwrap(),
           Url::parse("file:///foo3.js").unwrap(),
+          Url::parse("file:///foo4.js").unwrap(),
         ],
         &mut loader,
         Default::default(),
@@ -2721,5 +2731,12 @@ mod tests {
         .to_string(),
       "Expected a Json module, but identified a JavaScript module.\n  Specifier: file:///foo2.js"
     );
+    graph
+      .walk(
+        &[Url::parse("file:///foo4.js").unwrap()],
+        WalkOptions::default(),
+      )
+      .validate()
+      .unwrap();
   }
 }
