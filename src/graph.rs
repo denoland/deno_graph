@@ -142,11 +142,7 @@ pub enum ModuleGraphError {
   LoadingErr(ModuleSpecifier, Option<Range>, Arc<anyhow::Error>),
   Missing(ModuleSpecifier, Option<Range>),
   ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
-  UnsupportedMediaType {
-    specifier: ModuleSpecifier,
-    media_type: MediaType,
-    maybe_referrer: Option<Range>,
-  },
+  UnsupportedMediaType(ModuleSpecifier, MediaType, Option<Range>),
   // Note: Resolution and import errors are special in that they don't occupy
   // module slots, whereas the other variants do.
   ResolutionError(ResolutionError),
@@ -160,7 +156,7 @@ impl ModuleGraphError {
       Self::ResolutionError(_) => None,
       Self::LoadingErr(s, _, _)
       | Self::ParseErr(s, _)
-      | Self::UnsupportedMediaType { specifier: s, .. }
+      | Self::UnsupportedMediaType(s, _, _)
       | Self::Missing(s, _) => Some(s),
     }
   }
@@ -183,7 +179,7 @@ impl ModuleGraphError {
       Self::ImportError(_) => None,
       Self::ResolutionError(err) => Some(err.range()),
       Self::Missing(_, maybe_range) => maybe_range.as_ref(),
-      Self::UnsupportedMediaType { maybe_referrer, .. } => {
+      Self::UnsupportedMediaType(_, _, maybe_referrer) => {
         maybe_referrer.as_ref()
       }
       Self::ParseErr(_, _) => None,
@@ -199,7 +195,7 @@ impl std::error::Error for ModuleGraphError {
       Self::ImportError(ref err) => Some(err),
       Self::Missing(_, _)
       | Self::ParseErr(_, _)
-      | Self::UnsupportedMediaType { .. } => None,
+      | Self::UnsupportedMediaType(_, _, _) => None,
     }
   }
 }
@@ -211,16 +207,7 @@ impl fmt::Display for ModuleGraphError {
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {diagnostic}"),
       Self::ResolutionError(err) => err.fmt(f),
       Self::ImportError(err) => err.fmt(f),
-      Self::UnsupportedMediaType {
-        specifier,
-        media_type: MediaType::Json,
-        ..
-      } => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {specifier}"),
-      Self::UnsupportedMediaType {
-        specifier,
-        media_type,
-        ..
-       } => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
+      Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
       Self::Missing(specifier, _) => {
         write!(f, "Module not found \"{specifier}\".")
       },
@@ -1425,11 +1412,11 @@ pub(crate) fn parse_module(
         }
       }
     }
-    _ => Err(ModuleGraphError::UnsupportedMediaType {
-      specifier: specifier.clone(),
+    _ => Err(ModuleGraphError::UnsupportedMediaType(
+      specifier.clone(),
       media_type,
       maybe_referrer,
-    }),
+    )),
   }
 }
 
