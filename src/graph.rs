@@ -497,7 +497,7 @@ fn is_false(v: &bool) -> bool {
   !v
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub enum ImportError {
   TypeAssertionFailed {
     specifier: ModuleSpecifier,
@@ -547,7 +547,7 @@ where
   }
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Import {
   pub specifier: String,
@@ -562,7 +562,7 @@ pub struct Import {
   pub errors: Vec<ImportError>,
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone)]
 pub struct Dependency {
   pub maybe_code: Resolution,
   pub maybe_type: Resolution,
@@ -728,7 +728,7 @@ fn to_result<'a>(
 /// module graph without requiring the dependencies to be analyzed. This is
 /// intended to be used for importing type dependencies or other externally
 /// defined dependencies, like JSX runtimes.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct GraphImport {
   /// A map of resolved dependencies, where the key is the value originally
   /// provided for the import and the value is the resolved dependency.
@@ -1736,13 +1736,6 @@ type LoadWithSpecifierFuture = Pin<
     dyn Future<Output = (ModuleSpecifier, Option<Range>, LoadResult)> + 'static,
   >,
 >;
-
-#[derive(PartialEq, Eq, Hash)]
-pub(crate) struct AssertTypeWithRange {
-  range: Range,
-  /// The kind of assertion (ex. "json").
-  kind: String,
-}
 
 /// Metadata for modules which should suffice to check assertions on importers
 /// of that module.
