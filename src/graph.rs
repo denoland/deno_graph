@@ -845,6 +845,7 @@ impl<'a> ModuleEntryIterator<'a> {
   /// options.
   #[allow(clippy::result_large_err)]
   pub fn validate(self) -> Result<(), ModuleGraphError> {
+    let follow_dynamic = self.follow_dynamic;
     let follow_type_only = self.follow_type_only;
     let check_js = self.check_js;
     for (_, module_entry) in self {
@@ -869,7 +870,7 @@ impl<'a> ModuleEntryIterator<'a> {
             }
           }
           for dep in module.dependencies.values() {
-            if !dep.is_dynamic {
+            if follow_dynamic || !dep.is_dynamic {
               let mut resolutions = vec![&dep.maybe_code];
               if check_types {
                 resolutions.push(&dep.maybe_type);
@@ -883,7 +884,7 @@ impl<'a> ModuleEntryIterator<'a> {
                 }
               }
               for import in &dep.imports {
-                if !import.is_dynamic {
+                if follow_dynamic || !import.is_dynamic {
                   if let Some(error) = import.errors.first() {
                     return Err(ModuleGraphError::ImportError(error.clone()));
                   }
@@ -2734,7 +2735,10 @@ mod tests {
     graph
       .walk(
         &[Url::parse("file:///foo4.js").unwrap()],
-        WalkOptions::default(),
+        WalkOptions {
+          follow_dynamic: false,
+          ..Default::default()
+        },
       )
       .validate()
       .unwrap();
