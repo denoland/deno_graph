@@ -300,11 +300,7 @@ Deno.test({
               "imports": [
                 {
                   "assertions": {
-                    "Known": {
-                      "type": {
-                        "Known": "json",
-                      },
-                    },
+                    "type": "json",
                   },
                   "range": {
                     "end": {
@@ -868,11 +864,7 @@ Deno.test({
           "imports": [
             {
               "assertions": {
-                "Known": {
-                  "type": {
-                    "Known": "json",
-                  },
-                },
+                "type": "json",
               },
               "range": {
                 "end": {
@@ -907,11 +899,7 @@ Deno.test({
           "imports": [
             {
               "assertions": {
-                "Known": {
-                  "type": {
-                    "Known": "json",
-                  },
-                },
+                "type": "json",
               },
               "isDynamic": true,
               "range": {

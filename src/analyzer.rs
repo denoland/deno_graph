@@ -128,6 +128,7 @@ impl DependencyKind {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum ImportAssertion {
   /// The value of this assertion could not be statically analyzed.
   Unknown,
@@ -147,6 +148,7 @@ impl ImportAssertion {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum ImportAssertions {
   /// There was no import assertions object literal.
   None,
@@ -196,6 +198,26 @@ impl ImportAssertions {
 
   pub fn is_empty(&self) -> bool {
     matches!(self, ImportAssertions::None)
+  }
+
+  /// Try to get a flat dictionary, successful if there are no unknowns.
+  pub fn maybe_static(&self) -> Option<HashMap<String, String>> {
+    let mut assertions = HashMap::new();
+    match self {
+      ImportAssertions::None => {}
+      ImportAssertions::Known(map) => {
+        for (key, assertion) in map {
+          match assertion {
+            ImportAssertion::Known(value) => {
+              assertions.insert(key.clone(), value.clone());
+            }
+            ImportAssertion::Unknown => return None,
+          }
+        }
+      }
+      _ => return None,
+    }
+    Some(assertions)
   }
 }
 

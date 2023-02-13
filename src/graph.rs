@@ -533,6 +533,20 @@ impl Serialize for ImportError {
   }
 }
 
+fn serialize_import_assertions<S>(
+  assertions: &ImportAssertions,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  if let Some(map) = assertions.maybe_static() {
+    map.serialize(serializer)
+  } else {
+    ImportAssertions::Unknown.serialize(serializer)
+  }
+}
+
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Import {
@@ -541,6 +555,7 @@ pub struct Import {
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
   #[serde(skip_serializing_if = "ImportAssertions::is_empty")]
+  #[serde(serialize_with = "serialize_import_assertions")]
   pub assertions: ImportAssertions,
   // Note: This is only populated in a final pass at the end of graph building.
   #[serde(skip_serializing_if = "Vec::is_empty")]

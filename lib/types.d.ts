@@ -105,11 +105,7 @@ export type ModuleKind =
   | "external"
   | "script";
 
-export type ImportAssertion = "Unknown" | { "Known": string };
-
-export type ImportAssertions = "Unknown" | {
-  "Known": Record<string, ImportAssertion>;
-};
+export type ImportAssertions = "unknown" | Record<string, string>;
 
 export interface ImportJson {
   specifier: string;

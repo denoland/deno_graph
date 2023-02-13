@@ -1600,11 +1600,7 @@ export function a(a) {
                       },
                     },
                     "assertions": {
-                      "Known": {
-                        "type": {
-                          "Known": "json",
-                        },
-                      },
+                      "type": "json",
                     },
                   },
                 ],
@@ -1640,11 +1636,7 @@ export function a(a) {
                       },
                       "isDynamic": true,
                       "assertions": {
-                        "Known": {
-                          "type": {
-                            "Known": "json",
-                          },
-                        },
+                        "type": "json",
                       },
                     },
                 ],
@@ -1678,11 +1670,7 @@ export function a(a) {
                       },
                     },
                     "assertions": {
-                      "Known": {
-                        "type": {
-                          "Known": "json",
-                        },
-                      },
+                      "type": "json",
                     },
                   },
                 ],
@@ -1717,11 +1705,7 @@ export function a(a) {
                       },
                     },
                     "isDynamic": true,
-                    "assertions": {
-                      "Known": {
-                        "type": "Unknown",
-                      },
-                    },
+                    "assertions": "unknown",
                   },
                 ],
               }
@@ -1985,11 +1969,7 @@ export function a(a) {
                       },
                     },
                     "assertions": {
-                      "Known": {
-                        "type": {
-                          "Known": "json",
-                        },
-                      },
+                      "type": "json",
                     },
                   },
                 ],
@@ -2023,11 +2003,7 @@ export function a(a) {
                       },
                     },
                     "assertions": {
-                      "Known": {
-                        "type": {
-                          "Known": "json",
-                        },
-                      },
+                      "type": "json",
                     },
                     "errors": ["Expected a Json module, but identified a JavaScript module.\n  Specifier: file:///a/c.js"],
                   },
@@ -2062,11 +2038,7 @@ export function a(a) {
                       },
                     },
                     "assertions": {
-                      "Known": {
-                        "type": {
-                          "Known": "css",
-                        },
-                      },
+                      "type": "css",
                     },
                     "errors": ["The import assertion type of \"css\" is unsupported."],
                   },
