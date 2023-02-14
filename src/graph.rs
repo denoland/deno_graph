@@ -613,12 +613,8 @@ pub struct TypesDependency {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum ModuleKind {
-  /// An asserted module. The import location is required to determine what the
-  /// asserted type is as well as a loader/runtime would want to ensure the
-  /// `MediaType` matches the assertion. Dependency analysis does not occur on
-  /// asserted modules.
-  Asserted,
-  /// An ECMAScript Module (JavaScript Module).
+  /// An ECMAScript Module. Normally JavaScript/TypeScript, but includes exotic
+  /// types such JSON if they are included through the ES module syntax.
   Esm,
   /// Represents a module which is not statically analyzed and is only available
   /// at runtime. It is up to the implementor to ensure that the module is
@@ -1367,7 +1363,7 @@ pub(crate) fn parse_module(
   if media_type == MediaType::Json {
     return Ok(Module {
       dependencies: Default::default(),
-      kind: ModuleKind::Asserted,
+      kind: ModuleKind::Esm,
       maybe_cache_info: None,
       maybe_source: Some(content),
       maybe_types_dependency: None,

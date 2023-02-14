@@ -93,14 +93,8 @@ export interface TypesDependencyJson {
 
 /** The kind of module.
  *
- * For asserted modules, the value of the `asserted` property is set to the
- * `type` value of the assertion.
- *
- * Dependency analysis is not performed for asserted or Script modules
- * currently. Synthetic modules were injected into the graph with their own
- * dependencies provided. */
+ * Dependency analysis is not performed for "script" modules currently. */
 export type ModuleKind =
-  | "asserted"
   | "esm"
   | "external"
   | "script";

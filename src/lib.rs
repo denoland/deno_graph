@@ -392,7 +392,7 @@ mod tests {
         "modules": [
           {
             "size": 18,
-            "kind": "asserted",
+            "kind": "esm",
             "mediaType": "Json",
             "specifier": "file:///a/test.json"
           }
@@ -658,7 +658,7 @@ console.log(a);
         "roots": ["file:///a/test01.ts"],
         "modules": [
           {
-            "kind": "asserted",
+            "kind": "esm",
             "size": 125,
             "mediaType": "Json",
             "specifier": "file:///a/deno.json",
@@ -1546,25 +1546,25 @@ export function a(a) {
         ],
         "modules": [
           {
-            "kind": "asserted",
+            "kind": "esm",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/a.json"
           },
           {
-            "kind": "asserted",
+            "kind": "esm",
             "size": 7,
             "mediaType": "Json",
             "specifier": "file:///a/b.json"
           },
           {
-            "kind": "asserted",
+            "kind": "esm",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/c.json"
           },
           {
-            "kind": "asserted",
+            "kind": "esm",
             "size": 7,
             "mediaType": "Json",
             "specifier": "file:///a/d.json"
@@ -1765,7 +1765,7 @@ export function a(a) {
         ],
         "modules": [
           {
-            "kind": "asserted",
+            "kind": "esm",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/a.json"
@@ -1879,13 +1879,13 @@ export function a(a) {
         ],
         "modules": [
           {
-            "kind": "asserted",
+            "kind": "esm",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/a.json",
           },
           {
-            "kind": "asserted",
+            "kind": "esm",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/b.json"
@@ -1897,7 +1897,7 @@ export function a(a) {
             "specifier": "file:///a/c.js",
           },
           {
-            "kind": "asserted",
+            "kind": "esm",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/d.json",
