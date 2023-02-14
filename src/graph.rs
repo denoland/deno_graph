@@ -22,7 +22,7 @@ use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
-use futures::stream::FuturesOrdered;
+use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
 use futures::Future;
 use futures::FutureExt;
@@ -717,7 +717,7 @@ pub struct GraphImport {
 }
 
 impl GraphImport {
-  pub async fn new(
+  pub fn new(
     referrer: &ModuleSpecifier,
     imports: Vec<String>,
     maybe_resolver: Option<&dyn Resolver>,
@@ -727,19 +727,21 @@ impl GraphImport {
       start: Position::zeroed(),
       end: Position::zeroed(),
     };
-    let mut dependencies = BTreeMap::new();
-    for import in imports {
-      let maybe_type = resolve(&import, &referrer_range, maybe_resolver).await;
-      dependencies.insert(
-        import,
-        Dependency {
-          is_dynamic: false,
-          maybe_code: Resolution::None,
-          maybe_type,
-          maybe_assert_type: None,
-        },
-      );
-    }
+    let dependencies = imports
+      .into_iter()
+      .map(|import| {
+        let maybe_type = resolve(&import, &referrer_range, maybe_resolver);
+        (
+          import,
+          Dependency {
+            is_dynamic: false,
+            maybe_code: Resolution::None,
+            maybe_type,
+            maybe_assert_type: None,
+          },
+        )
+      })
+      .collect();
     Self { dependencies }
   }
 }
@@ -1280,13 +1282,13 @@ impl ModuleGraph {
 
 /// Resolve a string specifier from a referring module, using the resolver if
 /// present, returning the resolution result.
-async fn resolve(
+fn resolve(
   specifier: &str,
   referrer_range: &Range,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolution {
   let response = if let Some(resolver) = maybe_resolver {
-    resolver.resolve(specifier, &referrer_range.specifier).await
+    resolver.resolve(specifier, &referrer_range.specifier)
   } else {
     resolve_import(specifier, &referrer_range.specifier)
       .map_err(|err| err.into())
@@ -1322,7 +1324,7 @@ impl Serialize for ModuleGraph {
 /// With the provided information, parse an esm module and return its "module slot"
 #[allow(clippy::too_many_arguments)]
 #[allow(clippy::result_large_err)]
-pub(crate) async fn parse_module(
+pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<str>,
@@ -1387,17 +1389,14 @@ pub(crate) async fn parse_module(
       match module_analyzer.analyze(specifier, content.clone(), media_type) {
         Ok(module_info) => {
           // Return the module as a valid module
-          Ok(Module::Esm(
-            parse_esm_module_from_module_info(
-              specifier,
-              media_type,
-              maybe_headers,
-              module_info,
-              content,
-              maybe_resolver,
-            )
-            .await,
-          ))
+          Ok(Module::Esm(parse_esm_module_from_module_info(
+            specifier,
+            media_type,
+            maybe_headers,
+            module_info,
+            content,
+            maybe_resolver,
+          )))
         }
         Err(diagnostic) => {
           Err(ModuleGraphError::ParseErr(specifier.clone(), diagnostic))
@@ -1412,17 +1411,14 @@ pub(crate) async fn parse_module(
       ) {
         Ok(module_info) => {
           // Return the module as a valid module
-          Ok(Module::Esm(
-            parse_esm_module_from_module_info(
-              specifier,
-              media_type,
-              maybe_headers,
-              module_info,
-              content,
-              maybe_resolver,
-            )
-            .await,
-          ))
+          Ok(Module::Esm(parse_esm_module_from_module_info(
+            specifier,
+            media_type,
+            maybe_headers,
+            module_info,
+            content,
+            maybe_resolver,
+          )))
         }
         Err(diagnostic) => {
           Err(ModuleGraphError::ParseErr(specifier.clone(), diagnostic))
@@ -1437,7 +1433,7 @@ pub(crate) async fn parse_module(
   }
 }
 
-pub(crate) async fn parse_esm_module_from_module_info(
+pub(crate) fn parse_esm_module_from_module_info(
   specifier: &ModuleSpecifier,
   media_type: MediaType,
   maybe_headers: Option<&HashMap<String, String>>,
@@ -1459,15 +1455,13 @@ pub(crate) async fn parse_esm_module_from_module_info(
         if dep.maybe_code.is_none() {
           let range =
             Range::from_position_range(&module.specifier, &specifier.range);
-          dep.maybe_code =
-            resolve(&specifier.text, &range, maybe_resolver).await;
+          dep.maybe_code = resolve(&specifier.text, &range, maybe_resolver);
         }
       }
       TypeScriptReference::Types(specifier) => {
         let range =
           Range::from_position_range(&module.specifier, &specifier.range);
-        let dep_resolution =
-          resolve(&specifier.text, &range, maybe_resolver).await;
+        let dep_resolution = resolve(&specifier.text, &range, maybe_resolver);
         if is_untyped(&module.media_type) {
           module.maybe_types_dependency = Some(TypesDependency {
             specifier: specifier.text,
@@ -1513,7 +1507,7 @@ pub(crate) async fn parse_esm_module_from_module_info(
       if dep.maybe_code.is_none() {
         let range =
           Range::from_position_range(&module.specifier, &import_source.range);
-        dep.maybe_code = resolve(&specifier, &range, maybe_resolver).await;
+        dep.maybe_code = resolve(&specifier, &range, maybe_resolver);
       }
     }
   }
@@ -1527,7 +1521,7 @@ pub(crate) async fn parse_esm_module_from_module_info(
     if dep.maybe_type.is_none() {
       let range =
         Range::from_position_range(&module.specifier, &specifier.range);
-      dep.maybe_type = resolve(&specifier.text, &range, maybe_resolver).await;
+      dep.maybe_type = resolve(&specifier.text, &range, maybe_resolver);
     }
   }
 
@@ -1542,7 +1536,7 @@ pub(crate) async fn parse_esm_module_from_module_info(
         };
         module.maybe_types_dependency = Some(TypesDependency {
           specifier: types_header.clone(),
-          dependency: resolve(types_header, &range, maybe_resolver).await,
+          dependency: resolve(types_header, &range, maybe_resolver),
         });
       }
     }
@@ -1555,7 +1549,7 @@ pub(crate) async fn parse_esm_module_from_module_info(
     if module.maybe_types_dependency.is_none() && is_untyped(&module.media_type)
     {
       module.maybe_types_dependency =
-        match resolver.resolve_types(&module.specifier).await {
+        match resolver.resolve_types(&module.specifier) {
           Ok(Some((specifier, maybe_range))) => Some(TypesDependency {
             specifier: module.specifier.to_string(),
             dependency: Resolution::Ok(Box::new(ResolutionResolved {
@@ -1601,8 +1595,7 @@ pub(crate) async fn parse_esm_module_from_module_info(
       &desc.specifier,
       &Range::from_position_range(&module.specifier, &desc.specifier_range),
       maybe_resolver,
-    )
-    .await;
+    );
     if matches!(
       desc.kind,
       DependencyKind::ImportType | DependencyKind::ExportType
@@ -1630,7 +1623,6 @@ pub(crate) async fn parse_esm_module_from_module_info(
           &Range::from_position_range(&specifier, &pragma.range),
           maybe_resolver,
         )
-        .await
       } else {
         Resolution::None
       };
@@ -1695,8 +1687,7 @@ struct Builder<'a, 'graph> {
   graph: &'graph mut ModuleGraph,
   loader: &'a mut dyn Loader,
   resolver: Option<&'a dyn Resolver>,
-  // needs to be deterministic to ensure npm specifiers are resolved in the same order
-  pending: FuturesOrdered<LoadWithSpecifierFuture>,
+  pending: FuturesUnordered<LoadWithSpecifierFuture>,
   pending_specifiers:
     HashMap<ModuleSpecifier, HashSet<Option<AssertTypeWithRange>>>,
   dynamic_branches:
@@ -1724,7 +1715,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       resolver,
       module_analyzer,
       reporter,
-      pending: FuturesOrdered::new(),
+      pending: FuturesUnordered::new(),
       pending_specifiers: HashMap::new(),
       dynamic_branches: HashMap::new(),
     }
@@ -1754,8 +1745,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     for referrer_imports in imports {
       let referrer = referrer_imports.referrer;
       let imports = referrer_imports.imports;
-      let graph_import =
-        GraphImport::new(&referrer, imports, self.resolver).await;
+      let graph_import = GraphImport::new(&referrer, imports, self.resolver);
       for dep in graph_import.dependencies.values() {
         if let Resolution::Ok(resolved) = &dep.maybe_type {
           self.load(
@@ -1775,14 +1765,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           let assert_types =
             self.pending_specifiers.remove(&specifier).unwrap();
           for maybe_assert_type in assert_types {
-            self
-              .visit(
-                &specifier,
-                &response,
-                maybe_assert_type,
-                maybe_referrer.clone(),
-              )
-              .await
+            self.visit(
+              &specifier,
+              &response,
+              maybe_assert_type,
+              maybe_referrer.clone(),
+            )
           }
           Some(specifier)
         }
@@ -1892,41 +1880,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .or_default()
       .insert(maybe_assert_type);
     if !self.graph.module_slots.contains_key(specifier) {
-      if specifier.scheme() == "npm" {
-        match NpmPackageIdReference::from_specifier(specifier) {
-          Ok(package_id_reference) => {
-            self.graph.module_slots.insert(
-              specifier.clone(),
-              ModuleSlot::Module(Module::Npm(NpmModule {
-                package_id_reference,
-              })),
-            );
-          }
-          Err(err) => {
-            let maybe_range = maybe_range.map(ToOwned::to_owned);
-            self.graph.module_slots.insert(
-              specifier.clone(),
-              ModuleSlot::Err(ModuleGraphError::LoadingErr(
-                specifier.clone(),
-                maybe_range,
-                Arc::new(err.into()),
-              )),
-            );
-          }
-        }
-      } else {
-        self
-          .graph
-          .module_slots
-          .insert(specifier.clone(), ModuleSlot::Pending);
-        let specifier = specifier.clone();
-        let maybe_range = maybe_range.map(ToOwned::to_owned);
-        let fut = self
-          .loader
-          .load(&specifier, is_dynamic)
-          .map(move |res| (specifier, maybe_range, res));
-        self.pending.push_back(Box::pin(fut));
-      }
+      self
+        .graph
+        .module_slots
+        .insert(specifier.clone(), ModuleSlot::Pending);
+      let specifier = specifier.clone();
+      let maybe_range = maybe_range.map(ToOwned::to_owned);
+      let fut = self
+        .loader
+        .load(&specifier, is_dynamic)
+        .map(move |res| (specifier, maybe_range, res));
+      self.pending.push(Box::pin(fut));
     }
   }
 
@@ -1939,7 +1903,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     false
   }
 
-  async fn visit(
+  fn visit(
     &mut self,
     requested_specifier: &ModuleSpecifier,
     response: &LoadResponse,
@@ -1963,15 +1927,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         self.check_specifier(requested_specifier, specifier);
         (
           specifier,
-          self
-            .visit_module(
-              specifier,
-              maybe_headers.as_ref(),
-              content.clone(),
-              maybe_assert_type,
-              maybe_referrer,
-            )
-            .await,
+          self.visit_module(
+            specifier,
+            maybe_headers.as_ref(),
+            content.clone(),
+            maybe_assert_type,
+            maybe_referrer,
+          ),
         )
       }
     };
@@ -1982,7 +1944,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   }
 
   /// Visit a module, parsing it and resolving any dependencies.
-  async fn visit_module(
+  fn visit_module(
     &mut self,
     specifier: &ModuleSpecifier,
     maybe_headers: Option<&HashMap<String, String>>,
@@ -2003,9 +1965,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       self.module_analyzer,
       is_root,
       self.in_dynamic_branch,
-    )
-    .await
-    {
+    ) {
       Ok(module) => ModuleSlot::Module(module),
       Err(err) => ModuleSlot::Err(err),
     };
@@ -2289,8 +2249,8 @@ mod tests {
     }));
   }
 
-  #[tokio::test]
-  async fn test_module_dependency_includes() {
+  #[test]
+  fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let module_analyzer = DefaultModuleAnalyzer::default();
     let content = r#"import * as b from "./b.ts";"#;
@@ -2305,7 +2265,6 @@ mod tests {
       true,
       false,
     )
-    .await
     .unwrap();
     let module = module.esm().unwrap();
     let maybe_dependency = module.dependencies.values().find_map(|d| {

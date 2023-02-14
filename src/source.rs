@@ -107,10 +107,8 @@ pub trait Resolver: fmt::Debug {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
-  ) -> BoxFuture<'static, Result<ModuleSpecifier, Error>> {
-    Box::pin(futures::future::ready(
-      resolve_import(specifier, referrer).map_err(|err| err.into()),
-    ))
+  ) -> Result<ModuleSpecifier, Error> {
+    Ok(resolve_import(specifier, referrer)?)
   }
 
   /// Given a module specifier, return an optional tuple which provides a module
@@ -123,8 +121,8 @@ pub trait Resolver: fmt::Debug {
   fn resolve_types(
     &self,
     _specifier: &ModuleSpecifier,
-  ) -> BoxFuture<'static, Result<Option<(ModuleSpecifier, Option<Range>)>>> {
-    Box::pin(futures::future::ready(Ok(None)))
+  ) -> Result<Option<(ModuleSpecifier, Option<Range>)>> {
+    Ok(None)
   }
 }
 
@@ -297,26 +295,20 @@ pub mod tests {
       &self,
       specifier: &str,
       referrer: &ModuleSpecifier,
-    ) -> BoxFuture<'static, Result<ModuleSpecifier, Error>> {
-      Box::pin(futures::future::ready(
-        if let Some(resolved_specifier) =
-          self.map.get(referrer).and_then(|map| map.get(specifier))
-        {
-          Ok(resolved_specifier.clone())
-        } else {
-          resolve_import(specifier, referrer).map_err(|err| err.into())
-        },
-      ))
+    ) -> Result<ModuleSpecifier, Error> {
+      if let Some(map) = self.map.get(referrer) {
+        if let Some(resolved_specifier) = map.get(specifier) {
+          return Ok(resolved_specifier.clone());
+        }
+      }
+      Ok(resolve_import(specifier, referrer)?)
     }
 
     fn resolve_types(
       &self,
       specifier: &ModuleSpecifier,
-    ) -> BoxFuture<'static, Result<Option<(ModuleSpecifier, Option<Range>)>>>
-    {
-      Box::pin(futures::future::ready(Ok(
-        self.types.get(specifier).cloned(),
-      )))
+    ) -> Result<Option<(ModuleSpecifier, Option<Range>)>> {
+      Ok(self.types.get(specifier).cloned())
     }
   }
 

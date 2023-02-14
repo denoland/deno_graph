@@ -66,7 +66,7 @@ pub struct ReferrerImports {
 /// Parse an individual module, returning the module as a result, otherwise
 /// erroring with a module graph error.
 #[allow(clippy::result_large_err)]
-pub async fn parse_module(
+pub fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<str>,
@@ -87,11 +87,10 @@ pub async fn parse_module(
     true,
     false,
   )
-  .await
 }
 
 /// Parse an individual module from an AST, returning the module.
-pub async fn parse_esm_module_from_ast(
+pub fn parse_module_from_ast(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
   parsed_source: &deno_ast::ParsedSource,
@@ -105,7 +104,6 @@ pub async fn parse_esm_module_from_ast(
     parsed_source.text_info().text(),
     maybe_resolver,
   )
-  .await
 }
 
 #[cfg(test)]
@@ -2686,8 +2684,8 @@ export function a(a) {
     );
   }
 
-  #[tokio::test]
-  async fn test_parse_module() {
+  #[test]
+  fn test_parse_module() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let actual = parse_module(
       &specifier,
@@ -2701,17 +2699,16 @@ export function a(a) {
       .into(),
       None,
       None,
-    )
-    .await
-    .unwrap();
+    );
+    assert!(result.is_ok());
     let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 4);
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::TypeScript);
   }
 
-  #[tokio::test]
-  async fn test_parse_module_import_assertions() {
+  #[test]
+  fn test_parse_module_import_assertions() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let actual = parse_module(
       &specifier,
@@ -2724,7 +2721,6 @@ export function a(a) {
       None,
       None,
     )
-    .await
     .unwrap();
     assert_eq!(
       json!(actual),
@@ -2774,8 +2770,8 @@ export function a(a) {
     );
   }
 
-  #[tokio::test]
-  async fn test_parse_module_jsx_import_source() {
+  #[test]
+  fn test_parse_module_jsx_import_source() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
     let actual = parse_module(
       &specifier,
@@ -2791,7 +2787,6 @@ export function a(a) {
       None,
       None,
     )
-    .await
     .unwrap();
     let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
@@ -2808,8 +2803,8 @@ export function a(a) {
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
 
-  #[tokio::test]
-  async fn test_default_jsx_import_source() {
+  #[test]
+  fn test_default_jsx_import_source() {
     #[derive(Debug)]
     struct R;
     impl Resolver for R {
@@ -2831,7 +2826,6 @@ export function a(a) {
       Some(&R),
       None,
     )
-    .await
     .unwrap();
     let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
@@ -2848,8 +2842,8 @@ export function a(a) {
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
 
-  #[tokio::test]
-  async fn test_parse_module_with_headers() {
+  #[test]
+  fn test_parse_module_with_headers() {
     let specifier = ModuleSpecifier::parse("https://localhost/file").unwrap();
     let mut headers = HashMap::new();
     headers.insert(
@@ -2866,13 +2860,12 @@ export function a(a) {
         .into(),
       None,
       None,
-    )
-    .await;
+    );
     assert!(result.is_ok());
   }
 
-  #[tokio::test]
-  async fn test_parse_module_with_jsdoc_imports() {
+  #[test]
+  fn test_parse_module_with_jsdoc_imports() {
     let specifier = ModuleSpecifier::parse("file:///a/test.js").unwrap();
     let actual = parse_module(
       &specifier,
@@ -2892,7 +2885,6 @@ export function a(a) {
       None,
       None,
     )
-    .await
     .unwrap();
     assert_eq!(
       json!(actual),
@@ -2960,7 +2952,6 @@ export function a(a: A): B {
       None,
       None,
     )
-    .await
     .unwrap();
     assert_eq!(
       json!(actual),
