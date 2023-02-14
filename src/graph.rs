@@ -579,12 +579,17 @@ impl ImportKind {
       | ImportKind::JsDoc => false,
     }
   }
+
+  fn is_es(&self) -> bool {
+    matches!(self, ImportKind::Es)
+  }
 }
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Import {
   pub specifier: String,
+  #[serde(skip_serializing_if = "ImportKind::is_es")]
   pub kind: ImportKind,
   pub range: Range,
   #[serde(skip_serializing_if = "is_false")]

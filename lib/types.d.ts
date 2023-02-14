@@ -100,7 +100,6 @@ export type ModuleKind =
   | "script";
 
 export type ImportKind =
-  | "es"
   | "tsType"
   | "tsReferencePath"
   | "tsReferenceTypes"
@@ -111,7 +110,8 @@ export type ImportAssertions = "unknown" | Record<string, string>;
 
 export interface ImportJson {
   specifier: string;
-  kind: ImportKind;
+  /** Absent if standard ES import/export. */
+  kind?: ImportKind;
   range: RangeJson;
   isDynamic?: true;
   assertions?: ImportAssertions;
