@@ -576,6 +576,15 @@ pub enum Module {
 }
 
 impl Module {
+  pub fn specifier(&self) -> &ModuleSpecifier {
+    match self {
+      Module::Esm(module) => &module.specifier,
+      Module::Json(module) => &module.specifier,
+      Module::Npm(module) => &module.specifier,
+      Module::External(module) => &module.specifier,
+    }
+  }
+
   pub fn json(&self) -> Option<&JsonModule> {
     if let Module::Json(module) = &self {
       Some(module)
@@ -613,6 +622,7 @@ impl Module {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NpmModule {
+  pub specifier: ModuleSpecifier,
   pub package_id_reference: NpmPackageIdReference,
 }
 
@@ -1917,8 +1927,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       .insert(specifier, resolved_specifier.clone());
                   }
                   self.graph.module_slots.insert(
-                    resolved_specifier,
+                    resolved_specifier.clone(),
                     ModuleSlot::Module(Module::Npm(NpmModule {
+                      specifier: resolved_specifier,
                       package_id_reference: pkg_id_ref,
                     })),
                   );
