@@ -1589,6 +1589,7 @@ export function a(a) {
                 "imports": [
                   {
                     "specifier": "./a.json",
+                    "kind": "es",
                     "range": {
                       "start": {
                         "line": 1,
@@ -1624,6 +1625,7 @@ export function a(a) {
                 "imports": [
                     {
                       "specifier": "./b.json",
+                      "kind": "es",
                       "range": {
                         "start": {
                           "line": 2,
@@ -1659,6 +1661,7 @@ export function a(a) {
                 "imports": [
                   {
                     "specifier": "./c.json",
+                    "kind": "es",
                     "range": {
                       "start": {
                         "line": 3,
@@ -1694,6 +1697,7 @@ export function a(a) {
                 "imports": [
                   {
                     "specifier": "./d.json",
+                    "kind": "es",
                     "range": {
                       "start": {
                         "line": 5,
@@ -1926,6 +1930,7 @@ export function a(a) {
                 "imports": [
                   {
                     "specifier": "./a.json",
+                    "kind": "es",
                     "range": {
                       "start": {
                         "line": 1,
@@ -1958,6 +1963,7 @@ export function a(a) {
                 "imports": [
                   {
                     "specifier": "./b.json",
+                    "kind": "es",
                     "range": {
                       "start": {
                         "line": 2,
@@ -1992,6 +1998,7 @@ export function a(a) {
                 "imports": [
                   {
                     "specifier": "./c.js",
+                    "kind": "es",
                     "range": {
                       "start": {
                         "line": 3,
@@ -2027,6 +2034,7 @@ export function a(a) {
                 "imports": [
                   {
                     "specifier": "./d.json",
+                    "kind": "es",
                     "range": {
                       "start": {
                         "line": 4,
@@ -2062,6 +2070,7 @@ export function a(a) {
                 "imports": [
                   {
                     "specifier": "./e.wasm",
+                    "kind": "es",
                     "range": {
                       "start": {
                         "line": 5,
@@ -2905,7 +2914,23 @@ export function a(a) {
                   "character": 31
                 }
               }
-            }
+            },
+            "imports": [
+              {
+                "specifier": "./other.ts",
+                "kind": "jsDoc",
+                "range": {
+                  "start": {
+                    "line": 5,
+                    "character": 19,
+                  },
+                  "end": {
+                    "line": 5,
+                    "character": 31,
+                  },
+                },
+              },
+            ],
           },
           {
             "specifier": "./types.d.ts",
@@ -2921,7 +2946,23 @@ export function a(a) {
                   "character": 32,
                 }
               }
-            }
+            },
+            "imports": [
+              {
+                "specifier": "./types.d.ts",
+                "kind": "jsDoc",
+                "range": {
+                  "start": {
+                    "line": 4,
+                    "character": 18,
+                  },
+                  "end": {
+                    "line": 4,
+                    "character": 32,
+                  },
+                },
+              },
+            ],
           }
         ],
         "kind": "esm",

@@ -99,10 +99,19 @@ export type ModuleKind =
   | "external"
   | "script";
 
+export type ImportKind =
+  | "es"
+  | "tsType"
+  | "tsReferencePath"
+  | "tsReferenceTypes"
+  | "jsxImportSource"
+  | "jsDoc";
+
 export type ImportAssertions = "unknown" | Record<string, string>;
 
 export interface ImportJson {
   specifier: string;
+  kind: ImportKind;
   range: RangeJson;
   isDynamic?: true;
   assertions?: ImportAssertions;

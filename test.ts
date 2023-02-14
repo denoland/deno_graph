@@ -217,6 +217,7 @@ Deno.test({
                     },
                   },
                   "specifier": "./b.js",
+                  "kind": "es",
                 },
               ],
             },
@@ -313,6 +314,7 @@ Deno.test({
                     },
                   },
                   "specifier": "./deno.json",
+                  "kind": "es",
                 },
               ],
             },
@@ -422,6 +424,7 @@ Deno.test({
                     },
                   },
                   "specifier": "./b.js",
+                  "kind": "es",
                 },
               ],
             },
@@ -533,6 +536,7 @@ Deno.test({
                     },
                   },
                   "specifier": "builtin:fs",
+                  "kind": "es",
                 },
               ],
             },
@@ -564,6 +568,7 @@ Deno.test({
                     },
                   },
                   "specifier": "https://example.com/bundle",
+                  "kind": "es",
                 },
               ],
             },
@@ -650,6 +655,7 @@ Deno.test({
               },
             },
             "specifier": "./a.ts",
+            "kind": "es",
           },
         ],
       }, {
@@ -674,6 +680,7 @@ Deno.test({
               },
             },
             "specifier": "./b.ts",
+            "kind": "es",
           },
         ],
       }, {
@@ -698,6 +705,7 @@ Deno.test({
               },
             },
             "specifier": "./c.ts",
+            "kind": "es",
           },
         ],
       }, {
@@ -724,6 +732,7 @@ Deno.test({
               },
             },
             "specifier": "./d.ts",
+            "kind": "es",
           },
         ],
       }],
@@ -866,6 +875,7 @@ Deno.test({
               "assertions": {
                 "type": "json",
               },
+              "kind": "es",
               "range": {
                 "end": {
                   "character": 32,
@@ -901,6 +911,7 @@ Deno.test({
               "assertions": {
                 "type": "json",
               },
+              "kind": "es",
               "isDynamic": true,
               "range": {
                 "end": {

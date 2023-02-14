@@ -552,10 +552,40 @@ where
   }
 }
 
+#[derive(Clone, Copy, Debug, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum ImportKind {
+  /// `import`/`export`
+  Es,
+  /// `import type`/`export type`
+  TsType,
+  /// `/// <reference path="..." />`
+  TsReferencePath,
+  /// `/// <reference types="..." />`
+  TsReferenceTypes,
+  /// `/** @jsxImportSource ... */`
+  JsxImportSource,
+  /// `/** @typedef { import("./types").Pet } Pet */`
+  JsDoc,
+}
+
+impl ImportKind {
+  pub fn is_runtime(&self) -> bool {
+    match self {
+      ImportKind::Es | ImportKind::JsxImportSource => true,
+      ImportKind::TsType
+      | ImportKind::TsReferencePath
+      | ImportKind::TsReferenceTypes
+      | ImportKind::JsDoc => false,
+    }
+  }
+}
+
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Import {
   pub specifier: String,
+  pub kind: ImportKind,
   pub range: Range,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
@@ -572,8 +602,8 @@ pub struct Dependency {
   pub maybe_code: Resolution,
   pub maybe_type: Resolution,
   pub is_dynamic: bool,
-  /// List of code imports which refer to this dependency. Only ones which can
-  /// populate `Dependency::maybe_code`.
+  /// List of imports which refer to this dependency. Doesn't include those
+  /// which only supplement types to the main import (i.e. @deno-types).
   pub imports: Vec<Import>,
 }
 
@@ -1459,11 +1489,12 @@ pub(crate) fn parse_module_from_module_info(
           .or_default();
         let range =
           Range::from_position_range(&module.specifier, &specifier.range);
-        if dep.maybe_code.is_none() {
-          dep.maybe_code = resolve(&specifier.text, &range, maybe_resolver);
+        if dep.maybe_type.is_none() {
+          dep.maybe_type = resolve(&specifier.text, &range, maybe_resolver);
         }
         dep.imports.push(Import {
-          specifier: specifier.text.clone(),
+          specifier: specifier.text,
+          kind: ImportKind::TsReferencePath,
           range: range.clone(),
           is_dynamic: false,
           assertions: Default::default(),
@@ -1480,10 +1511,21 @@ pub(crate) fn parse_module_from_module_info(
             dependency: dep_resolution,
           });
         } else {
-          let dep = module.dependencies.entry(specifier.text).or_default();
+          let dep = module
+            .dependencies
+            .entry(specifier.text.clone())
+            .or_default();
           if dep.maybe_type.is_none() {
             dep.maybe_type = dep_resolution;
           }
+          dep.imports.push(Import {
+            specifier: specifier.text,
+            kind: ImportKind::TsReferenceTypes,
+            range: range.clone(),
+            is_dynamic: false,
+            assertions: Default::default(),
+            errors: Default::default(),
+          });
         }
       }
     }
@@ -1523,6 +1565,7 @@ pub(crate) fn parse_module_from_module_info(
       }
       dep.imports.push(Import {
         specifier,
+        kind: ImportKind::JsxImportSource,
         range,
         is_dynamic: false,
         assertions: Default::default(),
@@ -1537,11 +1580,18 @@ pub(crate) fn parse_module_from_module_info(
       .dependencies
       .entry(specifier.text.clone())
       .or_default();
+    let range = Range::from_position_range(&module.specifier, &specifier.range);
     if dep.maybe_type.is_none() {
-      let range =
-        Range::from_position_range(&module.specifier, &specifier.range);
       dep.maybe_type = resolve(&specifier.text, &range, maybe_resolver);
     }
+    dep.imports.push(Import {
+      specifier: specifier.text,
+      kind: ImportKind::JsDoc,
+      range,
+      is_dynamic: false,
+      assertions: Default::default(),
+      errors: Default::default(),
+    });
   }
 
   // Analyze the X-TypeScript-Types header
@@ -1615,6 +1665,14 @@ pub(crate) fn parse_module_from_module_info(
       if dep.maybe_type.is_none() {
         dep.maybe_type = dep_resolution;
       }
+      dep.imports.push(Import {
+        specifier: desc.specifier.clone(),
+        kind: ImportKind::TsType,
+        range,
+        is_dynamic: desc.is_dynamic,
+        assertions: desc.import_assertions.clone(),
+        errors: vec![],
+      });
     } else {
       if dep.maybe_code.is_none() {
         // This is a code import, the first one of that specifier in this module.
@@ -1630,6 +1688,7 @@ pub(crate) fn parse_module_from_module_info(
       }
       dep.imports.push(Import {
         specifier: desc.specifier.clone(),
+        kind: ImportKind::Es,
         range,
         is_dynamic: desc.is_dynamic,
         assertions: desc.import_assertions.clone(),
