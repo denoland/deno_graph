@@ -13,7 +13,9 @@ use crate::ReferrerImports;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
+use crate::npm::NpmPackageId;
 use crate::npm::NpmPackageIdReference;
+use crate::npm::NpmPackageReqReference;
 use crate::source::*;
 
 use anyhow::Error;
@@ -22,9 +24,10 @@ use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
+use futures::future::BoxFuture;
+use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
-use futures::Future;
 use futures::FutureExt;
 use serde::ser::SerializeMap;
 use serde::ser::SerializeSeq;
@@ -38,7 +41,6 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::fmt;
-use std::pin::Pin;
 use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
@@ -566,14 +568,16 @@ fn is_media_type_unknown(media_type: &MediaType) -> bool {
 #[serde(tag = "kind")]
 pub enum Module {
   Esm(EsmModule),
-  Asserted(AssertedModule),
+  // todo(THIS PR): open an issue for removing this when updating the --json output for 2.0
+  #[serde(rename = "asserted")]
+  Json(JsonModule),
   Npm(NpmModule),
   External(ExternalModule),
 }
 
 impl Module {
-  pub fn asserted(&self) -> Option<&AssertedModule> {
-    if let Module::Asserted(module) = &self {
+  pub fn json(&self) -> Option<&JsonModule> {
+    if let Module::Json(module) = &self {
       Some(module)
     } else {
       None
@@ -605,6 +609,7 @@ impl Module {
   }
 }
 
+/// An npm module entrypoint.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NpmModule {
@@ -619,13 +624,14 @@ pub struct ExternalModule {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct AssertedModule {
+pub struct JsonModule {
   pub specifier: ModuleSpecifier,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
   #[serde(rename = "size", serialize_with = "serialize_source")]
   pub source: Arc<str>,
-  #[serde(skip_serializing_if = "is_media_type_unknown")]
+  // todo(THIS PR): This will always be MediaType::Json, so open an issue about removing this
+  // from the --json output and this field because it's redundant
   pub media_type: MediaType,
 }
 
@@ -653,7 +659,7 @@ impl EsmModule {
     Self {
       dependencies: Default::default(),
       maybe_cache_info: None,
-      source: source,
+      source,
       maybe_types_dependency: None,
       media_type: MediaType::Unknown,
       specifier,
@@ -965,7 +971,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
             }
           }
         }
-        Module::Asserted(_) | Module::External(_) | Module::Npm(_) => {}
+        Module::Json(_) | Module::External(_) | Module::Npm(_) => {}
       },
       ModuleEntryRef::Err(_) => {}
       ModuleEntryRef::Redirect(specifier) => {
@@ -992,6 +998,7 @@ pub struct ModuleGraph {
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
   pub imports: BTreeMap<ModuleSpecifier, GraphImport>,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
+  pub npm_packages: Vec<NpmPackageId>,
 }
 
 impl ModuleGraph {
@@ -1002,6 +1009,7 @@ impl ModuleGraph {
       module_slots: Default::default(),
       imports: Default::default(),
       redirects: Default::default(),
+      npm_packages: Default::default(),
     }
   }
 
@@ -1163,7 +1171,7 @@ impl ModuleGraph {
           let dependency = referring_module.dependencies.get(specifier)?;
           self.resolve_dependency_specifier(dependency, prefer_types)
         }
-        Module::Asserted(_) | Module::Npm(_) | Module::External(_) => None,
+        Module::Json(_) | Module::Npm(_) | Module::External(_) => None,
       }
     } else if let Some(graph_import) = self.imports.get(&referrer) {
       let dependency = graph_import.dependencies.get(specifier)?;
@@ -1348,7 +1356,7 @@ pub(crate) fn parse_module(
         Some("json")
       ))
   {
-    return Ok(Module::Asserted(AssertedModule {
+    return Ok(Module::Json(JsonModule {
       maybe_cache_info: None,
       source: content,
       media_type: MediaType::Json,
@@ -1669,11 +1677,8 @@ impl Default for GraphKind {
   }
 }
 
-type LoadWithSpecifierFuture = Pin<
-  Box<
-    dyn Future<Output = (ModuleSpecifier, Option<Range>, LoadResult)> + 'static,
-  >,
->;
+type LoadWithSpecifierFuture =
+  BoxFuture<'static, (ModuleSpecifier, Option<Range>, LoadResult)>;
 
 #[derive(PartialEq, Eq, Hash)]
 pub(crate) struct AssertTypeWithRange {
@@ -1687,7 +1692,12 @@ struct Builder<'a, 'graph> {
   graph: &'graph mut ModuleGraph,
   loader: &'a mut dyn Loader,
   resolver: Option<&'a dyn Resolver>,
-  pending: FuturesUnordered<LoadWithSpecifierFuture>,
+  pending: FuturesOrdered<LoadWithSpecifierFuture>,
+  requested_npm_registry_info_loads: HashSet<String>,
+  pending_npm_registry_info_loads:
+    FuturesUnordered<BoxFuture<'static, (String, Result<(), String>)>>,
+  pending_npm_specifiers:
+    Vec<(ModuleSpecifier, NpmPackageReqReference, Option<Range>)>,
   pending_specifiers:
     HashMap<ModuleSpecifier, HashSet<Option<AssertTypeWithRange>>>,
   dynamic_branches:
@@ -1715,9 +1725,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       resolver,
       module_analyzer,
       reporter,
-      pending: FuturesUnordered::new(),
-      pending_specifiers: HashMap::new(),
-      dynamic_branches: HashMap::new(),
+      pending: Default::default(),
+      requested_npm_registry_info_loads: Default::default(),
+      pending_npm_registry_info_loads: Default::default(),
+      pending_npm_specifiers: Default::default(),
+      pending_specifiers: Default::default(),
+      dynamic_branches: Default::default(),
     }
     .fill(roots, imports)
     .await
@@ -1829,7 +1842,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     for slot in self.graph.module_slots.values_mut() {
       if let ModuleSlot::Module(ref mut module) = slot {
         match module {
-          Module::Asserted(module) => {
+          Module::Json(module) => {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
           }
@@ -1838,6 +1851,117 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               self.loader.get_cache_info(&module.specifier);
           }
           Module::External(_) | Module::Npm(_) => {}
+        }
+      }
+    }
+
+    // Now resolve any npm package requirements
+    let capacity = self.pending_npm_specifiers.len();
+    let mut pending_npm_by_name = HashMap::with_capacity(capacity);
+    let mut npm_specifiers = Vec::with_capacity(capacity);
+    let mut specifier_resolutions = HashMap::with_capacity(capacity);
+    let mut seen_specifiers = HashSet::with_capacity(capacity);
+    for (specifier, npm_ref, maybe_range) in
+      self.pending_npm_specifiers.drain(..)
+    {
+      npm_specifiers.push(specifier.clone());
+      if seen_specifiers.insert(specifier.clone()) {
+        let npm_infos: &mut Vec<_> = pending_npm_by_name
+          .entry(npm_ref.req.name.clone())
+          .or_default();
+        npm_infos.push((specifier, npm_ref, maybe_range));
+      }
+    }
+    while let Some((package_name, result)) =
+      self.pending_npm_registry_info_loads.next().await
+    {
+      let infos = pending_npm_by_name.remove(&package_name).unwrap();
+      if let Err(err) = result {
+        for (specifier, _, maybe_range) in infos {
+          if !self.graph.module_slots.contains_key(&specifier) {
+            self.graph.module_slots.insert(
+              specifier.clone(),
+              ModuleSlot::Err(ModuleGraphError::LoadingErr(
+                specifier,
+                maybe_range,
+                Arc::new(anyhow::anyhow!("{}", err)),
+              )),
+            );
+          }
+        }
+      } else {
+        for (specifier, npm_ref, maybe_range) in infos {
+          if !self.graph.module_slots.contains_key(&specifier) {
+            if let Some(resolver) = &self.resolver {
+              // todo: cache resolutions to ensure they always resolve the same
+              let resolution = resolver.resolve_npm(&npm_ref.req);
+              match resolution {
+                Ok(pkg_id) => {
+                  specifier_resolutions
+                    .insert(specifier.clone(), pkg_id.clone());
+                  let pkg_id_ref = NpmPackageIdReference {
+                    id: pkg_id,
+                    sub_path: npm_ref.sub_path,
+                  };
+                  let resolved_specifier = pkg_id_ref.as_specifier();
+                  if resolved_specifier != specifier {
+                    self
+                      .graph
+                      .redirects
+                      .insert(specifier, resolved_specifier.clone());
+                  }
+                  self.graph.module_slots.insert(
+                    resolved_specifier,
+                    ModuleSlot::Module(Module::Npm(NpmModule {
+                      package_id_reference: pkg_id_ref,
+                    })),
+                  );
+                }
+                Err(err) => {
+                  self.graph.module_slots.insert(
+                    specifier.clone(),
+                    ModuleSlot::Err(ModuleGraphError::ResolutionError(
+                      ResolutionError::ResolverError {
+                        error: Arc::new(err),
+                        specifier: specifier.to_string(),
+                        // this should always be set,
+                        range: maybe_range.unwrap_or_else(|| Range {
+                          specifier,
+                          start: Position::zeroed(),
+                          end: Position::zeroed(),
+                        }),
+                      },
+                    )),
+                  );
+                }
+              }
+            } else {
+              self.graph.module_slots.insert(
+                specifier.clone(),
+                ModuleSlot::Err(ModuleGraphError::LoadingErr(
+                  specifier,
+                  maybe_range,
+                  Arc::new(anyhow::anyhow!(
+                    "npm specifiers are not supported in this environment"
+                  )),
+                )),
+              );
+            }
+          }
+        }
+      }
+    }
+
+    // the future above is unordered, so we now fill in the npm packages
+    // in resolution order ensuring no duplicates are added
+    let mut seen_npm_package_ids = HashSet::with_capacity(
+      self.graph.npm_packages.len() + npm_specifiers.len(),
+    );
+    seen_npm_package_ids.extend(self.graph.npm_packages.iter().cloned());
+    for npm_specifier in npm_specifiers {
+      if let Some(package_id) = specifier_resolutions.get(&npm_specifier) {
+        if seen_npm_package_ids.insert(package_id.clone()) {
+          self.graph.npm_packages.push(package_id.clone());
         }
       }
     }
@@ -1880,17 +2004,69 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .or_default()
       .insert(maybe_assert_type);
     if !self.graph.module_slots.contains_key(specifier) {
-      self
-        .graph
-        .module_slots
-        .insert(specifier.clone(), ModuleSlot::Pending);
-      let specifier = specifier.clone();
       let maybe_range = maybe_range.map(ToOwned::to_owned);
-      let fut = self
-        .loader
-        .load(&specifier, is_dynamic)
-        .map(move |res| (specifier, maybe_range, res));
-      self.pending.push(Box::pin(fut));
+      if specifier.scheme() == "npm" {
+        let npm_specifier = self.graph.resolve(specifier);
+        if !self.graph.module_slots.contains_key(&npm_specifier) {
+          match NpmPackageReqReference::from_specifier(&npm_specifier) {
+            Ok(package_ref) => {
+              if let Some(resolver) = &self.resolver {
+                if self
+                  .requested_npm_registry_info_loads
+                  .insert(package_ref.req.name.clone())
+                {
+                  // request to load
+                  let package_name = package_ref.req.name.clone();
+                  let fut =
+                    resolver.load_npm_package_info(package_name.clone());
+                  self
+                    .pending_npm_registry_info_loads
+                    .push(Box::pin(async move { (package_name, fut.await) }));
+                }
+                self.pending_npm_specifiers.push((
+                  npm_specifier,
+                  package_ref,
+                  maybe_range,
+                ));
+              } else {
+                self.graph.module_slots.insert(
+                  npm_specifier.clone(),
+                  ModuleSlot::Err(ModuleGraphError::LoadingErr(
+                    npm_specifier,
+                    maybe_range,
+                    Arc::new(anyhow::anyhow!(
+                      "npm specifiers are not supported in this environment"
+                    )),
+                  )),
+                );
+              }
+            }
+            Err(err) => {
+              if !self.graph.module_slots.contains_key(&npm_specifier) {
+                self.graph.module_slots.insert(
+                  npm_specifier.clone(),
+                  ModuleSlot::Err(ModuleGraphError::LoadingErr(
+                    npm_specifier,
+                    maybe_range,
+                    Arc::new(err.into()),
+                  )),
+                );
+              }
+            }
+          }
+        }
+      } else {
+        self
+          .graph
+          .module_slots
+          .insert(specifier.clone(), ModuleSlot::Pending);
+        let specifier = specifier.clone();
+        let fut = self
+          .loader
+          .load(&specifier, is_dynamic)
+          .map(move |res| (specifier, maybe_range, res));
+        self.pending.push_back(Box::pin(fut));
+      }
     }
   }
 

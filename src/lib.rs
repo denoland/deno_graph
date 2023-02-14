@@ -34,12 +34,12 @@ pub use ast::DefaultParsedSourceStore;
 pub use ast::ModuleParser;
 pub use ast::ParsedSourceStore;
 pub use deno_ast::MediaType;
-pub use graph::AssertedModule;
 pub use graph::BuildOptions;
 pub use graph::Dependency;
 pub use graph::EsmModule;
 pub use graph::GraphImport;
 pub use graph::GraphKind;
+pub use graph::JsonModule;
 pub use graph::Module;
 pub use graph::ModuleEntryRef;
 pub use graph::ModuleGraph;
@@ -2699,8 +2699,8 @@ export function a(a) {
       .into(),
       None,
       None,
-    );
-    assert!(result.is_ok());
+    )
+    .unwrap();
     let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 4);
     assert_eq!(actual.specifier, specifier);

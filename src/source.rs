@@ -3,7 +3,6 @@
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::npm::NpmPackageId;
-use crate::npm::NpmPackageIdReference;
 use crate::npm::NpmPackageReq;
 use crate::text_encoding::strip_bom_mut;
 
@@ -123,6 +122,24 @@ pub trait Resolver: fmt::Debug {
     _specifier: &ModuleSpecifier,
   ) -> Result<Option<(ModuleSpecifier, Option<Range>)>> {
     Ok(None)
+  }
+
+  /// This tells the implementation to asynchronously load within itself the
+  /// npm registry package information so that synchronous resolution can occur
+  /// afterwards.
+  fn load_npm_package_info(
+    &self,
+    _package_name: String,
+  ) -> BoxFuture<'static, Result<(), String>> {
+    Box::pin(futures::future::ready(Err(
+      "npm specifiers are not supported in this environment".to_string(),
+    )))
+  }
+
+  fn resolve_npm(&self, _package_req: &NpmPackageReq) -> Result<NpmPackageId> {
+    Err(anyhow!(
+      "npm specifiers are not supported in this environment"
+    ))
   }
 }
 
