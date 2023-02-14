@@ -1295,18 +1295,24 @@ fn resolve(
   referrer_range: &Range,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolution {
-  let response = if let Some(resolver) = maybe_resolver {
-    resolver.resolve(specifier, &referrer_range.specifier)
+  if let Some(resolver) = maybe_resolver {
+    let response = resolver.resolve(specifier, &referrer_range.specifier);
+    Resolution::from_resolve_result(
+      response,
+      referrer_range.clone(),
+      specifier,
+      true,
+    )
   } else {
-    resolve_import(specifier, &referrer_range.specifier)
-      .map_err(|err| err.into())
-  };
-  Resolution::from_resolve_result(
-    response,
-    referrer_range.clone(),
-    specifier,
-    /* remapped */ maybe_resolver.is_some(),
-  )
+    let response = resolve_import(specifier, &referrer_range.specifier)
+      .map_err(|err| err.into());
+    Resolution::from_resolve_result(
+      response,
+      referrer_range.clone(),
+      specifier,
+      false,
+    )
+  }
 }
 
 impl Serialize for ModuleGraph {
@@ -1329,7 +1335,7 @@ impl Serialize for ModuleGraph {
   }
 }
 
-/// With the provided information, parse an esm module and return its "module slot"
+/// With the provided information, parse a module and return its "module slot"
 #[allow(clippy::too_many_arguments)]
 #[allow(clippy::result_large_err)]
 pub(crate) fn parse_module(

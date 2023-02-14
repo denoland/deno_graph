@@ -2931,8 +2931,8 @@ export function a(a) {
     );
   }
 
-  #[tokio::test]
-  async fn test_parse_ts_jsdoc_imports_ignored() {
+  #[test]
+  fn test_parse_ts_jsdoc_imports_ignored() {
     let specifier = ModuleSpecifier::parse("file:///a/test.ts").unwrap();
     let actual = parse_module(
       &specifier,
