@@ -376,10 +376,9 @@ impl Resolution {
     result: Result<ModuleSpecifier, Error>,
     range: Range,
     specifier: &str,
-    remapped: bool,
   ) -> Self {
     match result {
-      Ok(specifier) => Self::from_specifier(specifier, range, remapped),
+      Ok(specifier) => Self::from_specifier(specifier, range),
       Err(err) => {
         let resolution_error =
           if let Some(specifier_error) = err.downcast_ref::<SpecifierError>() {
@@ -399,11 +398,7 @@ impl Resolution {
     }
   }
 
-  fn from_specifier(
-    specifier: ModuleSpecifier,
-    range: Range,
-    remapped: bool,
-  ) -> Self {
+  fn from_specifier(specifier: ModuleSpecifier, range: Range) -> Self {
     let referrer_scheme = range.specifier.scheme();
     let specifier_scheme = specifier.scheme();
     if referrer_scheme == "https" && specifier_scheme == "http" {
@@ -413,7 +408,6 @@ impl Resolution {
       }))
     } else if matches!(referrer_scheme, "https" | "http")
       && !matches!(specifier_scheme, "https" | "http" | "npm" | "node")
-      && !remapped
     {
       Resolution::Err(Box::new(ResolutionError::InvalidLocalImport {
         specifier,
@@ -1246,24 +1240,13 @@ fn resolve(
   referrer_range: &Range,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolution {
-  if let Some(resolver) = maybe_resolver {
-    let response = resolver.resolve(specifier, &referrer_range.specifier);
-    Resolution::from_resolve_result(
-      response,
-      referrer_range.clone(),
-      specifier,
-      true,
-    )
+  let response = if let Some(resolver) = maybe_resolver {
+    resolver.resolve(specifier, &referrer_range.specifier)
   } else {
-    let response = resolve_import(specifier, &referrer_range.specifier)
-      .map_err(|err| err.into());
-    Resolution::from_resolve_result(
-      response,
-      referrer_range.clone(),
-      specifier,
-      false,
-    )
-  }
+    resolve_import(specifier, &referrer_range.specifier)
+      .map_err(|err| err.into())
+  };
+  Resolution::from_resolve_result(response, referrer_range.clone(), specifier)
 }
 
 impl Serialize for ModuleGraph {
@@ -2490,7 +2473,6 @@ mod tests {
         start: Position::zeroed(),
         end: Position::zeroed(),
       },
-      false,
     );
     assert!(matches!(
       resolution.err().unwrap(),
@@ -2507,7 +2489,6 @@ mod tests {
         start: Position::zeroed(),
         end: Position::zeroed(),
       },
-      false,
     );
     assert!(matches!(resolution, Resolution::Ok { .. }));
   }
