@@ -2,6 +2,9 @@
 
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
+use crate::npm::NpmPackageId;
+use crate::npm::NpmPackageIdReference;
+use crate::npm::NpmPackageReq;
 use crate::text_encoding::strip_bom_mut;
 
 use anyhow::anyhow;
@@ -10,13 +13,12 @@ use anyhow::Result;
 use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
 use futures::future;
-use futures::future::Future;
+use futures::future::BoxFuture;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
-use std::pin::Pin;
 use std::sync::Arc;
 
 pub const DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
@@ -62,7 +64,7 @@ pub enum LoadResponse {
 }
 
 pub type LoadResult = Result<Option<LoadResponse>>;
-pub type LoadFuture = Pin<Box<dyn Future<Output = LoadResult> + 'static>>;
+pub type LoadFuture = BoxFuture<'static, LoadResult>;
 
 /// A trait which allows asynchronous loading of source files into a module
 /// graph in a thread safe way as well as a way to provide additional meta data
@@ -72,6 +74,7 @@ pub trait Loader {
   fn get_cache_info(&self, _specifier: &ModuleSpecifier) -> Option<CacheInfo> {
     None
   }
+
   /// A method that given a specifier that asynchronously returns a response
   fn load(
     &mut self,
@@ -104,8 +107,10 @@ pub trait Resolver: fmt::Debug {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
-  ) -> Result<ModuleSpecifier, Error> {
-    Ok(resolve_import(specifier, referrer)?)
+  ) -> BoxFuture<'static, Result<ModuleSpecifier, Error>> {
+    Box::pin(futures::future::ready(
+      resolve_import(specifier, referrer).map_err(|err| err.into()),
+    ))
   }
 
   /// Given a module specifier, return an optional tuple which provides a module
@@ -118,8 +123,8 @@ pub trait Resolver: fmt::Debug {
   fn resolve_types(
     &self,
     _specifier: &ModuleSpecifier,
-  ) -> Result<Option<(ModuleSpecifier, Option<Range>)>> {
-    Ok(None)
+  ) -> BoxFuture<'static, Result<Option<(ModuleSpecifier, Option<Range>)>>> {
+    Box::pin(futures::future::ready(Ok(None)))
   }
 }
 
@@ -292,20 +297,26 @@ pub mod tests {
       &self,
       specifier: &str,
       referrer: &ModuleSpecifier,
-    ) -> Result<ModuleSpecifier, Error> {
-      if let Some(map) = self.map.get(referrer) {
-        if let Some(resolved_specifier) = map.get(specifier) {
-          return Ok(resolved_specifier.clone());
-        }
-      }
-      Ok(resolve_import(specifier, referrer)?)
+    ) -> BoxFuture<'static, Result<ModuleSpecifier, Error>> {
+      Box::pin(futures::future::ready(
+        if let Some(resolved_specifier) =
+          self.map.get(referrer).and_then(|map| map.get(specifier))
+        {
+          Ok(resolved_specifier.clone())
+        } else {
+          resolve_import(specifier, referrer).map_err(|err| err.into())
+        },
+      ))
     }
 
     fn resolve_types(
       &self,
       specifier: &ModuleSpecifier,
-    ) -> Result<Option<(ModuleSpecifier, Option<Range>)>> {
-      Ok(self.types.get(specifier).cloned())
+    ) -> BoxFuture<'static, Result<Option<(ModuleSpecifier, Option<Range>)>>>
+    {
+      Box::pin(futures::future::ready(Ok(
+        self.types.get(specifier).cloned(),
+      )))
     }
   }
 

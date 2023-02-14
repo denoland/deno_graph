@@ -10,6 +10,75 @@ use crate::semver::Version;
 use crate::semver::VersionReq;
 
 #[derive(Debug, Error)]
+#[error("Invalid npm package id reference '{text}'. {message}")]
+pub struct NpmPackageIdReferenceParseError {
+  message: String,
+  text: String,
+}
+
+/// A resolved npm package id with a potential subpath.
+#[derive(
+  Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize,
+)]
+pub struct NpmPackageIdReference {
+  pub id: NpmPackageId,
+  pub sub_path: Option<String>,
+}
+
+impl NpmPackageIdReference {
+  pub fn from_specifier(
+    specifier: &ModuleSpecifier,
+  ) -> Result<Self, NpmPackageIdReferenceParseError> {
+    Self::from_str(specifier.as_str())
+  }
+
+  #[allow(clippy::should_implement_trait)]
+  pub fn from_str(id: &str) -> Result<Self, NpmPackageIdReferenceParseError> {
+    use monch::*;
+
+    fn sub_path(input: &str) -> ParseResult<&str> {
+      let (input, _) = ch('/')(input)?;
+      Ok(("", input))
+    }
+
+    fn parse_ref(input: &str) -> ParseResult<NpmPackageIdReference> {
+      let (input, _) = tag("npm:")(input)?;
+      let (input, id) = parse_id(input)?;
+      let (input, maybe_sub_path) = maybe(sub_path)(input)?;
+      Ok((
+        input,
+        NpmPackageIdReference {
+          id,
+          sub_path: maybe_sub_path.map(ToOwned::to_owned),
+        },
+      ))
+    }
+
+    with_failure_handling(parse_ref)(id).map_err(|err| {
+      NpmPackageIdReferenceParseError {
+        message: format!("{err:#}"),
+        text: id.to_string(),
+      }
+    })
+  }
+
+  pub fn as_specifier(&self) -> ModuleSpecifier {
+    let serialized_text = self.id.as_serialized();
+    let mut text = String::with_capacity(
+      4 + serialized_text.len()
+        + self.sub_path.as_ref().map(|p| p.len() + 1).unwrap_or(0),
+    );
+    text.push_str("npm:");
+    text.push_str(&serialized_text);
+    if let Some(sub_path) = &self.sub_path {
+      text.push('/');
+      text.push_str(sub_path);
+    }
+    ModuleSpecifier::parse(&text).unwrap()
+  }
+}
+
+#[derive(Debug, Error)]
 #[error("Invalid npm package id '{text}'. {message}")]
 pub struct NpmPackageIdDeserializationError {
   message: String,
@@ -65,92 +134,7 @@ impl NpmPackageId {
   pub fn from_serialized(
     id: &str,
   ) -> Result<Self, NpmPackageIdDeserializationError> {
-    use monch::*;
-
-    fn parse_name(input: &str) -> ParseResult<&str> {
-      if_not_empty(substring(move |input| {
-        for (pos, c) in input.char_indices() {
-          // first character might be a scope, so skip it
-          if pos > 0 && c == '@' {
-            return Ok((&input[pos..], ()));
-          }
-        }
-        ParseError::backtrace()
-      }))(input)
-    }
-
-    fn parse_version(input: &str) -> ParseResult<&str> {
-      if_not_empty(substring(skip_while(|c| c != '_')))(input)
-    }
-
-    fn parse_name_and_version(input: &str) -> ParseResult<(String, Version)> {
-      let (input, name) = parse_name(input)?;
-      let (input, _) = ch('@')(input)?;
-      let at_version_input = input;
-      let (input, version) = parse_version(input)?;
-      match Version::parse_from_npm(version) {
-        Ok(version) => Ok((input, (name.to_string(), version))),
-        Err(err) => ParseError::fail(at_version_input, format!("{err:#}")),
-      }
-    }
-
-    fn parse_level_at_level<'a>(
-      level: usize,
-    ) -> impl Fn(&'a str) -> ParseResult<'a, ()> {
-      fn parse_level(input: &str) -> ParseResult<usize> {
-        let level = input.chars().take_while(|c| *c == '_').count();
-        Ok((&input[level..], level))
-      }
-
-      move |input| {
-        let (input, parsed_level) = parse_level(input)?;
-        if parsed_level == level {
-          Ok((input, ()))
-        } else {
-          ParseError::backtrace()
-        }
-      }
-    }
-
-    fn parse_peers_at_level<'a>(
-      level: usize,
-    ) -> impl Fn(&'a str) -> ParseResult<'a, Vec<NpmPackageId>> {
-      move |mut input| {
-        let mut peers = Vec::new();
-        while let Ok((level_input, _)) = parse_level_at_level(level)(input) {
-          input = level_input;
-          let peer_result = parse_id_at_level(level)(input)?;
-          input = peer_result.0;
-          peers.push(peer_result.1);
-        }
-        Ok((input, peers))
-      }
-    }
-
-    fn parse_id_at_level<'a>(
-      level: usize,
-    ) -> impl Fn(&'a str) -> ParseResult<'a, NpmPackageId> {
-      move |input| {
-        let (input, (name, version)) = parse_name_and_version(input)?;
-        let name = if level > 0 {
-          name.replace('+', "/")
-        } else {
-          name
-        };
-        let (input, peer_dependencies) =
-          parse_peers_at_level(level + 1)(input)?;
-        Ok((
-          input,
-          NpmPackageId {
-            name,
-            version,
-            peer_dependencies,
-          },
-        ))
-      }
-    }
-
-    with_failure_handling(parse_id_at_level(0))(id).map_err(|err| {
+    monch::with_failure_handling(parse_id)(id).map_err(|err| {
       NpmPackageIdDeserializationError {
         message: format!("{err:#}"),
         text: id.to_string(),
@@ -163,6 +147,94 @@ impl NpmPackageId {
     // want this to be used by accident in certain scenarios.
     format!("{}@{}", self.name, self.version)
   }
+}
+
+fn parse_id(text: &str) -> monch::ParseResult<NpmPackageId> {
+  use monch::*;
+
+  fn parse_name(input: &str) -> ParseResult<&str> {
+    if_not_empty(substring(move |input| {
+      for (pos, c) in input.char_indices() {
+        // first character might be a scope, so skip it
+        if pos > 0 && c == '@' {
+          return Ok((&input[pos..], ()));
+        }
+      }
+      ParseError::backtrace()
+    }))(input)
+  }
+
+  fn parse_version(input: &str) -> ParseResult<&str> {
+    if_not_empty(substring(skip_while(|c| !matches!(c, '_' | '/'))))(input)
+  }
+
+  fn parse_name_and_version(input: &str) -> ParseResult<(String, Version)> {
+    let (input, name) = parse_name(input)?;
+    let (input, _) = ch('@')(input)?;
+    let at_version_input = input;
+    let (input, version) = parse_version(input)?;
+    match Version::parse_from_npm(version) {
+      Ok(version) => Ok((input, (name.to_string(), version))),
+      Err(err) => ParseError::fail(at_version_input, format!("{err:#}")),
+    }
+  }
+
+  fn parse_level_at_level<'a>(
+    level: usize,
+  ) -> impl Fn(&'a str) -> ParseResult<'a, ()> {
+    fn parse_level(input: &str) -> ParseResult<usize> {
+      let level = input.chars().take_while(|c| *c == '_').count();
+      Ok((&input[level..], level))
+    }
+
+    move |input| {
+      let (input, parsed_level) = parse_level(input)?;
+      if parsed_level == level {
+        Ok((input, ()))
+      } else {
+        ParseError::backtrace()
+      }
+    }
+  }
+
+  fn parse_peers_at_level<'a>(
+    level: usize,
+  ) -> impl Fn(&'a str) -> ParseResult<'a, Vec<NpmPackageId>> {
+    move |mut input| {
+      let mut peers = Vec::new();
+      while let Ok((level_input, _)) = parse_level_at_level(level)(input) {
+        input = level_input;
+        let peer_result = parse_id_at_level(level)(input)?;
+        input = peer_result.0;
+        peers.push(peer_result.1);
+      }
+      Ok((input, peers))
+    }
+  }
+
+  fn parse_id_at_level<'a>(
+    level: usize,
+  ) -> impl Fn(&'a str) -> ParseResult<'a, NpmPackageId> {
+    move |input| {
+      let (input, (name, version)) = parse_name_and_version(input)?;
+      let name = if level > 0 {
+        name.replace('+', "/")
+      } else {
+        name
+      };
+      let (input, peer_dependencies) = parse_peers_at_level(level + 1)(input)?;
+      Ok((
+        input,
+        NpmPackageId {
+          name,
+          version,
+          peer_dependencies,
+        },
+      ))
+    }
+  }
+
+  parse_id_at_level(1)(text)
 }
 
 #[derive(Error, Debug)]
@@ -185,22 +257,22 @@ pub enum NpmPackageReferenceParseError {
 ///
 /// This contains all the information found in an npm specifier.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct NpmPackageReference {
+pub struct NpmPackageReqReference {
   pub req: NpmPackageReq,
   pub sub_path: Option<String>,
 }
 
-impl NpmPackageReference {
+impl NpmPackageReqReference {
   pub fn from_specifier(
     specifier: &ModuleSpecifier,
-  ) -> Result<NpmPackageReference, NpmPackageReferenceParseError> {
+  ) -> Result<Self, NpmPackageReferenceParseError> {
     Self::from_str(specifier.as_str())
   }
 
   #[allow(clippy::should_implement_trait)]
   pub fn from_str(
     specifier: &str,
-  ) -> Result<NpmPackageReference, NpmPackageReferenceParseError> {
+  ) -> Result<Self, NpmPackageReferenceParseError> {
     let original_text = specifier;
     let specifier = match specifier.strip_prefix("npm:") {
       Some(s) => {
@@ -251,11 +323,11 @@ impl NpmPackageReference {
       }
     }
 
-    Ok(NpmPackageReference { req, sub_path })
+    Ok(NpmPackageReqReference { req, sub_path })
   }
 }
 
-impl std::fmt::Display for NpmPackageReference {
+impl std::fmt::Display for NpmPackageReqReference {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     if let Some(sub_path) = &self.sub_path {
       write!(f, "npm:{}/{}", self.req, sub_path)
@@ -350,10 +422,31 @@ mod tests {
   use super::*;
 
   #[test]
-  fn parse_npm_package_ref() {
+  fn npm_package_id_ref() {
+    let package_id_ref =
+      NpmPackageIdReference::from_str("npm:package@1.2.3/test").unwrap();
     assert_eq!(
-      NpmPackageReference::from_str("npm:@package/test").unwrap(),
-      NpmPackageReference {
+      package_id_ref,
+      NpmPackageIdReference {
+        id: NpmPackageId {
+          name: "package".to_string(),
+          version: Version::parse_from_npm("1.2.3").unwrap(),
+          peer_dependencies: Vec::new()
+        },
+        sub_path: Some("test".to_string())
+      }
+    );
+    assert_eq!(
+      package_id_ref.as_specifier().as_str(),
+      "npm:package@1.2.3/test"
+    );
+  }
+
+  #[test]
+  fn parse_npm_package_req_ref() {
+    assert_eq!(
+      NpmPackageReqReference::from_str("npm:@package/test").unwrap(),
+      NpmPackageReqReference {
         req: NpmPackageReq {
           name: "@package/test".to_string(),
           version_req: None,
@@ -363,8 +456,8 @@ mod tests {
     );
 
     assert_eq!(
-      NpmPackageReference::from_str("npm:@package/test@1").unwrap(),
-      NpmPackageReference {
+      NpmPackageReqReference::from_str("npm:@package/test@1").unwrap(),
+      NpmPackageReqReference {
         req: NpmPackageReq {
           name: "@package/test".to_string(),
           version_req: Some(VersionReq::parse_from_specifier("1").unwrap()),
@@ -374,8 +467,9 @@ mod tests {
     );
 
     assert_eq!(
-      NpmPackageReference::from_str("npm:@package/test@~1.1/sub_path").unwrap(),
-      NpmPackageReference {
+      NpmPackageReqReference::from_str("npm:@package/test@~1.1/sub_path")
+        .unwrap(),
+      NpmPackageReqReference {
         req: NpmPackageReq {
           name: "@package/test".to_string(),
           version_req: Some(VersionReq::parse_from_specifier("~1.1").unwrap()),
@@ -385,8 +479,8 @@ mod tests {
     );
 
     assert_eq!(
-      NpmPackageReference::from_str("npm:@package/test/sub_path").unwrap(),
-      NpmPackageReference {
+      NpmPackageReqReference::from_str("npm:@package/test/sub_path").unwrap(),
+      NpmPackageReqReference {
         req: NpmPackageReq {
           name: "@package/test".to_string(),
           version_req: None,
@@ -396,8 +490,8 @@ mod tests {
     );
 
     assert_eq!(
-      NpmPackageReference::from_str("npm:test").unwrap(),
-      NpmPackageReference {
+      NpmPackageReqReference::from_str("npm:test").unwrap(),
+      NpmPackageReqReference {
         req: NpmPackageReq {
           name: "test".to_string(),
           version_req: None,
@@ -407,8 +501,8 @@ mod tests {
     );
 
     assert_eq!(
-      NpmPackageReference::from_str("npm:test@^1.2").unwrap(),
-      NpmPackageReference {
+      NpmPackageReqReference::from_str("npm:test@^1.2").unwrap(),
+      NpmPackageReqReference {
         req: NpmPackageReq {
           name: "test".to_string(),
           version_req: Some(VersionReq::parse_from_specifier("^1.2").unwrap()),
@@ -418,8 +512,8 @@ mod tests {
     );
 
     assert_eq!(
-      NpmPackageReference::from_str("npm:test@~1.1/sub_path").unwrap(),
-      NpmPackageReference {
+      NpmPackageReqReference::from_str("npm:test@~1.1/sub_path").unwrap(),
+      NpmPackageReqReference {
         req: NpmPackageReq {
           name: "test".to_string(),
           version_req: Some(VersionReq::parse_from_specifier("~1.1").unwrap()),
@@ -429,8 +523,8 @@ mod tests {
     );
 
     assert_eq!(
-      NpmPackageReference::from_str("npm:@package/test/sub_path").unwrap(),
-      NpmPackageReference {
+      NpmPackageReqReference::from_str("npm:@package/test/sub_path").unwrap(),
+      NpmPackageReqReference {
         req: NpmPackageReq {
           name: "@package/test".to_string(),
           version_req: None,
@@ -440,7 +534,7 @@ mod tests {
     );
 
     assert_eq!(
-      NpmPackageReference::from_str("npm:@package")
+      NpmPackageReqReference::from_str("npm:@package")
         .err()
         .unwrap()
         .to_string(),
@@ -449,8 +543,8 @@ mod tests {
 
     // should parse leading slash
     assert_eq!(
-      NpmPackageReference::from_str("npm:/@package/test/sub_path").unwrap(),
-      NpmPackageReference {
+      NpmPackageReqReference::from_str("npm:/@package/test/sub_path").unwrap(),
+      NpmPackageReqReference {
         req: NpmPackageReq {
           name: "@package/test".to_string(),
           version_req: None,
@@ -459,8 +553,8 @@ mod tests {
       }
     );
     assert_eq!(
-      NpmPackageReference::from_str("npm:/test").unwrap(),
-      NpmPackageReference {
+      NpmPackageReqReference::from_str("npm:/test").unwrap(),
+      NpmPackageReqReference {
         req: NpmPackageReq {
           name: "test".to_string(),
           version_req: None,
@@ -469,8 +563,8 @@ mod tests {
       }
     );
     assert_eq!(
-      NpmPackageReference::from_str("npm:/test/").unwrap(),
-      NpmPackageReference {
+      NpmPackageReqReference::from_str("npm:/test/").unwrap(),
+      NpmPackageReqReference {
         req: NpmPackageReq {
           name: "test".to_string(),
           version_req: None,
@@ -481,14 +575,14 @@ mod tests {
 
     // should error for no name
     assert_eq!(
-      NpmPackageReference::from_str("npm:/")
+      NpmPackageReqReference::from_str("npm:/")
         .err()
         .unwrap()
         .to_string(),
       "Invalid npm specifier 'npm:/'. Did not contain a package name."
     );
     assert_eq!(
-      NpmPackageReference::from_str("npm://test")
+      NpmPackageReqReference::from_str("npm://test")
         .err()
         .unwrap()
         .to_string(),

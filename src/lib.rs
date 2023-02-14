@@ -9,7 +9,6 @@ pub mod semver;
 pub mod source;
 mod text_encoding;
 
-pub use graph::ModuleKind;
 use source::Resolver;
 
 use std::collections::HashMap;
@@ -35,8 +34,10 @@ pub use ast::DefaultParsedSourceStore;
 pub use ast::ModuleParser;
 pub use ast::ParsedSourceStore;
 pub use deno_ast::MediaType;
+pub use graph::AssertedModule;
 pub use graph::BuildOptions;
 pub use graph::Dependency;
+pub use graph::EsmModule;
 pub use graph::GraphImport;
 pub use graph::GraphKind;
 pub use graph::Module;
@@ -65,11 +66,10 @@ pub struct ReferrerImports {
 /// Parse an individual module, returning the module as a result, otherwise
 /// erroring with a module graph error.
 #[allow(clippy::result_large_err)]
-pub fn parse_module(
+pub async fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<str>,
-  maybe_kind: Option<ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
 ) -> Result<Module, ModuleGraphError> {
@@ -82,36 +82,34 @@ pub fn parse_module(
     content,
     None,
     None,
-    maybe_kind,
     maybe_resolver,
     module_analyzer,
     true,
     false,
   )
+  .await
 }
 
 /// Parse an individual module from an AST, returning the module.
-pub fn parse_module_from_ast(
+pub async fn parse_esm_module_from_ast(
   specifier: &ModuleSpecifier,
-  kind: ModuleKind,
   maybe_headers: Option<&HashMap<String, String>>,
   parsed_source: &deno_ast::ParsedSource,
   maybe_resolver: Option<&dyn Resolver>,
-) -> Module {
-  graph::parse_module_from_module_info(
+) -> EsmModule {
+  graph::parse_esm_module_from_module_info(
     specifier,
-    kind,
     parsed_source.media_type(),
     maybe_headers,
     DefaultModuleAnalyzer::module_info(parsed_source),
     parsed_source.text_info().text(),
     maybe_resolver,
   )
+  .await
 }
 
 #[cfg(test)]
 mod tests {
-  use crate::graph::ModuleSlot;
   use crate::graph::ResolutionResolved;
 
   use super::*;
@@ -172,27 +170,28 @@ mod tests {
     assert!(
       !graph.contains(&ModuleSpecifier::parse("file:///a/test03.ts").unwrap())
     );
-    let maybe_root_module = graph.module_slots.get(&root_specifier);
-    assert!(maybe_root_module.is_some());
-    let root_module_slot = maybe_root_module.unwrap();
-    if let ModuleSlot::Module(module) = root_module_slot {
-      assert_eq!(module.dependencies.len(), 1);
-      let maybe_dependency = module.dependencies.get("./test02.ts");
-      assert!(maybe_dependency.is_some());
-      let dependency_specifier =
-        ModuleSpecifier::parse("file:///a/test02.ts").unwrap();
-      let dependency = maybe_dependency.unwrap();
-      assert!(!dependency.is_dynamic);
-      assert_eq!(
-        dependency.maybe_code.ok().unwrap().specifier,
-        dependency_specifier
-      );
-      assert_eq!(dependency.maybe_type, Resolution::None);
-      let maybe_dep_module_slot = graph.get(&dependency_specifier);
-      assert!(maybe_dep_module_slot.is_some());
-    } else {
-      panic!("unexpected module slot");
-    }
+    let module = graph
+      .module_slots
+      .get(&root_specifier)
+      .unwrap()
+      .module()
+      .unwrap()
+      .esm()
+      .unwrap();
+    assert_eq!(module.dependencies.len(), 1);
+    let maybe_dependency = module.dependencies.get("./test02.ts");
+    assert!(maybe_dependency.is_some());
+    let dependency_specifier =
+      ModuleSpecifier::parse("file:///a/test02.ts").unwrap();
+    let dependency = maybe_dependency.unwrap();
+    assert!(!dependency.is_dynamic);
+    assert_eq!(
+      dependency.maybe_code.ok().unwrap().specifier,
+      dependency_specifier
+    );
+    assert_eq!(dependency.maybe_type, Resolution::None);
+    let maybe_dep_module_slot = graph.get(&dependency_specifier);
+    assert!(maybe_dep_module_slot.is_some());
   }
 
   #[tokio::test]
@@ -851,7 +850,7 @@ console.log(a);
         &config_specifier,
         false
       ),
-      Some(&ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
+      Some(ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
     );
     assert_eq!(
       graph.resolve_dependency(
@@ -860,8 +859,7 @@ console.log(a);
         true
       ),
       Some(
-        &ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts")
-          .unwrap()
+        ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts").unwrap()
       )
     );
   }
@@ -894,14 +892,15 @@ console.log(a);
       .await;
     assert_eq!(graph.module_slots.len(), 1);
     assert_eq!(graph.roots, vec![root_specifier.clone()]);
-    let maybe_root_module = graph.module_slots.get(&root_specifier);
-    assert!(maybe_root_module.is_some());
-    let root_module_slot = maybe_root_module.unwrap();
-    if let ModuleSlot::Module(module) = root_module_slot {
-      assert_eq!(module.media_type, MediaType::TypeScript);
-    } else {
-      panic!("unspected module slot");
-    }
+    let module = graph
+      .module_slots
+      .get(&root_specifier)
+      .unwrap()
+      .module()
+      .unwrap()
+      .esm()
+      .unwrap();
+    assert_eq!(module.media_type, MediaType::TypeScript);
   }
 
   #[tokio::test]
@@ -1457,10 +1456,8 @@ export function a(a) {
       .await;
     assert_eq!(graph.module_slots.len(), 3);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
-    let maybe_module = graph.get(&data_specifier);
-    assert!(maybe_module.is_some());
-    let module = maybe_module.unwrap();
-    let source: &str = module.maybe_source.as_ref().unwrap();
+    let module = graph.get(&data_specifier).unwrap().esm().unwrap();
+    let source: &str = &module.source;
     assert_eq!(source, r#"export * from "https://example.com/c.ts";"#,);
   }
 
@@ -1504,9 +1501,7 @@ export function a(a) {
         },
       )
       .await;
-    let maybe_module = graph.get(&graph.roots[0]);
-    assert!(maybe_module.is_some());
-    let module = maybe_module.unwrap();
+    let module = graph.get(&graph.roots[0]).unwrap().esm().unwrap();
     let maybe_dep = module.dependencies.get("b");
     assert!(maybe_dep.is_some());
     let dep = maybe_dep.unwrap();
@@ -1566,9 +1561,7 @@ export function a(a) {
         },
       )
       .await;
-    let maybe_module = graph.get(&graph.roots[0]);
-    assert!(maybe_module.is_some());
-    let module = maybe_module.unwrap();
+    let module = graph.get(&graph.roots[0]).unwrap().esm().unwrap();
     let types_dep = module.maybe_types_dependency.as_ref().unwrap();
     assert_eq!(types_dep.specifier, "file:///a.js");
     assert_eq!(
@@ -2693,10 +2686,10 @@ export function a(a) {
     );
   }
 
-  #[test]
-  fn test_parse_module() {
+  #[tokio::test]
+  async fn test_parse_module() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
-    let result = parse_module(
+    let actual = parse_module(
       &specifier,
       None,
       r#"
@@ -2708,19 +2701,19 @@ export function a(a) {
       .into(),
       None,
       None,
-      None,
-    );
-    assert!(result.is_ok());
-    let actual = result.unwrap();
+    )
+    .await
+    .unwrap();
+    let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 4);
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::TypeScript);
   }
 
-  #[test]
-  fn test_parse_module_import_assertions() {
+  #[tokio::test]
+  async fn test_parse_module_import_assertions() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
-    let result = parse_module(
+    let actual = parse_module(
       &specifier,
       None,
       r#"
@@ -2728,12 +2721,11 @@ export function a(a) {
     await import("./b.json", { assert: { type: "json" } });
     "#
       .into(),
-      Some(ModuleKind::Esm),
       None,
       None,
-    );
-    assert!(result.is_ok());
-    let actual = result.unwrap();
+    )
+    .await
+    .unwrap();
     assert_eq!(
       json!(actual),
       json!({
@@ -2782,10 +2774,10 @@ export function a(a) {
     );
   }
 
-  #[test]
-  fn test_parse_module_jsx_import_source() {
+  #[tokio::test]
+  async fn test_parse_module_jsx_import_source() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
-    let result = parse_module(
+    let actual = parse_module(
       &specifier,
       None,
       r#"
@@ -2796,12 +2788,12 @@ export function a(a) {
     }
     "#
       .into(),
-      Some(ModuleKind::Esm),
       None,
       None,
-    );
-    assert!(result.is_ok());
-    let actual = result.unwrap();
+    )
+    .await
+    .unwrap();
+    let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
     let dep = actual
       .dependencies
@@ -2816,8 +2808,8 @@ export function a(a) {
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
 
-  #[test]
-  fn test_default_jsx_import_source() {
+  #[tokio::test]
+  async fn test_default_jsx_import_source() {
     #[derive(Debug)]
     struct R;
     impl Resolver for R {
@@ -2827,7 +2819,7 @@ export function a(a) {
     }
 
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
-    let result = parse_module(
+    let actual = parse_module(
       &specifier,
       None,
       r#"
@@ -2836,12 +2828,12 @@ export function a(a) {
     }
     "#
       .into(),
-      Some(ModuleKind::Esm),
       Some(&R),
       None,
-    );
-    assert!(result.is_ok());
-    let actual = result.unwrap();
+    )
+    .await
+    .unwrap();
+    let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
     let dep = actual
       .dependencies
@@ -2856,8 +2848,8 @@ export function a(a) {
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
 
-  #[test]
-  fn test_parse_module_with_headers() {
+  #[tokio::test]
+  async fn test_parse_module_with_headers() {
     let specifier = ModuleSpecifier::parse("https://localhost/file").unwrap();
     let mut headers = HashMap::new();
     headers.insert(
@@ -2872,17 +2864,17 @@ export function a(a) {
   a: string;
 }"#
         .into(),
-      Some(ModuleKind::Esm),
       None,
       None,
-    );
+    )
+    .await;
     assert!(result.is_ok());
   }
 
-  #[test]
-  fn test_parse_module_with_jsdoc_imports() {
+  #[tokio::test]
+  async fn test_parse_module_with_jsdoc_imports() {
     let specifier = ModuleSpecifier::parse("file:///a/test.js").unwrap();
-    let result = parse_module(
+    let actual = parse_module(
       &specifier,
       None,
       r#"
@@ -2897,12 +2889,11 @@ export function a(a) {
 }
 "#
       .into(),
-      Some(ModuleKind::Esm),
       None,
       None,
-    );
-    assert!(result.is_ok());
-    let actual = result.unwrap();
+    )
+    .await
+    .unwrap();
     assert_eq!(
       json!(actual),
       json!({
@@ -2948,10 +2939,10 @@ export function a(a) {
     );
   }
 
-  #[test]
-  fn test_parse_ts_jsdoc_imports_ignored() {
+  #[tokio::test]
+  async fn test_parse_ts_jsdoc_imports_ignored() {
     let specifier = ModuleSpecifier::parse("file:///a/test.ts").unwrap();
-    let result = parse_module(
+    let actual = parse_module(
       &specifier,
       None,
       r#"
@@ -2966,12 +2957,11 @@ export function a(a: A): B {
 }
 "#
       .into(),
-      Some(ModuleKind::Esm),
       None,
       None,
-    );
-    assert!(result.is_ok());
-    let actual = result.unwrap();
+    )
+    .await
+    .unwrap();
     assert_eq!(
       json!(actual),
       json!({
@@ -3093,7 +3083,7 @@ export function a(a: A): B {
         &config_specifier,
         false
       ),
-      Some(&ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
+      Some(ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
     );
     assert_eq!(
       graph.resolve_dependency(
@@ -3102,8 +3092,7 @@ export function a(a: A): B {
         true
       ),
       Some(
-        &ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts")
-          .unwrap()
+        ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts").unwrap()
       )
     );
   }
