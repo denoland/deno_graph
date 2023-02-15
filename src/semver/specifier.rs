@@ -13,7 +13,7 @@ use super::VersionReq;
 use super::is_valid_tag;
 
 #[derive(Error, Debug)]
-#[error("Invalid npm specifier version requirement '{source}'.")]
+#[error("Invalid npm specifier version requirement. {source}")]
 pub struct NpmVersionReqSpecifierParseError {
   #[source]
   source: ParseErrorFailureError,
