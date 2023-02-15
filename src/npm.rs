@@ -570,4 +570,44 @@ mod tests {
     assert_eq!(cmp_req("a@1", "a@2"), Ordering::Greater);
     assert_eq!(cmp_req("a@2", "a@1"), Ordering::Less);
   }
+
+  #[test]
+  fn serialize_npm_package_id() {
+    let id = NpmPackageId {
+      name: "pkg-a".to_string(),
+      version: Version::parse_from_npm("1.2.3").unwrap(),
+      peer_dependencies: vec![
+        NpmPackageId {
+          name: "pkg-b".to_string(),
+          version: Version::parse_from_npm("3.2.1").unwrap(),
+          peer_dependencies: vec![
+            NpmPackageId {
+              name: "pkg-c".to_string(),
+              version: Version::parse_from_npm("1.3.2").unwrap(),
+              peer_dependencies: vec![],
+            },
+            NpmPackageId {
+              name: "pkg-d".to_string(),
+              version: Version::parse_from_npm("2.3.4").unwrap(),
+              peer_dependencies: vec![],
+            },
+          ],
+        },
+        NpmPackageId {
+          name: "pkg-e".to_string(),
+          version: Version::parse_from_npm("2.3.1").unwrap(),
+          peer_dependencies: vec![NpmPackageId {
+            name: "pkg-f".to_string(),
+            version: Version::parse_from_npm("2.3.1").unwrap(),
+            peer_dependencies: vec![],
+          }],
+        },
+      ],
+    };
+
+    // this shouldn't change because it's used in the CLI's lockfile
+    let serialized = id.as_serialized();
+    assert_eq!(serialized, "pkg-a@1.2.3_pkg-b@3.2.1__pkg-c@1.3.2__pkg-d@2.3.4_pkg-e@2.3.1__pkg-f@2.3.1");
+    assert_eq!(NpmPackageId::from_serialized(&serialized).unwrap(), id);
+  }
 }

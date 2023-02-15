@@ -24,10 +24,10 @@ pub fn is_valid_npm_tag(value: &str) -> bool {
 // which is Copyright (c) Isaac Z. Schlueter and Contributors (ISC License)
 
 #[derive(Error, Debug)]
-#[error("Invalid npm version '{source}'.")]
+#[error("Invalid npm version. {source}")]
 pub struct NpmVersionParseError {
   #[source]
-  source: ParseErrorFailureError,
+  pub(crate) source: ParseErrorFailureError,
 }
 
 pub fn parse_npm_version(text: &str) -> Result<Version, NpmVersionParseError> {
@@ -60,7 +60,7 @@ pub fn parse_npm_version(text: &str) -> Result<Version, NpmVersionParseError> {
 }
 
 #[derive(Error, Debug)]
-#[error("Invalid npm version requirement '{source}'.")]
+#[error("Invalid npm version requirement. {source}")]
 pub struct NpmVersionReqParseError {
   #[source]
   source: ParseErrorFailureError,

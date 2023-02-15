@@ -5,6 +5,7 @@ use std::fmt;
 
 use serde::Deserialize;
 use serde::Serialize;
+use thiserror::Error;
 
 mod npm;
 mod range;
@@ -21,6 +22,13 @@ pub use self::range::XRange;
 use self::specifier::parse_version_req_from_specifier;
 pub use self::specifier::NpmVersionReqSpecifierParseError;
 
+#[derive(Error, Debug)]
+#[error("Invalid version. {source}")]
+pub struct VersionParseError {
+  #[source]
+  source: monch::ParseErrorFailureError,
+}
+
 #[derive(
   Clone, Debug, PartialEq, Eq, Default, Hash, Serialize, Deserialize,
 )]
@@ -33,6 +41,14 @@ pub struct Version {
 }
 
 impl Version {
+  /// Parse a version.
+  pub fn parse_standard(text: &str) -> Result<Version, VersionParseError> {
+    // re-use npm's loose version parsing
+    Self::parse_from_npm(text)
+      .map_err(|err| VersionParseError { source: err.source })
+  }
+
+  /// Parse a version from npm.
   pub fn parse_from_npm(text: &str) -> Result<Version, NpmVersionParseError> {
     npm::parse_npm_version(text)
   }
