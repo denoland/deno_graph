@@ -1104,6 +1104,7 @@ pub struct ModuleGraph {
   pub imports: BTreeMap<ModuleSpecifier, GraphImport>,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
   pub npm_packages: Vec<NpmPackageId>,
+  pub has_node_specifier: bool,
 }
 
 impl ModuleGraph {
@@ -1115,6 +1116,7 @@ impl ModuleGraph {
       imports: Default::default(),
       redirects: Default::default(),
       npm_packages: Default::default(),
+      has_node_specifier: false,
     }
   }
 
@@ -2106,41 +2108,28 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .insert(maybe_assert_type);
     if !self.graph.module_slots.contains_key(specifier) {
       let maybe_range = maybe_range.map(ToOwned::to_owned);
-      if specifier.scheme() == "npm" {
+      if specifier.scheme() == "npm" && self.supports_npm_specifiers() {
         let npm_specifier = self.graph.resolve(specifier);
         if !self.graph.module_slots.contains_key(&npm_specifier) {
           match NpmPackageReqReference::from_specifier(&npm_specifier) {
             Ok(package_ref) => {
-              if let Some(resolver) = &self.resolver {
-                if self
-                  .requested_npm_registry_info_loads
-                  .insert(package_ref.req.name.clone())
-                {
-                  // request to load
-                  let package_name = package_ref.req.name.clone();
-                  let fut =
-                    resolver.load_npm_package_info(package_name.clone());
-                  self
-                    .pending_npm_registry_info_loads
-                    .push(Box::pin(async move { (package_name, fut.await) }));
-                }
-                self.pending_npm_specifiers.push((
-                  npm_specifier,
-                  package_ref,
-                  maybe_range,
-                ));
-              } else {
-                self.graph.module_slots.insert(
-                  npm_specifier.clone(),
-                  ModuleSlot::Err(ModuleGraphError::LoadingErr(
-                    npm_specifier,
-                    maybe_range,
-                    Arc::new(anyhow::anyhow!(
-                      "npm specifiers are not supported in this environment"
-                    )),
-                  )),
-                );
+              if self
+                .requested_npm_registry_info_loads
+                .insert(package_ref.req.name.clone())
+              {
+                // request to load
+                let package_name = package_ref.req.name.clone();
+                let fut =
+                  self.loader.load_npm_package_info(package_name.clone());
+                self
+                  .pending_npm_registry_info_loads
+                  .push(Box::pin(async move { (package_name, fut.await) }));
               }
+              self.pending_npm_specifiers.push((
+                npm_specifier,
+                package_ref,
+                maybe_range,
+              ));
             }
             Err(err) => {
               if !self.graph.module_slots.contains_key(&npm_specifier) {
@@ -2156,6 +2145,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             }
           }
         }
+      } else if specifier.scheme() == "node" && self.supports_node_specifiers()
+      {
+        self.graph.has_node_specifier = true;
       } else {
         self
           .graph

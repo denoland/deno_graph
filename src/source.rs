@@ -38,6 +38,20 @@ pub struct CacheInfo {
   pub map: Option<PathBuf>,
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct EnvSupportInfo {
+  /// Gets if the environment supports "npm:" specifiers.
+  ///
+  /// By default, this is `false` and npm specifiers will use
+  /// the default loader and not be handled.
+  npm_specifiers: bool,
+  /// Gets if the environment supports "node:" specifiers.
+  ///
+  /// By default, this is `false` and node specifiers will use
+  /// the default loader and not be handled.
+  node_specifiers: bool,
+}
+
 /// The response that is expected from a loader's `.load()` method.
 ///
 /// The returned specifier is the final specifier. This can differ from the
@@ -80,6 +94,23 @@ pub trait Loader {
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
   ) -> LoadFuture;
+
+  /// This tells the implementation to asynchronously load within itself the
+  /// npm registry package information so that synchronous resolution can occur
+  /// afterwards.
+  fn load_npm_package_info(
+    &self,
+    _package_name: String,
+  ) -> BoxFuture<'static, Result<(), String>> {
+    Box::pin(futures::future::ready(Err(
+      "npm specifiers are not supported in this environment".to_string(),
+    )))
+  }
+
+  /// Provides information on what the environment supports.
+  fn env_support_info(&self) -> EnvSupportInfo {
+    EnvSupportInfo::default()
+  }
 }
 
 /// A trait which allows the module graph to resolve specifiers and type only
@@ -124,18 +155,7 @@ pub trait Resolver: fmt::Debug {
     Ok(None)
   }
 
-  /// This tells the implementation to asynchronously load within itself the
-  /// npm registry package information so that synchronous resolution can occur
-  /// afterwards.
-  fn load_npm_package_info(
-    &self,
-    _package_name: String,
-  ) -> BoxFuture<'static, Result<(), String>> {
-    Box::pin(futures::future::ready(Err(
-      "npm specifiers are not supported in this environment".to_string(),
-    )))
-  }
-
+  /// Resolves an npm package requirement to a resolved npm package identifier.
   fn resolve_npm(&self, _package_req: &NpmPackageReq) -> Result<NpmPackageId> {
     Err(anyhow!(
       "npm specifiers are not supported in this environment"
