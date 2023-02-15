@@ -2466,12 +2466,9 @@ mod tests {
     }
     let mut loader = TestLoader;
     let mut graph = ModuleGraph::new(GraphKind::All);
+    let roots = vec![Url::parse("file:///foo.js").unwrap()];
     graph
-      .build(
-        vec![Url::parse("file:///foo.js").unwrap()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(roots.clone(), &mut loader, Default::default())
       .await;
     assert!(graph
       .try_get(&Url::parse("file:///foo.js").unwrap())
@@ -2496,6 +2493,35 @@ mod tests {
         .unwrap_err(),
       ModuleGraphError::Missing(..)
     ));
+
+    // should not follow the dynamic import error when walking and not following
+    let error_count = graph
+      .walk(
+        &roots,
+        WalkOptions {
+          follow_dynamic: false,
+          follow_type_only: true,
+          check_js: true,
+        },
+      )
+      .errors()
+      .count();
+    assert_eq!(error_count, 0);
+
+    // should return as dynamic import missing when walking
+    let errors = graph
+      .walk(
+        &roots,
+        WalkOptions {
+          follow_dynamic: true,
+          follow_type_only: true,
+          check_js: true,
+        },
+      )
+      .errors()
+      .collect::<Vec<_>>();
+    assert_eq!(errors.len(), 1);
+    assert!(matches!(errors[0], ModuleGraphError::MissingDynamic(..)));
   }
 
   #[tokio::test]
