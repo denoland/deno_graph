@@ -138,6 +138,7 @@ pub enum ModuleGraphError {
   },
   LoadingErr(ModuleSpecifier, Option<Range>, Arc<anyhow::Error>),
   Missing(ModuleSpecifier, Option<Range>),
+  MissingDynamic(ModuleSpecifier, Range),
   ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
   ResolutionError(ResolutionError),
   UnsupportedImportAssertionType {
@@ -161,7 +162,8 @@ impl ModuleGraphError {
       | Self::UnsupportedMediaType { specifier: s, .. }
       | Self::UnsupportedImportAssertionType { specifier: s, .. }
       | Self::InvalidTypeAssertion { specifier: s, .. }
-      | Self::Missing(s, _) => s,
+      | Self::Missing(s, _)
+      | Self::MissingDynamic(s, _) => s,
     }
   }
 
@@ -184,6 +186,7 @@ impl ModuleGraphError {
       Self::InvalidTypeAssertion { range, .. }
       | Self::UnsupportedImportAssertionType { range, .. } => Some(range),
       Self::Missing(_, maybe_range) => maybe_range.as_ref(),
+      Self::MissingDynamic(_, range) => Some(range),
       Self::UnsupportedMediaType { maybe_referrer, .. } => {
         maybe_referrer.as_ref()
       }
@@ -199,6 +202,7 @@ impl std::error::Error for ModuleGraphError {
       Self::ResolutionError(ref err) => Some(err),
       Self::InvalidTypeAssertion { .. }
       | Self::Missing(_, _)
+      | Self::MissingDynamic(_, _)
       | Self::ParseErr(_, _)
       | Self::UnsupportedImportAssertionType { .. }
       | Self::UnsupportedMediaType { .. } => None,
@@ -228,6 +232,9 @@ impl fmt::Display for ModuleGraphError {
         write!(f, "The import assertion type of \"{kind}\" is unsupported.\n  Specifier: {specifier}"),
       Self::Missing(specifier, _) => {
         write!(f, "Module not found \"{specifier}\".")
+      },
+      Self::MissingDynamic(specifier, _) => {
+        write!(f, "Dynamic import not found \"{specifier}\".")
       },
     }
   }
@@ -376,10 +383,11 @@ impl Resolution {
     result: Result<ModuleSpecifier, Error>,
     range: Range,
     specifier: &str,
-    remapped: bool,
   ) -> Self {
     match result {
-      Ok(specifier) => Self::from_specifier(specifier, range, remapped),
+      Ok(specifier) => {
+        Resolution::Ok(Box::new(ResolutionResolved { specifier, range }))
+      }
       Err(err) => {
         let resolution_error =
           if let Some(specifier_error) = err.downcast_ref::<SpecifierError>() {
@@ -396,31 +404,6 @@ impl Resolution {
           };
         Self::Err(Box::new(resolution_error))
       }
-    }
-  }
-
-  fn from_specifier(
-    specifier: ModuleSpecifier,
-    range: Range,
-    remapped: bool,
-  ) -> Self {
-    let referrer_scheme = range.specifier.scheme();
-    let specifier_scheme = specifier.scheme();
-    if referrer_scheme == "https" && specifier_scheme == "http" {
-      Resolution::Err(Box::new(ResolutionError::InvalidDowngrade {
-        specifier,
-        range,
-      }))
-    } else if matches!(referrer_scheme, "https" | "http")
-      && !matches!(specifier_scheme, "https" | "http" | "npm" | "node")
-      && !remapped
-    {
-      Resolution::Err(Box::new(ResolutionError::InvalidLocalImport {
-        specifier,
-        range,
-      }))
-    } else {
-      Resolution::Ok(Box::new(ResolutionResolved { specifier, range }))
     }
   }
 
@@ -736,7 +719,7 @@ pub enum ModuleEntryRef<'a> {
   Redirect(&'a ModuleSpecifier),
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct WalkOptions {
   pub follow_dynamic: bool,
   pub follow_type_only: bool,
@@ -746,7 +729,7 @@ pub struct WalkOptions {
 impl Default for WalkOptions {
   fn default() -> Self {
     Self {
-      follow_dynamic: true,
+      follow_dynamic: false,
       follow_type_only: true,
       check_js: true,
     }
@@ -786,13 +769,13 @@ impl<'a> ModuleEntryIterator<'a> {
       for resolution in resolutions {
         if let Resolution::Ok(resolved) = resolution {
           let specifier = &resolved.specifier;
-          if !seen.contains(specifier) {
-            seen.insert(specifier);
+          if seen.insert(specifier) {
             visiting.push_front(specifier);
           }
         }
       }
     }
+
     Self {
       graph,
       seen,
@@ -803,6 +786,13 @@ impl<'a> ModuleEntryIterator<'a> {
     }
   }
 
+  /// An iterator over all the errors found when walking this iterator.
+  ///
+  /// This can be useful in scenarios where you want to filter or ignore an error.
+  pub fn errors(self) -> ModuleGraphErrorIterator<'a> {
+    ModuleGraphErrorIterator::new(self)
+  }
+
   /// Consumes the iterator validating all the items for any resolution
   /// or module graph errors.
   ///
@@ -811,53 +801,11 @@ impl<'a> ModuleEntryIterator<'a> {
   /// options.
   #[allow(clippy::result_large_err)]
   pub fn validate(self) -> Result<(), ModuleGraphError> {
-    let follow_type_only = self.follow_type_only;
-    let check_js = self.check_js;
-    for (_, module_entry) in self {
-      match module_entry {
-        ModuleEntryRef::Module(module) => {
-          let check_types = (check_js
-            || !matches!(
-              module.media_type,
-              MediaType::JavaScript
-                | MediaType::Mjs
-                | MediaType::Cjs
-                | MediaType::Jsx
-            ))
-            && follow_type_only;
-          if check_types {
-            if let Some(Resolution::Err(error)) = module
-              .maybe_types_dependency
-              .as_ref()
-              .map(|d| &d.dependency)
-            {
-              return Err(ModuleGraphError::ResolutionError(*error.clone()));
-            }
-          }
-          for dep in module.dependencies.values() {
-            if !dep.is_dynamic {
-              let mut resolutions = vec![&dep.maybe_code];
-              if check_types {
-                resolutions.push(&dep.maybe_type);
-              }
-              #[allow(clippy::manual_flatten)]
-              for resolution in resolutions {
-                if let Resolution::Err(error) = resolution {
-                  return Err(ModuleGraphError::ResolutionError(
-                    *error.clone(),
-                  ));
-                }
-              }
-            }
-          }
-        }
-        ModuleEntryRef::Err(error) => {
-          return Err(error.clone());
-        }
-        _ => {}
-      }
+    if let Some(err) = self.errors().next() {
+      Err(err)
+    } else {
+      Ok(())
     }
-    Ok(())
   }
 }
 
@@ -909,15 +857,15 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
             .map(|d| &d.dependency)
           {
             let specifier = &resolved.specifier;
-            if !self.seen.contains(specifier) {
-              self.seen.insert(specifier);
+            if self.seen.insert(specifier) {
               self.visiting.push_front(specifier);
             }
           }
         }
         for dep in module.dependencies.values().rev() {
           if !dep.is_dynamic || self.follow_dynamic {
-            let mut resolutions = vec![&dep.maybe_code];
+            let mut resolutions = Vec::with_capacity(2);
+            resolutions.push(&dep.maybe_code);
             if check_types {
               resolutions.push(&dep.maybe_type);
             }
@@ -925,8 +873,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
             for resolution in resolutions {
               if let Resolution::Ok(resolved) = resolution {
                 let specifier = &resolved.specifier;
-                if !self.seen.contains(specifier) {
-                  self.seen.insert(specifier);
+                if self.seen.insert(specifier) {
                   self.visiting.push_front(specifier);
                 }
               }
@@ -936,14 +883,162 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
       }
       ModuleEntryRef::Err(_) => {}
       ModuleEntryRef::Redirect(specifier) => {
-        if !self.seen.contains(specifier) {
-          self.seen.insert(specifier);
+        if self.seen.insert(specifier) {
           self.visiting.push_front(specifier);
         }
       }
     }
 
     Some((specifier, module_entry))
+  }
+}
+
+pub struct ModuleGraphErrorIterator<'a> {
+  iterator: ModuleEntryIterator<'a>,
+  next_errors: Vec<ModuleGraphError>,
+}
+
+impl<'a> ModuleGraphErrorIterator<'a> {
+  pub fn new(iterator: ModuleEntryIterator<'a>) -> Self {
+    Self {
+      iterator,
+      next_errors: Default::default(),
+    }
+  }
+
+  fn check_resolution(
+    &self,
+    module: &Module,
+    resolution: &Resolution,
+    is_dynamic: bool,
+  ) -> Option<ModuleGraphError> {
+    match resolution {
+      Resolution::Ok(resolved) => {
+        let referrer_scheme = module.specifier.scheme();
+        let specifier_scheme = resolved.specifier.scheme();
+        if referrer_scheme == "https" && specifier_scheme == "http" {
+          Some(ModuleGraphError::ResolutionError(
+            ResolutionError::InvalidDowngrade {
+              specifier: resolved.specifier.clone(),
+              range: resolved.range.clone(),
+            },
+          ))
+        } else if matches!(referrer_scheme, "https" | "http")
+          && !matches!(specifier_scheme, "https" | "http" | "npm" | "node",)
+        {
+          Some(ModuleGraphError::ResolutionError(
+            ResolutionError::InvalidLocalImport {
+              specifier: resolved.specifier.clone(),
+              range: resolved.range.clone(),
+            },
+          ))
+        } else if self.iterator.follow_dynamic {
+          let resolved_specifier =
+            self.iterator.graph.resolve(&resolved.specifier);
+          let module_slot =
+            self.iterator.graph.module_slots.get(&resolved_specifier);
+          if let Some(ModuleSlot::Err(ModuleGraphError::Missing(
+            specifier,
+            maybe_range,
+          ))) = module_slot
+          {
+            // we want to surface module missing errors as dynamic missing errors
+            if is_dynamic {
+              Some(ModuleGraphError::MissingDynamic(
+                specifier.clone(),
+                resolved.range.clone(),
+              ))
+            } else {
+              Some(ModuleGraphError::Missing(
+                specifier.clone(),
+                maybe_range.clone(),
+              ))
+            }
+          } else {
+            None
+          }
+        } else {
+          None
+        }
+      }
+      Resolution::Err(err) => {
+        Some(ModuleGraphError::ResolutionError(*err.clone()))
+      }
+      Resolution::None => None,
+    }
+  }
+}
+
+impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
+  type Item = ModuleGraphError;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    while self.next_errors.is_empty() {
+      let follow_type_only = self.iterator.follow_type_only;
+      let check_js = self.iterator.check_js;
+      let follow_dynamic = self.iterator.follow_dynamic;
+
+      if let Some((_, module_entry)) = self.iterator.next() {
+        match module_entry {
+          ModuleEntryRef::Module(module) => {
+            let check_types = (check_js
+              || !matches!(
+                module.media_type,
+                MediaType::JavaScript
+                  | MediaType::Mjs
+                  | MediaType::Cjs
+                  | MediaType::Jsx
+              ))
+              && follow_type_only;
+            if check_types {
+              if let Some(resolution) = module
+                .maybe_types_dependency
+                .as_ref()
+                .map(|d| &d.dependency)
+              {
+                if let Some(err) =
+                  self.check_resolution(module, resolution, false)
+                {
+                  self.next_errors.push(err);
+                }
+              }
+            }
+            for dep in module.dependencies.values() {
+              if follow_dynamic || !dep.is_dynamic {
+                if let Some(err) =
+                  self.check_resolution(module, &dep.maybe_code, dep.is_dynamic)
+                {
+                  self.next_errors.push(err);
+                }
+                if check_types {
+                  if let Some(err) = self.check_resolution(
+                    module,
+                    &dep.maybe_type,
+                    dep.is_dynamic,
+                  ) {
+                    self.next_errors.push(err);
+                  }
+                }
+              }
+            }
+          }
+          ModuleEntryRef::Err(error) => {
+            // ignore missing modules when following dynamic imports
+            // because they will be resolved in place
+            let should_ignore = follow_dynamic
+              && matches!(error, ModuleGraphError::Missing { .. });
+            if !should_ignore {
+              self.next_errors.push(error.clone());
+            }
+          }
+          _ => {}
+        }
+      } else {
+        break; // no more modules, stop searching
+      }
+    }
+
+    self.next_errors.pop()
   }
 }
 
@@ -1246,24 +1341,13 @@ fn resolve(
   referrer_range: &Range,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolution {
-  if let Some(resolver) = maybe_resolver {
-    let response = resolver.resolve(specifier, &referrer_range.specifier);
-    Resolution::from_resolve_result(
-      response,
-      referrer_range.clone(),
-      specifier,
-      true,
-    )
+  let response = if let Some(resolver) = maybe_resolver {
+    resolver.resolve(specifier, &referrer_range.specifier)
   } else {
-    let response = resolve_import(specifier, &referrer_range.specifier)
-      .map_err(|err| err.into());
-    Resolution::from_resolve_result(
-      response,
-      referrer_range.clone(),
-      specifier,
-      false,
-    )
-  }
+    resolve_import(specifier, &referrer_range.specifier)
+      .map_err(|err| err.into())
+  };
+  Resolution::from_resolve_result(response, referrer_range.clone(), specifier)
 }
 
 impl Serialize for ModuleGraph {
@@ -2382,12 +2466,9 @@ mod tests {
     }
     let mut loader = TestLoader;
     let mut graph = ModuleGraph::new(GraphKind::All);
+    let roots = vec![Url::parse("file:///foo.js").unwrap()];
     graph
-      .build(
-        vec![Url::parse("file:///foo.js").unwrap()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(roots.clone(), &mut loader, Default::default())
       .await;
     assert!(graph
       .try_get(&Url::parse("file:///foo.js").unwrap())
@@ -2412,6 +2493,35 @@ mod tests {
         .unwrap_err(),
       ModuleGraphError::Missing(..)
     ));
+
+    // should not follow the dynamic import error when walking and not following
+    let error_count = graph
+      .walk(
+        &roots,
+        WalkOptions {
+          follow_dynamic: false,
+          follow_type_only: true,
+          check_js: true,
+        },
+      )
+      .errors()
+      .count();
+    assert_eq!(error_count, 0);
+
+    // should return as dynamic import missing when walking
+    let errors = graph
+      .walk(
+        &roots,
+        WalkOptions {
+          follow_dynamic: true,
+          follow_type_only: true,
+          check_js: true,
+        },
+      )
+      .errors()
+      .collect::<Vec<_>>();
+    assert_eq!(errors.len(), 1);
+    assert!(matches!(errors[0], ModuleGraphError::MissingDynamic(..)));
   }
 
   #[tokio::test]
@@ -2481,35 +2591,99 @@ mod tests {
     ));
   }
 
-  #[test]
-  fn local_import_remote_module() {
-    let resolution = Resolution::from_specifier(
-      Url::parse("file:///local/mod.ts").unwrap(),
-      Range {
-        specifier: Url::parse("https://localhost").unwrap(),
-        start: Position::zeroed(),
-        end: Position::zeroed(),
-      },
-      false,
-    );
-    assert!(matches!(
-      resolution.err().unwrap(),
-      ResolutionError::InvalidLocalImport { .. },
-    ));
-  }
+  #[tokio::test]
+  async fn local_import_remote_module() {
+    struct TestLoader;
+    impl Loader for TestLoader {
+      fn load(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        _is_dynamic: bool,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "https://deno.land/foo.js" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content:
+                "import 'file:///bar.js'; import 'http://deno.land/foo.js'"
+                  .into(),
+            }))
+          }),
+          "http://deno.land/foo.js" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: "export {}".into(),
+            }))
+          }),
+          "file:///bar.js" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: "console.log('Hello, world!')".into(),
+            }))
+          }),
+          _ => unreachable!(),
+        }
+      }
+    }
+    let mut loader = TestLoader;
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    let roots = vec![Url::parse("https://deno.land/foo.js").unwrap()];
+    graph
+      .build(roots.clone(), &mut loader, Default::default())
+      .await;
+    let errors = graph
+      .walk(&roots, Default::default())
+      .errors()
+      .collect::<Vec<_>>();
+    assert_eq!(errors.len(), 2);
+    let errors = errors
+      .into_iter()
+      .map(|err| match err {
+        ModuleGraphError::ResolutionError(err) => err,
+        _ => unreachable!(),
+      })
+      .collect::<Vec<_>>();
 
-  #[test]
-  fn npm_import_remote_module() {
-    let resolution = Resolution::from_specifier(
-      Url::parse("npm:package").unwrap(),
-      Range {
-        specifier: Url::parse("https://localhost").unwrap(),
-        start: Position::zeroed(),
-        end: Position::zeroed(),
+    assert_eq!(
+      errors[0],
+      ResolutionError::InvalidDowngrade {
+        range: Range {
+          specifier: ModuleSpecifier::parse("https://deno.land/foo.js")
+            .unwrap(),
+          start: Position {
+            line: 0,
+            character: 32,
+          },
+          end: Position {
+            line: 0,
+            character: 57,
+          },
+        },
+        specifier: ModuleSpecifier::parse("http://deno.land/foo.js").unwrap(),
       },
-      false,
     );
-    assert!(matches!(resolution, Resolution::Ok { .. }));
+    assert_eq!(
+      errors[1],
+      ResolutionError::InvalidLocalImport {
+        range: Range {
+          specifier: ModuleSpecifier::parse("https://deno.land/foo.js")
+            .unwrap(),
+          start: Position {
+            line: 0,
+            character: 7,
+          },
+          end: Position {
+            line: 0,
+            character: 23,
+          },
+        },
+        specifier: ModuleSpecifier::parse("file:///bar.js").unwrap(),
+      },
+    );
   }
 
   #[tokio::test]
