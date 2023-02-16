@@ -1818,6 +1818,9 @@ fn check_import_assertions(
   import: &Import,
   maybe_module_metadata: Option<&ModuleMetadata>,
 ) -> Vec<ImportError> {
+  if !matches!(import.kind, ImportKind::Es) {
+    return vec![];
+  }
   let mut errors = vec![];
   if let Some(assert_type) = import.assertions.get("type") {
     match SUPPORTED_ASSERT_TYPES.get(assert_type) {
