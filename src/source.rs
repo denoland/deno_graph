@@ -130,12 +130,12 @@ pub trait NpmResolver: fmt::Debug {
   fn supports_node_specifiers(&self) -> bool;
 
   /// If the provided module name is a valid built-in node module (ex. "fs").
-  fn is_valid_builtin_node_module(&self, name: &str) -> bool;
+  fn is_builtin_node_module(&self, module_name: &str) -> bool;
 
   /// This tells the implementation to asynchronously load within itself the
   /// npm registry package information so that synchronous resolution can occur
   /// afterwards.
-  fn load_npm_package_info(
+  fn load_and_cache_npm_package_info(
     &self,
     _package_name: String,
   ) -> BoxFuture<'static, Result<(), String>>;

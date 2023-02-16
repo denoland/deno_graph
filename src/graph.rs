@@ -628,6 +628,13 @@ pub struct JsonModule {
   pub media_type: MediaType,
 }
 
+impl JsonModule {
+  /// Return the size in bytes of the content of the JSON module.
+  pub fn size(&self) -> usize {
+    self.source.as_bytes().len()
+  }
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EsmModule {
@@ -1180,6 +1187,8 @@ impl ModuleGraph {
     }
     new_graph.imports = self.imports.clone();
     new_graph.roots = roots.iter().map(|r| (*r).to_owned()).collect();
+    new_graph.npm_packages = self.npm_packages.clone();
+    new_graph.has_node_specifier = self.has_node_specifier;
 
     new_graph
   }
@@ -2127,8 +2136,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               {
                 // request to load
                 let package_name = package_ref.req.name.clone();
-                let fut =
-                  npm_resolver.load_npm_package_info(package_name.clone());
+                let fut = npm_resolver
+                  .load_and_cache_npm_package_info(package_name.clone());
                 self
                   .pending_npm_registry_info_loads
                   .push(Box::pin(async move { (package_name, fut.await) }));
@@ -2154,7 +2163,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         }
         "node" if npm_resolver.supports_node_specifiers() => {
           let name = specifier.path();
-          let module_slot = if npm_resolver.is_valid_builtin_node_module(name) {
+          let module_slot = if npm_resolver.is_builtin_node_module(name) {
             self.graph.has_node_specifier = true;
             ModuleSlot::Module(Module::External(ExternalModule {
               specifier: specifier.clone(),

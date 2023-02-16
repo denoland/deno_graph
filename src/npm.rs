@@ -18,7 +18,7 @@ pub struct NpmPackageIdReferenceParseError {
   text: String,
 }
 
-/// A resolved npm package id with a potential subpath.
+/// A resolved npm package name and version with a potential subpath.
 #[derive(
   Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize,
 )]
@@ -45,12 +45,17 @@ impl NpmPackageIdReference {
 
     fn parse_ref(input: &str) -> ParseResult<NpmPackageIdReference> {
       let (input, _) = tag("npm:")(input)?;
-      let (input, id) = parse_id(input)?;
+      let after_npm_input = input;
+      // todo: remove this when extracting out of deno_ast
+      let (input, node_id) = parse_id(input)?;
+      if !node_id.peer_dependencies.is_empty() {
+        return ParseError::fail(after_npm_input, "Invalid name and version.");
+      }
       let (input, maybe_sub_path) = maybe(sub_path)(input)?;
       Ok((
         input,
         NpmPackageIdReference {
-          id,
+          id: node_id.id,
           sub_path: maybe_sub_path.map(ToOwned::to_owned),
         },
       ))
@@ -65,13 +70,17 @@ impl NpmPackageIdReference {
   }
 
   pub fn as_specifier(&self) -> ModuleSpecifier {
-    let serialized_text = self.id.as_serialized();
+    let version_text = self.id.version.to_string();
     let mut text = String::with_capacity(
-      4 + serialized_text.len()
+      4 + self.id.name.len()
+        + 1
+        + version_text.len()
         + self.sub_path.as_ref().map(|p| p.len() + 1).unwrap_or(0),
     );
     text.push_str("npm:");
-    text.push_str(&serialized_text);
+    text.push_str(&self.id.name);
+    text.push('@');
+    text.push_str(&version_text);
     if let Some(sub_path) = &self.sub_path {
       text.push('/');
       text.push_str(sub_path);
@@ -80,26 +89,15 @@ impl NpmPackageIdReference {
   }
 }
 
-#[derive(Debug, Error)]
-#[error("Invalid npm package id '{text}'. {message}")]
-pub struct NpmPackageIdDeserializationError {
-  message: String,
-  text: String,
-}
-
-/// A resolved unique identifier for an npm package. This contains
-/// the resolved name, version, and peer dependency resolution identifiers.
 #[derive(
   Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize,
 )]
 pub struct NpmPackageId {
   pub name: String,
   pub version: Version,
-  pub peer_dependencies: Vec<NpmPackageId>,
 }
 
 impl NpmPackageId {
-  #[allow(unused)]
   pub fn scope(&self) -> Option<&str> {
     if self.name.starts_with('@') && self.name.contains('/') {
       self.name.split('/').next()
@@ -107,7 +105,28 @@ impl NpmPackageId {
       None
     }
   }
+}
 
+#[derive(Debug, Error)]
+#[error("Invalid npm package id '{text}'. {message}")]
+pub struct NpmPackageNodeIdDeserializationError {
+  message: String,
+  text: String,
+}
+
+// todo: move this back into the CLI
+
+/// A resolved unique identifier for an npm package. This contains
+/// the resolved name, version, and peer dependency resolution identifiers.
+#[derive(
+  Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize,
+)]
+pub struct NpmPackageNodeId {
+  pub id: NpmPackageId,
+  pub peer_dependencies: Vec<NpmPackageNodeId>,
+}
+
+impl NpmPackageNodeId {
   pub fn as_serialized(&self) -> String {
     self.as_serialized_with_level(0)
   }
@@ -117,11 +136,11 @@ impl NpmPackageId {
     let mut result = format!(
       "{}@{}",
       if level == 0 {
-        self.name.to_string()
+        self.id.name.to_string()
       } else {
-        self.name.replace('/', "+")
+        self.id.name.replace('/', "+")
       },
-      self.version
+      self.id.version
     );
     for peer in &self.peer_dependencies {
       // unfortunately we can't do something like `_3` when
@@ -135,9 +154,9 @@ impl NpmPackageId {
 
   pub fn from_serialized(
     id: &str,
-  ) -> Result<Self, NpmPackageIdDeserializationError> {
+  ) -> Result<Self, NpmPackageNodeIdDeserializationError> {
     monch::with_failure_handling(parse_id)(id).map_err(|err| {
-      NpmPackageIdDeserializationError {
+      NpmPackageNodeIdDeserializationError {
         message: format!("{err:#}"),
         text: id.to_string(),
       }
@@ -147,11 +166,11 @@ impl NpmPackageId {
   pub fn display(&self) -> String {
     // Don't implement std::fmt::Display because we don't
     // want this to be used by accident in certain scenarios.
-    format!("{}@{}", self.name, self.version)
+    format!("{}@{}", self.id.name, self.id.version)
   }
 }
 
-fn parse_id(text: &str) -> monch::ParseResult<NpmPackageId> {
+fn parse_id(text: &str) -> monch::ParseResult<NpmPackageNodeId> {
   use monch::*;
 
   fn parse_name(input: &str) -> ParseResult<&str> {
@@ -201,7 +220,7 @@ fn parse_id(text: &str) -> monch::ParseResult<NpmPackageId> {
 
   fn parse_peers_at_level<'a>(
     level: usize,
-  ) -> impl Fn(&'a str) -> ParseResult<'a, Vec<NpmPackageId>> {
+  ) -> impl Fn(&'a str) -> ParseResult<'a, Vec<NpmPackageNodeId>> {
     move |mut input| {
       let mut peers = Vec::new();
       while let Ok((level_input, _)) = parse_level_at_level(level)(input) {
@@ -216,7 +235,7 @@ fn parse_id(text: &str) -> monch::ParseResult<NpmPackageId> {
 
   fn parse_id_at_level<'a>(
     level: usize,
-  ) -> impl Fn(&'a str) -> ParseResult<'a, NpmPackageId> {
+  ) -> impl Fn(&'a str) -> ParseResult<'a, NpmPackageNodeId> {
     move |input| {
       let (input, (name, version)) = parse_name_and_version(input)?;
       let name = if level > 0 {
@@ -227,9 +246,8 @@ fn parse_id(text: &str) -> monch::ParseResult<NpmPackageId> {
       let (input, peer_dependencies) = parse_peers_at_level(level + 1)(input)?;
       Ok((
         input,
-        NpmPackageId {
-          name,
-          version,
+        NpmPackageNodeId {
+          id: NpmPackageId { name, version },
           peer_dependencies,
         },
       ))
@@ -481,7 +499,6 @@ mod tests {
         id: NpmPackageId {
           name: "package".to_string(),
           version: Version::parse_from_npm("1.2.3").unwrap(),
-          peer_dependencies: Vec::new()
         },
         sub_path: Some("test".to_string())
       }
@@ -667,32 +684,44 @@ mod tests {
 
   #[test]
   fn serialize_npm_package_id() {
-    let id = NpmPackageId {
-      name: "pkg-a".to_string(),
-      version: Version::parse_from_npm("1.2.3").unwrap(),
+    let id = NpmPackageNodeId {
+      id: NpmPackageId {
+        name: "pkg-a".to_string(),
+        version: Version::parse_from_npm("1.2.3").unwrap(),
+      },
       peer_dependencies: vec![
-        NpmPackageId {
-          name: "pkg-b".to_string(),
-          version: Version::parse_from_npm("3.2.1").unwrap(),
+        NpmPackageNodeId {
+          id: NpmPackageId {
+            name: "pkg-b".to_string(),
+            version: Version::parse_from_npm("3.2.1").unwrap(),
+          },
           peer_dependencies: vec![
-            NpmPackageId {
-              name: "pkg-c".to_string(),
-              version: Version::parse_from_npm("1.3.2").unwrap(),
+            NpmPackageNodeId {
+              id: NpmPackageId {
+                name: "pkg-c".to_string(),
+                version: Version::parse_from_npm("1.3.2").unwrap(),
+              },
               peer_dependencies: vec![],
             },
-            NpmPackageId {
-              name: "pkg-d".to_string(),
-              version: Version::parse_from_npm("2.3.4").unwrap(),
+            NpmPackageNodeId {
+              id: NpmPackageId {
+                name: "pkg-d".to_string(),
+                version: Version::parse_from_npm("2.3.4").unwrap(),
+              },
               peer_dependencies: vec![],
             },
           ],
         },
-        NpmPackageId {
-          name: "pkg-e".to_string(),
-          version: Version::parse_from_npm("2.3.1").unwrap(),
-          peer_dependencies: vec![NpmPackageId {
-            name: "pkg-f".to_string(),
+        NpmPackageNodeId {
+          id: NpmPackageId {
+            name: "pkg-e".to_string(),
             version: Version::parse_from_npm("2.3.1").unwrap(),
+          },
+          peer_dependencies: vec![NpmPackageNodeId {
+            id: NpmPackageId {
+              name: "pkg-f".to_string(),
+              version: Version::parse_from_npm("2.3.1").unwrap(),
+            },
             peer_dependencies: vec![],
           }],
         },
@@ -702,6 +731,6 @@ mod tests {
     // this shouldn't change because it's used in the CLI's lockfile
     let serialized = id.as_serialized();
     assert_eq!(serialized, "pkg-a@1.2.3_pkg-b@3.2.1__pkg-c@1.3.2__pkg-d@2.3.4_pkg-e@2.3.1__pkg-f@2.3.1");
-    assert_eq!(NpmPackageId::from_serialized(&serialized).unwrap(), id);
+    assert_eq!(NpmPackageNodeId::from_serialized(&serialized).unwrap(), id);
   }
 }
