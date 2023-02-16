@@ -236,7 +236,7 @@ fn parse_id(text: &str) -> monch::ParseResult<NpmPackageId> {
     }
   }
 
-  parse_id_at_level(1)(text)
+  parse_id_at_level(0)(text)
 }
 
 #[derive(Error, Debug)]
