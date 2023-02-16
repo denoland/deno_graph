@@ -754,6 +754,7 @@ pub struct BuildOptions<'a> {
   /// runtime types.
   pub imports: Vec<ReferrerImports>,
   pub resolver: Option<&'a dyn Resolver>,
+  pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
   pub reporter: Option<&'a dyn Reporter>,
 }
@@ -973,7 +974,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
             },
           ))
         } else if matches!(referrer_scheme, "https" | "http")
-          && !matches!(specifier_scheme, "https" | "http" | "npm" | "node",)
+          && !matches!(specifier_scheme, "https" | "http" | "npm" | "node")
         {
           Some(ModuleGraphError::ResolutionError(
             ResolutionError::InvalidLocalImport {
@@ -1133,6 +1134,7 @@ impl ModuleGraph {
       options.imports,
       options.is_dynamic,
       options.resolver,
+      options.npm_resolver,
       loader,
       options.module_analyzer.unwrap_or(&default_analyzer),
       options.reporter,
@@ -1794,6 +1796,7 @@ struct Builder<'a, 'graph> {
   graph: &'graph mut ModuleGraph,
   loader: &'a mut dyn Loader,
   resolver: Option<&'a dyn Resolver>,
+  npm_resolver: Option<&'a dyn NpmResolver>,
   pending: FuturesOrdered<LoadWithSpecifierFuture>,
   requested_npm_registry_info_loads: HashSet<String>,
   pending_npm_registry_info_loads:
@@ -1816,6 +1819,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     imports: Vec<ReferrerImports>,
     is_dynamic: bool,
     resolver: Option<&'a dyn Resolver>,
+    npm_resolver: Option<&'a dyn NpmResolver>,
     loader: &'a mut dyn Loader,
     module_analyzer: &'a dyn ModuleAnalyzer,
     reporter: Option<&'a dyn Reporter>,
@@ -1825,6 +1829,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       graph,
       loader,
       resolver,
+      npm_resolver,
       module_analyzer,
       reporter,
       pending: Default::default(),
@@ -1994,9 +1999,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       } else {
         for (specifier, npm_ref, maybe_range) in infos {
           if !self.graph.module_slots.contains_key(&specifier) {
-            if let Some(resolver) = &self.resolver {
+            if let Some(npm_resolver) = &self.npm_resolver {
               // todo: cache resolutions to ensure they always resolve the same
-              let resolution = resolver.resolve_npm(&npm_ref.req);
+              let resolution = npm_resolver.resolve_npm(&npm_ref.req);
               match resolution {
                 Ok(pkg_id) => {
                   specifier_resolutions
@@ -2106,12 +2111,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .entry(specifier.clone())
       .or_default()
       .insert(maybe_assert_type);
-    if !self.graph.module_slots.contains_key(specifier) {
-      let maybe_range = maybe_range.map(ToOwned::to_owned);
-      if specifier.scheme() == "npm" && self.supports_npm_specifiers() {
-        let npm_specifier = self.graph.resolve(specifier);
-        if !self.graph.module_slots.contains_key(&npm_specifier) {
-          match NpmPackageReqReference::from_specifier(&npm_specifier) {
+    if self.graph.module_slots.contains_key(specifier) {
+      return;
+    }
+
+    let maybe_range = maybe_range.map(ToOwned::to_owned);
+    if let Some(npm_resolver) = &self.npm_resolver {
+      match specifier.scheme() {
+        "npm" => {
+          match NpmPackageReqReference::from_specifier(&specifier) {
             Ok(package_ref) => {
               if self
                 .requested_npm_registry_info_loads
@@ -2120,47 +2128,66 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 // request to load
                 let package_name = package_ref.req.name.clone();
                 let fut =
-                  self.loader.load_npm_package_info(package_name.clone());
+                  npm_resolver.load_npm_package_info(package_name.clone());
                 self
                   .pending_npm_registry_info_loads
                   .push(Box::pin(async move { (package_name, fut.await) }));
               }
               self.pending_npm_specifiers.push((
-                npm_specifier,
+                specifier.clone(),
                 package_ref,
                 maybe_range,
               ));
             }
             Err(err) => {
-              if !self.graph.module_slots.contains_key(&npm_specifier) {
-                self.graph.module_slots.insert(
-                  npm_specifier.clone(),
-                  ModuleSlot::Err(ModuleGraphError::LoadingErr(
-                    npm_specifier,
-                    maybe_range,
-                    Arc::new(err.into()),
-                  )),
-                );
-              }
+              self.graph.module_slots.insert(
+                specifier.clone(),
+                ModuleSlot::Err(ModuleGraphError::LoadingErr(
+                  specifier.clone(),
+                  maybe_range,
+                  Arc::new(err.into()),
+                )),
+              );
             }
           }
+          return;
         }
-      } else if specifier.scheme() == "node" && self.supports_node_specifiers()
-      {
-        self.graph.has_node_specifier = true;
-      } else {
-        self
-          .graph
-          .module_slots
-          .insert(specifier.clone(), ModuleSlot::Pending);
-        let specifier = specifier.clone();
-        let fut = self
-          .loader
-          .load(&specifier, is_dynamic)
-          .map(move |res| (specifier, maybe_range, res));
-        self.pending.push_back(Box::pin(fut));
+        "node" if npm_resolver.supports_node_specifiers() => {
+          let name = specifier.path();
+          let module_slot = if npm_resolver.is_valid_builtin_node_module(name) {
+            self.graph.has_node_specifier = true;
+            ModuleSlot::Module(Module::External(ExternalModule {
+              specifier: specifier.clone(),
+            }))
+          } else {
+            ModuleSlot::Err(ModuleGraphError::LoadingErr(
+              specifier.clone(),
+              maybe_range,
+              Arc::new(anyhow::anyhow!(
+                "Unknown built-in \"node:\" module: {specifier}"
+              )),
+            ))
+          };
+          self
+            .graph
+            .module_slots
+            .insert(specifier.clone(), module_slot);
+          return;
+        }
+        _ => {}
       }
     }
+
+    self
+      .graph
+      .module_slots
+      .insert(specifier.clone(), ModuleSlot::Pending);
+    let specifier = specifier.clone();
+    let fut = self
+      .loader
+      .load(&specifier, is_dynamic)
+      .map(move |res| (specifier, maybe_range, res));
+    self.pending.push_back(Box::pin(fut));
   }
 
   fn roots_contain(&self, specifier: &ModuleSpecifier) -> bool {

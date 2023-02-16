@@ -240,7 +240,7 @@ fn parse_id(text: &str) -> monch::ParseResult<NpmPackageId> {
 }
 
 #[derive(Error, Debug)]
-pub enum NpmPackageReferenceParseError {
+pub enum NpmPackageReqReferenceParseError {
   #[error("Not an npm specifier.")]
   NotNpmSpecifier,
   #[error("Not a valid package: {0}")]
@@ -267,14 +267,14 @@ pub struct NpmPackageReqReference {
 impl NpmPackageReqReference {
   pub fn from_specifier(
     specifier: &ModuleSpecifier,
-  ) -> Result<Self, NpmPackageReferenceParseError> {
+  ) -> Result<Self, NpmPackageReqReferenceParseError> {
     Self::from_str(specifier.as_str())
   }
 
   #[allow(clippy::should_implement_trait)]
   pub fn from_str(
     specifier: &str,
-  ) -> Result<Self, NpmPackageReferenceParseError> {
+  ) -> Result<Self, NpmPackageReqReferenceParseError> {
     let original_text = specifier;
     let specifier = match specifier.strip_prefix("npm:") {
       Some(s) => {
@@ -284,13 +284,13 @@ impl NpmPackageReqReference {
       None => {
         // don't allocate a string here and instead use a static string
         // because this is hit a lot when a url is not an npm specifier
-        return Err(NpmPackageReferenceParseError::NotNpmSpecifier);
+        return Err(NpmPackageReqReferenceParseError::NotNpmSpecifier);
       }
     };
     let parts = specifier.split('/').collect::<Vec<_>>();
     let name_part_len = if specifier.starts_with('@') { 2 } else { 1 };
     if parts.len() < name_part_len {
-      return Err(NpmPackageReferenceParseError::InvalidPackage(
+      return Err(NpmPackageReqReferenceParseError::InvalidPackage(
         specifier.to_string(),
       ));
     }
@@ -298,7 +298,7 @@ impl NpmPackageReqReference {
     let req = match NpmPackageReq::parse_from_parts(name_parts) {
       Ok(pkg_req) => pkg_req,
       Err(err) => {
-        return Err(NpmPackageReferenceParseError::Invalid {
+        return Err(NpmPackageReqReferenceParseError::Invalid {
           specifier: original_text.to_string(),
           source: err,
         });
@@ -318,7 +318,7 @@ impl NpmPackageReqReference {
     if let Some(sub_path) = &sub_path {
       if let Some(at_index) = sub_path.rfind('@') {
         let (new_sub_path, version) = sub_path.split_at(at_index);
-        return Err(NpmPackageReferenceParseError::InvalidPathWithVersion {
+        return Err(NpmPackageReqReferenceParseError::InvalidPathWithVersion {
           current: format!("{req}/{sub_path}"),
           suggested: format!("{req}{version}/{new_sub_path}"),
         });
@@ -358,7 +358,7 @@ pub struct NpmPackageReqParseError {
   source: VersionReqPartsParseError,
 }
 
-/// The name and version constraint component of an `NpmPackageReference`.
+/// The name and version constraint component of an `NpmPackageReqReference`.
 #[derive(
   Clone, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize,
 )]
