@@ -2128,7 +2128,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     if let Some(npm_resolver) = &self.npm_resolver {
       match specifier.scheme() {
         "npm" => {
-          match NpmPackageReqReference::from_specifier(&specifier) {
+          match NpmPackageReqReference::from_specifier(specifier) {
             Ok(package_ref) => {
               if self
                 .requested_npm_registry_info_loads
