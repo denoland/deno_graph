@@ -45,17 +45,12 @@ impl NpmPackageIdReference {
 
     fn parse_ref(input: &str) -> ParseResult<NpmPackageIdReference> {
       let (input, _) = tag("npm:")(input)?;
-      let after_npm_input = input;
-      // todo: remove this when extracting out of deno_ast
-      let (input, node_id) = parse_id(input)?;
-      if !node_id.peer_dependencies.is_empty() {
-        return ParseError::fail(after_npm_input, "Invalid name and version.");
-      }
+      let (input, id) = parse_id(input)?;
       let (input, maybe_sub_path) = maybe(sub_path)(input)?;
       Ok((
         input,
         NpmPackageIdReference {
-          id: node_id.id,
+          id,
           sub_path: maybe_sub_path.map(ToOwned::to_owned),
         },
       ))
@@ -89,6 +84,23 @@ impl NpmPackageIdReference {
   }
 }
 
+impl std::fmt::Display for NpmPackageIdReference {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    if let Some(sub_path) = &self.sub_path {
+      write!(f, "npm:{}/{}", self.id, sub_path)
+    } else {
+      write!(f, "npm:{}", self.id)
+    }
+  }
+}
+
+#[derive(Debug, Error)]
+#[error("Invalid npm package id reference '{text}'. {message}")]
+pub struct NpmPackageIdParseError {
+  message: String,
+  text: String,
+}
+
 #[derive(
   Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize,
 )]
@@ -97,13 +109,42 @@ pub struct NpmPackageId {
   pub version: Version,
 }
 
+impl std::fmt::Display for NpmPackageId {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}@{}", self.name, self.version)
+  }
+}
+
 impl NpmPackageId {
+  #[allow(clippy::should_implement_trait)]
+  pub fn from_str(id: &str) -> Result<Self, NpmPackageIdParseError> {
+    monch::with_failure_handling(parse_id)(id).map_err(|err| {
+      NpmPackageIdParseError {
+        message: format!("{err:#}"),
+        text: id.to_string(),
+      }
+    })
+  }
+
   pub fn scope(&self) -> Option<&str> {
     if self.name.starts_with('@') && self.name.contains('/') {
       self.name.split('/').next()
     } else {
       None
     }
+  }
+}
+
+fn parse_id(input: &str) -> monch::ParseResult<NpmPackageId> {
+  use monch::*;
+
+  let original_input = input;
+  // todo: remove this when extracting out of deno_ast
+  let (input, node_id) = parse_node_id(input)?;
+  if !node_id.peer_dependencies.is_empty() {
+    ParseError::fail(original_input, "Invalid name and version.")
+  } else {
+    Ok((input, node_id.id))
   }
 }
 
@@ -155,7 +196,7 @@ impl NpmPackageNodeId {
   pub fn from_serialized(
     id: &str,
   ) -> Result<Self, NpmPackageNodeIdDeserializationError> {
-    monch::with_failure_handling(parse_id)(id).map_err(|err| {
+    monch::with_failure_handling(parse_node_id)(id).map_err(|err| {
       NpmPackageNodeIdDeserializationError {
         message: format!("{err:#}"),
         text: id.to_string(),
@@ -170,7 +211,7 @@ impl NpmPackageNodeId {
   }
 }
 
-fn parse_id(text: &str) -> monch::ParseResult<NpmPackageNodeId> {
+fn parse_node_id(text: &str) -> monch::ParseResult<NpmPackageNodeId> {
   use monch::*;
 
   fn parse_name(input: &str) -> ParseResult<&str> {
