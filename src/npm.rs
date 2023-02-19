@@ -18,16 +18,16 @@ pub struct NpmPackageIdReferenceParseError {
   text: String,
 }
 
-/// A resolved npm package name and version with a potential subpath.
+/// A npm package name and version with a potential subpath.
 #[derive(
   Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize,
 )]
-pub struct NpmPackageIdReference {
-  pub id: NpmPackageId,
+pub struct NpmPackageNvReference {
+  pub nv: NpmPackageNv,
   pub sub_path: Option<String>,
 }
 
-impl NpmPackageIdReference {
+impl NpmPackageNvReference {
   pub fn from_specifier(
     specifier: &ModuleSpecifier,
   ) -> Result<Self, NpmPackageIdReferenceParseError> {
@@ -43,14 +43,14 @@ impl NpmPackageIdReference {
       Ok(("", input))
     }
 
-    fn parse_ref(input: &str) -> ParseResult<NpmPackageIdReference> {
+    fn parse_ref(input: &str) -> ParseResult<NpmPackageNvReference> {
       let (input, _) = tag("npm:")(input)?;
       let (input, id) = parse_id(input)?;
       let (input, maybe_sub_path) = maybe(sub_path)(input)?;
       Ok((
         input,
-        NpmPackageIdReference {
-          id,
+        NpmPackageNvReference {
+          nv: id,
           sub_path: maybe_sub_path.map(ToOwned::to_owned),
         },
       ))
@@ -65,15 +65,15 @@ impl NpmPackageIdReference {
   }
 
   pub fn as_specifier(&self) -> ModuleSpecifier {
-    let version_text = self.id.version.to_string();
+    let version_text = self.nv.version.to_string();
     let mut text = String::with_capacity(
-      4 + self.id.name.len()
+      4 + self.nv.name.len()
         + 1
         + version_text.len()
         + self.sub_path.as_ref().map(|p| p.len() + 1).unwrap_or(0),
     );
     text.push_str("npm:");
-    text.push_str(&self.id.name);
+    text.push_str(&self.nv.name);
     text.push('@');
     text.push_str(&version_text);
     if let Some(sub_path) = &self.sub_path {
@@ -84,42 +84,49 @@ impl NpmPackageIdReference {
   }
 }
 
-impl std::fmt::Display for NpmPackageIdReference {
+impl std::fmt::Display for NpmPackageNvReference {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     if let Some(sub_path) = &self.sub_path {
-      write!(f, "npm:{}/{}", self.id, sub_path)
+      write!(f, "npm:{}/{}", self.nv, sub_path)
     } else {
-      write!(f, "npm:{}", self.id)
+      write!(f, "npm:{}", self.nv)
     }
   }
 }
 
 #[derive(Debug, Error)]
-#[error("Invalid npm package id reference '{text}'. {message}")]
-pub struct NpmPackageIdParseError {
+#[error("Invalid npm package name and version '{text}'. {message}")]
+pub struct NpmPackageNvParseError {
   message: String,
   text: String,
 }
 
 #[derive(
-  Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize,
+  Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize,
 )]
-pub struct NpmPackageId {
+pub struct NpmPackageNv {
   pub name: String,
   pub version: Version,
 }
 
-impl std::fmt::Display for NpmPackageId {
+impl std::fmt::Debug for NpmPackageNv {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    // when debugging, it's easier to compare this
+    write!(f, "{}@{}", self.name, self.version)
+  }
+}
+
+impl std::fmt::Display for NpmPackageNv {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "{}@{}", self.name, self.version)
   }
 }
 
-impl NpmPackageId {
+impl NpmPackageNv {
   #[allow(clippy::should_implement_trait)]
-  pub fn from_str(id: &str) -> Result<Self, NpmPackageIdParseError> {
+  pub fn from_str(id: &str) -> Result<Self, NpmPackageNvParseError> {
     monch::with_failure_handling(parse_id)(id).map_err(|err| {
-      NpmPackageIdParseError {
+      NpmPackageNvParseError {
         message: format!("{err:#}"),
         text: id.to_string(),
       }
@@ -135,7 +142,7 @@ impl NpmPackageId {
   }
 }
 
-fn parse_id(input: &str) -> monch::ParseResult<NpmPackageId> {
+fn parse_id(input: &str) -> monch::ParseResult<NpmPackageNv> {
   use monch::*;
 
   fn parse_name(input: &str) -> ParseResult<&str> {
@@ -161,7 +168,7 @@ fn parse_id(input: &str) -> monch::ParseResult<NpmPackageId> {
   match Version::parse_from_npm(version) {
     Ok(version) => Ok((
       input,
-      NpmPackageId {
+      NpmPackageNv {
         name: name.to_string(),
         version,
       },
@@ -405,11 +412,11 @@ mod tests {
   #[test]
   fn npm_package_id_ref() {
     let package_id_ref =
-      NpmPackageIdReference::from_str("npm:package@1.2.3/test").unwrap();
+      NpmPackageNvReference::from_str("npm:package@1.2.3/test").unwrap();
     assert_eq!(
       package_id_ref,
-      NpmPackageIdReference {
-        id: NpmPackageId {
+      NpmPackageNvReference {
+        nv: NpmPackageNv {
           name: "package".to_string(),
           version: Version::parse_from_npm("1.2.3").unwrap(),
         },

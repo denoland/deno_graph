@@ -2,7 +2,7 @@
 
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
-use crate::npm::NpmPackageId;
+use crate::npm::NpmPackageNv;
 use crate::npm::NpmPackageReq;
 use crate::text_encoding::strip_bom_mut;
 
@@ -141,7 +141,7 @@ pub trait NpmResolver: fmt::Debug {
   ) -> BoxFuture<'static, Result<(), String>>;
 
   /// Resolves an npm package requirement to a resolved npm package identifier.
-  fn resolve_npm(&self, _package_req: &NpmPackageReq) -> Result<NpmPackageId>;
+  fn resolve_npm(&self, _package_req: &NpmPackageReq) -> Result<NpmPackageNv>;
 }
 
 pub fn load_data_url(

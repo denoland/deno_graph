@@ -13,8 +13,8 @@ use crate::ReferrerImports;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
-use crate::npm::NpmPackageId;
-use crate::npm::NpmPackageIdReference;
+use crate::npm::NpmPackageNv;
+use crate::npm::NpmPackageNvReference;
 use crate::npm::NpmPackageReqReference;
 use crate::source::*;
 
@@ -606,7 +606,7 @@ impl Module {
 #[serde(rename_all = "camelCase")]
 pub struct NpmModule {
   pub specifier: ModuleSpecifier,
-  pub package_id_reference: NpmPackageIdReference,
+  pub package_id_reference: NpmPackageNvReference,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1111,7 +1111,7 @@ pub struct ModuleGraph {
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
   pub imports: BTreeMap<ModuleSpecifier, GraphImport>,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
-  pub npm_packages: Vec<NpmPackageId>,
+  pub npm_packages: Vec<NpmPackageNv>,
   pub has_node_specifier: bool,
 }
 
@@ -2015,8 +2015,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 Ok(pkg_id) => {
                   specifier_resolutions
                     .insert(specifier.clone(), pkg_id.clone());
-                  let pkg_id_ref = NpmPackageIdReference {
-                    id: pkg_id,
+                  let pkg_id_ref = NpmPackageNvReference {
+                    nv: pkg_id,
                     sub_path: npm_ref.sub_path,
                   };
                   let resolved_specifier = pkg_id_ref.as_specifier();
