@@ -1237,6 +1237,22 @@ export function a(a) {
           {
             "dependencies": [
               {
+                "specifier": "./types.d.ts",
+                "type": {
+                  "specifier": "file:///a/types.d.ts",
+                  "span": {
+                    "start": {
+                      "line": 4,
+                      "character": 18
+                    },
+                    "end": {
+                      "line": 4,
+                      "character": 32
+                    }
+                  }
+                }
+              },
+              {
                 "specifier": "./other.ts",
                 "type": {
                   "specifier": "file:///a/other.ts",
@@ -1252,22 +1268,6 @@ export function a(a) {
                   }
                 }
               },
-              {
-                "specifier": "./types.d.ts",
-                "type": {
-                  "specifier": "file:///a/types.d.ts",
-                  "span": {
-                    "start": {
-                      "line": 4,
-                      "character": 18
-                    },
-                    "end": {
-                      "line": 4,
-                      "character": 32
-                    }
-                  }
-                }
-              }
             ],
             "kind": "esm",
             "mediaType": "JavaScript",
@@ -2309,6 +2309,22 @@ export function a(a) {
                 }
               },
               {
+                "specifier": "https://example.com/c",
+                "code": {
+                  "specifier": "https://example.com/c",
+                  "span": {
+                    "start": {
+                      "line": 4,
+                      "character": 31
+                    },
+                    "end": {
+                      "line": 4,
+                      "character": 54
+                    }
+                  }
+                }
+              },
+              {
                 "specifier": "./d.js",
                 "code": {
                   "specifier": "file:///a/d.js",
@@ -2324,22 +2340,6 @@ export function a(a) {
                   }
                 }
               },
-              {
-                "specifier": "https://example.com/c",
-                "code": {
-                  "specifier": "https://example.com/c",
-                  "span": {
-                    "start": {
-                      "line": 4,
-                      "character": 31
-                    },
-                    "end": {
-                      "line": 4,
-                      "character": 54
-                    }
-                  }
-                }
-              }
             ],
             "kind": "esm",
             "mediaType": "TypeScript",
@@ -2517,6 +2517,22 @@ export function a(a) {
                 "specifier": "./b.d.ts",
               },
               {
+                "specifier": "https://example.com/c",
+                "code": {
+                  "specifier": "https://example.com/c",
+                  "span": {
+                    "start": {
+                      "line": 4,
+                      "character": 31
+                    },
+                    "end": {
+                      "line": 4,
+                      "character": 54
+                    }
+                  }
+                }
+              },
+              {
                 "specifier": "./d.js",
                 "code": {
                   "specifier": "file:///a/d.js",
@@ -2532,22 +2548,6 @@ export function a(a) {
                   }
                 }
               },
-              {
-                "specifier": "https://example.com/c",
-                "code": {
-                  "specifier": "https://example.com/c",
-                  "span": {
-                    "start": {
-                      "line": 4,
-                      "character": 31
-                    },
-                    "end": {
-                      "line": 4,
-                      "character": 54
-                    }
-                  }
-                }
-              }
             ],
             "mediaType": "TypeScript",
             "kind": "esm",
@@ -2891,22 +2891,6 @@ export function a(a) {
       json!({
         "dependencies": [
           {
-            "specifier": "./other.ts",
-            "type": {
-              "specifier": "file:///a/other.ts",
-              "span": {
-                "start": {
-                  "line": 5,
-                  "character": 19,
-                },
-                "end": {
-                  "line": 5,
-                  "character": 31
-                }
-              }
-            }
-          },
-          {
             "specifier": "./types.d.ts",
             "type": {
               "specifier": "file:///a/types.d.ts",
@@ -2918,6 +2902,22 @@ export function a(a) {
                 "end": {
                   "line": 4,
                   "character": 32,
+                }
+              }
+            }
+          },
+          {
+            "specifier": "./other.ts",
+            "type": {
+              "specifier": "file:///a/other.ts",
+              "span": {
+                "start": {
+                  "line": 5,
+                  "character": 19,
+                },
+                "end": {
+                  "line": 5,
+                  "character": 31
                 }
               }
             }
@@ -3212,12 +3212,12 @@ export function a(a: A): B {
         "https://example.com/jsx-runtime.d.ts",
         "file:///a/test01.ts",
         "file:///a/test02.ts",
-        "file:///a/test03.ts",
-        "file:///a/test04.js",
-        "file:///a/test04.d.ts",
         "https://example.com/a.ts",
         "https://example.com/c",
         "https://example.com/c.ts",
+        "file:///a/test04.js",
+        "file:///a/test04.d.ts",
+        "file:///a/test03.ts",
       ]
     );
 
@@ -3237,10 +3237,10 @@ export function a(a: A): B {
       vec![
         "file:///a/test01.ts",
         "file:///a/test02.ts",
-        "file:///a/test04.js", // no types
         "https://example.com/a.ts",
         "https://example.com/c",
         "https://example.com/c.ts",
+        "file:///a/test04.js", // no types
       ]
     );
     // dynamic true
@@ -3259,11 +3259,11 @@ export function a(a: A): B {
       vec![
         "file:///a/test01.ts",
         "file:///a/test02.ts",
-        "file:///a/test03.ts",
-        "file:///a/test04.js",
         "https://example.com/a.ts",
         "https://example.com/c",
         "https://example.com/c.ts",
+        "file:///a/test04.js",
+        "file:///a/test03.ts",
       ]
     );
 
@@ -3283,10 +3283,10 @@ export function a(a: A): B {
       vec![
         "file:///a/test01.ts",
         "file:///a/test02.ts",
-        "file:///a/test04.js",
         "https://example.com/a.ts",
         "https://example.com/c",
         "https://example.com/c.ts",
+        "file:///a/test04.js",
       ]
     );
 
@@ -3307,10 +3307,10 @@ export function a(a: A): B {
         "https://example.com/jsx-runtime",
         "file:///a/test01.ts",
         "file:///a/test02.ts",
-        "file:///a/test04.js",
         "https://example.com/a.ts",
         "https://example.com/c",
         "https://example.com/c.ts",
+        "file:///a/test04.js",
       ]
     );
 
@@ -3332,11 +3332,11 @@ export function a(a: A): B {
         "https://example.com/jsx-runtime.d.ts",
         "file:///a/test01.ts",
         "file:///a/test02.ts",
-        "file:///a/test04.js",
-        "file:///a/test04.d.ts",
         "https://example.com/a.ts",
         "https://example.com/c",
         "https://example.com/c.ts",
+        "file:///a/test04.js",
+        "file:///a/test04.d.ts",
       ]
     );
   }

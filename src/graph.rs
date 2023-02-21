@@ -29,6 +29,7 @@ use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
 use futures::FutureExt;
+use indexmap::IndexMap;
 use serde::ser::SerializeMap;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
@@ -639,10 +640,10 @@ impl JsonModule {
 #[serde(rename_all = "camelCase")]
 pub struct EsmModule {
   #[serde(
-    skip_serializing_if = "BTreeMap::is_empty",
+    skip_serializing_if = "IndexMap::is_empty",
     serialize_with = "serialize_dependencies"
   )]
-  pub dependencies: BTreeMap<String, Dependency>,
+  pub dependencies: IndexMap<String, Dependency>,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
   #[serde(rename = "size", serialize_with = "serialize_source")]
@@ -719,7 +720,7 @@ fn to_result<'a>(
 pub struct GraphImport {
   /// A map of resolved dependencies, where the key is the value originally
   /// provided for the import and the value is the resolved dependency.
-  pub dependencies: BTreeMap<String, Dependency>,
+  pub dependencies: IndexMap<String, Dependency>,
 }
 
 impl GraphImport {
@@ -2400,7 +2401,7 @@ impl<'a> Serialize for SerializableDependency<'a> {
   }
 }
 
-struct SerializableDependencies<'a>(&'a BTreeMap<String, Dependency>);
+struct SerializableDependencies<'a>(&'a IndexMap<String, Dependency>);
 
 impl<'a> Serialize for SerializableDependencies<'a> {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -2412,7 +2413,7 @@ impl<'a> Serialize for SerializableDependencies<'a> {
 }
 
 fn serialize_dependencies<S>(
-  dependencies: &BTreeMap<String, Dependency>,
+  dependencies: &IndexMap<String, Dependency>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
