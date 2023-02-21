@@ -607,7 +607,7 @@ impl Module {
 #[serde(rename_all = "camelCase")]
 pub struct NpmModule {
   pub specifier: ModuleSpecifier,
-  pub package_id_reference: NpmPackageNvReference,
+  pub nv_reference: NpmPackageNvReference,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -2031,7 +2031,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     resolved_specifier.clone(),
                     ModuleSlot::Module(Module::Npm(NpmModule {
                       specifier: resolved_specifier,
-                      package_id_reference: pkg_id_ref,
+                      nv_reference: pkg_id_ref,
                     })),
                   );
                 }
