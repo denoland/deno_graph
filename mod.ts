@@ -25,7 +25,6 @@ import type {
   LoadResponse,
   ModuleGraphJson,
   ModuleJson,
-  ModuleKind,
   TypesDependency,
 } from "./lib/types.d.ts";
 
