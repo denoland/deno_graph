@@ -17,7 +17,6 @@ use deno_graph::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
 use deno_graph::BuildOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
-use deno_graph::ModuleKind;
 use deno_graph::ModuleSpecifier;
 use deno_graph::Range;
 use deno_graph::ReferrerImports;
@@ -244,6 +243,7 @@ pub async fn js_create_graph(
       BuildOptions {
         is_dynamic: false,
         resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+        npm_resolver: None,
         module_analyzer: None,
         imports,
         reporter: None,
@@ -286,14 +286,10 @@ pub fn js_parse_module(
   } else {
     None
   };
-  let maybe_kind: Option<ModuleKind> =
-    serde_wasm_bindgen::from_value(maybe_kind)
-      .map_err(|err| js_sys::Error::new(&err.to_string()))?;
   match deno_graph::parse_module(
     &specifier,
     maybe_headers.as_ref(),
     content.into(),
-    maybe_kind,
     maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
     None,
   ) {

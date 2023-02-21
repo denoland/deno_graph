@@ -12,7 +12,7 @@ use anyhow::Result;
 use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
 use futures::future;
-use futures::future::BoxFuture;
+use futures::future::LocalBoxFuture;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -63,7 +63,7 @@ pub enum LoadResponse {
 }
 
 pub type LoadResult = Result<Option<LoadResponse>>;
-pub type LoadFuture = BoxFuture<'static, LoadResult>;
+pub type LoadFuture = LocalBoxFuture<'static, LoadResult>;
 
 /// A trait which allows asynchronous loading of source files into a module
 /// graph in a thread safe way as well as a way to provide additional meta data
@@ -138,7 +138,7 @@ pub trait NpmResolver: fmt::Debug {
   fn load_and_cache_npm_package_info(
     &self,
     _package_name: &str,
-  ) -> BoxFuture<'static, Result<(), String>>;
+  ) -> LocalBoxFuture<'static, Result<(), String>>;
 
   /// Resolves an npm package requirement to a resolved npm package identifier.
   fn resolve_npm(&self, _package_req: &NpmPackageReq) -> Result<NpmPackageNv>;

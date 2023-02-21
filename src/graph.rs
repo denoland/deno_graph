@@ -24,7 +24,7 @@ use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
-use futures::future::BoxFuture;
+use futures::future::LocalBoxFuture;
 use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
@@ -552,7 +552,7 @@ fn is_media_type_unknown(media_type: &MediaType) -> bool {
 #[serde(tag = "kind")]
 pub enum Module {
   Esm(EsmModule),
-  // todo(THIS PR): open an issue for removing this when updating the --json output for 2.0
+  // todo(#239): remove this when updating the --json output for 2.0
   #[serde(rename = "asserted")]
   Json(JsonModule),
   Npm(NpmModule),
@@ -602,7 +602,7 @@ impl Module {
   }
 }
 
-/// An npm module entrypoint.
+/// An npm package entrypoint.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NpmModule {
@@ -610,6 +610,10 @@ pub struct NpmModule {
   pub nv_reference: NpmPackageNvReference,
 }
 
+/// Represents a module which is not statically analyzed and is only available
+/// at runtime. It is up to the implementor to ensure that the module is
+/// loaded and available as a dependency. The module does not contain source
+/// code and will have no dependencies.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalModule {
@@ -624,8 +628,8 @@ pub struct JsonModule {
   pub maybe_cache_info: Option<CacheInfo>,
   #[serde(rename = "size", serialize_with = "serialize_source")]
   pub source: Arc<str>,
-  // todo(THIS PR): This will always be MediaType::Json, so open an issue about removing this
-  // from the --json output and this field because it's redundant
+  // todo(#240): This will always be MediaType::Json, but it's currently
+  // used in the --json output. It's redundant though.
   pub media_type: MediaType,
 }
 
@@ -1792,7 +1796,7 @@ impl Default for GraphKind {
 }
 
 type LoadWithSpecifierFuture =
-  BoxFuture<'static, (ModuleSpecifier, Option<Range>, LoadResult)>;
+  LocalBoxFuture<'static, (ModuleSpecifier, Option<Range>, LoadResult)>;
 
 #[derive(PartialEq, Eq, Hash)]
 pub(crate) struct AssertTypeWithRange {
@@ -1810,7 +1814,7 @@ struct Builder<'a, 'graph> {
   pending: FuturesOrdered<LoadWithSpecifierFuture>,
   requested_npm_registry_info_loads: HashSet<String>,
   pending_npm_registry_info_loads:
-    FuturesUnordered<BoxFuture<'static, (String, Result<(), String>)>>,
+    FuturesUnordered<LocalBoxFuture<'static, (String, Result<(), String>)>>,
   pending_npm_specifiers:
     Vec<(ModuleSpecifier, NpmPackageReqReference, Option<Range>)>,
   pending_specifiers:
@@ -2435,6 +2439,12 @@ impl<'a> Serialize for SerializableModuleSlot<'a> {
     S: Serializer,
   {
     match self.1 {
+      ModuleSlot::Module(Module::Npm(npm)) => {
+        let mut state = serializer.serialize_struct("Module", 2)?;
+        state.serialize_field("kind", "npm")?;
+        state.serialize_field("specifier", &npm.specifier)?;
+        state.end()
+      }
       ModuleSlot::Module(module) => Serialize::serialize(module, serializer),
       ModuleSlot::Err(err) => {
         let mut state = serializer.serialize_struct("ModuleSlot", 2)?;
