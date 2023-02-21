@@ -103,7 +103,6 @@ export type ModuleKind =
   | "asserted"
   | "esm"
   | "npm"
-  | "json"
   | "external";
 
 export interface DependencyJson {
