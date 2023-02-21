@@ -2462,14 +2462,8 @@ impl<'a> Serialize for SerializableModules<'a> {
   where
     S: Serializer,
   {
-    let mut seq = serializer.serialize_seq(None)?;
+    let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
     for (specifier, slot) in self.0.iter() {
-      if matches!(
-        slot,
-        ModuleSlot::Module(Module::Npm(_) | Module::External(_))
-      ) {
-        continue; // skip npm and node: specifier output in the json for now
-      }
       let serializeable_module_slot = SerializableModuleSlot(specifier, slot);
       seq.serialize_element(&serializeable_module_slot)?;
     }
