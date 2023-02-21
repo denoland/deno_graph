@@ -137,7 +137,7 @@ pub trait NpmResolver: fmt::Debug {
   /// afterwards.
   fn load_and_cache_npm_package_info(
     &self,
-    _package_name: String,
+    _package_name: &str,
   ) -> BoxFuture<'static, Result<(), String>>;
 
   /// Resolves an npm package requirement to a resolved npm package identifier.

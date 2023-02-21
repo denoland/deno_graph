@@ -2136,8 +2136,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               {
                 // request to load
                 let package_name = package_ref.req.name.clone();
-                let fut = npm_resolver
-                  .load_and_cache_npm_package_info(package_name.clone());
+                let fut =
+                  npm_resolver.load_and_cache_npm_package_info(&package_name);
                 self
                   .pending_npm_registry_info_loads
                   .push(Box::pin(async move { (package_name, fut.await) }));
