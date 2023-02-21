@@ -263,7 +263,6 @@ pub fn js_parse_module(
   maybe_default_jsx_import_source: Option<String>,
   maybe_jsx_import_source_module: Option<String>,
   content: String,
-  maybe_kind: JsValue,
   maybe_resolve: Option<js_sys::Function>,
   maybe_resolve_types: Option<js_sys::Function>,
 ) -> Result<JsValue, JsValue> {

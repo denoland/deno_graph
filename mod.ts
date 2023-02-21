@@ -196,7 +196,6 @@ export function parseModule(
     headers,
     defaultJsxImportSource,
     jsxImportSourceModule,
-    kind,
     resolve,
     resolveTypes,
   } = options;
@@ -213,7 +212,6 @@ export function parseModule(
     defaultJsxImportSource,
     jsxImportSourceModule,
     content,
-    kind,
     resolve,
     resolveTypes,
   ) as ModuleJson;
