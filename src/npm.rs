@@ -12,8 +12,8 @@ use crate::semver::Version;
 use crate::semver::VersionReq;
 
 #[derive(Debug, Error)]
-#[error("Invalid npm package id reference '{text}'. {message}")]
-pub struct NpmPackageIdReferenceParseError {
+#[error("Invalid npm package name and version reference '{text}'. {message}")]
+pub struct NpmPackageNvReferenceParseError {
   message: String,
   text: String,
 }
@@ -30,12 +30,12 @@ pub struct NpmPackageNvReference {
 impl NpmPackageNvReference {
   pub fn from_specifier(
     specifier: &ModuleSpecifier,
-  ) -> Result<Self, NpmPackageIdReferenceParseError> {
+  ) -> Result<Self, NpmPackageNvReferenceParseError> {
     Self::from_str(specifier.as_str())
   }
 
   #[allow(clippy::should_implement_trait)]
-  pub fn from_str(id: &str) -> Result<Self, NpmPackageIdReferenceParseError> {
+  pub fn from_str(nv: &str) -> Result<Self, NpmPackageNvReferenceParseError> {
     use monch::*;
 
     fn sub_path(input: &str) -> ParseResult<&str> {
@@ -45,21 +45,21 @@ impl NpmPackageNvReference {
 
     fn parse_ref(input: &str) -> ParseResult<NpmPackageNvReference> {
       let (input, _) = tag("npm:")(input)?;
-      let (input, id) = parse_id(input)?;
+      let (input, nv) = parse_nv(input)?;
       let (input, maybe_sub_path) = maybe(sub_path)(input)?;
       Ok((
         input,
         NpmPackageNvReference {
-          nv: id,
+          nv,
           sub_path: maybe_sub_path.map(ToOwned::to_owned),
         },
       ))
     }
 
-    with_failure_handling(parse_ref)(id).map_err(|err| {
-      NpmPackageIdReferenceParseError {
+    with_failure_handling(parse_ref)(nv).map_err(|err| {
+      NpmPackageNvReferenceParseError {
         message: format!("{err:#}"),
-        text: id.to_string(),
+        text: nv.to_string(),
       }
     })
   }
@@ -124,11 +124,11 @@ impl std::fmt::Display for NpmPackageNv {
 
 impl NpmPackageNv {
   #[allow(clippy::should_implement_trait)]
-  pub fn from_str(id: &str) -> Result<Self, NpmPackageNvParseError> {
-    monch::with_failure_handling(parse_id)(id).map_err(|err| {
+  pub fn from_str(nv: &str) -> Result<Self, NpmPackageNvParseError> {
+    monch::with_failure_handling(parse_nv)(nv).map_err(|err| {
       NpmPackageNvParseError {
         message: format!("{err:#}"),
-        text: id.to_string(),
+        text: nv.to_string(),
       }
     })
   }
@@ -142,7 +142,7 @@ impl NpmPackageNv {
   }
 }
 
-fn parse_id(input: &str) -> monch::ParseResult<NpmPackageNv> {
+fn parse_nv(input: &str) -> monch::ParseResult<NpmPackageNv> {
   use monch::*;
 
   fn parse_name(input: &str) -> ParseResult<&str> {
@@ -410,11 +410,11 @@ mod tests {
   use super::*;
 
   #[test]
-  fn npm_package_id_ref() {
-    let package_id_ref =
+  fn npm_package_nv_ref() {
+    let package_nv_ref =
       NpmPackageNvReference::from_str("npm:package@1.2.3/test").unwrap();
     assert_eq!(
-      package_id_ref,
+      package_nv_ref,
       NpmPackageNvReference {
         nv: NpmPackageNv {
           name: "package".to_string(),
@@ -424,7 +424,7 @@ mod tests {
       }
     );
     assert_eq!(
-      package_id_ref.as_specifier().as_str(),
+      package_nv_ref.as_specifier().as_str(),
       "npm:package@1.2.3/test"
     );
   }
