@@ -2001,6 +2001,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
 
+    // todo(dsherret): refactor this out to a separate struct
+    // that handles updating the graph with this information
+
     // Now resolve any npm package requirements
     let capacity = self.pending_npm_specifiers.len();
     let mut pending_npm_by_name = HashMap::with_capacity(capacity);
@@ -2191,14 +2194,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         return;
       }
 
-      match npm_resolver.resolve_builtin_node_module_name(specifier) {
+      match npm_resolver.resolve_builtin_node_module(specifier) {
         Ok(Some(module_name)) => {
           self.graph.has_node_specifier = true;
           self.graph.module_slots.insert(
             specifier.clone(),
             ModuleSlot::Module(Module::Node(BuiltInNodeModule {
               specifier: specifier.clone(),
-              module_name: module_name,
+              module_name,
             })),
           );
           return;

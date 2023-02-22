@@ -135,7 +135,7 @@ pub struct UnknownBuiltInNodeModuleError {
 
 pub trait NpmResolver: fmt::Debug {
   /// Gets the builtin node module name from the specifier (ex. "node:fs" -> "fs").
-  fn resolve_builtin_node_module_name(
+  fn resolve_builtin_node_module(
     &self,
     specifier: &ModuleSpecifier,
   ) -> Result<Option<String>, UnknownBuiltInNodeModuleError>;
