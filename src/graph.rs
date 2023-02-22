@@ -582,6 +582,7 @@ impl Module {
 #[serde(rename_all = "camelCase")]
 pub struct NpmModule {
   pub specifier: ModuleSpecifier,
+  #[serde(skip_serializing)]
   pub nv_reference: NpmPackageNvReference,
 }
 
@@ -1432,30 +1433,18 @@ fn serialize_module_slots<S>(
 where
   S: Serializer,
 {
-  #[derive(Serialize)]
-  struct ModuleSlotError<'a> {
-    specifier: &'a ModuleSpecifier,
-    error: String,
-  }
   let mut seq = serializer.serialize_seq(Some(module_slots.len()))?;
   for (specifier, slot) in module_slots.iter() {
     match slot {
-      ModuleSlot::Module(Module::Npm(npm)) => {
-        seq.serialize_element(&serde_json::json!({
-          "kind": "npm",
-          "specifier": &npm.specifier,
-        }))?
-      }
       ModuleSlot::Module(module) => seq.serialize_element(module)?,
-      ModuleSlot::Err(err) => seq.serialize_element(&ModuleSlotError {
-        specifier,
-        error: err.to_string(),
-      })?,
-      ModuleSlot::Pending => seq.serialize_element(&ModuleSlotError {
-        specifier,
-        error: "[INTERNAL ERROR] A pending module load never completed."
-          .to_string(),
-      })?,
+      ModuleSlot::Err(err) => seq.serialize_element(&serde_json::json!({
+        "specifier": specifier,
+        "error": err.to_string(),
+      }))?,
+      ModuleSlot::Pending => seq.serialize_element(&serde_json::json!({
+        "specifier": specifier,
+        "error": "[INTERNAL ERROR] A pending module load never completed.",
+      }))?,
     };
   }
   seq.end()
