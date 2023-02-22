@@ -66,12 +66,12 @@ impl NpmPackageNvReference {
 
   pub fn as_specifier(&self) -> ModuleSpecifier {
     let version_text = self.nv.version.to_string();
-    let mut text = String::with_capacity(
-      4 + self.nv.name.len()
-        + 1
-        + version_text.len()
-        + self.sub_path.as_ref().map(|p| p.len() + 1).unwrap_or(0),
-    );
+    let capacity = 4
+      + self.nv.name.len()
+      + 1
+      + version_text.len()
+      + self.sub_path.as_ref().map(|p| p.len() + 1).unwrap_or(0);
+    let mut text = String::with_capacity(capacity);
     text.push_str("npm:");
     text.push_str(&self.nv.name);
     text.push('@');
@@ -80,6 +80,7 @@ impl NpmPackageNvReference {
       text.push('/');
       text.push_str(sub_path);
     }
+    debug_assert_eq!(text.len(), capacity);
     ModuleSpecifier::parse(&text).unwrap()
   }
 }
@@ -427,6 +428,21 @@ mod tests {
       package_nv_ref.as_specifier().as_str(),
       "npm:package@1.2.3/test"
     );
+
+    // no path
+    let package_nv_ref =
+      NpmPackageNvReference::from_str("npm:package@1.2.3").unwrap();
+    assert_eq!(
+      package_nv_ref,
+      NpmPackageNvReference {
+        nv: NpmPackageNv {
+          name: "package".to_string(),
+          version: Version::parse_from_npm("1.2.3").unwrap(),
+        },
+        sub_path: None
+      }
+    );
+    assert_eq!(package_nv_ref.as_specifier().as_str(), "npm:package@1.2.3");
   }
 
   #[test]

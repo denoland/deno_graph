@@ -2,6 +2,8 @@
 
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
+use crate::npm::NpmPackageNv;
+use crate::npm::NpmPackageReq;
 use crate::text_encoding::strip_bom_mut;
 
 use anyhow::anyhow;
@@ -10,14 +12,14 @@ use anyhow::Result;
 use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
 use futures::future;
-use futures::future::Future;
+use futures::future::LocalBoxFuture;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
-use std::pin::Pin;
 use std::sync::Arc;
+use thiserror::Error;
 
 pub const DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
 
@@ -62,7 +64,7 @@ pub enum LoadResponse {
 }
 
 pub type LoadResult = Result<Option<LoadResponse>>;
-pub type LoadFuture = Pin<Box<dyn Future<Output = LoadResult> + 'static>>;
+pub type LoadFuture = LocalBoxFuture<'static, LoadResult>;
 
 /// A trait which allows asynchronous loading of source files into a module
 /// graph in a thread safe way as well as a way to provide additional meta data
@@ -72,6 +74,7 @@ pub trait Loader {
   fn get_cache_info(&self, _specifier: &ModuleSpecifier) -> Option<CacheInfo> {
     None
   }
+
   /// A method that given a specifier that asynchronously returns a response
   fn load(
     &mut self,
@@ -121,6 +124,32 @@ pub trait Resolver: fmt::Debug {
   ) -> Result<Option<(ModuleSpecifier, Option<Range>)>> {
     Ok(None)
   }
+}
+
+#[derive(Error, Debug)]
+#[error("Unknown built-in \"node:\" module: {module_name}")]
+pub struct UnknownBuiltInNodeModuleError {
+  /// Name of the invalid module.
+  pub module_name: String,
+}
+
+pub trait NpmResolver: fmt::Debug {
+  /// Gets the builtin node module name from the specifier (ex. "node:fs" -> "fs").
+  fn resolve_builtin_node_module(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Result<Option<String>, UnknownBuiltInNodeModuleError>;
+
+  /// This tells the implementation to asynchronously load within itself the
+  /// npm registry package information so that synchronous resolution can occur
+  /// afterwards.
+  fn load_and_cache_npm_package_info(
+    &self,
+    _package_name: &str,
+  ) -> LocalBoxFuture<'static, Result<(), String>>;
+
+  /// Resolves an npm package requirement to a resolved npm package identifier.
+  fn resolve_npm(&self, _package_req: &NpmPackageReq) -> Result<NpmPackageNv>;
 }
 
 pub fn load_data_url(
