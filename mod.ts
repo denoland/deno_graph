@@ -25,7 +25,6 @@ import type {
   LoadResponse,
   ModuleGraphJson,
   ModuleJson,
-  ModuleKind,
   TypesDependency,
 } from "./lib/types.d.ts";
 
@@ -159,8 +158,6 @@ export interface ParseModuleOptions {
   /** When identifying a `@jsxImportSource` pragma, what module name will be
    * appended to the import source. This defaults to `jsx-runtime`. */
   jsxImportSourceModule?: string;
-  /** The kind of module to set on the resulting parsed module. */
-  kind?: ModuleKind;
   /** An optional callback that allows the default resolution logic of the
    * module graph to be "overridden". This is intended to allow items like an
    * import map to be used with the module graph. The callback takes the string
@@ -198,7 +195,6 @@ export function parseModule(
     headers,
     defaultJsxImportSource,
     jsxImportSourceModule,
-    kind,
     resolve,
     resolveTypes,
   } = options;
@@ -215,7 +211,6 @@ export function parseModule(
     defaultJsxImportSource,
     jsxImportSourceModule,
     content,
-    kind,
     resolve,
     resolveTypes,
   ) as ModuleJson;

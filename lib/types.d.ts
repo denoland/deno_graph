@@ -91,13 +91,12 @@ export interface TypesDependencyJson {
   dependency: ResolvedDependency;
 }
 
-/** The kind of module.
- *
- * Dependency analysis is not performed for "script" modules currently. */
+/** The kind of module. */
 export type ModuleKind =
+  | "asserted"
   | "esm"
-  | "external"
-  | "script";
+  | "npm"
+  | "external";
 
 export type ImportKind =
   | "tsType"
@@ -132,6 +131,8 @@ export interface DependencyJson {
   isDynamic?: true;
   imports?: ImportJson[];
 }
+
+// todo(dsherret): split this up into separate types based on the "kind"
 
 export interface ModuleJson extends CacheInfo {
   /** The string URL of the module. */

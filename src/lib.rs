@@ -9,7 +9,6 @@ pub mod semver;
 pub mod source;
 mod text_encoding;
 
-pub use graph::ModuleKind;
 use source::Resolver;
 
 use std::collections::HashMap;
@@ -37,8 +36,10 @@ pub use ast::ParsedSourceStore;
 pub use deno_ast::MediaType;
 pub use graph::BuildOptions;
 pub use graph::Dependency;
+pub use graph::EsmModule;
 pub use graph::GraphImport;
 pub use graph::GraphKind;
+pub use graph::JsonModule;
 pub use graph::Module;
 pub use graph::ModuleEntryRef;
 pub use graph::ModuleGraph;
@@ -69,7 +70,6 @@ pub fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<str>,
-  maybe_kind: Option<ModuleKind>,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
 ) -> Result<Module, ModuleGraphError> {
@@ -81,7 +81,6 @@ pub fn parse_module(
     maybe_headers,
     content,
     None,
-    maybe_kind,
     maybe_resolver,
     module_analyzer,
     true,
@@ -91,14 +90,12 @@ pub fn parse_module(
 /// Parse an individual module from an AST, returning the module.
 pub fn parse_module_from_ast(
   specifier: &ModuleSpecifier,
-  kind: ModuleKind,
   maybe_headers: Option<&HashMap<String, String>>,
   parsed_source: &deno_ast::ParsedSource,
   maybe_resolver: Option<&dyn Resolver>,
-) -> Module {
-  graph::parse_module_from_module_info(
+) -> EsmModule {
+  graph::parse_esm_module_from_module_info(
     specifier,
-    kind,
     parsed_source.media_type(),
     maybe_headers,
     DefaultModuleAnalyzer::module_info(parsed_source),
@@ -109,7 +106,6 @@ pub fn parse_module_from_ast(
 
 #[cfg(test)]
 mod tests {
-  use crate::graph::ModuleSlot;
   use crate::graph::ResolutionResolved;
 
   use super::*;
@@ -186,27 +182,28 @@ mod tests {
     assert!(
       !graph.contains(&ModuleSpecifier::parse("file:///a/test03.ts").unwrap())
     );
-    let maybe_root_module = graph.module_slots.get(&root_specifier);
-    assert!(maybe_root_module.is_some());
-    let root_module_slot = maybe_root_module.unwrap();
-    if let ModuleSlot::Module(module) = root_module_slot {
-      assert_eq!(module.dependencies.len(), 1);
-      let maybe_dependency = module.dependencies.get("./test02.ts");
-      assert!(maybe_dependency.is_some());
-      let dependency_specifier =
-        ModuleSpecifier::parse("file:///a/test02.ts").unwrap();
-      let dependency = maybe_dependency.unwrap();
-      assert!(!dependency.is_dynamic);
-      assert_eq!(
-        dependency.maybe_code.ok().unwrap().specifier,
-        dependency_specifier
-      );
-      assert_eq!(dependency.maybe_type, Resolution::None);
-      let maybe_dep_module_slot = graph.get(&dependency_specifier);
-      assert!(maybe_dep_module_slot.is_some());
-    } else {
-      panic!("unexpected module slot");
-    }
+    let module = graph
+      .module_slots
+      .get(&root_specifier)
+      .unwrap()
+      .module()
+      .unwrap()
+      .esm()
+      .unwrap();
+    assert_eq!(module.dependencies.len(), 1);
+    let maybe_dependency = module.dependencies.get("./test02.ts");
+    assert!(maybe_dependency.is_some());
+    let dependency_specifier =
+      ModuleSpecifier::parse("file:///a/test02.ts").unwrap();
+    let dependency = maybe_dependency.unwrap();
+    assert!(!dependency.is_dynamic);
+    assert_eq!(
+      dependency.maybe_code.ok().unwrap().specifier,
+      dependency_specifier
+    );
+    assert_eq!(dependency.maybe_type, Resolution::None);
+    let maybe_dep_module_slot = graph.get(&dependency_specifier);
+    assert!(maybe_dep_module_slot.is_some());
   }
 
   #[tokio::test]
@@ -392,7 +389,7 @@ mod tests {
         "modules": [
           {
             "size": 18,
-            "kind": "esm",
+            "kind": "asserted",
             "mediaType": "Json",
             "specifier": "file:///a/test.json"
           }
@@ -658,7 +655,7 @@ console.log(a);
         "roots": ["file:///a/test01.ts"],
         "modules": [
           {
-            "kind": "esm",
+            "kind": "asserted",
             "size": 125,
             "mediaType": "Json",
             "specifier": "file:///a/deno.json",
@@ -783,7 +780,7 @@ console.log(a);
         &config_specifier,
         false
       ),
-      Some(&ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
+      Some(ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
     );
     assert_eq!(
       graph.resolve_dependency(
@@ -792,8 +789,7 @@ console.log(a);
         true
       ),
       Some(
-        &ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts")
-          .unwrap()
+        ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts").unwrap()
       )
     );
   }
@@ -826,14 +822,15 @@ console.log(a);
       .await;
     assert_eq!(graph.module_slots.len(), 1);
     assert_eq!(graph.roots, vec![root_specifier.clone()]);
-    let maybe_root_module = graph.module_slots.get(&root_specifier);
-    assert!(maybe_root_module.is_some());
-    let root_module_slot = maybe_root_module.unwrap();
-    if let ModuleSlot::Module(module) = root_module_slot {
-      assert_eq!(module.media_type, MediaType::TypeScript);
-    } else {
-      panic!("unspected module slot");
-    }
+    let module = graph
+      .module_slots
+      .get(&root_specifier)
+      .unwrap()
+      .module()
+      .unwrap()
+      .esm()
+      .unwrap();
+    assert_eq!(module.media_type, MediaType::TypeScript);
   }
 
   #[tokio::test]
@@ -1131,6 +1128,22 @@ export function a(a) {
           {
             "dependencies": [
               {
+                "specifier": "./types.d.ts",
+                "type": {
+                  "specifier": "file:///a/types.d.ts",
+                  "span": {
+                    "start": {
+                      "line": 4,
+                      "character": 18
+                    },
+                    "end": {
+                      "line": 4,
+                      "character": 32
+                    }
+                  }
+                }
+              },
+              {
                 "specifier": "./other.ts",
                 "type": {
                   "specifier": "file:///a/other.ts",
@@ -1146,22 +1159,6 @@ export function a(a) {
                   }
                 }
               },
-              {
-                "specifier": "./types.d.ts",
-                "type": {
-                  "specifier": "file:///a/types.d.ts",
-                  "span": {
-                    "start": {
-                      "line": 4,
-                      "character": 18
-                    },
-                    "end": {
-                      "line": 4,
-                      "character": 32
-                    }
-                  }
-                }
-              }
             ],
             "kind": "esm",
             "mediaType": "JavaScript",
@@ -1348,10 +1345,8 @@ export function a(a) {
       .await;
     assert_eq!(graph.module_slots.len(), 3);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
-    let maybe_module = graph.get(&data_specifier);
-    assert!(maybe_module.is_some());
-    let module = maybe_module.unwrap();
-    let source: &str = module.maybe_source.as_ref().unwrap();
+    let module = graph.get(&data_specifier).unwrap().esm().unwrap();
+    let source: &str = &module.source;
     assert_eq!(source, r#"export * from "https://example.com/c.ts";"#,);
   }
 
@@ -1395,9 +1390,7 @@ export function a(a) {
         },
       )
       .await;
-    let maybe_module = graph.get(&graph.roots[0]);
-    assert!(maybe_module.is_some());
-    let module = maybe_module.unwrap();
+    let module = graph.get(&graph.roots[0]).unwrap().esm().unwrap();
     let maybe_dep = module.dependencies.get("b");
     assert!(maybe_dep.is_some());
     let dep = maybe_dep.unwrap();
@@ -1457,9 +1450,7 @@ export function a(a) {
         },
       )
       .await;
-    let maybe_module = graph.get(&graph.roots[0]);
-    assert!(maybe_module.is_some());
-    let module = maybe_module.unwrap();
+    let module = graph.get(&graph.roots[0]).unwrap().esm().unwrap();
     let types_dep = module.maybe_types_dependency.as_ref().unwrap();
     assert_eq!(types_dep.specifier, "file:///a.js");
     assert_eq!(
@@ -1546,25 +1537,25 @@ export function a(a) {
         ],
         "modules": [
           {
-            "kind": "esm",
+            "kind": "asserted",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/a.json"
           },
           {
-            "kind": "esm",
+            "kind": "asserted",
             "size": 7,
             "mediaType": "Json",
             "specifier": "file:///a/b.json"
           },
           {
-            "kind": "esm",
+            "kind": "asserted",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/c.json"
           },
           {
-            "kind": "esm",
+            "kind": "asserted",
             "size": 7,
             "mediaType": "Json",
             "specifier": "file:///a/d.json"
@@ -1765,7 +1756,7 @@ export function a(a) {
         ],
         "modules": [
           {
-            "kind": "esm",
+            "kind": "asserted",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/a.json"
@@ -1879,13 +1870,13 @@ export function a(a) {
         ],
         "modules": [
           {
-            "kind": "esm",
+            "kind": "asserted",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/a.json",
           },
           {
-            "kind": "esm",
+            "kind": "asserted",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/b.json"
@@ -1897,7 +1888,7 @@ export function a(a) {
             "specifier": "file:///a/c.js",
           },
           {
-            "kind": "esm",
+            "kind": "asserted",
             "size": 9,
             "mediaType": "Json",
             "specifier": "file:///a/d.json",
@@ -2367,6 +2358,22 @@ export function a(a) {
                 }
               },
               {
+                "specifier": "https://example.com/c",
+                "code": {
+                  "specifier": "https://example.com/c",
+                  "span": {
+                    "start": {
+                      "line": 4,
+                      "character": 31
+                    },
+                    "end": {
+                      "line": 4,
+                      "character": 54
+                    }
+                  }
+                }
+              },
+              {
                 "specifier": "./d.js",
                 "code": {
                   "specifier": "file:///a/d.js",
@@ -2382,22 +2389,6 @@ export function a(a) {
                   }
                 }
               },
-              {
-                "specifier": "https://example.com/c",
-                "code": {
-                  "specifier": "https://example.com/c",
-                  "span": {
-                    "start": {
-                      "line": 4,
-                      "character": 31
-                    },
-                    "end": {
-                      "line": 4,
-                      "character": 54
-                    }
-                  }
-                }
-              }
             ],
             "kind": "esm",
             "mediaType": "TypeScript",
@@ -2575,6 +2566,22 @@ export function a(a) {
                 "specifier": "./b.d.ts",
               },
               {
+                "specifier": "https://example.com/c",
+                "code": {
+                  "specifier": "https://example.com/c",
+                  "span": {
+                    "start": {
+                      "line": 4,
+                      "character": 31
+                    },
+                    "end": {
+                      "line": 4,
+                      "character": 54
+                    }
+                  }
+                }
+              },
+              {
                 "specifier": "./d.js",
                 "code": {
                   "specifier": "file:///a/d.js",
@@ -2590,22 +2597,6 @@ export function a(a) {
                   }
                 }
               },
-              {
-                "specifier": "https://example.com/c",
-                "code": {
-                  "specifier": "https://example.com/c",
-                  "span": {
-                    "start": {
-                      "line": 4,
-                      "character": 31
-                    },
-                    "end": {
-                      "line": 4,
-                      "character": 54
-                    }
-                  }
-                }
-              }
             ],
             "mediaType": "TypeScript",
             "kind": "esm",
@@ -2745,7 +2736,7 @@ export function a(a) {
   #[test]
   fn test_parse_module() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
-    let result = parse_module(
+    let actual = parse_module(
       &specifier,
       None,
       r#"
@@ -2757,10 +2748,9 @@ export function a(a) {
       .into(),
       None,
       None,
-      None,
-    );
-    assert!(result.is_ok());
-    let actual = result.unwrap();
+    )
+    .unwrap();
+    let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 4);
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::TypeScript);
@@ -2769,7 +2759,7 @@ export function a(a) {
   #[test]
   fn test_parse_module_jsx_import_source() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
-    let result = parse_module(
+    let actual = parse_module(
       &specifier,
       None,
       r#"
@@ -2780,12 +2770,11 @@ export function a(a) {
     }
     "#
       .into(),
-      Some(ModuleKind::Esm),
       None,
       None,
-    );
-    assert!(result.is_ok());
-    let actual = result.unwrap();
+    )
+    .unwrap();
+    let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
     let dep = actual
       .dependencies
@@ -2811,7 +2800,7 @@ export function a(a) {
     }
 
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
-    let result = parse_module(
+    let actual = parse_module(
       &specifier,
       None,
       r#"
@@ -2820,12 +2809,11 @@ export function a(a) {
     }
     "#
       .into(),
-      Some(ModuleKind::Esm),
       Some(&R),
       None,
-    );
-    assert!(result.is_ok());
-    let actual = result.unwrap();
+    )
+    .unwrap();
+    let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
     let dep = actual
       .dependencies
@@ -2856,7 +2844,6 @@ export function a(a) {
   a: string;
 }"#
         .into(),
-      Some(ModuleKind::Esm),
       None,
       None,
     );
@@ -2866,7 +2853,7 @@ export function a(a) {
   #[test]
   fn test_parse_module_with_jsdoc_imports() {
     let specifier = ModuleSpecifier::parse("file:///a/test.js").unwrap();
-    let result = parse_module(
+    let actual = parse_module(
       &specifier,
       None,
       r#"
@@ -2881,48 +2868,14 @@ export function a(a) {
 }
 "#
       .into(),
-      Some(ModuleKind::Esm),
       None,
       None,
-    );
-    assert!(result.is_ok());
-    let actual = result.unwrap();
+    )
+    .unwrap();
     assert_eq!(
       json!(actual),
       json!({
         "dependencies": [
-          {
-            "specifier": "./other.ts",
-            "type": {
-              "specifier": "file:///a/other.ts",
-              "span": {
-                "start": {
-                  "line": 5,
-                  "character": 19,
-                },
-                "end": {
-                  "line": 5,
-                  "character": 31
-                }
-              }
-            },
-            "imports": [
-              {
-                "specifier": "./other.ts",
-                "kind": "jsDoc",
-                "range": {
-                  "start": {
-                    "line": 5,
-                    "character": 19,
-                  },
-                  "end": {
-                    "line": 5,
-                    "character": 31,
-                  },
-                },
-              },
-            ],
-          },
           {
             "specifier": "./types.d.ts",
             "type": {
@@ -2954,6 +2907,38 @@ export function a(a) {
                 },
               },
             ],
+          },
+          {
+            "specifier": "./other.ts",
+            "type": {
+              "specifier": "file:///a/other.ts",
+              "span": {
+                "start": {
+                  "line": 5,
+                  "character": 19,
+                },
+                "end": {
+                  "line": 5,
+                  "character": 31
+                }
+              }
+            },
+            "imports": [
+              {
+                "specifier": "./other.ts",
+                "kind": "jsDoc",
+                "range": {
+                  "start": {
+                    "line": 5,
+                    "character": 19,
+                  },
+                  "end": {
+                    "line": 5,
+                    "character": 31,
+                  },
+                },
+              },
+            ],
           }
         ],
         "kind": "esm",
@@ -2967,7 +2952,7 @@ export function a(a) {
   #[test]
   fn test_parse_ts_jsdoc_imports_ignored() {
     let specifier = ModuleSpecifier::parse("file:///a/test.ts").unwrap();
-    let result = parse_module(
+    let actual = parse_module(
       &specifier,
       None,
       r#"
@@ -2982,12 +2967,10 @@ export function a(a: A): B {
 }
 "#
       .into(),
-      Some(ModuleKind::Esm),
       None,
       None,
-    );
-    assert!(result.is_ok());
-    let actual = result.unwrap();
+    )
+    .unwrap();
     assert_eq!(
       json!(actual),
       json!({
@@ -3109,7 +3092,7 @@ export function a(a: A): B {
         &config_specifier,
         false
       ),
-      Some(&ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
+      Some(ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
     );
     assert_eq!(
       graph.resolve_dependency(
@@ -3118,8 +3101,7 @@ export function a(a: A): B {
         true
       ),
       Some(
-        &ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts")
-          .unwrap()
+        ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts").unwrap()
       )
     );
   }
@@ -3248,12 +3230,12 @@ export function a(a: A): B {
         "https://example.com/jsx-runtime.d.ts",
         "file:///a/test01.ts",
         "file:///a/test02.ts",
-        "file:///a/test03.ts",
-        "file:///a/test04.js",
-        "file:///a/test04.d.ts",
         "https://example.com/a.ts",
         "https://example.com/c",
         "https://example.com/c.ts",
+        "file:///a/test04.js",
+        "file:///a/test04.d.ts",
+        "file:///a/test03.ts",
       ]
     );
 
@@ -3273,10 +3255,10 @@ export function a(a: A): B {
       vec![
         "file:///a/test01.ts",
         "file:///a/test02.ts",
-        "file:///a/test04.js", // no types
         "https://example.com/a.ts",
         "https://example.com/c",
         "https://example.com/c.ts",
+        "file:///a/test04.js", // no types
       ]
     );
     // dynamic true
@@ -3295,11 +3277,11 @@ export function a(a: A): B {
       vec![
         "file:///a/test01.ts",
         "file:///a/test02.ts",
-        "file:///a/test03.ts",
-        "file:///a/test04.js",
         "https://example.com/a.ts",
         "https://example.com/c",
         "https://example.com/c.ts",
+        "file:///a/test04.js",
+        "file:///a/test03.ts",
       ]
     );
 
@@ -3319,10 +3301,10 @@ export function a(a: A): B {
       vec![
         "file:///a/test01.ts",
         "file:///a/test02.ts",
-        "file:///a/test04.js",
         "https://example.com/a.ts",
         "https://example.com/c",
         "https://example.com/c.ts",
+        "file:///a/test04.js",
       ]
     );
 
@@ -3343,10 +3325,10 @@ export function a(a: A): B {
         "https://example.com/jsx-runtime",
         "file:///a/test01.ts",
         "file:///a/test02.ts",
-        "file:///a/test04.js",
         "https://example.com/a.ts",
         "https://example.com/c",
         "https://example.com/c.ts",
+        "file:///a/test04.js",
       ]
     );
 
@@ -3368,11 +3350,11 @@ export function a(a: A): B {
         "https://example.com/jsx-runtime.d.ts",
         "file:///a/test01.ts",
         "file:///a/test02.ts",
-        "file:///a/test04.js",
-        "file:///a/test04.d.ts",
         "https://example.com/a.ts",
         "https://example.com/c",
         "https://example.com/c.ts",
+        "file:///a/test04.js",
+        "file:///a/test04.d.ts",
       ]
     );
   }

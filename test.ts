@@ -274,7 +274,7 @@ Deno.test({
       "modules": [
         {
           "specifier": "file:///a/deno.json",
-          "kind": "esm",
+          "kind": "asserted",
           "mediaType": MediaType.Json,
           "size": 2,
         },
