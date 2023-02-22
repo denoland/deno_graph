@@ -102,8 +102,8 @@ export interface TypesDependencyJson {
 export type ModuleKind =
   | "asserted"
   | "esm"
-  | "external"
-  | "script";
+  | "npm"
+  | "external";
 
 export interface DependencyJson {
   /** The string specifier that was used for the dependency. */
@@ -119,6 +119,8 @@ export interface DependencyJson {
   isDynamic?: true;
   assertionType?: string;
 }
+
+// todo(dsherret): split this up into separate types based on the "kind"
 
 export interface ModuleJson extends CacheInfo {
   /** The string URL of the module. */
