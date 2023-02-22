@@ -556,6 +556,7 @@ pub enum Module {
   #[serde(rename = "asserted")]
   Json(JsonModule),
   Npm(NpmModule),
+  Node(BuiltInNodeModule),
   External(ExternalModule),
 }
 
@@ -565,6 +566,7 @@ impl Module {
       Module::Esm(module) => &module.specifier,
       Module::Json(module) => &module.specifier,
       Module::Npm(module) => &module.specifier,
+      Module::Node(module) => &module.specifier,
       Module::External(module) => &module.specifier,
     }
   }
@@ -585,16 +587,24 @@ impl Module {
     }
   }
 
-  pub fn external(&self) -> Option<&ExternalModule> {
-    if let Module::External(module) = &self {
+  pub fn npm(&self) -> Option<&NpmModule> {
+    if let Module::Npm(module) = &self {
       Some(module)
     } else {
       None
     }
   }
 
-  pub fn npm(&self) -> Option<&NpmModule> {
-    if let Module::Npm(module) = &self {
+  pub fn node(&self) -> Option<&BuiltInNodeModule> {
+    if let Module::Node(module) = &self {
+      Some(module)
+    } else {
+      None
+    }
+  }
+
+  pub fn external(&self) -> Option<&ExternalModule> {
+    if let Module::External(module) = &self {
       Some(module)
     } else {
       None
@@ -618,6 +628,15 @@ pub struct NpmModule {
 #[serde(rename_all = "camelCase")]
 pub struct ExternalModule {
   pub specifier: ModuleSpecifier,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BuiltInNodeModule {
+  /// Specifier (ex. "node:fs")
+  pub specifier: ModuleSpecifier,
+  /// Module name (ex. "fs")
+  pub module_name: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -941,7 +960,10 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
             }
           }
         }
-        Module::Json(_) | Module::External(_) | Module::Npm(_) => {}
+        Module::Json(_)
+        | Module::External(_)
+        | Module::Npm(_)
+        | Module::Node(_) => {}
       },
       ModuleEntryRef::Err(_) => {}
       ModuleEntryRef::Redirect(specifier) => {
@@ -1294,7 +1316,10 @@ impl ModuleGraph {
           let dependency = referring_module.dependencies.get(specifier)?;
           self.resolve_dependency_specifier(dependency, prefer_types)
         }
-        Module::Json(_) | Module::Npm(_) | Module::External(_) => None,
+        Module::Json(_)
+        | Module::Npm(_)
+        | Module::Node(_)
+        | Module::External(_) => None,
       }
     } else if let Some(graph_import) = self.imports.get(&referrer) {
       let dependency = graph_import.dependencies.get(specifier)?;
@@ -1971,7 +1996,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
           }
-          Module::External(_) | Module::Npm(_) => {}
+          Module::External(_) | Module::Npm(_) | Module::Node(_) => {}
         }
       }
     }
@@ -2014,7 +2039,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         for (specifier, npm_ref, maybe_range) in infos {
           if !self.graph.module_slots.contains_key(&specifier) {
             if let Some(npm_resolver) = &self.npm_resolver {
-              // todo: cache resolutions to ensure they always resolve the same
+              // todo(dsherret): cache resolutions to ensure they always resolve the same
               let resolution = npm_resolver.resolve_npm(&npm_ref.req);
               match resolution {
                 Ok(pkg_id) => {
@@ -2131,64 +2156,67 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     let maybe_range = maybe_range.map(ToOwned::to_owned);
     if let Some(npm_resolver) = &self.npm_resolver {
-      match specifier.scheme() {
-        "npm" => {
-          match NpmPackageReqReference::from_specifier(specifier) {
-            Ok(package_ref) => {
-              if self
-                .requested_npm_registry_info_loads
-                .insert(package_ref.req.name.clone())
-              {
-                // request to load
-                let package_name = package_ref.req.name.clone();
-                let fut =
-                  npm_resolver.load_and_cache_npm_package_info(&package_name);
-                self
-                  .pending_npm_registry_info_loads
-                  .push(Box::pin(async move { (package_name, fut.await) }));
-              }
-              self.pending_npm_specifiers.push((
-                specifier.clone(),
-                package_ref,
-                maybe_range,
-              ));
+      if specifier.scheme() == "npm" {
+        match NpmPackageReqReference::from_specifier(specifier) {
+          Ok(package_ref) => {
+            if self
+              .requested_npm_registry_info_loads
+              .insert(package_ref.req.name.clone())
+            {
+              // request to load
+              let package_name = package_ref.req.name.clone();
+              let fut =
+                npm_resolver.load_and_cache_npm_package_info(&package_name);
+              self
+                .pending_npm_registry_info_loads
+                .push(Box::pin(async move { (package_name, fut.await) }));
             }
-            Err(err) => {
-              self.graph.module_slots.insert(
-                specifier.clone(),
-                ModuleSlot::Err(ModuleGraphError::LoadingErr(
-                  specifier.clone(),
-                  maybe_range,
-                  Arc::new(err.into()),
-                )),
-              );
-            }
+            self.pending_npm_specifiers.push((
+              specifier.clone(),
+              package_ref,
+              maybe_range,
+            ));
           }
+          Err(err) => {
+            self.graph.module_slots.insert(
+              specifier.clone(),
+              ModuleSlot::Err(ModuleGraphError::LoadingErr(
+                specifier.clone(),
+                maybe_range,
+                Arc::new(err.into()),
+              )),
+            );
+          }
+        }
+        return;
+      }
+
+      match npm_resolver.resolve_builtin_node_module_name(specifier) {
+        Ok(Some(module_name)) => {
+          self.graph.has_node_specifier = true;
+          self.graph.module_slots.insert(
+            specifier.clone(),
+            ModuleSlot::Module(Module::Node(BuiltInNodeModule {
+              specifier: specifier.clone(),
+              module_name: module_name,
+            })),
+          );
           return;
         }
-        "node" if npm_resolver.supports_node_specifiers() => {
-          let name = specifier.path();
-          let module_slot = if npm_resolver.is_builtin_node_module(name) {
-            self.graph.has_node_specifier = true;
-            ModuleSlot::Module(Module::External(ExternalModule {
-              specifier: specifier.clone(),
-            }))
-          } else {
+        Err(err) => {
+          self.graph.module_slots.insert(
+            specifier.clone(),
             ModuleSlot::Err(ModuleGraphError::LoadingErr(
               specifier.clone(),
               maybe_range,
-              Arc::new(anyhow::anyhow!(
-                "Unknown built-in \"node:\" module: {specifier}"
-              )),
-            ))
-          };
-          self
-            .graph
-            .module_slots
-            .insert(specifier.clone(), module_slot);
+              Arc::new(err.into()),
+            )),
+          );
           return;
         }
-        _ => {}
+        Ok(None) => {
+          // ignore, not a builtin node module name
+        }
       }
     }
 

@@ -19,6 +19,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
 use std::sync::Arc;
+use thiserror::Error;
 
 pub const DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
 
@@ -125,12 +126,19 @@ pub trait Resolver: fmt::Debug {
   }
 }
 
-pub trait NpmResolver: fmt::Debug {
-  /// If this environment supports "node:" specifiers.
-  fn supports_node_specifiers(&self) -> bool;
+#[derive(Error, Debug)]
+#[error("Unknown built-in \"node:\" module: {module_name}")]
+pub struct UnknownBuiltInNodeModuleError {
+  /// Name of the invalid module.
+  pub module_name: String,
+}
 
-  /// If the provided module name is a valid built-in node module (ex. "fs").
-  fn is_builtin_node_module(&self, module_name: &str) -> bool;
+pub trait NpmResolver: fmt::Debug {
+  /// Gets the builtin node module name from the specifier (ex. "node:fs" -> "fs").
+  fn resolve_builtin_node_module_name(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Result<Option<String>, UnknownBuiltInNodeModuleError>;
 
   /// This tells the implementation to asynchronously load within itself the
   /// npm registry package information so that synchronous resolution can occur
