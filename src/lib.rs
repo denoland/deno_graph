@@ -571,7 +571,7 @@ console.log(a);
   async fn test_remote_import_local_url() {
     for scheme in &["http", "https"] {
       let root_specifier =
-        ModuleSpecifier::parse(&format!("{}://deno.land/main.ts", scheme))
+        ModuleSpecifier::parse(&format!("{scheme}://deno.land/main.ts"))
           .unwrap();
       let mut loader = setup(
         vec![
