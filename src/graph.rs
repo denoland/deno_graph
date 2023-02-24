@@ -1008,7 +1008,10 @@ impl<'a> ModuleGraphErrorIterator<'a> {
             },
           ))
         } else if matches!(referrer_scheme, "https" | "http")
-          && !matches!(specifier_scheme, "https" | "http" | "npm" | "node")
+          && !matches!(
+            specifier_scheme,
+            "https" | "http" | "npm" | "node" | "data"
+          )
         {
           Some(ModuleGraphError::ResolutionError(
             ResolutionError::InvalidLocalImport {
