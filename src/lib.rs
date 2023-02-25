@@ -37,6 +37,7 @@ pub use deno_ast::MediaType;
 pub use graph::BuildOptions;
 pub use graph::Dependency;
 pub use graph::EsmModule;
+pub use graph::ExternalModule;
 pub use graph::GraphImport;
 pub use graph::GraphKind;
 pub use graph::JsonModule;
@@ -44,6 +45,7 @@ pub use graph::Module;
 pub use graph::ModuleEntryRef;
 pub use graph::ModuleGraph;
 pub use graph::ModuleGraphError;
+pub use graph::NpmModule;
 pub use graph::Position;
 pub use graph::Range;
 pub use graph::Resolution;
@@ -607,6 +609,58 @@ console.log(a);
           ResolutionError::InvalidLocalImport { .. },
         )
       ));
+    }
+  }
+
+  #[tokio::test]
+  async fn test_remote_import_local_url_remapped() {
+    for scheme in &["http", "https"] {
+      let root_specifier_str = format!("{scheme}://deno.land/main.ts");
+      let root_specifier = ModuleSpecifier::parse(&root_specifier_str).unwrap();
+      let mut loader = setup(
+        vec![
+          (
+            root_specifier.as_str(),
+            Source::Module {
+              specifier: root_specifier.as_str(),
+              maybe_headers: None,
+              content: r#"import * as a from "remapped";
+
+console.log(a);
+"#,
+            },
+          ),
+          (
+            "file:///local.ts",
+            Source::Module {
+              specifier: "file:///local.ts",
+              maybe_headers: None,
+              content: r#"console.log(1);"#,
+            },
+          ),
+        ],
+        vec![],
+      );
+      let resolver = MockResolver::new(
+        vec![(
+          root_specifier_str.as_str(),
+          vec![("remapped", "file:///local.ts")],
+        )],
+        vec![],
+      );
+      let maybe_resolver: Option<&dyn Resolver> = Some(&resolver);
+      let mut graph = ModuleGraph::default();
+      graph
+        .build(
+          vec![root_specifier.clone()],
+          &mut loader,
+          BuildOptions {
+            resolver: maybe_resolver,
+            ..Default::default()
+          },
+        )
+        .await;
+      assert!(graph.valid().is_ok());
     }
   }
 
@@ -1611,6 +1665,7 @@ export function a(a) {
           "file:///a.d.ts",
           Some(Range {
             specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
+            text: "a".to_string(),
             start: Position::zeroed(),
             end: Position::zeroed(),
           }),
@@ -1639,6 +1694,7 @@ export function a(a) {
         specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
         range: Range {
           specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
+          text: "a".to_string(),
           start: Position::zeroed(),
           end: Position::zeroed(),
         }
