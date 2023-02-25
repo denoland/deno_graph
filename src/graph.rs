@@ -2591,6 +2591,7 @@ where
 #[cfg(test)]
 mod tests {
   use crate::DefaultModuleAnalyzer;
+  use pretty_assertions::assert_eq;
 
   use super::*;
   use url::Url;
@@ -2937,7 +2938,7 @@ mod tests {
               specifier: specifier.clone(),
               maybe_headers: None,
               content:
-                "import 'file:///bar.js'; import 'http://deno.land/foo.js'"
+                "import 'FILE:///baz.js'; import 'file:///bar.js'; import 'http://deno.land/foo.js';"
                   .into(),
             }))
           }),
@@ -2955,6 +2956,13 @@ mod tests {
               content: "console.log('Hello, world!')".into(),
             }))
           }),
+          "file:///baz.js" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: "console.log('Hello, world 2!')".into(),
+            }))
+          }),
           _ => unreachable!(),
         }
       }
@@ -2969,7 +2977,7 @@ mod tests {
       .walk(&roots, Default::default())
       .errors()
       .collect::<Vec<_>>();
-    assert_eq!(errors.len(), 2);
+    assert_eq!(errors.len(), 3);
     let errors = errors
       .into_iter()
       .map(|err| match err {
@@ -2987,11 +2995,11 @@ mod tests {
           text: "http://deno.land/foo.js".to_string(),
           start: Position {
             line: 0,
-            character: 32,
+            character: 57,
           },
           end: Position {
             line: 0,
-            character: 57,
+            character: 82,
           },
         },
         specifier: ModuleSpecifier::parse("http://deno.land/foo.js").unwrap(),
@@ -3006,6 +3014,26 @@ mod tests {
           text: "file:///bar.js".to_string(),
           start: Position {
             line: 0,
+            character: 32,
+          },
+          end: Position {
+            line: 0,
+            character: 48,
+          },
+        },
+        specifier: ModuleSpecifier::parse("file:///bar.js").unwrap(),
+      },
+    );
+
+    assert_eq!(
+      errors[2],
+      ResolutionError::InvalidLocalImport {
+        range: Range {
+          specifier: ModuleSpecifier::parse("https://deno.land/foo.js")
+            .unwrap(),
+          text: "FILE:///baz.js".to_string(),
+          start: Position {
+            line: 0,
             character: 7,
           },
           end: Position {
@@ -3013,7 +3041,7 @@ mod tests {
             character: 23,
           },
         },
-        specifier: ModuleSpecifier::parse("file:///bar.js").unwrap(),
+        specifier: ModuleSpecifier::parse("file:///baz.js").unwrap(),
       },
     );
   }
