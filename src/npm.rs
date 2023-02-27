@@ -11,11 +11,11 @@ use crate::semver::NpmVersionReqSpecifierParseError;
 use crate::semver::Version;
 use crate::semver::VersionReq;
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Clone, PartialEq, Eq, Hash)]
 #[error("Invalid npm package name and version reference '{text}'. {message}")]
 pub struct NpmPackageNvReferenceParseError {
-  message: String,
-  text: String,
+  pub message: String,
+  pub text: String,
 }
 
 /// A npm package name and version with a potential subpath.
@@ -95,11 +95,11 @@ impl std::fmt::Display for NpmPackageNvReference {
   }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq, Eq, Hash)]
 #[error("Invalid npm package name and version '{text}'. {message}")]
 pub struct NpmPackageNvParseError {
-  message: String,
-  text: String,
+  pub message: String,
+  pub text: String,
 }
 
 #[derive(
@@ -178,7 +178,7 @@ fn parse_nv(input: &str) -> monch::ParseResult<NpmPackageNv> {
   }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum NpmPackageReqReferenceParseError {
   #[error("Not an npm specifier.")]
   NotNpmSpecifier,
@@ -278,7 +278,7 @@ impl std::fmt::Display for NpmPackageReqReference {
   }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum VersionReqPartsParseError {
   #[error("Did not contain a package name.")]
   NoPackageName,
@@ -289,12 +289,12 @@ pub enum VersionReqPartsParseError {
   },
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone, PartialEq, Eq, Hash)]
 #[error("Invalid npm package requirement '{text}'. {source:#}")]
 pub struct NpmPackageReqParseError {
   pub text: String,
   #[source]
-  source: VersionReqPartsParseError,
+  pub source: VersionReqPartsParseError,
 }
 
 /// The name and version constraint component of an `NpmPackageReqReference`.
