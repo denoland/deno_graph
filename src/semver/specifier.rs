@@ -12,11 +12,11 @@ use super::VersionReq;
 
 use super::is_valid_tag;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone, PartialEq, Eq, Hash)]
 #[error("Invalid npm specifier version requirement. {source}")]
 pub struct NpmVersionReqSpecifierParseError {
   #[source]
-  source: ParseErrorFailureError,
+  pub source: ParseErrorFailureError,
 }
 
 pub fn parse_version_req_from_specifier(
