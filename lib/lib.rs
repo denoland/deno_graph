@@ -324,6 +324,7 @@ mod tests {
         types: ModuleSpecifier::parse("https://deno.land/x/mod.d.ts").unwrap(),
         source: Some(Range {
           specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
+          text: "".to_string(),
           start: Position::zeroed(),
           end: Position::zeroed(),
         })
