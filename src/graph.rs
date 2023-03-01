@@ -1469,14 +1469,14 @@ where
     #[serde(flatten)]
     graph_import: &'a GraphImport,
   }
-  graph_imports
-    .iter()
-    .map(|(k, v)| GraphImportWithReferrer {
-      referrer: k,
-      graph_import: v,
-    })
-    .collect::<Vec<_>>()
-    .serialize(serializer)
+  let mut seq = serializer.serialize_seq(Some(graph_imports.len()))?;
+  for (referrer, graph_import) in graph_imports {
+    seq.serialize_element(&GraphImportWithReferrer {
+      referrer,
+      graph_import,
+    })?
+  }
+  seq.end()
 }
 
 /// With the provided information, parse a module and return its "module slot"
@@ -2475,14 +2475,14 @@ where
     #[serde(flatten)]
     dependency: &'a Dependency,
   }
-  dependencies
-    .iter()
-    .map(|(k, v)| DependencyWithSpecifier {
-      specifier: k,
-      dependency: v,
-    })
-    .collect::<Vec<_>>()
-    .serialize(serializer)
+  let mut seq = serializer.serialize_seq(Some(dependencies.len()))?;
+  for (specifier, dependency) in dependencies {
+    seq.serialize_element(&DependencyWithSpecifier {
+      specifier,
+      dependency,
+    })?
+  }
+  seq.end()
 }
 
 fn serialize_source<S>(
