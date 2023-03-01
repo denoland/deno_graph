@@ -156,7 +156,7 @@ dependencies = [
 
 [[package]]
 name = "deno_graph"
-version = "0.44.0"
+version = "0.44.3"
 dependencies = [
  "anyhow",
  "data-url",
@@ -539,9 +539,9 @@ checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
 
 [[package]]
 name = "monch"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f13de1c3edc9a5b9dc3a1029f56e9ab3eba34640010aff4fc01044c42ef67afa"
+checksum = "1120c1ab92ab8cdacb3b89ac9a214f512d2e78e90e3b57c00d9551ced19f646f"
 
 [[package]]
 name = "new_debug_unreachable"
