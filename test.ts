@@ -751,3 +751,57 @@ Deno.test({
     });
   },
 });
+
+Deno.test({
+  name: "parseModule() - triple slash directives in typescript",
+  async fn() {
+    await init();
+    const module = parseModule(
+      "file:///a/foo.ts",
+      `
+        /// <reference path="./a.d.ts" />
+        /// <reference types="./b.d.ts" />
+      `,
+    );
+    assertEquals(module, {
+      "dependencies": [
+        {
+          "specifier": "./a.d.ts",
+          "type": {
+            "specifier": "file:///a/a.d.ts",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 28,
+              },
+              "end": {
+                "line": 1,
+                "character": 38,
+              },
+            },
+          },
+        },
+        {
+          "specifier": "./b.d.ts",
+          "type": {
+            "specifier": "file:///a/b.d.ts",
+            "span": {
+              "start": {
+                "line": 2,
+                "character": 29,
+              },
+              "end": {
+                "line": 2,
+                "character": 39,
+              },
+            },
+          },
+        },
+      ],
+      "kind": "esm",
+      "mediaType": MediaType.TypeScript,
+      "size": 92,
+      "specifier": "file:///a/foo.ts",
+    });
+  },
+});

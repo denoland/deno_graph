@@ -1610,13 +1610,13 @@ pub(crate) fn parse_esm_module_from_module_info(
           .dependencies
           .entry(specifier.text.clone())
           .or_default();
-        if dep.maybe_code.is_none() {
+        if dep.maybe_type.is_none() {
           let range = Range::from_position_range(
             module.specifier.clone(),
             specifier.text,
             specifier.range,
           );
-          dep.maybe_code = resolve(range, maybe_resolver);
+          dep.maybe_type = resolve(range, maybe_resolver);
         }
       }
       TypeScriptReference::Types(specifier) => {
