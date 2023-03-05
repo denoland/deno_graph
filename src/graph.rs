@@ -32,7 +32,6 @@ use futures::stream::StreamExt;
 use futures::FutureExt;
 use indexmap::IndexMap;
 use once_cell::sync::Lazy;
-use serde::ser::SerializeMap;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
 use serde::Deserialize;
@@ -462,32 +461,6 @@ impl Default for Resolution {
   }
 }
 
-fn serialize_resolution<S>(
-  resolution: &Resolution,
-  serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-  S: Serializer,
-{
-  match resolution {
-    Resolution::Ok(resolved) => {
-      let mut state = serializer.serialize_struct("ResolvedSpecifier", 2)?;
-      state.serialize_field("specifier", &resolved.specifier)?;
-      state.serialize_field("span", &resolved.range)?;
-      state.end()
-    }
-    Resolution::Err(err) => {
-      let mut state = serializer.serialize_struct("ResolvedError", 2)?;
-      state.serialize_field("error", &err.to_string())?;
-      state.serialize_field("span", err.range())?;
-      state.end()
-    }
-    Resolution::None => {
-      Serialize::serialize(&serde_json::Value::Null, serializer)
-    }
-  }
-}
-
 fn is_false(v: &bool) -> bool {
   !v
 }
@@ -592,13 +565,18 @@ pub struct Import {
   pub errors: Vec<ImportError>,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Dependency {
+  #[serde(rename = "code", skip_serializing_if = "Resolution::is_none")]
   pub maybe_code: Resolution,
+  #[serde(rename = "type", skip_serializing_if = "Resolution::is_none")]
   pub maybe_type: Resolution,
+  #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
   /// List of imports which refer to this dependency. Doesn't include those
   /// which only supplement types to the main import (i.e. @deno-types).
+  #[serde(skip_serializing_if = "Vec::is_empty")]
   pub imports: Vec<Import>,
 }
 
@@ -709,6 +687,7 @@ impl Module {
 #[serde(rename_all = "camelCase")]
 pub struct NpmModule {
   pub specifier: ModuleSpecifier,
+  #[serde(skip_serializing)]
   pub nv_reference: NpmPackageNvReference,
 }
 
@@ -831,10 +810,11 @@ fn to_result<'a>(
 /// module graph without requiring the dependencies to be analyzed. This is
 /// intended to be used for importing type dependencies or other externally
 /// defined dependencies, like JSX runtimes.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct GraphImport {
   /// A map of resolved dependencies, where the key is the value originally
   /// provided for the import and the value is the resolved dependency.
+  #[serde(serialize_with = "serialize_dependencies")]
   pub dependencies: IndexMap<String, Dependency>,
 }
 
@@ -1236,14 +1216,21 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
 /// which can be located in the module "slots" in the graph. The graph also
 /// contains any redirects where the requested module specifier was redirected
 /// to another module specifier when being loaded.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize)]
 pub struct ModuleGraph {
+  #[serde(skip_serializing)]
   graph_kind: GraphKind,
   pub roots: Vec<ModuleSpecifier>,
+  #[serde(rename = "modules")]
+  #[serde(serialize_with = "serialize_module_slots")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
+  #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+  #[serde(serialize_with = "serialize_graph_imports")]
   pub imports: BTreeMap<ModuleSpecifier, GraphImport>,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
+  #[serde(skip_serializing)]
   pub npm_packages: Vec<NpmPackageNv>,
+  #[serde(skip_serializing)]
   pub has_node_specifier: bool,
 }
 
@@ -1556,24 +1543,51 @@ fn resolve(
   Resolution::from_resolve_result(response, referrer_range)
 }
 
-impl Serialize for ModuleGraph {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    let mut graph = serializer.serialize_struct("ModuleGraph", 4)?;
-    graph.serialize_field("roots", &self.roots)?;
-    graph
-      .serialize_field("modules", &SerializableModules(&self.module_slots))?;
-    if self.imports.is_empty() {
-      graph.skip_field("imports")?;
-    } else {
-      graph
-        .serialize_field("imports", &SerializableGraphImports(&self.imports))?;
-    }
-    graph.serialize_field("redirects", &self.redirects)?;
-    graph.end()
+fn serialize_module_slots<S>(
+  module_slots: &BTreeMap<ModuleSpecifier, ModuleSlot>,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  let mut seq = serializer.serialize_seq(Some(module_slots.len()))?;
+  for (specifier, slot) in module_slots.iter() {
+    match slot {
+      ModuleSlot::Module(module) => seq.serialize_element(module)?,
+      ModuleSlot::Err(err) => seq.serialize_element(&serde_json::json!({
+        "specifier": specifier,
+        "error": err.to_string(),
+      }))?,
+      ModuleSlot::Pending => seq.serialize_element(&serde_json::json!({
+        "specifier": specifier,
+        "error": "[INTERNAL ERROR] A pending module load never completed.",
+      }))?,
+    };
   }
+  seq.end()
+}
+
+fn serialize_graph_imports<S>(
+  graph_imports: &BTreeMap<ModuleSpecifier, GraphImport>,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  #[derive(Serialize)]
+  struct GraphImportWithReferrer<'a> {
+    referrer: &'a ModuleSpecifier,
+    #[serde(flatten)]
+    graph_import: &'a GraphImport,
+  }
+  let mut seq = serializer.serialize_seq(Some(graph_imports.len()))?;
+  for (referrer, graph_import) in graph_imports {
+    seq.serialize_element(&GraphImportWithReferrer {
+      referrer,
+      graph_import,
+    })?
+  }
+  seq.end()
 }
 
 /// With the provided information, parse a module and return its "module slot"
@@ -2596,43 +2610,23 @@ impl Serialize for Resolution {
   where
     S: Serializer,
   {
-    serialize_resolution(self, serializer)
-  }
-}
-
-struct SerializableDependency<'a>(&'a str, &'a Dependency);
-
-impl<'a> Serialize for SerializableDependency<'a> {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    let mut map = serializer.serialize_map(None)?;
-    map.serialize_entry("specifier", self.0)?;
-    if !self.1.maybe_code.is_none() {
-      map.serialize_entry("code", &self.1.maybe_code)?;
+    match self {
+      Resolution::Ok(resolved) => {
+        let mut state = serializer.serialize_struct("ResolvedSpecifier", 2)?;
+        state.serialize_field("specifier", &resolved.specifier)?;
+        state.serialize_field("span", &resolved.range)?;
+        state.end()
+      }
+      Resolution::Err(err) => {
+        let mut state = serializer.serialize_struct("ResolvedError", 2)?;
+        state.serialize_field("error", &err.to_string())?;
+        state.serialize_field("span", err.range())?;
+        state.end()
+      }
+      Resolution::None => {
+        Serialize::serialize(&serde_json::Value::Null, serializer)
+      }
     }
-    if !self.1.maybe_type.is_none() {
-      map.serialize_entry("type", &self.1.maybe_type)?;
-    }
-    if self.1.is_dynamic {
-      map.serialize_entry("isDynamic", &self.1.is_dynamic)?;
-    }
-    if !self.1.imports.is_empty() {
-      map.serialize_entry("imports", &self.1.imports)?;
-    }
-    map.end()
-  }
-}
-
-struct SerializableDependencies<'a>(&'a IndexMap<String, Dependency>);
-
-impl<'a> Serialize for SerializableDependencies<'a> {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    serialize_dependencies(self.0, serializer)
   }
 }
 
@@ -2643,94 +2637,20 @@ fn serialize_dependencies<S>(
 where
   S: Serializer,
 {
-  let mut seq = serializer.serialize_seq(Some(dependencies.iter().count()))?;
-  for (specifier_str, dep) in dependencies.iter() {
-    let serializeable_dependency = SerializableDependency(specifier_str, dep);
-    seq.serialize_element(&serializeable_dependency)?;
+  #[derive(Serialize)]
+  struct DependencyWithSpecifier<'a> {
+    specifier: &'a str,
+    #[serde(flatten)]
+    dependency: &'a Dependency,
+  }
+  let mut seq = serializer.serialize_seq(Some(dependencies.len()))?;
+  for (specifier, dependency) in dependencies {
+    seq.serialize_element(&DependencyWithSpecifier {
+      specifier,
+      dependency,
+    })?
   }
   seq.end()
-}
-
-struct SerializableModuleSlot<'a>(&'a ModuleSpecifier, &'a ModuleSlot);
-
-impl<'a> Serialize for SerializableModuleSlot<'a> {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    match self.1 {
-      ModuleSlot::Module(Module::Npm(npm)) => {
-        let mut state = serializer.serialize_struct("Module", 2)?;
-        state.serialize_field("kind", "npm")?;
-        state.serialize_field("specifier", &npm.specifier)?;
-        state.end()
-      }
-      ModuleSlot::Module(module) => Serialize::serialize(module, serializer),
-      ModuleSlot::Err(err) => {
-        let mut state = serializer.serialize_struct("ModuleSlot", 2)?;
-        state.serialize_field("specifier", self.0)?;
-        state.serialize_field("error", &err.to_string())?;
-        state.end()
-      }
-      ModuleSlot::Pending => {
-        let mut state = serializer.serialize_struct("ModuleSlot", 2)?;
-        state.serialize_field("specifier", self.0)?;
-        state.serialize_field(
-          "error",
-          "[INTERNAL ERROR] A pending module load never completed.",
-        )?;
-        state.end()
-      }
-    }
-  }
-}
-
-struct SerializableModules<'a>(&'a BTreeMap<ModuleSpecifier, ModuleSlot>);
-
-impl<'a> Serialize for SerializableModules<'a> {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
-    for (specifier, slot) in self.0.iter() {
-      let serializeable_module_slot = SerializableModuleSlot(specifier, slot);
-      seq.serialize_element(&serializeable_module_slot)?;
-    }
-    seq.end()
-  }
-}
-
-struct SerializableGraphImports<'a>(&'a BTreeMap<ModuleSpecifier, GraphImport>);
-
-impl<'a> Serialize for SerializableGraphImports<'a> {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
-    for (key, value) in self.0.iter() {
-      seq.serialize_element(&SerializableGraphImport(key, value))?;
-    }
-    seq.end()
-  }
-}
-
-struct SerializableGraphImport<'a>(&'a ModuleSpecifier, &'a GraphImport);
-
-impl<'a> Serialize for SerializableGraphImport<'a> {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    let mut val = serializer.serialize_struct("GraphImport", 2)?;
-    val.serialize_field("referrer", self.0)?;
-    val.serialize_field(
-      "dependencies",
-      &SerializableDependencies(&self.1.dependencies),
-    )?;
-    val.end()
-  }
 }
 
 fn serialize_source<S>(
