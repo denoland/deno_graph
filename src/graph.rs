@@ -137,44 +137,93 @@ impl Range {
 }
 
 #[derive(Debug, Clone)]
-pub enum ModuleGraphError {
+pub enum ModuleError {
+  LoadingErr(ModuleSpecifier, Option<Range>, Arc<anyhow::Error>),
+  Missing(ModuleSpecifier, Option<Range>),
+  MissingDynamic(ModuleSpecifier, Range),
+  ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
+  UnsupportedMediaType(ModuleSpecifier, MediaType, Option<Range>),
   InvalidTypeAssertion {
     specifier: ModuleSpecifier,
     range: Range,
     actual_media_type: MediaType,
     expected_media_type: MediaType,
   },
-  LoadingErr(ModuleSpecifier, Option<Range>, Arc<anyhow::Error>),
-  Missing(ModuleSpecifier, Option<Range>),
-  MissingDynamic(ModuleSpecifier, Range),
-  ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
-  ResolutionError(ResolutionError),
   UnsupportedImportAssertionType {
     specifier: ModuleSpecifier,
     range: Range,
     kind: String,
   },
-  UnsupportedMediaType {
-    specifier: ModuleSpecifier,
-    media_type: MediaType,
-    maybe_referrer: Option<Range>,
-  },
 }
 
-impl ModuleGraphError {
+impl ModuleError {
   pub fn specifier(&self) -> &ModuleSpecifier {
     match self {
-      Self::ResolutionError(err) => &err.range().specifier,
       Self::LoadingErr(s, _, _)
       | Self::ParseErr(s, _)
-      | Self::UnsupportedMediaType { specifier: s, .. }
-      | Self::UnsupportedImportAssertionType { specifier: s, .. }
-      | Self::InvalidTypeAssertion { specifier: s, .. }
+      | Self::UnsupportedMediaType(s, _, _)
       | Self::Missing(s, _)
-      | Self::MissingDynamic(s, _) => s,
+      | Self::MissingDynamic(s, _)
+      | Self::InvalidTypeAssertion { specifier: s, .. }
+      | Self::UnsupportedImportAssertionType { specifier: s, .. } => s,
     }
   }
 
+  pub fn maybe_referrer(&self) -> Option<&Range> {
+    match self {
+      Self::LoadingErr(_, maybe_referrer, _) => maybe_referrer.as_ref(),
+      Self::Missing(_, maybe_referrer) => maybe_referrer.as_ref(),
+      Self::MissingDynamic(_, range) => Some(range),
+      Self::UnsupportedMediaType(_, _, maybe_referrer) => {
+        maybe_referrer.as_ref()
+      }
+      Self::ParseErr(_, _) => None,
+      Self::InvalidTypeAssertion { range, .. } => Some(range),
+      Self::UnsupportedImportAssertionType { range, .. } => Some(range),
+    }
+  }
+}
+
+impl std::error::Error for ModuleError {
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    match self {
+      Self::LoadingErr(_, _, err) => Some(err.as_ref().as_ref()),
+      Self::Missing(_, _)
+      | Self::MissingDynamic(_, _)
+      | Self::ParseErr(_, _)
+      | Self::UnsupportedMediaType(_, _, _)
+      | Self::InvalidTypeAssertion { .. }
+      | Self::UnsupportedImportAssertionType { .. } => None,
+    }
+  }
+}
+
+impl fmt::Display for ModuleError {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Self::LoadingErr(_, _, err) => err.fmt(f),
+      Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {diagnostic}"),
+      Self::UnsupportedMediaType(specifier, MediaType::Json, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {specifier}"),
+      Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
+      Self::Missing(specifier, _) => write!(f, "Module not found \"{specifier}\"."),
+      Self::MissingDynamic(specifier, _) => write!(f, "Dynamic import not found \"{specifier}\"."),
+      Self::InvalidTypeAssertion { specifier, actual_media_type: MediaType::Json, expected_media_type, .. } =>
+        write!(f, "Expected a {expected_media_type} module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {specifier}"),
+      Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type, .. } =>
+        write!(f, "Expected a {expected_media_type} module, but identified a {actual_media_type} module.\n  Specifier: {specifier}"),
+      Self::UnsupportedImportAssertionType { specifier, kind, .. } =>
+        write!(f, "The import assertion type of \"{kind}\" is unsupported.\n  Specifier: {specifier}"),
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub enum ModuleGraphError {
+  ModuleError(ModuleError),
+  ResolutionError(ResolutionError),
+}
+
+impl ModuleGraphError {
   /// Converts the error into a string along with the range related to the error.
   ///
   /// We don't include the range in the error messages by default because they're
@@ -189,16 +238,8 @@ impl ModuleGraphError {
 
   pub fn maybe_range(&self) -> Option<&Range> {
     match self {
-      Self::LoadingErr(_, maybe_range, _) => maybe_range.as_ref(),
+      Self::ModuleError(err) => err.maybe_referrer(),
       Self::ResolutionError(err) => Some(err.range()),
-      Self::InvalidTypeAssertion { range, .. }
-      | Self::UnsupportedImportAssertionType { range, .. } => Some(range),
-      Self::Missing(_, maybe_range) => maybe_range.as_ref(),
-      Self::MissingDynamic(_, range) => Some(range),
-      Self::UnsupportedMediaType { maybe_referrer, .. } => {
-        maybe_referrer.as_ref()
-      }
-      Self::ParseErr(_, _) => None,
     }
   }
 }
@@ -206,14 +247,8 @@ impl ModuleGraphError {
 impl std::error::Error for ModuleGraphError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
-      Self::LoadingErr(_, _, err) => Some(err.as_ref().as_ref()),
+      Self::ModuleError(ref err) => Some(err),
       Self::ResolutionError(ref err) => Some(err),
-      Self::InvalidTypeAssertion { .. }
-      | Self::Missing(_, _)
-      | Self::MissingDynamic(_, _)
-      | Self::ParseErr(_, _)
-      | Self::UnsupportedImportAssertionType { .. }
-      | Self::UnsupportedMediaType { .. } => None,
     }
   }
 }
@@ -221,36 +256,9 @@ impl std::error::Error for ModuleGraphError {
 impl fmt::Display for ModuleGraphError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::LoadingErr(_, _, err) => err.fmt(f),
-      Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {diagnostic}"),
+      Self::ModuleError(err) => err.fmt(f),
       Self::ResolutionError(err) => err.fmt(f),
-      Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type, .. } =>
-        write!(f, "Expected a {expected_media_type} module, but identified a {actual_media_type} module.\n  Specifier: {specifier}"),
-      Self::UnsupportedMediaType {
-        specifier,
-        media_type: MediaType::Json,
-        ..
-      } => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {specifier}"),
-      Self::UnsupportedMediaType {
-        specifier,
-        media_type,
-        ..
-       } => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
-      Self::UnsupportedImportAssertionType { specifier, kind, .. } =>
-        write!(f, "The import assertion type of \"{kind}\" is unsupported.\n  Specifier: {specifier}"),
-      Self::Missing(specifier, _) => {
-        write!(f, "Module not found \"{specifier}\".")
-      },
-      Self::MissingDynamic(specifier, _) => {
-        write!(f, "Dynamic import not found \"{specifier}\".")
-      },
     }
-  }
-}
-
-impl<'a> From<&'a ResolutionError> for ModuleGraphError {
-  fn from(err: &'a ResolutionError) -> Self {
-    Self::ResolutionError(err.clone())
   }
 }
 
@@ -995,22 +1003,21 @@ impl<'a> ModuleGraphErrorIterator<'a> {
             self.iterator.graph.resolve(&resolved.specifier);
           let module_slot =
             self.iterator.graph.module_slots.get(&resolved_specifier);
-          if let Some(ModuleSlot::Err(ModuleGraphError::Missing(
-            specifier,
-            maybe_range,
+          if let Some(ModuleSlot::Err(ModuleGraphError::ModuleError(
+            ModuleError::Missing(specifier, maybe_range),
           ))) = module_slot
           {
             // we want to surface module missing errors as dynamic missing errors
             if is_dynamic {
-              Some(ModuleGraphError::MissingDynamic(
+              Some(ModuleGraphError::ModuleError(ModuleError::MissingDynamic(
                 specifier.clone(),
                 resolved.range.clone(),
-              ))
+              )))
             } else {
-              Some(ModuleGraphError::Missing(
+              Some(ModuleGraphError::ModuleError(ModuleError::Missing(
                 specifier.clone(),
                 maybe_range.clone(),
-              ))
+              )))
             }
           } else {
             None
@@ -1084,7 +1091,10 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
             // ignore missing modules when following dynamic imports
             // because they will be resolved in place
             let should_ignore = follow_dynamic
-              && matches!(error, ModuleGraphError::Missing { .. });
+              && matches!(
+                error,
+                ModuleGraphError::ModuleError(ModuleError::Missing { .. })
+              );
             if !should_ignore {
               self.next_errors.push(error.clone());
             }
@@ -1516,18 +1526,22 @@ pub(crate) fn parse_module(
 
   if let Some(assert_type) = maybe_assert_type {
     if assert_type.kind == "json" {
-      return Err(ModuleGraphError::InvalidTypeAssertion {
-        specifier: specifier.clone(),
-        range: assert_type.range,
-        actual_media_type: media_type,
-        expected_media_type: MediaType::Json,
-      });
+      return Err(ModuleGraphError::ModuleError(
+        ModuleError::InvalidTypeAssertion {
+          specifier: specifier.clone(),
+          range: assert_type.range,
+          actual_media_type: media_type,
+          expected_media_type: MediaType::Json,
+        },
+      ));
     } else {
-      return Err(ModuleGraphError::UnsupportedImportAssertionType {
-        specifier: specifier.clone(),
-        range: assert_type.range,
-        kind: assert_type.kind,
-      });
+      return Err(ModuleGraphError::ModuleError(
+        ModuleError::UnsupportedImportAssertionType {
+          specifier: specifier.clone(),
+          range: assert_type.range,
+          kind: assert_type.kind,
+        },
+      ));
     }
   }
 
@@ -1556,9 +1570,9 @@ pub(crate) fn parse_module(
             maybe_resolver,
           )))
         }
-        Err(diagnostic) => {
-          Err(ModuleGraphError::ParseErr(specifier.clone(), diagnostic))
-        }
+        Err(diagnostic) => Err(ModuleGraphError::ModuleError(
+          ModuleError::ParseErr(specifier.clone(), diagnostic),
+        )),
       }
     }
     MediaType::Unknown if is_root => {
@@ -1578,16 +1592,18 @@ pub(crate) fn parse_module(
             maybe_resolver,
           )))
         }
-        Err(diagnostic) => {
-          Err(ModuleGraphError::ParseErr(specifier.clone(), diagnostic))
-        }
+        Err(diagnostic) => Err(ModuleGraphError::ModuleError(
+          ModuleError::ParseErr(specifier.clone(), diagnostic),
+        )),
       }
     }
-    _ => Err(ModuleGraphError::UnsupportedMediaType {
-      specifier: specifier.clone(),
-      media_type,
-      maybe_referrer,
-    }),
+    _ => Err(ModuleGraphError::ModuleError(
+      ModuleError::UnsupportedMediaType(
+        specifier.clone(),
+        media_type,
+        maybe_referrer,
+      ),
+    )),
   }
 }
 
@@ -1969,9 +1985,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Some((specifier, maybe_range, Ok(None))) => {
           self.graph.module_slots.insert(
             specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::Missing(
-              specifier.clone(),
-              maybe_range,
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::Missing(specifier.clone(), maybe_range),
             )),
           );
           Some(specifier)
@@ -1979,10 +1994,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Some((specifier, maybe_range, Err(err))) => {
           self.graph.module_slots.insert(
             specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::LoadingErr(
-              specifier.clone(),
-              maybe_range,
-              Arc::new(err),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::LoadingErr(
+                specifier.clone(),
+                maybe_range,
+                Arc::new(err),
+              ),
             )),
           );
           Some(specifier)
@@ -2063,10 +2080,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           if !self.graph.module_slots.contains_key(&specifier) {
             self.graph.module_slots.insert(
               specifier.clone(),
-              ModuleSlot::Err(ModuleGraphError::LoadingErr(
-                specifier,
-                maybe_range,
-                Arc::new(anyhow::anyhow!("{}", err)),
+              ModuleSlot::Err(ModuleGraphError::ModuleError(
+                ModuleError::LoadingErr(
+                  specifier,
+                  maybe_range,
+                  Arc::new(anyhow::anyhow!("{}", err)),
+                ),
               )),
             );
           }
@@ -2123,12 +2142,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             } else {
               self.graph.module_slots.insert(
                 specifier.clone(),
-                ModuleSlot::Err(ModuleGraphError::LoadingErr(
-                  specifier,
-                  maybe_range,
-                  Arc::new(anyhow::anyhow!(
-                    "npm specifiers are not supported in this environment"
-                  )),
+                ModuleSlot::Err(ModuleGraphError::ModuleError(
+                  ModuleError::LoadingErr(
+                    specifier,
+                    maybe_range,
+                    Arc::new(anyhow::anyhow!(
+                      "npm specifiers are not supported in this environment"
+                    )),
+                  ),
                 )),
               );
             }
@@ -2218,10 +2239,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           Err(err) => {
             self.graph.module_slots.insert(
               specifier.clone(),
-              ModuleSlot::Err(ModuleGraphError::LoadingErr(
-                specifier.clone(),
-                maybe_range,
-                Arc::new(err.into()),
+              ModuleSlot::Err(ModuleGraphError::ModuleError(
+                ModuleError::LoadingErr(
+                  specifier.clone(),
+                  maybe_range,
+                  Arc::new(err.into()),
+                ),
               )),
             );
           }
@@ -2244,10 +2267,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Err(err) => {
           self.graph.module_slots.insert(
             specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::LoadingErr(
-              specifier.clone(),
-              maybe_range,
-              Arc::new(err.into()),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::LoadingErr(
+                specifier.clone(),
+                maybe_range,
+                Arc::new(err.into()),
+              ),
             )),
           );
           return;
@@ -2715,7 +2740,7 @@ mod tests {
       graph
         .try_get(&Url::parse("file:///bar.js").unwrap())
         .unwrap_err(),
-      ModuleGraphError::Missing(..)
+      ModuleGraphError::ModuleError(ModuleError::Missing(..))
     ));
     let specifiers = graph.specifiers().collect::<HashMap<_, _>>();
     assert_eq!(specifiers.len(), 2);
@@ -2729,7 +2754,7 @@ mod tests {
         .unwrap()
         .as_ref()
         .unwrap_err(),
-      ModuleGraphError::Missing(..)
+      ModuleGraphError::ModuleError(ModuleError::Missing(..))
     ));
 
     // should not follow the dynamic import error when walking and not following
@@ -2759,7 +2784,10 @@ mod tests {
       .errors()
       .collect::<Vec<_>>();
     assert_eq!(errors.len(), 1);
-    assert!(matches!(errors[0], ModuleGraphError::MissingDynamic(..)));
+    assert!(matches!(
+      errors[0],
+      ModuleGraphError::ModuleError(ModuleError::MissingDynamic(..))
+    ));
   }
 
   #[tokio::test]
@@ -2817,7 +2845,7 @@ mod tests {
         .unwrap()
         .as_ref()
         .unwrap_err(),
-      ModuleGraphError::ParseErr(..)
+      ModuleGraphError::ModuleError(ModuleError::ParseErr(..))
     ));
     assert!(matches!(
       specifiers
@@ -2825,7 +2853,7 @@ mod tests {
         .unwrap()
         .as_ref()
         .unwrap_err(),
-      ModuleGraphError::ParseErr(..)
+      ModuleGraphError::ModuleError(ModuleError::ParseErr(..))
     ));
   }
 
