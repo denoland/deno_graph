@@ -270,8 +270,6 @@ pub enum ResolutionError {
   },
   ResolverError {
     error: Arc<anyhow::Error>,
-    // todo(dsherret): remove this as it's now on the Range
-    specifier: String,
     range: Range,
   },
 }
@@ -307,17 +305,9 @@ impl PartialEq for ResolutionError {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
       (
-        Self::ResolverError {
-          specifier: a,
-          range: a_range,
-          ..
-        },
-        Self::ResolverError {
-          specifier: b,
-          range: b_range,
-          ..
-        },
-      ) => a == b && a_range == b_range,
+        Self::ResolverError { range: a_range, .. },
+        Self::ResolverError { range: b_range, .. },
+      ) => a_range == b_range,
       (
         Self::InvalidDowngrade {
           specifier: a,
@@ -406,7 +396,6 @@ impl Resolution {
           } else {
             ResolutionError::ResolverError {
               error: Arc::new(err),
-              specifier: range.text.to_string(),
               range,
             }
           };
@@ -1747,7 +1736,6 @@ pub(crate) fn parse_esm_module_from_module_info(
               dependency: Resolution::Err(Box::new(
                 ResolutionError::ResolverError {
                   error: Arc::new(err),
-                  specifier: module.specifier.to_string(),
                   range: Range {
                     specifier: module.specifier.clone(),
                     text: specifier_text,
@@ -2107,7 +2095,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     ModuleSlot::Err(ModuleGraphError::ResolutionError(
                       ResolutionError::ResolverError {
                         error: Arc::new(err),
-                        specifier: specifier_text.to_string(),
                         // this should always be set,
                         range: maybe_range.unwrap_or_else(|| Range {
                           specifier,
