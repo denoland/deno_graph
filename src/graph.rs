@@ -95,9 +95,6 @@ impl Position {
 pub struct Range {
   #[serde(skip_serializing)]
   pub specifier: ModuleSpecifier,
-  /// The raw text in the referrer.
-  #[serde(skip_serializing)]
-  pub text: String,
   #[serde(default = "Position::zeroed")]
   pub start: Position,
   #[serde(default = "Position::zeroed")]
@@ -119,12 +116,10 @@ impl fmt::Display for Range {
 impl Range {
   pub(crate) fn from_position_range(
     specifier: ModuleSpecifier,
-    specifier_text: String,
     range: PositionRange,
   ) -> Range {
     Range {
       specifier,
-      text: specifier_text,
       start: range.start,
       end: range.end,
     }
@@ -278,7 +273,6 @@ pub enum ResolutionError {
   },
   ResolverError {
     error: Arc<anyhow::Error>,
-    // todo(dsherret): remove this as it's now on the Range
     specifier: String,
     range: Range,
   },
@@ -398,6 +392,7 @@ pub enum Resolution {
 impl Resolution {
   pub fn from_resolve_result(
     result: Result<ModuleSpecifier, Error>,
+    specifier_text: &str,
     range: Range,
   ) -> Self {
     match result {
@@ -414,7 +409,7 @@ impl Resolution {
           } else {
             ResolutionError::ResolverError {
               error: Arc::new(err),
-              specifier: range.text.to_string(),
+              specifier: specifier_text.to_string(),
               range,
             }
           };
@@ -737,11 +732,10 @@ impl GraphImport {
       .map(|import| {
         let referrer_range = Range {
           specifier: referrer.clone(),
-          text: import.clone(),
           start: Position::zeroed(),
           end: Position::zeroed(),
         };
-        let maybe_type = resolve(referrer_range, maybe_resolver);
+        let maybe_type = resolve(&import, referrer_range, maybe_resolver);
         (
           import,
           Dependency {
@@ -974,6 +968,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
   fn check_resolution(
     &self,
     module: &EsmModule,
+    specifier_text: &str,
     resolution: &Resolution,
     is_dynamic: bool,
   ) -> Option<ModuleGraphError> {
@@ -990,7 +985,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
           ))
         } else if matches!(referrer_scheme, "https" | "http")
           && matches!(specifier_scheme, "file")
-          && resolved.range.text.to_lowercase().starts_with("file://")
+          && specifier_text.to_lowercase().starts_with("file://")
         {
           Some(ModuleGraphError::ResolutionError(
             ResolutionError::InvalidLocalImport {
@@ -1056,28 +1051,31 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
               ))
               && follow_type_only;
             if check_types {
-              if let Some(resolution) = module
-                .maybe_types_dependency
-                .as_ref()
-                .map(|d| &d.dependency)
-              {
-                if let Some(err) =
-                  self.check_resolution(module, resolution, false)
-                {
+              if let Some(dep) = module.maybe_types_dependency.as_ref() {
+                if let Some(err) = self.check_resolution(
+                  module,
+                  &dep.specifier,
+                  &dep.dependency,
+                  false,
+                ) {
                   self.next_errors.push(err);
                 }
               }
             }
-            for dep in module.dependencies.values() {
+            for (specifier_text, dep) in &module.dependencies {
               if follow_dynamic || !dep.is_dynamic {
-                if let Some(err) =
-                  self.check_resolution(module, &dep.maybe_code, dep.is_dynamic)
-                {
+                if let Some(err) = self.check_resolution(
+                  module,
+                  specifier_text,
+                  &dep.maybe_code,
+                  dep.is_dynamic,
+                ) {
                   self.next_errors.push(err);
                 }
                 if check_types {
                   if let Some(err) = self.check_resolution(
                     module,
+                    specifier_text,
                     &dep.maybe_type,
                     dep.is_dynamic,
                   ) {
@@ -1430,16 +1428,17 @@ impl ModuleGraph {
 /// Resolve a string specifier from a referring module, using the resolver if
 /// present, returning the resolution result.
 fn resolve(
+  specifier_text: &str,
   referrer_range: Range,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolution {
   let response = if let Some(resolver) = maybe_resolver {
-    resolver.resolve(&referrer_range.text, &referrer_range.specifier)
+    resolver.resolve(specifier_text, &referrer_range.specifier)
   } else {
-    resolve_import(&referrer_range.text, &referrer_range.specifier)
+    resolve_import(specifier_text, &referrer_range.specifier)
       .map_err(|err| err.into())
   };
-  Resolution::from_resolve_result(response, referrer_range)
+  Resolution::from_resolve_result(response, specifier_text, referrer_range)
 }
 
 fn serialize_module_slots<S>(
@@ -1629,19 +1628,15 @@ pub(crate) fn parse_esm_module_from_module_info(
         if dep.maybe_type.is_none() {
           let range = Range::from_position_range(
             module.specifier.clone(),
-            specifier.text,
             specifier.range,
           );
-          dep.maybe_type = resolve(range, maybe_resolver);
+          dep.maybe_type = resolve(&specifier.text, range, maybe_resolver);
         }
       }
       TypeScriptReference::Types(specifier) => {
-        let range = Range::from_position_range(
-          module.specifier.clone(),
-          specifier.text.clone(),
-          specifier.range,
-        );
-        let dep_resolution = resolve(range, maybe_resolver);
+        let range =
+          Range::from_position_range(module.specifier.clone(), specifier.range);
+        let dep_resolution = resolve(&specifier.text, range, maybe_resolver);
         if is_untyped(&module.media_type) {
           module.maybe_types_dependency = Some(TypesDependency {
             specifier: specifier.text.clone(),
@@ -1690,10 +1685,9 @@ pub(crate) fn parse_esm_module_from_module_info(
       if dep.maybe_code.is_none() {
         let range = Range::from_position_range(
           module.specifier.clone(),
-          specifier_text,
           import_source.range,
         );
-        dep.maybe_code = resolve(range, maybe_resolver);
+        dep.maybe_code = resolve(&specifier_text, range, maybe_resolver);
       }
     }
   }
@@ -1705,12 +1699,9 @@ pub(crate) fn parse_esm_module_from_module_info(
       .entry(specifier.text.clone())
       .or_default();
     if dep.maybe_type.is_none() {
-      let range = Range::from_position_range(
-        module.specifier.clone(),
-        specifier.text,
-        specifier.range,
-      );
-      dep.maybe_type = resolve(range, maybe_resolver);
+      let range =
+        Range::from_position_range(module.specifier.clone(), specifier.range);
+      dep.maybe_type = resolve(&specifier.text, range, maybe_resolver);
     }
   }
 
@@ -1720,13 +1711,12 @@ pub(crate) fn parse_esm_module_from_module_info(
       if let Some(types_header) = headers.get("x-typescript-types") {
         let range = Range {
           specifier: module.specifier.clone(),
-          text: types_header.to_string(),
           start: Position::zeroed(),
           end: Position::zeroed(),
         };
         module.maybe_types_dependency = Some(TypesDependency {
-          specifier: range.text.clone(),
-          dependency: resolve(range, maybe_resolver),
+          specifier: types_header.to_string(),
+          dependency: resolve(types_header, range, maybe_resolver),
         });
       }
     }
@@ -1743,12 +1733,11 @@ pub(crate) fn parse_esm_module_from_module_info(
           Ok(Some((specifier, maybe_range))) => {
             let specifier_text = module.specifier.to_string();
             Some(TypesDependency {
-              specifier: specifier_text.clone(),
+              specifier: specifier_text,
               dependency: Resolution::Ok(Box::new(ResolutionResolved {
                 specifier: specifier.clone(),
                 range: maybe_range.unwrap_or_else(|| Range {
                   specifier,
-                  text: specifier_text,
                   start: Position::zeroed(),
                   end: Position::zeroed(),
                 }),
@@ -1756,24 +1745,20 @@ pub(crate) fn parse_esm_module_from_module_info(
             })
           }
           Ok(None) => None,
-          Err(err) => {
-            let specifier_text = module.specifier.to_string();
-            Some(TypesDependency {
-              specifier: specifier_text.clone(),
-              dependency: Resolution::Err(Box::new(
-                ResolutionError::ResolverError {
-                  error: Arc::new(err),
-                  specifier: module.specifier.to_string(),
-                  range: Range {
-                    specifier: module.specifier.clone(),
-                    text: specifier_text,
-                    start: Position::zeroed(),
-                    end: Position::zeroed(),
-                  },
+          Err(err) => Some(TypesDependency {
+            specifier: module.specifier.to_string(),
+            dependency: Resolution::Err(Box::new(
+              ResolutionError::ResolverError {
+                error: Arc::new(err),
+                specifier: module.specifier.to_string(),
+                range: Range {
+                  specifier: module.specifier.clone(),
+                  start: Position::zeroed(),
+                  end: Position::zeroed(),
                 },
-              )),
-            })
-          }
+              },
+            )),
+          }),
         };
     }
   }
@@ -1790,9 +1775,9 @@ pub(crate) fn parse_esm_module_from_module_info(
       dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
     }
     let dep_resolution = resolve(
+      &desc.specifier,
       Range::from_position_range(
         module.specifier.clone(),
-        desc.specifier.clone(),
         desc.specifier_range.clone(),
       ),
       maybe_resolver,
@@ -1820,7 +1805,8 @@ pub(crate) fn parse_esm_module_from_module_info(
       let specifier = module.specifier.clone();
       let maybe_type = if let Some(pragma) = analyze_deno_types(&desc) {
         resolve(
-          Range::from_position_range(specifier, pragma.specifier, pragma.range),
+          &pragma.specifier,
+          Range::from_position_range(specifier, pragma.range),
           maybe_resolver,
         )
       } else {
@@ -2120,17 +2106,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   );
                 }
                 Err(err) => {
-                  let specifier_text = specifier.to_string();
                   self.graph.module_slots.insert(
                     specifier.clone(),
                     ModuleSlot::Err(ModuleGraphError::ResolutionError(
                       ResolutionError::ResolverError {
                         error: Arc::new(err),
-                        specifier: specifier_text.to_string(),
+                        specifier: specifier.to_string(),
                         // this should always be set,
                         range: maybe_range.unwrap_or_else(|| Range {
                           specifier,
-                          text: specifier_text,
                           start: Position::zeroed(),
                           end: Position::zeroed(),
                         }),
@@ -2532,7 +2516,6 @@ mod tests {
   fn test_range_includes() {
     let range = Range {
       specifier: ModuleSpecifier::parse("file:///a.ts").unwrap(),
-      text: String::new(),
       start: Position {
         line: 1,
         character: 20,
@@ -2597,7 +2580,6 @@ mod tests {
         specifier: ModuleSpecifier::parse("file:///b.ts").unwrap(),
         range: Range {
           specifier: specifier.clone(),
-          text: "./b.ts".to_string(),
           start: Position {
             line: 0,
             character: 19
@@ -2613,7 +2595,6 @@ mod tests {
       range,
       &Range {
         specifier,
-        text: "./b.ts".to_string(),
         start: Position {
           line: 0,
           character: 19
@@ -2927,7 +2908,6 @@ mod tests {
         range: Range {
           specifier: ModuleSpecifier::parse("https://deno.land/foo.js")
             .unwrap(),
-          text: "http://deno.land/foo.js".to_string(),
           start: Position {
             line: 0,
             character: 57,
@@ -2946,7 +2926,6 @@ mod tests {
         range: Range {
           specifier: ModuleSpecifier::parse("https://deno.land/foo.js")
             .unwrap(),
-          text: "file:///bar.js".to_string(),
           start: Position {
             line: 0,
             character: 32,
@@ -2966,7 +2945,6 @@ mod tests {
         range: Range {
           specifier: ModuleSpecifier::parse("https://deno.land/foo.js")
             .unwrap(),
-          text: "FILE:///baz.js".to_string(),
           start: Position {
             line: 0,
             character: 7,
