@@ -369,6 +369,9 @@ fn analyze_jsx_import_source(
   match parsed_source.media_type() {
     MediaType::Jsx | MediaType::Tsx => {
       parsed_source.get_leading_comments().iter().find_map(|c| {
+        if c.kind == CommentKind::Line {
+          return None;
+        }
         let captures = JSX_IMPORT_SOURCE_RE.captures(&c.text)?;
         let m = captures.get(1)?;
         Some(SpecifierWithRange {
@@ -459,6 +462,7 @@ mod tests {
     let source = r#"
     /// <reference path="./ref.d.ts" />
     /// <reference types="./types.d.ts" />
+    // @jsxImportSource http://example.com/invalid
     /* @jsxImportSource http://example.com/preact */
     import {
       A,
