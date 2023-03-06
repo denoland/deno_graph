@@ -1665,7 +1665,6 @@ export function a(a) {
           "file:///a.d.ts",
           Some(Range {
             specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
-            text: "a".to_string(),
             start: Position::zeroed(),
             end: Position::zeroed(),
           }),
@@ -1694,7 +1693,6 @@ export function a(a) {
         specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
         range: Range {
           specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
-          text: "a".to_string(),
           start: Position::zeroed(),
           end: Position::zeroed(),
         }
