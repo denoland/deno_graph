@@ -43,6 +43,7 @@ pub use graph::GraphKind;
 pub use graph::JsonModule;
 pub use graph::Module;
 pub use graph::ModuleEntryRef;
+pub use graph::ModuleError;
 pub use graph::ModuleGraph;
 pub use graph::ModuleGraphError;
 pub use graph::NpmModule;
@@ -1138,8 +1139,12 @@ console.log(a);
     let result = graph.valid();
     assert!(result.is_err());
     let err = result.unwrap_err();
-    assert_eq!(err.specifier(), &root_specifier);
-    assert!(matches!(err, ModuleGraphError::ResolutionError(_)));
+    match err {
+      ModuleGraphError::ResolutionError(err) => {
+        assert_eq!(err.range().specifier, root_specifier)
+      }
+      _ => unreachable!(),
+    }
   }
 
   #[tokio::test]
@@ -1180,10 +1185,11 @@ console.log(a);
     let err = result.unwrap_err();
     assert!(matches!(
       err,
-      ModuleGraphError::UnsupportedMediaType {
-        media_type: MediaType::Json,
-        ..
-      },
+      ModuleGraphError::ModuleError(ModuleError::UnsupportedMediaType(
+        _,
+        MediaType::Json,
+        _
+      )),
     ));
   }
 
