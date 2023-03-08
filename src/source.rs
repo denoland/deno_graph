@@ -105,10 +105,10 @@ pub trait Resolver: fmt::Debug {
   /// resolved module specifier.
   fn resolve(
     &self,
-    specifier: &str,
+    specifier_text: &str,
     referrer: &ModuleSpecifier,
   ) -> Result<ModuleSpecifier, Error> {
-    Ok(resolve_import(specifier, referrer)?)
+    Ok(resolve_import(specifier_text, referrer)?)
   }
 
   /// Given a module specifier, return an optional tuple which provides a module
