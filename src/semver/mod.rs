@@ -249,7 +249,7 @@ mod test {
     // should deserialize and serialize with loose parsing
     let text = "= v 1.2.3-pre.other+build.test";
     let version: Version =
-      serde_json::from_str(&format!("\"{}\"", text)).unwrap();
+      serde_json::from_str(&format!("\"{text}\"")).unwrap();
     let serialized_version = serde_json::to_string(&version).unwrap();
     assert_eq!(serialized_version, "\"1.2.3-pre.other+build.test\"");
   }
