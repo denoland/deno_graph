@@ -11,7 +11,6 @@ mod npm;
 mod range;
 mod specifier;
 
-use self::npm::parse_npm_version_req;
 pub use self::npm::NpmVersionParseError;
 pub use self::npm::NpmVersionReqParseError;
 pub use self::range::Partial;
@@ -19,8 +18,10 @@ pub use self::range::VersionBoundKind;
 pub use self::range::VersionRange;
 pub use self::range::VersionRangeSet;
 pub use self::range::XRange;
-use self::specifier::parse_version_req_from_specifier;
 pub use self::specifier::NpmVersionReqSpecifierParseError;
+
+use self::npm::parse_npm_version_req;
+use self::specifier::parse_version_req_from_specifier;
 
 #[derive(Error, Debug)]
 #[error("Invalid version. {source}")]
@@ -29,15 +30,35 @@ pub struct VersionParseError {
   source: monch::ParseErrorFailureError,
 }
 
-#[derive(
-  Clone, Debug, PartialEq, Eq, Default, Hash, Serialize, Deserialize,
-)]
+#[derive(Clone, Debug, PartialEq, Eq, Default, Hash)]
 pub struct Version {
   pub major: u64,
   pub minor: u64,
   pub patch: u64,
   pub pre: Vec<String>,
   pub build: Vec<String>,
+}
+
+impl Serialize for Version {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::Serializer,
+  {
+    serializer.serialize_str(&self.to_string())
+  }
+}
+
+impl<'de> Deserialize<'de> for Version {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'de>,
+  {
+    let text = String::deserialize(deserializer)?;
+    match Version::parse_standard(&text) {
+      Ok(version) => Ok(version),
+      Err(err) => Err(serde::de::Error::custom(err)),
+    }
+  }
 }
 
 impl Version {
@@ -216,5 +237,20 @@ impl VersionReq {
 impl fmt::Display for VersionReq {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "{}", &self.raw_text)
+  }
+}
+
+#[cfg(test)]
+mod test {
+  use crate::semver::Version;
+
+  #[test]
+  fn serialize_deserialize() {
+    // should deserialize and serialize with loose parsing
+    let text = "= v 1.2.3-pre+build";
+    let version: Version =
+      serde_json::from_str(&format!("\"{}\"", text)).unwrap();
+    let serialized_version = serde_json::to_string(&version).unwrap();
+    assert_eq!(serialized_version, "\"1.2.3-pre+build\"");
   }
 }
