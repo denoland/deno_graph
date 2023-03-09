@@ -505,6 +505,7 @@ impl ImportKind {
 }
 
 #[derive(Clone, Debug, Serialize)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 #[serde(rename_all = "camelCase")]
 pub struct Import {
   pub specifier: String,
@@ -2608,6 +2609,7 @@ where
 #[cfg(test)]
 mod tests {
   use crate::DefaultModuleAnalyzer;
+  use crate::ImportAssertion;
   use pretty_assertions::assert_eq;
 
   use super::*;
@@ -3106,5 +3108,203 @@ mod tests {
       )
       .await;
     assert!(loader.loaded_bar);
+  }
+
+  #[tokio::test]
+  async fn dependency_imports() {
+    struct TestLoader;
+    impl Loader for TestLoader {
+      fn load(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        is_dynamic: bool,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///foo.ts" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: "
+                /// <reference path='file:///bar.ts' />
+                /// <reference types='file:///bar.ts' />
+                /* @jsxImportSource file:///bar.ts */
+                import 'file:///bar.ts';
+                await import('file:///bar.ts');
+                await import('file:///bar.ts', { assert: eval('') });
+                import 'file:///baz.json' assert { type: 'json' };
+                import type {} from 'file:///bar.ts';
+                /** @typedef { import('file:///bar.ts') } bar */
+              "
+              .into(),
+            }))
+          }),
+          "file:///bar.ts" => {
+            assert!(!is_dynamic);
+            Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: "".into(),
+              }))
+            })
+          }
+          "file:///baz.json" => {
+            assert!(!is_dynamic);
+            Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: "{}".into(),
+              }))
+            })
+          }
+          _ => unreachable!(),
+        }
+      }
+    }
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.ts").unwrap()],
+        &mut TestLoader,
+        Default::default(),
+      )
+      .await;
+    graph.valid().unwrap();
+    let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
+    let module = module.esm().unwrap();
+    let dependency_a = module.dependencies.get("file:///bar.ts").unwrap();
+    let dependency_b = module.dependencies.get("file:///baz.json").unwrap();
+    assert_eq!(
+      dependency_a.imports,
+      vec![
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::TsReferencePath,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 1,
+              character: 36
+            },
+            end: Position {
+              line: 1,
+              character: 52,
+            },
+          },
+          is_dynamic: false,
+          assertions: ImportAssertions::None,
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::TsReferenceTypes,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 2,
+              character: 37,
+            },
+            end: Position {
+              line: 2,
+              character: 53,
+            },
+          },
+          is_dynamic: false,
+          assertions: ImportAssertions::None,
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::Es,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 4,
+              character: 23,
+            },
+            end: Position {
+              line: 4,
+              character: 39,
+            },
+          },
+          is_dynamic: false,
+          assertions: ImportAssertions::None,
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::Es,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 5,
+              character: 29,
+            },
+            end: Position {
+              line: 5,
+              character: 45,
+            },
+          },
+          is_dynamic: true,
+          assertions: ImportAssertions::None,
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::Es,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 6,
+              character: 29,
+            },
+            end: Position {
+              line: 6,
+              character: 45,
+            },
+          },
+          is_dynamic: true,
+          assertions: ImportAssertions::Unknown,
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::TsType,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 8,
+              character: 36,
+            },
+            end: Position {
+              line: 8,
+              character: 52,
+            },
+          },
+          is_dynamic: false,
+          assertions: ImportAssertions::None,
+        },
+      ]
+    );
+    assert_eq!(
+      dependency_b.imports,
+      vec![Import {
+        specifier: "file:///baz.json".to_string(),
+        kind: ImportKind::Es,
+        range: Range {
+          specifier: Url::parse("file:///foo.ts").unwrap(),
+          start: Position {
+            line: 7,
+            character: 23,
+          },
+          end: Position {
+            line: 7,
+            character: 41,
+          },
+        },
+        is_dynamic: false,
+        assertions: ImportAssertions::Known(HashMap::from_iter(vec![(
+          "type".to_string(),
+          ImportAssertion::Known("json".to_string())
+        )])),
+      },]
+    );
   }
 }
