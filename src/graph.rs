@@ -471,20 +471,6 @@ fn is_false(v: &bool) -> bool {
   !v
 }
 
-fn serialize_import_assertions<S>(
-  assertions: &ImportAssertions,
-  serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-  S: Serializer,
-{
-  if let Some(map) = assertions.maybe_static() {
-    map.serialize(serializer)
-  } else {
-    ImportAssertions::Unknown.serialize(serializer)
-  }
-}
-
 #[derive(Clone, Copy, Debug, Serialize, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum ImportKind {
@@ -527,8 +513,10 @@ pub struct Import {
   pub range: Range,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
-  #[serde(skip_serializing_if = "ImportAssertions::is_empty")]
-  #[serde(serialize_with = "serialize_import_assertions")]
+  // Don't include assertions in `deno info --json`, since they may be unstable:
+  // https://github.com/denoland/deno/issues/17944. Assertion error strings
+  // eventually will be included in a separate `Import::errors`, however.
+  #[serde(skip_serializing)]
   pub assertions: ImportAssertions,
 }
 

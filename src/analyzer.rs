@@ -128,7 +128,6 @@ impl DependencyKind {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub enum ImportAssertion {
   /// The value of this assertion could not be statically analyzed.
   Unknown,
@@ -148,7 +147,6 @@ impl ImportAssertion {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub enum ImportAssertions {
   /// There was no import assertions object literal.
   None,
@@ -157,6 +155,12 @@ pub enum ImportAssertions {
   /// The set of assertion keys is statically analyzed, though each respective
   /// value may or may not not be for dynamic imports.
   Known(HashMap<String, ImportAssertion>),
+}
+
+impl Default for ImportAssertions {
+  fn default() -> Self {
+    Self::None
+  }
 }
 
 impl ImportAssertions {
@@ -183,47 +187,6 @@ impl ImportAssertions {
       },
       _ => None,
     }
-  }
-
-  /// Check if a assertion key is known to be absent (not set to a value and not
-  /// undeterminable). This is significant because it is the precise case where
-  /// `type: "javascript"` is asserted.
-  pub fn is_known_none(&self, key: &str) -> bool {
-    match self {
-      ImportAssertions::None => true,
-      ImportAssertions::Known(map) => !map.contains_key(key),
-      ImportAssertions::Unknown => false,
-    }
-  }
-
-  pub fn is_empty(&self) -> bool {
-    matches!(self, ImportAssertions::None)
-  }
-
-  /// Try to get a flat dictionary, successful if there are no unknowns.
-  pub fn maybe_static(&self) -> Option<HashMap<String, String>> {
-    let mut assertions = HashMap::new();
-    match self {
-      ImportAssertions::None => {}
-      ImportAssertions::Known(map) => {
-        for (key, assertion) in map {
-          match assertion {
-            ImportAssertion::Known(value) => {
-              assertions.insert(key.clone(), value.clone());
-            }
-            ImportAssertion::Unknown => return None,
-          }
-        }
-      }
-      _ => return None,
-    }
-    Some(assertions)
-  }
-}
-
-impl Default for ImportAssertions {
-  fn default() -> Self {
-    Self::None
   }
 }
 
