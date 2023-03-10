@@ -804,9 +804,8 @@ impl<'a> ModuleEntryIterator<'a> {
     roots: &'a [ModuleSpecifier],
     options: WalkOptions,
   ) -> Self {
-    let mut seen = HashSet::<&'a ModuleSpecifier>::with_capacity(
-      graph.roots.len() + graph.redirects.len(),
-    );
+    let mut seen =
+      HashSet::<&'a ModuleSpecifier>::with_capacity(graph.specifiers_count());
     let mut visiting = VecDeque::<&'a ModuleSpecifier>::new();
     for root in roots {
       seen.insert(root);
@@ -1422,6 +1421,14 @@ impl ModuleGraph {
         },
       )
       .validate()
+  }
+
+  /// Gets the approximate number of specifiers in the graph.
+  ///
+  /// This is useful for pre-allocating actions that will take
+  /// place on the graph.
+  pub fn specifiers_count(&self) -> usize {
+    self.module_slots.len() + self.redirects.len()
   }
 }
 
@@ -2683,6 +2690,7 @@ mod tests {
     assert!(loader.loaded_foo);
     assert!(loader.loaded_bar);
     assert!(loader.loaded_baz);
+    assert_eq!(graph.specifiers_count(), 3);
   }
 
   #[tokio::test]
@@ -2889,6 +2897,7 @@ mod tests {
     graph
       .build(roots.clone(), &mut loader, Default::default())
       .await;
+    assert_eq!(graph.specifiers_count(), 4);
     let errors = graph
       .walk(&roots, Default::default())
       .errors()
