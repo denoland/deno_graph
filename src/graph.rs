@@ -1121,9 +1121,9 @@ pub struct ModuleGraph {
   #[serde(rename = "modules")]
   #[serde(serialize_with = "serialize_module_slots")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
-  #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+  #[serde(skip_serializing_if = "IndexMap::is_empty")]
   #[serde(serialize_with = "serialize_graph_imports")]
-  pub imports: BTreeMap<ModuleSpecifier, GraphImport>,
+  pub imports: IndexMap<ModuleSpecifier, GraphImport>,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
   #[serde(skip_serializing)]
   pub npm_packages: Vec<NpmPackageNv>,
@@ -1466,7 +1466,7 @@ where
 }
 
 fn serialize_graph_imports<S>(
-  graph_imports: &BTreeMap<ModuleSpecifier, GraphImport>,
+  graph_imports: &IndexMap<ModuleSpecifier, GraphImport>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
