@@ -860,9 +860,8 @@ impl<'a> ModuleEntryIterator<'a> {
     roots: &'a [ModuleSpecifier],
     options: WalkOptions,
   ) -> Self {
-    let mut seen = HashSet::<&'a ModuleSpecifier>::with_capacity(
-      graph.roots.len() + graph.redirects.len(),
-    );
+    let mut seen =
+      HashSet::<&'a ModuleSpecifier>::with_capacity(graph.specifiers_count());
     let mut visiting = VecDeque::<&'a ModuleSpecifier>::new();
     for root in roots {
       seen.insert(root);
@@ -1177,9 +1176,9 @@ pub struct ModuleGraph {
   #[serde(rename = "modules")]
   #[serde(serialize_with = "serialize_module_slots")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
-  #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+  #[serde(skip_serializing_if = "IndexMap::is_empty")]
   #[serde(serialize_with = "serialize_graph_imports")]
-  pub imports: BTreeMap<ModuleSpecifier, GraphImport>,
+  pub imports: IndexMap<ModuleSpecifier, GraphImport>,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
   #[serde(skip_serializing)]
   pub npm_packages: Vec<NpmPackageNv>,
@@ -1479,6 +1478,14 @@ impl ModuleGraph {
       )
       .validate()
   }
+
+  /// Gets the approximate number of specifiers in the graph.
+  ///
+  /// This is useful for pre-allocating actions that will take
+  /// place on the graph.
+  pub fn specifiers_count(&self) -> usize {
+    self.module_slots.len() + self.redirects.len()
+  }
 }
 
 /// Resolve a string specifier from a referring module, using the resolver if
@@ -1522,7 +1529,7 @@ where
 }
 
 fn serialize_graph_imports<S>(
-  graph_imports: &BTreeMap<ModuleSpecifier, GraphImport>,
+  graph_imports: &IndexMap<ModuleSpecifier, GraphImport>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
@@ -2786,6 +2793,7 @@ mod tests {
     assert!(loader.loaded_foo);
     assert!(loader.loaded_bar);
     assert!(loader.loaded_baz);
+    assert_eq!(graph.specifiers_count(), 3);
   }
 
   #[tokio::test]
@@ -2992,6 +3000,7 @@ mod tests {
     graph
       .build(roots.clone(), &mut loader, Default::default())
       .await;
+    assert_eq!(graph.specifiers_count(), 4);
     let errors = graph
       .walk(&roots, Default::default())
       .errors()
