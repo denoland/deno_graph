@@ -1,9 +1,6 @@
 name: ci
 
-on:
-  push:
-    main
-  pull_request:
+on: [push, pull_request]
 
 jobs:
   rust:
