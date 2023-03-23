@@ -7,7 +7,7 @@ jobs:
     name: deno_graph-${{ matrix.os }}
     if: |
       (github.event_name == 'push' || !startsWith(github.event.pull_request.head.label, 'denoland:'))
-      && github.ref_name != "deno_registry"
+      && github.ref_name != 'deno_registry'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
