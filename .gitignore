@@ -5,4 +5,3 @@ deno.lock
 js/deno_graph_wasm_bg.wasm
 js/deno_graph_wasm.generated.js
 js/LICENSE
-js/README.md
