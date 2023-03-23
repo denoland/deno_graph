@@ -8,6 +8,7 @@ jobs:
     if: |
       (github.event_name == 'push' || !startsWith(github.event.pull_request.head.label, 'denoland:'))
       && github.ref_name != 'deno_registry'
+      && !startsWith(github.ref, 'refs/tags/deno_')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
