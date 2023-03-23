@@ -18,18 +18,18 @@
  * @module
  */
 
-import * as wasm from "./lib/deno_graph_wasm.generated.js";
-import { load as defaultLoad } from "./lib/loader.ts";
+import * as wasm from "./deno_graph_wasm.generated.js";
+import { load as defaultLoad } from "./loader.ts";
 import type {
   CacheInfo,
   LoadResponse,
   ModuleGraphJson,
   ModuleJson,
   TypesDependency,
-} from "./lib/types.d.ts";
+} from "./types.d.ts";
 
-export { load } from "./lib/loader.ts";
-export { MediaType } from "./lib/media_type.ts";
+export { load } from "./loader.ts";
+export { MediaType } from "./media_type.ts";
 export type {
   CacheInfo,
   Dependency,
@@ -38,7 +38,7 @@ export type {
   ModuleJson,
   ModuleKind,
   TypesDependency,
-} from "./lib/types.d.ts";
+} from "./types.d.ts";
 
 export interface CreateGraphOptions {
   /**
