@@ -45,7 +45,7 @@ jobs:
           cargo clippy --locked --release --all-features --all-targets -- -D clippy::all
           deno lint
 
-      - name: Build
+      - name: Cargo Build
         run: cargo build --locked --release --all-features --all-targets
 
       - name: Cargo Test
@@ -78,7 +78,9 @@ jobs:
           REPO: self
           BRANCH: deno_registry
           FOLDER: js
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_NAME: denobot
+          COMMIT_EMAIL: denobot@users.noreply.github.com
+          GITHUB_TOKEN: ${{ secrets.DENOBOT_PAT }}
 
       - name: Tag deno.land/x
         if: contains(matrix.os, 'ubuntu') && startsWith(github.ref, 'refs/tags/')
