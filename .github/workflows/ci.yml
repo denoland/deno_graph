@@ -8,7 +8,7 @@ jobs:
     if: |
       (github.event_name == 'push' || !startsWith(github.event.pull_request.head.label, 'denoland:'))
       && github.ref_name != 'deno_registry'
-      && !startsWith(github.ref, 'refs/tags/deno_')
+      && !startsWith(github.ref, 'refs/tags/deno/')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -87,8 +87,8 @@ jobs:
         if: contains(matrix.os, 'ubuntu') && startsWith(github.ref, 'refs/tags/')
         run: |
           git fetch origin
-          git tag deno_${{steps.get_tag_version.outputs.TAG_VERSION}} deno_registry
-          git push deno_${{steps.get_tag_version.outputs.TAG_VERSION}}
+          git tag deno/${{steps.get_tag_version.outputs.TAG_VERSION}} deno_registry
+          git push deno/${{steps.get_tag_version.outputs.TAG_VERSION}}
 
         # NPM Distribution
       - name: Setup node
