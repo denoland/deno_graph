@@ -87,7 +87,7 @@ jobs:
         if: contains(matrix.os, 'ubuntu') && startsWith(github.ref, 'refs/tags/')
         run: |
           git fetch origin
-          git tag deno/${{steps.get_tag_version.outputs.TAG_VERSION}} deno_registry
+          git tag deno/${{steps.get_tag_version.outputs.TAG_VERSION}} origin/deno_registry
           git push deno/${{steps.get_tag_version.outputs.TAG_VERSION}}
 
         # NPM Distribution
