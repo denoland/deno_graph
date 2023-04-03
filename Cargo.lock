@@ -167,9 +167,9 @@ dependencies = [
  "anyhow",
  "data-url",
  "deno_ast",
+ "deno_semver",
  "futures",
  "indexmap",
- "monch",
  "once_cell",
  "parking_lot",
  "pretty_assertions",
@@ -195,6 +195,18 @@ dependencies = [
  "serde_json",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+]
+
+[[package]]
+name = "deno_semver"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c2c0b6d783f6e7b2fce69893962023dcb1a31b3506c9d8e04bf666749fae054"
+dependencies = [
+ "monch",
+ "serde",
+ "thiserror",
+ "url",
 ]
 
 [[package]]
