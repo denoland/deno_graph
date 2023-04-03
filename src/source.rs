@@ -2,9 +2,9 @@
 
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
-use crate::npm::NpmPackageNv;
-use crate::npm::NpmPackageReq;
 use crate::text_encoding::strip_bom_mut;
+use deno_semver::npm::NpmPackageNv;
+use deno_semver::npm::NpmPackageReq;
 
 use anyhow::anyhow;
 use anyhow::Error;
