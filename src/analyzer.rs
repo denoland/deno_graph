@@ -159,6 +159,12 @@ pub enum ImportAssertions {
   Known(HashMap<String, ImportAssertion>),
 }
 
+impl Default for ImportAssertions {
+  fn default() -> Self {
+    Self::None
+  }
+}
+
 impl ImportAssertions {
   // can't use this type directly because we need to make it serialize & deserialize
   pub fn from_swc(value: deno_ast::swc::dep_graph::ImportAssertions) -> Self {
@@ -218,12 +224,6 @@ impl ImportAssertions {
       _ => return None,
     }
     Some(assertions)
-  }
-}
-
-impl Default for ImportAssertions {
-  fn default() -> Self {
-    Self::None
   }
 }
 

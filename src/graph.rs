@@ -14,9 +14,6 @@ use crate::ReferrerImports;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
-use crate::npm::NpmPackageNv;
-use crate::npm::NpmPackageNvReference;
-use crate::npm::NpmPackageReqReference;
 use crate::source::*;
 
 use anyhow::Error;
@@ -25,6 +22,9 @@ use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
+use deno_semver::npm::NpmPackageNv;
+use deno_semver::npm::NpmPackageNvReference;
+use deno_semver::npm::NpmPackageReqReference;
 use futures::future::LocalBoxFuture;
 use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
@@ -461,6 +461,7 @@ fn is_false(v: &bool) -> bool {
 }
 
 #[derive(Clone, Debug)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 pub enum ImportError {
   TypeAssertionFailed {
     specifier: ModuleSpecifier,
@@ -544,6 +545,7 @@ impl ImportKind {
 }
 
 #[derive(Clone, Debug, Serialize)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 #[serde(rename_all = "camelCase")]
 pub struct Import {
   pub specifier: String,
@@ -896,9 +898,8 @@ impl<'a> ModuleEntryIterator<'a> {
     roots: &'a [ModuleSpecifier],
     options: WalkOptions,
   ) -> Self {
-    let mut seen = HashSet::<&'a ModuleSpecifier>::with_capacity(
-      graph.roots.len() + graph.redirects.len(),
-    );
+    let mut seen =
+      HashSet::<&'a ModuleSpecifier>::with_capacity(graph.specifiers_count());
     let mut visiting = VecDeque::<&'a ModuleSpecifier>::new();
     for root in roots {
       seen.insert(root);
@@ -1222,9 +1223,9 @@ pub struct ModuleGraph {
   #[serde(rename = "modules")]
   #[serde(serialize_with = "serialize_module_slots")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
-  #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+  #[serde(skip_serializing_if = "IndexMap::is_empty")]
   #[serde(serialize_with = "serialize_graph_imports")]
-  pub imports: BTreeMap<ModuleSpecifier, GraphImport>,
+  pub imports: IndexMap<ModuleSpecifier, GraphImport>,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
   #[serde(skip_serializing)]
   pub npm_packages: Vec<NpmPackageNv>,
@@ -1524,6 +1525,14 @@ impl ModuleGraph {
       )
       .validate()
   }
+
+  /// Gets the approximate number of specifiers in the graph.
+  ///
+  /// This is useful for pre-allocating actions that will take
+  /// place on the graph.
+  pub fn specifiers_count(&self) -> usize {
+    self.module_slots.len() + self.redirects.len()
+  }
 }
 
 /// Resolve a string specifier from a referring module, using the resolver if
@@ -1567,7 +1576,7 @@ where
 }
 
 fn serialize_graph_imports<S>(
-  graph_imports: &BTreeMap<ModuleSpecifier, GraphImport>,
+  graph_imports: &IndexMap<ModuleSpecifier, GraphImport>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
@@ -2034,7 +2043,6 @@ struct Builder<'a, 'graph> {
   graph: &'graph mut ModuleGraph,
   loader: &'a mut dyn Loader,
   resolver: Option<&'a dyn Resolver>,
-  dynamic_branches: HashMap<ModuleSpecifier, Range>,
   npm_resolver: Option<&'a dyn NpmResolver>,
   pending: FuturesOrdered<LoadWithSpecifierFuture>,
   requested_npm_registry_info_loads: HashSet<String>,
@@ -2042,6 +2050,7 @@ struct Builder<'a, 'graph> {
     FuturesUnordered<LocalBoxFuture<'static, (String, Result<(), String>)>>,
   pending_npm_specifiers:
     Vec<(ModuleSpecifier, NpmPackageReqReference, Option<Range>)>,
+  dynamic_branches: HashMap<ModuleSpecifier, Range>,
   module_analyzer: &'a dyn ModuleAnalyzer,
   reporter: Option<&'a dyn Reporter>,
 }
@@ -2651,6 +2660,7 @@ where
 #[cfg(test)]
 mod tests {
   use crate::DefaultModuleAnalyzer;
+  use crate::ImportAssertion;
   use pretty_assertions::assert_eq;
 
   use super::*;
@@ -2825,6 +2835,7 @@ mod tests {
     assert!(loader.loaded_foo);
     assert!(loader.loaded_bar);
     assert!(loader.loaded_baz);
+    assert_eq!(graph.specifiers_count(), 3);
   }
 
   #[tokio::test]
@@ -3031,6 +3042,7 @@ mod tests {
     graph
       .build(roots.clone(), &mut loader, Default::default())
       .await;
+    assert_eq!(graph.specifiers_count(), 4);
     let errors = graph
       .walk(&roots, Default::default())
       .errors()
@@ -3147,6 +3159,211 @@ mod tests {
       )
       .await;
     assert!(loader.loaded_bar);
+  }
+
+  #[tokio::test]
+  async fn dependency_imports() {
+    struct TestLoader;
+    impl Loader for TestLoader {
+      fn load(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        is_dynamic: bool,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///foo.ts" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: "
+                /// <reference path='file:///bar.ts' />
+                /// <reference types='file:///bar.ts' />
+                /* @jsxImportSource file:///bar.ts */
+                import 'file:///bar.ts';
+                await import('file:///bar.ts');
+                await import('file:///bar.ts', { assert: eval('') });
+                import 'file:///baz.json' assert { type: 'json' };
+                import type {} from 'file:///bar.ts';
+                /** @typedef { import('file:///bar.ts') } bar */
+              "
+              .into(),
+            }))
+          }),
+          "file:///bar.ts" => {
+            assert!(!is_dynamic);
+            Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: "".into(),
+              }))
+            })
+          }
+          "file:///baz.json" => {
+            assert!(!is_dynamic);
+            Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: "{}".into(),
+              }))
+            })
+          }
+          _ => unreachable!(),
+        }
+      }
+    }
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.ts").unwrap()],
+        &mut TestLoader,
+        Default::default(),
+      )
+      .await;
+    graph.valid().unwrap();
+    let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
+    let module = module.esm().unwrap();
+    let dependency_a = module.dependencies.get("file:///bar.ts").unwrap();
+    let dependency_b = module.dependencies.get("file:///baz.json").unwrap();
+    assert_eq!(
+      dependency_a.imports,
+      vec![
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::TsReferencePath,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 1,
+              character: 36
+            },
+            end: Position {
+              line: 1,
+              character: 52,
+            },
+          },
+          is_dynamic: false,
+          assertions: ImportAssertions::None,
+          errors: vec![],
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::TsReferenceTypes,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 2,
+              character: 37,
+            },
+            end: Position {
+              line: 2,
+              character: 53,
+            },
+          },
+          is_dynamic: false,
+          assertions: ImportAssertions::None,
+          errors: vec![],
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::Es,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 4,
+              character: 23,
+            },
+            end: Position {
+              line: 4,
+              character: 39,
+            },
+          },
+          is_dynamic: false,
+          assertions: ImportAssertions::None,
+          errors: vec![],
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::Es,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 5,
+              character: 29,
+            },
+            end: Position {
+              line: 5,
+              character: 45,
+            },
+          },
+          is_dynamic: true,
+          assertions: ImportAssertions::None,
+          errors: vec![],
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::Es,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 6,
+              character: 29,
+            },
+            end: Position {
+              line: 6,
+              character: 45,
+            },
+          },
+          is_dynamic: true,
+          assertions: ImportAssertions::Unknown,
+          errors: vec![],
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::TsType,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 8,
+              character: 36,
+            },
+            end: Position {
+              line: 8,
+              character: 52,
+            },
+          },
+          is_dynamic: false,
+          assertions: ImportAssertions::None,
+          errors: vec![],
+        },
+      ]
+    );
+    assert_eq!(
+      dependency_b.imports,
+      vec![Import {
+        specifier: "file:///baz.json".to_string(),
+        kind: ImportKind::Es,
+        range: Range {
+          specifier: Url::parse("file:///foo.ts").unwrap(),
+          start: Position {
+            line: 7,
+            character: 23,
+          },
+          end: Position {
+            line: 7,
+            character: 41,
+          },
+        },
+        is_dynamic: false,
+        assertions: ImportAssertions::Known(HashMap::from_iter(vec![(
+          "type".to_string(),
+          ImportAssertion::Known("json".to_string())
+        )])),
+        errors: vec![],
+      },]
+    );
   }
 
   #[tokio::test]
