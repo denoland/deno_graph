@@ -802,6 +802,7 @@ console.log(a);
                     }
                   }
                 },
+                "assertionType": "json",
               }
             ],
             "kind": "esm",
@@ -1717,6 +1718,7 @@ export function a(a) {
                     },
                   },
                 ],
+                "assertionType": "json"
               },
               {
                 "specifier": "./b.json",
@@ -1735,21 +1737,22 @@ export function a(a) {
                 },
                 "isDynamic": true,
                 "imports": [
-                    {
-                      "specifier": "./b.json",
-                      "range": {
-                        "start": {
-                          "line": 2,
-                          "character": 35,
-                        },
-                        "end": {
-                          "line": 2,
-                          "character": 45,
-                        },
+                  {
+                    "specifier": "./b.json",
+                    "range": {
+                      "start": {
+                        "line": 2,
+                        "character": 35,
                       },
-                      "isDynamic": true,
+                      "end": {
+                        "line": 2,
+                        "character": 45,
+                      },
                     },
+                    "isDynamic": true,
+                  },
                 ],
+                "assertionType": "json"
               },
               {
                 "specifier": "./c.json",
@@ -1781,6 +1784,7 @@ export function a(a) {
                     },
                   },
                 ],
+                "assertionType": "json"
               },
               {
                 "specifier": "./d.json",
@@ -1893,6 +1897,7 @@ export function a(a) {
                     }
                   }
                 },
+                "assertionType": "json"
               }
             ],
             "kind": "esm",
@@ -2076,6 +2081,7 @@ export function a(a) {
                     },
                   },
                 ],
+                "assertionType": "json"
               },
               {
                 "specifier": "./c.js",
@@ -2108,6 +2114,7 @@ export function a(a) {
                     "errors": ["Expected a Json module, but identified a JavaScript module.\n  Specifier: file:///a/c.js"],
                   },
                 ],
+                "assertionType": "json"
               },
               {
                 "specifier": "./d.json",
@@ -2140,6 +2147,7 @@ export function a(a) {
                     "errors": ["The import assertion type of \"css\" is unsupported."],
                   },
                 ],
+                "assertionType": "css"
               },
               {
                 "specifier": "./e.wasm",

@@ -312,6 +312,7 @@ Deno.test({
                   "specifier": "./deno.json",
                 },
               ],
+              "assertionType": "json",
             },
           ],
           "mediaType": MediaType.TypeScript,
@@ -873,6 +874,7 @@ Deno.test({
               "specifier": "./a.json",
             },
           ],
+          "assertionType": "json",
         },
         {
           "specifier": "./b.json",
@@ -906,6 +908,7 @@ Deno.test({
               "specifier": "./b.json",
             },
           ],
+          "assertionType": "json",
         },
       ],
       "kind": "esm",

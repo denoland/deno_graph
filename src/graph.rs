@@ -2619,15 +2619,24 @@ where
   S: Serializer,
 {
   #[derive(Serialize)]
+  #[serde(rename_all = "camelCase")]
   struct DependencyWithSpecifier<'a> {
     specifier: &'a str,
+    // TODO(nayeemrmn): Legacy field, remove for 2.0. Asserts are per-import.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    assertion_type: Option<&'a String>,
     #[serde(flatten)]
     dependency: &'a Dependency,
   }
   let mut seq = serializer.serialize_seq(Some(dependencies.len()))?;
   for (specifier, dependency) in dependencies {
+    let assertion_type = dependency
+      .imports
+      .iter()
+      .find_map(|i| i.assertions.get("type"));
     seq.serialize_element(&DependencyWithSpecifier {
       specifier,
+      assertion_type,
       dependency,
     })?
   }

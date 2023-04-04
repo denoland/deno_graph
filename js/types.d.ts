@@ -130,6 +130,8 @@ export interface DependencyJson {
    * `await import("mod.ts")`) */
   isDynamic?: true;
   imports?: ImportJson[];
+  // TODO(nayeemrmn): Legacy field, remove for 2.0. Asserts are per-import.
+  assertionType?: string;
 }
 
 // todo(dsherret): split this up into separate types based on the "kind"
