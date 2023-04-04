@@ -802,7 +802,7 @@ console.log(a);
                     }
                   }
                 },
-                "assertionType": "json",
+                "assertionType": "json"
               }
             ],
             "kind": "esm",
