@@ -1715,9 +1715,6 @@ export function a(a) {
                         "character": 36,
                       },
                     },
-                    "assertions": {
-                      "type": "json",
-                    },
                   },
                 ],
               },
@@ -1751,9 +1748,6 @@ export function a(a) {
                         },
                       },
                       "isDynamic": true,
-                      "assertions": {
-                        "type": "json",
-                      },
                     },
                 ],
               },
@@ -1784,9 +1778,6 @@ export function a(a) {
                         "line": 3,
                         "character": 41,
                       },
-                    },
-                    "assertions": {
-                      "type": "json",
                     },
                   },
                 ],
@@ -1821,7 +1812,6 @@ export function a(a) {
                       },
                     },
                     "isDynamic": true,
-                    "assertions": "unknown",
                   },
                 ],
               }
@@ -2084,9 +2074,6 @@ export function a(a) {
                         "character": 36,
                       },
                     },
-                    "assertions": {
-                      "type": "json",
-                    },
                   },
                 ],
               },
@@ -2117,9 +2104,6 @@ export function a(a) {
                         "line": 3,
                         "character": 34,
                       },
-                    },
-                    "assertions": {
-                      "type": "json",
                     },
                     "errors": ["Expected a Json module, but identified a JavaScript module.\n  Specifier: file:///a/c.js"],
                   },
@@ -2152,9 +2136,6 @@ export function a(a) {
                         "line": 4,
                         "character": 36,
                       },
-                    },
-                    "assertions": {
-                      "type": "css",
                     },
                     "errors": ["The import assertion type of \"css\" is unsupported."],
                   },

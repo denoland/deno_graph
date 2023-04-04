@@ -299,9 +299,6 @@ Deno.test({
               },
               "imports": [
                 {
-                  "assertions": {
-                    "type": "json",
-                  },
                   "range": {
                     "end": {
                       "character": 32,
@@ -863,9 +860,6 @@ Deno.test({
           },
           "imports": [
             {
-              "assertions": {
-                "type": "json",
-              },
               "range": {
                 "end": {
                   "character": 32,
@@ -898,9 +892,6 @@ Deno.test({
           "isDynamic": true,
           "imports": [
             {
-              "assertions": {
-                "type": "json",
-              },
               "isDynamic": true,
               "range": {
                 "end": {
