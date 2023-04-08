@@ -1974,6 +1974,7 @@ pub(crate) struct AssertTypeWithRange {
   kind: String,
 }
 
+// todo(dsherret): remove the tuple
 type PendingNpmRegistryInfoLoadFutures = FuturesUnordered<
   LocalBoxFuture<'static, (String, Result<(), Arc<anyhow::Error>>)>,
 >;
