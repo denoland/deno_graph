@@ -2589,7 +2589,7 @@ impl<'a> NpmSpecifierResolver<'a> {
                 pending_npm_registry_info_loads.clear();
                 self.pending_info.clear();
 
-                // refill the pending npm registry info
+                // reload all the npm registry information
                 for package_name in self.pending_npm_by_name.keys() {
                   let package_name = package_name.clone();
                   let fut =
