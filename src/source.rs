@@ -163,6 +163,10 @@ pub trait NpmResolver: fmt::Debug {
   /// This tells the implementation to asynchronously load within itself the
   /// npm registry package information so that synchronous resolution can occur
   /// afterwards.
+  ///
+  /// WARNING: deno_graph will stop executing these futures when a
+  /// `NpmPackageReqResolution::ReloadRegistryInfo` is returned from
+  /// `resolve_npm`. The implementation should be resilient to this.
   fn load_and_cache_npm_package_info(
     &self,
     package_name: &str,

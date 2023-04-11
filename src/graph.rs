@@ -2469,15 +2469,18 @@ impl NpmSpecifierBuildPendingInfo {
   }
 }
 
+struct PendingNpmResolutionItem {
+  specifier: ModuleSpecifier,
+  npm_ref: NpmPackageReqReference,
+  maybe_range: Option<Range>,
+}
+
 struct NpmSpecifierResolver<'a> {
   npm_resolver: Option<&'a dyn NpmResolver>,
   /// Ordered npm specifiers.
   npm_specifiers: Vec<ModuleSpecifier>,
   pending_info: NpmSpecifierBuildPendingInfo,
-  pending_npm_by_name: HashMap<
-    String,
-    Vec<(ModuleSpecifier, NpmPackageReqReference, Option<Range>)>,
-  >,
+  pending_npm_by_name: HashMap<String, VecDeque<PendingNpmResolutionItem>>,
 }
 
 impl<'a> NpmSpecifierResolver<'a> {
@@ -2511,10 +2514,14 @@ impl<'a> NpmSpecifierResolver<'a> {
     for (specifier, npm_ref, maybe_range) in pending_npm_specifiers.drain(..) {
       npm_specifiers.push(specifier.clone());
       if seen_specifiers.insert(specifier.clone()) {
-        let npm_infos: &mut Vec<_> = pending_npm_by_name
+        let items: &mut VecDeque<_> = pending_npm_by_name
           .entry(npm_ref.req.name.clone())
           .or_default();
-        npm_infos.push((specifier, npm_ref, maybe_range));
+        items.push_back(PendingNpmResolutionItem {
+          specifier,
+          npm_ref,
+          maybe_range,
+        });
       }
     }
 
@@ -2534,41 +2541,41 @@ impl<'a> NpmSpecifierResolver<'a> {
     while let Some((package_name, result)) =
       pending_npm_registry_info_loads.next().await
     {
-      let infos = self.pending_npm_by_name.get(&package_name).unwrap();
+      let items = self.pending_npm_by_name.get_mut(&package_name).unwrap();
       if let Err(err) = result {
-        for (specifier, _, maybe_range) in infos {
+        for item in items {
           // load failure
           self.pending_info.module_slots.insert(
-            specifier.clone(),
+            item.specifier.clone(),
             ModuleSlot::Err(ModuleGraphError::ModuleError(
               ModuleError::LoadingErr(
-                specifier.clone(),
-                maybe_range.clone(),
+                item.specifier.clone(),
+                item.maybe_range.clone(),
                 err.clone(),
               ),
             )),
           );
         }
       } else {
-        for (specifier, npm_ref, maybe_range) in infos {
+        while let Some(item) = items.pop_front() {
           if let Some(npm_resolver) = &self.npm_resolver {
-            let resolution = npm_resolver.resolve_npm(&npm_ref.req);
+            let resolution = npm_resolver.resolve_npm(&item.npm_ref.req);
             match resolution {
               NpmPackageReqResolution::Ok(pkg_id) => {
                 self
                   .pending_info
                   .specifier_resolutions
-                  .insert(specifier.clone(), pkg_id.clone());
+                  .insert(item.specifier.clone(), pkg_id.clone());
                 let pkg_id_ref = NpmPackageNvReference {
                   nv: pkg_id,
-                  sub_path: npm_ref.sub_path.clone(),
+                  sub_path: item.npm_ref.sub_path.clone(),
                 };
                 let resolved_specifier = pkg_id_ref.as_specifier();
-                if resolved_specifier != *specifier {
+                if resolved_specifier != item.specifier {
                   self
                     .pending_info
                     .redirects
-                    .insert(specifier.clone(), resolved_specifier.clone());
+                    .insert(item.specifier, resolved_specifier.clone());
                 }
                 self.pending_info.module_slots.insert(
                   resolved_specifier.clone(),
@@ -2589,6 +2596,9 @@ impl<'a> NpmSpecifierResolver<'a> {
                 pending_npm_registry_info_loads.clear();
                 self.pending_info.clear();
 
+                // add back the failed item so it can be retried
+                items.push_front(item);
+
                 // reload all the npm registry information
                 for package_name in self.pending_npm_by_name.keys() {
                   let package_name = package_name.clone();
@@ -2599,18 +2609,19 @@ impl<'a> NpmSpecifierResolver<'a> {
                     (package_name, result)
                   }));
                 }
+                break;
               }
               NpmPackageReqResolution::Err(err)
               | NpmPackageReqResolution::ReloadRegistryInfo(err) => {
                 self.pending_info.module_slots.insert(
-                  specifier.clone(),
+                  item.specifier.clone(),
                   ModuleSlot::Err(ModuleGraphError::ResolutionError(
                     ResolutionError::ResolverError {
                       error: Arc::new(err),
-                      specifier: specifier.to_string(),
+                      specifier: item.specifier.to_string(),
                       // this should always be set
-                      range: maybe_range.clone().unwrap_or_else(|| Range {
-                        specifier: specifier.clone(),
+                      range: item.maybe_range.unwrap_or_else(|| Range {
+                        specifier: item.specifier,
                         start: Position::zeroed(),
                         end: Position::zeroed(),
                       }),
@@ -2621,11 +2632,11 @@ impl<'a> NpmSpecifierResolver<'a> {
             }
           } else {
             self.pending_info.module_slots.insert(
-              specifier.clone(),
+              item.specifier.clone(),
               ModuleSlot::Err(ModuleGraphError::ModuleError(
                 ModuleError::LoadingErr(
-                  specifier.clone(),
-                  maybe_range.clone(),
+                  item.specifier,
+                  item.maybe_range,
                   Arc::new(anyhow::anyhow!(
                     "npm specifiers are not supported in this environment"
                   )),
