@@ -226,9 +226,9 @@ impl ModuleGraphError {
   /// not useful in cases like the LSP where the range is given by the editor itself.
   pub fn to_string_with_range(&self) -> String {
     if let Some(range) = self.maybe_range() {
-      format!("{self}\n    at {range}")
+      format!("{self:#}\n    at {range}")
     } else {
-      format!("{self}")
+      format!("{self:#}")
     }
   }
 
