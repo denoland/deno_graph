@@ -58,10 +58,24 @@ pub trait ModuleParser {
   ) -> Result<ParsedSource, Diagnostic>;
 }
 
-/// Default parser that parses using only settings necessary
-/// for deno_graph to analyze the modules.
 #[derive(Default, Clone)]
-pub struct DefaultModuleParser;
+pub struct DefaultModuleParser {
+  analysis: bool,
+}
+
+impl DefaultModuleParser {
+  /// Creates a new default parser that parses using only settings
+  /// necessary for deno_graph to analyze the modules.
+  pub fn new() -> Self {
+    Self::default()
+  }
+
+  /// Creates a new parser that also collects scope analysis information
+  /// and captures tokens.
+  pub fn new_for_analysis() -> Self {
+    Self { analysis: true }
+  }
+}
 
 impl ModuleParser for DefaultModuleParser {
   fn parse_module(
@@ -74,8 +88,8 @@ impl ModuleParser for DefaultModuleParser {
       specifier: specifier.to_string(),
       text_info: SourceTextInfo::new(source),
       media_type,
-      capture_tokens: false,
-      scope_analysis: false,
+      capture_tokens: self.analysis,
+      scope_analysis: self.analysis,
       maybe_syntax: None,
     })
   }
