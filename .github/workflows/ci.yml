@@ -6,8 +6,9 @@ jobs:
   rust:
     name: deno_graph-${{ matrix.os }}
     if: |
-      github.event_name == 'push' ||
-      !startsWith(github.event.pull_request.head.label, 'denoland:')
+      (github.event_name == 'push' || !startsWith(github.event.pull_request.head.label, 'denoland:'))
+      && github.ref_name != 'deno_registry'
+      && !startsWith(github.ref, 'refs/tags/deno/')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -21,70 +22,80 @@ jobs:
       RUSTFLAGS: -D warnings
 
     steps:
-      - name: ☑️ Clone repository
+      - name: Clone repository
         uses: actions/checkout@v3
 
-      - name: ➡️ Install rust
+      - name: Install rust
         uses: dsherret/rust-toolchain-file@v1
 
-      - name: 🗃️ Cache
+      - name: Cache
         uses: Swatinem/rust-cache@v1
 
-      - name: ➡️ Install up Deno
+      - name: Install up Deno
         uses: denoland/setup-deno@v1.0.0
 
-      - name: 💄 Format
+      - name: Format
         if: contains(matrix.os, 'ubuntu')
         run: |
           cargo fmt -- --check
           deno fmt --check
 
-      - name: 💄 Lint
+      - name: Lint
         if: contains(matrix.os, 'ubuntu')
         run: |
           cargo clippy --locked --release --all-features --all-targets -- -D clippy::all
           deno lint
 
-      - name: 🏗️ Build
+      - name: Cargo Build
         run: cargo build --locked --release --all-features --all-targets
 
-      - name: 🧪 Test
-        run: |
-          cargo test --locked --release --all-features --all-targets
-          deno task test
+      - name: Cargo Test
+        run: cargo test --locked --release --all-features --all-targets
 
-      - name: 💄 Ensure Wasm up to date
-        if: contains(matrix.os, 'ubuntu')
-        run: deno task build --check
+      - name: Build Wasm
+        run: deno task build
 
-      - name: 📦 Publish
+      - name: Test JavaScript
+        run: deno task test
+
+      - name: Cargo publish
         if: |
           contains(matrix.os, 'ubuntu') &&
           github.repository == 'denoland/deno_graph' &&
           startsWith(github.ref, 'refs/tags/')
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: |
-          cargo publish -vv
+        run: cargo publish
 
-        # NPM Distribution
-      - name: ➡️ get tag version
+      - name: Get tag version
         if: contains(matrix.os, 'ubuntu') && startsWith(github.ref, 'refs/tags/')
         id: get_tag_version
         run: echo ::set-output name=TAG_VERSION::${GITHUB_REF/refs\/tags\//}
 
-      - name: ➡️ setup node
+      - name: Publish deno.land/x
+        uses: denoland/publish-folder@82ce065074e7174baf444332c4b7c40869a4909a
+        if: contains(matrix.os, 'ubuntu') && startsWith(github.ref, 'refs/tags/')
+        with:
+          folder: js
+          branch: deno_registry
+          tag: deno/${{ steps.get_tag_version.outputs.TAG_VERSION }}
+          token: ${{ secrets.DENOBOT_PAT }}
+          git-user-name: denobot
+          git-user-email: denobot@users.noreply.github.com
+
+        # NPM Distribution
+      - name: Setup node
         uses: actions/setup-node@v2
         if: contains(matrix.os, 'ubuntu')
         with:
-          node-version: '16.x'
+          node-version: '18.x'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: 🏗️ build npm
+      - name: Build npm
         if: contains(matrix.os, 'ubuntu')
         run: deno task build:npm ${{steps.get_tag_version.outputs.TAG_VERSION}}
 
-      - name: 📦 npm publish
+      - name: npm publish
         if: contains(matrix.os, 'ubuntu') && startsWith(github.ref, 'refs/tags/')
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

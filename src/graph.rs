@@ -8,14 +8,12 @@ use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
 use crate::DefaultModuleAnalyzer;
+use crate::ImportAssertions;
 use crate::ReferrerImports;
 
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
-use crate::npm::NpmPackageNv;
-use crate::npm::NpmPackageNvReference;
-use crate::npm::NpmPackageReqReference;
 use crate::source::*;
 
 use anyhow::Error;
@@ -24,6 +22,9 @@ use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
+use deno_semver::npm::NpmPackageNv;
+use deno_semver::npm::NpmPackageNvReference;
+use deno_semver::npm::NpmPackageReqReference;
 use futures::future::LocalBoxFuture;
 use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
@@ -225,9 +226,9 @@ impl ModuleGraphError {
   /// not useful in cases like the LSP where the range is given by the editor itself.
   pub fn to_string_with_range(&self) -> String {
     if let Some(range) = self.maybe_range() {
-      format!("{self}\n    at {range}")
+      format!("{self:#}\n    at {range}")
     } else {
-      format!("{self}")
+      format!("{self:#}")
     }
   }
 
@@ -470,7 +471,57 @@ fn is_false(v: &bool) -> bool {
   !v
 }
 
-#[derive(Debug, Default, Clone, Serialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum ImportKind {
+  /// `import`/`export`
+  Es,
+  /// `import type`/`export type`
+  TsType,
+  /// `/// <reference path="..." />`
+  TsReferencePath,
+  /// `/// <reference types="..." />`
+  TsReferenceTypes,
+  /// `/** @jsxImportSource ... */`
+  JsxImportSource,
+  /// `/** @typedef { import("./types").Pet } Pet */`
+  JsDoc,
+}
+
+impl ImportKind {
+  pub fn is_runtime(&self) -> bool {
+    match self {
+      ImportKind::Es | ImportKind::JsxImportSource => true,
+      ImportKind::TsType
+      | ImportKind::TsReferencePath
+      | ImportKind::TsReferenceTypes
+      | ImportKind::JsDoc => false,
+    }
+  }
+
+  fn is_es(&self) -> bool {
+    matches!(self, ImportKind::Es)
+  }
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
+#[serde(rename_all = "camelCase")]
+pub struct Import {
+  pub specifier: String,
+  #[serde(skip_serializing_if = "ImportKind::is_es")]
+  pub kind: ImportKind,
+  pub range: Range,
+  #[serde(skip_serializing_if = "is_false")]
+  pub is_dynamic: bool,
+  // Don't include assertions in `deno info --json`, since they may be unstable:
+  // https://github.com/denoland/deno/issues/17944. Assertion error strings
+  // eventually will be included in a separate `Import::errors`, however.
+  #[serde(skip_serializing)]
+  pub assertions: ImportAssertions,
+}
+
+#[derive(Debug, Default, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Dependency {
   #[serde(rename = "code", skip_serializing_if = "Resolution::is_none")]
@@ -481,6 +532,10 @@ pub struct Dependency {
   pub is_dynamic: bool,
   #[serde(rename = "assertionType", skip_serializing_if = "Option::is_none")]
   pub maybe_assert_type: Option<String>,
+  // TODO(nayeemrmn): Replace `maybe_assert_type` with this in the serialization
+  // for 2.0.
+  #[serde(skip_serializing)]
+  pub imports: Vec<Import>,
 }
 
 impl Dependency {
@@ -713,7 +768,7 @@ fn to_result<'a>(
 /// module graph without requiring the dependencies to be analyzed. This is
 /// intended to be used for importing type dependencies or other externally
 /// defined dependencies, like JSX runtimes.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct GraphImport {
   /// A map of resolved dependencies, where the key is the value originally
   /// provided for the import and the value is the resolved dependency.
@@ -743,6 +798,7 @@ impl GraphImport {
             maybe_code: Resolution::None,
             maybe_type,
             maybe_assert_type: None,
+            imports: vec![],
           },
         )
       })
@@ -1632,28 +1688,45 @@ pub(crate) fn parse_esm_module_from_module_info(
           .dependencies
           .entry(specifier.text.clone())
           .or_default();
+        let range =
+          Range::from_position_range(module.specifier.clone(), specifier.range);
         if dep.maybe_type.is_none() {
-          let range = Range::from_position_range(
-            module.specifier.clone(),
-            specifier.range,
-          );
-          dep.maybe_type = resolve(&specifier.text, range, maybe_resolver);
+          dep.maybe_type =
+            resolve(&specifier.text, range.clone(), maybe_resolver);
         }
+        dep.imports.push(Import {
+          specifier: specifier.text,
+          kind: ImportKind::TsReferencePath,
+          range,
+          is_dynamic: false,
+          assertions: Default::default(),
+        });
       }
       TypeScriptReference::Types(specifier) => {
         let range =
           Range::from_position_range(module.specifier.clone(), specifier.range);
-        let dep_resolution = resolve(&specifier.text, range, maybe_resolver);
+        let dep_resolution =
+          resolve(&specifier.text, range.clone(), maybe_resolver);
         if is_untyped(&module.media_type) {
           module.maybe_types_dependency = Some(TypesDependency {
             specifier: specifier.text.clone(),
             dependency: dep_resolution,
           });
         } else {
-          let dep = module.dependencies.entry(specifier.text).or_default();
+          let dep = module
+            .dependencies
+            .entry(specifier.text.clone())
+            .or_default();
           if dep.maybe_type.is_none() {
             dep.maybe_type = dep_resolution;
           }
+          dep.imports.push(Import {
+            specifier: specifier.text,
+            kind: ImportKind::TsReferenceTypes,
+            range,
+            is_dynamic: false,
+            assertions: Default::default(),
+          });
         }
       }
     }
@@ -1689,13 +1762,21 @@ pub(crate) fn parse_esm_module_from_module_info(
         .dependencies
         .entry(specifier_text.clone())
         .or_default();
+      let range = Range::from_position_range(
+        module.specifier.clone(),
+        import_source.range,
+      );
       if dep.maybe_code.is_none() {
-        let range = Range::from_position_range(
-          module.specifier.clone(),
-          import_source.range,
-        );
-        dep.maybe_code = resolve(&specifier_text, range, maybe_resolver);
+        dep.maybe_code =
+          resolve(&specifier_text, range.clone(), maybe_resolver);
       }
+      dep.imports.push(Import {
+        specifier: specifier_text,
+        kind: ImportKind::JsxImportSource,
+        range,
+        is_dynamic: false,
+        assertions: Default::default(),
+      });
     }
   }
 
@@ -1705,11 +1786,18 @@ pub(crate) fn parse_esm_module_from_module_info(
       .dependencies
       .entry(specifier.text.clone())
       .or_default();
+    let range =
+      Range::from_position_range(module.specifier.clone(), specifier.range);
     if dep.maybe_type.is_none() {
-      let range =
-        Range::from_position_range(module.specifier.clone(), specifier.range);
-      dep.maybe_type = resolve(&specifier.text, range, maybe_resolver);
+      dep.maybe_type = resolve(&specifier.text, range.clone(), maybe_resolver);
     }
+    dep.imports.push(Import {
+      specifier: specifier.text,
+      kind: ImportKind::JsDoc,
+      range,
+      is_dynamic: false,
+      assertions: Default::default(),
+    });
   }
 
   // Analyze the X-TypeScript-Types header
@@ -1781,14 +1869,12 @@ pub(crate) fn parse_esm_module_from_module_info(
     if dep.maybe_assert_type.is_none() {
       dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
     }
-    let dep_resolution = resolve(
-      &desc.specifier,
-      Range::from_position_range(
-        module.specifier.clone(),
-        desc.specifier_range.clone(),
-      ),
-      maybe_resolver,
+    let range = Range::from_position_range(
+      module.specifier.clone(),
+      desc.specifier_range.clone(),
     );
+    let dep_resolution =
+      resolve(&desc.specifier, range.clone(), maybe_resolver);
     if matches!(
       desc.kind,
       DependencyKind::ImportType | DependencyKind::ExportType
@@ -1796,17 +1882,33 @@ pub(crate) fn parse_esm_module_from_module_info(
       if dep.maybe_type.is_none() {
         dep.maybe_type = dep_resolution;
       }
-    } else if dep.maybe_code.is_none() {
-      // This is a code import, the first one of that specifier in this module.
-      // Resolve and determine the initial `is_dynamic` value from it.
-      dep.maybe_code = dep_resolution;
-      dep.is_dynamic = desc.is_dynamic;
+      dep.imports.push(Import {
+        specifier: desc.specifier.clone(),
+        kind: ImportKind::TsType,
+        range,
+        is_dynamic: desc.is_dynamic,
+        assertions: desc.import_assertions.clone(),
+      });
     } else {
-      // This is a code import, but not the first one of that specifier in this
-      // module. Maybe update the `is_dynamic` value. Static imports take
-      // precedence. Note that `@jsxImportSource` and `/// <reference path />`
-      // count as static imports for this purpose.
-      dep.is_dynamic = dep.is_dynamic && desc.is_dynamic;
+      if dep.maybe_code.is_none() {
+        // This is a code import, the first one of that specifier in this module.
+        // Resolve and determine the initial `is_dynamic` value from it.
+        dep.maybe_code = dep_resolution;
+        dep.is_dynamic = desc.is_dynamic;
+      } else {
+        // This is a code import, but not the first one of that specifier in this
+        // module. Maybe update the `is_dynamic` value. Static imports take
+        // precedence. Note that `@jsxImportSource` and `/// <reference path />`
+        // count as static imports for this purpose.
+        dep.is_dynamic = dep.is_dynamic && desc.is_dynamic;
+      }
+      dep.imports.push(Import {
+        specifier: desc.specifier.clone(),
+        kind: ImportKind::Es,
+        range,
+        is_dynamic: desc.is_dynamic,
+        assertions: desc.import_assertions.clone(),
+      });
     }
     if dep.maybe_type.is_none() {
       let specifier = module.specifier.clone();
@@ -1872,6 +1974,11 @@ pub(crate) struct AssertTypeWithRange {
   kind: String,
 }
 
+// todo(dsherret): remove the tuple
+type PendingNpmRegistryInfoLoadFutures = FuturesUnordered<
+  LocalBoxFuture<'static, (String, Result<(), Arc<anyhow::Error>>)>,
+>;
+
 struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
   graph: &'graph mut ModuleGraph,
@@ -1880,8 +1987,7 @@ struct Builder<'a, 'graph> {
   npm_resolver: Option<&'a dyn NpmResolver>,
   pending: FuturesOrdered<LoadWithSpecifierFuture>,
   requested_npm_registry_info_loads: HashSet<String>,
-  pending_npm_registry_info_loads:
-    FuturesUnordered<LocalBoxFuture<'static, (String, Result<(), String>)>>,
+  pending_npm_registry_info_loads: PendingNpmRegistryInfoLoadFutures,
   pending_npm_specifiers:
     Vec<(ModuleSpecifier, NpmPackageReqReference, Option<Range>)>,
   pending_specifiers:
@@ -2044,124 +2150,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
 
-    // todo(dsherret): refactor this out to a separate struct
-    // that handles updating the graph with this information
-
     // Now resolve any npm package requirements
-    let capacity = self.pending_npm_specifiers.len();
-    let mut pending_npm_by_name = HashMap::with_capacity(capacity);
-    let mut npm_specifiers = Vec::with_capacity(capacity);
-    let mut specifier_resolutions = HashMap::with_capacity(capacity);
-    let mut seen_specifiers = HashSet::with_capacity(capacity);
-    for (specifier, npm_ref, maybe_range) in
-      self.pending_npm_specifiers.drain(..)
-    {
-      npm_specifiers.push(specifier.clone());
-      if seen_specifiers.insert(specifier.clone()) {
-        let npm_infos: &mut Vec<_> = pending_npm_by_name
-          .entry(npm_ref.req.name.clone())
-          .or_default();
-        npm_infos.push((specifier, npm_ref, maybe_range));
-      }
-    }
-    while let Some((package_name, result)) =
-      self.pending_npm_registry_info_loads.next().await
-    {
-      let infos = pending_npm_by_name.remove(&package_name).unwrap();
-      if let Err(err) = result {
-        for (specifier, _, maybe_range) in infos {
-          if !self.graph.module_slots.contains_key(&specifier) {
-            self.graph.module_slots.insert(
-              specifier.clone(),
-              ModuleSlot::Err(ModuleGraphError::ModuleError(
-                ModuleError::LoadingErr(
-                  specifier,
-                  maybe_range,
-                  Arc::new(anyhow::anyhow!("{}", err)),
-                ),
-              )),
-            );
-          }
-        }
-      } else {
-        for (specifier, npm_ref, maybe_range) in infos {
-          if !self.graph.module_slots.contains_key(&specifier) {
-            if let Some(npm_resolver) = &self.npm_resolver {
-              // todo(dsherret): cache resolutions to ensure they always resolve the same
-              let resolution = npm_resolver.resolve_npm(&npm_ref.req);
-              match resolution {
-                Ok(pkg_id) => {
-                  specifier_resolutions
-                    .insert(specifier.clone(), pkg_id.clone());
-                  let pkg_id_ref = NpmPackageNvReference {
-                    nv: pkg_id,
-                    sub_path: npm_ref.sub_path,
-                  };
-                  let resolved_specifier = pkg_id_ref.as_specifier();
-                  if resolved_specifier != specifier {
-                    self
-                      .graph
-                      .redirects
-                      .insert(specifier, resolved_specifier.clone());
-                  }
-                  self.graph.module_slots.insert(
-                    resolved_specifier.clone(),
-                    ModuleSlot::Module(Module::Npm(NpmModule {
-                      specifier: resolved_specifier,
-                      nv_reference: pkg_id_ref,
-                    })),
-                  );
-                }
-                Err(err) => {
-                  self.graph.module_slots.insert(
-                    specifier.clone(),
-                    ModuleSlot::Err(ModuleGraphError::ResolutionError(
-                      ResolutionError::ResolverError {
-                        error: Arc::new(err),
-                        specifier: specifier.to_string(),
-                        // this should always be set,
-                        range: maybe_range.unwrap_or_else(|| Range {
-                          specifier,
-                          start: Position::zeroed(),
-                          end: Position::zeroed(),
-                        }),
-                      },
-                    )),
-                  );
-                }
-              }
-            } else {
-              self.graph.module_slots.insert(
-                specifier.clone(),
-                ModuleSlot::Err(ModuleGraphError::ModuleError(
-                  ModuleError::LoadingErr(
-                    specifier,
-                    maybe_range,
-                    Arc::new(anyhow::anyhow!(
-                      "npm specifiers are not supported in this environment"
-                    )),
-                  ),
-                )),
-              );
-            }
-          }
-        }
-      }
-    }
-
-    // the future above is unordered, so we now fill in the npm packages
-    // in resolution order ensuring no duplicates are added
-    let mut seen_npm_package_ids = HashSet::with_capacity(
-      self.graph.npm_packages.len() + npm_specifiers.len(),
-    );
-    seen_npm_package_ids.extend(self.graph.npm_packages.iter().cloned());
-    for npm_specifier in npm_specifiers {
-      if let Some(package_id) = specifier_resolutions.get(&npm_specifier) {
-        if seen_npm_package_ids.insert(package_id.clone()) {
-          self.graph.npm_packages.push(package_id.clone());
-        }
-      }
-    }
+    NpmSpecifierResolver::fill_builder(self).await;
   }
 
   /// Checks if the specifier is redirected or not and updates any redirects in
@@ -2219,7 +2209,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 npm_resolver.load_and_cache_npm_package_info(&package_name);
               self
                 .pending_npm_registry_info_loads
-                .push(Box::pin(async move { (package_name, fut.await) }));
+                .push(Box::pin(async move {
+                  (package_name, fut.await.map_err(Arc::new))
+                }));
             }
             self.pending_npm_specifiers.push((
               specifier.clone(),
@@ -2453,6 +2445,241 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   }
 }
 
+/// Pending information to insert into the module graph once
+/// npm specifier resolution has been finalized.
+struct NpmSpecifierBuildPendingInfo {
+  specifier_resolutions: HashMap<ModuleSpecifier, NpmPackageNv>,
+  module_slots: HashMap<ModuleSpecifier, ModuleSlot>,
+  redirects: HashMap<ModuleSpecifier, ModuleSpecifier>,
+}
+
+impl NpmSpecifierBuildPendingInfo {
+  pub fn with_capacity(capacity: usize) -> Self {
+    Self {
+      specifier_resolutions: HashMap::with_capacity(capacity),
+      module_slots: HashMap::with_capacity(capacity),
+      redirects: HashMap::with_capacity(capacity),
+    }
+  }
+
+  pub fn clear(&mut self) {
+    self.specifier_resolutions.clear();
+    self.module_slots.clear();
+    self.redirects.clear();
+  }
+}
+
+struct PendingNpmResolutionItem {
+  specifier: ModuleSpecifier,
+  npm_ref: NpmPackageReqReference,
+  maybe_range: Option<Range>,
+}
+
+struct NpmSpecifierResolver<'a> {
+  npm_resolver: Option<&'a dyn NpmResolver>,
+  /// Ordered npm specifiers.
+  npm_specifiers: Vec<ModuleSpecifier>,
+  pending_info: NpmSpecifierBuildPendingInfo,
+  pending_npm_by_name: HashMap<String, VecDeque<PendingNpmResolutionItem>>,
+}
+
+impl<'a> NpmSpecifierResolver<'a> {
+  pub async fn fill_builder(builder: &mut Builder<'a, '_>) {
+    let mut npm_specifier_resolver = NpmSpecifierResolver::new(
+      builder.npm_resolver,
+      std::mem::take(&mut builder.pending_npm_specifiers),
+    );
+
+    npm_specifier_resolver
+      .resolve(std::mem::take(&mut builder.pending_npm_registry_info_loads))
+      .await;
+
+    npm_specifier_resolver.fill_graph(builder.graph);
+  }
+
+  fn new(
+    npm_resolver: Option<&'a dyn NpmResolver>,
+    // todo(dsherret): remove these tuples
+    mut pending_npm_specifiers: Vec<(
+      ModuleSpecifier,
+      NpmPackageReqReference,
+      Option<Range>,
+    )>,
+  ) -> Self {
+    let capacity = pending_npm_specifiers.len();
+    let mut pending_npm_by_name = HashMap::with_capacity(capacity);
+    let mut npm_specifiers = Vec::with_capacity(capacity);
+
+    let mut seen_specifiers = HashSet::with_capacity(capacity);
+    for (specifier, npm_ref, maybe_range) in pending_npm_specifiers.drain(..) {
+      npm_specifiers.push(specifier.clone());
+      if seen_specifiers.insert(specifier.clone()) {
+        let items: &mut VecDeque<_> = pending_npm_by_name
+          .entry(npm_ref.req.name.clone())
+          .or_default();
+        items.push_back(PendingNpmResolutionItem {
+          specifier,
+          npm_ref,
+          maybe_range,
+        });
+      }
+    }
+
+    Self {
+      npm_resolver,
+      pending_info: NpmSpecifierBuildPendingInfo::with_capacity(capacity),
+      pending_npm_by_name,
+      npm_specifiers,
+    }
+  }
+
+  async fn resolve(
+    &mut self,
+    mut pending_npm_registry_info_loads: PendingNpmRegistryInfoLoadFutures,
+  ) {
+    let mut previously_restarted = false;
+    while let Some((package_name, result)) =
+      pending_npm_registry_info_loads.next().await
+    {
+      let items = self.pending_npm_by_name.get_mut(&package_name).unwrap();
+      if let Err(err) = result {
+        for item in items {
+          // load failure
+          self.pending_info.module_slots.insert(
+            item.specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::LoadingErr(
+                item.specifier.clone(),
+                item.maybe_range.clone(),
+                err.clone(),
+              ),
+            )),
+          );
+        }
+      } else {
+        while let Some(item) = items.pop_front() {
+          if let Some(npm_resolver) = &self.npm_resolver {
+            let resolution = npm_resolver.resolve_npm(&item.npm_ref.req);
+            match resolution {
+              NpmPackageReqResolution::Ok(pkg_id) => {
+                self
+                  .pending_info
+                  .specifier_resolutions
+                  .insert(item.specifier.clone(), pkg_id.clone());
+                let pkg_id_ref = NpmPackageNvReference {
+                  nv: pkg_id,
+                  sub_path: item.npm_ref.sub_path.clone(),
+                };
+                let resolved_specifier = pkg_id_ref.as_specifier();
+                if resolved_specifier != item.specifier {
+                  self
+                    .pending_info
+                    .redirects
+                    .insert(item.specifier, resolved_specifier.clone());
+                }
+                self.pending_info.module_slots.insert(
+                  resolved_specifier.clone(),
+                  ModuleSlot::Module(Module::Npm(NpmModule {
+                    specifier: resolved_specifier,
+                    nv_reference: pkg_id_ref,
+                  })),
+                );
+              }
+              NpmPackageReqResolution::ReloadRegistryInfo(_)
+                if !previously_restarted =>
+              {
+                // the implementer should ideally never return this more than once,
+                // but in case they do, have this safety
+                previously_restarted = true;
+
+                // clear the current pending information and restart from scratch
+                pending_npm_registry_info_loads.clear();
+                self.pending_info.clear();
+
+                // add back the failed item so it can be retried
+                items.push_front(item);
+
+                // reload all the npm registry information
+                for package_name in self.pending_npm_by_name.keys() {
+                  let package_name = package_name.clone();
+                  let fut =
+                    npm_resolver.load_and_cache_npm_package_info(&package_name);
+                  pending_npm_registry_info_loads.push(Box::pin(async move {
+                    let result = fut.await.map_err(Arc::new);
+                    (package_name, result)
+                  }));
+                }
+                break;
+              }
+              NpmPackageReqResolution::Err(err)
+              | NpmPackageReqResolution::ReloadRegistryInfo(err) => {
+                self.pending_info.module_slots.insert(
+                  item.specifier.clone(),
+                  ModuleSlot::Err(ModuleGraphError::ResolutionError(
+                    ResolutionError::ResolverError {
+                      error: Arc::new(err),
+                      specifier: item.specifier.to_string(),
+                      // this should always be set
+                      range: item.maybe_range.unwrap_or_else(|| Range {
+                        specifier: item.specifier,
+                        start: Position::zeroed(),
+                        end: Position::zeroed(),
+                      }),
+                    },
+                  )),
+                );
+              }
+            }
+          } else {
+            self.pending_info.module_slots.insert(
+              item.specifier.clone(),
+              ModuleSlot::Err(ModuleGraphError::ModuleError(
+                ModuleError::LoadingErr(
+                  item.specifier,
+                  item.maybe_range,
+                  Arc::new(anyhow::anyhow!(
+                    "npm specifiers are not supported in this environment"
+                  )),
+                ),
+              )),
+            );
+          }
+        }
+      }
+    }
+  }
+
+  fn fill_graph(self, graph: &mut ModuleGraph) {
+    let pending_info = self.pending_info;
+    let npm_specifiers = self.npm_specifiers;
+
+    // update the graph with the pending information
+    for (key, value) in pending_info.module_slots {
+      // always keep the existing information in the graph
+      // in case it was already used in the runtime
+      graph.module_slots.entry(key).or_insert(value);
+    }
+    for (key, value) in pending_info.redirects {
+      graph.redirects.entry(key).or_insert(value);
+    }
+
+    // we resolve the npm specifiers grouped by package unordered, so now fill
+    // in the npm packages in resolution order ensuring no duplicates are added
+    let mut seen_npm_package_ids =
+      HashSet::with_capacity(graph.npm_packages.len() + npm_specifiers.len());
+    seen_npm_package_ids.extend(graph.npm_packages.iter().cloned());
+    for npm_specifier in npm_specifiers {
+      if let Some(package_id) =
+        pending_info.specifier_resolutions.get(&npm_specifier)
+      {
+        if seen_npm_package_ids.insert(package_id.clone()) {
+          graph.npm_packages.push(package_id.clone());
+        }
+      }
+    }
+  }
+}
+
 impl Serialize for Resolution {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
@@ -2514,6 +2741,7 @@ where
 #[cfg(test)]
 mod tests {
   use crate::DefaultModuleAnalyzer;
+  use crate::ImportAssertion;
   use pretty_assertions::assert_eq;
 
   use super::*;
@@ -3014,5 +3242,203 @@ mod tests {
       )
       .await;
     assert!(loader.loaded_bar);
+  }
+
+  #[tokio::test]
+  async fn dependency_imports() {
+    struct TestLoader;
+    impl Loader for TestLoader {
+      fn load(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        is_dynamic: bool,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///foo.ts" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: "
+                /// <reference path='file:///bar.ts' />
+                /// <reference types='file:///bar.ts' />
+                /* @jsxImportSource file:///bar.ts */
+                import 'file:///bar.ts';
+                await import('file:///bar.ts');
+                await import('file:///bar.ts', { assert: eval('') });
+                import 'file:///baz.json' assert { type: 'json' };
+                import type {} from 'file:///bar.ts';
+                /** @typedef { import('file:///bar.ts') } bar */
+              "
+              .into(),
+            }))
+          }),
+          "file:///bar.ts" => {
+            assert!(!is_dynamic);
+            Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: "".into(),
+              }))
+            })
+          }
+          "file:///baz.json" => {
+            assert!(!is_dynamic);
+            Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: "{}".into(),
+              }))
+            })
+          }
+          _ => unreachable!(),
+        }
+      }
+    }
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.ts").unwrap()],
+        &mut TestLoader,
+        Default::default(),
+      )
+      .await;
+    graph.valid().unwrap();
+    let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
+    let module = module.esm().unwrap();
+    let dependency_a = module.dependencies.get("file:///bar.ts").unwrap();
+    let dependency_b = module.dependencies.get("file:///baz.json").unwrap();
+    assert_eq!(
+      dependency_a.imports,
+      vec![
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::TsReferencePath,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 1,
+              character: 36
+            },
+            end: Position {
+              line: 1,
+              character: 52,
+            },
+          },
+          is_dynamic: false,
+          assertions: ImportAssertions::None,
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::TsReferenceTypes,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 2,
+              character: 37,
+            },
+            end: Position {
+              line: 2,
+              character: 53,
+            },
+          },
+          is_dynamic: false,
+          assertions: ImportAssertions::None,
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::Es,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 4,
+              character: 23,
+            },
+            end: Position {
+              line: 4,
+              character: 39,
+            },
+          },
+          is_dynamic: false,
+          assertions: ImportAssertions::None,
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::Es,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 5,
+              character: 29,
+            },
+            end: Position {
+              line: 5,
+              character: 45,
+            },
+          },
+          is_dynamic: true,
+          assertions: ImportAssertions::None,
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::Es,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 6,
+              character: 29,
+            },
+            end: Position {
+              line: 6,
+              character: 45,
+            },
+          },
+          is_dynamic: true,
+          assertions: ImportAssertions::Unknown,
+        },
+        Import {
+          specifier: "file:///bar.ts".to_string(),
+          kind: ImportKind::TsType,
+          range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position {
+              line: 8,
+              character: 36,
+            },
+            end: Position {
+              line: 8,
+              character: 52,
+            },
+          },
+          is_dynamic: false,
+          assertions: ImportAssertions::None,
+        },
+      ]
+    );
+    assert_eq!(
+      dependency_b.imports,
+      vec![Import {
+        specifier: "file:///baz.json".to_string(),
+        kind: ImportKind::Es,
+        range: Range {
+          specifier: Url::parse("file:///foo.ts").unwrap(),
+          start: Position {
+            line: 7,
+            character: 23,
+          },
+          end: Position {
+            line: 7,
+            character: 41,
+          },
+        },
+        is_dynamic: false,
+        assertions: ImportAssertions::Known(HashMap::from_iter(vec![(
+          "type".to_string(),
+          ImportAssertion::Known("json".to_string())
+        )])),
+      },]
+    );
   }
 }

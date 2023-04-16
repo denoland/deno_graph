@@ -2,9 +2,9 @@
 
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
-use crate::npm::NpmPackageNv;
-use crate::npm::NpmPackageReq;
 use crate::text_encoding::strip_bom_mut;
+use deno_semver::npm::NpmPackageNv;
+use deno_semver::npm::NpmPackageReq;
 
 use anyhow::anyhow;
 use anyhow::Error;
@@ -133,6 +133,26 @@ pub struct UnknownBuiltInNodeModuleError {
   pub module_name: String,
 }
 
+#[derive(Debug)]
+pub enum NpmPackageReqResolution {
+  Ok(NpmPackageNv),
+  Err(anyhow::Error),
+  /// Error was encountered, but instruct deno_graph to ask for
+  /// the registry information again. This is useful to use when
+  /// a user specifies a npm specifier that doesn't match any version
+  /// found in a cache and you want to cache bust the registry information.
+  ///
+  /// When the implementation provides this, it should cache bust its
+  /// cached/loaded npm registry information and deno_graph will
+  /// call `load_and_cache_npm_package_info` for every package again
+  /// then re-attempt resolution.
+  ///
+  /// deno_graph will restart only once per build call to prevent accidental,
+  /// infinite loops, but the implementation should ensure this is only
+  /// returned once per session.
+  ReloadRegistryInfo(anyhow::Error),
+}
+
 pub trait NpmResolver: fmt::Debug {
   /// Gets the builtin node module name from the specifier (ex. "node:fs" -> "fs").
   fn resolve_builtin_node_module(
@@ -143,13 +163,18 @@ pub trait NpmResolver: fmt::Debug {
   /// This tells the implementation to asynchronously load within itself the
   /// npm registry package information so that synchronous resolution can occur
   /// afterwards.
+  ///
+  /// WARNING: deno_graph will stop executing these futures when a
+  /// `NpmPackageReqResolution::ReloadRegistryInfo` is returned from
+  /// `resolve_npm`. The implementation should be resilient to this.
   fn load_and_cache_npm_package_info(
     &self,
-    _package_name: &str,
-  ) -> LocalBoxFuture<'static, Result<(), String>>;
+    package_name: &str,
+  ) -> LocalBoxFuture<'static, Result<(), anyhow::Error>>;
 
-  /// Resolves an npm package requirement to a resolved npm package identifier.
-  fn resolve_npm(&self, _package_req: &NpmPackageReq) -> Result<NpmPackageNv>;
+  /// Resolves an npm package requirement to a resolved npm package name and version.
+  fn resolve_npm(&self, package_req: &NpmPackageReq)
+    -> NpmPackageReqResolution;
 }
 
 pub fn load_data_url(
@@ -173,6 +198,7 @@ pub fn load_data_url(
 
 /// An implementation of the loader attribute where the responses are provided
 /// ahead of time. This is useful for testing or
+#[derive(Default)]
 pub struct MemoryLoader {
   sources: HashMap<ModuleSpecifier, Result<LoadResponse, Error>>,
   cache_info: HashMap<ModuleSpecifier, CacheInfo>,
@@ -188,6 +214,30 @@ pub enum Source<S> {
   Err(Error),
 }
 
+impl<S: AsRef<str>> Source<S> {
+  fn into_result(self) -> Result<LoadResponse, Error> {
+    match self {
+      Source::Module {
+        specifier,
+        maybe_headers,
+        content,
+      } => Ok(LoadResponse::Module {
+        specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
+        maybe_headers: maybe_headers.map(|h| {
+          h.into_iter()
+            .map(|(k, v)| (k.as_ref().to_string(), v.as_ref().to_string()))
+            .collect()
+        }),
+        content: content.as_ref().into(),
+      }),
+      Source::External(specifier) => Ok(LoadResponse::External {
+        specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
+      }),
+      Source::Err(error) => Err(error),
+    }
+  }
+}
+
 pub type MemoryLoaderSources<S> = Vec<(S, Source<S>)>;
 
 impl MemoryLoader {
@@ -200,28 +250,7 @@ impl MemoryLoader {
         .into_iter()
         .map(|(s, r)| {
           let specifier = ModuleSpecifier::parse(s.as_ref()).unwrap();
-          let result = match r {
-            Source::Module {
-              specifier,
-              maybe_headers,
-              content,
-            } => Ok(LoadResponse::Module {
-              specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
-              maybe_headers: maybe_headers.map(|h| {
-                h.into_iter()
-                  .map(|(k, v)| {
-                    (k.as_ref().to_string(), v.as_ref().to_string())
-                  })
-                  .collect()
-              }),
-              content: content.as_ref().into(),
-            }),
-            Source::External(specifier) => Ok(LoadResponse::External {
-              specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
-            }),
-            Source::Err(error) => Err(error),
-          };
-          (specifier, result)
+          (specifier, r.into_result())
         })
         .collect(),
       cache_info: cache_info
@@ -232,6 +261,30 @@ impl MemoryLoader {
         })
         .collect(),
     }
+  }
+
+  pub fn add_source<S: AsRef<str>>(
+    &mut self,
+    specifier: impl AsRef<str>,
+    source: Source<S>,
+  ) {
+    let specifier = ModuleSpecifier::parse(specifier.as_ref()).unwrap();
+    self.sources.insert(specifier, source.into_result());
+  }
+
+  pub fn add_source_with_text(
+    &mut self,
+    specifier: impl AsRef<str>,
+    source: impl AsRef<str>,
+  ) {
+    self.add_source(
+      specifier.as_ref(),
+      Source::Module {
+        specifier: specifier.as_ref().to_string(),
+        maybe_headers: None,
+        content: source.as_ref().to_string(),
+      },
+    );
   }
 }
 

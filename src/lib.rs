@@ -4,8 +4,7 @@ mod analyzer;
 mod ast;
 mod graph;
 mod module_specifier;
-pub mod npm;
-pub mod semver;
+
 pub mod source;
 mod text_encoding;
 
@@ -57,6 +56,7 @@ pub use graph::WalkOptions;
 pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
+pub use source::NpmPackageReqResolution;
 
 #[derive(Debug, Clone)]
 pub struct ReferrerImports {
