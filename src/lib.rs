@@ -3470,5 +3470,21 @@ export function a(a: A): B {
         "file:///a/test04.d.ts",
       ]
     );
+
+    // try skip analyzing the dependencies after getting the first module
+    {
+      let mut iterator = graph.walk(&roots, Default::default());
+      assert_eq!(
+        iterator.next().unwrap().0.as_str(),
+        "https://example.com/jsx-runtime"
+      );
+      assert_eq!(
+        iterator.next().unwrap().0.as_str(),
+        "https://example.com/jsx-runtime.d.ts"
+      );
+      assert_eq!(iterator.next().unwrap().0.as_str(), "file:///a/test01.ts");
+      iterator.skip_previous_dependencies();
+      assert!(iterator.next().is_none());
+    }
   }
 }
