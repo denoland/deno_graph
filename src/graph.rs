@@ -555,12 +555,16 @@ impl Dependency {
   /// entry for the dependency, returning a reference to the range if true,
   /// otherwise none.
   pub fn includes(&self, position: &Position) -> Option<&Range> {
-    let code = self.maybe_code.includes(position);
-    if code.is_none() {
-      self.maybe_type.includes(position)
-    } else {
-      code
+    for import in &self.imports {
+      if import.range.includes(position) {
+        return Some(&import.range);
+      }
     }
+    // `@deno-types` directives won't be associated with an import.
+    if let Some(range) = self.maybe_type.includes(position) {
+      return Some(range);
+    }
+    None
   }
 }
 
@@ -2786,7 +2790,8 @@ mod tests {
   fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let module_analyzer = DefaultModuleAnalyzer::default();
-    let content = r#"import * as b from "./b.ts";"#;
+    let content =
+      "import * as b from \"./b.ts\";\nimport * as c from \"./b.ts\"";
     let module = parse_module(
       &specifier,
       None,
@@ -2800,15 +2805,8 @@ mod tests {
     )
     .unwrap();
     let module = module.esm().unwrap();
-    let maybe_dependency = module.dependencies.values().find_map(|d| {
-      d.includes(&Position {
-        line: 0,
-        character: 21,
-      })
-      .map(|r| (d, r))
-    });
-    assert!(maybe_dependency.is_some());
-    let (dependency, range) = maybe_dependency.unwrap();
+    assert_eq!(module.dependencies.len(), 1);
+    let dependency = module.dependencies.first().unwrap().1;
     assert_eq!(
       dependency.maybe_code,
       Resolution::Ok(Box::new(ResolutionResolved {
@@ -2827,9 +2825,12 @@ mod tests {
       }))
     );
     assert_eq!(
-      range,
-      &Range {
-        specifier,
+      dependency.includes(&Position {
+        line: 0,
+        character: 21,
+      }),
+      Some(&Range {
+        specifier: specifier.clone(),
         start: Position {
           line: 0,
           character: 19
@@ -2838,16 +2839,32 @@ mod tests {
           line: 0,
           character: 27
         },
-      }
+      })
     );
-
-    let maybe_dependency = module.dependencies.values().find_map(|d| {
-      d.includes(&Position {
+    assert_eq!(
+      dependency.includes(&Position {
+        line: 1,
+        character: 21,
+      }),
+      Some(&Range {
+        specifier: specifier.clone(),
+        start: Position {
+          line: 1,
+          character: 19
+        },
+        end: Position {
+          line: 1,
+          character: 27
+        },
+      })
+    );
+    assert_eq!(
+      dependency.includes(&Position {
         line: 0,
         character: 18,
-      })
-    });
-    assert!(maybe_dependency.is_none());
+      }),
+      None,
+    );
   }
 
   #[tokio::test]
