@@ -2847,7 +2847,7 @@ mod tests {
         character: 21,
       }),
       Some(&Range {
-        specifier: specifier.clone(),
+        specifier: specifier,
         start: Position {
           line: 1,
           character: 19
