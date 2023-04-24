@@ -1807,33 +1807,39 @@ pub(crate) fn parse_esm_module_from_module_info(
       is_dynamic: desc.is_dynamic,
       assertions: desc.import_assertions.clone(),
     };
+    let mut has_external_types = false;
     if let Some(dependency) = module.dependencies.get_mut(&desc.specifier) {
       dependency.add_import(import);
+      has_external_types = dependency.external_types_index.is_some();
     } else {
       module.dependencies.insert(
         desc.specifier.clone(),
         Dependency::new(import, maybe_resolver),
       );
     }
-    if let Some(pragma) = analyze_deno_types(&desc) {
-      let import = Import {
-        specifier: pragma.specifier.clone(),
-        kind: ImportKind::DenoTypes,
-        range: Range::from_position_range(specifier.clone(), pragma.range),
-        is_dynamic: false,
-        assertions: Default::default(),
-      };
-      if let Some(dependency) = module.dependencies.get_mut(&pragma.specifier) {
-        dependency.add_import(import);
-      } else {
-        module.dependencies.insert(
-          pragma.specifier.clone(),
-          Dependency::new(import, maybe_resolver),
-        );
+    if !has_external_types {
+      if let Some(pragma) = analyze_deno_types(&desc) {
+        let import = Import {
+          specifier: pragma.specifier.clone(),
+          kind: ImportKind::DenoTypes,
+          range: Range::from_position_range(specifier.clone(), pragma.range),
+          is_dynamic: false,
+          assertions: Default::default(),
+        };
+        if let Some(dependency) = module.dependencies.get_mut(&pragma.specifier)
+        {
+          dependency.add_import(import);
+        } else {
+          module.dependencies.insert(
+            pragma.specifier.clone(),
+            Dependency::new(import, maybe_resolver),
+          );
+        }
+        let index =
+          module.dependencies.get_index_of(&pragma.specifier).unwrap();
+        let dep = module.dependencies.get_mut(&desc.specifier).unwrap();
+        dep.external_types_index = Some(index);
       }
-      let index = module.dependencies.get_index_of(&pragma.specifier).unwrap();
-      let dep = module.dependencies.get_mut(&desc.specifier).unwrap();
-      dep.external_types_index = Some(index);
     }
   }
 
