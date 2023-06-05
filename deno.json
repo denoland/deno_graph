@@ -4,24 +4,10 @@
     "build:npm": "deno run -A _build_npm.ts",
     "test": "deno test --allow-read --allow-net"
   },
-  "fmt": {
-    "files": {
-      "exclude": [
-        "lib/deno_graph.generated.js",
-        "npm",
-        "target",
-        "temp"
-      ]
-    }
-  },
-  "lint": {
-    "files": {
-      "exclude": [
-        "lib/deno_graph.generated.js",
-        "npm",
-        "target",
-        "temp"
-      ]
-    }
-  }
+  "exclude": [
+    "lib/deno_graph.generated.js",
+    "npm",
+    "target",
+    "temp"
+  ]
 }

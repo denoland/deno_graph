@@ -1,4 +1,4 @@
-import { build, emptyDir } from "https://deno.land/x/dnt@0.33.1/mod.ts";
+import { build, emptyDir } from "https://deno.land/x/dnt@0.37.0/mod.ts";
 
 await emptyDir("./npm");
 Deno.mkdirSync("npm/esm/lib", { recursive: true });
@@ -20,6 +20,7 @@ await build({
     deno: true,
     undici: true,
   },
+  rootTestDir: "./js",
   package: {
     name: "@deno/graph",
     version: Deno.args[0],
@@ -32,7 +33,21 @@ await build({
     bugs: {
       url: "https://github.com/deno/deno_graph/issues",
     },
+    devDependencies: {
+      "@types/node": "^18.16.16"
+    }
   },
+  compilerOptions: {
+    lib: ["dom", "es2021"],
+  },
+  filterDiagnostic(diagnostic) {
+    if (
+      diagnostic.file?.fileName.endsWith("wasmbuild@0.14.1/loader.ts")
+    ) {
+      return false;
+    }
+    return true;
+  }
 });
 
 Deno.copyFileSync("LICENSE", "npm/LICENSE");
