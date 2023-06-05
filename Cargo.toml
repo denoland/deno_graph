@@ -18,7 +18,7 @@ name = "deno_graph"
 [dependencies]
 anyhow = "1.0.43"
 data-url = "0.2.0"
-deno_ast = { version = "0.26.0", features = ["dep_graph", "module_specifier"] }
+deno_ast = { version = "0.27.0", features = ["dep_graph", "module_specifier"] }
 deno_semver = "0.2.0"
 futures = "0.3.26"
 indexmap = { version = "1.9.2", features = ["serde"] }
