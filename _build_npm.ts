@@ -34,8 +34,8 @@ await build({
       url: "https://github.com/deno/deno_graph/issues",
     },
     devDependencies: {
-      "@types/node": "^18.16.16"
-    }
+      "@types/node": "^18.16.16",
+    },
   },
   compilerOptions: {
     lib: ["dom", "es2021"],
@@ -47,7 +47,7 @@ await build({
       return false;
     }
     return true;
-  }
+  },
 });
 
 Deno.copyFileSync("LICENSE", "npm/LICENSE");
