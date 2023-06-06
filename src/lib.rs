@@ -157,7 +157,7 @@ mod tests {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -238,7 +238,7 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test01.ts").unwrap(),
       ModuleSpecifier::parse("https://example.com/a.ts").unwrap(),
     ];
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(roots.clone(), &mut loader, Default::default())
       .await;
@@ -308,7 +308,7 @@ mod tests {
       ModuleSpecifier::parse("https://example.com/a.ts").unwrap();
     let third_root =
       ModuleSpecifier::parse("https://example.com/d.ts").unwrap();
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(vec![first_root.clone()], &mut loader, Default::default())
       .await;
@@ -358,7 +358,7 @@ mod tests {
       vec![],
     );
     let roots = vec![ModuleSpecifier::parse("file:///a/test.json").unwrap()];
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         roots.clone(),
@@ -414,7 +414,7 @@ mod tests {
       vec![],
     );
     let roots = vec![ModuleSpecifier::parse("file:///a/test.js").unwrap()];
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         roots.clone(),
@@ -498,7 +498,7 @@ console.log(a);
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -526,7 +526,7 @@ console.log(a);
       vec![],
     );
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -559,7 +559,7 @@ console.log(a);
     );
     let root_specifier =
       ModuleSpecifier::parse("https://deno.land/main.ts").unwrap();
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -600,7 +600,7 @@ console.log(a);
         ],
         vec![],
       );
-      let mut graph = ModuleGraph::default();
+      let mut graph = ModuleGraph::new(GraphKind::All);
       graph
         .build(vec![root_specifier], &mut loader, Default::default())
         .await;
@@ -650,7 +650,7 @@ console.log(a);
         vec![],
       );
       let maybe_resolver: Option<&dyn Resolver> = Some(&resolver);
-      let mut graph = ModuleGraph::default();
+      let mut graph = ModuleGraph::new(GraphKind::All);
       graph
         .build(
           vec![root_specifier.clone()],
@@ -703,7 +703,7 @@ console.log(a);
       referrer: config_specifier,
       imports: vec!["./types.d.ts".to_string()],
     }];
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier],
@@ -831,7 +831,7 @@ console.log(a);
       referrer: config_specifier,
       imports: vec!["https://esm.sh/preact/runtime-jsx".to_string()],
     }];
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier],
@@ -957,7 +957,7 @@ console.log(a);
       referrer: config_specifier.clone(),
       imports: vec!["https://example.com/jsx-runtime".to_string()],
     }];
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier],
@@ -1006,7 +1006,7 @@ console.log(a);
     );
     let root_specifier =
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -1060,7 +1060,7 @@ console.log(a);
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.tsx").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -1128,7 +1128,7 @@ console.log(a);
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -1172,7 +1172,7 @@ console.log(a);
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -1218,7 +1218,7 @@ console.log(a);
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -1254,7 +1254,7 @@ console.log(a);
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a.ts").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -1348,7 +1348,7 @@ export function a(a) {
       vec![],
     );
     let root = ModuleSpecifier::parse("file:///a/test.js").unwrap();
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(vec![root.clone()], &mut loader, Default::default())
       .await;
@@ -1448,7 +1448,7 @@ export function a(a) {
     );
     let root_specifier =
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -1515,7 +1515,7 @@ export function a(a) {
     );
     let root_specifier =
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -1575,7 +1575,7 @@ export function a(a) {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -1619,7 +1619,7 @@ export function a(a) {
     );
     let maybe_resolver: Option<&dyn Resolver> = Some(&resolver);
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier],
@@ -1679,7 +1679,7 @@ export function a(a) {
     );
     let maybe_resolver: Option<&dyn Resolver> = Some(&resolver);
     let root_specifier = ModuleSpecifier::parse("file:///a.js").unwrap();
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier],
@@ -1761,7 +1761,7 @@ export function a(a) {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -1911,7 +1911,7 @@ export function a(a) {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -2026,7 +2026,7 @@ export function a(a) {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -2234,7 +2234,7 @@ export function a(a) {
     let reporter = CollectingReporter {
       on_loads: RefCell::new(vec![]),
     };
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -2746,7 +2746,7 @@ export function a(a) {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
@@ -3157,7 +3157,7 @@ export function a(a: A): B {
       vec![],
     );
     let roots = vec![ModuleSpecifier::parse("file:///a/test01.ts").unwrap()];
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     let config_specifier =
       ModuleSpecifier::parse("file:///a/tsconfig.json").unwrap();
     let imports = vec![ReferrerImports {
@@ -3305,7 +3305,7 @@ export function a(a: A): B {
       vec![],
     );
     let root = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     let config_specifier =
       ModuleSpecifier::parse("file:///a/tsconfig.json").unwrap();
     let imports = vec![ReferrerImports {

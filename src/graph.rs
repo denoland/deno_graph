@@ -1177,11 +1177,11 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
 }
 
 /// The structure which represents a module graph, which can be serialized as
-/// well as "printed".  The roots of the graph represent the "starting" point
+/// well as "printed". The roots of the graph represent the "starting" point
 /// which can be located in the module "slots" in the graph. The graph also
 /// contains any redirects where the requested module specifier was redirected
 /// to another module specifier when being loaded.
-#[derive(Debug, Default, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ModuleGraph {
   #[serde(skip_serializing)]
   graph_kind: GraphKind,
