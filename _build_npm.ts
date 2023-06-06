@@ -38,7 +38,7 @@ await build({
     },
   },
   compilerOptions: {
-    lib: ["dom", "es2021"],
+    lib: ["DOM", "ES2021"],
   },
   filterDiagnostic(diagnostic) {
     if (
