@@ -1,6 +1,9 @@
+// Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 
+use anyhow::Result;
 use deno_ast::swc::ast::*;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::utils::find_pat_ids;
@@ -11,6 +14,10 @@ use deno_ast::SourcePos;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use indexmap::IndexMap;
+
+use crate::CapturingModuleParser;
+use crate::ModuleGraph;
+use crate::ModuleParser;
 
 use super::TypeTraceDiagnostic;
 use super::TypeTraceDiagnosticKind;
@@ -214,15 +221,23 @@ impl ModuleSymbol {
   }
 }
 
-pub struct ModuleAnalyzer<'a, THandler: TypeTraceHandler> {
+pub struct TypeTraceModuleAnalyzer<'a, THandler: TypeTraceHandler> {
+  graph: &'a ModuleGraph,
+  parser: &'a CapturingModuleParser<'a>,
   handler: &'a THandler,
   modules: HashMap<ModuleSpecifier, ModuleSymbol>,
 }
 
-impl<'a, THandler: TypeTraceHandler> ModuleAnalyzer<'a, THandler> {
-  pub fn new(handler: &'a THandler) -> Self {
+impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
+  pub fn new(
+    graph: &'a ModuleGraph,
+    parser: &'a CapturingModuleParser<'a>,
+    handler: &'a THandler,
+  ) -> Self {
     Self {
       handler,
+      parser,
+      graph,
       modules: Default::default(),
     }
   }
@@ -231,18 +246,15 @@ impl<'a, THandler: TypeTraceHandler> ModuleAnalyzer<'a, THandler> {
     self.modules
   }
 
-  pub fn get(&self, specifier: &ModuleSpecifier) -> Option<&ModuleSymbol> {
-    self.modules.get(specifier)
-  }
-
-  pub fn get_mut(
+  pub fn get_or_analyze(
     &mut self,
     specifier: &ModuleSpecifier,
-  ) -> Option<&mut ModuleSymbol> {
-    self.modules.get_mut(specifier)
-  }
+  ) -> Result<&ModuleSymbol> {
+    if self.modules.contains_key(specifier) {
+      return Ok(self.modules.get(specifier).unwrap());
+    }
 
-  pub fn analyze(&mut self, specifier: ModuleSpecifier, source: &ParsedSource) {
+    let source = self.parsed_source(specifier)?;
     let module = source.module();
     let mut module_symbol = ModuleSymbol {
       module_id: ModuleId(self.modules.len()),
@@ -256,12 +268,33 @@ impl<'a, THandler: TypeTraceHandler> ModuleAnalyzer<'a, THandler> {
     };
 
     let filler = SymbolFiller {
-      source,
-      specifier: &specifier,
+      source: &source,
+      specifier,
       handler: self.handler,
     };
     filler.fill_module(&mut module_symbol, module);
-    self.modules.insert(specifier, module_symbol);
+    self.modules.insert(specifier.clone(), module_symbol);
+    Ok(self.modules.get(specifier).unwrap())
+  }
+
+  pub fn get_mut(
+    &mut self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<&mut ModuleSymbol> {
+    self.modules.get_mut(specifier)
+  }
+
+  fn parsed_source(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Result<ParsedSource, deno_ast::Diagnostic> {
+    let graph_module = self.graph.get(specifier).unwrap();
+    let graph_module = graph_module.esm().unwrap();
+    self.parser.parse_module(
+      &graph_module.specifier,
+      graph_module.source.clone(),
+      graph_module.media_type,
+    )
   }
 }
 

@@ -1,17 +1,17 @@
+// Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 
 use anyhow::Result;
 use deno_ast::LineAndColumnDisplay;
 use deno_ast::ModuleSpecifier;
-use deno_ast::ParsedSource;
 use indexmap::IndexMap;
 
 use crate::CapturingModuleParser;
 use crate::ModuleGraph;
-use crate::ModuleParser;
 
-use self::analyzer::ModuleAnalyzer;
+use self::analyzer::TypeTraceModuleAnalyzer;
 
 pub use self::analyzer::FileDep;
 pub use self::analyzer::FileDepName;
@@ -37,17 +37,17 @@ pub trait TypeTraceHandler {
   fn diagnostic(&self, diagnostic: TypeTraceDiagnostic);
 }
 
-/// Traces the public types of the specified modules.
-pub fn trace<'a, THandler: TypeTraceHandler>(
-  roots: &[ModuleSpecifier],
+/// Analyzes the public types and all the private dependent types of
+/// the specified modules throughout the entire graph.
+pub fn trace_public_types<'a, THandler: TypeTraceHandler>(
   graph: &'a ModuleGraph,
+  roots: &[ModuleSpecifier],
   parser: &'a CapturingModuleParser<'a>,
   handler: &'a THandler,
 ) -> Result<HashMap<ModuleSpecifier, ModuleSymbol>> {
   let mut context = Context {
     graph,
-    parser,
-    analyzer: ModuleAnalyzer::new(handler),
+    analyzer: TypeTraceModuleAnalyzer::new(graph, parser, handler),
     pending_traces: roots
       .iter()
       .map(|r| (r.clone(), ExportsToTrace::AllWithDefault))
@@ -93,39 +93,16 @@ impl ExportsToTrace {
 
 struct Context<'a, TReporter: TypeTraceHandler> {
   graph: &'a ModuleGraph,
-  parser: &'a CapturingModuleParser<'a>,
-  analyzer: ModuleAnalyzer<'a, TReporter>,
+  analyzer: TypeTraceModuleAnalyzer<'a, TReporter>,
   pending_traces: IndexMap<ModuleSpecifier, ExportsToTrace>,
 }
 
 impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
-  pub fn parsed_source(
-    &self,
-    specifier: &ModuleSpecifier,
-  ) -> Result<ParsedSource, deno_ast::Diagnostic> {
-    let graph_module = self.graph.get(specifier).unwrap();
-    let graph_module = graph_module.esm().unwrap();
-    self.parser.parse_module(
-      &graph_module.specifier,
-      graph_module.source.clone(),
-      graph_module.media_type,
-    )
-  }
-
   pub fn get_module_symbol(
     &mut self,
     specifier: &ModuleSpecifier,
   ) -> Result<&ModuleSymbol> {
-    self.ensure_analyze(specifier)?;
-    Ok(self.analyzer.get(specifier).unwrap())
-  }
-
-  pub fn ensure_analyze(&mut self, specifier: &ModuleSpecifier) -> Result<()> {
-    if self.analyzer.get(specifier).is_none() {
-      let parsed_source = self.parsed_source(specifier)?;
-      self.analyzer.analyze(specifier.clone(), &parsed_source);
-    }
-    Ok(())
+    self.analyzer.get_or_analyze(specifier)
   }
 
   pub fn trace_exports(
