@@ -126,6 +126,8 @@ dependencies = [
  "swc_ecma_ast",
  "swc_ecma_dep_graph",
  "swc_ecma_parser",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
  "text_lines",
  "url",
 ]
@@ -1011,6 +1013,24 @@ dependencies = [
  "swc_ecma_ast",
  "tracing",
  "typed-arena",
+]
+
+[[package]]
+name = "swc_ecma_utils"
+version = "0.117.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad791bbfdafcebd878584021e050964c8ab68aba7eeac9d0ee4afba4c284a629"
+dependencies = [
+ "indexmap",
+ "num_cpus",
+ "once_cell",
+ "rustc-hash",
+ "swc_atoms",
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_visit",
+ "tracing",
+ "unicode-id",
 ]
 
 [[package]]

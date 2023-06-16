@@ -15,6 +15,12 @@ members = ["lib"]
 [lib]
 name = "deno_graph"
 
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+type_tracing = ["deno_ast/visit", "deno_ast/utils"]
+
 [dependencies]
 anyhow = "1.0.43"
 data-url = "0.2.0"
