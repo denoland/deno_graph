@@ -1154,6 +1154,10 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
   }
 
   fn fill_method(&self, symbol: &mut Symbol, method: &ClassMethod) {
+    if method.accessibility == Some(Accessibility::Private) {
+      return; // ignore, private
+    }
+
     self.fill_prop_name(symbol, &method.key);
     if let Some(type_params) = &method.function.type_params {
       self.fill_ts_type_param_decl(symbol, type_params)

@@ -17,11 +17,16 @@ class B extends BBase implements IBase {
 
   method2(other: Param): void {
   }
+
+  private asdf(private: PrivateParam): PrivateReturn {
+  }
 }
 
 class PropValue {}
 class ReturnValue {}
 class Param {}
+class PrivateParam {}
+class PrivateReturn {}
 
 # output
 {
@@ -29,7 +34,7 @@ class Param {}
         module_id: ModuleId(
             0,
         ),
-        next_symbol_id: 7,
+        next_symbol_id: 9,
         exports: {
             "A": 0,
         },
@@ -64,6 +69,14 @@ class Param {}
                 Atom('Param' type=inline),
                 #2,
             ): 6,
+            (
+                Atom('PrivateParam' type=dynamic),
+                #2,
+            ): 7,
+            (
+                Atom('PrivateReturn' type=dynamic),
+                #2,
+            ): 8,
         },
         symbols: {
             0: Symbol {
@@ -136,7 +149,7 @@ class Param {}
                                 67,
                             ),
                             end: SourcePos(
-                                195,
+                                255,
                             ),
                         },
                         kind: Definition,
@@ -171,10 +184,10 @@ class Param {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                197,
+                                257,
                             ),
                             end: SourcePos(
-                                215,
+                                275,
                             ),
                         },
                         kind: Definition,
@@ -188,10 +201,10 @@ class Param {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                216,
+                                276,
                             ),
                             end: SourcePos(
-                                236,
+                                296,
                             ),
                         },
                         kind: Definition,
@@ -205,10 +218,44 @@ class Param {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                237,
+                                297,
                             ),
                             end: SourcePos(
-                                251,
+                                311,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            7: Symbol {
+                is_public: false,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                312,
+                            ),
+                            end: SourcePos(
+                                333,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            8: Symbol {
+                is_public: false,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                334,
+                            ),
+                            end: SourcePos(
+                                356,
                             ),
                         },
                         kind: Definition,
