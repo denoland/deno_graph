@@ -1,6 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
@@ -38,7 +37,7 @@ impl RootsGraphSymbol {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum FileDepName {
   Star,
   Name(String),
@@ -53,7 +52,7 @@ impl FileDepName {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FileDep {
   pub name: FileDepName,
   pub specifier: String,
@@ -72,12 +71,25 @@ impl std::fmt::Debug for SymbolId {
   }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum SymbolDeclKind {
+  Target(Id),
+  TargetSelf,
+  FileRef(FileDep),
+  Definition,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct SymbolDecl {
+  pub range: SourceRange,
+  pub kind: SymbolDeclKind,
+}
+
 #[derive(Default, Debug, Clone)]
 pub struct Symbol {
   is_public: bool,
-  decls: Vec<SourceRange>,
+  decls: IndexSet<SymbolDecl>,
   deps: IndexSet<Id>,
-  file_dep: Option<FileDep>,
 }
 
 impl Symbol {
@@ -99,7 +111,12 @@ impl Symbol {
   }
 
   pub fn file_dep(&self) -> Option<&FileDep> {
-    self.file_dep.as_ref()
+    for dep in &self.decls {
+      if let SymbolDeclKind::FileRef(file_ref) = &dep.kind {
+        return Some(file_ref);
+      }
+    }
+    None
   }
 }
 
@@ -132,7 +149,7 @@ impl ModuleSymbol {
       .symbols
       .values()
       .filter(|symbol| symbol.is_public)
-      .flat_map(|symbol| symbol.decls.clone())
+      .flat_map(|symbol| symbol.decls.iter().map(|d| d.range.clone()))
       .collect()
   }
 
@@ -162,16 +179,16 @@ impl ModuleSymbol {
 
   pub(crate) fn ensure_default_export_symbol(
     &mut self,
-    range: SourceRange,
+    symbol_decl: SymbolDecl,
   ) -> SymbolId {
     if let Some(symbol_id) = &self.default_export_symbol_id {
       let default_export_symbol = self.symbols.get_mut(symbol_id).unwrap();
-      default_export_symbol.decls.push(range);
+      default_export_symbol.decls.insert(symbol_decl);
       *symbol_id
     } else {
       let symbol_id = self.get_next_symbol_id();
       let mut symbol = Symbol::default();
-      symbol.decls.push(range);
+      symbol.decls.insert(symbol_decl);
       self.symbols.insert(symbol_id, symbol);
       self.default_export_symbol_id = Some(symbol_id);
       symbol_id
@@ -196,8 +213,8 @@ impl ModuleSymbol {
     next_id
   }
 
-  fn add_export(&mut self, id: Id, range: SourceRange) -> SymbolId {
-    let symbol_id = self.ensure_symbol_for_swc_id(id.clone(), range);
+  fn add_export(&mut self, id: Id, symbol_decl: SymbolDecl) -> SymbolId {
+    let symbol_id = self.ensure_symbol_for_swc_id(id.clone(), symbol_decl);
     self.exports.insert(id.0.to_string(), symbol_id);
     symbol_id
   }
@@ -205,16 +222,16 @@ impl ModuleSymbol {
   fn get_symbol_from_swc_id(
     &mut self,
     id: Id,
-    symbol_range: SourceRange,
+    symbol_decl: SymbolDecl,
   ) -> &mut Symbol {
-    let symbol_id = self.ensure_symbol_for_swc_id(id, symbol_range);
+    let symbol_id = self.ensure_symbol_for_swc_id(id, symbol_decl);
     self.symbols.get_mut(&symbol_id).unwrap()
   }
 
   fn ensure_symbol_for_swc_id(
     &mut self,
     id: Id,
-    symbol_range: SourceRange,
+    symbol_decl: SymbolDecl,
   ) -> SymbolId {
     let symbol_id = match self.swc_id_to_symbol_id.get(&id) {
       Some(symbol_id) => *symbol_id,
@@ -226,10 +243,10 @@ impl ModuleSymbol {
     };
 
     if let Some(symbol) = self.symbols.get_mut(&symbol_id) {
-      symbol.decls.push(symbol_range);
+      symbol.decls.insert(symbol_decl);
     } else {
       let mut symbol = Symbol::default();
-      symbol.decls.push(symbol_range);
+      symbol.decls.insert(symbol_decl);
       self.symbols.insert(symbol_id, symbol);
     }
     symbol_id
@@ -344,31 +361,73 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           }
           ModuleDecl::ExportDecl(export_decl) => match &export_decl.decl {
             Decl::Class(n) => {
-              file_module.add_export(n.ident.to_id(), export_decl.range());
+              file_module.add_export(
+                n.ident.to_id(),
+                SymbolDecl {
+                  kind: SymbolDeclKind::Definition,
+                  range: export_decl.range(),
+                },
+              );
             }
             Decl::Fn(n) => {
-              file_module.add_export(n.ident.to_id(), export_decl.range());
+              file_module.add_export(
+                n.ident.to_id(),
+                SymbolDecl {
+                  kind: SymbolDeclKind::Definition,
+                  range: export_decl.range(),
+                },
+              );
             }
             Decl::Var(n) => {
               for decl in &n.decls {
                 let ids: Vec<Id> = find_pat_ids(&decl.name);
                 for id in ids {
-                  file_module.add_export(id, decl.range());
+                  file_module.add_export(
+                    id,
+                    SymbolDecl {
+                      kind: SymbolDeclKind::Definition,
+                      range: decl.range(),
+                    },
+                  );
                 }
               }
             }
             Decl::TsInterface(n) => {
-              file_module.add_export(n.id.to_id(), export_decl.range());
+              file_module.add_export(
+                n.id.to_id(),
+                SymbolDecl {
+                  kind: SymbolDeclKind::Definition,
+                  range: export_decl.range(),
+                },
+              );
             }
             Decl::TsTypeAlias(n) => {
-              file_module.add_export(n.id.to_id(), export_decl.range());
+              file_module.add_export(
+                n.id.to_id(),
+                SymbolDecl {
+                  kind: SymbolDeclKind::Definition,
+                  range: export_decl.range(),
+                },
+              );
             }
             Decl::TsEnum(n) => {
-              file_module.add_export(n.id.to_id(), export_decl.range());
+              file_module.add_export(
+                n.id.to_id(),
+                SymbolDecl {
+                  kind: SymbolDeclKind::Definition,
+                  range: export_decl.range(),
+                },
+              );
             }
             Decl::TsModule(n) => match &n.id {
               TsModuleName::Ident(ident) => {
-                file_module.add_export(ident.to_id(), export_decl.range());
+                file_module.add_export(
+                  ident.to_id(),
+                  SymbolDecl {
+                    kind: SymbolDeclKind::Definition,
+                    range: export_decl.range(),
+                  },
+                );
               }
               TsModuleName::Str(_) => todo!("module id str"),
             },
@@ -418,71 +477,118 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                     ModuleExportName::Str(_) => todo!(),
                   })
                   .unwrap_or_else(|| n.local.sym.to_string());
-                let local_symbol = file_module
-                  .get_symbol_from_swc_id(n.local.to_id(), n.range());
-                local_symbol.file_dep = Some(FileDep {
-                  name: FileDepName::Name(imported_name),
-                  specifier: import_decl.src.value.to_string(),
-                });
+                file_module.get_symbol_from_swc_id(
+                  n.local.to_id(),
+                  SymbolDecl {
+                    range: n.range(),
+                    kind: SymbolDeclKind::FileRef(FileDep {
+                      name: FileDepName::Name(imported_name),
+                      specifier: import_decl.src.value.to_string(),
+                    }),
+                  },
+                );
               }
               ImportSpecifier::Default(n) => {
-                let symbol = file_module
-                  .get_symbol_from_swc_id(n.local.to_id(), n.range());
-                symbol.file_dep = Some(FileDep {
-                  name: FileDepName::Name("default".to_string()),
-                  specifier: import_decl.src.value.to_string(),
-                });
+                file_module.get_symbol_from_swc_id(
+                  n.local.to_id(),
+                  SymbolDecl {
+                    range: n.range(),
+                    kind: SymbolDeclKind::FileRef(FileDep {
+                      name: FileDepName::Name("default".to_string()),
+                      specifier: import_decl.src.value.to_string(),
+                    }),
+                  },
+                );
               }
               ImportSpecifier::Namespace(n) => {
-                let symbol = file_module
-                  .get_symbol_from_swc_id(n.local.to_id(), n.range());
-                symbol.file_dep = Some(FileDep {
-                  name: FileDepName::Star,
-                  specifier: import_decl.src.value.to_string(),
-                });
+                file_module.get_symbol_from_swc_id(
+                  n.local.to_id(),
+                  SymbolDecl {
+                    range: n.range(),
+                    kind: SymbolDeclKind::FileRef(FileDep {
+                      name: FileDepName::Star,
+                      specifier: import_decl.src.value.to_string(),
+                    }),
+                  },
+                );
               }
             }
           }
         }
         ModuleDecl::ExportDecl(export_decl) => match &export_decl.decl {
           Decl::Class(n) => {
-            let symbol = file_module
-              .get_symbol_from_swc_id(n.ident.to_id(), export_decl.range());
+            let symbol = file_module.get_symbol_from_swc_id(
+              n.ident.to_id(),
+              SymbolDecl {
+                kind: SymbolDeclKind::Definition,
+                range: export_decl.range(),
+              },
+            );
             self.fill_class_decl(symbol, n);
           }
           Decl::Fn(n) => {
-            let symbol = file_module
-              .get_symbol_from_swc_id(n.ident.to_id(), export_decl.range());
+            let symbol = file_module.get_symbol_from_swc_id(
+              n.ident.to_id(),
+              SymbolDecl {
+                kind: SymbolDeclKind::Definition,
+                range: export_decl.range(),
+              },
+            );
             self.fill_fn_decl(symbol, n);
           }
           Decl::Var(n) => {
             for decl in &n.decls {
               let ids: Vec<Id> = find_pat_ids(&decl.name);
               for id in ids {
-                let symbol =
-                  file_module.get_symbol_from_swc_id(id, decl.range());
+                let symbol = file_module.get_symbol_from_swc_id(
+                  id,
+                  SymbolDecl {
+                    kind: SymbolDeclKind::Definition,
+                    range: decl.range(),
+                  },
+                );
                 self.fill_var_declarator(symbol, decl);
               }
             }
           }
           Decl::TsInterface(n) => {
-            let symbol = file_module
-              .get_symbol_from_swc_id(n.id.to_id(), export_decl.range());
+            let symbol = file_module.get_symbol_from_swc_id(
+              n.id.to_id(),
+              SymbolDecl {
+                kind: SymbolDeclKind::Definition,
+                range: export_decl.range(),
+              },
+            );
             self.fill_ts_interface(symbol, n);
           }
           Decl::TsTypeAlias(n) => {
-            let symbol = file_module
-              .get_symbol_from_swc_id(n.id.to_id(), export_decl.range());
+            let symbol = file_module.get_symbol_from_swc_id(
+              n.id.to_id(),
+              SymbolDecl {
+                kind: SymbolDeclKind::Definition,
+                range: export_decl.range(),
+              },
+            );
             self.fill_ts_type_alias(symbol, n);
           }
           Decl::TsEnum(n) => {
-            let symbol = file_module
-              .get_symbol_from_swc_id(n.id.to_id(), export_decl.range());
+            let symbol = file_module.get_symbol_from_swc_id(
+              n.id.to_id(),
+              SymbolDecl {
+                kind: SymbolDeclKind::Definition,
+                range: export_decl.range(),
+              },
+            );
             self.fill_ts_enum(symbol, n);
           }
-          Decl::TsModule(n) => {
-            self.fill_ts_module(file_module, export_decl.range(), n)
-          }
+          Decl::TsModule(n) => self.fill_ts_module(
+            file_module,
+            SymbolDecl {
+              kind: SymbolDeclKind::Definition,
+              range: export_decl.range(),
+            },
+            n,
+          ),
           Decl::Using(_) => {
             unreachable!()
           }
@@ -498,20 +604,28 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                         ModuleExportName::Ident(orig_ident) => {
                           let orig_symbol = file_module.get_symbol_from_swc_id(
                             orig_ident.to_id(),
-                            n.range(),
+                            SymbolDecl {
+                              range: n.range(),
+                              kind: match &n.src {
+                                Some(src) => SymbolDeclKind::FileRef(FileDep {
+                                  name: FileDepName::Name(
+                                    orig_ident.sym.to_string(),
+                                  ),
+                                  specifier: src.value.to_string(),
+                                }),
+                                None => SymbolDeclKind::TargetSelf,
+                              },
+                            },
                           );
                           orig_symbol.deps.insert(export_ident.to_id());
-                          if let Some(src) = &n.src {
-                            orig_symbol.file_dep = Some(FileDep {
-                              name: FileDepName::Name(
-                                orig_ident.sym.to_string(),
-                              ),
-                              specifier: src.value.to_string(),
-                            });
-                          }
 
-                          let export_id = file_module
-                            .add_export(export_ident.to_id(), named.range());
+                          let export_id = file_module.add_export(
+                            export_ident.to_id(),
+                            SymbolDecl {
+                              range: named.range(),
+                              kind: SymbolDeclKind::Target(orig_ident.to_id()),
+                            },
+                          );
                           file_module
                             .symbol_mut(export_id)
                             .unwrap()
@@ -526,15 +640,28 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                 } else {
                   match &named.orig {
                     ModuleExportName::Ident(orig_ident) => {
-                      let orig_symbol = file_module
-                        .get_symbol_from_swc_id(orig_ident.to_id(), n.range());
-                      if let Some(src) = &n.src {
-                        orig_symbol.file_dep = Some(FileDep {
-                          name: FileDepName::Name(orig_ident.sym.to_string()),
-                          specifier: src.value.to_string(),
-                        });
-                      }
-                      file_module.add_export(orig_ident.to_id(), named.range());
+                      file_module.get_symbol_from_swc_id(
+                        orig_ident.to_id(),
+                        SymbolDecl {
+                          range: n.range(),
+                          kind: match &n.src {
+                            Some(src) => SymbolDeclKind::FileRef(FileDep {
+                              name: FileDepName::Name(
+                                orig_ident.sym.to_string(),
+                              ),
+                              specifier: src.value.to_string(),
+                            }),
+                            None => SymbolDeclKind::TargetSelf,
+                          },
+                        },
+                      );
+                      file_module.add_export(
+                        orig_ident.to_id(),
+                        SymbolDecl {
+                          range: named.range(),
+                          kind: SymbolDeclKind::TargetSelf,
+                        },
+                      );
                     }
                     ModuleExportName::Str(_) => todo!(),
                   }
@@ -545,23 +672,40 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                   ModuleExportName::Ident(ident) => ident,
                   ModuleExportName::Str(_) => todo!(),
                 };
-                let symbol =
-                  file_module.get_symbol_from_swc_id(name.to_id(), n.range());
-                if let Some(src) = &n.src {
-                  symbol.file_dep = Some(FileDep {
+                let symbol_kind = if let Some(src) = &n.src {
+                  let file_dep = FileDep {
                     name: FileDepName::Star,
                     specifier: src.value.to_string(),
-                  });
-                }
-                file_module.add_export(name.to_id(), specifier.range());
+                  };
+                  SymbolDeclKind::FileRef(file_dep)
+                } else {
+                  SymbolDeclKind::Target(name.to_id())
+                };
+                file_module.get_symbol_from_swc_id(
+                  name.to_id(),
+                  SymbolDecl {
+                    kind: symbol_kind.clone(),
+                    range: n.range(),
+                  },
+                );
+                file_module.add_export(
+                  name.to_id(),
+                  SymbolDecl {
+                    kind: symbol_kind,
+                    range: specifier.range(),
+                  },
+                );
               }
               ExportSpecifier::Default(_) => todo!("export default specifier"),
             }
           }
         }
         ModuleDecl::ExportDefaultDecl(default_decl) => {
-          let default_export_symbol_id =
-            file_module.ensure_default_export_symbol(default_decl.range());
+          let default_export_symbol_id = file_module
+            .ensure_default_export_symbol(SymbolDecl {
+              range: default_decl.range(),
+              kind: SymbolDeclKind::Definition,
+            });
           let maybe_ident = match &default_decl.decl {
             DefaultDecl::Class(expr) => expr.ident.as_ref(),
             DefaultDecl::Fn(expr) => expr.ident.as_ref(),
@@ -569,8 +713,13 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           };
           let symbol_id = if let Some(ident) = maybe_ident {
             let id = ident.to_id();
-            let symbol_id =
-              file_module.ensure_symbol_for_swc_id(id.clone(), ident.range());
+            let symbol_id = file_module.ensure_symbol_for_swc_id(
+              id.clone(),
+              SymbolDecl {
+                kind: SymbolDeclKind::Definition,
+                range: ident.range(),
+              },
+            );
             file_module
               .symbol_mut(default_export_symbol_id)
               .unwrap()
@@ -594,9 +743,18 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
         }
         ModuleDecl::ExportDefaultExpr(expr) => match &*expr.expr {
           Expr::Ident(ident) => {
-            let default_export_symbol_id =
-              file_module.ensure_default_export_symbol(expr.range());
-            file_module.ensure_symbol_for_swc_id(ident.to_id(), ident.range());
+            let default_export_symbol_id = file_module
+              .ensure_default_export_symbol(SymbolDecl {
+                kind: SymbolDeclKind::Target(ident.to_id()),
+                range: expr.range(),
+              });
+            file_module.ensure_symbol_for_swc_id(
+              ident.to_id(),
+              SymbolDecl {
+                kind: SymbolDeclKind::Target(ident.to_id()),
+                range: ident.range(),
+              },
+            );
             file_module
               .symbol_mut(default_export_symbol_id)
               .unwrap()
@@ -647,41 +805,83 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           match n {
             Decl::Class(n) => {
               let id = n.ident.to_id();
-              let symbol = file_module.get_symbol_from_swc_id(id, n.range());
+              let symbol = file_module.get_symbol_from_swc_id(
+                id,
+                SymbolDecl {
+                  kind: SymbolDeclKind::Definition,
+                  range: n.range(),
+                },
+              );
               self.fill_class_decl(symbol, n);
             }
             Decl::Fn(n) => {
               let id = n.ident.to_id();
-              let symbol = file_module.get_symbol_from_swc_id(id, n.range());
+              let symbol = file_module.get_symbol_from_swc_id(
+                id,
+                SymbolDecl {
+                  kind: SymbolDeclKind::Definition,
+                  range: n.range(),
+                },
+              );
               self.fill_fn_decl(symbol, n);
             }
             Decl::Var(var_decl) => {
               for decl in &var_decl.decls {
                 let ids: Vec<Id> = find_pat_ids(&decl.name);
                 for id in ids {
-                  let symbol =
-                    file_module.get_symbol_from_swc_id(id, decl.range());
+                  let symbol = file_module.get_symbol_from_swc_id(
+                    id,
+                    SymbolDecl {
+                      kind: SymbolDeclKind::Definition,
+                      range: decl.range(),
+                    },
+                  );
                   self.fill_var_declarator(symbol, decl);
                 }
               }
             }
             Decl::TsInterface(n) => {
               let id = n.id.to_id();
-              let symbol = file_module.get_symbol_from_swc_id(id, n.range());
+              let symbol = file_module.get_symbol_from_swc_id(
+                id,
+                SymbolDecl {
+                  kind: SymbolDeclKind::Definition,
+                  range: n.range(),
+                },
+              );
               self.fill_ts_interface(symbol, n);
             }
             Decl::TsTypeAlias(n) => {
               let id = n.id.to_id();
-              let symbol = file_module.get_symbol_from_swc_id(id, n.range());
+              let symbol = file_module.get_symbol_from_swc_id(
+                id,
+                SymbolDecl {
+                  kind: SymbolDeclKind::Definition,
+                  range: n.range(),
+                },
+              );
               self.fill_ts_type_alias(symbol, n);
             }
             Decl::TsEnum(n) => {
               let id = n.id.to_id();
-              let symbol = file_module.get_symbol_from_swc_id(id, n.range());
+              let symbol = file_module.get_symbol_from_swc_id(
+                id,
+                SymbolDecl {
+                  kind: SymbolDeclKind::Definition,
+                  range: n.range(),
+                },
+              );
               self.fill_ts_enum(symbol, n);
             }
             Decl::TsModule(n) => {
-              self.fill_ts_module(file_module, n.range(), n);
+              self.fill_ts_module(
+                file_module,
+                SymbolDecl {
+                  kind: SymbolDeclKind::Definition,
+                  range: n.range(),
+                },
+                n,
+              );
             }
             Decl::Using(_) => {
               // ignore
@@ -753,14 +953,15 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
   fn fill_ts_module(
     &self,
     file_module: &mut ModuleSymbol,
-    range: SourceRange,
+    symbol_decl: SymbolDecl,
     n: &TsModuleDecl,
   ) {
     let mut id = match &n.id {
       TsModuleName::Ident(ident) => ident.to_id(),
       TsModuleName::Str(_) => todo!(),
     };
-    let mut symbol_id = file_module.ensure_symbol_for_swc_id(id.clone(), range);
+    let mut symbol_id =
+      file_module.ensure_symbol_for_swc_id(id.clone(), symbol_decl);
 
     // fill the exported declarations
     if let Some(body) = &n.body {
@@ -772,8 +973,13 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             let previous_symbol_id = symbol_id;
             let previous_id = id;
             id = decl.id.to_id();
-            symbol_id =
-              file_module.ensure_symbol_for_swc_id(id.clone(), decl.range());
+            symbol_id = file_module.ensure_symbol_for_swc_id(
+              id.clone(),
+              SymbolDecl {
+                kind: SymbolDeclKind::Definition,
+                range: decl.range(),
+              },
+            );
             file_module
               .symbol_mut(previous_symbol_id)
               .unwrap()

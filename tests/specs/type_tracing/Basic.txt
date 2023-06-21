@@ -45,16 +45,19 @@ export class A {
         symbols: {
             0: Symbol {
                 is_public: true,
-                decls: [
-                    SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            38,
-                        ),
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                0,
+                            ),
+                            end: SourcePos(
+                                36,
+                            ),
+                        },
+                        kind: Definition,
                     },
-                ],
+                },
                 deps: {
                     (
                         Atom('AInner' type=inline),
@@ -65,20 +68,22 @@ export class A {
                         #0,
                     ),
                 },
-                file_dep: None,
             },
             1: Symbol {
                 is_public: false,
-                decls: [
-                    SourceRange {
-                        start: SourcePos(
-                            42,
-                        ),
-                        end: SourcePos(
-                            87,
-                        ),
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                38,
+                            ),
+                            end: SourcePos(
+                                81,
+                            ),
+                        },
+                        kind: Definition,
                     },
-                ],
+                },
                 deps: {
                     (
                         Atom('AInnerUnused' type=dynamic),
@@ -89,35 +94,28 @@ export class A {
                         #0,
                     ),
                 },
-                file_dep: None,
             },
             2: Symbol {
                 is_public: true,
-                decls: [
-                    SourceRange {
-                        start: SourcePos(
-                            91,
-                        ),
-                        end: SourcePos(
-                            127,
-                        ),
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                83,
+                            ),
+                            end: SourcePos(
+                                117,
+                            ),
+                        },
+                        kind: Definition,
                     },
-                    SourceRange {
-                        start: SourcePos(
-                            91,
-                        ),
-                        end: SourcePos(
-                            127,
-                        ),
-                    },
-                ],
+                },
                 deps: {
                     (
                         Atom('AInner' type=inline),
                         #2,
                     ),
                 },
-                file_dep: None,
             },
         },
         traced_re_exports: {},
@@ -145,53 +143,49 @@ export class A {
         symbols: {
             0: Symbol {
                 is_public: true,
-                decls: [
-                    SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            10,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                9,
+                            ),
+                            end: SourcePos(
+                                10,
+                            ),
+                        },
+                        kind: FileRef(
+                            FileDep {
+                                name: Name(
+                                    "A",
+                                ),
+                                specifier: "./a.ts",
+                            },
                         ),
                     },
-                ],
+                },
                 deps: {},
-                file_dep: Some(
-                    FileDep {
-                        name: Name(
-                            "A",
-                        ),
-                        specifier: "./a.ts",
-                    },
-                ),
             },
             1: Symbol {
                 is_public: true,
-                decls: [
-                    SourceRange {
-                        start: SourcePos(
-                            44,
-                        ),
-                        end: SourcePos(
-                            65,
-                        ),
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                42,
+                            ),
+                            end: SourcePos(
+                                63,
+                            ),
+                        },
+                        kind: Definition,
                     },
-                    SourceRange {
-                        start: SourcePos(
-                            44,
-                        ),
-                        end: SourcePos(
-                            65,
-                        ),
-                    },
-                ],
+                },
                 deps: {
                     (
                         Atom('A' type=inline),
                         #2,
                     ),
                 },
-                file_dep: None,
             },
         },
         traced_re_exports: {},
