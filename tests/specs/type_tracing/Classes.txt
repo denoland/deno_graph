@@ -11,6 +11,7 @@ interface IBase {
 }
 
 class B extends BBase implements IBase {
+  private constructor(prop: CtorProp) {}
   prop: PropValue;
   method(): ReturnValue {
   }
@@ -20,6 +21,8 @@ class B extends BBase implements IBase {
 
   private asdf(private: PrivateParam): PrivateReturn {
   }
+
+  private prop: PrivateProp;
 }
 
 class PropValue {}
@@ -27,6 +30,8 @@ class ReturnValue {}
 class Param {}
 class PrivateParam {}
 class PrivateReturn {}
+class PrivateProp {}
+class CtorProp {}
 
 # output
 {
@@ -34,7 +39,7 @@ class PrivateReturn {}
         module_id: ModuleId(
             0,
         ),
-        next_symbol_id: 9,
+        next_symbol_id: 11,
         exports: {
             "A": 0,
         },
@@ -77,6 +82,14 @@ class PrivateReturn {}
                 Atom('PrivateReturn' type=dynamic),
                 #2,
             ): 8,
+            (
+                Atom('PrivateProp' type=dynamic),
+                #2,
+            ): 9,
+            (
+                Atom('CtorProp' type=dynamic),
+                #2,
+            ): 10,
         },
         symbols: {
             0: Symbol {
@@ -149,7 +162,7 @@ class PrivateReturn {}
                                 67,
                             ),
                             end: SourcePos(
-                                255,
+                                326,
                             ),
                         },
                         kind: Definition,
@@ -184,10 +197,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                257,
+                                328,
                             ),
                             end: SourcePos(
-                                275,
+                                346,
                             ),
                         },
                         kind: Definition,
@@ -201,10 +214,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                276,
+                                347,
                             ),
                             end: SourcePos(
-                                296,
+                                367,
                             ),
                         },
                         kind: Definition,
@@ -218,10 +231,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                297,
+                                368,
                             ),
                             end: SourcePos(
-                                311,
+                                382,
                             ),
                         },
                         kind: Definition,
@@ -235,10 +248,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                312,
+                                383,
                             ),
                             end: SourcePos(
-                                333,
+                                404,
                             ),
                         },
                         kind: Definition,
@@ -252,10 +265,44 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                334,
+                                405,
                             ),
                             end: SourcePos(
-                                356,
+                                427,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            9: Symbol {
+                is_public: false,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                428,
+                            ),
+                            end: SourcePos(
+                                448,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            10: Symbol {
+                is_public: false,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                449,
+                            ),
+                            end: SourcePos(
+                                466,
                             ),
                         },
                         kind: Definition,

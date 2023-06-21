@@ -1143,6 +1143,9 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
   }
 
   fn fill_ctor(&self, symbol: &mut Symbol, ctor: &Constructor) {
+    if ctor.accessibility == Some(Accessibility::Private) {
+      return; // ignore, private
+    }
     for param in &ctor.params {
       match param {
         ParamOrTsParamProp::TsParamProp(param) => {
@@ -1255,6 +1258,10 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
   }
 
   fn fill_class_prop(&self, symbol: &mut Symbol, prop: &ClassProp) {
+    if prop.accessibility == Some(Accessibility::Private) {
+      return; // ignore, private
+    }
+
     if let Some(type_ann) = &prop.type_ann {
       self.fill_ts_type_ann(symbol, type_ann)
     }
