@@ -1,5 +1,6 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
+use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
@@ -14,6 +15,7 @@ use deno_ast::SourcePos;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use indexmap::IndexMap;
+use indexmap::IndexSet;
 
 use crate::CapturingModuleParser;
 use crate::ModuleGraph;
@@ -23,7 +25,20 @@ use super::TypeTraceDiagnostic;
 use super::TypeTraceDiagnosticKind;
 use super::TypeTraceHandler;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub struct RootsGraphSymbol(HashMap<ModuleSpecifier, ModuleSymbol>);
+
+impl RootsGraphSymbol {
+  pub fn get(&self, specifier: &ModuleSpecifier) -> Option<&ModuleSymbol> {
+    self.0.get(specifier)
+  }
+
+  pub fn into_inner(self) -> HashMap<ModuleSpecifier, ModuleSymbol> {
+    self.0
+  }
+}
+
+#[derive(Debug, Clone)]
 pub enum FileDepName {
   Star,
   Name(String),
@@ -38,7 +53,7 @@ impl FileDepName {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FileDep {
   pub name: FileDepName,
   pub specifier: String,
@@ -47,7 +62,7 @@ pub struct FileDep {
 #[derive(Debug, Clone, Copy)]
 pub struct ModuleId(usize);
 
-#[derive(Default, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Default, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct SymbolId(u32);
 
 impl std::fmt::Debug for SymbolId {
@@ -57,11 +72,11 @@ impl std::fmt::Debug for SymbolId {
   }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct Symbol {
   is_public: bool,
   decls: Vec<SourceRange>,
-  deps: HashSet<Id>,
+  deps: IndexSet<Id>,
   file_dep: Option<FileDep>,
 }
 
@@ -88,13 +103,13 @@ impl Symbol {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct UniqueSymbol {
   pub module_id: ModuleId,
   pub symbol_id: SymbolId,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ModuleSymbol {
   module_id: ModuleId,
   next_symbol_id: SymbolId,
@@ -102,8 +117,8 @@ pub struct ModuleSymbol {
   re_exports: Vec<String>,
   default_export_symbol_id: Option<SymbolId>,
   // note: not all symbol ids have an swc id. For example, default exports
-  swc_id_to_symbol_id: HashMap<Id, SymbolId>,
-  symbols: HashMap<SymbolId, Symbol>,
+  swc_id_to_symbol_id: IndexMap<Id, SymbolId>,
+  symbols: IndexMap<SymbolId, Symbol>,
   traced_re_exports: IndexMap<String, UniqueSymbol>,
 }
 
@@ -242,8 +257,8 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
     }
   }
 
-  pub fn into_module_symbols(self) -> HashMap<ModuleSpecifier, ModuleSymbol> {
-    self.modules
+  pub fn into_roots_graph_symbol(self) -> RootsGraphSymbol {
+    RootsGraphSymbol(self.modules)
   }
 
   pub fn get_or_analyze(
@@ -288,7 +303,10 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
     &self,
     specifier: &ModuleSpecifier,
   ) -> Result<ParsedSource, deno_ast::Diagnostic> {
-    let graph_module = self.graph.get(specifier).unwrap();
+    let graph_module = self
+      .graph
+      .get(specifier)
+      .unwrap_or_else(|| panic!("not foud: {}", specifier));
     let graph_module = graph_module.esm().unwrap();
     self.parser.parse_module(
       &graph_module.specifier,

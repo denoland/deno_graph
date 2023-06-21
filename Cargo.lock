@@ -125,7 +125,9 @@ dependencies = [
  "swc_common",
  "swc_ecma_ast",
  "swc_ecma_dep_graph",
+ "swc_ecma_loader",
  "swc_ecma_parser",
+ "swc_ecma_transforms_base",
  "swc_ecma_utils",
  "swc_ecma_visit",
  "text_lines",
@@ -608,10 +610,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "pathdiff"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8835116a5c179084a830efb3adc117ab007512b535bc1a21c991d3b32a6b44dd"
+
+[[package]]
 name = "percent-encoding"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e"
+
+[[package]]
+name = "phf"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fabbf1ead8a5bcbc20f5f8b939ee3f5b0f6f281b6ad3468b84656b658b455259"
+dependencies = [
+ "phf_macros",
+ "phf_shared",
+ "proc-macro-hack",
+]
 
 [[package]]
 name = "phf_generator"
@@ -621,6 +640,20 @@ checksum = "5d5285893bb5eb82e6aaf5d59ee909a06a16737a8970984dd7746ba9283498d6"
 dependencies = [
  "phf_shared",
  "rand",
+]
+
+[[package]]
+name = "phf_macros"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58fdf3184dd560f160dd73922bea2d5cd6e8f064bf4b13110abd81b03697b4e0"
+dependencies = [
+ "phf_generator",
+ "phf_shared",
+ "proc-macro-hack",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -678,6 +711,12 @@ dependencies = [
  "output_vt100",
  "yansi",
 ]
+
+[[package]]
+name = "proc-macro-hack"
+version = "0.5.20+deprecated"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc375e1527247fe1a97d8b7156678dfe7c1af2fc075c9a4db3690ecd2a148068"
 
 [[package]]
 name = "proc-macro2"
@@ -996,6 +1035,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "swc_ecma_loader"
+version = "0.43.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe45f1e5dcc1b005544ff78253b787dea5dfd5e2f712b133964cdc3545c954a4"
+dependencies = [
+ "ahash",
+ "anyhow",
+ "pathdiff",
+ "serde",
+ "swc_common",
+ "tracing",
+]
+
+[[package]]
 name = "swc_ecma_parser"
 version = "0.134.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1013,6 +1066,29 @@ dependencies = [
  "swc_ecma_ast",
  "tracing",
  "typed-arena",
+]
+
+[[package]]
+name = "swc_ecma_transforms_base"
+version = "0.127.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6232e641bef05c462bc7da34a3771f9b3f1f3352349ae0cd72b8eee8b0f5d5e0"
+dependencies = [
+ "better_scoped_tls",
+ "bitflags 2.1.0",
+ "indexmap",
+ "once_cell",
+ "phf",
+ "rustc-hash",
+ "serde",
+ "smallvec",
+ "swc_atoms",
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_parser",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "tracing",
 ]
 
 [[package]]

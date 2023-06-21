@@ -1,0 +1,199 @@
+# mod.ts
+import { A } from "./a.ts";
+
+export const ExportA: typeof A = A;
+
+# a.ts
+interface AInner {
+  prop: string;
+}
+
+interface AInnerUnused {
+  prop2: string;
+}
+
+export class A {
+  prop: AInner;
+}
+
+# output
+{
+    "file:///a.ts": ModuleSymbol {
+        module_id: ModuleId(
+            1,
+        ),
+        next_symbol_id: 3,
+        exports: {
+            "A": 2,
+        },
+        re_exports: [],
+        default_export_symbol_id: None,
+        swc_id_to_symbol_id: {
+            (
+                Atom('AInner' type=inline),
+                #2,
+            ): 0,
+            (
+                Atom('AInnerUnused' type=dynamic),
+                #2,
+            ): 1,
+            (
+                Atom('A' type=inline),
+                #2,
+            ): 2,
+        },
+        symbols: {
+            0: Symbol {
+                is_public: true,
+                decls: [
+                    SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            38,
+                        ),
+                    },
+                ],
+                deps: {
+                    (
+                        Atom('AInner' type=inline),
+                        #2,
+                    ),
+                    (
+                        Atom('prop' type=inline),
+                        #0,
+                    ),
+                },
+                file_dep: None,
+            },
+            1: Symbol {
+                is_public: false,
+                decls: [
+                    SourceRange {
+                        start: SourcePos(
+                            42,
+                        ),
+                        end: SourcePos(
+                            87,
+                        ),
+                    },
+                ],
+                deps: {
+                    (
+                        Atom('AInnerUnused' type=dynamic),
+                        #2,
+                    ),
+                    (
+                        Atom('prop2' type=inline),
+                        #0,
+                    ),
+                },
+                file_dep: None,
+            },
+            2: Symbol {
+                is_public: true,
+                decls: [
+                    SourceRange {
+                        start: SourcePos(
+                            91,
+                        ),
+                        end: SourcePos(
+                            127,
+                        ),
+                    },
+                    SourceRange {
+                        start: SourcePos(
+                            91,
+                        ),
+                        end: SourcePos(
+                            127,
+                        ),
+                    },
+                ],
+                deps: {
+                    (
+                        Atom('AInner' type=inline),
+                        #2,
+                    ),
+                },
+                file_dep: None,
+            },
+        },
+        traced_re_exports: {},
+    },
+    "file:///mod.ts": ModuleSymbol {
+        module_id: ModuleId(
+            0,
+        ),
+        next_symbol_id: 2,
+        exports: {
+            "ExportA": 1,
+        },
+        re_exports: [],
+        default_export_symbol_id: None,
+        swc_id_to_symbol_id: {
+            (
+                Atom('A' type=inline),
+                #2,
+            ): 0,
+            (
+                Atom('ExportA' type=inline),
+                #2,
+            ): 1,
+        },
+        symbols: {
+            0: Symbol {
+                is_public: true,
+                decls: [
+                    SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            10,
+                        ),
+                    },
+                ],
+                deps: {},
+                file_dep: Some(
+                    FileDep {
+                        name: Name(
+                            "A",
+                        ),
+                        specifier: "./a.ts",
+                    },
+                ),
+            },
+            1: Symbol {
+                is_public: true,
+                decls: [
+                    SourceRange {
+                        start: SourcePos(
+                            44,
+                        ),
+                        end: SourcePos(
+                            65,
+                        ),
+                    },
+                    SourceRange {
+                        start: SourcePos(
+                            44,
+                        ),
+                        end: SourcePos(
+                            65,
+                        ),
+                    },
+                ],
+                deps: {
+                    (
+                        Atom('A' type=inline),
+                        #2,
+                    ),
+                },
+                file_dep: None,
+            },
+        },
+        traced_re_exports: {},
+    },
+}

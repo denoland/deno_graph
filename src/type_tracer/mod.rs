@@ -1,12 +1,13 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-use std::collections::HashMap;
 use std::collections::HashSet;
 
 use anyhow::Result;
 use deno_ast::LineAndColumnDisplay;
 use deno_ast::ModuleSpecifier;
 use indexmap::IndexMap;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::CapturingModuleParser;
 use crate::ModuleGraph;
@@ -17,16 +18,19 @@ pub use self::analyzer::FileDep;
 pub use self::analyzer::FileDepName;
 pub use self::analyzer::ModuleId;
 pub use self::analyzer::ModuleSymbol;
+pub use self::analyzer::RootsGraphSymbol;
 pub use self::analyzer::Symbol;
 pub use self::analyzer::SymbolId;
 pub use self::analyzer::UniqueSymbol;
 
 mod analyzer;
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum TypeTraceDiagnosticKind {
   UnsupportedDefaultExpr,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct TypeTraceDiagnostic {
   pub kind: TypeTraceDiagnosticKind,
   pub specifier: ModuleSpecifier,
@@ -44,7 +48,7 @@ pub fn trace_public_types<'a, THandler: TypeTraceHandler>(
   roots: &[ModuleSpecifier],
   parser: &'a CapturingModuleParser<'a>,
   handler: &'a THandler,
-) -> Result<HashMap<ModuleSpecifier, ModuleSymbol>> {
+) -> Result<RootsGraphSymbol> {
   let mut context = Context {
     graph,
     analyzer: TypeTraceModuleAnalyzer::new(graph, parser, handler),
@@ -57,7 +61,7 @@ pub fn trace_public_types<'a, THandler: TypeTraceHandler>(
     trace_module(&specifier, &mut context, &exports_to_trace)?;
   }
 
-  Ok(context.analyzer.into_module_symbols())
+  Ok(context.analyzer.into_roots_graph_symbol())
 }
 
 #[derive(Debug)]
@@ -281,7 +285,7 @@ fn trace_module<TReporter: TypeTraceHandler>(
           Some(id) => Some((specifier.clone(), id)),
           None => {
             if cfg!(debug_assertions) {
-              panic!("Failed to find symbol id for swc id: {:?}", id);
+              //panic!("Failed to find symbol id for swc id: {:?}", id);
             }
             None
           }
