@@ -1,0 +1,372 @@
+# mod.ts
+import Test from "./a.ts";
+import { C } from "./a.ts";
+
+export default Test;
+
+export { C };
+
+# a.ts
+export { default as C } from "./b.ts";
+
+export default class Test {
+    prop: A;
+}
+
+class A {
+    a: number;
+    b: B;
+}
+
+class B {
+    b: number;
+    #c: C;
+}
+
+class C {
+}
+
+# b
+export default class Test {
+}
+
+# output
+{
+    "file:///a.ts": ModuleSymbol {
+        module_id: ModuleId(
+            1,
+        ),
+        next_symbol_id: 7,
+        exports: {
+            "C": 1,
+        },
+        re_exports: [],
+        default_export_symbol_id: Some(
+            2,
+        ),
+        swc_id_to_symbol_id: {
+            (
+                Atom('default' type=static),
+                #0,
+            ): 0,
+            (
+                Atom('C' type=inline),
+                #0,
+            ): 1,
+            (
+                Atom('Test' type=inline),
+                #2,
+            ): 3,
+            (
+                Atom('A' type=inline),
+                #2,
+            ): 4,
+            (
+                Atom('B' type=inline),
+                #2,
+            ): 5,
+            (
+                Atom('C' type=inline),
+                #2,
+            ): 6,
+        },
+        symbols: {
+            0: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                0,
+                            ),
+                            end: SourcePos(
+                                38,
+                            ),
+                        },
+                        kind: FileRef(
+                            FileDep {
+                                name: Name(
+                                    "default",
+                                ),
+                                specifier: "./b.ts",
+                            },
+                        ),
+                    },
+                },
+                deps: {
+                    (
+                        Atom('C' type=inline),
+                        #0,
+                    ),
+                },
+            },
+            1: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                9,
+                            ),
+                            end: SourcePos(
+                                21,
+                            ),
+                        },
+                        kind: Target(
+                            (
+                                Atom('default' type=static),
+                                #0,
+                            ),
+                        ),
+                    },
+                },
+                deps: {
+                    (
+                        Atom('default' type=static),
+                        #0,
+                    ),
+                },
+            },
+            2: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                40,
+                            ),
+                            end: SourcePos(
+                                82,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                },
+            },
+            3: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                61,
+                            ),
+                            end: SourcePos(
+                                65,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {
+                    (
+                        Atom('A' type=inline),
+                        #2,
+                    ),
+                },
+            },
+            4: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                84,
+                            ),
+                            end: SourcePos(
+                                120,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {
+                    (
+                        Atom('B' type=inline),
+                        #2,
+                    ),
+                },
+            },
+            5: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                122,
+                            ),
+                            end: SourcePos(
+                                159,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            6: Symbol {
+                is_public: false,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                161,
+                            ),
+                            end: SourcePos(
+                                172,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+        },
+        traced_re_exports: {},
+    },
+    "file:///mod.ts": ModuleSymbol {
+        module_id: ModuleId(
+            0,
+        ),
+        next_symbol_id: 3,
+        exports: {
+            "C": 1,
+        },
+        re_exports: [],
+        default_export_symbol_id: Some(
+            2,
+        ),
+        swc_id_to_symbol_id: {
+            (
+                Atom('Test' type=inline),
+                #2,
+            ): 0,
+            (
+                Atom('C' type=inline),
+                #2,
+            ): 1,
+        },
+        symbols: {
+            0: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                7,
+                            ),
+                            end: SourcePos(
+                                11,
+                            ),
+                        },
+                        kind: FileRef(
+                            FileDep {
+                                name: Name(
+                                    "default",
+                                ),
+                                specifier: "./a.ts",
+                            },
+                        ),
+                    },
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                71,
+                            ),
+                            end: SourcePos(
+                                75,
+                            ),
+                        },
+                        kind: Target(
+                            (
+                                Atom('Test' type=inline),
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+                deps: {},
+            },
+            1: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                36,
+                            ),
+                            end: SourcePos(
+                                37,
+                            ),
+                        },
+                        kind: FileRef(
+                            FileDep {
+                                name: Name(
+                                    "C",
+                                ),
+                                specifier: "./a.ts",
+                            },
+                        ),
+                    },
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                78,
+                            ),
+                            end: SourcePos(
+                                91,
+                            ),
+                        },
+                        kind: TargetSelf,
+                    },
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                87,
+                            ),
+                            end: SourcePos(
+                                88,
+                            ),
+                        },
+                        kind: TargetSelf,
+                    },
+                },
+                deps: {},
+            },
+            2: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                56,
+                            ),
+                            end: SourcePos(
+                                76,
+                            ),
+                        },
+                        kind: Target(
+                            (
+                                Atom('Test' type=inline),
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+                deps: {
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                },
+            },
+        },
+        traced_re_exports: {},
+    },
+}

@@ -323,7 +323,7 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
     let graph_module = self
       .graph
       .get(specifier)
-      .unwrap_or_else(|| panic!("not foud: {}", specifier));
+      .unwrap_or_else(|| panic!("not found: {}", specifier));
     let graph_module = graph_module.esm().unwrap();
     self.parser.parse_module(
       &graph_module.specifier,
