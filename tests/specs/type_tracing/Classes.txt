@@ -23,6 +23,10 @@ class B extends BBase implements IBase {
   }
 
   private prop: PrivateProp;
+
+  methodOverload(param: OverloadParam): OverloadReturn;
+  methodOverload(param: PrivateImplementationParam): PrivateImplementationReturn {
+  }
 }
 
 class PropValue {}
@@ -32,6 +36,10 @@ class PrivateParam {}
 class PrivateReturn {}
 class PrivateProp {}
 class CtorProp {}
+class OverloadParam {}
+class OverloadReturn {}
+class PrivateImplementationParam {}
+class PrivateImplementationReturn {}
 
 # output
 {
@@ -39,7 +47,7 @@ class CtorProp {}
         module_id: ModuleId(
             0,
         ),
-        next_symbol_id: 11,
+        next_symbol_id: 15,
         exports: {
             "A": 0,
         },
@@ -90,6 +98,22 @@ class CtorProp {}
                 Atom('CtorProp' type=dynamic),
                 #2,
             ): 10,
+            (
+                Atom('OverloadParam' type=dynamic),
+                #2,
+            ): 11,
+            (
+                Atom('OverloadReturn' type=dynamic),
+                #2,
+            ): 12,
+            (
+                Atom('PrivateImplementationParam' type=dynamic),
+                #2,
+            ): 13,
+            (
+                Atom('PrivateImplementationReturn' type=dynamic),
+                #2,
+            ): 14,
         },
         symbols: {
             0: Symbol {
@@ -162,7 +186,7 @@ class CtorProp {}
                                 67,
                             ),
                             end: SourcePos(
-                                326,
+                                470,
                             ),
                         },
                         kind: Definition,
@@ -189,6 +213,14 @@ class CtorProp {}
                         Atom('Param' type=inline),
                         #2,
                     ),
+                    (
+                        Atom('OverloadParam' type=dynamic),
+                        #2,
+                    ),
+                    (
+                        Atom('OverloadReturn' type=dynamic),
+                        #2,
+                    ),
                 },
             },
             4: Symbol {
@@ -197,10 +229,10 @@ class CtorProp {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                328,
+                                472,
                             ),
                             end: SourcePos(
-                                346,
+                                490,
                             ),
                         },
                         kind: Definition,
@@ -214,10 +246,10 @@ class CtorProp {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                347,
+                                491,
                             ),
                             end: SourcePos(
-                                367,
+                                511,
                             ),
                         },
                         kind: Definition,
@@ -231,10 +263,10 @@ class CtorProp {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                368,
+                                512,
                             ),
                             end: SourcePos(
-                                382,
+                                526,
                             ),
                         },
                         kind: Definition,
@@ -248,10 +280,10 @@ class CtorProp {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                383,
+                                527,
                             ),
                             end: SourcePos(
-                                404,
+                                548,
                             ),
                         },
                         kind: Definition,
@@ -265,10 +297,10 @@ class CtorProp {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                405,
+                                549,
                             ),
                             end: SourcePos(
-                                427,
+                                571,
                             ),
                         },
                         kind: Definition,
@@ -282,10 +314,10 @@ class CtorProp {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                428,
+                                572,
                             ),
                             end: SourcePos(
-                                448,
+                                592,
                             ),
                         },
                         kind: Definition,
@@ -299,10 +331,78 @@ class CtorProp {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                449,
+                                593,
                             ),
                             end: SourcePos(
-                                466,
+                                610,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            11: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                611,
+                            ),
+                            end: SourcePos(
+                                633,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            12: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                634,
+                            ),
+                            end: SourcePos(
+                                657,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            13: Symbol {
+                is_public: false,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                658,
+                            ),
+                            end: SourcePos(
+                                693,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            14: Symbol {
+                is_public: false,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                694,
+                            ),
+                            end: SourcePos(
+                                730,
                             ),
                         },
                         kind: Definition,

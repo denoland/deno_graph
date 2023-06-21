@@ -1146,6 +1146,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
     if ctor.accessibility == Some(Accessibility::Private) {
       return; // ignore, private
     }
+
     for param in &ctor.params {
       match param {
         ParamOrTsParamProp::TsParamProp(param) => {
