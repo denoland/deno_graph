@@ -1,0 +1,222 @@
+# mod.ts
+export class A {
+  b: B;
+}
+
+class BBase {
+
+}
+
+interface IBase {
+}
+
+class B extends BBase implements IBase {
+  prop: PropValue;
+  method(): ReturnValue {
+  }
+
+  method2(other: Param): void {
+  }
+}
+
+class PropValue {}
+class ReturnValue {}
+class Param {}
+
+# output
+{
+    "file:///mod.ts": ModuleSymbol {
+        module_id: ModuleId(
+            0,
+        ),
+        next_symbol_id: 7,
+        exports: {
+            "A": 0,
+        },
+        re_exports: [],
+        default_export_symbol_id: None,
+        swc_id_to_symbol_id: {
+            (
+                Atom('A' type=inline),
+                #2,
+            ): 0,
+            (
+                Atom('BBase' type=inline),
+                #2,
+            ): 1,
+            (
+                Atom('IBase' type=inline),
+                #2,
+            ): 2,
+            (
+                Atom('B' type=inline),
+                #2,
+            ): 3,
+            (
+                Atom('PropValue' type=dynamic),
+                #2,
+            ): 4,
+            (
+                Atom('ReturnValue' type=dynamic),
+                #2,
+            ): 5,
+            (
+                Atom('Param' type=inline),
+                #2,
+            ): 6,
+        },
+        symbols: {
+            0: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                0,
+                            ),
+                            end: SourcePos(
+                                26,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {
+                    (
+                        Atom('B' type=inline),
+                        #2,
+                    ),
+                },
+            },
+            1: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                28,
+                            ),
+                            end: SourcePos(
+                                44,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            2: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                46,
+                            ),
+                            end: SourcePos(
+                                65,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {
+                    (
+                        Atom('IBase' type=inline),
+                        #2,
+                    ),
+                },
+            },
+            3: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                67,
+                            ),
+                            end: SourcePos(
+                                195,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {
+                    (
+                        Atom('BBase' type=inline),
+                        #2,
+                    ),
+                    (
+                        Atom('IBase' type=inline),
+                        #2,
+                    ),
+                    (
+                        Atom('PropValue' type=dynamic),
+                        #2,
+                    ),
+                    (
+                        Atom('ReturnValue' type=dynamic),
+                        #2,
+                    ),
+                    (
+                        Atom('Param' type=inline),
+                        #2,
+                    ),
+                },
+            },
+            4: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                197,
+                            ),
+                            end: SourcePos(
+                                215,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            5: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                216,
+                            ),
+                            end: SourcePos(
+                                236,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            6: Symbol {
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                237,
+                            ),
+                            end: SourcePos(
+                                251,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+        },
+        traced_re_exports: {},
+    },
+}
