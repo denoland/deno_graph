@@ -32,7 +32,7 @@ export type D = typeof C;
         module_id: ModuleId(
             1,
         ),
-        next_symbol_id: 7,
+        specifier: "file:///a.ts",
         exports: {
             "A": 2,
             "B": 3,
@@ -70,6 +70,7 @@ export type D = typeof C;
         },
         symbols: {
             0: Symbol {
+                symbol_id: 0,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -96,6 +97,7 @@ export type D = typeof C;
                 },
             },
             1: Symbol {
+                symbol_id: 1,
                 is_public: false,
                 decls: {
                     SymbolDecl {
@@ -122,6 +124,7 @@ export type D = typeof C;
                 },
             },
             2: Symbol {
+                symbol_id: 2,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -144,6 +147,7 @@ export type D = typeof C;
                 },
             },
             3: Symbol {
+                symbol_id: 3,
                 is_public: false,
                 decls: {
                     SymbolDecl {
@@ -166,6 +170,7 @@ export type D = typeof C;
                 },
             },
             4: Symbol {
+                symbol_id: 4,
                 is_public: false,
                 decls: {
                     SymbolDecl {
@@ -188,6 +193,7 @@ export type D = typeof C;
                 },
             },
             5: Symbol {
+                symbol_id: 5,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -205,6 +211,7 @@ export type D = typeof C;
                 deps: {},
             },
             6: Symbol {
+                symbol_id: 6,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -237,7 +244,7 @@ export type D = typeof C;
         module_id: ModuleId(
             0,
         ),
-        next_symbol_id: 5,
+        specifier: "file:///mod.ts",
         exports: {
             "ExportA": 3,
             "D": 2,
@@ -268,6 +275,7 @@ export type D = typeof C;
         },
         symbols: {
             0: Symbol {
+                symbol_id: 0,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -292,6 +300,7 @@ export type D = typeof C;
                 deps: {},
             },
             1: Symbol {
+                symbol_id: 1,
                 is_public: false,
                 decls: {
                     SymbolDecl {
@@ -316,6 +325,7 @@ export type D = typeof C;
                 deps: {},
             },
             2: Symbol {
+                symbol_id: 2,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -362,6 +372,7 @@ export type D = typeof C;
                 deps: {},
             },
             3: Symbol {
+                symbol_id: 3,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -384,6 +395,7 @@ export type D = typeof C;
                 },
             },
             4: Symbol {
+                symbol_id: 4,
                 is_public: false,
                 decls: {
                     SymbolDecl {
@@ -409,3 +421,8 @@ export type D = typeof C;
         traced_re_exports: {},
     },
 }
+== export definitions ==
+[ExportA]: file:///mod.ts:48..69
+  ExportA: typeof A = A
+[D]: file:///a.ts:173..198
+  export type D = typeof C;

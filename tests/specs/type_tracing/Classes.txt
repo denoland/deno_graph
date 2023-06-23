@@ -47,7 +47,7 @@ class PrivateImplementationReturn {}
         module_id: ModuleId(
             0,
         ),
-        next_symbol_id: 15,
+        specifier: "file:///mod.ts",
         exports: {
             "A": 0,
         },
@@ -117,6 +117,7 @@ class PrivateImplementationReturn {}
         },
         symbols: {
             0: Symbol {
+                symbol_id: 0,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -139,6 +140,7 @@ class PrivateImplementationReturn {}
                 },
             },
             1: Symbol {
+                symbol_id: 1,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -156,6 +158,7 @@ class PrivateImplementationReturn {}
                 deps: {},
             },
             2: Symbol {
+                symbol_id: 2,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -178,6 +181,7 @@ class PrivateImplementationReturn {}
                 },
             },
             3: Symbol {
+                symbol_id: 3,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -224,6 +228,7 @@ class PrivateImplementationReturn {}
                 },
             },
             4: Symbol {
+                symbol_id: 4,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -241,6 +246,7 @@ class PrivateImplementationReturn {}
                 deps: {},
             },
             5: Symbol {
+                symbol_id: 5,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -258,6 +264,7 @@ class PrivateImplementationReturn {}
                 deps: {},
             },
             6: Symbol {
+                symbol_id: 6,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -275,6 +282,7 @@ class PrivateImplementationReturn {}
                 deps: {},
             },
             7: Symbol {
+                symbol_id: 7,
                 is_public: false,
                 decls: {
                     SymbolDecl {
@@ -292,6 +300,7 @@ class PrivateImplementationReturn {}
                 deps: {},
             },
             8: Symbol {
+                symbol_id: 8,
                 is_public: false,
                 decls: {
                     SymbolDecl {
@@ -309,6 +318,7 @@ class PrivateImplementationReturn {}
                 deps: {},
             },
             9: Symbol {
+                symbol_id: 9,
                 is_public: false,
                 decls: {
                     SymbolDecl {
@@ -326,6 +336,7 @@ class PrivateImplementationReturn {}
                 deps: {},
             },
             10: Symbol {
+                symbol_id: 10,
                 is_public: false,
                 decls: {
                     SymbolDecl {
@@ -343,6 +354,7 @@ class PrivateImplementationReturn {}
                 deps: {},
             },
             11: Symbol {
+                symbol_id: 11,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -360,6 +372,7 @@ class PrivateImplementationReturn {}
                 deps: {},
             },
             12: Symbol {
+                symbol_id: 12,
                 is_public: true,
                 decls: {
                     SymbolDecl {
@@ -377,6 +390,7 @@ class PrivateImplementationReturn {}
                 deps: {},
             },
             13: Symbol {
+                symbol_id: 13,
                 is_public: false,
                 decls: {
                     SymbolDecl {
@@ -394,6 +408,7 @@ class PrivateImplementationReturn {}
                 deps: {},
             },
             14: Symbol {
+                symbol_id: 14,
                 is_public: false,
                 decls: {
                     SymbolDecl {
@@ -414,3 +429,8 @@ class PrivateImplementationReturn {}
         traced_re_exports: {},
     },
 }
+== export definitions ==
+[A]: file:///mod.ts:0..26
+  export class A {
+    b: B;
+  }

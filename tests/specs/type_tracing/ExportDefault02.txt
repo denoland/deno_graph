@@ -1,0 +1,91 @@
+# mod.ts
+export default Test; class Test {}
+
+# output
+{
+    "file:///mod.ts": ModuleSymbol {
+        module_id: ModuleId(
+            0,
+        ),
+        specifier: "file:///mod.ts",
+        exports: {},
+        re_exports: [],
+        default_export_symbol_id: Some(
+            0,
+        ),
+        swc_id_to_symbol_id: {
+            (
+                Atom('Test' type=inline),
+                #2,
+            ): 1,
+        },
+        symbols: {
+            0: Symbol {
+                symbol_id: 0,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                0,
+                            ),
+                            end: SourcePos(
+                                20,
+                            ),
+                        },
+                        kind: Target(
+                            (
+                                Atom('Test' type=inline),
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+                deps: {
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                },
+            },
+            1: Symbol {
+                symbol_id: 1,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                15,
+                            ),
+                            end: SourcePos(
+                                19,
+                            ),
+                        },
+                        kind: Target(
+                            (
+                                Atom('Test' type=inline),
+                                #2,
+                            ),
+                        ),
+                    },
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                21,
+                            ),
+                            end: SourcePos(
+                                34,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+        },
+        traced_re_exports: {},
+    },
+}
+== export definitions ==
+[default]: file:///mod.ts:21..34
+  class Test {}

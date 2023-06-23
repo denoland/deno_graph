@@ -24,6 +24,12 @@ use super::TypeTraceDiagnostic;
 use super::TypeTraceDiagnosticKind;
 use super::TypeTraceHandler;
 
+pub struct Definition<'a> {
+  pub module: &'a ModuleSymbol,
+  pub symbol: &'a Symbol,
+  pub decl: &'a SymbolDecl,
+}
+
 #[derive(Debug, Clone)]
 pub struct RootsGraphSymbol(HashMap<ModuleSpecifier, ModuleSymbol>);
 
@@ -34,6 +40,98 @@ impl RootsGraphSymbol {
 
   pub fn into_inner(self) -> HashMap<ModuleSpecifier, ModuleSymbol> {
     self.0
+  }
+
+  pub fn go_to_definition<'a>(
+    &'a self,
+    module_graph: &ModuleGraph,
+    module: &'a ModuleSymbol,
+    symbol: &'a Symbol,
+  ) -> Option<Definition<'a>> {
+    self.go_to_definition_internal(
+      module_graph,
+      module,
+      symbol,
+      &mut Default::default(),
+    )
+  }
+
+  fn go_to_definition_internal<'a>(
+    &'a self,
+    module_graph: &ModuleGraph,
+    module: &'a ModuleSymbol,
+    symbol: &'a Symbol,
+    visited_symbols: &mut HashSet<UniqueSymbol>,
+  ) -> Option<Definition<'a>> {
+    if !visited_symbols.insert(UniqueSymbol {
+      module_id: module.module_id,
+      symbol_id: symbol.symbol_id,
+    }) {
+      return None;
+    }
+    for decl in &symbol.decls {
+      match &decl.kind {
+        SymbolDeclKind::Definition => {
+          return Some(Definition {
+            module,
+            symbol,
+            decl,
+          });
+        }
+        SymbolDeclKind::Target(target_id) => {
+          if let Some(symbol) = module
+            .symbol_id_from_swc(target_id)
+            .and_then(|id| module.symbol(id))
+          {
+            if let Some(declaration_symbol) = self.go_to_definition_internal(
+              module_graph,
+              module,
+              symbol,
+              visited_symbols,
+            ) {
+              return Some(declaration_symbol);
+            }
+          }
+        }
+        SymbolDeclKind::FileRef(file_ref) => match &file_ref.name {
+          FileDepName::Star => {
+            return Some(Definition {
+              module,
+              symbol,
+              decl,
+            })
+          }
+          FileDepName::Name(export_name) => {
+            if let Some(dep) = module_graph.resolve_dependency(
+              &file_ref.specifier,
+              &module.specifier,
+              /* prefer types */ true,
+            ) {
+              if let Some(module_symbol) = self.0.get(&dep) {
+                let maybe_symbol = module_symbol
+                  .exports
+                  .get(export_name)
+                  .and_then(|symbol_id| module_symbol.symbol(*symbol_id));
+                if let Some(export_symbol) = maybe_symbol {
+                  if let Some(result) = self.go_to_definition_internal(
+                    module_graph,
+                    module_symbol,
+                    export_symbol,
+                    visited_symbols,
+                  ) {
+                    return Some(result);
+                  }
+                }
+              }
+            }
+          }
+        },
+        SymbolDeclKind::TargetSelf => {
+          // ignore
+        }
+      }
+    }
+    None
   }
 }
 
@@ -58,7 +156,7 @@ pub struct FileDep {
   pub specifier: String,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ModuleId(usize);
 
 #[derive(Default, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
@@ -85,14 +183,24 @@ pub struct SymbolDecl {
   pub kind: SymbolDeclKind,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Symbol {
+  symbol_id: SymbolId,
   is_public: bool,
   decls: IndexSet<SymbolDecl>,
   deps: IndexSet<Id>,
 }
 
 impl Symbol {
+  pub fn new(symbol_id: SymbolId) -> Self {
+    Symbol {
+      symbol_id,
+      decls: Default::default(),
+      deps: Default::default(),
+      is_public: false,
+    }
+  }
+
   pub fn is_public(&self) -> bool {
     self.is_public
   }
@@ -120,15 +228,17 @@ impl Symbol {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct UniqueSymbol {
   pub module_id: ModuleId,
   pub symbol_id: SymbolId,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ModuleSymbol {
   module_id: ModuleId,
+  specifier: ModuleSpecifier,
+  source: ParsedSource,
   next_symbol_id: SymbolId,
   exports: IndexMap<String, SymbolId>,
   re_exports: Vec<String>,
@@ -139,9 +249,32 @@ pub struct ModuleSymbol {
   traced_re_exports: IndexMap<String, UniqueSymbol>,
 }
 
+impl std::fmt::Debug for ModuleSymbol {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_struct("ModuleSymbol")
+      .field("module_id", &self.module_id)
+      .field("specifier", &self.specifier.as_str())
+      .field("exports", &self.exports)
+      .field("re_exports", &self.re_exports)
+      .field("default_export_symbol_id", &self.default_export_symbol_id)
+      .field("swc_id_to_symbol_id", &self.swc_id_to_symbol_id)
+      .field("symbols", &self.symbols)
+      .field("traced_re_exports", &self.traced_re_exports)
+      .finish()
+  }
+}
+
 impl ModuleSymbol {
   pub fn module_id(&self) -> ModuleId {
     self.module_id
+  }
+
+  pub fn specifier(&self) -> &ModuleSpecifier {
+    &self.specifier
+  }
+
+  pub fn source(&self) -> &ParsedSource {
+    &self.source
   }
 
   pub fn public_source_ranges(&self) -> HashSet<SourceRange> {
@@ -177,6 +310,11 @@ impl ModuleSymbol {
     self.default_export_symbol_id
   }
 
+  pub fn default_export_symbol(&self) -> Option<&Symbol> {
+    let symbol_id = self.default_export_symbol_id()?;
+    self.symbol(symbol_id)
+  }
+
   pub(crate) fn ensure_default_export_symbol(
     &mut self,
     symbol_decl: SymbolDecl,
@@ -187,7 +325,7 @@ impl ModuleSymbol {
       *symbol_id
     } else {
       let symbol_id = self.get_next_symbol_id();
-      let mut symbol = Symbol::default();
+      let mut symbol = Symbol::new(symbol_id);
       symbol.decls.insert(symbol_decl);
       self.symbols.insert(symbol_id, symbol);
       self.default_export_symbol_id = Some(symbol_id);
@@ -245,7 +383,7 @@ impl ModuleSymbol {
     if let Some(symbol) = self.symbols.get_mut(&symbol_id) {
       symbol.decls.insert(symbol_decl);
     } else {
-      let mut symbol = Symbol::default();
+      let mut symbol = Symbol::new(symbol_id);
       symbol.decls.insert(symbol_decl);
       self.symbols.insert(symbol_id, symbol);
     }
@@ -289,7 +427,9 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
     let source = self.parsed_source(specifier)?;
     let module = source.module();
     let mut module_symbol = ModuleSymbol {
+      specifier: specifier.clone(),
       module_id: ModuleId(self.modules.len()),
+      source: source.clone(),
       next_symbol_id: Default::default(),
       exports: Default::default(),
       re_exports: Default::default(),
