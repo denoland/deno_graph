@@ -42,13 +42,13 @@ impl RootsGraphSymbol {
     self.0
   }
 
-  pub fn go_to_definition<'a>(
+  pub fn go_to_definitions<'a>(
     &'a self,
     module_graph: &ModuleGraph,
     module: &'a ModuleSymbol,
     symbol: &'a Symbol,
-  ) -> Option<Definition<'a>> {
-    self.go_to_definition_internal(
+  ) -> Vec<Definition<'a>> {
+    self.go_to_definitions_internal(
       module_graph,
       module,
       symbol,
@@ -56,23 +56,24 @@ impl RootsGraphSymbol {
     )
   }
 
-  fn go_to_definition_internal<'a>(
+  fn go_to_definitions_internal<'a>(
     &'a self,
     module_graph: &ModuleGraph,
     module: &'a ModuleSymbol,
     symbol: &'a Symbol,
     visited_symbols: &mut HashSet<UniqueSymbol>,
-  ) -> Option<Definition<'a>> {
+  ) -> Vec<Definition<'a>> {
     if !visited_symbols.insert(UniqueSymbol {
       module_id: module.module_id,
       symbol_id: symbol.symbol_id,
     }) {
-      return None;
+      return Vec::new();
     }
+    let mut definitions = Vec::new();
     for decl in &symbol.decls {
       match &decl.kind {
         SymbolDeclKind::Definition => {
-          return Some(Definition {
+          definitions.push(Definition {
             module,
             symbol,
             decl,
@@ -83,23 +84,21 @@ impl RootsGraphSymbol {
             .symbol_id_from_swc(target_id)
             .and_then(|id| module.symbol(id))
           {
-            if let Some(declaration_symbol) = self.go_to_definition_internal(
+            definitions.extend(self.go_to_definitions_internal(
               module_graph,
               module,
               symbol,
               visited_symbols,
-            ) {
-              return Some(declaration_symbol);
-            }
+            ));
           }
         }
         SymbolDeclKind::FileRef(file_ref) => match &file_ref.name {
           FileDepName::Star => {
-            return Some(Definition {
+            definitions.push(Definition {
               module,
               symbol,
               decl,
-            })
+            });
           }
           FileDepName::Name(export_name) => {
             if let Some(dep) = module_graph.resolve_dependency(
@@ -113,14 +112,12 @@ impl RootsGraphSymbol {
                   .get(export_name)
                   .and_then(|symbol_id| module_symbol.symbol(*symbol_id));
                 if let Some(export_symbol) = maybe_symbol {
-                  if let Some(result) = self.go_to_definition_internal(
+                  definitions.extend(self.go_to_definitions_internal(
                     module_graph,
                     module_symbol,
                     export_symbol,
                     visited_symbols,
-                  ) {
-                    return Some(result);
-                  }
+                  ));
                 }
               }
             }
@@ -131,7 +128,7 @@ impl RootsGraphSymbol {
         }
       }
     }
-    None
+    definitions
   }
 }
 

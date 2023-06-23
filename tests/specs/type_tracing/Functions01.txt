@@ -8,6 +8,7 @@ class Return {}
 class Default {}
 
 export function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;
+export function overloaded(): string;
 export function overloaded<T extends PrivateTypeParam>(param: PrivateParam): PrivateReturn {
 }
 
@@ -204,6 +205,17 @@ class PrivateReturn {}
                         },
                         kind: Definition,
                     },
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                242,
+                            ),
+                            end: SourcePos(
+                                279,
+                            ),
+                        },
+                        kind: Definition,
+                    },
                 },
                 deps: {
                     (
@@ -227,10 +239,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                338,
+                                376,
                             ),
                             end: SourcePos(
-                                364,
+                                402,
                             ),
                         },
                         kind: Definition,
@@ -245,10 +257,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                365,
+                                403,
                             ),
                             end: SourcePos(
-                                387,
+                                425,
                             ),
                         },
                         kind: Definition,
@@ -263,10 +275,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                388,
+                                426,
                             ),
                             end: SourcePos(
-                                411,
+                                449,
                             ),
                         },
                         kind: Definition,
@@ -281,10 +293,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                413,
+                                451,
                             ),
                             end: SourcePos(
-                                438,
+                                476,
                             ),
                         },
                         kind: Definition,
@@ -299,10 +311,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                439,
+                                477,
                             ),
                             end: SourcePos(
-                                460,
+                                498,
                             ),
                         },
                         kind: Definition,
@@ -317,10 +329,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                461,
+                                499,
                             ),
                             end: SourcePos(
-                                483,
+                                521,
                             ),
                         },
                         kind: Definition,
@@ -338,3 +350,5 @@ class PrivateReturn {}
   }
 [overloaded]: file:///mod.ts:147..241
   export function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;
+file:///mod.ts:242..279
+  export function overloaded(): string;

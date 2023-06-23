@@ -103,10 +103,13 @@ impl TestBuilder {
         output_text.push_str("== export definitions ==\n");
         let get_symbol_text = |symbol_id: SymbolId| {
           let symbol = entrypoint_symbol.symbol(symbol_id).unwrap();
-          let definition =
-            output.go_to_definition(&graph, entrypoint_symbol, symbol);
-          match definition {
-            Some(definition) => {
+          let definitions =
+            output.go_to_definitions(&graph, entrypoint_symbol, symbol);
+          if definitions.is_empty() {
+            format!("NONE")
+          } else {
+            let mut results = Vec::new();
+            for definition in definitions {
               let decl_text = {
                 let decl_text = definition
                   .decl
@@ -131,17 +134,15 @@ impl TestBuilder {
               let range = definition.decl.range.as_byte_range(
                 definition.module.source().text_info().range().start,
               );
-              format!(
+              results.push(format!(
                 "{}:{}..{}\n{}",
                 definition.module.specifier(),
                 range.start,
                 range.end,
                 decl_text
-              )
+              ));
             }
-            None => {
-              format!("NONE")
-            }
+            results.join("\n")
           }
         };
         for (name, symbol_id) in entrypoint_symbol.exports() {
