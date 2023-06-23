@@ -1,0 +1,171 @@
+# mod.ts
+// declaration merging
+interface Test {
+    prop1: Prop1;
+}
+interface Test {
+    prop2: Prop2;
+}
+
+interface Prop1 {}
+interface Prop2 {}
+
+export { Test };
+
+# output
+{
+    "file:///mod.ts": ModuleSymbol {
+        module_id: ModuleId(
+            0,
+        ),
+        specifier: "file:///mod.ts",
+        exports: {
+            "Test": 0,
+        },
+        re_exports: [],
+        swc_id_to_symbol_id: {
+            (
+                Atom('Test' type=inline),
+                #2,
+            ): 0,
+            (
+                Atom('Prop1' type=inline),
+                #2,
+            ): 1,
+            (
+                Atom('Prop2' type=inline),
+                #2,
+            ): 2,
+        },
+        symbols: {
+            0: Symbol {
+                symbol_id: 0,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                24,
+                            ),
+                            end: SourcePos(
+                                62,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                64,
+                            ),
+                            end: SourcePos(
+                                102,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                148,
+                            ),
+                            end: SourcePos(
+                                164,
+                            ),
+                        },
+                        kind: TargetSelf,
+                    },
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                157,
+                            ),
+                            end: SourcePos(
+                                161,
+                            ),
+                        },
+                        kind: TargetSelf,
+                    },
+                },
+                deps: {
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                    (
+                        Atom('prop1' type=inline),
+                        #0,
+                    ),
+                    (
+                        Atom('Prop1' type=inline),
+                        #2,
+                    ),
+                    (
+                        Atom('prop2' type=inline),
+                        #0,
+                    ),
+                    (
+                        Atom('Prop2' type=inline),
+                        #2,
+                    ),
+                },
+            },
+            1: Symbol {
+                symbol_id: 1,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                106,
+                            ),
+                            end: SourcePos(
+                                124,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {
+                    (
+                        Atom('Prop1' type=inline),
+                        #2,
+                    ),
+                },
+            },
+            2: Symbol {
+                symbol_id: 2,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                126,
+                            ),
+                            end: SourcePos(
+                                144,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {
+                    (
+                        Atom('Prop2' type=inline),
+                        #2,
+                    ),
+                },
+            },
+        },
+        traced_re_exports: {},
+    },
+}
+== export definitions ==
+[Test]: file:///mod.ts:24..62
+  interface Test {
+      prop1: Prop1;
+  }
+file:///mod.ts:64..102
+  interface Test {
+      prop2: Prop2;
+  }

@@ -7,6 +7,7 @@ class Param {}
 class Return {}
 class Default {}
 
+// the top two overloads should appear in the results
 export function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;
 export function overloaded(): string;
 export function overloaded<T extends PrivateTypeParam>(param: PrivateParam): PrivateReturn {
@@ -197,10 +198,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                147,
+                                201,
                             ),
                             end: SourcePos(
-                                241,
+                                295,
                             ),
                         },
                         kind: Definition,
@@ -208,10 +209,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                242,
+                                296,
                             ),
                             end: SourcePos(
-                                279,
+                                333,
                             ),
                         },
                         kind: Definition,
@@ -239,10 +240,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                376,
+                                430,
                             ),
                             end: SourcePos(
-                                402,
+                                456,
                             ),
                         },
                         kind: Definition,
@@ -257,10 +258,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                403,
+                                457,
                             ),
                             end: SourcePos(
-                                425,
+                                479,
                             ),
                         },
                         kind: Definition,
@@ -275,10 +276,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                426,
+                                480,
                             ),
                             end: SourcePos(
-                                449,
+                                503,
                             ),
                         },
                         kind: Definition,
@@ -293,10 +294,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                451,
+                                505,
                             ),
                             end: SourcePos(
-                                476,
+                                530,
                             ),
                         },
                         kind: Definition,
@@ -311,10 +312,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                477,
+                                531,
                             ),
                             end: SourcePos(
-                                498,
+                                552,
                             ),
                         },
                         kind: Definition,
@@ -329,10 +330,10 @@ class PrivateReturn {}
                     SymbolDecl {
                         range: SourceRange {
                             start: SourcePos(
-                                499,
+                                553,
                             ),
                             end: SourcePos(
-                                521,
+                                575,
                             ),
                         },
                         kind: Definition,
@@ -348,7 +349,7 @@ class PrivateReturn {}
 [test]: file:///mod.ts:0..77
   export function test<T extends TypeParam = Default>(param: Param): Return {
   }
-[overloaded]: file:///mod.ts:147..241
+[overloaded]: file:///mod.ts:201..295
   export function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;
-file:///mod.ts:242..279
+file:///mod.ts:296..333
   export function overloaded(): string;
