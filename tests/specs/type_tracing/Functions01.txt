@@ -1,0 +1,340 @@
+# mod.ts
+export function test<T extends TypeParam = Default>(param: Param): Return {
+}
+
+class TypeParam {}
+class Param {}
+class Return {}
+class Default {}
+
+export function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;
+export function overloaded<T extends PrivateTypeParam>(param: PrivateParam): PrivateReturn {
+}
+
+class OverloadTypeParam {}
+class OverloadParam {}
+class OverloadReturn {}
+
+class PrivateTypeParam {}
+class PrivateParam {}
+class PrivateReturn {}
+
+# output
+{
+    "file:///mod.ts": ModuleSymbol {
+        module_id: ModuleId(
+            0,
+        ),
+        specifier: "file:///mod.ts",
+        exports: {
+            "test": 0,
+            "overloaded": 5,
+        },
+        re_exports: [],
+        swc_id_to_symbol_id: {
+            (
+                Atom('test' type=inline),
+                #2,
+            ): 0,
+            (
+                Atom('TypeParam' type=dynamic),
+                #2,
+            ): 1,
+            (
+                Atom('Param' type=inline),
+                #2,
+            ): 2,
+            (
+                Atom('Return' type=inline),
+                #2,
+            ): 3,
+            (
+                Atom('Default' type=inline),
+                #2,
+            ): 4,
+            (
+                Atom('overloaded' type=dynamic),
+                #2,
+            ): 5,
+            (
+                Atom('OverloadTypeParam' type=dynamic),
+                #2,
+            ): 6,
+            (
+                Atom('OverloadParam' type=dynamic),
+                #2,
+            ): 7,
+            (
+                Atom('OverloadReturn' type=dynamic),
+                #2,
+            ): 8,
+            (
+                Atom('PrivateTypeParam' type=dynamic),
+                #2,
+            ): 9,
+            (
+                Atom('PrivateParam' type=dynamic),
+                #2,
+            ): 10,
+            (
+                Atom('PrivateReturn' type=dynamic),
+                #2,
+            ): 11,
+        },
+        symbols: {
+            0: Symbol {
+                symbol_id: 0,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                0,
+                            ),
+                            end: SourcePos(
+                                77,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {
+                    (
+                        Atom('TypeParam' type=dynamic),
+                        #2,
+                    ),
+                    (
+                        Atom('Default' type=inline),
+                        #2,
+                    ),
+                    (
+                        Atom('Param' type=inline),
+                        #2,
+                    ),
+                    (
+                        Atom('Return' type=inline),
+                        #2,
+                    ),
+                },
+            },
+            1: Symbol {
+                symbol_id: 1,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                79,
+                            ),
+                            end: SourcePos(
+                                97,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            2: Symbol {
+                symbol_id: 2,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                98,
+                            ),
+                            end: SourcePos(
+                                112,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            3: Symbol {
+                symbol_id: 3,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                113,
+                            ),
+                            end: SourcePos(
+                                128,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            4: Symbol {
+                symbol_id: 4,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                129,
+                            ),
+                            end: SourcePos(
+                                145,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            5: Symbol {
+                symbol_id: 5,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                147,
+                            ),
+                            end: SourcePos(
+                                241,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {
+                    (
+                        Atom('OverloadTypeParam' type=dynamic),
+                        #2,
+                    ),
+                    (
+                        Atom('OverloadParam' type=dynamic),
+                        #2,
+                    ),
+                    (
+                        Atom('OverloadReturn' type=dynamic),
+                        #2,
+                    ),
+                },
+            },
+            6: Symbol {
+                symbol_id: 6,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                338,
+                            ),
+                            end: SourcePos(
+                                364,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            7: Symbol {
+                symbol_id: 7,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                365,
+                            ),
+                            end: SourcePos(
+                                387,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            8: Symbol {
+                symbol_id: 8,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                388,
+                            ),
+                            end: SourcePos(
+                                411,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            9: Symbol {
+                symbol_id: 9,
+                is_public: false,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                413,
+                            ),
+                            end: SourcePos(
+                                438,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            10: Symbol {
+                symbol_id: 10,
+                is_public: false,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                439,
+                            ),
+                            end: SourcePos(
+                                460,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+            11: Symbol {
+                symbol_id: 11,
+                is_public: false,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                461,
+                            ),
+                            end: SourcePos(
+                                483,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+        },
+        traced_re_exports: {},
+    },
+}
+== export definitions ==
+[test]: file:///mod.ts:0..77
+  export function test<T extends TypeParam = Default>(param: Param): Return {
+  }
+[overloaded]: file:///mod.ts:147..241
+  export function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;
