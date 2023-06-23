@@ -1,5 +1,10 @@
 # mod.ts
-export default Test; class Test {}
+export import MyExport = Test.Inner;
+
+namespace Test {
+  export class Inner {
+  }
+}
 
 # output
 file:///mod.ts: ModuleSymbol {
@@ -8,14 +13,22 @@ file:///mod.ts: ModuleSymbol {
     ),
     specifier: "file:///mod.ts",
     exports: {
-        "default": 0,
+        "MyExport": 0,
     },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
+            Atom('MyExport' type=dynamic),
+            #2,
+        ): 0,
+        (
             Atom('Test' type=inline),
             #2,
         ): 1,
+        (
+            Atom('Inner' type=inline),
+            #3,
+        ): 2,
     },
     symbols: {
         0: Symbol {
@@ -28,52 +41,61 @@ file:///mod.ts: ModuleSymbol {
                             0,
                         ),
                         end: SourcePos(
-                            20,
+                            36,
                         ),
                     },
-                    kind: Target(
+                    kind: QualifiedTarget(
                         (
-                            Atom('Test' type=inline),
+                            Atom('MyExport' type=dynamic),
                             #2,
                         ),
+                        [
+                            "Test",
+                            "Inner",
+                        ],
                     ),
                 },
             },
-            deps: {
-                (
-                    Atom('Test' type=inline),
-                    #2,
-                ),
-            },
+            deps: {},
             exports: {},
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: true,
+            is_public: false,
             decls: {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            15,
+                            40,
                         ),
                         end: SourcePos(
-                            19,
+                            88,
                         ),
                     },
-                    kind: Target(
-                        (
-                            Atom('Test' type=inline),
-                            #2,
-                        ),
-                    ),
+                    kind: Definition,
                 },
+            },
+            deps: {
+                (
+                    Atom('Inner' type=inline),
+                    #3,
+                ),
+            },
+            exports: {
+                "Inner": 2,
+            },
+        },
+        2: Symbol {
+            symbol_id: 2,
+            is_public: false,
+            decls: {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            21,
+                            60,
                         ),
                         end: SourcePos(
-                            34,
+                            85,
                         ),
                     },
                     kind: Definition,
@@ -86,5 +108,4 @@ file:///mod.ts: ModuleSymbol {
     traced_re_exports: {},
 }
 == export definitions ==
-[default]: file:///mod.ts:21..34
-  class Test {}
+[MyExport]: NONE

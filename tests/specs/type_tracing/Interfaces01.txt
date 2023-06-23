@@ -86,6 +86,7 @@ file:///mod.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         1: Symbol {
             symbol_id: 1,
@@ -145,6 +146,7 @@ file:///mod.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         2: Symbol {
             symbol_id: 2,
@@ -168,6 +170,7 @@ file:///mod.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         3: Symbol {
             symbol_id: 3,
@@ -191,6 +194,7 @@ file:///mod.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         4: Symbol {
             symbol_id: 4,
@@ -214,6 +218,7 @@ file:///mod.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         5: Symbol {
             symbol_id: 5,
@@ -237,6 +242,7 @@ file:///mod.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         6: Symbol {
             symbol_id: 6,
@@ -268,6 +274,7 @@ file:///mod.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         7: Symbol {
             symbol_id: 7,
@@ -291,6 +298,7 @@ file:///mod.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
     },
     traced_re_exports: {},

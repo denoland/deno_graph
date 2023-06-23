@@ -124,6 +124,7 @@ file:///mod.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         1: Symbol {
             symbol_id: 1,
@@ -147,6 +148,7 @@ file:///mod.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         2: Symbol {
             symbol_id: 2,
@@ -170,6 +172,7 @@ file:///mod.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
     },
     traced_re_exports: {
@@ -268,6 +271,7 @@ file:///a.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         1: Symbol {
             symbol_id: 1,
@@ -291,6 +295,7 @@ file:///a.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
     },
     traced_re_exports: {},

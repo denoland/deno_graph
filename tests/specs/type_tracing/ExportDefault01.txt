@@ -92,6 +92,7 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {},
+            exports: {},
         },
         1: Symbol {
             symbol_id: 1,
@@ -139,6 +140,7 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {},
+            exports: {},
         },
         2: Symbol {
             symbol_id: 2,
@@ -167,6 +169,7 @@ file:///mod.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
     },
     traced_re_exports: {},
@@ -237,6 +240,7 @@ file:///a.ts: ModuleSymbol {
                     #0,
                 ),
             },
+            exports: {},
         },
         1: Symbol {
             symbol_id: 1,
@@ -265,6 +269,7 @@ file:///a.ts: ModuleSymbol {
                     #0,
                 ),
             },
+            exports: {},
         },
         2: Symbol {
             symbol_id: 2,
@@ -288,6 +293,7 @@ file:///a.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         3: Symbol {
             symbol_id: 3,
@@ -311,6 +317,7 @@ file:///a.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         4: Symbol {
             symbol_id: 4,
@@ -334,6 +341,7 @@ file:///a.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         5: Symbol {
             symbol_id: 5,
@@ -352,6 +360,7 @@ file:///a.ts: ModuleSymbol {
                 },
             },
             deps: {},
+            exports: {},
         },
         6: Symbol {
             symbol_id: 6,
@@ -370,6 +379,7 @@ file:///a.ts: ModuleSymbol {
                 },
             },
             deps: {},
+            exports: {},
         },
     },
     traced_re_exports: {},
@@ -412,6 +422,7 @@ file:///b.ts: ModuleSymbol {
                     #2,
                 ),
             },
+            exports: {},
         },
         1: Symbol {
             symbol_id: 1,
@@ -430,6 +441,7 @@ file:///b.ts: ModuleSymbol {
                 },
             },
             deps: {},
+            exports: {},
         },
     },
     traced_re_exports: {},
