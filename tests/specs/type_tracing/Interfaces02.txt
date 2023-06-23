@@ -27,275 +27,273 @@ interface Prop2 {}
 export { A1 };
 
 # output
-{
-    "file:///a.ts": ModuleSymbol {
-        module_id: ModuleId(
-            1,
-        ),
-        specifier: "file:///a.ts",
-        exports: {
-            "A1": 0,
-        },
-        re_exports: [],
-        swc_id_to_symbol_id: {
-            (
-                Atom('A1' type=inline),
-                #2,
-            ): 0,
-            (
-                Atom('Prop2' type=inline),
-                #2,
-            ): 1,
-        },
-        symbols: {
-            0: Symbol {
-                symbol_id: 0,
-                is_public: true,
-                decls: {
-                    SymbolDecl {
-                        range: SourceRange {
-                            start: SourcePos(
-                                0,
-                            ),
-                            end: SourcePos(
-                                33,
-                            ),
-                        },
-                        kind: Definition,
-                    },
-                    SymbolDecl {
-                        range: SourceRange {
-                            start: SourcePos(
-                                34,
-                            ),
-                            end: SourcePos(
-                                66,
-                            ),
-                        },
-                        kind: Definition,
-                    },
-                    SymbolDecl {
-                        range: SourceRange {
-                            start: SourcePos(
-                                88,
-                            ),
-                            end: SourcePos(
-                                102,
-                            ),
-                        },
-                        kind: TargetSelf,
-                    },
-                    SymbolDecl {
-                        range: SourceRange {
-                            start: SourcePos(
-                                97,
-                            ),
-                            end: SourcePos(
-                                99,
-                            ),
-                        },
-                        kind: TargetSelf,
-                    },
-                },
-                deps: {
-                    (
-                        Atom('A1' type=inline),
-                        #2,
-                    ),
-                    (
-                        Atom('prop1' type=inline),
-                        #0,
-                    ),
-                    (
-                        Atom('prop2' type=inline),
-                        #0,
-                    ),
-                    (
-                        Atom('Prop2' type=inline),
-                        #2,
-                    ),
-                },
-            },
-            1: Symbol {
-                symbol_id: 1,
-                is_public: true,
-                decls: {
-                    SymbolDecl {
-                        range: SourceRange {
-                            start: SourcePos(
-                                68,
-                            ),
-                            end: SourcePos(
-                                86,
-                            ),
-                        },
-                        kind: Definition,
-                    },
-                },
-                deps: {
-                    (
-                        Atom('Prop2' type=inline),
-                        #2,
-                    ),
-                },
-            },
-        },
-        traced_re_exports: {},
+file:///mod.ts: ModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    exports: {
+        "Test": 0,
     },
-    "file:///mod.ts": ModuleSymbol {
-        module_id: ModuleId(
-            0,
-        ),
-        specifier: "file:///mod.ts",
-        exports: {
-            "Test": 0,
-        },
-        re_exports: [
-            "./a.ts",
-        ],
-        swc_id_to_symbol_id: {
-            (
-                Atom('Test' type=inline),
-                #2,
-            ): 0,
-            (
-                Atom('Prop1' type=inline),
-                #2,
-            ): 1,
-            (
-                Atom('Prop2' type=inline),
-                #2,
-            ): 2,
-        },
-        symbols: {
-            0: Symbol {
-                symbol_id: 0,
-                is_public: true,
-                decls: {
-                    SymbolDecl {
-                        range: SourceRange {
-                            start: SourcePos(
-                                23,
-                            ),
-                            end: SourcePos(
-                                57,
-                            ),
-                        },
-                        kind: Definition,
+    re_exports: [
+        "./a.ts",
+    ],
+    swc_id_to_symbol_id: {
+        (
+            Atom('Test' type=inline),
+            #2,
+        ): 0,
+        (
+            Atom('Prop1' type=inline),
+            #2,
+        ): 1,
+        (
+            Atom('Prop2' type=inline),
+            #2,
+        ): 2,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            23,
+                        ),
+                        end: SourcePos(
+                            57,
+                        ),
                     },
-                    SymbolDecl {
-                        range: SourceRange {
-                            start: SourcePos(
-                                58,
-                            ),
-                            end: SourcePos(
-                                92,
-                            ),
-                        },
-                        kind: Definition,
-                    },
-                    SymbolDecl {
-                        range: SourceRange {
-                            start: SourcePos(
-                                133,
-                            ),
-                            end: SourcePos(
-                                149,
-                            ),
-                        },
-                        kind: TargetSelf,
-                    },
-                    SymbolDecl {
-                        range: SourceRange {
-                            start: SourcePos(
-                                142,
-                            ),
-                            end: SourcePos(
-                                146,
-                            ),
-                        },
-                        kind: TargetSelf,
-                    },
+                    kind: Definition,
                 },
-                deps: {
-                    (
-                        Atom('Test' type=inline),
-                        #2,
-                    ),
-                    (
-                        Atom('prop1' type=inline),
-                        #0,
-                    ),
-                    (
-                        Atom('Prop1' type=inline),
-                        #2,
-                    ),
-                    (
-                        Atom('prop2' type=inline),
-                        #0,
-                    ),
-                    (
-                        Atom('Prop2' type=inline),
-                        #2,
-                    ),
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            58,
+                        ),
+                        end: SourcePos(
+                            92,
+                        ),
+                    },
+                    kind: Definition,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            133,
+                        ),
+                        end: SourcePos(
+                            149,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            142,
+                        ),
+                        end: SourcePos(
+                            146,
+                        ),
+                    },
+                    kind: TargetSelf,
                 },
             },
-            1: Symbol {
-                symbol_id: 1,
-                is_public: true,
-                decls: {
-                    SymbolDecl {
-                        range: SourceRange {
-                            start: SourcePos(
-                                94,
-                            ),
-                            end: SourcePos(
-                                112,
-                            ),
-                        },
-                        kind: Definition,
-                    },
-                },
-                deps: {
-                    (
-                        Atom('Prop1' type=inline),
-                        #2,
-                    ),
-                },
-            },
-            2: Symbol {
-                symbol_id: 2,
-                is_public: true,
-                decls: {
-                    SymbolDecl {
-                        range: SourceRange {
-                            start: SourcePos(
-                                113,
-                            ),
-                            end: SourcePos(
-                                131,
-                            ),
-                        },
-                        kind: Definition,
-                    },
-                },
-                deps: {
-                    (
-                        Atom('Prop2' type=inline),
-                        #2,
-                    ),
-                },
-            },
-        },
-        traced_re_exports: {
-            "A1": UniqueSymbolId {
-                module_id: ModuleId(
-                    1,
+            deps: {
+                (
+                    Atom('Test' type=inline),
+                    #2,
                 ),
-                symbol_id: 0,
+                (
+                    Atom('prop1' type=inline),
+                    #0,
+                ),
+                (
+                    Atom('Prop1' type=inline),
+                    #2,
+                ),
+                (
+                    Atom('prop2' type=inline),
+                    #0,
+                ),
+                (
+                    Atom('Prop2' type=inline),
+                    #2,
+                ),
+            },
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            94,
+                        ),
+                        end: SourcePos(
+                            112,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                (
+                    Atom('Prop1' type=inline),
+                    #2,
+                ),
+            },
+        },
+        2: Symbol {
+            symbol_id: 2,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            113,
+                        ),
+                        end: SourcePos(
+                            131,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                (
+                    Atom('Prop2' type=inline),
+                    #2,
+                ),
             },
         },
     },
+    traced_re_exports: {
+        "A1": UniqueSymbolId {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 0,
+        },
+    },
+}
+file:///a.ts: ModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///a.ts",
+    exports: {
+        "A1": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('A1' type=inline),
+            #2,
+        ): 0,
+        (
+            Atom('Prop2' type=inline),
+            #2,
+        ): 1,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            33,
+                        ),
+                    },
+                    kind: Definition,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            34,
+                        ),
+                        end: SourcePos(
+                            66,
+                        ),
+                    },
+                    kind: Definition,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            88,
+                        ),
+                        end: SourcePos(
+                            102,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            97,
+                        ),
+                        end: SourcePos(
+                            99,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            },
+            deps: {
+                (
+                    Atom('A1' type=inline),
+                    #2,
+                ),
+                (
+                    Atom('prop1' type=inline),
+                    #0,
+                ),
+                (
+                    Atom('prop2' type=inline),
+                    #0,
+                ),
+                (
+                    Atom('Prop2' type=inline),
+                    #2,
+                ),
+            },
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            68,
+                        ),
+                        end: SourcePos(
+                            86,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                (
+                    Atom('Prop2' type=inline),
+                    #2,
+                ),
+            },
+        },
+    },
+    traced_re_exports: {},
 }
 == export definitions ==
 [Test]: file:///mod.ts:23..57

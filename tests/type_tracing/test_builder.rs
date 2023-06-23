@@ -96,13 +96,10 @@ impl TestBuilder {
         let entrypoint_symbol = root_symbol
           .get_module_from_specifier(&entry_point_url)
           .unwrap();
-        let sorted_symbols = root_symbol
-          .clone()
-          .into_specifier_map()
-          .into_iter()
-          .map(|(k, v)| (k.to_string(), v))
-          .collect::<BTreeMap<_, _>>();
-        let mut output_text = format!("{:#?}\n", sorted_symbols);
+        let mut output_text = String::new();
+        for (k, v) in root_symbol.clone().into_specifier_map() {
+          output_text.push_str(&format!("{}: {:#?}\n", k.as_str(), v));
+        }
         output_text.push_str("== export definitions ==\n");
         let get_symbol_text = |symbol_id: UniqueSymbolId| {
           let module_symbol =
