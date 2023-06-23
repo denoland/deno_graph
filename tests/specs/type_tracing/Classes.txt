@@ -52,7 +52,6 @@ class PrivateImplementationReturn {}
             "A": 0,
         },
         re_exports: [],
-        default_export_symbol_id: None,
         swc_id_to_symbol_id: {
             (
                 Atom('A' type=inline),

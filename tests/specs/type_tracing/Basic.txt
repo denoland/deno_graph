@@ -36,12 +36,10 @@ export type D = typeof C;
         exports: {
             "A": 2,
             "B": 3,
+            "default": 4,
             "D": 6,
         },
         re_exports: [],
-        default_export_symbol_id: Some(
-            4,
-        ),
         swc_id_to_symbol_id: {
             (
                 Atom('AInner' type=inline),
@@ -250,7 +248,6 @@ export type D = typeof C;
             "D": 2,
         },
         re_exports: [],
-        default_export_symbol_id: None,
         swc_id_to_symbol_id: {
             (
                 Atom('A' type=inline),

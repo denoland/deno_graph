@@ -112,21 +112,20 @@ impl TestBuilder {
                   .decl
                   .range
                   .text_fast(definition.module.source().text_info());
-                let mut lines = decl_text
+                let lines = decl_text
                   .split('\n')
                   .map(|line| format!("  {}", line))
                   .collect::<Vec<_>>();
-                let lines = if lines.len() > 4 {
-                  vec![
-                    lines.remove(0),
-                    lines.remove(1),
-                    lines.remove(lines.len() - 2),
-                    lines.remove(lines.len() - 1),
-                  ]
+                if lines.len() > 4 {
+                  lines[0..2]
+                    .iter()
+                    .chain(&lines[lines.len() - 2..])
+                    .map(ToOwned::to_owned)
+                    .collect::<Vec<_>>()
+                    .join("\n")
                 } else {
-                  lines
-                };
-                lines.join("\n")
+                  lines.join("\n")
+                }
               };
               let range = definition.decl.range.as_byte_range(
                 definition.module.source().text_info().range().start,
@@ -147,10 +146,6 @@ impl TestBuilder {
         for (name, symbol_id) in entrypoint_symbol.exports() {
           let position = get_symbol_text(*symbol_id);
           output_text.push_str(&format!("[{}]: {}\n", name, position));
-        }
-        if let Some(symbol_id) = entrypoint_symbol.default_export_symbol_id() {
-          let position = get_symbol_text(symbol_id);
-          output_text.push_str(&format!("[default]: {}\n", position));
         }
         output_text
       },

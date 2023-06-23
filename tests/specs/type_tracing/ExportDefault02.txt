@@ -8,11 +8,10 @@ export default Test; class Test {}
             0,
         ),
         specifier: "file:///mod.ts",
-        exports: {},
+        exports: {
+            "default": 0,
+        },
         re_exports: [],
-        default_export_symbol_id: Some(
-            0,
-        ),
         swc_id_to_symbol_id: {
             (
                 Atom('Test' type=inline),

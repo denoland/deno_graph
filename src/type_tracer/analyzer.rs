@@ -242,7 +242,6 @@ pub struct ModuleSymbol {
   next_symbol_id: SymbolId,
   exports: IndexMap<String, SymbolId>,
   re_exports: Vec<String>,
-  default_export_symbol_id: Option<SymbolId>,
   // note: not all symbol ids have an swc id. For example, default exports
   swc_id_to_symbol_id: IndexMap<Id, SymbolId>,
   symbols: IndexMap<SymbolId, Symbol>,
@@ -256,7 +255,6 @@ impl std::fmt::Debug for ModuleSymbol {
       .field("specifier", &self.specifier.as_str())
       .field("exports", &self.exports)
       .field("re_exports", &self.re_exports)
-      .field("default_export_symbol_id", &self.default_export_symbol_id)
       .field("swc_id_to_symbol_id", &self.swc_id_to_symbol_id)
       .field("symbols", &self.symbols)
       .field("traced_re_exports", &self.traced_re_exports)
@@ -306,20 +304,11 @@ impl ModuleSymbol {
     &self.re_exports
   }
 
-  pub fn default_export_symbol_id(&self) -> Option<SymbolId> {
-    self.default_export_symbol_id
-  }
-
-  pub fn default_export_symbol(&self) -> Option<&Symbol> {
-    let symbol_id = self.default_export_symbol_id()?;
-    self.symbol(symbol_id)
-  }
-
   pub(crate) fn ensure_default_export_symbol(
     &mut self,
     symbol_decl: SymbolDecl,
   ) -> SymbolId {
-    if let Some(symbol_id) = &self.default_export_symbol_id {
+    if let Some(symbol_id) = self.exports.get("default") {
       let default_export_symbol = self.symbols.get_mut(symbol_id).unwrap();
       default_export_symbol.decls.insert(symbol_decl);
       *symbol_id
@@ -328,7 +317,7 @@ impl ModuleSymbol {
       let mut symbol = Symbol::new(symbol_id);
       symbol.decls.insert(symbol_decl);
       self.symbols.insert(symbol_id, symbol);
-      self.default_export_symbol_id = Some(symbol_id);
+      self.exports.insert("default".to_string(), symbol_id);
       symbol_id
     }
   }
@@ -434,7 +423,6 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
       exports: Default::default(),
       re_exports: Default::default(),
       traced_re_exports: Default::default(),
-      default_export_symbol_id: None,
       swc_id_to_symbol_id: Default::default(),
       symbols: Default::default(),
     };

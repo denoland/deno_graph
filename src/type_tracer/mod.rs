@@ -145,9 +145,7 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
     let mut result = Vec::new();
     let module_symbol = self.get_module_symbol(specifier)?;
     if matches!(exports_to_trace, ExportsToTrace::AllWithDefault) {
-      let maybe_symbol_id = module_symbol
-        .default_export_symbol_id()
-        .or_else(|| module_symbol.exports().get("default").copied());
+      let maybe_symbol_id = module_symbol.exports().get("default").copied();
       if let Some(symbol_id) = maybe_symbol_id {
         result.push((
           specifier.clone(),
@@ -197,17 +195,8 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
         let module_id = module_symbol.module_id();
         let exports = module_symbol.exports().clone();
         let re_exports = module_symbol.re_exports().clone();
-        let default_export_symbol_id = module_symbol.default_export_symbol_id();
         for name in names {
-          #[allow(clippy::unnecessary_unwrap)]
-          if name == "default" && default_export_symbol_id.is_some() {
-            result.push((
-              specifier.clone(),
-              module_id,
-              name.clone(),
-              default_export_symbol_id.unwrap(),
-            ));
-          } else if let Some(symbol_id) = exports.get(name) {
+          if let Some(symbol_id) = exports.get(name) {
             result.push((
               specifier.clone(),
               module_id,

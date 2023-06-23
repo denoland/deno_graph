@@ -13,7 +13,7 @@ use type_tracing::TestBuilder;
 mod type_tracing;
 
 #[tokio::test]
-async fn test_specs() {
+async fn test_type_tracing_specs() {
   for (test_file_path, spec) in
     get_specs_in_dir(&PathBuf::from("./tests/specs/type_tracing"))
   {
@@ -49,29 +49,6 @@ async fn test_specs() {
       test_file_path.display()
     );
   }
-}
-
-#[tokio::test]
-async fn test_go_to_definition() {
-  let mut builder = TestBuilder::new();
-  let mod_ts_url = ModuleSpecifier::parse("file:///mod.ts").unwrap();
-  builder.with_loader(|loader| {
-    loader.add_file(mod_ts_url.as_str(), "export default Test; class Test {}");
-  });
-  let result = builder.trace().await.unwrap();
-  let root_symbol = result.roots_graph_symbol;
-  let mod_symbol = root_symbol.get(&mod_ts_url).unwrap();
-  let default_export_symbol = mod_symbol.default_export_symbol().unwrap();
-  let definition = root_symbol
-    .go_to_definition(&result.graph, &mod_symbol, &default_export_symbol)
-    .unwrap();
-  assert_eq!(
-    definition
-      .decl
-      .range
-      .as_byte_range(definition.module.source().text_info().range().start),
-    21..34
-  );
 }
 
 struct Spec {

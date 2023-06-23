@@ -26,7 +26,7 @@ class B {
 class C {
 }
 
-# b
+# b.ts
 export default class Test {
 }
 
@@ -39,11 +39,9 @@ export default class Test {
         specifier: "file:///a.ts",
         exports: {
             "C": 1,
+            "default": 2,
         },
         re_exports: [],
-        default_export_symbol_id: Some(
-            2,
-        ),
         swc_id_to_symbol_id: {
             (
                 Atom('default' type=static),
@@ -237,18 +235,76 @@ export default class Test {
         },
         traced_re_exports: {},
     },
+    "file:///b.ts": ModuleSymbol {
+        module_id: ModuleId(
+            2,
+        ),
+        specifier: "file:///b.ts",
+        exports: {
+            "default": 0,
+        },
+        re_exports: [],
+        swc_id_to_symbol_id: {
+            (
+                Atom('Test' type=inline),
+                #2,
+            ): 1,
+        },
+        symbols: {
+            0: Symbol {
+                symbol_id: 0,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                0,
+                            ),
+                            end: SourcePos(
+                                29,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                },
+            },
+            1: Symbol {
+                symbol_id: 1,
+                is_public: true,
+                decls: {
+                    SymbolDecl {
+                        range: SourceRange {
+                            start: SourcePos(
+                                21,
+                            ),
+                            end: SourcePos(
+                                25,
+                            ),
+                        },
+                        kind: Definition,
+                    },
+                },
+                deps: {},
+            },
+        },
+        traced_re_exports: {},
+    },
     "file:///mod.ts": ModuleSymbol {
         module_id: ModuleId(
             0,
         ),
         specifier: "file:///mod.ts",
         exports: {
+            "default": 2,
             "C": 1,
         },
         re_exports: [],
-        default_export_symbol_id: Some(
-            2,
-        ),
         swc_id_to_symbol_id: {
             (
                 Atom('Test' type=inline),
@@ -381,5 +437,10 @@ export default class Test {
     },
 }
 == export definitions ==
-[C]: NONE
-[default]: NONE
+[default]: file:///a.ts:40..82
+  export default class Test {
+      prop: A;
+  }
+[C]: file:///b.ts:0..29
+  export default class Test {
+  }
