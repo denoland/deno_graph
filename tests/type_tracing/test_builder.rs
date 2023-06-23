@@ -112,20 +112,21 @@ impl TestBuilder {
                   .decl
                   .range
                   .text_fast(definition.module.source().text_info());
-                let lines = decl_text
-                  .split('\n')
-                  .map(|line| format!("  {}", line))
-                  .collect::<Vec<_>>();
+                let lines = decl_text.split('\n').collect::<Vec<_>>();
                 if lines.len() > 4 {
                   lines[0..2]
-                    .iter()
+                    .into_iter()
+                    .chain(std::iter::once(&"..."))
                     .chain(&lines[lines.len() - 2..])
-                    .map(ToOwned::to_owned)
+                    .map(|l| *l)
                     .collect::<Vec<_>>()
-                    .join("\n")
                 } else {
-                  lines.join("\n")
+                  lines
                 }
+                .into_iter()
+                .map(|line| format!("  {}", line).trim_end().to_string())
+                .collect::<Vec<_>>()
+                .join("\n")
               };
               let range = definition.decl.range.as_byte_range(
                 definition.module.source().text_info().range().start,
