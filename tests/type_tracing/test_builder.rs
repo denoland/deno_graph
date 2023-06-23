@@ -5,10 +5,11 @@ use anyhow::Result;
 use deno_ast::ModuleSpecifier;
 use deno_ast::SourceRanged;
 use deno_graph::type_tracer::trace_public_types;
-use deno_graph::type_tracer::RootsGraphSymbol;
+use deno_graph::type_tracer::RootSymbol;
 use deno_graph::type_tracer::SymbolId;
 use deno_graph::type_tracer::TypeTraceDiagnostic;
 use deno_graph::type_tracer::TypeTraceHandler;
+use deno_graph::type_tracer::UniqueSymbolId;
 use deno_graph::CapturingModuleAnalyzer;
 use deno_graph::DefaultModuleParser;
 use deno_graph::GraphKind;
@@ -35,7 +36,7 @@ impl TypeTraceHandler for TestTypeTraceHandler {
 
 pub struct TypeTraceResult {
   pub graph: ModuleGraph,
-  pub roots_graph_symbol: RootsGraphSymbol,
+  pub root_symbol: RootSymbol,
   pub output: String,
   pub diagnostics: Vec<TypeTraceDiagnostic>,
 }
@@ -82,7 +83,7 @@ impl TestBuilder {
     let source_parser = DefaultModuleParser::new_for_analysis();
     let capturing_analyzer =
       CapturingModuleAnalyzer::new(Some(Box::new(source_parser)), None);
-    let output = trace_public_types(
+    let root_symbol = trace_public_types(
       &graph,
       &roots,
       &capturing_analyzer.as_capturing_parser(),
@@ -90,21 +91,25 @@ impl TestBuilder {
     )?;
     Ok(TypeTraceResult {
       graph: graph.clone(),
-      roots_graph_symbol: output.clone(),
+      root_symbol: root_symbol.clone(),
       output: {
-        let entrypoint_symbol = output.get(&entry_point_url).unwrap();
-        let sorted_symbols = output
+        let entrypoint_symbol = root_symbol
+          .get_module_from_specifier(&entry_point_url)
+          .unwrap();
+        let sorted_symbols = root_symbol
           .clone()
-          .into_inner()
+          .into_specifier_map()
           .into_iter()
           .map(|(k, v)| (k.to_string(), v))
           .collect::<BTreeMap<_, _>>();
         let mut output_text = format!("{:#?}\n", sorted_symbols);
         output_text.push_str("== export definitions ==\n");
-        let get_symbol_text = |symbol_id: SymbolId| {
-          let symbol = entrypoint_symbol.symbol(symbol_id).unwrap();
+        let get_symbol_text = |symbol_id: UniqueSymbolId| {
+          let module_symbol =
+            root_symbol.get_module_from_id(symbol_id.module_id).unwrap();
+          let symbol = module_symbol.symbol(symbol_id.symbol_id).unwrap();
           let definitions =
-            output.go_to_definitions(&graph, entrypoint_symbol, symbol);
+            root_symbol.go_to_definitions(&graph, module_symbol, symbol);
           if definitions.is_empty() {
             format!("NONE")
           } else {
@@ -145,8 +150,10 @@ impl TestBuilder {
             results.join("\n")
           }
         };
-        for (name, symbol_id) in entrypoint_symbol.exports() {
-          let position = get_symbol_text(*symbol_id);
+        for (name, unique_symbol_id) in
+          entrypoint_symbol.exports(&graph, &root_symbol)
+        {
+          let position = get_symbol_text(unique_symbol_id);
           output_text.push_str(&format!("[{}]: {}\n", name, position));
         }
         output_text

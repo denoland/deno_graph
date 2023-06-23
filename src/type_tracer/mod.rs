@@ -18,10 +18,10 @@ pub use self::analyzer::FileDep;
 pub use self::analyzer::FileDepName;
 pub use self::analyzer::ModuleId;
 pub use self::analyzer::ModuleSymbol;
-pub use self::analyzer::RootsGraphSymbol;
+pub use self::analyzer::RootSymbol;
 pub use self::analyzer::Symbol;
 pub use self::analyzer::SymbolId;
-pub use self::analyzer::UniqueSymbol;
+pub use self::analyzer::UniqueSymbolId;
 
 mod analyzer;
 
@@ -48,7 +48,7 @@ pub fn trace_public_types<'a, THandler: TypeTraceHandler>(
   roots: &[ModuleSpecifier],
   parser: &'a CapturingModuleParser<'a>,
   handler: &'a THandler,
-) -> Result<RootsGraphSymbol> {
+) -> Result<RootSymbol> {
   let mut context = Context {
     graph,
     analyzer: TypeTraceModuleAnalyzer::new(graph, parser, handler),
@@ -121,7 +121,7 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
       if specifier != export_specifier {
         module_symbol.add_traced_re_export(
           name.clone(),
-          UniqueSymbol {
+          UniqueSymbolId {
             module_id: *module_id,
             symbol_id: *symbol_id,
           },
@@ -145,7 +145,7 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
     let mut result = Vec::new();
     let module_symbol = self.get_module_symbol(specifier)?;
     if matches!(exports_to_trace, ExportsToTrace::AllWithDefault) {
-      let maybe_symbol_id = module_symbol.exports().get("default").copied();
+      let maybe_symbol_id = module_symbol.exports_map().get("default").copied();
       if let Some(symbol_id) = maybe_symbol_id {
         result.push((
           specifier.clone(),
@@ -158,7 +158,7 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
     match exports_to_trace {
       ExportsToTrace::Star | ExportsToTrace::AllWithDefault => {
         let mut found_names = HashSet::new();
-        for (name, symbol_id) in module_symbol.exports() {
+        for (name, symbol_id) in module_symbol.exports_map() {
           if name != "default" {
             result.push((
               specifier.clone(),
@@ -193,7 +193,7 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
       }
       ExportsToTrace::Named(names) => {
         let module_id = module_symbol.module_id();
-        let exports = module_symbol.exports().clone();
+        let exports = module_symbol.exports_map().clone();
         let re_exports = module_symbol.re_exports().clone();
         for name in names {
           if let Some(symbol_id) = exports.get(name) {

@@ -31,15 +31,48 @@ pub struct Definition<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub struct RootsGraphSymbol(HashMap<ModuleSpecifier, ModuleSymbol>);
+pub struct RootSymbol {
+  specifiers_to_ids: HashMap<ModuleSpecifier, ModuleId>,
+  ids_to_symbols: HashMap<ModuleId, ModuleSymbol>,
+}
 
-impl RootsGraphSymbol {
-  pub fn get(&self, specifier: &ModuleSpecifier) -> Option<&ModuleSymbol> {
-    self.0.get(specifier)
+impl RootSymbol {
+  pub fn get_module_from_specifier(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<&ModuleSymbol> {
+    let id = self.specifiers_to_ids.get(specifier)?;
+    self.ids_to_symbols.get(id)
   }
 
-  pub fn into_inner(self) -> HashMap<ModuleSpecifier, ModuleSymbol> {
-    self.0
+  pub fn get_module_from_id(
+    &self,
+    module_id: ModuleId,
+  ) -> Option<&ModuleSymbol> {
+    self.ids_to_symbols.get(&module_id)
+  }
+
+  pub fn into_specifier_map(self) -> IndexMap<ModuleSpecifier, ModuleSymbol> {
+    use std::collections::BTreeMap;
+
+    let ids_to_symbols =
+      self.ids_to_symbols.into_iter().collect::<BTreeMap<_, _>>();
+    let mut result = IndexMap::default();
+    for (id, symbol) in ids_to_symbols {
+      // todo: improve
+      result.insert(
+        self
+          .specifiers_to_ids
+          .iter()
+          .find(|(k, v)| **v == id)
+          .unwrap()
+          .0
+          .clone(),
+        symbol,
+      );
+    }
+
+    result
   }
 
   pub fn go_to_definitions<'a>(
@@ -61,9 +94,9 @@ impl RootsGraphSymbol {
     module_graph: &ModuleGraph,
     module: &'a ModuleSymbol,
     symbol: &'a Symbol,
-    visited_symbols: &mut HashSet<UniqueSymbol>,
+    visited_symbols: &mut HashSet<UniqueSymbolId>,
   ) -> Vec<Definition<'a>> {
-    if !visited_symbols.insert(UniqueSymbol {
+    if !visited_symbols.insert(UniqueSymbolId {
       module_id: module.module_id,
       symbol_id: symbol.symbol_id,
     }) {
@@ -106,7 +139,8 @@ impl RootsGraphSymbol {
               &module.specifier,
               /* prefer types */ true,
             ) {
-              if let Some(module_symbol) = self.0.get(&dep) {
+              if let Some(module_symbol) = self.get_module_from_specifier(&dep)
+              {
                 let maybe_symbol = module_symbol
                   .exports
                   .get(export_name)
@@ -153,7 +187,7 @@ pub struct FileDep {
   pub specifier: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct ModuleId(usize);
 
 #[derive(Default, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
@@ -225,8 +259,8 @@ impl Symbol {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct UniqueSymbol {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct UniqueSymbolId {
   pub module_id: ModuleId,
   pub symbol_id: SymbolId,
 }
@@ -242,7 +276,7 @@ pub struct ModuleSymbol {
   // note: not all symbol ids have an swc id. For example, default exports
   swc_id_to_symbol_id: IndexMap<Id, SymbolId>,
   symbols: IndexMap<SymbolId, Symbol>,
-  traced_re_exports: IndexMap<String, UniqueSymbol>,
+  traced_re_exports: IndexMap<String, UniqueSymbolId>,
 }
 
 impl std::fmt::Debug for ModuleSymbol {
@@ -281,23 +315,64 @@ impl ModuleSymbol {
       .collect()
   }
 
-  pub fn traced_re_exports(&self) -> &IndexMap<String, UniqueSymbol> {
+  pub fn traced_re_exports(&self) -> &IndexMap<String, UniqueSymbolId> {
     &self.traced_re_exports
   }
 
   pub(crate) fn add_traced_re_export(
     &mut self,
     name: String,
-    symbol: UniqueSymbol,
+    symbol: UniqueSymbolId,
   ) {
     self.traced_re_exports.insert(name, symbol);
   }
 
-  pub fn exports(&self) -> &IndexMap<String, SymbolId> {
+  pub fn exports(
+    &self,
+    module_graph: &ModuleGraph,
+    root_symbol: &RootSymbol,
+  ) -> Vec<(String, UniqueSymbolId)> {
+    let mut result = Vec::new();
+    let mut found_names = HashSet::new();
+    let module_id = self.module_id;
+    for (name, symbol_id) in self.exports_map() {
+      result.push((
+        name.clone(),
+        UniqueSymbolId {
+          module_id,
+          symbol_id: *symbol_id,
+        },
+      ));
+      found_names.insert(name.clone());
+    }
+    let re_exports = self.re_exports().clone();
+    for re_export_specifier in &re_exports {
+      let maybe_specifier = module_graph.resolve_dependency(
+        re_export_specifier,
+        &self.specifier,
+        /* prefer_types */ true,
+      );
+      if let Some(specifier) = maybe_specifier {
+        if let Some(module_symbol) =
+          root_symbol.get_module_from_specifier(&specifier)
+        {
+          let inner = module_symbol.exports(module_graph, root_symbol);
+          for (name, unique_symbol) in inner {
+            if name != "default" && found_names.insert(name.clone()) {
+              result.push((name, unique_symbol));
+            }
+          }
+        }
+      }
+    }
+    result
+  }
+
+  pub(crate) fn exports_map(&self) -> &IndexMap<String, SymbolId> {
     &self.exports
   }
 
-  pub fn re_exports(&self) -> &Vec<String> {
+  pub(crate) fn re_exports(&self) -> &Vec<String> {
     &self.re_exports
   }
 
@@ -398,8 +473,17 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
     }
   }
 
-  pub fn into_roots_graph_symbol(self) -> RootsGraphSymbol {
-    RootsGraphSymbol(self.modules)
+  pub fn into_roots_graph_symbol(self) -> RootSymbol {
+    let mut specifiers_to_ids = HashMap::with_capacity(self.modules.len());
+    let mut ids_to_symbols = HashMap::with_capacity(self.modules.len());
+    for (specifier, symbol) in self.modules {
+      specifiers_to_ids.insert(specifier, symbol.module_id);
+      ids_to_symbols.insert(symbol.module_id, symbol);
+    }
+    RootSymbol {
+      specifiers_to_ids,
+      ids_to_symbols,
+    }
   }
 
   pub fn get_or_analyze(
