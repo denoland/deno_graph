@@ -8,18 +8,20 @@ namespace Test {
 }
 
 # a.ts
-export namespace A {
+namespace A {
   export interface Other {
     prop1: string;
   }
   export interface Other {
-    prop1: string;
+    prop2: string;
   }
   export namespace Other {
     export class MyTest {
     }
   }
 }
+
+export { A };
 
 # output
 file:///mod.ts: ModuleSymbol {
@@ -208,10 +210,32 @@ file:///a.ts: ModuleSymbol {
                             0,
                         ),
                         end: SourcePos(
-                            185,
+                            178,
                         ),
                     },
                     kind: Definition,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            180,
+                        ),
+                        end: SourcePos(
+                            193,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            189,
+                        ),
+                        end: SourcePos(
+                            190,
+                        ),
+                    },
+                    kind: TargetSelf,
                 },
             },
             deps: {
@@ -233,10 +257,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            23,
+                            16,
                         ),
                         end: SourcePos(
-                            70,
+                            63,
                         ),
                     },
                     kind: Definition,
@@ -244,10 +268,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            73,
+                            66,
                         ),
                         end: SourcePos(
-                            120,
+                            113,
                         ),
                     },
                     kind: Definition,
@@ -255,10 +279,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            123,
+                            116,
                         ),
                         end: SourcePos(
-                            183,
+                            176,
                         ),
                     },
                     kind: Definition,
@@ -274,6 +298,12 @@ file:///a.ts: ModuleSymbol {
                 Id(
                     (
                         Atom('prop1' type=inline),
+                        #0,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('prop2' type=inline),
                         #0,
                     ),
                 ),
@@ -295,10 +325,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            152,
+                            145,
                         ),
                         end: SourcePos(
-                            179,
+                            172,
                         ),
                     },
                     kind: Definition,
@@ -311,15 +341,15 @@ file:///a.ts: ModuleSymbol {
     traced_re_exports: {},
 }
 == export definitions ==
-[MyExport]: file:///a.ts:23..70
+[MyExport]: file:///a.ts:16..63
   export interface Other {
       prop1: string;
     }
-file:///a.ts:73..120
+file:///a.ts:66..113
   export interface Other {
-      prop1: string;
+      prop2: string;
     }
-file:///a.ts:123..183
+file:///a.ts:116..176
   export namespace Other {
       export class MyTest {
       }
