@@ -4,7 +4,8 @@ import { A } from "./a.ts";
 export import MyExport = Test.Inner;
 
 namespace Test {
-  export import Inner = A.Other;
+  import Other = A.Other;
+  export { Other as Inner };
 }
 
 # a.ts
@@ -47,9 +48,13 @@ file:///mod.ts: ModuleSymbol {
             #2,
         ): 2,
         (
-            Atom('Inner' type=inline),
+            Atom('Other' type=inline),
             #3,
         ): 3,
+        (
+            Atom('Inner' type=inline),
+            #1,
+        ): 4,
     },
     symbols: {
         0: Symbol {
@@ -125,7 +130,7 @@ file:///mod.ts: ModuleSymbol {
                             67,
                         ),
                         end: SourcePos(
-                            118,
+                            140,
                         ),
                     },
                     kind: Definition,
@@ -133,7 +138,7 @@ file:///mod.ts: ModuleSymbol {
             },
             deps: {},
             exports: {
-                "Inner": 3,
+                "Inner": 4,
             },
         },
         3: Symbol {
@@ -146,7 +151,7 @@ file:///mod.ts: ModuleSymbol {
                             86,
                         ),
                         end: SourcePos(
-                            116,
+                            109,
                         ),
                     },
                     kind: QualifiedTarget(
@@ -159,6 +164,17 @@ file:///mod.ts: ModuleSymbol {
                         ],
                     ),
                 },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            112,
+                        ),
+                        end: SourcePos(
+                            138,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
             },
             deps: {
                 QualifiedId(
@@ -169,6 +185,43 @@ file:///mod.ts: ModuleSymbol {
                     [
                         "Other",
                     ],
+                ),
+                Id(
+                    (
+                        Atom('Inner' type=inline),
+                        #1,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            121,
+                        ),
+                        end: SourcePos(
+                            135,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            Atom('Other' type=inline),
+                            #3,
+                        ),
+                    ),
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Other' type=inline),
+                        #3,
+                    ),
                 ),
             },
             exports: {},
