@@ -451,7 +451,7 @@ file:///a.ts: ModuleSymbol {
     traced_re_exports: {},
 }
 == export definitions ==
-[ExportA]: file:///mod.ts:48..69
-  ExportA: typeof A = A
 [D]: file:///a.ts:173..198
   export type D = typeof C;
+[ExportA]: file:///mod.ts:48..69
+  ExportA: typeof A = A

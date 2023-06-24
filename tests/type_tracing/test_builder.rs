@@ -146,8 +146,10 @@ impl TestBuilder {
               results.join("\n")
             }
           };
-        for (name, (module_symbol, symbol_id)) in
-          entrypoint_symbol.exports(&graph, &root_symbol)
+        for (name, (module_symbol, symbol_id)) in entrypoint_symbol
+          .exports(&graph, &root_symbol)
+          .into_iter()
+          .collect::<BTreeMap<_, _>>()
         {
           let position = get_symbol_text(module_symbol, symbol_id);
           output_text.push_str(&format!("[{}]: {}\n", name, position));

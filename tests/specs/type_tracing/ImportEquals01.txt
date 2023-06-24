@@ -70,7 +70,7 @@ file:///mod.ts: ModuleSymbol {
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: true,
+            is_public: false,
             decls: {
                 SymbolDecl {
                     range: SourceRange {
@@ -119,4 +119,6 @@ file:///mod.ts: ModuleSymbol {
     traced_re_exports: {},
 }
 == export definitions ==
-[MyExport]: NONE
+[MyExport]: file:///mod.ts:57..81
+  export class Inner {
+    }

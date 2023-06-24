@@ -285,7 +285,7 @@ file:///b.ts: ModuleSymbol {
     traced_re_exports: {},
 }
 == export definitions ==
-[Test2]: file:///b.ts:0..17
-  export class B {}
 [Test]: file:///mod.ts:44..64
   export class Test {}
+[Test2]: file:///b.ts:0..17
+  export class B {}

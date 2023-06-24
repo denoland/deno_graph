@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
+use anyhow::Result;
 use deno_ast::SourceRange;
 
 use crate::ModuleGraph;
@@ -22,6 +23,7 @@ pub enum DefinitionKind<'a> {
   Definition,
 }
 
+#[derive(Debug)]
 pub struct Definition<'a> {
   pub kind: DefinitionKind<'a>,
   pub module: &'a ModuleSymbol,
@@ -83,8 +85,29 @@ fn go_to_definitions_internal<'a>(
         }
       }
       SymbolDeclKind::QualifiedTarget(target_id, parts) => {
-        // todo...
-        eprintln!("TODO");
+        if let Some(symbol_id) = module.symbol_id_from_swc(target_id) {
+          if let Ok(results) = resolve_qualified_name(
+            module_graph,
+            module,
+            symbol_id,
+            parts,
+            specifier_to_module,
+          ) {
+            for (specifier, symbol_id) in results {
+              if let Some(module_symbol) = specifier_to_module(&specifier) {
+                if let Some(symbol) = module_symbol.symbol(symbol_id) {
+                  definitions.extend(go_to_definitions_internal(
+                    module_graph,
+                    module_symbol,
+                    symbol,
+                    visited_symbols,
+                    specifier_to_module,
+                  ));
+                }
+              }
+            }
+          }
+        }
       }
       SymbolDeclKind::FileRef(file_ref) => match &file_ref.name {
         FileDepName::Star => {
@@ -127,13 +150,107 @@ fn go_to_definitions_internal<'a>(
   definitions
 }
 
+pub fn resolve_qualified_name<'a>(
+  graph: &ModuleGraph,
+  module_symbol: &'a ModuleSymbol,
+  symbol_id: SymbolId,
+  parts: &[String],
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<&'a ModuleSymbol>,
+) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
+  resolve_qualified_name_internal(
+    graph,
+    module_symbol,
+    symbol_id,
+    parts,
+    &mut HashSet::new(),
+    specifier_to_module,
+  )
+}
+
+fn resolve_qualified_name_internal<'a>(
+  graph: &ModuleGraph,
+  module_symbol: &'a ModuleSymbol,
+  symbol_id: SymbolId,
+  parts: &[String],
+  visited_symbols: &mut HashSet<UniqueSymbolId>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<&'a ModuleSymbol>,
+) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
+  if parts.is_empty() {
+    return Ok(vec![(module_symbol.specifier().clone(), symbol_id)]);
+  }
+
+  let mut result = Vec::new();
+  let next_part = &parts[0];
+  match module_symbol.symbol(symbol_id) {
+    Some(symbol) => {
+      let definitions = go_to_definitions_internal(
+        graph,
+        &module_symbol,
+        symbol,
+        visited_symbols,
+        specifier_to_module,
+      );
+      for definition in definitions {
+        match definition.kind {
+          DefinitionKind::Definition => {
+            if let Some(export_symbol_id) = definition.symbol.export(next_part)
+            {
+              result.extend(resolve_qualified_name_internal(
+                graph,
+                definition.module,
+                export_symbol_id,
+                &parts[1..],
+                visited_symbols,
+                specifier_to_module,
+              )?);
+            }
+          }
+          DefinitionKind::ExportStar(file_dep) => {
+            let maybe_dep_specifier = graph.resolve_dependency(
+              &file_dep.specifier,
+              module_symbol.specifier(),
+              /* prefer types */ true,
+            );
+            if let Some(specifier) = maybe_dep_specifier {
+              if let Some(module_symbol) = specifier_to_module(&specifier) {
+                let exports = exports_and_re_exports(
+                  graph,
+                  module_symbol,
+                  specifier_to_module,
+                );
+                if let Some((module, symbol_id)) = exports.get(next_part) {
+                  result.extend(resolve_qualified_name_internal(
+                    graph,
+                    module,
+                    *symbol_id,
+                    &parts[1..],
+                    visited_symbols,
+                    specifier_to_module,
+                  )?);
+                }
+              }
+            }
+          }
+        }
+      }
+      Ok(result)
+    }
+    None => {
+      if cfg!(debug_assertions) {
+        // todo: remove
+        eprintln!("Failed to find symbol for symbol id: {:?}", symbol_id);
+      }
+      Ok(Vec::new())
+    }
+  }
+}
+
 pub fn exports_and_re_exports<'a>(
   module_graph: &ModuleGraph,
   module: &'a ModuleSymbol,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<&'a ModuleSymbol>,
 ) -> HashMap<String, (&'a ModuleSymbol, SymbolId)> {
   let mut result = HashMap::new();
-  let module_id = module.module_id();
   for (name, symbol_id) in module.exports_map() {
     result.insert(name.clone(), (module, *symbol_id));
   }
