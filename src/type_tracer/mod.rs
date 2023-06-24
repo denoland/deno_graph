@@ -3,14 +3,12 @@
 use std::collections::HashSet;
 
 use anyhow::Result;
-use deno_ast::swc::ast::Id;
 use deno_ast::LineAndColumnDisplay;
 use deno_ast::ModuleSpecifier;
 use indexmap::IndexMap;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::type_tracer::cross_module::DefinitionKind;
 use crate::CapturingModuleParser;
 use crate::ModuleGraph;
 
@@ -280,7 +278,6 @@ fn trace_module<THandler: TypeTraceHandler>(
             }
           }
           SymbolDep::QualifiedId(id, parts) => {
-            eprintln!("HERE: {:?} [{}]", id, parts.join(", "));
             if let Some(symbol_id) = module_symbol.symbol_id_from_swc(id) {
               pending.extend(resolve_qualified_name(
                 context.graph,
