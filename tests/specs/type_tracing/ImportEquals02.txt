@@ -4,12 +4,12 @@ import { A } from "./a.ts";
 export import MyExport = Test.Inner;
 
 namespace Test {
-  import Other = A.Other;
-  export { Other as Inner };
+  import OtherInner = A.B.Other;
+  export { OtherInner as Inner };
 }
 
 # a.ts
-namespace A {
+namespace A.B {
   export interface Other {
     prop1: string;
   }
@@ -48,7 +48,7 @@ file:///mod.ts: ModuleSymbol {
             #2,
         ): 2,
         (
-            Atom('Other' type=inline),
+            Atom('OtherInner' type=dynamic),
             #3,
         ): 3,
         (
@@ -130,7 +130,7 @@ file:///mod.ts: ModuleSymbol {
                             67,
                         ),
                         end: SourcePos(
-                            140,
+                            152,
                         ),
                     },
                     kind: Definition,
@@ -151,7 +151,7 @@ file:///mod.ts: ModuleSymbol {
                             86,
                         ),
                         end: SourcePos(
-                            109,
+                            116,
                         ),
                     },
                     kind: QualifiedTarget(
@@ -160,6 +160,7 @@ file:///mod.ts: ModuleSymbol {
                             #2,
                         ),
                         [
+                            "B",
                             "Other",
                         ],
                     ),
@@ -167,10 +168,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            112,
+                            119,
                         ),
                         end: SourcePos(
-                            138,
+                            150,
                         ),
                     },
                     kind: TargetSelf,
@@ -183,6 +184,7 @@ file:///mod.ts: ModuleSymbol {
                         #2,
                     ),
                     [
+                        "B",
                         "Other",
                     ],
                 ),
@@ -202,15 +204,15 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            121,
+                            128,
                         ),
                         end: SourcePos(
-                            135,
+                            147,
                         ),
                     },
                     kind: Target(
                         (
-                            Atom('Other' type=inline),
+                            Atom('OtherInner' type=dynamic),
                             #3,
                         ),
                     ),
@@ -219,7 +221,7 @@ file:///mod.ts: ModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Other' type=inline),
+                        Atom('OtherInner' type=dynamic),
                         #3,
                     ),
                 ),
@@ -244,13 +246,17 @@ file:///a.ts: ModuleSymbol {
             #2,
         ): 0,
         (
-            Atom('Other' type=inline),
+            Atom('B' type=inline),
             #3,
         ): 1,
         (
+            Atom('Other' type=inline),
+            #3,
+        ): 2,
+        (
             Atom('MyTest' type=inline),
             #4,
-        ): 2,
+        ): 3,
     },
     symbols: {
         0: Symbol {
@@ -263,7 +269,7 @@ file:///a.ts: ModuleSymbol {
                             0,
                         ),
                         end: SourcePos(
-                            178,
+                            180,
                         ),
                     },
                     kind: Definition,
@@ -271,10 +277,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            180,
+                            182,
                         ),
                         end: SourcePos(
-                            193,
+                            195,
                         ),
                     },
                     kind: TargetSelf,
@@ -282,10 +288,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            189,
+                            191,
                         ),
                         end: SourcePos(
-                            190,
+                            192,
                         ),
                     },
                     kind: TargetSelf,
@@ -294,26 +300,60 @@ file:///a.ts: ModuleSymbol {
             deps: {
                 Id(
                     (
+                        Atom('B' type=inline),
+                        #3,
+                    ),
+                ),
+            },
+            exports: {
+                "B": 1,
+            },
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: false,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            12,
+                        ),
+                        end: SourcePos(
+                            180,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('A' type=inline),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
                         Atom('Other' type=inline),
                         #3,
                     ),
                 ),
             },
             exports: {
-                "Other": 1,
+                "Other": 2,
             },
         },
-        1: Symbol {
-            symbol_id: 1,
+        2: Symbol {
+            symbol_id: 2,
             is_public: true,
             decls: {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            16,
+                            18,
                         ),
                         end: SourcePos(
-                            63,
+                            65,
                         ),
                     },
                     kind: Definition,
@@ -321,10 +361,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            66,
+                            68,
                         ),
                         end: SourcePos(
-                            113,
+                            115,
                         ),
                     },
                     kind: Definition,
@@ -332,10 +372,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            116,
+                            118,
                         ),
                         end: SourcePos(
-                            176,
+                            178,
                         ),
                     },
                     kind: Definition,
@@ -368,20 +408,20 @@ file:///a.ts: ModuleSymbol {
                 ),
             },
             exports: {
-                "MyTest": 2,
+                "MyTest": 3,
             },
         },
-        2: Symbol {
-            symbol_id: 2,
+        3: Symbol {
+            symbol_id: 3,
             is_public: true,
             decls: {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            145,
+                            147,
                         ),
                         end: SourcePos(
-                            172,
+                            174,
                         ),
                     },
                     kind: Definition,
@@ -394,15 +434,15 @@ file:///a.ts: ModuleSymbol {
     traced_re_exports: {},
 }
 == export definitions ==
-[MyExport]: file:///a.ts:16..63
+[MyExport]: file:///a.ts:18..65
   export interface Other {
       prop1: string;
     }
-file:///a.ts:66..113
+file:///a.ts:68..115
   export interface Other {
       prop2: string;
     }
-file:///a.ts:116..176
+file:///a.ts:118..178
   export namespace Other {
       export class MyTest {
       }

@@ -1109,11 +1109,12 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                 range: decl.range(),
               },
             );
-            file_module
-              .symbol_mut(previous_symbol_id)
-              .unwrap()
-              .deps
-              .insert(id.clone().into());
+            let previous_symbol =
+              file_module.symbol_mut(previous_symbol_id).unwrap();
+            previous_symbol.deps.insert(id.clone().into());
+            previous_symbol
+              .exports
+              .insert(id.0.to_string(), mod_symbol_id);
             file_module
               .symbol_mut(mod_symbol_id)
               .unwrap()
