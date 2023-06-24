@@ -3,12 +3,14 @@
 use std::collections::HashSet;
 
 use anyhow::Result;
+use deno_ast::swc::ast::Id;
 use deno_ast::LineAndColumnDisplay;
 use deno_ast::ModuleSpecifier;
 use indexmap::IndexMap;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::type_tracer::cross_module::DefinitionKind;
 use crate::CapturingModuleParser;
 use crate::ModuleGraph;
 
@@ -25,6 +27,8 @@ pub use self::analyzer::SymbolId;
 pub use self::analyzer::UniqueSymbolId;
 
 mod analyzer;
+mod collections;
+mod cross_module;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum TypeTraceDiagnosticKind {
@@ -103,13 +107,6 @@ struct Context<'a, TReporter: TypeTraceHandler> {
 }
 
 impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
-  pub fn get_module_symbol(
-    &mut self,
-    specifier: &ModuleSpecifier,
-  ) -> Result<&ModuleSymbol> {
-    self.analyzer.get_or_analyze(specifier)
-  }
-
   pub fn trace_exports(
     &mut self,
     specifier: &ModuleSpecifier,
@@ -117,7 +114,7 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
   ) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
     let exports =
       self.trace_exports_inner(specifier, exports_to_trace, HashSet::new())?;
-    let module_symbol = self.analyzer.get_mut(specifier).unwrap();
+    let module_symbol = self.analyzer.get_or_analyze(specifier)?;
     for (export_specifier, module_id, name, symbol_id) in &exports {
       if specifier != export_specifier {
         module_symbol.add_traced_re_export(
@@ -144,7 +141,7 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
     visited: HashSet<ModuleSpecifier>,
   ) -> Result<Vec<(ModuleSpecifier, ModuleId, String, SymbolId)>> {
     let mut result = Vec::new();
-    let module_symbol = self.get_module_symbol(specifier)?;
+    let module_symbol = self.analyzer.get_or_analyze(specifier)?;
     if matches!(exports_to_trace, ExportsToTrace::AllWithDefault) {
       let maybe_symbol_id = module_symbol.exports_map().get("default").copied();
       if let Some(symbol_id) = maybe_symbol_id {
@@ -236,16 +233,16 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
   }
 }
 
-fn trace_module<TReporter: TypeTraceHandler>(
+fn trace_module<THandler: TypeTraceHandler>(
   specifier: &ModuleSpecifier,
-  context: &mut Context<TReporter>,
+  context: &mut Context<THandler>,
   exports_to_trace: &ExportsToTrace,
 ) -> Result<()> {
   let mut pending = context.trace_exports(specifier, exports_to_trace)?;
 
   while let Some((specifier, symbol_id)) = pending.pop() {
-    let module_symbol = context.analyzer.get_mut(&specifier).unwrap();
-    let symbol = module_symbol.symbol_mut(symbol_id).unwrap();
+    let module_symbol = context.analyzer.get_or_analyze(&specifier)?;
+    let symbol = module_symbol.symbol(symbol_id).unwrap();
     if symbol.mark_public() {
       if let Some(file_dep) = symbol.file_dep() {
         let maybe_dep_specifier = context.graph.resolve_dependency(
@@ -266,27 +263,118 @@ fn trace_module<TReporter: TypeTraceHandler>(
           }
         }
       }
-      let deps = symbol.deps().map(ToOwned::to_owned).collect::<Vec<_>>();
-      pending.extend(deps.iter().filter_map(|dep| {
-        let (specifier, id) = match dep {
-          SymbolDep::Id(id) => (specifier.clone(), id),
-          SymbolDep::QualifiedId(id, parts) => {
-            // todo: resolve this
-            todo!("resolve the parts to get the id")
-          }
-        };
-        match module_symbol.symbol_id_from_swc(id) {
-          Some(id) => Some((specifier, id)),
-          None => {
-            if cfg!(debug_assertions) {
-              //panic!("Failed to find symbol id for swc id: {:?}", id);
+      let symbol_deps =
+        symbol.deps().map(ToOwned::to_owned).collect::<Vec<_>>();
+      for dep in symbol_deps {
+        match &dep {
+          SymbolDep::Id(id) => {
+            match module_symbol.symbol_id_from_swc(id) {
+              Some(id) => pending.push((module_symbol.specifier().clone(), id)),
+              None => {
+                if cfg!(debug_assertions) {
+                  // todo: remove
+                  eprintln!("Failed to find symbol id for swc id: {:?}", id);
+                }
+              }
             }
-            None
+          }
+          SymbolDep::QualifiedId(id, parts) => {
+            if let Some(symbol_id) = module_symbol.symbol_id_from_swc(id) {
+              pending.extend(resolve_qualified_name(
+                context,
+                &module_symbol,
+                symbol_id,
+                parts,
+              )?);
+            }
           }
         }
-      }));
+      }
     }
   }
 
   Ok(())
 }
+
+fn resolve_qualified_name<THandler: TypeTraceHandler>(
+  context: &Context<THandler>,
+  module_symbol: &ModuleSymbol,
+  symbol_id: SymbolId,
+  parts: &[String],
+) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
+  if parts.is_empty() {
+    return Ok(vec![(module_symbol.specifier().clone(), symbol_id)]);
+  }
+  let mut result = Vec::new();
+  let next_part = &parts[0];
+  match module_symbol.symbol(symbol_id) {
+    Some(symbol) => {
+      let definitions = cross_module::go_to_definitions(
+        context.graph,
+        &module_symbol,
+        symbol,
+        &|specifier| context.analyzer.get_or_analyze(specifier).ok(),
+      );
+      for definition in definitions {
+        match definition.kind {
+          DefinitionKind::Definition => {
+            result.extend(resolve_qualified_name(
+              context,
+              definition.module,
+              definition.symbol.symbol_id(),
+              &parts[1..],
+            )?);
+          }
+          DefinitionKind::ExportStar(file_dep) => {
+            let maybe_dep_specifier = context.graph.resolve_dependency(
+              &file_dep.specifier,
+              module_symbol.specifier(),
+              /* prefer types */ true,
+            );
+            if let Some(specifier) = maybe_dep_specifier {
+              let module_symbol =
+                context.analyzer.get_or_analyze(&specifier)?;
+              let exports = cross_module::exports_and_re_exports(
+                context.graph,
+                module_symbol,
+                &|specifier| context.analyzer.get_or_analyze(specifier).ok(),
+              );
+              if let Some((module, symbol_id)) = exports.get(next_part) {
+                result.extend(resolve_qualified_name(
+                  context,
+                  module,
+                  *symbol_id,
+                  &parts[1..],
+                )?);
+              }
+            }
+          }
+        }
+      }
+      Ok(result)
+    }
+    None => {
+      if cfg!(debug_assertions) {
+        // todo: remove
+        eprintln!("Failed to find symbol for symbol id: {:?}", symbol_id);
+      }
+      Ok(Vec::new())
+    }
+  }
+}
+
+// fn find_export<TReporter: TypeTraceHandler>(
+//   specifier: &ModuleSpecifier,
+//   export_name: &str,
+//   context: &mut Context<'_, TReporter>,
+// ) -> Result<Option<UniqueSymbolId>> {
+//   let module_symbol = context.analyzer.get_or_analyze(&specifier)?;
+//   if let Some(symbol_id) = module_symbol.exports_map().get(export_name) {
+//     return Ok(Some(UniqueSymbolId {
+//       module_id: module_symbol.module_id(),
+//       symbol_id: *symbol_id,
+//     }));
+//   }
+//   for re_export in module_symbol.re_exports().clone() {}
+//   Ok(())
+// }

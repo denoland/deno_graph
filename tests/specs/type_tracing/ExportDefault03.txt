@@ -62,9 +62,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('Test2' type=inline),
-                    #0,
+                Id(
+                    (
+                        Atom('Test2' type=inline),
+                        #0,
+                    ),
                 ),
             },
             exports: {},
@@ -91,9 +93,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('default' type=static),
-                    #0,
+                Id(
+                    (
+                        Atom('default' type=static),
+                        #0,
+                    ),
                 ),
             },
             exports: {},
@@ -175,9 +179,11 @@ file:///a.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('default' type=static),
-                    #1,
+                Id(
+                    (
+                        Atom('default' type=static),
+                        #1,
+                    ),
                 ),
             },
             exports: {},
@@ -204,9 +210,11 @@ file:///a.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('Test' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},

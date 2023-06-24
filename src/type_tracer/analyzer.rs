@@ -1,7 +1,9 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::rc::Rc;
 
 use anyhow::Result;
 use deno_ast::swc::ast::*;
@@ -20,15 +22,12 @@ use crate::CapturingModuleParser;
 use crate::ModuleGraph;
 use crate::ModuleParser;
 
+use super::collections::AdditiveRefCellMap;
+use super::cross_module;
+use super::cross_module::Definition;
 use super::TypeTraceDiagnostic;
 use super::TypeTraceDiagnosticKind;
 use super::TypeTraceHandler;
-
-pub struct Definition<'a> {
-  pub module: &'a ModuleSymbol,
-  pub symbol: &'a Symbol,
-  pub decl: &'a SymbolDecl,
-}
 
 #[derive(Debug, Clone)]
 pub struct RootSymbol {
@@ -81,92 +80,12 @@ impl RootSymbol {
     module: &'a ModuleSymbol,
     symbol: &'a Symbol,
   ) -> Vec<Definition<'a>> {
-    self.go_to_definitions_internal(
+    super::cross_module::go_to_definitions(
       module_graph,
       module,
       symbol,
-      &mut Default::default(),
+      &|specifier| self.get_module_from_specifier(specifier),
     )
-  }
-
-  fn go_to_definitions_internal<'a>(
-    &'a self,
-    module_graph: &ModuleGraph,
-    module: &'a ModuleSymbol,
-    symbol: &'a Symbol,
-    visited_symbols: &mut HashSet<UniqueSymbolId>,
-  ) -> Vec<Definition<'a>> {
-    if !visited_symbols.insert(UniqueSymbolId {
-      module_id: module.module_id,
-      symbol_id: symbol.symbol_id,
-    }) {
-      return Vec::new();
-    }
-    let mut definitions = Vec::new();
-    for decl in &symbol.decls {
-      match &decl.kind {
-        SymbolDeclKind::Definition => {
-          definitions.push(Definition {
-            module,
-            symbol,
-            decl,
-          });
-        }
-        SymbolDeclKind::Target(target_id) => {
-          if let Some(symbol) = module
-            .symbol_id_from_swc(target_id)
-            .and_then(|id| module.symbol(id))
-          {
-            definitions.extend(self.go_to_definitions_internal(
-              module_graph,
-              module,
-              symbol,
-              visited_symbols,
-            ));
-          }
-        }
-        SymbolDeclKind::QualifiedTarget(target_id, parts) => {
-          // todo...
-          eprintln!("TODO");
-        }
-        SymbolDeclKind::FileRef(file_ref) => match &file_ref.name {
-          FileDepName::Star => {
-            definitions.push(Definition {
-              module,
-              symbol,
-              decl,
-            });
-          }
-          FileDepName::Name(export_name) => {
-            if let Some(dep) = module_graph.resolve_dependency(
-              &file_ref.specifier,
-              &module.specifier,
-              /* prefer types */ true,
-            ) {
-              if let Some(module_symbol) = self.get_module_from_specifier(&dep)
-              {
-                let maybe_symbol = module_symbol
-                  .exports
-                  .get(export_name)
-                  .and_then(|symbol_id| module_symbol.symbol(*symbol_id));
-                if let Some(export_symbol) = maybe_symbol {
-                  definitions.extend(self.go_to_definitions_internal(
-                    module_graph,
-                    module_symbol,
-                    export_symbol,
-                    visited_symbols,
-                  ));
-                }
-              }
-            }
-          }
-        },
-        SymbolDeclKind::TargetSelf => {
-          // ignore
-        }
-      }
-    }
-    definitions
   }
 }
 
@@ -231,35 +150,51 @@ impl From<Id> for SymbolDep {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Symbol {
   symbol_id: SymbolId,
-  is_public: bool,
-  decls: IndexSet<SymbolDecl>,
+  is_public: RefCell<bool>,
+  pub(super) decls: IndexSet<SymbolDecl>,
   deps: IndexSet<SymbolDep>,
   exports: IndexMap<String, SymbolId>,
+}
+
+impl std::fmt::Debug for Symbol {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_struct("Symbol")
+      .field("symbol_id", &self.symbol_id)
+      .field("is_public", &*self.is_public.borrow())
+      .field("decls", &self.decls)
+      .field("deps", &self.deps)
+      .field("exports", &self.exports)
+      .finish()
+  }
 }
 
 impl Symbol {
   pub fn new(symbol_id: SymbolId) -> Self {
     Symbol {
       symbol_id,
-      is_public: false,
+      is_public: Default::default(),
       decls: Default::default(),
       deps: Default::default(),
       exports: Default::default(),
     }
   }
 
-  pub fn is_public(&self) -> bool {
-    self.is_public
+  pub fn symbol_id(&self) -> SymbolId {
+    self.symbol_id
   }
 
-  pub(crate) fn mark_public(&mut self) -> bool {
-    if self.is_public {
+  pub fn is_public(&self) -> bool {
+    *self.is_public.borrow()
+  }
+
+  pub(crate) fn mark_public(&self) -> bool {
+    if self.is_public() {
       false
     } else {
-      self.is_public = true;
+      *self.is_public.borrow_mut() = true;
       true
     }
   }
@@ -303,7 +238,7 @@ pub struct ModuleSymbol {
   // note: not all symbol ids have an swc id. For example, default exports
   swc_id_to_symbol_id: IndexMap<Id, SymbolId>,
   symbols: IndexMap<SymbolId, Symbol>,
-  traced_re_exports: IndexMap<String, UniqueSymbolId>,
+  traced_re_exports: RefCell<IndexMap<String, UniqueSymbolId>>,
 }
 
 impl std::fmt::Debug for ModuleSymbol {
@@ -315,7 +250,7 @@ impl std::fmt::Debug for ModuleSymbol {
       .field("re_exports", &self.re_exports)
       .field("swc_id_to_symbol_id", &self.swc_id_to_symbol_id)
       .field("symbols", &self.symbols)
-      .field("traced_re_exports", &self.traced_re_exports)
+      .field("traced_re_exports", &self.traced_re_exports.borrow())
       .finish()
   }
 }
@@ -337,62 +272,27 @@ impl ModuleSymbol {
     self
       .symbols
       .values()
-      .filter(|symbol| symbol.is_public)
+      .filter(|symbol| symbol.is_public())
       .flat_map(|symbol| symbol.decls.iter().map(|d| d.range.clone()))
       .collect()
   }
 
-  pub fn traced_re_exports(&self) -> &IndexMap<String, UniqueSymbolId> {
-    &self.traced_re_exports
-  }
-
   pub(crate) fn add_traced_re_export(
-    &mut self,
+    &self,
     name: String,
     symbol: UniqueSymbolId,
   ) {
-    self.traced_re_exports.insert(name, symbol);
+    self.traced_re_exports.borrow_mut().insert(name, symbol);
   }
 
-  pub fn exports(
-    &self,
+  pub fn exports<'a>(
+    &'a self,
     module_graph: &ModuleGraph,
-    root_symbol: &RootSymbol,
-  ) -> Vec<(String, UniqueSymbolId)> {
-    let mut result = Vec::new();
-    let mut found_names = HashSet::new();
-    let module_id = self.module_id;
-    for (name, symbol_id) in self.exports_map() {
-      result.push((
-        name.clone(),
-        UniqueSymbolId {
-          module_id,
-          symbol_id: *symbol_id,
-        },
-      ));
-      found_names.insert(name.clone());
-    }
-    let re_exports = self.re_exports().clone();
-    for re_export_specifier in &re_exports {
-      let maybe_specifier = module_graph.resolve_dependency(
-        re_export_specifier,
-        &self.specifier,
-        /* prefer_types */ true,
-      );
-      if let Some(specifier) = maybe_specifier {
-        if let Some(module_symbol) =
-          root_symbol.get_module_from_specifier(&specifier)
-        {
-          let inner = module_symbol.exports(module_graph, root_symbol);
-          for (name, unique_symbol) in inner {
-            if name != "default" && found_names.insert(name.clone()) {
-              result.push((name, unique_symbol));
-            }
-          }
-        }
-      }
-    }
-    result
+    root_symbol: &'a RootSymbol,
+  ) -> HashMap<String, (&'a ModuleSymbol, SymbolId)> {
+    cross_module::exports_and_re_exports(module_graph, self, &|specifier| {
+      root_symbol.get_module_from_specifier(specifier)
+    })
   }
 
   pub(crate) fn exports_map(&self) -> &IndexMap<String, SymbolId> {
@@ -423,6 +323,11 @@ impl ModuleSymbol {
 
   pub fn symbol_id_from_swc(&self, id: &Id) -> Option<SymbolId> {
     self.swc_id_to_symbol_id.get(id).copied()
+  }
+
+  pub fn symbol_from_swc(&self, id: &Id) -> Option<&Symbol> {
+    let id = self.symbol_id_from_swc(id)?;
+    self.symbol(id)
   }
 
   pub fn symbol(&self, id: SymbolId) -> Option<&Symbol> {
@@ -483,7 +388,7 @@ pub struct TypeTraceModuleAnalyzer<'a, THandler: TypeTraceHandler> {
   graph: &'a ModuleGraph,
   parser: &'a CapturingModuleParser<'a>,
   handler: &'a THandler,
-  modules: HashMap<ModuleSpecifier, ModuleSymbol>,
+  modules: AdditiveRefCellMap<ModuleSpecifier, ModuleSymbol>,
 }
 
 impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
@@ -496,16 +401,17 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
       handler,
       parser,
       graph,
-      modules: Default::default(),
+      modules: AdditiveRefCellMap::new(),
     }
   }
 
   pub fn into_roots_graph_symbol(self) -> RootSymbol {
-    let mut specifiers_to_ids = HashMap::with_capacity(self.modules.len());
-    let mut ids_to_symbols = HashMap::with_capacity(self.modules.len());
-    for (specifier, symbol) in self.modules {
+    let modules = self.modules.take();
+    let mut specifiers_to_ids = HashMap::with_capacity(modules.len());
+    let mut ids_to_symbols = HashMap::with_capacity(modules.len());
+    for (specifier, symbol) in modules {
       specifiers_to_ids.insert(specifier, symbol.module_id);
-      ids_to_symbols.insert(symbol.module_id, symbol);
+      ids_to_symbols.insert(symbol.module_id, *symbol);
     }
     RootSymbol {
       specifiers_to_ids,
@@ -513,12 +419,12 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
     }
   }
 
-  pub fn get_or_analyze(
-    &mut self,
+  pub fn get_or_analyze<'b>(
+    &'b self,
     specifier: &ModuleSpecifier,
-  ) -> Result<&ModuleSymbol> {
-    if self.modules.contains_key(specifier) {
-      return Ok(self.modules.get(specifier).unwrap());
+  ) -> Result<&'b ModuleSymbol> {
+    if let Some(module_symbol) = self.modules.get(specifier) {
+      return Ok(module_symbol);
     }
 
     let source = self.parsed_source(specifier)?;
@@ -543,13 +449,6 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
     filler.fill_module(&mut module_symbol, module);
     self.modules.insert(specifier.clone(), module_symbol);
     Ok(self.modules.get(specifier).unwrap())
-  }
-
-  pub fn get_mut(
-    &mut self,
-    specifier: &ModuleSpecifier,
-  ) -> Option<&mut ModuleSymbol> {
-    self.modules.get_mut(specifier)
   }
 
   fn parsed_source(
@@ -1041,7 +940,10 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           let symbol_id = file_module.ensure_symbol_for_swc_id(
             id.clone(),
             SymbolDecl {
-              kind: SymbolDeclKind::QualifiedTarget(id, parts.clone()),
+              kind: SymbolDeclKind::QualifiedTarget(
+                leftmost_id.clone().unwrap(),
+                parts.clone(),
+              ),
               range: import_equals.range(),
             },
           );

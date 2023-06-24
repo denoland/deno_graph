@@ -40,9 +40,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('Test' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},

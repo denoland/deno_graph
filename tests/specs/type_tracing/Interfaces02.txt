@@ -103,25 +103,35 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('Test' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('prop1' type=inline),
-                    #0,
+                Id(
+                    (
+                        Atom('prop1' type=inline),
+                        #0,
+                    ),
                 ),
-                (
-                    Atom('Prop1' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Prop1' type=inline),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('prop2' type=inline),
-                    #0,
+                Id(
+                    (
+                        Atom('prop2' type=inline),
+                        #0,
+                    ),
                 ),
-                (
-                    Atom('Prop2' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Prop2' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -143,9 +153,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('Prop1' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Prop1' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -167,9 +179,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('Prop2' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Prop2' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -254,21 +268,29 @@ file:///a.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('A1' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('A1' type=inline),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('prop1' type=inline),
-                    #0,
+                Id(
+                    (
+                        Atom('prop1' type=inline),
+                        #0,
+                    ),
                 ),
-                (
-                    Atom('prop2' type=inline),
-                    #0,
+                Id(
+                    (
+                        Atom('prop2' type=inline),
+                        #0,
+                    ),
                 ),
-                (
-                    Atom('Prop2' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Prop2' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -290,9 +312,11 @@ file:///a.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('Prop2' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Prop2' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},

@@ -46,39 +46,50 @@ file:///mod.ts: ModuleSymbol {
                     },
                     kind: QualifiedTarget(
                         (
-                            Atom('MyExport' type=dynamic),
+                            Atom('Test' type=inline),
                             #2,
                         ),
                         [
-                            "Test",
                             "Inner",
                         ],
                     ),
                 },
             },
-            deps: {},
+            deps: {
+                QualifiedId(
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                    [
+                        "Inner",
+                    ],
+                ),
+            },
             exports: {},
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: false,
+            is_public: true,
             decls: {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            40,
+                            38,
                         ),
                         end: SourcePos(
-                            88,
+                            83,
                         ),
                     },
                     kind: Definition,
                 },
             },
             deps: {
-                (
-                    Atom('Inner' type=inline),
-                    #3,
+                Id(
+                    (
+                        Atom('Inner' type=inline),
+                        #3,
+                    ),
                 ),
             },
             exports: {
@@ -87,15 +98,15 @@ file:///mod.ts: ModuleSymbol {
         },
         2: Symbol {
             symbol_id: 2,
-            is_public: false,
+            is_public: true,
             decls: {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            60,
+                            57,
                         ),
                         end: SourcePos(
-                            85,
+                            81,
                         ),
                     },
                     kind: Definition,

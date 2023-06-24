@@ -177,9 +177,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('A' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('A' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -201,9 +203,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('B' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('B' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -267,13 +271,17 @@ file:///a.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('AInner' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('AInner' type=inline),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('prop' type=inline),
-                    #0,
+                Id(
+                    (
+                        Atom('prop' type=inline),
+                        #0,
+                    ),
                 ),
             },
             exports: {},
@@ -295,13 +303,17 @@ file:///a.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('AInnerUnused' type=dynamic),
-                    #2,
+                Id(
+                    (
+                        Atom('AInnerUnused' type=dynamic),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('prop2' type=inline),
-                    #0,
+                Id(
+                    (
+                        Atom('prop2' type=inline),
+                        #0,
+                    ),
                 ),
             },
             exports: {},
@@ -323,9 +335,11 @@ file:///a.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('AInner' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('AInner' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -347,9 +361,11 @@ file:///a.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('B' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('B' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -371,9 +387,11 @@ file:///a.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('C' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('C' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -414,13 +432,17 @@ file:///a.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('D' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('D' type=inline),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('C' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('C' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},

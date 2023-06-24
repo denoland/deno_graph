@@ -81,9 +81,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('A' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('A' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -105,45 +107,65 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('Main' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Main' type=inline),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('Extends' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Extends' type=inline),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('prop' type=inline),
-                    #0,
+                Id(
+                    (
+                        Atom('prop' type=inline),
+                        #0,
+                    ),
                 ),
-                (
-                    Atom('Prop' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Prop' type=inline),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('method' type=inline),
-                    #0,
+                Id(
+                    (
+                        Atom('method' type=inline),
+                        #0,
+                    ),
                 ),
-                (
-                    Atom('method' type=inline),
-                    #1,
+                Id(
+                    (
+                        Atom('method' type=inline),
+                        #1,
+                    ),
                 ),
-                (
-                    Atom('Param' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Param' type=inline),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('Return' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Return' type=inline),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('key' type=static),
-                    #1,
+                Id(
+                    (
+                        Atom('key' type=static),
+                        #1,
+                    ),
                 ),
-                (
-                    Atom('SignatureValueType' type=dynamic),
-                    #2,
+                Id(
+                    (
+                        Atom('SignatureValueType' type=dynamic),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -165,9 +187,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('Extends' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Extends' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -189,9 +213,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('Prop' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Prop' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -213,9 +239,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('Param' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Param' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -237,9 +265,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('Return' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Return' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -261,17 +291,23 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('SignatureValueType' type=dynamic),
-                    #2,
+                Id(
+                    (
+                        Atom('SignatureValueType' type=dynamic),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('other' type=inline),
-                    #0,
+                Id(
+                    (
+                        Atom('other' type=inline),
+                        #0,
+                    ),
                 ),
-                (
-                    Atom('B' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('B' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -293,9 +329,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('B' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('B' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},

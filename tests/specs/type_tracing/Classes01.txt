@@ -131,9 +131,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('B' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('B' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -174,9 +176,11 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('IBase' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('IBase' type=inline),
+                        #2,
+                    ),
                 ),
             },
             exports: {},
@@ -198,33 +202,47 @@ file:///mod.ts: ModuleSymbol {
                 },
             },
             deps: {
-                (
-                    Atom('BBase' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('BBase' type=inline),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('IBase' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('IBase' type=inline),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('PropValue' type=dynamic),
-                    #2,
+                Id(
+                    (
+                        Atom('PropValue' type=dynamic),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('ReturnValue' type=dynamic),
-                    #2,
+                Id(
+                    (
+                        Atom('ReturnValue' type=dynamic),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('Param' type=inline),
-                    #2,
+                Id(
+                    (
+                        Atom('Param' type=inline),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('OverloadParam' type=dynamic),
-                    #2,
+                Id(
+                    (
+                        Atom('OverloadParam' type=dynamic),
+                        #2,
+                    ),
                 ),
-                (
-                    Atom('OverloadReturn' type=dynamic),
-                    #2,
+                Id(
+                    (
+                        Atom('OverloadReturn' type=dynamic),
+                        #2,
+                    ),
                 ),
             },
             exports: {},

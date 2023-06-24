@@ -5,6 +5,7 @@ use anyhow::Result;
 use deno_ast::ModuleSpecifier;
 use deno_ast::SourceRanged;
 use deno_graph::type_tracer::trace_public_types;
+use deno_graph::type_tracer::ModuleSymbol;
 use deno_graph::type_tracer::RootSymbol;
 use deno_graph::type_tracer::SymbolId;
 use deno_graph::type_tracer::TypeTraceDiagnostic;
@@ -101,56 +102,54 @@ impl TestBuilder {
           output_text.push_str(&format!("{}: {:#?}\n", k.as_str(), v));
         }
         output_text.push_str("== export definitions ==\n");
-        let get_symbol_text = |symbol_id: UniqueSymbolId| {
-          let module_symbol =
-            root_symbol.get_module_from_id(symbol_id.module_id).unwrap();
-          let symbol = module_symbol.symbol(symbol_id.symbol_id).unwrap();
-          let definitions =
-            root_symbol.go_to_definitions(&graph, module_symbol, symbol);
-          if definitions.is_empty() {
-            format!("NONE")
-          } else {
-            let mut results = Vec::new();
-            for definition in definitions {
-              let decl_text = {
-                let decl_text = definition
-                  .decl
-                  .range
-                  .text_fast(definition.module.source().text_info());
-                let lines = decl_text.split('\n').collect::<Vec<_>>();
-                if lines.len() > 4 {
-                  lines[0..2]
-                    .into_iter()
-                    .chain(std::iter::once(&"..."))
-                    .chain(&lines[lines.len() - 2..])
-                    .map(|l| *l)
-                    .collect::<Vec<_>>()
-                } else {
-                  lines
-                }
-                .into_iter()
-                .map(|line| format!("  {}", line).trim_end().to_string())
-                .collect::<Vec<_>>()
-                .join("\n")
-              };
-              let range = definition.decl.range.as_byte_range(
-                definition.module.source().text_info().range().start,
-              );
-              results.push(format!(
-                "{}:{}..{}\n{}",
-                definition.module.specifier(),
-                range.start,
-                range.end,
-                decl_text
-              ));
+        let get_symbol_text =
+          |module_symbol: &ModuleSymbol, symbol_id: SymbolId| {
+            let symbol = module_symbol.symbol(symbol_id).unwrap();
+            let definitions =
+              root_symbol.go_to_definitions(&graph, module_symbol, symbol);
+            if definitions.is_empty() {
+              format!("NONE")
+            } else {
+              let mut results = Vec::new();
+              for definition in definitions {
+                let decl_text = {
+                  let decl_text = definition
+                    .range
+                    .text_fast(definition.module.source().text_info());
+                  let lines = decl_text.split('\n').collect::<Vec<_>>();
+                  if lines.len() > 4 {
+                    lines[0..2]
+                      .into_iter()
+                      .chain(std::iter::once(&"..."))
+                      .chain(&lines[lines.len() - 2..])
+                      .map(|l| *l)
+                      .collect::<Vec<_>>()
+                  } else {
+                    lines
+                  }
+                  .into_iter()
+                  .map(|line| format!("  {}", line).trim_end().to_string())
+                  .collect::<Vec<_>>()
+                  .join("\n")
+                };
+                let range = definition.range.as_byte_range(
+                  definition.module.source().text_info().range().start,
+                );
+                results.push(format!(
+                  "{}:{}..{}\n{}",
+                  definition.module.specifier(),
+                  range.start,
+                  range.end,
+                  decl_text
+                ));
+              }
+              results.join("\n")
             }
-            results.join("\n")
-          }
-        };
-        for (name, unique_symbol_id) in
+          };
+        for (name, (module_symbol, symbol_id)) in
           entrypoint_symbol.exports(&graph, &root_symbol)
         {
-          let position = get_symbol_text(unique_symbol_id);
+          let position = get_symbol_text(module_symbol, symbol_id);
           output_text.push_str(&format!("[{}]: {}\n", name, position));
         }
         output_text
