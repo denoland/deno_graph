@@ -219,12 +219,24 @@ pub struct SymbolDecl {
   pub kind: SymbolDeclKind,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum SymbolDep {
+  Id(Id),
+  QualifiedId(Id, Vec<String>),
+}
+
+impl From<Id> for SymbolDep {
+  fn from(value: Id) -> Self {
+    Self::Id(value)
+  }
+}
+
 #[derive(Debug, Clone)]
 pub struct Symbol {
   symbol_id: SymbolId,
   is_public: bool,
   decls: IndexSet<SymbolDecl>,
-  deps: IndexSet<Id>,
+  deps: IndexSet<SymbolDep>,
   exports: IndexMap<String, SymbolId>,
 }
 
@@ -260,7 +272,7 @@ impl Symbol {
     self.exports.get(name).copied()
   }
 
-  pub fn swc_dep_ids(&self) -> impl Iterator<Item = &Id> {
+  pub fn deps(&self) -> impl Iterator<Item = &SymbolDep> {
     self.deps.iter()
   }
 
@@ -841,7 +853,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                               },
                             },
                           );
-                          orig_symbol.deps.insert(export_ident.to_id());
+                          orig_symbol.deps.insert(export_ident.to_id().into());
 
                           let export_id = file_module.add_export(
                             export_ident.to_id(),
@@ -854,7 +866,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                             .symbol_mut(export_id)
                             .unwrap()
                             .deps
-                            .insert(orig_ident.to_id());
+                            .insert(orig_ident.to_id().into());
                         }
                         ModuleExportName::Str(_) => todo!(),
                       }
@@ -948,7 +960,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               .symbol_mut(default_export_symbol_id)
               .unwrap()
               .deps
-              .insert(id);
+              .insert(id.into());
             symbol_id
           } else {
             default_export_symbol_id
@@ -983,7 +995,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               .symbol_mut(default_export_symbol_id)
               .unwrap()
               .deps
-              .insert(ident.to_id());
+              .insert(ident.to_id().into());
           }
           _ => {
             let line_and_column = self
@@ -1002,7 +1014,8 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
         }
         ModuleDecl::TsImportEquals(import_equals) => {
           let id = import_equals.id.to_id();
-          let mut parts = {
+          let mut leftmost_id = None;
+          let parts = {
             match &import_equals.module_ref {
               TsModuleRef::TsEntityName(entity_name) => {
                 let mut entity_name = entity_name;
@@ -1014,7 +1027,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                       entity_name = &qualified_name.left;
                     }
                     TsEntityName::Ident(ident) => {
-                      parts.push(ident.sym.to_string());
+                      leftmost_id = Some(ident.to_id());
                       break;
                     }
                   }
@@ -1028,7 +1041,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           let symbol_id = file_module.ensure_symbol_for_swc_id(
             id.clone(),
             SymbolDecl {
-              kind: SymbolDeclKind::QualifiedTarget(id, parts),
+              kind: SymbolDeclKind::QualifiedTarget(id, parts.clone()),
               range: import_equals.range(),
             },
           );
@@ -1037,6 +1050,10 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               .exports
               .insert(import_equals.id.sym.to_string(), symbol_id);
           }
+          let symbol = file_module.symbol_mut(symbol_id).unwrap();
+          symbol
+            .deps
+            .insert(SymbolDep::QualifiedId(leftmost_id.unwrap(), parts));
         }
         ModuleDecl::TsExportAssignment(_) => todo!("export assignment"),
         ModuleDecl::TsNamespaceExport(_) => todo!("namespace export"),
@@ -1245,12 +1262,12 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               .symbol_mut(previous_symbol_id)
               .unwrap()
               .deps
-              .insert(id.clone());
+              .insert(id.clone().into());
             file_module
               .symbol_mut(mod_symbol_id)
               .unwrap()
               .deps
-              .insert(previous_id);
+              .insert(previous_id.into());
             current = &decl.body;
           }
         }
@@ -1290,7 +1307,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                   },
                 );
                 let mod_symbol = file_module.symbol_mut(mod_symbol_id).unwrap();
-                mod_symbol.deps.insert(id);
+                mod_symbol.deps.insert(id.into());
                 mod_symbol
                   .exports
                   .insert(n.ident.sym.to_string(), def_symbol_id);
@@ -1305,7 +1322,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                   },
                 );
                 let mod_symbol = file_module.symbol_mut(mod_symbol_id).unwrap();
-                mod_symbol.deps.insert(n.ident.to_id());
+                mod_symbol.deps.insert(n.ident.to_id().into());
                 mod_symbol
                   .exports
                   .insert(n.ident.sym.to_string(), def_symbol_id);
@@ -1323,7 +1340,11 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                     );
                     let mod_symbol =
                       file_module.symbol_mut(mod_symbol_id).unwrap();
-                    mod_symbol.deps.extend(find_pat_ids(&decl.name));
+                    mod_symbol.deps.extend(
+                      find_pat_ids(&decl.name)
+                        .into_iter()
+                        .map(|i: Id| i.into()),
+                    );
                     mod_symbol.exports.insert(id.0.to_string(), def_symbol_id);
                   }
                 }
@@ -1338,7 +1359,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                   },
                 );
                 let mod_symbol = file_module.symbol_mut(mod_symbol_id).unwrap();
-                mod_symbol.deps.insert(id);
+                mod_symbol.deps.insert(id.into());
                 mod_symbol
                   .exports
                   .insert(n.id.sym.to_string(), def_symbol_id);
@@ -1353,7 +1374,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                   },
                 );
                 let mod_symbol = file_module.symbol_mut(mod_symbol_id).unwrap();
-                mod_symbol.deps.insert(id);
+                mod_symbol.deps.insert(id.into());
                 mod_symbol
                   .exports
                   .insert(n.id.sym.to_string(), def_symbol_id);
@@ -1368,7 +1389,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                   },
                 );
                 let mod_symbol = file_module.symbol_mut(mod_symbol_id).unwrap();
-                mod_symbol.deps.insert(id);
+                mod_symbol.deps.insert(id.into());
                 mod_symbol
                   .exports
                   .insert(n.id.sym.to_string(), def_symbol_id);
@@ -1385,7 +1406,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                   );
                   let mod_symbol =
                     file_module.symbol_mut(mod_symbol_id).unwrap();
-                  mod_symbol.deps.insert(id);
+                  mod_symbol.deps.insert(id.into());
                   mod_symbol
                     .exports
                     .insert(ident.sym.to_string(), def_symbol_id);
@@ -1646,7 +1667,7 @@ struct SymbolFillVisitor<'a> {
 impl<'a> Visit for SymbolFillVisitor<'a> {
   fn visit_ident(&mut self, n: &Ident) {
     let id = n.to_id();
-    self.symbol.deps.insert(id);
+    self.symbol.deps.insert(id.into());
   }
 
   fn visit_ts_import_type(&mut self, _n: &TsImportType) {

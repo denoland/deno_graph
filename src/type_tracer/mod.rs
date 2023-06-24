@@ -12,6 +12,7 @@ use serde::Serialize;
 use crate::CapturingModuleParser;
 use crate::ModuleGraph;
 
+use self::analyzer::SymbolDep;
 use self::analyzer::TypeTraceModuleAnalyzer;
 
 pub use self::analyzer::FileDep;
@@ -265,13 +266,17 @@ fn trace_module<TReporter: TypeTraceHandler>(
           }
         }
       }
-      let ids = symbol
-        .swc_dep_ids()
-        .map(ToOwned::to_owned)
-        .collect::<Vec<_>>();
-      pending.extend(ids.iter().filter_map(|id| {
+      let deps = symbol.deps().map(ToOwned::to_owned).collect::<Vec<_>>();
+      pending.extend(deps.iter().filter_map(|dep| {
+        let (specifier, id) = match dep {
+          SymbolDep::Id(id) => (specifier.clone(), id),
+          SymbolDep::QualifiedId(id, parts) => {
+            // todo: resolve this
+            todo!("resolve the parts to get the id")
+          }
+        };
         match module_symbol.symbol_id_from_swc(id) {
-          Some(id) => Some((specifier.clone(), id)),
+          Some(id) => Some((specifier, id)),
           None => {
             if cfg!(debug_assertions) {
               //panic!("Failed to find symbol id for swc id: {:?}", id);
