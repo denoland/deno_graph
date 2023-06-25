@@ -19,23 +19,19 @@ file:///mod.ts: ModuleSymbol {
     ),
     specifier: "file:///mod.ts",
     exports: {
-        "Test2": 1,
-        "Test": 2,
+        "Test2": 0,
+        "Test": 1,
     },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('default' type=static),
+            Atom('Test2' type=inline),
             #0,
         ): 0,
         (
-            Atom('Test2' type=inline),
-            #0,
-        ): 1,
-        (
             Atom('Test' type=inline),
             #2,
-        ): 2,
+        ): 1,
     },
     symbols: {
         0: Symbol {
@@ -61,49 +57,11 @@ file:///mod.ts: ModuleSymbol {
                     ),
                 },
             },
-            deps: {
-                Id(
-                    (
-                        Atom('Test2' type=inline),
-                        #0,
-                    ),
-                ),
-            },
+            deps: {},
             exports: {},
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: true,
-            decls: {
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            25,
-                        ),
-                    },
-                    kind: Target(
-                        (
-                            Atom('default' type=static),
-                            #0,
-                        ),
-                    ),
-                },
-            },
-            deps: {
-                Id(
-                    (
-                        Atom('default' type=static),
-                        #0,
-                    ),
-                ),
-            },
-            exports: {},
-        },
-        2: Symbol {
-            symbol_id: 2,
             is_public: true,
             decls: {
                 SymbolDecl {

@@ -6,14 +6,14 @@ use std::collections::HashMap;
 /// A hash map that supports inserting data while holding references to
 /// the underlying data at another key. Due to this property, the values
 /// in the hashmap can never be replaced or removed. Inserting data at a
-/// previously key will cause a panic.
-pub struct AdditiveRefCellMap<K, V> {
+/// previously inserted to key will cause a panic.
+pub struct AdditiveOnlyMap<K, V> {
   // store the values in a box to ensure the references are always stored
   // in the same place
   data: RefCell<HashMap<K, Box<V>>>,
 }
 
-impl<K, V> AdditiveRefCellMap<K, V> {
+impl<K, V> AdditiveOnlyMap<K, V> {
   pub fn new() -> Self {
     Self {
       data: Default::default(),
@@ -35,7 +35,7 @@ impl<K, V> AdditiveRefCellMap<K, V> {
   }
 }
 
-impl<K: Eq + std::hash::Hash, V> AdditiveRefCellMap<K, V> {
+impl<K: Eq + std::hash::Hash, V> AdditiveOnlyMap<K, V> {
   pub fn insert(&self, key: K, value: V) {
     // assert that we never replace any data
     assert!(self
@@ -67,8 +67,7 @@ mod test {
       value: usize,
     }
 
-    let map: AdditiveRefCellMap<usize, Value> =
-      AdditiveRefCellMap::with_capacity(2);
+    let map: AdditiveOnlyMap<usize, Value> = AdditiveOnlyMap::with_capacity(2);
     map.insert(0, Value { value: 987 });
     let data = map.get(&0).unwrap();
     for i in 1..100 {
