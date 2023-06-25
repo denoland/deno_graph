@@ -57,10 +57,12 @@ pub fn trace_public_types<'a, THandler: TypeTraceHandler>(
   let mut context = Context {
     graph,
     analyzer: TypeTraceModuleAnalyzer::new(graph, parser, handler),
-    pending_traces: roots
-      .iter()
-      .map(|r| (r.clone(), ExportsToTrace::AllWithDefault))
-      .collect(),
+    pending_traces: PendingTraces(
+      roots
+        .iter()
+        .map(|r| (r.clone(), ExportsToTrace::AllWithDefault))
+        .collect(),
+    ),
   };
   while let Some((specifier, exports_to_trace)) = context.pending_traces.pop() {
     trace_module(&specifier, &mut context, &exports_to_trace)?;
@@ -84,26 +86,50 @@ impl ExportsToTrace {
     }
   }
 
-  pub fn add(&mut self, name: &FileDepName) {
-    match name {
-      FileDepName::Star => {
+  pub fn add(&mut self, exports_to_trace: ExportsToTrace) {
+    match exports_to_trace {
+      ExportsToTrace::AllWithDefault => {
+        *self = Self::AllWithDefault;
+      }
+      ExportsToTrace::Star => {
         if !matches!(self, Self::Star | Self::AllWithDefault) {
           *self = Self::Star;
         }
       }
-      FileDepName::Name(name) => {
+      ExportsToTrace::Named(new_names) => {
         if let Self::Named(names) = self {
-          names.push(name.to_string());
+          names.extend(new_names);
         }
       }
     }
   }
 }
 
+#[derive(Default)]
+struct PendingTraces(IndexMap<ModuleSpecifier, ExportsToTrace>);
+
+impl PendingTraces {
+  pub fn add(
+    &mut self,
+    dep_specifier: ModuleSpecifier,
+    exports_to_trace: ExportsToTrace,
+  ) {
+    if let Some(current_exports_to_trace) = self.0.get_mut(&dep_specifier) {
+      current_exports_to_trace.add(exports_to_trace);
+    } else {
+      self.0.insert(dep_specifier, exports_to_trace);
+    }
+  }
+
+  pub fn pop(&mut self) -> Option<(ModuleSpecifier, ExportsToTrace)> {
+    self.0.pop()
+  }
+}
+
 struct Context<'a, TReporter: TypeTraceHandler> {
   graph: &'a ModuleGraph,
   analyzer: TypeTraceModuleAnalyzer<'a, TReporter>,
-  pending_traces: IndexMap<ModuleSpecifier, ExportsToTrace>,
+  pending_traces: PendingTraces,
 }
 
 impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
@@ -251,16 +277,10 @@ fn trace_module<THandler: TypeTraceHandler>(
           /* prefer types */ true,
         );
         if let Some(dep_specifier) = maybe_dep_specifier {
-          if let Some(exports_to_trace) =
-            context.pending_traces.get_mut(&dep_specifier)
-          {
-            exports_to_trace.add(&file_dep.name);
-          } else {
-            context.pending_traces.insert(
-              dep_specifier,
-              ExportsToTrace::from_file_dep_name(&file_dep.name),
-            );
-          }
+          context.pending_traces.add(
+            dep_specifier,
+            ExportsToTrace::from_file_dep_name(&file_dep.name),
+          );
         }
       }
       let symbol_deps =
@@ -299,7 +319,10 @@ fn trace_module<THandler: TypeTraceHandler>(
               let module_symbol =
                 context.analyzer.get_or_analyze(&dep_specifier)?;
               if parts.is_empty() {
-                todo!("empty import equals");
+                // an ImportType includes default exports
+                context
+                  .pending_traces
+                  .add(dep_specifier, ExportsToTrace::AllWithDefault);
               } else {
                 pending.extend(resolve_qualified_export_name(
                   context.graph,

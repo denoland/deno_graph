@@ -24,6 +24,7 @@ use crate::ModuleParser;
 use super::collections::AdditiveOnlyMap;
 use super::cross_module;
 use super::cross_module::Definition;
+use super::ExportsToTrace;
 use super::TypeTraceDiagnostic;
 use super::TypeTraceDiagnosticKind;
 use super::TypeTraceHandler;
