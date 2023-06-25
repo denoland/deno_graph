@@ -1197,7 +1197,6 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               }
               Decl::Var(n) => {
                 for decl in &n.decls {
-                  // todo: get pat ids
                   for id in find_pat_ids::<_, Id>(&decl.name) {
                     let def_symbol_id = file_module.ensure_symbol_for_swc_id(
                       id.clone(),
@@ -1555,27 +1554,37 @@ impl<'a> Visit for SymbolFillVisitor<'a> {
     n.type_args.visit_with(self);
   }
 
-  fn visit_ts_qualified_name(&mut self, _n: &TsQualifiedName) {
-    // todo!("qualified name");
+  fn visit_ts_qualified_name(&mut self, n: &TsQualifiedName) {
+    let (id, parts) = ts_qualified_name_parts(n);
+    self.symbol.deps.insert(SymbolDep::QualifiedId(id, parts));
   }
 }
 
 fn ts_entity_name_to_parts(entity_name: &TsEntityName) -> (Id, Vec<String>) {
-  let mut entity_name = entity_name;
+  match entity_name {
+    TsEntityName::TsQualifiedName(qualified_name) => {
+      ts_qualified_name_parts(qualified_name)
+    }
+    TsEntityName::Ident(ident) => (ident.to_id(), Vec::new()),
+  }
+}
+
+fn ts_qualified_name_parts(
+  mut qualified_name: &TsQualifiedName,
+) -> (Id, Vec<String>) {
   let mut parts = Vec::new();
-  let leftmost_id = loop {
-    match entity_name {
-      TsEntityName::TsQualifiedName(qualified_name) => {
-        parts.push(qualified_name.right.sym.to_string());
-        entity_name = &qualified_name.left;
+  loop {
+    parts.push(qualified_name.right.sym.to_string());
+    match &qualified_name.left {
+      TsEntityName::TsQualifiedName(n) => {
+        qualified_name = n;
       }
-      TsEntityName::Ident(ident) => {
-        break Some(ident.to_id());
+      TsEntityName::Ident(n) => {
+        parts.reverse();
+        return (n.to_id(), parts);
       }
     }
-  };
-  parts.reverse();
-  (leftmost_id.unwrap(), parts)
+  }
 }
 
 fn has_internal_jsdoc(source: &ParsedSource, pos: SourcePos) -> bool {
