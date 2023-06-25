@@ -141,6 +141,7 @@ pub struct SymbolDecl {
 pub enum SymbolDep {
   Id(Id),
   QualifiedId(Id, Vec<String>),
+  ImportType(String, Vec<String>),
 }
 
 impl From<Id> for SymbolDep {
@@ -1017,31 +1018,12 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
     &self,
     import_equals: &TsImportEqualsDecl,
   ) -> (Id, Vec<String>) {
-    let mut leftmost_id = None;
-    let parts = {
-      match &import_equals.module_ref {
-        TsModuleRef::TsEntityName(entity_name) => {
-          let mut entity_name = entity_name;
-          let mut parts = Vec::new();
-          loop {
-            match entity_name {
-              TsEntityName::TsQualifiedName(qualified_name) => {
-                parts.push(qualified_name.right.sym.to_string());
-                entity_name = &qualified_name.left;
-              }
-              TsEntityName::Ident(ident) => {
-                leftmost_id = Some(ident.to_id());
-                break;
-              }
-            }
-          }
-          parts.reverse();
-          parts
-        }
-        TsModuleRef::TsExternalModuleRef(_) => todo!("module reference"),
+    match &import_equals.module_ref {
+      TsModuleRef::TsEntityName(entity_name) => {
+        ts_entity_name_to_parts(entity_name)
       }
-    };
-    (leftmost_id.unwrap(), parts)
+      TsModuleRef::TsExternalModuleRef(_) => todo!("module reference"),
+    }
   }
 
   fn fill_class_decl(&self, symbol: &mut Symbol, n: &ClassDecl) {
@@ -1556,14 +1538,43 @@ impl<'a> Visit for SymbolFillVisitor<'a> {
     self.symbol.deps.insert(id.into());
   }
 
-  fn visit_ts_import_type(&mut self, _n: &TsImportType) {
-    // probably need to have another map for these
-    todo!("import type");
+  fn visit_ts_import_type(&mut self, n: &TsImportType) {
+    let parts = match &n.qualifier {
+      Some(qualifier) => {
+        let (leftmost_id, mut parts) = ts_entity_name_to_parts(qualifier);
+        parts.insert(0, leftmost_id.0.to_string());
+        parts
+      }
+      None => Vec::new(),
+    };
+    self
+      .symbol
+      .deps
+      .insert(SymbolDep::ImportType(n.arg.value.to_string(), parts));
+    n.type_args.visit_with(self);
   }
 
   fn visit_ts_qualified_name(&mut self, _n: &TsQualifiedName) {
     // todo!("qualified name");
   }
+}
+
+fn ts_entity_name_to_parts(entity_name: &TsEntityName) -> (Id, Vec<String>) {
+  let mut entity_name = entity_name;
+  let mut parts = Vec::new();
+  let leftmost_id = loop {
+    match entity_name {
+      TsEntityName::TsQualifiedName(qualified_name) => {
+        parts.push(qualified_name.right.sym.to_string());
+        entity_name = &qualified_name.left;
+      }
+      TsEntityName::Ident(ident) => {
+        break Some(ident.to_id());
+      }
+    }
+  };
+  parts.reverse();
+  (leftmost_id.unwrap(), parts)
 }
 
 fn has_internal_jsdoc(source: &ParsedSource, pos: SourcePos) -> bool {

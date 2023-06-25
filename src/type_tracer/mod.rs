@@ -9,6 +9,7 @@ use indexmap::IndexMap;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::type_tracer::cross_module::resolve_qualified_export_name;
 use crate::CapturingModuleParser;
 use crate::ModuleGraph;
 
@@ -286,6 +287,28 @@ fn trace_module<THandler: TypeTraceHandler>(
                 parts,
                 &|specifier| context.analyzer.get_or_analyze(specifier).ok(),
               )?);
+            }
+          }
+          SymbolDep::ImportType(import_specifier, parts) => {
+            let maybe_dep_specifier = context.graph.resolve_dependency(
+              &import_specifier,
+              &specifier,
+              /* prefer types */ true,
+            );
+            if let Some(dep_specifier) = maybe_dep_specifier {
+              let module_symbol =
+                context.analyzer.get_or_analyze(&dep_specifier)?;
+              if parts.is_empty() {
+                todo!("empty import equals");
+              } else {
+                pending.extend(resolve_qualified_export_name(
+                  context.graph,
+                  module_symbol,
+                  &parts[0],
+                  &parts[1..],
+                  &|specifier| context.analyzer.get_or_analyze(specifier).ok(),
+                )?);
+              }
             }
           }
         }
