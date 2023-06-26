@@ -1,5 +1,9 @@
 # mod.ts
-export default Test; class Test {}
+function test() {
+}
+
+// this will be treated as an export default
+export = test;
 
 # output
 file:///mod.ts: ModuleSymbol {
@@ -8,14 +12,14 @@ file:///mod.ts: ModuleSymbol {
     ),
     specifier: "file:///mod.ts",
     exports: {
-        "default": 0,
+        "default": 1,
     },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('Test' type=inline),
+            Atom('test' type=inline),
             #2,
-        ): 1,
+        ): 0,
     },
     symbols: {
         0: Symbol {
@@ -25,28 +29,32 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            15,
+                            0,
                         ),
                         end: SourcePos(
                             19,
                         ),
                     },
+                    kind: Definition,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            75,
+                        ),
+                        end: SourcePos(
+                            79,
+                        ),
+                    },
                     kind: Target(
                         (
-                            Atom('Test' type=inline),
+                            Atom('test' type=inline),
                             #2,
                         ),
                     ),
                 },
             },
-            deps: {
-                Id(
-                    (
-                        Atom('Test' type=inline),
-                        #2,
-                    ),
-                ),
-            },
+            deps: {},
             exports: {},
         },
         1: Symbol {
@@ -56,37 +64,34 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            15,
+                            75,
                         ),
                         end: SourcePos(
-                            19,
+                            79,
                         ),
                     },
                     kind: Target(
                         (
-                            Atom('Test' type=inline),
+                            Atom('test' type=inline),
                             #2,
                         ),
                     ),
                 },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            21,
-                        ),
-                        end: SourcePos(
-                            34,
-                        ),
-                    },
-                    kind: Definition,
-                },
             },
-            deps: {},
+            deps: {
+                Id(
+                    (
+                        Atom('test' type=inline),
+                        #2,
+                    ),
+                ),
+            },
             exports: {},
         },
     },
     traced_re_exports: {},
 }
 == export definitions ==
-[default]: file:///mod.ts:21..34
-  class Test {}
+[default]: file:///mod.ts:0..19
+  function test() {
+  }

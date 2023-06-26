@@ -782,7 +782,10 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                   .symbol_id;
                 add_export(file_module, name.sym.to_string(), symbol_id);
               }
-              ExportSpecifier::Default(_) => todo!("export default specifier"),
+              // https://github.com/tc39/proposal-export-default-from
+              ExportSpecifier::Default(_) => {
+                unreachable!("export default from is stage 1")
+              }
             }
           }
         }
@@ -827,38 +830,9 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             }
           }
         }
-        ModuleDecl::ExportDefaultExpr(expr) => match &*expr.expr {
-          Expr::Ident(ident) => {
-            let default_export_symbol_id = file_module
-              .ensure_default_export_symbol(SymbolDecl {
-                kind: SymbolDeclKind::Target(ident.to_id()),
-                range: expr.range(),
-              });
-            file_module.ensure_symbol_for_swc_id(
-              ident.to_id(),
-              SymbolDecl {
-                kind: SymbolDeclKind::Target(ident.to_id()),
-                range: ident.range(),
-              },
-            );
-            file_module
-              .symbol_mut(default_export_symbol_id)
-              .unwrap()
-              .deps
-              .insert(ident.to_id().into());
-          }
-          _ => {
-            let line_and_column = self
-              .source
-              .text_info()
-              .line_and_column_display(expr.start());
-            self.handler.diagnostic(TypeTraceDiagnostic {
-              kind: TypeTraceDiagnosticKind::UnsupportedDefaultExpr,
-              specifier: self.specifier.clone(),
-              line_and_column: Some(line_and_column),
-            });
-          }
-        },
+        ModuleDecl::ExportDefaultExpr(expr) => {
+          self.handle_export_default_expr(&*expr.expr, file_module);
+        }
         ModuleDecl::ExportAll(n) => {
           file_module.re_exports.push(n.src.value.to_string());
         }
@@ -866,11 +840,17 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           let symbol_id =
             self.ensure_symbol_for_import_equals(file_module, &import_equals);
           let symbol = file_module.symbol_mut(symbol_id).unwrap();
-          let (leftmost_id, parts) =
-            self.get_import_equals_target_qualified_name(import_equals);
-          symbol
-            .deps
-            .insert(SymbolDep::QualifiedId(leftmost_id, parts));
+          match &import_equals.module_ref {
+            TsModuleRef::TsEntityName(entity_name) => {
+              let (leftmost_id, parts) = ts_entity_name_to_parts(entity_name);
+              symbol
+                .deps
+                .insert(SymbolDep::QualifiedId(leftmost_id, parts));
+            }
+            TsModuleRef::TsExternalModuleRef(_) => {
+              // don't need to do anything in this case
+            }
+          }
           if import_equals.is_export {
             add_export(
               file_module,
@@ -879,8 +859,13 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             );
           }
         }
-        ModuleDecl::TsExportAssignment(_) => todo!("export assignment"),
-        ModuleDecl::TsNamespaceExport(_) => todo!("namespace export"),
+        ModuleDecl::TsExportAssignment(export_assignment) => {
+          self
+            .handle_export_default_expr(&*export_assignment.expr, file_module);
+        }
+        ModuleDecl::TsNamespaceExport(_) => {
+          // ignore
+        }
       },
       ModuleItem::Stmt(stmt) => match stmt {
         Stmt::Block(_)
@@ -994,6 +979,45 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
     }
   }
 
+  fn handle_export_default_expr(
+    &self,
+    expr: &Expr,
+    file_module: &mut ModuleSymbol,
+  ) {
+    match expr {
+      Expr::Ident(ident) => {
+        let default_export_symbol_id = file_module
+          .ensure_default_export_symbol(SymbolDecl {
+            kind: SymbolDeclKind::Target(ident.to_id()),
+            range: expr.range(),
+          });
+        file_module.ensure_symbol_for_swc_id(
+          ident.to_id(),
+          SymbolDecl {
+            kind: SymbolDeclKind::Target(ident.to_id()),
+            range: ident.range(),
+          },
+        );
+        file_module
+          .symbol_mut(default_export_symbol_id)
+          .unwrap()
+          .deps
+          .insert(ident.to_id().into());
+      }
+      _ => {
+        let line_and_column = self
+          .source
+          .text_info()
+          .line_and_column_display(expr.start());
+        self.handler.diagnostic(TypeTraceDiagnostic {
+          kind: TypeTraceDiagnosticKind::UnsupportedDefaultExpr,
+          specifier: self.specifier.clone(),
+          line_and_column: Some(line_and_column),
+        });
+      }
+    }
+  }
+
   fn ensure_symbol_for_import_equals(
     &self,
     file_module: &mut ModuleSymbol,
@@ -1003,16 +1027,32 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
     if let Some(symbol_id) = file_module.swc_id_to_symbol_id.get(&id) {
       return *symbol_id;
     }
-    let (leftmost_id, parts) =
-      self.get_import_equals_target_qualified_name(import_equals);
-    let symbol_id = file_module.ensure_symbol_for_swc_id(
-      id.clone(),
-      SymbolDecl {
-        kind: SymbolDeclKind::QualifiedTarget(leftmost_id, parts),
-        range: import_equals.range(),
-      },
-    );
-    symbol_id
+    match &import_equals.module_ref {
+      TsModuleRef::TsEntityName(entity_name) => {
+        let (leftmost_id, parts) = ts_entity_name_to_parts(entity_name);
+        let symbol_id = file_module.ensure_symbol_for_swc_id(
+          id.clone(),
+          SymbolDecl {
+            kind: SymbolDeclKind::QualifiedTarget(leftmost_id, parts),
+            range: import_equals.range(),
+          },
+        );
+        symbol_id
+      }
+      TsModuleRef::TsExternalModuleRef(module_ref) => {
+        let symbol_id = file_module.ensure_symbol_for_swc_id(
+          id.clone(),
+          SymbolDecl {
+            kind: SymbolDeclKind::FileRef(FileDep {
+              name: FileDepName::Name("default".to_string()),
+              specifier: module_ref.expr.value.to_string(),
+            }),
+            range: import_equals.range(),
+          },
+        );
+        symbol_id
+      }
+    }
   }
 
   fn get_import_equals_target_qualified_name(
@@ -1023,7 +1063,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
       TsModuleRef::TsEntityName(entity_name) => {
         ts_entity_name_to_parts(entity_name)
       }
-      TsModuleRef::TsExternalModuleRef(_) => todo!("module reference"),
+      TsModuleRef::TsExternalModuleRef(module_ref) => todo!("module reference"),
     }
   }
 

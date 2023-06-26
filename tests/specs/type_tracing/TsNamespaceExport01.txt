@@ -1,0 +1,53 @@
+# mod.ts
+export function isPrime(x: number): boolean {
+  // ...
+}
+
+// we just ignore this because this causes typescript to
+// export this module as a "mathLib" global
+export as namespace mathLib;
+
+# output
+file:///mod.ts: ModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    exports: {
+        "isPrime": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('isPrime' type=inline),
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            56,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+}
+== export definitions ==
+[isPrime]: file:///mod.ts:0..56
+  export function isPrime(x: number): boolean {
+    // ...
+  }

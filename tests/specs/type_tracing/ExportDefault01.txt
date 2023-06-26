@@ -265,10 +265,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            79,
+                            94,
                         ),
                         end: SourcePos(
-                            99,
+                            98,
                         ),
                     },
                     kind: Target(
