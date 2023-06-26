@@ -51,10 +51,6 @@ file:///mod.ts: ModuleSymbol {
             Atom('OtherInner' type=dynamic),
             #3,
         ): 3,
-        (
-            Atom('Inner' type=inline),
-            #1,
-        ): 4,
     },
     symbols: {
         0: Symbol {
@@ -138,7 +134,7 @@ file:///mod.ts: ModuleSymbol {
             },
             deps: {},
             exports: {
-                "Inner": 4,
+                "Inner": 3,
             },
         },
         3: Symbol {
@@ -187,43 +183,6 @@ file:///mod.ts: ModuleSymbol {
                         "B",
                         "Other",
                     ],
-                ),
-                Id(
-                    (
-                        Atom('Inner' type=inline),
-                        #1,
-                    ),
-                ),
-            },
-            exports: {},
-        },
-        4: Symbol {
-            symbol_id: 4,
-            is_public: true,
-            decls: {
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            128,
-                        ),
-                        end: SourcePos(
-                            147,
-                        ),
-                    },
-                    kind: Target(
-                        (
-                            Atom('OtherInner' type=dynamic),
-                            #3,
-                        ),
-                    ),
-                },
-            },
-            deps: {
-                Id(
-                    (
-                        Atom('OtherInner' type=dynamic),
-                        #3,
-                    ),
                 ),
             },
             exports: {},

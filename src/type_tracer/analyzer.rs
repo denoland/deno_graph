@@ -24,7 +24,6 @@ use crate::ModuleParser;
 use super::collections::AdditiveOnlyMap;
 use super::cross_module;
 use super::cross_module::Definition;
-use super::ExportsToTrace;
 use super::TypeTraceDiagnostic;
 use super::TypeTraceDiagnosticKind;
 use super::TypeTraceHandler;
@@ -58,7 +57,7 @@ impl RootSymbol {
       self.ids_to_symbols.into_iter().collect::<BTreeMap<_, _>>();
     let mut result = IndexMap::default();
     for (id, symbol) in ids_to_symbols {
-      // todo: improve
+      // todo(dsherret): improve
       result.insert(
         self
           .specifiers_to_ids
@@ -318,6 +317,13 @@ impl ModuleSymbol {
     }
   }
 
+  pub(crate) fn create_new_symbol(&mut self) -> &mut Symbol {
+    let symbol_id = self.get_next_symbol_id();
+    let mut symbol = Symbol::new(symbol_id);
+    self.symbols.insert(symbol_id, symbol);
+    self.symbols.get_mut(&symbol_id).unwrap()
+  }
+
   pub fn symbol_id_from_swc(&self, id: &Id) -> Option<SymbolId> {
     self.swc_id_to_symbol_id.get(id).copied()
   }
@@ -510,7 +516,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                   .as_ref()
                   .map(|n| match n {
                     ModuleExportName::Ident(ident) => ident.sym.to_string(),
-                    ModuleExportName::Str(_) => todo!(),
+                    ModuleExportName::Str(str) => str.value.to_string(),
                   })
                   .unwrap_or_else(|| n.local.sym.to_string());
                 file_module.get_symbol_from_swc_id(
@@ -653,78 +659,56 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           for specifier in &n.specifiers {
             match specifier {
               ExportSpecifier::Named(named) => {
-                if let Some(exported_name) = &named.exported {
-                  match exported_name {
-                    ModuleExportName::Ident(export_ident) => {
-                      match &named.orig {
-                        ModuleExportName::Ident(orig_ident) => match &n.src {
-                          Some(src) => {
-                            // don't add the original ident in this case because
-                            // it might conflict with a re-exported name in another
-                            // module due to how swc does its export analysis where
-                            // all the identifiers in re-exports have the same scope
-                            let export_id = file_module
-                              .ensure_symbol_for_swc_id(
-                                export_ident.to_id(),
-                                SymbolDecl {
-                                  range: n.range(),
-                                  kind: SymbolDeclKind::FileRef(FileDep {
-                                    name: FileDepName::Name(
-                                      orig_ident.sym.to_string(),
-                                    ),
-                                    specifier: src.value.to_string(),
-                                  }),
-                                },
-                              );
-                            add_export(
-                              file_module,
-                              export_ident.sym.to_string(),
-                              export_id,
-                            );
-                          }
-                          None => {
-                            let orig_symbol = file_module
-                              .get_symbol_from_swc_id(
-                                orig_ident.to_id(),
-                                SymbolDecl {
-                                  range: n.range(),
-                                  kind: SymbolDeclKind::TargetSelf,
-                                },
-                              );
-                            orig_symbol
-                              .deps
-                              .insert(export_ident.to_id().into());
-
-                            let export_id = file_module
-                              .ensure_symbol_for_swc_id(
-                                export_ident.to_id(),
-                                SymbolDecl {
-                                  range: named.range(),
-                                  kind: SymbolDeclKind::Target(
-                                    orig_ident.to_id(),
-                                  ),
-                                },
-                              );
-                            add_export(
-                              file_module,
-                              export_ident.sym.to_string(),
-                              export_id,
-                            );
-                            file_module
-                              .symbol_mut(export_id)
-                              .unwrap()
-                              .deps
-                              .insert(orig_ident.to_id().into());
-                          }
-                        },
-                        ModuleExportName::Str(_) => todo!(),
-                      }
-                    }
-                    ModuleExportName::Str(_) => todo!(),
+                match &n.src {
+                  Some(src) => {
+                    // we don't add the swc ids when there's a specifier because it might
+                    // conflict with a re-exported name in another module due to how swc
+                    // does its export analysis where all the identifiers in re-exports
+                    // have the same scope. Additionally, it makes it easier working
+                    // with ModuleExportName::Str
+                    let imported_name = match &named.orig {
+                      ModuleExportName::Ident(ident) => ident.sym.to_string(),
+                      ModuleExportName::Str(str) => str.value.to_string(),
+                    };
+                    let export_name = named
+                      .exported
+                      .as_ref()
+                      .map(|exported| match exported {
+                        ModuleExportName::Ident(ident) => ident.sym.to_string(),
+                        ModuleExportName::Str(str) => str.value.to_string(),
+                      })
+                      .unwrap_or_else(|| imported_name.clone());
+                    let symbol = file_module.create_new_symbol();
+                    symbol.decls.insert(SymbolDecl {
+                      range: n.range(),
+                      kind: SymbolDeclKind::FileRef(FileDep {
+                        name: FileDepName::Name(imported_name),
+                        specifier: src.value.to_string(),
+                      }),
+                    });
+                    let symbol_id = symbol.symbol_id;
+                    add_export(file_module, export_name, symbol_id);
                   }
-                } else {
-                  match &named.orig {
-                    ModuleExportName::Ident(orig_ident) => {
+                  None => {
+                    let orig_ident = match &named.orig {
+                      ModuleExportName::Ident(ident) => ident,
+                      ModuleExportName::Str(_) => unreachable!(),
+                    };
+                    if let Some(exported_name) = &named.exported {
+                      let exported_name = match exported_name {
+                        ModuleExportName::Ident(ident) => ident.sym.to_string(),
+                        ModuleExportName::Str(str) => str.value.to_string(),
+                      };
+                      let orig_symbol = file_module.get_symbol_from_swc_id(
+                        orig_ident.to_id(),
+                        SymbolDecl {
+                          range: n.range(),
+                          kind: SymbolDeclKind::TargetSelf,
+                        },
+                      );
+                      let orig_symbol_id = orig_symbol.symbol_id;
+                      add_export(file_module, exported_name, orig_symbol_id);
+                    } else {
                       file_module.get_symbol_from_swc_id(
                         orig_ident.to_id(),
                         SymbolDecl {
@@ -753,34 +737,42 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                         symbol_id,
                       );
                     }
-                    ModuleExportName::Str(_) => todo!(),
                   }
                 }
               }
               ExportSpecifier::Namespace(specifier) => {
-                let name = match &specifier.name {
-                  ModuleExportName::Ident(ident) => ident,
-                  ModuleExportName::Str(_) => todo!(),
-                };
-                let symbol_kind = if let Some(src) = &n.src {
-                  let file_dep = FileDep {
-                    name: FileDepName::Star,
-                    specifier: src.value.to_string(),
+                if let Some(src) = &n.src {
+                  let name = match &specifier.name {
+                    ModuleExportName::Ident(ident) => ident.sym.to_string(),
+                    ModuleExportName::Str(str) => str.value.to_string(),
                   };
-                  SymbolDeclKind::FileRef(file_dep)
+                  let symbol = file_module.create_new_symbol();
+                  symbol.decls.insert(SymbolDecl {
+                    kind: SymbolDeclKind::FileRef(FileDep {
+                      name: FileDepName::Star,
+                      specifier: src.value.to_string(),
+                    }),
+                    range: n.range(),
+                  });
+                  let symbol_id = symbol.symbol_id;
+                  add_export(file_module, name, symbol_id);
                 } else {
-                  SymbolDeclKind::Target(name.to_id())
-                };
-                let symbol_id = file_module
-                  .get_symbol_from_swc_id(
-                    name.to_id(),
-                    SymbolDecl {
-                      kind: symbol_kind.clone(),
-                      range: n.range(),
-                    },
-                  )
-                  .symbol_id;
-                add_export(file_module, name.sym.to_string(), symbol_id);
+                  let name = match &specifier.name {
+                    ModuleExportName::Ident(ident) => ident,
+                    ModuleExportName::Str(_) => unreachable!(),
+                  };
+                  let symbol_kind = SymbolDeclKind::Target(name.to_id());
+                  let symbol_id = file_module
+                    .get_symbol_from_swc_id(
+                      name.to_id(),
+                      SymbolDecl {
+                        kind: symbol_kind.clone(),
+                        range: n.range(),
+                      },
+                    )
+                    .symbol_id;
+                  add_export(file_module, name.sym.to_string(), symbol_id);
+                }
               }
               // https://github.com/tc39/proposal-export-default-from
               ExportSpecifier::Default(_) => {
@@ -1052,18 +1044,6 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
         );
         symbol_id
       }
-    }
-  }
-
-  fn get_import_equals_target_qualified_name(
-    &self,
-    import_equals: &TsImportEqualsDecl,
-  ) -> (Id, Vec<String>) {
-    match &import_equals.module_ref {
-      TsModuleRef::TsEntityName(entity_name) => {
-        ts_entity_name_to_parts(entity_name)
-      }
-      TsModuleRef::TsExternalModuleRef(module_ref) => todo!("module reference"),
     }
   }
 

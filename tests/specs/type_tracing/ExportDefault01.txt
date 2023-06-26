@@ -306,18 +306,6 @@ file:///a.ts: ModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('C1' type=inline),
-            #0,
-        ): 0,
-        (
-            Atom('C2' type=inline),
-            #0,
-        ): 1,
-        (
-            Atom('C3' type=inline),
-            #0,
-        ): 2,
-        (
             Atom('Test' type=inline),
             #2,
         ): 4,

@@ -1,16 +1,16 @@
 # mod.ts
-export { default as Test2 } from "./a.ts";
-
-export class Test {}
+export { "someName" as "someOtherName" } from "./a.ts";
 
 # a.ts
-import { B as Test } from "./b.ts";
+import { "some-name" as someName } from "./b.ts";
 
-export { Test as default };
+export { someName as "someName" };
 
 # b.ts
-export class B {}
-export class B1 {}
+export { MyClass as "some-name" } from "./c.ts";
+
+# c.ts
+export class MyClass {}
 
 # output
 file:///mod.ts: ModuleSymbol {
@@ -19,16 +19,10 @@ file:///mod.ts: ModuleSymbol {
     ),
     specifier: "file:///mod.ts",
     exports: {
-        "Test2": 0,
-        "Test": 1,
+        "someOtherName": 0,
     },
     re_exports: [],
-    swc_id_to_symbol_id: {
-        (
-            Atom('Test' type=inline),
-            #2,
-        ): 1,
-    },
+    swc_id_to_symbol_id: {},
     symbols: {
         0: Symbol {
             symbol_id: 0,
@@ -40,36 +34,17 @@ file:///mod.ts: ModuleSymbol {
                             0,
                         ),
                         end: SourcePos(
-                            42,
+                            55,
                         ),
                     },
                     kind: FileRef(
                         FileDep {
                             name: Name(
-                                "default",
+                                "someName",
                             ),
                             specifier: "./a.ts",
                         },
                     ),
-                },
-            },
-            deps: {},
-            exports: {},
-        },
-        1: Symbol {
-            symbol_id: 1,
-            is_public: true,
-            decls: {
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            44,
-                        ),
-                        end: SourcePos(
-                            64,
-                        ),
-                    },
-                    kind: Definition,
                 },
             },
             deps: {},
@@ -84,12 +59,12 @@ file:///a.ts: ModuleSymbol {
     ),
     specifier: "file:///a.ts",
     exports: {
-        "default": 0,
+        "someName": 0,
     },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('Test' type=inline),
+            Atom('someName' type=dynamic),
             #2,
         ): 0,
     },
@@ -104,13 +79,13 @@ file:///a.ts: ModuleSymbol {
                             9,
                         ),
                         end: SourcePos(
-                            18,
+                            32,
                         ),
                     },
                     kind: FileRef(
                         FileDep {
                             name: Name(
-                                "B",
+                                "some-name",
                             ),
                             specifier: "./b.ts",
                         },
@@ -119,10 +94,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            37,
+                            51,
                         ),
                         end: SourcePos(
-                            64,
+                            85,
                         ),
                     },
                     kind: TargetSelf,
@@ -140,19 +115,54 @@ file:///b.ts: ModuleSymbol {
     ),
     specifier: "file:///b.ts",
     exports: {
-        "B": 0,
-        "B1": 1,
+        "some-name": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {},
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            48,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "MyClass",
+                            ),
+                            specifier: "./c.ts",
+                        },
+                    ),
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+}
+file:///c.ts: ModuleSymbol {
+    module_id: ModuleId(
+        3,
+    ),
+    specifier: "file:///c.ts",
+    exports: {
+        "MyClass": 0,
     },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('B' type=inline),
+            Atom('MyClass' type=inline),
             #2,
         ): 0,
-        (
-            Atom('B1' type=inline),
-            #2,
-        ): 1,
     },
     symbols: {
         0: Symbol {
@@ -165,26 +175,7 @@ file:///b.ts: ModuleSymbol {
                             0,
                         ),
                         end: SourcePos(
-                            17,
-                        ),
-                    },
-                    kind: Definition,
-                },
-            },
-            deps: {},
-            exports: {},
-        },
-        1: Symbol {
-            symbol_id: 1,
-            is_public: false,
-            decls: {
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            18,
-                        ),
-                        end: SourcePos(
-                            36,
+                            23,
                         ),
                     },
                     kind: Definition,
@@ -197,7 +188,5 @@ file:///b.ts: ModuleSymbol {
     traced_re_exports: {},
 }
 == export definitions ==
-[Test]: file:///mod.ts:44..64
-  export class Test {}
-[Test2]: file:///b.ts:0..17
-  export class B {}
+[someOtherName]: file:///c.ts:0..23
+  export class MyClass {}
