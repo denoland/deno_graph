@@ -269,7 +269,7 @@ impl ModuleSymbol {
       .symbols
       .values()
       .filter(|symbol| symbol.is_public())
-      .flat_map(|symbol| symbol.decls.iter().map(|d| d.range.clone()))
+      .flat_map(|symbol| symbol.decls.iter().map(|d| d.range))
       .collect()
   }
 
@@ -319,8 +319,7 @@ impl ModuleSymbol {
 
   pub(crate) fn create_new_symbol(&mut self) -> &mut Symbol {
     let symbol_id = self.get_next_symbol_id();
-    let mut symbol = Symbol::new(symbol_id);
-    self.symbols.insert(symbol_id, symbol);
+    self.symbols.insert(symbol_id, Symbol::new(symbol_id));
     self.symbols.get_mut(&symbol_id).unwrap()
   }
 
@@ -419,12 +418,14 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
   pub fn get_or_analyze<'b>(
     &'b self,
     specifier: &ModuleSpecifier,
-  ) -> Result<&'b ModuleSymbol> {
+  ) -> Result<Option<&'b ModuleSymbol>> {
     if let Some(module_symbol) = self.modules.get(specifier) {
-      return Ok(module_symbol);
+      return Ok(Some(module_symbol));
     }
 
-    let source = self.parsed_source(specifier)?;
+    let Some(source) = self.parsed_source(specifier)? else {
+      return Ok(None);
+    };
     let module = source.module();
     let mut module_symbol = ModuleSymbol {
       specifier: specifier.clone(),
@@ -445,23 +446,27 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
     };
     filler.fill_module(&mut module_symbol, module);
     self.modules.insert(specifier.clone(), module_symbol);
-    Ok(self.modules.get(specifier).unwrap())
+    Ok(Some(self.modules.get(specifier).unwrap()))
   }
 
   fn parsed_source(
     &self,
     specifier: &ModuleSpecifier,
-  ) -> Result<ParsedSource, deno_ast::Diagnostic> {
-    let graph_module = self
-      .graph
-      .get(specifier)
-      .unwrap_or_else(|| panic!("not found: {}", specifier));
-    let graph_module = graph_module.esm().unwrap();
-    self.parser.parse_module(
-      &graph_module.specifier,
-      graph_module.source.clone(),
-      graph_module.media_type,
-    )
+  ) -> Result<Option<ParsedSource>, deno_ast::Diagnostic> {
+    let Some(graph_module) = self.graph.get(specifier) else {
+      return Ok(None);
+    };
+    let Some(graph_module) = graph_module.esm() else {
+      return Ok(None);
+    };
+    self
+      .parser
+      .parse_module(
+        &graph_module.specifier,
+        graph_module.source.clone(),
+        graph_module.media_type,
+      )
+      .map(Some)
   }
 }
 
@@ -637,7 +642,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             add_export(file_module, n.id.sym.to_string(), symbol_id);
           }
           Decl::TsModule(n) => {
-            let symbol_id = self.fill_ts_module(
+            let maybe_symbol_id = self.fill_ts_module(
               file_module,
               SymbolDecl {
                 kind: SymbolDeclKind::Definition,
@@ -645,11 +650,14 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               },
               n,
             );
-            let id = match &n.id {
-              TsModuleName::Ident(ident) => ident,
-              TsModuleName::Str(_) => todo!(),
-            };
-            add_export(file_module, id.sym.to_string(), symbol_id);
+            if let Some(symbol_id) = maybe_symbol_id {
+              match &n.id {
+                TsModuleName::Ident(ident) => {
+                  add_export(file_module, ident.sym.to_string(), symbol_id)
+                }
+                TsModuleName::Str(_) => {}
+              }
+            }
           }
           Decl::Using(_) => {
             unreachable!()
@@ -823,14 +831,14 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           }
         }
         ModuleDecl::ExportDefaultExpr(expr) => {
-          self.handle_export_default_expr(&*expr.expr, file_module);
+          self.handle_export_default_expr(&expr.expr, file_module);
         }
         ModuleDecl::ExportAll(n) => {
           file_module.re_exports.push(n.src.value.to_string());
         }
         ModuleDecl::TsImportEquals(import_equals) => {
           let symbol_id =
-            self.ensure_symbol_for_import_equals(file_module, &import_equals);
+            self.ensure_symbol_for_import_equals(file_module, import_equals);
           let symbol = file_module.symbol_mut(symbol_id).unwrap();
           match &import_equals.module_ref {
             TsModuleRef::TsEntityName(entity_name) => {
@@ -852,8 +860,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           }
         }
         ModuleDecl::TsExportAssignment(export_assignment) => {
-          self
-            .handle_export_default_expr(&*export_assignment.expr, file_module);
+          self.handle_export_default_expr(&export_assignment.expr, file_module);
         }
         ModuleDecl::TsNamespaceExport(_) => {
           // ignore
@@ -1022,18 +1029,17 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
     match &import_equals.module_ref {
       TsModuleRef::TsEntityName(entity_name) => {
         let (leftmost_id, parts) = ts_entity_name_to_parts(entity_name);
-        let symbol_id = file_module.ensure_symbol_for_swc_id(
-          id.clone(),
+        file_module.ensure_symbol_for_swc_id(
+          id,
           SymbolDecl {
             kind: SymbolDeclKind::QualifiedTarget(leftmost_id, parts),
             range: import_equals.range(),
           },
-        );
-        symbol_id
+        )
       }
-      TsModuleRef::TsExternalModuleRef(module_ref) => {
-        let symbol_id = file_module.ensure_symbol_for_swc_id(
-          id.clone(),
+      TsModuleRef::TsExternalModuleRef(module_ref) => file_module
+        .ensure_symbol_for_swc_id(
+          id,
           SymbolDecl {
             kind: SymbolDeclKind::FileRef(FileDep {
               name: FileDepName::Name("default".to_string()),
@@ -1041,9 +1047,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             }),
             range: import_equals.range(),
           },
-        );
-        symbol_id
-      }
+        ),
     }
   }
 
@@ -1110,10 +1114,10 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
     file_module: &mut ModuleSymbol,
     symbol_decl: SymbolDecl,
     n: &TsModuleDecl,
-  ) -> SymbolId {
+  ) -> Option<SymbolId> {
     let mut id = match &n.id {
       TsModuleName::Ident(ident) => ident.to_id(),
-      TsModuleName::Str(_) => todo!(),
+      TsModuleName::Str(_) => return None, // ignore for now
     };
     let mut mod_symbol_id =
       file_module.ensure_symbol_for_swc_id(id.clone(), symbol_decl);
@@ -1298,7 +1302,9 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                     .exports
                     .insert(ident.sym.to_string(), def_symbol_id);
                 }
-                TsModuleName::Str(_) => todo!(),
+                TsModuleName::Str(_) => {
+                  // ignore for now
+                }
               },
               Decl::Using(_) => {
                 // ignore
@@ -1311,7 +1317,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
         }
       }
     }
-    mod_symbol_id
+    Some(mod_symbol_id)
   }
 
   fn fill_ts_expr_with_type_args(

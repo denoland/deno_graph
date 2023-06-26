@@ -27,6 +27,10 @@ class B extends BBase implements IBase {
   methodOverload(param: OverloadParam): OverloadReturn;
   methodOverload(param: PrivateImplementationParam): PrivateImplementationReturn {
   }
+
+  #private: PrivateProp;
+  #privateMethod(private: PrivateParam): PrivateReturn {
+  }
 }
 
 class PropValue {}
@@ -195,7 +199,7 @@ file:///mod.ts: ModuleSymbol {
                             67,
                         ),
                         end: SourcePos(
-                            470,
+                            557,
                         ),
                     },
                     kind: Definition,
@@ -254,10 +258,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            472,
+                            559,
                         ),
                         end: SourcePos(
-                            490,
+                            577,
                         ),
                     },
                     kind: Definition,
@@ -273,10 +277,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            491,
+                            578,
                         ),
                         end: SourcePos(
-                            511,
+                            598,
                         ),
                     },
                     kind: Definition,
@@ -292,10 +296,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            512,
+                            599,
                         ),
                         end: SourcePos(
-                            526,
+                            613,
                         ),
                     },
                     kind: Definition,
@@ -311,10 +315,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            527,
+                            614,
                         ),
                         end: SourcePos(
-                            548,
+                            635,
                         ),
                     },
                     kind: Definition,
@@ -330,10 +334,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            549,
+                            636,
                         ),
                         end: SourcePos(
-                            571,
+                            658,
                         ),
                     },
                     kind: Definition,
@@ -349,10 +353,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            572,
+                            659,
                         ),
                         end: SourcePos(
-                            592,
+                            679,
                         ),
                     },
                     kind: Definition,
@@ -368,10 +372,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            593,
+                            680,
                         ),
                         end: SourcePos(
-                            610,
+                            697,
                         ),
                     },
                     kind: Definition,
@@ -387,10 +391,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            611,
+                            698,
                         ),
                         end: SourcePos(
-                            633,
+                            720,
                         ),
                     },
                     kind: Definition,
@@ -406,10 +410,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            634,
+                            721,
                         ),
                         end: SourcePos(
-                            657,
+                            744,
                         ),
                     },
                     kind: Definition,
@@ -425,10 +429,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            658,
+                            745,
                         ),
                         end: SourcePos(
-                            693,
+                            780,
                         ),
                     },
                     kind: Definition,
@@ -444,10 +448,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            694,
+                            781,
                         ),
                         end: SourcePos(
-                            730,
+                            817,
                         ),
                     },
                     kind: Definition,

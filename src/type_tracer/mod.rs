@@ -140,16 +140,17 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
   ) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
     let exports =
       self.trace_exports_inner(specifier, exports_to_trace, HashSet::new())?;
-    let module_symbol = self.analyzer.get_or_analyze(specifier)?;
-    for (export_specifier, module_id, name, symbol_id) in &exports {
-      if specifier != export_specifier {
-        module_symbol.add_traced_re_export(
-          name.clone(),
-          UniqueSymbolId {
-            module_id: *module_id,
-            symbol_id: *symbol_id,
-          },
-        );
+    if let Some(module_symbol) = self.analyzer.get_or_analyze(specifier)? {
+      for (export_specifier, module_id, name, symbol_id) in &exports {
+        if specifier != export_specifier {
+          module_symbol.add_traced_re_export(
+            name.clone(),
+            UniqueSymbolId {
+              module_id: *module_id,
+              symbol_id: *symbol_id,
+            },
+          );
+        }
       }
     }
     Ok(
@@ -167,7 +168,9 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
     visited: HashSet<ModuleSpecifier>,
   ) -> Result<Vec<(ModuleSpecifier, ModuleId, String, SymbolId)>> {
     let mut result = Vec::new();
-    let module_symbol = self.analyzer.get_or_analyze(specifier)?;
+    let Some(module_symbol) = self.analyzer.get_or_analyze(specifier)? else {
+      return Ok(Vec::new());
+    };
     if matches!(exports_to_trace, ExportsToTrace::AllWithDefault) {
       let maybe_symbol_id = module_symbol.exports_map().get("default").copied();
       if let Some(symbol_id) = maybe_symbol_id {
@@ -267,7 +270,9 @@ fn trace_module<THandler: TypeTraceHandler>(
   let mut pending = context.trace_exports(specifier, exports_to_trace)?;
 
   while let Some((specifier, symbol_id)) = pending.pop() {
-    let module_symbol = context.analyzer.get_or_analyze(&specifier)?;
+    let Some(module_symbol) = context.analyzer.get_or_analyze(&specifier)? else {
+      continue;
+    };
     let symbol = module_symbol.symbol(symbol_id).unwrap();
     if symbol.mark_public() {
       if let Some(file_dep) = symbol.file_dep() {
@@ -288,49 +293,49 @@ fn trace_module<THandler: TypeTraceHandler>(
       for dep in symbol_deps {
         match &dep {
           SymbolDep::Id(id) => {
-            match module_symbol.symbol_id_from_swc(id) {
-              Some(id) => pending.push((module_symbol.specifier().clone(), id)),
-              None => {
-                if cfg!(debug_assertions) {
-                  // todo: remove
-                  eprintln!("Failed to find symbol id for swc id: {:?}", id);
-                }
-              }
+            if let Some(id) = module_symbol.symbol_id_from_swc(id) {
+              pending.push((module_symbol.specifier().clone(), id))
             }
           }
           SymbolDep::QualifiedId(id, parts) => {
             if let Some(symbol_id) = module_symbol.symbol_id_from_swc(id) {
               pending.extend(resolve_qualified_name(
                 context.graph,
-                &module_symbol,
+                module_symbol,
                 symbol_id,
                 parts,
-                &|specifier| context.analyzer.get_or_analyze(specifier).ok(),
+                &|specifier| {
+                  context.analyzer.get_or_analyze(specifier).ok().flatten()
+                },
               )?);
             }
           }
           SymbolDep::ImportType(import_specifier, parts) => {
             let maybe_dep_specifier = context.graph.resolve_dependency(
-              &import_specifier,
+              import_specifier,
               &specifier,
               /* prefer types */ true,
             );
             if let Some(dep_specifier) = maybe_dep_specifier {
-              let module_symbol =
-                context.analyzer.get_or_analyze(&dep_specifier)?;
-              if parts.is_empty() {
-                // an ImportType includes default exports
-                context
-                  .pending_traces
-                  .add(dep_specifier, ExportsToTrace::AllWithDefault);
-              } else {
-                pending.extend(resolve_qualified_export_name(
-                  context.graph,
-                  module_symbol,
-                  &parts[0],
-                  &parts[1..],
-                  &|specifier| context.analyzer.get_or_analyze(specifier).ok(),
-                )?);
+              if let Some(module_symbol) =
+                context.analyzer.get_or_analyze(&dep_specifier)?
+              {
+                if parts.is_empty() {
+                  // an ImportType includes default exports
+                  context
+                    .pending_traces
+                    .add(dep_specifier, ExportsToTrace::AllWithDefault);
+                } else {
+                  pending.extend(resolve_qualified_export_name(
+                    context.graph,
+                    module_symbol,
+                    &parts[0],
+                    &parts[1..],
+                    &|specifier| {
+                      context.analyzer.get_or_analyze(specifier).ok().flatten()
+                    },
+                  )?);
+                }
               }
             }
           }
@@ -341,19 +346,3 @@ fn trace_module<THandler: TypeTraceHandler>(
 
   Ok(())
 }
-
-// fn find_export<TReporter: TypeTraceHandler>(
-//   specifier: &ModuleSpecifier,
-//   export_name: &str,
-//   context: &mut Context<'_, TReporter>,
-// ) -> Result<Option<UniqueSymbolId>> {
-//   let module_symbol = context.analyzer.get_or_analyze(&specifier)?;
-//   if let Some(symbol_id) = module_symbol.exports_map().get(export_name) {
-//     return Ok(Some(UniqueSymbolId {
-//       module_id: module_symbol.module_id(),
-//       symbol_id: *symbol_id,
-//     }));
-//   }
-//   for re_export in module_symbol.re_exports().clone() {}
-//   Ok(())
-// }

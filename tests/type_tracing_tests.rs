@@ -1,10 +1,6 @@
 use std::path::Path;
 use std::path::PathBuf;
 
-use deno_ast::ModuleSpecifier;
-use deno_ast::SourcePos;
-use deno_ast::SourceRange;
-use deno_ast::SourceRangedForSpanned;
 use pretty_assertions::assert_eq;
 
 use deno_graph::type_tracer::TypeTraceDiagnostic;
@@ -68,6 +64,7 @@ impl Spec {
     if !self.diagnostics.is_empty() {
       text.push_str("\n# diagnostics\n");
       text.push_str(&serde_json::to_string_pretty(&self.diagnostics).unwrap());
+      text.push('\n');
     }
     text
   }
@@ -107,12 +104,12 @@ fn parse_spec(text: String) -> Spec {
   let mut files = Vec::new();
   let mut current_file = None;
   for line in text.split('\n') {
-    if line.starts_with("# ") {
+    if let Some(specifier) = line.strip_prefix("# ") {
       if let Some(file) = current_file.take() {
         files.push(file);
       }
       current_file = Some(File {
-        specifier: line[2..].trim().to_string(),
+        specifier: specifier.to_string(),
         text: String::new(),
       });
     } else {

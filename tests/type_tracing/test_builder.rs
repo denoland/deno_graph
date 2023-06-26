@@ -10,7 +10,6 @@ use deno_graph::type_tracer::RootSymbol;
 use deno_graph::type_tracer::SymbolId;
 use deno_graph::type_tracer::TypeTraceDiagnostic;
 use deno_graph::type_tracer::TypeTraceHandler;
-use deno_graph::type_tracer::UniqueSymbolId;
 use deno_graph::CapturingModuleAnalyzer;
 use deno_graph::DefaultModuleParser;
 use deno_graph::GraphKind;
@@ -64,6 +63,7 @@ impl TestBuilder {
     self
   }
 
+  #[allow(dead_code)]
   pub fn entry_point(&mut self, value: impl AsRef<str>) -> &mut Self {
     self.entry_point = value.as_ref().to_string();
     self
@@ -101,14 +101,13 @@ impl TestBuilder {
         for (k, v) in root_symbol.clone().into_specifier_map() {
           output_text.push_str(&format!("{}: {:#?}\n", k.as_str(), v));
         }
-        output_text.push_str("== export definitions ==\n");
         let get_symbol_text =
           |module_symbol: &ModuleSymbol, symbol_id: SymbolId| {
             let symbol = module_symbol.symbol(symbol_id).unwrap();
             let definitions =
               root_symbol.go_to_definitions(&graph, module_symbol, symbol);
             if definitions.is_empty() {
-              format!("NONE")
+              "NONE".to_string()
             } else {
               let mut results = Vec::new();
               for definition in definitions {
@@ -119,10 +118,10 @@ impl TestBuilder {
                   let lines = decl_text.split('\n').collect::<Vec<_>>();
                   if lines.len() > 4 {
                     lines[0..2]
-                      .into_iter()
+                      .iter()
                       .chain(std::iter::once(&"..."))
                       .chain(&lines[lines.len() - 2..])
-                      .map(|l| *l)
+                      .cloned()
                       .collect::<Vec<_>>()
                   } else {
                     lines
@@ -146,20 +145,20 @@ impl TestBuilder {
               results.join("\n")
             }
           };
-        for (name, (module_symbol, symbol_id)) in entrypoint_symbol
+        let exports = entrypoint_symbol
           .exports(&graph, &root_symbol)
           .into_iter()
-          .collect::<BTreeMap<_, _>>()
-        {
-          let position = get_symbol_text(module_symbol, symbol_id);
-          output_text.push_str(&format!("[{}]: {}\n", name, position));
+          .collect::<BTreeMap<_, _>>();
+        if !exports.is_empty() {
+          output_text.push_str("== export definitions ==\n");
+          for (name, (module_symbol, symbol_id)) in exports {
+            let position = get_symbol_text(module_symbol, symbol_id);
+            output_text.push_str(&format!("[{}]: {}\n", name, position));
+          }
         }
         output_text
       },
-      diagnostics: {
-        let diagnostics = handler.diagnostics.borrow();
-        diagnostics.clone()
-      },
+      diagnostics: handler.diagnostics(),
     })
   }
 }

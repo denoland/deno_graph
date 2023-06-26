@@ -121,7 +121,7 @@ fn go_to_definitions_internal<'a>(
         FileDepName::Name(export_name) => {
           if let Some(dep) = module_graph.resolve_dependency(
             &file_ref.specifier,
-            &module.specifier(),
+            module.specifier(),
             /* prefer types */ true,
           ) {
             if let Some(module_symbol) = specifier_to_module(&dep) {
@@ -226,7 +226,7 @@ fn resolve_qualified_name_internal<'a>(
     Some(symbol) => {
       let definitions = go_to_definitions_internal(
         graph,
-        &module_symbol,
+        module_symbol,
         symbol,
         visited_symbols,
         specifier_to_module,
@@ -269,13 +269,7 @@ fn resolve_qualified_name_internal<'a>(
       }
       Ok(result)
     }
-    None => {
-      if cfg!(debug_assertions) {
-        // todo: remove
-        eprintln!("Failed to find symbol for symbol id: {:?}", symbol_id);
-      }
-      Ok(Vec::new())
-    }
+    None => Ok(Vec::new()),
   }
 }
 
@@ -291,7 +285,7 @@ pub fn exports_and_re_exports<'a>(
   for re_export_specifier in module.re_exports() {
     let maybe_specifier = module_graph.resolve_dependency(
       re_export_specifier,
-      &module.specifier(),
+      module.specifier(),
       /* prefer_types */ true,
     );
     if let Some(specifier) = maybe_specifier {

@@ -20,6 +20,7 @@ impl<K, V> AdditiveOnlyMap<K, V> {
     }
   }
 
+  #[cfg(test)]
   pub fn with_capacity(capacity: usize) -> Self {
     Self {
       data: RefCell::new(HashMap::with_capacity(capacity)),
@@ -51,7 +52,7 @@ impl<K: Eq + std::hash::Hash, V> AdditiveOnlyMap<K, V> {
       let data = self.data.borrow();
       data
         .get(key)
-        .map(|value_box| &*value_box.as_ref() as *const V)
+        .map(|value_box| value_box.as_ref() as *const V)
         .map(|raw| &*raw)
     }
   }
@@ -67,6 +68,7 @@ mod test {
       value: usize,
     }
 
+    // use a low capacity which will ensure the map is resized once we exceed it
     let map: AdditiveOnlyMap<usize, Value> = AdditiveOnlyMap::with_capacity(2);
     map.insert(0, Value { value: 987 });
     let data = map.get(&0).unwrap();
