@@ -22,13 +22,14 @@ use crate::ModuleGraph;
 use crate::ModuleParser;
 
 use super::collections::AdditiveOnlyMap;
+use super::collections::LockableRefCell;
 use super::cross_module;
 use super::cross_module::Definition;
 use super::TypeTraceDiagnostic;
 use super::TypeTraceDiagnosticKind;
 use super::TypeTraceHandler;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct RootSymbol {
   specifiers_to_ids: HashMap<ModuleSpecifier, ModuleId>,
   ids_to_symbols: HashMap<ModuleId, ModuleSymbol>,
@@ -110,7 +111,13 @@ pub struct FileDep {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
-pub struct ModuleId(usize);
+pub struct ModuleId(u32);
+
+impl std::fmt::Display for ModuleId {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.0)
+  }
+}
 
 #[derive(Default, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct SymbolId(u32);
@@ -234,7 +241,7 @@ pub struct ModuleSymbol {
   // note: not all symbol ids have an swc id. For example, default exports
   swc_id_to_symbol_id: IndexMap<Id, SymbolId>,
   symbols: IndexMap<SymbolId, Symbol>,
-  traced_re_exports: RefCell<IndexMap<String, UniqueSymbolId>>,
+  traced_re_exports: LockableRefCell<IndexMap<String, UniqueSymbolId>>,
 }
 
 impl std::fmt::Debug for ModuleSymbol {
@@ -271,6 +278,10 @@ impl ModuleSymbol {
       .filter(|symbol| symbol.is_public())
       .flat_map(|symbol| symbol.decls.iter().map(|d| d.range))
       .collect()
+  }
+
+  pub fn traced_re_exports(&self) -> &IndexMap<String, UniqueSymbolId> {
+    self.traced_re_exports.lock_and_get_ref()
   }
 
   pub(crate) fn add_traced_re_export(
@@ -330,6 +341,10 @@ impl ModuleSymbol {
   pub fn symbol_from_swc(&self, id: &Id) -> Option<&Symbol> {
     let id = self.symbol_id_from_swc(id)?;
     self.symbol(id)
+  }
+
+  pub fn symbols(&self) -> impl Iterator<Item = &Symbol> {
+    self.symbols.values()
   }
 
   pub fn symbol(&self, id: SymbolId) -> Option<&Symbol> {
@@ -429,7 +444,7 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
     let module = source.module();
     let mut module_symbol = ModuleSymbol {
       specifier: specifier.clone(),
-      module_id: ModuleId(self.modules.len()),
+      module_id: ModuleId(self.modules.len() as u32),
       source: source.clone(),
       next_symbol_id: Default::default(),
       exports: Default::default(),
