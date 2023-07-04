@@ -5,6 +5,9 @@ mod ast;
 mod graph;
 mod module_specifier;
 
+#[cfg(feature = "type_tracing")]
+pub mod type_tracer;
+
 pub mod source;
 mod text_encoding;
 

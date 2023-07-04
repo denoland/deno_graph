@@ -1,0 +1,152 @@
+# mod.ts
+export type Test = typeof Other.Test;
+
+namespace Other {
+  export const Test = 1;
+
+  export const other = 2;
+}
+
+# output
+file:///mod.ts: ModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    exports: {
+        "Test": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('Test' type=inline),
+            #2,
+        ): 0,
+        (
+            Atom('Other' type=inline),
+            #2,
+        ): 1,
+        (
+            Atom('Test' type=inline),
+            #3,
+        ): 2,
+        (
+            Atom('other' type=inline),
+            #3,
+        ): 3,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            37,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                ),
+                QualifiedId(
+                    (
+                        Atom('Other' type=inline),
+                        #2,
+                    ),
+                    [
+                        "Test",
+                    ],
+                ),
+            },
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: false,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            39,
+                        ),
+                        end: SourcePos(
+                            110,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Test' type=inline),
+                        #3,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('other' type=inline),
+                        #3,
+                    ),
+                ),
+            },
+            exports: {
+                "Test": 2,
+                "other": 3,
+            },
+        },
+        2: Symbol {
+            symbol_id: 2,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            72,
+                        ),
+                        end: SourcePos(
+                            80,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            is_public: false,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            98,
+                        ),
+                        end: SourcePos(
+                            107,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+}
+== export definitions ==
+[Test]: file:///mod.ts:0..37
+  export type Test = typeof Other.Test;

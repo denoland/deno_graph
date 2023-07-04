@@ -1,0 +1,735 @@
+# mod.ts
+import Test from "./a.ts";
+import { C1, C2, C3 as CInterface } from "./a.ts";
+
+export default Test;
+
+export { C1, C2, CInterface };
+
+# a.ts
+export { default as C1 } from "./class.ts";
+export { default as C2 } from "./function.ts";
+export { default as C3 } from "./interface.ts";
+
+export default class Test {
+    prop: A;
+}
+
+class A {
+    a: number;
+    b: B;
+}
+
+class B {
+    b: number;
+    #c: C;
+}
+
+class C {
+}
+
+# class.ts
+export default class Test {
+}
+
+# interface.ts
+export default interface Test {
+}
+
+# function.ts
+export default function Test() {
+}
+
+# output
+file:///mod.ts: ModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    exports: {
+        "default": 4,
+        "C1": 1,
+        "C2": 2,
+        "CInterface": 3,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('Test' type=inline),
+            #2,
+        ): 0,
+        (
+            Atom('C1' type=inline),
+            #2,
+        ): 1,
+        (
+            Atom('C2' type=inline),
+            #2,
+        ): 2,
+        (
+            Atom('CInterface' type=dynamic),
+            #2,
+        ): 3,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            7,
+                        ),
+                        end: SourcePos(
+                            11,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "default",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            94,
+                        ),
+                        end: SourcePos(
+                            98,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            Atom('Test' type=inline),
+                            #2,
+                        ),
+                    ),
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            36,
+                        ),
+                        end: SourcePos(
+                            38,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "C1",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            101,
+                        ),
+                        end: SourcePos(
+                            131,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            110,
+                        ),
+                        end: SourcePos(
+                            112,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        2: Symbol {
+            symbol_id: 2,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            40,
+                        ),
+                        end: SourcePos(
+                            42,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "C2",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            101,
+                        ),
+                        end: SourcePos(
+                            131,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            114,
+                        ),
+                        end: SourcePos(
+                            116,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            44,
+                        ),
+                        end: SourcePos(
+                            60,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "C3",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            101,
+                        ),
+                        end: SourcePos(
+                            131,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            118,
+                        ),
+                        end: SourcePos(
+                            128,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            94,
+                        ),
+                        end: SourcePos(
+                            98,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            Atom('Test' type=inline),
+                            #2,
+                        ),
+                    ),
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+}
+file:///a.ts: ModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///a.ts",
+    exports: {
+        "C1": 0,
+        "C2": 1,
+        "C3": 2,
+        "default": 3,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('Test' type=inline),
+            #2,
+        ): 4,
+        (
+            Atom('A' type=inline),
+            #2,
+        ): 5,
+        (
+            Atom('B' type=inline),
+            #2,
+        ): 6,
+        (
+            Atom('C' type=inline),
+            #2,
+        ): 7,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            43,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "default",
+                            ),
+                            specifier: "./class.ts",
+                        },
+                    ),
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            44,
+                        ),
+                        end: SourcePos(
+                            90,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "default",
+                            ),
+                            specifier: "./function.ts",
+                        },
+                    ),
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        2: Symbol {
+            symbol_id: 2,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            91,
+                        ),
+                        end: SourcePos(
+                            138,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "default",
+                            ),
+                            specifier: "./interface.ts",
+                        },
+                    ),
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            140,
+                        ),
+                        end: SourcePos(
+                            182,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            161,
+                        ),
+                        end: SourcePos(
+                            165,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('A' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        5: Symbol {
+            symbol_id: 5,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            184,
+                        ),
+                        end: SourcePos(
+                            220,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('B' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        6: Symbol {
+            symbol_id: 6,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            222,
+                        ),
+                        end: SourcePos(
+                            259,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        7: Symbol {
+            symbol_id: 7,
+            is_public: false,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            261,
+                        ),
+                        end: SourcePos(
+                            272,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+}
+file:///interface.ts: ModuleSymbol {
+    module_id: ModuleId(
+        2,
+    ),
+    specifier: "file:///interface.ts",
+    exports: {
+        "default": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('Test' type=inline),
+            #2,
+        ): 1,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            33,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            25,
+                        ),
+                        end: SourcePos(
+                            29,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+}
+file:///function.ts: ModuleSymbol {
+    module_id: ModuleId(
+        3,
+    ),
+    specifier: "file:///function.ts",
+    exports: {
+        "default": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('Test' type=inline),
+            #2,
+        ): 1,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            34,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            24,
+                        ),
+                        end: SourcePos(
+                            28,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+}
+file:///class.ts: ModuleSymbol {
+    module_id: ModuleId(
+        4,
+    ),
+    specifier: "file:///class.ts",
+    exports: {
+        "default": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('Test' type=inline),
+            #2,
+        ): 1,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            29,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            21,
+                        ),
+                        end: SourcePos(
+                            25,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+}
+== export definitions ==
+[C1]: file:///class.ts:0..29
+  export default class Test {
+  }
+[C2]: file:///function.ts:0..34
+  export default function Test() {
+  }
+[CInterface]: file:///interface.ts:0..33
+  export default interface Test {
+  }
+[default]: file:///a.ts:140..182
+  export default class Test {
+      prop: A;
+  }

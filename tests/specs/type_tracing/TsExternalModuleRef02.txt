@@ -1,0 +1,227 @@
+# mod.ts
+import A = require("./a.ts");
+
+export default A;
+
+# a.ts
+namespace MyNamespace {
+  export function B() {}
+}
+
+export = MyNamespace;
+
+# output
+file:///mod.ts: ModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    exports: {
+        "default": 1,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('A' type=inline),
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            29,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "default",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            46,
+                        ),
+                        end: SourcePos(
+                            47,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            Atom('A' type=inline),
+                            #2,
+                        ),
+                    ),
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            46,
+                        ),
+                        end: SourcePos(
+                            47,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            Atom('A' type=inline),
+                            #2,
+                        ),
+                    ),
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('A' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+}
+file:///a.ts: ModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///a.ts",
+    exports: {
+        "default": 2,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('MyNamespace' type=dynamic),
+            #2,
+        ): 0,
+        (
+            Atom('B' type=inline),
+            #3,
+        ): 1,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            50,
+                        ),
+                    },
+                    kind: Definition,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            61,
+                        ),
+                        end: SourcePos(
+                            72,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            Atom('MyNamespace' type=dynamic),
+                            #2,
+                        ),
+                    ),
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('B' type=inline),
+                        #3,
+                    ),
+                ),
+            },
+            exports: {
+                "B": 1,
+            },
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            26,
+                        ),
+                        end: SourcePos(
+                            48,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        2: Symbol {
+            symbol_id: 2,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            61,
+                        ),
+                        end: SourcePos(
+                            72,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            Atom('MyNamespace' type=dynamic),
+                            #2,
+                        ),
+                    ),
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('MyNamespace' type=dynamic),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+}
+== export definitions ==
+[default]: file:///a.ts:0..50
+  namespace MyNamespace {
+    export function B() {}
+  }
