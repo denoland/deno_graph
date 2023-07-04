@@ -94,6 +94,7 @@ file:///mod.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {},
 }
 file:///a.ts: ModuleSymbol {
     module_id: ModuleId(
@@ -211,6 +212,7 @@ file:///a.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {},
 }
 == export definitions ==
 [Test]: file:///mod.ts:31..61

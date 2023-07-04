@@ -117,6 +117,7 @@ file:///mod.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {},
 }
 == export definitions ==
 [MyExport]: file:///mod.ts:57..81

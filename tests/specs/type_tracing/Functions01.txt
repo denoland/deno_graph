@@ -368,6 +368,7 @@ file:///mod.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {},
 }
 == export definitions ==
 [overloaded]: file:///mod.ts:201..295

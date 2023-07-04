@@ -52,6 +52,7 @@ file:///mod.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {},
 }
 file:///a.ts: ModuleSymbol {
     module_id: ModuleId(
@@ -108,6 +109,15 @@ file:///a.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            0,
+        ): Named(
+            [
+                "someName",
+            ],
+        ),
+    },
 }
 file:///b.ts: ModuleSymbol {
     module_id: ModuleId(
@@ -148,6 +158,15 @@ file:///b.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            1,
+        ): Named(
+            [
+                "some-name",
+            ],
+        ),
+    },
 }
 file:///c.ts: ModuleSymbol {
     module_id: ModuleId(
@@ -186,6 +205,15 @@ file:///c.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            2,
+        ): Named(
+            [
+                "MyClass",
+            ],
+        ),
+    },
 }
 == export definitions ==
 [someOtherName]: file:///c.ts:0..23

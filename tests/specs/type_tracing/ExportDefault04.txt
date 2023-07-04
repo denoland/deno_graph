@@ -12,6 +12,7 @@ file:///mod.ts: ModuleSymbol {
     swc_id_to_symbol_id: {},
     symbols: {},
     traced_re_exports: {},
+    traced_referrers: {},
 }
 
 # diagnostics

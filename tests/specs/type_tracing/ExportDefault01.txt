@@ -291,6 +291,7 @@ file:///mod.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {},
 }
 file:///a.ts: ModuleSymbol {
     module_id: ModuleId(
@@ -519,6 +520,18 @@ file:///a.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            0,
+        ): Named(
+            [
+                "C3",
+                "C2",
+                "C1",
+                "default",
+            ],
+        ),
+    },
 }
 file:///interface.ts: ModuleSymbol {
     module_id: ModuleId(
@@ -590,6 +603,15 @@ file:///interface.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            1,
+        ): Named(
+            [
+                "default",
+            ],
+        ),
+    },
 }
 file:///function.ts: ModuleSymbol {
     module_id: ModuleId(
@@ -654,6 +676,15 @@ file:///function.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            1,
+        ): Named(
+            [
+                "default",
+            ],
+        ),
+    },
 }
 file:///class.ts: ModuleSymbol {
     module_id: ModuleId(
@@ -718,6 +749,15 @@ file:///class.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            1,
+        ): Named(
+            [
+                "default",
+            ],
+        ),
+    },
 }
 == export definitions ==
 [C1]: file:///class.ts:0..29

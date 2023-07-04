@@ -25,6 +25,7 @@ use super::collections::AdditiveOnlyMap;
 use super::collections::LockableRefCell;
 use super::cross_module;
 use super::cross_module::Definition;
+use super::ImportedExports;
 use super::TypeTraceDiagnostic;
 use super::TypeTraceDiagnosticKind;
 use super::TypeTraceHandler;
@@ -242,6 +243,7 @@ pub struct ModuleSymbol {
   swc_id_to_symbol_id: IndexMap<Id, SymbolId>,
   symbols: IndexMap<SymbolId, Symbol>,
   traced_re_exports: LockableRefCell<IndexMap<String, UniqueSymbolId>>,
+  traced_referrers: LockableRefCell<IndexMap<ModuleId, ImportedExports>>,
 }
 
 impl std::fmt::Debug for ModuleSymbol {
@@ -254,6 +256,7 @@ impl std::fmt::Debug for ModuleSymbol {
       .field("swc_id_to_symbol_id", &self.swc_id_to_symbol_id)
       .field("symbols", &self.symbols)
       .field("traced_re_exports", &self.traced_re_exports.borrow())
+      .field("traced_referrers", &self.traced_referrers.borrow())
       .finish()
   }
 }
@@ -280,6 +283,7 @@ impl ModuleSymbol {
       .collect()
   }
 
+  /// Re-exports from this module that were found during tracing.
   pub fn traced_re_exports(&self) -> &IndexMap<String, UniqueSymbolId> {
     self.traced_re_exports.lock_and_get_ref()
   }
@@ -290,6 +294,26 @@ impl ModuleSymbol {
     symbol: UniqueSymbolId,
   ) {
     self.traced_re_exports.borrow_mut().insert(name, symbol);
+  }
+
+  /// Referrers and their imported exports. This only includes referrers that
+  /// were found during tracing and not all referrers.
+  pub fn traced_referrers(&self) -> &IndexMap<ModuleId, ImportedExports> {
+    self.traced_referrers.lock_and_get_ref()
+  }
+
+  pub(crate) fn add_traced_referrer(
+    &self,
+    module_id: ModuleId,
+    imported_exports: ImportedExports,
+  ) {
+    let mut traced_referrers = self.traced_referrers.borrow_mut();
+    if let Some(current_imported_exports) = traced_referrers.get_mut(&module_id)
+    {
+      current_imported_exports.add(imported_exports);
+    } else {
+      traced_referrers.insert(module_id, imported_exports);
+    }
   }
 
   pub fn exports<'a>(
@@ -450,6 +474,7 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
       exports: Default::default(),
       re_exports: Default::default(),
       traced_re_exports: Default::default(),
+      traced_referrers: Default::default(),
       swc_id_to_symbol_id: Default::default(),
       symbols: Default::default(),
     };

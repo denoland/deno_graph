@@ -21,6 +21,9 @@ use deno_semver::npm::NpmPackageReq;
 use deno_semver::Version;
 use futures::future::LocalBoxFuture;
 
+#[cfg(feature = "type_tracing")]
+mod type_tracing;
+
 #[tokio::test]
 async fn test_npm_version_not_found_then_found() {
   #[derive(Debug)]

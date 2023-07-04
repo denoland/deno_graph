@@ -60,43 +60,48 @@ pub fn trace_public_types<'a, THandler: TypeTraceHandler>(
     pending_traces: PendingTraces(
       roots
         .iter()
-        .map(|r| (r.clone(), ExportsToTrace::AllWithDefault))
+        .map(|r| {
+          (
+            r.clone(),
+            (ImportedExports::AllWithDefault, Default::default()),
+          )
+        })
         .collect(),
     ),
   };
-  while let Some((specifier, exports_to_trace)) = context.pending_traces.pop() {
-    trace_module(&specifier, &mut context, &exports_to_trace)?;
+  while let Some(pending_trace) = context.pending_traces.pop() {
+    trace_module(pending_trace, &mut context)?;
   }
 
   Ok(context.analyzer.into_roots_graph_symbol())
 }
 
-#[derive(Debug)]
-enum ExportsToTrace {
+#[derive(Debug, Clone)]
+pub enum ImportedExports {
   AllWithDefault,
   Star,
   Named(Vec<String>),
 }
 
-impl ExportsToTrace {
-  pub fn from_file_dep_name(dep_name: &FileDepName) -> Self {
+impl ImportedExports {
+  pub(crate) fn from_file_dep_name(dep_name: &FileDepName) -> Self {
     match dep_name {
       FileDepName::Star => Self::Star,
       FileDepName::Name(value) => Self::Named(vec![value.clone()]),
     }
   }
 
-  pub fn add(&mut self, exports_to_trace: ExportsToTrace) {
+  pub(crate) fn add(&mut self, exports_to_trace: ImportedExports) {
     match exports_to_trace {
-      ExportsToTrace::AllWithDefault => {
+      ImportedExports::AllWithDefault => {
         *self = Self::AllWithDefault;
       }
-      ExportsToTrace::Star => {
+      ImportedExports::Star => {
         if !matches!(self, Self::Star | Self::AllWithDefault) {
           *self = Self::Star;
         }
       }
-      ExportsToTrace::Named(new_names) => {
+      ImportedExports::Named(new_names) => {
         if let Self::Named(names) = self {
           names.extend(new_names);
         }
@@ -105,25 +110,60 @@ impl ExportsToTrace {
   }
 }
 
+type ReferrerTracesMap = IndexMap<ModuleId, ImportedExports>;
+
 #[derive(Default)]
-struct PendingTraces(IndexMap<ModuleSpecifier, ExportsToTrace>);
+struct PendingTraces(
+  IndexMap<ModuleSpecifier, (ImportedExports, ReferrerTracesMap)>,
+);
 
 impl PendingTraces {
   pub fn add(
     &mut self,
     dep_specifier: ModuleSpecifier,
-    exports_to_trace: ExportsToTrace,
+    exports_to_trace: ImportedExports,
+    referrer_module_id: ModuleId,
   ) {
-    if let Some(current_exports_to_trace) = self.0.get_mut(&dep_specifier) {
-      current_exports_to_trace.add(exports_to_trace);
+    if let Some((current_exports_to_trace, referrer_traces)) =
+      self.0.get_mut(&dep_specifier)
+    {
+      current_exports_to_trace.add(exports_to_trace.clone());
+      if let Some(referrer_traces) =
+        referrer_traces.get_mut(&referrer_module_id)
+      {
+        referrer_traces.add(exports_to_trace);
+      } else {
+        referrer_traces.insert(referrer_module_id, exports_to_trace);
+      }
     } else {
-      self.0.insert(dep_specifier, exports_to_trace);
+      self.0.insert(
+        dep_specifier,
+        (
+          exports_to_trace.clone(),
+          IndexMap::from([(referrer_module_id, exports_to_trace)]),
+        ),
+      );
     }
   }
 
-  pub fn pop(&mut self) -> Option<(ModuleSpecifier, ExportsToTrace)> {
-    self.0.pop()
+  pub fn pop(&mut self) -> Option<PendingTrace> {
+    self
+      .0
+      .pop()
+      .map(
+        |(specifier, (exports_to_trace, referrer_traces))| PendingTrace {
+          specifier,
+          exports_to_trace,
+          referrer_traces,
+        },
+      )
   }
+}
+
+struct PendingTrace {
+  pub specifier: ModuleSpecifier,
+  pub exports_to_trace: ImportedExports,
+  pub referrer_traces: ReferrerTracesMap,
 }
 
 struct Context<'a, TReporter: TypeTraceHandler> {
@@ -135,11 +175,14 @@ struct Context<'a, TReporter: TypeTraceHandler> {
 impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
   pub fn trace_exports(
     &mut self,
-    specifier: &ModuleSpecifier,
-    exports_to_trace: &ExportsToTrace,
+    pending_trace: PendingTrace,
   ) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
-    let exports =
-      self.trace_exports_inner(specifier, exports_to_trace, HashSet::new())?;
+    let specifier = &pending_trace.specifier;
+    let exports = self.trace_exports_inner(
+      specifier,
+      &pending_trace.exports_to_trace,
+      HashSet::new(),
+    )?;
     if let Some(module_symbol) = self.analyzer.get_or_analyze(specifier)? {
       for (export_specifier, module_id, name, symbol_id) in &exports {
         if specifier != export_specifier {
@@ -151,6 +194,11 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
             },
           );
         }
+      }
+
+      // add the traced referrers
+      for (module_id, imported_exports) in pending_trace.referrer_traces {
+        module_symbol.add_traced_referrer(module_id, imported_exports);
       }
     }
     Ok(
@@ -164,14 +212,14 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
   fn trace_exports_inner(
     &mut self,
     specifier: &ModuleSpecifier,
-    exports_to_trace: &ExportsToTrace,
+    exports_to_trace: &ImportedExports,
     visited: HashSet<ModuleSpecifier>,
   ) -> Result<Vec<(ModuleSpecifier, ModuleId, String, SymbolId)>> {
     let mut result = Vec::new();
     let Some(module_symbol) = self.analyzer.get_or_analyze(specifier)? else {
       return Ok(Vec::new());
     };
-    if matches!(exports_to_trace, ExportsToTrace::AllWithDefault) {
+    if matches!(exports_to_trace, ImportedExports::AllWithDefault) {
       let maybe_symbol_id = module_symbol.exports_map().get("default").copied();
       if let Some(symbol_id) = maybe_symbol_id {
         result.push((
@@ -183,7 +231,7 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
       }
     }
     match exports_to_trace {
-      ExportsToTrace::Star | ExportsToTrace::AllWithDefault => {
+      ImportedExports::Star | ImportedExports::AllWithDefault => {
         let mut found_names = HashSet::new();
         for (name, symbol_id) in module_symbol.exports_map() {
           if name != "default" {
@@ -204,12 +252,15 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
             /* prefer_types */ true,
           );
           if let Some(specifier) = maybe_specifier {
-            let inner =
-              self.trace_exports_inner(&specifier, &ExportsToTrace::Star, {
+            let inner = self.trace_exports_inner(
+              &specifier,
+              &ImportedExports::Star,
+              {
                 let mut visited = visited.clone();
                 visited.insert(specifier.clone());
                 visited
-              })?;
+              },
+            )?;
             for (specifier, module_id, name, symbol_id) in inner {
               if name != "default" && found_names.insert(name.clone()) {
                 result.push((specifier, module_id, name, symbol_id));
@@ -218,7 +269,7 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
           }
         }
       }
-      ExportsToTrace::Named(names) => {
+      ImportedExports::Named(names) => {
         let module_id = module_symbol.module_id();
         let exports = module_symbol.exports_map().clone();
         let re_exports = module_symbol.re_exports().clone();
@@ -240,7 +291,7 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
               if let Some(specifier) = maybe_specifier {
                 let mut found = self.trace_exports_inner(
                   &specifier,
-                  &ExportsToTrace::Named(vec![name.clone()]),
+                  &ImportedExports::Named(vec![name.clone()]),
                   {
                     let mut visited = visited.clone();
                     visited.insert(specifier.clone());
@@ -263,11 +314,10 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
 }
 
 fn trace_module<THandler: TypeTraceHandler>(
-  specifier: &ModuleSpecifier,
+  pending_trace: PendingTrace,
   context: &mut Context<THandler>,
-  exports_to_trace: &ExportsToTrace,
 ) -> Result<()> {
-  let mut pending = context.trace_exports(specifier, exports_to_trace)?;
+  let mut pending = context.trace_exports(pending_trace)?;
 
   while let Some((specifier, symbol_id)) = pending.pop() {
     let Some(module_symbol) = context.analyzer.get_or_analyze(&specifier)? else {
@@ -284,7 +334,8 @@ fn trace_module<THandler: TypeTraceHandler>(
         if let Some(dep_specifier) = maybe_dep_specifier {
           context.pending_traces.add(
             dep_specifier,
-            ExportsToTrace::from_file_dep_name(&file_dep.name),
+            ImportedExports::from_file_dep_name(&file_dep.name),
+            /* referrer */ module_symbol.module_id(),
           );
         }
       }
@@ -322,9 +373,11 @@ fn trace_module<THandler: TypeTraceHandler>(
               {
                 if parts.is_empty() {
                   // an ImportType includes default exports
-                  context
-                    .pending_traces
-                    .add(dep_specifier, ExportsToTrace::AllWithDefault);
+                  context.pending_traces.add(
+                    dep_specifier,
+                    ImportedExports::AllWithDefault,
+                    /* referrer */ module_symbol.module_id(),
+                  );
                 } else {
                   pending.extend(resolve_qualified_export_name(
                     context.graph,
