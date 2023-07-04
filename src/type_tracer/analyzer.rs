@@ -800,7 +800,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                       name: FileDepName::Star,
                       specifier: src.value.to_string(),
                     }),
-                    range: n.range(),
+                    range: specifier.range(),
                   });
                   let symbol_id = symbol.symbol_id;
                   add_export(file_module, name, symbol_id);
