@@ -6,6 +6,7 @@ use anyhow::Result;
 use deno_ast::LineAndColumnDisplay;
 use deno_ast::ModuleSpecifier;
 use indexmap::IndexMap;
+use indexmap::IndexSet;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -80,14 +81,14 @@ pub fn trace_public_types<'a, THandler: TypeTraceHandler>(
 pub enum ImportedExports {
   AllWithDefault,
   Star,
-  Named(Vec<String>),
+  Named(IndexSet<String>),
 }
 
 impl ImportedExports {
   pub(crate) fn from_file_dep_name(dep_name: &FileDepName) -> Self {
     match dep_name {
       FileDepName::Star => Self::Star,
-      FileDepName::Name(value) => Self::Named(vec![value.clone()]),
+      FileDepName::Name(value) => Self::Named(IndexSet::from([value.clone()])),
     }
   }
 
@@ -291,7 +292,7 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
               if let Some(specifier) = maybe_specifier {
                 let mut found = self.trace_exports_inner(
                   &specifier,
-                  &ImportedExports::Named(vec![name.clone()]),
+                  &ImportedExports::Named(IndexSet::from([name.clone()])),
                   {
                     let mut visited = visited.clone();
                     visited.insert(specifier.clone());
