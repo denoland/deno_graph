@@ -76,10 +76,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            46,
+                            31,
                         ),
                         end: SourcePos(
-                            47,
+                            48,
                         ),
                     },
                     kind: Target(
@@ -194,10 +194,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            61,
+                            52,
                         ),
                         end: SourcePos(
-                            72,
+                            73,
                         ),
                     },
                     kind: Target(
@@ -224,9 +224,9 @@ file:///a.ts: ModuleSymbol {
         ModuleId(
             0,
         ): Named(
-            [
+            {
                 "default",
-            ],
+            },
         ),
     },
 }

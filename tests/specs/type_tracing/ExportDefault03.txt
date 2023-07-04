@@ -37,10 +37,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            0,
+                            9,
                         ),
                         end: SourcePos(
-                            42,
+                            25,
                         ),
                     },
                     kind: FileRef(
@@ -138,9 +138,9 @@ file:///a.ts: ModuleSymbol {
         ModuleId(
             0,
         ): Named(
-            [
+            {
                 "default",
-            ],
+            },
         ),
     },
 }
@@ -209,9 +209,9 @@ file:///b.ts: ModuleSymbol {
         ModuleId(
             1,
         ): Named(
-            [
+            {
                 "B",
-            ],
+            },
         ),
     },
 }

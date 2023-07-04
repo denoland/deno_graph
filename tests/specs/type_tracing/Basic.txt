@@ -454,10 +454,10 @@ file:///a.ts: ModuleSymbol {
         ModuleId(
             0,
         ): Named(
-            [
+            {
                 "D",
                 "A",
-            ],
+            },
         ),
     },
 }

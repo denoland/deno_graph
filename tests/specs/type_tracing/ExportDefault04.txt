@@ -22,7 +22,7 @@ file:///mod.ts: ModuleSymbol {
     "specifier": "file:///mod.ts",
     "line_and_column": {
       "line_number": 1,
-      "column_number": 16
+      "column_number": 1
     }
   }
 ]

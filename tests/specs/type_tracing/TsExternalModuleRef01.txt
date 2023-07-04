@@ -186,10 +186,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            61,
+                            52,
                         ),
                         end: SourcePos(
-                            72,
+                            73,
                         ),
                     },
                     kind: Target(

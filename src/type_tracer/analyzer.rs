@@ -728,7 +728,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                       .unwrap_or_else(|| imported_name.clone());
                     let symbol = file_module.create_new_symbol();
                     symbol.decls.insert(SymbolDecl {
-                      range: n.range(),
+                      range: named.range(),
                       kind: SymbolDeclKind::FileRef(FileDep {
                         name: FileDepName::Name(imported_name),
                         specifier: src.value.to_string(),
@@ -871,7 +871,11 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           }
         }
         ModuleDecl::ExportDefaultExpr(expr) => {
-          self.handle_export_default_expr(&expr.expr, file_module);
+          self.handle_export_default_expr(
+            expr.range(),
+            &expr.expr,
+            file_module,
+          );
         }
         ModuleDecl::ExportAll(n) => {
           file_module.re_exports.push(n.src.value.to_string());
@@ -900,7 +904,11 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           }
         }
         ModuleDecl::TsExportAssignment(export_assignment) => {
-          self.handle_export_default_expr(&export_assignment.expr, file_module);
+          self.handle_export_default_expr(
+            export_assignment.range(),
+            &export_assignment.expr,
+            file_module,
+          );
         }
         ModuleDecl::TsNamespaceExport(_) => {
           // ignore
@@ -1020,6 +1028,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
 
   fn handle_export_default_expr(
     &self,
+    default_export_range: SourceRange,
     expr: &Expr,
     file_module: &mut ModuleSymbol,
   ) {
@@ -1028,7 +1037,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
         let default_export_symbol_id = file_module
           .ensure_default_export_symbol(SymbolDecl {
             kind: SymbolDeclKind::Target(ident.to_id()),
-            range: expr.range(),
+            range: default_export_range,
           });
         file_module.ensure_symbol_for_swc_id(
           ident.to_id(),
@@ -1047,7 +1056,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
         let line_and_column = self
           .source
           .text_info()
-          .line_and_column_display(expr.start());
+          .line_and_column_display(default_export_range.start);
         self.handler.diagnostic(TypeTraceDiagnostic {
           kind: TypeTraceDiagnosticKind::UnsupportedDefaultExpr,
           specifier: self.specifier.clone(),

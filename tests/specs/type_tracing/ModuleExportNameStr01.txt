@@ -31,10 +31,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            0,
+                            9,
                         ),
                         end: SourcePos(
-                            55,
+                            38,
                         ),
                     },
                     kind: FileRef(
@@ -113,9 +113,9 @@ file:///a.ts: ModuleSymbol {
         ModuleId(
             0,
         ): Named(
-            [
+            {
                 "someName",
-            ],
+            },
         ),
     },
 }
@@ -137,10 +137,10 @@ file:///b.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            0,
+                            9,
                         ),
                         end: SourcePos(
-                            48,
+                            31,
                         ),
                     },
                     kind: FileRef(
@@ -162,9 +162,9 @@ file:///b.ts: ModuleSymbol {
         ModuleId(
             1,
         ): Named(
-            [
+            {
                 "some-name",
-            ],
+            },
         ),
     },
 }
@@ -209,9 +209,9 @@ file:///c.ts: ModuleSymbol {
         ModuleId(
             2,
         ): Named(
-            [
+            {
                 "MyClass",
-            ],
+            },
         ),
     },
 }

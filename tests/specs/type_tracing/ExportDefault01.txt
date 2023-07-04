@@ -265,10 +265,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            94,
+                            79,
                         ),
                         end: SourcePos(
-                            98,
+                            99,
                         ),
                     },
                     kind: Target(
@@ -331,10 +331,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            0,
+                            9,
                         ),
                         end: SourcePos(
-                            43,
+                            22,
                         ),
                     },
                     kind: FileRef(
@@ -357,10 +357,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            44,
+                            53,
                         ),
                         end: SourcePos(
-                            90,
+                            66,
                         ),
                     },
                     kind: FileRef(
@@ -383,10 +383,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            91,
+                            100,
                         ),
                         end: SourcePos(
-                            138,
+                            113,
                         ),
                     },
                     kind: FileRef(
@@ -524,12 +524,12 @@ file:///a.ts: ModuleSymbol {
         ModuleId(
             0,
         ): Named(
-            [
+            {
                 "C3",
                 "C2",
                 "C1",
                 "default",
-            ],
+            },
         ),
     },
 }
@@ -607,9 +607,9 @@ file:///interface.ts: ModuleSymbol {
         ModuleId(
             1,
         ): Named(
-            [
+            {
                 "default",
-            ],
+            },
         ),
     },
 }
@@ -680,9 +680,9 @@ file:///function.ts: ModuleSymbol {
         ModuleId(
             1,
         ): Named(
-            [
+            {
                 "default",
-            ],
+            },
         ),
     },
 }
@@ -753,9 +753,9 @@ file:///class.ts: ModuleSymbol {
         ModuleId(
             1,
         ): Named(
-            [
+            {
                 "default",
-            ],
+            },
         ),
     },
 }

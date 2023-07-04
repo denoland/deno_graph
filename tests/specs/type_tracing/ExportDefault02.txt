@@ -25,10 +25,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            15,
+                            0,
                         ),
                         end: SourcePos(
-                            19,
+                            20,
                         ),
                     },
                     kind: Target(
