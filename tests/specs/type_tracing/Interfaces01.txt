@@ -1,0 +1,351 @@
+# mod.ts
+interface A {
+}
+
+export interface Main extends Extends {
+  prop: Prop;
+  method(method: Param): Return;
+  [key: string]: SignatureValueType;
+}
+
+interface Extends {}
+interface Prop {}
+interface Param {}
+interface Return {}
+interface SignatureValueType {
+  other: B;
+}
+
+interface B {
+}
+
+# output
+file:///mod.ts: ModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    exports: {
+        "Main": 1,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('A' type=inline),
+            #2,
+        ): 0,
+        (
+            Atom('Main' type=inline),
+            #2,
+        ): 1,
+        (
+            Atom('Extends' type=inline),
+            #2,
+        ): 2,
+        (
+            Atom('Prop' type=inline),
+            #2,
+        ): 3,
+        (
+            Atom('Param' type=inline),
+            #2,
+        ): 4,
+        (
+            Atom('Return' type=inline),
+            #2,
+        ): 5,
+        (
+            Atom('SignatureValueType' type=dynamic),
+            #2,
+        ): 6,
+        (
+            Atom('B' type=inline),
+            #2,
+        ): 7,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: false,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            15,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('A' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            17,
+                        ),
+                        end: SourcePos(
+                            142,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Main' type=inline),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('Extends' type=inline),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('prop' type=inline),
+                        #0,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('Prop' type=inline),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('method' type=inline),
+                        #0,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('method' type=inline),
+                        #1,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('Param' type=inline),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('Return' type=inline),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('key' type=static),
+                        #1,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('SignatureValueType' type=dynamic),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        2: Symbol {
+            symbol_id: 2,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            144,
+                        ),
+                        end: SourcePos(
+                            164,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Extends' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            165,
+                        ),
+                        end: SourcePos(
+                            182,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Prop' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            183,
+                        ),
+                        end: SourcePos(
+                            201,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Param' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        5: Symbol {
+            symbol_id: 5,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            202,
+                        ),
+                        end: SourcePos(
+                            221,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Return' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        6: Symbol {
+            symbol_id: 6,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            222,
+                        ),
+                        end: SourcePos(
+                            266,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('SignatureValueType' type=dynamic),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('other' type=inline),
+                        #0,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('B' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        7: Symbol {
+            symbol_id: 7,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            268,
+                        ),
+                        end: SourcePos(
+                            283,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('B' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {},
+}
+== export definitions ==
+[Main]: file:///mod.ts:17..142
+  export interface Main extends Extends {
+    prop: Prop;
+  ...
+    [key: string]: SignatureValueType;
+  }

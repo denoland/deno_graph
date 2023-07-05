@@ -1,0 +1,161 @@
+# mod.ts
+export interface Test {
+  prop: import("./a.ts").A.B,
+}
+
+# a.ts
+export namespace A {
+  export interface B {
+    prop: string,
+  }
+}
+
+# output
+file:///mod.ts: ModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    exports: {
+        "Test": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('Test' type=inline),
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            55,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('prop' type=inline),
+                        #0,
+                    ),
+                ),
+                ImportType(
+                    "./a.ts",
+                    [
+                        "A",
+                        "B",
+                    ],
+                ),
+            },
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {},
+}
+file:///a.ts: ModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///a.ts",
+    exports: {
+        "A": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('A' type=inline),
+            #2,
+        ): 0,
+        (
+            Atom('B' type=inline),
+            #3,
+        ): 1,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: false,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            67,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('B' type=inline),
+                        #3,
+                    ),
+                ),
+            },
+            exports: {
+                "B": 1,
+            },
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            23,
+                        ),
+                        end: SourcePos(
+                            65,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('B' type=inline),
+                        #3,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('prop' type=inline),
+                        #0,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {},
+}
+== export definitions ==
+[Test]: file:///mod.ts:0..55
+  export interface Test {
+    prop: import("./a.ts").A.B,
+  }

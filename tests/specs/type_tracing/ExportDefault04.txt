@@ -1,0 +1,28 @@
+# mod.ts
+export default 1 + 1;
+
+# output
+file:///mod.ts: ModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    exports: {},
+    re_exports: [],
+    swc_id_to_symbol_id: {},
+    symbols: {},
+    traced_re_exports: {},
+    traced_referrers: {},
+}
+
+# diagnostics
+[
+  {
+    "kind": "UnsupportedDefaultExpr",
+    "specifier": "file:///mod.ts",
+    "line_and_column": {
+      "line_number": 1,
+      "column_number": 1
+    }
+  }
+]

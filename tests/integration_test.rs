@@ -13,12 +13,16 @@ use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
 use deno_graph::source::UnknownBuiltInNodeModuleError;
 use deno_graph::BuildOptions;
+use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 use deno_graph::NpmPackageReqResolution;
 use deno_semver::npm::NpmPackageNv;
 use deno_semver::npm::NpmPackageReq;
 use deno_semver::Version;
 use futures::future::LocalBoxFuture;
+
+#[cfg(feature = "type_tracing")]
+mod type_tracing;
 
 #[tokio::test]
 async fn test_npm_version_not_found_then_found() {
@@ -76,7 +80,7 @@ async fn test_npm_version_not_found_then_found() {
       should_never_succeed: false,
     };
 
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root.clone()],
@@ -105,7 +109,7 @@ async fn test_npm_version_not_found_then_found() {
       should_never_succeed: true,
     };
 
-    let mut graph = ModuleGraph::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root.clone()],

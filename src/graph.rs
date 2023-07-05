@@ -830,6 +830,7 @@ pub struct ModuleEntryIterator<'a> {
   follow_dynamic: bool,
   follow_type_only: bool,
   check_js: bool,
+  previous_module: Option<ModuleEntryRef<'a>>,
 }
 
 impl<'a> ModuleEntryIterator<'a> {
@@ -860,7 +861,13 @@ impl<'a> ModuleEntryIterator<'a> {
       follow_dynamic: options.follow_dynamic,
       follow_type_only: options.follow_type_only,
       check_js: options.check_js,
+      previous_module: None,
     }
+  }
+
+  /// Skips analyzing the dependencies of the previously returned module.
+  pub fn skip_previous_dependencies(&mut self) {
+    self.previous_module = None;
   }
 
   /// An iterator over all the errors found when walking this iterator.
@@ -890,34 +897,8 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
   type Item = (&'a ModuleSpecifier, ModuleEntryRef<'a>);
 
   fn next(&mut self) -> Option<Self::Item> {
-    let (specifier, module_entry) = loop {
-      let specifier = self.visiting.pop_front()?;
-      match self.graph.module_slots.get_key_value(specifier) {
-        Some((specifier, module_slot)) => {
-          match module_slot {
-            ModuleSlot::Pending => {
-              // ignore
-            }
-            ModuleSlot::Module(module) => {
-              break (specifier, ModuleEntryRef::Module(module))
-            }
-            ModuleSlot::Err(err) => {
-              break (specifier, ModuleEntryRef::Err(err))
-            }
-          }
-        }
-        None => {
-          if let Some((specifier, to)) =
-            self.graph.redirects.get_key_value(specifier)
-          {
-            break (specifier, ModuleEntryRef::Redirect(to));
-          }
-        }
-      }
-    };
-
-    match &module_entry {
-      ModuleEntryRef::Module(module) => match module {
+    match self.previous_module.take() {
+      Some(ModuleEntryRef::Module(module)) => match module {
         Module::Esm(module) => {
           let check_types = (self.check_js
             || !matches!(
@@ -952,13 +933,41 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
         | Module::Npm(_)
         | Module::Node(_) => {}
       },
-      ModuleEntryRef::Err(_) => {}
-      ModuleEntryRef::Redirect(specifier) => {
+      Some(ModuleEntryRef::Redirect(specifier)) => {
         if self.seen.insert(specifier) {
           self.visiting.push_front(specifier);
         }
       }
+      Some(ModuleEntryRef::Err(_)) | None => {}
     }
+
+    let (specifier, module_entry) = loop {
+      let specifier = self.visiting.pop_front()?;
+      match self.graph.module_slots.get_key_value(specifier) {
+        Some((specifier, module_slot)) => {
+          match module_slot {
+            ModuleSlot::Pending => {
+              // ignore
+            }
+            ModuleSlot::Module(module) => {
+              break (specifier, ModuleEntryRef::Module(module))
+            }
+            ModuleSlot::Err(err) => {
+              break (specifier, ModuleEntryRef::Err(err))
+            }
+          }
+        }
+        None => {
+          if let Some((specifier, to)) =
+            self.graph.redirects.get_key_value(specifier)
+          {
+            break (specifier, ModuleEntryRef::Redirect(to));
+          }
+        }
+      }
+    };
+
+    self.previous_module = Some(module_entry);
 
     Some((specifier, module_entry))
   }
@@ -1118,11 +1127,11 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
 }
 
 /// The structure which represents a module graph, which can be serialized as
-/// well as "printed".  The roots of the graph represent the "starting" point
+/// well as "printed". The roots of the graph represent the "starting" point
 /// which can be located in the module "slots" in the graph. The graph also
 /// contains any redirects where the requested module specifier was redirected
 /// to another module specifier when being loaded.
-#[derive(Debug, Default, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ModuleGraph {
   #[serde(skip_serializing)]
   graph_kind: GraphKind,

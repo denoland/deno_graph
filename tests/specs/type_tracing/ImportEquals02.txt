@@ -1,0 +1,410 @@
+# mod.ts
+import { A } from "./a.ts";
+
+export import MyExport = Test.Inner;
+
+namespace Test {
+  import OtherInner = A.B.Other;
+  export { OtherInner as Inner };
+}
+
+# a.ts
+namespace A.B {
+  export interface Other {
+    prop1: string;
+  }
+  export interface Other {
+    prop2: string;
+  }
+  export namespace Other {
+    export class MyTest {
+    }
+  }
+}
+
+export { A };
+
+# output
+file:///mod.ts: ModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    exports: {
+        "MyExport": 1,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('A' type=inline),
+            #2,
+        ): 0,
+        (
+            Atom('MyExport' type=dynamic),
+            #2,
+        ): 1,
+        (
+            Atom('Test' type=inline),
+            #2,
+        ): 2,
+        (
+            Atom('OtherInner' type=dynamic),
+            #3,
+        ): 3,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: false,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            10,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "A",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            29,
+                        ),
+                        end: SourcePos(
+                            65,
+                        ),
+                    },
+                    kind: QualifiedTarget(
+                        (
+                            Atom('Test' type=inline),
+                            #2,
+                        ),
+                        [
+                            "Inner",
+                        ],
+                    ),
+                },
+            },
+            deps: {
+                QualifiedId(
+                    (
+                        Atom('Test' type=inline),
+                        #2,
+                    ),
+                    [
+                        "Inner",
+                    ],
+                ),
+            },
+            exports: {},
+        },
+        2: Symbol {
+            symbol_id: 2,
+            is_public: false,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            67,
+                        ),
+                        end: SourcePos(
+                            152,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {},
+            exports: {
+                "Inner": 3,
+            },
+        },
+        3: Symbol {
+            symbol_id: 3,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            86,
+                        ),
+                        end: SourcePos(
+                            116,
+                        ),
+                    },
+                    kind: QualifiedTarget(
+                        (
+                            Atom('A' type=inline),
+                            #2,
+                        ),
+                        [
+                            "B",
+                            "Other",
+                        ],
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            119,
+                        ),
+                        end: SourcePos(
+                            150,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            },
+            deps: {
+                QualifiedId(
+                    (
+                        Atom('A' type=inline),
+                        #2,
+                    ),
+                    [
+                        "B",
+                        "Other",
+                    ],
+                ),
+            },
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {},
+}
+file:///a.ts: ModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///a.ts",
+    exports: {
+        "A": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('A' type=inline),
+            #2,
+        ): 0,
+        (
+            Atom('B' type=inline),
+            #3,
+        ): 1,
+        (
+            Atom('Other' type=inline),
+            #3,
+        ): 2,
+        (
+            Atom('MyTest' type=inline),
+            #4,
+        ): 3,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: false,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            180,
+                        ),
+                    },
+                    kind: Definition,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            182,
+                        ),
+                        end: SourcePos(
+                            195,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            191,
+                        ),
+                        end: SourcePos(
+                            192,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('B' type=inline),
+                        #3,
+                    ),
+                ),
+            },
+            exports: {
+                "B": 1,
+            },
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: false,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            12,
+                        ),
+                        end: SourcePos(
+                            180,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('A' type=inline),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('Other' type=inline),
+                        #3,
+                    ),
+                ),
+            },
+            exports: {
+                "Other": 2,
+            },
+        },
+        2: Symbol {
+            symbol_id: 2,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            18,
+                        ),
+                        end: SourcePos(
+                            65,
+                        ),
+                    },
+                    kind: Definition,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            68,
+                        ),
+                        end: SourcePos(
+                            115,
+                        ),
+                    },
+                    kind: Definition,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            118,
+                        ),
+                        end: SourcePos(
+                            178,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('Other' type=inline),
+                        #3,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('prop1' type=inline),
+                        #0,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('prop2' type=inline),
+                        #0,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('MyTest' type=inline),
+                        #4,
+                    ),
+                ),
+            },
+            exports: {
+                "MyTest": 3,
+            },
+        },
+        3: Symbol {
+            symbol_id: 3,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            147,
+                        ),
+                        end: SourcePos(
+                            174,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {},
+}
+== export definitions ==
+[MyExport]: file:///a.ts:18..65
+  export interface Other {
+      prop1: string;
+    }
+file:///a.ts:68..115
+  export interface Other {
+      prop2: string;
+    }
+file:///a.ts:118..178
+  export namespace Other {
+      export class MyTest {
+      }
+    }
