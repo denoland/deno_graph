@@ -15,7 +15,7 @@ use deno_graph::DefaultModuleParser;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 
-use super::InMemoryLoader;
+use super::in_memory_loader::InMemoryLoader;
 
 #[derive(Default)]
 struct TestTypeTraceHandler {

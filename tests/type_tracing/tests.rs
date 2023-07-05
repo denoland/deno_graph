@@ -3,10 +3,8 @@ use std::path::PathBuf;
 
 use pretty_assertions::assert_eq;
 
+use super::test_builder::TestBuilder;
 use deno_graph::type_tracer::TypeTraceDiagnostic;
-use type_tracing::TestBuilder;
-
-mod type_tracing;
 
 #[tokio::test]
 async fn test_type_tracing_specs() {

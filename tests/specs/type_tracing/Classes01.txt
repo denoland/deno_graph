@@ -462,6 +462,7 @@ file:///mod.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {},
 }
 == export definitions ==
 [A]: file:///mod.ts:0..26

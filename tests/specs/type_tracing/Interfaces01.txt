@@ -340,6 +340,7 @@ file:///mod.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {},
 }
 == export definitions ==
 [Main]: file:///mod.ts:17..142

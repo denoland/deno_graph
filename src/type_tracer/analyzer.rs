@@ -25,6 +25,7 @@ use super::collections::AdditiveOnlyMap;
 use super::collections::LockableRefCell;
 use super::cross_module;
 use super::cross_module::Definition;
+use super::ImportedExports;
 use super::TypeTraceDiagnostic;
 use super::TypeTraceDiagnosticKind;
 use super::TypeTraceHandler;
@@ -242,6 +243,7 @@ pub struct ModuleSymbol {
   swc_id_to_symbol_id: IndexMap<Id, SymbolId>,
   symbols: IndexMap<SymbolId, Symbol>,
   traced_re_exports: LockableRefCell<IndexMap<String, UniqueSymbolId>>,
+  traced_referrers: LockableRefCell<IndexMap<ModuleId, ImportedExports>>,
 }
 
 impl std::fmt::Debug for ModuleSymbol {
@@ -254,6 +256,7 @@ impl std::fmt::Debug for ModuleSymbol {
       .field("swc_id_to_symbol_id", &self.swc_id_to_symbol_id)
       .field("symbols", &self.symbols)
       .field("traced_re_exports", &self.traced_re_exports.borrow())
+      .field("traced_referrers", &self.traced_referrers.borrow())
       .finish()
   }
 }
@@ -280,6 +283,7 @@ impl ModuleSymbol {
       .collect()
   }
 
+  /// Re-exports from this module that were found during tracing.
   pub fn traced_re_exports(&self) -> &IndexMap<String, UniqueSymbolId> {
     self.traced_re_exports.lock_and_get_ref()
   }
@@ -290,6 +294,26 @@ impl ModuleSymbol {
     symbol: UniqueSymbolId,
   ) {
     self.traced_re_exports.borrow_mut().insert(name, symbol);
+  }
+
+  /// Referrers and their imported exports. This only includes referrers that
+  /// were found during tracing and not all referrers.
+  pub fn traced_referrers(&self) -> &IndexMap<ModuleId, ImportedExports> {
+    self.traced_referrers.lock_and_get_ref()
+  }
+
+  pub(crate) fn add_traced_referrer(
+    &self,
+    module_id: ModuleId,
+    imported_exports: ImportedExports,
+  ) {
+    let mut traced_referrers = self.traced_referrers.borrow_mut();
+    if let Some(current_imported_exports) = traced_referrers.get_mut(&module_id)
+    {
+      current_imported_exports.add(imported_exports);
+    } else {
+      traced_referrers.insert(module_id, imported_exports);
+    }
   }
 
   pub fn exports<'a>(
@@ -450,6 +474,7 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
       exports: Default::default(),
       re_exports: Default::default(),
       traced_re_exports: Default::default(),
+      traced_referrers: Default::default(),
       swc_id_to_symbol_id: Default::default(),
       symbols: Default::default(),
     };
@@ -703,7 +728,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                       .unwrap_or_else(|| imported_name.clone());
                     let symbol = file_module.create_new_symbol();
                     symbol.decls.insert(SymbolDecl {
-                      range: n.range(),
+                      range: named.range(),
                       kind: SymbolDeclKind::FileRef(FileDep {
                         name: FileDepName::Name(imported_name),
                         specifier: src.value.to_string(),
@@ -775,7 +800,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                       name: FileDepName::Star,
                       specifier: src.value.to_string(),
                     }),
-                    range: n.range(),
+                    range: specifier.range(),
                   });
                   let symbol_id = symbol.symbol_id;
                   add_export(file_module, name, symbol_id);
@@ -846,7 +871,11 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           }
         }
         ModuleDecl::ExportDefaultExpr(expr) => {
-          self.handle_export_default_expr(&expr.expr, file_module);
+          self.handle_export_default_expr(
+            expr.range(),
+            &expr.expr,
+            file_module,
+          );
         }
         ModuleDecl::ExportAll(n) => {
           file_module.re_exports.push(n.src.value.to_string());
@@ -875,7 +904,11 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           }
         }
         ModuleDecl::TsExportAssignment(export_assignment) => {
-          self.handle_export_default_expr(&export_assignment.expr, file_module);
+          self.handle_export_default_expr(
+            export_assignment.range(),
+            &export_assignment.expr,
+            file_module,
+          );
         }
         ModuleDecl::TsNamespaceExport(_) => {
           // ignore
@@ -995,6 +1028,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
 
   fn handle_export_default_expr(
     &self,
+    default_export_range: SourceRange,
     expr: &Expr,
     file_module: &mut ModuleSymbol,
   ) {
@@ -1003,7 +1037,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
         let default_export_symbol_id = file_module
           .ensure_default_export_symbol(SymbolDecl {
             kind: SymbolDeclKind::Target(ident.to_id()),
-            range: expr.range(),
+            range: default_export_range,
           });
         file_module.ensure_symbol_for_swc_id(
           ident.to_id(),
@@ -1022,7 +1056,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
         let line_and_column = self
           .source
           .text_info()
-          .line_and_column_display(expr.start());
+          .line_and_column_display(default_export_range.start);
         self.handler.diagnostic(TypeTraceDiagnostic {
           kind: TypeTraceDiagnosticKind::UnsupportedDefaultExpr,
           specifier: self.specifier.clone(),

@@ -76,10 +76,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            46,
+                            31,
                         ),
                         end: SourcePos(
-                            47,
+                            48,
                         ),
                     },
                     kind: Target(
@@ -102,6 +102,7 @@ file:///mod.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {},
 }
 file:///a.ts: ModuleSymbol {
     module_id: ModuleId(
@@ -193,10 +194,10 @@ file:///a.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            61,
+                            52,
                         ),
                         end: SourcePos(
-                            72,
+                            73,
                         ),
                     },
                     kind: Target(
@@ -219,6 +220,15 @@ file:///a.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            0,
+        ): Named(
+            {
+                "default",
+            },
+        ),
+    },
 }
 == export definitions ==
 [default]: file:///a.ts:0..50

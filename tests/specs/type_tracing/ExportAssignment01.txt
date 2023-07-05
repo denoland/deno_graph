@@ -64,10 +64,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            75,
+                            66,
                         ),
                         end: SourcePos(
-                            79,
+                            80,
                         ),
                     },
                     kind: Target(
@@ -90,6 +90,7 @@ file:///mod.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {},
 }
 == export definitions ==
 [default]: file:///mod.ts:0..19

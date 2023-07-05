@@ -37,10 +37,10 @@ file:///mod.ts: ModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            0,
+                            9,
                         ),
                         end: SourcePos(
-                            42,
+                            25,
                         ),
                     },
                     kind: FileRef(
@@ -77,6 +77,7 @@ file:///mod.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {},
 }
 file:///a.ts: ModuleSymbol {
     module_id: ModuleId(
@@ -133,6 +134,15 @@ file:///a.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            0,
+        ): Named(
+            {
+                "default",
+            },
+        ),
+    },
 }
 file:///b.ts: ModuleSymbol {
     module_id: ModuleId(
@@ -195,6 +205,15 @@ file:///b.ts: ModuleSymbol {
         },
     },
     traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            1,
+        ): Named(
+            {
+                "B",
+            },
+        ),
+    },
 }
 == export definitions ==
 [Test]: file:///mod.ts:44..64
