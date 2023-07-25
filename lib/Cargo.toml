@@ -26,9 +26,3 @@ wasm-bindgen-futures = { version = "=0.4.36" }
 
 [dev-dependencies]
 pretty_assertions = "1.0.0"
-
-[profile.release]
-codegen-units = 1
-incremental = true
-lto = true
-opt-level = "z"
