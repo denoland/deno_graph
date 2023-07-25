@@ -1,7 +1,7 @@
 // @generated file from wasmbuild -- do not edit
 // deno-lint-ignore-file
 // deno-fmt-ignore-file
-// source-hash: f1ea20edccbe4d560c96eedaff8730a6f672a1a5
+// source-hash: f030a675e1cc79e5fcc29a3eee25545e707b92a4
 let wasm;
 
 const heap = new Array(128).fill(undefined);
@@ -237,7 +237,7 @@ function makeMutClosure(arg0, arg1, dtor, f) {
   return real;
 }
 function __wbg_adapter_48(arg0, arg1, arg2) {
-  wasm.wasm_bindgen__convert__closures__invoke1_mut__hef72ddd86e01b182(
+  wasm.wasm_bindgen__convert__closures__invoke1_mut__h31797be6cb667307(
     arg0,
     arg1,
     addHeapObject(arg2),
@@ -391,7 +391,7 @@ function handleError(f, args) {
   }
 }
 function __wbg_adapter_95(arg0, arg1, arg2, arg3) {
-  wasm.wasm_bindgen__convert__closures__invoke2_mut__h828f4d486163140a(
+  wasm.wasm_bindgen__convert__closures__invoke2_mut__ha3f1a42e86f3159f(
     arg0,
     arg1,
     addHeapObject(arg2),
@@ -481,13 +481,13 @@ const imports = {
       const ret = new Error(getStringFromWasm0(arg0, arg1));
       return addHeapObject(ret);
     },
-    __wbg_new_87297f22973157c8: function (arg0, arg1) {
-      const ret = new Error(getStringFromWasm0(arg0, arg1));
-      return addHeapObject(ret);
-    },
     __wbg_length_820c786973abdd8a: function (arg0) {
       const ret = getObject(arg0).length;
       return ret;
+    },
+    __wbg_new_87297f22973157c8: function (arg0, arg1) {
+      const ret = new Error(getStringFromWasm0(arg0, arg1));
+      return addHeapObject(ret);
     },
     __wbg_String_88810dfeb4021902: function (arg0, arg1) {
       const ret = String(getObject(arg1));
@@ -695,8 +695,8 @@ const imports = {
       const ret = getObject(arg0).then(getObject(arg1));
       return addHeapObject(ret);
     },
-    __wbindgen_closure_wrapper572: function (arg0, arg1, arg2) {
-      const ret = makeMutClosure(arg0, arg1, 175, __wbg_adapter_48);
+    __wbindgen_closure_wrapper565: function (arg0, arg1, arg2) {
+      const ret = makeMutClosure(arg0, arg1, 174, __wbg_adapter_48);
       return addHeapObject(ret);
     },
   },
