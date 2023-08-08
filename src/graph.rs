@@ -22,9 +22,10 @@ use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
-use deno_semver::npm::NpmPackageNv;
 use deno_semver::npm::NpmPackageNvReference;
 use deno_semver::npm::NpmPackageReqReference;
+use deno_semver::package::PackageNv;
+use deno_semver::package::PackageNvReference;
 use futures::future::LocalBoxFuture;
 use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
@@ -1194,7 +1195,7 @@ pub struct ModuleGraph {
   pub imports: IndexMap<ModuleSpecifier, GraphImport>,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
   #[serde(skip_serializing)]
-  pub npm_packages: Vec<NpmPackageNv>,
+  pub npm_packages: Vec<PackageNv>,
   #[serde(skip_serializing)]
   pub has_node_specifier: bool,
 }
@@ -2214,10 +2215,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           Ok(package_ref) => {
             if self
               .requested_npm_registry_info_loads
-              .insert(package_ref.req.name.clone())
+              .insert(package_ref.req().name.clone())
             {
               // request to load
-              let package_name = package_ref.req.name.clone();
+              let package_name = package_ref.req().name.clone();
               let fut =
                 npm_resolver.load_and_cache_npm_package_info(&package_name);
               self
@@ -2461,7 +2462,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 /// Pending information to insert into the module graph once
 /// npm specifier resolution has been finalized.
 struct NpmSpecifierBuildPendingInfo {
-  specifier_resolutions: HashMap<ModuleSpecifier, NpmPackageNv>,
+  specifier_resolutions: HashMap<ModuleSpecifier, PackageNv>,
   module_slots: HashMap<ModuleSpecifier, ModuleSlot>,
   redirects: HashMap<ModuleSpecifier, ModuleSpecifier>,
 }
@@ -2528,7 +2529,7 @@ impl<'a> NpmSpecifierResolver<'a> {
       npm_specifiers.push(specifier.clone());
       if seen_specifiers.insert(specifier.clone()) {
         let items: &mut VecDeque<_> = pending_npm_by_name
-          .entry(npm_ref.req.name.clone())
+          .entry(npm_ref.req().name.clone())
           .or_default();
         items.push_back(PendingNpmResolutionItem {
           specifier,
@@ -2572,17 +2573,18 @@ impl<'a> NpmSpecifierResolver<'a> {
       } else {
         while let Some(item) = items.pop_front() {
           if let Some(npm_resolver) = &self.npm_resolver {
-            let resolution = npm_resolver.resolve_npm(&item.npm_ref.req);
+            let resolution = npm_resolver.resolve_npm(item.npm_ref.req());
             match resolution {
               NpmPackageReqResolution::Ok(pkg_id) => {
                 self
                   .pending_info
                   .specifier_resolutions
                   .insert(item.specifier.clone(), pkg_id.clone());
-                let pkg_id_ref = NpmPackageNvReference {
-                  nv: pkg_id,
-                  sub_path: item.npm_ref.sub_path.clone(),
-                };
+                let pkg_id_ref =
+                  NpmPackageNvReference::new(PackageNvReference {
+                    nv: pkg_id,
+                    sub_path: item.npm_ref.sub_path().map(ToOwned::to_owned),
+                  });
                 let resolved_specifier = pkg_id_ref.as_specifier();
                 if resolved_specifier != item.specifier {
                   self

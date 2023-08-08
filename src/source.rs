@@ -3,8 +3,8 @@
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::text_encoding::strip_bom_mut;
-use deno_semver::npm::NpmPackageNv;
-use deno_semver::npm::NpmPackageReq;
+use deno_semver::package::PackageNv;
+use deno_semver::package::PackageReq;
 
 use anyhow::anyhow;
 use anyhow::Error;
@@ -135,7 +135,7 @@ pub struct UnknownBuiltInNodeModuleError {
 
 #[derive(Debug)]
 pub enum NpmPackageReqResolution {
-  Ok(NpmPackageNv),
+  Ok(PackageNv),
   Err(anyhow::Error),
   /// Error was encountered, but instruct deno_graph to ask for
   /// the registry information again. This is useful to use when
@@ -173,8 +173,7 @@ pub trait NpmResolver: fmt::Debug {
   ) -> LocalBoxFuture<'static, Result<(), anyhow::Error>>;
 
   /// Resolves an npm package requirement to a resolved npm package name and version.
-  fn resolve_npm(&self, package_req: &NpmPackageReq)
-    -> NpmPackageReqResolution;
+  fn resolve_npm(&self, package_req: &PackageReq) -> NpmPackageReqResolution;
 }
 
 pub fn load_data_url(

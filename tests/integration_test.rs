@@ -16,8 +16,8 @@ use deno_graph::BuildOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 use deno_graph::NpmPackageReqResolution;
-use deno_semver::npm::NpmPackageNv;
-use deno_semver::npm::NpmPackageReq;
+use deno_semver::package::PackageNv;
+use deno_semver::package::PackageReq;
 use deno_semver::Version;
 use futures::future::LocalBoxFuture;
 
@@ -49,14 +49,11 @@ async fn test_npm_version_not_found_then_found() {
       Box::pin(futures::future::ready(Ok(())))
     }
 
-    fn resolve_npm(
-      &self,
-      package_req: &NpmPackageReq,
-    ) -> NpmPackageReqResolution {
+    fn resolve_npm(&self, package_req: &PackageReq) -> NpmPackageReqResolution {
       let mut value = self.made_first_request.borrow_mut();
       if *value && !self.should_never_succeed {
         assert_eq!(*self.number_times_load_called.borrow(), 2);
-        NpmPackageReqResolution::Ok(NpmPackageNv {
+        NpmPackageReqResolution::Ok(PackageNv {
           name: package_req.name.clone(),
           version: Version::parse_from_npm("1.0.0").unwrap(),
         })
@@ -97,7 +94,7 @@ async fn test_npm_version_not_found_then_found() {
         .modules()
         .map(|m| m.specifier().to_string())
         .collect::<Vec<_>>(),
-      vec![root.as_str(), "npm:foo@1.0.0"]
+      vec![root.as_str(), "npm:/foo@1.0.0"]
     );
   }
 
