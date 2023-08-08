@@ -3,8 +3,8 @@
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::text_encoding::strip_bom_mut;
-use deno_semver::npm::NpmPackageNv;
-use deno_semver::npm::NpmPackageReq;
+use deno_semver::package::PackageNv;
+use deno_semver::package::PackageReq;
 
 use anyhow::anyhow;
 use anyhow::Error;
@@ -134,18 +134,17 @@ pub struct UnknownBuiltInNodeModuleError {
 }
 
 #[derive(Debug)]
-pub enum NpmPackageReqResolution {
-  Ok(NpmPackageNv),
+pub enum PackageReqResolution {
+  Ok(PackageNv),
   Err(anyhow::Error),
   /// Error was encountered, but instruct deno_graph to ask for
   /// the registry information again. This is useful to use when
-  /// a user specifies a npm specifier that doesn't match any version
+  /// a user specifies a deno/npm specifier that doesn't match any version
   /// found in a cache and you want to cache bust the registry information.
   ///
   /// When the implementation provides this, it should cache bust its
-  /// cached/loaded npm registry information and deno_graph will
-  /// call `load_and_cache_npm_package_info` for every package again
-  /// then re-attempt resolution.
+  /// cached/loaded registry information and deno_graph will request
+  /// the registry information for every package again then re-attempt resolution.
   ///
   /// deno_graph will restart only once per build call to prevent accidental,
   /// infinite loops, but the implementation should ensure this is only
@@ -173,8 +172,7 @@ pub trait NpmResolver: fmt::Debug {
   ) -> LocalBoxFuture<'static, Result<(), anyhow::Error>>;
 
   /// Resolves an npm package requirement to a resolved npm package name and version.
-  fn resolve_npm(&self, package_req: &NpmPackageReq)
-    -> NpmPackageReqResolution;
+  fn resolve_npm(&self, package_req: &PackageReq) -> PackageReqResolution;
 }
 
 pub fn load_data_url(
