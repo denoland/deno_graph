@@ -63,6 +63,20 @@ pub enum LoadResponse {
   },
 }
 
+#[derive(Debug, Error)]
+pub enum LoadError {
+  #[error(transparent)]
+  Fail(#[from] anyhow::Error),
+  /// Tell deno_graph to attempt to restart building the graph from its
+  /// start point.
+  ///
+  /// This is used when resolving deno: specifiers and we encounter a
+  /// specifier version constraint that doesn't line up with what's
+  /// in the cache.
+  #[error(transparent)]
+  Restart(anyhow::Error),
+}
+
 pub type LoadResult = Result<Option<LoadResponse>>;
 pub type LoadFuture = LocalBoxFuture<'static, LoadResult>;
 
@@ -134,12 +148,12 @@ pub struct UnknownBuiltInNodeModuleError {
 }
 
 #[derive(Debug)]
-pub enum PackageReqResolution {
+pub enum NpmPackageReqResolution {
   Ok(PackageNv),
   Err(anyhow::Error),
   /// Error was encountered, but instruct deno_graph to ask for
   /// the registry information again. This is useful to use when
-  /// a user specifies a deno/npm specifier that doesn't match any version
+  /// a user specifies an npm specifier that doesn't match any version
   /// found in a cache and you want to cache bust the registry information.
   ///
   /// When the implementation provides this, it should cache bust its
@@ -172,7 +186,7 @@ pub trait NpmResolver: fmt::Debug {
   ) -> LocalBoxFuture<'static, Result<(), anyhow::Error>>;
 
   /// Resolves an npm package requirement to a resolved npm package name and version.
-  fn resolve_npm(&self, package_req: &PackageReq) -> PackageReqResolution;
+  fn resolve_npm(&self, package_req: &PackageReq) -> NpmPackageReqResolution;
 }
 
 pub fn load_data_url(
@@ -298,8 +312,10 @@ impl Loader for MemoryLoader {
   ) -> LoadFuture {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),
-      Some(Err(err)) => Err(anyhow!("{}", err)),
-      None if specifier.scheme() == "data" => load_data_url(specifier),
+      Some(Err(err)) => Err(LoadError::Fail(anyhow!("{}", err))),
+      None if specifier.scheme() == "data" => {
+        load_data_url(specifier).map_err(|err| err.into())
+      }
       _ => Ok(None),
     };
     Box::pin(future::ready(response))

@@ -15,7 +15,7 @@ use deno_graph::source::UnknownBuiltInNodeModuleError;
 use deno_graph::BuildOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
-use deno_graph::PackageReqResolution;
+use deno_graph::NpmPackageReqResolution;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
@@ -49,17 +49,19 @@ async fn test_npm_version_not_found_then_found() {
       Box::pin(futures::future::ready(Ok(())))
     }
 
-    fn resolve_npm(&self, package_req: &PackageReq) -> PackageReqResolution {
+    fn resolve_npm(&self, package_req: &PackageReq) -> NpmPackageReqResolution {
       let mut value = self.made_first_request.borrow_mut();
       if *value && !self.should_never_succeed {
         assert_eq!(*self.number_times_load_called.borrow(), 2);
-        PackageReqResolution::Ok(PackageNv {
+        NpmPackageReqResolution::Ok(PackageNv {
           name: package_req.name.clone(),
           version: Version::parse_from_npm("1.0.0").unwrap(),
         })
       } else {
         *value = true;
-        PackageReqResolution::ReloadRegistryInfo(anyhow!("failed to resolve"))
+        NpmPackageReqResolution::ReloadRegistryInfo(anyhow!(
+          "failed to resolve"
+        ))
       }
     }
   }

@@ -1996,12 +1996,8 @@ struct PendingNpmRegistryInfoLoad {
 type PendingNpmRegistryInfoLoadFutures =
   FuturesUnordered<LocalBoxFuture<'static, PendingNpmRegistryInfoLoad>>;
 
-struct Builder<'a, 'graph> {
-  in_dynamic_branch: bool,
-  graph: &'graph mut ModuleGraph,
-  loader: &'a mut dyn Loader,
-  resolver: Option<&'a dyn Resolver>,
-  npm_resolver: Option<&'a dyn NpmResolver>,
+#[derive(Default)]
+struct PendingState {
   pending: FuturesOrdered<LoadWithSpecifierFuture>,
   requested_npm_registry_info_loads: HashSet<String>,
   pending_npm_registry_info_loads: PendingNpmRegistryInfoLoadFutures,
@@ -2010,8 +2006,17 @@ struct Builder<'a, 'graph> {
     HashMap<ModuleSpecifier, HashSet<Option<AssertTypeWithRange>>>,
   dynamic_branches:
     HashMap<ModuleSpecifier, (Range, Option<AssertTypeWithRange>)>,
+}
+
+struct Builder<'a, 'graph> {
+  in_dynamic_branch: bool,
+  loader: &'a mut dyn Loader,
+  resolver: Option<&'a dyn Resolver>,
+  npm_resolver: Option<&'a dyn NpmResolver>,
   module_analyzer: &'a dyn ModuleAnalyzer,
   reporter: Option<&'a dyn Reporter>,
+  graph: &'graph mut ModuleGraph,
+  state: PendingState,
 }
 
 impl<'a, 'graph> Builder<'a, 'graph> {
@@ -2027,22 +2032,18 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     module_analyzer: &'a dyn ModuleAnalyzer,
     reporter: Option<&'a dyn Reporter>,
   ) {
+    let allow_restart = graph.roots.is_empty();
     Self {
       in_dynamic_branch: is_dynamic,
-      graph,
       loader,
       resolver,
       npm_resolver,
       module_analyzer,
       reporter,
-      pending: Default::default(),
-      requested_npm_registry_info_loads: Default::default(),
-      pending_npm_registry_info_loads: Default::default(),
-      pending_npm_specifiers: Default::default(),
-      pending_specifiers: Default::default(),
-      dynamic_branches: Default::default(),
+      graph,
+      state: PendingState::default(),
     }
-    .fill(roots, imports)
+    .fill(roots, imports, allow_restart)
     .await
   }
 
@@ -2050,14 +2051,19 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     &mut self,
     roots: Vec<ModuleSpecifier>,
     imports: Vec<ReferrerImports>,
+    allow_restart: bool,
   ) {
-    let roots = roots
-      .into_iter()
+    let provided_roots = roots;
+    let provided_imports = imports;
+    let roots = provided_roots
+      .iter()
       .filter(|r| !self.graph.roots.contains(r))
+      .cloned()
       .collect::<Vec<_>>();
-    let imports = imports
-      .into_iter()
+    let imports = provided_imports
+      .iter()
       .filter(|r| !self.graph.imports.contains_key(&r.referrer))
+      .cloned()
       .collect::<Vec<_>>();
     self.graph.roots.extend(roots.clone());
     for root in roots {
@@ -2083,10 +2089,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     loop {
-      let specifier = match self.pending.next().await {
+      let specifier = match self.state.pending.next().await {
         Some((specifier, maybe_referrer, Ok(Some(response)))) => {
           let assert_types =
-            self.pending_specifiers.remove(&specifier).unwrap();
+            self.state.pending_specifiers.remove(&specifier).unwrap();
           for maybe_assert_type in assert_types {
             self.visit(
               &specifier,
@@ -2107,6 +2113,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           Some(specifier)
         }
         Some((specifier, maybe_range, Err(err))) => {
+          let err = match err {
+            LoadError::Fail(err) => err,
+            LoadError::Restart(err) => {
+              if allow_restart {
+                self.restart(provided_roots, provided_imports).await;
+                return;
+              } else {
+                err
+              }
+            }
+          };
           self.graph.module_slots.insert(
             specifier.clone(),
             ModuleSlot::Err(ModuleGraphError::ModuleError(
@@ -2123,10 +2140,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       };
       if let (Some(specifier), Some(reporter)) = (specifier, self.reporter) {
         let modules_total = self.graph.module_slots.len();
-        let modules_done = modules_total - self.pending.len();
+        let modules_done = modules_total - self.state.pending.len();
         reporter.on_load(&specifier, modules_done, modules_total);
       }
-      if self.pending.is_empty() {
+      if self.state.pending.is_empty() {
         // Start visiting queued up dynamic branches. We do this in a separate
         // pass after all static dependencies have been visited because:
         // - If a module is both statically and dynamically imported, we want
@@ -2137,7 +2154,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         if !self.in_dynamic_branch {
           self.in_dynamic_branch = true;
           for (specifier, (range, maybe_assert_type)) in
-            std::mem::take(&mut self.dynamic_branches)
+            std::mem::take(&mut self.state.dynamic_branches)
           {
             if !self.graph.module_slots.contains_key(&specifier) {
               self.load(&specifier, Some(&range), true, maybe_assert_type);
@@ -2168,6 +2185,24 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     // Now resolve any npm package requirements
     NpmSpecifierResolver::fill_builder(self).await;
+  }
+
+  fn restart(
+    &mut self,
+    roots: Vec<ModuleSpecifier>,
+    imports: Vec<ReferrerImports>,
+  ) -> LocalBoxFuture<()> {
+    // if restarting is allowed, then the graph will have been empty at the start
+    *self.graph = ModuleGraph::new(self.graph.graph_kind);
+    self.state = PendingState::default();
+
+    // boxed due to async recursion
+    async move {
+      // don't allow restarting as we've already restarted once
+      let allow_restart = false;
+      self.fill(roots, imports, allow_restart).await
+    }
+    .boxed_local()
   }
 
   /// Checks if the specifier is redirected or not and updates any redirects in
@@ -2202,6 +2237,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     self
+      .state
       .pending_specifiers
       .entry(specifier.clone())
       .or_default()
@@ -2216,6 +2252,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         match NpmPackageReqReference::from_specifier(specifier) {
           Ok(package_ref) => {
             if self
+              .state
               .requested_npm_registry_info_loads
               .insert(package_ref.req().name.clone())
             {
@@ -2223,20 +2260,23 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               let package_name = package_ref.req().name.clone();
               let fut =
                 npm_resolver.load_and_cache_npm_package_info(&package_name);
-              self
-                .pending_npm_registry_info_loads
-                .push(Box::pin(async move {
+              self.state.pending_npm_registry_info_loads.push(Box::pin(
+                async move {
                   PendingNpmRegistryInfoLoad {
                     package_name,
                     result: fut.await.map_err(Arc::new),
                   }
-                }));
+                },
+              ));
             }
-            self.pending_npm_specifiers.push(PendingNpmResolutionItem {
-              specifier: specifier.clone(),
-              package_ref,
-              maybe_range,
-            });
+            self
+              .state
+              .pending_npm_specifiers
+              .push(PendingNpmResolutionItem {
+                specifier: specifier.clone(),
+                package_ref,
+                maybe_range,
+              });
           }
           Err(err) => {
             self.graph.module_slots.insert(
@@ -2294,7 +2334,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .loader
       .load(&specifier, is_dynamic)
       .map(move |res| (specifier, maybe_range, res));
-    self.pending.push_back(Box::pin(fut));
+    self.state.pending.push_back(Box::pin(fut));
   }
 
   fn roots_contain(&self, specifier: &ModuleSpecifier) -> bool {
@@ -2394,7 +2434,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   kind: assert_type.clone(),
                 });
               if dep.is_dynamic && !self.in_dynamic_branch {
-                self.dynamic_branches.insert(
+                self.state.dynamic_branches.insert(
                   specifier.clone(),
                   (range.clone(), maybe_assert_type_with_range),
                 );
@@ -2426,7 +2466,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   kind: assert_type.clone(),
                 });
               if dep.is_dynamic && !self.in_dynamic_branch {
-                self.dynamic_branches.insert(
+                self.state.dynamic_branches.insert(
                   specifier.clone(),
                   (range.clone(), maybe_assert_type_with_range),
                 );
@@ -2506,11 +2546,13 @@ impl<'a> NpmSpecifierResolver<'a> {
   pub async fn fill_builder(builder: &mut Builder<'a, '_>) {
     let mut npm_specifier_resolver = NpmSpecifierResolver::new(
       builder.npm_resolver,
-      std::mem::take(&mut builder.pending_npm_specifiers),
+      std::mem::take(&mut builder.state.pending_npm_specifiers),
     );
 
     npm_specifier_resolver
-      .resolve(std::mem::take(&mut builder.pending_npm_registry_info_loads))
+      .resolve(std::mem::take(
+        &mut builder.state.pending_npm_registry_info_loads,
+      ))
       .await;
 
     npm_specifier_resolver.fill_graph(builder.graph);
@@ -2573,7 +2615,7 @@ impl<'a> NpmSpecifierResolver<'a> {
           if let Some(npm_resolver) = &self.npm_resolver {
             let resolution = npm_resolver.resolve_npm(item.package_ref.req());
             match resolution {
-              PackageReqResolution::Ok(pkg_nv) => {
+              NpmPackageReqResolution::Ok(pkg_nv) => {
                 self
                   .pending_info
                   .specifier_resolutions
@@ -2601,7 +2643,7 @@ impl<'a> NpmSpecifierResolver<'a> {
                   })),
                 );
               }
-              PackageReqResolution::ReloadRegistryInfo(_)
+              NpmPackageReqResolution::ReloadRegistryInfo(_)
                 if !previously_restarted =>
               {
                 // the implementer should ideally never return this more than once,
@@ -2629,8 +2671,8 @@ impl<'a> NpmSpecifierResolver<'a> {
                 }
                 break;
               }
-              PackageReqResolution::Err(err)
-              | PackageReqResolution::ReloadRegistryInfo(err) => {
+              NpmPackageReqResolution::Err(err)
+              | NpmPackageReqResolution::ReloadRegistryInfo(err) => {
                 self.pending_info.module_slots.insert(
                   item.specifier.clone(),
                   ModuleSlot::Err(ModuleGraphError::ResolutionError(

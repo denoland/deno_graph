@@ -8,6 +8,7 @@ mod module_specifier;
 #[cfg(feature = "type_tracing")]
 pub mod type_tracer;
 
+pub mod deno;
 pub mod source;
 mod text_encoding;
 
@@ -59,7 +60,7 @@ pub use graph::WalkOptions;
 pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
-pub use source::PackageReqResolution;
+pub use source::NpmPackageReqResolution;
 
 #[derive(Debug, Clone)]
 pub struct ReferrerImports {
