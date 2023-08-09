@@ -4,23 +4,21 @@ use std::collections::HashMap;
 
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
+use deno_semver::Version;
+use serde::Serialize;
 
-pub struct DenoPackageInfo {}
+use crate::ModuleInfo;
+use crate::ModuleSpecifier;
 
-pub enum DenoRegistryPackageInfoCacheSetting {
-  PreferCache,
-  ForceReload,
+pub struct DenoPackageInfo {
+  pub versions: Vec<Version>,
 }
 
-#[async_trait::async_trait]
-pub trait DenoRegistryApi {
-  async fn package_info(
-    &self,
-    name: &str,
-    cache_setting: DenoRegistryPackageInfoCacheSetting,
-  ) -> Result<DenoPackageInfo, anyhow::Error>;
+pub struct DenoPackageVersionInfo {
+  pub module_graph: HashMap<ModuleSpecifier, ModuleInfo>,
 }
 
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct DenoSpecifierSnapshot {
   package_reqs: HashMap<PackageReq, PackageNv>,
   packages_by_name: HashMap<String, Vec<PackageNv>>,

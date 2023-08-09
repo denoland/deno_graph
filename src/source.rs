@@ -3,6 +3,7 @@
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::text_encoding::strip_bom_mut;
+use crate::ModuleInfo;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 
@@ -63,20 +64,6 @@ pub enum LoadResponse {
   },
 }
 
-#[derive(Debug, Error)]
-pub enum LoadError {
-  #[error(transparent)]
-  Fail(#[from] anyhow::Error),
-  /// Tell deno_graph to attempt to restart building the graph from its
-  /// start point.
-  ///
-  /// This is used when resolving deno: specifiers and we encounter a
-  /// specifier version constraint that doesn't line up with what's
-  /// in the cache.
-  #[error(transparent)]
-  Restart(anyhow::Error),
-}
-
 pub type LoadResult = Result<Option<LoadResponse>>;
 pub type LoadFuture = LocalBoxFuture<'static, LoadResult>;
 
@@ -89,12 +76,44 @@ pub trait Loader {
     None
   }
 
-  /// A method that given a specifier that asynchronously returns a response
+  /// A method that given a specifier that asynchronously returns the
+  /// source of the file. By default, this uses the `load_no_cache`
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
+  ) -> LoadFuture {
+    self.load_no_cache(specifier, is_dynamic)
+  }
+
+  /// Loads a specifier where the implementation should not use an internal cache.
+  fn load_no_cache(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    is_dynamic: bool,
   ) -> LoadFuture;
+
+  /// Attempts to load a specifier from the cache.
+  ///
+  /// This is used to see whether the specifier is in the cache for `deno:` specifiers.
+  /// * If it is, then it will use the source provided to get the module information.
+  /// * If not, then it will use the manifest information to do resolution and
+  ///   issue a separate request to the `load` method in order to get the source.
+  fn load_from_cache(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    is_dynamic: bool,
+  ) -> LoadFuture;
+
+  /// Cache the module info for the provided specifier if the loader
+  /// supports caching this information.
+  fn cache_module_info(
+    &mut self,
+    _specifier: &ModuleSpecifier,
+    _module_info: &ModuleInfo,
+    _source: &str,
+  ) {
+  }
 }
 
 /// A trait which allows the module graph to resolve specifiers and type only
@@ -305,20 +324,28 @@ impl Loader for MemoryLoader {
     self.cache_info.get(specifier).cloned()
   }
 
-  fn load(
+  fn load_no_cache(
     &mut self,
     specifier: &ModuleSpecifier,
     _is_dynamic: bool,
   ) -> LoadFuture {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),
-      Some(Err(err)) => Err(LoadError::Fail(anyhow!("{}", err))),
+      Some(Err(err)) => Err(anyhow!("{}", err)),
       None if specifier.scheme() == "data" => {
         load_data_url(specifier).map_err(|err| err.into())
       }
       _ => Ok(None),
     };
     Box::pin(future::ready(response))
+  }
+
+  fn load_from_cache(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    is_dynamic: bool,
+  ) -> LoadFuture {
+    self.load(specifier, is_dynamic)
   }
 }
 

@@ -11,6 +11,8 @@ use crate::DefaultModuleAnalyzer;
 use crate::ImportAssertions;
 use crate::ReferrerImports;
 
+use crate::deno::DenoPackageVersionInfo;
+use crate::deno::DenoSpecifierSnapshot;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
@@ -22,6 +24,7 @@ use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
+use deno_semver::deno::DenoPackageReqReference;
 use deno_semver::npm::NpmPackageNvReference;
 use deno_semver::npm::NpmPackageReqReference;
 use deno_semver::package::PackageNv;
@@ -1198,6 +1201,7 @@ pub struct ModuleGraph {
   pub npm_packages: Vec<PackageNv>,
   #[serde(skip_serializing)]
   pub has_node_specifier: bool,
+  pub deno_specifiers: DenoSpecifierSnapshot,
 }
 
 impl ModuleGraph {
@@ -1210,6 +1214,7 @@ impl ModuleGraph {
       redirects: Default::default(),
       npm_packages: Default::default(),
       has_node_specifier: false,
+      deno_specifiers: Default::default(),
     }
   }
 
@@ -1997,11 +2002,26 @@ type PendingNpmRegistryInfoLoadFutures =
   FuturesUnordered<LocalBoxFuture<'static, PendingNpmRegistryInfoLoad>>;
 
 #[derive(Default)]
+struct PendingNpmState {
+  requested_registry_info_loads: HashSet<String>,
+  pending_registry_info_loads: PendingNpmRegistryInfoLoadFutures,
+  pending_resolutions: Vec<PendingNpmResolutionItem>,
+}
+
+#[derive(Default)]
+struct PendingDenoState {
+  pending_package_info_loads:
+    HashMap<PackageNv, LocalBoxFuture<'static, Result<DenoPackageVersionInfo>>>,
+  pending_package_version_info_loads:
+    HashMap<PackageNv, LocalBoxFuture<'static, Result<DenoPackageVersionInfo>>>,
+  pending_resolutions: Vec<PendingNpmResolutionItem>,
+}
+
+#[derive(Default)]
 struct PendingState {
   pending: FuturesOrdered<LoadWithSpecifierFuture>,
-  requested_npm_registry_info_loads: HashSet<String>,
-  pending_npm_registry_info_loads: PendingNpmRegistryInfoLoadFutures,
-  pending_npm_specifiers: Vec<PendingNpmResolutionItem>,
+  deno: PendingDenoState,
+  npm: PendingNpmState,
   pending_specifiers:
     HashMap<ModuleSpecifier, HashSet<Option<AssertTypeWithRange>>>,
   dynamic_branches:
@@ -2113,17 +2133,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           Some(specifier)
         }
         Some((specifier, maybe_range, Err(err))) => {
-          let err = match err {
-            LoadError::Fail(err) => err,
-            LoadError::Restart(err) => {
-              if allow_restart {
-                self.restart(provided_roots, provided_imports).await;
-                return;
-              } else {
-                err
-              }
-            }
-          };
+          // let err = match err {
+          //   LoadError::Fail(err) => err,
+          //   LoadError::Restart(err) => {
+          //     if allow_restart {
+          //       self.restart(provided_roots, provided_imports).await;
+          //       return;
+          //     } else {
+          //       err
+          //     }
+          //   }
+          // };
           self.graph.module_slots.insert(
             specifier.clone(),
             ModuleSlot::Err(ModuleGraphError::ModuleError(
@@ -2247,20 +2267,40 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     let maybe_range = maybe_range.map(ToOwned::to_owned);
-    if let Some(npm_resolver) = &self.npm_resolver {
+    if specifier.scheme() == "deno" {
+      match DenoPackageReqReference::from_specifier(specifier) {
+        Ok(package_ref) => {
+          // todo...
+        }
+        Err(err) => {
+          self.graph.module_slots.insert(
+            specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::LoadingErr(
+                specifier.clone(),
+                maybe_range,
+                Arc::new(err.into()),
+              ),
+            )),
+          );
+        }
+      }
+      return;
+    } else if let Some(npm_resolver) = &self.npm_resolver {
       if specifier.scheme() == "npm" {
         match NpmPackageReqReference::from_specifier(specifier) {
           Ok(package_ref) => {
             if self
               .state
-              .requested_npm_registry_info_loads
+              .npm
+              .requested_registry_info_loads
               .insert(package_ref.req().name.clone())
             {
               // request to load
               let package_name = package_ref.req().name.clone();
               let fut =
                 npm_resolver.load_and_cache_npm_package_info(&package_name);
-              self.state.pending_npm_registry_info_loads.push(Box::pin(
+              self.state.npm.pending_registry_info_loads.push(Box::pin(
                 async move {
                   PendingNpmRegistryInfoLoad {
                     package_name,
@@ -2271,7 +2311,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             }
             self
               .state
-              .pending_npm_specifiers
+              .npm
+              .pending_resolutions
               .push(PendingNpmResolutionItem {
                 specifier: specifier.clone(),
                 package_ref,
@@ -2546,12 +2587,12 @@ impl<'a> NpmSpecifierResolver<'a> {
   pub async fn fill_builder(builder: &mut Builder<'a, '_>) {
     let mut npm_specifier_resolver = NpmSpecifierResolver::new(
       builder.npm_resolver,
-      std::mem::take(&mut builder.state.pending_npm_specifiers),
+      std::mem::take(&mut builder.state.npm.pending_resolutions),
     );
 
     npm_specifier_resolver
       .resolve(std::mem::take(
-        &mut builder.state.pending_npm_registry_info_loads,
+        &mut builder.state.npm.pending_registry_info_loads,
       ))
       .await;
 
@@ -2931,7 +2972,7 @@ mod tests {
       loaded_baz: bool,
     }
     impl Loader for TestLoader {
-      fn load(
+      fn load_no_cache(
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
@@ -2974,7 +3015,16 @@ mod tests {
           _ => unreachable!(),
         }
       }
+
+      fn load_from_cache(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        is_dynamic: bool,
+      ) -> LoadFuture {
+        self.load(specifier, is_dynamic)
+      }
     }
+
     let mut loader = TestLoader {
       loaded_foo: false,
       loaded_bar: false,
@@ -2998,7 +3048,7 @@ mod tests {
   async fn missing_module_is_error() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load(
+      fn load_no_cache(
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
@@ -3015,6 +3065,14 @@ mod tests {
           "file:///bar.js" => Box::pin(async move { Ok(None) }),
           _ => unreachable!(),
         }
+      }
+
+      fn load_from_cache(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        is_dynamic: bool,
+      ) -> LoadFuture {
+        self.load(specifier, is_dynamic)
       }
     }
     let mut loader = TestLoader;
@@ -3084,7 +3142,7 @@ mod tests {
   async fn redirected_specifiers() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load(
+      fn load_no_cache(
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
@@ -3107,6 +3165,14 @@ mod tests {
           }),
           _ => unreachable!(),
         }
+      }
+
+      fn load_from_cache(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        is_dynamic: bool,
+      ) -> LoadFuture {
+        self.load(specifier, is_dynamic)
       }
     }
     let mut loader = TestLoader;
@@ -3151,7 +3217,7 @@ mod tests {
   async fn local_import_remote_module() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load(
+      fn load_no_cache(
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
@@ -3190,6 +3256,14 @@ mod tests {
           }),
           _ => unreachable!(),
         }
+      }
+
+      fn load_from_cache(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        is_dynamic: bool,
+      ) -> LoadFuture {
+        self.load(specifier, is_dynamic)
       }
     }
     let mut loader = TestLoader;
@@ -3275,7 +3349,7 @@ mod tests {
       loaded_bar: bool,
     }
     impl Loader for TestLoader {
-      fn load(
+      fn load_no_cache(
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
@@ -3304,6 +3378,14 @@ mod tests {
           _ => unreachable!(),
         }
       }
+
+      fn load_from_cache(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        is_dynamic: bool,
+      ) -> LoadFuture {
+        self.load(specifier, is_dynamic)
+      }
     }
     let mut loader = TestLoader { loaded_bar: false };
     let mut graph = ModuleGraph::new(GraphKind::All);
@@ -3321,7 +3403,7 @@ mod tests {
   async fn dependency_imports() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load(
+      fn load_no_cache(
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
@@ -3368,6 +3450,14 @@ mod tests {
           }
           _ => unreachable!(),
         }
+      }
+
+      fn load_from_cache(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        is_dynamic: bool,
+      ) -> LoadFuture {
+        self.load(specifier, is_dynamic)
       }
     }
     let mut graph = ModuleGraph::new(GraphKind::All);

@@ -89,6 +89,24 @@ impl Loader for JsLoader {
       Box::pin(f)
     }
   }
+
+  fn load_no_cache(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    is_dynamic: bool,
+  ) -> LoadFuture {
+    // todo(THIS PR): implement this
+    self.load(specifier, is_dynamic)
+  }
+
+  fn load_from_cache(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    is_dynamic: bool,
+  ) -> LoadFuture {
+    // todo(THIS PR): implement this
+    self.load(specifier, is_dynamic)
+  }
 }
 
 #[derive(Debug)]
