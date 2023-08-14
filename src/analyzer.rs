@@ -76,6 +76,7 @@ pub fn analyze_deno_types(
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PositionRange {
   pub start: Position,
   pub end: Position,
@@ -101,6 +102,7 @@ impl PositionRange {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum DependencyKind {
   Import,
   ImportType,
@@ -128,6 +130,7 @@ impl DependencyKind {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum ImportAssertion {
   /// The value of this assertion could not be statically analyzed.
   Unknown,
@@ -147,6 +150,8 @@ impl ImportAssertion {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "kind")]
 pub enum ImportAssertions {
   /// There was no import assertions object literal.
   None,
@@ -164,6 +169,10 @@ impl Default for ImportAssertions {
 }
 
 impl ImportAssertions {
+  pub fn is_none(&self) -> bool {
+    matches!(self, ImportAssertions::None)
+  }
+
   // can't use this type directly because we need to make it serialize & deserialize
   pub fn from_swc(value: deno_ast::swc::dep_graph::ImportAssertions) -> Self {
     use deno_ast::swc::dep_graph::ImportAssertions::*;
@@ -191,6 +200,7 @@ impl ImportAssertions {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Comment {
   pub text: String,
   pub range: PositionRange,
@@ -209,13 +219,20 @@ impl Comment {
   }
 }
 
+fn is_false(v: &bool) -> bool {
+  !v
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DependencyDescriptor {
   pub kind: DependencyKind,
   /// A flag indicating if the import is dynamic or not.
+  #[serde(skip_serializing_if = "is_false", default)]
   pub is_dynamic: bool,
   /// Any leading comments associated with the dependency.  This is used for
   /// further processing of supported pragma that impact the dependency.
+  #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub leading_comments: Vec<Comment>,
   /// The range of the import/export statement.
   pub range: PositionRange,
@@ -224,16 +241,20 @@ pub struct DependencyDescriptor {
   /// The range of the specifier.
   pub specifier_range: PositionRange,
   /// Import assertions for this dependency.
+  #[serde(skip_serializing_if = "ImportAssertions::is_none", default)]
   pub import_assertions: ImportAssertions,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SpecifierWithRange {
   pub text: String,
   pub range: PositionRange,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "kind")]
 pub enum TypeScriptReference {
   Path(SpecifierWithRange),
   Types(SpecifierWithRange),
@@ -241,6 +262,7 @@ pub enum TypeScriptReference {
 
 /// Information about the module.
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ModuleInfo {
   /// Dependencies of the module.
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
@@ -268,4 +290,287 @@ pub trait ModuleAnalyzer {
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ModuleInfo, Diagnostic>;
+}
+
+#[cfg(test)]
+mod test {
+  use pretty_assertions::assert_eq;
+  use serde::de::DeserializeOwned;
+  use serde_json::json;
+
+  use super::*;
+
+  #[test]
+  fn module_info_serialization_empty() {
+    // empty
+    let module_info = ModuleInfo {
+      dependencies: Vec::new(),
+      ts_references: Vec::new(),
+      jsx_import_source: None,
+      jsdoc_imports: Vec::new(),
+    };
+    run_serialization_test(&module_info, json!({}));
+  }
+
+  #[test]
+  fn module_info_serialization_deps() {
+    // with dependencies
+    let module_info = ModuleInfo {
+      dependencies: Vec::from([DependencyDescriptor {
+        kind: DependencyKind::ImportEquals,
+        is_dynamic: false,
+        leading_comments: Vec::new(),
+        range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+        specifier: "./test".to_string(),
+        specifier_range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+        import_assertions: ImportAssertions::None,
+      }]),
+      ts_references: Vec::new(),
+      jsx_import_source: None,
+      jsdoc_imports: Vec::new(),
+    };
+    run_serialization_test(
+      &module_info,
+      json!({
+        "dependencies": [{
+          "kind": "importEquals",
+          "range": {
+            "start": {
+              "line": 0,
+              "character": 0
+            },
+            "end": {
+              "line": 0,
+              "character": 0
+            }
+          },
+          "specifier": "./test",
+          "specifierRange": {
+            "start": {
+              "line": 0,
+              "character": 0
+            },
+            "end": {
+              "line": 0,
+              "character": 0
+            }
+          }
+        }]
+      }),
+    );
+  }
+
+  #[test]
+  fn module_info_serialization_ts_references() {
+    let module_info = ModuleInfo {
+      dependencies: Vec::new(),
+      ts_references: Vec::from([
+        TypeScriptReference::Path(SpecifierWithRange {
+          text: "a".to_string(),
+          range: PositionRange {
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+        }),
+        TypeScriptReference::Types(SpecifierWithRange {
+          text: "b".to_string(),
+          range: PositionRange {
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+        }),
+      ]),
+      jsx_import_source: None,
+      jsdoc_imports: Vec::new(),
+    };
+    run_serialization_test(
+      &module_info,
+      json!({
+        "tsReferences": [{
+          "kind": "path",
+          "text": "a",
+          "range": {
+            "start": {
+              "line": 0,
+              "character": 0,
+            },
+            "end": {
+              "line": 0,
+              "character": 0,
+            }
+          }
+        }, {
+          "kind": "types",
+          "text": "b",
+          "range": {
+            "start": {
+              "line": 0,
+              "character": 0,
+            },
+            "end": {
+              "line": 0,
+              "character": 0,
+            }
+          }
+        }]
+      }),
+    );
+  }
+
+  #[test]
+  fn module_info_serialization_jsx_import_source() {
+    let module_info = ModuleInfo {
+      dependencies: Vec::new(),
+      ts_references: Vec::new(),
+      jsx_import_source: Some(SpecifierWithRange {
+        text: "a".to_string(),
+        range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      }),
+      jsdoc_imports: Vec::new(),
+    };
+    run_serialization_test(
+      &module_info,
+      json!({
+        "jsxImportSource": {
+          "text": "a",
+          "range": {
+            "start": {
+              "line": 0,
+              "character": 0,
+            },
+            "end": {
+              "line": 0,
+              "character": 0,
+            }
+          }
+        }
+      }),
+    );
+  }
+
+  #[test]
+  fn module_info_jsdoc_imports() {
+    let module_info = ModuleInfo {
+      dependencies: Vec::new(),
+      ts_references: Vec::new(),
+      jsx_import_source: None,
+      jsdoc_imports: Vec::from([SpecifierWithRange {
+        text: "a".to_string(),
+        range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      }]),
+    };
+    run_serialization_test(
+      &module_info,
+      json!({
+        "jsdocImports": [{
+          "text": "a",
+          "range": {
+            "start": {
+              "line": 0,
+              "character": 0,
+            },
+            "end": {
+              "line": 0,
+              "character": 0,
+            }
+          }
+        }]
+      }),
+    );
+  }
+
+  #[test]
+  fn dependency_descriptor_serialization() {
+    // with dependencies
+    let module_info = DependencyDescriptor {
+      kind: DependencyKind::ExportEquals,
+      is_dynamic: true,
+      leading_comments: Vec::from([Comment {
+        text: "a".to_string(),
+        range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      }]),
+      range: PositionRange {
+        start: Position::zeroed(),
+        end: Position::zeroed(),
+      },
+      specifier: "./test".to_string(),
+      specifier_range: PositionRange {
+        start: Position::zeroed(),
+        end: Position::zeroed(),
+      },
+      import_assertions: ImportAssertions::Unknown,
+    };
+    run_serialization_test(
+      &module_info,
+      json!({
+        "kind": "exportEquals",
+        "isDynamic": true,
+        "leadingComments": [{
+          "text": "a",
+          "range": {
+            "start": {
+              "line": 0,
+              "character": 0,
+            },
+            "end": {
+              "line": 0,
+              "character": 0,
+            }
+          },
+        }],
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 0
+          },
+          "end": {
+            "line": 0,
+            "character": 0
+          }
+        },
+        "specifier": "./test",
+        "specifierRange": {
+          "start": {
+            "line": 0,
+            "character": 0
+          },
+          "end": {
+            "line": 0,
+            "character": 0
+          }
+        },
+        "importAssertions": {
+          "kind": "unknown"
+        }
+      }),
+    );
+  }
+
+  #[track_caller]
+  fn run_serialization_test<
+    T: DeserializeOwned + Serialize + std::fmt::Debug + PartialEq + Eq,
+  >(
+    value: &T,
+    expected_json: serde_json::Value,
+  ) {
+    let json = serde_json::to_value(value).unwrap();
+    assert_eq!(json, expected_json);
+    let deserialized_value = serde_json::from_value::<T>(json).unwrap();
+    assert_eq!(deserialized_value, *value);
+  }
 }
