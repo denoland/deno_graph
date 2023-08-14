@@ -2009,8 +2009,13 @@ impl Default for GraphKind {
   }
 }
 
-type LoadWithSpecifierFuture =
-  LocalBoxFuture<'static, (ModuleSpecifier, Option<Range>, LoadResult)>;
+struct PendingInfo {
+  specifier: ModuleSpecifier,
+  maybe_range: Option<Range>,
+  result: LoadResult,
+}
+
+type PendingInfoFuture = LocalBoxFuture<'static, PendingInfo>;
 
 #[derive(PartialEq, Eq, Hash)]
 pub(crate) struct AssertTypeWithRange {
@@ -2061,7 +2066,7 @@ struct PendingDenoState {
 
 #[derive(Default)]
 struct PendingState {
-  pending: FuturesOrdered<LoadWithSpecifierFuture>,
+  pending: FuturesOrdered<PendingInfoFuture>,
   deno: PendingDenoState,
   npm: PendingNpmState,
   pending_specifiers:
@@ -2163,53 +2168,48 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     loop {
       let specifier = match self.state.pending.next().await {
-        Some((specifier, maybe_referrer, Ok(Some(response)))) => {
-          let assert_types =
-            self.state.pending_specifiers.remove(&specifier).unwrap();
-          for maybe_assert_type in assert_types {
-            self.visit(
-              &specifier,
-              &response,
-              maybe_assert_type,
-              maybe_referrer.clone(),
-            )
+        Some(PendingInfo {
+          specifier,
+          maybe_range,
+          result,
+        }) => match result {
+          Ok(Some(response)) => {
+            let assert_types =
+              self.pending_specifiers.remove(&specifier).unwrap();
+            for maybe_assert_type in assert_types {
+              self.visit(
+                &specifier,
+                &response,
+                maybe_assert_type,
+                maybe_range.clone(),
+              )
+            }
+            Some(specifier)
           }
-          Some(specifier)
-        }
-        Some((specifier, maybe_range, Ok(None))) => {
-          self.graph.module_slots.insert(
-            specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::ModuleError(
-              ModuleError::Missing(specifier.clone(), maybe_range),
-            )),
-          );
-          Some(specifier)
-        }
-        Some((specifier, maybe_range, Err(err))) => {
-          // let err = match err {
-          //   LoadError::Fail(err) => err,
-          //   LoadError::Restart(err) => {
-          //     if allow_restart {
-          //       self.restart(provided_roots, provided_imports).await;
-          //       return;
-          //     } else {
-          //       err
-          //     }
-          //   }
-          // };
-          self.graph.module_slots.insert(
-            specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::ModuleError(
-              ModuleError::LoadingErr(
-                specifier.clone(),
-                maybe_range,
-                Arc::new(err),
-              ),
-            )),
-          );
-          Some(specifier)
-        }
-        _ => None,
+          Ok(None) => {
+            self.graph.module_slots.insert(
+              specifier.clone(),
+              ModuleSlot::Err(ModuleGraphError::ModuleError(
+                ModuleError::Missing(specifier.clone(), maybe_range),
+              )),
+            );
+            Some(specifier)
+          }
+          Err(err) => {
+            self.graph.module_slots.insert(
+              specifier.clone(),
+              ModuleSlot::Err(ModuleGraphError::ModuleError(
+                ModuleError::LoadingErr(
+                  specifier.clone(),
+                  maybe_range,
+                  Arc::new(err),
+                ),
+              )),
+            );
+            Some(specifier)
+          }
+        },
+        None => None,
       };
       if let (Some(specifier), Some(reporter)) = (specifier, self.reporter) {
         let modules_total = self.graph.module_slots.len();
@@ -2537,10 +2537,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .module_slots
       .insert(specifier.clone(), ModuleSlot::Pending);
     let specifier = specifier.clone();
-    let fut = self
-      .loader
-      .load(&specifier, is_dynamic)
-      .map(move |res| (specifier, maybe_range, res));
+    let fut =
+      self
+        .loader
+        .load(&specifier, is_dynamic)
+        .map(move |result| PendingInfo {
+          specifier,
+          maybe_range,
+          result,
+        });
     self.state.pending.push_back(Box::pin(fut));
   }
 
