@@ -77,7 +77,7 @@ pub trait Loader {
   }
 
   /// A method that given a specifier that asynchronously returns the
-  /// source of the file. By default, this uses the `load_no_cache`
+  /// source of the file. By default, this uses `load_no_cache`.
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
@@ -86,7 +86,8 @@ pub trait Loader {
     self.load_no_cache(specifier, is_dynamic)
   }
 
-  /// Loads a specifier where the implementation should not use an internal cache.
+  /// Loads a specifier where the implementation should not load
+  /// from an internal cache.
   fn load_no_cache(
     &mut self,
     specifier: &ModuleSpecifier,
