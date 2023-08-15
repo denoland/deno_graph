@@ -2175,7 +2175,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         }) => match result {
           Ok(Some(response)) => {
             let assert_types =
-              self.pending_specifiers.remove(&specifier).unwrap();
+              self.state.pending_specifiers.remove(&specifier).unwrap();
             for maybe_assert_type in assert_types {
               self.visit(
                 &specifier,
