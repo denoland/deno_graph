@@ -1505,10 +1505,8 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           self.fill_ts_type_ann(symbol, type_ann)
         }
       }
-      TsParamPropParam::Assign(assign) => {
-        if let Some(type_ann) = &assign.type_ann {
-          self.fill_ts_type_ann(symbol, type_ann)
-        }
+      TsParamPropParam::Assign(_) => {
+        // nothing to fill
       }
     }
   }
@@ -1541,10 +1539,6 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
       }
       Pat::Assign(n) => {
         self.fill_pat(symbol, &n.left);
-        // this will always be none (https://github.com/swc-project/swc/issues/7487)
-        if let Some(type_ann) = &n.type_ann {
-          self.fill_ts_type_ann(symbol, type_ann);
-        }
       }
       Pat::Invalid(_) => {
         // ignore
