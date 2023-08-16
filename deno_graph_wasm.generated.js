@@ -441,18 +441,18 @@ const imports = {
     },
     __wbindgen_number_get: function (arg0, arg1) {
       const obj = getObject(arg1);
-      const ret = typeof (obj) === "number" ? obj : undefined;
+      const ret = typeof obj === "number" ? obj : undefined;
       getFloat64Memory0()[arg0 / 8 + 1] = isLikeNone(ret) ? 0 : ret;
       getInt32Memory0()[arg0 / 4 + 0] = !isLikeNone(ret);
     },
     __wbindgen_boolean_get: function (arg0) {
       const v = getObject(arg0);
-      const ret = typeof (v) === "boolean" ? (v ? 1 : 0) : 2;
+      const ret = typeof v === "boolean" ? (v ? 1 : 0) : 2;
       return ret;
     },
     __wbindgen_string_get: function (arg0, arg1) {
       const obj = getObject(arg1);
-      const ret = typeof (obj) === "string" ? obj : undefined;
+      const ret = typeof obj === "string" ? obj : undefined;
       var ptr1 = isLikeNone(ret)
         ? 0
         : passStringToWasm0(
@@ -470,7 +470,7 @@ const imports = {
     },
     __wbindgen_is_object: function (arg0) {
       const val = getObject(arg0);
-      const ret = typeof (val) === "object" && val !== null;
+      const ret = typeof val === "object" && val !== null;
       return ret;
     },
     __wbindgen_bigint_from_u64: function (arg0) {
@@ -664,7 +664,7 @@ const imports = {
     },
     __wbindgen_bigint_get_as_i64: function (arg0, arg1) {
       const v = getObject(arg1);
-      const ret = typeof (v) === "bigint" ? v : undefined;
+      const ret = typeof v === "bigint" ? v : undefined;
       getBigInt64Memory0()[arg0 / 8 + 1] = isLikeNone(ret) ? BigInt(0) : ret;
       getInt32Memory0()[arg0 / 4 + 0] = !isLikeNone(ret);
     },
@@ -695,7 +695,7 @@ const imports = {
       const ret = getObject(arg0).then(getObject(arg1));
       return addHeapObject(ret);
     },
-    __wbindgen_closure_wrapper565: function (arg0, arg1, arg2) {
+    __wbindgen_closure_wrapper559: function (arg0, arg1, arg2) {
       const ret = makeMutClosure(arg0, arg1, 174, __wbg_adapter_48);
       return addHeapObject(ret);
     },
