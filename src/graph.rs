@@ -2059,6 +2059,7 @@ struct PendingDenoResolutionItem {
 
 struct PendingContentLoadItem {
   specifier: ModuleSpecifier,
+  maybe_range: Option<Range>,
   result: LoadFuture,
 }
 
@@ -2367,19 +2368,95 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
 
-    // now handle any pending content loads
+    // now handle any pending content loads from the Deno registry
     for item in self.state.deno.pending_content_loads.drain(..) {
       let result = item.result.await;
       match result {
         Ok(Some(response)) => {
-
+          match response {
+            LoadResponse::External { .. } => {
+              // this should never happen, and if it does it indicates the loader
+              // was setup incorrectly, so return an error
+              self.graph.module_slots.insert(
+                item.specifier.clone(),
+                ModuleSlot::Err(ModuleGraphError::ModuleError(
+                  ModuleError::LoadingErr(
+                    item.specifier,
+                    item.maybe_range,
+                    Arc::new(anyhow!("Loader should never return an external specifier for a deno: specifier.")),
+                  ),
+                )),
+              );
+            }
+            LoadResponse::Module {
+              content,
+              specifier,
+              maybe_headers,
+            } => {
+              if specifier == item.specifier {
+                // fill the existing module slot with the loaded source
+                let slot = self.graph.module_slots.get_mut(&specifier).unwrap();
+                match slot {
+                  ModuleSlot::Module(module) => {
+                    match module {
+                      Module::Esm(module) => {
+                        module.source = content;
+                      }
+                      Module::Json(module) => {
+                        module.source = content;
+                      }
+                      Module::Npm(_)
+                      | Module::Node(_)
+                      | Module::External(_) => {
+                        unreachable!(); // should not happen by design
+                      }
+                    }
+                  }
+                  ModuleSlot::Err(_) => {
+                    // the module errored some other way, so ignore
+                  }
+                  ModuleSlot::Pending => {
+                    unreachable!(); // should not happen by design
+                  }
+                }
+              } else {
+                // redirects are not supported
+                self.graph.module_slots.insert(
+                  item.specifier.clone(),
+                  ModuleSlot::Err(ModuleGraphError::ModuleError(
+                    ModuleError::LoadingErr(
+                      item.specifier,
+                      item.maybe_range,
+                      Arc::new(anyhow!(
+                        "Redirects are not supported on the Deno registry."
+                      )),
+                    ),
+                  )),
+                );
+              }
+            }
+          }
           // todo
         }
         Ok(None) => {
-          // todo
+          self.graph.module_slots.insert(
+            item.specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::Missing(item.specifier, item.maybe_range),
+            )),
+          );
         }
         Err(err) => {
-          // todo
+          self.graph.module_slots.insert(
+            item.specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::LoadingErr(
+                item.specifier,
+                item.maybe_range,
+                Arc::new(err),
+              ),
+            )),
+          );
         }
       }
     }
