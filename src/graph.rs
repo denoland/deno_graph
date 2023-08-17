@@ -24,6 +24,7 @@ use crate::source::*;
 use anyhow::anyhow;
 use anyhow::Error;
 use anyhow::Result;
+use deno_ast::Diagnostic;
 use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
@@ -46,6 +47,7 @@ use serde::ser::SerializeStruct;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
+use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -2010,10 +2012,18 @@ impl Default for GraphKind {
   }
 }
 
+enum PendingInfoResponse {
+  LoadResponse(Option<LoadResponse>),
+  ModuleInfo {
+    specifier: ModuleSpecifier,
+    module_info: ModuleInfo,
+  },
+}
+
 struct PendingInfo {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
-  result: LoadResult,
+  result: Result<PendingInfoResponse>,
   maybe_version_info: Option<Arc<DenoPackageVersionInfo>>,
 }
 
@@ -2047,6 +2057,11 @@ struct PendingDenoResolutionItem {
   maybe_range: Option<Range>,
 }
 
+struct PendingContentLoadItem {
+  specifier: ModuleSpecifier,
+  result: LoadFuture,
+}
+
 #[derive(Default)]
 struct PendingDenoState {
   pending_package_info_loads: HashMap<
@@ -2064,6 +2079,7 @@ struct PendingDenoState {
     >,
   >,
   pending_resolutions: Vec<PendingDenoResolutionItem>,
+  pending_content_loads: Vec<PendingContentLoadItem>,
 }
 
 #[derive(Default)]
@@ -2075,6 +2091,11 @@ struct PendingState {
     HashMap<ModuleSpecifier, HashSet<Option<AssertTypeWithRange>>>,
   dynamic_branches:
     HashMap<ModuleSpecifier, (Range, Option<AssertTypeWithRange>)>,
+}
+
+enum ContentOrModuleInfo {
+  Content(Arc<str>),
+  ModuleInfo(ModuleInfo),
 }
 
 #[derive(PartialEq, Eq)]
@@ -2346,6 +2367,23 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
 
+    // now handle any pending content loads
+    for item in self.state.deno.pending_content_loads.drain(..) {
+      let result = item.result.await;
+      match result {
+        Ok(Some(response)) => {
+
+          // todo
+        }
+        Ok(None) => {
+          // todo
+        }
+        Err(err) => {
+          // todo
+        }
+      }
+    }
+
     // Enrich with cache info from the loader
     for slot in self.graph.module_slots.values_mut() {
       if let ModuleSlot::Module(ref mut module) = slot {
@@ -2570,6 +2608,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           specifier,
           maybe_range,
           result,
+          maybe_version_info: None,
         });
     self.state.pending.push_back(Box::pin(fut));
   }
@@ -2687,7 +2726,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           self.visit_module(
             specifier,
             maybe_headers.as_ref(),
-            content.clone(),
+            ContentOrModuleInfo::Content(content.clone()),
             maybe_assert_type,
             maybe_referrer,
           ),
@@ -2705,12 +2744,33 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     &mut self,
     specifier: &ModuleSpecifier,
     maybe_headers: Option<&HashMap<String, String>>,
-    content: Arc<str>,
+    content_or_module_info: ContentOrModuleInfo,
     maybe_assert_type: Option<AssertTypeWithRange>,
     maybe_referrer: Option<Range>,
   ) -> ModuleSlot {
+    struct ProvidedModuleAnalyzer(RefCell<Option<ModuleInfo>>);
+
+    impl ModuleAnalyzer for ProvidedModuleAnalyzer {
+      fn analyze(
+        &self,
+        specifier: &ModuleSpecifier,
+        source: Arc<str>,
+        media_type: MediaType,
+      ) -> Result<ModuleInfo, Diagnostic> {
+        Ok(self.0.borrow_mut().take().unwrap()) // will only be called once
+      }
+    }
+
     use std::borrow::BorrowMut;
     let is_root = self.roots_contain(specifier);
+
+    let (content, maybe_module_analyzer) = match content_or_module_info {
+      ContentOrModuleInfo::Content(content) => (content, None),
+      ContentOrModuleInfo::ModuleInfo(info) => (
+        String::new().into(),
+        Some(ProvidedModuleAnalyzer(RefCell::new(Some(info)))),
+      ),
+    };
 
     let mut module_slot = match parse_module(
       specifier,
@@ -2719,7 +2779,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       maybe_assert_type,
       maybe_referrer,
       self.resolver,
-      self.module_analyzer,
+      maybe_module_analyzer
+        .as_ref()
+        .map(|r| r as &dyn ModuleAnalyzer)
+        .unwrap_or(self.module_analyzer),
       is_root,
       self.in_dynamic_branch,
     ) {
