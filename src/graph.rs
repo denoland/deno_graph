@@ -21,6 +21,7 @@ use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
 use crate::source::*;
 
+use anyhow::anyhow;
 use anyhow::Error;
 use anyhow::Result;
 use deno_ast::LineAndColumnIndex;
@@ -2013,6 +2014,7 @@ struct PendingInfo {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
   result: LoadResult,
+  maybe_version_info: Option<Arc<DenoPackageVersionInfo>>,
 }
 
 type PendingInfoFuture = LocalBoxFuture<'static, PendingInfo>;
@@ -2058,7 +2060,7 @@ struct PendingDenoState {
     PackageNv,
     LocalBoxFuture<
       'static,
-      Result<Option<DenoPackageVersionInfo>, Arc<anyhow::Error>>,
+      Result<Arc<DenoPackageVersionInfo>, Arc<anyhow::Error>>,
     >,
   >,
   pending_resolutions: Vec<PendingDenoResolutionItem>,
@@ -2172,6 +2174,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           specifier,
           maybe_range,
           result,
+          maybe_version_info,
         }) => match result {
           Ok(Some(response)) => {
             let assert_types =
@@ -2293,7 +2296,29 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         }
 
         for (nv, resolution_item) in pending_version_resolutions {
-          // now try loading the registry information
+          // now try loading the version information
+          let version_info_result = self
+            .state
+            .deno
+            .pending_package_version_info_loads
+            .get_mut(&nv)
+            .unwrap()
+            .await;
+          match version_info_result {
+            Ok(version_info) => self.state.pending.push_back(),
+            Err(err) => {
+              self.graph.module_slots.insert(
+                resolution_item.specifier.clone(),
+                ModuleSlot::Err(ModuleGraphError::ModuleError(
+                  ModuleError::LoadingErr(
+                    resolution_item.specifier,
+                    resolution_item.maybe_range,
+                    err.clone(),
+                  ),
+                )),
+              );
+            }
+          }
         }
       }
 
@@ -2613,9 +2638,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Some(LoadResponse::Module { content, .. }) => {
           let version_info: DenoPackageVersionInfo =
             serde_json::from_str(&content).map_err(|e| Arc::new(e.into()))?;
-          Ok(Some(version_info))
+          Ok(Arc::new(version_info))
         }
-        _ => Ok(None),
+        _ => Err(Arc::new(anyhow!("Not found: {}", specifier))),
       }
     }
     .boxed_local();
