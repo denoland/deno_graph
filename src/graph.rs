@@ -2355,14 +2355,18 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               let sub_path = resolution_item
                 .package_ref
                 .sub_path()
-                .unwrap_or(version_info.main.as_str());
+                .map(|p| format!("/{}", p))
+                .unwrap_or(version_info.main.to_string());
+              eprintln!("Sub path: {:?}", resolution_item
+              .package_ref
+              .sub_path());
               let specifier =
-                ModuleSpecifier::parse(&format!("https://deno-registry-staging.net/{}/{}/{}", nv.name, nv.version, sub_path))
+                ModuleSpecifier::parse(&format!("https://deno-registry-staging.net/{}/{}{}", nv.name, nv.version, sub_path))
                   .unwrap();
               eprintln!("SPECIFIER: {}", specifier);
               if !self.graph.module_slots.contains_key(&specifier) {
                 self.graph.redirects.insert(resolution_item.specifier, specifier.clone());
-                if let Some(module_info) = version_info.module_info(sub_path) {
+                if let Some(module_info) = version_info.module_info(&sub_path) {
                   self
                     .graph
                     .module_slots
