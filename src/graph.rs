@@ -2013,17 +2013,37 @@ impl Default for GraphKind {
 }
 
 enum PendingInfoResponse {
-  LoadResponse(Option<LoadResponse>),
-  ModuleInfo {
+  External {
     specifier: ModuleSpecifier,
-    module_info: ModuleInfo,
   },
+  Module {
+    content_or_module_info: ContentOrModuleInfo,
+    specifier: ModuleSpecifier,
+    maybe_headers: Option<HashMap<String, String>>,
+  },
+}
+
+impl From<LoadResponse> for PendingInfoResponse {
+  fn from(load_response: LoadResponse) -> Self {
+    match load_response {
+      LoadResponse::External { specifier } => Self::External { specifier },
+      LoadResponse::Module {
+        content,
+        specifier,
+        maybe_headers,
+      } => Self::Module {
+        content_or_module_info: ContentOrModuleInfo::Content(content),
+        specifier,
+        maybe_headers,
+      },
+    }
+  }
 }
 
 struct PendingInfo {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
-  result: Result<PendingInfoResponse>,
+  result: Result<Option<PendingInfoResponse>>,
   maybe_version_info: Option<Arc<DenoPackageVersionInfo>>,
 }
 
@@ -2094,6 +2114,7 @@ struct PendingState {
     HashMap<ModuleSpecifier, (Range, Option<AssertTypeWithRange>)>,
 }
 
+#[derive(Clone)]
 enum ContentOrModuleInfo {
   Content(Arc<str>),
   ModuleInfo(ModuleInfo),
@@ -2327,7 +2348,46 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .unwrap()
             .await;
           match version_info_result {
-            Ok(version_info) => self.state.pending.push_back(),
+            Ok(version_info) => {
+              if !self
+                .graph
+                .module_slots
+                .contains_key(&resolution_item.specifier)
+              {
+                self.graph.module_slots.insert(
+                  resolution_item.specifier.clone(),
+                  ModuleSlot::Pending,
+                );
+                let sub_path = resolution_item
+                  .package_ref
+                  .sub_path()
+                  .unwrap_or(version_info.main.as_str());
+                if let Some(module_info) = version_info.module_info(sub_path) {
+                  self.state.pending.push_back(
+                    std::future::ready(PendingInfo {
+                      specifier: resolution_item.specifier.clone(),
+                      maybe_range: resolution_item.maybe_range,
+                      result: Ok(Some(PendingInfoResponse::Module {
+                        content_or_module_info: ContentOrModuleInfo::ModuleInfo(
+                          module_info,
+                        ),
+                        specifier: resolution_item.specifier,
+                        maybe_headers: None,
+                      })),
+                      maybe_version_info: Some(version_info),
+                    })
+                    .boxed_local(),
+                  );
+                } else {
+                  self.load(
+                    &resolution_item.specifier,
+                    resolution_item.maybe_range.as_ref(),
+                    self.in_dynamic_branch,
+                    None,
+                  );
+                }
+              }
+            }
             Err(err) => {
               self.graph.module_slots.insert(
                 resolution_item.specifier.clone(),
@@ -2436,7 +2496,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               }
             }
           }
-          // todo
         }
         Ok(None) => {
           self.graph.module_slots.insert(
@@ -2684,7 +2743,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         .map(move |result| PendingInfo {
           specifier,
           maybe_range,
-          result,
+          result: result.map(|r| r.map(Into::into)),
           maybe_version_info: None,
         });
     self.state.pending.push_back(Box::pin(fut));
@@ -2701,9 +2760,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     // request to load
-    let specifier =
-      Url::parse(&format!("http://localhost/~/{}/meta.json", package_name))
-        .unwrap();
+    let specifier = Url::parse(&format!(
+      "https://deno-registry-staging.net/{}/meta.json",
+      package_name
+    ))
+    .unwrap();
     let fut = if self.fill_pass_mode == FillPassMode::CacheBusting {
       self.loader.load_no_cache(&specifier, false)
     } else {
@@ -2739,7 +2800,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     let specifier = Url::parse(&format!(
-      "http://localhost/~/{}/v/{}.json",
+      "https://deno-registry-staging.net/{}/{}_meta.json",
       package_nv.name, package_nv.version
     ))
     .unwrap();
@@ -2779,12 +2840,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   fn visit(
     &mut self,
     requested_specifier: &ModuleSpecifier,
-    response: &LoadResponse,
+    response: &PendingInfoResponse,
     maybe_assert_type: Option<AssertTypeWithRange>,
     maybe_referrer: Option<Range>,
   ) {
     let (specifier, module_slot) = match response {
-      LoadResponse::External { specifier } => {
+      PendingInfoResponse::External { specifier } => {
         self.check_specifier(requested_specifier, specifier);
         let module_slot =
           ModuleSlot::Module(Module::External(ExternalModule {
@@ -2792,9 +2853,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           }));
         (specifier, module_slot)
       }
-      LoadResponse::Module {
+      PendingInfoResponse::Module {
         specifier,
-        content,
+        content_or_module_info,
         maybe_headers,
       } => {
         self.check_specifier(requested_specifier, specifier);
@@ -2803,7 +2864,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           self.visit_module(
             specifier,
             maybe_headers.as_ref(),
-            ContentOrModuleInfo::Content(content.clone()),
+            content_or_module_info.clone(),
             maybe_assert_type,
             maybe_referrer,
           ),

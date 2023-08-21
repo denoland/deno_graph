@@ -10,7 +10,6 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::ModuleInfo;
-use crate::ModuleSpecifier;
 
 #[derive(Deserialize, Clone)]
 pub struct DenoPackageInfo {
@@ -24,7 +23,17 @@ pub struct DenoPackageInfoVersion {
 
 #[derive(Deserialize, Clone)]
 pub struct DenoPackageVersionInfo {
-  pub module_graph: HashMap<ModuleSpecifier, ModuleInfo>,
+  pub main: String,
+  #[serde(rename = "moduleGraph1")]
+  pub module_graph: Option<serde_json::Value>,
+}
+
+impl DenoPackageVersionInfo {
+  pub fn module_info(&self, specifier: &str) -> Option<ModuleInfo> {
+    let module_graph = self.module_graph.as_ref()?.as_object()?;
+    let module_info = module_graph.get(specifier)?;
+    serde_json::from_value(module_info.clone()).ok()
+  }
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
