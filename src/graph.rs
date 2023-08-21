@@ -2220,6 +2220,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           maybe_version_info,
         }) => match result {
           Ok(Some(response)) => {
+            eprintln!("Looking at: {}", specifier);
             let assert_types =
               self.state.pending_specifiers.remove(&specifier).unwrap();
             for maybe_assert_type in assert_types {
@@ -2339,6 +2340,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         }
 
         for (nv, resolution_item) in pending_version_resolutions {
+          eprintln!("Looking at pending version resolution: {}", nv);
           // now try loading the version information
           let version_info_result = self
             .state
@@ -2349,46 +2351,63 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .await;
           match version_info_result {
             Ok(version_info) => {
-              if !self
-                .graph
-                .module_slots
-                .contains_key(&resolution_item.specifier)
-              {
-                self.graph.module_slots.insert(
-                  resolution_item.specifier.clone(),
-                  ModuleSlot::Pending,
-                );
-                let sub_path = resolution_item
-                  .package_ref
-                  .sub_path()
-                  .unwrap_or(version_info.main.as_str());
+              eprintln!("Found version info: {}", version_info.main);
+              let sub_path = resolution_item
+                .package_ref
+                .sub_path()
+                .unwrap_or(version_info.main.as_str());
+              let specifier =
+                ModuleSpecifier::parse(&format!("https://deno-registry-staging.net/{}/{}/{}", nv.name, nv.version, sub_path))
+                  .unwrap();
+              eprintln!("SPECIFIER: {}", specifier);
+              if !self.graph.module_slots.contains_key(&specifier) {
+                self.graph.redirects.insert(resolution_item.specifier, specifier.clone());
                 if let Some(module_info) = version_info.module_info(sub_path) {
+                  self
+                    .graph
+                    .module_slots
+                    .insert(specifier.clone(), ModuleSlot::Pending);
                   self.state.pending.push_back(
                     std::future::ready(PendingInfo {
-                      specifier: resolution_item.specifier.clone(),
-                      maybe_range: resolution_item.maybe_range,
+                      specifier: specifier.clone(),
+                      maybe_range: resolution_item.maybe_range.clone(),
                       result: Ok(Some(PendingInfoResponse::Module {
                         content_or_module_info: ContentOrModuleInfo::ModuleInfo(
                           module_info,
                         ),
-                        specifier: resolution_item.specifier,
+                        specifier: specifier.clone(),
                         maybe_headers: None,
                       })),
                       maybe_version_info: Some(version_info),
                     })
                     .boxed_local(),
                   );
+                  self.state.deno.pending_content_loads.push(
+                    PendingContentLoadItem {
+                      specifier: specifier.clone(),
+                      maybe_range: resolution_item.maybe_range,
+                      result: self
+                        .loader
+                        .load(&specifier, self.in_dynamic_branch),
+                    },
+                  );
                 } else {
                   self.load(
-                    &resolution_item.specifier,
+                    &specifier,
                     resolution_item.maybe_range.as_ref(),
                     self.in_dynamic_branch,
                     None,
                   );
                 }
+              } else {
+                eprintln!(
+                  "SKIPPING BECAUSE IT HAD A MODULE SLOT: {}",
+                  resolution_item.specifier
+                );
               }
             }
             Err(err) => {
+              eprintln!("FAILED");
               self.graph.module_slots.insert(
                 resolution_item.specifier.clone(),
                 ModuleSlot::Err(ModuleGraphError::ModuleError(
@@ -2430,6 +2449,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     // now handle any pending content loads from the Deno registry
     for item in self.state.deno.pending_content_loads.drain(..) {
+      eprintln!("HANDLING CONTENT LOAD: {}", item.specifier);
       let result = item.result.await;
       match result {
         Ok(Some(response)) => {
@@ -2453,6 +2473,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               specifier,
               maybe_headers,
             } => {
+              eprintln!(
+                "HANDLING MODULE RESPONSE: {} {}",
+                specifier, item.specifier
+              );
               if specifier == item.specifier {
                 // fill the existing module slot with the loaded source
                 let slot = self.graph.module_slots.get_mut(&specifier).unwrap();
