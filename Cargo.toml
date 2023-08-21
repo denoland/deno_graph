@@ -1,6 +1,6 @@
 [package]
 name = "deno_graph"
-version = "0.50.0"
+version = "0.52.0"
 edition = "2021"
 description = "Module graph analysis for deno"
 homepage = "https://deno.land/"
@@ -25,7 +25,7 @@ type_tracing = ["deno_ast/transforms", "deno_ast/visit", "deno_ast/utils"]
 anyhow = "1.0.43"
 async-trait = "0.1.72"
 data-url = "0.2.0"
-deno_ast = { version = "0.27.0", features = ["dep_graph", "module_specifier"] }
+deno_ast = { version = "0.28.0", features = ["dep_graph", "module_specifier"] }
 deno_semver = "0.4.0"
 futures = "0.3.26"
 indexmap = { version = "1.9.2", features = ["serde"] }
