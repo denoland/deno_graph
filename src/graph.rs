@@ -2197,7 +2197,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .collect::<Vec<_>>();
     self.graph.roots.extend(roots.clone());
     for root in roots {
-      self.load(&root, None, self.in_dynamic_branch, None);
+      self.load(&root, None, self.in_dynamic_branch, None, None);
     }
 
     // Process any imports that are being added to the graph.
@@ -2211,6 +2211,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             &resolved.specifier,
             Some(&resolved.range),
             self.in_dynamic_branch,
+            None,
             None,
           );
         }
@@ -2379,7 +2380,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 base_url,
                 inner: version_info
               };
-              self.load_with_version_info(
+              self.load(
                 &specifier,
                 resolution_item.maybe_range.as_ref(),
                 self.in_dynamic_branch,
@@ -2418,7 +2419,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             std::mem::take(&mut self.state.dynamic_branches)
           {
             if !self.graph.module_slots.contains_key(&specifier) {
-              self.load(&specifier, Some(&range), true, maybe_assert_type);
+              self.load(&specifier, Some(&range), true, maybe_assert_type, None);
             }
           }
         }
@@ -2613,16 +2614,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_range: Option<&Range>,
     is_dynamic: bool,
     maybe_assert_type: Option<AssertTypeWithRange>,
-  ) {
-    self.load_with_version_info(specifier, maybe_range, is_dynamic, maybe_assert_type, None)
-  }
-
-  fn load_with_version_info(
-    &mut self,
-    specifier: &ModuleSpecifier,
-    maybe_range: Option<&Range>,
-    is_dynamic: bool,
-    maybe_assert_type: Option<AssertTypeWithRange>,
     maybe_version_info: Option<&DenoPackageVersionInfoExt>,
   ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
@@ -2667,7 +2658,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 .load(&specifier, self.in_dynamic_branch),
             },
           );
-          return
+          return;
         }
       }
     }
@@ -3009,7 +3000,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   (range.clone(), maybe_assert_type_with_range),
                 );
               } else {
-                self.load_with_version_info(
+                self.load(
                   specifier,
                   Some(range),
                   self.in_dynamic_branch,
@@ -3042,7 +3033,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   (range.clone(), maybe_assert_type_with_range),
                 );
               } else {
-                self.load_with_version_info(
+                self.load(
                   specifier,
                   Some(range),
                   self.in_dynamic_branch,
@@ -3066,7 +3057,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           .as_ref()
           .map(|d| &d.dependency)
         {
-          self.load_with_version_info(&resolved.specifier, Some(&resolved.range), false, None, maybe_version_info);
+          self.load(&resolved.specifier, Some(&resolved.range), false, None, maybe_version_info);
         }
       } else {
         module.maybe_types_dependency = None;
