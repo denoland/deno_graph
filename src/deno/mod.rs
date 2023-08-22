@@ -18,12 +18,12 @@ pub struct DenoPackageInfo {
 
 #[derive(Deserialize, Clone)]
 pub struct DenoPackageInfoVersion {
-  pub main: String,
+  pub main: Option<String>,
 }
 
 #[derive(Deserialize, Clone)]
 pub struct DenoPackageVersionInfo {
-  pub main: String,
+  pub main: Option<String>,
   #[serde(rename = "moduleGraph1")]
   pub module_graph: Option<serde_json::Value>,
 }

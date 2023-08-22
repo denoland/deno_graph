@@ -37,6 +37,7 @@ use deno_semver::package::PackageNvReference;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
 use futures::future::LocalBoxFuture;
+use futures::future::Shared;
 use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
@@ -2046,7 +2047,6 @@ struct DenoPackageVersionInfoExt {
   inner: Arc<DenoPackageVersionInfo>,
 }
 
-
 struct PendingInfo {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
@@ -2087,27 +2087,32 @@ struct PendingDenoResolutionItem {
 struct PendingContentLoadItem {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
-  result: LoadFuture,
+  result: LoadResult,
 }
 
 #[derive(Default)]
 struct PendingDenoState {
   pending_package_info_loads: HashMap<
     String,
-    LocalBoxFuture<
-      'static,
-      Result<Option<DenoPackageInfo>, Arc<anyhow::Error>>,
+    Shared<
+      LocalBoxFuture<
+        'static,
+        Result<Option<DenoPackageInfo>, Arc<anyhow::Error>>,
+      >,
     >,
   >,
   pending_package_version_info_loads: HashMap<
     PackageNv,
-    LocalBoxFuture<
-      'static,
-      Result<Arc<DenoPackageVersionInfo>, Arc<anyhow::Error>>,
+    Shared<
+      LocalBoxFuture<
+        'static,
+        Result<Arc<DenoPackageVersionInfo>, Arc<anyhow::Error>>,
+      >,
     >,
   >,
   pending_resolutions: Vec<PendingDenoResolutionItem>,
-  pending_content_loads: Vec<PendingContentLoadItem>,
+  pending_content_loads:
+    FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
 }
 
 #[derive(Default)]
@@ -2298,6 +2303,21 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     name: package_name.clone(),
                     version,
                   };
+                  self
+                    .graph
+                    .deno_specifiers
+                    .package_reqs
+                    .insert(package_req.clone(), package_nv.clone());
+                  let packages = self
+                    .graph
+                    .deno_specifiers
+                    .packages_by_name
+                    .entry(package_name.clone())
+                    .or_default();
+                  if !packages.contains(&package_nv) {
+                    packages.push(package_nv.clone());
+                  }
+
                   self.queue_load_package_version_info(&package_nv);
                   pending_version_resolutions
                     .push((package_nv, pending_resolution));
@@ -2360,25 +2380,39 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .await;
           match version_info_result {
             Ok(version_info) => {
-              eprintln!("Found version info: {}", version_info.main);
+              eprintln!("Found version info: {:?}", version_info.main);
               let sub_path = resolution_item
                 .package_ref
                 .sub_path()
-                .map(|p| format!("/{}", p))
-                .unwrap_or(version_info.main.to_string());
-              eprintln!("Sub path: {:?}", resolution_item
-              .package_ref
-              .sub_path());
-              let base_url = ModuleSpecifier::parse(&format!("https://deno-registry-staging.net/{}/{}/", nv.name, nv.version))
-                  .unwrap();
-              let specifier =
-                ModuleSpecifier::parse(&format!("https://deno-registry-staging.net/{}/{}{}", nv.name, nv.version, sub_path))
-                  .unwrap();
+                .or_else(|| {
+                  version_info
+                    .main
+                    .as_ref()
+                    .map(|p| p.strip_prefix('/').unwrap_or(p))
+                })
+                .unwrap(); // todo: temp
+              eprintln!(
+                "Sub path: {:?}",
+                resolution_item.package_ref.sub_path()
+              );
+              let base_url = ModuleSpecifier::parse(&format!(
+                "https://deno-registry-staging.net/{}/{}/",
+                nv.name, nv.version
+              ))
+              .unwrap();
+              let specifier = ModuleSpecifier::parse(&format!(
+                "https://deno-registry-staging.net/{}/{}/{}",
+                nv.name, nv.version, sub_path
+              ))
+              .unwrap();
               eprintln!("SPECIFIER: {}", specifier);
-              self.graph.redirects.insert(resolution_item.specifier, specifier.clone());
+              self
+                .graph
+                .redirects
+                .insert(resolution_item.specifier, specifier.clone());
               let version_info = DenoPackageVersionInfoExt {
                 base_url,
-                inner: version_info
+                inner: version_info,
               };
               self.load(
                 &specifier,
@@ -2419,7 +2453,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             std::mem::take(&mut self.state.dynamic_branches)
           {
             if !self.graph.module_slots.contains_key(&specifier) {
-              self.load(&specifier, Some(&range), true, maybe_assert_type, None);
+              self.load(
+                &specifier,
+                Some(&range),
+                true,
+                maybe_assert_type,
+                None,
+              );
             }
           }
         }
@@ -2430,10 +2470,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     // now handle any pending content loads from the Deno registry
-    for item in self.state.deno.pending_content_loads.drain(..) {
+    while let Some(item) = self.state.deno.pending_content_loads.next().await {
       eprintln!("HANDLING CONTENT LOAD: {}", item.specifier);
-      let result = item.result.await;
-      match result {
+      match item.result {
         Ok(Some(response)) => {
           match response {
             LoadResponse::External { .. } => {
@@ -2649,15 +2688,20 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             })
             .boxed_local(),
           );
-          self.state.deno.pending_content_loads.push(
-            PendingContentLoadItem {
-              specifier: specifier.clone(),
-              maybe_range: maybe_range.cloned(),
-              result: self
-                .loader
-                .load(&specifier, self.in_dynamic_branch),
-            },
-          );
+          self.state.deno.pending_content_loads.push({
+            let specifier = specifier.clone();
+            let maybe_range = maybe_range.cloned();
+            let fut = self.loader.load(&specifier, self.in_dynamic_branch);
+            async move {
+              let result = fut.await;
+              PendingContentLoadItem {
+                specifier,
+                maybe_range,
+                result,
+              }
+            }
+            .boxed_local()
+          });
           return;
         }
       }
@@ -2817,6 +2861,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let data = fut.await.map_err(Arc::new)?;
       match data {
         Some(LoadResponse::Module { content, .. }) => {
+          eprintln!("LOADING CONTENT: {}", content);
           let package_info: DenoPackageInfo =
             serde_json::from_str(&content).map_err(|e| Arc::new(e.into()))?;
           Ok(Some(package_info))
@@ -2829,7 +2874,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .state
       .deno
       .pending_package_info_loads
-      .insert(package_name.to_string(), fut);
+      .insert(package_name.to_string(), fut.shared());
   }
 
   fn queue_load_package_version_info(&mut self, package_nv: &PackageNv) {
@@ -2868,7 +2913,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .state
       .deno
       .pending_package_version_info_loads
-      .insert(package_nv.clone(), fut);
+      .insert(package_nv.clone(), fut.shared());
   }
 
   fn roots_contain(&self, specifier: &ModuleSpecifier) -> bool {
@@ -3057,7 +3102,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           .as_ref()
           .map(|d| &d.dependency)
         {
-          self.load(&resolved.specifier, Some(&resolved.range), false, None, maybe_version_info);
+          self.load(
+            &resolved.specifier,
+            Some(&resolved.range),
+            false,
+            None,
+            maybe_version_info,
+          );
         }
       } else {
         module.maybe_types_dependency = None;
