@@ -2088,6 +2088,7 @@ struct PendingContentLoadItem {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
   result: LoadResult,
+  module_info: ModuleInfo,
 }
 
 #[derive(Default)]
@@ -2499,6 +2500,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 specifier, item.specifier
               );
               if specifier == item.specifier {
+                self.loader.cache_module_info(&specifier, &content, &item.module_info);
                 // fill the existing module slot with the loaded source
                 let slot = self.graph.module_slots.get_mut(&specifier).unwrap();
                 match slot {
@@ -2679,7 +2681,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               maybe_range: maybe_range.cloned(),
               result: Ok(Some(PendingInfoResponse::Module {
                 content_or_module_info: ContentOrModuleInfo::ModuleInfo(
-                  module_info,
+                  module_info.clone(),
                 ),
                 specifier: specifier.clone(),
                 maybe_headers: None,
@@ -2698,6 +2700,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 specifier,
                 maybe_range,
                 result,
+                module_info,
               }
             }
             .boxed_local()

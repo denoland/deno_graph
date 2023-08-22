@@ -111,9 +111,10 @@ pub trait Loader {
   fn cache_module_info(
     &mut self,
     _specifier: &ModuleSpecifier,
-    _module_info: &ModuleInfo,
     _source: &str,
+    _module_info: &ModuleInfo,
   ) {
+
   }
 }
 
