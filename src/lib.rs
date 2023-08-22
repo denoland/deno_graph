@@ -51,10 +51,7 @@ pub use graph::ModuleGraphError;
 pub use graph::NpmModule;
 pub use graph::Position;
 pub use graph::Range;
-pub use graph::Resolution;
 pub use graph::ResolutionError;
-pub use graph::ResolutionResolved;
-pub use graph::TypesDependency;
 pub use graph::WalkOptions;
 pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
@@ -114,8 +111,6 @@ pub fn parse_module_from_ast(
 
 #[cfg(test)]
 mod tests {
-  use crate::graph::ResolutionResolved;
-
   use super::*;
   use pretty_assertions::assert_eq;
   use serde_json::json;
@@ -190,10 +185,9 @@ mod tests {
     let dependency = maybe_dependency.unwrap();
     assert!(!dependency.is_dynamic);
     assert_eq!(
-      dependency.maybe_code.ok().unwrap().specifier,
+      *dependency.resolution.as_ref().unwrap(),
       dependency_specifier
     );
-    assert_eq!(dependency.maybe_type, Resolution::None);
     let maybe_dep_module_slot = graph.get(&dependency_specifier);
     assert!(maybe_dep_module_slot.is_some());
   }
@@ -509,7 +503,11 @@ console.log(a);
         Default::default(),
       )
       .await;
-    assert!(graph.valid().is_ok());
+    assert!(graph.valid().is_err());
+    assert_eq!(
+      graph.valid().err().unwrap().to_string(),
+      "Module not found \"file:///a/test02.d.ts\"."
+    );
   }
 
   #[tokio::test]
@@ -1638,8 +1636,8 @@ export function a(a) {
     assert!(maybe_dep.is_some());
     let dep = maybe_dep.unwrap();
     assert_eq!(
-      dep.maybe_code.maybe_specifier().unwrap(),
-      &ModuleSpecifier::parse("file:///a/test02.ts").unwrap()
+      *dep.resolution.as_ref().unwrap(),
+      ModuleSpecifier::parse("file:///a/test02.ts").unwrap()
     );
   }
 
@@ -1694,18 +1692,19 @@ export function a(a) {
       )
       .await;
     let module = graph.get(&graph.roots[0]).unwrap().esm().unwrap();
-    let types_dep = module.maybe_types_dependency.as_ref().unwrap();
-    assert_eq!(types_dep.specifier, "file:///a.js");
+    let external_types = module.external_types.as_ref().unwrap();
+    assert_eq!(external_types.key, "file:///a.js");
     assert_eq!(
-      *types_dep.dependency.ok().unwrap(),
-      ResolutionResolved {
-        specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
-        range: Range {
-          specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
-        }
-      }
+      *external_types.resolution.as_ref().unwrap(),
+      ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
+    );
+    assert_eq!(
+      external_types.range,
+      Some(Range {
+        specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
+        start: Position::zeroed(),
+        end: Position::zeroed(),
+      })
     );
   }
 
@@ -2648,9 +2647,6 @@ export function a(a) {
                 }
               },
               {
-                "specifier": "./b.d.ts",
-              },
-              {
                 "specifier": "https://example.com/c",
                 "code": {
                   "specifier": "https://example.com/c",
@@ -2929,10 +2925,9 @@ export function a(a) {
       .get("https://example.com/preact/jsx-runtime")
       .unwrap();
     assert_eq!(
-      dep.maybe_code.ok().unwrap().specifier,
+      *dep.resolution.as_ref().unwrap(),
       ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
     );
-    assert!(dep.maybe_type.is_none());
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
@@ -2968,10 +2963,9 @@ export function a(a) {
       .get("https://example.com/preact/jsx-runtime")
       .unwrap();
     assert_eq!(
-      dep.maybe_code.ok().unwrap().specifier,
+      *dep.resolution.as_ref().unwrap(),
       ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
     );
-    assert!(dep.maybe_type.is_none());
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
@@ -3369,6 +3363,7 @@ export function a(a: A): B {
         .map(|(specifier, _)| specifier.to_string())
         .collect::<Vec<_>>(),
       vec![
+        "https://example.com/jsx-runtime",
         "file:///a/test01.ts",
         "file:///a/test02.ts",
         "https://example.com/a.ts",
@@ -3391,6 +3386,7 @@ export function a(a: A): B {
         .map(|(specifier, _)| specifier.to_string())
         .collect::<Vec<_>>(),
       vec![
+        "https://example.com/jsx-runtime",
         "file:///a/test01.ts",
         "file:///a/test02.ts",
         "https://example.com/a.ts",
@@ -3415,6 +3411,7 @@ export function a(a: A): B {
         .map(|(specifier, _)| specifier.to_string())
         .collect::<Vec<_>>(),
       vec![
+        "https://example.com/jsx-runtime",
         "file:///a/test01.ts",
         "file:///a/test02.ts",
         "https://example.com/a.ts",
