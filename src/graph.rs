@@ -2040,11 +2040,18 @@ impl From<LoadResponse> for PendingInfoResponse {
   }
 }
 
+#[derive(Clone)]
+struct DenoPackageVersionInfoExt {
+  base_url: Url,
+  inner: Arc<DenoPackageVersionInfo>,
+}
+
+
 struct PendingInfo {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
   result: Result<Option<PendingInfoResponse>>,
-  maybe_version_info: Option<Arc<DenoPackageVersionInfo>>,
+  maybe_version_info: Option<DenoPackageVersionInfoExt>,
 }
 
 type PendingInfoFuture = LocalBoxFuture<'static, PendingInfo>;
@@ -2229,6 +2236,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 &response,
                 maybe_assert_type,
                 maybe_range.clone(),
+                maybe_version_info.as_ref(),
               )
             }
             Some(specifier)
@@ -2360,55 +2368,24 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               eprintln!("Sub path: {:?}", resolution_item
               .package_ref
               .sub_path());
+              let base_url = ModuleSpecifier::parse(&format!("https://deno-registry-staging.net/{}/{}/", nv.name, nv.version))
+                  .unwrap();
               let specifier =
                 ModuleSpecifier::parse(&format!("https://deno-registry-staging.net/{}/{}{}", nv.name, nv.version, sub_path))
                   .unwrap();
               eprintln!("SPECIFIER: {}", specifier);
-              if !self.graph.module_slots.contains_key(&specifier) {
-                self.graph.redirects.insert(resolution_item.specifier, specifier.clone());
-                if let Some(module_info) = version_info.module_info(&sub_path) {
-                  self
-                    .graph
-                    .module_slots
-                    .insert(specifier.clone(), ModuleSlot::Pending);
-                  self.state.pending.push_back(
-                    std::future::ready(PendingInfo {
-                      specifier: specifier.clone(),
-                      maybe_range: resolution_item.maybe_range.clone(),
-                      result: Ok(Some(PendingInfoResponse::Module {
-                        content_or_module_info: ContentOrModuleInfo::ModuleInfo(
-                          module_info,
-                        ),
-                        specifier: specifier.clone(),
-                        maybe_headers: None,
-                      })),
-                      maybe_version_info: Some(version_info),
-                    })
-                    .boxed_local(),
-                  );
-                  self.state.deno.pending_content_loads.push(
-                    PendingContentLoadItem {
-                      specifier: specifier.clone(),
-                      maybe_range: resolution_item.maybe_range,
-                      result: self
-                        .loader
-                        .load(&specifier, self.in_dynamic_branch),
-                    },
-                  );
-                } else {
-                  self.load(
-                    &specifier,
-                    resolution_item.maybe_range.as_ref(),
-                    self.in_dynamic_branch,
-                    None,
-                  );
-                }
-              } else {
-                eprintln!(
-                  "SKIPPING BECAUSE IT HAD A MODULE SLOT: {}",
-                  resolution_item.specifier
-                );
-              }
+              self.graph.redirects.insert(resolution_item.specifier, specifier.clone());
+              let version_info = DenoPackageVersionInfoExt {
+                base_url,
+                inner: version_info
+              };
+              self.load_with_version_info(
+                &specifier,
+                resolution_item.maybe_range.as_ref(),
+                self.in_dynamic_branch,
+                None,
+                Some(&version_info),
+              );
             }
             Err(err) => {
               eprintln!("FAILED");
@@ -2637,6 +2614,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     is_dynamic: bool,
     maybe_assert_type: Option<AssertTypeWithRange>,
   ) {
+    self.load_with_version_info(specifier, maybe_range, is_dynamic, maybe_assert_type, None)
+  }
+
+  fn load_with_version_info(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    maybe_range: Option<&Range>,
+    is_dynamic: bool,
+    maybe_assert_type: Option<AssertTypeWithRange>,
+    maybe_version_info: Option<&DenoPackageVersionInfoExt>,
+  ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     self
       .state
@@ -2646,6 +2634,42 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .insert(maybe_assert_type);
     if self.graph.module_slots.contains_key(specifier) {
       return;
+    }
+
+    if let Some(version_info) = maybe_version_info {
+      let base_url = version_info.base_url.as_str();
+      let base_url = base_url.strip_suffix('/').unwrap_or(base_url);
+      if let Some(sub_path) = specifier.as_str().strip_prefix(base_url) {
+        eprintln!("Sub path: {}", sub_path);
+        if let Some(module_info) = version_info.inner.module_info(&sub_path) {
+          eprintln!("Using moudle info for {}", sub_path);
+          self.state.pending.push_back(
+            std::future::ready(PendingInfo {
+              specifier: specifier.clone(),
+              maybe_range: maybe_range.cloned(),
+              result: Ok(Some(PendingInfoResponse::Module {
+                content_or_module_info: ContentOrModuleInfo::ModuleInfo(
+                  module_info,
+                ),
+                specifier: specifier.clone(),
+                maybe_headers: None,
+              })),
+              maybe_version_info: Some(version_info.clone()),
+            })
+            .boxed_local(),
+          );
+          self.state.deno.pending_content_loads.push(
+            PendingContentLoadItem {
+              specifier: specifier.clone(),
+              maybe_range: maybe_range.cloned(),
+              result: self
+                .loader
+                .load(&specifier, self.in_dynamic_branch),
+            },
+          );
+          return
+        }
+      }
     }
 
     let maybe_range = maybe_range.map(ToOwned::to_owned);
@@ -2871,6 +2895,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     response: &PendingInfoResponse,
     maybe_assert_type: Option<AssertTypeWithRange>,
     maybe_referrer: Option<Range>,
+    maybe_version_info: Option<&DenoPackageVersionInfoExt>,
   ) {
     let (specifier, module_slot) = match response {
       PendingInfoResponse::External { specifier } => {
@@ -2895,6 +2920,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             content_or_module_info.clone(),
             maybe_assert_type,
             maybe_referrer,
+            maybe_version_info,
           ),
         )
       }
@@ -2913,15 +2939,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     content_or_module_info: ContentOrModuleInfo,
     maybe_assert_type: Option<AssertTypeWithRange>,
     maybe_referrer: Option<Range>,
+    maybe_version_info: Option<&DenoPackageVersionInfoExt>,
   ) -> ModuleSlot {
     struct ProvidedModuleAnalyzer(RefCell<Option<ModuleInfo>>);
 
     impl ModuleAnalyzer for ProvidedModuleAnalyzer {
       fn analyze(
         &self,
-        specifier: &ModuleSpecifier,
-        source: Arc<str>,
-        media_type: MediaType,
+        _specifier: &ModuleSpecifier,
+        _source: Arc<str>,
+        _media_type: MediaType,
       ) -> Result<ModuleInfo, Diagnostic> {
         Ok(self.0.borrow_mut().take().unwrap()) // will only be called once
       }
@@ -2982,11 +3009,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   (range.clone(), maybe_assert_type_with_range),
                 );
               } else {
-                self.load(
+                self.load_with_version_info(
                   specifier,
                   Some(range),
                   self.in_dynamic_branch,
                   maybe_assert_type_with_range,
+                  maybe_version_info,
                 );
               }
             }
@@ -3014,11 +3042,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   (range.clone(), maybe_assert_type_with_range),
                 );
               } else {
-                self.load(
+                self.load_with_version_info(
                   specifier,
                   Some(range),
                   self.in_dynamic_branch,
                   maybe_assert_type_with_range,
+                  maybe_version_info,
                 );
               }
             }
@@ -3037,7 +3066,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           .as_ref()
           .map(|d| &d.dependency)
         {
-          self.load(&resolved.specifier, Some(&resolved.range), false, None);
+          self.load_with_version_info(&resolved.specifier, Some(&resolved.range), false, None, maybe_version_info);
         }
       } else {
         module.maybe_types_dependency = None;
