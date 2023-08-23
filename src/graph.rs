@@ -2098,7 +2098,7 @@ struct PendingDenoState {
     Shared<
       LocalBoxFuture<
         'static,
-        Result<Option<DenoPackageInfo>, Arc<anyhow::Error>>,
+        Result<Option<Arc<DenoPackageInfo>>, Arc<anyhow::Error>>,
       >,
     >,
   >,
@@ -2292,12 +2292,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .deno
             .pending_package_info_loads
             .get_mut(package_name)
-            .unwrap();
-          match &fut.await {
+            .unwrap()
+            .clone();
+          match fut.await {
             Ok(Some(info)) => {
               // resolve the best version out of the existing versions first
               let package_req = pending_resolution.package_ref.req();
-              match self.resolve_deno_version(info, package_req) {
+              match self.resolve_deno_version(&info, package_req) {
                 Some(version) => {
                   // now queue a pending load for that version information
                   let package_nv = PackageNv {
@@ -2378,6 +2379,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .pending_package_version_info_loads
             .get_mut(&nv)
             .unwrap()
+            .clone()
             .await;
           match version_info_result {
             Ok(version_info) => {
@@ -2867,7 +2869,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           eprintln!("LOADING CONTENT: {}", content);
           let package_info: DenoPackageInfo =
             serde_json::from_str(&content).map_err(|e| Arc::new(e.into()))?;
-          Ok(Some(package_info))
+          Ok(Some(Arc::new(package_info)))
         }
         _ => Ok(None),
       }
