@@ -8,6 +8,7 @@
 use std::collections::HashMap;
 
 use deno_graph::resolve_import;
+use deno_graph::source::LoaderCacheSetting;
 use deno_graph::source::load_data_url;
 use deno_graph::source::CacheInfo;
 use deno_graph::source::LoadFuture;
@@ -59,10 +60,12 @@ impl Loader for JsLoader {
     }
   }
 
-  fn load(
+  fn load_with_cache_setting(
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
+    // todo: implement using this
+    cache_setting: LoaderCacheSetting,
   ) -> LoadFuture {
     if specifier.scheme() == "data" {
       Box::pin(future::ready(load_data_url(specifier)))
@@ -88,24 +91,6 @@ impl Loader for JsLoader {
       };
       Box::pin(f)
     }
-  }
-
-  fn load_no_cache(
-    &mut self,
-    specifier: &ModuleSpecifier,
-    is_dynamic: bool,
-  ) -> LoadFuture {
-    // todo(THIS PR): implement this
-    self.load(specifier, is_dynamic)
-  }
-
-  fn load_from_cache(
-    &mut self,
-    specifier: &ModuleSpecifier,
-    is_dynamic: bool,
-  ) -> LoadFuture {
-    // todo(THIS PR): implement this
-    self.load(specifier, is_dynamic)
   }
 }
 
@@ -265,6 +250,7 @@ pub async fn js_create_graph(
         module_analyzer: None,
         imports,
         reporter: None,
+        workspace_members: Vec::new(),
       },
     )
     .await;

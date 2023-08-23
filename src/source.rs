@@ -67,6 +67,24 @@ pub enum LoadResponse {
 pub type LoadResult = Result<Option<LoadResponse>>;
 pub type LoadFuture = LocalBoxFuture<'static, LoadResult>;
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum LoaderCacheSetting {
+  /// The implementation should prefer using the cache.
+  Prefer,
+  /// Loads a specifier where the implementation should not load
+  /// from an internal cache. This is only ever done when loading
+  /// `deno:` specifier module information and the version constraint
+  /// cannot be resolved.
+  Reload,
+  /// Attempts to load a specifier from the cache.
+  ///
+  /// This is used to see whether the specifier is in the cache for `deno:` specifiers.
+  /// * If it is, then it will use the source provided to get the module information.
+  /// * If not, then it will use the manifest information to do resolution and
+  ///   issue a separate request to the `load` method in order to get the source.
+  Only,
+}
+
 /// A trait which allows asynchronous loading of source files into a module
 /// graph in a thread safe way as well as a way to provide additional meta data
 /// about any cached resources.
@@ -77,33 +95,20 @@ pub trait Loader {
   }
 
   /// A method that given a specifier that asynchronously returns the
-  /// source of the file. By default, this uses `load_no_cache`.
+  /// source of the file.
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
   ) -> LoadFuture {
-    self.load_no_cache(specifier, is_dynamic)
+    self.load_with_cache_setting(specifier, is_dynamic, LoaderCacheSetting::Prefer)
   }
 
-  /// Loads a specifier where the implementation should not load
-  /// from an internal cache.
-  fn load_no_cache(
+  fn load_with_cache_setting(
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
-  ) -> LoadFuture;
-
-  /// Attempts to load a specifier from the cache.
-  ///
-  /// This is used to see whether the specifier is in the cache for `deno:` specifiers.
-  /// * If it is, then it will use the source provided to get the module information.
-  /// * If not, then it will use the manifest information to do resolution and
-  ///   issue a separate request to the `load` method in order to get the source.
-  fn load_from_cache(
-    &mut self,
-    specifier: &ModuleSpecifier,
-    is_dynamic: bool,
+    cache_setting: LoaderCacheSetting,
   ) -> LoadFuture;
 
   /// Cache the module info for the provided specifier if the loader
@@ -325,10 +330,11 @@ impl Loader for MemoryLoader {
     self.cache_info.get(specifier).cloned()
   }
 
-  fn load_no_cache(
+  fn load_with_cache_setting(
     &mut self,
     specifier: &ModuleSpecifier,
     _is_dynamic: bool,
+    _cache_setting: LoaderCacheSetting,
   ) -> LoadFuture {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),
@@ -339,14 +345,6 @@ impl Loader for MemoryLoader {
       _ => Ok(None),
     };
     Box::pin(future::ready(response))
-  }
-
-  fn load_from_cache(
-    &mut self,
-    specifier: &ModuleSpecifier,
-    is_dynamic: bool,
-  ) -> LoadFuture {
-    self.load(specifier, is_dynamic)
   }
 }
 

@@ -2141,11 +2141,21 @@ enum ContentOrModuleInfo {
   ModuleInfo(ModuleInfo),
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum FillPassMode {
   AllowRestart,
   NoRestart,
   CacheBusting,
+}
+
+impl FillPassMode {
+  fn to_cache_setting(&self) -> LoaderCacheSetting {
+    if *self == FillPassMode::CacheBusting {
+      LoaderCacheSetting::Reload
+    } else {
+      LoaderCacheSetting::Prefer
+    }
+  }
 }
 
 struct Builder<'a, 'graph> {
@@ -2914,11 +2924,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       package_name
     ))
     .unwrap();
-    let fut = if self.fill_pass_mode == FillPassMode::CacheBusting {
-      self.loader.load_no_cache(&specifier, false)
-    } else {
-      self.loader.load(&specifier, false)
-    };
+    let fut = self.loader.load_with_cache_setting(&specifier, false, self.fill_pass_mode.to_cache_setting());
     let fut = async move {
       let data = fut.await.map_err(Arc::new)?;
       match data {
@@ -2954,11 +2960,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       package_nv.name, package_nv.version
     ))
     .unwrap();
-    let fut = if self.fill_pass_mode == FillPassMode::CacheBusting {
-      self.loader.load_no_cache(&specifier, false)
-    } else {
-      self.loader.load(&specifier, false)
-    };
+    let fut = self.loader.load_with_cache_setting(&specifier, false, self.fill_pass_mode.to_cache_setting());
     let fut = async move {
       let data = fut.await.map_err(Arc::new)?;
       match data {
@@ -3607,10 +3609,11 @@ mod tests {
       loaded_baz: bool,
     }
     impl Loader for TestLoader {
-      fn load_no_cache(
+      fn load_with_cache_setting(
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
+        _cache_setting: LoaderCacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -3650,14 +3653,6 @@ mod tests {
           _ => unreachable!(),
         }
       }
-
-      fn load_from_cache(
-        &mut self,
-        specifier: &ModuleSpecifier,
-        is_dynamic: bool,
-      ) -> LoadFuture {
-        self.load(specifier, is_dynamic)
-      }
     }
 
     let mut loader = TestLoader {
@@ -3683,10 +3678,11 @@ mod tests {
   async fn missing_module_is_error() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load_no_cache(
+      fn load_with_cache_setting(
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
+        _cache_setting: LoaderCacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -3700,14 +3696,6 @@ mod tests {
           "file:///bar.js" => Box::pin(async move { Ok(None) }),
           _ => unreachable!(),
         }
-      }
-
-      fn load_from_cache(
-        &mut self,
-        specifier: &ModuleSpecifier,
-        is_dynamic: bool,
-      ) -> LoadFuture {
-        self.load(specifier, is_dynamic)
       }
     }
     let mut loader = TestLoader;
@@ -3777,10 +3765,11 @@ mod tests {
   async fn redirected_specifiers() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load_no_cache(
+      fn load_with_cache_setting(
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
+        _cache_setting: LoaderCacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -3800,14 +3789,6 @@ mod tests {
           }),
           _ => unreachable!(),
         }
-      }
-
-      fn load_from_cache(
-        &mut self,
-        specifier: &ModuleSpecifier,
-        is_dynamic: bool,
-      ) -> LoadFuture {
-        self.load(specifier, is_dynamic)
       }
     }
     let mut loader = TestLoader;
@@ -3852,10 +3833,11 @@ mod tests {
   async fn local_import_remote_module() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load_no_cache(
+      fn load_with_cache_setting(
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
+        _cache_setting: LoaderCacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -3891,14 +3873,6 @@ mod tests {
           }),
           _ => unreachable!(),
         }
-      }
-
-      fn load_from_cache(
-        &mut self,
-        specifier: &ModuleSpecifier,
-        is_dynamic: bool,
-      ) -> LoadFuture {
-        self.load(specifier, is_dynamic)
       }
     }
     let mut loader = TestLoader;
@@ -3984,10 +3958,11 @@ mod tests {
       loaded_bar: bool,
     }
     impl Loader for TestLoader {
-      fn load_no_cache(
+      fn load_with_cache_setting(
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
+        _cache_setting: LoaderCacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4013,14 +3988,6 @@ mod tests {
           _ => unreachable!(),
         }
       }
-
-      fn load_from_cache(
-        &mut self,
-        specifier: &ModuleSpecifier,
-        is_dynamic: bool,
-      ) -> LoadFuture {
-        self.load(specifier, is_dynamic)
-      }
     }
     let mut loader = TestLoader { loaded_bar: false };
     let mut graph = ModuleGraph::new(GraphKind::All);
@@ -4038,10 +4005,11 @@ mod tests {
   async fn dependency_imports() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load_no_cache(
+      fn load_with_cache_setting(
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
+        _cache_setting: LoaderCacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4085,14 +4053,6 @@ mod tests {
           }
           _ => unreachable!(),
         }
-      }
-
-      fn load_from_cache(
-        &mut self,
-        specifier: &ModuleSpecifier,
-        is_dynamic: bool,
-      ) -> LoadFuture {
-        self.load(specifier, is_dynamic)
       }
     }
     let mut graph = ModuleGraph::new(GraphKind::All);
