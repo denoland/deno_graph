@@ -38,6 +38,7 @@ pub use ast::ModuleParser;
 pub use ast::ParsedSourceStore;
 pub use deno_ast::MediaType;
 pub use graph::BuildOptions;
+pub use graph::WorkspaceMember;
 pub use graph::Dependency;
 pub use graph::EsmModule;
 pub use graph::ExternalModule;
