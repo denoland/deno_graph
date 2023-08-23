@@ -613,6 +613,12 @@ fn is_media_type_unknown(media_type: &MediaType) -> bool {
   matches!(media_type, MediaType::Unknown)
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WorkspaceMember {
+  pub base: Url,
+  pub nv: PackageNv,
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "kind")]
@@ -857,6 +863,7 @@ pub struct BuildOptions<'a> {
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
   pub reporter: Option<&'a dyn Reporter>,
+  pub workspace_members: Vec<WorkspaceMember>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -1265,6 +1272,7 @@ impl ModuleGraph {
       loader,
       options.module_analyzer.unwrap_or(&default_analyzer),
       options.reporter,
+      options.workspace_members,
     )
     .await
   }
@@ -2150,6 +2158,7 @@ struct Builder<'a, 'graph> {
   graph: &'graph mut ModuleGraph,
   state: PendingState,
   fill_pass_mode: FillPassMode,
+  workspace_members: Vec<WorkspaceMember>,
 }
 
 impl<'a, 'graph> Builder<'a, 'graph> {
@@ -2164,6 +2173,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     loader: &'a mut dyn Loader,
     module_analyzer: &'a dyn ModuleAnalyzer,
     reporter: Option<&'a dyn Reporter>,
+    workspace_members: Vec<WorkspaceMember>,
   ) {
     let fill_pass_mode = match graph.roots.is_empty() {
       true => FillPassMode::AllowRestart,
@@ -2179,6 +2189,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       graph,
       state: PendingState::default(),
       fill_pass_mode,
+      workspace_members,
     }
     .fill(roots, imports)
     .await
@@ -2724,6 +2735,32 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     if specifier.scheme() == "deno" {
       match DenoPackageReqReference::from_specifier(specifier) {
         Ok(package_ref) => {
+          for workspace_member in &self.workspace_members {
+            if workspace_member.nv.name == package_ref.req().name {
+              if package_ref.req().version_req.matches(&workspace_member.nv.version) {
+                // todo: handle no sub path
+                let load_specifier = workspace_member.base.join(package_ref.sub_path().unwrap()).unwrap();
+                let specifier = specifier.clone();
+                self.load_pending_module(&specifier, maybe_range, &load_specifier, is_dynamic);
+                return;
+              } else {
+                // todo: warn properly
+                let text =
+                format!(
+                  "Warning: Version constraint ({}) did not match workspace member ({})",
+                  package_ref.req().version_req,
+                  workspace_member.nv,
+                );
+                let text = if let Some(range) = &maybe_range {
+                  format!("{text}\n    at {range}")
+                } else {
+                  format!("{text}")
+                };
+                eprintln!("{}", text);
+              }
+            }
+          }
+
           let package_name = &package_ref.req().name;
           let specifier = specifier.clone();
           self.queue_load_package_info(package_name);
@@ -2831,17 +2868,27 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
 
+    let specifier = specifier.clone();
+    self.load_pending_module(&specifier, maybe_range, &specifier, is_dynamic);
+  }
+
+  fn load_pending_module(
+    &mut self,
+    requested_specifier: &Url,
+    maybe_range: Option<Range>,
+    load_specifier: &Url, is_dynamic: bool) {
     self
       .graph
       .module_slots
-      .insert(specifier.clone(), ModuleSlot::Pending);
-    let specifier = specifier.clone();
+      .insert(requested_specifier.clone(), ModuleSlot::Pending);
+    let load_specifier = load_specifier.clone();
+    let requested_specifier = requested_specifier.clone();
     let fut =
       self
         .loader
-        .load(&specifier, is_dynamic)
+        .load(&load_specifier, is_dynamic)
         .map(move |result| PendingInfo {
-          specifier,
+          specifier: requested_specifier,
           maybe_range,
           result: result.map(|r| r.map(Into::into)),
           maybe_version_info: None,
