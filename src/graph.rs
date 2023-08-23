@@ -2502,7 +2502,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 specifier, item.specifier
               );
               if specifier == item.specifier {
-                self.loader.cache_module_info(&specifier, &content, &item.module_info);
+                self.loader.cache_module_info(
+                  &specifier,
+                  &content,
+                  &item.module_info,
+                );
                 // fill the existing module slot with the loaded source
                 let slot = self.graph.module_slots.get_mut(&specifier).unwrap();
                 match slot {
@@ -2677,6 +2681,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         eprintln!("Sub path: {}", sub_path);
         if let Some(module_info) = version_info.inner.module_info(&sub_path) {
           eprintln!("Using moudle info for {}", sub_path);
+          self
+            .graph
+            .module_slots
+            .insert(specifier.clone(), ModuleSlot::Pending);
           self.state.pending.push_back(
             std::future::ready(PendingInfo {
               specifier: specifier.clone(),

@@ -114,7 +114,6 @@ pub trait Loader {
     _source: &str,
     _module_info: &ModuleInfo,
   ) {
-
   }
 }
 
