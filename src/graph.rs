@@ -2738,8 +2738,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           for workspace_member in &self.workspace_members {
             if workspace_member.nv.name == package_ref.req().name {
               if package_ref.req().version_req.matches(&workspace_member.nv.version) {
+                eprintln!("MATCHED: {} ({})", workspace_member.nv, workspace_member.base);
                 // todo: handle no sub path
                 let load_specifier = workspace_member.base.join(package_ref.sub_path().unwrap()).unwrap();
+                eprintln!("Load specifier: {}", load_specifier);
                 let specifier = specifier.clone();
                 self.load_pending_module(&specifier, maybe_range, &load_specifier, is_dynamic);
                 return;
