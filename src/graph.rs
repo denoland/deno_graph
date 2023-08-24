@@ -2329,17 +2329,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   self
                     .graph
                     .deno_specifiers
-                    .package_reqs
-                    .insert(package_req.clone(), package_nv.clone());
-                  let packages = self
-                    .graph
-                    .deno_specifiers
-                    .packages_by_name
-                    .entry(package_name.clone())
-                    .or_default();
-                  if !packages.contains(&package_nv) {
-                    packages.push(package_nv.clone());
-                  }
+                    .add(package_req.clone(), package_nv.clone());
 
                   self.queue_load_package_version_info(&package_nv);
                   pending_version_resolutions
@@ -2638,8 +2628,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     if let Some(existing_versions) = self
       .graph
       .deno_specifiers
-      .packages_by_name
-      .get(&package_req.name)
+      .versions_by_name(&package_req.name)
     {
       if let Some(version) = resolve_version(
         &package_req.version_req,

@@ -38,8 +38,35 @@ impl DenoPackageVersionInfo {
 
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct DenoSpecifierSnapshot {
-  pub package_reqs: HashMap<PackageReq, PackageNv>,
-  pub packages_by_name: HashMap<String, Vec<PackageNv>>,
+  package_reqs: HashMap<PackageReq, PackageNv>,
+  packages_by_name: HashMap<String, Vec<PackageNv>>,
+}
+
+impl DenoSpecifierSnapshot {
+  pub fn is_empty(&self) -> bool {
+    self.package_reqs.is_empty()
+  }
+
+  pub fn add(&mut self, package_req: PackageReq, nv: PackageNv) {
+    let nvs = self
+      .packages_by_name
+      .entry(package_req.name.clone())
+      .or_default();
+    if !nvs.contains(&nv) {
+      nvs.push(nv.clone());
+    }
+    self
+      .package_reqs
+      .insert(package_req, nv);
+  }
+
+  pub fn versions_by_name(&self, name: &str) -> Option<&Vec<PackageNv>> {
+    self.packages_by_name.get(name)
+  }
+
+  pub fn mappings(&self) -> impl Iterator<Item = (&PackageReq, &PackageNv)> {
+    self.package_reqs.iter()
+  }
 }
 
 pub fn resolve_version<'a>(
