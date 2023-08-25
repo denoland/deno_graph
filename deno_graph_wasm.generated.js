@@ -237,7 +237,7 @@ function makeMutClosure(arg0, arg1, dtor, f) {
   return real;
 }
 function __wbg_adapter_48(arg0, arg1, arg2) {
-  wasm.wasm_bindgen__convert__closures__invoke1_mut__h9888ef94b50be201(
+  wasm.wasm_bindgen__convert__closures__invoke1_mut__h09d0a4f5b4ec36af(
     arg0,
     arg1,
     addHeapObject(arg2),
@@ -391,7 +391,7 @@ function handleError(f, args) {
   }
 }
 function __wbg_adapter_95(arg0, arg1, arg2, arg3) {
-  wasm.wasm_bindgen__convert__closures__invoke2_mut__haa348216a50ba809(
+  wasm.wasm_bindgen__convert__closures__invoke2_mut__h29292501c6e51d6d(
     arg0,
     arg1,
     addHeapObject(arg2),
@@ -546,6 +546,9 @@ const imports = {
       const ret = typeof (getObject(arg0)) === "function";
       return ret;
     },
+    __wbindgen_object_drop_ref: function (arg0) {
+      takeObject(arg0);
+    },
     __wbg_get_7303ed2ef026b2f5: function (arg0, arg1) {
       const ret = getObject(arg0)[arg1 >>> 0];
       return addHeapObject(ret);
@@ -623,9 +626,6 @@ const imports = {
     __wbg_set_3698e3ca519b3c3c: function (arg0, arg1, arg2) {
       getObject(arg0).set(getObject(arg1), arg2 >>> 0);
     },
-    __wbindgen_object_drop_ref: function (arg0) {
-      takeObject(arg0);
-    },
     __wbindgen_jsval_loose_eq: function (arg0, arg1) {
       const ret = getObject(arg0) == getObject(arg1);
       return ret;
@@ -695,8 +695,8 @@ const imports = {
       const ret = getObject(arg0).then(getObject(arg1));
       return addHeapObject(ret);
     },
-    __wbindgen_closure_wrapper554: function (arg0, arg1, arg2) {
-      const ret = makeMutClosure(arg0, arg1, 176, __wbg_adapter_48);
+    __wbindgen_closure_wrapper581: function (arg0, arg1, arg2) {
+      const ret = makeMutClosure(arg0, arg1, 210, __wbg_adapter_48);
       return addHeapObject(ret);
     },
   },
