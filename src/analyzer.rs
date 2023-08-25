@@ -405,10 +405,7 @@ mod test {
               "key2".to_string(),
               ImportAssertion::Known("value".to_string()),
             ),
-            (
-              "kind".to_string(),
-              ImportAssertion::Unknown
-            )
+            ("kind".to_string(), ImportAssertion::Unknown),
           ])),
         },
       ]),
