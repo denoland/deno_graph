@@ -161,6 +161,7 @@ impl DependencyKind {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[serde(untagged)]
 pub enum ImportAssertion {
   /// The value of this assertion could not be statically analyzed.
   Unknown,
@@ -181,7 +182,6 @@ impl ImportAssertion {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[serde(tag = "kind")]
 pub enum ImportAssertions {
   /// There was no import assertions object literal.
   None,
@@ -346,33 +346,72 @@ mod test {
   fn module_info_serialization_deps() {
     // with dependencies
     let module_info = ModuleInfo {
-      dependencies: Vec::from([DependencyDescriptor {
-        kind: DependencyKind::ImportEquals,
-        is_dynamic: false,
-        leading_comments: Vec::new(),
-        range: PositionRange {
-          start: Position {
-            line: 4,
-            character: 3,
+      dependencies: Vec::from([
+        DependencyDescriptor {
+          kind: DependencyKind::ImportEquals,
+          is_dynamic: false,
+          leading_comments: vec![Comment {
+            text: "a".to_string(),
+            range: PositionRange {
+              start: Position {
+                line: 9,
+                character: 7,
+              },
+              end: Position {
+                line: 5,
+                character: 3,
+              },
+            },
+          }],
+          range: PositionRange {
+            start: Position {
+              line: 4,
+              character: 3,
+            },
+            end: Position {
+              line: 2,
+              character: 1,
+            },
           },
-          end: Position {
-            line: 2,
-            character: 1,
+          specifier: "./test".to_string(),
+          specifier_range: PositionRange {
+            start: Position {
+              line: 1,
+              character: 2,
+            },
+            end: Position {
+              line: 3,
+              character: 4,
+            },
           },
+          import_assertions: ImportAssertions::None,
         },
-        specifier: "./test".to_string(),
-        specifier_range: PositionRange {
-          start: Position {
-            line: 1,
-            character: 2,
+        DependencyDescriptor {
+          kind: DependencyKind::Export,
+          is_dynamic: true,
+          leading_comments: vec![],
+          range: PositionRange {
+            start: Position::zeroed(),
+            end: Position::zeroed(),
           },
-          end: Position {
-            line: 3,
-            character: 4,
+          specifier: "./test2".to_string(),
+          specifier_range: PositionRange {
+            start: Position::zeroed(),
+            end: Position::zeroed(),
           },
+          import_assertions: ImportAssertions::Known(HashMap::from([
+            ("key".to_string(), ImportAssertion::Unknown),
+            (
+              "key2".to_string(),
+              ImportAssertion::Known("value".to_string()),
+            ),
+            (
+              "kind".to_string(),
+              ImportAssertion::Unknown
+            )
+          ])),
         },
-        import_assertions: ImportAssertions::None,
-      }]),
+      ]),
       ts_references: Vec::new(),
       jsx_import_source: None,
       jsdoc_imports: Vec::new(),
@@ -382,9 +421,26 @@ mod test {
       json!({
         "dependencies": [{
           "kind": "importEquals",
+          "leadingComments": [{
+            "text": "a",
+            "range": [[9, 7], [5, 3]],
+          }],
           "range": [[4, 3], [2, 1]],
           "specifier": "./test",
           "specifierRange": [[1, 2], [3, 4]],
+        }, {
+          "kind": "export",
+          "isDynamic": true,
+          "range": [[0, 0], [0, 0]],
+          "specifier": "./test2",
+          "specifierRange": [[0, 0], [0, 0]],
+          "importAssertions": {
+            "known": {
+              "key": null,
+              "key2": "value",
+              "kind": null,
+            }
+          }
         }]
       }),
     );
@@ -515,9 +571,7 @@ mod test {
         "range": [[0, 0], [0, 0]],
         "specifier": "./test",
         "specifierRange": [[0, 0], [0, 0]],
-        "importAssertions": {
-          "kind": "unknown"
-        }
+        "importAssertions": "unknown",
       }),
     );
   }
