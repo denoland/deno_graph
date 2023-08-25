@@ -12,8 +12,10 @@ use deno_ast::SourceTextInfo;
 use once_cell::sync::Lazy;
 use regex::Match;
 use regex::Regex;
+use serde::ser::SerializeTuple;
 use serde::Deserialize;
 use serde::Serialize;
+use serde::Serializer;
 
 use crate::graph::Position;
 
@@ -75,8 +77,7 @@ pub fn analyze_deno_types(
   }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
 pub struct PositionRange {
   pub start: Position,
   pub end: Position,
@@ -98,6 +99,35 @@ impl PositionRange {
       self.start.as_source_pos(text_info),
       self.end.as_source_pos(text_info),
     )
+  }
+}
+
+// Custom serialization to serialize to an array. Interestingly we
+// don't need to implement custom deserialization logic that does
+// the same thing, and serde_json will handle it fine.
+impl Serialize for PositionRange {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    struct PositionSerializer<'a>(&'a Position);
+
+    impl Serialize for PositionSerializer<'_> {
+      fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+      where
+        S: Serializer,
+      {
+        let mut seq = serializer.serialize_tuple(2)?;
+        seq.serialize_element(&self.0.line)?;
+        seq.serialize_element(&self.0.character)?;
+        seq.end()
+      }
+    }
+
+    let mut seq = serializer.serialize_tuple(2)?;
+    seq.serialize_element(&PositionSerializer(&self.start))?;
+    seq.serialize_element(&PositionSerializer(&self.end))?;
+    seq.end()
   }
 }
 
@@ -131,6 +161,7 @@ impl DependencyKind {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[serde(untagged)]
 pub enum ImportAssertion {
   /// The value of this assertion could not be statically analyzed.
   Unknown,
@@ -151,7 +182,6 @@ impl ImportAssertion {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[serde(tag = "kind")]
 pub enum ImportAssertions {
   /// There was no import assertions object literal.
   None,
@@ -316,21 +346,69 @@ mod test {
   fn module_info_serialization_deps() {
     // with dependencies
     let module_info = ModuleInfo {
-      dependencies: Vec::from([DependencyDescriptor {
-        kind: DependencyKind::ImportEquals,
-        is_dynamic: false,
-        leading_comments: Vec::new(),
-        range: PositionRange {
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+      dependencies: Vec::from([
+        DependencyDescriptor {
+          kind: DependencyKind::ImportEquals,
+          is_dynamic: false,
+          leading_comments: vec![Comment {
+            text: "a".to_string(),
+            range: PositionRange {
+              start: Position {
+                line: 9,
+                character: 7,
+              },
+              end: Position {
+                line: 5,
+                character: 3,
+              },
+            },
+          }],
+          range: PositionRange {
+            start: Position {
+              line: 4,
+              character: 3,
+            },
+            end: Position {
+              line: 2,
+              character: 1,
+            },
+          },
+          specifier: "./test".to_string(),
+          specifier_range: PositionRange {
+            start: Position {
+              line: 1,
+              character: 2,
+            },
+            end: Position {
+              line: 3,
+              character: 4,
+            },
+          },
+          import_assertions: ImportAssertions::None,
         },
-        specifier: "./test".to_string(),
-        specifier_range: PositionRange {
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+        DependencyDescriptor {
+          kind: DependencyKind::Export,
+          is_dynamic: true,
+          leading_comments: vec![],
+          range: PositionRange {
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+          specifier: "./test2".to_string(),
+          specifier_range: PositionRange {
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+          import_assertions: ImportAssertions::Known(HashMap::from([
+            ("key".to_string(), ImportAssertion::Unknown),
+            (
+              "key2".to_string(),
+              ImportAssertion::Known("value".to_string()),
+            ),
+            ("kind".to_string(), ImportAssertion::Unknown),
+          ])),
         },
-        import_assertions: ImportAssertions::None,
-      }]),
+      ]),
       ts_references: Vec::new(),
       jsx_import_source: None,
       jsdoc_imports: Vec::new(),
@@ -340,25 +418,24 @@ mod test {
       json!({
         "dependencies": [{
           "kind": "importEquals",
-          "range": {
-            "start": {
-              "line": 0,
-              "character": 0
-            },
-            "end": {
-              "line": 0,
-              "character": 0
-            }
-          },
+          "leadingComments": [{
+            "text": "a",
+            "range": [[9, 7], [5, 3]],
+          }],
+          "range": [[4, 3], [2, 1]],
           "specifier": "./test",
-          "specifierRange": {
-            "start": {
-              "line": 0,
-              "character": 0
-            },
-            "end": {
-              "line": 0,
-              "character": 0
+          "specifierRange": [[1, 2], [3, 4]],
+        }, {
+          "kind": "export",
+          "isDynamic": true,
+          "range": [[0, 0], [0, 0]],
+          "specifier": "./test2",
+          "specifierRange": [[0, 0], [0, 0]],
+          "importAssertions": {
+            "known": {
+              "key": null,
+              "key2": "value",
+              "kind": null,
             }
           }
         }]
@@ -395,29 +472,11 @@ mod test {
         "tsReferences": [{
           "kind": "path",
           "text": "a",
-          "range": {
-            "start": {
-              "line": 0,
-              "character": 0,
-            },
-            "end": {
-              "line": 0,
-              "character": 0,
-            }
-          }
+          "range": [[0, 0], [0, 0]],
         }, {
           "kind": "types",
           "text": "b",
-          "range": {
-            "start": {
-              "line": 0,
-              "character": 0,
-            },
-            "end": {
-              "line": 0,
-              "character": 0,
-            }
-          }
+          "range": [[0, 0], [0, 0]],
         }]
       }),
     );
@@ -442,16 +501,7 @@ mod test {
       json!({
         "jsxImportSource": {
           "text": "a",
-          "range": {
-            "start": {
-              "line": 0,
-              "character": 0,
-            },
-            "end": {
-              "line": 0,
-              "character": 0,
-            }
-          }
+          "range": [[0, 0], [0, 0]],
         }
       }),
     );
@@ -476,16 +526,7 @@ mod test {
       json!({
         "jsdocImports": [{
           "text": "a",
-          "range": {
-            "start": {
-              "line": 0,
-              "character": 0,
-            },
-            "end": {
-              "line": 0,
-              "character": 0,
-            }
-          }
+          "range": [[0, 0], [0, 0]],
         }]
       }),
     );
@@ -522,41 +563,12 @@ mod test {
         "isDynamic": true,
         "leadingComments": [{
           "text": "a",
-          "range": {
-            "start": {
-              "line": 0,
-              "character": 0,
-            },
-            "end": {
-              "line": 0,
-              "character": 0,
-            }
-          },
+          "range": [[0, 0], [0, 0]],
         }],
-        "range": {
-          "start": {
-            "line": 0,
-            "character": 0
-          },
-          "end": {
-            "line": 0,
-            "character": 0
-          }
-        },
+        "range": [[0, 0], [0, 0]],
         "specifier": "./test",
-        "specifierRange": {
-          "start": {
-            "line": 0,
-            "character": 0
-          },
-          "end": {
-            "line": 0,
-            "character": 0
-          }
-        },
-        "importAssertions": {
-          "kind": "unknown"
-        }
+        "specifierRange": [[0, 0], [0, 0]],
+        "importAssertions": "unknown",
       }),
     );
   }
