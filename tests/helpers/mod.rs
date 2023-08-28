@@ -4,6 +4,7 @@ use std::path::PathBuf;
 mod test_builder;
 
 pub use test_builder::*;
+use url::Url;
 
 pub struct Spec {
   pub files: Vec<SpecFile>,
@@ -28,6 +29,7 @@ impl Spec {
   }
 }
 
+#[derive(Debug)]
 pub struct SpecFile {
   pub specifier: String,
   pub text: String,
@@ -36,6 +38,15 @@ pub struct SpecFile {
 impl SpecFile {
   pub fn emit(&self) -> String {
     format!("# {}\n{}", self.specifier, self.text)
+  }
+
+  pub fn url(&self) -> Url {
+    let specifier = &self.specifier;
+    if !specifier.starts_with("http") && !specifier.starts_with("file") {
+      Url::parse(&format!("file:///{}", specifier)).unwrap()
+    } else {
+      Url::parse(specifier).unwrap()
+    }
   }
 }
 

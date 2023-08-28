@@ -1,0 +1,51 @@
+# https://deno-registry-staging.net/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.0": {},
+    "1.0.1": {},
+  }
+}
+
+# https://deno-registry-staging.net/@scope/a/1.0.0.json
+{}
+
+# https://deno-registry-staging.net/@scope/a/1.0.1.json
+{}
+
+# https://deno-registry-staging.net/@scope/b/meta.json
+{
+  "versions": {
+    "2.0.0": {}
+  }
+}
+
+# https://deno-registry-staging.net/@scope/b/2.0.0.json
+{}
+
+# https://deno-registry-staging.net/@scope/c/meta.json
+{
+  "versions": {
+    "3.0.0": {}
+    "3.0.1": {}
+  }
+}
+
+# https://deno-registry-staging.net/@scope/c/3.0.0.json
+{}
+
+# main.ts
+import 'deno:@scope/a/mod.ts'
+import 'deno:@scope/c@3.0.0/mod.ts'
+
+# https://deno-registry-staging.net/@scope/a/1.0.1.json
+import 'deno:@scope/b@2/mod.ts';
+
+# https://deno-registry-staging.net/@scope/b/2.0.0.json
+// should still resolve to 3.0.0 because that was resolved earlier
+import 'deno:@scope/c@3/mod.ts';
+
+# https://deno-registry-staging.net/@scope/c/3.0.0.json
+console.log(1);
+
+# output
+Test

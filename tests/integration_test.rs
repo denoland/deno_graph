@@ -22,51 +22,56 @@ use deno_semver::package::PackageReq;
 use deno_semver::Version;
 use futures::future::LocalBoxFuture;
 use pretty_assertions::assert_eq;
-use url::Url;
 
 use crate::helpers::get_specs_in_dir;
 use crate::helpers::TestBuilder;
 
 mod helpers;
 
-// #[tokio::test]
-// async fn test_graph_specs() {
-//   for (test_file_path, spec) in
-//     get_specs_in_dir(&PathBuf::from("./tests/specs/graph"))
-//   {
-//     eprintln!("Running {}", test_file_path.display());
-//     let mut builder = TestBuilder::new();
-//     builder.with_loader(|loader| {
-//       for file in &spec.files {
-//         loader.add_file(&file.specifier, &file.text);
-//       }
-//     });
+#[tokio::test]
+async fn test_graph_specs() {
+  for (test_file_path, spec) in
+    get_specs_in_dir(&PathBuf::from("./tests/specs/graph"))
+  {
+    eprintln!("Running {}", test_file_path.display());
+    let mut builder = TestBuilder::new();
+    builder.with_loader(|loader| {
+      for file in &spec.files {
+        loader.add_source_with_text(file.url(), &file.text);
+      }
+    });
 
-//     let result = builder.trace().await.unwrap();
-//     let update_var = std::env::var("UPDATE");
-//     let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
-//       let mut spec = spec;
-//       spec.output_file.text = result.output.clone();
-//       spec.diagnostics = result.diagnostics.clone();
-//       std::fs::write(&test_file_path, spec.emit()).unwrap();
-//       spec
-//     } else {
-//       spec
-//     };
-//     assert_eq!(
-//       result.output,
-//       spec.output_file.text,
-//       "Should be same for {}",
-//       test_file_path.display()
-//     );
-//     assert_eq!(
-//       result.diagnostics,
-//       spec.diagnostics,
-//       "Should be same for {}",
-//       test_file_path.display()
-//     );
-//   }
-// }
+    let result = builder.build().await;
+    let update_var = std::env::var("UPDATE");
+    let output_text = serde_json::to_string_pretty(&result.graph).unwrap();
+    let diagnostics = result
+      .diagnostics
+      .iter()
+      .map(|d| serde_json::to_value(d.to_string()).unwrap())
+      .collect::<Vec<_>>();
+    let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
+      let mut spec = spec;
+      spec.output_file.text = output_text.clone();
+      spec.diagnostics = diagnostics.clone();
+      std::fs::write(&test_file_path, spec.emit()).unwrap();
+      spec
+    } else {
+      spec
+    };
+    assert_eq!(
+      output_text,
+      spec.output_file.text,
+      "Should be same for {}",
+      test_file_path.display()
+    );
+    assert_eq!(
+      diagnostics,
+      spec.diagnostics,
+      "Should be same for {}",
+      test_file_path.display()
+    );
+  }
+}
 
 #[cfg(feature = "type_tracing")]
 #[tokio::test]
@@ -78,27 +83,21 @@ async fn test_type_tracing_specs() {
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
       for file in &spec.files {
-        let specifier = &file.specifier;
-        let specifier =
-          if !specifier.starts_with("http") && !specifier.starts_with("file") {
-            Url::parse(&format!("file:///{}", specifier)).unwrap()
-          } else {
-            Url::parse(specifier).unwrap()
-          };
-        loader.add_source_with_text(&specifier, &file.text);
+        loader.add_source_with_text(file.url(), &file.text);
       }
     });
 
     let result = builder.trace().await.unwrap();
     let update_var = std::env::var("UPDATE");
+    let diagnostics = result
+      .diagnostics
+      .iter()
+      .map(|d| serde_json::to_value(d.clone()).unwrap())
+      .collect::<Vec<_>>();
     let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
       let mut spec = spec;
       spec.output_file.text = result.output.clone();
-      spec.diagnostics = result
-        .diagnostics
-        .iter()
-        .map(|d| serde_json::to_value(d.clone()).unwrap())
-        .collect();
+      spec.diagnostics = diagnostics.clone();
       std::fs::write(&test_file_path, spec.emit()).unwrap();
       spec
     } else {
@@ -111,11 +110,7 @@ async fn test_type_tracing_specs() {
       test_file_path.display()
     );
     assert_eq!(
-      result
-        .diagnostics
-        .iter()
-        .map(|d| serde_json::to_value(d.clone()).unwrap())
-        .collect::<Vec<_>>(),
+      diagnostics,
       spec.diagnostics,
       "Should be same for {}",
       test_file_path.display()
