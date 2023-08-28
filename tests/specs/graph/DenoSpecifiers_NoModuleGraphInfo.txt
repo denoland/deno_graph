@@ -155,8 +155,8 @@ console.log(1);
     "deno:@scope/c@3/mod.ts": "https://deno-registry-staging.net/@scope/c/3.0.0/mod.ts"
   },
   "deno": {
-    "@scope/b@2": "@scope/b@2.0.0",
     "@scope/a": "@scope/a@1.0.1",
+    "@scope/b@2": "@scope/b@2.0.0",
     "@scope/c@3.0.0": "@scope/c@3.0.0",
     "@scope/c@3": "@scope/c@3.0.0"
   }

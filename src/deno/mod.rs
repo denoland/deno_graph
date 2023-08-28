@@ -1,5 +1,6 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
+use std::collections::BTreeMap;
 use std::collections::HashMap;
 
 use deno_semver::package::PackageNv;
@@ -38,7 +39,7 @@ impl DenoPackageVersionInfo {
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct DenoSpecifierSnapshot {
   #[serde(flatten)]
-  package_reqs: HashMap<PackageReq, PackageNv>,
+  package_reqs: BTreeMap<PackageReq, PackageNv>,
   #[serde(skip_serializing)]
   packages_by_name: HashMap<String, Vec<PackageNv>>,
 }
