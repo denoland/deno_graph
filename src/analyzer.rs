@@ -84,6 +84,13 @@ pub struct PositionRange {
 }
 
 impl PositionRange {
+  pub fn zeroed() -> Self {
+    Self {
+      start: Position::zeroed(),
+      end: Position::zeroed(),
+    }
+  }
+
   pub fn from_source_range(
     range: SourceRange,
     text_info: &SourceTextInfo,

@@ -8,11 +8,11 @@
 use std::collections::HashMap;
 
 use deno_graph::resolve_import;
-use deno_graph::source::LoaderCacheSetting;
 use deno_graph::source::load_data_url;
 use deno_graph::source::CacheInfo;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::Loader;
+use deno_graph::source::LoaderCacheSetting;
 use deno_graph::source::Resolver;
 use deno_graph::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
 use deno_graph::BuildOptions;

@@ -41,10 +41,11 @@ impl InMemoryLoader {
 }
 
 impl Loader for InMemoryLoader {
-  fn load_no_cache(
+  fn load_with_cache_setting(
     &mut self,
     specifier: &ModuleSpecifier,
     _is_dynamic: bool,
+    _cache_setting: deno_graph::source::LoaderCacheSetting,
   ) -> LoadFuture {
     let specifier = specifier.clone();
     let result = self.modules.get(&specifier).map(|result| match result {
@@ -61,13 +62,5 @@ impl Loader for InMemoryLoader {
       None => Ok(None),
     };
     Box::pin(futures::future::ready(result))
-  }
-
-  fn load_from_cache(
-    &mut self,
-    specifier: &ModuleSpecifier,
-    is_dynamic: bool,
-  ) -> LoadFuture {
-    self.load(specifier, is_dynamic)
   }
 }

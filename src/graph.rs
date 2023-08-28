@@ -1261,7 +1261,7 @@ impl ModuleGraph {
     roots: Vec<ModuleSpecifier>,
     loader: &mut dyn Loader,
     options: BuildOptions<'a>,
-  ) {
+  ) -> Vec<BuildDiagnostic> {
     let default_analyzer = DefaultModuleAnalyzer::default();
     Builder::build(
       self,
@@ -2150,11 +2150,53 @@ enum FillPassMode {
 }
 
 impl FillPassMode {
-  fn to_cache_setting(&self) -> LoaderCacheSetting {
-    if *self == FillPassMode::CacheBusting {
+  fn to_cache_setting(self) -> LoaderCacheSetting {
+    if self == FillPassMode::CacheBusting {
       LoaderCacheSetting::Reload
     } else {
       LoaderCacheSetting::Prefer
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildDiagnostic {
+  pub maybe_range: Option<Range>,
+  pub kind: BuildDiagnosticKind,
+}
+
+impl std::fmt::Display for BuildDiagnostic {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.kind)?;
+    if let Some(range) = &self.maybe_range {
+      write!(f, "\n    at {range}")?;
+    }
+    Ok(())
+  }
+}
+
+#[derive(Debug, Clone)]
+pub enum BuildDiagnosticKind {
+  ConstraintNotMatchedWorkspaceVersion {
+    reference: DenoPackageReqReference,
+    workspace_version: Version,
+  },
+}
+
+impl std::fmt::Display for BuildDiagnosticKind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::ConstraintNotMatchedWorkspaceVersion {
+        reference,
+        workspace_version,
+      } => {
+        write!(
+          f,
+          "Version constraint '{}' did not match workspace member version '{}'",
+          reference.req(),
+          workspace_version,
+        )
+      }
     }
   }
 }
@@ -2170,6 +2212,7 @@ struct Builder<'a, 'graph> {
   state: PendingState,
   fill_pass_mode: FillPassMode,
   workspace_members: Vec<WorkspaceMember>,
+  diagnostics: Vec<BuildDiagnostic>,
 }
 
 impl<'a, 'graph> Builder<'a, 'graph> {
@@ -2185,12 +2228,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     module_analyzer: &'a dyn ModuleAnalyzer,
     reporter: Option<&'a dyn Reporter>,
     workspace_members: Vec<WorkspaceMember>,
-  ) {
+  ) -> Vec<BuildDiagnostic> {
     let fill_pass_mode = match graph.roots.is_empty() {
       true => FillPassMode::AllowRestart,
       false => FillPassMode::NoRestart,
     };
-    Self {
+    let mut builder = Self {
       in_dynamic_branch: is_dynamic,
       loader,
       resolver,
@@ -2201,9 +2244,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       state: PendingState::default(),
       fill_pass_mode,
       workspace_members,
-    }
-    .fill(roots, imports)
-    .await
+      diagnostics: Vec::new(),
+    };
+    builder.fill(roots, imports).await;
+    builder.diagnostics
   }
 
   async fn fill(
@@ -2395,31 +2439,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .await;
           match version_info_result {
             Ok(version_info) => {
-              eprintln!("Found version info: {:?}", version_info.main);
-              let sub_path = resolution_item
-                .package_ref
-                .sub_path()
-                .or_else(|| {
-                  version_info
-                    .main
-                    .as_ref()
-                    .map(|p| p.strip_prefix('/').unwrap_or(p))
-                })
-                .unwrap(); // todo: temp
+              let sub_path = resolution_item.package_ref.sub_path().unwrap(); // todo: temp
               eprintln!(
                 "Sub path: {:?}",
                 resolution_item.package_ref.sub_path()
               );
-              let base_url = ModuleSpecifier::parse(&format!(
-                "https://deno-registry-staging.net/{}/{}/",
-                nv.name, nv.version
-              ))
-              .unwrap();
-              let specifier = ModuleSpecifier::parse(&format!(
-                "https://deno-registry-staging.net/{}/{}/{}",
-                nv.name, nv.version, sub_path
-              ))
-              .unwrap();
+              let base_url = self
+                .loader
+                .registry_url()
+                .join(&format!("{}/{}/", nv.name, nv.version))
+                .unwrap();
+              let specifier = base_url.join(sub_path).unwrap();
               eprintln!("SPECIFIER: {}", specifier);
               self
                 .graph
@@ -2507,7 +2537,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             LoadResponse::Module {
               content,
               specifier,
-              maybe_headers,
+              maybe_headers: _maybe_headers,
             } => {
               eprintln!(
                 "HANDLING MODULE RESPONSE: {} {}",
@@ -2553,7 +2583,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       item.specifier,
                       item.maybe_range,
                       Arc::new(anyhow!(
-                        "Redirects are not supported on the Deno registry."
+                        "Redirects are not supported for the Deno registry."
                       )),
                     ),
                   )),
@@ -2690,7 +2720,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let base_url = base_url.strip_suffix('/').unwrap_or(base_url);
       if let Some(sub_path) = specifier.as_str().strip_prefix(base_url) {
         eprintln!("Sub path: {}", sub_path);
-        if let Some(module_info) = version_info.inner.module_info(&sub_path) {
+        if let Some(module_info) = version_info.inner.module_info(sub_path) {
           eprintln!("Using moudle info for {}", sub_path);
           self
             .graph
@@ -2737,28 +2767,38 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Ok(package_ref) => {
           for workspace_member in &self.workspace_members {
             if workspace_member.nv.name == package_ref.req().name {
-              if package_ref.req().version_req.matches(&workspace_member.nv.version) {
-                eprintln!("MATCHED: {} ({})", workspace_member.nv, workspace_member.base);
+              if package_ref
+                .req()
+                .version_req
+                .matches(&workspace_member.nv.version)
+              {
+                eprintln!(
+                  "MATCHED: {} ({})",
+                  workspace_member.nv, workspace_member.base
+                );
                 // todo: handle no sub path
-                let load_specifier = workspace_member.base.join(package_ref.sub_path().unwrap()).unwrap();
+                let load_specifier = workspace_member
+                  .base
+                  .join(package_ref.sub_path().unwrap())
+                  .unwrap();
                 eprintln!("Load specifier: {}", load_specifier);
                 let specifier = specifier.clone();
-                self.load_pending_module(&specifier, maybe_range, &load_specifier, is_dynamic);
+                self.load_pending_module(
+                  &specifier,
+                  maybe_range,
+                  &load_specifier,
+                  is_dynamic,
+                );
                 return;
               } else {
-                // todo: warn properly
-                let text =
-                format!(
-                  "Warning: Version constraint ({}) did not match workspace member ({})",
-                  package_ref.req().version_req,
-                  workspace_member.nv,
-                );
-                let text = if let Some(range) = &maybe_range {
-                  format!("{text}\n    at {range}")
-                } else {
-                  format!("{text}")
-                };
-                eprintln!("{}", text);
+                self.diagnostics.push(BuildDiagnostic {
+                  maybe_range: maybe_range.clone(),
+                  kind:
+                    BuildDiagnosticKind::ConstraintNotMatchedWorkspaceVersion {
+                      reference: package_ref.clone(),
+                      workspace_version: workspace_member.nv.version.clone(),
+                    },
+                });
               }
             }
           }
@@ -2878,7 +2918,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     &mut self,
     requested_specifier: &Url,
     maybe_range: Option<Range>,
-    load_specifier: &Url, is_dynamic: bool) {
+    load_specifier: &Url,
+    is_dynamic: bool,
+  ) {
     self
       .graph
       .module_slots
@@ -2909,12 +2951,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     // request to load
-    let specifier = Url::parse(&format!(
-      "https://deno-registry-staging.net/{}/meta.json",
-      package_name
-    ))
-    .unwrap();
-    let fut = self.loader.load_with_cache_setting(&specifier, false, self.fill_pass_mode.to_cache_setting());
+    let specifier = self
+      .loader
+      .registry_url()
+      .join(&format!("{}/meta.json", package_name))
+      .unwrap();
+    let fut = self.loader.load_with_cache_setting(
+      &specifier,
+      false,
+      self.fill_pass_mode.to_cache_setting(),
+    );
     let fut = async move {
       let data = fut.await.map_err(Arc::new)?;
       match data {
@@ -2940,17 +2986,24 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .state
       .deno
       .pending_package_version_info_loads
-      .contains_key(&package_nv)
+      .contains_key(package_nv)
     {
       return; // already queued
     }
 
-    let specifier = Url::parse(&format!(
-      "https://deno-registry-staging.net/{}/{}_meta.json",
-      package_nv.name, package_nv.version
-    ))
-    .unwrap();
-    let fut = self.loader.load_with_cache_setting(&specifier, false, self.fill_pass_mode.to_cache_setting());
+    let specifier = self
+      .loader
+      .registry_url()
+      .join(&format!(
+        "{}/{}_meta.json",
+        package_nv.name, package_nv.version
+      ))
+      .unwrap();
+    let fut = self.loader.load_with_cache_setting(
+      &specifier,
+      false,
+      self.fill_pass_mode.to_cache_setting(),
+    );
     let fut = async move {
       let data = fut.await.map_err(Arc::new)?;
       match data {

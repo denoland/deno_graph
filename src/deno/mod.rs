@@ -11,19 +11,18 @@ use serde::Serialize;
 
 use crate::ModuleInfo;
 
-#[derive(Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct DenoPackageInfo {
   pub versions: HashMap<Version, DenoPackageInfoVersion>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct DenoPackageInfoVersion {
-  pub main: Option<String>,
+  // pub main: Option<String>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct DenoPackageVersionInfo {
-  pub main: Option<String>,
   #[serde(rename = "moduleGraph1")]
   pub module_graph: Option<serde_json::Value>,
 }
@@ -57,9 +56,7 @@ impl DenoSpecifierSnapshot {
     if !nvs.contains(&nv) {
       nvs.push(nv.clone());
     }
-    self
-      .package_reqs
-      .insert(package_req, nv);
+    self.package_reqs.insert(package_req, nv);
   }
 
   pub fn versions_by_name(&self, name: &str) -> Option<&Vec<PackageNv>> {
@@ -77,7 +74,7 @@ pub fn resolve_version<'a>(
 ) -> Option<&'a Version> {
   let mut maybe_best_version: Option<&Version> = None;
   for version in versions {
-    if version_req.matches(&version) {
+    if version_req.matches(version) {
       let is_best_version = maybe_best_version
         .as_ref()
         .map(|best_version| (*best_version).cmp(version).is_lt())

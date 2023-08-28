@@ -1,5 +1,7 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
+use crate::deno::DenoPackageInfo;
+use crate::deno::DenoPackageVersionInfo;
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::text_encoding::strip_bom_mut;
@@ -14,6 +16,7 @@ use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
 use futures::future;
 use futures::future::LocalBoxFuture;
+use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -21,6 +24,7 @@ use std::fmt;
 use std::path::PathBuf;
 use std::sync::Arc;
 use thiserror::Error;
+use url::Url;
 
 pub const DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
 
@@ -85,10 +89,17 @@ pub enum LoaderCacheSetting {
   Only,
 }
 
+pub static DEFAULT_DENO_REGISTRY_URL: Lazy<Url> =
+  Lazy::new(|| Url::parse("https://deno-registry-staging.net").unwrap());
+
 /// A trait which allows asynchronous loading of source files into a module
 /// graph in a thread safe way as well as a way to provide additional meta data
 /// about any cached resources.
 pub trait Loader {
+  fn registry_url(&self) -> &Url {
+    &DEFAULT_DENO_REGISTRY_URL
+  }
+
   /// An optional method which returns cache info for a module specifier.
   fn get_cache_info(&self, _specifier: &ModuleSpecifier) -> Option<CacheInfo> {
     None
@@ -101,7 +112,11 @@ pub trait Loader {
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
   ) -> LoadFuture {
-    self.load_with_cache_setting(specifier, is_dynamic, LoaderCacheSetting::Prefer)
+    self.load_with_cache_setting(
+      specifier,
+      is_dynamic,
+      LoaderCacheSetting::Prefer,
+    )
   }
 
   fn load_with_cache_setting(
@@ -323,6 +338,30 @@ impl MemoryLoader {
       },
     );
   }
+
+  pub fn add_deno_package_info(
+    &mut self,
+    name: &str,
+    package_info: &DenoPackageInfo,
+  ) {
+    let specifier = DEFAULT_DENO_REGISTRY_URL
+      .join(&format!("{}/meta.json", name))
+      .unwrap();
+    let json_text = serde_json::to_string(package_info).unwrap();
+    self.add_source_with_text(specifier, json_text);
+  }
+
+  pub fn add_deno_version_info(
+    &mut self,
+    nv: &PackageNv,
+    version_info: &DenoPackageVersionInfo,
+  ) {
+    let specifier = DEFAULT_DENO_REGISTRY_URL
+      .join(&format!("{}/{}_meta.json", nv.name, nv.version))
+      .unwrap();
+    let json_text = serde_json::to_string(version_info).unwrap();
+    self.add_source_with_text(specifier, json_text);
+  }
 }
 
 impl Loader for MemoryLoader {
@@ -339,9 +378,7 @@ impl Loader for MemoryLoader {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),
       Some(Err(err)) => Err(anyhow!("{}", err)),
-      None if specifier.scheme() == "data" => {
-        load_data_url(specifier).map_err(|err| err.into())
-      }
+      None if specifier.scheme() == "data" => load_data_url(specifier),
       _ => Ok(None),
     };
     Box::pin(future::ready(response))

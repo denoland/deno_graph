@@ -37,8 +37,8 @@ pub use ast::DefaultParsedSourceStore;
 pub use ast::ModuleParser;
 pub use ast::ParsedSourceStore;
 pub use deno_ast::MediaType;
+pub use graph::BuildDiagnostic;
 pub use graph::BuildOptions;
-pub use graph::WorkspaceMember;
 pub use graph::Dependency;
 pub use graph::EsmModule;
 pub use graph::ExternalModule;
@@ -58,6 +58,7 @@ pub use graph::ResolutionError;
 pub use graph::ResolutionResolved;
 pub use graph::TypesDependency;
 pub use graph::WalkOptions;
+pub use graph::WorkspaceMember;
 pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
@@ -116,9 +117,14 @@ pub fn parse_module_from_ast(
 
 #[cfg(test)]
 mod tests {
+  use crate::deno::DenoPackageInfo;
+  use crate::deno::DenoPackageVersionInfo;
   use crate::graph::ResolutionResolved;
+  use crate::source::DEFAULT_DENO_REGISTRY_URL;
 
   use super::*;
+  use deno_semver::package::PackageNv;
+  use deno_semver::Version;
   use pretty_assertions::assert_eq;
   use serde_json::json;
   use source::tests::MockResolver;
@@ -3096,6 +3102,474 @@ export function a(a: A): B {
         "mediaType": "TypeScript",
         "size": 143,
         "specifier": "file:///a/test.ts"
+      })
+    );
+  }
+
+  #[tokio::test]
+  async fn test_deno_specifiers_no_module_graph_info_in_registry() {
+    let mut loader = MemoryLoader::default();
+    loader.add_deno_package_info(
+      "@scope/a",
+      &DenoPackageInfo {
+        versions: HashMap::from([
+          (
+            Version::parse_standard("1.0.0").unwrap(),
+            Default::default(),
+          ),
+          (
+            Version::parse_standard("1.0.1").unwrap(),
+            Default::default(),
+          ),
+        ]),
+      },
+    );
+    loader.add_deno_version_info(
+      &PackageNv::from_str("@scope/a@1.0.0").unwrap(),
+      &DenoPackageVersionInfo { module_graph: None },
+    );
+    loader.add_deno_version_info(
+      &PackageNv::from_str("@scope/a@1.0.1").unwrap(),
+      &DenoPackageVersionInfo { module_graph: None },
+    );
+    loader.add_deno_package_info(
+      "@scope/b",
+      &DenoPackageInfo {
+        versions: HashMap::from([(
+          Version::parse_standard("2.0.0").unwrap(),
+          Default::default(),
+        )]),
+      },
+    );
+    loader.add_deno_version_info(
+      &PackageNv::from_str("@scope/b@2.0.0").unwrap(),
+      &DenoPackageVersionInfo { module_graph: None },
+    );
+    loader.add_deno_package_info(
+      "@scope/c",
+      &DenoPackageInfo {
+        versions: HashMap::from([
+          (
+            Version::parse_standard("3.0.0").unwrap(),
+            Default::default(),
+          ),
+          (
+            Version::parse_standard("3.0.1").unwrap(),
+            Default::default(),
+          ),
+        ]),
+      },
+    );
+    loader.add_deno_version_info(
+      &PackageNv::from_str("@scope/c@3.0.0").unwrap(),
+      &DenoPackageVersionInfo { module_graph: None },
+    );
+
+    loader.add_source_with_text(
+      "file:///main.ts",
+      "import 'deno:@scope/a/mod.ts'; import 'deno:@scope/c@3.0.0/mod.ts';",
+    );
+    loader.add_source_with_text(
+      DEFAULT_DENO_REGISTRY_URL
+        .join("@scope/a/1.0.1/mod.ts")
+        .unwrap(),
+      "import 'deno:@scope/b@2/mod.ts'",
+    );
+    loader.add_source_with_text(
+      DEFAULT_DENO_REGISTRY_URL
+        .join("@scope/b/2.0.0/mod.ts")
+        .unwrap(),
+      "import 'deno:@scope/c@3/mod.ts'",
+    );
+    loader.add_source_with_text(
+      DEFAULT_DENO_REGISTRY_URL
+        .join("@scope/c/3.0.0/mod.ts")
+        .unwrap(),
+      "console.log(1)",
+    );
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![ModuleSpecifier::parse("file:///main.ts").unwrap()],
+        &mut loader,
+        Default::default(),
+      )
+      .await;
+    graph.valid().unwrap();
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///main.ts"
+        ],
+        "modules": [{
+          "kind": "esm",
+          "dependencies": [
+            {
+              "specifier": "deno:@scope/a/mod.ts",
+              "code": {
+                "specifier": "deno:@scope/a/mod.ts",
+                "span": {
+                  "start": {
+                    "line": 0,
+                    "character": 7
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 29
+                  }
+                }
+              }
+            }, {
+              "specifier": "deno:@scope/c@3.0.0/mod.ts",
+              "code": {
+                "specifier": "deno:@scope/c@3.0.0/mod.ts",
+                "span": {
+                  "start": {
+                    "line": 0,
+                    "character": 38
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 66
+                  }
+                }
+              }
+            }
+          ],
+          "size": 67,
+          "mediaType": "TypeScript",
+          "specifier": "file:///main.ts"
+        }, {
+          "kind": "esm",
+          "dependencies": [
+            {
+              "specifier": "deno:@scope/b@2/mod.ts",
+              "code": {
+                "specifier": "deno:@scope/b@2/mod.ts",
+                "span": {
+                  "start": {
+                    "line": 0,
+                    "character": 7
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 31
+                  }
+                }
+              }
+            }
+          ],
+          "size": 31,
+          "mediaType": "TypeScript",
+          "specifier": "https://deno-registry-staging.net/@scope/a/1.0.1/mod.ts"
+        }, {
+          "kind": "esm",
+          "dependencies": [
+            {
+              "specifier": "deno:@scope/c@3/mod.ts",
+              "code": {
+                "specifier": "deno:@scope/c@3/mod.ts",
+                "span": {
+                  "start": {
+                    "line": 0,
+                    "character": 7
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 31
+                  }
+                }
+              }
+            }
+          ],
+          "size": 31,
+          "mediaType": "TypeScript",
+          "specifier": "https://deno-registry-staging.net/@scope/b/2.0.0/mod.ts"
+        }, {
+          "kind": "esm",
+          "size": 14,
+          "mediaType": "TypeScript",
+          "specifier": "https://deno-registry-staging.net/@scope/c/3.0.0/mod.ts"
+        }],
+        "redirects": {
+          "deno:@scope/a/mod.ts": "https://deno-registry-staging.net/@scope/a/1.0.1/mod.ts",
+          "deno:@scope/b@2/mod.ts": "https://deno-registry-staging.net/@scope/b/2.0.0/mod.ts",
+          "deno:@scope/c@3.0.0/mod.ts": "https://deno-registry-staging.net/@scope/c/3.0.0/mod.ts",
+          "deno:@scope/c@3/mod.ts": "https://deno-registry-staging.net/@scope/c/3.0.0/mod.ts",
+        },
+        "deno": {
+          "@scope/c@3.0.0": "@scope/c@3.0.0",
+          "@scope/b@2": "@scope/b@2.0.0",
+          "@scope/a": "@scope/a@1.0.1",
+          "@scope/c@3": "@scope/c@3.0.0",
+        }
+      })
+    );
+  }
+
+  #[tokio::test]
+  async fn test_deno_specifiers_module_graph_info() {
+    let mut loader = MemoryLoader::default();
+    loader.add_deno_package_info(
+      "@scope/a",
+      &DenoPackageInfo {
+        versions: HashMap::from([(
+          Version::parse_standard("1.0.0").unwrap(),
+          Default::default(),
+        )]),
+      },
+    );
+    loader.add_deno_version_info(
+      &PackageNv::from_str("@scope/a@1.0.0").unwrap(),
+      &DenoPackageVersionInfo {
+        module_graph: Some(json!({
+          "/mod.ts": {
+            "dependencies": [{
+              "kind": "import",
+              "range": [[1, 2], [3, 4]],
+              "specifier": "./a.ts",
+              "specifierRange": [[5, 6], [7, 8]],
+            }]
+          },
+          "/a.ts": {
+            "dependencies": [{
+              "kind": "import",
+              "range": [[9, 10], [11, 12]],
+              "specifier": "./b.ts",
+              "specifierRange": [[13, 14], [15, 16]],
+            }, {
+              "kind": "import",
+              "range": [[1, 2], [3, 4]],
+              "specifier": "deno:@scope/b/mod.ts",
+              "specifierRange": [[5, 6], [7, 8]],
+            }]
+          }
+        })),
+      },
+    );
+    loader.add_deno_package_info(
+      "@scope/b",
+      &DenoPackageInfo {
+        versions: HashMap::from([(
+          Version::parse_standard("9.0.0").unwrap(),
+          Default::default(),
+        )]),
+      },
+    );
+    loader.add_deno_version_info(
+      &PackageNv::from_str("@scope/b@9.0.0").unwrap(),
+      &DenoPackageVersionInfo {
+        module_graph: Some(json!({
+          "/mod.ts": {
+            "dependencies": [{
+              "kind": "import",
+              "range": [[1, 2], [3, 4]],
+              "specifier": "./inner.ts",
+              "specifierRange": [[5, 6], [7, 8]],
+            }]
+          },
+        })),
+      },
+    );
+
+    loader.add_source_with_text(
+      "file:///main.ts",
+      "import 'deno:@scope/a@^1.0/mod.ts';",
+    );
+    loader.add_source_with_text(
+      DEFAULT_DENO_REGISTRY_URL
+        .join("@scope/a/1.0.0/mod.ts")
+        .unwrap(),
+      "1;", // it will ignore this
+    );
+    loader.add_source_with_text(
+      DEFAULT_DENO_REGISTRY_URL
+        .join("@scope/a/1.0.0/a.ts")
+        .unwrap(),
+      "2;", // it will ignore this
+    );
+    loader.add_source_with_text(
+      DEFAULT_DENO_REGISTRY_URL
+        .join("@scope/a/1.0.0/b.ts")
+        .unwrap(),
+      "import './c.ts';",
+    );
+    loader.add_source_with_text(
+      DEFAULT_DENO_REGISTRY_URL
+        .join("@scope/a/1.0.0/c.ts")
+        .unwrap(),
+      "3;",
+    );
+    loader.add_source_with_text(
+      DEFAULT_DENO_REGISTRY_URL
+        .join("@scope/b/9.0.0/mod.ts")
+        .unwrap(),
+      "4;",
+    );
+    loader.add_source_with_text(
+      DEFAULT_DENO_REGISTRY_URL
+        .join("@scope/b/9.0.0/inner.ts")
+        .unwrap(),
+      "5;",
+    );
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![ModuleSpecifier::parse("file:///main.ts").unwrap()],
+        &mut loader,
+        Default::default(),
+      )
+      .await;
+    graph.valid().unwrap();
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///main.ts"
+        ],
+        "modules": [{
+          "kind": "esm",
+          "dependencies": [{
+            "specifier": "deno:@scope/a@^1.0/mod.ts",
+            "code": {
+              "specifier": "deno:@scope/a@^1.0/mod.ts",
+              "span": {
+                "start": {
+                  "line": 0,
+                  "character": 7
+                },
+                "end": {
+                  "line": 0,
+                  "character": 34
+                }
+              }
+            }
+          }],
+          "size": 35,
+          "mediaType": "TypeScript",
+          "specifier": "file:///main.ts"
+        }, {
+          "kind": "esm",
+          "dependencies": [
+            {
+              "specifier": "./b.ts",
+              "code": {
+                "specifier": "https://deno-registry-staging.net/@scope/a/1.0.0/b.ts",
+                "span": {
+                  "start": {
+                    "line": 13,
+                    "character": 14
+                  },
+                  "end": {
+                    "line": 15,
+                    "character": 16
+                  }
+                }
+              }
+            },
+            {
+              "specifier": "deno:@scope/b/mod.ts",
+              "code": {
+                "specifier": "deno:@scope/b/mod.ts",
+                "span": {
+                  "start": {
+                    "line": 5,
+                    "character": 6
+                  },
+                  "end": {
+                    "line": 7,
+                    "character": 8
+                  }
+                }
+              }
+            }
+          ],
+          "size": 2,
+          "mediaType": "TypeScript",
+          "specifier": "https://deno-registry-staging.net/@scope/a/1.0.0/a.ts"
+        }, {
+          "kind": "esm",
+          "dependencies": [{
+            "specifier": "./c.ts",
+            "code": {
+              "specifier": "https://deno-registry-staging.net/@scope/a/1.0.0/c.ts",
+              "span": {
+                "start": {
+                  "line": 0,
+                  "character": 7
+                },
+                "end": {
+                  "line": 0,
+                  "character": 15
+                }
+              }
+            }
+          }],
+          "size": 16,
+          "mediaType": "TypeScript",
+          "specifier": "https://deno-registry-staging.net/@scope/a/1.0.0/b.ts"
+        }, {
+          "kind": "esm",
+          "size": 2,
+          "mediaType": "TypeScript",
+          "specifier": "https://deno-registry-staging.net/@scope/a/1.0.0/c.ts"
+        }, {
+          "kind": "esm",
+          "dependencies": [{
+            "specifier": "./a.ts",
+            "code": {
+              "specifier": "https://deno-registry-staging.net/@scope/a/1.0.0/a.ts",
+              "span": {
+                "start": {
+                  "line": 5,
+                  "character": 6
+                },
+                "end": {
+                  "line": 7,
+                  "character": 8
+                }
+              }
+            }
+          }],
+          "size": 2,
+          "mediaType": "TypeScript",
+          "specifier": "https://deno-registry-staging.net/@scope/a/1.0.0/mod.ts"
+        }, {
+          "kind": "esm",
+          "size": 2,
+          "mediaType": "TypeScript",
+          "specifier": "https://deno-registry-staging.net/@scope/b/9.0.0/inner.ts"
+        }, {
+          "kind": "esm",
+          "dependencies": [{
+            "specifier": "./inner.ts",
+            "code": {
+              "specifier": "https://deno-registry-staging.net/@scope/b/9.0.0/inner.ts",
+              "span": {
+                "start": {
+                  "line": 5,
+                  "character": 6
+                },
+                "end": {
+                  "line": 7,
+                  "character": 8
+                }
+              }
+            }
+          }],
+          "size": 2,
+          "mediaType": "TypeScript",
+          "specifier": "https://deno-registry-staging.net/@scope/b/9.0.0/mod.ts"
+        }],
+        "redirects": {
+          "deno:@scope/a@^1.0/mod.ts": "https://deno-registry-staging.net/@scope/a/1.0.0/mod.ts",
+          "deno:@scope/b/mod.ts": "https://deno-registry-staging.net/@scope/b/9.0.0/mod.ts"
+        },
+        "deno": {
+          "@scope/b": "@scope/b@9.0.0",
+          "@scope/a@^1.0": "@scope/a@1.0.0"
+        }
       })
     );
   }
