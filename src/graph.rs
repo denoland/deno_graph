@@ -13,7 +13,6 @@ use crate::ReferrerImports;
 
 use crate::deno::resolve_version;
 use crate::deno::DenoPackageInfo;
-use crate::deno::DenoPackageInfoVersion;
 use crate::deno::DenoPackageVersionInfo;
 use crate::deno::DenoSpecifierSnapshot;
 use crate::module_specifier::resolve_import;
@@ -1238,6 +1237,8 @@ pub struct ModuleGraph {
   pub npm_packages: Vec<PackageNv>,
   #[serde(skip_serializing)]
   pub has_node_specifier: bool,
+  #[serde(rename = "deno")]
+  #[serde(skip_serializing_if = "DenoSpecifierSnapshot::is_empty")]
   pub deno_specifiers: DenoSpecifierSnapshot,
 }
 

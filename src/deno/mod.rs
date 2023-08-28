@@ -38,7 +38,9 @@ impl DenoPackageVersionInfo {
 
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct DenoSpecifierSnapshot {
+  #[serde(flatten)]
   package_reqs: HashMap<PackageReq, PackageNv>,
+  #[serde(skip_serializing)]
   packages_by_name: HashMap<String, Vec<PackageNv>>,
 }
 
