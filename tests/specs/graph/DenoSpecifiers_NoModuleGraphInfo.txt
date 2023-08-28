@@ -2,14 +2,14 @@
 {
   "versions": {
     "1.0.0": {},
-    "1.0.1": {},
+    "1.0.1": {}
   }
 }
 
-# https://deno-registry-staging.net/@scope/a/1.0.0.json
+# https://deno-registry-staging.net/@scope/a/1.0.0_meta.json
 {}
 
-# https://deno-registry-staging.net/@scope/a/1.0.1.json
+# https://deno-registry-staging.net/@scope/a/1.0.1_meta.json
 {}
 
 # https://deno-registry-staging.net/@scope/b/meta.json
@@ -19,33 +19,145 @@
   }
 }
 
-# https://deno-registry-staging.net/@scope/b/2.0.0.json
+# https://deno-registry-staging.net/@scope/b/2.0.0_meta.json
 {}
 
 # https://deno-registry-staging.net/@scope/c/meta.json
 {
   "versions": {
-    "3.0.0": {}
+    "3.0.0": {},
     "3.0.1": {}
   }
 }
 
-# https://deno-registry-staging.net/@scope/c/3.0.0.json
+# https://deno-registry-staging.net/@scope/c/3.0.0_meta.json
 {}
 
-# main.ts
+# mod.ts
 import 'deno:@scope/a/mod.ts'
 import 'deno:@scope/c@3.0.0/mod.ts'
 
-# https://deno-registry-staging.net/@scope/a/1.0.1.json
-import 'deno:@scope/b@2/mod.ts';
+# https://deno-registry-staging.net/@scope/a/1.0.1/mod.ts
+import 'deno:@scope/b@2/sub_dir/sub.ts';
 
-# https://deno-registry-staging.net/@scope/b/2.0.0.json
+# https://deno-registry-staging.net/@scope/b/2.0.0/sub_dir/sub.ts
 // should still resolve to 3.0.0 because that was resolved earlier
 import 'deno:@scope/c@3/mod.ts';
 
-# https://deno-registry-staging.net/@scope/c/3.0.0.json
+# https://deno-registry-staging.net/@scope/c/3.0.0/mod.ts
 console.log(1);
 
 # output
-Test
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "deno:@scope/a/mod.ts",
+          "code": {
+            "specifier": "deno:@scope/a/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 29
+              }
+            }
+          }
+        },
+        {
+          "specifier": "deno:@scope/c@3.0.0/mod.ts",
+          "code": {
+            "specifier": "deno:@scope/c@3.0.0/mod.ts",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 7
+              },
+              "end": {
+                "line": 1,
+                "character": 35
+              }
+            }
+          }
+        }
+      ],
+      "size": 66,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "deno:@scope/b@2/sub_dir/sub.ts",
+          "code": {
+            "specifier": "deno:@scope/b@2/sub_dir/sub.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 39
+              }
+            }
+          }
+        }
+      ],
+      "size": 41,
+      "mediaType": "TypeScript",
+      "specifier": "https://deno-registry-staging.net/@scope/a/1.0.1/mod.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "deno:@scope/c@3/mod.ts",
+          "code": {
+            "specifier": "deno:@scope/c@3/mod.ts",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 7
+              },
+              "end": {
+                "line": 1,
+                "character": 31
+              }
+            }
+          }
+        }
+      ],
+      "size": 100,
+      "mediaType": "TypeScript",
+      "specifier": "https://deno-registry-staging.net/@scope/b/2.0.0/sub_dir/sub.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 16,
+      "mediaType": "TypeScript",
+      "specifier": "https://deno-registry-staging.net/@scope/c/3.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "deno:@scope/a/mod.ts": "https://deno-registry-staging.net/@scope/a/1.0.1/mod.ts",
+    "deno:@scope/b@2/sub_dir/sub.ts": "https://deno-registry-staging.net/@scope/b/2.0.0/sub_dir/sub.ts",
+    "deno:@scope/c@3.0.0/mod.ts": "https://deno-registry-staging.net/@scope/c/3.0.0/mod.ts",
+    "deno:@scope/c@3/mod.ts": "https://deno-registry-staging.net/@scope/c/3.0.0/mod.ts"
+  },
+  "deno": {
+    "@scope/b@2": "@scope/b@2.0.0",
+    "@scope/a": "@scope/a@1.0.1",
+    "@scope/c@3.0.0": "@scope/c@3.0.0",
+    "@scope/c@3": "@scope/c@3.0.0"
+  }
+}

@@ -20,6 +20,9 @@ impl Spec {
       text.push('\n');
     }
     text.push_str(&self.output_file.emit());
+    if !text.ends_with("\n") {
+      text.push('\n');
+    }
     if !self.diagnostics.is_empty() {
       text.push_str("\n# diagnostics\n");
       text.push_str(&serde_json::to_string_pretty(&self.diagnostics).unwrap());
