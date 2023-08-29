@@ -10,6 +10,9 @@ use std::rc::Rc;
 
 use anyhow::anyhow;
 use deno_ast::ModuleSpecifier;
+use deno_graph::source::LoadFuture;
+use deno_graph::source::LoadResponse;
+use deno_graph::source::LoaderCacheSetting;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
 use deno_graph::source::UnknownBuiltInNodeModuleError;
@@ -22,6 +25,7 @@ use deno_semver::package::PackageReq;
 use deno_semver::Version;
 use futures::future::LocalBoxFuture;
 use pretty_assertions::assert_eq;
+use url::Url;
 
 use crate::helpers::get_specs_in_dir;
 use crate::helpers::TestBuilder;
@@ -218,4 +222,106 @@ async fn test_npm_version_not_found_then_found() {
       "failed to resolve"
     );
   }
+}
+
+#[tokio::test]
+async fn test_deno_version_not_found_then_found() {
+  #[derive(Default)]
+  struct TestLoader {
+    requests: Vec<(String, LoaderCacheSetting)>,
+  }
+
+  impl deno_graph::source::Loader for TestLoader {
+    fn load_with_cache_setting(
+      &mut self,
+      specifier: &ModuleSpecifier,
+      is_dynamic: bool,
+      cache_setting: LoaderCacheSetting,
+    ) -> LoadFuture {
+      assert!(!is_dynamic);
+      self.requests.push((specifier.to_string(), cache_setting));
+      let specifier = specifier.clone();
+      match specifier.as_str() {
+        "file:///main.ts" => Box::pin(async move {
+          Ok(Some(LoadResponse::Module {
+            specifier: specifier.clone(),
+            maybe_headers: None,
+            content: "import 'deno:@scope/a@1.2/mod.ts".into(),
+          }))
+        }),
+        "https://deno-registry-staging.net/@scope/a/meta.json" => {
+          Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: match cache_setting {
+                LoaderCacheSetting::Only | LoaderCacheSetting::Prefer => {
+                  // first time it won't have the version
+                  r#"{ "versions": { "1.0.0": {} } }"#.into()
+                }
+                LoaderCacheSetting::Reload => {
+                  // then on reload it will
+                  r#"{ "versions": { "1.0.0": {}, "1.2.0": {} } }"#.into()
+                }
+              },
+            }))
+          })
+        }
+        "https://deno-registry-staging.net/@scope/a/1.2.0_meta.json" => {
+          Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: "{}".into(),
+            }))
+          })
+        }
+        "https://deno-registry-staging.net/@scope/a/1.2.0/mod.ts" => {
+          Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: "console.log('Hello, world!')".into(),
+            }))
+          })
+        }
+        _ => unreachable!(),
+      }
+    }
+  }
+
+  let mut loader = TestLoader::default();
+  let mut graph = ModuleGraph::new(GraphKind::All);
+  graph
+    .build(
+      vec![Url::parse("file:///main.ts").unwrap()],
+      &mut loader,
+      Default::default(),
+    )
+    .await;
+  graph.valid().unwrap();
+  assert_eq!(
+    loader.requests,
+    vec![
+      ("file:///main.ts".to_string(), LoaderCacheSetting::Prefer),
+      (
+        "https://deno-registry-staging.net/@scope/a/meta.json".to_string(),
+        LoaderCacheSetting::Prefer
+      ),
+      ("file:///main.ts".to_string(), LoaderCacheSetting::Prefer),
+      (
+        "https://deno-registry-staging.net/@scope/a/meta.json".to_string(),
+        LoaderCacheSetting::Reload
+      ),
+      (
+        "https://deno-registry-staging.net/@scope/a/1.2.0_meta.json"
+          .to_string(),
+        LoaderCacheSetting::Reload
+      ),
+      (
+        "https://deno-registry-staging.net/@scope/a/1.2.0/mod.ts".to_string(),
+        LoaderCacheSetting::Prefer
+      ),
+    ]
+  );
 }
