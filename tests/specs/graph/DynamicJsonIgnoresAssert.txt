@@ -1,0 +1,46 @@
+# mod.ts
+const a = await import("./a.json");
+
+# a.json
+{"a":"b"}
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "asserted",
+      "specifier": "file:///a.json",
+      "size": 10,
+      "mediaType": "Json"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.json",
+          "code": {
+            "specifier": "file:///a.json",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 23
+              },
+              "end": {
+                "line": 0,
+                "character": 33
+              }
+            }
+          },
+          "isDynamic": true
+        }
+      ],
+      "size": 36,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}

@@ -20,7 +20,7 @@ impl Spec {
       text.push('\n');
     }
     text.push_str(&self.output_file.emit());
-    if !text.ends_with("\n") {
+    if !text.ends_with('\n') {
       text.push('\n');
     }
     if !self.diagnostics.is_empty() {
