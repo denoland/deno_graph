@@ -5,6 +5,7 @@ use deno_graph::source::MemoryLoader;
 use deno_graph::BuildDiagnostic;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
+use deno_graph::WorkspaceMember;
 
 #[cfg(feature = "type_tracing")]
 pub mod tracing {
@@ -48,6 +49,7 @@ pub struct BuildResult {
 pub struct TestBuilder {
   loader: MemoryLoader,
   entry_point: String,
+  workspace_members: Vec<WorkspaceMember>,
 }
 
 impl TestBuilder {
@@ -55,6 +57,7 @@ impl TestBuilder {
     Self {
       loader: Default::default(),
       entry_point: "file:///mod.ts".to_string(),
+      workspace_members: Default::default(),
     }
   }
 
@@ -72,6 +75,14 @@ impl TestBuilder {
     self
   }
 
+  pub fn workspace_members(
+    &mut self,
+    members: Vec<WorkspaceMember>,
+  ) -> &mut Self {
+    self.workspace_members = members;
+    self
+  }
+
   pub async fn build(&mut self) -> BuildResult {
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
@@ -80,7 +91,10 @@ impl TestBuilder {
       .build(
         roots.clone(),
         &mut self.loader,
-        deno_graph::BuildOptions::default(),
+        deno_graph::BuildOptions {
+          workspace_members: self.workspace_members.clone(),
+          ..Default::default()
+        },
       )
       .await;
     BuildResult { graph, diagnostics }

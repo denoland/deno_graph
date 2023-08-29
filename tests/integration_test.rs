@@ -40,6 +40,7 @@ async fn test_graph_specs() {
         loader.add_source_with_text(file.url(), &file.text);
       }
     });
+    builder.workspace_members(spec.workspace_members.clone());
 
     let result = builder.build().await;
     let update_var = std::env::var("UPDATE");

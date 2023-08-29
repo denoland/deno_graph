@@ -19,6 +19,7 @@ pub struct DenoPackageInfo {
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct DenoPackageInfoVersion {
+  // currently not supported because it doesn't work in workspaces
   // pub main: Option<String>,
 }
 

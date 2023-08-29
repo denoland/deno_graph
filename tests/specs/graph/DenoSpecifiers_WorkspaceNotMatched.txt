@@ -1,0 +1,153 @@
+# workspace_members
+[
+  {
+    "base": "file:///members/a/",
+    "nv": "@scope/a@1.0.1"
+  },
+  {
+    "base": "file:///members/b/",
+    "nv": "@scope/b@2.0.0"
+  }
+]
+
+# https://deno-registry-staging.net/@scope/b/meta.json
+{
+  "versions": {
+    "2.0.3": {}
+  }
+}
+
+# https://deno-registry-staging.net/@scope/b/2.0.3_meta.json
+{}
+
+# mod.ts
+import "./members/a/mod.ts";
+
+# members/a/mod.ts
+import 'deno:@scope/b@2/mod.ts'; // this one will match
+import './next.ts';
+
+# members/a/next.ts
+import 'deno:@scope/b@2.0.3/mod.ts'; // this one will not match the workspace member
+
+# members/b/mod.ts
+console.log("Test");
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "deno:@scope/b@2/mod.ts",
+          "code": {
+            "specifier": "deno:@scope/b@2/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 31
+              }
+            }
+          }
+        },
+        {
+          "specifier": "./next.ts",
+          "code": {
+            "specifier": "file:///members/a/next.ts",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 7
+              },
+              "end": {
+                "line": 1,
+                "character": 18
+              }
+            }
+          }
+        }
+      ],
+      "size": 76,
+      "mediaType": "TypeScript",
+      "specifier": "file:///members/a/mod.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "deno:@scope/b@2.0.3/mod.ts",
+          "code": {
+            "specifier": "deno:@scope/b@2.0.3/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 35
+              }
+            }
+          }
+        }
+      ],
+      "size": 85,
+      "mediaType": "TypeScript",
+      "specifier": "file:///members/a/next.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 21,
+      "mediaType": "TypeScript",
+      "specifier": "file:///members/b/mod.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./members/a/mod.ts",
+          "code": {
+            "specifier": "file:///members/a/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 27
+              }
+            }
+          }
+        }
+      ],
+      "size": 29,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "https://deno-registry-staging.net/@scope/b/2.0.3/mod.ts",
+      "error": "Module not found \"https://deno-registry-staging.net/@scope/b/2.0.3/mod.ts\"."
+    }
+  ],
+  "redirects": {
+    "deno:@scope/b@2.0.3/mod.ts": "https://deno-registry-staging.net/@scope/b/2.0.3/mod.ts",
+    "deno:@scope/b@2/mod.ts": "file:///members/b/mod.ts"
+  },
+  "deno": {
+    "@scope/b@2.0.3": "@scope/b@2.0.3"
+  }
+}
+
+# diagnostics
+[
+  "Version constraint '@scope/b@2.0.3' did not match workspace member version '2.0.0'\n    at file:///members/a/next.ts:1:8"
+]

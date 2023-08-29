@@ -5,6 +5,8 @@ use std::path::PathBuf;
 
 mod test_builder;
 
+use deno_graph::WorkspaceMember;
+use serde::de::DeserializeOwned;
 pub use test_builder::*;
 use url::Url;
 
@@ -12,11 +14,19 @@ pub struct Spec {
   pub files: Vec<SpecFile>,
   pub output_file: SpecFile,
   pub diagnostics: Vec<serde_json::Value>,
+  pub workspace_members: Vec<WorkspaceMember>,
 }
 
 impl Spec {
   pub fn emit(&self) -> String {
     let mut text = String::new();
+    if !self.workspace_members.is_empty() {
+      text.push_str("# workspace_members\n");
+      text.push_str(
+        &serde_json::to_string_pretty(&self.workspace_members).unwrap(),
+      );
+      text.push_str("\n\n");
+    }
     for file in &self.files {
       text.push_str(&file.emit());
       text.push('\n');
@@ -99,18 +109,25 @@ fn parse_spec(text: String) -> Spec {
   files.push(current_file.unwrap());
   let output_file =
     files.remove(files.iter().position(|f| f.specifier == "output").unwrap());
-  let diagnostics = if let Some(index) =
-    files.iter().position(|f| f.specifier == "diagnostics")
-  {
-    let diagnostic_file = files.remove(index);
-    serde_json::from_str(&diagnostic_file.text).unwrap()
-  } else {
-    Vec::new()
-  };
+  let diagnostics = take_vec_file(&mut files, "diagnostics");
+  let workspace_members = take_vec_file(&mut files, "workspace_members");
   Spec {
     files,
     output_file,
     diagnostics,
+    workspace_members,
+  }
+}
+
+fn take_vec_file<T: DeserializeOwned>(
+  files: &mut Vec<SpecFile>,
+  name: &str,
+) -> Vec<T> {
+  if let Some(index) = files.iter().position(|f| f.specifier == name) {
+    let file = files.remove(index);
+    serde_json::from_str(&file.text).unwrap()
+  } else {
+    Vec::new()
   }
 }
 

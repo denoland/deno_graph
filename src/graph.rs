@@ -612,7 +612,7 @@ fn is_media_type_unknown(media_type: &MediaType) -> bool {
   matches!(media_type, MediaType::Unknown)
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WorkspaceMember {
   pub base: Url,
   pub nv: PackageNv,
@@ -2440,7 +2440,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .and_then(|info| match resolution_item.package_ref.sub_path() {
               Some(sub_path) => Ok((info, sub_path)),
               None => Err(Arc::new(anyhow!(
-                "Package reference must specify a path in the package: {}",
+                "Missing path in package specifier '{0}' (ex. specify {0}/mod.ts)",
                 resolution_item.package_ref
               ))),
             });
@@ -2782,11 +2782,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   "MATCHED: {} ({})",
                   workspace_member.nv, workspace_member.base
                 );
-                // todo: handle no sub path
-                let load_specifier = workspace_member
-                  .base
-                  .join(package_ref.sub_path().unwrap())
-                  .unwrap();
+                let mut load_specifier = workspace_member.base.clone();
+                if let Some(sub_path) = package_ref.sub_path() {
+                  load_specifier = load_specifier.join(sub_path).unwrap();
+                }
                 eprintln!("Load specifier: {}", load_specifier);
                 let specifier = specifier.clone();
                 self.load_pending_module(
