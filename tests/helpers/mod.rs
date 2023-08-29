@@ -1,54 +1,15 @@
 use std::path::Path;
 use std::path::PathBuf;
 
-use pretty_assertions::assert_eq;
+mod test_builder;
 
-use super::test_builder::TestBuilder;
-use deno_graph::type_tracer::TypeTraceDiagnostic;
+pub use test_builder::*;
+use url::Url;
 
-#[tokio::test]
-async fn test_type_tracing_specs() {
-  for (test_file_path, spec) in
-    get_specs_in_dir(&PathBuf::from("./tests/specs/type_tracing"))
-  {
-    eprintln!("Running {}", test_file_path.display());
-    let mut builder = TestBuilder::new();
-    builder.with_loader(|loader| {
-      for file in &spec.files {
-        loader.add_file(&file.specifier, &file.text);
-      }
-    });
-
-    let result = builder.trace().await.unwrap();
-    let update_var = std::env::var("UPDATE");
-    let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
-      let mut spec = spec;
-      spec.output_file.text = result.output.clone();
-      spec.diagnostics = result.diagnostics.clone();
-      std::fs::write(&test_file_path, spec.emit()).unwrap();
-      spec
-    } else {
-      spec
-    };
-    assert_eq!(
-      result.output,
-      spec.output_file.text,
-      "Should be same for {}",
-      test_file_path.display()
-    );
-    assert_eq!(
-      result.diagnostics,
-      spec.diagnostics,
-      "Should be same for {}",
-      test_file_path.display()
-    );
-  }
-}
-
-struct Spec {
-  files: Vec<File>,
-  output_file: File,
-  diagnostics: Vec<TypeTraceDiagnostic>,
+pub struct Spec {
+  pub files: Vec<SpecFile>,
+  pub output_file: SpecFile,
+  pub diagnostics: Vec<serde_json::Value>,
 }
 
 impl Spec {
@@ -59,6 +20,9 @@ impl Spec {
       text.push('\n');
     }
     text.push_str(&self.output_file.emit());
+    if !text.ends_with('\n') {
+      text.push('\n');
+    }
     if !self.diagnostics.is_empty() {
       text.push_str("\n# diagnostics\n");
       text.push_str(&serde_json::to_string_pretty(&self.diagnostics).unwrap());
@@ -68,33 +32,45 @@ impl Spec {
   }
 }
 
-struct File {
-  specifier: String,
-  text: String,
+#[derive(Debug)]
+pub struct SpecFile {
+  pub specifier: String,
+  pub text: String,
 }
 
-impl File {
+impl SpecFile {
   pub fn emit(&self) -> String {
     format!("# {}\n{}", self.specifier, self.text)
   }
+
+  pub fn url(&self) -> Url {
+    let specifier = &self.specifier;
+    if !specifier.starts_with("http") && !specifier.starts_with("file") {
+      Url::parse(&format!("file:///{}", specifier)).unwrap()
+    } else {
+      Url::parse(specifier).unwrap()
+    }
+  }
 }
 
-fn get_specs_in_dir(path: &Path) -> Vec<(PathBuf, Spec)> {
-  let files = get_files_in_dir_recursive(path);
+pub fn get_specs_in_dir(path: &Path) -> Vec<(PathBuf, Spec)> {
+  let files = collect_files_in_dir_recursive(path);
   let files = if files
     .iter()
-    .any(|(s, _)| s.to_string_lossy().to_lowercase().contains("_only"))
+    .any(|file| file.path.to_string_lossy().to_lowercase().contains("_only"))
   {
     files
       .into_iter()
-      .filter(|(s, _)| s.to_string_lossy().to_lowercase().contains("_only"))
+      .filter(|file| {
+        file.path.to_string_lossy().to_lowercase().contains("_only")
+      })
       .collect()
   } else {
     files
   };
   files
     .into_iter()
-    .map(|(file_path, text)| (file_path, parse_spec(text)))
+    .map(|file| (file.path, parse_spec(file.text)))
     .collect()
 }
 
@@ -106,7 +82,7 @@ fn parse_spec(text: String) -> Spec {
       if let Some(file) = current_file.take() {
         files.push(file);
       }
-      current_file = Some(File {
+      current_file = Some(SpecFile {
         specifier: specifier.to_string(),
         text: String::new(),
       });
@@ -136,16 +112,24 @@ fn parse_spec(text: String) -> Spec {
   }
 }
 
-fn get_files_in_dir_recursive(path: &Path) -> Vec<(PathBuf, String)> {
+struct CollectedFile {
+  pub path: PathBuf,
+  pub text: String,
+}
+
+fn collect_files_in_dir_recursive(path: &Path) -> Vec<CollectedFile> {
   let mut result = Vec::new();
 
   for entry in path.read_dir().unwrap().flatten() {
     let entry_path = entry.path();
     if entry_path.is_file() {
       let text = std::fs::read_to_string(&entry_path).unwrap();
-      result.push((entry_path, text));
+      result.push(CollectedFile {
+        path: entry_path,
+        text,
+      });
     } else {
-      result.extend(get_files_in_dir_recursive(&entry_path));
+      result.extend(collect_files_in_dir_recursive(&entry_path));
     }
   }
 

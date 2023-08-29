@@ -5,6 +5,7 @@
 // out of deno_graph that should be public
 
 use std::cell::RefCell;
+use std::path::PathBuf;
 use std::rc::Rc;
 
 use anyhow::anyhow;
@@ -20,9 +21,91 @@ use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
 use futures::future::LocalBoxFuture;
+use pretty_assertions::assert_eq;
+
+use crate::helpers::get_specs_in_dir;
+use crate::helpers::TestBuilder;
+
+mod helpers;
+
+#[tokio::test]
+async fn test_graph_specs() {
+  for (test_file_path, spec) in
+    get_specs_in_dir(&PathBuf::from("./tests/specs/graph"))
+  {
+    eprintln!("Running {}", test_file_path.display());
+    let mut builder = TestBuilder::new();
+    builder.with_loader(|loader| {
+      for file in &spec.files {
+        loader.add_source_with_text(file.url(), &file.text);
+      }
+    });
+
+    let result = builder.build().await;
+    let update_var = std::env::var("UPDATE");
+    let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
+    output_text.push('\n');
+    let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
+      let mut spec = spec;
+      spec.output_file.text = output_text.clone();
+      std::fs::write(&test_file_path, spec.emit()).unwrap();
+      spec
+    } else {
+      spec
+    };
+    assert_eq!(
+      output_text,
+      spec.output_file.text,
+      "Should be same for {}",
+      test_file_path.display()
+    );
+  }
+}
 
 #[cfg(feature = "type_tracing")]
-mod type_tracing;
+#[tokio::test]
+async fn test_type_tracing_specs() {
+  for (test_file_path, spec) in
+    get_specs_in_dir(&PathBuf::from("./tests/specs/type_tracing"))
+  {
+    eprintln!("Running {}", test_file_path.display());
+    let mut builder = TestBuilder::new();
+    builder.with_loader(|loader| {
+      for file in &spec.files {
+        loader.add_source_with_text(file.url(), &file.text);
+      }
+    });
+
+    let result = builder.trace().await.unwrap();
+    let update_var = std::env::var("UPDATE");
+    let diagnostics = result
+      .diagnostics
+      .iter()
+      .map(|d| serde_json::to_value(d.clone()).unwrap())
+      .collect::<Vec<_>>();
+    let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
+      let mut spec = spec;
+      spec.output_file.text = result.output.clone();
+      spec.diagnostics = diagnostics.clone();
+      std::fs::write(&test_file_path, spec.emit()).unwrap();
+      spec
+    } else {
+      spec
+    };
+    assert_eq!(
+      result.output,
+      spec.output_file.text,
+      "Should be same for {}",
+      test_file_path.display()
+    );
+    assert_eq!(
+      diagnostics,
+      spec.diagnostics,
+      "Should be same for {}",
+      test_file_path.display()
+    );
+  }
+}
 
 #[tokio::test]
 async fn test_npm_version_not_found_then_found() {
