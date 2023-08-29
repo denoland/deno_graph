@@ -1,63 +1,68 @@
-use std::cell::RefCell;
 use std::collections::BTreeMap;
 
 use anyhow::Result;
 use deno_ast::ModuleSpecifier;
 use deno_ast::SourceRanged;
-use deno_graph::type_tracer::trace_public_types;
-use deno_graph::type_tracer::ModuleSymbol;
-use deno_graph::type_tracer::RootSymbol;
-use deno_graph::type_tracer::SymbolId;
-use deno_graph::type_tracer::TypeTraceDiagnostic;
-use deno_graph::type_tracer::TypeTraceHandler;
+use deno_graph::source::MemoryLoader;
 use deno_graph::CapturingModuleAnalyzer;
 use deno_graph::DefaultModuleParser;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 
-use super::in_memory_loader::InMemoryLoader;
+#[cfg(feature = "type_tracing")]
+pub mod tracing {
+  use std::cell::RefCell;
 
-#[derive(Default)]
-struct TestTypeTraceHandler {
-  diagnostics: RefCell<Vec<TypeTraceDiagnostic>>,
-}
+  use deno_graph::type_tracer::RootSymbol;
+  use deno_graph::type_tracer::TypeTraceDiagnostic;
+  use deno_graph::type_tracer::TypeTraceHandler;
+  use deno_graph::ModuleGraph;
 
-impl TestTypeTraceHandler {
-  pub fn diagnostics(self) -> Vec<TypeTraceDiagnostic> {
-    self.diagnostics.take()
+  #[derive(Default)]
+  pub struct TestTypeTraceHandler {
+    diagnostics: RefCell<Vec<TypeTraceDiagnostic>>,
+  }
+
+  impl TestTypeTraceHandler {
+    pub fn diagnostics(self) -> Vec<TypeTraceDiagnostic> {
+      self.diagnostics.take()
+    }
+  }
+
+  impl TypeTraceHandler for TestTypeTraceHandler {
+    fn diagnostic(&self, diagnostic: TypeTraceDiagnostic) {
+      self.diagnostics.borrow_mut().push(diagnostic);
+    }
+  }
+
+  pub struct TypeTraceResult {
+    pub graph: ModuleGraph,
+    pub root_symbol: RootSymbol,
+    pub output: String,
+    pub diagnostics: Vec<TypeTraceDiagnostic>,
   }
 }
 
-impl TypeTraceHandler for TestTypeTraceHandler {
-  fn diagnostic(&self, diagnostic: TypeTraceDiagnostic) {
-    self.diagnostics.borrow_mut().push(diagnostic);
-  }
-}
-
-pub struct TypeTraceResult {
+pub struct BuildResult {
   pub graph: ModuleGraph,
-  pub root_symbol: RootSymbol,
-  pub output: String,
-  pub diagnostics: Vec<TypeTraceDiagnostic>,
 }
 
 pub struct TestBuilder {
-  loader: InMemoryLoader,
+  loader: MemoryLoader,
   entry_point: String,
 }
 
 impl TestBuilder {
   pub fn new() -> Self {
-    let loader = InMemoryLoader::default();
     Self {
-      loader,
+      loader: Default::default(),
       entry_point: "file:///mod.ts".to_string(),
     }
   }
 
   pub fn with_loader(
     &mut self,
-    mut action: impl FnMut(&mut InMemoryLoader),
+    mut action: impl FnMut(&mut MemoryLoader),
   ) -> &mut Self {
     action(&mut self.loader);
     self
@@ -69,8 +74,23 @@ impl TestBuilder {
     self
   }
 
-  pub async fn trace(&mut self) -> Result<TypeTraceResult> {
-    let handler = TestTypeTraceHandler::default();
+  pub async fn build(&mut self) -> BuildResult {
+    let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
+    let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
+    let roots = vec![entry_point_url.clone()];
+    graph
+      .build(
+        roots.clone(),
+        &mut self.loader,
+        deno_graph::BuildOptions::default(),
+      )
+      .await;
+    BuildResult { graph }
+  }
+
+  #[cfg(feature = "type_tracing")]
+  pub async fn trace(&mut self) -> Result<tracing::TypeTraceResult> {
+    let handler = tracing::TestTypeTraceHandler::default();
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
     let roots = vec![entry_point_url.clone()];
@@ -84,13 +104,13 @@ impl TestBuilder {
     let source_parser = DefaultModuleParser::new_for_analysis();
     let capturing_analyzer =
       CapturingModuleAnalyzer::new(Some(Box::new(source_parser)), None);
-    let root_symbol = trace_public_types(
+    let root_symbol = deno_graph::type_tracer::trace_public_types(
       &graph,
       &roots,
       &capturing_analyzer.as_capturing_parser(),
       &handler,
     )?;
-    Ok(TypeTraceResult {
+    Ok(tracing::TypeTraceResult {
       graph: graph.clone(),
       root_symbol: root_symbol.clone(),
       output: {
@@ -102,7 +122,8 @@ impl TestBuilder {
           output_text.push_str(&format!("{}: {:#?}\n", k.as_str(), v));
         }
         let get_symbol_text =
-          |module_symbol: &ModuleSymbol, symbol_id: SymbolId| {
+          |module_symbol: &deno_graph::type_tracer::ModuleSymbol,
+           symbol_id: deno_graph::type_tracer::SymbolId| {
             let symbol = module_symbol.symbol(symbol_id).unwrap();
             let definitions =
               root_symbol.go_to_definitions(&graph, module_symbol, symbol);
