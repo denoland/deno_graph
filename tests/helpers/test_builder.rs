@@ -1,12 +1,8 @@
-use std::collections::BTreeMap;
+// Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-use anyhow::Result;
 use deno_ast::ModuleSpecifier;
-use deno_ast::SourceRanged;
 use deno_graph::source::MemoryLoader;
 use deno_graph::BuildDiagnostic;
-use deno_graph::CapturingModuleAnalyzer;
-use deno_graph::DefaultModuleParser;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 
@@ -91,7 +87,9 @@ impl TestBuilder {
   }
 
   #[cfg(feature = "type_tracing")]
-  pub async fn trace(&mut self) -> Result<tracing::TypeTraceResult> {
+  pub async fn trace(&mut self) -> anyhow::Result<tracing::TypeTraceResult> {
+    use deno_ast::SourceRanged;
+
     let handler = tracing::TestTypeTraceHandler::default();
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
@@ -103,9 +101,11 @@ impl TestBuilder {
         deno_graph::BuildOptions::default(),
       )
       .await;
-    let source_parser = DefaultModuleParser::new_for_analysis();
-    let capturing_analyzer =
-      CapturingModuleAnalyzer::new(Some(Box::new(source_parser)), None);
+    let source_parser = deno_graph::DefaultModuleParser::new_for_analysis();
+    let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::new(
+      Some(Box::new(source_parser)),
+      None,
+    );
     let root_symbol = deno_graph::type_tracer::trace_public_types(
       &graph,
       &roots,
@@ -171,7 +171,7 @@ impl TestBuilder {
         let exports = entrypoint_symbol
           .exports(&graph, &root_symbol)
           .into_iter()
-          .collect::<BTreeMap<_, _>>();
+          .collect::<std::collections::BTreeMap<_, _>>();
         if !exports.is_empty() {
           output_text.push_str("== export definitions ==\n");
           for (name, (module_symbol, symbol_id)) in exports {

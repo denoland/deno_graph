@@ -117,14 +117,9 @@ pub fn parse_module_from_ast(
 
 #[cfg(test)]
 mod tests {
-  use crate::deno::DenoPackageInfo;
-  use crate::deno::DenoPackageVersionInfo;
   use crate::graph::ResolutionResolved;
-  use crate::source::DEFAULT_DENO_REGISTRY_URL;
 
   use super::*;
-  use deno_semver::package::PackageNv;
-  use deno_semver::Version;
   use pretty_assertions::assert_eq;
   use serde_json::json;
   use source::tests::MockResolver;

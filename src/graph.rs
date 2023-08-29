@@ -231,7 +231,7 @@ impl fmt::Display for ModuleError {
       Self::UnknownPackage { package_name, specifier, .. } =>
         write!(f, "Unknown package: {package_name}\n  Specifier: {specifier}"),
       Self::UnknownPackageReq { package_req, specifier, .. } =>
-        write!(f, "Could not find package constraint in the list of packages: {package_req}\n  Specifier: {specifier}"),
+        write!(f, "Could not find constraint in the list of versions: {package_req}\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType(specifier, MediaType::Json, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
       Self::Missing(specifier, _) => write!(f, "Module not found \"{specifier}\"."),
@@ -2436,10 +2436,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .get_mut(&nv)
             .unwrap()
             .clone()
-            .await;
+            .await
+            .and_then(|info| match resolution_item.package_ref.sub_path() {
+              Some(sub_path) => Ok((info, sub_path)),
+              None => Err(Arc::new(anyhow!(
+                "Package reference must specify a path in the package: {}",
+                resolution_item.package_ref
+              ))),
+            });
           match version_info_result {
-            Ok(version_info) => {
-              let sub_path = resolution_item.package_ref.sub_path().unwrap(); // todo: temp
+            Ok((version_info, sub_path)) => {
               eprintln!(
                 "Sub path: {:?}",
                 resolution_item.package_ref.sub_path()

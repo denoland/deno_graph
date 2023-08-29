@@ -1,0 +1,47 @@
+# https://deno-registry-staging.net/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.0": {}
+  }
+}
+
+# mod.ts
+import 'deno:@scope/a@1.0.1/mod.ts';
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "specifier": "deno:@scope/a@1.0.1/mod.ts",
+      "error": "Could not find constraint in the list of versions: @scope/a@1.0.1\n  Specifier: deno:@scope/a@1.0.1/mod.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "deno:@scope/a@1.0.1/mod.ts",
+          "code": {
+            "specifier": "deno:@scope/a@1.0.1/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 35
+              }
+            }
+          }
+        }
+      ],
+      "size": 37,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
