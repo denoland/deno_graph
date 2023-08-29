@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use anyhow::Result;
 use deno_ast::ModuleSpecifier;
 use deno_ast::SourceRanged;
@@ -8,6 +6,7 @@ use deno_graph::CapturingModuleAnalyzer;
 use deno_graph::DefaultModuleParser;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
+use std::collections::BTreeMap;
 
 #[cfg(feature = "type_tracing")]
 pub mod tracing {

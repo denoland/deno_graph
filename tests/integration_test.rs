@@ -43,7 +43,8 @@ async fn test_graph_specs() {
 
     let result = builder.build().await;
     let update_var = std::env::var("UPDATE");
-    let output_text = serde_json::to_string_pretty(&result.graph).unwrap();
+    let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
+    output_text.push('\n');
     let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
       let mut spec = spec;
       spec.output_file.text = output_text.clone();
