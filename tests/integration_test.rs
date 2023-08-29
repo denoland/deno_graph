@@ -41,7 +41,11 @@ async fn test_graph_specs() {
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
       for file in &spec.files {
-        loader.add_source_with_text(file.url(), &file.text);
+        if file.is_cache() {
+          loader.cache.add_source_with_text(file.url(), &file.text);
+        } else {
+          loader.remote.add_source_with_text(file.url(), &file.text);
+        }
       }
     });
     builder.workspace_members(spec.workspace_members.clone());
@@ -89,7 +93,11 @@ async fn test_type_tracing_specs() {
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
       for file in &spec.files {
-        loader.add_source_with_text(file.url(), &file.text);
+        if file.is_cache() {
+          loader.cache.add_source_with_text(file.url(), &file.text);
+        } else {
+          loader.remote.add_source_with_text(file.url(), &file.text);
+        }
       }
     });
 

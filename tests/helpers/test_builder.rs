@@ -1,11 +1,55 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
 use deno_ast::ModuleSpecifier;
+use deno_graph::source::CacheInfo;
+use deno_graph::source::LoadFuture;
+use deno_graph::source::Loader;
+use deno_graph::source::LoaderCacheSetting;
 use deno_graph::source::MemoryLoader;
 use deno_graph::BuildDiagnostic;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 use deno_graph::WorkspaceMember;
+
+#[derive(Default)]
+pub struct TestLoader {
+  pub cache: MemoryLoader,
+  pub remote: MemoryLoader,
+}
+
+impl Loader for TestLoader {
+  fn get_cache_info(&self, specifier: &ModuleSpecifier) -> Option<CacheInfo> {
+    self.cache.get_cache_info(specifier)
+  }
+
+  fn load_with_cache_setting(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    is_dynamic: bool,
+    cache_setting: LoaderCacheSetting,
+  ) -> LoadFuture {
+    eprintln!("SPECIFIER: {} {:?}", specifier, cache_setting);
+    match cache_setting {
+      // todo(dsherret): in the future, actually make this use the cache
+      LoaderCacheSetting::Prefer => self.remote.load_with_cache_setting(
+        specifier,
+        is_dynamic,
+        cache_setting,
+      ),
+      // todo(dsherret): in the future, make this update the cache
+      LoaderCacheSetting::Reload => self.remote.load_with_cache_setting(
+        specifier,
+        is_dynamic,
+        cache_setting,
+      ),
+      LoaderCacheSetting::Only => {
+        self
+          .cache
+          .load_with_cache_setting(specifier, is_dynamic, cache_setting)
+      }
+    }
+  }
+}
 
 #[cfg(feature = "type_tracing")]
 pub mod tracing {
@@ -47,7 +91,7 @@ pub struct BuildResult {
 }
 
 pub struct TestBuilder {
-  loader: MemoryLoader,
+  loader: TestLoader,
   entry_point: String,
   workspace_members: Vec<WorkspaceMember>,
 }
@@ -63,7 +107,7 @@ impl TestBuilder {
 
   pub fn with_loader(
     &mut self,
-    mut action: impl FnMut(&mut MemoryLoader),
+    mut action: impl FnMut(&mut TestLoader),
   ) -> &mut Self {
     action(&mut self.loader);
     self

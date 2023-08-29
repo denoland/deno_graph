@@ -2702,40 +2702,47 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let base_url = base_url.strip_suffix('/').unwrap_or(base_url);
       if let Some(sub_path) = specifier.as_str().strip_prefix(base_url) {
         if let Some(module_info) = version_info.inner.module_info(sub_path) {
-          self
-            .graph
-            .module_slots
-            .insert(specifier.clone(), ModuleSlot::Pending);
-          self.state.pending.push_back(
-            std::future::ready(PendingInfo {
-              specifier: specifier.clone(),
-              maybe_range: maybe_range.cloned(),
-              result: Ok(Some(PendingInfoResponse::Module {
-                content_or_module_info: ContentOrModuleInfo::ModuleInfo(
-                  module_info.clone(),
-                ),
-                specifier: specifier.clone(),
-                maybe_headers: None,
-              })),
-              maybe_version_info: Some(version_info.clone()),
-            })
-            .boxed_local(),
+          // Check if this specifier is in the cache. If it is, then
+          // don't use the module information as it may be out of date
+          // with what's in the cache
+          let fut = self.loader.load_with_cache_setting(
+            specifier,
+            self.in_dynamic_branch,
+            LoaderCacheSetting::Only,
           );
-          self.state.deno.pending_content_loads.push({
+          self.state.pending.push_back({
             let specifier = specifier.clone();
             let maybe_range = maybe_range.cloned();
-            let fut = self.loader.load(&specifier, self.in_dynamic_branch);
+            let version_info = version_info.clone();
             async move {
-              let result = fut.await;
-              PendingContentLoadItem {
-                specifier,
-                maybe_range,
-                result,
-                module_info,
+              let response = fut.await;
+              match response {
+                Ok(None) => PendingInfo {
+                  specifier: specifier.clone(),
+                  maybe_range,
+                  result: Ok(Some(PendingInfoResponse::Module {
+                    content_or_module_info: ContentOrModuleInfo::ModuleInfo(
+                      module_info,
+                    ),
+                    specifier,
+                    maybe_headers: None,
+                  })),
+                  maybe_version_info: Some(version_info),
+                },
+                response => PendingInfo {
+                  specifier,
+                  maybe_range,
+                  result: response.map(|r| r.map(Into::into)),
+                  maybe_version_info: Some(version_info),
+                },
               }
             }
             .boxed_local()
           });
+          self
+            .graph
+            .module_slots
+            .insert(specifier.clone(), ModuleSlot::Pending);
           return;
         }
       }
@@ -3075,10 +3082,28 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     let (content, maybe_module_analyzer) = match content_or_module_info {
       ContentOrModuleInfo::Content(content) => (content, None),
-      ContentOrModuleInfo::ModuleInfo(info) => (
-        String::new().into(),
-        Some(ProvidedModuleAnalyzer(RefCell::new(Some(info)))),
-      ),
+      ContentOrModuleInfo::ModuleInfo(info) => {
+        self.state.deno.pending_content_loads.push({
+          let specifier = specifier.clone();
+          let maybe_range = maybe_referrer.clone();
+          let module_info = info.clone();
+          let fut = self.loader.load(&specifier, self.in_dynamic_branch);
+          async move {
+            let result = fut.await;
+            PendingContentLoadItem {
+              specifier,
+              maybe_range,
+              result,
+              module_info,
+            }
+          }
+          .boxed_local()
+        });
+        (
+          String::new().into(),
+          Some(ProvidedModuleAnalyzer(RefCell::new(Some(info)))),
+        )
+      }
     };
 
     let mut module_slot = match parse_module(

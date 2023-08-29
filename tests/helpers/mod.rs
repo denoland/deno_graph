@@ -56,12 +56,19 @@ impl SpecFile {
   }
 
   pub fn url(&self) -> Url {
-    let specifier = &self.specifier;
+    let specifier = self
+      .specifier
+      .strip_prefix("cache:")
+      .unwrap_or(&self.specifier);
     if !specifier.starts_with("http") && !specifier.starts_with("file") {
       Url::parse(&format!("file:///{}", specifier)).unwrap()
     } else {
       Url::parse(specifier).unwrap()
     }
+  }
+
+  pub fn is_cache(&self) -> bool {
+    self.specifier.starts_with("cache:")
   }
 }
 
