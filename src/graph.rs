@@ -2100,26 +2100,15 @@ struct PendingContentLoadItem {
   module_info: ModuleInfo,
 }
 
+type PendingResult<T> =
+  Shared<LocalBoxFuture<'static, Result<T, Arc<anyhow::Error>>>>;
+
 #[derive(Default)]
 struct PendingDenoState {
-  pending_package_info_loads: HashMap<
-    String,
-    Shared<
-      LocalBoxFuture<
-        'static,
-        Result<Option<Arc<DenoPackageInfo>>, Arc<anyhow::Error>>,
-      >,
-    >,
-  >,
-  pending_package_version_info_loads: HashMap<
-    PackageNv,
-    Shared<
-      LocalBoxFuture<
-        'static,
-        Result<Arc<DenoPackageVersionInfo>, Arc<anyhow::Error>>,
-      >,
-    >,
-  >,
+  pending_package_info_loads:
+    HashMap<String, PendingResult<Option<Arc<DenoPackageInfo>>>>,
+  pending_package_version_info_loads:
+    HashMap<PackageNv, PendingResult<Arc<DenoPackageVersionInfo>>>,
   pending_resolutions: Vec<PendingDenoResolutionItem>,
   pending_content_loads:
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
@@ -2300,7 +2289,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           maybe_version_info,
         }) => match result {
           Ok(Some(response)) => {
-            eprintln!("Looking at: {}", specifier);
             let assert_types =
               self.state.pending_specifiers.remove(&specifier).unwrap();
             for maybe_assert_type in assert_types {
@@ -2427,7 +2415,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         }
 
         for (nv, resolution_item) in pending_version_resolutions {
-          eprintln!("Looking at pending version resolution: {}", nv);
           // now try loading the version information
           let version_info_result = self
             .state
@@ -2446,17 +2433,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             });
           match version_info_result {
             Ok((version_info, sub_path)) => {
-              eprintln!(
-                "Sub path: {:?}",
-                resolution_item.package_ref.sub_path()
-              );
               let base_url = self
                 .loader
                 .registry_url()
                 .join(&format!("{}/{}/", nv.name, nv.version))
                 .unwrap();
               let specifier = base_url.join(sub_path).unwrap();
-              eprintln!("SPECIFIER: {}", specifier);
               self
                 .graph
                 .redirects
@@ -2474,7 +2456,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               );
             }
             Err(err) => {
-              eprintln!("FAILED");
               self.graph.module_slots.insert(
                 resolution_item.specifier.clone(),
                 ModuleSlot::Err(ModuleGraphError::ModuleError(
@@ -2522,7 +2503,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     // now handle any pending content loads from the Deno registry
     while let Some(item) = self.state.deno.pending_content_loads.next().await {
-      eprintln!("HANDLING CONTENT LOAD: {}", item.specifier);
       match item.result {
         Ok(Some(response)) => {
           match response {
@@ -2545,10 +2525,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               specifier,
               maybe_headers: _maybe_headers,
             } => {
-              eprintln!(
-                "HANDLING MODULE RESPONSE: {} {}",
-                specifier, item.specifier
-              );
               if specifier == item.specifier {
                 self.loader.cache_module_info(
                   &specifier,
@@ -2725,9 +2701,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let base_url = version_info.base_url.as_str();
       let base_url = base_url.strip_suffix('/').unwrap_or(base_url);
       if let Some(sub_path) = specifier.as_str().strip_prefix(base_url) {
-        eprintln!("Sub path: {}", sub_path);
         if let Some(module_info) = version_info.inner.module_info(sub_path) {
-          eprintln!("Using moudle info for {}", sub_path);
           self
             .graph
             .module_slots
@@ -2778,15 +2752,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 .version_req
                 .matches(&workspace_member.nv.version)
               {
-                eprintln!(
-                  "MATCHED: {} ({})",
-                  workspace_member.nv, workspace_member.base
-                );
                 let mut load_specifier = workspace_member.base.clone();
                 if let Some(sub_path) = package_ref.sub_path() {
                   load_specifier = load_specifier.join(sub_path).unwrap();
                 }
-                eprintln!("Load specifier: {}", load_specifier);
                 let specifier = specifier.clone();
                 self.load_pending_module(
                   &specifier,
@@ -2970,7 +2939,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let data = fut.await.map_err(Arc::new)?;
       match data {
         Some(LoadResponse::Module { content, .. }) => {
-          eprintln!("LOADING CONTENT: {}", content);
           let package_info: DenoPackageInfo =
             serde_json::from_str(&content).map_err(|e| Arc::new(e.into()))?;
           Ok(Some(Arc::new(package_info)))
