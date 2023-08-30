@@ -2773,113 +2773,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     let maybe_range = maybe_range.map(ToOwned::to_owned);
     if specifier.scheme() == "deno" {
-      match DenoPackageReqReference::from_specifier(specifier) {
-        Ok(package_ref) => {
-          for workspace_member in &self.workspace_members {
-            if workspace_member.nv.name == package_ref.req().name {
-              if package_ref
-                .req()
-                .version_req
-                .matches(&workspace_member.nv.version)
-              {
-                let mut load_specifier = workspace_member.base.clone();
-                if let Some(sub_path) = package_ref.sub_path() {
-                  load_specifier = load_specifier.join(sub_path).unwrap();
-                }
-                let specifier = specifier.clone();
-                self.load_pending_module(
-                  &specifier,
-                  maybe_range,
-                  &load_specifier,
-                  is_dynamic,
-                );
-                return;
-              } else {
-                self.diagnostics.push(BuildDiagnostic {
-                  maybe_range: maybe_range.clone(),
-                  kind:
-                    BuildDiagnosticKind::ConstraintNotMatchedWorkspaceVersion {
-                      reference: package_ref.clone(),
-                      workspace_version: workspace_member.nv.version.clone(),
-                    },
-                });
-              }
-            }
-          }
-
-          let package_name = &package_ref.req().name;
-          let specifier = specifier.clone();
-          self.queue_load_package_info(package_name);
-          self
-            .state
-            .deno
-            .pending_resolutions
-            .push(PendingDenoResolutionItem {
-              specifier,
-              package_ref,
-              maybe_range,
-            });
-        }
-        Err(err) => {
-          self.graph.module_slots.insert(
-            specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::ModuleError(
-              ModuleError::LoadingErr(
-                specifier.clone(),
-                maybe_range,
-                Arc::new(err.into()),
-              ),
-            )),
-          );
-        }
-      }
+      self.load_deno_specifier(specifier.clone(), maybe_range, is_dynamic);
       return;
-    } else if let Some(npm_resolver) = &self.npm_resolver {
+    } else if let Some(npm_resolver) = self.npm_resolver {
       if specifier.scheme() == "npm" {
-        match NpmPackageReqReference::from_specifier(specifier) {
-          Ok(package_ref) => {
-            if self
-              .state
-              .npm
-              .requested_registry_info_loads
-              .insert(package_ref.req().name.clone())
-            {
-              // request to load
-              let package_name = package_ref.req().name.clone();
-              let fut =
-                npm_resolver.load_and_cache_npm_package_info(&package_name);
-              self.state.npm.pending_registry_info_loads.push(Box::pin(
-                async move {
-                  PendingNpmRegistryInfoLoad {
-                    package_name,
-                    result: fut.await.map_err(Arc::new),
-                  }
-                },
-              ));
-            }
-            self
-              .state
-              .npm
-              .pending_resolutions
-              .push(PendingNpmResolutionItem {
-                specifier: specifier.clone(),
-                package_ref,
-                maybe_range,
-              });
-          }
-          Err(err) => {
-            self.graph.module_slots.insert(
-              specifier.clone(),
-              ModuleSlot::Err(ModuleGraphError::ModuleError(
-                ModuleError::LoadingErr(
-                  specifier.clone(),
-                  maybe_range,
-                  Arc::new(err.into()),
-                ),
-              )),
-            );
-          }
-        }
+        self.load_npm_specifier(specifier.clone(), npm_resolver, maybe_range);
         return;
       }
 
@@ -2916,6 +2814,124 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     let specifier = specifier.clone();
     self.load_pending_module(&specifier, maybe_range, &specifier, is_dynamic);
+  }
+
+  fn load_deno_specifier(
+    &mut self,
+    specifier: Url,
+    maybe_range: Option<Range>,
+    is_dynamic: bool,
+  ) {
+    match DenoPackageReqReference::from_specifier(&specifier) {
+      Ok(package_ref) => {
+        for workspace_member in &self.workspace_members {
+          if workspace_member.nv.name == package_ref.req().name {
+            if package_ref
+              .req()
+              .version_req
+              .matches(&workspace_member.nv.version)
+            {
+              let mut load_specifier = workspace_member.base.clone();
+              if let Some(sub_path) = package_ref.sub_path() {
+                load_specifier = load_specifier.join(sub_path).unwrap();
+              }
+              self.load_pending_module(
+                &specifier,
+                maybe_range.clone(),
+                &load_specifier,
+                is_dynamic,
+              );
+              return;
+            } else {
+              self.diagnostics.push(BuildDiagnostic {
+                maybe_range: maybe_range.clone(),
+                kind:
+                  BuildDiagnosticKind::ConstraintNotMatchedWorkspaceVersion {
+                    reference: package_ref.clone(),
+                    workspace_version: workspace_member.nv.version.clone(),
+                  },
+              });
+            }
+          }
+        }
+
+        let package_name = &package_ref.req().name;
+        let specifier = specifier.clone();
+        self.queue_load_package_info(package_name);
+        self
+          .state
+          .deno
+          .pending_resolutions
+          .push(PendingDenoResolutionItem {
+            specifier,
+            package_ref,
+            maybe_range,
+          });
+      }
+      Err(err) => {
+        self.graph.module_slots.insert(
+          specifier.clone(),
+          ModuleSlot::Err(ModuleGraphError::ModuleError(
+            ModuleError::LoadingErr(
+              specifier,
+              maybe_range,
+              Arc::new(err.into()),
+            ),
+          )),
+        );
+      }
+    }
+  }
+
+  fn load_npm_specifier(
+    &mut self,
+    specifier: Url,
+    npm_resolver: &dyn NpmResolver,
+    maybe_range: Option<Range>,
+  ) {
+    match NpmPackageReqReference::from_specifier(&specifier) {
+      Ok(package_ref) => {
+        if self
+          .state
+          .npm
+          .requested_registry_info_loads
+          .insert(package_ref.req().name.clone())
+        {
+          // request to load
+          let package_name = package_ref.req().name.clone();
+          let fut = npm_resolver.load_and_cache_npm_package_info(&package_name);
+          self.state.npm.pending_registry_info_loads.push(Box::pin(
+            async move {
+              PendingNpmRegistryInfoLoad {
+                package_name,
+                result: fut.await.map_err(Arc::new),
+              }
+            },
+          ));
+        }
+        self
+          .state
+          .npm
+          .pending_resolutions
+          .push(PendingNpmResolutionItem {
+            specifier,
+            package_ref,
+            maybe_range,
+          });
+      }
+      Err(err) => {
+        self.graph.module_slots.insert(
+          specifier.clone(),
+          ModuleSlot::Err(ModuleGraphError::ModuleError(
+            ModuleError::LoadingErr(
+              specifier,
+              maybe_range,
+              Arc::new(err.into()),
+            ),
+          )),
+        );
+      }
+    }
   }
 
   fn load_pending_module(
