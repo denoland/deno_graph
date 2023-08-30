@@ -22,8 +22,8 @@ pub use analyzer::analyze_deno_types;
 pub use analyzer::Comment;
 pub use analyzer::DependencyDescriptor;
 pub use analyzer::DependencyKind;
-pub use analyzer::ImportAssertion;
-pub use analyzer::ImportAssertions;
+pub use analyzer::ImportAttribute;
+pub use analyzer::ImportAttributes;
 pub use analyzer::ModuleAnalyzer;
 pub use analyzer::ModuleInfo;
 pub use analyzer::PositionRange;
@@ -1632,7 +1632,7 @@ export function a(a) {
   }
 
   #[tokio::test]
-  async fn test_build_graph_import_assertions() {
+  async fn test_build_graph_import_attributes() {
     let mut loader = setup(
       vec![
         (
@@ -1641,11 +1641,11 @@ export function a(a) {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
             content: r#"
-            import a from "./a.json" assert { type: "json" };
-            const b = await import("./b.json", { assert: { type: "json" } });
-            export * as c from "./c.json" assert { type: "json" };
+            import a from "./a.json" with { type: "json" };
+            const b = await import("./b.json", { with: { type: "json" } });
+            export * as c from "./c.json" with { type: "json" };
             const json = "json";
-            const d = await import("./d.json", { assert: { type: json } });
+            const d = await import("./d.json", { with: { type: json } });
             "#,
           },
         ),
@@ -1799,7 +1799,7 @@ export function a(a) {
             ],
             "kind": "esm",
             "mediaType": "TypeScript",
-            "size": 329,
+            "size": 321,
             "specifier": "file:///a/test01.ts"
           }
         ],
@@ -1968,7 +1968,7 @@ export function a(a) {
         "modules": [
           {
             "specifier": "file:///a/a.json",
-            "error": "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: file:///a/a.json"
+            "error": "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: file:///a/a.json"
           },
           {
             "kind": "asserted",
@@ -1982,7 +1982,7 @@ export function a(a) {
           },
           {
             "specifier": "file:///a/d.json",
-            "error": "The import assertion type of \"css\" is unsupported.\n  Specifier: file:///a/d.json"
+            "error": "The import attribute type of \"css\" is unsupported.\n  Specifier: file:///a/d.json"
           },
           {
             "specifier": "file:///a/e.wasm",
