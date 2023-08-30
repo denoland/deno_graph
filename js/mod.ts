@@ -58,7 +58,7 @@ export interface CreateGraphOptions {
   load?(
     specifier: string,
     isDynamic: boolean,
-    cacheSetting: CacheSetting
+    cacheSetting: CacheSetting,
   ): Promise<LoadResponse | undefined>;
   /** The type of graph to build. `"all"` includes all dependencies of the
    * roots. `"typesOnly"` skips any code only dependencies that do not impact
