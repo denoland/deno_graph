@@ -2256,29 +2256,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .filter(|r| !self.graph.imports.contains_key(&r.referrer))
       .cloned()
       .collect::<Vec<_>>();
+
     self.graph.roots.extend(roots.clone());
+
     for root in roots {
       self.load(&root, None, self.in_dynamic_branch, None, None);
     }
 
-    // Process any imports that are being added to the graph.
-    for referrer_imports in imports {
-      let referrer = referrer_imports.referrer;
-      let imports = referrer_imports.imports;
-      let graph_import = GraphImport::new(&referrer, imports, self.resolver);
-      for dep in graph_import.dependencies.values() {
-        if let Resolution::Ok(resolved) = &dep.maybe_type {
-          self.load(
-            &resolved.specifier,
-            Some(&resolved.range),
-            self.in_dynamic_branch,
-            None,
-            None,
-          );
-        }
-      }
-      self.graph.imports.insert(referrer, graph_import);
-    }
+    // process any imports that are being added to the graph.
+    self.handle_provided_imports(imports);
 
     loop {
       let specifier = match self.state.pending.next().await {
@@ -2327,6 +2313,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         },
         None => None,
       };
+
       if let (Some(specifier), Some(reporter)) = (specifier, self.reporter) {
         let modules_total = self.graph.module_slots.len();
         let modules_done = modules_total - self.state.pending.len();
@@ -2334,174 +2321,212 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
 
       if self.state.pending.is_empty() {
-        // resolve all the pending deno specifiers
-        let pending_resolutions =
-          std::mem::take(&mut self.state.deno.pending_resolutions);
-        let mut pending_version_resolutions =
-          Vec::with_capacity(pending_resolutions.len());
-        for pending_resolution in pending_resolutions {
-          let package_name = &pending_resolution.package_ref.req().name;
-          let fut = self
-            .state
-            .deno
-            .pending_package_info_loads
-            .get(package_name)
-            .unwrap()
-            .clone();
-          match fut.await {
-            Ok(Some(info)) => {
-              // resolve the best version out of the existing versions first
-              let package_req = pending_resolution.package_ref.req();
-              match self.resolve_deno_version(&info, package_req) {
-                Some(version) => {
-                  // now queue a pending load for that version information
-                  let package_nv = PackageNv {
-                    name: package_name.clone(),
-                    version,
-                  };
-                  self
-                    .graph
-                    .deno_specifiers
-                    .add(package_req.clone(), package_nv.clone());
-
-                  self.queue_load_package_version_info(&package_nv);
-                  pending_version_resolutions
-                    .push((package_nv, pending_resolution));
-                }
-                None => {
-                  if self.fill_pass_mode == FillPassMode::AllowRestart {
-                    self.restart(provided_roots, provided_imports).await;
-                    return;
-                  } else {
-                    self.graph.module_slots.insert(
-                      pending_resolution.specifier.clone(),
-                      ModuleSlot::Err(ModuleGraphError::ModuleError(
-                        ModuleError::UnknownPackageReq {
-                          specifier: pending_resolution.specifier.clone(),
-                          maybe_range: pending_resolution.maybe_range.clone(),
-                          package_req: package_req.clone(),
-                        },
-                      )),
-                    );
-                  }
-                }
-              }
-            }
-            Ok(None) => {
-              self.graph.module_slots.insert(
-                pending_resolution.specifier.clone(),
-                ModuleSlot::Err(ModuleGraphError::ModuleError(
-                  ModuleError::UnknownPackage {
-                    specifier: pending_resolution.specifier.clone(),
-                    maybe_range: pending_resolution.maybe_range.clone(),
-                    package_name: package_name.clone(),
-                  },
-                )),
-              );
-            }
-            Err(err) => {
-              self.graph.module_slots.insert(
-                pending_resolution.specifier.clone(),
-                ModuleSlot::Err(ModuleGraphError::ModuleError(
-                  ModuleError::LoadingErr(
-                    pending_resolution.specifier,
-                    pending_resolution.maybe_range,
-                    err.clone(),
-                  ),
-                )),
-              );
-            }
-          }
+        let should_restart = self.resolve_pending_deno_specifiers().await;
+        if should_restart {
+          self.restart(provided_roots, provided_imports).await;
+          return;
         }
 
-        for (nv, resolution_item) in pending_version_resolutions {
-          // now try loading the version information
-          let version_info_result = self
-            .state
-            .deno
-            .pending_package_version_info_loads
-            .get_mut(&nv)
-            .unwrap()
-            .clone()
-            .await
-            .and_then(|info| match resolution_item.package_ref.sub_path() {
-              Some(sub_path) => Ok((info, sub_path)),
-              None => Err(Arc::new(anyhow!(
-                "Missing path in package specifier '{0}' (ex. specify {0}/mod.ts)",
-                resolution_item.package_ref
-              ))),
-            });
-          match version_info_result {
-            Ok((version_info, sub_path)) => {
-              let base_url = self
-                .loader
-                .registry_url()
-                .join(&format!("{}/{}/", nv.name, nv.version))
-                .unwrap();
-              let specifier = base_url.join(sub_path).unwrap();
-              self
-                .graph
-                .redirects
-                .insert(resolution_item.specifier, specifier.clone());
-              let version_info = DenoPackageVersionInfoExt {
-                base_url,
-                inner: version_info,
-              };
-              self.load(
-                &specifier,
-                resolution_item.maybe_range.as_ref(),
-                self.in_dynamic_branch,
-                None,
-                Some(&version_info),
-              );
-            }
-            Err(err) => {
-              self.graph.module_slots.insert(
-                resolution_item.specifier.clone(),
-                ModuleSlot::Err(ModuleGraphError::ModuleError(
-                  ModuleError::LoadingErr(
-                    resolution_item.specifier,
-                    resolution_item.maybe_range,
-                    err.clone(),
-                  ),
-                )),
-              );
-            }
-          }
-        }
-      }
+        if self.state.pending.is_empty() {
+          self.resolve_dynamic_branches();
 
-      if self.state.pending.is_empty() {
-        // Start visiting queued up dynamic branches. We do this in a separate
-        // pass after all static dependencies have been visited because:
-        // - If a module is both statically and dynamically imported, we want
-        //   the static import to take precedence and only load it with
-        //   `is_dynamic: false`.
-        // - It's more convenient for tracking whether or not we are currently
-        //   visiting a dynamic branch.
-        if !self.in_dynamic_branch {
-          self.in_dynamic_branch = true;
-          for (specifier, (range, maybe_assert_type)) in
-            std::mem::take(&mut self.state.dynamic_branches)
-          {
-            if !self.graph.module_slots.contains_key(&specifier) {
-              self.load(
-                &specifier,
-                Some(&range),
-                true,
-                maybe_assert_type,
-                None,
-              );
-            }
+          if self.state.pending.is_empty() {
+            break;
           }
         }
-      }
-      if self.state.pending.is_empty() {
-        break;
       }
     }
 
-    // now handle any pending content loads from the Deno registry
+    // handle any pending content loads from the Deno registry
+    self.handle_deno_registry_pending_content_loads().await;
+
+    // enrich with cache info from the loader
+    self.fill_graph_with_cache_info();
+
+    // resolve any npm package requirements
+    NpmSpecifierResolver::fill_builder(self).await;
+  }
+
+  fn handle_provided_imports(&mut self, imports: Vec<ReferrerImports>) {
+    for referrer_imports in imports {
+      let referrer = referrer_imports.referrer;
+      let imports = referrer_imports.imports;
+      let graph_import = GraphImport::new(&referrer, imports, self.resolver);
+      for dep in graph_import.dependencies.values() {
+        if let Resolution::Ok(resolved) = &dep.maybe_type {
+          self.load(
+            &resolved.specifier,
+            Some(&resolved.range),
+            self.in_dynamic_branch,
+            None,
+            None,
+          );
+        }
+      }
+      self.graph.imports.insert(referrer, graph_import);
+    }
+  }
+
+  async fn resolve_pending_deno_specifiers(&mut self) -> bool {
+    // first load the package information
+    let pending_resolutions =
+      std::mem::take(&mut self.state.deno.pending_resolutions);
+    let mut pending_version_resolutions =
+      Vec::with_capacity(pending_resolutions.len());
+    for pending_resolution in pending_resolutions {
+      let package_name = &pending_resolution.package_ref.req().name;
+      let fut = self
+        .state
+        .deno
+        .pending_package_info_loads
+        .get(package_name)
+        .unwrap()
+        .clone();
+      match fut.await {
+        Ok(Some(info)) => {
+          // resolve the best version out of the existing versions first
+          let package_req = pending_resolution.package_ref.req();
+          match self.resolve_deno_version(&info, package_req) {
+            Some(version) => {
+              // now queue a pending load for that version information
+              let package_nv = PackageNv {
+                name: package_name.clone(),
+                version,
+              };
+              self
+                .graph
+                .deno_specifiers
+                .add(package_req.clone(), package_nv.clone());
+
+              self.queue_load_package_version_info(&package_nv);
+              pending_version_resolutions
+                .push((package_nv, pending_resolution));
+            }
+            None => {
+              if self.fill_pass_mode == FillPassMode::AllowRestart {
+                return true; // restart
+              } else {
+                self.graph.module_slots.insert(
+                  pending_resolution.specifier.clone(),
+                  ModuleSlot::Err(ModuleGraphError::ModuleError(
+                    ModuleError::UnknownPackageReq {
+                      specifier: pending_resolution.specifier.clone(),
+                      maybe_range: pending_resolution.maybe_range.clone(),
+                      package_req: package_req.clone(),
+                    },
+                  )),
+                );
+              }
+            }
+          }
+        }
+        Ok(None) => {
+          self.graph.module_slots.insert(
+            pending_resolution.specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::UnknownPackage {
+                specifier: pending_resolution.specifier.clone(),
+                maybe_range: pending_resolution.maybe_range.clone(),
+                package_name: package_name.clone(),
+              },
+            )),
+          );
+        }
+        Err(err) => {
+          self.graph.module_slots.insert(
+            pending_resolution.specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::LoadingErr(
+                pending_resolution.specifier,
+                pending_resolution.maybe_range,
+                err.clone(),
+              ),
+            )),
+          );
+        }
+      }
+    }
+
+    // now resolve the version information
+    for (nv, resolution_item) in pending_version_resolutions {
+      let version_info_result = self
+        .state
+        .deno
+        .pending_package_version_info_loads
+        .get_mut(&nv)
+        .unwrap()
+        .clone()
+        .await
+        .and_then(|info| match resolution_item.package_ref.sub_path() {
+          Some(sub_path) => Ok((info, sub_path)),
+          None => Err(Arc::new(anyhow!(
+            "Missing path in package specifier '{0}' (ex. specify {0}/mod.ts)",
+            resolution_item.package_ref
+          ))),
+        });
+      match version_info_result {
+        Ok((version_info, sub_path)) => {
+          let base_url = self
+            .loader
+            .registry_url()
+            .join(&format!("{}/{}/", nv.name, nv.version))
+            .unwrap();
+          let specifier = base_url.join(sub_path).unwrap();
+          self
+            .graph
+            .redirects
+            .insert(resolution_item.specifier, specifier.clone());
+          let version_info = DenoPackageVersionInfoExt {
+            base_url,
+            inner: version_info,
+          };
+          self.load(
+            &specifier,
+            resolution_item.maybe_range.as_ref(),
+            self.in_dynamic_branch,
+            None,
+            Some(&version_info),
+          );
+        }
+        Err(err) => {
+          self.graph.module_slots.insert(
+            resolution_item.specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::LoadingErr(
+                resolution_item.specifier,
+                resolution_item.maybe_range,
+                err.clone(),
+              ),
+            )),
+          );
+        }
+      }
+    }
+
+    false // no restart
+  }
+
+  fn resolve_dynamic_branches(&mut self) {
+    // Start visiting queued up dynamic branches. We do this in a separate
+    // pass after all static dependencies have been visited because:
+    // - If a module is both statically and dynamically imported, we want
+    //   the static import to take precedence and only load it with
+    //   `is_dynamic: false`.
+    // - It's more convenient for tracking whether or not we are currently
+    //   visiting a dynamic branch.
+    if !self.in_dynamic_branch {
+      self.in_dynamic_branch = true;
+      for (specifier, (range, maybe_assert_type)) in
+        std::mem::take(&mut self.state.dynamic_branches)
+      {
+        if !self.graph.module_slots.contains_key(&specifier) {
+          self.load(&specifier, Some(&range), true, maybe_assert_type, None);
+        }
+      }
+    }
+  }
+
+  async fn handle_deno_registry_pending_content_loads(&mut self) {
     while let Some(item) = self.state.deno.pending_content_loads.next().await {
       match item.result {
         Ok(Some(response)) => {
@@ -2596,8 +2621,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         }
       }
     }
+  }
 
-    // Enrich with cache info from the loader
+  fn fill_graph_with_cache_info(&mut self) {
     for slot in self.graph.module_slots.values_mut() {
       if let ModuleSlot::Module(ref mut module) = slot {
         match module {
@@ -2613,9 +2639,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         }
       }
     }
-
-    // Now resolve any npm package requirements
-    NpmSpecifierResolver::fill_builder(self).await;
   }
 
   fn restart(
