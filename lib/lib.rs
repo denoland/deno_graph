@@ -74,11 +74,12 @@ impl Loader for JsLoader {
       let arg1 = JsValue::from(specifier.to_string());
       let arg2 = JsValue::from(is_dynamic);
       let arg3 = JsValue::from(match cache_setting {
-        LoaderCacheSetting::Prefer => 0,
-        LoaderCacheSetting::Reload => 1,
-        LoaderCacheSetting::Only => 3,
+        // note: keep these values aligned with deno_cache
+        LoaderCacheSetting::Only => "only",
+        LoaderCacheSetting::Prefer => "prefer",
+        LoaderCacheSetting::Reload => "reload",
       });
-      let result = self.load.call2(&context, &arg1, &arg2);
+      let result = self.load.call3(&context, &arg1, &arg2, &arg3);
       let f = async move {
         let response = match result {
           Ok(result) => {

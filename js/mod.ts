@@ -40,6 +40,9 @@ export type {
   TypesDependency,
 } from "./types.d.ts";
 
+// note: keep this in line with deno_cache
+export type CacheSetting = "only" | "use" | "reload";
+
 export interface CreateGraphOptions {
   /**
    * A callback that is called with the URL string of the resource to be loaded
@@ -55,6 +58,7 @@ export interface CreateGraphOptions {
   load?(
     specifier: string,
     isDynamic: boolean,
+    cacheSetting: CacheSetting
   ): Promise<LoadResponse | undefined>;
   /** The type of graph to build. `"all"` includes all dependencies of the
    * roots. `"typesOnly"` skips any code only dependencies that do not impact

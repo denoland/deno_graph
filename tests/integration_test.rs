@@ -257,7 +257,7 @@ async fn test_deno_version_not_found_then_found() {
             content: "import 'deno:@scope/a@1.2/mod.ts".into(),
           }))
         }),
-        "https://deno-registry-staging.net/@scope/a/meta.json" => {
+        "https://registry-staging.deno.com/@scope/a/meta.json" => {
           Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
@@ -275,7 +275,7 @@ async fn test_deno_version_not_found_then_found() {
             }))
           })
         }
-        "https://deno-registry-staging.net/@scope/a/1.2.0_meta.json" => {
+        "https://registry-staging.deno.com/@scope/a/1.2.0_meta.json" => {
           Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
@@ -284,7 +284,7 @@ async fn test_deno_version_not_found_then_found() {
             }))
           })
         }
-        "https://deno-registry-staging.net/@scope/a/1.2.0/mod.ts" => {
+        "https://registry-staging.deno.com/@scope/a/1.2.0/mod.ts" => {
           Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
@@ -313,21 +313,21 @@ async fn test_deno_version_not_found_then_found() {
     vec![
       ("file:///main.ts".to_string(), LoaderCacheSetting::Prefer),
       (
-        "https://deno-registry-staging.net/@scope/a/meta.json".to_string(),
+        "https://registry-staging.deno.com/@scope/a/meta.json".to_string(),
         LoaderCacheSetting::Prefer
       ),
       ("file:///main.ts".to_string(), LoaderCacheSetting::Prefer),
       (
-        "https://deno-registry-staging.net/@scope/a/meta.json".to_string(),
+        "https://registry-staging.deno.com/@scope/a/meta.json".to_string(),
         LoaderCacheSetting::Reload
       ),
       (
-        "https://deno-registry-staging.net/@scope/a/1.2.0_meta.json"
+        "https://registry-staging.deno.com/@scope/a/1.2.0_meta.json"
           .to_string(),
         LoaderCacheSetting::Reload
       ),
       (
-        "https://deno-registry-staging.net/@scope/a/1.2.0/mod.ts".to_string(),
+        "https://registry-staging.deno.com/@scope/a/1.2.0/mod.ts".to_string(),
         LoaderCacheSetting::Prefer
       ),
     ]

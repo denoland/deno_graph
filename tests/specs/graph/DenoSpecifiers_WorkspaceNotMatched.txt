@@ -10,14 +10,14 @@
   }
 ]
 
-# https://deno-registry-staging.net/@scope/b/meta.json
+# https://registry-staging.deno.com/@scope/b/meta.json
 {
   "versions": {
     "2.0.3": {}
   }
 }
 
-# https://deno-registry-staging.net/@scope/b/2.0.3_meta.json
+# https://registry-staging.deno.com/@scope/b/2.0.3_meta.json
 {}
 
 # mod.ts
@@ -134,12 +134,12 @@ console.log("Test");
       "specifier": "file:///mod.ts"
     },
     {
-      "specifier": "https://deno-registry-staging.net/@scope/b/2.0.3/mod.ts",
-      "error": "Module not found \"https://deno-registry-staging.net/@scope/b/2.0.3/mod.ts\"."
+      "specifier": "https://registry-staging.deno.com/@scope/b/2.0.3/mod.ts",
+      "error": "Module not found \"https://registry-staging.deno.com/@scope/b/2.0.3/mod.ts\"."
     }
   ],
   "redirects": {
-    "deno:@scope/b@2.0.3/mod.ts": "https://deno-registry-staging.net/@scope/b/2.0.3/mod.ts",
+    "deno:@scope/b@2.0.3/mod.ts": "https://registry-staging.deno.com/@scope/b/2.0.3/mod.ts",
     "deno:@scope/b@2/mod.ts": "file:///members/b/mod.ts"
   },
   "deno": {

@@ -1,4 +1,4 @@
-# https://deno-registry-staging.net/@scope/a/meta.json
+# https://registry-staging.deno.com/@scope/a/meta.json
 {
   "versions": {
     "1.0.0": {}

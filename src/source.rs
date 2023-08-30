@@ -73,13 +73,6 @@ pub type LoadFuture = LocalBoxFuture<'static, LoadResult>;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum LoaderCacheSetting {
-  /// The implementation should prefer using the cache.
-  Prefer,
-  /// Loads a specifier where the implementation should not load
-  /// from an internal cache. This is only ever done when loading
-  /// `deno:` specifier module information and the version constraint
-  /// cannot be resolved.
-  Reload,
   /// Attempts to load a specifier from the cache.
   ///
   /// This is used to see whether the specifier is in the cache for `deno:` specifiers.
@@ -87,10 +80,17 @@ pub enum LoaderCacheSetting {
   /// * If not, then it will use the manifest information to do resolution and
   ///   issue a separate request to the `load` method in order to get the source.
   Only,
+  /// The implementation should prefer using the cache.
+  Prefer,
+  /// Loads a specifier where the implementation should not load
+  /// from an internal cache. This is only ever done when loading
+  /// `deno:` specifier module information and the version constraint
+  /// cannot be resolved.
+  Reload,
 }
 
 pub static DEFAULT_DENO_REGISTRY_URL: Lazy<Url> =
-  Lazy::new(|| Url::parse("https://deno-registry-staging.net").unwrap());
+  Lazy::new(|| Url::parse("https://registry-staging.deno.com").unwrap());
 
 /// A trait which allows asynchronous loading of source files into a module
 /// graph in a thread safe way as well as a way to provide additional meta data
