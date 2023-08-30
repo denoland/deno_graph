@@ -28,7 +28,6 @@ impl Loader for TestLoader {
     is_dynamic: bool,
     cache_setting: LoaderCacheSetting,
   ) -> LoadFuture {
-    eprintln!("SPECIFIER: {} {:?}", specifier, cache_setting);
     match cache_setting {
       // todo(dsherret): in the future, actually make this use the cache
       LoaderCacheSetting::Prefer => self.remote.load_with_cache_setting(

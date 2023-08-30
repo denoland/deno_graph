@@ -2345,7 +2345,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .state
             .deno
             .pending_package_info_loads
-            .get_mut(package_name)
+            .get(package_name)
             .unwrap()
             .clone();
           match fut.await {
