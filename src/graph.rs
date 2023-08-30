@@ -11,22 +11,32 @@ use crate::DefaultModuleAnalyzer;
 use crate::ImportAssertions;
 use crate::ReferrerImports;
 
+use crate::deno::resolve_version;
+use crate::deno::DenoPackageInfo;
+use crate::deno::DenoPackageVersionInfo;
+use crate::deno::DenoSpecifierSnapshot;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
 use crate::source::*;
 
+use anyhow::anyhow;
 use anyhow::Error;
 use anyhow::Result;
+use deno_ast::Diagnostic;
 use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
+use deno_semver::deno::DenoPackageReqReference;
 use deno_semver::npm::NpmPackageNvReference;
 use deno_semver::npm::NpmPackageReqReference;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageNvReference;
+use deno_semver::package::PackageReq;
+use deno_semver::Version;
 use futures::future::LocalBoxFuture;
+use futures::future::Shared;
 use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
@@ -37,6 +47,7 @@ use serde::ser::SerializeStruct;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
+use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -44,6 +55,7 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::fmt;
 use std::sync::Arc;
+use url::Url;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct Position {
@@ -138,6 +150,16 @@ pub enum ModuleError {
   LoadingErr(ModuleSpecifier, Option<Range>, Arc<anyhow::Error>),
   Missing(ModuleSpecifier, Option<Range>),
   MissingDynamic(ModuleSpecifier, Range),
+  UnknownPackage {
+    specifier: ModuleSpecifier,
+    maybe_range: Option<Range>,
+    package_name: String,
+  },
+  UnknownPackageReq {
+    specifier: ModuleSpecifier,
+    maybe_range: Option<Range>,
+    package_req: PackageReq,
+  },
   ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
   UnsupportedMediaType(ModuleSpecifier, MediaType, Option<Range>),
   InvalidTypeAssertion {
@@ -161,6 +183,8 @@ impl ModuleError {
       | Self::UnsupportedMediaType(s, _, _)
       | Self::Missing(s, _)
       | Self::MissingDynamic(s, _)
+      | Self::UnknownPackage { specifier: s, .. }
+      | Self::UnknownPackageReq { specifier: s, .. }
       | Self::InvalidTypeAssertion { specifier: s, .. }
       | Self::UnsupportedImportAssertionType { specifier: s, .. } => s,
     }
@@ -171,6 +195,8 @@ impl ModuleError {
       Self::LoadingErr(_, maybe_referrer, _) => maybe_referrer.as_ref(),
       Self::Missing(_, maybe_referrer) => maybe_referrer.as_ref(),
       Self::MissingDynamic(_, range) => Some(range),
+      Self::UnknownPackage { maybe_range, .. } => maybe_range.as_ref(),
+      Self::UnknownPackageReq { maybe_range, .. } => maybe_range.as_ref(),
       Self::UnsupportedMediaType(_, _, maybe_referrer) => {
         maybe_referrer.as_ref()
       }
@@ -188,6 +214,8 @@ impl std::error::Error for ModuleError {
       Self::Missing(_, _)
       | Self::MissingDynamic(_, _)
       | Self::ParseErr(_, _)
+      | Self::UnknownPackage { .. }
+      | Self::UnknownPackageReq { .. }
       | Self::UnsupportedMediaType(_, _, _)
       | Self::InvalidTypeAssertion { .. }
       | Self::UnsupportedImportAssertionType { .. } => None,
@@ -200,6 +228,10 @@ impl fmt::Display for ModuleError {
     match self {
       Self::LoadingErr(_, _, err) => err.fmt(f),
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {diagnostic}"),
+      Self::UnknownPackage { package_name, specifier, .. } =>
+        write!(f, "Unknown package: {package_name}\n  Specifier: {specifier}"),
+      Self::UnknownPackageReq { package_req, specifier, .. } =>
+        write!(f, "Could not find constraint in the list of versions: {package_req}\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType(specifier, MediaType::Json, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
       Self::Missing(specifier, _) => write!(f, "Module not found \"{specifier}\"."),
@@ -580,6 +612,12 @@ fn is_media_type_unknown(media_type: &MediaType) -> bool {
   matches!(media_type, MediaType::Unknown)
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WorkspaceMember {
+  pub base: Url,
+  pub nv: PackageNv,
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "kind")]
@@ -824,6 +862,7 @@ pub struct BuildOptions<'a> {
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
   pub reporter: Option<&'a dyn Reporter>,
+  pub workspace_members: Vec<WorkspaceMember>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -1198,6 +1237,9 @@ pub struct ModuleGraph {
   pub npm_packages: Vec<PackageNv>,
   #[serde(skip_serializing)]
   pub has_node_specifier: bool,
+  #[serde(rename = "deno")]
+  #[serde(skip_serializing_if = "DenoSpecifierSnapshot::is_empty")]
+  pub deno_specifiers: DenoSpecifierSnapshot,
 }
 
 impl ModuleGraph {
@@ -1210,6 +1252,7 @@ impl ModuleGraph {
       redirects: Default::default(),
       npm_packages: Default::default(),
       has_node_specifier: false,
+      deno_specifiers: Default::default(),
     }
   }
 
@@ -1218,7 +1261,7 @@ impl ModuleGraph {
     roots: Vec<ModuleSpecifier>,
     loader: &mut dyn Loader,
     options: BuildOptions<'a>,
-  ) {
+  ) -> Vec<BuildDiagnostic> {
     let default_analyzer = DefaultModuleAnalyzer::default();
     Builder::build(
       self,
@@ -1230,6 +1273,7 @@ impl ModuleGraph {
       loader,
       options.module_analyzer.unwrap_or(&default_analyzer),
       options.reporter,
+      options.workspace_members,
     )
     .await
   }
@@ -1978,10 +2022,45 @@ impl Default for GraphKind {
   }
 }
 
+enum PendingInfoResponse {
+  External {
+    specifier: ModuleSpecifier,
+  },
+  Module {
+    content_or_module_info: ContentOrModuleInfo,
+    specifier: ModuleSpecifier,
+    maybe_headers: Option<HashMap<String, String>>,
+  },
+}
+
+impl From<LoadResponse> for PendingInfoResponse {
+  fn from(load_response: LoadResponse) -> Self {
+    match load_response {
+      LoadResponse::External { specifier } => Self::External { specifier },
+      LoadResponse::Module {
+        content,
+        specifier,
+        maybe_headers,
+      } => Self::Module {
+        content_or_module_info: ContentOrModuleInfo::Content(content),
+        specifier,
+        maybe_headers,
+      },
+    }
+  }
+}
+
+#[derive(Clone)]
+struct DenoPackageVersionInfoExt {
+  base_url: Url,
+  inner: Arc<DenoPackageVersionInfo>,
+}
+
 struct PendingInfo {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
-  result: LoadResult,
+  result: Result<Option<PendingInfoResponse>>,
+  maybe_version_info: Option<DenoPackageVersionInfoExt>,
 }
 
 type PendingInfoFuture = LocalBoxFuture<'static, PendingInfo>;
@@ -2001,22 +2080,128 @@ struct PendingNpmRegistryInfoLoad {
 type PendingNpmRegistryInfoLoadFutures =
   FuturesUnordered<LocalBoxFuture<'static, PendingNpmRegistryInfoLoad>>;
 
-struct Builder<'a, 'graph> {
-  in_dynamic_branch: bool,
-  graph: &'graph mut ModuleGraph,
-  loader: &'a mut dyn Loader,
-  resolver: Option<&'a dyn Resolver>,
-  npm_resolver: Option<&'a dyn NpmResolver>,
+#[derive(Default)]
+struct PendingNpmState {
+  requested_registry_info_loads: HashSet<String>,
+  pending_registry_info_loads: PendingNpmRegistryInfoLoadFutures,
+  pending_resolutions: Vec<PendingNpmResolutionItem>,
+}
+
+struct PendingDenoResolutionItem {
+  specifier: ModuleSpecifier,
+  package_ref: DenoPackageReqReference,
+  maybe_range: Option<Range>,
+}
+
+struct PendingContentLoadItem {
+  specifier: ModuleSpecifier,
+  maybe_range: Option<Range>,
+  result: LoadResult,
+  module_info: ModuleInfo,
+}
+
+type PendingResult<T> =
+  Shared<LocalBoxFuture<'static, Result<T, Arc<anyhow::Error>>>>;
+
+#[derive(Default)]
+struct PendingDenoState {
+  pending_package_info_loads:
+    HashMap<String, PendingResult<Option<Arc<DenoPackageInfo>>>>,
+  pending_package_version_info_loads:
+    HashMap<PackageNv, PendingResult<Arc<DenoPackageVersionInfo>>>,
+  pending_resolutions: Vec<PendingDenoResolutionItem>,
+  pending_content_loads:
+    FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
+}
+
+#[derive(Default)]
+struct PendingState {
   pending: FuturesOrdered<PendingInfoFuture>,
-  requested_npm_registry_info_loads: HashSet<String>,
-  pending_npm_registry_info_loads: PendingNpmRegistryInfoLoadFutures,
-  pending_npm_specifiers: Vec<PendingNpmResolutionItem>,
+  deno: PendingDenoState,
+  npm: PendingNpmState,
   pending_specifiers:
     HashMap<ModuleSpecifier, HashSet<Option<AssertTypeWithRange>>>,
   dynamic_branches:
     HashMap<ModuleSpecifier, (Range, Option<AssertTypeWithRange>)>,
+}
+
+#[derive(Clone)]
+enum ContentOrModuleInfo {
+  Content(Arc<str>),
+  ModuleInfo(ModuleInfo),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FillPassMode {
+  AllowRestart,
+  NoRestart,
+  CacheBusting,
+}
+
+impl FillPassMode {
+  fn to_cache_setting(self) -> LoaderCacheSetting {
+    if self == FillPassMode::CacheBusting {
+      LoaderCacheSetting::Reload
+    } else {
+      LoaderCacheSetting::Prefer
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildDiagnostic {
+  pub maybe_range: Option<Range>,
+  pub kind: BuildDiagnosticKind,
+}
+
+impl std::fmt::Display for BuildDiagnostic {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.kind)?;
+    if let Some(range) = &self.maybe_range {
+      write!(f, "\n    at {range}")?;
+    }
+    Ok(())
+  }
+}
+
+#[derive(Debug, Clone)]
+pub enum BuildDiagnosticKind {
+  ConstraintNotMatchedWorkspaceVersion {
+    reference: DenoPackageReqReference,
+    workspace_version: Version,
+  },
+}
+
+impl std::fmt::Display for BuildDiagnosticKind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::ConstraintNotMatchedWorkspaceVersion {
+        reference,
+        workspace_version,
+      } => {
+        write!(
+          f,
+          "Version constraint '{}' did not match workspace member version '{}'",
+          reference.req(),
+          workspace_version,
+        )
+      }
+    }
+  }
+}
+
+struct Builder<'a, 'graph> {
+  in_dynamic_branch: bool,
+  loader: &'a mut dyn Loader,
+  resolver: Option<&'a dyn Resolver>,
+  npm_resolver: Option<&'a dyn NpmResolver>,
   module_analyzer: &'a dyn ModuleAnalyzer,
   reporter: Option<&'a dyn Reporter>,
+  graph: &'graph mut ModuleGraph,
+  state: PendingState,
+  fill_pass_mode: FillPassMode,
+  workspace_members: Vec<WorkspaceMember>,
+  diagnostics: Vec<BuildDiagnostic>,
 }
 
 impl<'a, 'graph> Builder<'a, 'graph> {
@@ -2031,24 +2216,27 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     loader: &'a mut dyn Loader,
     module_analyzer: &'a dyn ModuleAnalyzer,
     reporter: Option<&'a dyn Reporter>,
-  ) {
-    Self {
+    workspace_members: Vec<WorkspaceMember>,
+  ) -> Vec<BuildDiagnostic> {
+    let fill_pass_mode = match graph.roots.is_empty() {
+      true => FillPassMode::AllowRestart,
+      false => FillPassMode::NoRestart,
+    };
+    let mut builder = Self {
       in_dynamic_branch: is_dynamic,
-      graph,
       loader,
       resolver,
       npm_resolver,
       module_analyzer,
       reporter,
-      pending: Default::default(),
-      requested_npm_registry_info_loads: Default::default(),
-      pending_npm_registry_info_loads: Default::default(),
-      pending_npm_specifiers: Default::default(),
-      pending_specifiers: Default::default(),
-      dynamic_branches: Default::default(),
-    }
-    .fill(roots, imports)
-    .await
+      graph,
+      state: PendingState::default(),
+      fill_pass_mode,
+      workspace_members,
+      diagnostics: Vec::new(),
+    };
+    builder.fill(roots, imports).await;
+    builder.diagnostics
   }
 
   async fn fill(
@@ -2056,53 +2244,46 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     roots: Vec<ModuleSpecifier>,
     imports: Vec<ReferrerImports>,
   ) {
-    let roots = roots
-      .into_iter()
+    let provided_roots = roots;
+    let provided_imports = imports;
+    let roots = provided_roots
+      .iter()
       .filter(|r| !self.graph.roots.contains(r))
+      .cloned()
       .collect::<Vec<_>>();
-    let imports = imports
-      .into_iter()
+    let imports = provided_imports
+      .iter()
       .filter(|r| !self.graph.imports.contains_key(&r.referrer))
+      .cloned()
       .collect::<Vec<_>>();
+
     self.graph.roots.extend(roots.clone());
+
     for root in roots {
-      self.load(&root, None, self.in_dynamic_branch, None);
+      self.load(&root, None, self.in_dynamic_branch, None, None);
     }
 
-    // Process any imports that are being added to the graph.
-    for referrer_imports in imports {
-      let referrer = referrer_imports.referrer;
-      let imports = referrer_imports.imports;
-      let graph_import = GraphImport::new(&referrer, imports, self.resolver);
-      for dep in graph_import.dependencies.values() {
-        if let Resolution::Ok(resolved) = &dep.maybe_type {
-          self.load(
-            &resolved.specifier,
-            Some(&resolved.range),
-            self.in_dynamic_branch,
-            None,
-          );
-        }
-      }
-      self.graph.imports.insert(referrer, graph_import);
-    }
+    // process any imports that are being added to the graph.
+    self.handle_provided_imports(imports);
 
     loop {
-      let specifier = match self.pending.next().await {
+      let specifier = match self.state.pending.next().await {
         Some(PendingInfo {
           specifier,
           maybe_range,
           result,
+          maybe_version_info,
         }) => match result {
           Ok(Some(response)) => {
             let assert_types =
-              self.pending_specifiers.remove(&specifier).unwrap();
+              self.state.pending_specifiers.remove(&specifier).unwrap();
             for maybe_assert_type in assert_types {
               self.visit(
                 &specifier,
                 &response,
                 maybe_assert_type,
                 maybe_range.clone(),
+                maybe_version_info.as_ref(),
               )
             }
             Some(specifier)
@@ -2132,35 +2313,317 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         },
         None => None,
       };
+
       if let (Some(specifier), Some(reporter)) = (specifier, self.reporter) {
         let modules_total = self.graph.module_slots.len();
-        let modules_done = modules_total - self.pending.len();
+        let modules_done = modules_total - self.state.pending.len();
         reporter.on_load(&specifier, modules_done, modules_total);
       }
-      if self.pending.is_empty() {
-        // Start visiting queued up dynamic branches. We do this in a separate
-        // pass after all static dependencies have been visited because:
-        // - If a module is both statically and dynamically imported, we want
-        //   the static import to take precedence and only load it with
-        //   `is_dynamic: false`.
-        // - It's more convenient for tracking whether or not we are currently
-        //   visiting a dynamic branch.
-        if !self.in_dynamic_branch {
-          self.in_dynamic_branch = true;
-          for (specifier, (range, maybe_assert_type)) in
-            std::mem::take(&mut self.dynamic_branches)
-          {
-            if !self.graph.module_slots.contains_key(&specifier) {
-              self.load(&specifier, Some(&range), true, maybe_assert_type);
-            }
+
+      if self.state.pending.is_empty() {
+        let should_restart = self.resolve_pending_deno_specifiers().await;
+        if should_restart {
+          self.restart(provided_roots, provided_imports).await;
+          return;
+        }
+
+        if self.state.pending.is_empty() {
+          self.resolve_dynamic_branches();
+
+          if self.state.pending.is_empty() {
+            break;
           }
-        } else {
-          break;
         }
       }
     }
 
-    // Enrich with cache info from the loader
+    // handle any pending content loads from the Deno registry
+    self.handle_deno_registry_pending_content_loads().await;
+
+    // enrich with cache info from the loader
+    self.fill_graph_with_cache_info();
+
+    // resolve any npm package requirements
+    NpmSpecifierResolver::fill_builder(self).await;
+  }
+
+  fn handle_provided_imports(&mut self, imports: Vec<ReferrerImports>) {
+    for referrer_imports in imports {
+      let referrer = referrer_imports.referrer;
+      let imports = referrer_imports.imports;
+      let graph_import = GraphImport::new(&referrer, imports, self.resolver);
+      for dep in graph_import.dependencies.values() {
+        if let Resolution::Ok(resolved) = &dep.maybe_type {
+          self.load(
+            &resolved.specifier,
+            Some(&resolved.range),
+            self.in_dynamic_branch,
+            None,
+            None,
+          );
+        }
+      }
+      self.graph.imports.insert(referrer, graph_import);
+    }
+  }
+
+  async fn resolve_pending_deno_specifiers(&mut self) -> bool {
+    // first load the package information
+    let pending_resolutions =
+      std::mem::take(&mut self.state.deno.pending_resolutions);
+    let mut pending_version_resolutions =
+      Vec::with_capacity(pending_resolutions.len());
+    for pending_resolution in pending_resolutions {
+      let package_name = &pending_resolution.package_ref.req().name;
+      let fut = self
+        .state
+        .deno
+        .pending_package_info_loads
+        .get(package_name)
+        .unwrap()
+        .clone();
+      match fut.await {
+        Ok(Some(info)) => {
+          // resolve the best version out of the existing versions first
+          let package_req = pending_resolution.package_ref.req();
+          match self.resolve_deno_version(&info, package_req) {
+            Some(version) => {
+              // now queue a pending load for that version information
+              let package_nv = PackageNv {
+                name: package_name.clone(),
+                version,
+              };
+              self
+                .graph
+                .deno_specifiers
+                .add(package_req.clone(), package_nv.clone());
+
+              self.queue_load_package_version_info(&package_nv);
+              pending_version_resolutions
+                .push((package_nv, pending_resolution));
+            }
+            None => {
+              if self.fill_pass_mode == FillPassMode::AllowRestart {
+                return true; // restart
+              } else {
+                self.graph.module_slots.insert(
+                  pending_resolution.specifier.clone(),
+                  ModuleSlot::Err(ModuleGraphError::ModuleError(
+                    ModuleError::UnknownPackageReq {
+                      specifier: pending_resolution.specifier.clone(),
+                      maybe_range: pending_resolution.maybe_range.clone(),
+                      package_req: package_req.clone(),
+                    },
+                  )),
+                );
+              }
+            }
+          }
+        }
+        Ok(None) => {
+          self.graph.module_slots.insert(
+            pending_resolution.specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::UnknownPackage {
+                specifier: pending_resolution.specifier.clone(),
+                maybe_range: pending_resolution.maybe_range.clone(),
+                package_name: package_name.clone(),
+              },
+            )),
+          );
+        }
+        Err(err) => {
+          self.graph.module_slots.insert(
+            pending_resolution.specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::LoadingErr(
+                pending_resolution.specifier,
+                pending_resolution.maybe_range,
+                err.clone(),
+              ),
+            )),
+          );
+        }
+      }
+    }
+
+    // now resolve the version information
+    for (nv, resolution_item) in pending_version_resolutions {
+      let version_info_result = self
+        .state
+        .deno
+        .pending_package_version_info_loads
+        .get_mut(&nv)
+        .unwrap()
+        .clone()
+        .await
+        .and_then(|info| match resolution_item.package_ref.sub_path() {
+          Some(sub_path) => Ok((info, sub_path)),
+          None => Err(Arc::new(anyhow!(
+            "Missing path in package specifier '{0}' (ex. specify {0}/mod.ts)",
+            resolution_item.package_ref
+          ))),
+        });
+      match version_info_result {
+        Ok((version_info, sub_path)) => {
+          let base_url = self
+            .loader
+            .registry_url()
+            .join(&format!("{}/{}/", nv.name, nv.version))
+            .unwrap();
+          let specifier = base_url.join(sub_path).unwrap();
+          self
+            .graph
+            .redirects
+            .insert(resolution_item.specifier, specifier.clone());
+          let version_info = DenoPackageVersionInfoExt {
+            base_url,
+            inner: version_info,
+          };
+          self.load(
+            &specifier,
+            resolution_item.maybe_range.as_ref(),
+            self.in_dynamic_branch,
+            None,
+            Some(&version_info),
+          );
+        }
+        Err(err) => {
+          self.graph.module_slots.insert(
+            resolution_item.specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::LoadingErr(
+                resolution_item.specifier,
+                resolution_item.maybe_range,
+                err.clone(),
+              ),
+            )),
+          );
+        }
+      }
+    }
+
+    false // no restart
+  }
+
+  fn resolve_dynamic_branches(&mut self) {
+    // Start visiting queued up dynamic branches. We do this in a separate
+    // pass after all static dependencies have been visited because:
+    // - If a module is both statically and dynamically imported, we want
+    //   the static import to take precedence and only load it with
+    //   `is_dynamic: false`.
+    // - It's more convenient for tracking whether or not we are currently
+    //   visiting a dynamic branch.
+    if !self.in_dynamic_branch {
+      self.in_dynamic_branch = true;
+      for (specifier, (range, maybe_assert_type)) in
+        std::mem::take(&mut self.state.dynamic_branches)
+      {
+        if !self.graph.module_slots.contains_key(&specifier) {
+          self.load(&specifier, Some(&range), true, maybe_assert_type, None);
+        }
+      }
+    }
+  }
+
+  async fn handle_deno_registry_pending_content_loads(&mut self) {
+    while let Some(item) = self.state.deno.pending_content_loads.next().await {
+      match item.result {
+        Ok(Some(response)) => {
+          match response {
+            LoadResponse::External { .. } => {
+              // this should never happen, and if it does it indicates the loader
+              // was setup incorrectly, so return an error
+              self.graph.module_slots.insert(
+                item.specifier.clone(),
+                ModuleSlot::Err(ModuleGraphError::ModuleError(
+                  ModuleError::LoadingErr(
+                    item.specifier,
+                    item.maybe_range,
+                    Arc::new(anyhow!("Loader should never return an external specifier for a deno: specifier.")),
+                  ),
+                )),
+              );
+            }
+            LoadResponse::Module {
+              content,
+              specifier,
+              maybe_headers: _maybe_headers,
+            } => {
+              if specifier == item.specifier {
+                self.loader.cache_module_info(
+                  &specifier,
+                  &content,
+                  &item.module_info,
+                );
+                // fill the existing module slot with the loaded source
+                let slot = self.graph.module_slots.get_mut(&specifier).unwrap();
+                match slot {
+                  ModuleSlot::Module(module) => {
+                    match module {
+                      Module::Esm(module) => {
+                        module.source = content;
+                      }
+                      Module::Json(module) => {
+                        module.source = content;
+                      }
+                      Module::Npm(_)
+                      | Module::Node(_)
+                      | Module::External(_) => {
+                        unreachable!(); // should not happen by design
+                      }
+                    }
+                  }
+                  ModuleSlot::Err(_) => {
+                    // the module errored some other way, so ignore
+                  }
+                  ModuleSlot::Pending => {
+                    unreachable!(); // should not happen by design
+                  }
+                }
+              } else {
+                // redirects are not supported
+                self.graph.module_slots.insert(
+                  item.specifier.clone(),
+                  ModuleSlot::Err(ModuleGraphError::ModuleError(
+                    ModuleError::LoadingErr(
+                      item.specifier,
+                      item.maybe_range,
+                      Arc::new(anyhow!(
+                        "Redirects are not supported for the Deno registry."
+                      )),
+                    ),
+                  )),
+                );
+              }
+            }
+          }
+        }
+        Ok(None) => {
+          self.graph.module_slots.insert(
+            item.specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::Missing(item.specifier, item.maybe_range),
+            )),
+          );
+        }
+        Err(err) => {
+          self.graph.module_slots.insert(
+            item.specifier.clone(),
+            ModuleSlot::Err(ModuleGraphError::ModuleError(
+              ModuleError::LoadingErr(
+                item.specifier,
+                item.maybe_range,
+                Arc::new(err),
+              ),
+            )),
+          );
+        }
+      }
+    }
+  }
+
+  fn fill_graph_with_cache_info(&mut self) {
     for slot in self.graph.module_slots.values_mut() {
       if let ModuleSlot::Module(ref mut module) = slot {
         match module {
@@ -2176,9 +2639,43 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         }
       }
     }
+  }
 
-    // Now resolve any npm package requirements
-    NpmSpecifierResolver::fill_builder(self).await;
+  fn restart(
+    &mut self,
+    roots: Vec<ModuleSpecifier>,
+    imports: Vec<ReferrerImports>,
+  ) -> LocalBoxFuture<()> {
+    // if restarting is allowed, then the graph will have been empty at the start
+    *self.graph = ModuleGraph::new(self.graph.graph_kind);
+    self.state = PendingState::default();
+    self.fill_pass_mode = FillPassMode::CacheBusting;
+
+    // boxed due to async recursion
+    async move { self.fill(roots, imports).await }.boxed_local()
+  }
+
+  fn resolve_deno_version(
+    &mut self,
+    package_info: &DenoPackageInfo,
+    package_req: &PackageReq,
+  ) -> Option<Version> {
+    // try to find in the list of existing versions first
+    if let Some(existing_versions) = self
+      .graph
+      .deno_specifiers
+      .versions_by_name(&package_req.name)
+    {
+      if let Some(version) = resolve_version(
+        &package_req.version_req,
+        existing_versions.iter().map(|nv| &nv.version),
+      ) {
+        return Some(version.clone());
+      }
+    }
+    // now try in the package info
+    resolve_version(&package_req.version_req, package_info.versions.keys())
+      .cloned()
   }
 
   /// Checks if the specifier is redirected or not and updates any redirects in
@@ -2210,9 +2707,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_range: Option<&Range>,
     is_dynamic: bool,
     maybe_assert_type: Option<AssertTypeWithRange>,
+    maybe_version_info: Option<&DenoPackageVersionInfoExt>,
   ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     self
+      .state
       .pending_specifiers
       .entry(specifier.clone())
       .or_default()
@@ -2221,47 +2720,64 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       return;
     }
 
-    let maybe_range = maybe_range.map(ToOwned::to_owned);
-    if let Some(npm_resolver) = &self.npm_resolver {
-      if specifier.scheme() == "npm" {
-        match NpmPackageReqReference::from_specifier(specifier) {
-          Ok(package_ref) => {
-            if self
-              .requested_npm_registry_info_loads
-              .insert(package_ref.req().name.clone())
-            {
-              // request to load
-              let package_name = package_ref.req().name.clone();
-              let fut =
-                npm_resolver.load_and_cache_npm_package_info(&package_name);
-              self
-                .pending_npm_registry_info_loads
-                .push(Box::pin(async move {
-                  PendingNpmRegistryInfoLoad {
-                    package_name,
-                    result: fut.await.map_err(Arc::new),
-                  }
-                }));
-            }
-            self.pending_npm_specifiers.push(PendingNpmResolutionItem {
-              specifier: specifier.clone(),
-              package_ref,
-              maybe_range,
-            });
-          }
-          Err(err) => {
-            self.graph.module_slots.insert(
-              specifier.clone(),
-              ModuleSlot::Err(ModuleGraphError::ModuleError(
-                ModuleError::LoadingErr(
-                  specifier.clone(),
+    if let Some(version_info) = maybe_version_info {
+      let base_url = version_info.base_url.as_str();
+      let base_url = base_url.strip_suffix('/').unwrap_or(base_url);
+      if let Some(sub_path) = specifier.as_str().strip_prefix(base_url) {
+        if let Some(module_info) = version_info.inner.module_info(sub_path) {
+          // Check if this specifier is in the cache. If it is, then
+          // don't use the module information as it may be out of date
+          // with what's in the cache
+          let fut = self.loader.load_with_cache_setting(
+            specifier,
+            self.in_dynamic_branch,
+            LoaderCacheSetting::Only,
+          );
+          self.state.pending.push_back({
+            let specifier = specifier.clone();
+            let maybe_range = maybe_range.cloned();
+            let version_info = version_info.clone();
+            async move {
+              let response = fut.await;
+              match response {
+                Ok(None) => PendingInfo {
+                  specifier: specifier.clone(),
                   maybe_range,
-                  Arc::new(err.into()),
-                ),
-              )),
-            );
-          }
+                  result: Ok(Some(PendingInfoResponse::Module {
+                    content_or_module_info: ContentOrModuleInfo::ModuleInfo(
+                      module_info,
+                    ),
+                    specifier,
+                    maybe_headers: None,
+                  })),
+                  maybe_version_info: Some(version_info),
+                },
+                response => PendingInfo {
+                  specifier,
+                  maybe_range,
+                  result: response.map(|r| r.map(Into::into)),
+                  maybe_version_info: Some(version_info),
+                },
+              }
+            }
+            .boxed_local()
+          });
+          self
+            .graph
+            .module_slots
+            .insert(specifier.clone(), ModuleSlot::Pending);
+          return;
         }
+      }
+    }
+
+    let maybe_range = maybe_range.map(ToOwned::to_owned);
+    if specifier.scheme() == "deno" {
+      self.load_deno_specifier(specifier.clone(), maybe_range, is_dynamic);
+      return;
+    } else if let Some(npm_resolver) = self.npm_resolver {
+      if specifier.scheme() == "npm" {
+        self.load_npm_specifier(specifier.clone(), npm_resolver, maybe_range);
         return;
       }
 
@@ -2296,21 +2812,234 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
 
+    let specifier = specifier.clone();
+    self.load_pending_module(&specifier, maybe_range, &specifier, is_dynamic);
+  }
+
+  fn load_deno_specifier(
+    &mut self,
+    specifier: Url,
+    maybe_range: Option<Range>,
+    is_dynamic: bool,
+  ) {
+    match DenoPackageReqReference::from_specifier(&specifier) {
+      Ok(package_ref) => {
+        for workspace_member in &self.workspace_members {
+          if workspace_member.nv.name == package_ref.req().name {
+            if package_ref
+              .req()
+              .version_req
+              .matches(&workspace_member.nv.version)
+            {
+              let mut load_specifier = workspace_member.base.clone();
+              if let Some(sub_path) = package_ref.sub_path() {
+                load_specifier = load_specifier.join(sub_path).unwrap();
+              }
+              self.load_pending_module(
+                &specifier,
+                maybe_range.clone(),
+                &load_specifier,
+                is_dynamic,
+              );
+              return;
+            } else {
+              self.diagnostics.push(BuildDiagnostic {
+                maybe_range: maybe_range.clone(),
+                kind:
+                  BuildDiagnosticKind::ConstraintNotMatchedWorkspaceVersion {
+                    reference: package_ref.clone(),
+                    workspace_version: workspace_member.nv.version.clone(),
+                  },
+              });
+            }
+          }
+        }
+
+        let package_name = &package_ref.req().name;
+        let specifier = specifier.clone();
+        self.queue_load_package_info(package_name);
+        self
+          .state
+          .deno
+          .pending_resolutions
+          .push(PendingDenoResolutionItem {
+            specifier,
+            package_ref,
+            maybe_range,
+          });
+      }
+      Err(err) => {
+        self.graph.module_slots.insert(
+          specifier.clone(),
+          ModuleSlot::Err(ModuleGraphError::ModuleError(
+            ModuleError::LoadingErr(
+              specifier,
+              maybe_range,
+              Arc::new(err.into()),
+            ),
+          )),
+        );
+      }
+    }
+  }
+
+  fn load_npm_specifier(
+    &mut self,
+    specifier: Url,
+    npm_resolver: &dyn NpmResolver,
+    maybe_range: Option<Range>,
+  ) {
+    match NpmPackageReqReference::from_specifier(&specifier) {
+      Ok(package_ref) => {
+        if self
+          .state
+          .npm
+          .requested_registry_info_loads
+          .insert(package_ref.req().name.clone())
+        {
+          // request to load
+          let package_name = package_ref.req().name.clone();
+          let fut = npm_resolver.load_and_cache_npm_package_info(&package_name);
+          self.state.npm.pending_registry_info_loads.push(Box::pin(
+            async move {
+              PendingNpmRegistryInfoLoad {
+                package_name,
+                result: fut.await.map_err(Arc::new),
+              }
+            },
+          ));
+        }
+        self
+          .state
+          .npm
+          .pending_resolutions
+          .push(PendingNpmResolutionItem {
+            specifier,
+            package_ref,
+            maybe_range,
+          });
+      }
+      Err(err) => {
+        self.graph.module_slots.insert(
+          specifier.clone(),
+          ModuleSlot::Err(ModuleGraphError::ModuleError(
+            ModuleError::LoadingErr(
+              specifier,
+              maybe_range,
+              Arc::new(err.into()),
+            ),
+          )),
+        );
+      }
+    }
+  }
+
+  fn load_pending_module(
+    &mut self,
+    requested_specifier: &Url,
+    maybe_range: Option<Range>,
+    load_specifier: &Url,
+    is_dynamic: bool,
+  ) {
     self
       .graph
       .module_slots
-      .insert(specifier.clone(), ModuleSlot::Pending);
-    let specifier = specifier.clone();
+      .insert(requested_specifier.clone(), ModuleSlot::Pending);
+    let load_specifier = load_specifier.clone();
+    let requested_specifier = requested_specifier.clone();
     let fut =
       self
         .loader
-        .load(&specifier, is_dynamic)
+        .load(&load_specifier, is_dynamic)
         .map(move |result| PendingInfo {
-          specifier,
+          specifier: requested_specifier,
           maybe_range,
-          result,
+          result: result.map(|r| r.map(Into::into)),
+          maybe_version_info: None,
         });
-    self.pending.push_back(Box::pin(fut));
+    self.state.pending.push_back(Box::pin(fut));
+  }
+
+  fn queue_load_package_info(&mut self, package_name: &str) {
+    if self
+      .state
+      .deno
+      .pending_package_info_loads
+      .contains_key(package_name)
+    {
+      return; // already queued
+    }
+
+    // request to load
+    let specifier = self
+      .loader
+      .registry_url()
+      .join(&format!("{}/meta.json", package_name))
+      .unwrap();
+    let fut = self.loader.load_with_cache_setting(
+      &specifier,
+      false,
+      self.fill_pass_mode.to_cache_setting(),
+    );
+    let fut = async move {
+      let data = fut.await.map_err(Arc::new)?;
+      match data {
+        Some(LoadResponse::Module { content, .. }) => {
+          let package_info: DenoPackageInfo =
+            serde_json::from_str(&content).map_err(|e| Arc::new(e.into()))?;
+          Ok(Some(Arc::new(package_info)))
+        }
+        _ => Ok(None),
+      }
+    }
+    .boxed_local();
+    self
+      .state
+      .deno
+      .pending_package_info_loads
+      .insert(package_name.to_string(), fut.shared());
+  }
+
+  fn queue_load_package_version_info(&mut self, package_nv: &PackageNv) {
+    if self
+      .state
+      .deno
+      .pending_package_version_info_loads
+      .contains_key(package_nv)
+    {
+      return; // already queued
+    }
+
+    let specifier = self
+      .loader
+      .registry_url()
+      .join(&format!(
+        "{}/{}_meta.json",
+        package_nv.name, package_nv.version
+      ))
+      .unwrap();
+    let fut = self.loader.load_with_cache_setting(
+      &specifier,
+      false,
+      self.fill_pass_mode.to_cache_setting(),
+    );
+    let fut = async move {
+      let data = fut.await.map_err(Arc::new)?;
+      match data {
+        Some(LoadResponse::Module { content, .. }) => {
+          let version_info: DenoPackageVersionInfo =
+            serde_json::from_str(&content).map_err(|e| Arc::new(e.into()))?;
+          Ok(Arc::new(version_info))
+        }
+        _ => Err(Arc::new(anyhow!("Not found: {}", specifier))),
+      }
+    }
+    .boxed_local();
+    self
+      .state
+      .deno
+      .pending_package_version_info_loads
+      .insert(package_nv.clone(), fut.shared());
   }
 
   fn roots_contain(&self, specifier: &ModuleSpecifier) -> bool {
@@ -2325,12 +3054,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   fn visit(
     &mut self,
     requested_specifier: &ModuleSpecifier,
-    response: &LoadResponse,
+    response: &PendingInfoResponse,
     maybe_assert_type: Option<AssertTypeWithRange>,
     maybe_referrer: Option<Range>,
+    maybe_version_info: Option<&DenoPackageVersionInfoExt>,
   ) {
     let (specifier, module_slot) = match response {
-      LoadResponse::External { specifier } => {
+      PendingInfoResponse::External { specifier } => {
         self.check_specifier(requested_specifier, specifier);
         let module_slot =
           ModuleSlot::Module(Module::External(ExternalModule {
@@ -2338,9 +3068,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           }));
         (specifier, module_slot)
       }
-      LoadResponse::Module {
+      PendingInfoResponse::Module {
         specifier,
-        content,
+        content_or_module_info,
         maybe_headers,
       } => {
         self.check_specifier(requested_specifier, specifier);
@@ -2349,9 +3079,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           self.visit_module(
             specifier,
             maybe_headers.as_ref(),
-            content.clone(),
+            content_or_module_info.clone(),
             maybe_assert_type,
             maybe_referrer,
+            maybe_version_info,
           ),
         )
       }
@@ -2367,12 +3098,52 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     &mut self,
     specifier: &ModuleSpecifier,
     maybe_headers: Option<&HashMap<String, String>>,
-    content: Arc<str>,
+    content_or_module_info: ContentOrModuleInfo,
     maybe_assert_type: Option<AssertTypeWithRange>,
     maybe_referrer: Option<Range>,
+    maybe_version_info: Option<&DenoPackageVersionInfoExt>,
   ) -> ModuleSlot {
+    struct ProvidedModuleAnalyzer(RefCell<Option<ModuleInfo>>);
+
+    impl ModuleAnalyzer for ProvidedModuleAnalyzer {
+      fn analyze(
+        &self,
+        _specifier: &ModuleSpecifier,
+        _source: Arc<str>,
+        _media_type: MediaType,
+      ) -> Result<ModuleInfo, Diagnostic> {
+        Ok(self.0.borrow_mut().take().unwrap()) // will only be called once
+      }
+    }
+
     use std::borrow::BorrowMut;
     let is_root = self.roots_contain(specifier);
+
+    let (content, maybe_module_analyzer) = match content_or_module_info {
+      ContentOrModuleInfo::Content(content) => (content, None),
+      ContentOrModuleInfo::ModuleInfo(info) => {
+        self.state.deno.pending_content_loads.push({
+          let specifier = specifier.clone();
+          let maybe_range = maybe_referrer.clone();
+          let module_info = info.clone();
+          let fut = self.loader.load(&specifier, self.in_dynamic_branch);
+          async move {
+            let result = fut.await;
+            PendingContentLoadItem {
+              specifier,
+              maybe_range,
+              result,
+              module_info,
+            }
+          }
+          .boxed_local()
+        });
+        (
+          String::new().into(),
+          Some(ProvidedModuleAnalyzer(RefCell::new(Some(info)))),
+        )
+      }
+    };
 
     let mut module_slot = match parse_module(
       specifier,
@@ -2381,7 +3152,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       maybe_assert_type,
       maybe_referrer,
       self.resolver,
-      self.module_analyzer,
+      maybe_module_analyzer
+        .as_ref()
+        .map(|r| r as &dyn ModuleAnalyzer)
+        .unwrap_or(self.module_analyzer),
       is_root,
       self.in_dynamic_branch,
     ) {
@@ -2410,7 +3184,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   kind: assert_type.clone(),
                 });
               if dep.is_dynamic && !self.in_dynamic_branch {
-                self.dynamic_branches.insert(
+                self.state.dynamic_branches.insert(
                   specifier.clone(),
                   (range.clone(), maybe_assert_type_with_range),
                 );
@@ -2420,6 +3194,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   Some(range),
                   self.in_dynamic_branch,
                   maybe_assert_type_with_range,
+                  maybe_version_info,
                 );
               }
             }
@@ -2442,7 +3217,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   kind: assert_type.clone(),
                 });
               if dep.is_dynamic && !self.in_dynamic_branch {
-                self.dynamic_branches.insert(
+                self.state.dynamic_branches.insert(
                   specifier.clone(),
                   (range.clone(), maybe_assert_type_with_range),
                 );
@@ -2452,6 +3227,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   Some(range),
                   self.in_dynamic_branch,
                   maybe_assert_type_with_range,
+                  maybe_version_info,
                 );
               }
             }
@@ -2470,7 +3246,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           .as_ref()
           .map(|d| &d.dependency)
         {
-          self.load(&resolved.specifier, Some(&resolved.range), false, None);
+          self.load(
+            &resolved.specifier,
+            Some(&resolved.range),
+            false,
+            None,
+            maybe_version_info,
+          );
         }
       } else {
         module.maybe_types_dependency = None;
@@ -2522,11 +3304,13 @@ impl<'a> NpmSpecifierResolver<'a> {
   pub async fn fill_builder(builder: &mut Builder<'a, '_>) {
     let mut npm_specifier_resolver = NpmSpecifierResolver::new(
       builder.npm_resolver,
-      std::mem::take(&mut builder.pending_npm_specifiers),
+      std::mem::take(&mut builder.state.npm.pending_resolutions),
     );
 
     npm_specifier_resolver
-      .resolve(std::mem::take(&mut builder.pending_npm_registry_info_loads))
+      .resolve(std::mem::take(
+        &mut builder.state.npm.pending_registry_info_loads,
+      ))
       .await;
 
     npm_specifier_resolver.fill_graph(builder.graph);
@@ -2589,7 +3373,7 @@ impl<'a> NpmSpecifierResolver<'a> {
           if let Some(npm_resolver) = &self.npm_resolver {
             let resolution = npm_resolver.resolve_npm(item.package_ref.req());
             match resolution {
-              PackageReqResolution::Ok(pkg_nv) => {
+              NpmPackageReqResolution::Ok(pkg_nv) => {
                 self
                   .pending_info
                   .specifier_resolutions
@@ -2617,7 +3401,7 @@ impl<'a> NpmSpecifierResolver<'a> {
                   })),
                 );
               }
-              PackageReqResolution::ReloadRegistryInfo(_)
+              NpmPackageReqResolution::ReloadRegistryInfo(_)
                 if !previously_restarted =>
               {
                 // the implementer should ideally never return this more than once,
@@ -2645,8 +3429,8 @@ impl<'a> NpmSpecifierResolver<'a> {
                 }
                 break;
               }
-              PackageReqResolution::Err(err)
-              | PackageReqResolution::ReloadRegistryInfo(err) => {
+              NpmPackageReqResolution::Err(err)
+              | NpmPackageReqResolution::ReloadRegistryInfo(err) => {
                 self.pending_info.module_slots.insert(
                   item.specifier.clone(),
                   ModuleSlot::Err(ModuleGraphError::ResolutionError(
@@ -2905,10 +3689,11 @@ mod tests {
       loaded_baz: bool,
     }
     impl Loader for TestLoader {
-      fn load(
+      fn load_with_cache_setting(
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
+        _cache_setting: LoaderCacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -2949,6 +3734,7 @@ mod tests {
         }
       }
     }
+
     let mut loader = TestLoader {
       loaded_foo: false,
       loaded_bar: false,
@@ -2972,10 +3758,11 @@ mod tests {
   async fn missing_module_is_error() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load(
+      fn load_with_cache_setting(
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
+        _cache_setting: LoaderCacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -3058,10 +3845,11 @@ mod tests {
   async fn redirected_specifiers() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load(
+      fn load_with_cache_setting(
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
+        _cache_setting: LoaderCacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -3125,10 +3913,11 @@ mod tests {
   async fn local_import_remote_module() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load(
+      fn load_with_cache_setting(
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
+        _cache_setting: LoaderCacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -3249,10 +4038,11 @@ mod tests {
       loaded_bar: bool,
     }
     impl Loader for TestLoader {
-      fn load(
+      fn load_with_cache_setting(
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
+        _cache_setting: LoaderCacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -3295,10 +4085,11 @@ mod tests {
   async fn dependency_imports() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load(
+      fn load_with_cache_setting(
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
+        _cache_setting: LoaderCacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {

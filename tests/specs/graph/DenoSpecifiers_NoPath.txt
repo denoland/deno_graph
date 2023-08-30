@@ -1,0 +1,53 @@
+# https://registry-staging.deno.com/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.0": {}
+  }
+}
+
+# https://registry-staging.deno.com/@scope/a/1.0.0_meta.json
+{}
+
+# mod.ts
+import 'deno:@scope/a' // no subpath
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "specifier": "deno:@scope/a",
+      "error": "Missing path in package specifier 'deno:@scope/a' (ex. specify deno:@scope/a/mod.ts)"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "deno:@scope/a",
+          "code": {
+            "specifier": "deno:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 22
+              }
+            }
+          }
+        }
+      ],
+      "size": 37,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {},
+  "deno": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}

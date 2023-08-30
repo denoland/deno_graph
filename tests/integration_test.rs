@@ -10,18 +10,22 @@ use std::rc::Rc;
 
 use anyhow::anyhow;
 use deno_ast::ModuleSpecifier;
+use deno_graph::source::LoadFuture;
+use deno_graph::source::LoadResponse;
+use deno_graph::source::LoaderCacheSetting;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
 use deno_graph::source::UnknownBuiltInNodeModuleError;
 use deno_graph::BuildOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
-use deno_graph::PackageReqResolution;
+use deno_graph::NpmPackageReqResolution;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
 use futures::future::LocalBoxFuture;
 use pretty_assertions::assert_eq;
+use url::Url;
 
 use crate::helpers::get_specs_in_dir;
 use crate::helpers::TestBuilder;
@@ -37,17 +41,28 @@ async fn test_graph_specs() {
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
       for file in &spec.files {
-        loader.add_source_with_text(file.url(), &file.text);
+        if file.is_cache() {
+          loader.cache.add_source_with_text(file.url(), &file.text);
+        } else {
+          loader.remote.add_source_with_text(file.url(), &file.text);
+        }
       }
     });
+    builder.workspace_members(spec.workspace_members.clone());
 
     let result = builder.build().await;
     let update_var = std::env::var("UPDATE");
     let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
     output_text.push('\n');
+    let diagnostics = result
+      .diagnostics
+      .iter()
+      .map(|d| serde_json::to_value(d.to_string()).unwrap())
+      .collect::<Vec<_>>();
     let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
       let mut spec = spec;
       spec.output_file.text = output_text.clone();
+      spec.diagnostics = diagnostics.clone();
       std::fs::write(&test_file_path, spec.emit()).unwrap();
       spec
     } else {
@@ -56,6 +71,12 @@ async fn test_graph_specs() {
     assert_eq!(
       output_text,
       spec.output_file.text,
+      "Should be same for {}",
+      test_file_path.display()
+    );
+    assert_eq!(
+      diagnostics,
+      spec.diagnostics,
       "Should be same for {}",
       test_file_path.display()
     );
@@ -72,7 +93,11 @@ async fn test_type_tracing_specs() {
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
       for file in &spec.files {
-        loader.add_source_with_text(file.url(), &file.text);
+        if file.is_cache() {
+          loader.cache.add_source_with_text(file.url(), &file.text);
+        } else {
+          loader.remote.add_source_with_text(file.url(), &file.text);
+        }
       }
     });
 
@@ -132,17 +157,19 @@ async fn test_npm_version_not_found_then_found() {
       Box::pin(futures::future::ready(Ok(())))
     }
 
-    fn resolve_npm(&self, package_req: &PackageReq) -> PackageReqResolution {
+    fn resolve_npm(&self, package_req: &PackageReq) -> NpmPackageReqResolution {
       let mut value = self.made_first_request.borrow_mut();
       if *value && !self.should_never_succeed {
         assert_eq!(*self.number_times_load_called.borrow(), 2);
-        PackageReqResolution::Ok(PackageNv {
+        NpmPackageReqResolution::Ok(PackageNv {
           name: package_req.name.clone(),
           version: Version::parse_from_npm("1.0.0").unwrap(),
         })
       } else {
         *value = true;
-        PackageReqResolution::ReloadRegistryInfo(anyhow!("failed to resolve"))
+        NpmPackageReqResolution::ReloadRegistryInfo(anyhow!(
+          "failed to resolve"
+        ))
       }
     }
   }
@@ -203,4 +230,106 @@ async fn test_npm_version_not_found_then_found() {
       "failed to resolve"
     );
   }
+}
+
+#[tokio::test]
+async fn test_deno_version_not_found_then_found() {
+  #[derive(Default)]
+  struct TestLoader {
+    requests: Vec<(String, LoaderCacheSetting)>,
+  }
+
+  impl deno_graph::source::Loader for TestLoader {
+    fn load_with_cache_setting(
+      &mut self,
+      specifier: &ModuleSpecifier,
+      is_dynamic: bool,
+      cache_setting: LoaderCacheSetting,
+    ) -> LoadFuture {
+      assert!(!is_dynamic);
+      self.requests.push((specifier.to_string(), cache_setting));
+      let specifier = specifier.clone();
+      match specifier.as_str() {
+        "file:///main.ts" => Box::pin(async move {
+          Ok(Some(LoadResponse::Module {
+            specifier: specifier.clone(),
+            maybe_headers: None,
+            content: "import 'deno:@scope/a@1.2/mod.ts".into(),
+          }))
+        }),
+        "https://registry-staging.deno.com/@scope/a/meta.json" => {
+          Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: match cache_setting {
+                LoaderCacheSetting::Only | LoaderCacheSetting::Prefer => {
+                  // first time it won't have the version
+                  r#"{ "versions": { "1.0.0": {} } }"#.into()
+                }
+                LoaderCacheSetting::Reload => {
+                  // then on reload it will
+                  r#"{ "versions": { "1.0.0": {}, "1.2.0": {} } }"#.into()
+                }
+              },
+            }))
+          })
+        }
+        "https://registry-staging.deno.com/@scope/a/1.2.0_meta.json" => {
+          Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: "{}".into(),
+            }))
+          })
+        }
+        "https://registry-staging.deno.com/@scope/a/1.2.0/mod.ts" => {
+          Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: "console.log('Hello, world!')".into(),
+            }))
+          })
+        }
+        _ => unreachable!(),
+      }
+    }
+  }
+
+  let mut loader = TestLoader::default();
+  let mut graph = ModuleGraph::new(GraphKind::All);
+  graph
+    .build(
+      vec![Url::parse("file:///main.ts").unwrap()],
+      &mut loader,
+      Default::default(),
+    )
+    .await;
+  graph.valid().unwrap();
+  assert_eq!(
+    loader.requests,
+    vec![
+      ("file:///main.ts".to_string(), LoaderCacheSetting::Prefer),
+      (
+        "https://registry-staging.deno.com/@scope/a/meta.json".to_string(),
+        LoaderCacheSetting::Prefer
+      ),
+      ("file:///main.ts".to_string(), LoaderCacheSetting::Prefer),
+      (
+        "https://registry-staging.deno.com/@scope/a/meta.json".to_string(),
+        LoaderCacheSetting::Reload
+      ),
+      (
+        "https://registry-staging.deno.com/@scope/a/1.2.0_meta.json"
+          .to_string(),
+        LoaderCacheSetting::Reload
+      ),
+      (
+        "https://registry-staging.deno.com/@scope/a/1.2.0/mod.ts".to_string(),
+        LoaderCacheSetting::Prefer
+      ),
+    ]
+  );
 }

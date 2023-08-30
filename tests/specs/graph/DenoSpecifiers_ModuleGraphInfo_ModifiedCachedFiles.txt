@@ -1,0 +1,224 @@
+# https://registry-staging.deno.com/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.0": {}
+  }
+}
+
+# https://registry-staging.deno.com/@scope/a/1.0.0_meta.json
+{
+  "moduleGraph1": {
+    "/mod.ts": {
+      "dependencies": [{
+          "kind": "import",
+          "range": [[1, 2], [3, 4]],
+          "specifier": "./a.ts",
+          "specifierRange": [[5, 6], [7, 8]]
+      }]
+    },
+    "/a.ts": {
+      "dependencies": [{
+          "kind": "import",
+          "range": [[9, 10], [11, 12]],
+          "specifier": "./b.ts",
+          "specifierRange": [[13, 14], [15, 16]]
+      }, {
+          "kind": "import",
+          "range": [[1, 2], [3, 4]],
+          "specifier": "deno:@scope/b/mod.ts",
+          "specifierRange": [[5, 6], [7, 8]]
+      }]
+    },
+    "/b.ts": {
+      "dependencies": [{
+          "kind": "import",
+          "range": [[9, 10], [11, 12]],
+          "specifier": "./c.ts",
+          "specifierRange": [[13, 14], [15, 16]]
+      }]
+    },
+    "/c.ts": {}
+  }
+}
+
+# https://registry-staging.deno.com/@scope/b/meta.json
+{
+  "versions": {
+    "9.0.0": {}
+  }
+}
+
+# https://registry-staging.deno.com/@scope/b/9.0.0_meta.json
+{
+  "moduleGraph1": {
+    "/mod.ts": {
+      "dependencies": [{
+        "kind": "import",
+        "range": [[1, 2], [3, 4]],
+        "specifier": "./inner.ts",
+        "specifierRange": [[5, 6], [7, 8]]
+      }]
+    }
+  }
+}
+
+# mod.ts
+import 'deno:@scope/a@^1.0/mod.ts';
+
+# cache:https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
+import './a.ts';
+
+# cache:https://registry-staging.deno.com/@scope/a/1.0.0/a.ts
+import './b.ts';
+
+# https://registry-staging.deno.com/@scope/a/1.0.0/b.ts
+1; // will be ignored
+
+# cache:https://registry-staging.deno.com/@scope/a/1.0.0/c.ts
+import 'deno:@scope/b/mod.ts';
+
+# cache:https://registry-staging.deno.com/@scope/b/9.0.0/mod.ts
+4;
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "deno:@scope/a@^1.0/mod.ts",
+          "code": {
+            "specifier": "deno:@scope/a@^1.0/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 34
+              }
+            }
+          }
+        }
+      ],
+      "size": 36,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./b.ts",
+          "code": {
+            "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/b.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 15
+              }
+            }
+          }
+        }
+      ],
+      "size": 17,
+      "mediaType": "TypeScript",
+      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./c.ts",
+          "code": {
+            "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/c.ts",
+            "span": {
+              "start": {
+                "line": 13,
+                "character": 14
+              },
+              "end": {
+                "line": 15,
+                "character": 16
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/b.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "deno:@scope/b/mod.ts",
+          "code": {
+            "specifier": "deno:@scope/b/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 29
+              }
+            }
+          }
+        }
+      ],
+      "size": 31,
+      "mediaType": "TypeScript",
+      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/c.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.ts",
+          "code": {
+            "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 15
+              }
+            }
+          }
+        }
+      ],
+      "size": 17,
+      "mediaType": "TypeScript",
+      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 3,
+      "mediaType": "TypeScript",
+      "specifier": "https://registry-staging.deno.com/@scope/b/9.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "deno:@scope/a@^1.0/mod.ts": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts",
+    "deno:@scope/b/mod.ts": "https://registry-staging.deno.com/@scope/b/9.0.0/mod.ts"
+  },
+  "deno": {
+    "@scope/a@^1.0": "@scope/a@1.0.0",
+    "@scope/b": "@scope/b@9.0.0"
+  }
+}

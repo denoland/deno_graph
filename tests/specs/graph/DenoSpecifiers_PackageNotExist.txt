@@ -1,0 +1,40 @@
+# mod.ts
+import 'deno:@scope/a/mod.ts';
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "specifier": "deno:@scope/a/mod.ts",
+      "error": "Unknown package: @scope/a\n  Specifier: deno:@scope/a/mod.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "deno:@scope/a/mod.ts",
+          "code": {
+            "specifier": "deno:@scope/a/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 29
+              }
+            }
+          }
+        }
+      ],
+      "size": 31,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}

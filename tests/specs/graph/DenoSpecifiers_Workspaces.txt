@@ -1,0 +1,86 @@
+# workspace_members
+[
+  {
+    "base": "file:///members/a/",
+    "nv": "@scope/a@1.0.1"
+  },
+  {
+    "base": "file:///members/b/",
+    "nv": "@scope/b@2.0.0"
+  }
+]
+
+# mod.ts
+import "./members/a/mod.ts";
+
+# members/a/mod.ts
+import 'deno:@scope/b@2/mod.ts';
+
+# members/b/mod.ts
+console.log("Test");
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "deno:@scope/b@2/mod.ts",
+          "code": {
+            "specifier": "deno:@scope/b@2/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 31
+              }
+            }
+          }
+        }
+      ],
+      "size": 33,
+      "mediaType": "TypeScript",
+      "specifier": "file:///members/a/mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 21,
+      "mediaType": "TypeScript",
+      "specifier": "file:///members/b/mod.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./members/a/mod.ts",
+          "code": {
+            "specifier": "file:///members/a/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 27
+              }
+            }
+          }
+        }
+      ],
+      "size": 29,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {
+    "deno:@scope/b@2/mod.ts": "file:///members/b/mod.ts"
+  }
+}

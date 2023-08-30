@@ -1,12 +1,54 @@
-use anyhow::Result;
+// Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+
 use deno_ast::ModuleSpecifier;
-use deno_ast::SourceRanged;
+use deno_graph::source::CacheInfo;
+use deno_graph::source::LoadFuture;
+use deno_graph::source::Loader;
+use deno_graph::source::LoaderCacheSetting;
 use deno_graph::source::MemoryLoader;
-use deno_graph::CapturingModuleAnalyzer;
-use deno_graph::DefaultModuleParser;
+use deno_graph::BuildDiagnostic;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
-use std::collections::BTreeMap;
+use deno_graph::WorkspaceMember;
+
+#[derive(Default)]
+pub struct TestLoader {
+  pub cache: MemoryLoader,
+  pub remote: MemoryLoader,
+}
+
+impl Loader for TestLoader {
+  fn get_cache_info(&self, specifier: &ModuleSpecifier) -> Option<CacheInfo> {
+    self.cache.get_cache_info(specifier)
+  }
+
+  fn load_with_cache_setting(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    is_dynamic: bool,
+    cache_setting: LoaderCacheSetting,
+  ) -> LoadFuture {
+    match cache_setting {
+      // todo(dsherret): in the future, actually make this use the cache
+      LoaderCacheSetting::Prefer => self.remote.load_with_cache_setting(
+        specifier,
+        is_dynamic,
+        cache_setting,
+      ),
+      // todo(dsherret): in the future, make this update the cache
+      LoaderCacheSetting::Reload => self.remote.load_with_cache_setting(
+        specifier,
+        is_dynamic,
+        cache_setting,
+      ),
+      LoaderCacheSetting::Only => {
+        self
+          .cache
+          .load_with_cache_setting(specifier, is_dynamic, cache_setting)
+      }
+    }
+  }
+}
 
 #[cfg(feature = "type_tracing")]
 pub mod tracing {
@@ -44,11 +86,13 @@ pub mod tracing {
 
 pub struct BuildResult {
   pub graph: ModuleGraph,
+  pub diagnostics: Vec<BuildDiagnostic>,
 }
 
 pub struct TestBuilder {
-  loader: MemoryLoader,
+  loader: TestLoader,
   entry_point: String,
+  workspace_members: Vec<WorkspaceMember>,
 }
 
 impl TestBuilder {
@@ -56,12 +100,13 @@ impl TestBuilder {
     Self {
       loader: Default::default(),
       entry_point: "file:///mod.ts".to_string(),
+      workspace_members: Default::default(),
     }
   }
 
   pub fn with_loader(
     &mut self,
-    mut action: impl FnMut(&mut MemoryLoader),
+    mut action: impl FnMut(&mut TestLoader),
   ) -> &mut Self {
     action(&mut self.loader);
     self
@@ -73,22 +118,35 @@ impl TestBuilder {
     self
   }
 
+  pub fn workspace_members(
+    &mut self,
+    members: Vec<WorkspaceMember>,
+  ) -> &mut Self {
+    self.workspace_members = members;
+    self
+  }
+
   pub async fn build(&mut self) -> BuildResult {
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
     let roots = vec![entry_point_url.clone()];
-    graph
+    let diagnostics = graph
       .build(
         roots.clone(),
         &mut self.loader,
-        deno_graph::BuildOptions::default(),
+        deno_graph::BuildOptions {
+          workspace_members: self.workspace_members.clone(),
+          ..Default::default()
+        },
       )
       .await;
-    BuildResult { graph }
+    BuildResult { graph, diagnostics }
   }
 
   #[cfg(feature = "type_tracing")]
-  pub async fn trace(&mut self) -> Result<tracing::TypeTraceResult> {
+  pub async fn trace(&mut self) -> anyhow::Result<tracing::TypeTraceResult> {
+    use deno_ast::SourceRanged;
+
     let handler = tracing::TestTypeTraceHandler::default();
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
@@ -100,9 +158,11 @@ impl TestBuilder {
         deno_graph::BuildOptions::default(),
       )
       .await;
-    let source_parser = DefaultModuleParser::new_for_analysis();
-    let capturing_analyzer =
-      CapturingModuleAnalyzer::new(Some(Box::new(source_parser)), None);
+    let source_parser = deno_graph::DefaultModuleParser::new_for_analysis();
+    let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::new(
+      Some(Box::new(source_parser)),
+      None,
+    );
     let root_symbol = deno_graph::type_tracer::trace_public_types(
       &graph,
       &roots,
@@ -168,7 +228,7 @@ impl TestBuilder {
         let exports = entrypoint_symbol
           .exports(&graph, &root_symbol)
           .into_iter()
-          .collect::<BTreeMap<_, _>>();
+          .collect::<std::collections::BTreeMap<_, _>>();
         if !exports.is_empty() {
           output_text.push_str("== export definitions ==\n");
           for (name, (module_symbol, symbol_id)) in exports {

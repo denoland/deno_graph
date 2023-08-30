@@ -1,8 +1,11 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
+use crate::deno::DenoPackageInfo;
+use crate::deno::DenoPackageVersionInfo;
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::text_encoding::strip_bom_mut;
+use crate::ModuleInfo;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 
@@ -13,6 +16,7 @@ use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
 use futures::future;
 use futures::future::LocalBoxFuture;
+use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -20,6 +24,7 @@ use std::fmt;
 use std::path::PathBuf;
 use std::sync::Arc;
 use thiserror::Error;
+use url::Url;
 
 pub const DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
 
@@ -66,21 +71,70 @@ pub enum LoadResponse {
 pub type LoadResult = Result<Option<LoadResponse>>;
 pub type LoadFuture = LocalBoxFuture<'static, LoadResult>;
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum LoaderCacheSetting {
+  /// Attempts to load a specifier from the cache.
+  ///
+  /// This is used to see whether the specifier is in the cache for `deno:` specifiers.
+  /// * If it is, then it will use the source provided to get the module information.
+  /// * If not, then it will use the manifest information to do resolution and
+  ///   issue a separate request to the `load` method in order to get the source.
+  Only,
+  /// The implementation should prefer using the cache.
+  Prefer,
+  /// Loads a specifier where the implementation should not load
+  /// from an internal cache. This is only ever done when loading
+  /// `deno:` specifier module information and the version constraint
+  /// cannot be resolved.
+  Reload,
+}
+
+pub static DEFAULT_DENO_REGISTRY_URL: Lazy<Url> =
+  Lazy::new(|| Url::parse("https://registry-staging.deno.com").unwrap());
+
 /// A trait which allows asynchronous loading of source files into a module
 /// graph in a thread safe way as well as a way to provide additional meta data
 /// about any cached resources.
 pub trait Loader {
+  fn registry_url(&self) -> &Url {
+    &DEFAULT_DENO_REGISTRY_URL
+  }
+
   /// An optional method which returns cache info for a module specifier.
   fn get_cache_info(&self, _specifier: &ModuleSpecifier) -> Option<CacheInfo> {
     None
   }
 
-  /// A method that given a specifier that asynchronously returns a response
+  /// A method that given a specifier that asynchronously returns the
+  /// source of the file.
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
+  ) -> LoadFuture {
+    self.load_with_cache_setting(
+      specifier,
+      is_dynamic,
+      LoaderCacheSetting::Prefer,
+    )
+  }
+
+  fn load_with_cache_setting(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    is_dynamic: bool,
+    cache_setting: LoaderCacheSetting,
   ) -> LoadFuture;
+
+  /// Cache the module info for the provided specifier if the loader
+  /// supports caching this information.
+  fn cache_module_info(
+    &mut self,
+    _specifier: &ModuleSpecifier,
+    _source: &str,
+    _module_info: &ModuleInfo,
+  ) {
+  }
 }
 
 /// A trait which allows the module graph to resolve specifiers and type only
@@ -134,12 +188,12 @@ pub struct UnknownBuiltInNodeModuleError {
 }
 
 #[derive(Debug)]
-pub enum PackageReqResolution {
+pub enum NpmPackageReqResolution {
   Ok(PackageNv),
   Err(anyhow::Error),
   /// Error was encountered, but instruct deno_graph to ask for
   /// the registry information again. This is useful to use when
-  /// a user specifies a deno/npm specifier that doesn't match any version
+  /// a user specifies an npm specifier that doesn't match any version
   /// found in a cache and you want to cache bust the registry information.
   ///
   /// When the implementation provides this, it should cache bust its
@@ -172,7 +226,7 @@ pub trait NpmResolver: fmt::Debug {
   ) -> LocalBoxFuture<'static, Result<(), anyhow::Error>>;
 
   /// Resolves an npm package requirement to a resolved npm package name and version.
-  fn resolve_npm(&self, package_req: &PackageReq) -> PackageReqResolution;
+  fn resolve_npm(&self, package_req: &PackageReq) -> NpmPackageReqResolution;
 }
 
 pub fn load_data_url(
@@ -284,6 +338,30 @@ impl MemoryLoader {
       },
     );
   }
+
+  pub fn add_deno_package_info(
+    &mut self,
+    name: &str,
+    package_info: &DenoPackageInfo,
+  ) {
+    let specifier = DEFAULT_DENO_REGISTRY_URL
+      .join(&format!("{}/meta.json", name))
+      .unwrap();
+    let json_text = serde_json::to_string(package_info).unwrap();
+    self.add_source_with_text(specifier, json_text);
+  }
+
+  pub fn add_deno_version_info(
+    &mut self,
+    nv: &PackageNv,
+    version_info: &DenoPackageVersionInfo,
+  ) {
+    let specifier = DEFAULT_DENO_REGISTRY_URL
+      .join(&format!("{}/{}_meta.json", nv.name, nv.version))
+      .unwrap();
+    let json_text = serde_json::to_string(version_info).unwrap();
+    self.add_source_with_text(specifier, json_text);
+  }
 }
 
 impl Loader for MemoryLoader {
@@ -291,10 +369,11 @@ impl Loader for MemoryLoader {
     self.cache_info.get(specifier).cloned()
   }
 
-  fn load(
+  fn load_with_cache_setting(
     &mut self,
     specifier: &ModuleSpecifier,
     _is_dynamic: bool,
+    _cache_setting: LoaderCacheSetting,
   ) -> LoadFuture {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),

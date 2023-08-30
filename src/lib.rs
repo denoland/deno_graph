@@ -8,6 +8,7 @@ mod module_specifier;
 #[cfg(feature = "type_tracing")]
 pub mod type_tracer;
 
+pub mod deno;
 pub mod source;
 mod text_encoding;
 
@@ -36,6 +37,7 @@ pub use ast::DefaultParsedSourceStore;
 pub use ast::ModuleParser;
 pub use ast::ParsedSourceStore;
 pub use deno_ast::MediaType;
+pub use graph::BuildDiagnostic;
 pub use graph::BuildOptions;
 pub use graph::Dependency;
 pub use graph::EsmModule;
@@ -56,10 +58,11 @@ pub use graph::ResolutionError;
 pub use graph::ResolutionResolved;
 pub use graph::TypesDependency;
 pub use graph::WalkOptions;
+pub use graph::WorkspaceMember;
 pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
-pub use source::PackageReqResolution;
+pub use source::NpmPackageReqResolution;
 
 #[derive(Debug, Clone)]
 pub struct ReferrerImports {
