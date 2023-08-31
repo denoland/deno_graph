@@ -2,9 +2,9 @@
 
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheInfo;
+use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::Loader;
-use deno_graph::source::LoaderCacheSetting;
 use deno_graph::source::MemoryLoader;
 use deno_graph::BuildDiagnostic;
 use deno_graph::GraphKind;
@@ -22,29 +22,23 @@ impl Loader for TestLoader {
     self.cache.get_cache_info(specifier)
   }
 
-  fn load_with_cache_setting(
+  fn load(
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
-    cache_setting: LoaderCacheSetting,
+    cache_setting: CacheSetting,
   ) -> LoadFuture {
     match cache_setting {
       // todo(dsherret): in the future, actually make this use the cache
-      LoaderCacheSetting::Prefer => self.remote.load_with_cache_setting(
-        specifier,
-        is_dynamic,
-        cache_setting,
-      ),
+      CacheSetting::Use => {
+        self.remote.load(specifier, is_dynamic, cache_setting)
+      }
       // todo(dsherret): in the future, make this update the cache
-      LoaderCacheSetting::Reload => self.remote.load_with_cache_setting(
-        specifier,
-        is_dynamic,
-        cache_setting,
-      ),
-      LoaderCacheSetting::Only => {
-        self
-          .cache
-          .load_with_cache_setting(specifier, is_dynamic, cache_setting)
+      CacheSetting::Reload => {
+        self.remote.load(specifier, is_dynamic, cache_setting)
+      }
+      CacheSetting::Only => {
+        self.cache.load(specifier, is_dynamic, cache_setting)
       }
     }
   }

@@ -2139,11 +2139,11 @@ enum FillPassMode {
 }
 
 impl FillPassMode {
-  fn to_cache_setting(self) -> LoaderCacheSetting {
+  fn to_cache_setting(self) -> CacheSetting {
     if self == FillPassMode::CacheBusting {
-      LoaderCacheSetting::Reload
+      CacheSetting::Reload
     } else {
-      LoaderCacheSetting::Prefer
+      CacheSetting::Use
     }
   }
 }
@@ -2728,10 +2728,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           // Check if this specifier is in the cache. If it is, then
           // don't use the module information as it may be out of date
           // with what's in the cache
-          let fut = self.loader.load_with_cache_setting(
+          let fut = self.loader.load(
             specifier,
             self.in_dynamic_branch,
-            LoaderCacheSetting::Only,
+            CacheSetting::Only,
           );
           self.state.pending.push_back({
             let specifier = specifier.clone();
@@ -2947,16 +2947,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .insert(requested_specifier.clone(), ModuleSlot::Pending);
     let load_specifier = load_specifier.clone();
     let requested_specifier = requested_specifier.clone();
-    let fut =
-      self
-        .loader
-        .load(&load_specifier, is_dynamic)
-        .map(move |result| PendingInfo {
-          specifier: requested_specifier,
-          maybe_range,
-          result: result.map(|r| r.map(Into::into)),
-          maybe_version_info: None,
-        });
+    let fut = self
+      .loader
+      .load(&load_specifier, is_dynamic, CacheSetting::Use)
+      .map(move |result| PendingInfo {
+        specifier: requested_specifier,
+        maybe_range,
+        result: result.map(|r| r.map(Into::into)),
+        maybe_version_info: None,
+      });
     self.state.pending.push_back(Box::pin(fut));
   }
 
@@ -2976,7 +2975,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .registry_url()
       .join(&format!("{}/meta.json", package_name))
       .unwrap();
-    let fut = self.loader.load_with_cache_setting(
+    let fut = self.loader.load(
       &specifier,
       false,
       self.fill_pass_mode.to_cache_setting(),
@@ -3018,7 +3017,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         package_nv.name, package_nv.version
       ))
       .unwrap();
-    let fut = self.loader.load_with_cache_setting(
+    let fut = self.loader.load(
       &specifier,
       false,
       self.fill_pass_mode.to_cache_setting(),
@@ -3126,7 +3125,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           let specifier = specifier.clone();
           let maybe_range = maybe_referrer.clone();
           let module_info = info.clone();
-          let fut = self.loader.load(&specifier, self.in_dynamic_branch);
+          let fut = self.loader.load(
+            &specifier,
+            self.in_dynamic_branch,
+            CacheSetting::Use,
+          );
           async move {
             let result = fut.await;
             PendingContentLoadItem {
@@ -3689,11 +3692,11 @@ mod tests {
       loaded_baz: bool,
     }
     impl Loader for TestLoader {
-      fn load_with_cache_setting(
+      fn load(
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
-        _cache_setting: LoaderCacheSetting,
+        _cache_setting: CacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -3758,11 +3761,11 @@ mod tests {
   async fn missing_module_is_error() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load_with_cache_setting(
+      fn load(
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
-        _cache_setting: LoaderCacheSetting,
+        _cache_setting: CacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -3845,11 +3848,11 @@ mod tests {
   async fn redirected_specifiers() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load_with_cache_setting(
+      fn load(
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
-        _cache_setting: LoaderCacheSetting,
+        _cache_setting: CacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -3913,11 +3916,11 @@ mod tests {
   async fn local_import_remote_module() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load_with_cache_setting(
+      fn load(
         &mut self,
         specifier: &ModuleSpecifier,
         _is_dynamic: bool,
-        _cache_setting: LoaderCacheSetting,
+        _cache_setting: CacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4038,11 +4041,11 @@ mod tests {
       loaded_bar: bool,
     }
     impl Loader for TestLoader {
-      fn load_with_cache_setting(
+      fn load(
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
-        _cache_setting: LoaderCacheSetting,
+        _cache_setting: CacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4085,11 +4088,11 @@ mod tests {
   async fn dependency_imports() {
     struct TestLoader;
     impl Loader for TestLoader {
-      fn load_with_cache_setting(
+      fn load(
         &mut self,
         specifier: &ModuleSpecifier,
         is_dynamic: bool,
-        _cache_setting: LoaderCacheSetting,
+        _cache_setting: CacheSetting,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {

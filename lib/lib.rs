@@ -10,9 +10,9 @@ use std::collections::HashMap;
 use deno_graph::resolve_import;
 use deno_graph::source::load_data_url;
 use deno_graph::source::CacheInfo;
+use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::Loader;
-use deno_graph::source::LoaderCacheSetting;
 use deno_graph::source::Resolver;
 use deno_graph::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
 use deno_graph::BuildOptions;
@@ -60,11 +60,11 @@ impl Loader for JsLoader {
     }
   }
 
-  fn load_with_cache_setting(
+  fn load(
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
-    cache_setting: LoaderCacheSetting,
+    cache_setting: CacheSetting,
   ) -> LoadFuture {
     if specifier.scheme() == "data" {
       Box::pin(future::ready(load_data_url(specifier)))
@@ -73,12 +73,7 @@ impl Loader for JsLoader {
       let context = JsValue::null();
       let arg1 = JsValue::from(specifier.to_string());
       let arg2 = JsValue::from(is_dynamic);
-      let arg3 = JsValue::from(match cache_setting {
-        // note: keep these values aligned with deno_cache
-        LoaderCacheSetting::Only => "only",
-        LoaderCacheSetting::Prefer => "prefer",
-        LoaderCacheSetting::Reload => "reload",
-      });
+      let arg3 = JsValue::from(cache_setting.as_js_str());
       let result = self.load.call3(&context, &arg1, &arg2, &arg3);
       let f = async move {
         let response = match result {
