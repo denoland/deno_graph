@@ -81,7 +81,7 @@ pub enum CacheSetting {
   ///   issue a separate request to the `load` method in order to get the source.
   Only,
   /// The implementation should prefer using the cache.
-  Prefer,
+  Use,
   /// Loads a specifier where the implementation should not load
   /// from an internal cache. This is only ever done when loading
   /// `deno:` specifier module information and the version constraint
@@ -95,7 +95,7 @@ impl CacheSetting {
     // note: keep these values aligned with deno_cache
     match self {
       CacheSetting::Only => "only",
-      CacheSetting::Prefer => "use",
+      CacheSetting::Use => "use",
       CacheSetting::Reload => "reload",
     }
   }

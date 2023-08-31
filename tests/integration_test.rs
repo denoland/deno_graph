@@ -263,7 +263,7 @@ async fn test_deno_version_not_found_then_found() {
               specifier: specifier.clone(),
               maybe_headers: None,
               content: match cache_setting {
-                CacheSetting::Only | CacheSetting::Prefer => {
+                CacheSetting::Only | CacheSetting::Use => {
                   // first time it won't have the version
                   r#"{ "versions": { "1.0.0": {} } }"#.into()
                 }
@@ -311,12 +311,12 @@ async fn test_deno_version_not_found_then_found() {
   assert_eq!(
     loader.requests,
     vec![
-      ("file:///main.ts".to_string(), CacheSetting::Prefer),
+      ("file:///main.ts".to_string(), CacheSetting::Use),
       (
         "https://registry-staging.deno.com/@scope/a/meta.json".to_string(),
-        CacheSetting::Prefer
+        CacheSetting::Use
       ),
-      ("file:///main.ts".to_string(), CacheSetting::Prefer),
+      ("file:///main.ts".to_string(), CacheSetting::Use),
       (
         "https://registry-staging.deno.com/@scope/a/meta.json".to_string(),
         CacheSetting::Reload
@@ -328,7 +328,7 @@ async fn test_deno_version_not_found_then_found() {
       ),
       (
         "https://registry-staging.deno.com/@scope/a/1.2.0/mod.ts".to_string(),
-        CacheSetting::Prefer
+        CacheSetting::Use
       ),
     ]
   );

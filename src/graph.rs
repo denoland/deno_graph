@@ -2143,7 +2143,7 @@ impl FillPassMode {
     if self == FillPassMode::CacheBusting {
       CacheSetting::Reload
     } else {
-      CacheSetting::Prefer
+      CacheSetting::Use
     }
   }
 }
@@ -2949,7 +2949,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let requested_specifier = requested_specifier.clone();
     let fut = self
       .loader
-      .load(&load_specifier, is_dynamic, CacheSetting::Prefer)
+      .load(&load_specifier, is_dynamic, CacheSetting::Use)
       .map(move |result| PendingInfo {
         specifier: requested_specifier,
         maybe_range,
@@ -3128,7 +3128,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           let fut = self.loader.load(
             &specifier,
             self.in_dynamic_branch,
-            CacheSetting::Prefer,
+            CacheSetting::Use,
           );
           async move {
             let result = fut.await;

@@ -30,7 +30,7 @@ impl Loader for TestLoader {
   ) -> LoadFuture {
     match cache_setting {
       // todo(dsherret): in the future, actually make this use the cache
-      CacheSetting::Prefer => {
+      CacheSetting::Use => {
         self.remote.load(specifier, is_dynamic, cache_setting)
       }
       // todo(dsherret): in the future, make this update the cache
