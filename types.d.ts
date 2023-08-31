@@ -94,7 +94,7 @@ export interface TypesDependencyJson {
 /** The kind of module.
  *
  * For asserted modules, the value of the `asserted` property is set to the
- * `type` value of the assertion.
+ * `type` value of the import attribute.
  *
  * Dependency analysis is not performed for asserted or Script modules
  * currently. Synthetic modules were injected into the graph with their own
