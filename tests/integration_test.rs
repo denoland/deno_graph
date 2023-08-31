@@ -10,9 +10,9 @@ use std::rc::Rc;
 
 use anyhow::anyhow;
 use deno_ast::ModuleSpecifier;
+use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadResponse;
-use deno_graph::source::LoaderCacheSetting;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
 use deno_graph::source::UnknownBuiltInNodeModuleError;
@@ -236,15 +236,15 @@ async fn test_npm_version_not_found_then_found() {
 async fn test_deno_version_not_found_then_found() {
   #[derive(Default)]
   struct TestLoader {
-    requests: Vec<(String, LoaderCacheSetting)>,
+    requests: Vec<(String, CacheSetting)>,
   }
 
   impl deno_graph::source::Loader for TestLoader {
-    fn load_with_cache_setting(
+    fn load(
       &mut self,
       specifier: &ModuleSpecifier,
       is_dynamic: bool,
-      cache_setting: LoaderCacheSetting,
+      cache_setting: CacheSetting,
     ) -> LoadFuture {
       assert!(!is_dynamic);
       self.requests.push((specifier.to_string(), cache_setting));
@@ -263,11 +263,11 @@ async fn test_deno_version_not_found_then_found() {
               specifier: specifier.clone(),
               maybe_headers: None,
               content: match cache_setting {
-                LoaderCacheSetting::Only | LoaderCacheSetting::Prefer => {
+                CacheSetting::Only | CacheSetting::Prefer => {
                   // first time it won't have the version
                   r#"{ "versions": { "1.0.0": {} } }"#.into()
                 }
-                LoaderCacheSetting::Reload => {
+                CacheSetting::Reload => {
                   // then on reload it will
                   r#"{ "versions": { "1.0.0": {}, "1.2.0": {} } }"#.into()
                 }
@@ -311,24 +311,24 @@ async fn test_deno_version_not_found_then_found() {
   assert_eq!(
     loader.requests,
     vec![
-      ("file:///main.ts".to_string(), LoaderCacheSetting::Prefer),
+      ("file:///main.ts".to_string(), CacheSetting::Prefer),
       (
         "https://registry-staging.deno.com/@scope/a/meta.json".to_string(),
-        LoaderCacheSetting::Prefer
+        CacheSetting::Prefer
       ),
-      ("file:///main.ts".to_string(), LoaderCacheSetting::Prefer),
+      ("file:///main.ts".to_string(), CacheSetting::Prefer),
       (
         "https://registry-staging.deno.com/@scope/a/meta.json".to_string(),
-        LoaderCacheSetting::Reload
+        CacheSetting::Reload
       ),
       (
         "https://registry-staging.deno.com/@scope/a/1.2.0_meta.json"
           .to_string(),
-        LoaderCacheSetting::Reload
+        CacheSetting::Reload
       ),
       (
         "https://registry-staging.deno.com/@scope/a/1.2.0/mod.ts".to_string(),
-        LoaderCacheSetting::Prefer
+        CacheSetting::Prefer
       ),
     ]
   );

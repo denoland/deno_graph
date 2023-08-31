@@ -72,7 +72,7 @@ pub type LoadResult = Result<Option<LoadResponse>>;
 pub type LoadFuture = LocalBoxFuture<'static, LoadResult>;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum LoaderCacheSetting {
+pub enum CacheSetting {
   /// Attempts to load a specifier from the cache.
   ///
   /// This is used to see whether the specifier is in the cache for `deno:` specifiers.
@@ -87,6 +87,18 @@ pub enum LoaderCacheSetting {
   /// `deno:` specifier module information and the version constraint
   /// cannot be resolved.
   Reload,
+}
+
+impl CacheSetting {
+  /// String representation that can be sent to JS for consumption in deno_cache.
+  pub fn as_js_str(&self) -> &'static str {
+    // note: keep these values aligned with deno_cache
+    match self {
+      CacheSetting::Only => "only",
+      CacheSetting::Prefer => "use",
+      CacheSetting::Reload => "reload",
+    }
+  }
 }
 
 pub static DEFAULT_DENO_REGISTRY_URL: Lazy<Url> =
@@ -111,19 +123,7 @@ pub trait Loader {
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
-  ) -> LoadFuture {
-    self.load_with_cache_setting(
-      specifier,
-      is_dynamic,
-      LoaderCacheSetting::Prefer,
-    )
-  }
-
-  fn load_with_cache_setting(
-    &mut self,
-    specifier: &ModuleSpecifier,
-    is_dynamic: bool,
-    cache_setting: LoaderCacheSetting,
+    cache_setting: CacheSetting,
   ) -> LoadFuture;
 
   /// Cache the module info for the provided specifier if the loader
@@ -369,11 +369,11 @@ impl Loader for MemoryLoader {
     self.cache_info.get(specifier).cloned()
   }
 
-  fn load_with_cache_setting(
+  fn load(
     &mut self,
     specifier: &ModuleSpecifier,
     _is_dynamic: bool,
-    _cache_setting: LoaderCacheSetting,
+    _cache_setting: CacheSetting,
   ) -> LoadFuture {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),
