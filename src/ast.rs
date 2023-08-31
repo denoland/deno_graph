@@ -10,7 +10,7 @@ use crate::analyzer::TypeScriptReference;
 use crate::graph::Position;
 use crate::module_specifier::ModuleSpecifier;
 use crate::DependencyKind;
-use crate::ImportAssertions;
+use crate::ImportAttributes;
 
 use deno_ast::SourcePos;
 use deno_ast::SourceRange;
@@ -336,7 +336,7 @@ fn analyze_dependencies(
       SourceRange::unsafely_from_span(d.specifier_span),
       parsed_source.text_info(),
     ),
-    import_assertions: ImportAssertions::from_swc(d.import_assertions),
+    import_attributes: ImportAttributes::from_swc(d.import_attributes),
   })
   .collect()
 }
@@ -587,31 +587,35 @@ mod tests {
   }
 
   #[test]
-  fn test_analyze_dependencies_import_assertions() {
+  fn test_analyze_dependencies_import_attributes() {
     let specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad specifier");
-    let source = r#"
-    import a from "./a.json" assert { type: "json" };
-    await import("./b.json", { assert: { type: "json" } });
-    "#;
-    let parsed_source = DefaultModuleParser::default()
-      .parse_module(&specifier, source.into(), MediaType::TypeScript)
-      .unwrap();
-    let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
-    let dependencies = module_info.dependencies;
-    assert_eq!(dependencies.len(), 2);
-    assert!(!dependencies[0].is_dynamic);
-    assert_eq!(dependencies[0].specifier.to_string(), "./a.json");
-    assert_eq!(
-      dependencies[0].import_assertions.get("type"),
-      Some(&"json".to_string())
-    );
-    assert!(dependencies[1].is_dynamic);
-    assert_eq!(dependencies[1].specifier.to_string(), "./b.json");
-    assert_eq!(
-      dependencies[1].import_assertions.get("type"),
-      Some(&"json".to_string())
-    );
+    for keyword in ["assert", "with"] {
+      let source = format!(
+        "
+      import a from \"./a.json\" {keyword} {{ type: \"json\" }};
+      await import(\"./b.json\", {{ {keyword}: {{ type: \"json\" }} }});
+      "
+      );
+      let parsed_source = DefaultModuleParser::default()
+        .parse_module(&specifier, source.into(), MediaType::TypeScript)
+        .unwrap();
+      let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
+      let dependencies = module_info.dependencies;
+      assert_eq!(dependencies.len(), 2);
+      assert!(!dependencies[0].is_dynamic);
+      assert_eq!(dependencies[0].specifier.to_string(), "./a.json");
+      assert_eq!(
+        dependencies[0].import_attributes.get("type"),
+        Some(&"json".to_string())
+      );
+      assert!(dependencies[1].is_dynamic);
+      assert_eq!(dependencies[1].specifier.to_string(), "./b.json");
+      assert_eq!(
+        dependencies[1].import_attributes.get("type"),
+        Some(&"json".to_string())
+      );
+    }
   }
 
   #[test]

@@ -696,14 +696,14 @@ Deno.test({
 });
 
 Deno.test({
-  name: "parseModule() - import assertions",
+  name: "parseModule() - import attributes",
   async fn() {
     await init();
     const module = parseModule(
       "file:///a/test01.js",
       `
-        import a from "./a.json" assert { type: "json" };
-        await import("./b.json", { assert: { type: "json" } });
+        import a from "./a.json" with { type: "json" };
+        await import("./b.json", { with: { type: "json" } });
       `,
     );
     assertEquals(module, {
@@ -746,7 +746,7 @@ Deno.test({
       ],
       "kind": "esm",
       "mediaType": MediaType.JavaScript,
-      "size": 129,
+      "size": 125,
       "specifier": "file:///a/test01.js",
     });
   },

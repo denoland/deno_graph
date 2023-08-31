@@ -8,7 +8,7 @@ use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
 use crate::DefaultModuleAnalyzer;
-use crate::ImportAssertions;
+use crate::ImportAttributes;
 use crate::ReferrerImports;
 
 use crate::deno::resolve_version;
@@ -168,7 +168,7 @@ pub enum ModuleError {
     actual_media_type: MediaType,
     expected_media_type: MediaType,
   },
-  UnsupportedImportAssertionType {
+  UnsupportedImportAttributeType {
     specifier: ModuleSpecifier,
     range: Range,
     kind: String,
@@ -186,7 +186,7 @@ impl ModuleError {
       | Self::UnknownPackage { specifier: s, .. }
       | Self::UnknownPackageReq { specifier: s, .. }
       | Self::InvalidTypeAssertion { specifier: s, .. }
-      | Self::UnsupportedImportAssertionType { specifier: s, .. } => s,
+      | Self::UnsupportedImportAttributeType { specifier: s, .. } => s,
     }
   }
 
@@ -202,7 +202,7 @@ impl ModuleError {
       }
       Self::ParseErr(_, _) => None,
       Self::InvalidTypeAssertion { range, .. } => Some(range),
-      Self::UnsupportedImportAssertionType { range, .. } => Some(range),
+      Self::UnsupportedImportAttributeType { range, .. } => Some(range),
     }
   }
 }
@@ -218,7 +218,7 @@ impl std::error::Error for ModuleError {
       | Self::UnknownPackageReq { .. }
       | Self::UnsupportedMediaType(_, _, _)
       | Self::InvalidTypeAssertion { .. }
-      | Self::UnsupportedImportAssertionType { .. } => None,
+      | Self::UnsupportedImportAttributeType { .. } => None,
     }
   }
 }
@@ -232,16 +232,16 @@ impl fmt::Display for ModuleError {
         write!(f, "Unknown package: {package_name}\n  Specifier: {specifier}"),
       Self::UnknownPackageReq { package_req, specifier, .. } =>
         write!(f, "Could not find constraint in the list of versions: {package_req}\n  Specifier: {specifier}"),
-      Self::UnsupportedMediaType(specifier, MediaType::Json, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {specifier}"),
+      Self::UnsupportedMediaType(specifier, MediaType::Json, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
       Self::Missing(specifier, _) => write!(f, "Module not found \"{specifier}\"."),
       Self::MissingDynamic(specifier, _) => write!(f, "Dynamic import not found \"{specifier}\"."),
       Self::InvalidTypeAssertion { specifier, actual_media_type: MediaType::Json, expected_media_type, .. } =>
-        write!(f, "Expected a {expected_media_type} module, but identified a Json module. Consider importing Json modules with an import assertion with the type of \"json\".\n  Specifier: {specifier}"),
+        write!(f, "Expected a {expected_media_type} module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"),
       Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type, .. } =>
         write!(f, "Expected a {expected_media_type} module, but identified a {actual_media_type} module.\n  Specifier: {specifier}"),
-      Self::UnsupportedImportAssertionType { specifier, kind, .. } =>
-        write!(f, "The import assertion type of \"{kind}\" is unsupported.\n  Specifier: {specifier}"),
+      Self::UnsupportedImportAttributeType { specifier, kind, .. } =>
+        write!(f, "The import attribute type of \"{kind}\" is unsupported.\n  Specifier: {specifier}"),
     }
   }
 }
@@ -547,11 +547,10 @@ pub struct Import {
   pub range: Range,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
-  // Don't include assertions in `deno info --json`, since they may be unstable:
-  // https://github.com/denoland/deno/issues/17944. Assertion error strings
-  // eventually will be included in a separate `Import::errors`, however.
+  // Don't include attributes in `deno info --json` until someone has a need.
+  // Attribute error strings eventually will be included in a separate `Import::errors`, however.
   #[serde(skip_serializing)]
-  pub assertions: ImportAssertions,
+  pub attributes: ImportAttributes,
 }
 
 #[derive(Debug, Default, Clone, Serialize)]
@@ -563,9 +562,10 @@ pub struct Dependency {
   pub maybe_type: Resolution,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
+  // todo(dsherret): rename to attributeType in 2.0
   #[serde(rename = "assertionType", skip_serializing_if = "Option::is_none")]
-  pub maybe_assert_type: Option<String>,
-  // TODO(nayeemrmn): Replace `maybe_assert_type` with this in the serialization
+  pub maybe_attribute_type: Option<String>,
+  // TODO(nayeemrmn): Replace `maybe_attribute_type` with this in the serialization
   // for 2.0.
   #[serde(skip_serializing)]
   pub imports: Vec<Import>,
@@ -840,7 +840,7 @@ impl GraphImport {
             is_dynamic: false,
             maybe_code: Resolution::None,
             maybe_type,
-            maybe_assert_type: None,
+            maybe_attribute_type: None,
             imports: vec![],
           },
         )
@@ -1616,7 +1616,7 @@ pub(crate) fn parse_module(
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<str>,
-  maybe_assert_type: Option<AssertTypeWithRange>,
+  maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_referrer: Option<Range>,
   maybe_resolver: Option<&dyn Resolver>,
   module_analyzer: &dyn ModuleAnalyzer,
@@ -1632,7 +1632,7 @@ pub(crate) fn parse_module(
     && (is_root
       || is_dynamic_branch
       || matches!(
-        maybe_assert_type.as_ref().map(|t| t.kind.as_str()),
+        maybe_attribute_type.as_ref().map(|t| t.kind.as_str()),
         Some("json")
       ))
   {
@@ -1644,22 +1644,22 @@ pub(crate) fn parse_module(
     }));
   }
 
-  if let Some(assert_type) = maybe_assert_type {
-    if assert_type.kind == "json" {
+  if let Some(attribute_type) = maybe_attribute_type {
+    if attribute_type.kind == "json" {
       return Err(ModuleGraphError::ModuleError(
         ModuleError::InvalidTypeAssertion {
           specifier: specifier.clone(),
-          range: assert_type.range,
+          range: attribute_type.range,
           actual_media_type: media_type,
           expected_media_type: MediaType::Json,
         },
       ));
     } else {
       return Err(ModuleGraphError::ModuleError(
-        ModuleError::UnsupportedImportAssertionType {
+        ModuleError::UnsupportedImportAttributeType {
           specifier: specifier.clone(),
-          range: assert_type.range,
-          kind: assert_type.kind,
+          range: attribute_type.range,
+          kind: attribute_type.kind,
         },
       ));
     }
@@ -1757,7 +1757,7 @@ pub(crate) fn parse_esm_module_from_module_info(
           kind: ImportKind::TsReferencePath,
           range,
           is_dynamic: false,
-          assertions: Default::default(),
+          attributes: Default::default(),
         });
       }
       TypeScriptReference::Types(specifier) => {
@@ -1783,7 +1783,7 @@ pub(crate) fn parse_esm_module_from_module_info(
             kind: ImportKind::TsReferenceTypes,
             range,
             is_dynamic: false,
-            assertions: Default::default(),
+            attributes: Default::default(),
           });
         }
       }
@@ -1833,7 +1833,7 @@ pub(crate) fn parse_esm_module_from_module_info(
         kind: ImportKind::JsxImportSource,
         range,
         is_dynamic: false,
-        assertions: Default::default(),
+        attributes: Default::default(),
       });
     }
   }
@@ -1854,7 +1854,7 @@ pub(crate) fn parse_esm_module_from_module_info(
       kind: ImportKind::JsDoc,
       range,
       is_dynamic: false,
-      assertions: Default::default(),
+      attributes: Default::default(),
     });
   }
 
@@ -1922,10 +1922,10 @@ pub(crate) fn parse_esm_module_from_module_info(
       .dependencies
       .entry(desc.specifier.to_string())
       .or_default();
-    // TODO(nayeemrmn): Import assertions should be visited and checked for
+    // TODO(nayeemrmn): Import attributes should be visited and checked for
     // every import, not one per specifier.
-    if dep.maybe_assert_type.is_none() {
-      dep.maybe_assert_type = desc.import_assertions.get("type").cloned();
+    if dep.maybe_attribute_type.is_none() {
+      dep.maybe_attribute_type = desc.import_attributes.get("type").cloned();
     }
     let range = Range::from_position_range(
       module.specifier.clone(),
@@ -1945,7 +1945,7 @@ pub(crate) fn parse_esm_module_from_module_info(
         kind: ImportKind::TsType,
         range,
         is_dynamic: desc.is_dynamic,
-        assertions: desc.import_assertions.clone(),
+        attributes: desc.import_attributes.clone(),
       });
     } else {
       if dep.maybe_code.is_none() {
@@ -1965,7 +1965,7 @@ pub(crate) fn parse_esm_module_from_module_info(
         kind: ImportKind::Es,
         range,
         is_dynamic: desc.is_dynamic,
-        assertions: desc.import_assertions.clone(),
+        attributes: desc.import_attributes.clone(),
       });
     }
     if dep.maybe_type.is_none() {
@@ -2066,9 +2066,9 @@ struct PendingInfo {
 type PendingInfoFuture = LocalBoxFuture<'static, PendingInfo>;
 
 #[derive(PartialEq, Eq, Hash)]
-pub(crate) struct AssertTypeWithRange {
+pub(crate) struct AttributeTypeWithRange {
   range: Range,
-  /// The kind of assertion (ex. "json").
+  /// The kind of attribute (ex. "json").
   kind: String,
 }
 
@@ -2120,9 +2120,9 @@ struct PendingState {
   deno: PendingDenoState,
   npm: PendingNpmState,
   pending_specifiers:
-    HashMap<ModuleSpecifier, HashSet<Option<AssertTypeWithRange>>>,
+    HashMap<ModuleSpecifier, HashSet<Option<AttributeTypeWithRange>>>,
   dynamic_branches:
-    HashMap<ModuleSpecifier, (Range, Option<AssertTypeWithRange>)>,
+    HashMap<ModuleSpecifier, (Range, Option<AttributeTypeWithRange>)>,
 }
 
 #[derive(Clone)]
@@ -2706,7 +2706,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     specifier: &ModuleSpecifier,
     maybe_range: Option<&Range>,
     is_dynamic: bool,
-    maybe_assert_type: Option<AssertTypeWithRange>,
+    maybe_assert_type: Option<AttributeTypeWithRange>,
     maybe_version_info: Option<&DenoPackageVersionInfoExt>,
   ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
@@ -3055,7 +3055,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     &mut self,
     requested_specifier: &ModuleSpecifier,
     response: &PendingInfoResponse,
-    maybe_assert_type: Option<AssertTypeWithRange>,
+    maybe_assert_type: Option<AttributeTypeWithRange>,
     maybe_referrer: Option<Range>,
     maybe_version_info: Option<&DenoPackageVersionInfoExt>,
   ) {
@@ -3099,7 +3099,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     specifier: &ModuleSpecifier,
     maybe_headers: Option<&HashMap<String, String>>,
     content_or_module_info: ContentOrModuleInfo,
-    maybe_assert_type: Option<AssertTypeWithRange>,
+    maybe_assert_type: Option<AttributeTypeWithRange>,
     maybe_referrer: Option<Range>,
     maybe_version_info: Option<&DenoPackageVersionInfoExt>,
   ) -> ModuleSlot {
@@ -3177,9 +3177,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               let specifier = &resolved.specifier;
               let range = &resolved.range;
               let maybe_assert_type_with_range = dep
-                .maybe_assert_type
+                .maybe_attribute_type
                 .as_ref()
-                .map(|assert_type| AssertTypeWithRange {
+                .map(|assert_type| AttributeTypeWithRange {
                   range: range.clone(),
                   kind: assert_type.clone(),
                 });
@@ -3210,9 +3210,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               let specifier = &resolved.specifier;
               let range = &resolved.range;
               let maybe_assert_type_with_range = dep
-                .maybe_assert_type
+                .maybe_attribute_type
                 .as_ref()
-                .map(|assert_type| AssertTypeWithRange {
+                .map(|assert_type| AttributeTypeWithRange {
                   range: range.clone(),
                   kind: assert_type.clone(),
                 });
@@ -3559,7 +3559,7 @@ where
 #[cfg(test)]
 mod tests {
   use crate::DefaultModuleAnalyzer;
-  use crate::ImportAssertion;
+  use crate::ImportAttribute;
   use pretty_assertions::assert_eq;
 
   use super::*;
@@ -4166,7 +4166,7 @@ mod tests {
             },
           },
           is_dynamic: false,
-          assertions: ImportAssertions::None,
+          attributes: ImportAttributes::None,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
@@ -4183,7 +4183,7 @@ mod tests {
             },
           },
           is_dynamic: false,
-          assertions: ImportAssertions::None,
+          attributes: ImportAttributes::None,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
@@ -4200,7 +4200,7 @@ mod tests {
             },
           },
           is_dynamic: false,
-          assertions: ImportAssertions::None,
+          attributes: ImportAttributes::None,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
@@ -4217,7 +4217,7 @@ mod tests {
             },
           },
           is_dynamic: true,
-          assertions: ImportAssertions::None,
+          attributes: ImportAttributes::None,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
@@ -4234,7 +4234,7 @@ mod tests {
             },
           },
           is_dynamic: true,
-          assertions: ImportAssertions::Unknown,
+          attributes: ImportAttributes::Unknown,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
@@ -4251,7 +4251,7 @@ mod tests {
             },
           },
           is_dynamic: false,
-          assertions: ImportAssertions::None,
+          attributes: ImportAttributes::None,
         },
       ]
     );
@@ -4272,9 +4272,9 @@ mod tests {
           },
         },
         is_dynamic: false,
-        assertions: ImportAssertions::Known(HashMap::from_iter(vec![(
+        attributes: ImportAttributes::Known(HashMap::from_iter(vec![(
           "type".to_string(),
-          ImportAssertion::Known("json".to_string())
+          ImportAttribute::Known("json".to_string())
         )])),
       },]
     );

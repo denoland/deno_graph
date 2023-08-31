@@ -169,57 +169,57 @@ impl DependencyKind {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(untagged)]
-pub enum ImportAssertion {
-  /// The value of this assertion could not be statically analyzed.
+pub enum ImportAttribute {
+  /// The value of this attribute could not be statically analyzed.
   Unknown,
-  /// The value of this assertion is a statically analyzed string.
+  /// The value of this attribute is a statically analyzed string.
   Known(String),
 }
 
-impl ImportAssertion {
+impl ImportAttribute {
   // can't use swc's type directly because we need to make it serialize & deserialize
   pub fn from_swc(value: deno_ast::swc::dep_graph::ImportAssertion) -> Self {
     use deno_ast::swc::dep_graph::ImportAssertion::*;
     match value {
-      Unknown => ImportAssertion::Unknown,
-      Known(value) => ImportAssertion::Known(value),
+      Unknown => ImportAttribute::Unknown,
+      Known(value) => ImportAttribute::Known(value),
     }
   }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub enum ImportAssertions {
-  /// There was no import assertions object literal.
+pub enum ImportAttributes {
+  /// There was no import attributes object literal.
   None,
-  /// The set of assertion keys could not be statically analyzed.
+  /// The set of attribute keys could not be statically analyzed.
   Unknown,
-  /// The set of assertion keys is statically analyzed, though each respective
+  /// The set of attribute keys is statically analyzed, though each respective
   /// value may or may not not be for dynamic imports.
-  Known(HashMap<String, ImportAssertion>),
+  Known(HashMap<String, ImportAttribute>),
 }
 
-impl Default for ImportAssertions {
+impl Default for ImportAttributes {
   fn default() -> Self {
     Self::None
   }
 }
 
-impl ImportAssertions {
+impl ImportAttributes {
   pub fn is_none(&self) -> bool {
-    matches!(self, ImportAssertions::None)
+    matches!(self, ImportAttributes::None)
   }
 
   // can't use this type directly because we need to make it serialize & deserialize
-  pub fn from_swc(value: deno_ast::swc::dep_graph::ImportAssertions) -> Self {
-    use deno_ast::swc::dep_graph::ImportAssertions::*;
+  pub fn from_swc(value: deno_ast::swc::dep_graph::ImportAttributes) -> Self {
+    use deno_ast::swc::dep_graph::ImportAttributes::*;
     match value {
-      None => ImportAssertions::None,
-      Unknown => ImportAssertions::Unknown,
-      Known(value) => ImportAssertions::Known(
+      None => ImportAttributes::None,
+      Unknown => ImportAttributes::Unknown,
+      Known(value) => ImportAttributes::Known(
         value
           .into_iter()
-          .map(|(key, value)| (key, ImportAssertion::from_swc(value)))
+          .map(|(key, value)| (key, ImportAttribute::from_swc(value)))
           .collect(),
       ),
     }
@@ -227,8 +227,8 @@ impl ImportAssertions {
 
   pub fn get(&self, key: &str) -> Option<&String> {
     match self {
-      ImportAssertions::Known(map) => match map.get(key) {
-        Some(ImportAssertion::Known(value)) => Some(value),
+      ImportAttributes::Known(map) => match map.get(key) {
+        Some(ImportAttribute::Known(value)) => Some(value),
         _ => None,
       },
       _ => None,
@@ -277,9 +277,9 @@ pub struct DependencyDescriptor {
   pub specifier: String,
   /// The range of the specifier.
   pub specifier_range: PositionRange,
-  /// Import assertions for this dependency.
-  #[serde(skip_serializing_if = "ImportAssertions::is_none", default)]
-  pub import_assertions: ImportAssertions,
+  /// Import attributes for this dependency.
+  #[serde(skip_serializing_if = "ImportAttributes::is_none", default)]
+  pub import_attributes: ImportAttributes,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -391,7 +391,7 @@ mod test {
               character: 4,
             },
           },
-          import_assertions: ImportAssertions::None,
+          import_attributes: ImportAttributes::None,
         },
         DependencyDescriptor {
           kind: DependencyKind::Export,
@@ -406,13 +406,13 @@ mod test {
             start: Position::zeroed(),
             end: Position::zeroed(),
           },
-          import_assertions: ImportAssertions::Known(HashMap::from([
-            ("key".to_string(), ImportAssertion::Unknown),
+          import_attributes: ImportAttributes::Known(HashMap::from([
+            ("key".to_string(), ImportAttribute::Unknown),
             (
               "key2".to_string(),
-              ImportAssertion::Known("value".to_string()),
+              ImportAttribute::Known("value".to_string()),
             ),
-            ("kind".to_string(), ImportAssertion::Unknown),
+            ("kind".to_string(), ImportAttribute::Unknown),
           ])),
         },
       ]),
@@ -438,7 +438,7 @@ mod test {
           "range": [[0, 0], [0, 0]],
           "specifier": "./test2",
           "specifierRange": [[0, 0], [0, 0]],
-          "importAssertions": {
+          "importAttributes": {
             "known": {
               "key": null,
               "key2": "value",
@@ -561,7 +561,7 @@ mod test {
         start: Position::zeroed(),
         end: Position::zeroed(),
       },
-      import_assertions: ImportAssertions::Unknown,
+      import_attributes: ImportAttributes::Unknown,
     };
     run_serialization_test(
       &module_info,
@@ -575,7 +575,7 @@ mod test {
         "range": [[0, 0], [0, 0]],
         "specifier": "./test",
         "specifierRange": [[0, 0], [0, 0]],
-        "importAssertions": "unknown",
+        "importAttributes": "unknown",
       }),
     );
   }
