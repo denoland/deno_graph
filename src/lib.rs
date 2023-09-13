@@ -8,7 +8,7 @@ mod module_specifier;
 #[cfg(feature = "type_tracing")]
 pub mod type_tracer;
 
-pub mod deno;
+pub mod packages;
 pub mod source;
 mod text_encoding;
 

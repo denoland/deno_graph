@@ -6,7 +6,7 @@
 }
 
 # mod.ts
-import 'deno:@scope/a@1.0.1/mod.ts';
+import 'jsr:@scope/a@1.0.1/mod.ts';
 
 # output
 {
@@ -15,16 +15,12 @@ import 'deno:@scope/a@1.0.1/mod.ts';
   ],
   "modules": [
     {
-      "specifier": "deno:@scope/a@1.0.1/mod.ts",
-      "error": "Could not find constraint in the list of versions: @scope/a@1.0.1\n  Specifier: deno:@scope/a@1.0.1/mod.ts"
-    },
-    {
       "kind": "esm",
       "dependencies": [
         {
-          "specifier": "deno:@scope/a@1.0.1/mod.ts",
+          "specifier": "jsr:@scope/a@1.0.1/mod.ts",
           "code": {
-            "specifier": "deno:@scope/a@1.0.1/mod.ts",
+            "specifier": "jsr:@scope/a@1.0.1/mod.ts",
             "span": {
               "start": {
                 "line": 0,
@@ -32,15 +28,19 @@ import 'deno:@scope/a@1.0.1/mod.ts';
               },
               "end": {
                 "line": 0,
-                "character": 35
+                "character": 34
               }
             }
           }
         }
       ],
-      "size": 37,
+      "size": 36,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "jsr:@scope/a@1.0.1/mod.ts",
+      "error": "Could not find constraint in the list of versions: @scope/a@1.0.1\n  Specifier: jsr:@scope/a@1.0.1/mod.ts"
     }
   ],
   "redirects": {}

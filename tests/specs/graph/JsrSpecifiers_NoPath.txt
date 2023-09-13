@@ -9,7 +9,7 @@
 {}
 
 # mod.ts
-import 'deno:@scope/a' // no subpath
+import 'jsr:@scope/a' // no subpath
 
 # output
 {
@@ -18,16 +18,12 @@ import 'deno:@scope/a' // no subpath
   ],
   "modules": [
     {
-      "specifier": "deno:@scope/a",
-      "error": "Missing path in package specifier 'deno:@scope/a' (ex. specify deno:@scope/a/mod.ts)"
-    },
-    {
       "kind": "esm",
       "dependencies": [
         {
-          "specifier": "deno:@scope/a",
+          "specifier": "jsr:@scope/a",
           "code": {
-            "specifier": "deno:@scope/a",
+            "specifier": "jsr:@scope/a",
             "span": {
               "start": {
                 "line": 0,
@@ -35,19 +31,23 @@ import 'deno:@scope/a' // no subpath
               },
               "end": {
                 "line": 0,
-                "character": 22
+                "character": 21
               }
             }
           }
         }
       ],
-      "size": 37,
+      "size": 36,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "jsr:@scope/a",
+      "error": "Missing path in package specifier 'jsr:@scope/a' (ex. specify jsr:@scope/a/mod.ts)"
     }
   ],
   "redirects": {},
-  "deno": {
+  "packages": {
     "@scope/a": "@scope/a@1.0.0"
   }
 }

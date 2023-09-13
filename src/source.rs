@@ -1,9 +1,9 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-use crate::deno::DenoPackageInfo;
-use crate::deno::DenoPackageVersionInfo;
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
+use crate::packages::JsrPackageInfo;
+use crate::packages::JsrPackageVersionInfo;
 use crate::text_encoding::strip_bom_mut;
 use crate::ModuleInfo;
 use deno_semver::package::PackageNv;
@@ -75,7 +75,7 @@ pub type LoadFuture = LocalBoxFuture<'static, LoadResult>;
 pub enum CacheSetting {
   /// Attempts to load a specifier from the cache.
   ///
-  /// This is used to see whether the specifier is in the cache for `deno:` specifiers.
+  /// This is used to see whether the specifier is in the cache for `jsr:` specifiers.
   /// * If it is, then it will use the source provided to get the module information.
   /// * If not, then it will use the manifest information to do resolution and
   ///   issue a separate request to the `load` method in order to get the source.
@@ -84,7 +84,7 @@ pub enum CacheSetting {
   Use,
   /// Loads a specifier where the implementation should not load
   /// from an internal cache. This is only ever done when loading
-  /// `deno:` specifier module information and the version constraint
+  /// `jsr:` specifier module information and the version constraint
   /// cannot be resolved.
   Reload,
 }
@@ -342,7 +342,7 @@ impl MemoryLoader {
   pub fn add_deno_package_info(
     &mut self,
     name: &str,
-    package_info: &DenoPackageInfo,
+    package_info: &JsrPackageInfo,
   ) {
     let specifier = DEFAULT_DENO_REGISTRY_URL
       .join(&format!("{}/meta.json", name))
@@ -354,7 +354,7 @@ impl MemoryLoader {
   pub fn add_deno_version_info(
     &mut self,
     nv: &PackageNv,
-    version_info: &DenoPackageVersionInfo,
+    version_info: &JsrPackageVersionInfo,
   ) {
     let specifier = DEFAULT_DENO_REGISTRY_URL
       .join(&format!("{}/{}_meta.json", nv.name, nv.version))

@@ -13,23 +13,23 @@ use serde::Serialize;
 use crate::ModuleInfo;
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct DenoPackageInfo {
-  pub versions: HashMap<Version, DenoPackageInfoVersion>,
+pub struct JsrPackageInfo {
+  pub versions: HashMap<Version, JsrPackageInfoVersion>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
-pub struct DenoPackageInfoVersion {
+pub struct JsrPackageInfoVersion {
   // currently not supported because it doesn't work in workspaces
   // pub main: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
-pub struct DenoPackageVersionInfo {
+pub struct JsrPackageVersionInfo {
   #[serde(rename = "moduleGraph1")]
   pub module_graph: Option<serde_json::Value>,
 }
 
-impl DenoPackageVersionInfo {
+impl JsrPackageVersionInfo {
   pub fn module_info(&self, specifier: &str) -> Option<ModuleInfo> {
     let module_graph = self.module_graph.as_ref()?.as_object()?;
     let module_info = module_graph.get(specifier)?;
@@ -38,14 +38,14 @@ impl DenoPackageVersionInfo {
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
-pub struct DenoSpecifierSnapshot {
+pub struct PackageSpecifiers {
   #[serde(flatten)]
   package_reqs: BTreeMap<PackageReq, PackageNv>,
   #[serde(skip_serializing)]
   packages_by_name: HashMap<String, Vec<PackageNv>>,
 }
 
-impl DenoSpecifierSnapshot {
+impl PackageSpecifiers {
   pub fn is_empty(&self) -> bool {
     self.package_reqs.is_empty()
   }

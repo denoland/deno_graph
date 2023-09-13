@@ -233,7 +233,7 @@ async fn test_npm_version_not_found_then_found() {
 }
 
 #[tokio::test]
-async fn test_deno_version_not_found_then_found() {
+async fn test_jsr_version_not_found_then_found() {
   #[derive(Default)]
   struct TestLoader {
     requests: Vec<(String, CacheSetting)>,
@@ -254,7 +254,7 @@ async fn test_deno_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
-            content: "import 'deno:@scope/a@1.2/mod.ts".into(),
+            content: "import 'jsr:@scope/a@1.2/mod.ts".into(),
           }))
         }),
         "https://registry-staging.deno.com/@scope/a/meta.json" => {
