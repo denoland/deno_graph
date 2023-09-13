@@ -24,11 +24,11 @@
 import "./members/a/mod.ts";
 
 # members/a/mod.ts
-import 'deno:@scope/b@2/mod.ts'; // this one will match
+import 'jsr:@scope/b@2/mod.ts'; // this one will match
 import './next.ts';
 
 # members/a/next.ts
-import 'deno:@scope/b@2.0.3/mod.ts'; // this one will not match the workspace member
+import 'jsr:@scope/b@2.0.3/mod.ts'; // this one will not match the workspace member
 
 # members/b/mod.ts
 console.log("Test");
@@ -43,9 +43,9 @@ console.log("Test");
       "kind": "esm",
       "dependencies": [
         {
-          "specifier": "deno:@scope/b@2/mod.ts",
+          "specifier": "jsr:@scope/b@2/mod.ts",
           "code": {
-            "specifier": "deno:@scope/b@2/mod.ts",
+            "specifier": "jsr:@scope/b@2/mod.ts",
             "span": {
               "start": {
                 "line": 0,
@@ -53,7 +53,7 @@ console.log("Test");
               },
               "end": {
                 "line": 0,
-                "character": 31
+                "character": 30
               }
             }
           }
@@ -75,7 +75,7 @@ console.log("Test");
           }
         }
       ],
-      "size": 76,
+      "size": 75,
       "mediaType": "TypeScript",
       "specifier": "file:///members/a/mod.ts"
     },
@@ -83,9 +83,9 @@ console.log("Test");
       "kind": "esm",
       "dependencies": [
         {
-          "specifier": "deno:@scope/b@2.0.3/mod.ts",
+          "specifier": "jsr:@scope/b@2.0.3/mod.ts",
           "code": {
-            "specifier": "deno:@scope/b@2.0.3/mod.ts",
+            "specifier": "jsr:@scope/b@2.0.3/mod.ts",
             "span": {
               "start": {
                 "line": 0,
@@ -93,13 +93,13 @@ console.log("Test");
               },
               "end": {
                 "line": 0,
-                "character": 35
+                "character": 34
               }
             }
           }
         }
       ],
-      "size": 85,
+      "size": 84,
       "mediaType": "TypeScript",
       "specifier": "file:///members/a/next.ts"
     },
@@ -139,10 +139,10 @@ console.log("Test");
     }
   ],
   "redirects": {
-    "deno:@scope/b@2.0.3/mod.ts": "https://registry-staging.deno.com/@scope/b/2.0.3/mod.ts",
-    "deno:@scope/b@2/mod.ts": "file:///members/b/mod.ts"
+    "jsr:@scope/b@2.0.3/mod.ts": "https://registry-staging.deno.com/@scope/b/2.0.3/mod.ts",
+    "jsr:@scope/b@2/mod.ts": "file:///members/b/mod.ts"
   },
-  "deno": {
+  "packages": {
     "@scope/b@2.0.3": "@scope/b@2.0.3"
   }
 }

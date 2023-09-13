@@ -14,7 +14,7 @@
 import "./members/a/mod.ts";
 
 # members/a/mod.ts
-import 'deno:@scope/b@2/mod.ts';
+import 'jsr:@scope/b@2/mod.ts';
 
 # members/b/mod.ts
 console.log("Test");
@@ -29,9 +29,9 @@ console.log("Test");
       "kind": "esm",
       "dependencies": [
         {
-          "specifier": "deno:@scope/b@2/mod.ts",
+          "specifier": "jsr:@scope/b@2/mod.ts",
           "code": {
-            "specifier": "deno:@scope/b@2/mod.ts",
+            "specifier": "jsr:@scope/b@2/mod.ts",
             "span": {
               "start": {
                 "line": 0,
@@ -39,13 +39,13 @@ console.log("Test");
               },
               "end": {
                 "line": 0,
-                "character": 31
+                "character": 30
               }
             }
           }
         }
       ],
-      "size": 33,
+      "size": 32,
       "mediaType": "TypeScript",
       "specifier": "file:///members/a/mod.ts"
     },
@@ -81,6 +81,6 @@ console.log("Test");
     }
   ],
   "redirects": {
-    "deno:@scope/b@2/mod.ts": "file:///members/b/mod.ts"
+    "jsr:@scope/b@2/mod.ts": "file:///members/b/mod.ts"
   }
 }

@@ -11,13 +11,13 @@ use crate::DefaultModuleAnalyzer;
 use crate::ImportAttributes;
 use crate::ReferrerImports;
 
-use crate::deno::resolve_version;
-use crate::deno::DenoPackageInfo;
-use crate::deno::DenoPackageVersionInfo;
-use crate::deno::DenoSpecifierSnapshot;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
+use crate::packages::resolve_version;
+use crate::packages::JsrPackageInfo;
+use crate::packages::JsrPackageVersionInfo;
+use crate::packages::PackageSpecifiers;
 use crate::source::*;
 
 use anyhow::anyhow;
@@ -28,7 +28,7 @@ use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
-use deno_semver::deno::DenoPackageReqReference;
+use deno_semver::jsr::JsrPackageReqReference;
 use deno_semver::npm::NpmPackageNvReference;
 use deno_semver::npm::NpmPackageReqReference;
 use deno_semver::package::PackageNv;
@@ -1237,9 +1237,9 @@ pub struct ModuleGraph {
   pub npm_packages: Vec<PackageNv>,
   #[serde(skip_serializing)]
   pub has_node_specifier: bool,
-  #[serde(rename = "deno")]
-  #[serde(skip_serializing_if = "DenoSpecifierSnapshot::is_empty")]
-  pub deno_specifiers: DenoSpecifierSnapshot,
+  #[serde(rename = "packages")]
+  #[serde(skip_serializing_if = "PackageSpecifiers::is_empty")]
+  pub packages: PackageSpecifiers,
 }
 
 impl ModuleGraph {
@@ -1252,7 +1252,7 @@ impl ModuleGraph {
       redirects: Default::default(),
       npm_packages: Default::default(),
       has_node_specifier: false,
-      deno_specifiers: Default::default(),
+      packages: Default::default(),
     }
   }
 
@@ -2053,7 +2053,7 @@ impl From<LoadResponse> for PendingInfoResponse {
 #[derive(Clone)]
 struct DenoPackageVersionInfoExt {
   base_url: Url,
-  inner: Arc<DenoPackageVersionInfo>,
+  inner: Arc<JsrPackageVersionInfo>,
 }
 
 struct PendingInfo {
@@ -2087,9 +2087,9 @@ struct PendingNpmState {
   pending_resolutions: Vec<PendingNpmResolutionItem>,
 }
 
-struct PendingDenoResolutionItem {
+struct PendingJsrResolutionItem {
   specifier: ModuleSpecifier,
-  package_ref: DenoPackageReqReference,
+  package_ref: JsrPackageReqReference,
   maybe_range: Option<Range>,
 }
 
@@ -2104,12 +2104,12 @@ type PendingResult<T> =
   Shared<LocalBoxFuture<'static, Result<T, Arc<anyhow::Error>>>>;
 
 #[derive(Default)]
-struct PendingDenoState {
+struct PendingJsrState {
   pending_package_info_loads:
-    HashMap<String, PendingResult<Option<Arc<DenoPackageInfo>>>>,
+    HashMap<String, PendingResult<Option<Arc<JsrPackageInfo>>>>,
   pending_package_version_info_loads:
-    HashMap<PackageNv, PendingResult<Arc<DenoPackageVersionInfo>>>,
-  pending_resolutions: Vec<PendingDenoResolutionItem>,
+    HashMap<PackageNv, PendingResult<Arc<JsrPackageVersionInfo>>>,
+  pending_resolutions: Vec<PendingJsrResolutionItem>,
   pending_content_loads:
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
 }
@@ -2117,7 +2117,7 @@ struct PendingDenoState {
 #[derive(Default)]
 struct PendingState {
   pending: FuturesOrdered<PendingInfoFuture>,
-  deno: PendingDenoState,
+  jsr: PendingJsrState,
   npm: PendingNpmState,
   pending_specifiers:
     HashMap<ModuleSpecifier, HashSet<Option<AttributeTypeWithRange>>>,
@@ -2167,7 +2167,7 @@ impl std::fmt::Display for BuildDiagnostic {
 #[derive(Debug, Clone)]
 pub enum BuildDiagnosticKind {
   ConstraintNotMatchedWorkspaceVersion {
-    reference: DenoPackageReqReference,
+    reference: JsrPackageReqReference,
     workspace_version: Version,
   },
 }
@@ -2321,7 +2321,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
 
       if self.state.pending.is_empty() {
-        let should_restart = self.resolve_pending_deno_specifiers().await;
+        let should_restart = self.resolve_pending_jsr_specifiers().await;
         if should_restart {
           self.restart(provided_roots, provided_imports).await;
           return;
@@ -2338,7 +2338,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     // handle any pending content loads from the Deno registry
-    self.handle_deno_registry_pending_content_loads().await;
+    self.handle_jsr_registry_pending_content_loads().await;
 
     // enrich with cache info from the loader
     self.fill_graph_with_cache_info();
@@ -2367,17 +2367,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
   }
 
-  async fn resolve_pending_deno_specifiers(&mut self) -> bool {
+  async fn resolve_pending_jsr_specifiers(&mut self) -> bool {
     // first load the package information
     let pending_resolutions =
-      std::mem::take(&mut self.state.deno.pending_resolutions);
+      std::mem::take(&mut self.state.jsr.pending_resolutions);
     let mut pending_version_resolutions =
       Vec::with_capacity(pending_resolutions.len());
     for pending_resolution in pending_resolutions {
       let package_name = &pending_resolution.package_ref.req().name;
       let fut = self
         .state
-        .deno
+        .jsr
         .pending_package_info_loads
         .get(package_name)
         .unwrap()
@@ -2386,7 +2386,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Ok(Some(info)) => {
           // resolve the best version out of the existing versions first
           let package_req = pending_resolution.package_ref.req();
-          match self.resolve_deno_version(&info, package_req) {
+          match self.resolve_jsr_version(&info, package_req) {
             Some(version) => {
               // now queue a pending load for that version information
               let package_nv = PackageNv {
@@ -2395,7 +2395,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               };
               self
                 .graph
-                .deno_specifiers
+                .packages
                 .add(package_req.clone(), package_nv.clone());
 
               self.queue_load_package_version_info(&package_nv);
@@ -2451,7 +2451,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     for (nv, resolution_item) in pending_version_resolutions {
       let version_info_result = self
         .state
-        .deno
+        .jsr
         .pending_package_version_info_loads
         .get_mut(&nv)
         .unwrap()
@@ -2526,8 +2526,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
   }
 
-  async fn handle_deno_registry_pending_content_loads(&mut self) {
-    while let Some(item) = self.state.deno.pending_content_loads.next().await {
+  async fn handle_jsr_registry_pending_content_loads(&mut self) {
+    while let Some(item) = self.state.jsr.pending_content_loads.next().await {
       match item.result {
         Ok(Some(response)) => {
           match response {
@@ -2540,7 +2540,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   ModuleError::LoadingErr(
                     item.specifier,
                     item.maybe_range,
-                    Arc::new(anyhow!("Loader should never return an external specifier for a deno: specifier.")),
+                    Arc::new(anyhow!("Loader should never return an external specifier for a jsr: specifier.")),
                   ),
                 )),
               );
@@ -2655,16 +2655,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     async move { self.fill(roots, imports).await }.boxed_local()
   }
 
-  fn resolve_deno_version(
+  fn resolve_jsr_version(
     &mut self,
-    package_info: &DenoPackageInfo,
+    package_info: &JsrPackageInfo,
     package_req: &PackageReq,
   ) -> Option<Version> {
     // try to find in the list of existing versions first
-    if let Some(existing_versions) = self
-      .graph
-      .deno_specifiers
-      .versions_by_name(&package_req.name)
+    if let Some(existing_versions) =
+      self.graph.packages.versions_by_name(&package_req.name)
     {
       if let Some(version) = resolve_version(
         &package_req.version_req,
@@ -2772,8 +2770,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     let maybe_range = maybe_range.map(ToOwned::to_owned);
-    if specifier.scheme() == "deno" {
-      self.load_deno_specifier(specifier.clone(), maybe_range, is_dynamic);
+    if specifier.scheme() == "jsr" {
+      self.load_jsr_specifier(specifier.clone(), maybe_range, is_dynamic);
       return;
     } else if let Some(npm_resolver) = self.npm_resolver {
       if specifier.scheme() == "npm" {
@@ -2816,13 +2814,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     self.load_pending_module(&specifier, maybe_range, &specifier, is_dynamic);
   }
 
-  fn load_deno_specifier(
+  fn load_jsr_specifier(
     &mut self,
     specifier: Url,
     maybe_range: Option<Range>,
     is_dynamic: bool,
   ) {
-    match DenoPackageReqReference::from_specifier(&specifier) {
+    match JsrPackageReqReference::from_specifier(&specifier) {
       Ok(package_ref) => {
         for workspace_member in &self.workspace_members {
           if workspace_member.nv.name == package_ref.req().name {
@@ -2860,9 +2858,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         self.queue_load_package_info(package_name);
         self
           .state
-          .deno
+          .jsr
           .pending_resolutions
-          .push(PendingDenoResolutionItem {
+          .push(PendingJsrResolutionItem {
             specifier,
             package_ref,
             maybe_range,
@@ -2962,7 +2960,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   fn queue_load_package_info(&mut self, package_name: &str) {
     if self
       .state
-      .deno
+      .jsr
       .pending_package_info_loads
       .contains_key(package_name)
     {
@@ -2984,7 +2982,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let data = fut.await.map_err(Arc::new)?;
       match data {
         Some(LoadResponse::Module { content, .. }) => {
-          let package_info: DenoPackageInfo =
+          let package_info: JsrPackageInfo =
             serde_json::from_str(&content).map_err(|e| Arc::new(e.into()))?;
           Ok(Some(Arc::new(package_info)))
         }
@@ -2994,7 +2992,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     .boxed_local();
     self
       .state
-      .deno
+      .jsr
       .pending_package_info_loads
       .insert(package_name.to_string(), fut.shared());
   }
@@ -3002,7 +3000,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   fn queue_load_package_version_info(&mut self, package_nv: &PackageNv) {
     if self
       .state
-      .deno
+      .jsr
       .pending_package_version_info_loads
       .contains_key(package_nv)
     {
@@ -3026,7 +3024,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let data = fut.await.map_err(Arc::new)?;
       match data {
         Some(LoadResponse::Module { content, .. }) => {
-          let version_info: DenoPackageVersionInfo =
+          let version_info: JsrPackageVersionInfo =
             serde_json::from_str(&content).map_err(|e| Arc::new(e.into()))?;
           Ok(Arc::new(version_info))
         }
@@ -3036,7 +3034,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     .boxed_local();
     self
       .state
-      .deno
+      .jsr
       .pending_package_version_info_loads
       .insert(package_nv.clone(), fut.shared());
   }
@@ -3121,7 +3119,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let (content, maybe_module_analyzer) = match content_or_module_info {
       ContentOrModuleInfo::Content(content) => (content, None),
       ContentOrModuleInfo::ModuleInfo(info) => {
-        self.state.deno.pending_content_loads.push({
+        self.state.jsr.pending_content_loads.push({
           let specifier = specifier.clone();
           let maybe_range = maybe_referrer.clone();
           let module_info = info.clone();
