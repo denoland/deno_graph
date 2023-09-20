@@ -1073,6 +1073,76 @@ console.log(a);
   }
 
   #[tokio::test]
+  async fn test_node_builtin_module_as_bare_specifier() {
+    let mut loader = setup(
+      vec![(
+        "file:///a/test.ts",
+        Source::Module {
+          specifier: "file:///a/test.ts",
+          maybe_headers: None,
+          content: r#"import "path";"#,
+        },
+      )],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &mut loader,
+        Default::default(),
+      )
+      .await;
+    let result = graph.valid();
+    assert!(result.is_err());
+    assert_eq!(
+      result.unwrap_err().to_string(),
+      "Module not found \"node:path\"."
+    );
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test.ts"
+        ],
+        "modules": [
+          {
+            "dependencies": [
+              {
+                "specifier": "path",
+                "code": {
+                  "specifier": "node:path",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 7
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 13
+                    }
+                  }
+                },
+              }
+            ],
+            "kind": "esm",
+            "mediaType": "TypeScript",
+            "size": 14,
+            "specifier": "file:///a/test.ts"
+          },
+          {
+            "error": "Module not found \"node:path\".",
+            "specifier": "node:path"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
+
+  #[tokio::test]
   async fn test_unsupported_media_type() {
     let mut loader = setup(
       vec![

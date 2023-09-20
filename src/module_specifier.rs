@@ -49,6 +49,65 @@ fn specifier_from_path(_path: PathBuf) -> ModuleSpecifier {
   ModuleSpecifier::parse(EMPTY_SPECIFIER).unwrap()
 }
 
+static SUPPORTED_BUILTIN_NODE_MODULES: &[&str] = &[
+  "assert",
+  "assert/strict",
+  "async_hooks",
+  "buffer",
+  "child_process",
+  "cluster",
+  "console",
+  "constants",
+  "crypto",
+  "dgram",
+  "diagnostics_channel",
+  "dns",
+  "dns/promises",
+  "domain",
+  "events",
+  "fs",
+  "fs/promises",
+  "http",
+  "http2",
+  "https",
+  "module",
+  "net",
+  "os",
+  "path",
+  "path/posix",
+  "path/win32",
+  "perf_hooks",
+  "process",
+  "punycode",
+  "querystring",
+  "repl",
+  "readline",
+  "stream",
+  "stream/consumers",
+  "stream/promises",
+  "stream/web",
+  "string_decoder",
+  "sys",
+  "test",
+  "timers",
+  "timers/promises",
+  "tls",
+  "tty",
+  "url",
+  "util",
+  "util/types",
+  "v8",
+  "vm",
+  "worker_threads",
+  "zlib",
+];
+
+fn is_builtin_node_module(module_name: &str) -> bool {
+  SUPPORTED_BUILTIN_NODE_MODULES
+    .iter()
+    .any(|m| *m == module_name)
+}
+
 /// Given a specifier string and a referring module specifier, try to resolve
 /// the target module specifier, erroring if it cannot be resolved.
 pub fn resolve_import(
@@ -57,10 +116,19 @@ pub fn resolve_import(
 ) -> Result<ModuleSpecifier, SpecifierError> {
   let url = match ModuleSpecifier::parse(specifier) {
     // 1. Apply the URL parser to specifier.
-    //    If the result is not failure, return he result.
+    //    If the result is not failure, return the result.
     Ok(url) => url,
 
-    // 2. If specifier does not start with the character U+002F SOLIDUS (/),
+    // 2. If specifier is a node specifier without node: scheme, return
+    //    the specifier with node: scheme added.
+    Err(ParseError::RelativeUrlWithoutBase)
+      if is_builtin_node_module(specifier) =>
+    {
+      eprintln!("Warning: Resolving \"{specifier}\" as \"node:{specifier}\". If you want to use a built-in Node module, add a \"node:\" prefix.");
+      return Ok(ModuleSpecifier::parse(&format!("node:{specifier}")).unwrap());
+    }
+
+    // 3. If specifier does not start with the character U+002F SOLIDUS (/),
     //    the two-character sequence U+002E FULL STOP, U+002F SOLIDUS (./),
     //    or the three-character sequence U+002E FULL STOP, U+002E FULL STOP,
     //    U+002F SOLIDUS (../), return failure.
@@ -75,7 +143,7 @@ pub fn resolve_import(
       ));
     }
 
-    // 3. Return the result of applying the URL parser to specifier with base
+    // 4. Return the result of applying the URL parser to specifier with base
     //    URL as the base URL.
     Err(ParseError::RelativeUrlWithoutBase) => {
       let referrer = if referrer.as_str() == EMPTY_SPECIFIER {
