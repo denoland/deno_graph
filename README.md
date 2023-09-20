@@ -99,7 +99,7 @@ fn main() {
   let future = async move {
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph.build(roots, &mut loader, Default::default()).await;
-    println!("{:?}", graph);
+    println!("{:#?}", graph);
   };
   block_on(future)
 }
