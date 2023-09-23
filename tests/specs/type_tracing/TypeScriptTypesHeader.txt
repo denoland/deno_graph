@@ -1,0 +1,23 @@
+# mod.ts
+import { MyInterface } from "https://localhost/mod.js";
+import { MyInterface2 } from "other.js";
+
+export class MyClass implements MyInterface, MyInterface2 {
+}
+
+# https://localhost/mod.js
+HEADERS: { "x-typescript-types": "./mod.d.ts" }
+export class Dummy {}
+
+# https://localhost/mod.d.ts
+export interface MyInterface {
+}
+
+# other.js
+HEADERS: { "x-typescript-types": "./other.d.ts" }
+
+# other.d.ts
+export interface MyInterface2 {
+}
+
+# output
