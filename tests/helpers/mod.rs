@@ -6,6 +6,7 @@ use std::path::PathBuf;
 mod test_builder;
 
 use deno_graph::WorkspaceMember;
+use indexmap::IndexMap;
 use serde::de::DeserializeOwned;
 pub use test_builder::*;
 use url::Url;
@@ -48,11 +49,20 @@ impl Spec {
 pub struct SpecFile {
   pub specifier: String,
   pub text: String,
+  pub headers: IndexMap<String, String>,
 }
 
 impl SpecFile {
   pub fn emit(&self) -> String {
-    format!("# {}\n{}", self.specifier, self.text)
+    let mut text = format!("# {}\n", self.specifier);
+    if !self.headers.is_empty() {
+      text.push_str(&format!(
+        "HEADERS: {}\n",
+        serde_json::to_string(&self.headers).unwrap()
+      ));
+    }
+    text.push_str(&self.text);
+    text
   }
 
   pub fn url(&self) -> Url {
@@ -104,7 +114,11 @@ fn parse_spec(text: String) -> Spec {
       current_file = Some(SpecFile {
         specifier: specifier.to_string(),
         text: String::new(),
+        headers: Default::default(),
       });
+    } else if let Some(headers) = line.strip_prefix("HEADERS: ") {
+      current_file.as_mut().unwrap().headers =
+        serde_json::from_str(headers).unwrap();
     } else {
       let current_file = current_file.as_mut().unwrap();
       if !current_file.text.is_empty() {

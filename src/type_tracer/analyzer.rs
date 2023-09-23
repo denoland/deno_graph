@@ -223,6 +223,10 @@ impl Symbol {
     }
     None
   }
+
+  pub fn ranges(&self) -> impl Iterator<Item = SourceRange> + '_ {
+    self.decls.iter().map(|d| d.range)
+  }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]

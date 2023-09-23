@@ -15,6 +15,7 @@ use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadResponse;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
+use deno_graph::source::Source;
 use deno_graph::source::UnknownBuiltInNodeModuleError;
 use deno_graph::BuildOptions;
 use deno_graph::GraphKind;
@@ -41,10 +42,15 @@ async fn test_graph_specs() {
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
       for file in &spec.files {
+        let source = Source::Module {
+          specifier: file.url().to_string(),
+          maybe_headers: Some(file.headers.clone().into_iter().collect()),
+          content: file.text.clone(),
+        };
         if file.is_cache() {
-          loader.cache.add_source_with_text(file.url(), &file.text);
+          loader.cache.add_source(file.url(), source);
         } else {
-          loader.remote.add_source_with_text(file.url(), &file.text);
+          loader.remote.add_source(file.url(), source);
         }
       }
     });
