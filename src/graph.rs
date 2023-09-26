@@ -824,6 +824,7 @@ impl GraphImport {
     referrer: &ModuleSpecifier,
     imports: Vec<String>,
     maybe_resolver: Option<&dyn Resolver>,
+    maybe_npm_resolver: Option<&dyn NpmResolver>,
   ) -> Self {
     let dependencies = imports
       .into_iter()
@@ -833,7 +834,8 @@ impl GraphImport {
           start: Position::zeroed(),
           end: Position::zeroed(),
         };
-        let maybe_type = resolve(&import, referrer_range, maybe_resolver);
+        let maybe_type =
+          resolve(&import, referrer_range, maybe_resolver, maybe_npm_resolver);
         (
           import,
           Dependency {
@@ -1552,12 +1554,17 @@ fn resolve(
   specifier_text: &str,
   referrer_range: Range,
   maybe_resolver: Option<&dyn Resolver>,
+  maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Resolution {
   let response = if let Some(resolver) = maybe_resolver {
     resolver.resolve(specifier_text, &referrer_range.specifier)
   } else {
-    resolve_import(specifier_text, &referrer_range.specifier, None)
-      .map_err(|err| err.into())
+    resolve_import(
+      specifier_text,
+      &referrer_range.specifier,
+      maybe_npm_resolver,
+    )
+    .map_err(|err| err.into())
   };
   Resolution::from_resolve_result(response, specifier_text, referrer_range)
 }
@@ -1622,6 +1629,7 @@ pub(crate) fn parse_module(
   module_analyzer: &dyn ModuleAnalyzer,
   is_root: bool,
   is_dynamic_branch: bool,
+  maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Result<Module, ModuleGraphError> {
   let media_type =
     MediaType::from_specifier_and_headers(specifier, maybe_headers);
@@ -1688,6 +1696,7 @@ pub(crate) fn parse_module(
             module_info,
             content,
             maybe_resolver,
+            maybe_npm_resolver,
           )))
         }
         Err(diagnostic) => Err(ModuleGraphError::ModuleError(
@@ -1710,6 +1719,7 @@ pub(crate) fn parse_module(
             module_info,
             content,
             maybe_resolver,
+            maybe_npm_resolver,
           )))
         }
         Err(diagnostic) => Err(ModuleGraphError::ModuleError(
@@ -1734,6 +1744,7 @@ pub(crate) fn parse_esm_module_from_module_info(
   module_info: ModuleInfo,
   source: Arc<str>,
   maybe_resolver: Option<&dyn Resolver>,
+  maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> EsmModule {
   let mut module = EsmModule::new(specifier.clone(), source);
   module.media_type = media_type;
@@ -1749,8 +1760,12 @@ pub(crate) fn parse_esm_module_from_module_info(
         let range =
           Range::from_position_range(module.specifier.clone(), specifier.range);
         if dep.maybe_type.is_none() {
-          dep.maybe_type =
-            resolve(&specifier.text, range.clone(), maybe_resolver);
+          dep.maybe_type = resolve(
+            &specifier.text,
+            range.clone(),
+            maybe_resolver,
+            maybe_npm_resolver,
+          );
         }
         dep.imports.push(Import {
           specifier: specifier.text,
@@ -1763,8 +1778,12 @@ pub(crate) fn parse_esm_module_from_module_info(
       TypeScriptReference::Types(specifier) => {
         let range =
           Range::from_position_range(module.specifier.clone(), specifier.range);
-        let dep_resolution =
-          resolve(&specifier.text, range.clone(), maybe_resolver);
+        let dep_resolution = resolve(
+          &specifier.text,
+          range.clone(),
+          maybe_resolver,
+          maybe_npm_resolver,
+        );
         if is_untyped(&module.media_type) {
           module.maybe_types_dependency = Some(TypesDependency {
             specifier: specifier.text.clone(),
@@ -1825,8 +1844,12 @@ pub(crate) fn parse_esm_module_from_module_info(
         import_source.range,
       );
       if dep.maybe_code.is_none() {
-        dep.maybe_code =
-          resolve(&specifier_text, range.clone(), maybe_resolver);
+        dep.maybe_code = resolve(
+          &specifier_text,
+          range.clone(),
+          maybe_resolver,
+          maybe_npm_resolver,
+        );
       }
       dep.imports.push(Import {
         specifier: specifier_text,
@@ -1847,7 +1870,12 @@ pub(crate) fn parse_esm_module_from_module_info(
     let range =
       Range::from_position_range(module.specifier.clone(), specifier.range);
     if dep.maybe_type.is_none() {
-      dep.maybe_type = resolve(&specifier.text, range.clone(), maybe_resolver);
+      dep.maybe_type = resolve(
+        &specifier.text,
+        range.clone(),
+        maybe_resolver,
+        maybe_npm_resolver,
+      );
     }
     dep.imports.push(Import {
       specifier: specifier.text,
@@ -1869,7 +1897,12 @@ pub(crate) fn parse_esm_module_from_module_info(
         };
         module.maybe_types_dependency = Some(TypesDependency {
           specifier: types_header.to_string(),
-          dependency: resolve(types_header, range, maybe_resolver),
+          dependency: resolve(
+            types_header,
+            range,
+            maybe_resolver,
+            maybe_npm_resolver,
+          ),
         });
       }
     }
@@ -1931,8 +1964,12 @@ pub(crate) fn parse_esm_module_from_module_info(
       module.specifier.clone(),
       desc.specifier_range.clone(),
     );
-    let dep_resolution =
-      resolve(&desc.specifier, range.clone(), maybe_resolver);
+    let dep_resolution = resolve(
+      &desc.specifier,
+      range.clone(),
+      maybe_resolver,
+      maybe_npm_resolver,
+    );
     if matches!(
       desc.kind,
       DependencyKind::ImportType | DependencyKind::ExportType
@@ -1975,6 +2012,7 @@ pub(crate) fn parse_esm_module_from_module_info(
           &pragma.specifier,
           Range::from_position_range(specifier, pragma.range),
           maybe_resolver,
+          maybe_npm_resolver,
         )
       } else {
         Resolution::None
@@ -2351,7 +2389,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     for referrer_imports in imports {
       let referrer = referrer_imports.referrer;
       let imports = referrer_imports.imports;
-      let graph_import = GraphImport::new(&referrer, imports, self.resolver);
+      let graph_import =
+        GraphImport::new(&referrer, imports, self.resolver, self.npm_resolver);
       for dep in graph_import.dependencies.values() {
         if let Resolution::Ok(resolved) = &dep.maybe_type {
           self.load(
@@ -3159,6 +3198,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         .unwrap_or(self.module_analyzer),
       is_root,
       self.in_dynamic_branch,
+      self.npm_resolver,
     ) {
       Ok(module) => ModuleSlot::Module(module),
       Err(err) => ModuleSlot::Err(err),
@@ -3617,6 +3657,7 @@ mod tests {
       &module_analyzer,
       true,
       false,
+      None,
     )
     .unwrap();
     let module = module.esm().unwrap();

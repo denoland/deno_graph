@@ -12,6 +12,7 @@ pub mod packages;
 pub mod source;
 mod text_encoding;
 
+use source::NpmResolver;
 use source::Resolver;
 
 use std::collections::HashMap;
@@ -81,6 +82,7 @@ pub fn parse_module(
   content: Arc<str>,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
+  maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Result<Module, ModuleGraphError> {
   let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
   let module_analyzer =
@@ -95,6 +97,7 @@ pub fn parse_module(
     module_analyzer,
     true,
     false,
+    maybe_npm_resolver,
   )
 }
 
@@ -104,6 +107,7 @@ pub fn parse_module_from_ast(
   maybe_headers: Option<&HashMap<String, String>>,
   parsed_source: &deno_ast::ParsedSource,
   maybe_resolver: Option<&dyn Resolver>,
+  maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> EsmModule {
   graph::parse_esm_module_from_module_info(
     specifier,
@@ -112,6 +116,7 @@ pub fn parse_module_from_ast(
     DefaultModuleAnalyzer::module_info(parsed_source),
     parsed_source.text_info().text(),
     maybe_resolver,
+    maybe_npm_resolver,
   )
 }
 
@@ -1072,8 +1077,49 @@ console.log(a);
     }
   }
 
+  #[derive(Debug, Clone)]
+  struct MockNpmResolver {}
+
+  impl NpmResolver for MockNpmResolver {
+    fn resolve_builtin_node_module(
+      &self,
+      _specifier: &deno_ast::ModuleSpecifier,
+    ) -> anyhow::Result<Option<String>, source::UnknownBuiltInNodeModuleError>
+    {
+      Ok(None)
+    }
+
+    fn is_builtin_node_module_name(&self, module_name: &str) -> bool {
+      module_name == "path"
+    }
+
+    fn on_resolve_bare_builtin_node_module(&self, module_name: &str) {
+      eprintln!(
+        "Warning: Resolving bare specifier \"{}\" to \"node:{}\".",
+        module_name, module_name
+      );
+    }
+
+    fn load_and_cache_npm_package_info(
+      &self,
+      _package_name: &str,
+    ) -> futures::future::LocalBoxFuture<
+      'static,
+      anyhow::Result<(), anyhow::Error>,
+    > {
+      todo!();
+    }
+
+    fn resolve_npm(
+      &self,
+      _package_req: &deno_semver::package::PackageReq,
+    ) -> NpmPackageReqResolution {
+      todo!()
+    }
+  }
+
   #[tokio::test]
-  async fn test_node_builtin_module_as_bare_specifier() {
+  async fn test_builtin_node_module_as_bare_specifier() {
     let mut loader = setup(
       vec![(
         "file:///a/test.ts",
@@ -1087,12 +1133,21 @@ console.log(a);
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
+    let mock_npm_resolver = MockNpmResolver {};
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
         &mut loader,
-        Default::default(),
+        BuildOptions {
+          is_dynamic: Default::default(),
+          imports: Default::default(),
+          resolver: Default::default(),
+          npm_resolver: Some(&mock_npm_resolver),
+          module_analyzer: Default::default(),
+          reporter: Default::default(),
+          workspace_members: Default::default(),
+        },
       )
       .await;
     let result = graph.valid();
@@ -2825,6 +2880,7 @@ export function a(a) {
       .into(),
       None,
       None,
+      None,
     )
     .unwrap();
     let actual = actual.esm().unwrap();
@@ -2844,6 +2900,7 @@ export function a(a) {
     await import("./b.json", { assert: { type: "json" } });
     "#
       .into(),
+      None,
       None,
       None,
     )
@@ -2912,6 +2969,7 @@ export function a(a) {
       .into(),
       None,
       None,
+      None,
     )
     .unwrap();
     let actual = actual.esm().unwrap();
@@ -2951,6 +3009,7 @@ export function a(a) {
       .into(),
       Some(&R),
       None,
+      None,
     )
     .unwrap();
     let actual = actual.esm().unwrap();
@@ -2986,6 +3045,7 @@ export function a(a) {
         .into(),
       None,
       None,
+      None,
     );
     assert!(result.is_ok());
   }
@@ -3008,6 +3068,7 @@ export function a(a) {
 }
 "#
       .into(),
+      None,
       None,
       None,
     )
@@ -3075,6 +3136,7 @@ export function a(a: A): B {
 }
 "#
       .into(),
+      None,
       None,
       None,
     )
