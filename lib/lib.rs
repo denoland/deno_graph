@@ -13,6 +13,7 @@ use deno_graph::source::CacheInfo;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::Loader;
+use deno_graph::source::ResolveError;
 use deno_graph::source::Resolver;
 use deno_graph::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
 use deno_graph::BuildOptions;
@@ -21,10 +22,9 @@ use deno_graph::ModuleGraph;
 use deno_graph::ModuleSpecifier;
 use deno_graph::Range;
 use deno_graph::ReferrerImports;
+use deno_graph::SpecifierError;
 
 use anyhow::anyhow;
-use anyhow::Error;
-use anyhow::Result;
 use futures::future;
 use serde::Deserialize;
 use serde::Serialize;
@@ -140,20 +140,21 @@ impl Resolver for JsResolver {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
-  ) -> Result<ModuleSpecifier, Error> {
+  ) -> Result<ModuleSpecifier, ResolveError> {
     if let Some(resolve) = &self.maybe_resolve {
       let this = JsValue::null();
       let arg1 = JsValue::from(specifier);
       let arg2 = JsValue::from(referrer.to_string());
       let value = match resolve.call2(&this, &arg1, &arg2) {
         Ok(value) => value,
-        Err(_) => return Err(anyhow!("JavaScript resolve threw.")),
+        Err(_) => return Err(anyhow!("JavaScript resolve threw.").into()),
       };
       let value: String = match serde_wasm_bindgen::from_value(value) {
         Ok(value) => value,
-        Err(err) => return Err(anyhow!("{}", err.to_string())),
+        Err(err) => return Err(anyhow!("{}", err.to_string()).into()),
       };
-      Ok(ModuleSpecifier::parse(&value)?)
+      ModuleSpecifier::parse(&value)
+        .map_err(|err| ResolveError::Specifier(SpecifierError::InvalidUrl(err)))
     } else {
       resolve_import(specifier, referrer).map_err(|err| err.into())
     }
@@ -162,7 +163,7 @@ impl Resolver for JsResolver {
   fn resolve_types(
     &self,
     specifier: &ModuleSpecifier,
-  ) -> Result<Option<(ModuleSpecifier, Option<Range>)>> {
+  ) -> Result<Option<(ModuleSpecifier, Option<Range>)>, ResolveError> {
     if let Some(resolve_types) = &self.maybe_resolve_types {
       let this = JsValue::null();
       let arg1 = JsValue::from(specifier.to_string());

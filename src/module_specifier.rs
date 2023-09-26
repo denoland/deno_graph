@@ -1,6 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-use anyhow::Result;
 use std::error::Error;
 use std::fmt;
 use std::path::PathBuf;

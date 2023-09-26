@@ -16,7 +16,6 @@ use deno_ast::SourcePos;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 
-use anyhow::Result;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::Diagnostic;
 use deno_ast::MediaType;
