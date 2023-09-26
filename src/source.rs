@@ -6,12 +6,12 @@ use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::text_encoding::strip_bom_mut;
 use crate::ModuleInfo;
+use crate::SpecifierError;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 
 use anyhow::anyhow;
 use anyhow::Error;
-use anyhow::Result;
 use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
 use futures::future;
@@ -68,7 +68,7 @@ pub enum LoadResponse {
   },
 }
 
-pub type LoadResult = Result<Option<LoadResponse>>;
+pub type LoadResult = Result<Option<LoadResponse>, anyhow::Error>;
 pub type LoadFuture = LocalBoxFuture<'static, LoadResult>;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -137,6 +137,14 @@ pub trait Loader {
   }
 }
 
+#[derive(Error, Debug)]
+pub enum ResolveError {
+  #[error(transparent)]
+  Specifier(#[from] SpecifierError),
+  #[error(transparent)]
+  Other(#[from] anyhow::Error),
+}
+
 /// A trait which allows the module graph to resolve specifiers and type only
 /// dependencies. This can be use to provide import maps and override other
 /// default resolution logic used by `deno_graph`.
@@ -161,7 +169,7 @@ pub trait Resolver: fmt::Debug {
     &self,
     specifier_text: &str,
     referrer: &ModuleSpecifier,
-  ) -> Result<ModuleSpecifier, Error> {
+  ) -> Result<ModuleSpecifier, ResolveError> {
     Ok(resolve_import(specifier_text, referrer)?)
   }
 
@@ -175,7 +183,7 @@ pub trait Resolver: fmt::Debug {
   fn resolve_types(
     &self,
     _specifier: &ModuleSpecifier,
-  ) -> Result<Option<(ModuleSpecifier, Option<Range>)>> {
+  ) -> Result<Option<(ModuleSpecifier, Option<Range>)>, ResolveError> {
     Ok(None)
   }
 }
@@ -231,7 +239,7 @@ pub trait NpmResolver: fmt::Debug {
 
 pub fn load_data_url(
   specifier: &ModuleSpecifier,
-) -> Result<Option<LoadResponse>> {
+) -> Result<Option<LoadResponse>, anyhow::Error> {
   let url = DataUrl::process(specifier.as_str())
     .map_err(|_| anyhow!("Unable to decode data url."))?;
   let (bytes, _) = url
@@ -451,7 +459,7 @@ pub mod tests {
       &self,
       specifier: &str,
       referrer: &ModuleSpecifier,
-    ) -> Result<ModuleSpecifier, Error> {
+    ) -> Result<ModuleSpecifier, ResolveError> {
       if let Some(map) = self.map.get(referrer) {
         if let Some(resolved_specifier) = map.get(specifier) {
           return Ok(resolved_specifier.clone());
@@ -463,7 +471,7 @@ pub mod tests {
     fn resolve_types(
       &self,
       specifier: &ModuleSpecifier,
-    ) -> Result<Option<(ModuleSpecifier, Option<Range>)>> {
+    ) -> Result<Option<(ModuleSpecifier, Option<Range>)>, ResolveError> {
       Ok(self.types.get(specifier).cloned())
     }
   }

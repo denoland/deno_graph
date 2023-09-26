@@ -21,8 +21,6 @@ use crate::module_specifier::SpecifierError;
 use crate::source::*;
 
 use anyhow::anyhow;
-use anyhow::Error;
-use anyhow::Result;
 use deno_ast::Diagnostic;
 use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
@@ -306,7 +304,7 @@ pub enum ResolutionError {
     range: Range,
   },
   ResolverError {
-    error: Arc<anyhow::Error>,
+    error: Arc<ResolveError>,
     specifier: String,
     range: Range,
   },
@@ -334,7 +332,7 @@ impl std::error::Error for ResolutionError {
     match self {
       Self::InvalidDowngrade { .. } | Self::InvalidLocalImport { .. } => None,
       Self::InvalidSpecifier { ref error, .. } => Some(error),
-      Self::ResolverError { error, .. } => Some(error.as_ref().as_ref()),
+      Self::ResolverError { error, .. } => Some(error.as_ref()),
     }
   }
 }
@@ -425,7 +423,7 @@ pub enum Resolution {
 
 impl Resolution {
   pub fn from_resolve_result(
-    result: Result<ModuleSpecifier, Error>,
+    result: Result<ModuleSpecifier, ResolveError>,
     specifier_text: &str,
     range: Range,
   ) -> Self {
@@ -435,7 +433,7 @@ impl Resolution {
       }
       Err(err) => {
         let resolution_error =
-          if let Some(specifier_error) = err.downcast_ref::<SpecifierError>() {
+          if let ResolveError::Specifier(specifier_error) = err {
             ResolutionError::InvalidSpecifier {
               error: specifier_error.clone(),
               range,
@@ -2059,7 +2057,7 @@ struct DenoPackageVersionInfoExt {
 struct PendingInfo {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
-  result: Result<Option<PendingInfoResponse>>,
+  result: Result<Option<PendingInfoResponse>, anyhow::Error>,
   maybe_version_info: Option<DenoPackageVersionInfoExt>,
 }
 
@@ -3438,7 +3436,7 @@ impl<'a> NpmSpecifierResolver<'a> {
                   item.specifier.clone(),
                   ModuleSlot::Err(ModuleGraphError::ResolutionError(
                     ResolutionError::ResolverError {
-                      error: Arc::new(err),
+                      error: Arc::new(ResolveError::Other(err)),
                       specifier: item.specifier.to_string(),
                       // this should always be set
                       range: item.maybe_range.unwrap_or_else(|| Range {
