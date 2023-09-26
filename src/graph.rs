@@ -1556,7 +1556,7 @@ fn resolve(
   let response = if let Some(resolver) = maybe_resolver {
     resolver.resolve(specifier_text, &referrer_range.specifier)
   } else {
-    resolve_import(specifier_text, &referrer_range.specifier)
+    resolve_import(specifier_text, &referrer_range.specifier, None)
       .map_err(|err| err.into())
   };
   Resolution::from_resolve_result(response, specifier_text, referrer_range)

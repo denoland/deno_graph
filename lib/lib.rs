@@ -155,7 +155,7 @@ impl Resolver for JsResolver {
       };
       Ok(ModuleSpecifier::parse(&value)?)
     } else {
-      resolve_import(specifier, referrer).map_err(|err| err.into())
+      resolve_import(specifier, referrer, None).map_err(|err| err.into())
     }
   }
 

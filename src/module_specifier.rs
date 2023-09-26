@@ -1,5 +1,6 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
+use crate::source::NpmResolver;
 use anyhow::Result;
 use std::error::Error;
 use std::fmt;
@@ -49,70 +50,12 @@ fn specifier_from_path(_path: PathBuf) -> ModuleSpecifier {
   ModuleSpecifier::parse(EMPTY_SPECIFIER).unwrap()
 }
 
-static SUPPORTED_BUILTIN_NODE_MODULES: &[&str] = &[
-  "assert",
-  "assert/strict",
-  "async_hooks",
-  "buffer",
-  "child_process",
-  "cluster",
-  "console",
-  "constants",
-  "crypto",
-  "dgram",
-  "diagnostics_channel",
-  "dns",
-  "dns/promises",
-  "domain",
-  "events",
-  "fs",
-  "fs/promises",
-  "http",
-  "http2",
-  "https",
-  "module",
-  "net",
-  "os",
-  "path",
-  "path/posix",
-  "path/win32",
-  "perf_hooks",
-  "process",
-  "punycode",
-  "querystring",
-  "repl",
-  "readline",
-  "stream",
-  "stream/consumers",
-  "stream/promises",
-  "stream/web",
-  "string_decoder",
-  "sys",
-  "test",
-  "timers",
-  "timers/promises",
-  "tls",
-  "tty",
-  "url",
-  "util",
-  "util/types",
-  "v8",
-  "vm",
-  "worker_threads",
-  "zlib",
-];
-
-fn is_builtin_node_module(module_name: &str) -> bool {
-  SUPPORTED_BUILTIN_NODE_MODULES
-    .iter()
-    .any(|m| *m == module_name)
-}
-
 /// Given a specifier string and a referring module specifier, try to resolve
 /// the target module specifier, erroring if it cannot be resolved.
 pub fn resolve_import(
   specifier: &str,
   referrer: &ModuleSpecifier,
+  maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Result<ModuleSpecifier, SpecifierError> {
   let url = match ModuleSpecifier::parse(specifier) {
     // 1. Apply the URL parser to specifier.
@@ -122,9 +65,13 @@ pub fn resolve_import(
     // 2. If specifier is a node specifier without node: scheme, return
     //    the specifier with node: scheme added.
     Err(ParseError::RelativeUrlWithoutBase)
-      if is_builtin_node_module(specifier) =>
+      if maybe_npm_resolver.map_or(false, |npm_resolver| {
+        npm_resolver.is_builtin_node_module_name(specifier)
+      }) =>
     {
-      eprintln!("Warning: Resolving \"{specifier}\" as \"node:{specifier}\". If you want to use a built-in Node module, add a \"node:\" prefix.");
+      maybe_npm_resolver
+        .unwrap()
+        .on_resolve_bare_builtin_node_module(specifier);
       return Ok(ModuleSpecifier::parse(&format!("node:{specifier}")).unwrap());
     }
 

@@ -162,7 +162,7 @@ pub trait Resolver: fmt::Debug {
     specifier_text: &str,
     referrer: &ModuleSpecifier,
   ) -> Result<ModuleSpecifier, Error> {
-    Ok(resolve_import(specifier_text, referrer)?)
+    Ok(resolve_import(specifier_text, referrer, None)?)
   }
 
   /// Given a module specifier, return an optional tuple which provides a module
@@ -212,6 +212,13 @@ pub trait NpmResolver: fmt::Debug {
     &self,
     specifier: &ModuleSpecifier,
   ) -> Result<Option<String>, UnknownBuiltInNodeModuleError>;
+
+  /// Returns true if the given str is a builtin node module name (ex. "fs").
+  fn is_builtin_node_module_name(&self, module_name: &str) -> bool;
+
+  /// The callback when a bare specifier is resolved to a builtin node module.
+  /// (Note: used for printing warnings to discourage that usage of bare specifiers)
+  fn on_resolve_bare_builtin_node_module(&self, module_name: &str);
 
   /// This tells the implementation to asynchronously load within itself the
   /// npm registry package information so that synchronous resolution can occur
@@ -457,7 +464,7 @@ pub mod tests {
           return Ok(resolved_specifier.clone());
         }
       }
-      Ok(resolve_import(specifier, referrer)?)
+      Ok(resolve_import(specifier, referrer, None)?)
     }
 
     fn resolve_types(
