@@ -1557,34 +1557,34 @@ fn resolve(
   let response = if let Some(resolver) = maybe_resolver {
     resolver.resolve(specifier_text, &referrer_range.specifier)
   } else {
-    match resolve_import(specifier_text, &referrer_range.specifier) {
-      Err(SpecifierError::ImportPrefixMissing(
-        specifier_text,
-        maybe_specifier,
-      )) => {
-        let maybe_node_specifier =
-          ModuleSpecifier::parse(&format!("node:{}", specifier_text)).ok();
-        let maybe_node_module = maybe_node_specifier
-          .as_ref()
-          .and_then(|specifier| {
-            maybe_npm_resolver.and_then(|npm_resolver| {
-              npm_resolver.resolve_builtin_node_module(specifier).ok()
-            })
-          })
-          .flatten();
-        if maybe_node_module.is_some() {
-          Ok(maybe_node_specifier.unwrap())
-        } else {
-          Err(ResolveError::Specifier(
-            SpecifierError::ImportPrefixMissing(
-              specifier_text,
-              maybe_specifier,
-            ),
-          ))
-        }
-      }
-      res => res.map_err(|err| err.into()),
+    resolve_import(specifier_text, &referrer_range.specifier)
+      .map_err(|err| err.into())
+  };
+  let response = if let Err(ResolveError::Specifier(
+    SpecifierError::ImportPrefixMissing(module_name, _specifier),
+  )) = response.as_ref()
+  {
+    let maybe_node_specifier =
+      ModuleSpecifier::parse(&format!("node:{}", module_name)).ok();
+    let is_bare_builtin_node_module = maybe_node_specifier
+      .as_ref()
+      .and_then(|specifier| {
+        maybe_npm_resolver.and_then(|npm_resolver| {
+          npm_resolver.resolve_builtin_node_module(&specifier).ok()
+        })
+      })
+      .flatten()
+      .is_some();
+    if is_bare_builtin_node_module {
+      maybe_npm_resolver
+        .unwrap()
+        .on_resolve_bare_builtin_node_module(module_name);
+      Ok(maybe_node_specifier.unwrap())
+    } else {
+      response
     }
+  } else {
+    response
   };
   Resolution::from_resolve_result(response, specifier_text, referrer_range)
 }
