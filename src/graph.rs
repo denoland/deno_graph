@@ -1570,7 +1570,7 @@ fn resolve(
       .as_ref()
       .and_then(|specifier| {
         maybe_npm_resolver.and_then(|npm_resolver| {
-          npm_resolver.resolve_builtin_node_module(&specifier).ok()
+          npm_resolver.resolve_builtin_node_module(specifier).ok()
         })
       })
       .flatten()
