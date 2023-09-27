@@ -66,8 +66,9 @@ loading them is not practical or desirable.
 A minimal example would look like this:
 
 ```rust
-use deno_graph::create_graph;
 use deno_graph::ModuleSpecifier;
+use deno_graph::ModuleGraph;
+use deno_graph::GraphKind;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::Source;
 use futures::executor::block_on;
@@ -98,7 +99,7 @@ fn main() {
   let future = async move {
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph.build(roots, &mut loader, Default::default()).await;
-    println!("{}", graph);
+    println!("{:#?}", graph);
   };
   block_on(future)
 }
