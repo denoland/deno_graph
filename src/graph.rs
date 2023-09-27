@@ -1560,32 +1560,25 @@ fn resolve(
     resolve_import(specifier_text, &referrer_range.specifier)
       .map_err(|err| err.into())
   };
-  let response = if let Err(ResolveError::Specifier(
-    SpecifierError::ImportPrefixMissing(module_name, _specifier),
-  )) = response.as_ref()
-  {
-    let maybe_node_specifier =
-      ModuleSpecifier::parse(&format!("node:{}", module_name)).ok();
-    let is_bare_builtin_node_module = maybe_node_specifier
-      .as_ref()
-      .and_then(|specifier| {
-        maybe_npm_resolver.and_then(|npm_resolver| {
-          npm_resolver.resolve_builtin_node_module(specifier).ok()
-        })
-      })
-      .flatten()
-      .is_some();
-    if is_bare_builtin_node_module {
-      maybe_npm_resolver
-        .unwrap()
-        .on_resolve_bare_builtin_node_module(module_name);
-      Ok(maybe_node_specifier.unwrap())
-    } else {
-      response
+  use ResolveError::*;
+  use SpecifierError::*;
+  if let Err(Specifier(ImportPrefixMissing(_, _))) = response.as_ref() {
+    if let Some(npm_resolver) = maybe_npm_resolver {
+      let maybe_specifier =
+        ModuleSpecifier::parse(&format!("node:{}", specifier_text)).ok();
+      let maybe_mod_name = maybe_specifier.as_ref().and_then(|s| {
+        npm_resolver.resolve_builtin_node_module(s).ok().flatten()
+      });
+      if maybe_mod_name.is_some() {
+        npm_resolver.on_resolve_bare_builtin_node_module(specifier_text);
+        return Resolution::from_resolve_result(
+          Ok(maybe_specifier.unwrap()),
+          specifier_text,
+          referrer_range,
+        );
+      }
     }
-  } else {
-    response
-  };
+  }
   Resolution::from_resolve_result(response, specifier_text, referrer_range)
 }
 
