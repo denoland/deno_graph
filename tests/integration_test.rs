@@ -149,10 +149,6 @@ async fn test_npm_version_not_found_then_found() {
       Ok(None)
     }
 
-    fn is_builtin_node_module_name(&self, _module_name: &str) -> bool {
-      false
-    }
-
     fn on_resolve_bare_builtin_node_module(&self, _module_name: &str) {}
 
     fn load_and_cache_npm_package_info(

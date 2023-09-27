@@ -156,7 +156,7 @@ impl Resolver for JsResolver {
       ModuleSpecifier::parse(&value)
         .map_err(|err| ResolveError::Specifier(SpecifierError::InvalidUrl(err)))
     } else {
-      resolve_import(specifier, referrer, None).map_err(|err| err.into())
+      resolve_import(specifier, referrer).map_err(|err| err.into())
     }
   }
 

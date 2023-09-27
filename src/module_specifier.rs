@@ -1,7 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-use crate::source::NpmResolver;
-use anyhow::Result;
 use std::error::Error;
 use std::fmt;
 use std::path::PathBuf;
@@ -55,27 +53,13 @@ fn specifier_from_path(_path: PathBuf) -> ModuleSpecifier {
 pub fn resolve_import(
   specifier: &str,
   referrer: &ModuleSpecifier,
-  maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Result<ModuleSpecifier, SpecifierError> {
   let url = match ModuleSpecifier::parse(specifier) {
     // 1. Apply the URL parser to specifier.
-    //    If the result is not failure, return the result.
+    //    If the result is not failure, return he result.
     Ok(url) => url,
 
-    // 2. If specifier is a node specifier without node: scheme, return
-    //    the specifier with node: scheme added.
-    Err(ParseError::RelativeUrlWithoutBase)
-      if maybe_npm_resolver.map_or(false, |npm_resolver| {
-        npm_resolver.is_builtin_node_module_name(specifier)
-      }) =>
-    {
-      maybe_npm_resolver
-        .unwrap()
-        .on_resolve_bare_builtin_node_module(specifier);
-      return Ok(ModuleSpecifier::parse(&format!("node:{specifier}")).unwrap());
-    }
-
-    // 3. If specifier does not start with the character U+002F SOLIDUS (/),
+    // 2. If specifier does not start with the character U+002F SOLIDUS (/),
     //    the two-character sequence U+002E FULL STOP, U+002F SOLIDUS (./),
     //    or the three-character sequence U+002E FULL STOP, U+002E FULL STOP,
     //    U+002F SOLIDUS (../), return failure.
@@ -90,7 +74,7 @@ pub fn resolve_import(
       ));
     }
 
-    // 4. Return the result of applying the URL parser to specifier with base
+    // 3. Return the result of applying the URL parser to specifier with base
     //    URL as the base URL.
     Err(ParseError::RelativeUrlWithoutBase) => {
       let referrer = if referrer.as_str() == EMPTY_SPECIFIER {

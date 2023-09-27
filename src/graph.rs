@@ -1557,12 +1557,34 @@ fn resolve(
   let response = if let Some(resolver) = maybe_resolver {
     resolver.resolve(specifier_text, &referrer_range.specifier)
   } else {
-    resolve_import(
-      specifier_text,
-      &referrer_range.specifier,
-      maybe_npm_resolver,
-    )
-    .map_err(|err| err.into())
+    match resolve_import(specifier_text, &referrer_range.specifier) {
+      Err(SpecifierError::ImportPrefixMissing(
+        specifier_text,
+        maybe_specifier,
+      )) => {
+        let maybe_node_specifier =
+          ModuleSpecifier::parse(&format!("node:{}", specifier_text)).ok();
+        let maybe_node_module = maybe_node_specifier
+          .as_ref()
+          .and_then(|specifier| {
+            maybe_npm_resolver.and_then(|npm_resolver| {
+              npm_resolver.resolve_builtin_node_module(specifier).ok()
+            })
+          })
+          .flatten();
+        if maybe_node_module.is_some() {
+          Ok(maybe_node_specifier.unwrap())
+        } else {
+          Err(ResolveError::Specifier(
+            SpecifierError::ImportPrefixMissing(
+              specifier_text,
+              maybe_specifier,
+            ),
+          ))
+        }
+      }
+      res => res.map_err(|err| err.into()),
+    }
   };
   Resolution::from_resolve_result(response, specifier_text, referrer_range)
 }

@@ -1083,14 +1083,14 @@ console.log(a);
   impl NpmResolver for MockNpmResolver {
     fn resolve_builtin_node_module(
       &self,
-      _specifier: &deno_ast::ModuleSpecifier,
+      specifier: &deno_ast::ModuleSpecifier,
     ) -> anyhow::Result<Option<String>, source::UnknownBuiltInNodeModuleError>
     {
-      Ok(None)
-    }
-
-    fn is_builtin_node_module_name(&self, module_name: &str) -> bool {
-      module_name == "path"
+      if specifier.to_string() == "node:path" {
+        Ok(Some("path".to_string()))
+      } else {
+        Ok(None)
+      }
     }
 
     fn on_resolve_bare_builtin_node_module(&self, module_name: &str) {
@@ -1150,12 +1150,7 @@ console.log(a);
         },
       )
       .await;
-    let result = graph.valid();
-    assert!(result.is_err());
-    assert_eq!(
-      result.unwrap_err().to_string(),
-      "Module not found \"node:path\"."
-    );
+    assert!(graph.valid().is_ok());
     assert_eq!(
       json!(graph),
       json!({
@@ -1164,6 +1159,7 @@ console.log(a);
         ],
         "modules": [
           {
+            "kind": "esm",
             "dependencies": [
               {
                 "specifier": "path",
@@ -1182,14 +1178,14 @@ console.log(a);
                 },
               }
             ],
-            "kind": "esm",
-            "mediaType": "TypeScript",
             "size": 14,
+            "mediaType": "TypeScript",
             "specifier": "file:///a/test.ts"
           },
           {
-            "error": "Module not found \"node:path\".",
-            "specifier": "node:path"
+            "kind": "node",
+            "specifier": "node:path",
+            "moduleName": "path",
           }
         ],
         "redirects": {}
