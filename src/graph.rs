@@ -1564,18 +1564,17 @@ fn resolve(
   use SpecifierError::*;
   if let Err(Specifier(ImportPrefixMissing(_, _))) = response.as_ref() {
     if let Some(npm_resolver) = maybe_npm_resolver {
-      let maybe_specifier =
-        ModuleSpecifier::parse(&format!("node:{}", specifier_text)).ok();
-      let maybe_mod_name = maybe_specifier.as_ref().and_then(|s| {
-        npm_resolver.resolve_builtin_node_module(s).ok().flatten()
-      });
-      if maybe_mod_name.is_some() {
-        npm_resolver.on_resolve_bare_builtin_node_module(specifier_text);
-        return Resolution::from_resolve_result(
-          Ok(maybe_specifier.unwrap()),
-          specifier_text,
-          referrer_range,
-        );
+      if let Ok(specifier) =
+        ModuleSpecifier::parse(&format!("node:{}", specifier_text))
+      {
+        if npm_resolver.resolve_builtin_node_module(&specifier).is_ok() {
+          npm_resolver.on_resolve_bare_builtin_node_module(specifier_text);
+          return Resolution::from_resolve_result(
+            Ok(specifier),
+            specifier_text,
+            referrer_range,
+          );
+        }
       }
     }
   }
