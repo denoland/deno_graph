@@ -12,6 +12,7 @@ pub mod packages;
 pub mod source;
 mod text_encoding;
 
+use source::NpmResolver;
 use source::Resolver;
 
 use std::collections::HashMap;
@@ -81,6 +82,7 @@ pub fn parse_module(
   content: Arc<str>,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
+  maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Result<Module, ModuleGraphError> {
   let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
   let module_analyzer =
@@ -95,6 +97,7 @@ pub fn parse_module(
     module_analyzer,
     true,
     false,
+    maybe_npm_resolver,
   )
 }
 
@@ -104,6 +107,7 @@ pub fn parse_module_from_ast(
   maybe_headers: Option<&HashMap<String, String>>,
   parsed_source: &deno_ast::ParsedSource,
   maybe_resolver: Option<&dyn Resolver>,
+  maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> EsmModule {
   graph::parse_esm_module_from_module_info(
     specifier,
@@ -112,6 +116,7 @@ pub fn parse_module_from_ast(
     DefaultModuleAnalyzer::module_info(parsed_source),
     parsed_source.text_info().text(),
     maybe_resolver,
+    maybe_npm_resolver,
   )
 }
 
@@ -1070,6 +1075,122 @@ console.log(a);
       }
       _ => unreachable!(),
     }
+  }
+
+  #[derive(Debug, Clone)]
+  struct MockNpmResolver {}
+
+  impl NpmResolver for MockNpmResolver {
+    fn resolve_builtin_node_module(
+      &self,
+      specifier: &deno_ast::ModuleSpecifier,
+    ) -> anyhow::Result<Option<String>, source::UnknownBuiltInNodeModuleError>
+    {
+      if specifier.to_string() == "node:path" {
+        Ok(Some("path".to_string()))
+      } else {
+        Ok(None)
+      }
+    }
+
+    fn on_resolve_bare_builtin_node_module(&self, module_name: &str) {
+      eprintln!(
+        "Warning: Resolving bare specifier \"{}\" to \"node:{}\".",
+        module_name, module_name
+      );
+    }
+
+    fn load_and_cache_npm_package_info(
+      &self,
+      _package_name: &str,
+    ) -> futures::future::LocalBoxFuture<
+      'static,
+      anyhow::Result<(), anyhow::Error>,
+    > {
+      todo!();
+    }
+
+    fn resolve_npm(
+      &self,
+      _package_req: &deno_semver::package::PackageReq,
+    ) -> NpmPackageReqResolution {
+      todo!()
+    }
+  }
+
+  #[tokio::test]
+  async fn test_builtin_node_module_as_bare_specifier() {
+    let mut loader = setup(
+      vec![(
+        "file:///a/test.ts",
+        Source::Module {
+          specifier: "file:///a/test.ts",
+          maybe_headers: None,
+          content: r#"import "path";"#,
+        },
+      )],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
+    let mock_npm_resolver = MockNpmResolver {};
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &mut loader,
+        BuildOptions {
+          is_dynamic: Default::default(),
+          imports: Default::default(),
+          resolver: Default::default(),
+          npm_resolver: Some(&mock_npm_resolver),
+          module_analyzer: Default::default(),
+          reporter: Default::default(),
+          workspace_members: Default::default(),
+        },
+      )
+      .await;
+    assert!(graph.valid().is_ok());
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test.ts"
+        ],
+        "modules": [
+          {
+            "kind": "esm",
+            "dependencies": [
+              {
+                "specifier": "path",
+                "code": {
+                  "specifier": "node:path",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 7
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 13
+                    }
+                  }
+                },
+              }
+            ],
+            "size": 14,
+            "mediaType": "TypeScript",
+            "specifier": "file:///a/test.ts"
+          },
+          {
+            "kind": "node",
+            "specifier": "node:path",
+            "moduleName": "path",
+          }
+        ],
+        "redirects": {}
+      })
+    );
   }
 
   #[tokio::test]
@@ -2755,6 +2876,7 @@ export function a(a) {
       .into(),
       None,
       None,
+      None,
     )
     .unwrap();
     let actual = actual.esm().unwrap();
@@ -2774,6 +2896,7 @@ export function a(a) {
     await import("./b.json", { assert: { type: "json" } });
     "#
       .into(),
+      None,
       None,
       None,
     )
@@ -2842,6 +2965,7 @@ export function a(a) {
       .into(),
       None,
       None,
+      None,
     )
     .unwrap();
     let actual = actual.esm().unwrap();
@@ -2881,6 +3005,7 @@ export function a(a) {
       .into(),
       Some(&R),
       None,
+      None,
     )
     .unwrap();
     let actual = actual.esm().unwrap();
@@ -2916,6 +3041,7 @@ export function a(a) {
         .into(),
       None,
       None,
+      None,
     );
     assert!(result.is_ok());
   }
@@ -2938,6 +3064,7 @@ export function a(a) {
 }
 "#
       .into(),
+      None,
       None,
       None,
     )
@@ -3005,6 +3132,7 @@ export function a(a: A): B {
 }
 "#
       .into(),
+      None,
       None,
       None,
     )

@@ -221,6 +221,10 @@ pub trait NpmResolver: fmt::Debug {
     specifier: &ModuleSpecifier,
   ) -> Result<Option<String>, UnknownBuiltInNodeModuleError>;
 
+  /// The callback when a bare specifier is resolved to a builtin node module.
+  /// (Note: used for printing warnings to discourage that usage of bare specifiers)
+  fn on_resolve_bare_builtin_node_module(&self, module_name: &str);
+
   /// This tells the implementation to asynchronously load within itself the
   /// npm registry package information so that synchronous resolution can occur
   /// afterwards.

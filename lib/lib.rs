@@ -296,6 +296,7 @@ pub fn js_parse_module(
     content.into(),
     maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
     None,
+    None,
   ) {
     Ok(module) => {
       let serializer =

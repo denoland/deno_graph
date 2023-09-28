@@ -149,6 +149,8 @@ async fn test_npm_version_not_found_then_found() {
       Ok(None)
     }
 
+    fn on_resolve_bare_builtin_node_module(&self, _module_name: &str) {}
+
     fn load_and_cache_npm_package_info(
       &self,
       _package_name: &str,
