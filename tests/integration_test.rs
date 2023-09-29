@@ -20,6 +20,7 @@ use deno_graph::BuildOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 use deno_graph::NpmPackageReqResolution;
+use deno_graph::Range;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
@@ -149,7 +150,12 @@ async fn test_npm_version_not_found_then_found() {
       Ok(None)
     }
 
-    fn on_resolve_bare_builtin_node_module(&self, _module_name: &str) {}
+    fn on_resolve_bare_builtin_node_module(
+      &self,
+      _module_name: &str,
+      _range: &Range,
+    ) {
+    }
 
     fn load_and_cache_npm_package_info(
       &self,
