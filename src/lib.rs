@@ -1093,11 +1093,17 @@ console.log(a);
       }
     }
 
-    fn on_resolve_bare_builtin_node_module(&self, module_name: &str) {
-      eprintln!(
-        "Warning: Resolving bare specifier \"{}\" to \"node:{}\".",
-        module_name, module_name
-      );
+    fn on_resolve_bare_builtin_node_module(
+      &self,
+      module_name: &str,
+      range: &Range,
+    ) {
+      let Range {
+        specifier, start, ..
+      } = range;
+      let line = start.line + 1;
+      let column = start.character;
+      eprintln!("Warning: Resolving \"{module_name}\" as \"node:{module_name}\" at {specifier}:{line}:{column}. If you want to use a built-in Node module, add a \"node:\" prefix.");
     }
 
     fn load_and_cache_npm_package_info(

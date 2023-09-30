@@ -1568,7 +1568,10 @@ fn resolve(
         ModuleSpecifier::parse(&format!("node:{}", specifier_text))
       {
         if npm_resolver.resolve_builtin_node_module(&specifier).is_ok() {
-          npm_resolver.on_resolve_bare_builtin_node_module(specifier_text);
+          npm_resolver.on_resolve_bare_builtin_node_module(
+            specifier_text,
+            &referrer_range,
+          );
           return Resolution::from_resolve_result(
             Ok(specifier),
             specifier_text,
