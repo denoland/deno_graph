@@ -1124,8 +1124,86 @@ console.log(a);
     }
   }
 
+  #[derive(Debug, Clone)]
+  struct MockImportMapResolver {}
+
+  impl Resolver for MockImportMapResolver {
+    fn default_jsx_import_source(&self) -> Option<String> {
+      None
+    }
+
+    fn jsx_import_source_module(&self) -> &str {
+      source::DEFAULT_JSX_IMPORT_SOURCE_MODULE
+    }
+
+    fn resolve(
+      &self,
+      specifier_text: &str,
+      referrer: &deno_ast::ModuleSpecifier,
+    ) -> Result<deno_ast::ModuleSpecifier, source::ResolveError> {
+      use import_map::ImportMapError;
+      Err(source::ResolveError::Other(
+        ImportMapError::UnmappedBareSpecifier(
+          specifier_text.to_string(),
+          Some(referrer.to_string()),
+        )
+        .into(),
+      ))
+    }
+
+    fn resolve_types(
+      &self,
+      _specifier: &deno_ast::ModuleSpecifier,
+    ) -> Result<
+      Option<(deno_ast::ModuleSpecifier, Option<Range>)>,
+      source::ResolveError,
+    > {
+      Ok(None)
+    }
+  }
+
   #[tokio::test]
   async fn test_builtin_node_module_as_bare_specifier() {
+    let expectation = json!({
+      "roots": [
+        "file:///a/test.ts"
+      ],
+      "modules": [
+        {
+          "kind": "esm",
+          "dependencies": [
+            {
+              "specifier": "path",
+              "code": {
+                "specifier": "node:path",
+                "span": {
+                  "start": {
+                    "line": 0,
+                    "character": 7
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 13
+                  }
+                }
+              },
+            }
+          ],
+          "size": 14,
+          "mediaType": "TypeScript",
+          "specifier": "file:///a/test.ts"
+        },
+        {
+          "kind": "node",
+          "specifier": "node:path",
+          "moduleName": "path",
+        }
+      ],
+      "redirects": {}
+    });
+    let mock_npm_resolver = MockNpmResolver {};
+    let mock_import_map_resolver = MockImportMapResolver {};
+
     let mut loader = setup(
       vec![(
         "file:///a/test.ts",
@@ -1139,64 +1217,33 @@ console.log(a);
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
-    let mock_npm_resolver = MockNpmResolver {};
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![root_specifier.clone()],
         &mut loader,
         BuildOptions {
-          is_dynamic: Default::default(),
-          imports: Default::default(),
-          resolver: Default::default(),
           npm_resolver: Some(&mock_npm_resolver),
-          module_analyzer: Default::default(),
-          reporter: Default::default(),
-          workspace_members: Default::default(),
+          ..Default::default()
         },
       )
       .await;
     assert!(graph.valid().is_ok());
-    assert_eq!(
-      json!(graph),
-      json!({
-        "roots": [
-          "file:///a/test.ts"
-        ],
-        "modules": [
-          {
-            "kind": "esm",
-            "dependencies": [
-              {
-                "specifier": "path",
-                "code": {
-                  "specifier": "node:path",
-                  "span": {
-                    "start": {
-                      "line": 0,
-                      "character": 7
-                    },
-                    "end": {
-                      "line": 0,
-                      "character": 13
-                    }
-                  }
-                },
-              }
-            ],
-            "size": 14,
-            "mediaType": "TypeScript",
-            "specifier": "file:///a/test.ts"
-          },
-          {
-            "kind": "node",
-            "specifier": "node:path",
-            "moduleName": "path",
-          }
-        ],
-        "redirects": {}
-      })
-    );
+    assert_eq!(json!(graph), expectation);
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &mut loader,
+        BuildOptions {
+          resolver: Some(&mock_import_map_resolver),
+          npm_resolver: Some(&mock_npm_resolver),
+          ..Default::default()
+        },
+      )
+      .await;
+    assert!(graph.valid().is_ok());
+    assert_eq!(json!(graph), expectation);
   }
 
   #[tokio::test]
