@@ -1560,9 +1560,13 @@ fn resolve(
     resolve_import(specifier_text, &referrer_range.specifier)
       .map_err(|err| err.into())
   };
+  use import_map::ImportMapError;
   use ResolveError::*;
   use SpecifierError::*;
-  if let Err(Specifier(ImportPrefixMissing(_, _))) = response.as_ref() {
+  let res_ref = response.as_ref();
+  if matches!(res_ref, Err(Specifier(ImportPrefixMissing(_, _))))
+    || matches!(res_ref, Err(Other(e)) if matches!(e.downcast_ref::<ImportMapError>(), Some(&ImportMapError::UnmappedBareSpecifier(_, _))))
+  {
     if let Some(npm_resolver) = maybe_npm_resolver {
       if let Ok(specifier) =
         ModuleSpecifier::parse(&format!("node:{}", specifier_text))
