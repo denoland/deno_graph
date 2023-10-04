@@ -245,7 +245,7 @@ pub trait NpmResolver: fmt::Debug {
   fn resolve_npm(&self, package_req: &PackageReq) -> NpmPackageReqResolution;
 
   /// Returns true when bare node specifier resoluion is enabled
-  fn is_bare_node_specifier_enabled(&self) -> bool {
+  fn enables_bare_builtin_node_module(&self) -> bool {
     false
   }
 }

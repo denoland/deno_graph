@@ -1079,7 +1079,7 @@ console.log(a);
 
   #[derive(Debug, Clone)]
   struct MockNpmResolver {
-    is_bare_node_specifier_enabled: bool,
+    enables_bare_builtin_node_module: bool,
   }
 
   impl NpmResolver for MockNpmResolver {
@@ -1125,8 +1125,8 @@ console.log(a);
       todo!()
     }
 
-    fn is_bare_node_specifier_enabled(&self) -> bool {
-      self.is_bare_node_specifier_enabled
+    fn enables_bare_builtin_node_module(&self) -> bool {
+      self.enables_bare_builtin_node_module
     }
   }
 
@@ -1208,7 +1208,7 @@ console.log(a);
       "redirects": {}
     });
     let mock_npm_resolver = MockNpmResolver {
-      is_bare_node_specifier_enabled: true,
+      enables_bare_builtin_node_module: true,
     };
     let mock_import_map_resolver = MockImportMapResolver {};
 
@@ -1254,7 +1254,7 @@ console.log(a);
     assert_eq!(json!(graph), expectation);
 
     let mock_npm_resolver = MockNpmResolver {
-      is_bare_node_specifier_enabled: false,
+      enables_bare_builtin_node_module: false,
     };
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph

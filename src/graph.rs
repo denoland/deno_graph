@@ -1561,7 +1561,7 @@ fn resolve(
       .map_err(|err| err.into())
   };
   if let Some(npm_resolver) = maybe_npm_resolver {
-    if npm_resolver.is_bare_node_specifier_enabled() {
+    if npm_resolver.enables_bare_builtin_node_module() {
       use import_map::ImportMapError;
       use ResolveError::*;
       use SpecifierError::*;
