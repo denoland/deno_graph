@@ -1208,7 +1208,7 @@ console.log(a);
       "redirects": {}
     });
     let mock_npm_resolver = MockNpmResolver {
-      is_bare_node_specifier_enabled: true
+      is_bare_node_specifier_enabled: true,
     };
     let mock_import_map_resolver = MockImportMapResolver {};
 
@@ -1254,7 +1254,7 @@ console.log(a);
     assert_eq!(json!(graph), expectation);
 
     let mock_npm_resolver = MockNpmResolver {
-      is_bare_node_specifier_enabled: false
+      is_bare_node_specifier_enabled: false,
     };
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
@@ -1269,7 +1269,10 @@ console.log(a);
       .await;
     let res = graph.valid();
     assert!(res.is_err());
-    assert_eq!(res.unwrap_err().to_string(), "Relative import path \"path\" not prefixed with / or ./ or ../");
+    assert_eq!(
+      res.unwrap_err().to_string(),
+      "Relative import path \"path\" not prefixed with / or ./ or ../"
+    );
   }
 
   #[tokio::test]
