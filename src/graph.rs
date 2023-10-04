@@ -1560,27 +1560,29 @@ fn resolve(
     resolve_import(specifier_text, &referrer_range.specifier)
       .map_err(|err| err.into())
   };
-  use import_map::ImportMapError;
-  use ResolveError::*;
-  use SpecifierError::*;
-  let res_ref = response.as_ref();
-  if matches!(res_ref, Err(Specifier(ImportPrefixMissing(_, _))))
-    || matches!(res_ref, Err(Other(e)) if matches!(e.downcast_ref::<ImportMapError>(), Some(&ImportMapError::UnmappedBareSpecifier(_, _))))
-  {
-    if let Some(npm_resolver) = maybe_npm_resolver {
-      if let Ok(specifier) =
-        ModuleSpecifier::parse(&format!("node:{}", specifier_text))
+  if let Some(npm_resolver) = maybe_npm_resolver {
+    if npm_resolver.is_bare_node_specifier_enabled() {
+      use import_map::ImportMapError;
+      use ResolveError::*;
+      use SpecifierError::*;
+      let res_ref = response.as_ref();
+      if matches!(res_ref, Err(Specifier(ImportPrefixMissing(_, _))))
+        || matches!(res_ref, Err(Other(e)) if matches!(e.downcast_ref::<ImportMapError>(), Some(&ImportMapError::UnmappedBareSpecifier(_, _))))
       {
-        if npm_resolver.resolve_builtin_node_module(&specifier).is_ok() {
-          npm_resolver.on_resolve_bare_builtin_node_module(
-            specifier_text,
-            &referrer_range,
-          );
-          return Resolution::from_resolve_result(
-            Ok(specifier),
-            specifier_text,
-            referrer_range,
-          );
+        if let Ok(specifier) =
+          ModuleSpecifier::parse(&format!("node:{}", specifier_text))
+        {
+          if npm_resolver.resolve_builtin_node_module(&specifier).is_ok() {
+            npm_resolver.on_resolve_bare_builtin_node_module(
+              specifier_text,
+              &referrer_range,
+            );
+            return Resolution::from_resolve_result(
+              Ok(specifier),
+              specifier_text,
+              referrer_range,
+            );
+          }
         }
       }
     }

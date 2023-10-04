@@ -1078,7 +1078,9 @@ console.log(a);
   }
 
   #[derive(Debug, Clone)]
-  struct MockNpmResolver {}
+  struct MockNpmResolver {
+    is_bare_node_specifier_enabled: bool,
+  }
 
   impl NpmResolver for MockNpmResolver {
     fn resolve_builtin_node_module(
@@ -1121,6 +1123,10 @@ console.log(a);
       _package_req: &deno_semver::package::PackageReq,
     ) -> NpmPackageReqResolution {
       todo!()
+    }
+
+    fn is_bare_node_specifier_enabled(&self) -> bool {
+      self.is_bare_node_specifier_enabled
     }
   }
 
@@ -1201,7 +1207,9 @@ console.log(a);
       ],
       "redirects": {}
     });
-    let mock_npm_resolver = MockNpmResolver {};
+    let mock_npm_resolver = MockNpmResolver {
+      is_bare_node_specifier_enabled: true
+    };
     let mock_import_map_resolver = MockImportMapResolver {};
 
     let mut loader = setup(
@@ -1244,6 +1252,24 @@ console.log(a);
       .await;
     assert!(graph.valid().is_ok());
     assert_eq!(json!(graph), expectation);
+
+    let mock_npm_resolver = MockNpmResolver {
+      is_bare_node_specifier_enabled: false
+    };
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &mut loader,
+        BuildOptions {
+          npm_resolver: Some(&mock_npm_resolver),
+          ..Default::default()
+        },
+      )
+      .await;
+    let res = graph.valid();
+    assert!(res.is_err());
+    assert_eq!(res.unwrap_err().to_string(), "Relative import path \"path\" not prefixed with / or ./ or ../");
   }
 
   #[tokio::test]

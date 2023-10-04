@@ -243,6 +243,11 @@ pub trait NpmResolver: fmt::Debug {
 
   /// Resolves an npm package requirement to a resolved npm package name and version.
   fn resolve_npm(&self, package_req: &PackageReq) -> NpmPackageReqResolution;
+
+  /// Returns true when bare node specifier resoluion is enabled
+  fn is_bare_node_specifier_enabled(&self) -> bool {
+    false
+  }
 }
 
 pub fn load_data_url(
