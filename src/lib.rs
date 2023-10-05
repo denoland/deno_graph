@@ -1078,7 +1078,9 @@ console.log(a);
   }
 
   #[derive(Debug, Clone)]
-  struct MockNpmResolver {}
+  struct MockNpmResolver {
+    enables_bare_builtin_node_module: bool,
+  }
 
   impl NpmResolver for MockNpmResolver {
     fn resolve_builtin_node_module(
@@ -1121,6 +1123,10 @@ console.log(a);
       _package_req: &deno_semver::package::PackageReq,
     ) -> NpmPackageReqResolution {
       todo!()
+    }
+
+    fn enables_bare_builtin_node_module(&self) -> bool {
+      self.enables_bare_builtin_node_module
     }
   }
 
@@ -1201,7 +1207,9 @@ console.log(a);
       ],
       "redirects": {}
     });
-    let mock_npm_resolver = MockNpmResolver {};
+    let mock_npm_resolver = MockNpmResolver {
+      enables_bare_builtin_node_module: true,
+    };
     let mock_import_map_resolver = MockImportMapResolver {};
 
     let mut loader = setup(
@@ -1244,6 +1252,27 @@ console.log(a);
       .await;
     assert!(graph.valid().is_ok());
     assert_eq!(json!(graph), expectation);
+
+    let mock_npm_resolver = MockNpmResolver {
+      enables_bare_builtin_node_module: false,
+    };
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &mut loader,
+        BuildOptions {
+          npm_resolver: Some(&mock_npm_resolver),
+          ..Default::default()
+        },
+      )
+      .await;
+    let res = graph.valid();
+    assert!(res.is_err());
+    assert_eq!(
+      res.unwrap_err().to_string(),
+      "Relative import path \"path\" not prefixed with / or ./ or ../"
+    );
   }
 
   #[tokio::test]
