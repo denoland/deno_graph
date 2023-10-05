@@ -120,18 +120,6 @@ function getStringFromWasm0(ptr, len) {
   return cachedTextDecoder.decode(getUint8Memory0().subarray(ptr, ptr + len));
 }
 
-function dropObject(idx) {
-  if (idx < 132) return;
-  heap[idx] = heap_next;
-  heap_next = idx;
-}
-
-function takeObject(idx) {
-  const ret = getObject(idx);
-  dropObject(idx);
-  return ret;
-}
-
 let cachedBigInt64Memory0 = null;
 
 function getBigInt64Memory0() {
@@ -206,6 +194,18 @@ function debugString(val) {
   }
   // TODO we could test for more things here, like `Set`s and `Map`s.
   return className;
+}
+
+function dropObject(idx) {
+  if (idx < 132) return;
+  heap[idx] = heap_next;
+  heap_next = idx;
+}
+
+function takeObject(idx) {
+  const ret = getObject(idx);
+  dropObject(idx);
+  return ret;
 }
 
 const CLOSURE_DTORS = new FinalizationRegistry((state) => {
@@ -504,9 +504,6 @@ const imports = {
       const ret = getObject(arg0) === getObject(arg1);
       return ret;
     },
-    __wbindgen_object_drop_ref: function (arg0) {
-      takeObject(arg0);
-    },
     __wbg_getwithrefkey_5e6d9547403deab8: function (arg0, arg1) {
       const ret = getObject(arg0)[getObject(arg1)];
       return addHeapObject(ret);
@@ -702,11 +699,14 @@ const imports = {
       const ret = false;
       return ret;
     },
+    __wbindgen_object_drop_ref: function (arg0) {
+      takeObject(arg0);
+    },
     __wbg_then_8df675b8bb5d5e3c: function (arg0, arg1) {
       const ret = getObject(arg0).then(getObject(arg1));
       return addHeapObject(ret);
     },
-    __wbindgen_closure_wrapper507: function (arg0, arg1, arg2) {
+    __wbindgen_closure_wrapper508: function (arg0, arg1, arg2) {
       const ret = makeMutClosure(arg0, arg1, 222, __wbg_adapter_48);
       return addHeapObject(ret);
     },
