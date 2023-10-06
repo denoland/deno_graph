@@ -59,10 +59,25 @@ file:///bar.json: JsonModuleSymbol {
     default_symbol: Symbol {
         symbol_id: 0,
         is_public: false,
-        decls: {},
+        decls: {
+            SymbolDecl {
+                range: SourceRange {
+                    start: SourcePos(
+                        0,
+                    ),
+                    end: SourcePos(
+                        15,
+                    ),
+                },
+                kind: Definition,
+            },
+        },
         deps: {},
         exports: {},
     },
 }
 == export definitions ==
-[configFile]: NONE
+[configFile]: file:///bar.json:0..15
+  {
+    "test": 5
+  }

@@ -139,7 +139,6 @@ impl TestBuilder {
 
   #[cfg(feature = "type_tracing")]
   pub async fn trace(&mut self) -> anyhow::Result<tracing::TypeTraceResult> {
-    use deno_ast::SourceRanged;
     use deno_graph::type_tracer::ModuleSymbol;
 
     let handler = tracing::TestTypeTraceHandler::default();
@@ -195,9 +194,7 @@ impl TestBuilder {
               let mut results = Vec::new();
               for definition in definitions {
                 let decl_text = {
-                  let decl_text = definition.range.text_fast(
-                    definition.module.esm().unwrap().source().text_info(),
-                  );
+                  let decl_text = definition.text();
                   let lines = decl_text.split('\n').collect::<Vec<_>>();
                   if lines.len() > 4 {
                     lines[0..2]
@@ -214,16 +211,7 @@ impl TestBuilder {
                   .collect::<Vec<_>>()
                   .join("\n")
                 };
-                let range = definition.range.as_byte_range(
-                  definition
-                    .module
-                    .esm()
-                    .unwrap()
-                    .source()
-                    .text_info()
-                    .range()
-                    .start,
-                );
+                let range = definition.byte_range();
                 results.push(format!(
                   "{}:{}..{}\n{}",
                   definition.module.specifier(),

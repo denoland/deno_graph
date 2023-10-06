@@ -31,6 +31,17 @@ pub struct Definition<'a> {
   pub range: &'a SourceRange,
 }
 
+impl<'a> Definition<'a> {
+  pub fn byte_range(&self) -> std::ops::Range<usize> {
+    self
+      .range
+      .as_byte_range(self.module.source_text_info().range().start)
+  }
+  pub fn text(&self) -> &str {
+    self.module.source_text_info().range_text(self.range)
+  }
+}
+
 pub fn go_to_definitions<'a>(
   module_graph: &ModuleGraph,
   module: ModuleSymbolRef<'a>,
@@ -293,7 +304,6 @@ pub fn exports_and_re_exports<'a>(
       /* prefer_types */ true,
     );
     if let Some(specifier) = maybe_specifier {
-      eprintln!("LOOKING AT: {}", specifier);
       if let Some(module_symbol) = specifier_to_module(&specifier) {
         let inner = exports_and_re_exports(
           module_graph,

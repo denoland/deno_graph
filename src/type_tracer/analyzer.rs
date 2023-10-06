@@ -15,6 +15,7 @@ use deno_ast::ParsedSource;
 use deno_ast::SourcePos;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
+use deno_ast::SourceTextInfo;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
@@ -266,6 +267,17 @@ impl<'a> ModuleSymbolRef<'a> {
     }
   }
 
+  pub fn source_text_info(&self) -> &'a SourceTextInfo {
+    match self {
+      Self::Json(m) => &m.source_text_info,
+      Self::Esm(m) => m.source.text_info(),
+    }
+  }
+
+  pub fn text(&self) -> &'a str {
+    self.source_text_info().text_str()
+  }
+
   pub fn specifier(&self) -> &'a ModuleSpecifier {
     match self {
       Self::Json(m) => &m.specifier,
@@ -314,7 +326,7 @@ impl<'a> ModuleSymbolRef<'a> {
 
 #[derive(Debug, Clone)]
 pub enum ModuleSymbol {
-  Json(JsonModuleSymbol),
+  Json(Box<JsonModuleSymbol>),
   Esm(EsmModuleSymbol),
 }
 
@@ -335,7 +347,7 @@ impl ModuleSymbol {
 
   pub fn as_ref(&self) -> ModuleSymbolRef {
     match self {
-      ModuleSymbol::Json(m) => m.as_ref(),
+      ModuleSymbol::Json(m) => (**m).as_ref(),
       ModuleSymbol::Esm(m) => m.as_ref(),
     }
   }
@@ -364,6 +376,7 @@ impl ModuleSymbol {
 pub struct JsonModuleSymbol {
   module_id: ModuleId,
   specifier: ModuleSpecifier,
+  source_text_info: SourceTextInfo,
   exports: IndexMap<String, SymbolId>,
   default_symbol: Symbol,
 }
@@ -675,6 +688,10 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
     json_module: &JsonModule,
   ) -> Result<Option<ModuleSymbolRef>, anyhow::Error> {
     let specifier = &json_module.specifier;
+    // it's not ideal having to use SourceTextInfo here, but it makes
+    // it easier to interop with ParsedSource
+    let source_text_info = SourceTextInfo::new(json_module.source.clone());
+    let range = source_text_info.range();
     let module_symbol = JsonModuleSymbol {
       specifier: specifier.clone(),
       module_id: ModuleId(self.modules.len() as u32),
@@ -682,14 +699,27 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
       default_symbol: Symbol {
         symbol_id: SymbolId(0),
         is_public: RefCell::new(false),
-        decls: Default::default(),
+        decls: IndexSet::from([SymbolDecl {
+          range: {
+            let source = source_text_info.text_str();
+            let start_whitespace_len = source.len() - source.trim_start().len();
+            let end_whitespace_len = source.len() - source.trim_end().len();
+            SourceRange::new(
+              range.start + start_whitespace_len,
+              range.end - end_whitespace_len,
+            )
+          },
+          kind: SymbolDeclKind::Definition,
+        }]),
         deps: Default::default(),
         exports: Default::default(),
       },
+      source_text_info,
     };
-    self
-      .modules
-      .insert(specifier.clone(), ModuleSymbol::Json(module_symbol));
+    self.modules.insert(
+      specifier.clone(),
+      ModuleSymbol::Json(Box::new(module_symbol)),
+    );
     Ok(Some(self.modules.get(specifier).unwrap().as_ref()))
   }
 
