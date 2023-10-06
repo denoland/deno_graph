@@ -140,6 +140,7 @@ impl TestBuilder {
   #[cfg(feature = "type_tracing")]
   pub async fn trace(&mut self) -> anyhow::Result<tracing::TypeTraceResult> {
     use deno_ast::SourceRanged;
+    use deno_graph::type_tracer::ModuleSymbol;
 
     let handler = tracing::TestTypeTraceHandler::default();
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
@@ -152,6 +153,7 @@ impl TestBuilder {
         deno_graph::BuildOptions::default(),
       )
       .await;
+    graph.valid().unwrap(); // assert valid
     let source_parser = deno_graph::DefaultModuleParser::new_for_analysis();
     let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::new(
       Some(Box::new(source_parser)),
@@ -171,11 +173,18 @@ impl TestBuilder {
           .get_module_from_specifier(&entry_point_url)
           .unwrap();
         let mut output_text = String::new();
-        for (k, v) in root_symbol.clone().into_specifier_map() {
-          output_text.push_str(&format!("{}: {:#?}\n", k.as_str(), v));
+        for (k, m) in root_symbol.clone().into_specifier_map() {
+          output_text.push_str(&format!(
+            "{}: {}\n",
+            k.as_str(),
+            match m {
+              ModuleSymbol::Esm(m) => format!("{:#?}", m),
+              ModuleSymbol::Json(m) => format!("{:#?}", m),
+            }
+          ));
         }
         let get_symbol_text =
-          |module_symbol: &deno_graph::type_tracer::ModuleSymbol,
+          |module_symbol: deno_graph::type_tracer::ModuleSymbolRef,
            symbol_id: deno_graph::type_tracer::SymbolId| {
             let symbol = module_symbol.symbol(symbol_id).unwrap();
             let definitions =
@@ -186,9 +195,9 @@ impl TestBuilder {
               let mut results = Vec::new();
               for definition in definitions {
                 let decl_text = {
-                  let decl_text = definition
-                    .range
-                    .text_fast(definition.module.source().text_info());
+                  let decl_text = definition.range.text_fast(
+                    definition.module.esm().unwrap().source().text_info(),
+                  );
                   let lines = decl_text.split('\n').collect::<Vec<_>>();
                   if lines.len() > 4 {
                     lines[0..2]
@@ -206,7 +215,14 @@ impl TestBuilder {
                   .join("\n")
                 };
                 let range = definition.range.as_byte_range(
-                  definition.module.source().text_info().range().start,
+                  definition
+                    .module
+                    .esm()
+                    .unwrap()
+                    .source()
+                    .text_info()
+                    .range()
+                    .start,
                 );
                 results.push(format!(
                   "{}:{}..{}\n{}",
@@ -219,15 +235,17 @@ impl TestBuilder {
               results.join("\n")
             }
           };
-        let exports = entrypoint_symbol
-          .exports(&graph, &root_symbol)
-          .into_iter()
-          .collect::<std::collections::BTreeMap<_, _>>();
-        if !exports.is_empty() {
-          output_text.push_str("== export definitions ==\n");
-          for (name, (module_symbol, symbol_id)) in exports {
-            let position = get_symbol_text(module_symbol, symbol_id);
-            output_text.push_str(&format!("[{}]: {}\n", name, position));
+        if let Some(entrypoint_symbol) = entrypoint_symbol.esm() {
+          let exports = entrypoint_symbol
+            .exports(&graph, &root_symbol)
+            .into_iter()
+            .collect::<std::collections::BTreeMap<_, _>>();
+          if !exports.is_empty() {
+            output_text.push_str("== export definitions ==\n");
+            for (name, (module_symbol, symbol_id)) in exports {
+              let position = get_symbol_text(module_symbol, symbol_id);
+              output_text.push_str(&format!("[{}]: {}\n", name, position));
+            }
           }
         }
         output_text

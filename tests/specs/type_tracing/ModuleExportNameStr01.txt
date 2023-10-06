@@ -13,7 +13,7 @@ export { MyClass as "some-name" } from "./c.ts";
 export class MyClass {}
 
 # output
-file:///mod.ts: ModuleSymbol {
+file:///mod.ts: EsmModuleSymbol {
     module_id: ModuleId(
         0,
     ),
@@ -54,7 +54,7 @@ file:///mod.ts: ModuleSymbol {
     traced_re_exports: {},
     traced_referrers: {},
 }
-file:///a.ts: ModuleSymbol {
+file:///a.ts: EsmModuleSymbol {
     module_id: ModuleId(
         1,
     ),
@@ -119,7 +119,7 @@ file:///a.ts: ModuleSymbol {
         ),
     },
 }
-file:///b.ts: ModuleSymbol {
+file:///b.ts: EsmModuleSymbol {
     module_id: ModuleId(
         2,
     ),
@@ -168,7 +168,7 @@ file:///b.ts: ModuleSymbol {
         ),
     },
 }
-file:///c.ts: ModuleSymbol {
+file:///c.ts: EsmModuleSymbol {
     module_id: ModuleId(
         3,
     ),

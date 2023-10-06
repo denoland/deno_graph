@@ -1,0 +1,68 @@
+# mod.ts
+export { default as configFile } from './bar.json' assert { type: 'json' };
+
+# bar.json
+{
+  "test": 5
+}
+
+# output
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    exports: {
+        "configFile": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {},
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            30,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "default",
+                            ),
+                            specifier: "./bar.json",
+                        },
+                    ),
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {},
+}
+file:///bar.json: JsonModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///bar.json",
+    exports: {
+        "default": 0,
+    },
+    default_symbol: Symbol {
+        symbol_id: 0,
+        is_public: false,
+        decls: {},
+        deps: {},
+        exports: {},
+    },
+}
+== export definitions ==
+[configFile]: NONE

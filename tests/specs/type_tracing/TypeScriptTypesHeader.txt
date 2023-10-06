@@ -1,23 +1,314 @@
 # mod.ts
 import { MyInterface } from "https://localhost/mod.js";
-import { MyInterface2 } from "other.js";
+import { MyInterface2 } from "./other.js";
+import { MyInterface3 } from "./typescript.ts";
 
-export class MyClass implements MyInterface, MyInterface2 {
+export class MyClass implements MyInterface, MyInterface2, MyInterface3 {
 }
 
 # https://localhost/mod.js
-HEADERS: { "x-typescript-types": "./mod.d.ts" }
+HEADERS: {"x-typescript-types":"./mod.d.ts"}
 export class Dummy {}
 
 # https://localhost/mod.d.ts
 export interface MyInterface {
+  a: string;
+}
+
+export interface MyNonPublicInterface {
+  a1: string;
 }
 
 # other.js
-HEADERS: { "x-typescript-types": "./other.d.ts" }
+HEADERS: {"x-typescript-types":"./other.d.ts"}
 
 # other.d.ts
 export interface MyInterface2 {
+  b: string;
+}
+
+# typescript.ts
+export interface MyInterface3 {
+  c: string;
 }
 
 # output
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    exports: {
+        "MyClass": 3,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('MyInterface' type=dynamic),
+            #2,
+        ): 0,
+        (
+            Atom('MyInterface2' type=dynamic),
+            #2,
+        ): 1,
+        (
+            Atom('MyInterface3' type=dynamic),
+            #2,
+        ): 2,
+        (
+            Atom('MyClass' type=inline),
+            #2,
+        ): 3,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            20,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "MyInterface",
+                            ),
+                            specifier: "https://localhost/mod.js",
+                        },
+                    ),
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            65,
+                        ),
+                        end: SourcePos(
+                            77,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "MyInterface2",
+                            ),
+                            specifier: "./other.js",
+                        },
+                    ),
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        2: Symbol {
+            symbol_id: 2,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            108,
+                        ),
+                        end: SourcePos(
+                            120,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "MyInterface3",
+                            ),
+                            specifier: "./typescript.ts",
+                        },
+                    ),
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            148,
+                        ),
+                        end: SourcePos(
+                            223,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('MyInterface' type=dynamic),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('MyInterface2' type=dynamic),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('MyInterface3' type=dynamic),
+                        #2,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {},
+}
+https://localhost/mod.js: EsmModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "https://localhost/mod.js",
+    exports: {
+        "Dummy": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('Dummy' type=inline),
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: false,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            21,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            0,
+        ): Named(
+            {
+                "MyInterface",
+            },
+        ),
+    },
+}
+file:///other.js: EsmModuleSymbol {
+    module_id: ModuleId(
+        2,
+    ),
+    specifier: "file:///other.js",
+    exports: {},
+    re_exports: [],
+    swc_id_to_symbol_id: {},
+    symbols: {},
+    traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            0,
+        ): Named(
+            {
+                "MyInterface2",
+            },
+        ),
+    },
+}
+file:///typescript.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        3,
+    ),
+    specifier: "file:///typescript.ts",
+    exports: {
+        "MyInterface3": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('MyInterface3' type=dynamic),
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            46,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('MyInterface3' type=dynamic),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('c' type=inline),
+                        #0,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            0,
+        ): Named(
+            {
+                "MyInterface3",
+            },
+        ),
+    },
+}
+== export definitions ==
+[MyClass]: file:///mod.ts:148..223
+  export class MyClass implements MyInterface, MyInterface2, MyInterface3 {
+  }

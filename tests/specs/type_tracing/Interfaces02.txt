@@ -27,7 +27,7 @@ interface Prop2 {}
 export { A1 };
 
 # output
-file:///mod.ts: ModuleSymbol {
+file:///mod.ts: EsmModuleSymbol {
     module_id: ModuleId(
         0,
     ),
@@ -199,7 +199,7 @@ file:///mod.ts: ModuleSymbol {
     },
     traced_referrers: {},
 }
-file:///a.ts: ModuleSymbol {
+file:///a.ts: EsmModuleSymbol {
     module_id: ModuleId(
         1,
     ),

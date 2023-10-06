@@ -11,7 +11,7 @@ namespace MyNamespace {
 export = MyNamespace;
 
 # output
-file:///mod.ts: ModuleSymbol {
+file:///mod.ts: EsmModuleSymbol {
     module_id: ModuleId(
         0,
     ),
@@ -96,7 +96,7 @@ file:///mod.ts: ModuleSymbol {
     traced_re_exports: {},
     traced_referrers: {},
 }
-file:///a.ts: ModuleSymbol {
+file:///a.ts: EsmModuleSymbol {
     module_id: ModuleId(
         1,
     ),
