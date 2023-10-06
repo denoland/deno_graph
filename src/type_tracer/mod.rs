@@ -328,7 +328,7 @@ fn trace_module<THandler: TypeTraceHandler>(
   let mut pending = context.trace_exports(pending_trace)?;
 
   while let Some((specifier, symbol_id)) = pending.pop() {
-    let Some(module_symbol) = context.analyzer.get_or_analyze(&specifier)?.and_then(|m| m.esm()) else {
+    let Some(module_symbol) = context.analyzer.get_or_analyze(&specifier)? else {
       continue;
     };
     let symbol = module_symbol.symbol(symbol_id).unwrap();
@@ -352,15 +352,19 @@ fn trace_module<THandler: TypeTraceHandler>(
       for dep in symbol_deps {
         match &dep {
           SymbolDep::Id(id) => {
-            if let Some(id) = module_symbol.symbol_id_from_swc(id) {
+            if let Some(id) =
+              module_symbol.esm().unwrap().symbol_id_from_swc(id)
+            {
               pending.push((module_symbol.specifier().clone(), id))
             }
           }
           SymbolDep::QualifiedId(id, parts) => {
-            if let Some(symbol_id) = module_symbol.symbol_id_from_swc(id) {
+            if let Some(symbol_id) =
+              module_symbol.esm().unwrap().symbol_id_from_swc(id)
+            {
               pending.extend(resolve_qualified_name(
                 context.graph,
-                module_symbol.as_ref(),
+                module_symbol,
                 symbol_id,
                 parts,
                 &|specifier| {

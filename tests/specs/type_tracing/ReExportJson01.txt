@@ -1,10 +1,16 @@
 # mod.ts
+import other from "./non_public.json" with { type: 'json' };
 export { default as configFile } from './bar.json' assert { type: 'json' };
+
+console.log(other);
 
 # bar.json
 {
   "test": 5
 }
+
+# non_public.json
+{}
 
 # output
 file:///mod.ts: EsmModuleSymbol {
@@ -13,22 +19,53 @@ file:///mod.ts: EsmModuleSymbol {
     ),
     specifier: "file:///mod.ts",
     exports: {
-        "configFile": 0,
+        "configFile": 1,
     },
     re_exports: [],
-    swc_id_to_symbol_id: {},
+    swc_id_to_symbol_id: {
+        (
+            Atom('other' type=inline),
+            #2,
+        ): 0,
+    },
     symbols: {
         0: Symbol {
             symbol_id: 0,
+            is_public: false,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            7,
+                        ),
+                        end: SourcePos(
+                            12,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "default",
+                            ),
+                            specifier: "./non_public.json",
+                        },
+                    ),
+                },
+            },
+            deps: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
             is_public: true,
             decls: {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            9,
+                            70,
                         ),
                         end: SourcePos(
-                            30,
+                            91,
                         ),
                     },
                     kind: FileRef(
@@ -58,7 +95,7 @@ file:///bar.json: JsonModuleSymbol {
     },
     default_symbol: Symbol {
         symbol_id: 0,
-        is_public: false,
+        is_public: true,
         decls: {
             SymbolDecl {
                 range: SourceRange {
