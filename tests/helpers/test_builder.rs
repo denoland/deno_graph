@@ -223,17 +223,15 @@ impl TestBuilder {
               results.join("\n")
             }
           };
-        if let Some(entrypoint_symbol) = entrypoint_symbol.esm() {
-          let exports = entrypoint_symbol
-            .exports(&graph, &root_symbol)
-            .into_iter()
-            .collect::<std::collections::BTreeMap<_, _>>();
-          if !exports.is_empty() {
-            output_text.push_str("== export definitions ==\n");
-            for (name, (module_symbol, symbol_id)) in exports {
-              let position = get_symbol_text(module_symbol, symbol_id);
-              output_text.push_str(&format!("[{}]: {}\n", name, position));
-            }
+        let exports = entrypoint_symbol
+          .exports(&graph, &root_symbol)
+          .into_iter()
+          .collect::<std::collections::BTreeMap<_, _>>();
+        if !exports.is_empty() {
+          output_text.push_str("== export definitions ==\n");
+          for (name, (module_symbol, symbol_id)) in exports {
+            let position = get_symbol_text(module_symbol, symbol_id);
+            output_text.push_str(&format!("[{}]: {}\n", name, position));
           }
         }
         output_text
