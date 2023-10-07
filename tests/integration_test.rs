@@ -99,10 +99,15 @@ async fn test_type_tracing_specs() {
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
       for file in &spec.files {
+        let source = Source::Module {
+          specifier: file.url().to_string(),
+          maybe_headers: Some(file.headers.clone().into_iter().collect()),
+          content: file.text.clone(),
+        };
         if file.is_cache() {
-          loader.cache.add_source_with_text(file.url(), &file.text);
+          loader.cache.add_source(file.url(), source);
         } else {
-          loader.remote.add_source_with_text(file.url(), &file.text);
+          loader.remote.add_source(file.url(), source);
         }
       }
     });

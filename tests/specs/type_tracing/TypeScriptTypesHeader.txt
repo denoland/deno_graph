@@ -181,25 +181,30 @@ file:///mod.ts: EsmModuleSymbol {
     traced_re_exports: {},
     traced_referrers: {},
 }
-https://localhost/mod.js: EsmModuleSymbol {
+https://localhost/mod.d.ts: EsmModuleSymbol {
     module_id: ModuleId(
         1,
     ),
-    specifier: "https://localhost/mod.js",
+    specifier: "https://localhost/mod.d.ts",
     exports: {
-        "Dummy": 0,
+        "MyInterface": 0,
+        "MyNonPublicInterface": 1,
     },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('Dummy' type=inline),
+            Atom('MyInterface' type=dynamic),
             #2,
         ): 0,
+        (
+            Atom('MyNonPublicInterface' type=dynamic),
+            #2,
+        ): 1,
     },
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: false,
+            is_public: true,
             decls: {
                 SymbolDecl {
                     range: SourceRange {
@@ -207,13 +212,58 @@ https://localhost/mod.js: EsmModuleSymbol {
                             0,
                         ),
                         end: SourcePos(
-                            21,
+                            45,
                         ),
                     },
                     kind: Definition,
                 },
             },
-            deps: {},
+            deps: {
+                Id(
+                    (
+                        Atom('MyInterface' type=dynamic),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('a' type=static),
+                        #0,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: false,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            47,
+                        ),
+                        end: SourcePos(
+                            102,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('MyNonPublicInterface' type=dynamic),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('a1' type=inline),
+                        #0,
+                    ),
+                ),
+            },
             exports: {},
         },
     },
@@ -228,15 +278,55 @@ https://localhost/mod.js: EsmModuleSymbol {
         ),
     },
 }
-file:///other.js: EsmModuleSymbol {
+file:///other.d.ts: EsmModuleSymbol {
     module_id: ModuleId(
         2,
     ),
-    specifier: "file:///other.js",
-    exports: {},
+    specifier: "file:///other.d.ts",
+    exports: {
+        "MyInterface2": 0,
+    },
     re_exports: [],
-    swc_id_to_symbol_id: {},
-    symbols: {},
+    swc_id_to_symbol_id: {
+        (
+            Atom('MyInterface2' type=dynamic),
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            46,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('MyInterface2' type=dynamic),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('b' type=static),
+                        #0,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+    },
     traced_re_exports: {},
     traced_referrers: {
         ModuleId(
