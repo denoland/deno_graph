@@ -35,10 +35,10 @@ impl<'a> Definition<'a> {
   pub fn byte_range(&self) -> std::ops::Range<usize> {
     self
       .range
-      .as_byte_range(self.module.source_text_info().range().start)
+      .as_byte_range(self.module.text_info().range().start)
   }
   pub fn text(&self) -> &str {
-    self.module.source_text_info().range_text(self.range)
+    self.module.text_info().range_text(self.range)
   }
 }
 

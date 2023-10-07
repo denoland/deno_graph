@@ -52,8 +52,8 @@ impl RootSymbol {
   pub fn get_module_from_id(
     &self,
     module_id: ModuleId,
-  ) -> Option<&ModuleSymbol> {
-    self.ids_to_symbols.get(&module_id)
+  ) -> Option<ModuleSymbolRef> {
+    self.ids_to_symbols.get(&module_id).map(|s| s.as_ref())
   }
 
   pub fn into_specifier_map(self) -> IndexMap<ModuleSpecifier, ModuleSymbol> {
@@ -267,7 +267,7 @@ impl<'a> ModuleSymbolRef<'a> {
     }
   }
 
-  pub fn source_text_info(&self) -> &'a SourceTextInfo {
+  pub fn text_info(&self) -> &'a SourceTextInfo {
     match self {
       Self::Json(m) => &m.source_text_info,
       Self::Esm(m) => m.source.text_info(),
@@ -275,7 +275,7 @@ impl<'a> ModuleSymbolRef<'a> {
   }
 
   pub fn text(&self) -> &'a str {
-    self.source_text_info().text_str()
+    self.text_info().text_str()
   }
 
   pub fn specifier(&self) -> &'a ModuleSpecifier {
