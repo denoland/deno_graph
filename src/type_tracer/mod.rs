@@ -16,6 +16,7 @@ use crate::ModuleGraph;
 
 use self::analyzer::SymbolDep;
 use self::analyzer::TypeTraceModuleAnalyzer;
+use self::cross_module::resolve_qualified_name;
 
 pub use self::analyzer::EsmModuleSymbol;
 pub use self::analyzer::FileDep;
@@ -28,7 +29,8 @@ pub use self::analyzer::RootSymbol;
 pub use self::analyzer::Symbol;
 pub use self::analyzer::SymbolId;
 pub use self::analyzer::UniqueSymbolId;
-use self::cross_module::resolve_qualified_name;
+pub use self::cross_module::Definition;
+pub use self::cross_module::DefinitionKind;
 
 mod analyzer;
 mod collections;
