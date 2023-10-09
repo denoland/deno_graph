@@ -68,7 +68,7 @@ pub fn trace_public_types<'a, THandler: TypeTraceHandler>(
         .iter()
         .map(|r| {
           (
-            r.clone(),
+            graph.resolve_types_dependency(r).unwrap_or(r).clone(),
             (ImportedExports::AllWithDefault, Default::default()),
           )
         })

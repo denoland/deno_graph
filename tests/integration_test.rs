@@ -97,6 +97,13 @@ async fn test_type_tracing_specs() {
   {
     eprintln!("Running {}", test_file_path.display());
     let mut builder = TestBuilder::new();
+
+    if spec.files.iter().any(|f| f.specifier == "mod.js") {
+      // this is for the TypesEntrypoint test
+      builder.entry_point("file:///mod.js");
+      builder.entry_point_types("file:///mod.d.ts");
+    }
+
     builder.with_loader(|loader| {
       for file in &spec.files {
         let source = Source::Module {

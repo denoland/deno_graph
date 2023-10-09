@@ -86,6 +86,7 @@ pub struct BuildResult {
 pub struct TestBuilder {
   loader: TestLoader,
   entry_point: String,
+  entry_point_types: String,
   workspace_members: Vec<WorkspaceMember>,
 }
 
@@ -94,6 +95,7 @@ impl TestBuilder {
     Self {
       loader: Default::default(),
       entry_point: "file:///mod.ts".to_string(),
+      entry_point_types: "file:///mod.ts".to_string(),
       workspace_members: Default::default(),
     }
   }
@@ -106,9 +108,13 @@ impl TestBuilder {
     self
   }
 
-  #[allow(dead_code)]
   pub fn entry_point(&mut self, value: impl AsRef<str>) -> &mut Self {
     self.entry_point = value.as_ref().to_string();
+    self
+  }
+
+  pub fn entry_point_types(&mut self, value: impl AsRef<str>) -> &mut Self {
+    self.entry_point_types = value.as_ref().to_string();
     self
   }
 
@@ -144,6 +150,8 @@ impl TestBuilder {
     let handler = tracing::TestTypeTraceHandler::default();
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
+    let entry_point_types_url =
+      ModuleSpecifier::parse(&self.entry_point_types).unwrap();
     let roots = vec![entry_point_url.clone()];
     graph
       .build(
@@ -169,7 +177,7 @@ impl TestBuilder {
       root_symbol: root_symbol.clone(),
       output: {
         let entrypoint_symbol = root_symbol
-          .get_module_from_specifier(&entry_point_url)
+          .get_module_from_specifier(&entry_point_types_url)
           .unwrap();
         let mut output_text = String::new();
         for (k, m) in root_symbol.clone().into_specifier_map() {
