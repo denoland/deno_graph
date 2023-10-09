@@ -27,7 +27,7 @@ file:///mod.ts: EsmModuleSymbol {
         0: Symbol {
             symbol_id: 0,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -46,7 +46,7 @@ file:///mod.ts: EsmModuleSymbol {
                         },
                     ),
                 },
-            },
+            ],
             deps: {},
             exports: {},
         },
@@ -73,7 +73,7 @@ file:///a.ts: EsmModuleSymbol {
         0: Symbol {
             symbol_id: 0,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -103,7 +103,7 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: TargetSelf,
                 },
-            },
+            ],
             deps: {},
             exports: {},
         },
@@ -133,7 +133,7 @@ file:///b.ts: EsmModuleSymbol {
         0: Symbol {
             symbol_id: 0,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -152,7 +152,7 @@ file:///b.ts: EsmModuleSymbol {
                         },
                     ),
                 },
-            },
+            ],
             deps: {},
             exports: {},
         },
@@ -187,7 +187,7 @@ file:///c.ts: EsmModuleSymbol {
         0: Symbol {
             symbol_id: 0,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -197,9 +197,15 @@ file:///c.ts: EsmModuleSymbol {
                             23,
                         ),
                     },
-                    kind: Definition,
+                    kind: Definition(
+                        ClassDecl(
+                            DeclRef {
+                                value: "<omitted>",
+                            },
+                        ),
+                    ),
                 },
-            },
+            ],
             deps: {},
             exports: {},
         },

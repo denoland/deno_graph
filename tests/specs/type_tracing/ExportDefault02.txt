@@ -21,7 +21,7 @@ file:///mod.ts: EsmModuleSymbol {
         0: Symbol {
             symbol_id: 0,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -38,7 +38,7 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     ),
                 },
-            },
+            ],
             deps: {
                 Id(
                     (
@@ -52,7 +52,7 @@ file:///mod.ts: EsmModuleSymbol {
         1: Symbol {
             symbol_id: 1,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -78,9 +78,15 @@ file:///mod.ts: EsmModuleSymbol {
                             34,
                         ),
                     },
-                    kind: Definition,
+                    kind: Definition(
+                        ClassDecl(
+                            DeclRef {
+                                value: "<omitted>",
+                            },
+                        ),
+                    ),
                 },
-            },
+            ],
             deps: {},
             exports: {},
         },

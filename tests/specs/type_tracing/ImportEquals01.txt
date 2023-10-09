@@ -34,7 +34,7 @@ file:///mod.ts: EsmModuleSymbol {
         0: Symbol {
             symbol_id: 0,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -54,7 +54,7 @@ file:///mod.ts: EsmModuleSymbol {
                         ],
                     ),
                 },
-            },
+            ],
             deps: {
                 QualifiedId(
                     (
@@ -71,7 +71,7 @@ file:///mod.ts: EsmModuleSymbol {
         1: Symbol {
             symbol_id: 1,
             is_public: false,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -81,9 +81,15 @@ file:///mod.ts: EsmModuleSymbol {
                             83,
                         ),
                     },
-                    kind: Definition,
+                    kind: Definition(
+                        TsNamespace(
+                            DeclRef {
+                                value: "<omitted>",
+                            },
+                        ),
+                    ),
                 },
-            },
+            ],
             deps: {
                 Id(
                     (
@@ -99,7 +105,7 @@ file:///mod.ts: EsmModuleSymbol {
         2: Symbol {
             symbol_id: 2,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -109,9 +115,15 @@ file:///mod.ts: EsmModuleSymbol {
                             81,
                         ),
                     },
-                    kind: Definition,
+                    kind: Definition(
+                        ClassDecl(
+                            DeclRef {
+                                value: "<omitted>",
+                            },
+                        ),
+                    ),
                 },
-            },
+            ],
             deps: {},
             exports: {},
         },
