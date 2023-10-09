@@ -1469,7 +1469,7 @@ impl ModuleGraph {
   /// For a given specifier, return optionally if it has a types only dependency
   /// assigned on the module. This occurs when there is a header or text in the
   /// module that assigns expresses the types only dependency.
-  fn resolve_types_dependency(
+  pub(crate) fn resolve_types_dependency(
     &self,
     specifier: &ModuleSpecifier,
   ) -> Option<&ModuleSpecifier> {

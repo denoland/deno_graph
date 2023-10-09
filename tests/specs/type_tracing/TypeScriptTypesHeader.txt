@@ -1,30 +1,36 @@
 # mod.ts
-import { A, B, D } from "./a.ts";
+import { MyInterface } from "https://localhost/mod.js";
+import { MyInterface2 } from "./other.js";
+import { MyInterface3 } from "./typescript.ts";
 
-export const ExportA: typeof A = A;
-
-const test: B;
-export { D };
-
-# a.ts
-interface AInner {
-  prop: string;
+export class MyClass implements MyInterface, MyInterface2, MyInterface3 {
 }
 
-interface AInnerUnused {
-  prop2: string;
+# https://localhost/mod.js
+HEADERS: {"x-typescript-types":"./mod.d.ts"}
+export class Dummy {}
+
+# https://localhost/mod.d.ts
+export interface MyInterface {
+  a: string;
 }
 
-export class A {
-  prop: AInner;
+export interface MyNonPublicInterface {
+  a1: string;
 }
 
-export type B = string;
+# other.js
+HEADERS: {"x-typescript-types":"./other.d.ts"}
 
-export default class C {
-};
+# other.d.ts
+export interface MyInterface2 {
+  b: string;
+}
 
-export type D = typeof C;
+# typescript.ts
+export interface MyInterface3 {
+  c: string;
+}
 
 # output
 file:///mod.ts: EsmModuleSymbol {
@@ -33,31 +39,26 @@ file:///mod.ts: EsmModuleSymbol {
     ),
     specifier: "file:///mod.ts",
     exports: {
-        "ExportA": 3,
-        "D": 2,
+        "MyClass": 3,
     },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('A' type=inline),
+            Atom('MyInterface' type=dynamic),
             #2,
         ): 0,
         (
-            Atom('B' type=inline),
+            Atom('MyInterface2' type=dynamic),
             #2,
         ): 1,
         (
-            Atom('D' type=inline),
+            Atom('MyInterface3' type=dynamic),
             #2,
         ): 2,
         (
-            Atom('ExportA' type=inline),
+            Atom('MyClass' type=inline),
             #2,
         ): 3,
-        (
-            Atom('test' type=inline),
-            #2,
-        ): 4,
     },
     symbols: {
         0: Symbol {
@@ -70,15 +71,15 @@ file:///mod.ts: EsmModuleSymbol {
                             9,
                         ),
                         end: SourcePos(
-                            10,
+                            20,
                         ),
                     },
                     kind: FileRef(
                         FileDep {
                             name: Name(
-                                "A",
+                                "MyInterface",
                             ),
-                            specifier: "./a.ts",
+                            specifier: "https://localhost/mod.js",
                         },
                     ),
                 },
@@ -88,23 +89,23 @@ file:///mod.ts: EsmModuleSymbol {
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: false,
+            is_public: true,
             decls: {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            12,
+                            65,
                         ),
                         end: SourcePos(
-                            13,
+                            77,
                         ),
                     },
                     kind: FileRef(
                         FileDep {
                             name: Name(
-                                "B",
+                                "MyInterface2",
                             ),
-                            specifier: "./a.ts",
+                            specifier: "./other.js",
                         },
                     ),
                 },
@@ -119,42 +120,20 @@ file:///mod.ts: EsmModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            15,
+                            108,
                         ),
                         end: SourcePos(
-                            16,
+                            120,
                         ),
                     },
                     kind: FileRef(
                         FileDep {
                             name: Name(
-                                "D",
+                                "MyInterface3",
                             ),
-                            specifier: "./a.ts",
+                            specifier: "./typescript.ts",
                         },
                     ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            87,
-                        ),
-                        end: SourcePos(
-                            100,
-                        ),
-                    },
-                    kind: TargetSelf,
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            96,
-                        ),
-                        end: SourcePos(
-                            97,
-                        ),
-                    },
-                    kind: TargetSelf,
                 },
             },
             deps: {},
@@ -167,10 +146,10 @@ file:///mod.ts: EsmModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            48,
+                            148,
                         ),
                         end: SourcePos(
-                            69,
+                            223,
                         ),
                     },
                     kind: Definition,
@@ -179,33 +158,19 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('A' type=inline),
+                        Atom('MyInterface' type=dynamic),
                         #2,
                     ),
                 ),
-            },
-            exports: {},
-        },
-        4: Symbol {
-            symbol_id: 4,
-            is_public: false,
-            decls: {
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            78,
-                        ),
-                        end: SourcePos(
-                            85,
-                        ),
-                    },
-                    kind: Definition,
-                },
-            },
-            deps: {
                 Id(
                     (
-                        Atom('B' type=inline),
+                        Atom('MyInterface2' type=dynamic),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('MyInterface3' type=dynamic),
                         #2,
                     ),
                 ),
@@ -216,43 +181,25 @@ file:///mod.ts: EsmModuleSymbol {
     traced_re_exports: {},
     traced_referrers: {},
 }
-file:///a.ts: EsmModuleSymbol {
+https://localhost/mod.d.ts: EsmModuleSymbol {
     module_id: ModuleId(
         1,
     ),
-    specifier: "file:///a.ts",
+    specifier: "https://localhost/mod.d.ts",
     exports: {
-        "A": 2,
-        "B": 3,
-        "default": 4,
-        "D": 6,
+        "MyInterface": 0,
+        "MyNonPublicInterface": 1,
     },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('AInner' type=inline),
+            Atom('MyInterface' type=dynamic),
             #2,
         ): 0,
         (
-            Atom('AInnerUnused' type=dynamic),
+            Atom('MyNonPublicInterface' type=dynamic),
             #2,
         ): 1,
-        (
-            Atom('A' type=inline),
-            #2,
-        ): 2,
-        (
-            Atom('B' type=inline),
-            #2,
-        ): 3,
-        (
-            Atom('C' type=inline),
-            #2,
-        ): 5,
-        (
-            Atom('D' type=inline),
-            #2,
-        ): 6,
     },
     symbols: {
         0: Symbol {
@@ -265,7 +212,7 @@ file:///a.ts: EsmModuleSymbol {
                             0,
                         ),
                         end: SourcePos(
-                            36,
+                            45,
                         ),
                     },
                     kind: Definition,
@@ -274,13 +221,13 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('AInner' type=inline),
+                        Atom('MyInterface' type=dynamic),
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('prop' type=inline),
+                        Atom('a' type=static),
                         #0,
                     ),
                 ),
@@ -294,10 +241,10 @@ file:///a.ts: EsmModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            38,
+                            47,
                         ),
                         end: SourcePos(
-                            81,
+                            102,
                         ),
                     },
                     kind: Definition,
@@ -306,143 +253,14 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('AInnerUnused' type=dynamic),
+                        Atom('MyNonPublicInterface' type=dynamic),
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('prop2' type=inline),
+                        Atom('a1' type=inline),
                         #0,
-                    ),
-                ),
-            },
-            exports: {},
-        },
-        2: Symbol {
-            symbol_id: 2,
-            is_public: true,
-            decls: {
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            83,
-                        ),
-                        end: SourcePos(
-                            117,
-                        ),
-                    },
-                    kind: Definition,
-                },
-            },
-            deps: {
-                Id(
-                    (
-                        Atom('AInner' type=inline),
-                        #2,
-                    ),
-                ),
-            },
-            exports: {},
-        },
-        3: Symbol {
-            symbol_id: 3,
-            is_public: false,
-            decls: {
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            119,
-                        ),
-                        end: SourcePos(
-                            142,
-                        ),
-                    },
-                    kind: Definition,
-                },
-            },
-            deps: {
-                Id(
-                    (
-                        Atom('B' type=inline),
-                        #2,
-                    ),
-                ),
-            },
-            exports: {},
-        },
-        4: Symbol {
-            symbol_id: 4,
-            is_public: false,
-            decls: {
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            144,
-                        ),
-                        end: SourcePos(
-                            170,
-                        ),
-                    },
-                    kind: Definition,
-                },
-            },
-            deps: {
-                Id(
-                    (
-                        Atom('C' type=inline),
-                        #2,
-                    ),
-                ),
-            },
-            exports: {},
-        },
-        5: Symbol {
-            symbol_id: 5,
-            is_public: true,
-            decls: {
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            165,
-                        ),
-                        end: SourcePos(
-                            166,
-                        ),
-                    },
-                    kind: Definition,
-                },
-            },
-            deps: {},
-            exports: {},
-        },
-        6: Symbol {
-            symbol_id: 6,
-            is_public: true,
-            decls: {
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            173,
-                        ),
-                        end: SourcePos(
-                            198,
-                        ),
-                    },
-                    kind: Definition,
-                },
-            },
-            deps: {
-                Id(
-                    (
-                        Atom('D' type=inline),
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        Atom('C' type=inline),
-                        #2,
                     ),
                 ),
             },
@@ -455,14 +273,132 @@ file:///a.ts: EsmModuleSymbol {
             0,
         ): Named(
             {
-                "D",
-                "A",
+                "MyInterface",
+            },
+        ),
+    },
+}
+file:///other.d.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        2,
+    ),
+    specifier: "file:///other.d.ts",
+    exports: {
+        "MyInterface2": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('MyInterface2' type=dynamic),
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            46,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('MyInterface2' type=dynamic),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('b' type=static),
+                        #0,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            0,
+        ): Named(
+            {
+                "MyInterface2",
+            },
+        ),
+    },
+}
+file:///typescript.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        3,
+    ),
+    specifier: "file:///typescript.ts",
+    exports: {
+        "MyInterface3": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('MyInterface3' type=dynamic),
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            46,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('MyInterface3' type=dynamic),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('c' type=inline),
+                        #0,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {
+        ModuleId(
+            0,
+        ): Named(
+            {
+                "MyInterface3",
             },
         ),
     },
 }
 == export definitions ==
-[D]: file:///a.ts:173..198
-  export type D = typeof C;
-[ExportA]: file:///mod.ts:48..69
-  ExportA: typeof A = A
+[MyClass]: file:///mod.ts:148..223
+  export class MyClass implements MyInterface, MyInterface2, MyInterface3 {
+  }

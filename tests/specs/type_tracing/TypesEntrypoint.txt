@@ -1,0 +1,67 @@
+# mod.js
+/// <reference types="./mod.d.ts" />
+export class ShouldNotHaveThisInOutput {}
+
+# mod.d.ts
+export interface MyInterface {
+  a: string;
+}
+
+# output
+file:///mod.d.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.d.ts",
+    exports: {
+        "MyInterface": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            Atom('MyInterface' type=dynamic),
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: {
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            45,
+                        ),
+                    },
+                    kind: Definition,
+                },
+            },
+            deps: {
+                Id(
+                    (
+                        Atom('MyInterface' type=dynamic),
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        Atom('a' type=static),
+                        #0,
+                    ),
+                ),
+            },
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {},
+}
+== export definitions ==
+[MyInterface]: file:///mod.d.ts:0..45
+  export interface MyInterface {
+    a: string;
+  }

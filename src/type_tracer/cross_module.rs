@@ -1,10 +1,10 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-use std::collections::HashMap;
 use std::collections::HashSet;
 
 use anyhow::Result;
 use deno_ast::SourceRange;
+use indexmap::IndexMap;
 
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
@@ -12,7 +12,7 @@ use crate::ModuleSpecifier;
 use super::analyzer::SymbolDeclKind;
 use super::FileDep;
 use super::FileDepName;
-use super::ModuleSymbol;
+use super::ModuleSymbolRef;
 use super::Symbol;
 use super::SymbolId;
 use super::UniqueSymbolId;
@@ -26,16 +26,27 @@ pub enum DefinitionKind<'a> {
 #[derive(Debug)]
 pub struct Definition<'a> {
   pub kind: DefinitionKind<'a>,
-  pub module: &'a ModuleSymbol,
+  pub module: ModuleSymbolRef<'a>,
   pub symbol: &'a Symbol,
   pub range: &'a SourceRange,
 }
 
+impl<'a> Definition<'a> {
+  pub fn byte_range(&self) -> std::ops::Range<usize> {
+    self
+      .range
+      .as_byte_range(self.module.text_info().range().start)
+  }
+  pub fn text(&self) -> &str {
+    self.module.text_info().range_text(self.range)
+  }
+}
+
 pub fn go_to_definitions<'a>(
   module_graph: &ModuleGraph,
-  module: &'a ModuleSymbol,
+  module: ModuleSymbolRef<'a>,
   symbol: &'a Symbol,
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<&'a ModuleSymbol>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
 ) -> Vec<Definition<'a>> {
   go_to_definitions_internal(
     module_graph,
@@ -48,10 +59,10 @@ pub fn go_to_definitions<'a>(
 
 fn go_to_definitions_internal<'a>(
   module_graph: &ModuleGraph,
-  module: &'a ModuleSymbol,
+  module: ModuleSymbolRef<'a>,
   symbol: &'a Symbol,
   visited_symbols: &mut HashSet<UniqueSymbolId>,
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<&'a ModuleSymbol>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
 ) -> Vec<Definition<'a>> {
   if !visited_symbols.insert(UniqueSymbolId {
     module_id: module.module_id(),
@@ -72,6 +83,8 @@ fn go_to_definitions_internal<'a>(
       }
       SymbolDeclKind::Target(target_id) => {
         if let Some(symbol) = module
+          .esm()
+          .unwrap()
           .symbol_id_from_swc(target_id)
           .and_then(|id| module.symbol(id))
         {
@@ -85,7 +98,9 @@ fn go_to_definitions_internal<'a>(
         }
       }
       SymbolDeclKind::QualifiedTarget(target_id, parts) => {
-        if let Some(symbol_id) = module.symbol_id_from_swc(target_id) {
+        if let Some(symbol_id) =
+          module.esm().unwrap().symbol_id_from_swc(target_id)
+        {
           if let Ok(results) = resolve_qualified_name(
             module_graph,
             module,
@@ -152,10 +167,10 @@ fn go_to_definitions_internal<'a>(
 
 pub fn resolve_qualified_export_name<'a>(
   graph: &ModuleGraph,
-  module_symbol: &'a ModuleSymbol,
+  module_symbol: ModuleSymbolRef<'a>,
   export_name: &str,
   parts: &[String],
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<&'a ModuleSymbol>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
 ) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
   resolve_qualified_export_name_internal(
     graph,
@@ -169,18 +184,18 @@ pub fn resolve_qualified_export_name<'a>(
 
 fn resolve_qualified_export_name_internal<'a>(
   graph: &ModuleGraph,
-  module_symbol: &'a ModuleSymbol,
+  module_symbol: ModuleSymbolRef<'a>,
   export_name: &str,
   parts: &[String],
   visited_symbols: &mut HashSet<UniqueSymbolId>,
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<&'a ModuleSymbol>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
 ) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
   let exports =
     exports_and_re_exports(graph, module_symbol, specifier_to_module);
   if let Some((module, symbol_id)) = exports.get(export_name) {
     resolve_qualified_name_internal(
       graph,
-      module,
+      *module,
       *symbol_id,
       parts,
       visited_symbols,
@@ -193,10 +208,10 @@ fn resolve_qualified_export_name_internal<'a>(
 
 pub fn resolve_qualified_name<'a>(
   graph: &ModuleGraph,
-  module_symbol: &'a ModuleSymbol,
+  module_symbol: ModuleSymbolRef<'a>,
   symbol_id: SymbolId,
   parts: &[String],
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<&'a ModuleSymbol>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
 ) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
   resolve_qualified_name_internal(
     graph,
@@ -210,11 +225,11 @@ pub fn resolve_qualified_name<'a>(
 
 fn resolve_qualified_name_internal<'a>(
   graph: &ModuleGraph,
-  module_symbol: &'a ModuleSymbol,
+  module_symbol: ModuleSymbolRef<'a>,
   symbol_id: SymbolId,
   parts: &[String],
   visited_symbols: &mut HashSet<UniqueSymbolId>,
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<&'a ModuleSymbol>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
 ) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
   if parts.is_empty() {
     return Ok(vec![(module_symbol.specifier().clone(), symbol_id)]);
@@ -275,14 +290,14 @@ fn resolve_qualified_name_internal<'a>(
 
 pub fn exports_and_re_exports<'a>(
   module_graph: &ModuleGraph,
-  module: &'a ModuleSymbol,
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<&'a ModuleSymbol>,
-) -> HashMap<String, (&'a ModuleSymbol, SymbolId)> {
-  let mut result = HashMap::new();
+  module: ModuleSymbolRef<'a>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+) -> IndexMap<String, (ModuleSymbolRef<'a>, SymbolId)> {
+  let mut result = IndexMap::new();
   for (name, symbol_id) in module.exports_map() {
     result.insert(name.clone(), (module, *symbol_id));
   }
-  for re_export_specifier in module.re_exports() {
+  for re_export_specifier in module.re_export_all_specifiers().iter() {
     let maybe_specifier = module_graph.resolve_dependency(
       re_export_specifier,
       module.specifier(),

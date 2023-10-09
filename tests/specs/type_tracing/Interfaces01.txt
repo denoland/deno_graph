@@ -20,7 +20,7 @@ interface B {
 }
 
 # output
-file:///mod.ts: ModuleSymbol {
+file:///mod.ts: EsmModuleSymbol {
     module_id: ModuleId(
         0,
     ),

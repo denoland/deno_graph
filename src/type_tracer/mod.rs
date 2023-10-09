@@ -16,16 +16,21 @@ use crate::ModuleGraph;
 
 use self::analyzer::SymbolDep;
 use self::analyzer::TypeTraceModuleAnalyzer;
+use self::cross_module::resolve_qualified_name;
 
+pub use self::analyzer::EsmModuleSymbol;
 pub use self::analyzer::FileDep;
 pub use self::analyzer::FileDepName;
+pub use self::analyzer::JsonModuleSymbol;
 pub use self::analyzer::ModuleId;
 pub use self::analyzer::ModuleSymbol;
+pub use self::analyzer::ModuleSymbolRef;
 pub use self::analyzer::RootSymbol;
 pub use self::analyzer::Symbol;
 pub use self::analyzer::SymbolId;
 pub use self::analyzer::UniqueSymbolId;
-use self::cross_module::resolve_qualified_name;
+pub use self::cross_module::Definition;
+pub use self::cross_module::DefinitionKind;
 
 mod analyzer;
 mod collections;
@@ -63,7 +68,7 @@ pub fn trace_public_types<'a, THandler: TypeTraceHandler>(
         .iter()
         .map(|r| {
           (
-            r.clone(),
+            graph.resolve_types_dependency(r).unwrap_or(r).clone(),
             (ImportedExports::AllWithDefault, Default::default()),
           )
         })
@@ -184,7 +189,11 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
       &pending_trace.exports_to_trace,
       HashSet::new(),
     )?;
-    if let Some(module_symbol) = self.analyzer.get_or_analyze(specifier)? {
+    if let Some(module_symbol) = self
+      .analyzer
+      .get_or_analyze(specifier)?
+      .and_then(|m| m.esm())
+    {
       for (export_specifier, module_id, name, symbol_id) in &exports {
         if specifier != export_specifier {
           module_symbol.add_traced_re_export(
@@ -245,8 +254,8 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
             found_names.insert(name.clone());
           }
         }
-        let re_exports = module_symbol.re_exports().clone();
-        for re_export_specifier in &re_exports {
+        let re_exports = module_symbol.re_export_all_specifiers().to_vec();
+        for re_export_specifier in re_exports.iter() {
           let maybe_specifier = self.graph.resolve_dependency(
             re_export_specifier,
             specifier,
@@ -273,7 +282,7 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
       ImportedExports::Named(names) => {
         let module_id = module_symbol.module_id();
         let exports = module_symbol.exports_map().clone();
-        let re_exports = module_symbol.re_exports().clone();
+        let re_exports = module_symbol.re_export_all_specifiers().to_vec();
         for name in names {
           if let Some(symbol_id) = exports.get(name) {
             result.push((
@@ -283,7 +292,7 @@ impl<'a, TReporter: TypeTraceHandler> Context<'a, TReporter> {
               *symbol_id,
             ));
           } else if name != "default" {
-            for re_export_specifier in &re_exports {
+            for re_export_specifier in re_exports.iter() {
               let maybe_specifier = self.graph.resolve_dependency(
                 re_export_specifier,
                 specifier,
@@ -345,12 +354,16 @@ fn trace_module<THandler: TypeTraceHandler>(
       for dep in symbol_deps {
         match &dep {
           SymbolDep::Id(id) => {
-            if let Some(id) = module_symbol.symbol_id_from_swc(id) {
+            if let Some(id) =
+              module_symbol.esm().unwrap().symbol_id_from_swc(id)
+            {
               pending.push((module_symbol.specifier().clone(), id))
             }
           }
           SymbolDep::QualifiedId(id, parts) => {
-            if let Some(symbol_id) = module_symbol.symbol_id_from_swc(id) {
+            if let Some(symbol_id) =
+              module_symbol.esm().unwrap().symbol_id_from_swc(id)
+            {
               pending.extend(resolve_qualified_name(
                 context.graph,
                 module_symbol,
