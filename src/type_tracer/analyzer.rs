@@ -303,7 +303,7 @@ impl<'a> ModuleSymbolRef<'a> {
     &self,
     module_graph: &ModuleGraph,
     root_symbol: &'a RootSymbol,
-  ) -> HashMap<String, (ModuleSymbolRef<'a>, SymbolId)> {
+  ) -> IndexMap<String, (ModuleSymbolRef<'a>, SymbolId)> {
     cross_module::exports_and_re_exports(module_graph, *self, &|specifier| {
       root_symbol.get_module_from_specifier(specifier)
     })
@@ -504,7 +504,7 @@ impl EsmModuleSymbol {
     &'a self,
     module_graph: &ModuleGraph,
     root_symbol: &'a RootSymbol,
-  ) -> HashMap<String, (ModuleSymbolRef<'a>, SymbolId)> {
+  ) -> IndexMap<String, (ModuleSymbolRef<'a>, SymbolId)> {
     self.as_ref().exports(module_graph, root_symbol)
   }
 

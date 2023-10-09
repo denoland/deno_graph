@@ -1,10 +1,10 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-use std::collections::HashMap;
 use std::collections::HashSet;
 
 use anyhow::Result;
 use deno_ast::SourceRange;
+use indexmap::IndexMap;
 
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
@@ -292,8 +292,8 @@ pub fn exports_and_re_exports<'a>(
   module_graph: &ModuleGraph,
   module: ModuleSymbolRef<'a>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
-) -> HashMap<String, (ModuleSymbolRef<'a>, SymbolId)> {
-  let mut result = HashMap::new();
+) -> IndexMap<String, (ModuleSymbolRef<'a>, SymbolId)> {
+  let mut result = IndexMap::new();
   for (name, symbol_id) in module.exports_map() {
     result.insert(name.clone(), (module, *symbol_id));
   }
