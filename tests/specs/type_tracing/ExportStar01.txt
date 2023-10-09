@@ -217,10 +217,10 @@ file:///a.ts: EsmModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            161,
+                            155,
                         ),
                         end: SourcePos(
-                            165,
+                            182,
                         ),
                     },
                     kind: Definition,
@@ -357,10 +357,10 @@ file:///class.ts: EsmModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            21,
+                            15,
                         ),
                         end: SourcePos(
-                            25,
+                            29,
                         ),
                     },
                     kind: Definition,
@@ -430,10 +430,10 @@ file:///function.ts: EsmModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            24,
+                            15,
                         ),
                         end: SourcePos(
-                            28,
+                            34,
                         ),
                     },
                     kind: Definition,
@@ -503,10 +503,10 @@ file:///interface.ts: EsmModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            25,
+                            15,
                         ),
                         end: SourcePos(
-                            29,
+                            33,
                         ),
                     },
                     kind: Definition,

@@ -147,10 +147,10 @@ file:///a.ts: EsmModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            141,
+                            132,
                         ),
                         end: SourcePos(
-                            145,
+                            151,
                         ),
                     },
                     kind: Definition,

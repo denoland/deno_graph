@@ -1074,7 +1074,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               id.clone(),
               SymbolDecl {
                 kind: SymbolDeclKind::Definition,
-                range: ident.range(),
+                range: default_decl.decl.range(),
               },
             );
             file_module
