@@ -162,8 +162,14 @@ impl<T> NodeRefBox<T> {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct SymbolNode(SymbolNodeInner);
+
+impl std::fmt::Debug for SymbolNode {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_tuple("SymbolNode").field(&"<omitted>").finish()
+  }
+}
 
 #[derive(Debug, Clone)]
 enum SymbolNodeInner {
@@ -263,6 +269,8 @@ pub struct Symbol {
   // a better solution should be thought out
   decls: IndexMap<SourceRange, SymbolDecl>,
   deps: IndexSet<SymbolDep>,
+  /// The child declarations of module declarations.
+  child_decls: IndexSet<SymbolId>,
   exports: IndexMap<String, SymbolId>,
 }
 
@@ -273,6 +281,7 @@ impl std::fmt::Debug for Symbol {
       .field("is_public", &*self.is_public.borrow())
       .field("decls", &self.decls.values().collect::<Vec<_>>())
       .field("deps", &self.deps)
+      .field("child_decls", &self.child_decls)
       .field("exports", &self.exports)
       .finish()
   }
@@ -285,6 +294,7 @@ impl Symbol {
       is_public: Default::default(),
       decls: Default::default(),
       deps: Default::default(),
+      child_decls: Default::default(),
       exports: Default::default(),
     }
   }
@@ -308,6 +318,14 @@ impl Symbol {
 
   pub fn export(&self, name: &str) -> Option<SymbolId> {
     self.exports.get(name).copied()
+  }
+
+  pub fn exports(&self) -> impl Iterator<Item = SymbolId> + '_ {
+    self.exports.values().copied()
+  }
+
+  pub fn child_decls(&self) -> impl Iterator<Item = SymbolId> + '_ {
+    self.child_decls.iter().copied()
   }
 
   pub fn deps(&self) -> impl Iterator<Item = &SymbolDep> {
@@ -520,7 +538,7 @@ pub struct EsmModuleSymbol {
   source: ParsedSource,
   next_symbol_id: SymbolId,
   exports: IndexMap<String, SymbolId>,
-  children: IndexSet<SymbolId>,
+  child_decls: IndexSet<SymbolId>,
   /// The re-export specifiers.
   re_exports: Vec<String>,
   // note: not all symbol ids have an swc id. For example, default exports
@@ -535,6 +553,7 @@ impl std::fmt::Debug for EsmModuleSymbol {
     f.debug_struct("EsmModuleSymbol")
       .field("module_id", &self.module_id)
       .field("specifier", &self.specifier.as_str())
+      .field("child_decls", &self.child_decls)
       .field("exports", &self.exports)
       .field("re_exports", &self.re_exports)
       .field("swc_id_to_symbol_id", &self.swc_id_to_symbol_id)
@@ -610,6 +629,10 @@ impl EsmModuleSymbol {
     root_symbol: &'a RootSymbol,
   ) -> IndexMap<String, (ModuleSymbolRef<'a>, SymbolId)> {
     self.as_ref().exports(module_graph, root_symbol)
+  }
+
+  pub fn child_decls(&self) -> impl Iterator<Item = SymbolId> + '_ {
+    self.child_decls.iter().copied()
   }
 
   pub(crate) fn ensure_default_export_symbol(
@@ -767,7 +790,7 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
       module_id: ModuleId(self.modules.len() as u32),
       source: source.clone(),
       next_symbol_id: Default::default(),
-      children: Default::defult(),
+      child_decls: Default::default(),
       exports: Default::default(),
       re_exports: Default::default(),
       traced_re_exports: Default::default(),
@@ -825,6 +848,7 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
           )])
         },
         deps: Default::default(),
+        child_decls: Default::default(),
         exports: Default::default(),
       },
       source_text_info,
@@ -875,6 +899,9 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
         &|file_module, name, symbol_id| {
           file_module.exports.insert(name, symbol_id);
         },
+        &|file_module, symbol_id| {
+          file_module.child_decls.insert(symbol_id);
+        },
       );
     }
   }
@@ -884,6 +911,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
     file_module: &mut EsmModuleSymbol,
     module_item: &ModuleItem,
     add_export: &impl Fn(&mut EsmModuleSymbol, String, SymbolId),
+    add_child: &impl Fn(&mut EsmModuleSymbol, SymbolId),
   ) {
     match module_item {
       ModuleItem::ModuleDecl(decl) => match decl {
@@ -960,6 +988,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             self.fill_class_decl(symbol, n);
             let symbol_id = symbol.symbol_id;
             add_export(file_module, n.ident.sym.to_string(), symbol_id);
+            add_child(file_module, symbol_id);
           }
           Decl::Fn(n) => {
             let symbol = file_module.get_symbol_from_swc_id(
@@ -977,6 +1006,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             self.fill_fn_decl(symbol, n);
             let symbol_id = symbol.symbol_id;
             add_export(file_module, n.ident.sym.to_string(), symbol_id);
+            add_child(file_module, symbol_id);
           }
           Decl::Var(n) => {
             for decl in &n.decls {
@@ -998,6 +1028,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                 self.fill_var_declarator(symbol, decl);
                 let symbol_id = symbol.symbol_id;
                 add_export(file_module, name, symbol_id);
+                add_child(file_module, symbol_id);
               }
             }
           }
@@ -1017,6 +1048,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             self.fill_ts_interface(symbol, n);
             let symbol_id = symbol.symbol_id;
             add_export(file_module, n.id.sym.to_string(), symbol_id);
+            add_child(file_module, symbol_id);
           }
           Decl::TsTypeAlias(n) => {
             let symbol = file_module.get_symbol_from_swc_id(
@@ -1034,6 +1066,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             self.fill_ts_type_alias(symbol, n);
             let symbol_id = symbol.symbol_id;
             add_export(file_module, n.id.sym.to_string(), symbol_id);
+            add_child(file_module, symbol_id);
           }
           Decl::TsEnum(n) => {
             let symbol = file_module.get_symbol_from_swc_id(
@@ -1051,6 +1084,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             self.fill_ts_enum(symbol, n);
             let symbol_id = symbol.symbol_id;
             add_export(file_module, n.id.sym.to_string(), symbol_id);
+            add_child(file_module, symbol_id);
           }
           Decl::TsModule(n) => {
             let maybe_symbol_id = self.fill_ts_module(
@@ -1069,7 +1103,8 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             if let Some(symbol_id) = maybe_symbol_id {
               match &n.id {
                 TsModuleName::Ident(ident) => {
-                  add_export(file_module, ident.sym.to_string(), symbol_id)
+                  add_export(file_module, ident.sym.to_string(), symbol_id);
+                  add_child(file_module, symbol_id);
                 }
                 TsModuleName::Str(_) => {}
               }
@@ -1347,6 +1382,8 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                 },
               );
               self.fill_class_decl(symbol, n);
+              let symbol_id = symbol.symbol_id;
+              add_child(file_module, symbol_id);
             }
             Decl::Fn(n) => {
               let id = n.ident.to_id();
@@ -1363,6 +1400,8 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                 },
               );
               self.fill_fn_decl(symbol, n);
+              let symbol_id = symbol.symbol_id;
+              add_child(file_module, symbol_id);
             }
             Decl::Var(var_decl) => {
               for decl in &var_decl.decls {
@@ -1381,6 +1420,8 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                     },
                   );
                   self.fill_var_declarator(symbol, decl);
+                  let symbol_id = symbol.symbol_id;
+                  add_child(file_module, symbol_id);
                 }
               }
             }
@@ -1399,6 +1440,8 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                 },
               );
               self.fill_ts_interface(symbol, n);
+              let symbol_id = symbol.symbol_id;
+              add_child(file_module, symbol_id);
             }
             Decl::TsTypeAlias(n) => {
               let id = n.id.to_id();
@@ -1415,6 +1458,8 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                 },
               );
               self.fill_ts_type_alias(symbol, n);
+              let symbol_id = symbol.symbol_id;
+              add_child(file_module, symbol_id);
             }
             Decl::TsEnum(n) => {
               let id = n.id.to_id();
@@ -1431,9 +1476,11 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                 },
               );
               self.fill_ts_enum(symbol, n);
+              let symbol_id = symbol.symbol_id;
+              add_child(file_module, symbol_id);
             }
             Decl::TsModule(n) => {
-              self.fill_ts_module(
+              let symbol_id = self.fill_ts_module(
                 file_module,
                 SymbolDecl {
                   kind: SymbolDeclKind::Definition(SymbolNode(
@@ -1446,6 +1493,9 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                 },
                 n,
               );
+              if let Some(symbol_id) = symbol_id {
+                add_child(file_module, symbol_id);
+              }
             }
             Decl::Using(_) => {
               // ignore
@@ -1658,6 +1708,13 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               .unwrap()
               .exports
               .insert(name, symbol_id);
+          },
+          &|file_module, symbol_id| {
+            file_module
+              .symbol_mut(mod_symbol_id)
+              .unwrap()
+              .child_decls
+              .insert(symbol_id);
           },
         );
         match item {

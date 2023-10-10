@@ -32,6 +32,11 @@ file:///mod.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.ts",
+    child_decls: {
+        0,
+        1,
+        2,
+    },
     exports: {
         "Test": 0,
     },
@@ -67,10 +72,8 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        TsInterface(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
@@ -84,10 +87,8 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        TsInterface(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
@@ -146,6 +147,7 @@ file:///mod.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
         1: Symbol {
@@ -162,10 +164,8 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        TsInterface(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
@@ -178,6 +178,7 @@ file:///mod.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
         2: Symbol {
@@ -194,10 +195,8 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        TsInterface(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
@@ -210,6 +209,7 @@ file:///mod.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
     },
@@ -228,6 +228,10 @@ file:///a.ts: EsmModuleSymbol {
         1,
     ),
     specifier: "file:///a.ts",
+    child_decls: {
+        0,
+        1,
+    },
     exports: {
         "A1": 0,
     },
@@ -257,10 +261,8 @@ file:///a.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        TsInterface(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
@@ -274,10 +276,8 @@ file:///a.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        TsInterface(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
@@ -330,6 +330,7 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
         1: Symbol {
@@ -346,10 +347,8 @@ file:///a.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        TsInterface(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
@@ -362,6 +361,7 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
     },

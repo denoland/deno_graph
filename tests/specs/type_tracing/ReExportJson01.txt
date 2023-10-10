@@ -18,6 +18,7 @@ file:///mod.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.ts",
+    child_decls: {},
     exports: {
         "configFile": 1,
     },
@@ -53,6 +54,7 @@ file:///mod.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         1: Symbol {
@@ -79,6 +81,7 @@ file:///mod.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
     },
@@ -107,11 +110,14 @@ file:///bar.json: JsonModuleSymbol {
                     ),
                 },
                 kind: Definition(
-                    Json,
+                    SymbolNode(
+                        "<omitted>",
+                    ),
                 ),
             },
         ],
         deps: {},
+        child_decls: {},
         exports: {},
     },
 }

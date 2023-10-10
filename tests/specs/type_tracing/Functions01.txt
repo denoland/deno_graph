@@ -27,6 +27,20 @@ file:///mod.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.ts",
+    child_decls: {
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+    },
     exports: {
         "test": 0,
         "overloaded": 5,
@@ -97,10 +111,8 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        FnDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
@@ -131,6 +143,7 @@ file:///mod.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
         1: Symbol {
@@ -147,15 +160,14 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        ClassDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
             ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         2: Symbol {
@@ -172,15 +184,14 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        ClassDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
             ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         3: Symbol {
@@ -197,15 +208,14 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        ClassDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
             ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         4: Symbol {
@@ -222,15 +232,14 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        ClassDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
             ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         5: Symbol {
@@ -247,10 +256,8 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        FnDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
@@ -264,10 +271,8 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        FnDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
@@ -292,6 +297,7 @@ file:///mod.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
         6: Symbol {
@@ -308,15 +314,14 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        ClassDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
             ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         7: Symbol {
@@ -333,15 +338,14 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        ClassDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
             ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         8: Symbol {
@@ -358,15 +362,14 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        ClassDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
             ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         9: Symbol {
@@ -383,15 +386,14 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        ClassDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
             ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         10: Symbol {
@@ -408,15 +410,14 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        ClassDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
             ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         11: Symbol {
@@ -433,15 +434,14 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        ClassDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
             ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
     },

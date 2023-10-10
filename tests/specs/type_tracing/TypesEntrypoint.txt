@@ -13,6 +13,9 @@ file:///mod.d.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.d.ts",
+    child_decls: {
+        0,
+    },
     exports: {
         "MyInterface": 0,
     },
@@ -38,10 +41,8 @@ file:///mod.d.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        TsInterface(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
@@ -60,6 +61,7 @@ file:///mod.d.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
     },

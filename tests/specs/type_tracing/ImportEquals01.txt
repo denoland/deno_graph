@@ -12,6 +12,9 @@ file:///mod.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.ts",
+    child_decls: {
+        1,
+    },
     exports: {
         "MyExport": 0,
     },
@@ -66,6 +69,7 @@ file:///mod.ts: EsmModuleSymbol {
                     ],
                 ),
             },
+            child_decls: {},
             exports: {},
         },
         1: Symbol {
@@ -82,10 +86,8 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        TsNamespace(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
@@ -97,6 +99,9 @@ file:///mod.ts: EsmModuleSymbol {
                         #3,
                     ),
                 ),
+            },
+            child_decls: {
+                2,
             },
             exports: {
                 "Inner": 2,
@@ -116,15 +121,14 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     },
                     kind: Definition(
-                        ClassDecl(
-                            DeclRef {
-                                value: "<omitted>",
-                            },
+                        SymbolNode(
+                            "<omitted>",
                         ),
                     ),
                 },
             ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
     },
