@@ -160,11 +160,9 @@ impl<T> NodeRefBox<T> {
   }
 
   fn value(&self) -> &T {
-    /// SAFETY: This is safe because the parsed source is kept alive for the
-    /// duration of this struct and the reference is within the parsed source.
-    unsafe {
-      &*self.value
-    }
+    // SAFETY: This is safe because the parsed source is kept alive for the
+    // duration of this struct and the reference is within the parsed source.
+    unsafe { &*self.value }
   }
 
   fn source(&self) -> &ParsedSource {
@@ -374,7 +372,7 @@ impl Symbol {
   }
 
   fn insert_decl(&mut self, symbol_decl: SymbolDecl) {
-    self.decls.insert(symbol_decl.range.clone(), symbol_decl);
+    self.decls.insert(symbol_decl.range, symbol_decl);
   }
 }
 
@@ -862,7 +860,7 @@ impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
             )
           };
           IndexMap::from([(
-            range.clone(),
+            range,
             SymbolDecl {
               range,
               kind: SymbolDeclKind::Definition(SymbolNode(
