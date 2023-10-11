@@ -196,9 +196,9 @@ pub enum SymbolNodeRef<'a> {
   ExportDefaultDecl(&'a ExportDefaultDecl),
   FnDecl(&'a FnDecl),
   TsEnum(&'a TsEnumDecl),
+  TsInterface(&'a TsInterfaceDecl),
   TsNamespace(&'a TsModuleDecl),
   TsTypeAlias(&'a TsTypeAliasDecl),
-  TsInterface(&'a TsInterfaceDecl),
   /// The variable declarator along with its parent variable statement.
   Var(&'a VarDeclarator, &'a VarDecl),
 }
