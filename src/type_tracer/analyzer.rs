@@ -150,6 +150,8 @@ impl<T> std::fmt::Debug for NodeRefBox<T> {
 }
 
 impl<T> NodeRefBox<T> {
+  /// WARNING: Ensure that T is a reference inside ParsedSource. Otherwise
+  /// this is entirely unsafe.
   fn unsafe_new(parsed_source: &ParsedSource, value: &T) -> Self {
     Self {
       source: parsed_source.clone(),
@@ -158,7 +160,11 @@ impl<T> NodeRefBox<T> {
   }
 
   fn value(&self) -> &T {
-    unsafe { &*self.value }
+    /// SAFETY: This is safe because the parsed source is kept alive for the
+    /// duration of this struct and the reference is within the parsed source.
+    unsafe {
+      &*self.value
+    }
   }
 
   fn source(&self) -> &ParsedSource {
