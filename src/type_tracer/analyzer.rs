@@ -137,7 +137,7 @@ impl std::fmt::Debug for SymbolId {
 #[derive(Clone)]
 pub struct NodeRefBox<T> {
   // the parsed source needs to be kept alive for the duration of the value
-  _source: ParsedSource,
+  source: ParsedSource,
   value: *const T,
 }
 
@@ -152,13 +152,17 @@ impl<T> std::fmt::Debug for NodeRefBox<T> {
 impl<T> NodeRefBox<T> {
   fn unsafe_new(parsed_source: &ParsedSource, value: &T) -> Self {
     Self {
-      _source: parsed_source.clone(),
+      source: parsed_source.clone(),
       value: value as *const _,
     }
   }
 
   fn value(&self) -> &T {
     unsafe { &*self.value }
+  }
+
+  fn source(&self) -> &ParsedSource {
+    &self.source
   }
 }
 
@@ -181,7 +185,7 @@ enum SymbolNodeInner {
   TsNamespace(NodeRefBox<TsModuleDecl>),
   TsTypeAlias(NodeRefBox<TsTypeAliasDecl>),
   TsInterface(NodeRefBox<TsInterfaceDecl>),
-  Var(NodeRefBox<VarDeclarator>),
+  Var(NodeRefBox<VarDeclarator>, NodeRefBox<VarDecl>),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -193,7 +197,8 @@ pub enum SymbolNodeRef<'a> {
   TsNamespace(&'a TsModuleDecl),
   TsTypeAlias(&'a TsTypeAliasDecl),
   TsInterface(&'a TsInterfaceDecl),
-  Var(&'a VarDeclarator),
+  /// The variable declarator along with its parent variable statement.
+  Var(&'a VarDeclarator, &'a VarDecl),
 }
 
 #[derive(Debug, Clone)]
@@ -212,28 +217,44 @@ pub struct SymbolDecl {
 }
 
 impl SymbolDecl {
+  pub fn maybe_source(&self) -> Option<&ParsedSource> {
+    self.maybe_node_and_source().map(|n| n.1)
+  }
+
   pub fn maybe_node(&self) -> Option<SymbolNodeRef> {
+    self.maybe_node_and_source().map(|n| n.0)
+  }
+
+  pub fn maybe_node_and_source(
+    &self,
+  ) -> Option<(SymbolNodeRef, &ParsedSource)> {
     match &self.kind {
       SymbolDeclKind::Definition(SymbolNode(def)) => match def {
         SymbolNodeInner::Json => None,
         SymbolNodeInner::ClassDecl(n) => {
-          Some(SymbolNodeRef::ClassDecl(n.value()))
+          Some((SymbolNodeRef::ClassDecl(n.value()), n.source()))
         }
         SymbolNodeInner::ExportDefaultDecl(n) => {
-          Some(SymbolNodeRef::ExportDefaultDecl(n.value()))
+          Some((SymbolNodeRef::ExportDefaultDecl(n.value()), n.source()))
         }
-        SymbolNodeInner::FnDecl(n) => Some(SymbolNodeRef::FnDecl(n.value())),
-        SymbolNodeInner::TsEnum(n) => Some(SymbolNodeRef::TsEnum(n.value())),
+        SymbolNodeInner::FnDecl(n) => {
+          Some((SymbolNodeRef::FnDecl(n.value()), n.source()))
+        }
+        SymbolNodeInner::TsEnum(n) => {
+          Some((SymbolNodeRef::TsEnum(n.value()), n.source()))
+        }
         SymbolNodeInner::TsNamespace(n) => {
-          Some(SymbolNodeRef::TsNamespace(n.value()))
+          Some((SymbolNodeRef::TsNamespace(n.value()), n.source()))
         }
         SymbolNodeInner::TsTypeAlias(n) => {
-          Some(SymbolNodeRef::TsTypeAlias(n.value()))
+          Some((SymbolNodeRef::TsTypeAlias(n.value()), n.source()))
         }
         SymbolNodeInner::TsInterface(n) => {
-          Some(SymbolNodeRef::TsInterface(n.value()))
+          Some((SymbolNodeRef::TsInterface(n.value()), n.source()))
         }
-        SymbolNodeInner::Var(n) => Some(SymbolNodeRef::Var(n.value())),
+        SymbolNodeInner::Var(n, var_decl) => {
+          Some((SymbolNodeRef::Var(n.value(), var_decl.value()), n.source()))
+        }
       },
       _ => None,
     }
@@ -1009,10 +1030,10 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                   id.clone(),
                   SymbolDecl {
                     kind: SymbolDeclKind::Definition(SymbolNode(
-                      SymbolNodeInner::Var(NodeRefBox::unsafe_new(
-                        &file_module.source,
-                        decl,
-                      )),
+                      SymbolNodeInner::Var(
+                        NodeRefBox::unsafe_new(&file_module.source, decl),
+                        NodeRefBox::unsafe_new(&file_module.source, n),
+                      ),
                     )),
                     range: decl.range(),
                   },
@@ -1375,10 +1396,10 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                     id,
                     SymbolDecl {
                       kind: SymbolDeclKind::Definition(SymbolNode(
-                        SymbolNodeInner::Var(NodeRefBox::unsafe_new(
-                          &file_module.source,
-                          decl,
-                        )),
+                        SymbolNodeInner::Var(
+                          NodeRefBox::unsafe_new(&file_module.source, decl),
+                          NodeRefBox::unsafe_new(&file_module.source, var_decl),
+                        ),
                       )),
                       range: decl.range(),
                     },
@@ -1741,10 +1762,10 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                       id.clone(),
                       SymbolDecl {
                         kind: SymbolDeclKind::Definition(SymbolNode(
-                          SymbolNodeInner::Var(NodeRefBox::unsafe_new(
-                            &file_module.source,
-                            decl,
-                          )),
+                          SymbolNodeInner::Var(
+                            NodeRefBox::unsafe_new(&file_module.source, decl),
+                            NodeRefBox::unsafe_new(&file_module.source, n),
+                          ),
                         )),
                         range: decl.range(),
                       },
