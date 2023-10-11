@@ -175,10 +175,8 @@ impl std::fmt::Debug for SymbolNode {
 enum SymbolNodeInner {
   Json,
   ClassDecl(NodeRefBox<ClassDecl>),
-  ClassExpr(NodeRefBox<ClassExpr>),
   ExportDefaultDecl(NodeRefBox<ExportDefaultDecl>),
   FnDecl(NodeRefBox<FnDecl>),
-  FnExpr(NodeRefBox<FnExpr>),
   TsEnum(NodeRefBox<TsEnumDecl>),
   TsNamespace(NodeRefBox<TsModuleDecl>),
   TsTypeAlias(NodeRefBox<TsTypeAliasDecl>),
@@ -189,10 +187,8 @@ enum SymbolNodeInner {
 #[derive(Debug, Clone, Copy)]
 pub enum SymbolNodeRef<'a> {
   ClassDecl(&'a ClassDecl),
-  ClassExpr(&'a ClassExpr),
   ExportDefaultDecl(&'a ExportDefaultDecl),
   FnDecl(&'a FnDecl),
-  FnExpr(&'a FnExpr),
   TsEnum(&'a TsEnumDecl),
   TsNamespace(&'a TsModuleDecl),
   TsTypeAlias(&'a TsTypeAliasDecl),
@@ -223,14 +219,10 @@ impl SymbolDecl {
         SymbolNodeInner::ClassDecl(n) => {
           Some(SymbolNodeRef::ClassDecl(n.value()))
         }
-        SymbolNodeInner::ClassExpr(n) => {
-          Some(SymbolNodeRef::ClassExpr(n.value()))
-        }
         SymbolNodeInner::ExportDefaultDecl(n) => {
           Some(SymbolNodeRef::ExportDefaultDecl(n.value()))
         }
         SymbolNodeInner::FnDecl(n) => Some(SymbolNodeRef::FnDecl(n.value())),
-        SymbolNodeInner::FnExpr(n) => Some(SymbolNodeRef::FnExpr(n.value())),
         SymbolNodeInner::TsEnum(n) => Some(SymbolNodeRef::TsEnum(n.value())),
         SymbolNodeInner::TsNamespace(n) => {
           Some(SymbolNodeRef::TsNamespace(n.value()))
@@ -1241,8 +1233,8 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           }
         }
         ModuleDecl::ExportDefaultDecl(default_decl) => {
-          let default_export_symbol_id = file_module
-            .ensure_default_export_symbol(SymbolDecl {
+          let symbol_id =
+            file_module.ensure_default_export_symbol(SymbolDecl {
               range: default_decl.range(),
               kind: SymbolDeclKind::Definition(SymbolNode(
                 SymbolNodeInner::ExportDefaultDecl(NodeRefBox::unsafe_new(
@@ -1256,38 +1248,10 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             DefaultDecl::Fn(expr) => expr.ident.as_ref(),
             DefaultDecl::TsInterfaceDecl(decl) => Some(&decl.id),
           };
-          let symbol_id = if let Some(ident) = maybe_ident {
+          if let Some(ident) = maybe_ident {
             let id = ident.to_id();
-            let symbol_id = file_module.ensure_symbol_for_swc_id(
-              id.clone(),
-              SymbolDecl {
-                kind: SymbolDeclKind::Definition(match &default_decl.decl {
-                  DefaultDecl::Class(n) => {
-                    SymbolNode(SymbolNodeInner::ClassExpr(
-                      NodeRefBox::unsafe_new(&file_module.source, n),
-                    ))
-                  }
-                  DefaultDecl::Fn(n) => SymbolNode(SymbolNodeInner::FnExpr(
-                    NodeRefBox::unsafe_new(&file_module.source, n),
-                  )),
-                  DefaultDecl::TsInterfaceDecl(n) => {
-                    SymbolNode(SymbolNodeInner::TsInterface(
-                      NodeRefBox::unsafe_new(&file_module.source, n),
-                    ))
-                  }
-                }),
-                range: default_decl.decl.range(),
-              },
-            );
-            file_module
-              .symbol_mut(default_export_symbol_id)
-              .unwrap()
-              .deps
-              .insert(id.into());
-            symbol_id
-          } else {
-            default_export_symbol_id
-          };
+            file_module.swc_id_to_symbol_id.insert(id, symbol_id);
+          }
 
           let symbol = file_module.symbol_mut(symbol_id).unwrap();
           match &default_decl.decl {

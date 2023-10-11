@@ -243,13 +243,13 @@ file:///a.ts: EsmModuleSymbol {
         1,
         2,
         3,
-        6,
+        5,
     },
     exports: {
         "A": 2,
         "B": 3,
         "default": 4,
-        "D": 6,
+        "D": 5,
     },
     re_exports: [],
     swc_id_to_symbol_id: {
@@ -272,11 +272,11 @@ file:///a.ts: EsmModuleSymbol {
         (
             Atom('C' type=inline),
             #2,
-        ): 5,
+        ): 4,
         (
             Atom('D' type=inline),
             #2,
-        ): 6,
+        ): 5,
     },
     symbols: {
         0: Symbol {
@@ -417,7 +417,7 @@ file:///a.ts: EsmModuleSymbol {
         },
         4: Symbol {
             symbol_id: 4,
-            is_public: false,
+            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -435,43 +435,12 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        Atom('C' type=inline),
-                        #2,
-                    ),
-                ),
-            },
+            deps: {},
             child_decls: {},
             exports: {},
         },
         5: Symbol {
             symbol_id: 5,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            159,
-                        ),
-                        end: SourcePos(
-                            170,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-        6: Symbol {
-            symbol_id: 6,
             is_public: true,
             decls: [
                 SymbolDecl {

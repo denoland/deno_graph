@@ -90,7 +90,7 @@ file:///a.ts: EsmModuleSymbol {
         (
             Atom('test' type=inline),
             #2,
-        ): 2,
+        ): 1,
     },
     symbols: {
         0: Symbol {
@@ -138,37 +138,6 @@ file:///a.ts: EsmModuleSymbol {
                     range: SourceRange {
                         start: SourcePos(
                             117,
-                        ),
-                        end: SourcePos(
-                            151,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {
-                Id(
-                    (
-                        Atom('test' type=inline),
-                        #2,
-                    ),
-                ),
-            },
-            child_decls: {},
-            exports: {},
-        },
-        2: Symbol {
-            symbol_id: 2,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            132,
                         ),
                         end: SourcePos(
                             151,
