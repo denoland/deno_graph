@@ -136,11 +136,7 @@ file:///mod.ts: EsmModuleSymbol {
                             81,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
+                    kind: TargetSelf,
                 },
             ],
             deps: {
@@ -191,11 +187,7 @@ file:///mod.ts: EsmModuleSymbol {
                             108,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
+                    kind: TargetSelf,
                 },
             ],
             deps: {

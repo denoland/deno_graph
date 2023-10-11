@@ -19,6 +19,7 @@ use self::analyzer::TypeTraceModuleAnalyzer;
 use self::cross_module::resolve_qualified_name;
 
 pub use self::analyzer::EsmModuleSymbol;
+pub use self::analyzer::ExportDeclRef;
 pub use self::analyzer::FileDep;
 pub use self::analyzer::FileDepName;
 pub use self::analyzer::JsonModuleSymbol;

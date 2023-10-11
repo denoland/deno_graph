@@ -180,11 +180,7 @@ file:///mod.ts: EsmModuleSymbol {
                             70,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
+                    kind: TargetSelf,
                 },
             ],
             deps: {
