@@ -33,11 +33,11 @@ file:///mod.ts: EsmModuleSymbol {
         (
             Atom('Test' type=inline),
             #3,
-        ): 2,
+        ): 3,
         (
             Atom('other' type=inline),
             #3,
-        ): 3,
+        ): 5,
     },
     symbols: {
         0: Symbol {
@@ -116,15 +116,46 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {
                 2,
-                3,
+                4,
             },
             exports: {
-                "Test": 2,
-                "other": 3,
+                "Test": 3,
+                "other": 5,
             },
         },
         2: Symbol {
             symbol_id: 2,
+            is_public: false,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            59,
+                        ),
+                        end: SourcePos(
+                            81,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        Atom('Test' type=inline),
+                        #3,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
             is_public: true,
             decls: [
                 SymbolDecl {
@@ -147,8 +178,39 @@ file:///mod.ts: EsmModuleSymbol {
             child_decls: {},
             exports: {},
         },
-        3: Symbol {
-            symbol_id: 3,
+        4: Symbol {
+            symbol_id: 4,
+            is_public: false,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            85,
+                        ),
+                        end: SourcePos(
+                            108,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        Atom('other' type=inline),
+                        #3,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        5: Symbol {
+            symbol_id: 5,
             is_public: false,
             decls: [
                 SymbolDecl {

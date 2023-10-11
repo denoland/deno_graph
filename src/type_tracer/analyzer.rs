@@ -179,6 +179,7 @@ impl std::fmt::Debug for SymbolNode {
 enum SymbolNodeInner {
   Json,
   ClassDecl(NodeRefBox<ClassDecl>),
+  ExportDecl(NodeRefBox<ExportDecl>),
   ExportDefaultDecl(NodeRefBox<ExportDefaultDecl>),
   FnDecl(NodeRefBox<FnDecl>),
   TsEnum(NodeRefBox<TsEnumDecl>),
@@ -191,6 +192,7 @@ enum SymbolNodeInner {
 #[derive(Debug, Clone, Copy)]
 pub enum SymbolNodeRef<'a> {
   ClassDecl(&'a ClassDecl),
+  ExportDecl(&'a ExportDecl),
   ExportDefaultDecl(&'a ExportDefaultDecl),
   FnDecl(&'a FnDecl),
   TsEnum(&'a TsEnumDecl),
@@ -233,6 +235,9 @@ impl SymbolDecl {
         SymbolNodeInner::Json => None,
         SymbolNodeInner::ClassDecl(n) => {
           Some((SymbolNodeRef::ClassDecl(n.value()), n.source()))
+        }
+        SymbolNodeInner::ExportDecl(n) => {
+          Some((SymbolNodeRef::ExportDecl(n.value()), n.source()))
         }
         SymbolNodeInner::ExportDefaultDecl(n) => {
           Some((SymbolNodeRef::ExportDefaultDecl(n.value()), n.source()))
@@ -990,9 +995,9 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               n.ident.to_id(),
               SymbolDecl {
                 kind: SymbolDeclKind::Definition(SymbolNode(
-                  SymbolNodeInner::ClassDecl(NodeRefBox::unsafe_new(
+                  SymbolNodeInner::ExportDecl(NodeRefBox::unsafe_new(
                     &file_module.source,
-                    n,
+                    export_decl,
                   )),
                 )),
                 range: export_decl.range(),
@@ -1008,9 +1013,9 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               n.ident.to_id(),
               SymbolDecl {
                 kind: SymbolDeclKind::Definition(SymbolNode(
-                  SymbolNodeInner::FnDecl(NodeRefBox::unsafe_new(
+                  SymbolNodeInner::ExportDecl(NodeRefBox::unsafe_new(
                     &file_module.source,
-                    n,
+                    export_decl,
                   )),
                 )),
                 range: export_decl.range(),
@@ -1022,6 +1027,20 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             add_child(file_module, symbol_id);
           }
           Decl::Var(n) => {
+            let symbol_node = SymbolNode(SymbolNodeInner::ExportDecl(
+              NodeRefBox::unsafe_new(&file_module.source, export_decl),
+            ));
+            let symbol = file_module.create_new_symbol();
+            symbol.decls.insert(
+              export_decl.range(),
+              SymbolDecl {
+                kind: SymbolDeclKind::Definition(symbol_node),
+                range: export_decl.range(),
+              },
+            );
+            let export_decl_symbol_id = symbol.symbol_id();
+            add_child(file_module, export_decl_symbol_id);
+
             for decl in &n.decls {
               let ids: Vec<Id> = find_pat_ids(&decl.name);
               for id in ids {
@@ -1041,7 +1060,11 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                 self.fill_var_declarator(symbol, decl);
                 let symbol_id = symbol.symbol_id;
                 add_export(file_module, name, symbol_id);
-                add_child(file_module, symbol_id);
+                file_module
+                  .symbol_mut(export_decl_symbol_id)
+                  .unwrap()
+                  .deps
+                  .insert(id.clone().into());
               }
             }
           }
@@ -1050,9 +1073,9 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               n.id.to_id(),
               SymbolDecl {
                 kind: SymbolDeclKind::Definition(SymbolNode(
-                  SymbolNodeInner::TsInterface(NodeRefBox::unsafe_new(
+                  SymbolNodeInner::ExportDecl(NodeRefBox::unsafe_new(
                     &file_module.source,
-                    n,
+                    export_decl,
                   )),
                 )),
                 range: export_decl.range(),
@@ -1068,9 +1091,9 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               n.id.to_id(),
               SymbolDecl {
                 kind: SymbolDeclKind::Definition(SymbolNode(
-                  SymbolNodeInner::TsTypeAlias(NodeRefBox::unsafe_new(
+                  SymbolNodeInner::ExportDecl(NodeRefBox::unsafe_new(
                     &file_module.source,
-                    n,
+                    export_decl,
                   )),
                 )),
                 range: export_decl.range(),
@@ -1086,9 +1109,9 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               n.id.to_id(),
               SymbolDecl {
                 kind: SymbolDeclKind::Definition(SymbolNode(
-                  SymbolNodeInner::TsEnum(NodeRefBox::unsafe_new(
+                  SymbolNodeInner::ExportDecl(NodeRefBox::unsafe_new(
                     &file_module.source,
-                    n,
+                    export_decl,
                   )),
                 )),
                 range: export_decl.range(),
@@ -1104,9 +1127,9 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               file_module,
               SymbolDecl {
                 kind: SymbolDeclKind::Definition(SymbolNode(
-                  SymbolNodeInner::TsNamespace(NodeRefBox::unsafe_new(
+                  SymbolNodeInner::ExportDecl(NodeRefBox::unsafe_new(
                     &file_module.source,
-                    n,
+                    export_decl,
                   )),
                 )),
                 range: export_decl.range(),

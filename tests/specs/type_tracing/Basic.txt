@@ -34,10 +34,10 @@ file:///mod.ts: EsmModuleSymbol {
     specifier: "file:///mod.ts",
     child_decls: {
         3,
-        4,
+        5,
     },
     exports: {
-        "ExportA": 3,
+        "ExportA": 4,
         "D": 2,
     },
     re_exports: [],
@@ -57,11 +57,11 @@ file:///mod.ts: EsmModuleSymbol {
         (
             Atom('ExportA' type=inline),
             #2,
-        ): 3,
+        ): 4,
         (
             Atom('test' type=inline),
             #2,
-        ): 4,
+        ): 5,
     },
     symbols: {
         0: Symbol {
@@ -169,6 +169,37 @@ file:///mod.ts: EsmModuleSymbol {
         },
         3: Symbol {
             symbol_id: 3,
+            is_public: false,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            35,
+                        ),
+                        end: SourcePos(
+                            70,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        Atom('ExportA' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
             is_public: true,
             decls: [
                 SymbolDecl {
@@ -198,8 +229,8 @@ file:///mod.ts: EsmModuleSymbol {
             child_decls: {},
             exports: {},
         },
-        4: Symbol {
-            symbol_id: 4,
+        5: Symbol {
+            symbol_id: 5,
             is_public: false,
             decls: [
                 SymbolDecl {
