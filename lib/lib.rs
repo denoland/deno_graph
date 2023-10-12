@@ -13,6 +13,7 @@ use deno_graph::source::CacheInfo;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::Loader;
+use deno_graph::source::ResolutionMode;
 use deno_graph::source::ResolveError;
 use deno_graph::source::Resolver;
 use deno_graph::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
@@ -140,6 +141,7 @@ impl Resolver for JsResolver {
     &self,
     specifier: &str,
     referrer: &ModuleSpecifier,
+    _mode: ResolutionMode,
   ) -> Result<ModuleSpecifier, ResolveError> {
     if let Some(resolve) = &self.maybe_resolve {
       let this = JsValue::null();
