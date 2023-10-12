@@ -145,6 +145,15 @@ pub enum ResolveError {
   Other(#[from] anyhow::Error),
 }
 
+/// The kind of resolution currently being done by deno_graph.
+#[derive(Debug, Clone, Copy)]
+pub enum ResolutionMode {
+  /// Resolving for code that will be executed.
+  Execution,
+  /// Resolving for code that will be used for type information.
+  Types,
+}
+
 /// A trait which allows the module graph to resolve specifiers and type only
 /// dependencies. This can be use to provide import maps and override other
 /// default resolution logic used by `deno_graph`.
@@ -169,6 +178,7 @@ pub trait Resolver: fmt::Debug {
     &self,
     specifier_text: &str,
     referrer: &ModuleSpecifier,
+    _mode: ResolutionMode,
   ) -> Result<ModuleSpecifier, ResolveError> {
     Ok(resolve_import(specifier_text, referrer)?)
   }
@@ -472,6 +482,7 @@ pub mod tests {
       &self,
       specifier: &str,
       referrer: &ModuleSpecifier,
+      _mode: ResolutionMode,
     ) -> Result<ModuleSpecifier, ResolveError> {
       if let Some(map) = self.map.get(referrer) {
         if let Some(resolved_specifier) = map.get(specifier) {

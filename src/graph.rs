@@ -832,8 +832,13 @@ impl GraphImport {
           start: Position::zeroed(),
           end: Position::zeroed(),
         };
-        let maybe_type =
-          resolve(&import, referrer_range, maybe_resolver, maybe_npm_resolver);
+        let maybe_type = resolve(
+          &import,
+          referrer_range,
+          ResolutionMode::Types,
+          maybe_resolver,
+          maybe_npm_resolver,
+        );
         (
           import,
           Dependency {
@@ -1551,11 +1556,12 @@ impl ModuleGraph {
 fn resolve(
   specifier_text: &str,
   referrer_range: Range,
+  mode: ResolutionMode,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Resolution {
   let response = if let Some(resolver) = maybe_resolver {
-    resolver.resolve(specifier_text, &referrer_range.specifier)
+    resolver.resolve(specifier_text, &referrer_range.specifier, mode)
   } else {
     resolve_import(specifier_text, &referrer_range.specifier)
       .map_err(|err| err.into())
@@ -1784,6 +1790,7 @@ pub(crate) fn parse_esm_module_from_module_info(
           dep.maybe_type = resolve(
             &specifier.text,
             range.clone(),
+            ResolutionMode::Types,
             maybe_resolver,
             maybe_npm_resolver,
           );
@@ -1802,6 +1809,7 @@ pub(crate) fn parse_esm_module_from_module_info(
         let dep_resolution = resolve(
           &specifier.text,
           range.clone(),
+          ResolutionMode::Types,
           maybe_resolver,
           maybe_npm_resolver,
         );
@@ -1868,6 +1876,7 @@ pub(crate) fn parse_esm_module_from_module_info(
         dep.maybe_code = resolve(
           &specifier_text,
           range.clone(),
+          ResolutionMode::Execution,
           maybe_resolver,
           maybe_npm_resolver,
         );
@@ -1894,6 +1903,7 @@ pub(crate) fn parse_esm_module_from_module_info(
       dep.maybe_type = resolve(
         &specifier.text,
         range.clone(),
+        ResolutionMode::Types,
         maybe_resolver,
         maybe_npm_resolver,
       );
@@ -1921,6 +1931,7 @@ pub(crate) fn parse_esm_module_from_module_info(
           dependency: resolve(
             types_header,
             range,
+            ResolutionMode::Types,
             maybe_resolver,
             maybe_npm_resolver,
           ),
@@ -1985,18 +1996,18 @@ pub(crate) fn parse_esm_module_from_module_info(
       module.specifier.clone(),
       desc.specifier_range.clone(),
     );
-    let dep_resolution = resolve(
-      &desc.specifier,
-      range.clone(),
-      maybe_resolver,
-      maybe_npm_resolver,
-    );
     if matches!(
       desc.kind,
       DependencyKind::ImportType | DependencyKind::ExportType
     ) {
       if dep.maybe_type.is_none() {
-        dep.maybe_type = dep_resolution;
+        dep.maybe_type = resolve(
+          &desc.specifier,
+          range.clone(),
+          ResolutionMode::Types,
+          maybe_resolver,
+          maybe_npm_resolver,
+        );
       }
       dep.imports.push(Import {
         specifier: desc.specifier.clone(),
@@ -2009,7 +2020,13 @@ pub(crate) fn parse_esm_module_from_module_info(
       if dep.maybe_code.is_none() {
         // This is a code import, the first one of that specifier in this module.
         // Resolve and determine the initial `is_dynamic` value from it.
-        dep.maybe_code = dep_resolution;
+        dep.maybe_code = resolve(
+          &desc.specifier,
+          range.clone(),
+          ResolutionMode::Execution,
+          maybe_resolver,
+          maybe_npm_resolver,
+        );
         dep.is_dynamic = desc.is_dynamic;
       } else {
         // This is a code import, but not the first one of that specifier in this
@@ -2032,6 +2049,7 @@ pub(crate) fn parse_esm_module_from_module_info(
         resolve(
           &pragma.specifier,
           Range::from_position_range(specifier, pragma.range),
+          ResolutionMode::Types,
           maybe_resolver,
           maybe_npm_resolver,
         )
