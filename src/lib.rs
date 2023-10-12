@@ -123,6 +123,7 @@ pub fn parse_module_from_ast(
 #[cfg(test)]
 mod tests {
   use crate::graph::ResolutionResolved;
+  use crate::source::ResolutionMode;
 
   use super::*;
   use pretty_assertions::assert_eq;
@@ -1146,6 +1147,7 @@ console.log(a);
       &self,
       specifier_text: &str,
       referrer: &deno_ast::ModuleSpecifier,
+      _mode: ResolutionMode,
     ) -> Result<deno_ast::ModuleSpecifier, source::ResolveError> {
       use import_map::ImportMapError;
       Err(source::ResolveError::Other(
