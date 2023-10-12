@@ -71,9 +71,9 @@ fn go_to_definitions_internal<'a>(
     return Vec::new();
   }
   let mut definitions = Vec::new();
-  for decl in &symbol.decls {
+  for decl in symbol.decls() {
     match &decl.kind {
-      SymbolDeclKind::Definition => {
+      SymbolDeclKind::Definition(_) => {
         definitions.push(Definition {
           module,
           symbol,

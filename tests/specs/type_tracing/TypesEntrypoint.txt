@@ -13,6 +13,9 @@ file:///mod.d.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.d.ts",
+    child_decls: {
+        0,
+    },
     exports: {
         "MyInterface": 0,
     },
@@ -27,7 +30,7 @@ file:///mod.d.ts: EsmModuleSymbol {
         0: Symbol {
             symbol_id: 0,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -37,9 +40,13 @@ file:///mod.d.ts: EsmModuleSymbol {
                             45,
                         ),
                     },
-                    kind: Definition,
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
                 },
-            },
+            ],
             deps: {
                 Id(
                     (
@@ -54,6 +61,7 @@ file:///mod.d.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
     },

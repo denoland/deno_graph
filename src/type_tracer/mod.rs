@@ -19,6 +19,7 @@ use self::analyzer::TypeTraceModuleAnalyzer;
 use self::cross_module::resolve_qualified_name;
 
 pub use self::analyzer::EsmModuleSymbol;
+pub use self::analyzer::ExportDeclRef;
 pub use self::analyzer::FileDep;
 pub use self::analyzer::FileDepName;
 pub use self::analyzer::JsonModuleSymbol;
@@ -27,7 +28,9 @@ pub use self::analyzer::ModuleSymbol;
 pub use self::analyzer::ModuleSymbolRef;
 pub use self::analyzer::RootSymbol;
 pub use self::analyzer::Symbol;
+pub use self::analyzer::SymbolDecl;
 pub use self::analyzer::SymbolId;
+pub use self::analyzer::SymbolNodeRef;
 pub use self::analyzer::UniqueSymbolId;
 pub use self::cross_module::Definition;
 pub use self::cross_module::DefinitionKind;

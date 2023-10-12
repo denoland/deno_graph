@@ -13,6 +13,9 @@ file:///mod.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.ts",
+    child_decls: {
+        0,
+    },
     exports: {
         "isPrime": 0,
     },
@@ -27,7 +30,7 @@ file:///mod.ts: EsmModuleSymbol {
         0: Symbol {
             symbol_id: 0,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -37,10 +40,15 @@ file:///mod.ts: EsmModuleSymbol {
                             56,
                         ),
                     },
-                    kind: Definition,
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
                 },
-            },
+            ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
     },

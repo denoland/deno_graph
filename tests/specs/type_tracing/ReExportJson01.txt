@@ -18,6 +18,7 @@ file:///mod.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.ts",
+    child_decls: {},
     exports: {
         "configFile": 1,
     },
@@ -32,7 +33,7 @@ file:///mod.ts: EsmModuleSymbol {
         0: Symbol {
             symbol_id: 0,
             is_public: false,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -51,14 +52,15 @@ file:///mod.ts: EsmModuleSymbol {
                         },
                     ),
                 },
-            },
+            ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         1: Symbol {
             symbol_id: 1,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -77,8 +79,9 @@ file:///mod.ts: EsmModuleSymbol {
                         },
                     ),
                 },
-            },
+            ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
     },
@@ -96,7 +99,7 @@ file:///bar.json: JsonModuleSymbol {
     default_symbol: Symbol {
         symbol_id: 0,
         is_public: true,
-        decls: {
+        decls: [
             SymbolDecl {
                 range: SourceRange {
                     start: SourcePos(
@@ -106,10 +109,15 @@ file:///bar.json: JsonModuleSymbol {
                         15,
                     ),
                 },
-                kind: Definition,
+                kind: Definition(
+                    SymbolNode(
+                        "<omitted>",
+                    ),
+                ),
             },
-        },
+        ],
         deps: {},
+        child_decls: {},
         exports: {},
     },
 }

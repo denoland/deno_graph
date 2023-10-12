@@ -32,8 +32,12 @@ file:///mod.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.ts",
+    child_decls: {
+        3,
+        5,
+    },
     exports: {
-        "ExportA": 3,
+        "ExportA": 4,
         "D": 2,
     },
     re_exports: [],
@@ -53,17 +57,17 @@ file:///mod.ts: EsmModuleSymbol {
         (
             Atom('ExportA' type=inline),
             #2,
-        ): 3,
+        ): 4,
         (
             Atom('test' type=inline),
             #2,
-        ): 4,
+        ): 5,
     },
     symbols: {
         0: Symbol {
             symbol_id: 0,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -82,14 +86,15 @@ file:///mod.ts: EsmModuleSymbol {
                         },
                     ),
                 },
-            },
+            ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         1: Symbol {
             symbol_id: 1,
             is_public: false,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -108,14 +113,15 @@ file:///mod.ts: EsmModuleSymbol {
                         },
                     ),
                 },
-            },
+            ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         2: Symbol {
             symbol_id: 2,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -156,14 +162,42 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: TargetSelf,
                 },
-            },
+            ],
             deps: {},
+            child_decls: {},
             exports: {},
         },
         3: Symbol {
             symbol_id: 3,
+            is_public: false,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            35,
+                        ),
+                        end: SourcePos(
+                            70,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        Atom('ExportA' type=inline),
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -173,9 +207,13 @@ file:///mod.ts: EsmModuleSymbol {
                             69,
                         ),
                     },
-                    kind: Definition,
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
                 },
-            },
+            ],
             deps: {
                 Id(
                     (
@@ -184,12 +222,13 @@ file:///mod.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
-        4: Symbol {
-            symbol_id: 4,
+        5: Symbol {
+            symbol_id: 5,
             is_public: false,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -199,9 +238,13 @@ file:///mod.ts: EsmModuleSymbol {
                             85,
                         ),
                     },
-                    kind: Definition,
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
                 },
-            },
+            ],
             deps: {
                 Id(
                     (
@@ -210,6 +253,7 @@ file:///mod.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
     },
@@ -221,11 +265,18 @@ file:///a.ts: EsmModuleSymbol {
         1,
     ),
     specifier: "file:///a.ts",
+    child_decls: {
+        0,
+        1,
+        2,
+        3,
+        5,
+    },
     exports: {
         "A": 2,
         "B": 3,
         "default": 4,
-        "D": 6,
+        "D": 5,
     },
     re_exports: [],
     swc_id_to_symbol_id: {
@@ -248,17 +299,17 @@ file:///a.ts: EsmModuleSymbol {
         (
             Atom('C' type=inline),
             #2,
-        ): 5,
+        ): 4,
         (
             Atom('D' type=inline),
             #2,
-        ): 6,
+        ): 5,
     },
     symbols: {
         0: Symbol {
             symbol_id: 0,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -268,9 +319,13 @@ file:///a.ts: EsmModuleSymbol {
                             36,
                         ),
                     },
-                    kind: Definition,
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
                 },
-            },
+            ],
             deps: {
                 Id(
                     (
@@ -285,12 +340,13 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
         1: Symbol {
             symbol_id: 1,
             is_public: false,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -300,9 +356,13 @@ file:///a.ts: EsmModuleSymbol {
                             81,
                         ),
                     },
-                    kind: Definition,
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
                 },
-            },
+            ],
             deps: {
                 Id(
                     (
@@ -317,12 +377,13 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
         2: Symbol {
             symbol_id: 2,
             is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -332,9 +393,13 @@ file:///a.ts: EsmModuleSymbol {
                             117,
                         ),
                     },
-                    kind: Definition,
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
                 },
-            },
+            ],
             deps: {
                 Id(
                     (
@@ -343,12 +408,13 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
         3: Symbol {
             symbol_id: 3,
             is_public: false,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -358,9 +424,13 @@ file:///a.ts: EsmModuleSymbol {
                             142,
                         ),
                     },
-                    kind: Definition,
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
                 },
-            },
+            ],
             deps: {
                 Id(
                     (
@@ -369,12 +439,13 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
         4: Symbol {
             symbol_id: 4,
-            is_public: false,
-            decls: {
+            is_public: true,
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -384,42 +455,21 @@ file:///a.ts: EsmModuleSymbol {
                             170,
                         ),
                     },
-                    kind: Definition,
-                },
-            },
-            deps: {
-                Id(
-                    (
-                        Atom('C' type=inline),
-                        #2,
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
                     ),
-                ),
-            },
+                },
+            ],
+            deps: {},
+            child_decls: {},
             exports: {},
         },
         5: Symbol {
             symbol_id: 5,
             is_public: true,
-            decls: {
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            159,
-                        ),
-                        end: SourcePos(
-                            170,
-                        ),
-                    },
-                    kind: Definition,
-                },
-            },
-            deps: {},
-            exports: {},
-        },
-        6: Symbol {
-            symbol_id: 6,
-            is_public: true,
-            decls: {
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -429,9 +479,13 @@ file:///a.ts: EsmModuleSymbol {
                             198,
                         ),
                     },
-                    kind: Definition,
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
                 },
-            },
+            ],
             deps: {
                 Id(
                     (
@@ -446,6 +500,7 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 ),
             },
+            child_decls: {},
             exports: {},
         },
     },
