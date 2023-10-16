@@ -2075,7 +2075,8 @@ pub(crate) fn parse_esm_module_from_module_info(
             maybe_resolver,
             maybe_npm_resolver,
           );
-          // only use if the resolved specifier is different
+          // only bother setting if the resolved specifier
+          // does not match the code specifier
           if types_resolution.maybe_specifier()
             != dep.maybe_code.maybe_specifier()
           {
