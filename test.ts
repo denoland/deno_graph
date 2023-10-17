@@ -175,7 +175,7 @@ Deno.test({
         return Promise.resolve(fixtures[specifier]);
       },
     });
-    assertEquals(resolveCount, 1);
+    assertEquals(resolveCount, 2);
     assertEquals(graph, {
       "roots": [
         "file:///a/test.js",
@@ -251,7 +251,7 @@ Deno.test({
         "file:///a/deno.json": ["https://esm.sh/preact/jsx-runtime"],
       },
     });
-    assertEquals(resolveCount, 2);
+    assertEquals(resolveCount, 3);
     assertEquals(graph, {
       "roots": [
         "file:///a/test.ts",
@@ -348,7 +348,7 @@ Deno.test({
         return Promise.resolve(fixtures[specifier]);
       },
     });
-    assertEquals(resolveCount, 1);
+    assertEquals(resolveCount, 2);
     assertEquals(graph, {
       "roots": [
         "file:///a/test.js",
