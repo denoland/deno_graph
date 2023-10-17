@@ -475,6 +475,14 @@ impl Resolution {
     self.ok().map(|r| &r.specifier)
   }
 
+  pub fn maybe_range(&self) -> Option<&Range> {
+    match self {
+      Resolution::None => None,
+      Resolution::Ok(r) => Some(&r.range),
+      Resolution::Err(e) => Some(e.range()),
+    }
+  }
+
   pub fn ok(&self) -> Option<&ResolutionResolved> {
     if let Resolution::Ok(resolved) = self {
       Some(&**resolved)
@@ -2054,7 +2062,31 @@ pub(crate) fn parse_esm_module_from_module_info(
           maybe_npm_resolver,
         )
       } else {
-        Resolution::None
+        let range = Range::from_position_range(
+          module.specifier.clone(),
+          desc.specifier_range.clone(),
+        );
+        // only check if the code resolution is for the same range
+        if Some(&range) == dep.maybe_code.maybe_range() {
+          let types_resolution = resolve(
+            &desc.specifier,
+            range,
+            ResolutionMode::Types,
+            maybe_resolver,
+            maybe_npm_resolver,
+          );
+          // only bother setting if the resolved specifier
+          // does not match the code specifier
+          if types_resolution.maybe_specifier()
+            != dep.maybe_code.maybe_specifier()
+          {
+            types_resolution
+          } else {
+            Resolution::None
+          }
+        } else {
+          Resolution::None
+        }
       };
       dep.maybe_type = maybe_type
     }

@@ -3647,4 +3647,131 @@ export function a(a: A): B {
       assert!(iterator.next().is_none());
     }
   }
+
+  #[tokio::test]
+  async fn test_resolver_execution_and_types_resolution() {
+    #[derive(Debug)]
+    struct ExtResolver;
+
+    impl crate::source::Resolver for ExtResolver {
+      fn resolve(
+        &self,
+        specifier_text: &str,
+        referrer: &ModuleSpecifier,
+        mode: ResolutionMode,
+      ) -> Result<ModuleSpecifier, crate::source::ResolveError> {
+        let specifier_text = match mode {
+          ResolutionMode::Types => format!("{}.d.ts", specifier_text),
+          ResolutionMode::Execution => format!("{}.js", specifier_text),
+        };
+        Ok(resolve_import(&specifier_text, referrer)?)
+      }
+    }
+
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"
+            import a from "./a";
+            "#,
+          },
+        ),
+        (
+          "file:///a/a.js",
+          Source::Module {
+            specifier: "file:///a/a.js",
+            maybe_headers: None,
+            content: r#"export default 5;"#,
+          },
+        ),
+        (
+          "file:///a/a.d.ts",
+          Source::Module {
+            specifier: "file:///a/a.d.ts",
+            maybe_headers: None,
+            content: r#"export default 5;"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    let resolver = ExtResolver;
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &mut loader,
+        BuildOptions {
+          resolver: Some(&resolver),
+          ..Default::default()
+        },
+      )
+      .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test01.ts"
+        ],
+        "modules": [
+          {
+            "kind": "esm",
+            "size": 17,
+            "mediaType": "Dts",
+            "specifier": "file:///a/a.d.ts"
+          },
+          {
+            "kind": "esm",
+            "size": 17,
+            "mediaType": "JavaScript",
+            "specifier": "file:///a/a.js"
+          },
+          {
+            "dependencies": [
+              {
+                "specifier": "./a",
+                "code": {
+                  "specifier": "file:///a/a.js",
+                  "span": {
+                    "start": {
+                      "line": 1,
+                      "character": 26
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 31
+                    }
+                  }
+                },
+                "type": {
+                  "specifier": "file:///a/a.d.ts",
+                  "span": {
+                    "start": {
+                      "line": 1,
+                      "character": 26
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 31
+                    }
+                  }
+                },
+              }
+            ],
+            "kind": "esm",
+            "size": 46,
+            "mediaType": "TypeScript",
+            "specifier": "file:///a/test01.ts"
+          }
+        ],
+        "redirects": {}
+      })
+    );
+  }
 }
