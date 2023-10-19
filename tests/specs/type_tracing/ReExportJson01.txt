@@ -25,7 +25,7 @@ file:///mod.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('other' type=inline),
+            "other",
             #2,
         ): 0,
     },

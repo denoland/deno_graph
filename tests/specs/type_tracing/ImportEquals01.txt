@@ -21,15 +21,15 @@ file:///mod.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('MyExport' type=dynamic),
+            "MyExport",
             #2,
         ): 0,
         (
-            Atom('Test' type=inline),
+            "Test",
             #2,
         ): 1,
         (
-            Atom('Inner' type=inline),
+            "Inner",
             #3,
         ): 2,
     },
@@ -49,7 +49,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: QualifiedTarget(
                         (
-                            Atom('Test' type=inline),
+                            "Test",
                             #2,
                         ),
                         [
@@ -61,7 +61,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 QualifiedId(
                     (
-                        Atom('Test' type=inline),
+                        "Test",
                         #2,
                     ),
                     [
@@ -95,7 +95,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Inner' type=inline),
+                        "Inner",
                         #3,
                     ),
                 ),

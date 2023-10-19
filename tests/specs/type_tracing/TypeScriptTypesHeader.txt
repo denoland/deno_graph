@@ -47,19 +47,19 @@ file:///mod.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('MyInterface' type=dynamic),
+            "MyInterface",
             #2,
         ): 0,
         (
-            Atom('MyInterface2' type=dynamic),
+            "MyInterface2",
             #2,
         ): 1,
         (
-            Atom('MyInterface3' type=dynamic),
+            "MyInterface3",
             #2,
         ): 2,
         (
-            Atom('MyClass' type=inline),
+            "MyClass",
             #2,
         ): 3,
     },
@@ -168,19 +168,19 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('MyInterface' type=dynamic),
+                        "MyInterface",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('MyInterface2' type=dynamic),
+                        "MyInterface2",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('MyInterface3' type=dynamic),
+                        "MyInterface3",
                         #2,
                     ),
                 ),
@@ -208,11 +208,11 @@ https://localhost/mod.d.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('MyInterface' type=dynamic),
+            "MyInterface",
             #2,
         ): 0,
         (
-            Atom('MyNonPublicInterface' type=dynamic),
+            "MyNonPublicInterface",
             #2,
         ): 1,
     },
@@ -240,13 +240,13 @@ https://localhost/mod.d.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('MyInterface' type=dynamic),
+                        "MyInterface",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('a' type=static),
+                        "a",
                         #0,
                     ),
                 ),
@@ -277,13 +277,13 @@ https://localhost/mod.d.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('MyNonPublicInterface' type=dynamic),
+                        "MyNonPublicInterface",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('a1' type=inline),
+                        "a1",
                         #0,
                     ),
                 ),
@@ -317,7 +317,7 @@ file:///other.d.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('MyInterface2' type=dynamic),
+            "MyInterface2",
             #2,
         ): 0,
     },
@@ -345,13 +345,13 @@ file:///other.d.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('MyInterface2' type=dynamic),
+                        "MyInterface2",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('b' type=static),
+                        "b",
                         #0,
                     ),
                 ),
@@ -385,7 +385,7 @@ file:///typescript.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('MyInterface3' type=dynamic),
+            "MyInterface3",
             #2,
         ): 0,
     },
@@ -413,13 +413,13 @@ file:///typescript.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('MyInterface3' type=dynamic),
+                        "MyInterface3",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('c' type=inline),
+                        "c",
                         #0,
                     ),
                 ),

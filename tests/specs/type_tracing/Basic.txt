@@ -43,23 +43,23 @@ file:///mod.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('A' type=inline),
+            "A",
             #2,
         ): 0,
         (
-            Atom('B' type=inline),
+            "B",
             #2,
         ): 1,
         (
-            Atom('D' type=inline),
+            "D",
             #2,
         ): 2,
         (
-            Atom('ExportA' type=inline),
+            "ExportA",
             #2,
         ): 4,
         (
-            Atom('test' type=inline),
+            "test",
             #2,
         ): 5,
     },
@@ -186,7 +186,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('ExportA' type=inline),
+                        "ExportA",
                         #2,
                     ),
                 ),
@@ -217,7 +217,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('A' type=inline),
+                        "A",
                         #2,
                     ),
                 ),
@@ -248,7 +248,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('B' type=inline),
+                        "B",
                         #2,
                     ),
                 ),
@@ -281,27 +281,27 @@ file:///a.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('AInner' type=inline),
+            "AInner",
             #2,
         ): 0,
         (
-            Atom('AInnerUnused' type=dynamic),
+            "AInnerUnused",
             #2,
         ): 1,
         (
-            Atom('A' type=inline),
+            "A",
             #2,
         ): 2,
         (
-            Atom('B' type=inline),
+            "B",
             #2,
         ): 3,
         (
-            Atom('C' type=inline),
+            "C",
             #2,
         ): 4,
         (
-            Atom('D' type=inline),
+            "D",
             #2,
         ): 5,
     },
@@ -329,13 +329,13 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('AInner' type=inline),
+                        "AInner",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('prop' type=inline),
+                        "prop",
                         #0,
                     ),
                 ),
@@ -366,13 +366,13 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('AInnerUnused' type=dynamic),
+                        "AInnerUnused",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('prop2' type=inline),
+                        "prop2",
                         #0,
                     ),
                 ),
@@ -403,7 +403,7 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('AInner' type=inline),
+                        "AInner",
                         #2,
                     ),
                 ),
@@ -434,7 +434,7 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('B' type=inline),
+                        "B",
                         #2,
                     ),
                 ),
@@ -489,13 +489,13 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('D' type=inline),
+                        "D",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('C' type=inline),
+                        "C",
                         #2,
                     ),
                 ),

@@ -41,35 +41,35 @@ file:///mod.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('A' type=inline),
+            "A",
             #2,
         ): 0,
         (
-            Atom('Main' type=inline),
+            "Main",
             #2,
         ): 1,
         (
-            Atom('Extends' type=inline),
+            "Extends",
             #2,
         ): 2,
         (
-            Atom('Prop' type=inline),
+            "Prop",
             #2,
         ): 3,
         (
-            Atom('Param' type=inline),
+            "Param",
             #2,
         ): 4,
         (
-            Atom('Return' type=inline),
+            "Return",
             #2,
         ): 5,
         (
-            Atom('SignatureValueType' type=dynamic),
+            "SignatureValueType",
             #2,
         ): 6,
         (
-            Atom('B' type=inline),
+            "B",
             #2,
         ): 7,
     },
@@ -97,7 +97,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('A' type=inline),
+                        "A",
                         #2,
                     ),
                 ),
@@ -128,61 +128,61 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Main' type=inline),
+                        "Main",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('Extends' type=inline),
+                        "Extends",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('prop' type=inline),
+                        "prop",
                         #0,
                     ),
                 ),
                 Id(
                     (
-                        Atom('Prop' type=inline),
+                        "Prop",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('method' type=inline),
+                        "method",
                         #0,
                     ),
                 ),
                 Id(
                     (
-                        Atom('method' type=inline),
+                        "method",
                         #1,
                     ),
                 ),
                 Id(
                     (
-                        Atom('Param' type=inline),
+                        "Param",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('Return' type=inline),
+                        "Return",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('key' type=static),
+                        "key",
                         #1,
                     ),
                 ),
                 Id(
                     (
-                        Atom('SignatureValueType' type=dynamic),
+                        "SignatureValueType",
                         #2,
                     ),
                 ),
@@ -213,7 +213,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Extends' type=inline),
+                        "Extends",
                         #2,
                     ),
                 ),
@@ -244,7 +244,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Prop' type=inline),
+                        "Prop",
                         #2,
                     ),
                 ),
@@ -275,7 +275,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Param' type=inline),
+                        "Param",
                         #2,
                     ),
                 ),
@@ -306,7 +306,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Return' type=inline),
+                        "Return",
                         #2,
                     ),
                 ),
@@ -337,19 +337,19 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('SignatureValueType' type=dynamic),
+                        "SignatureValueType",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('other' type=inline),
+                        "other",
                         #0,
                     ),
                 ),
                 Id(
                     (
-                        Atom('B' type=inline),
+                        "B",
                         #2,
                     ),
                 ),
@@ -380,7 +380,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('B' type=inline),
+                        "B",
                         #2,
                     ),
                 ),

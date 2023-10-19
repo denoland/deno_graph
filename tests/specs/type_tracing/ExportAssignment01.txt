@@ -20,7 +20,7 @@ file:///mod.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('test' type=inline),
+            "test",
             #2,
         ): 0,
     },
@@ -55,7 +55,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Target(
                         (
-                            Atom('test' type=inline),
+                            "test",
                             #2,
                         ),
                     ),
@@ -80,7 +80,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Target(
                         (
-                            Atom('test' type=inline),
+                            "test",
                             #2,
                         ),
                     ),
@@ -89,7 +89,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('test' type=inline),
+                        "test",
                         #2,
                     ),
                 ),

@@ -22,7 +22,7 @@ file:///mod.d.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('MyInterface' type=dynamic),
+            "MyInterface",
             #2,
         ): 0,
     },
@@ -50,13 +50,13 @@ file:///mod.d.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('MyInterface' type=dynamic),
+                        "MyInterface",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('a' type=static),
+                        "a",
                         #0,
                     ),
                 ),
