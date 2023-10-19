@@ -48,51 +48,51 @@ file:///mod.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('test' type=inline),
+            "test",
             #2,
         ): 0,
         (
-            Atom('TypeParam' type=dynamic),
+            "TypeParam",
             #2,
         ): 1,
         (
-            Atom('Param' type=inline),
+            "Param",
             #2,
         ): 2,
         (
-            Atom('Return' type=inline),
+            "Return",
             #2,
         ): 3,
         (
-            Atom('Default' type=inline),
+            "Default",
             #2,
         ): 4,
         (
-            Atom('overloaded' type=dynamic),
+            "overloaded",
             #2,
         ): 5,
         (
-            Atom('OverloadTypeParam' type=dynamic),
+            "OverloadTypeParam",
             #2,
         ): 6,
         (
-            Atom('OverloadParam' type=dynamic),
+            "OverloadParam",
             #2,
         ): 7,
         (
-            Atom('OverloadReturn' type=dynamic),
+            "OverloadReturn",
             #2,
         ): 8,
         (
-            Atom('PrivateTypeParam' type=dynamic),
+            "PrivateTypeParam",
             #2,
         ): 9,
         (
-            Atom('PrivateParam' type=dynamic),
+            "PrivateParam",
             #2,
         ): 10,
         (
-            Atom('PrivateReturn' type=dynamic),
+            "PrivateReturn",
             #2,
         ): 11,
     },
@@ -120,25 +120,25 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('TypeParam' type=dynamic),
+                        "TypeParam",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('Default' type=inline),
+                        "Default",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('Param' type=inline),
+                        "Param",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('Return' type=inline),
+                        "Return",
                         #2,
                     ),
                 ),
@@ -280,19 +280,19 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('OverloadTypeParam' type=dynamic),
+                        "OverloadTypeParam",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('OverloadParam' type=dynamic),
+                        "OverloadParam",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('OverloadReturn' type=dynamic),
+                        "OverloadReturn",
                         #2,
                     ),
                 ),

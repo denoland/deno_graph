@@ -45,15 +45,15 @@ file:///mod.ts: EsmModuleSymbol {
     ],
     swc_id_to_symbol_id: {
         (
-            Atom('Test' type=inline),
+            "Test",
             #2,
         ): 0,
         (
-            Atom('Prop1' type=inline),
+            "Prop1",
             #2,
         ): 1,
         (
-            Atom('Prop2' type=inline),
+            "Prop2",
             #2,
         ): 2,
     },
@@ -118,31 +118,31 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Test' type=inline),
+                        "Test",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('prop1' type=inline),
+                        "prop1",
                         #0,
                     ),
                 ),
                 Id(
                     (
-                        Atom('Prop1' type=inline),
+                        "Prop1",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('prop2' type=inline),
+                        "prop2",
                         #0,
                     ),
                 ),
                 Id(
                     (
-                        Atom('Prop2' type=inline),
+                        "Prop2",
                         #2,
                     ),
                 ),
@@ -173,7 +173,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Prop1' type=inline),
+                        "Prop1",
                         #2,
                     ),
                 ),
@@ -204,7 +204,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Prop2' type=inline),
+                        "Prop2",
                         #2,
                     ),
                 ),
@@ -238,11 +238,11 @@ file:///a.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('A1' type=inline),
+            "A1",
             #2,
         ): 0,
         (
-            Atom('Prop2' type=inline),
+            "Prop2",
             #2,
         ): 1,
     },
@@ -307,25 +307,25 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('A1' type=inline),
+                        "A1",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('prop1' type=inline),
+                        "prop1",
                         #0,
                     ),
                 ),
                 Id(
                     (
-                        Atom('prop2' type=inline),
+                        "prop2",
                         #0,
                     ),
                 ),
                 Id(
                     (
-                        Atom('Prop2' type=inline),
+                        "Prop2",
                         #2,
                     ),
                 ),
@@ -356,7 +356,7 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Prop2' type=inline),
+                        "Prop2",
                         #2,
                     ),
                 ),

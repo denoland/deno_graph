@@ -68,7 +68,7 @@ file:///a.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('someName' type=dynamic),
+            "someName",
             #2,
         ): 0,
     },
@@ -188,7 +188,7 @@ file:///c.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('MyClass' type=inline),
+            "MyClass",
             #2,
         ): 0,
     },

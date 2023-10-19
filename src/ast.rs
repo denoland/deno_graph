@@ -34,7 +34,7 @@ static JSDOC_IMPORT_RE: Lazy<Regex> = Lazy::new(|| {
 });
 /// Matches the `@jsxImportSource` pragma.
 static JSX_IMPORT_SOURCE_RE: Lazy<Regex> =
-  Lazy::new(|| Regex::new(r#"(?i)^[\s*]*@jsxImportSource\s+(\S+)"#).unwrap());
+  Lazy::new(|| Regex::new(r"(?i)^[\s*]*@jsxImportSource\s+(\S+)").unwrap());
 /// Matches a `/// <reference ... />` comment reference.
 static TRIPLE_SLASH_REFERENCE_RE: Lazy<Regex> =
   Lazy::new(|| Regex::new(r"(?i)^/\s*<reference\s.*?/>").unwrap());

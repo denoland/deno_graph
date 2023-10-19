@@ -39,19 +39,19 @@ file:///mod.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('A' type=inline),
+            "A",
             #2,
         ): 0,
         (
-            Atom('MyExport' type=dynamic),
+            "MyExport",
             #2,
         ): 1,
         (
-            Atom('Test' type=inline),
+            "Test",
             #2,
         ): 2,
         (
-            Atom('OtherInner' type=dynamic),
+            "OtherInner",
             #3,
         ): 3,
     },
@@ -98,7 +98,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: QualifiedTarget(
                         (
-                            Atom('Test' type=inline),
+                            "Test",
                             #2,
                         ),
                         [
@@ -110,7 +110,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 QualifiedId(
                     (
-                        Atom('Test' type=inline),
+                        "Test",
                         #2,
                     ),
                     [
@@ -162,7 +162,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: QualifiedTarget(
                         (
-                            Atom('A' type=inline),
+                            "A",
                             #2,
                         ),
                         [
@@ -186,7 +186,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 QualifiedId(
                     (
-                        Atom('A' type=inline),
+                        "A",
                         #2,
                     ),
                     [
@@ -216,19 +216,19 @@ file:///a.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('A' type=inline),
+            "A",
             #2,
         ): 0,
         (
-            Atom('B' type=inline),
+            "B",
             #3,
         ): 1,
         (
-            Atom('Other' type=inline),
+            "Other",
             #3,
         ): 2,
         (
-            Atom('MyTest' type=inline),
+            "MyTest",
             #4,
         ): 3,
     },
@@ -278,7 +278,7 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('B' type=inline),
+                        "B",
                         #3,
                     ),
                 ),
@@ -311,13 +311,13 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('A' type=inline),
+                        "A",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('Other' type=inline),
+                        "Other",
                         #3,
                     ),
                 ),
@@ -382,25 +382,25 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Other' type=inline),
+                        "Other",
                         #3,
                     ),
                 ),
                 Id(
                     (
-                        Atom('prop1' type=inline),
+                        "prop1",
                         #0,
                     ),
                 ),
                 Id(
                     (
-                        Atom('prop2' type=inline),
+                        "prop2",
                         #0,
                     ),
                 ),
                 Id(
                     (
-                        Atom('MyTest' type=inline),
+                        "MyTest",
                         #4,
                     ),
                 ),

@@ -23,19 +23,19 @@ file:///mod.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('Test' type=inline),
+            "Test",
             #2,
         ): 0,
         (
-            Atom('Other' type=inline),
+            "Other",
             #2,
         ): 1,
         (
-            Atom('Test' type=inline),
+            "Test",
             #3,
         ): 3,
         (
-            Atom('other' type=inline),
+            "other",
             #3,
         ): 5,
     },
@@ -63,13 +63,13 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Test' type=inline),
+                        "Test",
                         #2,
                     ),
                 ),
                 QualifiedId(
                     (
-                        Atom('Other' type=inline),
+                        "Other",
                         #2,
                     ),
                     [
@@ -103,13 +103,13 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Test' type=inline),
+                        "Test",
                         #3,
                     ),
                 ),
                 Id(
                     (
-                        Atom('other' type=inline),
+                        "other",
                         #3,
                     ),
                 ),
@@ -142,7 +142,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('Test' type=inline),
+                        "Test",
                         #3,
                     ),
                 ),
@@ -193,7 +193,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('other' type=inline),
+                        "other",
                         #3,
                     ),
                 ),

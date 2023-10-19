@@ -74,63 +74,63 @@ file:///mod.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            Atom('A' type=inline),
+            "A",
             #2,
         ): 0,
         (
-            Atom('BBase' type=inline),
+            "BBase",
             #2,
         ): 1,
         (
-            Atom('IBase' type=inline),
+            "IBase",
             #2,
         ): 2,
         (
-            Atom('B' type=inline),
+            "B",
             #2,
         ): 3,
         (
-            Atom('PropValue' type=dynamic),
+            "PropValue",
             #2,
         ): 4,
         (
-            Atom('ReturnValue' type=dynamic),
+            "ReturnValue",
             #2,
         ): 5,
         (
-            Atom('Param' type=inline),
+            "Param",
             #2,
         ): 6,
         (
-            Atom('PrivateParam' type=dynamic),
+            "PrivateParam",
             #2,
         ): 7,
         (
-            Atom('PrivateReturn' type=dynamic),
+            "PrivateReturn",
             #2,
         ): 8,
         (
-            Atom('PrivateProp' type=dynamic),
+            "PrivateProp",
             #2,
         ): 9,
         (
-            Atom('CtorProp' type=dynamic),
+            "CtorProp",
             #2,
         ): 10,
         (
-            Atom('OverloadParam' type=dynamic),
+            "OverloadParam",
             #2,
         ): 11,
         (
-            Atom('OverloadReturn' type=dynamic),
+            "OverloadReturn",
             #2,
         ): 12,
         (
-            Atom('PrivateImplementationParam' type=dynamic),
+            "PrivateImplementationParam",
             #2,
         ): 13,
         (
-            Atom('PrivateImplementationReturn' type=dynamic),
+            "PrivateImplementationReturn",
             #2,
         ): 14,
     },
@@ -158,7 +158,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('B' type=inline),
+                        "B",
                         #2,
                     ),
                 ),
@@ -213,7 +213,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('IBase' type=inline),
+                        "IBase",
                         #2,
                     ),
                 ),
@@ -244,43 +244,43 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        Atom('BBase' type=inline),
+                        "BBase",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('IBase' type=inline),
+                        "IBase",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('PropValue' type=dynamic),
+                        "PropValue",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('ReturnValue' type=dynamic),
+                        "ReturnValue",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('Param' type=inline),
+                        "Param",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('OverloadParam' type=dynamic),
+                        "OverloadParam",
                         #2,
                     ),
                 ),
                 Id(
                     (
-                        Atom('OverloadReturn' type=dynamic),
+                        "OverloadReturn",
                         #2,
                     ),
                 ),
