@@ -333,7 +333,8 @@ fn trace_module<THandler: TypeTraceHandler>(
   let mut pending = context.trace_exports(pending_trace)?;
 
   while let Some((specifier, symbol_id)) = pending.pop() {
-    let Some(module_symbol) = context.analyzer.get_or_analyze(&specifier)? else {
+    let Some(module_symbol) = context.analyzer.get_or_analyze(&specifier)?
+    else {
       continue;
     };
     let symbol = module_symbol.symbol(symbol_id).unwrap();
