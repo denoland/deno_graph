@@ -284,6 +284,18 @@ file:///mod.ts: EsmModuleSymbol {
                         #2,
                     ),
                 ),
+                Id(
+                    (
+                        "PrivateImplementationParam",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "PrivateImplementationReturn",
+                        #2,
+                    ),
+                ),
             },
             child_decls: {},
             exports: {},
@@ -506,7 +518,7 @@ file:///mod.ts: EsmModuleSymbol {
         },
         13: Symbol {
             symbol_id: 13,
-            is_public: false,
+            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -530,7 +542,7 @@ file:///mod.ts: EsmModuleSymbol {
         },
         14: Symbol {
             symbol_id: 14,
-            is_public: false,
+            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {

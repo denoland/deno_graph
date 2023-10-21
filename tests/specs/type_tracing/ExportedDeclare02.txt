@@ -1,0 +1,84 @@
+# mod.ts
+declare function foo(): number;
+export function bar() {};
+
+# output
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {
+        0,
+        1,
+    },
+    exports: {
+        "bar": 1,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "foo",
+            #2,
+        ): 0,
+        (
+            "bar",
+            #2,
+        ): 1,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: false,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            31,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: true,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            32,
+                        ),
+                        end: SourcePos(
+                            56,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {},
+}
+== export definitions ==
+[bar]: file:///mod.ts:32..56
+  export function bar() {}
