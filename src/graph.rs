@@ -1269,6 +1269,10 @@ impl ModuleGraph {
     }
   }
 
+  pub fn graph_kind(&self) -> GraphKind {
+    self.graph_kind
+  }
+
   pub async fn build<'a>(
     &mut self,
     roots: Vec<ModuleSpecifier>,
@@ -1655,6 +1659,7 @@ where
 #[allow(clippy::too_many_arguments)]
 #[allow(clippy::result_large_err)]
 pub(crate) fn parse_module(
+  graph_kind: GraphKind,
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<str>,
@@ -1725,6 +1730,7 @@ pub(crate) fn parse_module(
         Ok(module_info) => {
           // Return the module as a valid module
           Ok(Module::Esm(parse_esm_module_from_module_info(
+            graph_kind,
             specifier,
             media_type,
             maybe_headers,
@@ -1748,6 +1754,7 @@ pub(crate) fn parse_module(
         Ok(module_info) => {
           // Return the module as a valid module
           Ok(Module::Esm(parse_esm_module_from_module_info(
+            graph_kind,
             specifier,
             media_type,
             maybe_headers,
@@ -1772,7 +1779,9 @@ pub(crate) fn parse_module(
   }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn parse_esm_module_from_module_info(
+  graph_kind: GraphKind,
   specifier: &ModuleSpecifier,
   media_type: MediaType,
   maybe_headers: Option<&HashMap<String, String>>,
@@ -1785,62 +1794,68 @@ pub(crate) fn parse_esm_module_from_module_info(
   module.media_type = media_type;
 
   // Analyze the TypeScript triple-slash references
-  for reference in module_info.ts_references {
-    match reference {
-      TypeScriptReference::Path(specifier) => {
-        let dep = module
-          .dependencies
-          .entry(specifier.text.clone())
-          .or_default();
-        let range =
-          Range::from_position_range(module.specifier.clone(), specifier.range);
-        if dep.maybe_type.is_none() {
-          dep.maybe_type = resolve(
+  if graph_kind.include_types() {
+    for reference in module_info.ts_references {
+      match reference {
+        TypeScriptReference::Path(specifier) => {
+          let dep = module
+            .dependencies
+            .entry(specifier.text.clone())
+            .or_default();
+          let range = Range::from_position_range(
+            module.specifier.clone(),
+            specifier.range,
+          );
+          if dep.maybe_type.is_none() {
+            dep.maybe_type = resolve(
+              &specifier.text,
+              range.clone(),
+              ResolutionMode::Types,
+              maybe_resolver,
+              maybe_npm_resolver,
+            );
+          }
+          dep.imports.push(Import {
+            specifier: specifier.text,
+            kind: ImportKind::TsReferencePath,
+            range,
+            is_dynamic: false,
+            attributes: Default::default(),
+          });
+        }
+        TypeScriptReference::Types(specifier) => {
+          let range = Range::from_position_range(
+            module.specifier.clone(),
+            specifier.range,
+          );
+          let dep_resolution = resolve(
             &specifier.text,
             range.clone(),
             ResolutionMode::Types,
             maybe_resolver,
             maybe_npm_resolver,
           );
-        }
-        dep.imports.push(Import {
-          specifier: specifier.text,
-          kind: ImportKind::TsReferencePath,
-          range,
-          is_dynamic: false,
-          attributes: Default::default(),
-        });
-      }
-      TypeScriptReference::Types(specifier) => {
-        let range =
-          Range::from_position_range(module.specifier.clone(), specifier.range);
-        let dep_resolution = resolve(
-          &specifier.text,
-          range.clone(),
-          ResolutionMode::Types,
-          maybe_resolver,
-          maybe_npm_resolver,
-        );
-        if is_untyped(&module.media_type) {
-          module.maybe_types_dependency = Some(TypesDependency {
-            specifier: specifier.text.clone(),
-            dependency: dep_resolution,
-          });
-        } else {
-          let dep = module
-            .dependencies
-            .entry(specifier.text.clone())
-            .or_default();
-          if dep.maybe_type.is_none() {
-            dep.maybe_type = dep_resolution;
+          if is_untyped(&module.media_type) {
+            module.maybe_types_dependency = Some(TypesDependency {
+              specifier: specifier.text.clone(),
+              dependency: dep_resolution,
+            });
+          } else {
+            let dep = module
+              .dependencies
+              .entry(specifier.text.clone())
+              .or_default();
+            if dep.maybe_type.is_none() {
+              dep.maybe_type = dep_resolution;
+            }
+            dep.imports.push(Import {
+              specifier: specifier.text,
+              kind: ImportKind::TsReferenceTypes,
+              range,
+              is_dynamic: false,
+              attributes: Default::default(),
+            });
           }
-          dep.imports.push(Import {
-            specifier: specifier.text,
-            kind: ImportKind::TsReferenceTypes,
-            range,
-            is_dynamic: false,
-            attributes: Default::default(),
-          });
         }
       }
     }
@@ -1900,33 +1915,35 @@ pub(crate) fn parse_esm_module_from_module_info(
   }
 
   // Analyze any JSDoc type imports
-  for specifier in module_info.jsdoc_imports {
-    let dep = module
-      .dependencies
-      .entry(specifier.text.clone())
-      .or_default();
-    let range =
-      Range::from_position_range(module.specifier.clone(), specifier.range);
-    if dep.maybe_type.is_none() {
-      dep.maybe_type = resolve(
-        &specifier.text,
-        range.clone(),
-        ResolutionMode::Types,
-        maybe_resolver,
-        maybe_npm_resolver,
-      );
+  if graph_kind.include_types() {
+    for specifier in module_info.jsdoc_imports {
+      let dep = module
+        .dependencies
+        .entry(specifier.text.clone())
+        .or_default();
+      let range =
+        Range::from_position_range(module.specifier.clone(), specifier.range);
+      if dep.maybe_type.is_none() {
+        dep.maybe_type = resolve(
+          &specifier.text,
+          range.clone(),
+          ResolutionMode::Types,
+          maybe_resolver,
+          maybe_npm_resolver,
+        );
+      }
+      dep.imports.push(Import {
+        specifier: specifier.text,
+        kind: ImportKind::JsDoc,
+        range,
+        is_dynamic: false,
+        attributes: Default::default(),
+      });
     }
-    dep.imports.push(Import {
-      specifier: specifier.text,
-      kind: ImportKind::JsDoc,
-      range,
-      is_dynamic: false,
-      attributes: Default::default(),
-    });
   }
 
   // Analyze the X-TypeScript-Types header
-  if module.maybe_types_dependency.is_none() {
+  if graph_kind.include_types() && module.maybe_types_dependency.is_none() {
     if let Some(headers) = maybe_headers {
       if let Some(types_header) = headers.get("x-typescript-types") {
         let range = Range {
@@ -1952,7 +1969,9 @@ pub(crate) fn parse_esm_module_from_module_info(
   if let Some(resolver) = maybe_resolver {
     // this will only get called if there is no other types dependency and
     // the media type is untyped.
-    if module.maybe_types_dependency.is_none() && is_untyped(&module.media_type)
+    if graph_kind.include_types()
+      && module.maybe_types_dependency.is_none()
+      && is_untyped(&module.media_type)
     {
       module.maybe_types_dependency =
         match resolver.resolve_types(&module.specifier) {
@@ -1991,6 +2010,14 @@ pub(crate) fn parse_esm_module_from_module_info(
 
   // Analyze ES dependencies
   for desc in module_info.dependencies {
+    let is_import_or_export_type = matches!(
+      desc.kind,
+      DependencyKind::ImportType | DependencyKind::ExportType
+    );
+    if is_import_or_export_type && !graph_kind.include_types() {
+      continue; // skip
+    }
+
     let dep = module
       .dependencies
       .entry(desc.specifier.to_string())
@@ -2004,10 +2031,7 @@ pub(crate) fn parse_esm_module_from_module_info(
       module.specifier.clone(),
       desc.specifier_range.clone(),
     );
-    if matches!(
-      desc.kind,
-      DependencyKind::ImportType | DependencyKind::ExportType
-    ) {
+    if is_import_or_export_type {
       if dep.maybe_type.is_none() {
         dep.maybe_type = resolve(
           &desc.specifier,
@@ -2051,7 +2075,7 @@ pub(crate) fn parse_esm_module_from_module_info(
         attributes: desc.import_attributes.clone(),
       });
     }
-    if dep.maybe_type.is_none() {
+    if graph_kind.include_types() && dep.maybe_type.is_none() {
       let specifier = module.specifier.clone();
       let maybe_type = if let Some(pragma) = analyze_deno_types(&desc) {
         resolve(
@@ -2128,6 +2152,12 @@ pub enum GraphKind {
 impl Default for GraphKind {
   fn default() -> Self {
     Self::All
+  }
+}
+
+impl GraphKind {
+  pub fn include_types(&self) -> bool {
+    matches!(self, Self::All | Self::TypesOnly)
   }
 }
 
@@ -3257,6 +3287,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     };
 
     let mut module_slot = match parse_module(
+      self.graph.graph_kind,
       specifier,
       maybe_headers,
       content,
@@ -3314,10 +3345,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             dep.maybe_code = Resolution::None;
           }
 
-          if matches!(
-            self.graph.graph_kind,
-            GraphKind::All | GraphKind::TypesOnly
-          ) {
+          if self.graph.graph_kind.include_types() {
             if let Resolution::Ok(resolved) = &dep.maybe_type {
               let specifier = &resolved.specifier;
               let range = &resolved.range;
@@ -3351,8 +3379,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         module.dependencies.clear();
       }
 
-      if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::TypesOnly)
-      {
+      if self.graph.graph_kind.include_types() {
         if let Some(Resolution::Ok(resolved)) = module
           .maybe_types_dependency
           .as_ref()
@@ -3719,6 +3746,7 @@ mod tests {
     let content =
       "import * as b from \"./b.ts\";\nimport * as c from \"./b.ts\"";
     let module = parse_module(
+      GraphKind::All,
       &specifier,
       None,
       content.into(),
