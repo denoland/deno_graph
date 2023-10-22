@@ -1,0 +1,236 @@
+# mod.ts
+const c = { a: "a", b: 2 };
+const d: { f: string; g: number; } = { f: "f", g: 2 };
+
+export const {
+  /** export a doc */
+  a,
+  /** export b doc */
+  b,
+}: {
+  /** type alias doc */
+  a: string;
+  /** other doc */
+  b: number;
+} = c;
+
+# output
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {
+        0,
+        1,
+        2,
+    },
+    exports: {
+        "a": 3,
+        "b": 4,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "c",
+            #2,
+        ): 0,
+        (
+            "d",
+            #2,
+        ): 1,
+        (
+            "a",
+            #2,
+        ): 3,
+        (
+            "b",
+            #2,
+        ): 4,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: false,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            6,
+                        ),
+                        end: SourcePos(
+                            26,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: false,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            34,
+                        ),
+                        end: SourcePos(
+                            81,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "f",
+                        #0,
+                    ),
+                ),
+                Id(
+                    (
+                        "g",
+                        #0,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        2: Symbol {
+            symbol_id: 2,
+            is_public: false,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            84,
+                        ),
+                        end: SourcePos(
+                            233,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "a",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "b",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            is_public: true,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            97,
+                        ),
+                        end: SourcePos(
+                            232,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "a",
+                        #0,
+                    ),
+                ),
+                Id(
+                    (
+                        "b",
+                        #0,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
+            is_public: true,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            97,
+                        ),
+                        end: SourcePos(
+                            232,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "a",
+                        #0,
+                    ),
+                ),
+                Id(
+                    (
+                        "b",
+                        #0,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {},
+}
+== export definitions ==
+[a]: file:///mod.ts:97..232
+  {
+    /** export a doc */
+  ...
+    b: number;
+  } = c
+[b]: file:///mod.ts:97..232
+  {
+    /** export a doc */
+  ...
+    b: number;
+  } = c

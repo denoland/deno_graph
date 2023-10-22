@@ -185,7 +185,7 @@ impl std::fmt::Debug for SymbolNode {
 enum SymbolNodeInnerExportDecl {
   Class(NodeRefBox<ClassDecl>),
   Fn(NodeRefBox<FnDecl>),
-  Var(NodeRefBox<VarDecl>, NodeRefBox<VarDeclarator>, Id),
+  Var(NodeRefBox<VarDecl>, NodeRefBox<VarDeclarator>, Ident),
   TsEnum(NodeRefBox<TsEnumDecl>),
   TsInterface(NodeRefBox<TsInterfaceDecl>),
   TsModule(NodeRefBox<TsModuleDecl>),
@@ -204,14 +204,14 @@ enum SymbolNodeInner {
   TsNamespace(NodeRefBox<TsModuleDecl>),
   TsTypeAlias(NodeRefBox<TsTypeAliasDecl>),
   TsInterface(NodeRefBox<TsInterfaceDecl>),
-  Var(NodeRefBox<VarDecl>, NodeRefBox<VarDeclarator>),
+  Var(NodeRefBox<VarDecl>, NodeRefBox<VarDeclarator>, Ident),
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum ExportDeclRef<'a> {
   Class(&'a ClassDecl),
   Fn(&'a FnDecl),
-  Var(&'a VarDecl, &'a VarDeclarator, &'a Id),
+  Var(&'a VarDecl, &'a VarDeclarator, &'a Ident),
   TsEnum(&'a TsEnumDecl),
   TsInterface(&'a TsInterfaceDecl),
   TsModule(&'a TsModuleDecl),
@@ -229,7 +229,7 @@ pub enum SymbolNodeRef<'a> {
   TsInterface(&'a TsInterfaceDecl),
   TsNamespace(&'a TsModuleDecl),
   TsTypeAlias(&'a TsTypeAliasDecl),
-  Var(&'a VarDecl, &'a VarDeclarator),
+  Var(&'a VarDecl, &'a VarDeclarator, &'a Ident),
 }
 
 #[derive(Debug, Clone)]
@@ -300,8 +300,8 @@ impl SymbolDeclKind {
         SymbolNodeInner::TsInterface(n) => {
           Some((SymbolNodeRef::TsInterface(n.value()), n.source()))
         }
-        SymbolNodeInner::Var(decl, declarator) => Some((
-          SymbolNodeRef::Var(decl.value(), declarator.value()),
+        SymbolNodeInner::Var(decl, declarator, ident) => Some((
+          SymbolNodeRef::Var(decl.value(), declarator.value(), ident),
           decl.source(),
         )),
       },
@@ -1126,9 +1126,10 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             add_child(file_module, export_decl_symbol_id);
 
             for decl in &n.decls {
-              let ids: Vec<Id> = find_pat_ids(&decl.name);
-              for id in ids {
-                let name = id.0.to_string();
+              let ids: Vec<Ident> = find_pat_ids(&decl.name);
+              for ident in ids {
+                let export_name = ident.sym.to_string();
+                let id = ident.to_id();
                 let symbol = file_module.get_symbol_from_swc_id(
                   id.clone(),
                   SymbolDecl {
@@ -1141,7 +1142,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                         SymbolNodeInnerExportDecl::Var(
                           NodeRefBox::unsafe_new(&file_module.source, n),
                           NodeRefBox::unsafe_new(&file_module.source, decl),
-                          id.clone(),
+                          ident,
                         ),
                       ),
                     )),
@@ -1150,7 +1151,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                 );
                 self.fill_var_declarator(symbol, decl);
                 let symbol_id = symbol.symbol_id;
-                add_export(file_module, name, symbol_id);
+                add_export(file_module, export_name, symbol_id);
                 file_module
                   .symbol_mut(export_decl_symbol_id)
                   .unwrap()
@@ -1515,15 +1516,16 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             }
             Decl::Var(var_decl) => {
               for decl in &var_decl.decls {
-                let ids: Vec<Id> = find_pat_ids(&decl.name);
+                let ids: Vec<Ident> = find_pat_ids(&decl.name);
                 for id in ids {
                   let symbol = file_module.get_symbol_from_swc_id(
-                    id,
+                    id.to_id(),
                     SymbolDecl {
                       kind: SymbolDeclKind::Definition(SymbolNode(
                         SymbolNodeInner::Var(
                           NodeRefBox::unsafe_new(&file_module.source, var_decl),
                           NodeRefBox::unsafe_new(&file_module.source, decl),
+                          id,
                         ),
                       )),
                       range: decl.range(),
@@ -1904,14 +1906,16 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               }
               Decl::Var(n) => {
                 for decl in &n.decls {
-                  for id in find_pat_ids::<_, Id>(&decl.name) {
+                  for id in find_pat_ids::<_, Ident>(&decl.name) {
+                    let export_name = id.sym.to_string();
                     let def_symbol_id = file_module.ensure_symbol_for_swc_id(
-                      id.clone(),
+                      id.to_id(),
                       SymbolDecl {
                         kind: SymbolDeclKind::Definition(SymbolNode(
                           SymbolNodeInner::Var(
                             NodeRefBox::unsafe_new(&file_module.source, n),
                             NodeRefBox::unsafe_new(&file_module.source, decl),
+                            id,
                           ),
                         )),
                         range: decl.range(),
@@ -1924,7 +1928,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                         .into_iter()
                         .map(|i: Id| i.into()),
                     );
-                    mod_symbol.exports.insert(id.0.to_string(), def_symbol_id);
+                    mod_symbol.exports.insert(export_name, def_symbol_id);
                   }
                 }
               }
