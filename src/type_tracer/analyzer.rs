@@ -4,6 +4,8 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::hash::Hash;
+use std::hash::Hasher;
 
 use anyhow::Result;
 use deno_ast::swc::ast::*;
@@ -196,6 +198,7 @@ enum SymbolNodeInner {
   ClassDecl(NodeRefBox<ClassDecl>),
   ExportDecl(NodeRefBox<ExportDecl>, SymbolNodeInnerExportDecl),
   ExportDefaultDecl(NodeRefBox<ExportDefaultDecl>),
+  ExportDefaultExprLit(NodeRefBox<ExportDefaultExpr>, NodeRefBox<Lit>),
   FnDecl(NodeRefBox<FnDecl>),
   TsEnum(NodeRefBox<TsEnumDecl>),
   TsNamespace(NodeRefBox<TsModuleDecl>),
@@ -220,6 +223,7 @@ pub enum SymbolNodeRef<'a> {
   ClassDecl(&'a ClassDecl),
   ExportDecl(&'a ExportDecl, ExportDeclRef<'a>),
   ExportDefaultDecl(&'a ExportDefaultDecl),
+  ExportDefaultExprLit(&'a ExportDefaultExpr, &'a Lit),
   FnDecl(&'a FnDecl),
   TsEnum(&'a TsEnumDecl),
   TsInterface(&'a TsInterfaceDecl),
@@ -237,25 +241,11 @@ pub enum SymbolDeclKind {
   Definition(SymbolNode),
 }
 
-#[derive(Debug, Clone)]
-pub struct SymbolDecl {
-  pub range: SourceRange,
-  pub kind: SymbolDeclKind,
-}
-
-impl SymbolDecl {
-  pub fn maybe_source(&self) -> Option<&ParsedSource> {
-    self.maybe_node_and_source().map(|n| n.1)
-  }
-
-  pub fn maybe_node(&self) -> Option<SymbolNodeRef> {
-    self.maybe_node_and_source().map(|n| n.0)
-  }
-
+impl SymbolDeclKind {
   pub fn maybe_node_and_source(
     &self,
   ) -> Option<(SymbolNodeRef, &ParsedSource)> {
-    match &self.kind {
+    match self {
       SymbolDeclKind::Definition(SymbolNode(def)) => match def {
         SymbolNodeInner::Json => None,
         SymbolNodeInner::ClassDecl(n) => {
@@ -291,6 +281,10 @@ impl SymbolDecl {
         SymbolNodeInner::ExportDefaultDecl(n) => {
           Some((SymbolNodeRef::ExportDefaultDecl(n.value()), n.source()))
         }
+        SymbolNodeInner::ExportDefaultExprLit(n, lit) => Some((
+          SymbolNodeRef::ExportDefaultExprLit(n.value(), lit.value()),
+          n.source(),
+        )),
         SymbolNodeInner::FnDecl(n) => {
           Some((SymbolNodeRef::FnDecl(n.value()), n.source()))
         }
@@ -313,6 +307,28 @@ impl SymbolDecl {
       },
       _ => None,
     }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct SymbolDecl {
+  pub range: SourceRange,
+  pub kind: SymbolDeclKind,
+}
+
+impl SymbolDecl {
+  pub fn maybe_source(&self) -> Option<&ParsedSource> {
+    self.maybe_node_and_source().map(|n| n.1)
+  }
+
+  pub fn maybe_node(&self) -> Option<SymbolNodeRef> {
+    self.maybe_node_and_source().map(|n| n.0)
+  }
+
+  pub fn maybe_node_and_source(
+    &self,
+  ) -> Option<(SymbolNodeRef, &ParsedSource)> {
+    self.kind.maybe_node_and_source()
   }
 }
 
@@ -584,6 +600,14 @@ impl std::fmt::Debug for JsonModuleSymbol {
 impl JsonModuleSymbol {
   pub fn as_ref(&self) -> ModuleSymbolRef {
     ModuleSymbolRef::Json(self)
+  }
+
+  pub fn specifier(&self) -> &ModuleSpecifier {
+    &self.specifier
+  }
+
+  pub fn text_info(&self) -> &SourceTextInfo {
+    &self.source_text_info
   }
 
   pub fn symbols(&self) -> impl Iterator<Item = &Symbol> {
@@ -952,12 +976,19 @@ struct SymbolFiller<'a, THandler: TypeTraceHandler> {
 impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
   fn fill_module(&self, file_module: &mut EsmModuleSymbol, module: &Module) {
     let mut last_was_overload = false;
+    let mut last_override_key = 0;
     for module_item in &module.body {
+      let current_override_key = module_item_overload_key(module_item);
       let is_overload = is_module_item_overload(module_item);
-      let is_implementation_with_overloads = !is_overload && last_was_overload;
+      let is_implementation_with_overloads = current_override_key
+        == last_override_key
+        && !is_overload
+        && last_was_overload;
       last_was_overload = is_overload;
+      last_override_key = current_override_key;
 
       if is_implementation_with_overloads {
+        // don't examine implementation signatures
         continue;
       }
 
@@ -1381,6 +1412,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           self.handle_export_default_expr(
             expr.range(),
             &expr.expr,
+            Some(expr),
             file_module,
           );
         }
@@ -1414,6 +1446,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           self.handle_export_default_expr(
             export_assignment.range(),
             &export_assignment.expr,
+            None,
             file_module,
           );
         }
@@ -1587,6 +1620,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
     &self,
     default_export_range: SourceRange,
     expr: &Expr,
+    maybe_parent: Option<&ExportDefaultExpr>,
     file_module: &mut EsmModuleSymbol,
   ) {
     match expr {
@@ -1608,6 +1642,21 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           .unwrap()
           .deps
           .insert(ident.to_id().into());
+      }
+      Expr::Lit(lit) => {
+        debug_assert!(maybe_parent.is_some());
+        let Some(parent) = maybe_parent else {
+          return;
+        };
+        file_module.ensure_default_export_symbol(SymbolDecl {
+          kind: SymbolDeclKind::Definition(SymbolNode(
+            SymbolNodeInner::ExportDefaultExprLit(
+              NodeRefBox::unsafe_new(&file_module.source, parent),
+              NodeRefBox::unsafe_new(&file_module.source, lit),
+            ),
+          )),
+          range: default_export_range,
+        });
       }
       _ => {
         let line_and_column = self
@@ -1766,13 +1815,19 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
         }
       };
       let mut last_was_overload = false;
+      let mut last_override_key = 0;
       for item in &block.body {
+        let current_override_key = module_item_overload_key(item);
         let is_overload = is_module_item_overload(item);
-        let is_implementation_with_overloads =
-          !is_overload && last_was_overload;
+        let is_implementation_with_overloads = current_override_key
+          == last_override_key
+          && !is_overload
+          && last_was_overload;
         last_was_overload = is_overload;
+        last_override_key = current_override_key;
 
         if is_implementation_with_overloads {
+          // don't examine implementation signatures
           continue;
         }
 
@@ -2023,15 +2078,38 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
     symbol: &mut Symbol,
     members: &[ClassMember],
   ) {
-    let mut last_was_overload = false;
-    for member in members {
-      let is_overload = is_class_member_overload(member);
-      let is_implementation_with_overloads = !is_overload && last_was_overload;
-      last_was_overload = is_overload;
+    fn overload_key(member: &ClassMember) -> u8 {
+      match member {
+        ClassMember::Constructor(_) => 1,
+        ClassMember::Method(_) => 2,
+        ClassMember::PrivateMethod(_) => 3,
+        ClassMember::ClassProp(_)
+        | ClassMember::PrivateProp(_)
+        | ClassMember::TsIndexSignature(_)
+        | ClassMember::AutoAccessor(_)
+        | ClassMember::StaticBlock(_)
+        | ClassMember::Empty(_) => 4,
+      }
+    }
 
-      if is_implementation_with_overloads
-        || self.has_internal_jsdoc(member.start())
-      {
+    let mut last_was_overload = false;
+    let mut last_overload_key = 0;
+    for member in members {
+      let current_overload_key = overload_key(member);
+      if current_overload_key == last_overload_key {
+        let is_overload = is_class_member_overload(member);
+        let is_implementation_with_overloads =
+          !is_overload && last_was_overload;
+        last_was_overload = is_overload;
+        last_overload_key = current_overload_key;
+
+        if is_implementation_with_overloads {
+          // filter out implementation signatures
+          continue;
+        }
+      }
+
+      if self.has_internal_jsdoc(member.start()) {
         continue;
       }
 
@@ -2303,5 +2381,29 @@ fn is_decl_overload(decl: &Decl) -> bool {
   match decl {
     Decl::Fn(func) => func.function.body.is_none(),
     _ => false,
+  }
+}
+
+fn module_item_overload_key(module_item: &ModuleItem) -> u64 {
+  match module_item {
+    ModuleItem::ModuleDecl(module_decl) => match module_decl {
+      ModuleDecl::ExportDecl(decl) => decl_overload_key(&decl.decl),
+      _ => 0,
+    },
+    ModuleItem::Stmt(stmt) => match stmt {
+      Stmt::Decl(decl) => decl_overload_key(decl),
+      _ => 0,
+    },
+  }
+}
+
+fn decl_overload_key(decl: &Decl) -> u64 {
+  match decl {
+    Decl::Fn(decl) => {
+      let mut hasher = std::collections::hash_map::DefaultHasher::default();
+      decl.ident.sym.hash(&mut hasher);
+      hasher.finish()
+    }
+    _ => 0,
   }
 }

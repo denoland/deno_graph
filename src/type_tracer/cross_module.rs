@@ -14,6 +14,7 @@ use super::FileDep;
 use super::FileDepName;
 use super::ModuleSymbolRef;
 use super::Symbol;
+use super::SymbolDecl;
 use super::SymbolId;
 use super::UniqueSymbolId;
 
@@ -28,17 +29,22 @@ pub struct Definition<'a> {
   pub kind: DefinitionKind<'a>,
   pub module: ModuleSymbolRef<'a>,
   pub symbol: &'a Symbol,
-  pub range: &'a SourceRange,
+  pub symbol_decl: &'a SymbolDecl,
 }
 
 impl<'a> Definition<'a> {
+  pub fn range(&self) -> &SourceRange {
+    &self.symbol_decl.range
+  }
+
   pub fn byte_range(&self) -> std::ops::Range<usize> {
     self
-      .range
+      .range()
       .as_byte_range(self.module.text_info().range().start)
   }
+
   pub fn text(&self) -> &str {
-    self.module.text_info().range_text(self.range)
+    self.module.text_info().range_text(self.range())
   }
 }
 
@@ -77,8 +83,8 @@ fn go_to_definitions_internal<'a>(
         definitions.push(Definition {
           module,
           symbol,
+          symbol_decl: decl,
           kind: DefinitionKind::Definition,
-          range: &decl.range,
         });
       }
       SymbolDeclKind::Target(target_id) => {
@@ -130,7 +136,7 @@ fn go_to_definitions_internal<'a>(
             module,
             symbol,
             kind: DefinitionKind::ExportStar(file_ref),
-            range: &decl.range,
+            symbol_decl: decl,
           });
         }
         FileDepName::Name(export_name) => {
