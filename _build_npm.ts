@@ -40,14 +40,6 @@ await build({
   compilerOptions: {
     lib: ["DOM", "ES2021"],
   },
-  filterDiagnostic(diagnostic) {
-    if (
-      diagnostic.file?.fileName.endsWith("wasmbuild@0.14.1/loader.ts")
-    ) {
-      return false;
-    }
-    return true;
-  },
 });
 
 Deno.copyFileSync("LICENSE", "npm/LICENSE");
