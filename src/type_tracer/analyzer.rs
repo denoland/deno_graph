@@ -1126,8 +1126,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             add_child(file_module, export_decl_symbol_id);
 
             for decl in &n.decls {
-              let ids: Vec<Ident> = find_pat_ids(&decl.name);
-              for ident in ids {
+              for ident in find_pat_ids::<_, Ident>(&decl.name) {
                 let export_name = ident.sym.to_string();
                 let id = ident.to_id();
                 let symbol = file_module.get_symbol_from_swc_id(
@@ -1516,16 +1515,15 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
             }
             Decl::Var(var_decl) => {
               for decl in &var_decl.decls {
-                let ids: Vec<Ident> = find_pat_ids(&decl.name);
-                for id in ids {
+                for ident in find_pat_ids::<_, Ident>(&decl.name) {
                   let symbol = file_module.get_symbol_from_swc_id(
-                    id.to_id(),
+                    ident.to_id(),
                     SymbolDecl {
                       kind: SymbolDeclKind::Definition(SymbolNode(
                         SymbolNodeInner::Var(
                           NodeRefBox::unsafe_new(&file_module.source, var_decl),
                           NodeRefBox::unsafe_new(&file_module.source, decl),
-                          id,
+                          ident,
                         ),
                       )),
                       range: decl.range(),
@@ -1906,16 +1904,17 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
               }
               Decl::Var(n) => {
                 for decl in &n.decls {
-                  for id in find_pat_ids::<_, Ident>(&decl.name) {
-                    let export_name = id.sym.to_string();
+                  for ident in find_pat_ids::<_, Ident>(&decl.name) {
+                    let export_name = ident.sym.to_string();
+                    let id = ident.to_id();
                     let def_symbol_id = file_module.ensure_symbol_for_swc_id(
-                      id.to_id(),
+                      id.clone(),
                       SymbolDecl {
                         kind: SymbolDeclKind::Definition(SymbolNode(
                           SymbolNodeInner::Var(
                             NodeRefBox::unsafe_new(&file_module.source, n),
                             NodeRefBox::unsafe_new(&file_module.source, decl),
-                            id,
+                            ident,
                           ),
                         )),
                         range: decl.range(),
@@ -1923,11 +1922,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
                     );
                     let mod_symbol =
                       file_module.symbol_mut(mod_symbol_id).unwrap();
-                    mod_symbol.deps.extend(
-                      find_pat_ids(&decl.name)
-                        .into_iter()
-                        .map(|i: Id| i.into()),
-                    );
+                    mod_symbol.deps.insert(id.into());
                     mod_symbol.exports.insert(export_name, def_symbol_id);
                   }
                 }
