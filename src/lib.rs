@@ -77,6 +77,7 @@ pub struct ReferrerImports {
 /// erroring with a module graph error.
 #[allow(clippy::result_large_err)]
 pub fn parse_module(
+  graph_kind: GraphKind,
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
   content: Arc<str>,
@@ -88,6 +89,7 @@ pub fn parse_module(
   let module_analyzer =
     maybe_module_analyzer.unwrap_or(&default_module_analyzer);
   graph::parse_module(
+    graph_kind,
     specifier,
     maybe_headers,
     content,
@@ -103,6 +105,7 @@ pub fn parse_module(
 
 /// Parse an individual module from an AST, returning the module.
 pub fn parse_module_from_ast(
+  graph_kind: GraphKind,
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
   parsed_source: &deno_ast::ParsedSource,
@@ -110,6 +113,7 @@ pub fn parse_module_from_ast(
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> EsmModule {
   graph::parse_esm_module_from_module_info(
+    graph_kind,
     specifier,
     parsed_source.media_type(),
     maybe_headers,
@@ -2724,6 +2728,14 @@ export function a(a) {
             content: r#"export const d = "d";"#,
           },
         ),
+        (
+          "file:///a/test04.js",
+          Source::Module {
+            specifier: "file:///a/test04.js",
+            maybe_headers: None,
+            content: r#"/// <reference types="./test04.d.ts" />\nexport const d = "d";"#,
+          },
+        ),
       ],
       vec![],
     );
@@ -2773,9 +2785,6 @@ export function a(a) {
                     }
                   }
                 }
-              },
-              {
-                "specifier": "./b.d.ts",
               },
               {
                 "specifier": "https://example.com/c",
@@ -2949,13 +2958,42 @@ export function a(a) {
   fn test_parse_module() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let actual = parse_module(
+      GraphKind::All,
       &specifier,
       None,
       r#"
+    /// <reference types="./a.d.ts" />
     import { a } from "./a.ts";
     import * as b from "./b.ts";
     export { c } from "./c.ts";
     const d = await import("./d.ts");
+    import type { e } from "./e.ts";
+    export type { f } from "./f.ts";
+    "#
+      .into(),
+      None,
+      None,
+      None,
+    )
+    .unwrap();
+    let actual = actual.esm().unwrap();
+    assert_eq!(actual.dependencies.len(), 7);
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::TypeScript);
+
+    // now try code only
+    let actual = parse_module(
+      GraphKind::CodeOnly,
+      &specifier,
+      None,
+      r#"
+    /// <reference types="./a.d.ts" />
+    import { a } from "./a.ts";
+    import * as b from "./b.ts";
+    export { c } from "./c.ts";
+    const d = await import("./d.ts");
+    import type { e } from "./e.ts";
+    export type { f } from "./f.ts";
     "#
       .into(),
       None,
@@ -2965,14 +3003,13 @@ export function a(a) {
     .unwrap();
     let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 4);
-    assert_eq!(actual.specifier, specifier);
-    assert_eq!(actual.media_type, MediaType::TypeScript);
   }
 
   #[test]
   fn test_parse_module_import_assertions() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let actual = parse_module(
+      GraphKind::All,
       &specifier,
       None,
       r#"
@@ -3037,6 +3074,7 @@ export function a(a) {
   fn test_parse_module_jsx_import_source() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
     let actual = parse_module(
+      GraphKind::All,
       &specifier,
       None,
       r#"
@@ -3079,6 +3117,7 @@ export function a(a) {
 
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
     let actual = parse_module(
+      GraphKind::All,
       &specifier,
       None,
       r#"
@@ -3117,6 +3156,7 @@ export function a(a) {
     );
     let maybe_headers = Some(&headers);
     let result = parse_module(
+      GraphKind::All,
       &specifier,
       maybe_headers,
       r#"declare interface A {
@@ -3133,10 +3173,7 @@ export function a(a) {
   #[test]
   fn test_parse_module_with_jsdoc_imports() {
     let specifier = ModuleSpecifier::parse("file:///a/test.js").unwrap();
-    let actual = parse_module(
-      &specifier,
-      None,
-      r#"
+    let code = r#"
 /**
  * Some js doc
  *
@@ -3146,8 +3183,12 @@ export function a(a) {
 export function a(a) {
   return;
 }
-"#
-      .into(),
+"#;
+    let actual = parse_module(
+      GraphKind::All,
+      &specifier,
+      None,
+      code.into(),
       None,
       None,
       None,
@@ -3196,12 +3237,34 @@ export function a(a) {
         "specifier": "file:///a/test.js"
       })
     );
+
+    // GraphKind::CodeOnly should not include them
+    let actual = parse_module(
+      GraphKind::CodeOnly,
+      &specifier,
+      None,
+      code.into(),
+      None,
+      None,
+      None,
+    )
+    .unwrap();
+    assert_eq!(
+      json!(actual),
+      json!({
+        "kind": "esm",
+        "mediaType": "JavaScript",
+        "size": 137,
+        "specifier": "file:///a/test.js"
+      })
+    );
   }
 
   #[test]
   fn test_parse_ts_jsdoc_imports_ignored() {
     let specifier = ModuleSpecifier::parse("file:///a/test.ts").unwrap();
     let actual = parse_module(
+      GraphKind::All,
       &specifier,
       None,
       r#"
@@ -3701,77 +3764,137 @@ export function a(a: A): B {
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let mut graph = ModuleGraph::new(GraphKind::All);
     let resolver = ExtResolver;
-    graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        BuildOptions {
-          resolver: Some(&resolver),
-          ..Default::default()
-        },
-      )
-      .await;
-    assert_eq!(
-      json!(graph),
-      json!({
-        "roots": [
-          "file:///a/test01.ts"
-        ],
-        "modules": [
-          {
-            "kind": "esm",
-            "size": 17,
-            "mediaType": "Dts",
-            "specifier": "file:///a/a.d.ts"
+
+    // test GraphKind::All
+    {
+      let mut graph = ModuleGraph::new(GraphKind::All);
+      graph
+        .build(
+          vec![root_specifier.clone()],
+          &mut loader,
+          BuildOptions {
+            resolver: Some(&resolver),
+            ..Default::default()
           },
-          {
-            "kind": "esm",
-            "size": 17,
-            "mediaType": "JavaScript",
-            "specifier": "file:///a/a.js"
+        )
+        .await;
+      assert_eq!(
+        json!(graph),
+        json!({
+          "roots": [
+            "file:///a/test01.ts"
+          ],
+          "modules": [
+            {
+              "kind": "esm",
+              "size": 17,
+              "mediaType": "Dts",
+              "specifier": "file:///a/a.d.ts"
+            },
+            {
+              "kind": "esm",
+              "size": 17,
+              "mediaType": "JavaScript",
+              "specifier": "file:///a/a.js"
+            },
+            {
+              "dependencies": [
+                {
+                  "specifier": "./a",
+                  "code": {
+                    "specifier": "file:///a/a.js",
+                    "span": {
+                      "start": {
+                        "line": 1,
+                        "character": 26
+                      },
+                      "end": {
+                        "line": 1,
+                        "character": 31
+                      }
+                    }
+                  },
+                  "type": {
+                    "specifier": "file:///a/a.d.ts",
+                    "span": {
+                      "start": {
+                        "line": 1,
+                        "character": 26
+                      },
+                      "end": {
+                        "line": 1,
+                        "character": 31
+                      }
+                    }
+                  },
+                }
+              ],
+              "kind": "esm",
+              "size": 46,
+              "mediaType": "TypeScript",
+              "specifier": "file:///a/test01.ts"
+            }
+          ],
+          "redirects": {}
+        })
+      );
+    }
+
+    // test GraphKind::CodeOnly
+    {
+      let mut graph = ModuleGraph::new(GraphKind::CodeOnly);
+      graph
+        .build(
+          vec![root_specifier.clone()],
+          &mut loader,
+          BuildOptions {
+            resolver: Some(&resolver),
+            ..Default::default()
           },
-          {
-            "dependencies": [
-              {
-                "specifier": "./a",
-                "code": {
-                  "specifier": "file:///a/a.js",
-                  "span": {
-                    "start": {
-                      "line": 1,
-                      "character": 26
-                    },
-                    "end": {
-                      "line": 1,
-                      "character": 31
+        )
+        .await;
+      assert_eq!(
+        json!(graph),
+        json!({
+          "roots": [
+            "file:///a/test01.ts"
+          ],
+          "modules": [
+            {
+              "kind": "esm",
+              "size": 17,
+              "mediaType": "JavaScript",
+              "specifier": "file:///a/a.js"
+            },
+            {
+              "dependencies": [
+                {
+                  "specifier": "./a",
+                  "code": {
+                    "specifier": "file:///a/a.js",
+                    "span": {
+                      "start": {
+                        "line": 1,
+                        "character": 26
+                      },
+                      "end": {
+                        "line": 1,
+                        "character": 31
+                      }
                     }
-                  }
-                },
-                "type": {
-                  "specifier": "file:///a/a.d.ts",
-                  "span": {
-                    "start": {
-                      "line": 1,
-                      "character": 26
-                    },
-                    "end": {
-                      "line": 1,
-                      "character": 31
-                    }
-                  }
-                },
-              }
-            ],
-            "kind": "esm",
-            "size": 46,
-            "mediaType": "TypeScript",
-            "specifier": "file:///a/test01.ts"
-          }
-        ],
-        "redirects": {}
-      })
-    );
+                  },
+                }
+              ],
+              "kind": "esm",
+              "size": 46,
+              "mediaType": "TypeScript",
+              "specifier": "file:///a/test01.ts"
+            }
+          ],
+          "redirects": {}
+        })
+      );
+    }
   }
 }

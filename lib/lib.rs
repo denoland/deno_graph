@@ -293,6 +293,7 @@ pub fn js_parse_module(
     None
   };
   match deno_graph::parse_module(
+    GraphKind::All,
     &specifier,
     maybe_headers.as_ref(),
     content.into(),
