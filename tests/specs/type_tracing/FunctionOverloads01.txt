@@ -91,7 +91,7 @@ file:///mod.ts: EsmModuleSymbol {
                             122,
                         ),
                     },
-                    kind: PrivateFnImplSignature(
+                    kind: DefinitionPrivateFnImpl(
                         SymbolNode(
                             "<omitted>",
                         ),
@@ -180,7 +180,7 @@ file:///mod.ts: EsmModuleSymbol {
                             275,
                         ),
                     },
-                    kind: PrivateFnImplSignature(
+                    kind: DefinitionPrivateFnImpl(
                         SymbolNode(
                             "<omitted>",
                         ),

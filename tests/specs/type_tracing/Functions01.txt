@@ -285,7 +285,7 @@ file:///mod.ts: EsmModuleSymbol {
                             428,
                         ),
                     },
-                    kind: PrivateFnImplSignature(
+                    kind: DefinitionPrivateFnImpl(
                         SymbolNode(
                             "<omitted>",
                         ),
