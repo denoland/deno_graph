@@ -1,0 +1,272 @@
+# mod.ts
+export function test(value: number);
+export function test(value: string);
+export function test(value: string | number) {
+}
+
+namespace Inner {
+  export function inner(value: number);
+  export function inner(value: string);
+  export function inner(value: string | number) {
+  }
+}
+
+import InnerInner = Inner.inner;
+export { InnerInner };
+
+# output
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {
+        0,
+        1,
+    },
+    exports: {
+        "test": 0,
+        "InnerInner": 3,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "test",
+            #2,
+        ): 0,
+        (
+            "Inner",
+            #2,
+        ): 1,
+        (
+            "inner",
+            #6,
+        ): 2,
+        (
+            "InnerInner",
+            #2,
+        ): 3,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            is_public: true,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            36,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            37,
+                        ),
+                        end: SourcePos(
+                            73,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            74,
+                        ),
+                        end: SourcePos(
+                            122,
+                        ),
+                    },
+                    kind: PrivateFnImplSignature(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            is_public: false,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            124,
+                        ),
+                        end: SourcePos(
+                            277,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "inner",
+                        #6,
+                    ),
+                ),
+            },
+            child_decls: {
+                2,
+            },
+            exports: {
+                "inner": 2,
+            },
+        },
+        2: Symbol {
+            symbol_id: 2,
+            is_public: true,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            144,
+                        ),
+                        end: SourcePos(
+                            181,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            184,
+                        ),
+                        end: SourcePos(
+                            221,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            224,
+                        ),
+                        end: SourcePos(
+                            275,
+                        ),
+                    },
+                    kind: PrivateFnImplSignature(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            is_public: true,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            279,
+                        ),
+                        end: SourcePos(
+                            311,
+                        ),
+                    },
+                    kind: QualifiedTarget(
+                        (
+                            "Inner",
+                            #2,
+                        ),
+                        [
+                            "inner",
+                        ],
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            312,
+                        ),
+                        end: SourcePos(
+                            334,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            321,
+                        ),
+                        end: SourcePos(
+                            331,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {
+                QualifiedId(
+                    (
+                        "Inner",
+                        #2,
+                    ),
+                    [
+                        "inner",
+                    ],
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+    },
+    traced_re_exports: {},
+    traced_referrers: {},
+}
+== export definitions ==
+[InnerInner]: file:///mod.ts:144..181
+  export function inner(value: number);
+file:///mod.ts:184..221
+  export function inner(value: string);
+file:///mod.ts:224..275
+  export function inner(value: string | number) {
+    }
+[test]: file:///mod.ts:0..36
+  export function test(value: number);
+file:///mod.ts:37..73
+  export function test(value: string);
+file:///mod.ts:74..122
+  export function test(value: string | number) {
+  }
