@@ -248,9 +248,17 @@ impl fmt::Display for ModuleError {
 pub enum ModuleGraphError {
   ModuleError(ModuleError),
   ResolutionError(ResolutionError),
+  TypesResolutionError(ResolutionError),
 }
 
 impl ModuleGraphError {
+  fn for_resolution_mode(mode: ResolutionMode, error: ResolutionError) -> Self {
+    match mode {
+      ResolutionMode::Execution => Self::ResolutionError(error),
+      ResolutionMode::Types => Self::TypesResolutionError(error),
+    }
+  }
+
   /// Converts the error into a string along with the range related to the error.
   ///
   /// We don't include the range in the error messages by default because they're
@@ -266,7 +274,9 @@ impl ModuleGraphError {
   pub fn maybe_range(&self) -> Option<&Range> {
     match self {
       Self::ModuleError(err) => err.maybe_referrer(),
-      Self::ResolutionError(err) => Some(err.range()),
+      Self::ResolutionError(err) | Self::TypesResolutionError(err) => {
+        Some(err.range())
+      }
     }
   }
 }
@@ -275,7 +285,9 @@ impl std::error::Error for ModuleGraphError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
       Self::ModuleError(ref err) => Some(err),
-      Self::ResolutionError(ref err) => Some(err),
+      Self::ResolutionError(ref err) | Self::TypesResolutionError(ref err) => {
+        Some(err)
+      }
     }
   }
 }
@@ -285,6 +297,10 @@ impl fmt::Display for ModuleGraphError {
     match self {
       Self::ModuleError(err) => err.fmt(f),
       Self::ResolutionError(err) => err.fmt(f),
+      Self::TypesResolutionError(err) => {
+        f.write_str("Failed resolving types. ")?;
+        err.fmt(f)
+      }
     }
   }
 }
@@ -780,7 +796,7 @@ pub(crate) enum ModuleSlot {
   /// A module, with source code.
   Module(Module),
   /// When trying to load or parse the module, an error occurred.
-  Err(ModuleGraphError),
+  Err(ModuleError),
   /// An internal state set when loading a module asynchronously.
   Pending,
 }
@@ -796,10 +812,8 @@ impl ModuleSlot {
   }
 }
 
-type ModuleResult<'a> = (
-  &'a ModuleSpecifier,
-  Result<&'a Module, &'a ModuleGraphError>,
-);
+type ModuleResult<'a> =
+  (&'a ModuleSpecifier, Result<&'a Module, &'a ModuleError>);
 
 /// Convert a module slot entry into a result which contains the resolved
 /// module specifier, module kind, and media type or the module graph error.
@@ -881,7 +895,7 @@ pub struct BuildOptions<'a> {
 #[derive(Debug, Copy, Clone)]
 pub enum ModuleEntryRef<'a> {
   Module(&'a Module),
-  Err(&'a ModuleGraphError),
+  Err(&'a ModuleError),
   Redirect(&'a ModuleSpecifier),
 }
 
@@ -1089,6 +1103,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
   fn check_resolution(
     &self,
     module: &EsmModule,
+    mode: ResolutionMode,
     specifier_text: &str,
     resolution: &Resolution,
     is_dynamic: bool,
@@ -1098,7 +1113,8 @@ impl<'a> ModuleGraphErrorIterator<'a> {
         let referrer_scheme = module.specifier.scheme();
         let specifier_scheme = resolved.specifier.scheme();
         if referrer_scheme == "https" && specifier_scheme == "http" {
-          Some(ModuleGraphError::ResolutionError(
+          Some(ModuleGraphError::for_resolution_mode(
+            mode,
             ResolutionError::InvalidDowngrade {
               specifier: resolved.specifier.clone(),
               range: resolved.range.clone(),
@@ -1108,7 +1124,8 @@ impl<'a> ModuleGraphErrorIterator<'a> {
           && matches!(specifier_scheme, "file")
           && specifier_text.to_lowercase().starts_with("file://")
         {
-          Some(ModuleGraphError::ResolutionError(
+          Some(ModuleGraphError::for_resolution_mode(
+            mode,
             ResolutionError::InvalidLocalImport {
               specifier: resolved.specifier.clone(),
               range: resolved.range.clone(),
@@ -1119,8 +1136,9 @@ impl<'a> ModuleGraphErrorIterator<'a> {
             self.iterator.graph.resolve(&resolved.specifier);
           let module_slot =
             self.iterator.graph.module_slots.get(&resolved_specifier);
-          if let Some(ModuleSlot::Err(ModuleGraphError::ModuleError(
-            ModuleError::Missing(specifier, maybe_range),
+          if let Some(ModuleSlot::Err(ModuleError::Missing(
+            specifier,
+            maybe_range,
           ))) = module_slot
           {
             // we want to surface module missing errors as dynamic missing errors
@@ -1143,7 +1161,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
         }
       }
       Resolution::Err(err) => {
-        Some(ModuleGraphError::ResolutionError(*err.clone()))
+        Some(ModuleGraphError::for_resolution_mode(mode, *err.clone()))
       }
       Resolution::None => None,
     }
@@ -1175,6 +1193,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
               if let Some(dep) = module.maybe_types_dependency.as_ref() {
                 if let Some(err) = self.check_resolution(
                   module,
+                  ResolutionMode::Types,
                   &dep.specifier,
                   &dep.dependency,
                   false,
@@ -1187,6 +1206,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
               if follow_dynamic || !dep.is_dynamic {
                 if let Some(err) = self.check_resolution(
                   module,
+                  ResolutionMode::Execution,
                   specifier_text,
                   &dep.maybe_code,
                   dep.is_dynamic,
@@ -1196,6 +1216,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
                 if check_types {
                   if let Some(err) = self.check_resolution(
                     module,
+                    ResolutionMode::Types,
                     specifier_text,
                     &dep.maybe_type,
                     dep.is_dynamic,
@@ -1209,13 +1230,12 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
           ModuleEntryRef::Err(error) => {
             // ignore missing modules when following dynamic imports
             // because they will be resolved in place
-            let should_ignore = follow_dynamic
-              && matches!(
-                error,
-                ModuleGraphError::ModuleError(ModuleError::Missing { .. })
-              );
+            let should_ignore =
+              follow_dynamic && matches!(error, ModuleError::Missing { .. });
             if !should_ignore {
-              self.next_errors.push(error.clone());
+              self
+                .next_errors
+                .push(ModuleGraphError::ModuleError(error.clone()));
             }
           }
           _ => {}
@@ -1358,8 +1378,10 @@ impl ModuleGraph {
       .map_or(false, |ms| matches!(ms, ModuleSlot::Module(_)))
   }
 
-  /// Returns any errors that are in the module graph.
-  pub fn errors(&self) -> impl Iterator<Item = &ModuleGraphError> {
+  /// Returns any module errors found in the graph.
+  ///
+  /// NOTE: This does not return any resolution errors.
+  pub fn module_errors(&self) -> impl Iterator<Item = &ModuleError> {
     self.module_slots.values().filter_map(|ms| match ms {
       ModuleSlot::Err(err) => Some(err),
       ModuleSlot::Module(_) | ModuleSlot::Pending => None,
@@ -1510,7 +1532,7 @@ impl ModuleGraph {
   /// error.
   pub fn specifiers(
     &self,
-  ) -> impl Iterator<Item = (&ModuleSpecifier, Result<&Module, &ModuleGraphError>)>
+  ) -> impl Iterator<Item = (&ModuleSpecifier, Result<&Module, &ModuleError>)>
   {
     self.module_slots.iter().filter_map(to_result).chain(
       self.redirects.iter().filter_map(|(specifier, found)| {
@@ -1528,7 +1550,7 @@ impl ModuleGraph {
   pub fn try_get(
     &self,
     specifier: &ModuleSpecifier,
-  ) -> Result<Option<&Module>, &ModuleGraphError> {
+  ) -> Result<Option<&Module>, &ModuleError> {
     let specifier = self.resolve(specifier);
     match self.module_slots.get(&specifier) {
       Some(ModuleSlot::Module(module)) => Ok(Some(module)),
@@ -1670,7 +1692,7 @@ pub(crate) fn parse_module(
   is_root: bool,
   is_dynamic_branch: bool,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
-) -> Result<Module, ModuleGraphError> {
+) -> Result<Module, ModuleError> {
   let media_type =
     MediaType::from_specifier_and_headers(specifier, maybe_headers);
 
@@ -1694,22 +1716,18 @@ pub(crate) fn parse_module(
 
   if let Some(attribute_type) = maybe_attribute_type {
     if attribute_type.kind == "json" {
-      return Err(ModuleGraphError::ModuleError(
-        ModuleError::InvalidTypeAssertion {
-          specifier: specifier.clone(),
-          range: attribute_type.range,
-          actual_media_type: media_type,
-          expected_media_type: MediaType::Json,
-        },
-      ));
+      return Err(ModuleError::InvalidTypeAssertion {
+        specifier: specifier.clone(),
+        range: attribute_type.range,
+        actual_media_type: media_type,
+        expected_media_type: MediaType::Json,
+      });
     } else {
-      return Err(ModuleGraphError::ModuleError(
-        ModuleError::UnsupportedImportAttributeType {
-          specifier: specifier.clone(),
-          range: attribute_type.range,
-          kind: attribute_type.kind,
-        },
-      ));
+      return Err(ModuleError::UnsupportedImportAttributeType {
+        specifier: specifier.clone(),
+        range: attribute_type.range,
+        kind: attribute_type.kind,
+      });
     }
   }
 
@@ -1740,9 +1758,9 @@ pub(crate) fn parse_module(
             maybe_npm_resolver,
           )))
         }
-        Err(diagnostic) => Err(ModuleGraphError::ModuleError(
-          ModuleError::ParseErr(specifier.clone(), diagnostic),
-        )),
+        Err(diagnostic) => {
+          Err(ModuleError::ParseErr(specifier.clone(), diagnostic))
+        }
       }
     }
     MediaType::Unknown if is_root => {
@@ -1764,17 +1782,15 @@ pub(crate) fn parse_module(
             maybe_npm_resolver,
           )))
         }
-        Err(diagnostic) => Err(ModuleGraphError::ModuleError(
-          ModuleError::ParseErr(specifier.clone(), diagnostic),
-        )),
+        Err(diagnostic) => {
+          Err(ModuleError::ParseErr(specifier.clone(), diagnostic))
+        }
       }
     }
-    _ => Err(ModuleGraphError::ModuleError(
-      ModuleError::UnsupportedMediaType(
-        specifier.clone(),
-        media_type,
-        maybe_referrer,
-      ),
+    _ => Err(ModuleError::UnsupportedMediaType(
+      specifier.clone(),
+      media_type,
+      maybe_referrer,
     )),
   }
 }
@@ -2430,8 +2446,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           Ok(None) => {
             self.graph.module_slots.insert(
               specifier.clone(),
-              ModuleSlot::Err(ModuleGraphError::ModuleError(
-                ModuleError::Missing(specifier.clone(), maybe_range),
+              ModuleSlot::Err(ModuleError::Missing(
+                specifier.clone(),
+                maybe_range,
               )),
             );
             Some(specifier)
@@ -2439,12 +2456,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           Err(err) => {
             self.graph.module_slots.insert(
               specifier.clone(),
-              ModuleSlot::Err(ModuleGraphError::ModuleError(
-                ModuleError::LoadingErr(
-                  specifier.clone(),
-                  maybe_range,
-                  Arc::new(err),
-                ),
+              ModuleSlot::Err(ModuleError::LoadingErr(
+                specifier.clone(),
+                maybe_range,
+                Arc::new(err),
               )),
             );
             Some(specifier)
@@ -2548,13 +2563,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               } else {
                 self.graph.module_slots.insert(
                   pending_resolution.specifier.clone(),
-                  ModuleSlot::Err(ModuleGraphError::ModuleError(
-                    ModuleError::UnknownPackageReq {
-                      specifier: pending_resolution.specifier.clone(),
-                      maybe_range: pending_resolution.maybe_range.clone(),
-                      package_req: package_req.clone(),
-                    },
-                  )),
+                  ModuleSlot::Err(ModuleError::UnknownPackageReq {
+                    specifier: pending_resolution.specifier.clone(),
+                    maybe_range: pending_resolution.maybe_range.clone(),
+                    package_req: package_req.clone(),
+                  }),
                 );
               }
             }
@@ -2563,24 +2576,20 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Ok(None) => {
           self.graph.module_slots.insert(
             pending_resolution.specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::ModuleError(
-              ModuleError::UnknownPackage {
-                specifier: pending_resolution.specifier.clone(),
-                maybe_range: pending_resolution.maybe_range.clone(),
-                package_name: package_name.clone(),
-              },
-            )),
+            ModuleSlot::Err(ModuleError::UnknownPackage {
+              specifier: pending_resolution.specifier.clone(),
+              maybe_range: pending_resolution.maybe_range.clone(),
+              package_name: package_name.clone(),
+            }),
           );
         }
         Err(err) => {
           self.graph.module_slots.insert(
             pending_resolution.specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::ModuleError(
-              ModuleError::LoadingErr(
-                pending_resolution.specifier,
-                pending_resolution.maybe_range,
-                err.clone(),
-              ),
+            ModuleSlot::Err(ModuleError::LoadingErr(
+              pending_resolution.specifier,
+              pending_resolution.maybe_range,
+              err.clone(),
             )),
           );
         }
@@ -2631,12 +2640,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Err(err) => {
           self.graph.module_slots.insert(
             resolution_item.specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::ModuleError(
-              ModuleError::LoadingErr(
-                resolution_item.specifier,
-                resolution_item.maybe_range,
-                err.clone(),
-              ),
+            ModuleSlot::Err(ModuleError::LoadingErr(
+              resolution_item.specifier,
+              resolution_item.maybe_range,
+              err.clone(),
             )),
           );
         }
@@ -2676,13 +2683,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               // was setup incorrectly, so return an error
               self.graph.module_slots.insert(
                 item.specifier.clone(),
-                ModuleSlot::Err(ModuleGraphError::ModuleError(
+                ModuleSlot::Err(
                   ModuleError::LoadingErr(
                     item.specifier,
                     item.maybe_range,
                     Arc::new(anyhow!("Loader should never return an external specifier for a jsr: specifier.")),
                   ),
-                )),
+                ),
               );
             }
             LoadResponse::Module {
@@ -2725,14 +2732,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 // redirects are not supported
                 self.graph.module_slots.insert(
                   item.specifier.clone(),
-                  ModuleSlot::Err(ModuleGraphError::ModuleError(
-                    ModuleError::LoadingErr(
-                      item.specifier,
-                      item.maybe_range,
-                      Arc::new(anyhow!(
-                        "Redirects are not supported for the Deno registry."
-                      )),
-                    ),
+                  ModuleSlot::Err(ModuleError::LoadingErr(
+                    item.specifier,
+                    item.maybe_range,
+                    Arc::new(anyhow!(
+                      "Redirects are not supported for the Deno registry."
+                    )),
                   )),
                 );
               }
@@ -2742,20 +2747,19 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Ok(None) => {
           self.graph.module_slots.insert(
             item.specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::ModuleError(
-              ModuleError::Missing(item.specifier, item.maybe_range),
+            ModuleSlot::Err(ModuleError::Missing(
+              item.specifier,
+              item.maybe_range,
             )),
           );
         }
         Err(err) => {
           self.graph.module_slots.insert(
             item.specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::ModuleError(
-              ModuleError::LoadingErr(
-                item.specifier,
-                item.maybe_range,
-                Arc::new(err),
-              ),
+            ModuleSlot::Err(ModuleError::LoadingErr(
+              item.specifier,
+              item.maybe_range,
+              Arc::new(err),
             )),
           );
         }
@@ -2934,12 +2938,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Err(err) => {
           self.graph.module_slots.insert(
             specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::ModuleError(
-              ModuleError::LoadingErr(
-                specifier.clone(),
-                maybe_range,
-                Arc::new(err.into()),
-              ),
+            ModuleSlot::Err(ModuleError::LoadingErr(
+              specifier.clone(),
+              maybe_range,
+              Arc::new(err.into()),
             )),
           );
           return;
@@ -3009,12 +3011,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       Err(err) => {
         self.graph.module_slots.insert(
           specifier.clone(),
-          ModuleSlot::Err(ModuleGraphError::ModuleError(
-            ModuleError::LoadingErr(
-              specifier,
-              maybe_range,
-              Arc::new(err.into()),
-            ),
+          ModuleSlot::Err(ModuleError::LoadingErr(
+            specifier,
+            maybe_range,
+            Arc::new(err.into()),
           )),
         );
       }
@@ -3060,12 +3060,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       Err(err) => {
         self.graph.module_slots.insert(
           specifier.clone(),
-          ModuleSlot::Err(ModuleGraphError::ModuleError(
-            ModuleError::LoadingErr(
-              specifier,
-              maybe_range,
-              Arc::new(err.into()),
-            ),
+          ModuleSlot::Err(ModuleError::LoadingErr(
+            specifier,
+            maybe_range,
+            Arc::new(err.into()),
           )),
         );
       }
@@ -3498,12 +3496,10 @@ impl<'a> NpmSpecifierResolver<'a> {
           // load failure
           self.pending_info.module_slots.insert(
             item.specifier.clone(),
-            ModuleSlot::Err(ModuleGraphError::ModuleError(
-              ModuleError::LoadingErr(
-                item.specifier.clone(),
-                item.maybe_range.clone(),
-                err.clone(),
-              ),
+            ModuleSlot::Err(ModuleError::LoadingErr(
+              item.specifier.clone(),
+              item.maybe_range.clone(),
+              err.clone(),
             )),
           );
         }
@@ -3572,17 +3568,10 @@ impl<'a> NpmSpecifierResolver<'a> {
               | NpmPackageReqResolution::ReloadRegistryInfo(err) => {
                 self.pending_info.module_slots.insert(
                   item.specifier.clone(),
-                  ModuleSlot::Err(ModuleGraphError::ResolutionError(
-                    ResolutionError::ResolverError {
-                      error: Arc::new(ResolveError::Other(err)),
-                      specifier: item.specifier.to_string(),
-                      // this should always be set
-                      range: item.maybe_range.unwrap_or_else(|| Range {
-                        specifier: item.specifier,
-                        start: Position::zeroed(),
-                        end: Position::zeroed(),
-                      }),
-                    },
+                  ModuleSlot::Err(ModuleError::LoadingErr(
+                    item.specifier,
+                    item.maybe_range,
+                    Arc::new(err),
                   )),
                 );
               }
@@ -3590,14 +3579,12 @@ impl<'a> NpmSpecifierResolver<'a> {
           } else {
             self.pending_info.module_slots.insert(
               item.specifier.clone(),
-              ModuleSlot::Err(ModuleGraphError::ModuleError(
-                ModuleError::LoadingErr(
-                  item.specifier,
-                  item.maybe_range,
-                  Arc::new(anyhow::anyhow!(
-                    "npm specifiers are not supported in this environment"
-                  )),
-                ),
+              ModuleSlot::Err(ModuleError::LoadingErr(
+                item.specifier,
+                item.maybe_range,
+                Arc::new(anyhow::anyhow!(
+                  "npm specifiers are not supported in this environment"
+                )),
               )),
             );
           }
@@ -3932,7 +3919,7 @@ mod tests {
       graph
         .try_get(&Url::parse("file:///bar.js").unwrap())
         .unwrap_err(),
-      ModuleGraphError::ModuleError(ModuleError::Missing(..))
+      ModuleError::Missing(..)
     ));
     let specifiers = graph.specifiers().collect::<HashMap<_, _>>();
     assert_eq!(specifiers.len(), 2);
@@ -3946,7 +3933,7 @@ mod tests {
         .unwrap()
         .as_ref()
         .unwrap_err(),
-      ModuleGraphError::ModuleError(ModuleError::Missing(..))
+      ModuleError::Missing(..)
     ));
 
     // should not follow the dynamic import error when walking and not following
@@ -4038,7 +4025,7 @@ mod tests {
         .unwrap()
         .as_ref()
         .unwrap_err(),
-      ModuleGraphError::ModuleError(ModuleError::ParseErr(..))
+      ModuleError::ParseErr(..)
     ));
     assert!(matches!(
       specifiers
@@ -4046,7 +4033,7 @@ mod tests {
         .unwrap()
         .as_ref()
         .unwrap_err(),
-      ModuleGraphError::ModuleError(ModuleError::ParseErr(..))
+      ModuleError::ParseErr(..)
     ));
   }
 
