@@ -84,7 +84,7 @@ pub fn parse_module(
   maybe_resolver: Option<&dyn Resolver>,
   maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
-) -> Result<Module, ModuleGraphError> {
+) -> Result<Module, ModuleError> {
   let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
   let module_analyzer =
     maybe_module_analyzer.unwrap_or(&default_module_analyzer);
@@ -3896,5 +3896,84 @@ export function a(a: A): B {
         })
       );
     }
+  }
+
+  #[tokio::test]
+  async fn test_resolver_failed_types_only() {
+    #[derive(Debug)]
+    struct FailForTypesResolver;
+
+    impl crate::source::Resolver for FailForTypesResolver {
+      fn resolve(
+        &self,
+        specifier_text: &str,
+        referrer: &ModuleSpecifier,
+        mode: ResolutionMode,
+      ) -> Result<ModuleSpecifier, crate::source::ResolveError> {
+        match mode {
+          ResolutionMode::Execution => {
+            Ok(resolve_import(&specifier_text, referrer)?)
+          }
+          ResolutionMode::Types => Err(crate::source::ResolveError::Other(
+            anyhow::anyhow!("Failed."),
+          )),
+        }
+      }
+    }
+
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"
+            import a from "./a.js";
+            "#,
+          },
+        ),
+        (
+          "file:///a/a.js",
+          Source::Module {
+            specifier: "file:///a/a.js",
+            maybe_headers: None,
+            content: r#"export default 5;"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let resolver = FailForTypesResolver;
+
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &mut loader,
+        BuildOptions {
+          resolver: Some(&resolver),
+          ..Default::default()
+        },
+      )
+      .await;
+    let errors = graph
+      .walk(
+        &graph.roots,
+        WalkOptions {
+          check_js: true,
+          follow_type_only: true,
+          follow_dynamic: false,
+        },
+      )
+      .errors()
+      .collect::<Vec<_>>();
+    assert_eq!(errors.len(), 1);
+    assert!(matches!(
+      &errors[0],
+      ModuleGraphError::TypesResolutionError(_)
+    ));
   }
 }
