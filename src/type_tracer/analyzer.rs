@@ -1783,11 +1783,12 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
       TsModuleName::Ident(ident) => ident.to_id(),
       TsModuleName::Str(_) => return None, // ignore for now
     };
-    let mut mod_symbol_id =
+    let mod_symbol_id =
       file_module.ensure_symbol_for_swc_id(id.clone(), symbol_decl);
 
     // fill the exported declarations
     if let Some(body) = &n.body {
+      let mut mod_symbol_id = mod_symbol_id;
       let mut current = body;
       let block = loop {
         match current {
