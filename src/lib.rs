@@ -3912,7 +3912,7 @@ export function a(a: A): B {
       ) -> Result<ModuleSpecifier, crate::source::ResolveError> {
         match mode {
           ResolutionMode::Execution => {
-            Ok(resolve_import(&specifier_text, referrer)?)
+            Ok(resolve_import(specifier_text, referrer)?)
           }
           ResolutionMode::Types => Err(crate::source::ResolveError::Other(
             anyhow::anyhow!("Failed."),
