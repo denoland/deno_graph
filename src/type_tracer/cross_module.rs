@@ -87,6 +87,14 @@ fn go_to_definitions_internal<'a>(
           kind: DefinitionKind::Definition,
         });
       }
+      SymbolDeclKind::DefinitionPrivateFnImpl(_) => {
+        definitions.push(Definition {
+          module,
+          symbol,
+          symbol_decl: decl,
+          kind: DefinitionKind::Definition,
+        });
+      }
       SymbolDeclKind::Target(target_id) => {
         if let Some(symbol) = module
           .esm()

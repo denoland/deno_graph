@@ -239,6 +239,11 @@ pub enum SymbolDeclKind {
   TargetSelf,
   FileRef(FileDep),
   Definition(SymbolNode),
+  /// An implementation signature of a function where the function has
+  /// overloads. In this case, the implementation signature is considered
+  /// "private" and it's types are not traced, but we include it in the
+  /// information returned for deno_doc to use.
+  DefinitionPrivateFnImpl(SymbolNode),
 }
 
 impl SymbolDeclKind {
@@ -246,7 +251,8 @@ impl SymbolDeclKind {
     &self,
   ) -> Option<(SymbolNodeRef, &ParsedSource)> {
     match self {
-      SymbolDeclKind::Definition(SymbolNode(def)) => match def {
+      SymbolDeclKind::Definition(SymbolNode(def))
+      | SymbolDeclKind::DefinitionPrivateFnImpl(SymbolNode(def)) => match def {
         SymbolNodeInner::Json => None,
         SymbolNodeInner::ClassDecl(n) => {
           Some((SymbolNodeRef::ClassDecl(n.value()), n.source()))
@@ -427,10 +433,6 @@ impl Symbol {
       }
     }
     None
-  }
-
-  pub fn ranges(&self) -> impl Iterator<Item = SourceRange> + '_ {
-    self.decls().map(|d| d.range)
   }
 
   fn insert_decl(&mut self, symbol_decl: SymbolDecl) {
@@ -678,7 +680,14 @@ impl EsmModuleSymbol {
       .symbols
       .values()
       .filter(|symbol| symbol.is_public())
-      .flat_map(|symbol| symbol.decls().map(|d| d.range))
+      .flat_map(|symbol| {
+        symbol
+          .decls()
+          .filter(|d| {
+            !matches!(d.kind, SymbolDeclKind::DefinitionPrivateFnImpl(_))
+          })
+          .map(|d| d.range)
+      })
       .collect()
   }
 
@@ -988,8 +997,8 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
       last_override_key = current_override_key;
 
       if is_implementation_with_overloads {
-        // don't examine implementation signatures
-        continue;
+        self.handle_module_item_fn_overload(file_module, module_item);
+        continue; // don't fill the types on implementation signatures as they're private
       }
 
       self.fill_module_item(
@@ -1827,8 +1836,8 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
         last_override_key = current_override_key;
 
         if is_implementation_with_overloads {
-          // don't examine implementation signatures
-          continue;
+          self.handle_module_item_fn_overload(file_module, item);
+          continue; // don't fill the types on implementation signatures as they're private
         }
 
         self.fill_module_item(
@@ -2025,6 +2034,50 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
       }
     }
     Some(mod_symbol_id)
+  }
+
+  fn handle_module_item_fn_overload(
+    &self,
+    file_module: &mut EsmModuleSymbol,
+    module_item: &ModuleItem,
+  ) {
+    // For function implementations with overloads, only add them
+    // to the list of declarations, but don't examine their types
+    // as the types they use are private.
+    let (id, symbol_node, range) = match module_item {
+      ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export_decl)) => {
+        let fn_decl = match &export_decl.decl {
+          Decl::Fn(n) => n,
+          _ => unreachable!(),
+        };
+        (
+          fn_decl.ident.to_id(),
+          SymbolNodeInner::ExportDecl(
+            NodeRefBox::unsafe_new(&file_module.source, export_decl),
+            SymbolNodeInnerExportDecl::Fn(NodeRefBox::unsafe_new(
+              &file_module.source,
+              fn_decl,
+            )),
+          ),
+          module_item.range(),
+        )
+      }
+      ModuleItem::Stmt(Stmt::Decl(Decl::Fn(n))) => (
+        n.ident.to_id(),
+        SymbolNodeInner::FnDecl(NodeRefBox::unsafe_new(&file_module.source, n)),
+        n.range(),
+      ),
+      _ => unreachable!(), // shouldn't happen
+    };
+
+    // include the implementation signature in the collection of declarations
+    file_module.ensure_symbol_for_swc_id(
+      id,
+      SymbolDecl {
+        kind: SymbolDeclKind::DefinitionPrivateFnImpl(SymbolNode(symbol_node)),
+        range,
+      },
+    );
   }
 
   fn fill_ts_expr_with_type_args(
