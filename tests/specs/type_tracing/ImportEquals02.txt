@@ -208,7 +208,7 @@ file:///a.ts: EsmModuleSymbol {
     ),
     specifier: "file:///a.ts",
     child_decls: {
-        1,
+        0,
     },
     exports: {
         "A": 0,
