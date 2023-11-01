@@ -10,6 +10,7 @@ use crate::ModuleGraph;
 use crate::ModuleSpecifier;
 
 use super::analyzer::SymbolDeclKind;
+use super::analyzer::SymbolDep;
 use super::FileDep;
 use super::FileDepName;
 use super::ModuleSymbolRef;
@@ -33,6 +34,13 @@ pub struct Definition<'a> {
 }
 
 impl<'a> Definition<'a> {
+  pub fn unique_id(&self) -> UniqueSymbolId {
+    UniqueSymbolId {
+      module_id: self.module.module_id(),
+      symbol_id: self.symbol.symbol_id(),
+    }
+  }
+
   pub fn range(&self) -> &SourceRange {
     &self.symbol_decl.range
   }
@@ -112,31 +120,14 @@ fn go_to_definitions_internal<'a>(
         }
       }
       SymbolDeclKind::QualifiedTarget(target_id, parts) => {
-        if let Some(symbol_id) =
-          module.esm().unwrap().symbol_id_from_swc(target_id)
-        {
-          if let Ok(results) = resolve_qualified_name(
-            module_graph,
-            module,
-            symbol_id,
-            parts,
-            specifier_to_module,
-          ) {
-            for (specifier, symbol_id) in results {
-              if let Some(module_symbol) = specifier_to_module(&specifier) {
-                if let Some(symbol) = module_symbol.symbol(symbol_id) {
-                  definitions.extend(go_to_definitions_internal(
-                    module_graph,
-                    module_symbol,
-                    symbol,
-                    visited_symbols,
-                    specifier_to_module,
-                  ));
-                }
-              }
-            }
-          }
-        }
+        definitions.extend(go_to_id_and_parts_definitions(
+          module_graph,
+          module,
+          target_id,
+          parts,
+          specifier_to_module,
+          visited_symbols,
+        ));
       }
       SymbolDeclKind::FileRef(file_ref) => match &file_ref.name {
         FileDepName::Star => {
@@ -179,13 +170,135 @@ fn go_to_definitions_internal<'a>(
   definitions
 }
 
+/// A resolved `SymbolDep`.
+pub enum ResolvedSymbolDepEntry<'a> {
+  /// The definition of the symbol dep.
+  Definition(Definition<'a>),
+  /// If the symbol dep was an import type with no property access.
+  ///
+  /// Ex. `type MyType = typeof import("./my_module.ts");`
+  ImportType(ModuleSymbolRef<'a>),
+}
+
+pub fn resolve_symbol_dep<'a>(
+  module_graph: &ModuleGraph,
+  module: ModuleSymbolRef<'a>,
+  dep: &SymbolDep,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+) -> Vec<ResolvedSymbolDepEntry<'a>> {
+  match &dep {
+    SymbolDep::Id(id) => {
+      if let Some(symbol) = module.esm().and_then(|m| m.symbol_from_swc(id)) {
+        go_to_definitions(module_graph, module, symbol, specifier_to_module)
+          .into_iter()
+          .map(ResolvedSymbolDepEntry::Definition)
+          .collect()
+      } else {
+        Vec::new()
+      }
+    }
+    SymbolDep::QualifiedId(id, parts) => go_to_id_and_parts_definitions(
+      module_graph,
+      module,
+      id,
+      parts,
+      specifier_to_module,
+      &mut Default::default(),
+    )
+    .into_iter()
+    .map(ResolvedSymbolDepEntry::Definition)
+    .collect(),
+    SymbolDep::ImportType(import_specifier, parts) => {
+      let maybe_dep_specifier = module_graph.resolve_dependency(
+        import_specifier,
+        module.specifier(),
+        /* prefer types */ true,
+      );
+      let Some(module_symbol) =
+        maybe_dep_specifier.as_ref().and_then(specifier_to_module)
+      else {
+        return Vec::new();
+      };
+      if parts.is_empty() {
+        // an ImportType includes default exports
+        vec![ResolvedSymbolDepEntry::ImportType(module_symbol)]
+      } else {
+        let symbols = resolve_qualified_export_name(
+          module_graph,
+          module_symbol,
+          &parts[0],
+          &parts[1..],
+          specifier_to_module,
+        );
+        let mut visited_symbols = HashSet::new();
+        let mut definitions = Vec::new();
+        for (specifier, symbol_id) in symbols {
+          if let Some(module) = specifier_to_module(&specifier) {
+            if let Some(symbol) = module.esm().and_then(|m| m.symbol(symbol_id))
+            {
+              definitions.extend(
+                go_to_definitions_internal(
+                  module_graph,
+                  module,
+                  symbol,
+                  &mut visited_symbols,
+                  specifier_to_module,
+                )
+                .into_iter()
+                .map(ResolvedSymbolDepEntry::Definition),
+              );
+            }
+          }
+        }
+        definitions
+      }
+    }
+  }
+}
+
+fn go_to_id_and_parts_definitions<'a>(
+  module_graph: &ModuleGraph,
+  module: ModuleSymbolRef<'a>,
+  target_id: &deno_ast::swc::ast::Id,
+  parts: &[String],
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+  visited_symbols: &mut HashSet<UniqueSymbolId>,
+) -> Vec<Definition<'a>> {
+  let mut definitions = Vec::new();
+  if let Some(symbol_id) =
+    module.esm().and_then(|m| m.symbol_id_from_swc(target_id))
+  {
+    let results = resolve_qualified_name(
+      module_graph,
+      module,
+      symbol_id,
+      parts,
+      specifier_to_module,
+    );
+    for (specifier, symbol_id) in results {
+      if let Some(module_symbol) = specifier_to_module(&specifier) {
+        if let Some(symbol) = module_symbol.symbol(symbol_id) {
+          definitions.extend(go_to_definitions_internal(
+            module_graph,
+            module_symbol,
+            symbol,
+            visited_symbols,
+            specifier_to_module,
+          ));
+        }
+      }
+    }
+  }
+  definitions
+}
+
 pub fn resolve_qualified_export_name<'a>(
   graph: &ModuleGraph,
   module_symbol: ModuleSymbolRef<'a>,
   export_name: &str,
   parts: &[String],
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
-) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
+) -> Vec<(ModuleSpecifier, SymbolId)> {
   resolve_qualified_export_name_internal(
     graph,
     module_symbol,
@@ -203,7 +316,7 @@ fn resolve_qualified_export_name_internal<'a>(
   parts: &[String],
   visited_symbols: &mut HashSet<UniqueSymbolId>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
-) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
+) -> Vec<(ModuleSpecifier, SymbolId)> {
   let exports =
     exports_and_re_exports(graph, module_symbol, specifier_to_module);
   if let Some((module, symbol_id)) = exports.get(export_name) {
@@ -216,7 +329,7 @@ fn resolve_qualified_export_name_internal<'a>(
       specifier_to_module,
     )
   } else {
-    Ok(Vec::new())
+    Vec::new()
   }
 }
 
@@ -226,7 +339,7 @@ pub fn resolve_qualified_name<'a>(
   symbol_id: SymbolId,
   parts: &[String],
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
-) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
+) -> Vec<(ModuleSpecifier, SymbolId)> {
   resolve_qualified_name_internal(
     graph,
     module_symbol,
@@ -244,9 +357,9 @@ fn resolve_qualified_name_internal<'a>(
   parts: &[String],
   visited_symbols: &mut HashSet<UniqueSymbolId>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
-) -> Result<Vec<(ModuleSpecifier, SymbolId)>> {
+) -> Vec<(ModuleSpecifier, SymbolId)> {
   if parts.is_empty() {
-    return Ok(vec![(module_symbol.specifier().clone(), symbol_id)]);
+    return vec![(module_symbol.specifier().clone(), symbol_id)];
   }
 
   let mut result = Vec::new();
@@ -272,7 +385,7 @@ fn resolve_qualified_name_internal<'a>(
                 &parts[1..],
                 visited_symbols,
                 specifier_to_module,
-              )?);
+              ));
             }
           }
           DefinitionKind::ExportStar(file_dep) => {
@@ -290,15 +403,15 @@ fn resolve_qualified_name_internal<'a>(
                   &parts[1..],
                   visited_symbols,
                   specifier_to_module,
-                )?);
+                ));
               }
             }
           }
         }
       }
-      Ok(result)
+      result
     }
-    None => Ok(Vec::new()),
+    None => Vec::new(),
   }
 }
 
