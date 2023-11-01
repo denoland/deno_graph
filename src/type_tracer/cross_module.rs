@@ -2,7 +2,6 @@
 
 use std::collections::HashSet;
 
-use anyhow::Result;
 use deno_ast::SourceRange;
 use indexmap::IndexMap;
 
