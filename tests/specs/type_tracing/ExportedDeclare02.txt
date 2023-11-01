@@ -29,7 +29,6 @@ file:///mod.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -53,7 +52,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -76,8 +74,6 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {},
 }
 == export definitions ==
 [bar]: file:///mod.ts:32..56

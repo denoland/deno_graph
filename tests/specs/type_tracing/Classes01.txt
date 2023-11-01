@@ -137,7 +137,6 @@ file:///mod.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -168,7 +167,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -192,7 +190,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         2: Symbol {
             symbol_id: 2,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -223,7 +220,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         3: Symbol {
             symbol_id: 3,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -302,7 +298,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         4: Symbol {
             symbol_id: 4,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -326,7 +321,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         5: Symbol {
             symbol_id: 5,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -350,7 +344,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         6: Symbol {
             symbol_id: 6,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -374,7 +367,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         7: Symbol {
             symbol_id: 7,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -398,7 +390,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         8: Symbol {
             symbol_id: 8,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -422,7 +413,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         9: Symbol {
             symbol_id: 9,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -446,7 +436,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         10: Symbol {
             symbol_id: 10,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -470,7 +459,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         11: Symbol {
             symbol_id: 11,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -494,7 +482,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         12: Symbol {
             symbol_id: 12,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -518,7 +505,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         13: Symbol {
             symbol_id: 13,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -542,7 +528,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         14: Symbol {
             symbol_id: 14,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -565,8 +550,6 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {},
 }
 == export definitions ==
 [A]: file:///mod.ts:0..26

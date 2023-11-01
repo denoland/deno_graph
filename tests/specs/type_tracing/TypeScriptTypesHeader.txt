@@ -66,7 +66,6 @@ file:///mod.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -93,7 +92,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -120,7 +118,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         2: Symbol {
             symbol_id: 2,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -147,7 +144,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         3: Symbol {
             symbol_id: 3,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -189,12 +185,135 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {},
+}
+file:///other.d.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///other.d.ts",
+    child_decls: {
+        0,
+    },
+    exports: {
+        "MyInterface2": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "MyInterface2",
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            46,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "MyInterface2",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "b",
+                        #0,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+file:///other.js: EsmModuleSymbol {
+    module_id: ModuleId(
+        2,
+    ),
+    specifier: "file:///other.js",
+    child_decls: {},
+    exports: {},
+    re_exports: [],
+    swc_id_to_symbol_id: {},
+    symbols: {},
+}
+file:///typescript.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        3,
+    ),
+    specifier: "file:///typescript.ts",
+    child_decls: {
+        0,
+    },
+    exports: {
+        "MyInterface3": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "MyInterface3",
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            46,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "MyInterface3",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "c",
+                        #0,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+    },
 }
 https://localhost/mod.d.ts: EsmModuleSymbol {
     module_id: ModuleId(
-        1,
+        4,
     ),
     specifier: "https://localhost/mod.d.ts",
     child_decls: {
@@ -219,7 +338,6 @@ https://localhost/mod.d.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -256,7 +374,6 @@ https://localhost/mod.d.ts: EsmModuleSymbol {
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -292,39 +409,28 @@ https://localhost/mod.d.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            0,
-        ): Named(
-            {
-                "MyInterface",
-            },
-        ),
-    },
 }
-file:///other.d.ts: EsmModuleSymbol {
+https://localhost/mod.js: EsmModuleSymbol {
     module_id: ModuleId(
-        2,
+        5,
     ),
-    specifier: "file:///other.d.ts",
+    specifier: "https://localhost/mod.js",
     child_decls: {
         0,
     },
     exports: {
-        "MyInterface2": 0,
+        "Dummy": 0,
     },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            "MyInterface2",
+            "Dummy",
             #2,
         ): 0,
     },
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -332,7 +438,7 @@ file:///other.d.ts: EsmModuleSymbol {
                             0,
                         ),
                         end: SourcePos(
-                            46,
+                            21,
                         ),
                     },
                     kind: Definition(
@@ -342,101 +448,10 @@ file:///other.d.ts: EsmModuleSymbol {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "MyInterface2",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "b",
-                        #0,
-                    ),
-                ),
-            },
+            deps: {},
             child_decls: {},
             exports: {},
         },
-    },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            0,
-        ): Named(
-            {
-                "MyInterface2",
-            },
-        ),
-    },
-}
-file:///typescript.ts: EsmModuleSymbol {
-    module_id: ModuleId(
-        3,
-    ),
-    specifier: "file:///typescript.ts",
-    child_decls: {
-        0,
-    },
-    exports: {
-        "MyInterface3": 0,
-    },
-    re_exports: [],
-    swc_id_to_symbol_id: {
-        (
-            "MyInterface3",
-            #2,
-        ): 0,
-    },
-    symbols: {
-        0: Symbol {
-            symbol_id: 0,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            46,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {
-                Id(
-                    (
-                        "MyInterface3",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "c",
-                        #0,
-                    ),
-                ),
-            },
-            child_decls: {},
-            exports: {},
-        },
-    },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            0,
-        ): Named(
-            {
-                "MyInterface3",
-            },
-        ),
     },
 }
 == export definitions ==

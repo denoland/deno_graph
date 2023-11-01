@@ -2,8 +2,6 @@
 
 use std::borrow::Cow;
 use std::cell::RefCell;
-use std::collections::HashMap;
-use std::collections::HashSet;
 use std::hash::Hash;
 use std::hash::Hasher;
 
@@ -12,6 +10,7 @@ use deno_ast::swc::ast::*;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::utils::find_pat_ids;
 use deno_ast::swc::visit::*;
+use deno_ast::LineAndColumnDisplay;
 use deno_ast::ModuleSpecifier;
 use deno_ast::ParsedSource;
 use deno_ast::SourcePos;
@@ -20,6 +19,8 @@ use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::CapturingModuleParser;
 use crate::EsmModule;
@@ -28,28 +29,54 @@ use crate::ModuleGraph;
 use crate::ModuleParser;
 
 use super::collections::AdditiveOnlyMap;
-use super::collections::LockableRefCell;
 use super::cross_module;
 use super::cross_module::Definition;
-use super::ImportedExports;
 use super::ResolvedSymbolDepEntry;
-use super::TypeTraceDiagnostic;
-use super::TypeTraceDiagnosticKind;
-use super::TypeTraceHandler;
 
-#[derive(Clone)]
-pub struct RootSymbol {
-  specifiers_to_ids: HashMap<ModuleSpecifier, ModuleId>,
-  ids_to_symbols: HashMap<ModuleId, ModuleSymbol>,
+pub struct RootSymbol<'a> {
+  module_graph: &'a ModuleGraph,
+  parser: &'a CapturingModuleParser<'a>,
+  specifiers_to_ids: AdditiveOnlyMap<ModuleSpecifier, ModuleId>,
+  ids_to_symbols: AdditiveOnlyMap<ModuleId, ModuleSymbol>,
+  diagnostics: RefCell<Vec<TypeTraceDiagnostic>>,
 }
 
-impl RootSymbol {
+impl<'a> RootSymbol<'a> {
+  pub fn new(
+    module_graph: &'a ModuleGraph,
+    parser: &'a CapturingModuleParser<'a>,
+  ) -> Self {
+    Self {
+      module_graph,
+      parser,
+      specifiers_to_ids: Default::default(),
+      ids_to_symbols: Default::default(),
+      diagnostics: Default::default(),
+    }
+  }
+
   pub fn get_module_from_specifier(
     &self,
     specifier: &ModuleSpecifier,
   ) -> Option<ModuleSymbolRef> {
-    let id = self.specifiers_to_ids.get(specifier)?;
-    self.ids_to_symbols.get(id).map(|m| m.as_ref())
+    if let Some(module_id) = self.specifiers_to_ids.get(specifier) {
+      let module_symbol = self.ids_to_symbols.get(module_id).unwrap();
+      return Some(module_symbol.as_ref());
+    }
+
+    let Some(graph_module) = self.module_graph.get(specifier) else {
+      return None;
+    };
+
+    match graph_module {
+      crate::Module::Esm(esm_module) => self.analyze_esm_module(esm_module),
+      crate::Module::Json(json_module) => {
+        Some(self.analyze_json_module(json_module))
+      }
+      crate::Module::Npm(_)
+      | crate::Module::Node(_)
+      | crate::Module::External(_) => None,
+    }
   }
 
   pub fn get_module_from_id(
@@ -59,55 +86,128 @@ impl RootSymbol {
     self.ids_to_symbols.get(&module_id).map(|s| s.as_ref())
   }
 
-  pub fn into_specifier_map(self) -> IndexMap<ModuleSpecifier, ModuleSymbol> {
-    use std::collections::BTreeMap;
-
-    let ids_to_symbols =
-      self.ids_to_symbols.into_iter().collect::<BTreeMap<_, _>>();
-    let mut result = IndexMap::default();
-    for (id, symbol) in ids_to_symbols {
-      // todo(dsherret): improve
-      result.insert(
-        self
-          .specifiers_to_ids
-          .iter()
-          .find(|(_, v)| **v == id)
-          .unwrap()
-          .0
-          .clone(),
-        symbol,
-      );
-    }
-
-    result
-  }
-
-  pub fn go_to_definitions<'a>(
-    &'a self,
-    module_graph: &ModuleGraph,
-    module: ModuleSymbolRef<'a>,
-    symbol: &'a Symbol,
-  ) -> Vec<Definition<'a>> {
+  pub fn go_to_definitions<'b>(
+    &'b self,
+    module: ModuleSymbolRef<'b>,
+    symbol: &'b Symbol,
+  ) -> Vec<Definition<'b>> {
     super::cross_module::go_to_definitions(
-      module_graph,
+      self.module_graph,
       module,
       symbol,
       &|specifier| self.get_module_from_specifier(specifier),
     )
   }
 
-  pub fn resolve_symbol_dep<'a>(
-    &'a self,
-    module_graph: &ModuleGraph,
-    module: ModuleSymbolRef<'a>,
-    dep: &'a SymbolDep,
-  ) -> Vec<ResolvedSymbolDepEntry<'a>> {
+  pub fn resolve_symbol_dep<'b>(
+    &'b self,
+    module: ModuleSymbolRef<'b>,
+    dep: &'b SymbolDep,
+  ) -> Vec<ResolvedSymbolDepEntry<'b>> {
     super::cross_module::resolve_symbol_dep(
-      module_graph,
+      self.module_graph,
       module,
       dep,
       &|specifier| self.get_module_from_specifier(specifier),
     )
+  }
+
+  fn analyze_esm_module(
+    &self,
+    esm_module: &EsmModule,
+  ) -> Option<ModuleSymbolRef> {
+    let Ok(source) = self.parsed_source(esm_module) else {
+      return None;
+    };
+    let specifier = &esm_module.specifier;
+    let module = source.module();
+    let mut module_symbol = EsmModuleSymbol {
+      specifier: specifier.clone(),
+      module_id: ModuleId(self.ids_to_symbols.len() as u32),
+      source: source.clone(),
+      next_symbol_id: Default::default(),
+      child_decls: Default::default(),
+      exports: Default::default(),
+      re_exports: Default::default(),
+      swc_id_to_symbol_id: Default::default(),
+      symbols: Default::default(),
+    };
+
+    let mut filler = SymbolFiller {
+      source: &source,
+      specifier,
+      diagnostics: Vec::new(),
+    };
+    filler.fill_module(&mut module_symbol, module);
+    if !filler.diagnostics.is_empty() {
+      self.diagnostics.borrow_mut().extend(filler.diagnostics);
+    }
+    Some(self.finalize_insert(ModuleSymbol::Esm(module_symbol)))
+  }
+
+  fn analyze_json_module(&self, json_module: &JsonModule) -> ModuleSymbolRef {
+    let specifier = &json_module.specifier;
+    // it's not ideal having to use SourceTextInfo here, but it makes
+    // it easier to interop with ParsedSource
+    let source_text_info = SourceTextInfo::new(json_module.source.clone());
+    let range = source_text_info.range();
+    let module_symbol = JsonModuleSymbol {
+      specifier: specifier.clone(),
+      module_id: ModuleId(self.ids_to_symbols.len() as u32),
+      exports: IndexMap::from([("default".to_string(), SymbolId(0))]),
+      default_symbol: Symbol {
+        symbol_id: SymbolId(0),
+        decls: {
+          let range = {
+            let source = source_text_info.text_str();
+            let start_whitespace_len = source.len() - source.trim_start().len();
+            let end_whitespace_len = source.len() - source.trim_end().len();
+            SourceRange::new(
+              range.start + start_whitespace_len,
+              range.end - end_whitespace_len,
+            )
+          };
+          IndexMap::from([(
+            range,
+            SymbolDecl {
+              range,
+              kind: SymbolDeclKind::Definition(SymbolNode(
+                SymbolNodeInner::Json,
+              )),
+            },
+          )])
+        },
+        deps: Default::default(),
+        child_decls: Default::default(),
+        exports: Default::default(),
+      },
+      source_text_info,
+    };
+    self.finalize_insert(ModuleSymbol::Json(Box::new(module_symbol)))
+  }
+
+  fn finalize_insert(&self, module_symbol: ModuleSymbol) -> ModuleSymbolRef {
+    self
+      .specifiers_to_ids
+      .insert(module_symbol.specifier().clone(), module_symbol.module_id());
+    let module_id = module_symbol.module_id();
+    self.ids_to_symbols.insert(module_id, module_symbol);
+    self.ids_to_symbols.get(&module_id).unwrap().as_ref()
+  }
+
+  fn parsed_source(
+    &self,
+    graph_module: &EsmModule,
+  ) -> Result<ParsedSource, deno_ast::Diagnostic> {
+    self.parser.parse_module(
+      &graph_module.specifier,
+      graph_module.source.clone(),
+      graph_module.media_type,
+    )
+  }
+
+  pub fn take_diagnostics(&self) -> Vec<TypeTraceDiagnostic> {
+    std::mem::take(&mut *self.diagnostics.borrow_mut())
   }
 }
 
@@ -369,7 +469,6 @@ impl From<Id> for SymbolDep {
 #[derive(Clone)]
 pub struct Symbol {
   symbol_id: SymbolId,
-  is_public: RefCell<bool>,
   // todo(dsherret): the IndexMap is just to prevent duplicates
   // a better solution should be thought out
   decls: IndexMap<SourceRange, SymbolDecl>,
@@ -383,7 +482,6 @@ impl std::fmt::Debug for Symbol {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.debug_struct("Symbol")
       .field("symbol_id", &self.symbol_id)
-      .field("is_public", &*self.is_public.borrow())
       .field("decls", &self.decls.values().collect::<Vec<_>>())
       .field("deps", &self.deps)
       .field("child_decls", &self.child_decls)
@@ -396,7 +494,6 @@ impl Symbol {
   pub fn new(symbol_id: SymbolId) -> Self {
     Symbol {
       symbol_id,
-      is_public: Default::default(),
       decls: Default::default(),
       deps: Default::default(),
       child_decls: Default::default(),
@@ -406,19 +503,6 @@ impl Symbol {
 
   pub fn symbol_id(&self) -> SymbolId {
     self.symbol_id
-  }
-
-  pub fn is_public(&self) -> bool {
-    *self.is_public.borrow()
-  }
-
-  pub(crate) fn mark_public(&self) -> bool {
-    if self.is_public() {
-      false
-    } else {
-      *self.is_public.borrow_mut() = true;
-      true
-    }
   }
 
   pub fn export(&self, name: &str) -> Option<SymbolId> {
@@ -662,8 +746,6 @@ pub struct EsmModuleSymbol {
   // note: not all symbol ids have an swc id. For example, default exports
   swc_id_to_symbol_id: IndexMap<Id, SymbolId>,
   symbols: IndexMap<SymbolId, Symbol>,
-  traced_re_exports: LockableRefCell<IndexMap<String, UniqueSymbolId>>,
-  traced_referrers: LockableRefCell<IndexMap<ModuleId, ImportedExports>>,
 }
 
 impl std::fmt::Debug for EsmModuleSymbol {
@@ -676,8 +758,6 @@ impl std::fmt::Debug for EsmModuleSymbol {
       .field("re_exports", &self.re_exports)
       .field("swc_id_to_symbol_id", &self.swc_id_to_symbol_id)
       .field("symbols", &self.symbols)
-      .field("traced_re_exports", &self.traced_re_exports.borrow())
-      .field("traced_referrers", &self.traced_referrers.borrow())
       .finish()
   }
 }
@@ -697,55 +777,6 @@ impl EsmModuleSymbol {
 
   pub fn source(&self) -> &ParsedSource {
     &self.source
-  }
-
-  pub fn public_source_ranges(&self) -> HashSet<SourceRange> {
-    self
-      .symbols
-      .values()
-      .filter(|symbol| symbol.is_public())
-      .flat_map(|symbol| {
-        symbol
-          .decls()
-          .filter(|d| {
-            !matches!(d.kind, SymbolDeclKind::DefinitionPrivateFnImpl(_))
-          })
-          .map(|d| d.range)
-      })
-      .collect()
-  }
-
-  /// Re-exports from this module that were found during tracing.
-  pub fn traced_re_exports(&self) -> &IndexMap<String, UniqueSymbolId> {
-    self.traced_re_exports.lock_and_get_ref()
-  }
-
-  pub(crate) fn add_traced_re_export(
-    &self,
-    name: String,
-    symbol: UniqueSymbolId,
-  ) {
-    self.traced_re_exports.borrow_mut().insert(name, symbol);
-  }
-
-  /// Referrers and their imported exports. This only includes referrers that
-  /// were found during tracing and not all referrers.
-  pub fn traced_referrers(&self) -> &IndexMap<ModuleId, ImportedExports> {
-    self.traced_referrers.lock_and_get_ref()
-  }
-
-  pub(crate) fn add_traced_referrer(
-    &self,
-    module_id: ModuleId,
-    imported_exports: ImportedExports,
-  ) {
-    let mut traced_referrers = self.traced_referrers.borrow_mut();
-    if let Some(current_imported_exports) = traced_referrers.get_mut(&module_id)
-    {
-      current_imported_exports.add(imported_exports);
-    } else {
-      traced_referrers.insert(module_id, imported_exports);
-    }
   }
 
   pub fn exports<'a>(
@@ -845,169 +876,30 @@ impl EsmModuleSymbol {
   }
 }
 
-pub struct TypeTraceModuleAnalyzer<'a, THandler: TypeTraceHandler> {
-  graph: &'a ModuleGraph,
-  parser: &'a CapturingModuleParser<'a>,
-  handler: &'a THandler,
-  modules: AdditiveOnlyMap<ModuleSpecifier, ModuleSymbol>,
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum TypeTraceDiagnosticKind {
+  UnsupportedDefaultExpr,
 }
 
-impl<'a, THandler: TypeTraceHandler> TypeTraceModuleAnalyzer<'a, THandler> {
-  pub fn new(
-    graph: &'a ModuleGraph,
-    parser: &'a CapturingModuleParser<'a>,
-    handler: &'a THandler,
-  ) -> Self {
-    Self {
-      handler,
-      parser,
-      graph,
-      modules: AdditiveOnlyMap::new(),
-    }
-  }
-
-  pub fn into_roots_graph_symbol(self) -> RootSymbol {
-    let modules = self.modules.take();
-    let mut specifiers_to_ids = HashMap::with_capacity(modules.len());
-    let mut ids_to_symbols = HashMap::with_capacity(modules.len());
-    for (specifier, symbol) in modules {
-      specifiers_to_ids.insert(specifier, symbol.module_id());
-      ids_to_symbols.insert(symbol.module_id(), *symbol);
-    }
-    RootSymbol {
-      specifiers_to_ids,
-      ids_to_symbols,
-    }
-  }
-
-  pub fn get_or_analyze<'b>(
-    &'b self,
-    specifier: &ModuleSpecifier,
-  ) -> Result<Option<ModuleSymbolRef<'b>>> {
-    if let Some(module_symbol) = self.modules.get(specifier) {
-      return Ok(Some(module_symbol.as_ref()));
-    }
-
-    let Some(graph_module) = self.graph.get(specifier) else {
-      return Ok(None);
-    };
-
-    match graph_module {
-      crate::Module::Esm(esm_module) => self.analyze_esm_module(esm_module),
-      crate::Module::Json(json_module) => self.analyze_json_module(json_module),
-      crate::Module::Npm(_)
-      | crate::Module::Node(_)
-      | crate::Module::External(_) => Ok(None),
-    }
-  }
-
-  fn analyze_esm_module(
-    &self,
-    esm_module: &EsmModule,
-  ) -> Result<Option<ModuleSymbolRef>, anyhow::Error> {
-    let Some(source) = self.parsed_source(esm_module)? else {
-      return Ok(None);
-    };
-    let specifier = &esm_module.specifier;
-    let module = source.module();
-    let mut module_symbol = EsmModuleSymbol {
-      specifier: specifier.clone(),
-      module_id: ModuleId(self.modules.len() as u32),
-      source: source.clone(),
-      next_symbol_id: Default::default(),
-      child_decls: Default::default(),
-      exports: Default::default(),
-      re_exports: Default::default(),
-      traced_re_exports: Default::default(),
-      traced_referrers: Default::default(),
-      swc_id_to_symbol_id: Default::default(),
-      symbols: Default::default(),
-    };
-
-    let filler = SymbolFiller {
-      source: &source,
-      specifier,
-      handler: self.handler,
-    };
-    filler.fill_module(&mut module_symbol, module);
-    self
-      .modules
-      .insert(specifier.clone(), ModuleSymbol::Esm(module_symbol));
-    Ok(Some(self.modules.get(specifier).unwrap().as_ref()))
-  }
-
-  fn analyze_json_module(
-    &self,
-    json_module: &JsonModule,
-  ) -> Result<Option<ModuleSymbolRef>, anyhow::Error> {
-    let specifier = &json_module.specifier;
-    // it's not ideal having to use SourceTextInfo here, but it makes
-    // it easier to interop with ParsedSource
-    let source_text_info = SourceTextInfo::new(json_module.source.clone());
-    let range = source_text_info.range();
-    let module_symbol = JsonModuleSymbol {
-      specifier: specifier.clone(),
-      module_id: ModuleId(self.modules.len() as u32),
-      exports: IndexMap::from([("default".to_string(), SymbolId(0))]),
-      default_symbol: Symbol {
-        symbol_id: SymbolId(0),
-        is_public: RefCell::new(false),
-        decls: {
-          let range = {
-            let source = source_text_info.text_str();
-            let start_whitespace_len = source.len() - source.trim_start().len();
-            let end_whitespace_len = source.len() - source.trim_end().len();
-            SourceRange::new(
-              range.start + start_whitespace_len,
-              range.end - end_whitespace_len,
-            )
-          };
-          IndexMap::from([(
-            range,
-            SymbolDecl {
-              range,
-              kind: SymbolDeclKind::Definition(SymbolNode(
-                SymbolNodeInner::Json,
-              )),
-            },
-          )])
-        },
-        deps: Default::default(),
-        child_decls: Default::default(),
-        exports: Default::default(),
-      },
-      source_text_info,
-    };
-    self.modules.insert(
-      specifier.clone(),
-      ModuleSymbol::Json(Box::new(module_symbol)),
-    );
-    Ok(Some(self.modules.get(specifier).unwrap().as_ref()))
-  }
-
-  fn parsed_source(
-    &self,
-    graph_module: &EsmModule,
-  ) -> Result<Option<ParsedSource>, deno_ast::Diagnostic> {
-    self
-      .parser
-      .parse_module(
-        &graph_module.specifier,
-        graph_module.source.clone(),
-        graph_module.media_type,
-      )
-      .map(Some)
-  }
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct TypeTraceDiagnostic {
+  pub kind: TypeTraceDiagnosticKind,
+  pub specifier: ModuleSpecifier,
+  pub line_and_column: Option<LineAndColumnDisplay>,
 }
 
-struct SymbolFiller<'a, THandler: TypeTraceHandler> {
-  handler: &'a THandler,
+struct SymbolFiller<'a> {
   specifier: &'a ModuleSpecifier,
   source: &'a ParsedSource,
+  diagnostics: Vec<TypeTraceDiagnostic>,
 }
 
-impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
-  fn fill_module(&self, file_module: &mut EsmModuleSymbol, module: &Module) {
+impl<'a> SymbolFiller<'a> {
+  fn fill_module(
+    &mut self,
+    file_module: &mut EsmModuleSymbol,
+    module: &Module,
+  ) {
     let mut last_was_overload = false;
     let mut last_override_key = 0;
     for module_item in &module.body {
@@ -1039,7 +931,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
   }
 
   fn fill_module_item(
-    &self,
+    &mut self,
     file_module: &mut EsmModuleSymbol,
     module_item: &ModuleItem,
     add_export: &impl Fn(&mut EsmModuleSymbol, String, SymbolId),
@@ -1650,7 +1542,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
   }
 
   fn handle_export_default_expr(
-    &self,
+    &mut self,
     default_export_range: SourceRange,
     expr: &Expr,
     maybe_parent: Option<&ExportDefaultExpr>,
@@ -1696,7 +1588,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
           .source
           .text_info()
           .line_and_column_display(default_export_range.start);
-        self.handler.diagnostic(TypeTraceDiagnostic {
+        self.diagnostics.push(TypeTraceDiagnostic {
           kind: TypeTraceDiagnosticKind::UnsupportedDefaultExpr,
           specifier: self.specifier.clone(),
           line_and_column: Some(line_and_column),
@@ -1798,7 +1690,7 @@ impl<'a, THandler: TypeTraceHandler> SymbolFiller<'a, THandler> {
   }
 
   fn fill_ts_module(
-    &self,
+    &mut self,
     file_module: &mut EsmModuleSymbol,
     symbol_decl: SymbolDecl,
     n: &TsModuleDecl,

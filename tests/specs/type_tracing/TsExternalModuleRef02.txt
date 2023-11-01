@@ -11,102 +11,6 @@ namespace MyNamespace {
 export = MyNamespace;
 
 # output
-file:///mod.ts: EsmModuleSymbol {
-    module_id: ModuleId(
-        0,
-    ),
-    specifier: "file:///mod.ts",
-    child_decls: {},
-    exports: {
-        "default": 1,
-    },
-    re_exports: [],
-    swc_id_to_symbol_id: {
-        (
-            "A",
-            #2,
-        ): 0,
-    },
-    symbols: {
-        0: Symbol {
-            symbol_id: 0,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            29,
-                        ),
-                    },
-                    kind: FileRef(
-                        FileDep {
-                            name: Name(
-                                "default",
-                            ),
-                            specifier: "./a.ts",
-                        },
-                    ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            46,
-                        ),
-                        end: SourcePos(
-                            47,
-                        ),
-                    },
-                    kind: Target(
-                        (
-                            "A",
-                            #2,
-                        ),
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-        1: Symbol {
-            symbol_id: 1,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            31,
-                        ),
-                        end: SourcePos(
-                            48,
-                        ),
-                    },
-                    kind: Target(
-                        (
-                            "A",
-                            #2,
-                        ),
-                    ),
-                },
-            ],
-            deps: {
-                Id(
-                    (
-                        "A",
-                        #2,
-                    ),
-                ),
-            },
-            child_decls: {},
-            exports: {},
-        },
-    },
-    traced_re_exports: {},
-    traced_referrers: {},
-}
 file:///a.ts: EsmModuleSymbol {
     module_id: ModuleId(
         1,
@@ -132,7 +36,6 @@ file:///a.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -183,7 +86,6 @@ file:///a.ts: EsmModuleSymbol {
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -207,7 +109,6 @@ file:///a.ts: EsmModuleSymbol {
         },
         2: Symbol {
             symbol_id: 2,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -238,15 +139,97 @@ file:///a.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            0,
-        ): Named(
-            {
-                "default",
+}
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {},
+    exports: {
+        "default": 1,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "A",
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            29,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "default",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            46,
+                        ),
+                        end: SourcePos(
+                            47,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            "A",
+                            #2,
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            31,
+                        ),
+                        end: SourcePos(
+                            48,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            "A",
+                            #2,
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "A",
+                        #2,
+                    ),
+                ),
             },
-        ),
+            child_decls: {},
+            exports: {},
+        },
     },
 }
 == export definitions ==

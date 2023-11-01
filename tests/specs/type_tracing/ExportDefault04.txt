@@ -12,8 +12,6 @@ file:///mod.ts: EsmModuleSymbol {
     re_exports: [],
     swc_id_to_symbol_id: {},
     symbols: {},
-    traced_re_exports: {},
-    traced_referrers: {},
 }
 
 # diagnostics

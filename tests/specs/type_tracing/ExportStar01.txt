@@ -36,47 +36,6 @@ export default function Test() {
 }
 
 # output
-file:///mod.ts: EsmModuleSymbol {
-    module_id: ModuleId(
-        0,
-    ),
-    specifier: "file:///mod.ts",
-    child_decls: {},
-    exports: {
-        "namespace": 0,
-    },
-    re_exports: [],
-    swc_id_to_symbol_id: {},
-    symbols: {
-        0: Symbol {
-            symbol_id: 0,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            7,
-                        ),
-                        end: SourcePos(
-                            21,
-                        ),
-                    },
-                    kind: FileRef(
-                        FileDep {
-                            name: Star,
-                            specifier: "./a.ts",
-                        },
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-    },
-    traced_re_exports: {},
-    traced_referrers: {},
-}
 file:///a.ts: EsmModuleSymbol {
     module_id: ModuleId(
         1,
@@ -115,7 +74,6 @@ file:///a.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -142,7 +100,6 @@ file:///a.ts: EsmModuleSymbol {
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -169,7 +126,6 @@ file:///a.ts: EsmModuleSymbol {
         },
         2: Symbol {
             symbol_id: 2,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -196,7 +152,6 @@ file:///a.ts: EsmModuleSymbol {
         },
         3: Symbol {
             symbol_id: 3,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -227,7 +182,6 @@ file:///a.ts: EsmModuleSymbol {
         },
         4: Symbol {
             symbol_id: 4,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -258,7 +212,6 @@ file:///a.ts: EsmModuleSymbol {
         },
         5: Symbol {
             symbol_id: 5,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -282,7 +235,6 @@ file:///a.ts: EsmModuleSymbol {
         },
         6: Symbol {
             symbol_id: 6,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -305,12 +257,6 @@ file:///a.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            0,
-        ): Star,
-    },
 }
 file:///class.ts: EsmModuleSymbol {
     module_id: ModuleId(
@@ -331,7 +277,6 @@ file:///class.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -354,16 +299,6 @@ file:///class.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            1,
-        ): Named(
-            {
-                "default",
-            },
-        ),
-    },
 }
 file:///function.ts: EsmModuleSymbol {
     module_id: ModuleId(
@@ -384,7 +319,6 @@ file:///function.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -407,16 +341,6 @@ file:///function.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            1,
-        ): Named(
-            {
-                "default",
-            },
-        ),
-    },
 }
 file:///interface.ts: EsmModuleSymbol {
     module_id: ModuleId(
@@ -437,7 +361,6 @@ file:///interface.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -467,15 +390,43 @@ file:///interface.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            1,
-        ): Named(
-            {
-                "default",
-            },
-        ),
+}
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {},
+    exports: {
+        "namespace": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {},
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            7,
+                        ),
+                        end: SourcePos(
+                            21,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Star,
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
     },
 }
 == export definitions ==

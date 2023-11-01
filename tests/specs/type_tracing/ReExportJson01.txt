@@ -13,6 +13,38 @@ console.log(other);
 {}
 
 # output
+file:///bar.json: JsonModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///bar.json",
+    exports: {
+        "default": 0,
+    },
+    default_symbol: Symbol {
+        symbol_id: 0,
+        decls: [
+            SymbolDecl {
+                range: SourceRange {
+                    start: SourcePos(
+                        0,
+                    ),
+                    end: SourcePos(
+                        15,
+                    ),
+                },
+                kind: Definition(
+                    SymbolNode(
+                        "<omitted>",
+                    ),
+                ),
+            },
+        ],
+        deps: {},
+        child_decls: {},
+        exports: {},
+    },
+}
 file:///mod.ts: EsmModuleSymbol {
     module_id: ModuleId(
         0,
@@ -32,7 +64,6 @@ file:///mod.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -59,7 +90,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -85,20 +115,17 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {},
 }
-file:///bar.json: JsonModuleSymbol {
+file:///non_public.json: JsonModuleSymbol {
     module_id: ModuleId(
-        1,
+        2,
     ),
-    specifier: "file:///bar.json",
+    specifier: "file:///non_public.json",
     exports: {
         "default": 0,
     },
     default_symbol: Symbol {
         symbol_id: 0,
-        is_public: true,
         decls: [
             SymbolDecl {
                 range: SourceRange {
@@ -106,7 +133,7 @@ file:///bar.json: JsonModuleSymbol {
                         0,
                     ),
                     end: SourcePos(
-                        15,
+                        2,
                     ),
                 },
                 kind: Definition(

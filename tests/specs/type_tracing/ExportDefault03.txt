@@ -13,81 +13,6 @@ export class B {}
 export class B1 {}
 
 # output
-file:///mod.ts: EsmModuleSymbol {
-    module_id: ModuleId(
-        0,
-    ),
-    specifier: "file:///mod.ts",
-    child_decls: {
-        1,
-    },
-    exports: {
-        "Test2": 0,
-        "Test": 1,
-    },
-    re_exports: [],
-    swc_id_to_symbol_id: {
-        (
-            "Test",
-            #2,
-        ): 1,
-    },
-    symbols: {
-        0: Symbol {
-            symbol_id: 0,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            25,
-                        ),
-                    },
-                    kind: FileRef(
-                        FileDep {
-                            name: Name(
-                                "default",
-                            ),
-                            specifier: "./a.ts",
-                        },
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-        1: Symbol {
-            symbol_id: 1,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            44,
-                        ),
-                        end: SourcePos(
-                            64,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-    },
-    traced_re_exports: {},
-    traced_referrers: {},
-}
 file:///a.ts: EsmModuleSymbol {
     module_id: ModuleId(
         1,
@@ -107,7 +32,6 @@ file:///a.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -144,16 +68,6 @@ file:///a.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            0,
-        ): Named(
-            {
-                "default",
-            },
-        ),
-    },
 }
 file:///b.ts: EsmModuleSymbol {
     module_id: ModuleId(
@@ -182,7 +96,6 @@ file:///b.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -206,7 +119,6 @@ file:///b.ts: EsmModuleSymbol {
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -229,15 +141,76 @@ file:///b.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            1,
-        ): Named(
-            {
-                "B",
-            },
-        ),
+}
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {
+        1,
+    },
+    exports: {
+        "Test2": 0,
+        "Test": 1,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "Test",
+            #2,
+        ): 1,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            25,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "default",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            44,
+                        ),
+                        end: SourcePos(
+                            64,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
     },
 }
 == export definitions ==

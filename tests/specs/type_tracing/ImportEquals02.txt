@@ -25,183 +25,6 @@ namespace A.B {
 export { A };
 
 # output
-file:///mod.ts: EsmModuleSymbol {
-    module_id: ModuleId(
-        0,
-    ),
-    specifier: "file:///mod.ts",
-    child_decls: {
-        2,
-    },
-    exports: {
-        "MyExport": 1,
-    },
-    re_exports: [],
-    swc_id_to_symbol_id: {
-        (
-            "A",
-            #2,
-        ): 0,
-        (
-            "MyExport",
-            #2,
-        ): 1,
-        (
-            "Test",
-            #2,
-        ): 2,
-        (
-            "OtherInner",
-            #3,
-        ): 3,
-    },
-    symbols: {
-        0: Symbol {
-            symbol_id: 0,
-            is_public: false,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            10,
-                        ),
-                    },
-                    kind: FileRef(
-                        FileDep {
-                            name: Name(
-                                "A",
-                            ),
-                            specifier: "./a.ts",
-                        },
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-        1: Symbol {
-            symbol_id: 1,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            29,
-                        ),
-                        end: SourcePos(
-                            65,
-                        ),
-                    },
-                    kind: QualifiedTarget(
-                        (
-                            "Test",
-                            #2,
-                        ),
-                        [
-                            "Inner",
-                        ],
-                    ),
-                },
-            ],
-            deps: {
-                QualifiedId(
-                    (
-                        "Test",
-                        #2,
-                    ),
-                    [
-                        "Inner",
-                    ],
-                ),
-            },
-            child_decls: {},
-            exports: {},
-        },
-        2: Symbol {
-            symbol_id: 2,
-            is_public: false,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            67,
-                        ),
-                        end: SourcePos(
-                            152,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {
-                "Inner": 3,
-            },
-        },
-        3: Symbol {
-            symbol_id: 3,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            86,
-                        ),
-                        end: SourcePos(
-                            116,
-                        ),
-                    },
-                    kind: QualifiedTarget(
-                        (
-                            "A",
-                            #2,
-                        ),
-                        [
-                            "B",
-                            "Other",
-                        ],
-                    ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            119,
-                        ),
-                        end: SourcePos(
-                            150,
-                        ),
-                    },
-                    kind: TargetSelf,
-                },
-            ],
-            deps: {
-                QualifiedId(
-                    (
-                        "A",
-                        #2,
-                    ),
-                    [
-                        "B",
-                        "Other",
-                    ],
-                ),
-            },
-            child_decls: {},
-            exports: {},
-        },
-    },
-    traced_re_exports: {},
-    traced_referrers: {},
-}
 file:///a.ts: EsmModuleSymbol {
     module_id: ModuleId(
         1,
@@ -235,7 +58,6 @@ file:///a.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -290,7 +112,6 @@ file:///a.ts: EsmModuleSymbol {
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: false,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -331,7 +152,6 @@ file:///a.ts: EsmModuleSymbol {
         },
         2: Symbol {
             symbol_id: 2,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -414,7 +234,6 @@ file:///a.ts: EsmModuleSymbol {
         },
         3: Symbol {
             symbol_id: 3,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -437,8 +256,177 @@ file:///a.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {},
+}
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {
+        2,
+    },
+    exports: {
+        "MyExport": 1,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "A",
+            #2,
+        ): 0,
+        (
+            "MyExport",
+            #2,
+        ): 1,
+        (
+            "Test",
+            #2,
+        ): 2,
+        (
+            "OtherInner",
+            #3,
+        ): 3,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            10,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "A",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            29,
+                        ),
+                        end: SourcePos(
+                            65,
+                        ),
+                    },
+                    kind: QualifiedTarget(
+                        (
+                            "Test",
+                            #2,
+                        ),
+                        [
+                            "Inner",
+                        ],
+                    ),
+                },
+            ],
+            deps: {
+                QualifiedId(
+                    (
+                        "Test",
+                        #2,
+                    ),
+                    [
+                        "Inner",
+                    ],
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        2: Symbol {
+            symbol_id: 2,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            67,
+                        ),
+                        end: SourcePos(
+                            152,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {
+                "Inner": 3,
+            },
+        },
+        3: Symbol {
+            symbol_id: 3,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            86,
+                        ),
+                        end: SourcePos(
+                            116,
+                        ),
+                    },
+                    kind: QualifiedTarget(
+                        (
+                            "A",
+                            #2,
+                        ),
+                        [
+                            "B",
+                            "Other",
+                        ],
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            119,
+                        ),
+                        end: SourcePos(
+                            150,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {
+                QualifiedId(
+                    (
+                        "A",
+                        #2,
+                    ),
+                    [
+                        "B",
+                        "Other",
+                    ],
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+    },
 }
 == export definitions ==
 [MyExport]: file:///a.ts:18..65

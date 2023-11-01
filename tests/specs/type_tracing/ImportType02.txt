@@ -11,64 +11,6 @@ export default function test() {
 }
 
 # output
-file:///mod.ts: EsmModuleSymbol {
-    module_id: ModuleId(
-        0,
-    ),
-    specifier: "file:///mod.ts",
-    child_decls: {
-        0,
-    },
-    exports: {
-        "Test": 0,
-    },
-    re_exports: [],
-    swc_id_to_symbol_id: {
-        (
-            "Test",
-            #2,
-        ): 0,
-    },
-    symbols: {
-        0: Symbol {
-            symbol_id: 0,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            43,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {
-                Id(
-                    (
-                        "Test",
-                        #2,
-                    ),
-                ),
-                ImportType(
-                    "./a.ts",
-                    [],
-                ),
-            },
-            child_decls: {},
-            exports: {},
-        },
-    },
-    traced_re_exports: {},
-    traced_referrers: {},
-}
 file:///a.ts: EsmModuleSymbol {
     module_id: ModuleId(
         1,
@@ -95,7 +37,6 @@ file:///a.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -132,7 +73,6 @@ file:///a.ts: EsmModuleSymbol {
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -155,11 +95,60 @@ file:///a.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            1,
-        ): AllWithDefault,
+}
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {
+        0,
+    },
+    exports: {
+        "Test": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "Test",
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            43,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Test",
+                        #2,
+                    ),
+                ),
+                ImportType(
+                    "./a.ts",
+                    [],
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
     },
 }
 == export definitions ==

@@ -29,7 +29,6 @@ file:///mod.d.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -65,8 +64,50 @@ file:///mod.d.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {},
+}
+file:///mod.js: EsmModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///mod.js",
+    child_decls: {
+        0,
+    },
+    exports: {
+        "ShouldNotHaveThisInOutput": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "ShouldNotHaveThisInOutput",
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            37,
+                        ),
+                        end: SourcePos(
+                            78,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+    },
 }
 == export definitions ==
 [MyInterface]: file:///mod.d.ts:0..45

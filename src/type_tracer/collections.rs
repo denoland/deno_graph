@@ -13,13 +13,15 @@ pub struct AdditiveOnlyMap<K, V> {
   data: RefCell<HashMap<K, Box<V>>>,
 }
 
-impl<K, V> AdditiveOnlyMap<K, V> {
-  pub fn new() -> Self {
+impl<K, V> Default for AdditiveOnlyMap<K, V> {
+  fn default() -> Self {
     Self {
       data: Default::default(),
     }
   }
+}
 
+impl<K, V> AdditiveOnlyMap<K, V> {
   #[cfg(test)]
   pub fn with_capacity(capacity: usize) -> Self {
     Self {
@@ -29,10 +31,6 @@ impl<K, V> AdditiveOnlyMap<K, V> {
 
   pub fn len(&self) -> usize {
     self.data.borrow().len()
-  }
-
-  pub fn take(self) -> HashMap<K, Box<V>> {
-    self.data.into_inner()
   }
 }
 
@@ -55,55 +53,6 @@ impl<K: Eq + std::hash::Hash, V> AdditiveOnlyMap<K, V> {
         .map(|value_box| value_box.as_ref() as *const V)
         .map(|raw| &*raw)
     }
-  }
-}
-
-struct LockableCellInner<T> {
-  locked: bool,
-  data: T,
-}
-
-/// A refcell that can be "locked" to then be readonly.
-pub struct LockableRefCell<T>(RefCell<LockableCellInner<T>>);
-
-impl<T> LockableRefCell<T> {
-  pub fn new(data: T) -> Self {
-    Self(RefCell::new(LockableCellInner {
-      locked: false,
-      data,
-    }))
-  }
-
-  pub fn lock_and_get_ref(&self) -> &T {
-    self.0.borrow_mut().locked = true;
-    // SAFETY: This is made safe by the assertion that the
-    // cell cannot be borrowed mutably after it is locked.
-    unsafe {
-      let data = self.0.try_borrow_unguarded().unwrap();
-      &data.data
-    }
-  }
-
-  pub fn borrow(&self) -> std::cell::Ref<T> {
-    std::cell::Ref::map(self.0.borrow(), |inner| &inner.data)
-  }
-
-  pub fn borrow_mut(&self) -> std::cell::RefMut<T> {
-    let inner = self.0.borrow_mut();
-    assert!(!inner.locked, "Cannot mutate after the cell is locked.");
-    std::cell::RefMut::map(inner, |inner| &mut inner.data)
-  }
-}
-
-impl<T: Default> Default for LockableRefCell<T> {
-  fn default() -> Self {
-    Self::new(Default::default())
-  }
-}
-
-impl<T: Clone> Clone for LockableRefCell<T> {
-  fn clone(&self) -> Self {
-    Self::new(self.0.borrow().data.clone())
   }
 }
 

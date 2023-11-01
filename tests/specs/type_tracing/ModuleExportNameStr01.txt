@@ -13,49 +13,6 @@ export { MyClass as "some-name" } from "./c.ts";
 export class MyClass {}
 
 # output
-file:///mod.ts: EsmModuleSymbol {
-    module_id: ModuleId(
-        0,
-    ),
-    specifier: "file:///mod.ts",
-    child_decls: {},
-    exports: {
-        "someOtherName": 0,
-    },
-    re_exports: [],
-    swc_id_to_symbol_id: {},
-    symbols: {
-        0: Symbol {
-            symbol_id: 0,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            38,
-                        ),
-                    },
-                    kind: FileRef(
-                        FileDep {
-                            name: Name(
-                                "someName",
-                            ),
-                            specifier: "./a.ts",
-                        },
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-    },
-    traced_re_exports: {},
-    traced_referrers: {},
-}
 file:///a.ts: EsmModuleSymbol {
     module_id: ModuleId(
         1,
@@ -75,7 +32,6 @@ file:///a.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -112,16 +68,6 @@ file:///a.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            0,
-        ): Named(
-            {
-                "someName",
-            },
-        ),
-    },
 }
 file:///b.ts: EsmModuleSymbol {
     module_id: ModuleId(
@@ -137,7 +83,6 @@ file:///b.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -163,16 +108,6 @@ file:///b.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            1,
-        ): Named(
-            {
-                "some-name",
-            },
-        ),
-    },
 }
 file:///c.ts: EsmModuleSymbol {
     module_id: ModuleId(
@@ -195,7 +130,6 @@ file:///c.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -218,15 +152,45 @@ file:///c.ts: EsmModuleSymbol {
             exports: {},
         },
     },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            2,
-        ): Named(
-            {
-                "MyClass",
-            },
-        ),
+}
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {},
+    exports: {
+        "someOtherName": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {},
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            38,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "someName",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
     },
 }
 == export definitions ==

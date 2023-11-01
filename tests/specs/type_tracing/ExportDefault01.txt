@@ -41,6 +41,361 @@ export default function Test() {
 }
 
 # output
+file:///a.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///a.ts",
+    child_decls: {
+        4,
+        5,
+        6,
+    },
+    exports: {
+        "C1": 0,
+        "C2": 1,
+        "C3": 2,
+        "default": 3,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "Test",
+            #2,
+        ): 3,
+        (
+            "A",
+            #2,
+        ): 4,
+        (
+            "B",
+            #2,
+        ): 5,
+        (
+            "C",
+            #2,
+        ): 6,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            22,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "default",
+                            ),
+                            specifier: "./class.ts",
+                        },
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            53,
+                        ),
+                        end: SourcePos(
+                            66,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "default",
+                            ),
+                            specifier: "./function.ts",
+                        },
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        2: Symbol {
+            symbol_id: 2,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            100,
+                        ),
+                        end: SourcePos(
+                            113,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "default",
+                            ),
+                            specifier: "./interface.ts",
+                        },
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            140,
+                        ),
+                        end: SourcePos(
+                            182,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "A",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            184,
+                        ),
+                        end: SourcePos(
+                            220,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "B",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        5: Symbol {
+            symbol_id: 5,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            222,
+                        ),
+                        end: SourcePos(
+                            259,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        6: Symbol {
+            symbol_id: 6,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            261,
+                        ),
+                        end: SourcePos(
+                            272,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+file:///class.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        2,
+    ),
+    specifier: "file:///class.ts",
+    child_decls: {},
+    exports: {
+        "default": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "Test",
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            29,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+file:///function.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        3,
+    ),
+    specifier: "file:///function.ts",
+    child_decls: {},
+    exports: {
+        "default": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "Test",
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            34,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+file:///interface.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        4,
+    ),
+    specifier: "file:///interface.ts",
+    child_decls: {},
+    exports: {
+        "default": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "Test",
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            33,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Test",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
 file:///mod.ts: EsmModuleSymbol {
     module_id: ModuleId(
         0,
@@ -75,7 +430,6 @@ file:///mod.ts: EsmModuleSymbol {
     symbols: {
         0: Symbol {
             symbol_id: 0,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -118,7 +472,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         1: Symbol {
             symbol_id: 1,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -167,7 +520,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         2: Symbol {
             symbol_id: 2,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -216,7 +568,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         3: Symbol {
             symbol_id: 3,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -265,7 +616,6 @@ file:///mod.ts: EsmModuleSymbol {
         },
         4: Symbol {
             symbol_id: 4,
-            is_public: true,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -295,416 +645,6 @@ file:///mod.ts: EsmModuleSymbol {
             child_decls: {},
             exports: {},
         },
-    },
-    traced_re_exports: {},
-    traced_referrers: {},
-}
-file:///a.ts: EsmModuleSymbol {
-    module_id: ModuleId(
-        1,
-    ),
-    specifier: "file:///a.ts",
-    child_decls: {
-        4,
-        5,
-        6,
-    },
-    exports: {
-        "C1": 0,
-        "C2": 1,
-        "C3": 2,
-        "default": 3,
-    },
-    re_exports: [],
-    swc_id_to_symbol_id: {
-        (
-            "Test",
-            #2,
-        ): 3,
-        (
-            "A",
-            #2,
-        ): 4,
-        (
-            "B",
-            #2,
-        ): 5,
-        (
-            "C",
-            #2,
-        ): 6,
-    },
-    symbols: {
-        0: Symbol {
-            symbol_id: 0,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            22,
-                        ),
-                    },
-                    kind: FileRef(
-                        FileDep {
-                            name: Name(
-                                "default",
-                            ),
-                            specifier: "./class.ts",
-                        },
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-        1: Symbol {
-            symbol_id: 1,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            53,
-                        ),
-                        end: SourcePos(
-                            66,
-                        ),
-                    },
-                    kind: FileRef(
-                        FileDep {
-                            name: Name(
-                                "default",
-                            ),
-                            specifier: "./function.ts",
-                        },
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-        2: Symbol {
-            symbol_id: 2,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            100,
-                        ),
-                        end: SourcePos(
-                            113,
-                        ),
-                    },
-                    kind: FileRef(
-                        FileDep {
-                            name: Name(
-                                "default",
-                            ),
-                            specifier: "./interface.ts",
-                        },
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-        3: Symbol {
-            symbol_id: 3,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            140,
-                        ),
-                        end: SourcePos(
-                            182,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {
-                Id(
-                    (
-                        "A",
-                        #2,
-                    ),
-                ),
-            },
-            child_decls: {},
-            exports: {},
-        },
-        4: Symbol {
-            symbol_id: 4,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            184,
-                        ),
-                        end: SourcePos(
-                            220,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {
-                Id(
-                    (
-                        "B",
-                        #2,
-                    ),
-                ),
-            },
-            child_decls: {},
-            exports: {},
-        },
-        5: Symbol {
-            symbol_id: 5,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            222,
-                        ),
-                        end: SourcePos(
-                            259,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-        6: Symbol {
-            symbol_id: 6,
-            is_public: false,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            261,
-                        ),
-                        end: SourcePos(
-                            272,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-    },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            0,
-        ): Named(
-            {
-                "C3",
-                "C2",
-                "C1",
-                "default",
-            },
-        ),
-    },
-}
-file:///interface.ts: EsmModuleSymbol {
-    module_id: ModuleId(
-        2,
-    ),
-    specifier: "file:///interface.ts",
-    child_decls: {},
-    exports: {
-        "default": 0,
-    },
-    re_exports: [],
-    swc_id_to_symbol_id: {
-        (
-            "Test",
-            #2,
-        ): 0,
-    },
-    symbols: {
-        0: Symbol {
-            symbol_id: 0,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            33,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {
-                Id(
-                    (
-                        "Test",
-                        #2,
-                    ),
-                ),
-            },
-            child_decls: {},
-            exports: {},
-        },
-    },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            1,
-        ): Named(
-            {
-                "default",
-            },
-        ),
-    },
-}
-file:///function.ts: EsmModuleSymbol {
-    module_id: ModuleId(
-        3,
-    ),
-    specifier: "file:///function.ts",
-    child_decls: {},
-    exports: {
-        "default": 0,
-    },
-    re_exports: [],
-    swc_id_to_symbol_id: {
-        (
-            "Test",
-            #2,
-        ): 0,
-    },
-    symbols: {
-        0: Symbol {
-            symbol_id: 0,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            34,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-    },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            1,
-        ): Named(
-            {
-                "default",
-            },
-        ),
-    },
-}
-file:///class.ts: EsmModuleSymbol {
-    module_id: ModuleId(
-        4,
-    ),
-    specifier: "file:///class.ts",
-    child_decls: {},
-    exports: {
-        "default": 0,
-    },
-    re_exports: [],
-    swc_id_to_symbol_id: {
-        (
-            "Test",
-            #2,
-        ): 0,
-    },
-    symbols: {
-        0: Symbol {
-            symbol_id: 0,
-            is_public: true,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            29,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {},
-            child_decls: {},
-            exports: {},
-        },
-    },
-    traced_re_exports: {},
-    traced_referrers: {
-        ModuleId(
-            1,
-        ): Named(
-            {
-                "default",
-            },
-        ),
     },
 }
 == export definitions ==
