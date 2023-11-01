@@ -34,6 +34,7 @@ pub use self::analyzer::SymbolNodeRef;
 pub use self::analyzer::UniqueSymbolId;
 pub use self::cross_module::Definition;
 pub use self::cross_module::DefinitionKind;
+pub use self::cross_module::ResolvedSymbolDepEntry;
 
 mod analyzer;
 mod collections;
@@ -376,7 +377,7 @@ fn trace_module<THandler: TypeTraceHandler>(
                 &|specifier| {
                   context.analyzer.get_or_analyze(specifier).ok().flatten()
                 },
-              )?);
+              ));
             }
           }
           SymbolDep::ImportType(import_specifier, parts) => {
@@ -405,7 +406,7 @@ fn trace_module<THandler: TypeTraceHandler>(
                     &|specifier| {
                       context.analyzer.get_or_analyze(specifier).ok().flatten()
                     },
-                  )?);
+                  ));
                 }
               }
             }

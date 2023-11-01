@@ -32,6 +32,7 @@ use super::collections::LockableRefCell;
 use super::cross_module;
 use super::cross_module::Definition;
 use super::ImportedExports;
+use super::ResolvedSymbolDepEntry;
 use super::TypeTraceDiagnostic;
 use super::TypeTraceDiagnosticKind;
 use super::TypeTraceHandler;
@@ -91,6 +92,20 @@ impl RootSymbol {
       module_graph,
       module,
       symbol,
+      &|specifier| self.get_module_from_specifier(specifier),
+    )
+  }
+
+  pub fn resolve_symbol_dep<'a>(
+    &'a self,
+    module_graph: &ModuleGraph,
+    module: ModuleSymbolRef<'a>,
+    dep: &'a SymbolDep,
+  ) -> Vec<ResolvedSymbolDepEntry<'a>> {
+    super::cross_module::resolve_symbol_dep(
+      module_graph,
+      module,
+      dep,
       &|specifier| self.get_module_from_specifier(specifier),
     )
   }
@@ -444,6 +459,15 @@ impl Symbol {
 pub struct UniqueSymbolId {
   pub module_id: ModuleId,
   pub symbol_id: SymbolId,
+}
+
+impl UniqueSymbolId {
+  pub fn new(module_id: ModuleId, symbol_id: SymbolId) -> Self {
+    Self {
+      module_id,
+      symbol_id,
+    }
+  }
 }
 
 #[derive(Debug, Clone, Copy)]
