@@ -154,7 +154,7 @@ impl TestBuilder {
           graph.specifiers().map(|(s, _)| s).collect::<Vec<_>>();
         specifiers.sort_unstable();
         for specifier in specifiers {
-          let Some(module) = root_symbol.get_module_from_specifier(&specifier)
+          let Some(module) = root_symbol.get_module_from_specifier(specifier)
           else {
             continue;
           };
