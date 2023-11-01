@@ -90,11 +90,11 @@ async fn test_graph_specs() {
   }
 }
 
-#[cfg(feature = "type_tracing")]
+#[cfg(feature = "symbols")]
 #[tokio::test]
-async fn test_type_tracing_specs() {
+async fn test_symbols_specs() {
   for (test_file_path, spec) in
-    get_specs_in_dir(&PathBuf::from("./tests/specs/type_tracing"))
+    get_specs_in_dir(&PathBuf::from("./tests/specs/symbols"))
   {
     eprintln!("Running {}", test_file_path.display());
     let mut builder = TestBuilder::new();
@@ -120,7 +120,7 @@ async fn test_type_tracing_specs() {
       }
     });
 
-    let result = builder.trace().await.unwrap();
+    let result = builder.symbols().await.unwrap();
     let update_var = std::env::var("UPDATE");
     let diagnostics = result
       .diagnostics

@@ -5,8 +5,8 @@ mod ast;
 mod graph;
 mod module_specifier;
 
-#[cfg(feature = "type_tracing")]
-pub mod type_tracer;
+#[cfg(feature = "symbols")]
+pub mod symbols;
 
 pub mod packages;
 pub mod source;

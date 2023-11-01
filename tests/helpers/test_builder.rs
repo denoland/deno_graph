@@ -44,11 +44,11 @@ impl Loader for TestLoader {
   }
 }
 
-#[cfg(feature = "type_tracing")]
-pub mod tracing {
-  use deno_graph::type_tracer::TypeTraceDiagnostic;
+#[cfg(feature = "symbols")]
+pub mod symbols {
+  use deno_graph::symbols::TypeTraceDiagnostic;
 
-  pub struct TypeTraceResult {
+  pub struct SymbolsResult {
     pub output: String,
     pub diagnostics: Vec<TypeTraceDiagnostic>,
   }
@@ -119,9 +119,9 @@ impl TestBuilder {
     BuildResult { graph, diagnostics }
   }
 
-  #[cfg(feature = "type_tracing")]
-  pub async fn trace(&mut self) -> anyhow::Result<tracing::TypeTraceResult> {
-    use deno_graph::type_tracer::ModuleSymbolRef;
+  #[cfg(feature = "symbols")]
+  pub async fn symbols(&mut self) -> anyhow::Result<symbols::SymbolsResult> {
+    use deno_graph::symbols::ModuleSymbolRef;
 
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
@@ -143,8 +143,8 @@ impl TestBuilder {
     );
     let capturing_parser = capturing_analyzer.as_capturing_parser();
     let root_symbol =
-      deno_graph::type_tracer::RootSymbol::new(&graph, &capturing_parser);
-    Ok(tracing::TypeTraceResult {
+      deno_graph::symbols::RootSymbol::new(&graph, &capturing_parser);
+    Ok(symbols::SymbolsResult {
       output: {
         let entrypoint_symbol = root_symbol
           .get_module_from_specifier(&entry_point_types_url)
@@ -168,8 +168,8 @@ impl TestBuilder {
           ));
         }
         let get_symbol_text =
-          |module_symbol: deno_graph::type_tracer::ModuleSymbolRef,
-           symbol_id: deno_graph::type_tracer::SymbolId| {
+          |module_symbol: deno_graph::symbols::ModuleSymbolRef,
+           symbol_id: deno_graph::symbols::SymbolId| {
             let symbol = module_symbol.symbol(symbol_id).unwrap();
             let definitions =
               root_symbol.go_to_definitions(module_symbol, symbol);
