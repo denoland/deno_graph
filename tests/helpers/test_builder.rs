@@ -46,11 +46,11 @@ impl Loader for TestLoader {
 
 #[cfg(feature = "symbols")]
 pub mod symbols {
-  use deno_graph::symbols::TypeTraceDiagnostic;
+  use deno_graph::symbols::SymbolFillDiagnostic;
 
   pub struct SymbolsResult {
     pub output: String,
-    pub diagnostics: Vec<TypeTraceDiagnostic>,
+    pub diagnostics: Vec<SymbolFillDiagnostic>,
   }
 }
 

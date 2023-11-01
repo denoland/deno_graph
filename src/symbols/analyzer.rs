@@ -38,7 +38,7 @@ pub struct RootSymbol<'a> {
   parser: &'a CapturingModuleParser<'a>,
   specifiers_to_ids: AdditiveOnlyMap<ModuleSpecifier, ModuleId>,
   ids_to_symbols: AdditiveOnlyMap<ModuleId, ModuleSymbol>,
-  diagnostics: RefCell<Vec<TypeTraceDiagnostic>>,
+  diagnostics: RefCell<Vec<SymbolFillDiagnostic>>,
 }
 
 impl<'a> RootSymbol<'a> {
@@ -206,7 +206,7 @@ impl<'a> RootSymbol<'a> {
     )
   }
 
-  pub fn take_diagnostics(&self) -> Vec<TypeTraceDiagnostic> {
+  pub fn take_diagnostics(&self) -> Vec<SymbolFillDiagnostic> {
     std::mem::take(&mut *self.diagnostics.borrow_mut())
   }
 }
@@ -877,13 +877,13 @@ impl EsmModuleSymbol {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum TypeTraceDiagnosticKind {
+pub enum SymbolFillDiagnosticKind {
   UnsupportedDefaultExpr,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct TypeTraceDiagnostic {
-  pub kind: TypeTraceDiagnosticKind,
+pub struct SymbolFillDiagnostic {
+  pub kind: SymbolFillDiagnosticKind,
   pub specifier: ModuleSpecifier,
   pub line_and_column: Option<LineAndColumnDisplay>,
 }
@@ -891,7 +891,7 @@ pub struct TypeTraceDiagnostic {
 struct SymbolFiller<'a> {
   specifier: &'a ModuleSpecifier,
   source: &'a ParsedSource,
-  diagnostics: Vec<TypeTraceDiagnostic>,
+  diagnostics: Vec<SymbolFillDiagnostic>,
 }
 
 impl<'a> SymbolFiller<'a> {
@@ -1588,8 +1588,8 @@ impl<'a> SymbolFiller<'a> {
           .source
           .text_info()
           .line_and_column_display(default_export_range.start);
-        self.diagnostics.push(TypeTraceDiagnostic {
-          kind: TypeTraceDiagnosticKind::UnsupportedDefaultExpr,
+        self.diagnostics.push(SymbolFillDiagnostic {
+          kind: SymbolFillDiagnosticKind::UnsupportedDefaultExpr,
           specifier: self.specifier.clone(),
           line_and_column: Some(line_and_column),
         });
