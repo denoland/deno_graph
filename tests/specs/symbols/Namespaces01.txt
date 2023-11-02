@@ -110,6 +110,7 @@ file:///mod.ts: EsmModuleSymbol {
                 "test": 1,
                 "Inner": 2,
             },
+            members: {},
         },
         1: Symbol {
             symbol_id: 1,
@@ -133,6 +134,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         2: Symbol {
             symbol_id: 2,
@@ -173,6 +175,7 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {
                 "test2": 3,
             },
+            members: {},
         },
         3: Symbol {
             symbol_id: 3,
@@ -196,6 +199,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         4: Symbol {
             symbol_id: 4,
@@ -255,6 +259,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
         5: Symbol {
             symbol_id: 5,
@@ -316,6 +321,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
     },
 }

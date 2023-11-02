@@ -62,6 +62,7 @@ file:///mod.d.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
     },
 }
@@ -106,6 +107,7 @@ file:///mod.js: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
     },
 }

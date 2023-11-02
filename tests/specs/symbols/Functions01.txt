@@ -144,6 +144,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
         1: Symbol {
             symbol_id: 1,
@@ -167,6 +168,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         2: Symbol {
             symbol_id: 2,
@@ -190,6 +192,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         3: Symbol {
             symbol_id: 3,
@@ -213,6 +216,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         4: Symbol {
             symbol_id: 4,
@@ -236,6 +240,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         5: Symbol {
             symbol_id: 5,
@@ -308,6 +313,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
         6: Symbol {
             symbol_id: 6,
@@ -331,6 +337,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         7: Symbol {
             symbol_id: 7,
@@ -354,6 +361,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         8: Symbol {
             symbol_id: 8,
@@ -377,6 +385,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         9: Symbol {
             symbol_id: 9,
@@ -400,6 +409,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         10: Symbol {
             symbol_id: 10,
@@ -423,6 +433,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         11: Symbol {
             symbol_id: 11,
@@ -446,6 +457,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
     },
 }

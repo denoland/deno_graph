@@ -43,6 +43,7 @@ file:///bar.json: JsonModuleSymbol {
         deps: {},
         child_decls: {},
         exports: {},
+        members: {},
     },
 }
 file:///mod.ts: EsmModuleSymbol {
@@ -87,6 +88,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         1: Symbol {
             symbol_id: 1,
@@ -113,6 +115,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
     },
 }
@@ -146,6 +149,7 @@ file:///non_public.json: JsonModuleSymbol {
         deps: {},
         child_decls: {},
         exports: {},
+        members: {},
     },
 }
 == export definitions ==

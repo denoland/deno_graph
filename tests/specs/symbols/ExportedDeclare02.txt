@@ -49,6 +49,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         1: Symbol {
             symbol_id: 1,
@@ -72,6 +73,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
     },
 }

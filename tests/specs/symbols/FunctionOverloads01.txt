@@ -100,6 +100,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         1: Symbol {
             symbol_id: 1,
@@ -134,6 +135,7 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {
                 "inner": 2,
             },
+            members: {},
         },
         2: Symbol {
             symbol_id: 2,
@@ -187,6 +189,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
+            members: {},
         },
         3: Symbol {
             symbol_id: 3,
@@ -246,6 +249,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
     },
 }

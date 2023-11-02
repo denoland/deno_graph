@@ -103,6 +103,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
         1: Symbol {
             symbol_id: 1,
@@ -187,6 +188,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
         2: Symbol {
             symbol_id: 2,
@@ -217,6 +219,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
         3: Symbol {
             symbol_id: 3,
@@ -247,6 +250,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
         4: Symbol {
             symbol_id: 4,
@@ -277,6 +281,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
         5: Symbol {
             symbol_id: 5,
@@ -307,6 +312,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
         6: Symbol {
             symbol_id: 6,
@@ -349,6 +355,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
         7: Symbol {
             symbol_id: 7,
@@ -379,6 +386,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
     },
 }

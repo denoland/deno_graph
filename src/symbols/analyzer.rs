@@ -137,6 +137,7 @@ impl<'a> RootSymbol<'a> {
       source: &source,
       specifier,
       diagnostics: Vec::new(),
+      next_symbol_member_id: SymbolMemberId(0),
     };
     filler.fill_module(&mut module_symbol, module);
     if !filler.diagnostics.is_empty() {
@@ -180,6 +181,7 @@ impl<'a> RootSymbol<'a> {
         deps: Default::default(),
         child_decls: Default::default(),
         exports: Default::default(),
+        members: Default::default(),
       },
       source_text_info,
     };
@@ -476,6 +478,7 @@ pub struct Symbol {
   /// The child declarations of module declarations.
   child_decls: IndexSet<SymbolId>,
   exports: IndexMap<String, SymbolId>,
+  members: IndexMap<String, SymbolMember>,
 }
 
 impl std::fmt::Debug for Symbol {
@@ -486,6 +489,7 @@ impl std::fmt::Debug for Symbol {
       .field("deps", &self.deps)
       .field("child_decls", &self.child_decls)
       .field("exports", &self.exports)
+      .field("members", &self.members)
       .finish()
   }
 }
@@ -498,6 +502,7 @@ impl Symbol {
       deps: Default::default(),
       child_decls: Default::default(),
       exports: Default::default(),
+      members: Default::default(),
     }
   }
 
@@ -525,6 +530,10 @@ impl Symbol {
     self.decls.values()
   }
 
+  pub fn members(&self) -> &IndexMap<String, SymbolMember> {
+    &self.members
+  }
+
   pub fn file_dep(&self) -> Option<&FileDep> {
     for dep in self.decls() {
       if let SymbolDeclKind::FileRef(file_ref) = &dep.kind {
@@ -536,6 +545,98 @@ impl Symbol {
 
   fn insert_decl(&mut self, symbol_decl: SymbolDecl) {
     self.decls.insert(symbol_decl.range, symbol_decl);
+  }
+}
+
+#[derive(Clone)]
+pub struct SymbolMemberDecl(SymbolMemberDeclInner);
+
+impl SymbolMemberDecl {
+  pub fn node(&self) -> SymbolMemberNodeRef {
+    match &self.0 {
+      SymbolMemberDeclInner::AutoAccessor(n) => {
+        SymbolMemberNodeRef::AutoAccessor(n.value())
+      }
+      SymbolMemberDeclInner::ClassMethod(n) => {
+        SymbolMemberNodeRef::ClassMethod(n.value())
+      }
+      SymbolMemberDeclInner::ClassProp(n) => {
+        SymbolMemberNodeRef::ClassProp(n.value())
+      }
+      SymbolMemberDeclInner::Constructor(n) => {
+        SymbolMemberNodeRef::Constructor(n.value())
+      }
+      SymbolMemberDeclInner::TsIndexSignature(n) => {
+        SymbolMemberNodeRef::TsIndexSignature(n.value())
+      }
+    }
+  }
+
+  pub fn range(&self) -> SourceRange {
+    match self.node() {
+      SymbolMemberNodeRef::AutoAccessor(n) => n.range(),
+      SymbolMemberNodeRef::ClassMethod(n) => n.range(),
+      SymbolMemberNodeRef::ClassProp(n) => n.range(),
+      SymbolMemberNodeRef::Constructor(n) => n.range(),
+      SymbolMemberNodeRef::TsIndexSignature(n) => n.range(),
+    }
+  }
+}
+
+impl std::fmt::Debug for SymbolMemberDecl {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_tuple("SymbolMemberNode")
+      .field(&"<omitted>")
+      .finish()
+  }
+}
+
+#[derive(Debug, Clone)]
+enum SymbolMemberDeclInner {
+  AutoAccessor(NodeRefBox<AutoAccessor>),
+  ClassMethod(NodeRefBox<ClassMethod>),
+  ClassProp(NodeRefBox<ClassProp>),
+  Constructor(NodeRefBox<Constructor>),
+  TsIndexSignature(NodeRefBox<TsIndexSignature>),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum SymbolMemberNodeRef<'a> {
+  AutoAccessor(&'a AutoAccessor),
+  ClassMethod(&'a ClassMethod),
+  ClassProp(&'a ClassProp),
+  Constructor(&'a Constructor),
+  TsIndexSignature(&'a TsIndexSignature),
+}
+
+#[derive(Default, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub struct SymbolMemberId(u32);
+
+impl std::fmt::Debug for SymbolMemberId {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    // for less verbose debugging
+    write!(f, "{}", self.0)
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct SymbolMember {
+  symbol_member_id: SymbolMemberId,
+  decls: Vec<SymbolMemberDecl>,
+  deps: IndexSet<SymbolDep>,
+}
+
+impl SymbolMember {
+  pub fn symbol_member_id(&self) -> SymbolMemberId {
+    self.symbol_member_id
+  }
+
+  pub fn deps(&self) -> impl Iterator<Item = &SymbolDep> {
+    self.deps.iter()
+  }
+
+  pub fn decls(&self) -> impl Iterator<Item = &SymbolMemberDecl> {
+    self.decls.iter()
   }
 }
 
@@ -892,6 +993,7 @@ struct SymbolFiller<'a> {
   specifier: &'a ModuleSpecifier,
   source: &'a ParsedSource,
   diagnostics: Vec<SymbolFillDiagnostic>,
+  next_symbol_member_id: SymbolMemberId,
 }
 
 impl<'a> SymbolFiller<'a> {
@@ -1631,11 +1733,11 @@ impl<'a> SymbolFiller<'a> {
     }
   }
 
-  fn fill_class_decl(&self, symbol: &mut Symbol, n: &ClassDecl) {
+  fn fill_class_decl(&mut self, symbol: &mut Symbol, n: &ClassDecl) {
     self.fill_class(symbol, &n.class);
   }
 
-  fn fill_class(&self, symbol: &mut Symbol, n: &Class) {
+  fn fill_class(&mut self, symbol: &mut Symbol, n: &Class) {
     if let Some(type_params) = &n.type_params {
       self.fill_ts_type_param_decl(symbol, type_params);
     }
@@ -2074,13 +2176,13 @@ impl<'a> SymbolFiller<'a> {
     }
   }
 
-  fn fill_expr(&self, symbol: &mut Symbol, n: &Expr) {
+  fn fill_expr(&self, symbol: &mut impl SymbolFillable, n: &Expr) {
     let mut visitor = SymbolFillVisitor { symbol };
     n.visit_with(&mut visitor);
   }
 
   fn fill_ts_class_members(
-    &self,
+    &mut self,
     symbol: &mut Symbol,
     members: &[ClassMember],
   ) {
@@ -2140,17 +2242,20 @@ impl<'a> SymbolFiller<'a> {
     }
   }
 
-  fn fill_ctor(&self, symbol: &mut Symbol, ctor: &Constructor) {
+  fn fill_ctor(&mut self, symbol: &mut Symbol, ctor: &Constructor) {
     if ctor.accessibility == Some(Accessibility::Private) {
       return; // ignore, private
     }
 
+    let member =
+      self.get_symbol_member(symbol, SymbolMemberNodeRef::Constructor(ctor));
+
     for param in &ctor.params {
       match param {
         ParamOrTsParamProp::TsParamProp(param) => {
-          self.fill_ts_param_prop(symbol, param)
+          self.fill_ts_param_prop(member, param)
         }
-        ParamOrTsParamProp::Param(param) => self.fill_param(symbol, param),
+        ParamOrTsParamProp::Param(param) => self.fill_param(member, param),
       }
     }
   }
@@ -2186,11 +2291,15 @@ impl<'a> SymbolFiller<'a> {
     }
   }
 
-  fn fill_ts_param_prop(&self, symbol: &mut Symbol, param: &TsParamProp) {
+  fn fill_ts_param_prop(
+    &self,
+    symbol_member: &mut SymbolMember,
+    param: &TsParamProp,
+  ) {
     match &param.param {
       TsParamPropParam::Ident(ident) => {
         if let Some(type_ann) = &ident.type_ann {
-          self.fill_ts_type_ann(symbol, type_ann)
+          self.fill_ts_type_ann(symbol_member, type_ann)
         }
       }
       TsParamPropParam::Assign(_) => {
@@ -2199,11 +2308,11 @@ impl<'a> SymbolFiller<'a> {
     }
   }
 
-  fn fill_param(&self, symbol: &mut Symbol, param: &Param) {
+  fn fill_param(&self, symbol: &mut impl SymbolFillable, param: &Param) {
     self.fill_pat(symbol, &param.pat);
   }
 
-  fn fill_pat(&self, symbol: &mut Symbol, pat: &Pat) {
+  fn fill_pat(&self, symbol: &mut impl SymbolFillable, pat: &Pat) {
     match pat {
       Pat::Ident(n) => {
         if let Some(type_ann) = &n.type_ann {
@@ -2237,11 +2346,15 @@ impl<'a> SymbolFiller<'a> {
     }
   }
 
-  fn fill_ts_type_ann(&self, symbol: &mut Symbol, type_ann: &TsTypeAnn) {
+  fn fill_ts_type_ann(
+    &self,
+    symbol: &mut impl SymbolFillable,
+    type_ann: &TsTypeAnn,
+  ) {
     self.fill_ts_type(symbol, &type_ann.type_ann)
   }
 
-  fn fill_ts_type(&self, symbol: &mut Symbol, n: &TsType) {
+  fn fill_ts_type(&self, symbol: &mut impl SymbolFillable, n: &TsType) {
     let mut visitor = SymbolFillVisitor { symbol };
     n.visit_with(&mut visitor);
   }
@@ -2283,16 +2396,90 @@ impl<'a> SymbolFiller<'a> {
   fn has_internal_jsdoc(&self, pos: SourcePos) -> bool {
     has_internal_jsdoc(self.source, pos)
   }
+
+  fn get_symbol_member<'b>(
+    &mut self,
+    symbol: &'b mut Symbol,
+    node_ref: SymbolMemberNodeRef,
+  ) -> &'b mut SymbolMember {
+    let (name, inner_decl) = match node_ref {
+      SymbolMemberNodeRef::AutoAccessor(n) => {
+        // very bad, but probably good enough for a first pass
+        (
+          n.key.text_fast(self.source.text_info()).to_string(),
+          SymbolMemberDeclInner::AutoAccessor(NodeRefBox::unsafe_new(
+            &self.source,
+            n,
+          )),
+        )
+      }
+      SymbolMemberNodeRef::ClassMethod(n) => (
+        n.key.text_fast(self.source.text_info()).to_string(),
+        SymbolMemberDeclInner::ClassMethod(NodeRefBox::unsafe_new(
+          &self.source,
+          n,
+        )),
+      ),
+      SymbolMemberNodeRef::ClassProp(n) => (
+        n.key.text_fast(self.source.text_info()).to_string(),
+        SymbolMemberDeclInner::ClassProp(NodeRefBox::unsafe_new(
+          &self.source,
+          n,
+        )),
+      ),
+      SymbolMemberNodeRef::Constructor(n) => (
+        "constructor".to_string(),
+        SymbolMemberDeclInner::Constructor(NodeRefBox::unsafe_new(
+          &self.source,
+          n,
+        )),
+      ),
+      SymbolMemberNodeRef::TsIndexSignature(n) => (
+        "%%index%%".to_string(),
+        SymbolMemberDeclInner::TsIndexSignature(NodeRefBox::unsafe_new(
+          &self.source,
+          n,
+        )),
+      ),
+    };
+    let symbol_member = symbol.members.entry(name).or_insert_with(|| {
+      let next_id = self.next_symbol_member_id;
+      self.next_symbol_member_id = SymbolMemberId(next_id.0 + 1);
+      SymbolMember {
+        symbol_member_id: next_id,
+        decls: Default::default(),
+        deps: Default::default(),
+      }
+    });
+    symbol_member.decls.push(SymbolMemberDecl(inner_decl));
+    symbol_member
+  }
 }
 
-struct SymbolFillVisitor<'a> {
-  symbol: &'a mut Symbol,
+trait SymbolFillable {
+  fn add_dep(&mut self, symbol_dep: SymbolDep);
 }
 
-impl<'a> Visit for SymbolFillVisitor<'a> {
+impl SymbolFillable for Symbol {
+  fn add_dep(&mut self, symbol_dep: SymbolDep) {
+    self.deps.insert(symbol_dep);
+  }
+}
+
+impl SymbolFillable for SymbolMember {
+  fn add_dep(&mut self, symbol_dep: SymbolDep) {
+    self.deps.insert(symbol_dep);
+  }
+}
+
+struct SymbolFillVisitor<'a, T: SymbolFillable> {
+  symbol: &'a mut T,
+}
+
+impl<'a, T: SymbolFillable> Visit for SymbolFillVisitor<'a, T> {
   fn visit_ident(&mut self, n: &Ident) {
     let id = n.to_id();
-    self.symbol.deps.insert(id.into());
+    self.symbol.add_dep(id.into());
   }
 
   fn visit_ts_import_type(&mut self, n: &TsImportType) {
@@ -2306,14 +2493,13 @@ impl<'a> Visit for SymbolFillVisitor<'a> {
     };
     self
       .symbol
-      .deps
-      .insert(SymbolDep::ImportType(n.arg.value.to_string(), parts));
+      .add_dep(SymbolDep::ImportType(n.arg.value.to_string(), parts));
     n.type_args.visit_with(self);
   }
 
   fn visit_ts_qualified_name(&mut self, n: &TsQualifiedName) {
     let (id, parts) = ts_qualified_name_parts(n);
-    self.symbol.deps.insert(SymbolDep::QualifiedId(id, parts));
+    self.symbol.add_dep(SymbolDep::QualifiedId(id, parts));
   }
 }
 

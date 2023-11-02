@@ -67,6 +67,7 @@ file:///a.ts: EsmModuleSymbol {
             exports: {
                 "B": 1,
             },
+            members: {},
         },
         1: Symbol {
             symbol_id: 1,
@@ -103,6 +104,7 @@ file:///a.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
     },
 }
@@ -167,6 +169,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
+            members: {},
         },
     },
 }
