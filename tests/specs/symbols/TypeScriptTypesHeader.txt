@@ -89,7 +89,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         1: Symbol {
             symbol_id: 1,
@@ -116,7 +116,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         2: Symbol {
             symbol_id: 2,
@@ -143,7 +143,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         3: Symbol {
             symbol_id: 3,
@@ -186,7 +186,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }
@@ -231,12 +231,6 @@ file:///other.d.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        "MyInterface2",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
                         "b",
                         #0,
                     ),
@@ -244,7 +238,7 @@ file:///other.d.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }
@@ -300,12 +294,6 @@ file:///typescript.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        "MyInterface3",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
                         "c",
                         #0,
                     ),
@@ -313,7 +301,7 @@ file:///typescript.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }
@@ -364,12 +352,6 @@ https://localhost/mod.d.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        "MyInterface",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
                         "a",
                         #0,
                     ),
@@ -377,7 +359,7 @@ https://localhost/mod.d.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         1: Symbol {
             symbol_id: 1,
@@ -401,12 +383,6 @@ https://localhost/mod.d.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        "MyNonPublicInterface",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
                         "a1",
                         #0,
                     ),
@@ -414,7 +390,7 @@ https://localhost/mod.d.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }
@@ -459,7 +435,7 @@ https://localhost/mod.js: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }

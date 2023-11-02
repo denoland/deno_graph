@@ -110,12 +110,6 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        "A1",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
                         "prop1",
                         #0,
                     ),
@@ -135,7 +129,7 @@ file:///a.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         1: Symbol {
             symbol_id: 1,
@@ -156,17 +150,10 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Prop2",
-                        #2,
-                    ),
-                ),
-            },
+            deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }
@@ -260,12 +247,6 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        "Test",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
                         "prop1",
                         #0,
                     ),
@@ -291,7 +272,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         1: Symbol {
             symbol_id: 1,
@@ -312,17 +293,10 @@ file:///mod.ts: EsmModuleSymbol {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Prop1",
-                        #2,
-                    ),
-                ),
-            },
+            deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         2: Symbol {
             symbol_id: 2,
@@ -343,17 +317,10 @@ file:///mod.ts: EsmModuleSymbol {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Prop2",
-                        #2,
-                    ),
-                ),
-            },
+            deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }

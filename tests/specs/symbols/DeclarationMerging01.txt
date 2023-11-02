@@ -138,7 +138,7 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {
                 "Label": 1,
             },
-            members: {},
+            members: [],
         },
         1: Symbol {
             symbol_id: 1,
@@ -162,7 +162,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         2: Symbol {
             symbol_id: 2,
@@ -234,7 +234,7 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {
                 "mixColor": 3,
             },
-            members: {},
+            members: [],
         },
         3: Symbol {
             symbol_id: 3,
@@ -258,7 +258,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         4: Symbol {
             symbol_id: 4,
@@ -330,7 +330,7 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {
                 "other": 5,
             },
-            members: {},
+            members: [],
         },
         5: Symbol {
             symbol_id: 5,
@@ -354,7 +354,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }

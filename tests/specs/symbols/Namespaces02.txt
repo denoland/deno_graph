@@ -82,7 +82,7 @@ file:///mod.ts: EsmModuleSymbol {
                 "NestedNs": 1,
                 "Foo": 3,
             },
-            members: {},
+            members: [],
         },
         1: Symbol {
             symbol_id: 1,
@@ -117,7 +117,7 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {
                 "Foo": 2,
             },
-            members: {},
+            members: [],
         },
         2: Symbol {
             symbol_id: 2,
@@ -141,7 +141,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         3: Symbol {
             symbol_id: 3,
@@ -165,7 +165,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }

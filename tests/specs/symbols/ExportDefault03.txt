@@ -66,7 +66,7 @@ file:///a.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }
@@ -117,7 +117,7 @@ file:///b.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         1: Symbol {
             symbol_id: 1,
@@ -141,7 +141,7 @@ file:///b.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }
@@ -190,7 +190,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         1: Symbol {
             symbol_id: 1,
@@ -214,7 +214,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }

@@ -109,7 +109,7 @@ file:///a.ts: EsmModuleSymbol {
             exports: {
                 "B": 1,
             },
-            members: {},
+            members: [],
         },
         1: Symbol {
             symbol_id: 1,
@@ -150,7 +150,7 @@ file:///a.ts: EsmModuleSymbol {
             exports: {
                 "Other": 2,
             },
-            members: {},
+            members: [],
         },
         2: Symbol {
             symbol_id: 2,
@@ -204,12 +204,6 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        "Other",
-                        #3,
-                    ),
-                ),
-                Id(
-                    (
                         "prop1",
                         #0,
                     ),
@@ -233,7 +227,7 @@ file:///a.ts: EsmModuleSymbol {
             exports: {
                 "MyTest": 3,
             },
-            members: {},
+            members: [],
         },
         3: Symbol {
             symbol_id: 3,
@@ -257,7 +251,7 @@ file:///a.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }
@@ -317,7 +311,7 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         1: Symbol {
             symbol_id: 1,
@@ -355,7 +349,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         2: Symbol {
             symbol_id: 2,
@@ -381,7 +375,7 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {
                 "Inner": 3,
             },
-            members: {},
+            members: [],
         },
         3: Symbol {
             symbol_id: 3,
@@ -432,7 +426,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }

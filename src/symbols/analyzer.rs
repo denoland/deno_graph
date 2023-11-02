@@ -478,7 +478,7 @@ pub struct Symbol {
   /// The child declarations of module declarations.
   child_decls: IndexSet<SymbolId>,
   exports: IndexMap<String, SymbolId>,
-  members: IndexMap<String, SymbolMember>,
+  members: Vec<SymbolMember>,
 }
 
 impl std::fmt::Debug for Symbol {
@@ -530,7 +530,7 @@ impl Symbol {
     self.decls.values()
   }
 
-  pub fn members(&self) -> &IndexMap<String, SymbolMember> {
+  pub fn members(&self) -> &Vec<SymbolMember> {
     &self.members
   }
 
@@ -1824,8 +1824,10 @@ impl<'a> SymbolFiller<'a> {
   }
 
   fn fill_ts_type_alias(&self, symbol: &mut Symbol, n: &TsTypeAliasDecl) {
-    let mut visitor = SymbolFillVisitor { symbol };
-    n.visit_with(&mut visitor);
+    if let Some(type_params) = &n.type_params {
+      self.fill_ts_type_param_decl(symbol, type_params);
+    }
+    self.fill_ts_type(symbol, &*n.type_ann)
   }
 
   fn fill_ts_enum(&self, symbol: &mut Symbol, n: &TsEnumDecl) {
@@ -2464,117 +2466,88 @@ impl<'a> SymbolFiller<'a> {
     symbol: &'b mut Symbol,
     node_ref: SymbolMemberNodeRef,
   ) -> &'b mut SymbolMember {
-    fn key_to_string(key: &Key, source: &ParsedSource) -> String {
-      match key {
-        Key::Private(p) => {
-          debug_assert!(false, "Should not have reached here.");
-          p.text_fast(source.text_info()).to_string()
-        }
-        Key::Public(p) => prop_name_to_string(p, source),
-      }
-    }
-
-    fn prop_name_to_string(p: &PropName, source: &ParsedSource) -> String {
-      match p {
-        PropName::Ident(ident) => ident.sym.to_string(),
-        PropName::Str(s) => s.value.to_string(),
-        PropName::Num(n) => n.value.to_string(),
-        PropName::BigInt(n) => n.value.to_string(),
-        // bad, but good enough for a first pass
-        PropName::Computed(n) => n.text_fast(source.text_info()).to_string(),
-      }
-    }
-
-    let (name, inner_decl) = match node_ref {
-      SymbolMemberNodeRef::AutoAccessor(n) => (
-        key_to_string(&n.key, self.source),
+    let inner_decl = match node_ref {
+      SymbolMemberNodeRef::AutoAccessor(n) => {
         SymbolMemberDeclInner::AutoAccessor(NodeRefBox::unsafe_new(
           &self.source,
           n,
-        )),
-      ),
-      SymbolMemberNodeRef::ClassMethod(n) => (
-        prop_name_to_string(&n.key, self.source),
+        ))
+      }
+
+      SymbolMemberNodeRef::ClassMethod(n) => {
         SymbolMemberDeclInner::ClassMethod(NodeRefBox::unsafe_new(
           &self.source,
           n,
-        )),
+        ))
+      }
+
+      SymbolMemberNodeRef::ClassProp(n) => SymbolMemberDeclInner::ClassProp(
+        NodeRefBox::unsafe_new(&self.source, n),
       ),
-      SymbolMemberNodeRef::ClassProp(n) => (
-        prop_name_to_string(&n.key, self.source),
-        SymbolMemberDeclInner::ClassProp(NodeRefBox::unsafe_new(
-          &self.source,
-          n,
-        )),
-      ),
-      SymbolMemberNodeRef::Constructor(n) => (
-        "constructor".to_string(),
+
+      SymbolMemberNodeRef::Constructor(n) => {
         SymbolMemberDeclInner::Constructor(NodeRefBox::unsafe_new(
           &self.source,
           n,
-        )),
-      ),
-      SymbolMemberNodeRef::TsIndexSignature(n) => (
-        "%%index%%".to_string(),
+        ))
+      }
+
+      SymbolMemberNodeRef::TsIndexSignature(n) => {
         SymbolMemberDeclInner::TsIndexSignature(NodeRefBox::unsafe_new(
           &self.source,
           n,
-        )),
-      ),
-      SymbolMemberNodeRef::TsCallSignatureDecl(n) => (
-        // what matters here is that this is unique and not what the actual text is
-        n.text_fast(source.text_info()).to_string(),
+        ))
+      }
+
+      SymbolMemberNodeRef::TsCallSignatureDecl(n) => {
         SymbolMemberDeclInner::TsCallSignatureDecl(NodeRefBox::unsafe_new(
           &self.source,
           n,
-        )),
-      ),
-      SymbolMemberNodeRef::TsConstructSignatureDecl(n) => (
-        n.text_fast(source.text_info()).to_string(),
-        SymbolMemberDeclInner::TsConstructSignatureDecl(
-          NodeRefBox::unsafe_new(&self.source, n),
-        ),
-      ),
-      SymbolMemberNodeRef::TsPropertySignature(n) => (
-        n.text_fast(source.text_info()).to_string(),
+        ))
+      }
+
+      SymbolMemberNodeRef::TsConstructSignatureDecl(n) => {
+        SymbolMemberDeclInner::TsConstructSignatureDecl(NodeRefBox::unsafe_new(
+          &self.source,
+          n,
+        ))
+      }
+
+      SymbolMemberNodeRef::TsPropertySignature(n) => {
         SymbolMemberDeclInner::TsPropertySignature(NodeRefBox::unsafe_new(
           &self.source,
           n,
-        )),
-      ),
-      SymbolMemberNodeRef::TsGetterSignature(n) => (
-        n.text_fast(source.text_info()).to_string(),
+        ))
+      }
+      SymbolMemberNodeRef::TsGetterSignature(n) => {
         SymbolMemberDeclInner::TsGetterSignature(NodeRefBox::unsafe_new(
           &self.source,
           n,
-        )),
-      ),
-      SymbolMemberNodeRef::TsSetterSignature(n) => (
-        n.text_fast(source.text_info()).to_string(),
+        ))
+      }
+
+      SymbolMemberNodeRef::TsSetterSignature(n) => {
         SymbolMemberDeclInner::TsSetterSignature(NodeRefBox::unsafe_new(
           &self.source,
           n,
-        )),
-      ),
-      SymbolMemberNodeRef::TsMethodSignature(n) => (
-        n.text_fast(source.text_info()).to_string(),
+        ))
+      }
+
+      SymbolMemberNodeRef::TsMethodSignature(n) => {
         SymbolMemberDeclInner::TsMethodSignature(NodeRefBox::unsafe_new(
           &self.source,
           n,
-        )),
-      ),
-    };
-    let symbol_member = symbol.members.entry(name).or_insert_with(|| {
-      let next_id = self.next_symbol_member_id;
-      self.next_symbol_member_id = SymbolMemberId(next_id.0 + 1);
-      SymbolMember {
-        symbol_member_id: next_id,
-        decls: Default::default(),
-        deps: Default::default(),
+        ))
       }
+    };
+    let next_id = self.next_symbol_member_id;
+    self.next_symbol_member_id = SymbolMemberId(next_id.0 + 1);
+    symbol.members.push(SymbolMember {
+      symbol_member_id: next_id,
+      decls: vec![SymbolMemberDecl(inner_decl)],
+      deps: Default::default(),
     });
-    symbol_member.decls.push(SymbolMemberDecl(inner_decl));
-    symbol_member
+    symbol.members.last_mut().unwrap()
   }
 }
 

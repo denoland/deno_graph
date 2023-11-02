@@ -49,12 +49,6 @@ file:///mod.d.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        "MyInterface",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
                         "a",
                         #0,
                     ),
@@ -62,7 +56,7 @@ file:///mod.d.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }
@@ -107,7 +101,7 @@ file:///mod.js: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }

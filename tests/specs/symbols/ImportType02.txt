@@ -57,12 +57,6 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        "Test",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
                         "prop",
                         #0,
                     ),
@@ -70,7 +64,7 @@ file:///a.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
         1: Symbol {
             symbol_id: 1,
@@ -94,7 +88,7 @@ file:///a.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }
@@ -137,12 +131,6 @@ file:///mod.ts: EsmModuleSymbol {
                 },
             ],
             deps: {
-                Id(
-                    (
-                        "Test",
-                        #2,
-                    ),
-                ),
                 ImportType(
                     "./a.ts",
                     [],
@@ -150,7 +138,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }

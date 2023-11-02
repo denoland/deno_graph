@@ -67,7 +67,7 @@ file:///a.ts: EsmModuleSymbol {
             exports: {
                 "B": 1,
             },
-            members: {},
+            members: [],
         },
         1: Symbol {
             symbol_id: 1,
@@ -91,12 +91,6 @@ file:///a.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        "B",
-                        #3,
-                    ),
-                ),
-                Id(
-                    (
                         "prop",
                         #0,
                     ),
@@ -104,7 +98,7 @@ file:///a.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }
@@ -149,12 +143,6 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        "Test",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
                         "prop",
                         #0,
                     ),
@@ -169,7 +157,7 @@ file:///mod.ts: EsmModuleSymbol {
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: [],
         },
     },
 }
