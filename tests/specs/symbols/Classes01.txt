@@ -163,19 +163,28 @@ file:///mod.ts: EsmModuleSymbol {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "B",
-                        #2,
-                    ),
-                ),
-            },
+            deps: {},
             child_decls: {},
             exports: {},
             members: {
-                "constructor": SymbolMember {
+                "b": SymbolMember {
                     symbol_member_id: 0,
+                    decls: [
+                        SymbolMemberNode(
+                            "<omitted>",
+                        ),
+                    ],
+                    deps: {
+                        Id(
+                            (
+                                "B",
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+                "constructor": SymbolMember {
+                    symbol_member_id: 1,
                     decls: [
                         SymbolMemberNode(
                             "<omitted>",
@@ -310,52 +319,96 @@ file:///mod.ts: EsmModuleSymbol {
                         #2,
                     ),
                 ),
-                Id(
-                    (
-                        "PropValue",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "ReturnValue",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "Param",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "OverloadParam",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "OverloadReturn",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "PrivateImplementationParam",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "PrivateImplementationReturn",
-                        #2,
-                    ),
-                ),
             },
             child_decls: {},
             exports: {},
-            members: {},
+            members: {
+                "prop": SymbolMember {
+                    symbol_member_id: 2,
+                    decls: [
+                        SymbolMemberNode(
+                            "<omitted>",
+                        ),
+                    ],
+                    deps: {
+                        Id(
+                            (
+                                "PropValue",
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+                "method": SymbolMember {
+                    symbol_member_id: 3,
+                    decls: [
+                        SymbolMemberNode(
+                            "<omitted>",
+                        ),
+                    ],
+                    deps: {
+                        Id(
+                            (
+                                "ReturnValue",
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+                "method2": SymbolMember {
+                    symbol_member_id: 4,
+                    decls: [
+                        SymbolMemberNode(
+                            "<omitted>",
+                        ),
+                    ],
+                    deps: {
+                        Id(
+                            (
+                                "Param",
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+                "methodOverload": SymbolMember {
+                    symbol_member_id: 5,
+                    decls: [
+                        SymbolMemberNode(
+                            "<omitted>",
+                        ),
+                        SymbolMemberNode(
+                            "<omitted>",
+                        ),
+                    ],
+                    deps: {
+                        Id(
+                            (
+                                "OverloadParam",
+                                #2,
+                            ),
+                        ),
+                        Id(
+                            (
+                                "OverloadReturn",
+                                #2,
+                            ),
+                        ),
+                        Id(
+                            (
+                                "PrivateImplementationParam",
+                                #2,
+                            ),
+                        ),
+                        Id(
+                            (
+                                "PrivateImplementationReturn",
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+            },
         },
         5: Symbol {
             symbol_id: 5,

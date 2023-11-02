@@ -231,17 +231,36 @@ file:///mod.ts: EsmModuleSymbol {
                     kind: TargetSelf,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Other",
-                        #2,
-                    ),
-                ),
-            },
+            deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: {
+                "method": SymbolMember {
+                    symbol_member_id: 0,
+                    decls: [
+                        SymbolMemberNode(
+                            "<omitted>",
+                        ),
+                    ],
+                    deps: {},
+                },
+                "prop": SymbolMember {
+                    symbol_member_id: 1,
+                    decls: [
+                        SymbolMemberNode(
+                            "<omitted>",
+                        ),
+                    ],
+                    deps: {
+                        Id(
+                            (
+                                "Other",
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+            },
         },
         5: Symbol {
             symbol_id: 5,

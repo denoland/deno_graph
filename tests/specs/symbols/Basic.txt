@@ -166,17 +166,27 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "AInner",
-                        #2,
-                    ),
-                ),
-            },
+            deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: {
+                "prop": SymbolMember {
+                    symbol_member_id: 0,
+                    decls: [
+                        SymbolMemberNode(
+                            "<omitted>",
+                        ),
+                    ],
+                    deps: {
+                        Id(
+                            (
+                                "AInner",
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+            },
         },
         3: Symbol {
             symbol_id: 3,

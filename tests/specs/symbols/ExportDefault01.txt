@@ -177,17 +177,27 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "A",
-                        #2,
-                    ),
-                ),
-            },
+            deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: {
+                "prop": SymbolMember {
+                    symbol_member_id: 0,
+                    decls: [
+                        SymbolMemberNode(
+                            "<omitted>",
+                        ),
+                    ],
+                    deps: {
+                        Id(
+                            (
+                                "A",
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+            },
         },
         4: Symbol {
             symbol_id: 4,
@@ -208,17 +218,36 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "B",
-                        #2,
-                    ),
-                ),
-            },
+            deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: {
+                "a": SymbolMember {
+                    symbol_member_id: 1,
+                    decls: [
+                        SymbolMemberNode(
+                            "<omitted>",
+                        ),
+                    ],
+                    deps: {},
+                },
+                "b": SymbolMember {
+                    symbol_member_id: 2,
+                    decls: [
+                        SymbolMemberNode(
+                            "<omitted>",
+                        ),
+                    ],
+                    deps: {
+                        Id(
+                            (
+                                "B",
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+            },
         },
         5: Symbol {
             symbol_id: 5,
@@ -242,7 +271,17 @@ file:///a.ts: EsmModuleSymbol {
             deps: {},
             child_decls: {},
             exports: {},
-            members: {},
+            members: {
+                "b": SymbolMember {
+                    symbol_member_id: 3,
+                    decls: [
+                        SymbolMemberNode(
+                            "<omitted>",
+                        ),
+                    ],
+                    deps: {},
+                },
+            },
         },
         6: Symbol {
             symbol_id: 6,
