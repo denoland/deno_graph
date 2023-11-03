@@ -34,10 +34,7 @@ pub struct Definition<'a> {
 
 impl<'a> Definition<'a> {
   pub fn unique_id(&self) -> UniqueSymbolId {
-    UniqueSymbolId {
-      module_id: self.module.module_id(),
-      symbol_id: self.symbol.symbol_id(),
-    }
+    self.symbol.unique_id()
   }
 
   pub fn range(&self) -> &SourceRange {
@@ -77,10 +74,7 @@ fn go_to_definitions_internal<'a>(
   visited_symbols: &mut HashSet<UniqueSymbolId>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
 ) -> Vec<Definition<'a>> {
-  if !visited_symbols.insert(UniqueSymbolId {
-    module_id: module.module_id(),
-    symbol_id: symbol.symbol_id(),
-  }) {
+  if !visited_symbols.insert(symbol.unique_id()) {
     return Vec::new();
   }
   let mut definitions = Vec::new();

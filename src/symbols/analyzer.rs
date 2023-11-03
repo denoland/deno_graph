@@ -33,9 +33,12 @@ use super::cross_module;
 use super::cross_module::Definition;
 use super::ResolvedSymbolDepEntry;
 
+/// The root symbol from which module symbols can be retrieved.
+///
+/// Building the symbols for modules is lazy.
 pub struct RootSymbol<'a> {
   module_graph: &'a ModuleGraph,
-  parser: &'a CapturingModuleParser<'a>,
+  parser: CapturingModuleParser<'a>,
   specifiers_to_ids: AdditiveOnlyMap<ModuleSpecifier, ModuleId>,
   ids_to_symbols: AdditiveOnlyMap<ModuleId, ModuleSymbol>,
   diagnostics: RefCell<Vec<SymbolFillDiagnostic>>,
@@ -44,7 +47,7 @@ pub struct RootSymbol<'a> {
 impl<'a> RootSymbol<'a> {
   pub fn new(
     module_graph: &'a ModuleGraph,
-    parser: &'a CapturingModuleParser<'a>,
+    parser: CapturingModuleParser<'a>,
   ) -> Self {
     Self {
       module_graph,
@@ -86,11 +89,13 @@ impl<'a> RootSymbol<'a> {
     self.ids_to_symbols.get(&module_id).map(|s| s.as_ref())
   }
 
+  /// Goes to the definitions of the specified symbol.
   pub fn go_to_definitions<'b>(
     &'b self,
     module: ModuleSymbolRef<'b>,
     symbol: &'b Symbol,
   ) -> Vec<Definition<'b>> {
+    debug_assert_eq!(symbol.module_id(), module.module_id());
     super::cross_module::go_to_definitions(
       self.module_graph,
       module,
@@ -126,7 +131,7 @@ impl<'a> RootSymbol<'a> {
       module_id: ModuleId(self.ids_to_symbols.len() as u32),
       source: source.clone(),
       next_symbol_id: Default::default(),
-      child_decls: Default::default(),
+      child_ids: Default::default(),
       exports: Default::default(),
       re_exports: Default::default(),
       swc_id_to_symbol_id: Default::default(),
@@ -152,11 +157,13 @@ impl<'a> RootSymbol<'a> {
     // it easier to interop with ParsedSource
     let source_text_info = SourceTextInfo::new(json_module.source.clone());
     let range = source_text_info.range();
+    let module_id = ModuleId(self.ids_to_symbols.len() as u32);
     let module_symbol = JsonModuleSymbol {
       specifier: specifier.clone(),
-      module_id: ModuleId(self.ids_to_symbols.len() as u32),
+      module_id,
       exports: IndexMap::from([("default".to_string(), SymbolId(0))]),
       default_symbol: Symbol {
+        module_id,
         symbol_id: SymbolId(0),
         decls: {
           let range = {
@@ -179,7 +186,7 @@ impl<'a> RootSymbol<'a> {
           )])
         },
         deps: Default::default(),
-        child_decls: Default::default(),
+        child_ids: Default::default(),
         exports: Default::default(),
         members: Default::default(),
       },
@@ -470,24 +477,26 @@ impl From<Id> for SymbolDep {
 
 #[derive(Clone)]
 pub struct Symbol {
+  module_id: ModuleId,
   symbol_id: SymbolId,
   // todo(dsherret): the IndexMap is just to prevent duplicates
   // a better solution should be thought out
   decls: IndexMap<SourceRange, SymbolDecl>,
   deps: IndexSet<SymbolDep>,
   /// The child declarations of module declarations.
-  child_decls: IndexSet<SymbolId>,
+  child_ids: IndexSet<SymbolId>,
   exports: IndexMap<String, SymbolId>,
-  members: Vec<SymbolMember>,
+  members: IndexMap<SymbolMemberId, SymbolMember>,
 }
 
 impl std::fmt::Debug for Symbol {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.debug_struct("Symbol")
+      .field("module_id", &self.module_id)
       .field("symbol_id", &self.symbol_id)
       .field("decls", &self.decls.values().collect::<Vec<_>>())
       .field("deps", &self.deps)
-      .field("child_decls", &self.child_decls)
+      .field("child_ids", &self.child_ids)
       .field("exports", &self.exports)
       .field("members", &self.members)
       .finish()
@@ -495,45 +504,81 @@ impl std::fmt::Debug for Symbol {
 }
 
 impl Symbol {
-  pub fn new(symbol_id: SymbolId) -> Self {
+  pub fn new(module_id: ModuleId, symbol_id: SymbolId) -> Self {
     Symbol {
+      module_id,
       symbol_id,
       decls: Default::default(),
       deps: Default::default(),
-      child_decls: Default::default(),
+      child_ids: Default::default(),
       exports: Default::default(),
       members: Default::default(),
     }
   }
 
+  /// A unique identifier of the symbol, which consists of the module id and symbol id.
+  pub fn unique_id(&self) -> UniqueSymbolId {
+    UniqueSymbolId::new(self.module_id, self.symbol_id)
+  }
+
+  /// Module id of where the symbol is located.
+  pub fn module_id(&self) -> ModuleId {
+    self.module_id
+  }
+
+  /// Symbol id within the module.
+  ///
+  /// This is module specific. If you need a global identifier, then use unique_id().
   pub fn symbol_id(&self) -> SymbolId {
     self.symbol_id
   }
 
+  /// Export of the symbol by name.
   pub fn export(&self, name: &str) -> Option<SymbolId> {
     self.exports.get(name).copied()
   }
 
+  /// Map of exports
   pub fn exports(&self) -> &IndexMap<String, SymbolId> {
     &self.exports
   }
 
-  pub fn child_decls(&self) -> impl Iterator<Item = SymbolId> + '_ {
-    self.child_decls.iter().copied()
+  /// Identifiers of namespace children (ex. functions, interface found in a namespace).
+  pub fn child_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
+    self.child_ids.iter().copied()
   }
 
-  pub fn deps(&self) -> impl Iterator<Item = &SymbolDep> {
-    self.deps.iter()
+  /// Gets the dependencies along with an of the symbol members' dependencies.
+  pub fn deps(
+    &self,
+  ) -> impl Iterator<Item = (Option<&SymbolMember>, &SymbolDep)> {
+    self.deps.iter().map(|d| (None, d)).chain(
+      self
+        .members
+        .values()
+        .flat_map(|member| member.deps().map(move |d| (Some(member), d))),
+    )
   }
 
+  /// The symbol's associated declarations. A symbol can represent many declarations
+  /// if they have the same name via declaration merging.
   pub fn decls(&self) -> impl Iterator<Item = &SymbolDecl> {
     self.decls.values()
   }
 
-  pub fn members(&self) -> &Vec<SymbolMember> {
+  /// Gets a member of a symbol by member identifier.
+  ///
+  /// This will return members of classes and interfaces.
+  pub fn member(&self, member_id: SymbolMemberId) -> Option<&SymbolMember> {
+    self.members.get(&member_id)
+  }
+
+  /// Gets a map of members by member ids.
+  pub fn members(&self) -> &IndexMap<SymbolMemberId, SymbolMember> {
     &self.members
   }
 
+  /// Gets if this symbol represents a file dependency.
   pub fn file_dep(&self) -> Option<&FileDep> {
     for dep in self.decls() {
       if let SymbolDeclKind::FileRef(file_ref) = &dep.kind {
@@ -549,47 +594,69 @@ impl Symbol {
 }
 
 #[derive(Clone)]
-pub struct SymbolMemberDecl(SymbolMemberDeclInner);
+enum SymbolMemberDecl {
+  AutoAccessor(NodeRefBox<AutoAccessor>),
+  ClassMethod(NodeRefBox<ClassMethod>),
+  ClassProp(NodeRefBox<ClassProp>),
+  Constructor(NodeRefBox<Constructor>),
+  TsIndexSignature(NodeRefBox<TsIndexSignature>),
+  TsCallSignatureDecl(NodeRefBox<TsCallSignatureDecl>),
+  TsConstructSignatureDecl(NodeRefBox<TsConstructSignatureDecl>),
+  TsPropertySignature(NodeRefBox<TsPropertySignature>),
+  TsGetterSignature(NodeRefBox<TsGetterSignature>),
+  TsSetterSignature(NodeRefBox<TsSetterSignature>),
+  TsMethodSignature(NodeRefBox<TsMethodSignature>),
+}
+
+impl std::fmt::Debug for SymbolMemberDecl {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_tuple("SymbolMemberDecl")
+      .field(&"<omitted>")
+      .finish()
+  }
+}
 
 impl SymbolMemberDecl {
+  /// Node of the symbol member declaration.
   pub fn node(&self) -> SymbolMemberNodeRef {
-    match &self.0 {
-      SymbolMemberDeclInner::AutoAccessor(n) => {
+    match &self {
+      SymbolMemberDecl::AutoAccessor(n) => {
         SymbolMemberNodeRef::AutoAccessor(n.value())
       }
-      SymbolMemberDeclInner::ClassMethod(n) => {
+      SymbolMemberDecl::ClassMethod(n) => {
         SymbolMemberNodeRef::ClassMethod(n.value())
       }
-      SymbolMemberDeclInner::ClassProp(n) => {
+      SymbolMemberDecl::ClassProp(n) => {
         SymbolMemberNodeRef::ClassProp(n.value())
       }
-      SymbolMemberDeclInner::Constructor(n) => {
+      SymbolMemberDecl::Constructor(n) => {
         SymbolMemberNodeRef::Constructor(n.value())
       }
-      SymbolMemberDeclInner::TsIndexSignature(n) => {
+      SymbolMemberDecl::TsIndexSignature(n) => {
         SymbolMemberNodeRef::TsIndexSignature(n.value())
       }
-      SymbolMemberDeclInner::TsCallSignatureDecl(n) => {
+      SymbolMemberDecl::TsCallSignatureDecl(n) => {
         SymbolMemberNodeRef::TsCallSignatureDecl(n.value())
       }
-      SymbolMemberDeclInner::TsConstructSignatureDecl(n) => {
+      SymbolMemberDecl::TsConstructSignatureDecl(n) => {
         SymbolMemberNodeRef::TsConstructSignatureDecl(n.value())
       }
-      SymbolMemberDeclInner::TsPropertySignature(n) => {
+      SymbolMemberDecl::TsPropertySignature(n) => {
         SymbolMemberNodeRef::TsPropertySignature(n.value())
       }
-      SymbolMemberDeclInner::TsGetterSignature(n) => {
+      SymbolMemberDecl::TsGetterSignature(n) => {
         SymbolMemberNodeRef::TsGetterSignature(n.value())
       }
-      SymbolMemberDeclInner::TsSetterSignature(n) => {
+      SymbolMemberDecl::TsSetterSignature(n) => {
         SymbolMemberNodeRef::TsSetterSignature(n.value())
       }
-      SymbolMemberDeclInner::TsMethodSignature(n) => {
+      SymbolMemberDecl::TsMethodSignature(n) => {
         SymbolMemberNodeRef::TsMethodSignature(n.value())
       }
     }
   }
 
+  /// Range of the symbol member.
   pub fn range(&self) -> SourceRange {
     match self.node() {
       SymbolMemberNodeRef::AutoAccessor(n) => n.range(),
@@ -605,29 +672,6 @@ impl SymbolMemberDecl {
       SymbolMemberNodeRef::TsMethodSignature(n) => n.range(),
     }
   }
-}
-
-impl std::fmt::Debug for SymbolMemberDecl {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_tuple("SymbolMemberNode")
-      .field(&"<omitted>")
-      .finish()
-  }
-}
-
-#[derive(Debug, Clone)]
-enum SymbolMemberDeclInner {
-  AutoAccessor(NodeRefBox<AutoAccessor>),
-  ClassMethod(NodeRefBox<ClassMethod>),
-  ClassProp(NodeRefBox<ClassProp>),
-  Constructor(NodeRefBox<Constructor>),
-  TsIndexSignature(NodeRefBox<TsIndexSignature>),
-  TsCallSignatureDecl(NodeRefBox<TsCallSignatureDecl>),
-  TsConstructSignatureDecl(NodeRefBox<TsConstructSignatureDecl>),
-  TsPropertySignature(NodeRefBox<TsPropertySignature>),
-  TsGetterSignature(NodeRefBox<TsGetterSignature>),
-  TsSetterSignature(NodeRefBox<TsSetterSignature>),
-  TsMethodSignature(NodeRefBox<TsMethodSignature>),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -658,7 +702,7 @@ impl std::fmt::Debug for SymbolMemberId {
 #[derive(Debug, Clone)]
 pub struct SymbolMember {
   symbol_member_id: SymbolMemberId,
-  decls: Vec<SymbolMemberDecl>,
+  decl: SymbolMemberDecl,
   deps: IndexSet<SymbolDep>,
 }
 
@@ -671,11 +715,16 @@ impl SymbolMember {
     self.deps.iter()
   }
 
-  pub fn decls(&self) -> impl Iterator<Item = &SymbolMemberDecl> {
-    self.decls.iter()
+  pub fn node(&self) -> SymbolMemberNodeRef {
+    self.decl.node()
+  }
+
+  pub fn range(&self) -> SourceRange {
+    self.decl.range()
   }
 }
 
+/// A unique identifier for a symbol, which consists of the module id and symbol id.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct UniqueSymbolId {
   pub module_id: ModuleId,
@@ -877,7 +926,7 @@ pub struct EsmModuleSymbol {
   source: ParsedSource,
   next_symbol_id: SymbolId,
   exports: IndexMap<String, SymbolId>,
-  child_decls: IndexSet<SymbolId>,
+  child_ids: IndexSet<SymbolId>,
   /// The re-export specifiers.
   re_exports: Vec<String>,
   // note: not all symbol ids have an swc id. For example, default exports
@@ -890,7 +939,7 @@ impl std::fmt::Debug for EsmModuleSymbol {
     f.debug_struct("EsmModuleSymbol")
       .field("module_id", &self.module_id)
       .field("specifier", &self.specifier.as_str())
-      .field("child_decls", &self.child_decls)
+      .field("child_ids", &self.child_ids)
       .field("exports", &self.exports)
       .field("re_exports", &self.re_exports)
       .field("swc_id_to_symbol_id", &self.swc_id_to_symbol_id)
@@ -924,8 +973,8 @@ impl EsmModuleSymbol {
     self.as_ref().exports(module_graph, root_symbol)
   }
 
-  pub fn child_decls(&self) -> impl Iterator<Item = SymbolId> + '_ {
-    self.child_decls.iter().copied()
+  pub fn child_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
+    self.child_ids.iter().copied()
   }
 
   pub(crate) fn ensure_default_export_symbol(
@@ -938,7 +987,7 @@ impl EsmModuleSymbol {
       *symbol_id
     } else {
       let symbol_id = self.get_next_symbol_id();
-      let mut symbol = Symbol::new(symbol_id);
+      let mut symbol = Symbol::new(self.module_id, symbol_id);
       symbol.insert_decl(symbol_decl);
       self.symbols.insert(symbol_id, symbol);
       self.exports.insert("default".to_string(), symbol_id);
@@ -948,7 +997,9 @@ impl EsmModuleSymbol {
 
   pub(crate) fn create_new_symbol(&mut self) -> &mut Symbol {
     let symbol_id = self.get_next_symbol_id();
-    self.symbols.insert(symbol_id, Symbol::new(symbol_id));
+    self
+      .symbols
+      .insert(symbol_id, Symbol::new(self.module_id, symbol_id));
     self.symbols.get_mut(&symbol_id).unwrap()
   }
 
@@ -1005,7 +1056,7 @@ impl EsmModuleSymbol {
     if let Some(symbol) = self.symbols.get_mut(&symbol_id) {
       symbol.insert_decl(symbol_decl);
     } else {
-      let mut symbol = Symbol::new(symbol_id);
+      let mut symbol = Symbol::new(self.module_id, symbol_id);
       symbol.insert_decl(symbol_decl);
       self.symbols.insert(symbol_id, symbol);
     }
@@ -1062,7 +1113,7 @@ impl<'a> SymbolFiller<'a> {
           file_module.exports.insert(name, symbol_id);
         },
         &|file_module, symbol_id| {
-          file_module.child_decls.insert(symbol_id);
+          file_module.child_ids.insert(symbol_id);
         },
       );
     }
@@ -1809,7 +1860,7 @@ impl<'a> SymbolFiller<'a> {
     }
   }
 
-  fn fill_ts_interface(&self, symbol: &mut Symbol, n: &TsInterfaceDecl) {
+  fn fill_ts_interface(&mut self, symbol: &mut Symbol, n: &TsInterfaceDecl) {
     if let Some(type_params) = &n.type_params {
       self.fill_ts_type_param_decl(symbol, type_params);
     }
@@ -1818,8 +1869,29 @@ impl<'a> SymbolFiller<'a> {
     }
 
     for member in &n.body.body {
-      let mut visitor = SymbolFillVisitor { symbol };
-      member.visit_with(&mut visitor);
+      match member {
+        TsTypeElement::TsCallSignatureDecl(n) => {
+          self.fill_ts_call_signature_decl(symbol, n);
+        }
+        TsTypeElement::TsConstructSignatureDecl(n) => {
+          self.fill_ts_construct_signature(symbol, n);
+        }
+        TsTypeElement::TsPropertySignature(n) => {
+          self.fill_ts_property_signature(symbol, n);
+        }
+        TsTypeElement::TsIndexSignature(n) => {
+          self.fill_ts_index_signature(symbol, n);
+        }
+        TsTypeElement::TsMethodSignature(n) => {
+          self.fill_ts_method_signature(symbol, n);
+        }
+        TsTypeElement::TsGetterSignature(n) => {
+          self.fill_ts_getter_signature(symbol, n);
+        }
+        TsTypeElement::TsSetterSignature(n) => {
+          self.fill_ts_setter_signature(symbol, n);
+        }
+      }
     }
   }
 
@@ -1920,7 +1992,7 @@ impl<'a> SymbolFiller<'a> {
             file_module
               .symbol_mut(mod_symbol_id)
               .unwrap()
-              .child_decls
+              .child_ids
               .insert(symbol_id);
           },
         );
@@ -2428,22 +2500,128 @@ impl<'a> SymbolFiller<'a> {
     }
   }
 
-  fn fill_ts_index_signature(
+  fn fill_ts_call_signature_decl(
     &mut self,
     symbol: &mut Symbol,
-    signature: &TsIndexSignature,
+    n: &TsCallSignatureDecl,
   ) {
-    let member = self.get_symbol_member(
-      symbol,
-      SymbolMemberNodeRef::TsIndexSignature(signature),
-    );
-    if let Some(type_ann) = &signature.type_ann {
+    let member = self
+      .get_symbol_member(symbol, SymbolMemberNodeRef::TsCallSignatureDecl(n));
+
+    if let Some(type_params) = &n.type_params {
+      self.fill_ts_type_param_decl(member, type_params);
+    }
+    for param in &n.params {
+      self.fill_ts_fn_param(member, param);
+    }
+    if let Some(type_ann) = &n.type_ann {
       self.fill_ts_type_ann(member, type_ann)
     }
   }
 
-  fn fill_auto_accessor(&mut self, symbol: &mut Symbol, prop: &AutoAccessor) {
-    match &prop.key {
+  fn fill_ts_construct_signature(
+    &mut self,
+    symbol: &mut Symbol,
+    n: &TsConstructSignatureDecl,
+  ) {
+    let member = self.get_symbol_member(
+      symbol,
+      SymbolMemberNodeRef::TsConstructSignatureDecl(n),
+    );
+
+    if let Some(type_params) = &n.type_params {
+      self.fill_ts_type_param_decl(member, type_params);
+    }
+    for param in &n.params {
+      self.fill_ts_fn_param(member, param);
+    }
+    if let Some(type_ann) = &n.type_ann {
+      self.fill_ts_type_ann(member, type_ann)
+    }
+  }
+
+  fn fill_ts_property_signature(
+    &mut self,
+    symbol: &mut Symbol,
+    n: &TsPropertySignature,
+  ) {
+    let member = self
+      .get_symbol_member(symbol, SymbolMemberNodeRef::TsPropertySignature(n));
+
+    if let Some(init) = &n.init {
+      self.fill_expr(member, init);
+    }
+    if let Some(type_params) = &n.type_params {
+      self.fill_ts_type_param_decl(member, type_params);
+    }
+    for param in &n.params {
+      self.fill_ts_fn_param(member, param);
+    }
+    if let Some(type_ann) = &n.type_ann {
+      self.fill_ts_type_ann(member, type_ann)
+    }
+  }
+
+  fn fill_ts_index_signature(
+    &mut self,
+    symbol: &mut Symbol,
+    n: &TsIndexSignature,
+  ) {
+    let member =
+      self.get_symbol_member(symbol, SymbolMemberNodeRef::TsIndexSignature(n));
+    for param in &n.params {
+      self.fill_ts_fn_param(member, param)
+    }
+    if let Some(type_ann) = &n.type_ann {
+      self.fill_ts_type_ann(member, type_ann)
+    }
+  }
+
+  fn fill_ts_method_signature(
+    &mut self,
+    symbol: &mut Symbol,
+    n: &TsMethodSignature,
+  ) {
+    let member =
+      self.get_symbol_member(symbol, SymbolMemberNodeRef::TsMethodSignature(n));
+
+    if let Some(type_params) = &n.type_params {
+      self.fill_ts_type_param_decl(member, type_params);
+    }
+    for param in &n.params {
+      self.fill_ts_fn_param(member, param)
+    }
+    if let Some(type_ann) = &n.type_ann {
+      self.fill_ts_type_ann(member, type_ann)
+    }
+  }
+
+  fn fill_ts_getter_signature(
+    &mut self,
+    symbol: &mut Symbol,
+    n: &TsGetterSignature,
+  ) {
+    let member =
+      self.get_symbol_member(symbol, SymbolMemberNodeRef::TsGetterSignature(n));
+
+    if let Some(type_ann) = &n.type_ann {
+      self.fill_ts_type_ann(member, type_ann)
+    }
+  }
+
+  fn fill_ts_setter_signature(
+    &mut self,
+    symbol: &mut Symbol,
+    n: &TsSetterSignature,
+  ) {
+    let member =
+      self.get_symbol_member(symbol, SymbolMemberNodeRef::TsSetterSignature(n));
+
+    self.fill_ts_fn_param(member, &n.param);
+  }
+
+  fn fill_auto_accessor(&mut self, symbol: &mut Symbol, n: &AutoAccessor) {
+    match &n.key {
       Key::Private(_) => {
         return; // ignore, private
       }
@@ -2451,10 +2629,15 @@ impl<'a> SymbolFiller<'a> {
     }
 
     let member =
-      self.get_symbol_member(symbol, SymbolMemberNodeRef::AutoAccessor(prop));
-    if let Some(type_ann) = &prop.type_ann {
+      self.get_symbol_member(symbol, SymbolMemberNodeRef::AutoAccessor(n));
+    if let Some(type_ann) = &n.type_ann {
       self.fill_ts_type_ann(member, type_ann)
     }
+  }
+
+  fn fill_ts_fn_param(&self, member: &mut SymbolMember, param: &TsFnParam) {
+    let mut visitor = SymbolFillVisitor { symbol: member };
+    param.visit_with(&mut visitor);
   }
 
   fn has_internal_jsdoc(&self, pos: SourcePos) -> bool {
@@ -2466,75 +2649,66 @@ impl<'a> SymbolFiller<'a> {
     symbol: &'b mut Symbol,
     node_ref: SymbolMemberNodeRef,
   ) -> &'b mut SymbolMember {
-    let inner_decl = match node_ref {
+    let decl = match node_ref {
       SymbolMemberNodeRef::AutoAccessor(n) => {
-        SymbolMemberDeclInner::AutoAccessor(NodeRefBox::unsafe_new(
-          &self.source,
-          n,
-        ))
+        SymbolMemberDecl::AutoAccessor(NodeRefBox::unsafe_new(&self.source, n))
       }
 
       SymbolMemberNodeRef::ClassMethod(n) => {
-        SymbolMemberDeclInner::ClassMethod(NodeRefBox::unsafe_new(
-          &self.source,
-          n,
-        ))
+        SymbolMemberDecl::ClassMethod(NodeRefBox::unsafe_new(&self.source, n))
       }
 
-      SymbolMemberNodeRef::ClassProp(n) => SymbolMemberDeclInner::ClassProp(
-        NodeRefBox::unsafe_new(&self.source, n),
-      ),
+      SymbolMemberNodeRef::ClassProp(n) => {
+        SymbolMemberDecl::ClassProp(NodeRefBox::unsafe_new(&self.source, n))
+      }
 
       SymbolMemberNodeRef::Constructor(n) => {
-        SymbolMemberDeclInner::Constructor(NodeRefBox::unsafe_new(
-          &self.source,
-          n,
-        ))
+        SymbolMemberDecl::Constructor(NodeRefBox::unsafe_new(&self.source, n))
       }
 
       SymbolMemberNodeRef::TsIndexSignature(n) => {
-        SymbolMemberDeclInner::TsIndexSignature(NodeRefBox::unsafe_new(
+        SymbolMemberDecl::TsIndexSignature(NodeRefBox::unsafe_new(
           &self.source,
           n,
         ))
       }
 
       SymbolMemberNodeRef::TsCallSignatureDecl(n) => {
-        SymbolMemberDeclInner::TsCallSignatureDecl(NodeRefBox::unsafe_new(
+        SymbolMemberDecl::TsCallSignatureDecl(NodeRefBox::unsafe_new(
           &self.source,
           n,
         ))
       }
 
       SymbolMemberNodeRef::TsConstructSignatureDecl(n) => {
-        SymbolMemberDeclInner::TsConstructSignatureDecl(NodeRefBox::unsafe_new(
+        SymbolMemberDecl::TsConstructSignatureDecl(NodeRefBox::unsafe_new(
           &self.source,
           n,
         ))
       }
 
       SymbolMemberNodeRef::TsPropertySignature(n) => {
-        SymbolMemberDeclInner::TsPropertySignature(NodeRefBox::unsafe_new(
+        SymbolMemberDecl::TsPropertySignature(NodeRefBox::unsafe_new(
           &self.source,
           n,
         ))
       }
       SymbolMemberNodeRef::TsGetterSignature(n) => {
-        SymbolMemberDeclInner::TsGetterSignature(NodeRefBox::unsafe_new(
+        SymbolMemberDecl::TsGetterSignature(NodeRefBox::unsafe_new(
           &self.source,
           n,
         ))
       }
 
       SymbolMemberNodeRef::TsSetterSignature(n) => {
-        SymbolMemberDeclInner::TsSetterSignature(NodeRefBox::unsafe_new(
+        SymbolMemberDecl::TsSetterSignature(NodeRefBox::unsafe_new(
           &self.source,
           n,
         ))
       }
 
       SymbolMemberNodeRef::TsMethodSignature(n) => {
-        SymbolMemberDeclInner::TsMethodSignature(NodeRefBox::unsafe_new(
+        SymbolMemberDecl::TsMethodSignature(NodeRefBox::unsafe_new(
           &self.source,
           n,
         ))
@@ -2542,12 +2716,16 @@ impl<'a> SymbolFiller<'a> {
     };
     let next_id = self.next_symbol_member_id;
     self.next_symbol_member_id = SymbolMemberId(next_id.0 + 1);
-    symbol.members.push(SymbolMember {
-      symbol_member_id: next_id,
-      decls: vec![SymbolMemberDecl(inner_decl)],
-      deps: Default::default(),
-    });
-    symbol.members.last_mut().unwrap()
+    let result = symbol.members.insert(
+      next_id,
+      SymbolMember {
+        symbol_member_id: next_id,
+        decl,
+        deps: Default::default(),
+      },
+    );
+    debug_assert!(result.is_none()); // should never re-insert
+    symbol.members.get_mut(&next_id).unwrap()
   }
 }
 

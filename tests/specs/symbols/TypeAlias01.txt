@@ -1,13 +1,8 @@
 # mod.ts
-export namespace RootNs {
-  export namespace NestedNs {
-    export enum Foo {
-    }
-  }
+export type Test<T extends Other> = Other2;
 
-  export enum Foo {
-  }
-}
+interface Other {}
+interface Other2 {}
 
 # output
 file:///mod.ts: EsmModuleSymbol {
@@ -17,28 +12,26 @@ file:///mod.ts: EsmModuleSymbol {
     specifier: "file:///mod.ts",
     child_ids: {
         0,
+        1,
+        2,
     },
     exports: {
-        "RootNs": 0,
+        "Test": 0,
     },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            "RootNs",
+            "Test",
             #2,
         ): 0,
         (
-            "NestedNs",
-            #3,
+            "Other",
+            #2,
         ): 1,
         (
-            "Foo",
-            #4,
+            "Other2",
+            #2,
         ): 2,
-        (
-            "Foo",
-            #3,
-        ): 3,
     },
     symbols: {
         0: Symbol {
@@ -53,7 +46,7 @@ file:///mod.ts: EsmModuleSymbol {
                             0,
                         ),
                         end: SourcePos(
-                            114,
+                            43,
                         ),
                     },
                     kind: Definition(
@@ -66,25 +59,19 @@ file:///mod.ts: EsmModuleSymbol {
             deps: {
                 Id(
                     (
-                        "NestedNs",
-                        #3,
+                        "Other",
+                        #2,
                     ),
                 ),
                 Id(
                     (
-                        "Foo",
-                        #3,
+                        "Other2",
+                        #2,
                     ),
                 ),
             },
-            child_ids: {
-                1,
-                3,
-            },
-            exports: {
-                "NestedNs": 1,
-                "Foo": 3,
-            },
+            child_ids: {},
+            exports: {},
             members: {},
         },
         1: Symbol {
@@ -96,10 +83,10 @@ file:///mod.ts: EsmModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            28,
+                            45,
                         ),
                         end: SourcePos(
-                            87,
+                            63,
                         ),
                     },
                     kind: Definition(
@@ -109,20 +96,9 @@ file:///mod.ts: EsmModuleSymbol {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Foo",
-                        #4,
-                    ),
-                ),
-            },
-            child_ids: {
-                2,
-            },
-            exports: {
-                "Foo": 2,
-            },
+            deps: {},
+            child_ids: {},
+            exports: {},
             members: {},
         },
         2: Symbol {
@@ -134,7 +110,7 @@ file:///mod.ts: EsmModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            60,
+                            64,
                         ),
                         end: SourcePos(
                             83,
@@ -152,39 +128,8 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        3: Symbol {
-            module_id: ModuleId(
-                0,
-            ),
-            symbol_id: 3,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            91,
-                        ),
-                        end: SourcePos(
-                            112,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "<omitted>",
-                        ),
-                    ),
-                },
-            ],
-            deps: {},
-            child_ids: {},
-            exports: {},
-            members: {},
-        },
     },
 }
 == export definitions ==
-[RootNs]: file:///mod.ts:0..114
-  export namespace RootNs {
-    export namespace NestedNs {
-  ...
-    }
-  }
+[Test]: file:///mod.ts:0..43
+  export type Test<T extends Other> = Other2;

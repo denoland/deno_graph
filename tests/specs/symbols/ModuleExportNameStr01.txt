@@ -18,7 +18,7 @@ file:///a.ts: EsmModuleSymbol {
         1,
     ),
     specifier: "file:///a.ts",
-    child_decls: {},
+    child_ids: {},
     exports: {
         "someName": 0,
     },
@@ -31,6 +31,9 @@ file:///a.ts: EsmModuleSymbol {
     },
     symbols: {
         0: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
             symbol_id: 0,
             decls: [
                 SymbolDecl {
@@ -64,9 +67,9 @@ file:///a.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
-            child_decls: {},
+            child_ids: {},
             exports: {},
-            members: [],
+            members: {},
         },
     },
 }
@@ -75,7 +78,7 @@ file:///b.ts: EsmModuleSymbol {
         2,
     ),
     specifier: "file:///b.ts",
-    child_decls: {},
+    child_ids: {},
     exports: {
         "some-name": 0,
     },
@@ -83,6 +86,9 @@ file:///b.ts: EsmModuleSymbol {
     swc_id_to_symbol_id: {},
     symbols: {
         0: Symbol {
+            module_id: ModuleId(
+                2,
+            ),
             symbol_id: 0,
             decls: [
                 SymbolDecl {
@@ -105,9 +111,9 @@ file:///b.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
-            child_decls: {},
+            child_ids: {},
             exports: {},
-            members: [],
+            members: {},
         },
     },
 }
@@ -116,7 +122,7 @@ file:///c.ts: EsmModuleSymbol {
         3,
     ),
     specifier: "file:///c.ts",
-    child_decls: {
+    child_ids: {
         0,
     },
     exports: {
@@ -131,6 +137,9 @@ file:///c.ts: EsmModuleSymbol {
     },
     symbols: {
         0: Symbol {
+            module_id: ModuleId(
+                3,
+            ),
             symbol_id: 0,
             decls: [
                 SymbolDecl {
@@ -150,9 +159,9 @@ file:///c.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
-            child_decls: {},
+            child_ids: {},
             exports: {},
-            members: [],
+            members: {},
         },
     },
 }
@@ -161,7 +170,7 @@ file:///mod.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.ts",
-    child_decls: {},
+    child_ids: {},
     exports: {
         "someOtherName": 0,
     },
@@ -169,6 +178,9 @@ file:///mod.ts: EsmModuleSymbol {
     swc_id_to_symbol_id: {},
     symbols: {
         0: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
             symbol_id: 0,
             decls: [
                 SymbolDecl {
@@ -191,9 +203,9 @@ file:///mod.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
-            child_decls: {},
+            child_ids: {},
             exports: {},
-            members: [],
+            members: {},
         },
     },
 }
