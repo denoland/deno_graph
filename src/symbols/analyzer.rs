@@ -1899,7 +1899,7 @@ impl<'a> SymbolFiller<'a> {
     if let Some(type_params) = &n.type_params {
       self.fill_ts_type_param_decl(symbol, type_params);
     }
-    self.fill_ts_type(symbol, &*n.type_ann)
+    self.fill_ts_type(symbol, &n.type_ann)
   }
 
   fn fill_ts_enum(&self, symbol: &mut Symbol, n: &TsEnumDecl) {
@@ -2651,65 +2651,65 @@ impl<'a> SymbolFiller<'a> {
   ) -> &'b mut SymbolMember {
     let decl = match node_ref {
       SymbolMemberNodeRef::AutoAccessor(n) => {
-        SymbolMemberDecl::AutoAccessor(NodeRefBox::unsafe_new(&self.source, n))
+        SymbolMemberDecl::AutoAccessor(NodeRefBox::unsafe_new(self.source, n))
       }
 
       SymbolMemberNodeRef::ClassMethod(n) => {
-        SymbolMemberDecl::ClassMethod(NodeRefBox::unsafe_new(&self.source, n))
+        SymbolMemberDecl::ClassMethod(NodeRefBox::unsafe_new(self.source, n))
       }
 
       SymbolMemberNodeRef::ClassProp(n) => {
-        SymbolMemberDecl::ClassProp(NodeRefBox::unsafe_new(&self.source, n))
+        SymbolMemberDecl::ClassProp(NodeRefBox::unsafe_new(self.source, n))
       }
 
       SymbolMemberNodeRef::Constructor(n) => {
-        SymbolMemberDecl::Constructor(NodeRefBox::unsafe_new(&self.source, n))
+        SymbolMemberDecl::Constructor(NodeRefBox::unsafe_new(self.source, n))
       }
 
       SymbolMemberNodeRef::TsIndexSignature(n) => {
         SymbolMemberDecl::TsIndexSignature(NodeRefBox::unsafe_new(
-          &self.source,
+          self.source,
           n,
         ))
       }
 
       SymbolMemberNodeRef::TsCallSignatureDecl(n) => {
         SymbolMemberDecl::TsCallSignatureDecl(NodeRefBox::unsafe_new(
-          &self.source,
+          self.source,
           n,
         ))
       }
 
       SymbolMemberNodeRef::TsConstructSignatureDecl(n) => {
         SymbolMemberDecl::TsConstructSignatureDecl(NodeRefBox::unsafe_new(
-          &self.source,
+          self.source,
           n,
         ))
       }
 
       SymbolMemberNodeRef::TsPropertySignature(n) => {
         SymbolMemberDecl::TsPropertySignature(NodeRefBox::unsafe_new(
-          &self.source,
+          self.source,
           n,
         ))
       }
       SymbolMemberNodeRef::TsGetterSignature(n) => {
         SymbolMemberDecl::TsGetterSignature(NodeRefBox::unsafe_new(
-          &self.source,
+          self.source,
           n,
         ))
       }
 
       SymbolMemberNodeRef::TsSetterSignature(n) => {
         SymbolMemberDecl::TsSetterSignature(NodeRefBox::unsafe_new(
-          &self.source,
+          self.source,
           n,
         ))
       }
 
       SymbolMemberNodeRef::TsMethodSignature(n) => {
         SymbolMemberDecl::TsMethodSignature(NodeRefBox::unsafe_new(
-          &self.source,
+          self.source,
           n,
         ))
       }
