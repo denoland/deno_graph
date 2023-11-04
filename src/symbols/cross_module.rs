@@ -255,8 +255,8 @@ fn go_to_file_export<'a>(
 
 /// A resolved `SymbolDep`.
 pub enum ResolvedSymbolDepEntry<'a> {
-  /// The definition of the symbol dep.
-  Definition(DefinitionPath<'a>),
+  /// The path to the definition of the symbol dep.
+  DefinitionPath(DefinitionPath<'a>),
   /// If the symbol dep was an import type with no property access.
   ///
   /// Ex. `type MyType = typeof import("./my_module.ts");`
@@ -274,7 +274,7 @@ pub fn resolve_symbol_dep<'a>(
       if let Some(symbol) = module.esm().and_then(|m| m.symbol_from_swc(id)) {
         find_definition_paths(module_graph, module, symbol, specifier_to_module)
           .into_iter()
-          .map(ResolvedSymbolDepEntry::Definition)
+          .map(ResolvedSymbolDepEntry::DefinitionPath)
           .collect()
       } else {
         Vec::new()
@@ -289,7 +289,7 @@ pub fn resolve_symbol_dep<'a>(
       &mut Default::default(),
     )
     .into_iter()
-    .map(ResolvedSymbolDepEntry::Definition)
+    .map(ResolvedSymbolDepEntry::DefinitionPath)
     .collect(),
     SymbolDep::ImportType(import_specifier, parts) => {
       let maybe_dep_specifier = module_graph.resolve_dependency(
@@ -328,7 +328,7 @@ pub fn resolve_symbol_dep<'a>(
                   specifier_to_module,
                 )
                 .into_iter()
-                .map(ResolvedSymbolDepEntry::Definition),
+                .map(ResolvedSymbolDepEntry::DefinitionPath),
               );
             }
           }
