@@ -2050,7 +2050,6 @@ impl<'a> SymbolFiller<'a> {
                 mod_symbol.deps.insert(id.into());
               }
               Decl::Fn(n) => {
-                let id = n.ident.to_id();
                 let mod_symbol = file_module.symbol_mut(mod_symbol_id).unwrap();
                 mod_symbol.deps.insert(n.ident.to_id().into());
               }
