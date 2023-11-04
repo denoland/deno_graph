@@ -1559,6 +1559,28 @@ impl ModuleGraph {
     }
   }
 
+  /// Similar to `try_get`, but will prefer resolving to the types dependency if
+  /// the module has one.
+  pub fn try_get_prefer_types(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Result<Option<&Module>, &ModuleError> {
+    let Some(module) = self.try_get(specifier)? else {
+      return Ok(None);
+    };
+
+    if let Some(specifier) = module.esm().and_then(|m| {
+      m.maybe_types_dependency
+        .as_ref()
+        .and_then(|d| d.dependency.ok())
+        .map(|r| &r.specifier)
+    }) {
+      self.try_get(specifier)
+    } else {
+      Ok(Some(module))
+    }
+  }
+
   /// Walk the graph from the root, checking to see if there are any module
   /// graph errors on non-type only, non-dynamic imports. The first error is
   /// returned as as error result, otherwise ok if there are no errors.
