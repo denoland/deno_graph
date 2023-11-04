@@ -93,21 +93,6 @@ file:///a.ts: EsmModuleSymbol {
                         ),
                     ),
                 },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            23,
-                        ),
-                        end: SourcePos(
-                            65,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface B {\n    prop: string,\n  }",
-                        ),
-                    ),
-                },
             ],
             deps: {},
             child_ids: {},

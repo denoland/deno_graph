@@ -164,21 +164,6 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     ),
                 },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            36,
-                        ),
-                        end: SourcePos(
-                            57,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class Label {}",
-                        ),
-                    ),
-                },
             ],
             deps: {},
             child_ids: {},
@@ -281,21 +266,6 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     ),
                 },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            120,
-                        ),
-                        end: SourcePos(
-                            186,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function mixColor(colorName: string) {\n    // ...etc...\n  }",
-                        ),
-                    ),
-                },
             ],
             deps: {},
             child_ids: {},
@@ -383,21 +353,6 @@ file:///mod.ts: EsmModuleSymbol {
             ),
             symbol_id: 5,
             decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            229,
-                        ),
-                        end: SourcePos(
-                            255,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function other() {}",
-                        ),
-                    ),
-                },
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(

@@ -167,36 +167,6 @@ file:///mod.ts: EsmModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            144,
-                        ),
-                        end: SourcePos(
-                            181,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function inner(value: number);",
-                        ),
-                    ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            184,
-                        ),
-                        end: SourcePos(
-                            221,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function inner(value: string);",
-                        ),
-                    ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
                             184,
                         ),
                         end: SourcePos(
@@ -301,10 +271,6 @@ file:///mod.ts: EsmModuleSymbol {
     }
 file:///mod.ts:184..221
   export function inner(value: string);
-file:///mod.ts:184..221
-  export function inner(value: string);
-file:///mod.ts:144..181
-  export function inner(value: number);
 file:///mod.ts:144..181
   export function inner(value: number);
 [test]: file:///mod.ts:0..36

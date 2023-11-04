@@ -109,21 +109,6 @@ file:///a.ts: EsmModuleSymbol {
                         ),
                     ),
                 },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            26,
-                        ),
-                        end: SourcePos(
-                            48,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function B() {}",
-                        ),
-                    ),
-                },
             ],
             deps: {},
             child_ids: {},

@@ -174,21 +174,6 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     ),
                 },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            72,
-                        ),
-                        end: SourcePos(
-                            80,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export const Test = 1;",
-                        ),
-                    ),
-                },
             ],
             deps: {},
             child_ids: {},
@@ -231,21 +216,6 @@ file:///mod.ts: EsmModuleSymbol {
             ),
             symbol_id: 5,
             decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            98,
-                        ),
-                        end: SourcePos(
-                            107,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export const other = 2;",
-                        ),
-                    ),
-                },
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(

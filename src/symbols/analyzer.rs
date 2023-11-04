@@ -2046,187 +2046,45 @@ impl<'a> SymbolFiller<'a> {
             ModuleDecl::ExportDecl(export_decl) => match &export_decl.decl {
               Decl::Class(n) => {
                 let id = n.ident.to_id();
-                let def_symbol_id = file_module.ensure_symbol_for_swc_id(
-                  id.clone(),
-                  SymbolDecl {
-                    kind: SymbolDeclKind::Definition(SymbolNode(
-                      SymbolNodeInner::ExportDecl(
-                        NodeRefBox::unsafe_new(
-                          &file_module.source,
-                          export_decl,
-                        ),
-                        SymbolNodeInnerExportDecl::Class(
-                          NodeRefBox::unsafe_new(&file_module.source, n),
-                        ),
-                      ),
-                    )),
-                    range: export_decl.range(),
-                  },
-                );
                 let mod_symbol = file_module.symbol_mut(mod_symbol_id).unwrap();
                 mod_symbol.deps.insert(id.into());
-                mod_symbol
-                  .exports
-                  .insert(n.ident.sym.to_string(), def_symbol_id);
               }
               Decl::Fn(n) => {
                 let id = n.ident.to_id();
-                let def_symbol_id = file_module.ensure_symbol_for_swc_id(
-                  id.clone(),
-                  SymbolDecl {
-                    kind: SymbolDeclKind::Definition(SymbolNode(
-                      SymbolNodeInner::ExportDecl(
-                        NodeRefBox::unsafe_new(
-                          &file_module.source,
-                          export_decl,
-                        ),
-                        SymbolNodeInnerExportDecl::Fn(NodeRefBox::unsafe_new(
-                          &file_module.source,
-                          n,
-                        )),
-                      ),
-                    )),
-                    range: export_decl.range(),
-                  },
-                );
                 let mod_symbol = file_module.symbol_mut(mod_symbol_id).unwrap();
                 mod_symbol.deps.insert(n.ident.to_id().into());
-                mod_symbol
-                  .exports
-                  .insert(n.ident.sym.to_string(), def_symbol_id);
               }
               Decl::Var(n) => {
                 for decl in &n.decls {
                   for ident in find_pat_ids::<_, Ident>(&decl.name) {
-                    let export_name = ident.sym.to_string();
                     let id = ident.to_id();
-                    let def_symbol_id = file_module.ensure_symbol_for_swc_id(
-                      id.clone(),
-                      SymbolDecl {
-                        kind: SymbolDeclKind::Definition(SymbolNode(
-                          SymbolNodeInner::ExportDecl(
-                            NodeRefBox::unsafe_new(
-                              &file_module.source,
-                              export_decl,
-                            ),
-                            SymbolNodeInnerExportDecl::Var(
-                              NodeRefBox::unsafe_new(&file_module.source, n),
-                              NodeRefBox::unsafe_new(&file_module.source, decl),
-                              ident,
-                            ),
-                          ),
-                        )),
-                        range: decl.range(),
-                      },
-                    );
                     let mod_symbol =
                       file_module.symbol_mut(mod_symbol_id).unwrap();
                     mod_symbol.deps.insert(id.into());
-                    mod_symbol.exports.insert(export_name, def_symbol_id);
                   }
                 }
               }
               Decl::TsInterface(n) => {
                 let id = n.id.to_id();
-                let def_symbol_id = file_module.ensure_symbol_for_swc_id(
-                  id.clone(),
-                  SymbolDecl {
-                    kind: SymbolDeclKind::Definition(SymbolNode(
-                      SymbolNodeInner::ExportDecl(
-                        NodeRefBox::unsafe_new(
-                          &file_module.source,
-                          export_decl,
-                        ),
-                        SymbolNodeInnerExportDecl::TsInterface(
-                          NodeRefBox::unsafe_new(&file_module.source, n),
-                        ),
-                      ),
-                    )),
-                    range: export_decl.range(),
-                  },
-                );
                 let mod_symbol = file_module.symbol_mut(mod_symbol_id).unwrap();
                 mod_symbol.deps.insert(id.into());
-                mod_symbol
-                  .exports
-                  .insert(n.id.sym.to_string(), def_symbol_id);
               }
               Decl::TsTypeAlias(n) => {
                 let id = n.id.to_id();
-                let def_symbol_id = file_module.ensure_symbol_for_swc_id(
-                  id.clone(),
-                  SymbolDecl {
-                    kind: SymbolDeclKind::Definition(SymbolNode(
-                      SymbolNodeInner::ExportDecl(
-                        NodeRefBox::unsafe_new(
-                          &file_module.source,
-                          export_decl,
-                        ),
-                        SymbolNodeInnerExportDecl::TsTypeAlias(
-                          NodeRefBox::unsafe_new(&file_module.source, n),
-                        ),
-                      ),
-                    )),
-                    range: export_decl.range(),
-                  },
-                );
                 let mod_symbol = file_module.symbol_mut(mod_symbol_id).unwrap();
                 mod_symbol.deps.insert(id.into());
-                mod_symbol
-                  .exports
-                  .insert(n.id.sym.to_string(), def_symbol_id);
               }
               Decl::TsEnum(n) => {
                 let id = n.id.to_id();
-                let def_symbol_id = file_module.ensure_symbol_for_swc_id(
-                  id.clone(),
-                  SymbolDecl {
-                    kind: SymbolDeclKind::Definition(SymbolNode(
-                      SymbolNodeInner::ExportDecl(
-                        NodeRefBox::unsafe_new(
-                          &file_module.source,
-                          export_decl,
-                        ),
-                        SymbolNodeInnerExportDecl::TsEnum(
-                          NodeRefBox::unsafe_new(&file_module.source, n),
-                        ),
-                      ),
-                    )),
-                    range: export_decl.range(),
-                  },
-                );
                 let mod_symbol = file_module.symbol_mut(mod_symbol_id).unwrap();
                 mod_symbol.deps.insert(id.into());
-                mod_symbol
-                  .exports
-                  .insert(n.id.sym.to_string(), def_symbol_id);
               }
               Decl::TsModule(n) => match &n.id {
                 TsModuleName::Ident(ident) => {
                   let id = ident.to_id();
-                  let def_symbol_id = file_module.ensure_symbol_for_swc_id(
-                    id.clone(),
-                    SymbolDecl {
-                      kind: SymbolDeclKind::Definition(SymbolNode(
-                        SymbolNodeInner::ExportDecl(
-                          NodeRefBox::unsafe_new(
-                            &file_module.source,
-                            export_decl,
-                          ),
-                          SymbolNodeInnerExportDecl::TsNamespace(
-                            NodeRefBox::unsafe_new(&file_module.source, n),
-                          ),
-                        ),
-                      )),
-                      range: export_decl.range(),
-                    },
-                  );
                   let mod_symbol =
                     file_module.symbol_mut(mod_symbol_id).unwrap();
                   mod_symbol.deps.insert(id.into());
-                  mod_symbol
-                    .exports
-                    .insert(ident.sym.to_string(), def_symbol_id);
                 }
                 TsModuleName::Str(_) => {
                   // ignore for now

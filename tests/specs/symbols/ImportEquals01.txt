@@ -134,21 +134,6 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     ),
                 },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            57,
-                        ),
-                        end: SourcePos(
-                            81,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class Inner {\n  }",
-                        ),
-                    ),
-                },
             ],
             deps: {},
             child_ids: {},
@@ -159,8 +144,5 @@ file:///mod.ts: EsmModuleSymbol {
 }
 == export definitions ==
 [MyExport]: file:///mod.ts:57..81
-  export class Inner {
-    }
-file:///mod.ts:57..81
   export class Inner {
     }

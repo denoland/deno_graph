@@ -182,21 +182,6 @@ file:///a.ts: EsmModuleSymbol {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            18,
-                        ),
-                        end: SourcePos(
-                            65,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface Other {\n    prop1: string;\n  }",
-                        ),
-                    ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
                             68,
                         ),
                         end: SourcePos(
@@ -206,36 +191,6 @@ file:///a.ts: EsmModuleSymbol {
                     kind: Definition(
                         SymbolNode(
                             "export interface Other {\n    prop2: string;\n  }",
-                        ),
-                    ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            68,
-                        ),
-                        end: SourcePos(
-                            115,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface Other {\n    prop2: string;\n  }",
-                        ),
-                    ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            118,
-                        ),
-                        end: SourcePos(
-                            178,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export namespace Other {\n    export class MyTest {\n    }\n  }",
                         ),
                     ),
                 },
@@ -292,21 +247,6 @@ file:///a.ts: EsmModuleSymbol {
             ),
             symbol_id: 3,
             decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            147,
-                        ),
-                        end: SourcePos(
-                            174,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class MyTest {\n    }",
-                        ),
-                    ),
-                },
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -523,22 +463,9 @@ file:///mod.ts: EsmModuleSymbol {
       export class MyTest {
       }
     }
-file:///a.ts:118..178
-  export namespace Other {
-      export class MyTest {
-      }
-    }
 file:///a.ts:68..115
   export interface Other {
       prop2: string;
-    }
-file:///a.ts:68..115
-  export interface Other {
-      prop2: string;
-    }
-file:///a.ts:18..65
-  export interface Other {
-      prop1: string;
     }
 file:///a.ts:18..65
   export interface Other {

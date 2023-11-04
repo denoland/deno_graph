@@ -108,21 +108,6 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     ),
                 },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            28,
-                        ),
-                        end: SourcePos(
-                            87,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export namespace NestedNs {\n    export enum Foo {\n    }\n  }",
-                        ),
-                    ),
-                },
             ],
             deps: {
                 Id(
@@ -161,21 +146,6 @@ file:///mod.ts: EsmModuleSymbol {
                         ),
                     ),
                 },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            60,
-                        ),
-                        end: SourcePos(
-                            83,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export enum Foo {\n    }",
-                        ),
-                    ),
-                },
             ],
             deps: {},
             child_ids: {},
@@ -188,21 +158,6 @@ file:///mod.ts: EsmModuleSymbol {
             ),
             symbol_id: 3,
             decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            91,
-                        ),
-                        end: SourcePos(
-                            112,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "export enum Foo {\n  }",
-                        ),
-                    ),
-                },
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
