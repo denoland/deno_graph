@@ -38,7 +38,7 @@ impl<K, V> AdditiveOnlyMap<K, V> {
 impl<K: Eq + std::hash::Hash, V> AdditiveOnlyMap<K, V> {
   pub fn contains_key(&self, key: &K) -> bool {
     let data = unsafe { &*self.data.get() };
-    data.contains_key(&key)
+    data.contains_key(key)
   }
 
   pub fn insert(&self, key: K, value: V) {
