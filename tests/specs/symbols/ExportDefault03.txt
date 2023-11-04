@@ -115,7 +115,7 @@ file:///b.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export class B {}",
                         ),
                     ),
                 },
@@ -142,7 +142,7 @@ file:///b.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export class B1 {}",
                         ),
                     ),
                 },
@@ -221,7 +221,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export class Test {}",
                         ),
                     ),
                 },

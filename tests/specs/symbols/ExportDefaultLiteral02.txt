@@ -31,7 +31,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export default \"test\";",
                         ),
                     ),
                 },

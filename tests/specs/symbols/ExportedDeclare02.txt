@@ -44,7 +44,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "declare function foo(): number;",
                         ),
                     ),
                 },
@@ -71,7 +71,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export function bar() {}",
                         ),
                     ),
                 },

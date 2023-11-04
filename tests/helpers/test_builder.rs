@@ -172,8 +172,9 @@ impl TestBuilder {
           |module_symbol: deno_graph::symbols::ModuleSymbolRef,
            symbol_id: deno_graph::symbols::SymbolId| {
             let symbol = module_symbol.symbol(symbol_id).unwrap();
-            let definitions =
-              root_symbol.go_to_definitions(module_symbol, symbol);
+            let definitions = root_symbol
+              .go_to_definitions(module_symbol, symbol)
+              .collect::<Vec<_>>();
             if definitions.is_empty() {
               "NONE".to_string()
             } else {

@@ -73,7 +73,7 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "namespace A.B {\n  export interface Other {\n    prop1: string;\n  }\n  export interface Other {\n    prop2: string;\n  }\n  export namespace Other {\n    export class MyTest {\n    }\n  }\n}",
                         ),
                     ),
                 },
@@ -131,7 +131,7 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "namespace A.B {\n  export interface Other {\n    prop1: string;\n  }\n  export interface Other {\n    prop2: string;\n  }\n  export namespace Other {\n    export class MyTest {\n    }\n  }\n}",
                         ),
                     ),
                 },
@@ -175,7 +175,22 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export interface Other {\n    prop1: string;\n  }",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            18,
+                        ),
+                        end: SourcePos(
+                            65,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Other {\n    prop1: string;\n  }",
                         ),
                     ),
                 },
@@ -190,7 +205,22 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export interface Other {\n    prop2: string;\n  }",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            68,
+                        ),
+                        end: SourcePos(
+                            115,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Other {\n    prop2: string;\n  }",
                         ),
                     ),
                 },
@@ -205,7 +235,22 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export namespace Other {\n    export class MyTest {\n    }\n  }",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            118,
+                        ),
+                        end: SourcePos(
+                            178,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace Other {\n    export class MyTest {\n    }\n  }",
                         ),
                     ),
                 },
@@ -258,7 +303,22 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export class MyTest {\n    }",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            147,
+                        ),
+                        end: SourcePos(
+                            174,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export class MyTest {\n    }",
                         ),
                     ),
                 },
@@ -389,7 +449,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "namespace Test {\n  import OtherInner = A.B.Other;\n  export { OtherInner as Inner };\n}",
                         ),
                     ),
                 },
@@ -458,16 +518,29 @@ file:///mod.ts: EsmModuleSymbol {
     },
 }
 == export definitions ==
-[MyExport]: file:///a.ts:18..65
-  export interface Other {
-      prop1: string;
-    }
-file:///a.ts:68..115
-  export interface Other {
-      prop2: string;
+[MyExport]: file:///a.ts:118..178
+  export namespace Other {
+      export class MyTest {
+      }
     }
 file:///a.ts:118..178
   export namespace Other {
       export class MyTest {
       }
+    }
+file:///a.ts:68..115
+  export interface Other {
+      prop2: string;
+    }
+file:///a.ts:68..115
+  export interface Other {
+      prop2: string;
+    }
+file:///a.ts:18..65
+  export interface Other {
+      prop1: string;
+    }
+file:///a.ts:18..65
+  export interface Other {
+      prop1: string;
     }

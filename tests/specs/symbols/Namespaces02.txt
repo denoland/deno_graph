@@ -58,7 +58,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export namespace RootNs {\n  export namespace NestedNs {\n    export enum Foo {\n    }\n  }\n\n  export enum Foo {\n  }\n}",
                         ),
                     ),
                 },
@@ -104,7 +104,22 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export namespace NestedNs {\n    export enum Foo {\n    }\n  }",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            28,
+                        ),
+                        end: SourcePos(
+                            87,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace NestedNs {\n    export enum Foo {\n    }\n  }",
                         ),
                     ),
                 },
@@ -142,7 +157,22 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export enum Foo {\n    }",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            60,
+                        ),
+                        end: SourcePos(
+                            83,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export enum Foo {\n    }",
                         ),
                     ),
                 },
@@ -169,7 +199,22 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export enum Foo {\n  }",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            91,
+                        ),
+                        end: SourcePos(
+                            112,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export enum Foo {\n  }",
                         ),
                     ),
                 },

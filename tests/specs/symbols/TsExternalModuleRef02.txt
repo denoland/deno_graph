@@ -51,7 +51,7 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "namespace MyNamespace {\n  export function B() {}\n}",
                         ),
                     ),
                 },
@@ -105,7 +105,22 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export function B() {}",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            26,
+                        ),
+                        end: SourcePos(
+                            48,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export function B() {}",
                         ),
                     ),
                 },

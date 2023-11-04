@@ -40,7 +40,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export function foo(): void {}",
                         ),
                     ),
                 },

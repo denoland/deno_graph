@@ -51,7 +51,7 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export namespace A {\n  export interface B {\n    prop: string,\n  }\n}",
                         ),
                     ),
                 },
@@ -89,7 +89,22 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export interface B {\n    prop: string,\n  }",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            23,
+                        ),
+                        end: SourcePos(
+                            65,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface B {\n    prop: string,\n  }",
                         ),
                     ),
                 },
@@ -145,7 +160,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export interface Test {\n  prop: import(\"./a.ts\").A.B,\n}",
                         ),
                     ),
                 },

@@ -57,7 +57,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export type Test = typeof Other.Test;",
                         ),
                     ),
                 },
@@ -94,7 +94,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "namespace Other {\n  export const Test = 1;\n\n  export const other = 2;\n}",
                         ),
                     ),
                 },
@@ -170,7 +170,22 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export const Test = 1;",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            72,
+                        ),
+                        end: SourcePos(
+                            80,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export const Test = 1;",
                         ),
                     ),
                 },
@@ -227,7 +242,22 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export const other = 2;",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            98,
+                        ),
+                        end: SourcePos(
+                            107,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export const other = 2;",
                         ),
                     ),
                 },

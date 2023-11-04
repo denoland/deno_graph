@@ -31,6 +31,7 @@ use crate::ModuleParser;
 use super::collections::AdditiveOnlyMap;
 use super::cross_module;
 use super::cross_module::Definition;
+use super::cross_module::DefinitionPath;
 use super::ResolvedSymbolDepEntry;
 
 /// The root symbol from which module symbols can be retrieved.
@@ -58,6 +59,15 @@ impl<'a> RootSymbol<'a> {
     }
   }
 
+  /// Checks if a specifier has been analyzed before.
+  ///
+  /// This does not lazily analyze the module.
+  pub fn has_analyzed(&self, specifier: &ModuleSpecifier) -> bool {
+    self.specifiers_to_ids.contains_key(specifier)
+  }
+
+  /// Gets a module from the provided specifier. This will lazily analyze
+  /// the module if it has not already been analyzed.
   pub fn get_module_from_specifier(
     &self,
     specifier: &ModuleSpecifier,
@@ -94,9 +104,23 @@ impl<'a> RootSymbol<'a> {
     &'b self,
     module: ModuleSymbolRef<'b>,
     symbol: &'b Symbol,
-  ) -> Vec<Definition<'b>> {
+  ) -> impl Iterator<Item = Definition<'b>> {
+    self
+      .find_definition_paths(module, symbol)
+      .into_iter()
+      .flat_map(|d| d.into_definitions())
+  }
+
+  /// Finds the graph paths to the definition of the specified symbol.
+  ///
+  /// Note: For performance reasons, this excludes paths that overlap.
+  pub fn find_definition_paths<'b>(
+    &'b self,
+    module: ModuleSymbolRef<'b>,
+    symbol: &'b Symbol,
+  ) -> Vec<DefinitionPath<'b>> {
     debug_assert_eq!(symbol.module_id(), module.module_id());
-    super::cross_module::go_to_definitions(
+    super::cross_module::find_definition_paths(
       self.module_graph,
       module,
       symbol,
@@ -130,7 +154,6 @@ impl<'a> RootSymbol<'a> {
       specifier: specifier.clone(),
       module_id: ModuleId(self.ids_to_symbols.len() as u32),
       source: source.clone(),
-      next_symbol_id: Default::default(),
       child_ids: Default::default(),
       exports: Default::default(),
       re_exports: Default::default(),
@@ -175,15 +198,10 @@ impl<'a> RootSymbol<'a> {
               range.end - end_whitespace_len,
             )
           };
-          IndexMap::from([(
+          Vec::from([SymbolDecl {
             range,
-            SymbolDecl {
-              range,
-              kind: SymbolDeclKind::Definition(SymbolNode(
-                SymbolNodeInner::Json,
-              )),
-            },
-          )])
+            kind: SymbolDeclKind::Definition(SymbolNode(SymbolNodeInner::Json)),
+          }])
         },
         deps: Default::default(),
         child_ids: Default::default(),
@@ -301,7 +319,45 @@ pub struct SymbolNode(SymbolNodeInner);
 
 impl std::fmt::Debug for SymbolNode {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_tuple("SymbolNode").field(&"<omitted>").finish()
+    f.debug_tuple("SymbolNode")
+      .field(&match &self.0 {
+        SymbolNodeInner::Json => "<json>".to_string(),
+        SymbolNodeInner::ClassDecl(d) => {
+          d.value().text_fast(d.source.text_info()).to_string()
+        }
+        SymbolNodeInner::ExportDecl(d, _) => {
+          d.value().text_fast(d.source.text_info()).to_string()
+        }
+        SymbolNodeInner::ExportDefaultDecl(d) => {
+          d.value().text_fast(d.source.text_info()).to_string()
+        }
+        SymbolNodeInner::ExportDefaultExprLit(d, _) => {
+          d.value().text_fast(d.source.text_info()).to_string()
+        }
+        SymbolNodeInner::FnDecl(d) => {
+          d.value().text_fast(d.source.text_info()).to_string()
+        }
+        SymbolNodeInner::TsEnum(d) => {
+          d.value().text_fast(d.source.text_info()).to_string()
+        }
+        SymbolNodeInner::TsNamespace(d) => {
+          d.value().text_fast(d.source.text_info()).to_string()
+        }
+        SymbolNodeInner::TsTypeAlias(d) => {
+          d.value().text_fast(d.source.text_info()).to_string()
+        }
+        SymbolNodeInner::TsInterface(d) => {
+          d.value().text_fast(d.source.text_info()).to_string()
+        }
+        SymbolNodeInner::Var(d, _, ident) => {
+          format!(
+            "{}: {}",
+            ident.sym,
+            d.value().text_fast(d.source.text_info())
+          )
+        }
+      })
+      .finish()
   }
 }
 
@@ -475,32 +531,16 @@ impl From<Id> for SymbolDep {
   }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Symbol {
   module_id: ModuleId,
   symbol_id: SymbolId,
-  // todo(dsherret): the IndexMap is just to prevent duplicates
-  // a better solution should be thought out
-  decls: IndexMap<SourceRange, SymbolDecl>,
+  decls: Vec<SymbolDecl>,
   deps: IndexSet<SymbolDep>,
   /// The child declarations of module declarations.
   child_ids: IndexSet<SymbolId>,
   exports: IndexMap<String, SymbolId>,
   members: IndexMap<SymbolMemberId, SymbolMember>,
-}
-
-impl std::fmt::Debug for Symbol {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("Symbol")
-      .field("module_id", &self.module_id)
-      .field("symbol_id", &self.symbol_id)
-      .field("decls", &self.decls.values().collect::<Vec<_>>())
-      .field("deps", &self.deps)
-      .field("child_ids", &self.child_ids)
-      .field("exports", &self.exports)
-      .field("members", &self.members)
-      .finish()
-  }
 }
 
 impl Symbol {
@@ -562,8 +602,8 @@ impl Symbol {
 
   /// The symbol's associated declarations. A symbol can represent many declarations
   /// if they have the same name via declaration merging.
-  pub fn decls(&self) -> impl Iterator<Item = &SymbolDecl> {
-    self.decls.values()
+  pub fn decls(&self) -> &[SymbolDecl] {
+    &self.decls
   }
 
   /// Gets a member of a symbol by member identifier.
@@ -589,7 +629,7 @@ impl Symbol {
   }
 
   fn insert_decl(&mut self, symbol_decl: SymbolDecl) {
-    self.decls.insert(symbol_decl.range, symbol_decl);
+    self.decls.push(symbol_decl);
   }
 }
 
@@ -924,7 +964,6 @@ pub struct EsmModuleSymbol {
   module_id: ModuleId,
   specifier: ModuleSpecifier,
   source: ParsedSource,
-  next_symbol_id: SymbolId,
   exports: IndexMap<String, SymbolId>,
   child_ids: IndexSet<SymbolId>,
   /// The re-export specifiers.
@@ -1025,9 +1064,7 @@ impl EsmModuleSymbol {
   }
 
   fn get_next_symbol_id(&mut self) -> SymbolId {
-    let next_id = self.next_symbol_id;
-    self.next_symbol_id = SymbolId(self.next_symbol_id.0 + 1);
-    next_id
+    SymbolId(self.symbols.len() as u32)
   }
 
   fn get_symbol_from_swc_id(
@@ -1044,23 +1081,24 @@ impl EsmModuleSymbol {
     id: Id,
     symbol_decl: SymbolDecl,
   ) -> SymbolId {
-    let symbol_id = match self.swc_id_to_symbol_id.get(&id) {
-      Some(symbol_id) => *symbol_id,
+    match self.swc_id_to_symbol_id.get(&id) {
+      Some(symbol_id) => {
+        self
+          .symbols
+          .get_mut(symbol_id)
+          .unwrap()
+          .insert_decl(symbol_decl);
+        *symbol_id
+      }
       None => {
         let symbol_id = self.get_next_symbol_id();
         self.swc_id_to_symbol_id.insert(id, symbol_id);
+        let mut symbol = Symbol::new(self.module_id, symbol_id);
+        symbol.insert_decl(symbol_decl);
+        self.symbols.insert(symbol_id, symbol);
         symbol_id
       }
-    };
-
-    if let Some(symbol) = self.symbols.get_mut(&symbol_id) {
-      symbol.insert_decl(symbol_decl);
-    } else {
-      let mut symbol = Symbol::new(self.module_id, symbol_id);
-      symbol.insert_decl(symbol_decl);
-      self.symbols.insert(symbol_id, symbol);
     }
-    symbol_id
   }
 }
 
@@ -1229,13 +1267,10 @@ impl<'a> SymbolFiller<'a> {
           }
           Decl::Var(n) => {
             let symbol = file_module.create_new_symbol();
-            symbol.decls.insert(
-              export_decl.range(),
-              SymbolDecl {
-                kind: SymbolDeclKind::TargetSelf,
-                range: export_decl.range(),
-              },
-            );
+            symbol.decls.push(SymbolDecl {
+              kind: SymbolDeclKind::TargetSelf,
+              range: export_decl.range(),
+            });
             let export_decl_symbol_id = symbol.symbol_id();
             add_child(file_module, export_decl_symbol_id);
 

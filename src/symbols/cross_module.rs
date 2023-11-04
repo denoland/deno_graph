@@ -24,7 +24,7 @@ pub enum DefinitionKind<'a> {
   Definition,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Definition<'a> {
   pub kind: DefinitionKind<'a>,
   pub module: ModuleSymbolRef<'a>,
@@ -52,13 +52,57 @@ impl<'a> Definition<'a> {
   }
 }
 
-pub fn go_to_definitions<'a>(
+/// A graph path to a definition.
+#[derive(Debug, Clone)]
+pub enum DefinitionPath<'a> {
+  Path {
+    module: ModuleSymbolRef<'a>,
+    symbol: &'a Symbol,
+    symbol_decl: &'a SymbolDecl,
+    next: Vec<DefinitionPath<'a>>,
+  },
+  Definition(Definition<'a>),
+}
+
+impl<'a> DefinitionPath<'a> {
+  pub fn into_definitions(self) -> impl Iterator<Item = Definition<'a>> {
+    struct DefinitionPathIntoDefinitionIterator<'a> {
+      stack: Vec<DefinitionPath<'a>>,
+    }
+
+    impl<'a> Iterator for DefinitionPathIntoDefinitionIterator<'a> {
+      type Item = Definition<'a>;
+
+      fn next(&mut self) -> Option<Self::Item> {
+        while let Some(path) = self.stack.pop() {
+          match path {
+            DefinitionPath::Path { next, .. } => {
+              self.stack.extend(next);
+            }
+            DefinitionPath::Definition(def) => {
+              return Some(def);
+            }
+          }
+        }
+
+        None
+      }
+    }
+
+    DefinitionPathIntoDefinitionIterator { stack: vec![self] }
+  }
+}
+
+/// Finds the path to a definition.
+///
+/// Note: For performance reasons, this excludes paths that overlap.
+pub fn find_definition_paths<'a>(
   module_graph: &ModuleGraph,
   module: ModuleSymbolRef<'a>,
   symbol: &'a Symbol,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
-) -> Vec<Definition<'a>> {
-  go_to_definitions_internal(
+) -> Vec<DefinitionPath<'a>> {
+  find_definition_paths_internal(
     module_graph,
     module,
     symbol,
@@ -67,34 +111,34 @@ pub fn go_to_definitions<'a>(
   )
 }
 
-fn go_to_definitions_internal<'a>(
+fn find_definition_paths_internal<'a>(
   module_graph: &ModuleGraph,
   module: ModuleSymbolRef<'a>,
   symbol: &'a Symbol,
   visited_symbols: &mut HashSet<UniqueSymbolId>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
-) -> Vec<Definition<'a>> {
+) -> Vec<DefinitionPath<'a>> {
   if !visited_symbols.insert(symbol.unique_id()) {
     return Vec::new();
   }
-  let mut definitions = Vec::new();
+  let mut paths = Vec::new(); //Vec::with_capacity(symbol.decls().len());
   for decl in symbol.decls() {
     match &decl.kind {
       SymbolDeclKind::Definition(_) => {
-        definitions.push(Definition {
+        paths.push(DefinitionPath::Definition(Definition {
           module,
           symbol,
           symbol_decl: decl,
           kind: DefinitionKind::Definition,
-        });
+        }));
       }
       SymbolDeclKind::DefinitionPrivateFnImpl(_) => {
-        definitions.push(Definition {
+        paths.push(DefinitionPath::Definition(Definition {
           module,
           symbol,
           symbol_decl: decl,
           kind: DefinitionKind::Definition,
-        });
+        }));
       }
       SymbolDeclKind::Target(target_id) => {
         if let Some(symbol) = module
@@ -103,55 +147,66 @@ fn go_to_definitions_internal<'a>(
           .symbol_id_from_swc(target_id)
           .and_then(|id| module.symbol(id))
         {
-          definitions.extend(go_to_definitions_internal(
+          let inner_paths = find_definition_paths_internal(
             module_graph,
             module,
             symbol,
             visited_symbols,
             specifier_to_module,
-          ));
+          );
+          if !inner_paths.is_empty() {
+            paths.push(DefinitionPath::Path {
+              module,
+              symbol,
+              symbol_decl: decl,
+              next: inner_paths,
+            });
+          }
         }
       }
       SymbolDeclKind::QualifiedTarget(target_id, parts) => {
-        definitions.extend(go_to_id_and_parts_definitions(
+        let inner_paths = go_to_id_and_parts_definition_paths(
           module_graph,
           module,
           target_id,
           parts,
           specifier_to_module,
           visited_symbols,
-        ));
+        );
+        if !inner_paths.is_empty() {
+          paths.push(DefinitionPath::Path {
+            module,
+            symbol,
+            symbol_decl: decl,
+            next: inner_paths,
+          });
+        }
       }
       SymbolDeclKind::FileRef(file_ref) => match &file_ref.name {
         FileDepName::Star => {
-          definitions.push(Definition {
+          paths.push(DefinitionPath::Definition(Definition {
             module,
             symbol,
             kind: DefinitionKind::ExportStar(file_ref),
             symbol_decl: decl,
-          });
+          }));
         }
         FileDepName::Name(export_name) => {
-          if let Some(dep) = module_graph.resolve_dependency(
-            &file_ref.specifier,
-            module.specifier(),
-            /* prefer types */ true,
-          ) {
-            if let Some(module_symbol) = specifier_to_module(&dep) {
-              let maybe_symbol = module_symbol
-                .exports_map()
-                .get(export_name)
-                .and_then(|symbol_id| module_symbol.symbol(*symbol_id));
-              if let Some(export_symbol) = maybe_symbol {
-                definitions.extend(go_to_definitions_internal(
-                  module_graph,
-                  module_symbol,
-                  export_symbol,
-                  visited_symbols,
-                  specifier_to_module,
-                ));
-              }
-            }
+          let inner_paths = go_to_file_export(
+            module_graph,
+            module,
+            file_ref,
+            export_name,
+            specifier_to_module,
+            visited_symbols,
+          );
+          if !inner_paths.is_empty() {
+            paths.push(DefinitionPath::Path {
+              module,
+              symbol,
+              symbol_decl: decl,
+              next: inner_paths,
+            });
           }
         }
       },
@@ -160,13 +215,48 @@ fn go_to_definitions_internal<'a>(
       }
     }
   }
-  definitions
+  paths
+}
+
+fn go_to_file_export<'a>(
+  module_graph: &ModuleGraph,
+  module: ModuleSymbolRef<'a>,
+  file_ref: &FileDep,
+  export_name: &str,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+  visited_symbols: &mut HashSet<UniqueSymbolId>,
+) -> Vec<DefinitionPath<'a>> {
+  let maybe_dep = module_graph.resolve_dependency(
+    &file_ref.specifier,
+    module.specifier(),
+    /* prefer types */ true,
+  );
+  let Some(dep) = maybe_dep else {
+    return Vec::new();
+  };
+  let Some(dep_module_symbol) = specifier_to_module(&dep) else {
+    return Vec::new();
+  };
+  let maybe_export_symbol = dep_module_symbol
+    .exports_map()
+    .get(export_name)
+    .and_then(|symbol_id| dep_module_symbol.symbol(*symbol_id));
+  let Some(export_symbol) = maybe_export_symbol else {
+    return Vec::new();
+  };
+  find_definition_paths_internal(
+    module_graph,
+    dep_module_symbol,
+    export_symbol,
+    visited_symbols,
+    specifier_to_module,
+  )
 }
 
 /// A resolved `SymbolDep`.
 pub enum ResolvedSymbolDepEntry<'a> {
   /// The definition of the symbol dep.
-  Definition(Definition<'a>),
+  Definition(DefinitionPath<'a>),
   /// If the symbol dep was an import type with no property access.
   ///
   /// Ex. `type MyType = typeof import("./my_module.ts");`
@@ -182,7 +272,7 @@ pub fn resolve_symbol_dep<'a>(
   match &dep {
     SymbolDep::Id(id) => {
       if let Some(symbol) = module.esm().and_then(|m| m.symbol_from_swc(id)) {
-        go_to_definitions(module_graph, module, symbol, specifier_to_module)
+        find_definition_paths(module_graph, module, symbol, specifier_to_module)
           .into_iter()
           .map(ResolvedSymbolDepEntry::Definition)
           .collect()
@@ -190,7 +280,7 @@ pub fn resolve_symbol_dep<'a>(
         Vec::new()
       }
     }
-    SymbolDep::QualifiedId(id, parts) => go_to_id_and_parts_definitions(
+    SymbolDep::QualifiedId(id, parts) => go_to_id_and_parts_definition_paths(
       module_graph,
       module,
       id,
@@ -230,7 +320,7 @@ pub fn resolve_symbol_dep<'a>(
             if let Some(symbol) = module.esm().and_then(|m| m.symbol(symbol_id))
             {
               definitions.extend(
-                go_to_definitions_internal(
+                find_definition_paths_internal(
                   module_graph,
                   module,
                   symbol,
@@ -249,14 +339,14 @@ pub fn resolve_symbol_dep<'a>(
   }
 }
 
-fn go_to_id_and_parts_definitions<'a>(
+fn go_to_id_and_parts_definition_paths<'a>(
   module_graph: &ModuleGraph,
   module: ModuleSymbolRef<'a>,
   target_id: &deno_ast::swc::ast::Id,
   parts: &[String],
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
   visited_symbols: &mut HashSet<UniqueSymbolId>,
-) -> Vec<Definition<'a>> {
+) -> Vec<DefinitionPath<'a>> {
   let mut definitions = Vec::new();
   if let Some(symbol_id) =
     module.esm().and_then(|m| m.symbol_id_from_swc(target_id))
@@ -271,7 +361,7 @@ fn go_to_id_and_parts_definitions<'a>(
     for (specifier, symbol_id) in results {
       if let Some(module_symbol) = specifier_to_module(&specifier) {
         if let Some(symbol) = module_symbol.symbol(symbol_id) {
-          definitions.extend(go_to_definitions_internal(
+          definitions.extend(find_definition_paths_internal(
             module_graph,
             module_symbol,
             symbol,
@@ -359,14 +449,14 @@ fn resolve_qualified_name_internal<'a>(
   let next_part = &parts[0];
   match module_symbol.symbol(symbol_id) {
     Some(symbol) => {
-      let definitions = go_to_definitions_internal(
+      let paths = find_definition_paths_internal(
         graph,
         module_symbol,
         symbol,
         visited_symbols,
         specifier_to_module,
       );
-      for definition in definitions {
+      for definition in paths.into_iter().flat_map(|p| p.into_definitions()) {
         match definition.kind {
           DefinitionKind::Definition => {
             if let Some(export_symbol_id) = definition.symbol.export(next_part)

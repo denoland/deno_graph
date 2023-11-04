@@ -114,7 +114,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export function test<T extends TypeParam = Default>(param: Param): Return {\n}",
                         ),
                     ),
                 },
@@ -166,7 +166,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "class TypeParam {}",
                         ),
                     ),
                 },
@@ -193,7 +193,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "class Param {}",
                         ),
                     ),
                 },
@@ -220,7 +220,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "class Return {}",
                         ),
                     ),
                 },
@@ -247,7 +247,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "class Default {}",
                         ),
                     ),
                 },
@@ -274,7 +274,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;",
                         ),
                     ),
                 },
@@ -289,7 +289,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export function overloaded(): string;",
                         ),
                     ),
                 },
@@ -304,7 +304,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: DefinitionPrivateFnImpl(
                         SymbolNode(
-                            "<omitted>",
+                            "export function overloaded<T extends PrivateTypeParam>(param: PrivateParam): PrivateReturn {\n}",
                         ),
                     ),
                 },
@@ -350,7 +350,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "class OverloadTypeParam {}",
                         ),
                     ),
                 },
@@ -377,7 +377,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "class OverloadParam {}",
                         ),
                     ),
                 },
@@ -404,7 +404,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "class OverloadReturn {}",
                         ),
                     ),
                 },
@@ -431,7 +431,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "class PrivateTypeParam {}",
                         ),
                     ),
                 },
@@ -458,7 +458,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "class PrivateParam {}",
                         ),
                     ),
                 },
@@ -485,7 +485,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "class PrivateReturn {}",
                         ),
                     ),
                 },

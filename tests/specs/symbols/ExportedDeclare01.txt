@@ -74,7 +74,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "declare function foo(): void;",
                         ),
                     ),
                 },
@@ -112,7 +112,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "declare namespace Test {\n  function test(): void;\n  export { test };\n}",
                         ),
                     ),
                 },
@@ -143,7 +143,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "function test(): void;",
                         ),
                     ),
                 },
@@ -192,7 +192,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "class Other {}",
                         ),
                     ),
                 },
@@ -219,7 +219,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "declare class MyClass {\n  method(): void;\n  prop: Other;\n}",
                         ),
                     ),
                 },

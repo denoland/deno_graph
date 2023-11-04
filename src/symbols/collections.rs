@@ -1,6 +1,6 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-use std::cell::RefCell;
+use std::cell::UnsafeCell;
 use std::collections::HashMap;
 
 /// A hash map that supports inserting data while holding references to
@@ -9,8 +9,8 @@ use std::collections::HashMap;
 /// previously inserted to key will cause a panic.
 pub struct AdditiveOnlyMap<K, V> {
   // store the values in a box to ensure the references are always stored
-  // in the same place
-  data: RefCell<HashMap<K, Box<V>>>,
+  // in the same place. Uses an UnsafeCell for faster performance.
+  data: UnsafeCell<HashMap<K, Box<V>>>,
 }
 
 impl<K, V> Default for AdditiveOnlyMap<K, V> {
@@ -25,29 +25,32 @@ impl<K, V> AdditiveOnlyMap<K, V> {
   #[cfg(test)]
   pub fn with_capacity(capacity: usize) -> Self {
     Self {
-      data: RefCell::new(HashMap::with_capacity(capacity)),
+      data: UnsafeCell::new(HashMap::with_capacity(capacity)),
     }
   }
 
   pub fn len(&self) -> usize {
-    self.data.borrow().len()
+    let data = unsafe { &*self.data.get() };
+    data.len()
   }
 }
 
 impl<K: Eq + std::hash::Hash, V> AdditiveOnlyMap<K, V> {
+  pub fn contains_key(&self, key: &K) -> bool {
+    let data = unsafe { &*self.data.get() };
+    data.contains_key(&key)
+  }
+
   pub fn insert(&self, key: K, value: V) {
+    let data = unsafe { &mut *self.data.get() };
     // assert that we never replace any data
-    assert!(self
-      .data
-      .borrow_mut()
-      .insert(key, Box::new(value))
-      .is_none());
+    assert!(data.insert(key, Box::new(value)).is_none());
   }
 
   pub fn get<'a>(&'a self, key: &K) -> Option<&'a V> {
-    // this is ok because we never remove from the map
     unsafe {
-      let data = self.data.borrow();
+      let data = &*self.data.get();
+      // this is ok because we never remove from the map
       data
         .get(key)
         .map(|value_box| value_box.as_ref() as *const V)
@@ -76,5 +79,7 @@ mod test {
     assert_eq!(data.value, 987);
     assert_eq!(map.get(&0).unwrap().value, 987);
     assert_eq!(map.get(&99).unwrap().value, 99);
+    assert!(map.contains_key(&99));
+    assert!(!map.contains_key(&100));
   }
 }

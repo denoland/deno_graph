@@ -66,7 +66,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "c: const c = { a: \"a\", b: 2 };",
                         ),
                     ),
                 },
@@ -93,7 +93,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "d: const d: { f: string; g: number; } = { f: \"f\", g: 2 };",
                         ),
                     ),
                 },
@@ -169,7 +169,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export const {\n  /** export a doc */\n  a,\n  /** export b doc */\n  b,\n}: {\n  /** type alias doc */\n  a: string;\n  /** other doc */\n  b: number;\n} = c;",
                         ),
                     ),
                 },
@@ -209,7 +209,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export const {\n  /** export a doc */\n  a,\n  /** export b doc */\n  b,\n}: {\n  /** type alias doc */\n  a: string;\n  /** other doc */\n  b: number;\n} = c;",
                         ),
                     ),
                 },

@@ -91,7 +91,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "interface A {\n}",
                         ),
                     ),
                 },
@@ -118,7 +118,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export interface Main extends Extends {\n  prop: Prop;\n  method(method: Param): Return;\n  [key: string]: SignatureValueType;\n}",
                         ),
                     ),
                 },
@@ -213,7 +213,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "interface Extends {}",
                         ),
                     ),
                 },
@@ -240,7 +240,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "interface Prop {}",
                         ),
                     ),
                 },
@@ -267,7 +267,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "interface Param {}",
                         ),
                     ),
                 },
@@ -294,7 +294,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "interface Return {}",
                         ),
                     ),
                 },
@@ -321,7 +321,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "interface SignatureValueType {\n  other: B;\n}",
                         ),
                     ),
                 },
@@ -363,7 +363,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "interface B {\n}",
                         ),
                     ),
                 },

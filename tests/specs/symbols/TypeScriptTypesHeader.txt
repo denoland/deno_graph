@@ -171,7 +171,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export class MyClass implements MyInterface, MyInterface2, MyInterface3 {\n}",
                         ),
                     ),
                 },
@@ -238,7 +238,7 @@ file:///other.d.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export interface MyInterface2 {\n  b: string;\n}",
                         ),
                     ),
                 },
@@ -305,7 +305,7 @@ file:///typescript.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export interface MyInterface3 {\n  c: string;\n}",
                         ),
                     ),
                 },
@@ -367,7 +367,7 @@ https://localhost/mod.d.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export interface MyInterface {\n  a: string;\n}",
                         ),
                     ),
                 },
@@ -402,7 +402,7 @@ https://localhost/mod.d.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export interface MyNonPublicInterface {\n  a1: string;\n}",
                         ),
                     ),
                 },
@@ -458,7 +458,7 @@ https://localhost/mod.js: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export class Dummy {}",
                         ),
                     ),
                 },
