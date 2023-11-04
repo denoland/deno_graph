@@ -64,7 +64,7 @@ file:///mod.ts: EsmModuleSymbol {
     },
 }
 == export definitions ==
-[bar]: file:///mod.ts:0..30
-  export function foo(): void {}
 [foo]: file:///mod.ts:0..30
+  export function foo(): void {}
+[bar]: file:///mod.ts:0..30
   export function foo(): void {}

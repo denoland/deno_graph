@@ -498,13 +498,13 @@ file:///mod.ts: EsmModuleSymbol {
     },
 }
 == export definitions ==
+[test]: file:///mod.ts:0..77
+  export function test<T extends TypeParam = Default>(param: Param): Return {
+  }
 [overloaded]: file:///mod.ts:201..295
   export function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;
 file:///mod.ts:296..333
   export function overloaded(): string;
 file:///mod.ts:334..428
   export function overloaded<T extends PrivateTypeParam>(param: PrivateParam): PrivateReturn {
-  }
-[test]: file:///mod.ts:0..77
-  export function test<T extends TypeParam = Default>(param: Param): Return {
   }

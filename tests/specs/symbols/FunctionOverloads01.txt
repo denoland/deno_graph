@@ -266,13 +266,6 @@ file:///mod.ts: EsmModuleSymbol {
     },
 }
 == export definitions ==
-[InnerInner]: file:///mod.ts:224..275
-  export function inner(value: string | number) {
-    }
-file:///mod.ts:184..221
-  export function inner(value: string);
-file:///mod.ts:144..181
-  export function inner(value: number);
 [test]: file:///mod.ts:0..36
   export function test(value: number);
 file:///mod.ts:37..73
@@ -280,3 +273,10 @@ file:///mod.ts:37..73
 file:///mod.ts:74..122
   export function test(value: string | number) {
   }
+[InnerInner]: file:///mod.ts:144..181
+  export function inner(value: number);
+file:///mod.ts:184..221
+  export function inner(value: string);
+file:///mod.ts:224..275
+  export function inner(value: string | number) {
+    }

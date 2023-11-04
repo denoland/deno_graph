@@ -458,16 +458,16 @@ file:///mod.ts: EsmModuleSymbol {
     },
 }
 == export definitions ==
-[MyExport]: file:///a.ts:118..178
-  export namespace Other {
-      export class MyTest {
-      }
+[MyExport]: file:///a.ts:18..65
+  export interface Other {
+      prop1: string;
     }
 file:///a.ts:68..115
   export interface Other {
       prop2: string;
     }
-file:///a.ts:18..65
-  export interface Other {
-      prop1: string;
+file:///a.ts:118..178
+  export namespace Other {
+      export class MyTest {
+      }
     }

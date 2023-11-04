@@ -210,10 +210,7 @@ impl TestBuilder {
               results.join("\n")
             }
           };
-        let exports = entrypoint_symbol
-          .exports(&graph, &root_symbol)
-          .into_iter()
-          .collect::<std::collections::BTreeMap<_, _>>();
+        let exports = entrypoint_symbol.exports(&graph, &root_symbol);
         if !exports.is_empty() {
           output_text.push_str("== export definitions ==\n");
           for (name, (module_symbol, symbol_id)) in exports {

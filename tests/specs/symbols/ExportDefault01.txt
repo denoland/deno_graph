@@ -732,6 +732,10 @@ file:///mod.ts: EsmModuleSymbol {
     },
 }
 == export definitions ==
+[default]: file:///a.ts:140..182
+  export default class Test {
+      prop: A;
+  }
 [C1]: file:///class.ts:0..29
   export default class Test {
   }
@@ -740,8 +744,4 @@ file:///mod.ts: EsmModuleSymbol {
   }
 [CInterface]: file:///interface.ts:0..33
   export default interface Test {
-  }
-[default]: file:///a.ts:140..182
-  export default class Test {
-      prop: A;
   }

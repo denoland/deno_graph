@@ -1,6 +1,7 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
 use std::collections::HashSet;
+use std::collections::VecDeque;
 
 use deno_ast::SourceRange;
 use indexmap::IndexMap;
@@ -67,17 +68,19 @@ pub enum DefinitionPath<'a> {
 impl<'a> DefinitionPath<'a> {
   pub fn into_definitions(self) -> impl Iterator<Item = Definition<'a>> {
     struct DefinitionPathIntoDefinitionIterator<'a> {
-      stack: Vec<DefinitionPath<'a>>,
+      queue: VecDeque<DefinitionPath<'a>>,
     }
 
     impl<'a> Iterator for DefinitionPathIntoDefinitionIterator<'a> {
       type Item = Definition<'a>;
 
       fn next(&mut self) -> Option<Self::Item> {
-        while let Some(path) = self.stack.pop() {
+        while let Some(path) = self.queue.pop_front() {
           match path {
             DefinitionPath::Path { next, .. } => {
-              self.stack.extend(next);
+              for child_path in next.into_iter().rev() {
+                self.queue.push_front(child_path);
+              }
             }
             DefinitionPath::Definition(def) => {
               return Some(def);
@@ -89,7 +92,9 @@ impl<'a> DefinitionPath<'a> {
       }
     }
 
-    DefinitionPathIntoDefinitionIterator { stack: vec![self] }
+    DefinitionPathIntoDefinitionIterator {
+      queue: VecDeque::from([self]),
+    }
   }
 }
 
