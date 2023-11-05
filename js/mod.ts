@@ -26,7 +26,7 @@ import type {
   ModuleGraphJson,
   ModuleJson,
   TypesDependency,
-} from "./types.d.ts";
+} from "./types.ts";
 
 export { load } from "./loader.ts";
 export { MediaType } from "./media_type.ts";
@@ -38,7 +38,7 @@ export type {
   ModuleJson,
   ModuleKind,
   TypesDependency,
-} from "./types.d.ts";
+} from "./types.ts";
 
 // note: keep this in line with deno_cache
 export type CacheSetting = "only" | "use" | "reload";
