@@ -28,12 +28,12 @@ file:///mod.ts: EsmModuleSymbol {
     child_ids: {
         0,
         1,
-        2,
-        3,
-        4,
         5,
         6,
         7,
+        8,
+        9,
+        11,
     },
     exports: {
         "Main": 1,
@@ -51,27 +51,27 @@ file:///mod.ts: EsmModuleSymbol {
         (
             "Extends",
             #2,
-        ): 2,
+        ): 5,
         (
             "Prop",
             #2,
-        ): 3,
+        ): 6,
         (
             "Param",
             #2,
-        ): 4,
+        ): 7,
         (
             "Return",
             #2,
-        ): 5,
+        ): 8,
         (
             "SignatureValueType",
             #2,
-        ): 6,
+        ): 9,
         (
             "B",
             #2,
-        ): 7,
+        ): 11,
     },
     symbols: {
         0: Symbol {
@@ -134,66 +134,9 @@ file:///mod.ts: EsmModuleSymbol {
             child_ids: {},
             exports: {},
             members: {
-                0: SymbolMember {
-                    symbol_member_id: 0,
-                    decl: SymbolMemberDecl(
-                        "<omitted>",
-                    ),
-                    deps: {
-                        Id(
-                            (
-                                "Prop",
-                                #2,
-                            ),
-                        ),
-                    },
-                },
-                1: SymbolMember {
-                    symbol_member_id: 1,
-                    decl: SymbolMemberDecl(
-                        "<omitted>",
-                    ),
-                    deps: {
-                        Id(
-                            (
-                                "method",
-                                #1,
-                            ),
-                        ),
-                        Id(
-                            (
-                                "Param",
-                                #2,
-                            ),
-                        ),
-                        Id(
-                            (
-                                "Return",
-                                #2,
-                            ),
-                        ),
-                    },
-                },
-                2: SymbolMember {
-                    symbol_member_id: 2,
-                    decl: SymbolMemberDecl(
-                        "<omitted>",
-                    ),
-                    deps: {
-                        Id(
-                            (
-                                "key",
-                                #1,
-                            ),
-                        ),
-                        Id(
-                            (
-                                "SignatureValueType",
-                                #2,
-                            ),
-                        ),
-                    },
-                },
+                2,
+                3,
+                4,
             },
         },
         2: Symbol {
@@ -201,6 +144,126 @@ file:///mod.ts: EsmModuleSymbol {
                 0,
             ),
             symbol_id: 2,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            59,
+                        ),
+                        end: SourcePos(
+                            70,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "prop: Prop;",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Prop",
+                        #2,
+                    ),
+                ),
+            },
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        3: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 3,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            73,
+                        ),
+                        end: SourcePos(
+                            103,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "method(method: Param): Return;",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "method",
+                        #1,
+                    ),
+                ),
+                Id(
+                    (
+                        "Param",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "Return",
+                        #2,
+                    ),
+                ),
+            },
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        4: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 4,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            106,
+                        ),
+                        end: SourcePos(
+                            140,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "[key: string]: SignatureValueType;",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "key",
+                        #1,
+                    ),
+                ),
+                Id(
+                    (
+                        "SignatureValueType",
+                        #2,
+                    ),
+                ),
+            },
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        5: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 5,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -223,11 +286,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        3: Symbol {
+        6: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 3,
+            symbol_id: 6,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -250,11 +313,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        4: Symbol {
+        7: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 4,
+            symbol_id: 7,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -277,11 +340,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        5: Symbol {
+        8: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 5,
+            symbol_id: 8,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -304,11 +367,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        6: Symbol {
+        9: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 6,
+            symbol_id: 9,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -330,27 +393,48 @@ file:///mod.ts: EsmModuleSymbol {
             child_ids: {},
             exports: {},
             members: {
-                3: SymbolMember {
-                    symbol_member_id: 3,
-                    decl: SymbolMemberDecl(
-                        "<omitted>",
-                    ),
-                    deps: {
-                        Id(
-                            (
-                                "B",
-                                #2,
-                            ),
-                        ),
-                    },
-                },
+                10,
             },
         },
-        7: Symbol {
+        10: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 7,
+            symbol_id: 10,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            255,
+                        ),
+                        end: SourcePos(
+                            264,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "other: B;",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "B",
+                        #2,
+                    ),
+                ),
+            },
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        11: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 11,
             decls: [
                 SymbolDecl {
                     range: SourceRange {

@@ -42,9 +42,9 @@ file:///a.ts: EsmModuleSymbol {
     ),
     specifier: "file:///a.ts",
     child_ids: {
-        4,
         5,
-        6,
+        8,
+        10,
     },
     exports: {
         "C1": 0,
@@ -61,15 +61,15 @@ file:///a.ts: EsmModuleSymbol {
         (
             "A",
             #2,
-        ): 4,
+        ): 5,
         (
             "B",
             #2,
-        ): 5,
+        ): 8,
         (
             "C",
             #2,
-        ): 6,
+        ): 10,
     },
     symbols: {
         0: Symbol {
@@ -188,20 +188,7 @@ file:///a.ts: EsmModuleSymbol {
             child_ids: {},
             exports: {},
             members: {
-                0: SymbolMember {
-                    symbol_member_id: 0,
-                    decl: SymbolMemberDecl(
-                        "<omitted>",
-                    ),
-                    deps: {
-                        Id(
-                            (
-                                "A",
-                                #2,
-                            ),
-                        ),
-                    },
-                },
+                4,
             },
         },
         4: Symbol {
@@ -209,6 +196,40 @@ file:///a.ts: EsmModuleSymbol {
                 1,
             ),
             symbol_id: 4,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            172,
+                        ),
+                        end: SourcePos(
+                            180,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "prop: A;",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "A",
+                        #2,
+                    ),
+                ),
+            },
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        5: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 5,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -230,34 +251,76 @@ file:///a.ts: EsmModuleSymbol {
             child_ids: {},
             exports: {},
             members: {
-                1: SymbolMember {
-                    symbol_member_id: 1,
-                    decl: SymbolMemberDecl(
-                        "<omitted>",
-                    ),
-                    deps: {},
-                },
-                2: SymbolMember {
-                    symbol_member_id: 2,
-                    decl: SymbolMemberDecl(
-                        "<omitted>",
-                    ),
-                    deps: {
-                        Id(
-                            (
-                                "B",
-                                #2,
-                            ),
-                        ),
-                    },
-                },
+                6,
+                7,
             },
         },
-        5: Symbol {
+        6: Symbol {
             module_id: ModuleId(
                 1,
             ),
-            symbol_id: 5,
+            symbol_id: 6,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            198,
+                        ),
+                        end: SourcePos(
+                            208,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "a: number;",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        7: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 7,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            213,
+                        ),
+                        end: SourcePos(
+                            218,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "b: B;",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "B",
+                        #2,
+                    ),
+                ),
+            },
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        8: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 8,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -279,20 +342,41 @@ file:///a.ts: EsmModuleSymbol {
             child_ids: {},
             exports: {},
             members: {
-                3: SymbolMember {
-                    symbol_member_id: 3,
-                    decl: SymbolMemberDecl(
-                        "<omitted>",
-                    ),
-                    deps: {},
-                },
+                9,
             },
         },
-        6: Symbol {
+        9: Symbol {
             module_id: ModuleId(
                 1,
             ),
-            symbol_id: 6,
+            symbol_id: 9,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            236,
+                        ),
+                        end: SourcePos(
+                            246,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "b: number;",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        10: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 10,
             decls: [
                 SymbolDecl {
                     range: SourceRange {

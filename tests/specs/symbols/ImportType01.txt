@@ -98,14 +98,35 @@ file:///a.ts: EsmModuleSymbol {
             child_ids: {},
             exports: {},
             members: {
-                0: SymbolMember {
-                    symbol_member_id: 0,
-                    decl: SymbolMemberDecl(
-                        "<omitted>",
-                    ),
-                    deps: {},
-                },
+                2,
             },
+        },
+        2: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 2,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            48,
+                        ),
+                        end: SourcePos(
+                            61,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "prop: string,",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
         },
     },
 }
@@ -154,22 +175,43 @@ file:///mod.ts: EsmModuleSymbol {
             child_ids: {},
             exports: {},
             members: {
-                0: SymbolMember {
-                    symbol_member_id: 0,
-                    decl: SymbolMemberDecl(
-                        "<omitted>",
-                    ),
-                    deps: {
-                        ImportType(
-                            "./a.ts",
-                            [
-                                "A",
-                                "B",
-                            ],
+                1,
+            },
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            26,
+                        ),
+                        end: SourcePos(
+                            53,
                         ),
                     },
+                    kind: Definition(
+                        SymbolNode(
+                            "prop: import(\"./a.ts\").A.B,",
+                        ),
+                    ),
                 },
+            ],
+            deps: {
+                ImportType(
+                    "./a.ts",
+                    [
+                        "A",
+                        "B",
+                    ],
+                ),
             },
+            child_ids: {},
+            exports: {},
+            members: {},
         },
     },
 }

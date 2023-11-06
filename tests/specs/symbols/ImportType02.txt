@@ -21,7 +21,7 @@ file:///a.ts: EsmModuleSymbol {
     },
     exports: {
         "Test": 0,
-        "default": 1,
+        "default": 2,
     },
     re_exports: [],
     swc_id_to_symbol_id: {
@@ -32,7 +32,7 @@ file:///a.ts: EsmModuleSymbol {
         (
             "test",
             #2,
-        ): 1,
+        ): 2,
     },
     symbols: {
         0: Symbol {
@@ -61,13 +61,7 @@ file:///a.ts: EsmModuleSymbol {
             child_ids: {},
             exports: {},
             members: {
-                0: SymbolMember {
-                    symbol_member_id: 0,
-                    decl: SymbolMemberDecl(
-                        "<omitted>",
-                    ),
-                    deps: {},
-                },
+                1,
             },
         },
         1: Symbol {
@@ -75,6 +69,33 @@ file:///a.ts: EsmModuleSymbol {
                 1,
             ),
             symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            26,
+                        ),
+                        end: SourcePos(
+                            39,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "prop: string;",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        2: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 2,
             decls: [
                 SymbolDecl {
                     range: SourceRange {

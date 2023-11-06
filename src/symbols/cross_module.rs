@@ -121,8 +121,6 @@ impl<'a> DefinitionPath<'a> {
 }
 
 /// Finds the path to a definition.
-///
-/// Note: For performance reasons, this excludes paths that overlap.
 pub fn find_definition_paths<'a>(
   module_graph: &ModuleGraph,
   module: ModuleSymbolRef<'a>,
