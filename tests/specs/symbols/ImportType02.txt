@@ -52,7 +52,7 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export interface Test {\n  prop: string;\n}",
                         ),
                     ),
                 },
@@ -87,7 +87,7 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export default function test() {\n}",
                         ),
                     ),
                 },
@@ -135,7 +135,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export type Test = typeof import(\"./a.ts\");",
                         ),
                     ),
                 },

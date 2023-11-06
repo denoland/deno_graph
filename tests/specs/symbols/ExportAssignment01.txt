@@ -42,7 +42,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "function test() {\n}",
                         ),
                     ),
                 },

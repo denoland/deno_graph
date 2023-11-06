@@ -44,7 +44,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export function isPrime(x: number): boolean {\n  // ...\n}",
                         ),
                     ),
                 },

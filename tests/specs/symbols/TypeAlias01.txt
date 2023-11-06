@@ -51,7 +51,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export type Test<T extends Other> = Other2;",
                         ),
                     ),
                 },
@@ -91,7 +91,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "interface Other {}",
                         ),
                     ),
                 },
@@ -118,7 +118,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "interface Other2 {}",
                         ),
                     ),
                 },

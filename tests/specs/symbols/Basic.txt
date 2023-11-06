@@ -90,7 +90,7 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "interface AInner {\n  prop: string;\n}",
                         ),
                     ),
                 },
@@ -125,7 +125,7 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "interface AInnerUnused {\n  prop2: string;\n}",
                         ),
                     ),
                 },
@@ -160,7 +160,7 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export class A {\n  prop: AInner;\n}",
                         ),
                     ),
                 },
@@ -202,7 +202,7 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export type B = string;",
                         ),
                     ),
                 },
@@ -229,7 +229,7 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export default class C {\n}",
                         ),
                     ),
                 },
@@ -256,7 +256,7 @@ file:///a.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export type D = typeof C;",
                         ),
                     ),
                 },
@@ -471,7 +471,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export const ExportA: typeof A = A;",
                         ),
                     ),
                 },
@@ -505,7 +505,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "test: const test: B;",
                         ),
                     ),
                 },
@@ -525,7 +525,7 @@ file:///mod.ts: EsmModuleSymbol {
     },
 }
 == export definitions ==
-[D]: file:///a.ts:173..198
-  export type D = typeof C;
 [ExportA]: file:///mod.ts:48..69
   ExportA: typeof A = A
+[D]: file:///a.ts:173..198
+  export type D = typeof C;

@@ -44,7 +44,7 @@ file:///mod.d.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export interface MyInterface {\n  a: string;\n}",
                         ),
                     ),
                 },
@@ -100,7 +100,7 @@ file:///mod.js: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export class ShouldNotHaveThisInOutput {}",
                         ),
                     ),
                 },

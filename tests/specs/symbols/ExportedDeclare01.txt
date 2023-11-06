@@ -74,7 +74,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "declare function foo(): void;",
                         ),
                     ),
                 },
@@ -112,7 +112,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "declare namespace Test {\n  function test(): void;\n  export { test };\n}",
                         ),
                     ),
                 },
@@ -143,7 +143,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "function test(): void;",
                         ),
                     ),
                 },
@@ -192,7 +192,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "class Other {}",
                         ),
                     ),
                 },
@@ -219,7 +219,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "declare class MyClass {\n  method(): void;\n  prop: Other;\n}",
                         ),
                     ),
                 },
@@ -328,12 +328,12 @@ file:///mod.ts: EsmModuleSymbol {
     },
 }
 == export definitions ==
+[bar]: file:///mod.ts:0..29
+  declare function foo(): void;
+[baz]: file:///mod.ts:57..79
+  function test(): void;
 [MyClass]: file:///mod.ts:116..174
   declare class MyClass {
     method(): void;
     prop: Other;
   }
-[bar]: file:///mod.ts:0..29
-  declare function foo(): void;
-[baz]: file:///mod.ts:57..79
-  function test(): void;

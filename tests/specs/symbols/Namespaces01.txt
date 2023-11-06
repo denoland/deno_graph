@@ -72,7 +72,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export namespace Namespace1 {\n  export function test() {\n  }\n}",
                         ),
                     ),
                 },
@@ -87,7 +87,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export namespace Namespace1.Inner {\n  export function test2() {\n  }\n}",
                         ),
                     ),
                 },
@@ -132,7 +132,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export function test() {\n  }",
                         ),
                     ),
                 },
@@ -159,7 +159,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "namespace Namespace1.Inner {\n  export function test2() {\n  }\n}",
                         ),
                     ),
                 },
@@ -203,7 +203,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export function test2() {\n  }",
                         ),
                     ),
                 },

@@ -172,8 +172,9 @@ impl TestBuilder {
           |module_symbol: deno_graph::symbols::ModuleSymbolRef,
            symbol_id: deno_graph::symbols::SymbolId| {
             let symbol = module_symbol.symbol(symbol_id).unwrap();
-            let definitions =
-              root_symbol.go_to_definitions(module_symbol, symbol);
+            let definitions = root_symbol
+              .go_to_definitions(module_symbol, symbol)
+              .collect::<Vec<_>>();
             if definitions.is_empty() {
               "NONE".to_string()
             } else {
@@ -209,10 +210,7 @@ impl TestBuilder {
               results.join("\n")
             }
           };
-        let exports = entrypoint_symbol
-          .exports(&graph, &root_symbol)
-          .into_iter()
-          .collect::<std::collections::BTreeMap<_, _>>();
+        let exports = entrypoint_symbol.exports(&graph, &root_symbol);
         if !exports.is_empty() {
           output_text.push_str("== export definitions ==\n");
           for (name, (module_symbol, symbol_id)) in exports {

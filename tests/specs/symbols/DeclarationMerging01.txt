@@ -85,7 +85,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "class Album {\n}",
                         ),
                     ),
                 },
@@ -100,7 +100,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "namespace Album {\n  export class Label {}\n}",
                         ),
                     ),
                 },
@@ -160,7 +160,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export class Label {}",
                         ),
                     ),
                 },
@@ -187,7 +187,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "enum Color {\n  red,\n  green,\n  blue,\n}",
                         ),
                     ),
                 },
@@ -202,7 +202,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "namespace Color {\n  export function mixColor(colorName: string) {\n    // ...etc...\n  }\n}",
                         ),
                     ),
                 },
@@ -262,7 +262,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export function mixColor(colorName: string) {\n    // ...etc...\n  }",
                         ),
                     ),
                 },
@@ -289,7 +289,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "function Test() {\n}",
                         ),
                     ),
                 },
@@ -304,7 +304,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "namespace Test {\n  export function other() {}\n}",
                         ),
                     ),
                 },
@@ -364,7 +364,7 @@ file:///mod.ts: EsmModuleSymbol {
                     },
                     kind: Definition(
                         SymbolNode(
-                            "<omitted>",
+                            "export function other() {}",
                         ),
                     ),
                 },
