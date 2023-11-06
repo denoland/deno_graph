@@ -467,6 +467,7 @@ pub enum SymbolNodeRef<'a> {
   TsTypeAlias(&'a TsTypeAliasDecl),
   Var(&'a VarDecl, &'a VarDeclarator, &'a Ident),
   // members
+  // todo(dsherret): split this up into two separate enums (one for declarations and one for members)
   AutoAccessor(&'a AutoAccessor),
   ClassMethod(&'a ClassMethod),
   ClassProp(&'a ClassProp),
@@ -478,6 +479,73 @@ pub enum SymbolNodeRef<'a> {
   TsGetterSignature(&'a TsGetterSignature),
   TsSetterSignature(&'a TsSetterSignature),
   TsMethodSignature(&'a TsMethodSignature),
+}
+
+impl<'a> SymbolNodeRef<'a> {
+  pub fn maybe_name(&self) -> Option<String> {
+    fn ts_module_name_to_string(module_name: &TsModuleName) -> String {
+      match module_name {
+        TsModuleName::Ident(ident) => ident.sym.to_string(),
+        TsModuleName::Str(str) => str.value.to_string(),
+      }
+    }
+
+    fn maybe_key_name(key: &Key) -> Option<String> {
+      match key {
+        Key::Private(_) => None,
+        Key::Public(n) => maybe_prop_name(n),
+      }
+    }
+
+    fn maybe_prop_name(prop_name: &PropName) -> Option<String> {
+      match prop_name {
+        PropName::Ident(n) => Some(n.sym.to_string()),
+        PropName::Str(n) => Some(n.value.to_string()),
+        PropName::Num(n) => Some(n.value.to_string()),
+        PropName::Computed(_) | PropName::BigInt(_) => None,
+      }
+    }
+
+    fn maybe_expr(expr: &Expr) -> Option<String> {
+      expr.as_ident().map(|ident| ident.sym.to_string())
+    }
+
+    match self {
+      Self::ClassDecl(n) => Some(n.ident.sym.to_string()),
+      Self::ExportDecl(_, n) => match n {
+        ExportDeclRef::Class(n) => Some(n.ident.sym.to_string()),
+        ExportDeclRef::Fn(n) => Some(n.ident.sym.to_string()),
+        ExportDeclRef::Var(_, _, ident) => Some(ident.sym.to_string()),
+        ExportDeclRef::TsEnum(n) => Some(n.id.sym.to_string()),
+        ExportDeclRef::TsInterface(n) => Some(n.id.sym.to_string()),
+        ExportDeclRef::TsModule(n) => Some(ts_module_name_to_string(&n.id)),
+        ExportDeclRef::TsTypeAlias(n) => Some(n.id.sym.to_string()),
+      },
+      Self::ExportDefaultDecl(n) => match &n.decl {
+        DefaultDecl::Class(n) => Some(n.ident.as_ref()?.sym.to_string()),
+        DefaultDecl::Fn(n) => Some(n.ident.as_ref()?.sym.to_string()),
+        DefaultDecl::TsInterfaceDecl(n) => Some(n.id.sym.to_string()),
+      },
+      Self::ExportDefaultExprLit(_, _) => None,
+      Self::FnDecl(n) => Some(n.ident.sym.to_string()),
+      Self::TsEnum(n) => Some(n.id.sym.to_string()),
+      Self::TsInterface(n) => Some(n.id.sym.to_string()),
+      Self::TsNamespace(n) => Some(ts_module_name_to_string(&n.id)),
+      Self::TsTypeAlias(n) => Some(n.id.sym.to_string()),
+      Self::Var(_, _, ident) => Some(ident.sym.to_string()),
+      Self::AutoAccessor(n) => maybe_key_name(&n.key),
+      Self::ClassMethod(n) => maybe_prop_name(&n.key),
+      Self::ClassProp(n) => maybe_prop_name(&n.key),
+      Self::Constructor(_) => None,
+      Self::TsIndexSignature(_) => None,
+      Self::TsCallSignatureDecl(_) => None,
+      Self::TsConstructSignatureDecl(_) => None,
+      Self::TsPropertySignature(n) => maybe_expr(&n.key),
+      Self::TsGetterSignature(n) => maybe_expr(&n.key),
+      Self::TsSetterSignature(n) => maybe_expr(&n.key),
+      Self::TsMethodSignature(n) => maybe_expr(&n.key),
+    }
+  }
 }
 
 #[derive(Debug, Clone)]
@@ -618,6 +686,10 @@ impl SymbolDecl {
   ) -> Option<(SymbolNodeRef, &ParsedSource)> {
     self.kind.maybe_node_and_source()
   }
+
+  pub fn maybe_name(&self) -> Option<String> {
+    self.maybe_node().and_then(|n| n.maybe_name())
+  }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -674,6 +746,11 @@ impl Symbol {
   /// This is module specific. If you need a global identifier, then use unique_id().
   pub fn symbol_id(&self) -> SymbolId {
     self.symbol_id
+  }
+
+  /// The local name of the symbol if it has one.
+  pub fn maybe_name(&self) -> Option<String> {
+    self.decls.first().and_then(|d| d.maybe_name())
   }
 
   /// Export of the symbol by name.
@@ -2504,45 +2581,24 @@ impl<'a> SymbolFiller<'a> {
     parent_symbol: &SymbolMut,
     node_ref: SymbolNodeRef,
   ) -> &'b SymbolMut {
-    fn maybe_key_name(key: &Key) -> Option<String> {
-      match key {
-        Key::Private(_) => None,
-        Key::Public(n) => maybe_prop_name(n),
-      }
-    }
-
-    fn maybe_prop_name(prop_name: &PropName) -> Option<String> {
-      match prop_name {
-        PropName::Ident(n) => Some(n.sym.to_string()),
-        PropName::Str(n) => Some(n.value.to_string()),
-        PropName::Num(n) => Some(n.value.to_string()),
-        PropName::Computed(_) | PropName::BigInt(_) => None,
-      }
-    }
-
-    // todo(dsherret): use maybe_name somehow
-    let (node_inner, _maybe_name, source_range) = match node_ref {
+    let (node_inner, source_range) = match node_ref {
       SymbolNodeRef::AutoAccessor(n) => (
         SymbolNodeInner::AutoAccessor(NodeRefBox::unsafe_new(self.source, n)),
-        maybe_key_name(&n.key),
         n.range(),
       ),
 
       SymbolNodeRef::ClassMethod(n) => (
         SymbolNodeInner::ClassMethod(NodeRefBox::unsafe_new(self.source, n)),
-        maybe_prop_name(&n.key),
         n.range(),
       ),
 
       SymbolNodeRef::ClassProp(n) => (
         SymbolNodeInner::ClassProp(NodeRefBox::unsafe_new(self.source, n)),
-        maybe_prop_name(&n.key),
         n.range(),
       ),
 
       SymbolNodeRef::Constructor(n) => (
         SymbolNodeInner::Constructor(NodeRefBox::unsafe_new(self.source, n)),
-        None,
         n.range(),
       ),
 
@@ -2551,7 +2607,6 @@ impl<'a> SymbolFiller<'a> {
           self.source,
           n,
         )),
-        None,
         n.range(),
       ),
 
@@ -2560,7 +2615,6 @@ impl<'a> SymbolFiller<'a> {
           self.source,
           n,
         )),
-        None,
         n.range(),
       ),
 
@@ -2569,7 +2623,6 @@ impl<'a> SymbolFiller<'a> {
           self.source,
           n,
         )),
-        None,
         n.range(),
       ),
 
@@ -2578,7 +2631,6 @@ impl<'a> SymbolFiller<'a> {
           self.source,
           n,
         )),
-        n.key.as_ident().map(|ident| ident.sym.to_string()),
         n.range(),
       ),
       SymbolNodeRef::TsGetterSignature(n) => (
@@ -2586,7 +2638,6 @@ impl<'a> SymbolFiller<'a> {
           self.source,
           n,
         )),
-        n.key.as_ident().map(|ident| ident.sym.to_string()),
         n.range(),
       ),
 
@@ -2595,7 +2646,6 @@ impl<'a> SymbolFiller<'a> {
           self.source,
           n,
         )),
-        n.key.as_ident().map(|ident| ident.sym.to_string()),
         n.range(),
       ),
 
@@ -2604,7 +2654,6 @@ impl<'a> SymbolFiller<'a> {
           self.source,
           n,
         )),
-        n.key.as_ident().map(|ident| ident.sym.to_string()),
         n.range(),
       ),
       SymbolNodeRef::ClassDecl(_)
