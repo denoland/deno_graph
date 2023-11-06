@@ -1,0 +1,226 @@
+# mod.ts
+export type Test = typeof Other.Test;
+
+namespace Other {
+  export const Test = 1;
+
+  export const other = 2;
+}
+
+# output
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {
+        0,
+        1,
+    },
+    exports: {
+        "Test": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "Test",
+            #2,
+        ): 0,
+        (
+            "Other",
+            #2,
+        ): 1,
+        (
+            "Test",
+            #3,
+        ): 3,
+        (
+            "other",
+            #3,
+        ): 5,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            37,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Test",
+                        #2,
+                    ),
+                ),
+                QualifiedId(
+                    (
+                        "Other",
+                        #2,
+                    ),
+                    [
+                        "Test",
+                    ],
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            39,
+                        ),
+                        end: SourcePos(
+                            110,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Test",
+                        #3,
+                    ),
+                ),
+                Id(
+                    (
+                        "other",
+                        #3,
+                    ),
+                ),
+            },
+            child_decls: {
+                2,
+                4,
+            },
+            exports: {
+                "Test": 3,
+                "other": 5,
+            },
+        },
+        2: Symbol {
+            symbol_id: 2,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            59,
+                        ),
+                        end: SourcePos(
+                            81,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Test",
+                        #3,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            72,
+                        ),
+                        end: SourcePos(
+                            80,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            85,
+                        ),
+                        end: SourcePos(
+                            108,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "other",
+                        #3,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        5: Symbol {
+            symbol_id: 5,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            98,
+                        ),
+                        end: SourcePos(
+                            107,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+== export definitions ==
+[Test]: file:///mod.ts:0..37
+  export type Test = typeof Other.Test;

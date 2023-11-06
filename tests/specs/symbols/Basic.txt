@@ -1,0 +1,498 @@
+# mod.ts
+import { A, B, D } from "./a.ts";
+
+export const ExportA: typeof A = A;
+
+const test: B;
+export { D };
+
+# a.ts
+interface AInner {
+  prop: string;
+}
+
+interface AInnerUnused {
+  prop2: string;
+}
+
+export class A {
+  prop: AInner;
+}
+
+export type B = string;
+
+export default class C {
+};
+
+export type D = typeof C;
+
+# output
+file:///a.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///a.ts",
+    child_decls: {
+        0,
+        1,
+        2,
+        3,
+        5,
+    },
+    exports: {
+        "A": 2,
+        "B": 3,
+        "default": 4,
+        "D": 5,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "AInner",
+            #2,
+        ): 0,
+        (
+            "AInnerUnused",
+            #2,
+        ): 1,
+        (
+            "A",
+            #2,
+        ): 2,
+        (
+            "B",
+            #2,
+        ): 3,
+        (
+            "C",
+            #2,
+        ): 4,
+        (
+            "D",
+            #2,
+        ): 5,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            36,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "AInner",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "prop",
+                        #0,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            38,
+                        ),
+                        end: SourcePos(
+                            81,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "AInnerUnused",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "prop2",
+                        #0,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        2: Symbol {
+            symbol_id: 2,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            83,
+                        ),
+                        end: SourcePos(
+                            117,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "AInner",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            119,
+                        ),
+                        end: SourcePos(
+                            142,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "B",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            144,
+                        ),
+                        end: SourcePos(
+                            170,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        5: Symbol {
+            symbol_id: 5,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            173,
+                        ),
+                        end: SourcePos(
+                            198,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "D",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "C",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {
+        3,
+        5,
+    },
+    exports: {
+        "ExportA": 4,
+        "D": 2,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "A",
+            #2,
+        ): 0,
+        (
+            "B",
+            #2,
+        ): 1,
+        (
+            "D",
+            #2,
+        ): 2,
+        (
+            "ExportA",
+            #2,
+        ): 4,
+        (
+            "test",
+            #2,
+        ): 5,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            10,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "A",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            12,
+                        ),
+                        end: SourcePos(
+                            13,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "B",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        2: Symbol {
+            symbol_id: 2,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            15,
+                        ),
+                        end: SourcePos(
+                            16,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "D",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            87,
+                        ),
+                        end: SourcePos(
+                            100,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            96,
+                        ),
+                        end: SourcePos(
+                            97,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            35,
+                        ),
+                        end: SourcePos(
+                            70,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "ExportA",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            48,
+                        ),
+                        end: SourcePos(
+                            69,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "A",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        5: Symbol {
+            symbol_id: 5,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            78,
+                        ),
+                        end: SourcePos(
+                            85,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "B",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+== export definitions ==
+[D]: file:///a.ts:173..198
+  export type D = typeof C;
+[ExportA]: file:///mod.ts:48..69
+  ExportA: typeof A = A

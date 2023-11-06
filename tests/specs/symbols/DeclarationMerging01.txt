@@ -1,0 +1,381 @@
+# mod.ts
+class Album {
+}
+namespace Album {
+  export class Label {}
+}
+
+enum Color {
+  red,
+  green,
+  blue,
+}
+namespace Color {
+  export function mixColor(colorName: string) {
+    // ...etc...
+  }
+}
+
+function Test() {
+}
+namespace Test {
+  export function other() {}
+}
+
+export { Album, Color, Test };
+
+# output
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {
+        0,
+        2,
+        4,
+    },
+    exports: {
+        "Album": 0,
+        "Color": 2,
+        "Test": 4,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "Album",
+            #2,
+        ): 0,
+        (
+            "Label",
+            #3,
+        ): 1,
+        (
+            "Color",
+            #2,
+        ): 2,
+        (
+            "mixColor",
+            #4,
+        ): 3,
+        (
+            "Test",
+            #2,
+        ): 4,
+        (
+            "other",
+            #7,
+        ): 5,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            15,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            16,
+                        ),
+                        end: SourcePos(
+                            59,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            259,
+                        ),
+                        end: SourcePos(
+                            289,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            268,
+                        ),
+                        end: SourcePos(
+                            273,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Label",
+                        #3,
+                    ),
+                ),
+            },
+            child_decls: {
+                1,
+            },
+            exports: {
+                "Label": 1,
+            },
+        },
+        1: Symbol {
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            36,
+                        ),
+                        end: SourcePos(
+                            57,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        2: Symbol {
+            symbol_id: 2,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            61,
+                        ),
+                        end: SourcePos(
+                            99,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            100,
+                        ),
+                        end: SourcePos(
+                            188,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            259,
+                        ),
+                        end: SourcePos(
+                            289,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            275,
+                        ),
+                        end: SourcePos(
+                            280,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "mixColor",
+                        #4,
+                    ),
+                ),
+            },
+            child_decls: {
+                3,
+            },
+            exports: {
+                "mixColor": 3,
+            },
+        },
+        3: Symbol {
+            symbol_id: 3,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            120,
+                        ),
+                        end: SourcePos(
+                            186,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            190,
+                        ),
+                        end: SourcePos(
+                            209,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            210,
+                        ),
+                        end: SourcePos(
+                            257,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            259,
+                        ),
+                        end: SourcePos(
+                            289,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            282,
+                        ),
+                        end: SourcePos(
+                            286,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "other",
+                        #7,
+                    ),
+                ),
+            },
+            child_decls: {
+                5,
+            },
+            exports: {
+                "other": 5,
+            },
+        },
+        5: Symbol {
+            symbol_id: 5,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            229,
+                        ),
+                        end: SourcePos(
+                            255,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+== export definitions ==
+[Album]: file:///mod.ts:0..15
+  class Album {
+  }
+file:///mod.ts:16..59
+  namespace Album {
+    export class Label {}
+  }
+[Color]: file:///mod.ts:61..99
+  enum Color {
+    red,
+  ...
+    blue,
+  }
+file:///mod.ts:100..188
+  namespace Color {
+    export function mixColor(colorName: string) {
+  ...
+    }
+  }
+[Test]: file:///mod.ts:190..209
+  function Test() {
+  }
+file:///mod.ts:210..257
+  namespace Test {
+    export function other() {}
+  }

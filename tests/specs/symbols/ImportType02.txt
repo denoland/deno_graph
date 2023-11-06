@@ -1,0 +1,156 @@
+# mod.ts
+export type Test = typeof import("./a.ts");
+
+# a.ts
+export interface Test {
+  prop: string;
+}
+
+// should be public because import types will include the default exports
+export default function test() {
+}
+
+# output
+file:///a.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///a.ts",
+    child_decls: {
+        0,
+    },
+    exports: {
+        "Test": 0,
+        "default": 1,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "Test",
+            #2,
+        ): 0,
+        (
+            "test",
+            #2,
+        ): 1,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            41,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Test",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "prop",
+                        #0,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            117,
+                        ),
+                        end: SourcePos(
+                            151,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {
+        0,
+    },
+    exports: {
+        "Test": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "Test",
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            43,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Test",
+                        #2,
+                    ),
+                ),
+                ImportType(
+                    "./a.ts",
+                    [],
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+== export definitions ==
+[Test]: file:///mod.ts:0..43
+  export type Test = typeof import("./a.ts");

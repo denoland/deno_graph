@@ -1,0 +1,300 @@
+# mod.ts
+declare function foo(): void;
+declare namespace Test {
+  function test(): void;
+  export { test };
+}
+class Other {}
+declare class MyClass {
+  method(): void;
+  prop: Other;
+}
+import inner = Test.test;
+export { foo as bar, inner as baz, MyClass };
+
+# output
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {
+        0,
+        1,
+        3,
+        4,
+    },
+    exports: {
+        "bar": 0,
+        "baz": 5,
+        "MyClass": 4,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "foo",
+            #2,
+        ): 0,
+        (
+            "Test",
+            #2,
+        ): 1,
+        (
+            "test",
+            #4,
+        ): 2,
+        (
+            "Other",
+            #2,
+        ): 3,
+        (
+            "MyClass",
+            #2,
+        ): 4,
+        (
+            "inner",
+            #2,
+        ): 5,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            29,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            201,
+                        ),
+                        end: SourcePos(
+                            246,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            30,
+                        ),
+                        end: SourcePos(
+                            100,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {
+                2,
+            },
+            exports: {
+                "test": 2,
+            },
+        },
+        2: Symbol {
+            symbol_id: 2,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            57,
+                        ),
+                        end: SourcePos(
+                            79,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            82,
+                        ),
+                        end: SourcePos(
+                            98,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            91,
+                        ),
+                        end: SourcePos(
+                            95,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            101,
+                        ),
+                        end: SourcePos(
+                            115,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            116,
+                        ),
+                        end: SourcePos(
+                            174,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            201,
+                        ),
+                        end: SourcePos(
+                            246,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            236,
+                        ),
+                        end: SourcePos(
+                            243,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Other",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        5: Symbol {
+            symbol_id: 5,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            175,
+                        ),
+                        end: SourcePos(
+                            200,
+                        ),
+                    },
+                    kind: QualifiedTarget(
+                        (
+                            "Test",
+                            #2,
+                        ),
+                        [
+                            "test",
+                        ],
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            201,
+                        ),
+                        end: SourcePos(
+                            246,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {
+                QualifiedId(
+                    (
+                        "Test",
+                        #2,
+                    ),
+                    [
+                        "test",
+                    ],
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+== export definitions ==
+[MyClass]: file:///mod.ts:116..174
+  declare class MyClass {
+    method(): void;
+    prop: Other;
+  }
+[bar]: file:///mod.ts:0..29
+  declare function foo(): void;
+[baz]: file:///mod.ts:57..79
+  function test(): void;

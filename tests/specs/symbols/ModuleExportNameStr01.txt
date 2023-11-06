@@ -1,0 +1,198 @@
+# mod.ts
+export { "someName" as "someOtherName" } from "./a.ts";
+
+# a.ts
+import { "some-name" as someName } from "./b.ts";
+
+export { someName as "someName" };
+
+# b.ts
+export { MyClass as "some-name" } from "./c.ts";
+
+# c.ts
+export class MyClass {}
+
+# output
+file:///a.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///a.ts",
+    child_decls: {},
+    exports: {
+        "someName": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "someName",
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            32,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "some-name",
+                            ),
+                            specifier: "./b.ts",
+                        },
+                    ),
+                },
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            51,
+                        ),
+                        end: SourcePos(
+                            85,
+                        ),
+                    },
+                    kind: TargetSelf,
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+file:///b.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        2,
+    ),
+    specifier: "file:///b.ts",
+    child_decls: {},
+    exports: {
+        "some-name": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {},
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            31,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "MyClass",
+                            ),
+                            specifier: "./c.ts",
+                        },
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+file:///c.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        3,
+    ),
+    specifier: "file:///c.ts",
+    child_decls: {
+        0,
+    },
+    exports: {
+        "MyClass": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "MyClass",
+            #2,
+        ): 0,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            23,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {},
+    exports: {
+        "someOtherName": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {},
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            38,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "someName",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+== export definitions ==
+[someOtherName]: file:///c.ts:0..23
+  export class MyClass {}

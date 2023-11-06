@@ -1,0 +1,174 @@
+# mod.ts
+export namespace RootNs {
+  export namespace NestedNs {
+    export enum Foo {
+    }
+  }
+
+  export enum Foo {
+  }
+}
+
+# output
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {
+        0,
+    },
+    exports: {
+        "RootNs": 0,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "RootNs",
+            #2,
+        ): 0,
+        (
+            "NestedNs",
+            #3,
+        ): 1,
+        (
+            "Foo",
+            #4,
+        ): 2,
+        (
+            "Foo",
+            #3,
+        ): 3,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            114,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "NestedNs",
+                        #3,
+                    ),
+                ),
+                Id(
+                    (
+                        "Foo",
+                        #3,
+                    ),
+                ),
+            },
+            child_decls: {
+                1,
+                3,
+            },
+            exports: {
+                "NestedNs": 1,
+                "Foo": 3,
+            },
+        },
+        1: Symbol {
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            28,
+                        ),
+                        end: SourcePos(
+                            87,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Foo",
+                        #4,
+                    ),
+                ),
+            },
+            child_decls: {
+                2,
+            },
+            exports: {
+                "Foo": 2,
+            },
+        },
+        2: Symbol {
+            symbol_id: 2,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            60,
+                        ),
+                        end: SourcePos(
+                            83,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            91,
+                        ),
+                        end: SourcePos(
+                            112,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+== export definitions ==
+[RootNs]: file:///mod.ts:0..114
+  export namespace RootNs {
+    export namespace NestedNs {
+  ...
+    }
+  }

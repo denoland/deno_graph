@@ -1,0 +1,391 @@
+# mod.ts
+interface A {
+}
+
+export interface Main extends Extends {
+  prop: Prop;
+  method(method: Param): Return;
+  [key: string]: SignatureValueType;
+}
+
+interface Extends {}
+interface Prop {}
+interface Param {}
+interface Return {}
+interface SignatureValueType {
+  other: B;
+}
+
+interface B {
+}
+
+# output
+file:///mod.ts: EsmModuleSymbol {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    child_decls: {
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+    },
+    exports: {
+        "Main": 1,
+    },
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "A",
+            #2,
+        ): 0,
+        (
+            "Main",
+            #2,
+        ): 1,
+        (
+            "Extends",
+            #2,
+        ): 2,
+        (
+            "Prop",
+            #2,
+        ): 3,
+        (
+            "Param",
+            #2,
+        ): 4,
+        (
+            "Return",
+            #2,
+        ): 5,
+        (
+            "SignatureValueType",
+            #2,
+        ): 6,
+        (
+            "B",
+            #2,
+        ): 7,
+    },
+    symbols: {
+        0: Symbol {
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            15,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "A",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        1: Symbol {
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            17,
+                        ),
+                        end: SourcePos(
+                            142,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Main",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "Extends",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "prop",
+                        #0,
+                    ),
+                ),
+                Id(
+                    (
+                        "Prop",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "method",
+                        #0,
+                    ),
+                ),
+                Id(
+                    (
+                        "method",
+                        #1,
+                    ),
+                ),
+                Id(
+                    (
+                        "Param",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "Return",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "key",
+                        #1,
+                    ),
+                ),
+                Id(
+                    (
+                        "SignatureValueType",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        2: Symbol {
+            symbol_id: 2,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            144,
+                        ),
+                        end: SourcePos(
+                            164,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Extends",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        3: Symbol {
+            symbol_id: 3,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            165,
+                        ),
+                        end: SourcePos(
+                            182,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Prop",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        4: Symbol {
+            symbol_id: 4,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            183,
+                        ),
+                        end: SourcePos(
+                            201,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Param",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        5: Symbol {
+            symbol_id: 5,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            202,
+                        ),
+                        end: SourcePos(
+                            221,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Return",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        6: Symbol {
+            symbol_id: 6,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            222,
+                        ),
+                        end: SourcePos(
+                            266,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "SignatureValueType",
+                        #2,
+                    ),
+                ),
+                Id(
+                    (
+                        "other",
+                        #0,
+                    ),
+                ),
+                Id(
+                    (
+                        "B",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+        7: Symbol {
+            symbol_id: 7,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            268,
+                        ),
+                        end: SourcePos(
+                            283,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "<omitted>",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "B",
+                        #2,
+                    ),
+                ),
+            },
+            child_decls: {},
+            exports: {},
+        },
+    },
+}
+== export definitions ==
+[Main]: file:///mod.ts:17..142
+  export interface Main extends Extends {
+    prop: Prop;
+  ...
+    [key: string]: SignatureValueType;
+  }
