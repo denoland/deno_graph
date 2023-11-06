@@ -26,7 +26,7 @@ file:///mod.ts: EsmModuleSymbol {
     },
     exports: {
         "bar": 0,
-        "baz": 5,
+        "baz": 7,
         "MyClass": 4,
     },
     re_exports: [],
@@ -54,7 +54,7 @@ file:///mod.ts: EsmModuleSymbol {
         (
             "inner",
             #2,
-        ): 5,
+        ): 7,
     },
     symbols: {
         0: Symbol {
@@ -250,27 +250,8 @@ file:///mod.ts: EsmModuleSymbol {
             child_ids: {},
             exports: {},
             members: {
-                0: SymbolMember {
-                    symbol_member_id: 0,
-                    decl: SymbolMemberDecl(
-                        "<omitted>",
-                    ),
-                    deps: {},
-                },
-                1: SymbolMember {
-                    symbol_member_id: 1,
-                    decl: SymbolMemberDecl(
-                        "<omitted>",
-                    ),
-                    deps: {
-                        Id(
-                            (
-                                "Other",
-                                #2,
-                            ),
-                        ),
-                    },
-                },
+                5,
+                6,
             },
         },
         5: Symbol {
@@ -278,6 +259,67 @@ file:///mod.ts: EsmModuleSymbol {
                 0,
             ),
             symbol_id: 5,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            142,
+                        ),
+                        end: SourcePos(
+                            157,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "method(): void;",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        6: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 6,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            160,
+                        ),
+                        end: SourcePos(
+                            172,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "prop: Other;",
+                        ),
+                    ),
+                },
+            ],
+            deps: {
+                Id(
+                    (
+                        "Other",
+                        #2,
+                    ),
+                ),
+            },
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        7: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 7,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
