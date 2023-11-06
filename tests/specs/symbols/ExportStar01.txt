@@ -41,7 +41,7 @@ file:///a.ts: EsmModuleSymbol {
         1,
     ),
     specifier: "file:///a.ts",
-    child_decls: {
+    child_ids: {
         4,
         5,
         6,
@@ -73,6 +73,9 @@ file:///a.ts: EsmModuleSymbol {
     },
     symbols: {
         0: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
             symbol_id: 0,
             decls: [
                 SymbolDecl {
@@ -95,10 +98,14 @@ file:///a.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
-            child_decls: {},
+            child_ids: {},
             exports: {},
+            members: {},
         },
         1: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
             symbol_id: 1,
             decls: [
                 SymbolDecl {
@@ -121,10 +128,14 @@ file:///a.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
-            child_decls: {},
+            child_ids: {},
             exports: {},
+            members: {},
         },
         2: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
             symbol_id: 2,
             decls: [
                 SymbolDecl {
@@ -147,10 +158,14 @@ file:///a.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
-            child_decls: {},
+            child_ids: {},
             exports: {},
+            members: {},
         },
         3: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
             symbol_id: 3,
             decls: [
                 SymbolDecl {
@@ -169,18 +184,30 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "A",
-                        #2,
-                    ),
-                ),
-            },
-            child_decls: {},
+            deps: {},
+            child_ids: {},
             exports: {},
+            members: {
+                0: SymbolMember {
+                    symbol_member_id: 0,
+                    decl: SymbolMemberDecl(
+                        "<omitted>",
+                    ),
+                    deps: {
+                        Id(
+                            (
+                                "A",
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+            },
         },
         4: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
             symbol_id: 4,
             decls: [
                 SymbolDecl {
@@ -199,18 +226,37 @@ file:///a.ts: EsmModuleSymbol {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "B",
-                        #2,
-                    ),
-                ),
-            },
-            child_decls: {},
+            deps: {},
+            child_ids: {},
             exports: {},
+            members: {
+                1: SymbolMember {
+                    symbol_member_id: 1,
+                    decl: SymbolMemberDecl(
+                        "<omitted>",
+                    ),
+                    deps: {},
+                },
+                2: SymbolMember {
+                    symbol_member_id: 2,
+                    decl: SymbolMemberDecl(
+                        "<omitted>",
+                    ),
+                    deps: {
+                        Id(
+                            (
+                                "B",
+                                #2,
+                            ),
+                        ),
+                    },
+                },
+            },
         },
         5: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
             symbol_id: 5,
             decls: [
                 SymbolDecl {
@@ -230,10 +276,22 @@ file:///a.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
-            child_decls: {},
+            child_ids: {},
             exports: {},
+            members: {
+                3: SymbolMember {
+                    symbol_member_id: 3,
+                    decl: SymbolMemberDecl(
+                        "<omitted>",
+                    ),
+                    deps: {},
+                },
+            },
         },
         6: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
             symbol_id: 6,
             decls: [
                 SymbolDecl {
@@ -253,8 +311,9 @@ file:///a.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
-            child_decls: {},
+            child_ids: {},
             exports: {},
+            members: {},
         },
     },
 }
@@ -263,7 +322,7 @@ file:///class.ts: EsmModuleSymbol {
         2,
     ),
     specifier: "file:///class.ts",
-    child_decls: {},
+    child_ids: {},
     exports: {
         "default": 0,
     },
@@ -276,6 +335,9 @@ file:///class.ts: EsmModuleSymbol {
     },
     symbols: {
         0: Symbol {
+            module_id: ModuleId(
+                2,
+            ),
             symbol_id: 0,
             decls: [
                 SymbolDecl {
@@ -295,8 +357,9 @@ file:///class.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
-            child_decls: {},
+            child_ids: {},
             exports: {},
+            members: {},
         },
     },
 }
@@ -305,7 +368,7 @@ file:///function.ts: EsmModuleSymbol {
         3,
     ),
     specifier: "file:///function.ts",
-    child_decls: {},
+    child_ids: {},
     exports: {
         "default": 0,
     },
@@ -318,6 +381,9 @@ file:///function.ts: EsmModuleSymbol {
     },
     symbols: {
         0: Symbol {
+            module_id: ModuleId(
+                3,
+            ),
             symbol_id: 0,
             decls: [
                 SymbolDecl {
@@ -337,8 +403,9 @@ file:///function.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
-            child_decls: {},
+            child_ids: {},
             exports: {},
+            members: {},
         },
     },
 }
@@ -347,7 +414,7 @@ file:///interface.ts: EsmModuleSymbol {
         4,
     ),
     specifier: "file:///interface.ts",
-    child_decls: {},
+    child_ids: {},
     exports: {
         "default": 0,
     },
@@ -360,6 +427,9 @@ file:///interface.ts: EsmModuleSymbol {
     },
     symbols: {
         0: Symbol {
+            module_id: ModuleId(
+                4,
+            ),
             symbol_id: 0,
             decls: [
                 SymbolDecl {
@@ -378,16 +448,10 @@ file:///interface.ts: EsmModuleSymbol {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Test",
-                        #2,
-                    ),
-                ),
-            },
-            child_decls: {},
+            deps: {},
+            child_ids: {},
             exports: {},
+            members: {},
         },
     },
 }
@@ -396,7 +460,7 @@ file:///mod.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.ts",
-    child_decls: {},
+    child_ids: {},
     exports: {
         "namespace": 0,
     },
@@ -404,6 +468,9 @@ file:///mod.ts: EsmModuleSymbol {
     swc_id_to_symbol_id: {},
     symbols: {
         0: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
             symbol_id: 0,
             decls: [
                 SymbolDecl {
@@ -424,8 +491,9 @@ file:///mod.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
-            child_decls: {},
+            child_ids: {},
             exports: {},
+            members: {},
         },
     },
 }

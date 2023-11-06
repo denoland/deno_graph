@@ -142,6 +142,7 @@ impl ParsedSourceStore for DefaultParsedSourceStore {
 /// Note that this will insert into the store whatever was
 /// last parsed, so if two threads race to parse, when they're
 /// both done it will have whatever was last stored.
+#[derive(Clone, Copy)]
 pub struct CapturingModuleParser<'a> {
   parser: Option<&'a dyn ModuleParser>,
   store: &'a dyn ParsedSourceStore,

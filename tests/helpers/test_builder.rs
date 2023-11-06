@@ -141,9 +141,10 @@ impl TestBuilder {
       Some(Box::new(source_parser)),
       None,
     );
-    let capturing_parser = capturing_analyzer.as_capturing_parser();
-    let root_symbol =
-      deno_graph::symbols::RootSymbol::new(&graph, &capturing_parser);
+    let root_symbol = deno_graph::symbols::RootSymbol::new(
+      &graph,
+      capturing_analyzer.as_capturing_parser(),
+    );
     Ok(symbols::SymbolsResult {
       output: {
         let entrypoint_symbol = root_symbol

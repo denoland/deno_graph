@@ -7,7 +7,7 @@ file:///mod.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.ts",
-    child_decls: {},
+    child_ids: {},
     exports: {
         "default": 0,
     },
@@ -15,6 +15,9 @@ file:///mod.ts: EsmModuleSymbol {
     swc_id_to_symbol_id: {},
     symbols: {
         0: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
             symbol_id: 0,
             decls: [
                 SymbolDecl {
@@ -34,8 +37,9 @@ file:///mod.ts: EsmModuleSymbol {
                 },
             ],
             deps: {},
-            child_decls: {},
+            child_ids: {},
             exports: {},
+            members: {},
         },
     },
 }
