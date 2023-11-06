@@ -6,7 +6,7 @@ import {
   assertRejects,
   assertThrows,
 } from "https://deno.land/std@0.181.0/testing/asserts.ts";
-import { LoadResponseModule } from "./types.d.ts";
+import { LoadResponseModule } from "./types.ts";
 import {
   createGraph,
   init,
