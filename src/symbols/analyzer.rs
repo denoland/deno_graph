@@ -36,6 +36,7 @@ use super::collections::AdditiveOnlyMapForCopyValues;
 use super::cross_module;
 use super::cross_module::Definition;
 use super::cross_module::DefinitionPath;
+use super::cross_module::ExportsAndReExports;
 use super::ResolvedSymbolDepEntry;
 
 /// The root symbol from which module symbols can be retrieved.
@@ -133,11 +134,13 @@ impl<'a> RootSymbol<'a> {
   pub fn resolve_symbol_dep<'b>(
     &'b self,
     module: ModuleSymbolRef<'b>,
+    symbol: &'b Symbol,
     dep: &'b SymbolDep,
   ) -> Vec<ResolvedSymbolDepEntry<'b>> {
     super::cross_module::resolve_symbol_dep(
       self.module_graph,
       module,
+      symbol,
       dep,
       &|specifier| self.get_module_from_specifier(specifier),
     )
@@ -873,14 +876,17 @@ impl<'a> ModuleSymbolRef<'a> {
 
   pub fn exports(
     &self,
-    module_graph: &ModuleGraph,
     root_symbol: &'a RootSymbol,
-  ) -> IndexMap<String, (ModuleSymbolRef<'a>, SymbolId)> {
-    cross_module::exports_and_re_exports(module_graph, *self, &|specifier| {
-      root_symbol.get_module_from_specifier(specifier)
-    })
+  ) -> ExportsAndReExports<'a> {
+    cross_module::exports_and_re_exports(
+      root_symbol.module_graph,
+      *self,
+      &|specifier| root_symbol.get_module_from_specifier(specifier),
+    )
   }
 
+  // This isn't exposed because using it might indicate a bug because it
+  // doesn't include the re-exports.
   pub(crate) fn exports_map(&self) -> &'a IndexMap<String, SymbolId> {
     match self {
       Self::Json(m) => &m.exports,
@@ -1037,10 +1043,9 @@ impl EsmModuleSymbol {
 
   pub fn exports<'a>(
     &'a self,
-    module_graph: &ModuleGraph,
     root_symbol: &'a RootSymbol,
-  ) -> IndexMap<String, (ModuleSymbolRef<'a>, SymbolId)> {
-    self.as_ref().exports(module_graph, root_symbol)
+  ) -> ExportsAndReExports<'a> {
+    self.as_ref().exports(root_symbol)
   }
 
   pub fn child_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {

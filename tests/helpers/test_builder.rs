@@ -46,11 +46,23 @@ impl Loader for TestLoader {
 
 #[cfg(feature = "symbols")]
 pub mod symbols {
+  use deno_graph::symbols::RootSymbol;
   use deno_graph::symbols::SymbolFillDiagnostic;
 
   pub struct SymbolsResult {
     pub output: String,
     pub diagnostics: Vec<SymbolFillDiagnostic>,
+  }
+
+  pub struct SymbolsBuildResult {
+    pub graph: deno_graph::ModuleGraph,
+    pub analyzer: deno_graph::CapturingModuleAnalyzer,
+  }
+
+  impl SymbolsBuildResult {
+    pub fn root_symbol(&self) -> RootSymbol {
+      RootSymbol::new(&self.graph, self.analyzer.as_capturing_parser())
+    }
   }
 }
 
@@ -120,31 +132,41 @@ impl TestBuilder {
   }
 
   #[cfg(feature = "symbols")]
-  pub async fn symbols(&mut self) -> anyhow::Result<symbols::SymbolsResult> {
-    use deno_graph::symbols::ModuleSymbolRef;
-
+  pub async fn build_for_symbols(&mut self) -> symbols::SymbolsBuildResult {
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
-    let entry_point_types_url =
-      ModuleSpecifier::parse(&self.entry_point_types).unwrap();
     let roots = vec![entry_point_url.clone()];
-    graph
-      .build(
-        roots.clone(),
-        &mut self.loader,
-        deno_graph::BuildOptions::default(),
-      )
-      .await;
-    graph.valid().unwrap(); // assert valid
     let source_parser = deno_graph::DefaultModuleParser::new_for_analysis();
     let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::new(
       Some(Box::new(source_parser)),
       None,
     );
-    let root_symbol = deno_graph::symbols::RootSymbol::new(
-      &graph,
-      capturing_analyzer.as_capturing_parser(),
-    );
+    graph
+      .build(
+        roots.clone(),
+        &mut self.loader,
+        deno_graph::BuildOptions {
+          module_analyzer: Some(&capturing_analyzer),
+          ..Default::default()
+        },
+      )
+      .await;
+    graph.valid().unwrap(); // assert valid
+    symbols::SymbolsBuildResult {
+      graph,
+      analyzer: capturing_analyzer,
+    }
+  }
+
+  #[cfg(feature = "symbols")]
+  pub async fn symbols(&mut self) -> anyhow::Result<symbols::SymbolsResult> {
+    use deno_graph::symbols::ModuleSymbolRef;
+
+    let build_result = self.build_for_symbols().await;
+    let graph = &build_result.graph;
+    let entry_point_types_url =
+      ModuleSpecifier::parse(&self.entry_point_types).unwrap();
+    let root_symbol = build_result.root_symbol();
     Ok(symbols::SymbolsResult {
       output: {
         let entrypoint_symbol = root_symbol
@@ -210,7 +232,7 @@ impl TestBuilder {
               results.join("\n")
             }
           };
-        let exports = entrypoint_symbol.exports(&graph, &root_symbol);
+        let exports = entrypoint_symbol.exports(&root_symbol);
         if !exports.is_empty() {
           output_text.push_str("== export definitions ==\n");
           for (name, (module_symbol, symbol_id)) in exports {

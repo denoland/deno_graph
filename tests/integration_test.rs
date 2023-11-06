@@ -151,6 +151,56 @@ async fn test_symbols_specs() {
   }
 }
 
+#[cfg(feature = "symbols")]
+#[tokio::test]
+async fn test_symbols_dep_definition() {
+  use deno_graph::symbols::ResolvedSymbolDepEntry;
+
+  let result = TestBuilder::new()
+    .with_loader(|loader| {
+      loader.remote.add_source_with_text(
+        "file:///mod.ts",
+        r#"
+export type MyType = typeof MyClass;
+
+export class MyClass {
+  static staticProp: string = "";
+}
+"#,
+      );
+    })
+    .build_for_symbols()
+    .await;
+
+  let root_symbol = result.root_symbol();
+  let module_symbol = root_symbol
+    .get_module_from_specifier(
+      &ModuleSpecifier::parse("file:///mod.ts").unwrap(),
+    )
+    .unwrap();
+  let exports = module_symbol.exports(&root_symbol);
+  let (module, my_type_symbol_id) = exports.get("MyType").unwrap();
+  let my_type_symbol = module.symbol(*my_type_symbol_id).unwrap();
+  let deps = my_type_symbol.deps().collect::<Vec<_>>();
+  assert_eq!(deps.len(), 1);
+  let dep = &deps[0];
+  let mut resolved_deps =
+    root_symbol.resolve_symbol_dep(*module, my_type_symbol, dep);
+  assert_eq!(resolved_deps.len(), 1);
+  let resolved_dep = resolved_deps.remove(0);
+  let path = match resolved_dep {
+    ResolvedSymbolDepEntry::DefinitionPath(p) => p,
+    ResolvedSymbolDepEntry::ImportType(_) => unreachable!(),
+  };
+  let definitions = path.into_definitions().collect::<Vec<_>>();
+  assert_eq!(definitions.len(), 1);
+  let definition = &definitions[0];
+  assert_eq!(
+    definition.text(),
+    "export class MyClass {\n  static staticProp: string = \"\";\n}"
+  );
+}
+
 #[tokio::test]
 async fn test_npm_version_not_found_then_found() {
   #[derive(Debug)]
