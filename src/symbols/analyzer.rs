@@ -116,8 +116,6 @@ impl<'a> RootSymbol<'a> {
   }
 
   /// Finds the graph paths to the definition of the specified symbol.
-  ///
-  /// Note: For performance reasons, this excludes paths that overlap.
   pub fn find_definition_paths<'b>(
     &'b self,
     module: ModuleSymbolRef<'b>,
@@ -482,6 +480,7 @@ pub enum SymbolNodeRef<'a> {
 }
 
 impl<'a> SymbolNodeRef<'a> {
+  /// The local name of the node, if it has a name.
   pub fn maybe_name(&self) -> Option<String> {
     fn ts_module_name_to_string(module_name: &TsModuleName) -> String {
       match module_name {
@@ -687,6 +686,7 @@ impl SymbolDecl {
     self.kind.maybe_node_and_source()
   }
 
+  /// The local name of the decl, if it has a name or node.
   pub fn maybe_name(&self) -> Option<String> {
     self.maybe_node().and_then(|n| n.maybe_name())
   }
@@ -1210,7 +1210,6 @@ impl ModuleBuilder {
 struct SymbolFiller<'a> {
   specifier: &'a ModuleSpecifier,
   source: &'a ParsedSource,
-  // todo: additive only vec
   diagnostics: RefCell<Vec<SymbolFillDiagnostic>>,
   builder: &'a ModuleBuilder,
 }
