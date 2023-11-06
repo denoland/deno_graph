@@ -921,6 +921,29 @@ console.log(a);
         ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts").unwrap()
       )
     );
+    assert_eq!(
+      graph
+        .try_get(
+          &ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap()
+        )
+        .unwrap()
+        .unwrap()
+        .specifier()
+        .as_str(),
+      "https://example.com/jsx-runtime"
+    );
+    assert_eq!(
+      graph
+        .try_get_prefer_types(
+          &ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap()
+        )
+        .unwrap()
+        .unwrap()
+        .specifier()
+        .as_str(),
+      // should end up at the declaration file
+      "https://example.com/jsx-runtime.d.ts"
+    );
   }
 
   #[tokio::test]
