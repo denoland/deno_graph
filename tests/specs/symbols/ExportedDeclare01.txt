@@ -75,6 +75,7 @@ file:///mod.ts: EsmModuleInfo {
                 2,
                 4,
                 5,
+                8,
             },
             exports: {
                 "bar": 1,

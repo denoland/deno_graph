@@ -227,7 +227,7 @@ impl<'a> RootSymbol<'a> {
         symbol_id: SymbolId(0),
         parent_id: None,
         exports: IndexMap::from([("default".to_string(), SymbolId(1))]),
-        child_ids: Default::default(),
+        child_ids: IndexSet::from([SymbolId(1)]),
         decls: decls.clone(),
         deps: Default::default(),
         members: Default::default(),
@@ -1334,7 +1334,7 @@ impl<'a> SymbolFiller<'a> {
                     ModuleExportName::Str(str) => str.value.to_string(),
                   })
                   .unwrap_or_else(|| n.local.sym.to_string());
-                self.builder.get_symbol_from_swc_id(
+                let symbol = self.builder.get_symbol_from_swc_id(
                   n.local.to_id(),
                   SymbolDecl {
                     range: n.range(),
@@ -1345,9 +1345,10 @@ impl<'a> SymbolFiller<'a> {
                   },
                   module_symbol.symbol_id(),
                 );
+                module_symbol.add_child_id(symbol.symbol_id());
               }
               ImportSpecifier::Default(n) => {
-                self.builder.get_symbol_from_swc_id(
+                let symbol = self.builder.get_symbol_from_swc_id(
                   n.local.to_id(),
                   SymbolDecl {
                     range: n.range(),
@@ -1358,9 +1359,10 @@ impl<'a> SymbolFiller<'a> {
                   },
                   module_symbol.symbol_id(),
                 );
+                module_symbol.add_child_id(symbol.symbol_id());
               }
               ImportSpecifier::Namespace(n) => {
-                self.builder.get_symbol_from_swc_id(
+                let symbol = self.builder.get_symbol_from_swc_id(
                   n.local.to_id(),
                   SymbolDecl {
                     range: n.range(),
@@ -1371,6 +1373,7 @@ impl<'a> SymbolFiller<'a> {
                   },
                   module_symbol.symbol_id(),
                 );
+                module_symbol.add_child_id(symbol.symbol_id());
               }
             }
           }
@@ -1576,6 +1579,7 @@ impl<'a> SymbolFiller<'a> {
                     });
                     let symbol_id = symbol.symbol_id();
                     module_symbol.add_export(export_name, symbol_id);
+                    module_symbol.add_child_id(symbol_id);
                   }
                   None => {
                     let orig_ident = match &named.orig {
@@ -1670,18 +1674,19 @@ impl<'a> SymbolFiller<'a> {
           }
         }
         ModuleDecl::ExportDefaultDecl(default_decl) => {
-          let symbol_id = self.builder.ensure_default_export_symbol(
-            module_symbol,
-            SymbolDecl {
-              range: default_decl.range(),
-              kind: SymbolDeclKind::Definition(SymbolNode(
-                SymbolNodeInner::ExportDefaultDecl(NodeRefBox::unsafe_new(
-                  self.source,
-                  default_decl,
+          let default_export_symbol_id =
+            self.builder.ensure_default_export_symbol(
+              module_symbol,
+              SymbolDecl {
+                range: default_decl.range(),
+                kind: SymbolDeclKind::Definition(SymbolNode(
+                  SymbolNodeInner::ExportDefaultDecl(NodeRefBox::unsafe_new(
+                    self.source,
+                    default_decl,
+                  )),
                 )),
-              )),
-            },
-          );
+              },
+            );
           let maybe_ident = match &default_decl.decl {
             DefaultDecl::Class(expr) => expr.ident.as_ref(),
             DefaultDecl::Fn(expr) => expr.ident.as_ref(),
@@ -1689,10 +1694,14 @@ impl<'a> SymbolFiller<'a> {
           };
           if let Some(ident) = maybe_ident {
             let id = ident.to_id();
-            self.builder.swc_id_to_symbol_id.insert(id, symbol_id);
+            self
+              .builder
+              .swc_id_to_symbol_id
+              .insert(id, default_export_symbol_id);
           }
 
-          let symbol = self.builder.symbol_mut(symbol_id).unwrap();
+          let symbol =
+            self.builder.symbol_mut(default_export_symbol_id).unwrap();
           match &default_decl.decl {
             DefaultDecl::Class(n) => {
               self.fill_class(symbol, &n.class);
@@ -1731,6 +1740,7 @@ impl<'a> SymbolFiller<'a> {
             module_symbol
               .add_export(import_equals.id.sym.to_string(), symbol_id);
           }
+          module_symbol.add_child_id(symbol_id);
         }
         ModuleDecl::TsExportAssignment(export_assignment) => {
           self.handle_export_default_expr(

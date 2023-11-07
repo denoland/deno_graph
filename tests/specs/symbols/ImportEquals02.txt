@@ -402,6 +402,8 @@ file:///mod.ts: EsmModuleInfo {
             ],
             deps: {},
             child_ids: {
+                1,
+                2,
                 3,
             },
             exports: {
@@ -512,7 +514,9 @@ file:///mod.ts: EsmModuleInfo {
                 },
             ],
             deps: {},
-            child_ids: {},
+            child_ids: {
+                4,
+            },
             exports: {
                 "Inner": 4,
             },

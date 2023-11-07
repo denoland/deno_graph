@@ -207,6 +207,7 @@ file:///mod.ts: EsmModuleInfo {
             ],
             deps: {},
             child_ids: {
+                1,
                 2,
             },
             exports: {

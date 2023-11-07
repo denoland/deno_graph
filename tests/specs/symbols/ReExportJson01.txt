@@ -42,7 +42,9 @@ file:///bar.json: JsonModuleInfo {
             },
         ],
         deps: {},
-        child_ids: {},
+        child_ids: {
+            1,
+        },
         exports: {
             "default": 1,
         },
@@ -86,7 +88,10 @@ file:///mod.ts: EsmModuleInfo {
                 },
             ],
             deps: {},
-            child_ids: {},
+            child_ids: {
+                1,
+                2,
+            },
             exports: {
                 "configFile": 2,
             },
@@ -189,7 +194,9 @@ file:///non_public.json: JsonModuleInfo {
             },
         ],
         deps: {},
-        child_ids: {},
+        child_ids: {
+            1,
+        },
         exports: {
             "default": 1,
         },

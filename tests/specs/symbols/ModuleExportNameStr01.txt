@@ -50,7 +50,9 @@ file:///a.ts: EsmModuleInfo {
                 },
             ],
             deps: {},
-            child_ids: {},
+            child_ids: {
+                1,
+            },
             exports: {
                 "someName": 1,
             },
@@ -139,7 +141,9 @@ file:///b.ts: EsmModuleInfo {
                 },
             ],
             deps: {},
-            child_ids: {},
+            child_ids: {
+                1,
+            },
             exports: {
                 "some-name": 1,
             },
@@ -289,7 +293,9 @@ file:///mod.ts: EsmModuleInfo {
                 },
             ],
             deps: {},
-            child_ids: {},
+            child_ids: {
+                1,
+            },
             exports: {
                 "someOtherName": 1,
             },

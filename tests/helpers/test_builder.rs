@@ -160,6 +160,85 @@ impl TestBuilder {
 
   #[cfg(feature = "symbols")]
   pub async fn symbols(&mut self) -> anyhow::Result<symbols::SymbolsResult> {
+    fn check_fatal_diagnostics(
+      module: deno_graph::symbols::ModuleInfoRef,
+    ) -> Vec<String> {
+      let mut results = Vec::new();
+      for symbol in module.symbols() {
+        // ensure it's possible to go from a parent to its child
+        if let Some(parent_id) = symbol.parent_id() {
+          let parent_symbol = module.symbol(parent_id).unwrap();
+          let has_child =
+            parent_symbol.child_ids().any(|id| id == symbol.symbol_id());
+          let has_member = parent_symbol
+            .members()
+            .iter()
+            .any(|id| *id == symbol.symbol_id());
+          if !has_child && !has_member {
+            results.push(format!(
+              "Parent {:#?} does not have child {:#?}",
+              parent_symbol.symbol_id(),
+              symbol.symbol_id()
+            ));
+          } else if has_child && has_member {
+            results.push(format!(
+              "Parent {:#?} should not have both a child and a member {:#?}",
+              parent_symbol.symbol_id(),
+              symbol.symbol_id()
+            ));
+          }
+        }
+
+        // ensure it's possible to get the module symbol id
+        {
+          let mut parent = symbol;
+          let mut i = 0;
+          while let Some(parent_id) = parent.parent_id() {
+            parent = module.symbol(parent_id).unwrap();
+            if i == 1000 {
+              results.push(format!(
+                "Could not find root from symbol: {:#?}",
+                symbol.symbol_id()
+              ));
+              break;
+            }
+            i += 1;
+          }
+        }
+      }
+
+      // from the root module, ensure everything is a tree
+      fn ensure_no_multiple_paths(
+        module: deno_graph::symbols::ModuleInfoRef,
+        symbol: &deno_graph::symbols::Symbol,
+        visited: &mut HashSet<deno_graph::symbols::SymbolId>,
+      ) -> Vec<String> {
+        let mut results = Vec::new();
+        if !visited.insert(symbol.symbol_id()) {
+          results.push(format!(
+            "Found symbol in multiple paths: {:#?}",
+            symbol.symbol_id()
+          ));
+        } else {
+          for id in symbol.child_ids().chain(symbol.members().iter().copied()) {
+            let symbol = module.symbol(id).unwrap();
+            results.extend(ensure_no_multiple_paths(module, symbol, visited));
+          }
+        }
+        results
+      }
+
+      results.extend(ensure_no_multiple_paths(
+        module,
+        module.module_symbol(),
+        &mut HashSet::new(),
+      ));
+
+      results
+    }
+
+    use std::collections::HashSet;
+
     use deno_graph::symbols::DefinitionOrUnresolved;
     use deno_graph::symbols::ModuleInfoRef;
 
@@ -182,14 +261,27 @@ impl TestBuilder {
           else {
             continue;
           };
-          output_text.push_str(&format!(
+          let module_output_text = format!(
             "{}: {}\n",
             specifier.as_str(),
             match module {
               ModuleInfoRef::Esm(m) => format!("{:#?}", m),
               ModuleInfoRef::Json(m) => format!("{:#?}", m),
             }
-          ));
+          );
+
+          // analyze the module graph for any problems
+          let diagnostics = check_fatal_diagnostics(module);
+          if !diagnostics.is_empty() {
+            eprintln!("== Output ==");
+            eprintln!("{}", module_output_text);
+            eprintln!("== Source ==");
+            eprintln!("{}", module.text());
+            eprintln!("== {} == \n\n{}", specifier, diagnostics.join("\n"));
+            panic!("FAILED");
+          }
+
+          output_text.push_str(&module_output_text);
         }
         let get_symbol_text =
           |module_symbol: deno_graph::symbols::ModuleInfoRef,
