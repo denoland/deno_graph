@@ -18,6 +18,7 @@ pub use self::analyzer::SymbolNodeRef;
 pub use self::analyzer::UniqueSymbolId;
 pub use self::cross_module::Definition;
 pub use self::cross_module::DefinitionKind;
+pub use self::cross_module::DefinitionOrUnresolved;
 pub use self::cross_module::DefinitionPath;
 pub use self::cross_module::ExportsAndReExports;
 pub use self::cross_module::ResolvedExportOrReExport;

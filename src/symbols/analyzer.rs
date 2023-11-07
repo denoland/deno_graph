@@ -34,6 +34,7 @@ use super::collections::AdditiveOnlyMap;
 use super::collections::AdditiveOnlyMapForCopyValues;
 use super::cross_module;
 use super::cross_module::Definition;
+use super::cross_module::DefinitionOrUnresolved;
 use super::cross_module::DefinitionPath;
 use super::cross_module::ExportsAndReExports;
 use super::ResolvedSymbolDepEntry;
@@ -113,6 +114,18 @@ impl<'a> RootSymbol<'a> {
       .find_definition_paths(module, symbol)
       .into_iter()
       .flat_map(|d| d.into_definitions())
+  }
+
+  /// Goes to the definitions of the specified symbol.
+  pub fn go_to_definitions_or_unresolveds<'b>(
+    &'b self,
+    module: ModuleInfoRef<'b>,
+    symbol: &'b Symbol,
+  ) -> impl Iterator<Item = DefinitionOrUnresolved<'b>> {
+    self
+      .find_definition_paths(module, symbol)
+      .into_iter()
+      .flat_map(|d| d.into_definitions_or_unresolveds())
   }
 
   /// Finds the graph paths to the definition of the specified symbol.
@@ -1149,7 +1162,7 @@ impl ModuleBuilder {
     module_symbol: &SymbolMut,
     symbol_decl: SymbolDecl,
   ) -> SymbolId {
-    if let Some(symbol_id) = module_symbol.get_export(&"default".to_string()) {
+    if let Some(symbol_id) = module_symbol.get_export("default") {
       let default_export_symbol = self.symbols.get(&symbol_id).unwrap();
       default_export_symbol.add_decl(symbol_decl);
       symbol_id
@@ -1244,7 +1257,7 @@ impl<'a> SymbolFiller<'a> {
         continue; // don't fill the types on implementation signatures as they're private
       }
 
-      self.fill_module_item(module_item, &module_symbol);
+      self.fill_module_item(module_item, module_symbol);
     }
   }
 

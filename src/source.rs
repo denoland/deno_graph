@@ -355,6 +355,13 @@ impl MemoryLoader {
     self.sources.insert(specifier, source.into_result());
   }
 
+  pub fn add_external_source(&mut self, specifier: impl AsRef<str>) {
+    self.add_source(
+      specifier.as_ref(),
+      Source::External(specifier.as_ref().to_string()),
+    );
+  }
+
   pub fn add_source_with_text(
     &mut self,
     specifier: impl AsRef<str>,

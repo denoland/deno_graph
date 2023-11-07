@@ -204,6 +204,37 @@ export class MyClass {
   );
 }
 
+#[cfg(feature = "symbols")]
+#[tokio::test]
+async fn test_symbols_re_export_external() {
+  let result = TestBuilder::new()
+    .with_loader(|loader| {
+      loader.remote.add_source_with_text(
+        "file:///mod.ts",
+        r#"export * from 'npm:example';"#,
+      );
+      loader.remote.add_external_source("npm:example");
+    })
+    .build_for_symbols()
+    .await;
+
+  let root_symbol = result.root_symbol();
+  let module = root_symbol
+    .get_module_from_specifier(
+      &ModuleSpecifier::parse("file:///mod.ts").unwrap(),
+    )
+    .unwrap();
+  let exports = module.exports(&root_symbol);
+  assert_eq!(
+    exports
+      .unresolved_specifiers
+      .into_iter()
+      .map(|s| s.specifier.as_str())
+      .collect::<Vec<_>>(),
+    vec!["npm:example"]
+  );
+}
+
 #[tokio::test]
 async fn test_npm_version_not_found_then_found() {
   #[derive(Debug)]

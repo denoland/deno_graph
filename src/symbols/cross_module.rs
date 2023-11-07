@@ -19,6 +19,12 @@ use super::SymbolDecl;
 use super::SymbolId;
 use super::UniqueSymbolId;
 
+#[derive(Debug, Clone)]
+pub enum DefinitionOrUnresolved<'a> {
+  Definition(Definition<'a>),
+  Unresolved(DefinitionUnresolved<'a>),
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DefinitionKind<'a> {
   ExportStar(&'a FileDep),
@@ -104,12 +110,23 @@ impl<'a> DefinitionPath<'a> {
   }
 
   pub fn into_definitions(self) -> impl Iterator<Item = Definition<'a>> {
+    self
+      .into_definitions_or_unresolveds()
+      .filter_map(|d| match d {
+        DefinitionOrUnresolved::Definition(d) => Some(d),
+        DefinitionOrUnresolved::Unresolved(_) => None,
+      })
+  }
+
+  pub fn into_definitions_or_unresolveds(
+    self,
+  ) -> impl Iterator<Item = DefinitionOrUnresolved<'a>> {
     struct IntoDefinitionIterator<'a> {
       queue: VecDeque<DefinitionPath<'a>>,
     }
 
     impl<'a> Iterator for IntoDefinitionIterator<'a> {
-      type Item = Definition<'a>;
+      type Item = DefinitionOrUnresolved<'a>;
 
       fn next(&mut self) -> Option<Self::Item> {
         while let Some(path) = self.queue.pop_front() {
@@ -120,10 +137,10 @@ impl<'a> DefinitionPath<'a> {
               }
             }
             DefinitionPath::Definition(def) => {
-              return Some(def);
+              return Some(DefinitionOrUnresolved::Definition(def));
             }
-            DefinitionPath::Unresolved { .. } => {
-              // no definition
+            DefinitionPath::Unresolved(unresolved) => {
+              return Some(DefinitionOrUnresolved::Unresolved(unresolved));
             }
           }
         }
@@ -364,7 +381,7 @@ pub fn resolve_symbol_dep<'a>(
         resolve_qualified_export_name(
           module_graph,
           module,
-          &parts,
+          parts,
           specifier_to_module,
         )
         .into_iter()
@@ -441,7 +458,7 @@ fn resolve_qualified_export_name_internal<'a>(
     )
   } else {
     vec![DefinitionPath::Unresolved(DefinitionUnresolved {
-      module: module,
+      module,
       symbol: module.module_symbol(),
       kind: DefinitionUnresolvedKind::Part(export_name),
       parts,
@@ -620,11 +637,13 @@ fn resolve_qualified_name_internal<'a>(
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct ExportsAndReExports<'a> {
   pub resolved: IndexMap<String, ResolvedExportOrReExport<'a>>,
   pub unresolved_specifiers: Vec<UnresolvedSpecifier<'a>>,
 }
 
+#[derive(Debug, Clone)]
 pub struct ResolvedExportOrReExport<'a> {
   pub module: ModuleInfoRef<'a>,
   pub symbol_id: SymbolId,
@@ -636,6 +655,7 @@ impl<'a> ResolvedExportOrReExport<'a> {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct UnresolvedSpecifier<'a> {
   pub referrer: ModuleInfoRef<'a>,
   pub specifier: &'a String,
