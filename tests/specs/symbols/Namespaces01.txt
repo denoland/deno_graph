@@ -14,45 +14,37 @@ import test2 = Namespace1.Inner.test2;
 export { test, test2 };
 
 # output
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),
     specifier: "file:///mod.ts",
-    child_ids: {
-        0,
-    },
-    exports: {
-        "Namespace1": 0,
-        "test": 4,
-        "test2": 5,
-    },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
             "Namespace1",
             #2,
-        ): 0,
+        ): 1,
         (
             "test",
             #3,
-        ): 1,
+        ): 2,
         (
             "Inner",
             #5,
-        ): 2,
+        ): 3,
         (
             "test2",
             #5,
-        ): 3,
+        ): 4,
         (
             "test",
             #2,
-        ): 4,
+        ): 5,
         (
             "test2",
             #2,
-        ): 5,
+        ): 6,
     },
     symbols: {
         0: Symbol {
@@ -60,6 +52,39 @@ file:///mod.ts: EsmModuleSymbol {
                 0,
             ),
             symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            228,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace Namespace1 {\n  export function test() {\n  }\n}\nexport namespace Namespace1.Inner {\n  export function test2() {\n  }\n}\n\nimport test = Namespace1.test;\nimport test2 = Namespace1.Inner.test2;\n\nexport { test, test2 };",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {
+                1,
+            },
+            exports: {
+                "Namespace1": 1,
+                "test": 5,
+                "test2": 6,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 1,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -107,19 +132,19 @@ file:///mod.ts: EsmModuleSymbol {
                 ),
             },
             child_ids: {
-                1,
+                2,
             },
             exports: {
-                "test": 1,
-                "Inner": 2,
+                "test": 2,
+                "Inner": 3,
             },
             members: {},
         },
-        1: Symbol {
+        2: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 1,
+            symbol_id: 2,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -142,11 +167,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        2: Symbol {
+        3: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 2,
+            symbol_id: 3,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -179,18 +204,18 @@ file:///mod.ts: EsmModuleSymbol {
                 ),
             },
             child_ids: {
-                3,
+                4,
             },
             exports: {
-                "test2": 3,
+                "test2": 4,
             },
             members: {},
         },
-        3: Symbol {
+        4: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 3,
+            symbol_id: 4,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -213,11 +238,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        4: Symbol {
+        5: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 4,
+            symbol_id: 5,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -276,11 +301,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        5: Symbol {
+        6: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 5,
+            symbol_id: 6,
             decls: [
                 SymbolDecl {
                     range: SourceRange {

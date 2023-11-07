@@ -1,6 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-use std::borrow::Cow;
 use std::cell::Cell;
 use std::cell::RefCell;
 use std::hash::Hash;
@@ -35,7 +34,9 @@ use super::collections::AdditiveOnlyMap;
 use super::collections::AdditiveOnlyMapForCopyValues;
 use super::cross_module;
 use super::cross_module::Definition;
+use super::cross_module::DefinitionOrUnresolved;
 use super::cross_module::DefinitionPath;
+use super::cross_module::ExportsAndReExports;
 use super::ResolvedSymbolDepEntry;
 
 /// The root symbol from which module symbols can be retrieved.
@@ -45,7 +46,7 @@ pub struct RootSymbol<'a> {
   module_graph: &'a ModuleGraph,
   parser: CapturingModuleParser<'a>,
   specifiers_to_ids: AdditiveOnlyMapForCopyValues<ModuleSpecifier, ModuleId>,
-  ids_to_symbols: AdditiveOnlyMap<ModuleId, ModuleSymbol>,
+  ids_to_modules: AdditiveOnlyMap<ModuleId, ModuleInfo>,
   diagnostics: RefCell<Vec<SymbolFillDiagnostic>>,
 }
 
@@ -58,7 +59,7 @@ impl<'a> RootSymbol<'a> {
       module_graph,
       parser,
       specifiers_to_ids: Default::default(),
-      ids_to_symbols: Default::default(),
+      ids_to_modules: Default::default(),
       diagnostics: Default::default(),
     }
   }
@@ -75,9 +76,9 @@ impl<'a> RootSymbol<'a> {
   pub fn get_module_from_specifier(
     &self,
     specifier: &ModuleSpecifier,
-  ) -> Option<ModuleSymbolRef> {
+  ) -> Option<ModuleInfoRef> {
     if let Some(module_id) = self.specifiers_to_ids.get(specifier) {
-      let module_symbol = self.ids_to_symbols.get(&module_id).unwrap();
+      let module_symbol = self.ids_to_modules.get(&module_id).unwrap();
       return Some(module_symbol.as_ref());
     }
 
@@ -99,14 +100,14 @@ impl<'a> RootSymbol<'a> {
   pub fn get_module_from_id(
     &self,
     module_id: ModuleId,
-  ) -> Option<ModuleSymbolRef> {
-    self.ids_to_symbols.get(&module_id).map(|s| s.as_ref())
+  ) -> Option<ModuleInfoRef> {
+    self.ids_to_modules.get(&module_id).map(|s| s.as_ref())
   }
 
   /// Goes to the definitions of the specified symbol.
   pub fn go_to_definitions<'b>(
     &'b self,
-    module: ModuleSymbolRef<'b>,
+    module: ModuleInfoRef<'b>,
     symbol: &'b Symbol,
   ) -> impl Iterator<Item = Definition<'b>> {
     self
@@ -115,10 +116,22 @@ impl<'a> RootSymbol<'a> {
       .flat_map(|d| d.into_definitions())
   }
 
+  /// Goes to the definitions of the specified symbol.
+  pub fn go_to_definitions_or_unresolveds<'b>(
+    &'b self,
+    module: ModuleInfoRef<'b>,
+    symbol: &'b Symbol,
+  ) -> impl Iterator<Item = DefinitionOrUnresolved<'b>> {
+    self
+      .find_definition_paths(module, symbol)
+      .into_iter()
+      .flat_map(|d| d.into_definitions_or_unresolveds())
+  }
+
   /// Finds the graph paths to the definition of the specified symbol.
   pub fn find_definition_paths<'b>(
     &'b self,
-    module: ModuleSymbolRef<'b>,
+    module: ModuleInfoRef<'b>,
     symbol: &'b Symbol,
   ) -> Vec<DefinitionPath<'b>> {
     debug_assert_eq!(symbol.module_id(), module.module_id());
@@ -132,12 +145,14 @@ impl<'a> RootSymbol<'a> {
 
   pub fn resolve_symbol_dep<'b>(
     &'b self,
-    module: ModuleSymbolRef<'b>,
+    module: ModuleInfoRef<'b>,
+    symbol: &'b Symbol,
     dep: &'b SymbolDep,
   ) -> Vec<ResolvedSymbolDepEntry<'b>> {
     super::cross_module::resolve_symbol_dep(
       self.module_graph,
       module,
+      symbol,
       dep,
       &|specifier| self.get_module_from_specifier(specifier),
     )
@@ -146,14 +161,14 @@ impl<'a> RootSymbol<'a> {
   fn analyze_esm_module(
     &self,
     esm_module: &EsmModule,
-  ) -> Option<ModuleSymbolRef> {
+  ) -> Option<ModuleInfoRef> {
     let Ok(source) = self.parsed_source(esm_module) else {
       return None;
     };
     let specifier = &esm_module.specifier;
     let module = source.module();
 
-    let module_id = ModuleId(self.ids_to_symbols.len() as u32);
+    let module_id = ModuleId(self.ids_to_modules.len() as u32);
     let builder = ModuleBuilder::new(module_id);
     let filler = SymbolFiller {
       source: &source,
@@ -166,12 +181,10 @@ impl<'a> RootSymbol<'a> {
     if !diagnostics.is_empty() {
       self.diagnostics.borrow_mut().extend(diagnostics);
     }
-    let module_symbol = EsmModuleSymbol {
+    let module_symbol = EsmModuleInfo {
       specifier: specifier.clone(),
       module_id,
       source: source.clone(),
-      child_ids: builder.child_ids.take(),
-      exports: builder.exports.take(),
       re_exports: builder.re_exports.take(),
       swc_id_to_symbol_id: builder.swc_id_to_symbol_id.take(),
       symbols: builder
@@ -181,38 +194,47 @@ impl<'a> RootSymbol<'a> {
         .map(|(k, v)| (k, v.0.into_inner()))
         .collect(),
     };
-    Some(self.finalize_insert(ModuleSymbol::Esm(module_symbol)))
+    Some(self.finalize_insert(ModuleInfo::Esm(module_symbol)))
   }
 
-  fn analyze_json_module(&self, json_module: &JsonModule) -> ModuleSymbolRef {
+  fn analyze_json_module(&self, json_module: &JsonModule) -> ModuleInfoRef {
     let specifier = &json_module.specifier;
     // it's not ideal having to use SourceTextInfo here, but it makes
     // it easier to interop with ParsedSource
     let source_text_info = SourceTextInfo::new(json_module.source.clone());
     let range = source_text_info.range();
-    let module_id = ModuleId(self.ids_to_symbols.len() as u32);
-    let module_symbol = JsonModuleSymbol {
+    let module_id = ModuleId(self.ids_to_modules.len() as u32);
+    let decls = {
+      let range = {
+        let source = source_text_info.text_str();
+        let start_whitespace_len = source.len() - source.trim_start().len();
+        let end_whitespace_len = source.len() - source.trim_end().len();
+        SourceRange::new(
+          range.start + start_whitespace_len,
+          range.end - end_whitespace_len,
+        )
+      };
+      Vec::from([SymbolDecl {
+        range,
+        kind: SymbolDeclKind::Definition(SymbolNode(SymbolNodeInner::Json)),
+      }])
+    };
+    let module_symbol = JsonModuleInfo {
       specifier: specifier.clone(),
       module_id,
-      exports: IndexMap::from([("default".to_string(), SymbolId(0))]),
-      default_symbol: Symbol {
+      module_symbol: Symbol {
         module_id,
         symbol_id: SymbolId(0),
-        decls: {
-          let range = {
-            let source = source_text_info.text_str();
-            let start_whitespace_len = source.len() - source.trim_start().len();
-            let end_whitespace_len = source.len() - source.trim_end().len();
-            SourceRange::new(
-              range.start + start_whitespace_len,
-              range.end - end_whitespace_len,
-            )
-          };
-          Vec::from([SymbolDecl {
-            range,
-            kind: SymbolDeclKind::Definition(SymbolNode(SymbolNodeInner::Json)),
-          }])
-        },
+        exports: IndexMap::from([("default".to_string(), SymbolId(1))]),
+        child_ids: Default::default(),
+        decls: decls.clone(),
+        deps: Default::default(),
+        members: Default::default(),
+      },
+      default_symbol: Symbol {
+        module_id,
+        symbol_id: SymbolId(1),
+        decls,
         deps: Default::default(),
         child_ids: Default::default(),
         exports: Default::default(),
@@ -220,16 +242,16 @@ impl<'a> RootSymbol<'a> {
       },
       source_text_info,
     };
-    self.finalize_insert(ModuleSymbol::Json(Box::new(module_symbol)))
+    self.finalize_insert(ModuleInfo::Json(Box::new(module_symbol)))
   }
 
-  fn finalize_insert(&self, module_symbol: ModuleSymbol) -> ModuleSymbolRef {
+  fn finalize_insert(&self, module: ModuleInfo) -> ModuleInfoRef {
     self
       .specifiers_to_ids
-      .insert(module_symbol.specifier().clone(), module_symbol.module_id());
-    let module_id = module_symbol.module_id();
-    self.ids_to_symbols.insert(module_id, module_symbol);
-    self.ids_to_symbols.get(&module_id).unwrap().as_ref()
+      .insert(module.specifier().clone(), module.module_id());
+    let module_id = module.module_id();
+    self.ids_to_modules.insert(module_id, module);
+    self.ids_to_modules.get(&module_id).unwrap().as_ref()
   }
 
   fn parsed_source(
@@ -332,6 +354,9 @@ impl std::fmt::Debug for SymbolNode {
     f.debug_tuple("SymbolNode")
       .field(&match &self.0 {
         SymbolNodeInner::Json => "<json>".to_string(),
+        SymbolNodeInner::Module(d) => {
+          d.value().text_fast(d.source.text_info()).to_string()
+        }
         SymbolNodeInner::ClassDecl(d) => {
           d.value().text_fast(d.source.text_info()).to_string()
         }
@@ -418,6 +443,7 @@ enum SymbolNodeInnerExportDecl {
 #[derive(Debug, Clone)]
 enum SymbolNodeInner {
   Json,
+  Module(NodeRefBox<Module>),
   ClassDecl(NodeRefBox<ClassDecl>),
   ExportDecl(NodeRefBox<ExportDecl>, SymbolNodeInnerExportDecl),
   ExportDefaultDecl(NodeRefBox<ExportDefaultDecl>),
@@ -454,6 +480,7 @@ pub enum ExportDeclRef<'a> {
 
 #[derive(Debug, Clone, Copy)]
 pub enum SymbolNodeRef<'a> {
+  Module(&'a Module),
   ClassDecl(&'a ClassDecl),
   ExportDecl(&'a ExportDecl, ExportDeclRef<'a>),
   ExportDefaultDecl(&'a ExportDefaultDecl),
@@ -510,6 +537,7 @@ impl<'a> SymbolNodeRef<'a> {
     }
 
     match self {
+      Self::Module(_) => None,
       Self::ClassDecl(n) => Some(n.ident.sym.to_string()),
       Self::ExportDecl(_, n) => match n {
         ExportDeclRef::Class(n) => Some(n.ident.sym.to_string()),
@@ -569,6 +597,9 @@ impl SymbolDeclKind {
       SymbolDeclKind::Definition(SymbolNode(def))
       | SymbolDeclKind::DefinitionPrivateFnImpl(SymbolNode(def)) => match def {
         SymbolNodeInner::Json => None,
+        SymbolNodeInner::Module(n) => {
+          Some((SymbolNodeRef::Module(n.value()), n.source()))
+        }
         SymbolNodeInner::ClassDecl(n) => {
           Some((SymbolNodeRef::ClassDecl(n.value()), n.source()))
         }
@@ -812,20 +843,20 @@ impl UniqueSymbolId {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum ModuleSymbolRef<'a> {
-  Json(&'a JsonModuleSymbol),
-  Esm(&'a EsmModuleSymbol),
+pub enum ModuleInfoRef<'a> {
+  Json(&'a JsonModuleInfo),
+  Esm(&'a EsmModuleInfo),
 }
 
-impl<'a> ModuleSymbolRef<'a> {
-  pub fn json(&self) -> Option<&'a JsonModuleSymbol> {
+impl<'a> ModuleInfoRef<'a> {
+  pub fn json(&self) -> Option<&'a JsonModuleInfo> {
     match self {
       Self::Json(json) => Some(json),
       Self::Esm(_) => None,
     }
   }
 
-  pub fn esm(&self) -> Option<&'a EsmModuleSymbol> {
+  pub fn esm(&self) -> Option<&'a EsmModuleInfo> {
     match self {
       Self::Json(_) => None,
       Self::Esm(esm) => Some(esm),
@@ -848,6 +879,13 @@ impl<'a> ModuleSymbolRef<'a> {
 
   pub fn text(&self) -> &'a str {
     self.text_info().text_str()
+  }
+
+  pub fn module_symbol(&self) -> &'a Symbol {
+    match self {
+      Self::Json(m) => &m.module_symbol,
+      Self::Esm(m) => m.module_symbol(),
+    }
   }
 
   pub fn specifier(&self) -> &'a ModuleSpecifier {
@@ -873,54 +911,49 @@ impl<'a> ModuleSymbolRef<'a> {
 
   pub fn exports(
     &self,
-    module_graph: &ModuleGraph,
     root_symbol: &'a RootSymbol,
-  ) -> IndexMap<String, (ModuleSymbolRef<'a>, SymbolId)> {
-    cross_module::exports_and_re_exports(module_graph, *self, &|specifier| {
-      root_symbol.get_module_from_specifier(specifier)
-    })
+  ) -> ExportsAndReExports<'a> {
+    cross_module::exports_and_re_exports(
+      root_symbol.module_graph,
+      *self,
+      &|specifier| root_symbol.get_module_from_specifier(specifier),
+    )
   }
 
-  pub(crate) fn exports_map(&self) -> &'a IndexMap<String, SymbolId> {
+  pub(crate) fn re_export_all_specifiers(&self) -> Option<&'a Vec<String>> {
     match self {
-      Self::Json(m) => &m.exports,
-      Self::Esm(m) => &m.exports,
-    }
-  }
-
-  pub(crate) fn re_export_all_specifiers(&self) -> Cow<'a, Vec<String>> {
-    match self {
-      Self::Json(_) => Cow::Owned(Vec::new()),
-      Self::Esm(m) => Cow::Borrowed(&m.re_exports),
+      Self::Json(_) => None,
+      Self::Esm(m) => Some(&m.re_exports),
     }
   }
 }
 
+/// Holds information about the module like symbols and re-exports.
 #[derive(Debug, Clone)]
-pub enum ModuleSymbol {
-  Json(Box<JsonModuleSymbol>),
-  Esm(EsmModuleSymbol),
+pub enum ModuleInfo {
+  Json(Box<JsonModuleInfo>),
+  Esm(EsmModuleInfo),
 }
 
-impl ModuleSymbol {
-  pub fn json(&self) -> Option<&JsonModuleSymbol> {
+impl ModuleInfo {
+  pub fn json(&self) -> Option<&JsonModuleInfo> {
     match self {
       Self::Json(json) => Some(json),
       Self::Esm(_) => None,
     }
   }
 
-  pub fn esm(&self) -> Option<&EsmModuleSymbol> {
+  pub fn esm(&self) -> Option<&EsmModuleInfo> {
     match self {
       Self::Json(_) => None,
       Self::Esm(esm) => Some(esm),
     }
   }
 
-  pub fn as_ref(&self) -> ModuleSymbolRef {
+  pub fn as_ref(&self) -> ModuleInfoRef {
     match self {
-      ModuleSymbol::Json(m) => (**m).as_ref(),
-      ModuleSymbol::Esm(m) => m.as_ref(),
+      ModuleInfo::Json(m) => (**m).as_ref(),
+      ModuleInfo::Esm(m) => m.as_ref(),
     }
   }
 
@@ -945,28 +978,27 @@ impl ModuleSymbol {
 }
 
 #[derive(Clone)]
-pub struct JsonModuleSymbol {
+pub struct JsonModuleInfo {
   module_id: ModuleId,
   specifier: ModuleSpecifier,
   source_text_info: SourceTextInfo,
-  exports: IndexMap<String, SymbolId>,
+  module_symbol: Symbol,
   default_symbol: Symbol,
 }
 
-impl std::fmt::Debug for JsonModuleSymbol {
+impl std::fmt::Debug for JsonModuleInfo {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("JsonModuleSymbol")
+    f.debug_struct("JsonModuleInfo")
       .field("module_id", &self.module_id)
       .field("specifier", &self.specifier.as_str())
-      .field("exports", &self.exports)
-      .field("default_symbol", &self.default_symbol)
+      .field("module_symbol", &self.module_symbol)
       .finish()
   }
 }
 
-impl JsonModuleSymbol {
-  pub fn as_ref(&self) -> ModuleSymbolRef {
-    ModuleSymbolRef::Json(self)
+impl JsonModuleInfo {
+  pub fn as_ref(&self) -> ModuleInfoRef {
+    ModuleInfoRef::Json(self)
   }
 
   pub fn specifier(&self) -> &ModuleSpecifier {
@@ -978,25 +1010,27 @@ impl JsonModuleSymbol {
   }
 
   pub fn symbols(&self) -> impl Iterator<Item = &Symbol> {
-    std::iter::once(&self.default_symbol)
+    std::iter::once(&self.module_symbol)
+      .chain(std::iter::once(&self.default_symbol))
   }
 
   pub fn symbol(&self, id: SymbolId) -> Option<&Symbol> {
-    if id.0 == 0 {
-      Some(&self.default_symbol)
-    } else {
-      None
+    match id.0 {
+      0 => Some(&self.module_symbol),
+      1 => Some(&self.default_symbol),
+      _ => {
+        debug_assert!(false, "invalid symbol id");
+        None
+      }
     }
   }
 }
 
 #[derive(Clone)]
-pub struct EsmModuleSymbol {
+pub struct EsmModuleInfo {
   module_id: ModuleId,
   specifier: ModuleSpecifier,
   source: ParsedSource,
-  exports: IndexMap<String, SymbolId>,
-  child_ids: IndexSet<SymbolId>,
   /// The re-export specifiers.
   re_exports: Vec<String>,
   // note: not all symbol ids have an swc id. For example, default exports
@@ -1004,13 +1038,11 @@ pub struct EsmModuleSymbol {
   symbols: IndexMap<SymbolId, Symbol>,
 }
 
-impl std::fmt::Debug for EsmModuleSymbol {
+impl std::fmt::Debug for EsmModuleInfo {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("EsmModuleSymbol")
+    f.debug_struct("EsmModuleInfo")
       .field("module_id", &self.module_id)
       .field("specifier", &self.specifier.as_str())
-      .field("child_ids", &self.child_ids)
-      .field("exports", &self.exports)
       .field("re_exports", &self.re_exports)
       .field("swc_id_to_symbol_id", &self.swc_id_to_symbol_id)
       .field("symbols", &self.symbols)
@@ -1018,9 +1050,9 @@ impl std::fmt::Debug for EsmModuleSymbol {
   }
 }
 
-impl EsmModuleSymbol {
-  pub fn as_ref(&self) -> ModuleSymbolRef {
-    ModuleSymbolRef::Esm(self)
+impl EsmModuleInfo {
+  pub fn as_ref(&self) -> ModuleInfoRef {
+    ModuleInfoRef::Esm(self)
   }
 
   pub fn module_id(&self) -> ModuleId {
@@ -1037,14 +1069,13 @@ impl EsmModuleSymbol {
 
   pub fn exports<'a>(
     &'a self,
-    module_graph: &ModuleGraph,
     root_symbol: &'a RootSymbol,
-  ) -> IndexMap<String, (ModuleSymbolRef<'a>, SymbolId)> {
-    self.as_ref().exports(module_graph, root_symbol)
+  ) -> ExportsAndReExports<'a> {
+    self.as_ref().exports(root_symbol)
   }
 
-  pub fn child_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
-    self.child_ids.iter().copied()
+  pub fn module_symbol(&self) -> &Symbol {
+    self.symbol(SymbolId(0)).unwrap()
   }
 
   pub fn symbol_id_from_swc(&self, id: &Id) -> Option<SymbolId> {
@@ -1101,6 +1132,10 @@ impl SymbolMut {
     self.0.borrow_mut().exports.insert(name, symbol_id);
   }
 
+  fn get_export(&self, name: &str) -> Option<SymbolId> {
+    self.0.borrow().exports.get(name).copied()
+  }
+
   fn add_child_id(&self, symbol_id: SymbolId) {
     self.0.borrow_mut().child_ids.insert(symbol_id);
   }
@@ -1117,9 +1152,7 @@ struct ModuleBuilder {
   // todo(dsherret): make this not an IndexMap
   symbols: AdditiveOnlyIndexMap<SymbolId, SymbolMut>,
   next_symbol_id: Cell<SymbolId>,
-  exports: AdditiveOnlyIndexMapForCopyValues<String, SymbolId>,
   re_exports: RefCell<Vec<String>>,
-  child_ids: RefCell<IndexSet<SymbolId>>,
 }
 
 impl ModuleBuilder {
@@ -1129,17 +1162,16 @@ impl ModuleBuilder {
       swc_id_to_symbol_id: Default::default(),
       symbols: Default::default(),
       next_symbol_id: Default::default(),
-      exports: Default::default(),
       re_exports: Default::default(),
-      child_ids: Default::default(),
     }
   }
 
   pub fn ensure_default_export_symbol(
     &self,
+    module_symbol: &SymbolMut,
     symbol_decl: SymbolDecl,
   ) -> SymbolId {
-    if let Some(symbol_id) = self.exports.get(&"default".to_string()) {
+    if let Some(symbol_id) = module_symbol.get_export("default") {
       let default_export_symbol = self.symbols.get(&symbol_id).unwrap();
       default_export_symbol.add_decl(symbol_decl);
       symbol_id
@@ -1148,7 +1180,7 @@ impl ModuleBuilder {
       let symbol = SymbolMut::new(Symbol::new(self.module_id, symbol_id));
       symbol.add_decl(symbol_decl);
       self.symbols.insert(symbol_id, symbol);
-      self.exports.insert("default".to_string(), symbol_id);
+      module_symbol.add_export("default".to_string(), symbol_id);
       symbol_id
     }
   }
@@ -1218,6 +1250,13 @@ impl<'a> SymbolFiller<'a> {
   fn fill(&self, module: &Module) {
     let mut last_was_overload = false;
     let mut last_override_key = 0;
+    let module_symbol = self.builder.create_new_symbol();
+    module_symbol.add_decl(SymbolDecl {
+      kind: SymbolDeclKind::Definition(SymbolNode(SymbolNodeInner::Module(
+        NodeRefBox::unsafe_new(self.source, module),
+      ))),
+      range: module.range(),
+    });
     for module_item in &module.body {
       let current_override_key = module_item_overload_key(module_item);
       let is_overload = is_module_item_overload(module_item);
@@ -1233,23 +1272,14 @@ impl<'a> SymbolFiller<'a> {
         continue; // don't fill the types on implementation signatures as they're private
       }
 
-      self.fill_module_item(
-        module_item,
-        &|name, symbol_id| {
-          self.builder.exports.insert(name, symbol_id);
-        },
-        &|symbol_id| {
-          self.builder.child_ids.borrow_mut().insert(symbol_id);
-        },
-      );
+      self.fill_module_item(module_item, module_symbol);
     }
   }
 
   fn fill_module_item(
     &self,
     module_item: &ModuleItem,
-    add_export: &impl Fn(String, SymbolId),
-    add_child: &impl Fn(SymbolId),
+    module_symbol: &SymbolMut,
   ) {
     match module_item {
       ModuleItem::ModuleDecl(decl) => match decl {
@@ -1328,8 +1358,8 @@ impl<'a> SymbolFiller<'a> {
             );
             self.fill_class_decl(symbol, n);
             let symbol_id = symbol.symbol_id();
-            add_export(n.ident.sym.to_string(), symbol_id);
-            add_child(symbol_id);
+            module_symbol.add_export(n.ident.sym.to_string(), symbol_id);
+            module_symbol.add_child_id(symbol_id);
           }
           Decl::Fn(n) => {
             let symbol = self.builder.get_symbol_from_swc_id(
@@ -1349,8 +1379,8 @@ impl<'a> SymbolFiller<'a> {
             );
             self.fill_fn_decl(symbol, n);
             let symbol_id = symbol.symbol_id();
-            add_export(n.ident.sym.to_string(), symbol_id);
-            add_child(symbol_id);
+            module_symbol.add_export(n.ident.sym.to_string(), symbol_id);
+            module_symbol.add_child_id(symbol_id);
           }
           Decl::Var(n) => {
             let symbol = self.builder.create_new_symbol();
@@ -1359,7 +1389,7 @@ impl<'a> SymbolFiller<'a> {
               range: export_decl.range(),
             });
             let export_decl_symbol_id = symbol.symbol_id();
-            add_child(export_decl_symbol_id);
+            module_symbol.add_child_id(export_decl_symbol_id);
 
             for decl in &n.decls {
               for ident in find_pat_ids::<_, Ident>(&decl.name) {
@@ -1383,7 +1413,7 @@ impl<'a> SymbolFiller<'a> {
                 );
                 self.fill_var_declarator(symbol, decl);
                 let symbol_id = symbol.symbol_id();
-                add_export(export_name, symbol_id);
+                module_symbol.add_export(export_name, symbol_id);
                 self
                   .builder
                   .symbol_mut(export_decl_symbol_id)
@@ -1409,8 +1439,8 @@ impl<'a> SymbolFiller<'a> {
             );
             self.fill_ts_interface(symbol, n);
             let symbol_id = symbol.symbol_id();
-            add_export(n.id.sym.to_string(), symbol_id);
-            add_child(symbol_id);
+            module_symbol.add_export(n.id.sym.to_string(), symbol_id);
+            module_symbol.add_child_id(symbol_id);
           }
           Decl::TsTypeAlias(n) => {
             let symbol = self.builder.get_symbol_from_swc_id(
@@ -1429,8 +1459,8 @@ impl<'a> SymbolFiller<'a> {
             );
             self.fill_ts_type_alias(symbol, n);
             let symbol_id = symbol.symbol_id();
-            add_export(n.id.sym.to_string(), symbol_id);
-            add_child(symbol_id);
+            module_symbol.add_export(n.id.sym.to_string(), symbol_id);
+            module_symbol.add_child_id(symbol_id);
           }
           Decl::TsEnum(n) => {
             let symbol = self.builder.get_symbol_from_swc_id(
@@ -1450,8 +1480,8 @@ impl<'a> SymbolFiller<'a> {
             );
             self.fill_ts_enum(symbol, n);
             let symbol_id = symbol.symbol_id();
-            add_export(n.id.sym.to_string(), symbol_id);
-            add_child(symbol_id);
+            module_symbol.add_export(n.id.sym.to_string(), symbol_id);
+            module_symbol.add_child_id(symbol_id);
           }
           Decl::TsModule(n) => {
             let maybe_symbol_id = self.fill_ts_module(
@@ -1471,8 +1501,8 @@ impl<'a> SymbolFiller<'a> {
             if let Some(symbol_id) = maybe_symbol_id {
               match &n.id {
                 TsModuleName::Ident(ident) => {
-                  add_export(ident.sym.to_string(), symbol_id);
-                  add_child(symbol_id);
+                  module_symbol.add_export(ident.sym.to_string(), symbol_id);
+                  module_symbol.add_child_id(symbol_id);
                 }
                 TsModuleName::Str(_) => {}
               }
@@ -1514,7 +1544,7 @@ impl<'a> SymbolFiller<'a> {
                       }),
                     });
                     let symbol_id = symbol.symbol_id();
-                    add_export(export_name, symbol_id);
+                    module_symbol.add_export(export_name, symbol_id);
                   }
                   None => {
                     let orig_ident = match &named.orig {
@@ -1534,7 +1564,7 @@ impl<'a> SymbolFiller<'a> {
                         },
                       );
                       let orig_symbol_id = orig_symbol.symbol_id();
-                      add_export(exported_name, orig_symbol_id);
+                      module_symbol.add_export(exported_name, orig_symbol_id);
                     } else {
                       self.builder.get_symbol_from_swc_id(
                         orig_ident.to_id(),
@@ -1558,7 +1588,8 @@ impl<'a> SymbolFiller<'a> {
                           kind: SymbolDeclKind::TargetSelf,
                         },
                       );
-                      add_export(orig_ident.sym.to_string(), symbol_id);
+                      module_symbol
+                        .add_export(orig_ident.sym.to_string(), symbol_id);
                     }
                   }
                 }
@@ -1578,7 +1609,7 @@ impl<'a> SymbolFiller<'a> {
                     range: specifier.range(),
                   });
                   let symbol_id = symbol.symbol_id();
-                  add_export(name, symbol_id);
+                  module_symbol.add_export(name, symbol_id);
                 } else {
                   let name = match &specifier.name {
                     ModuleExportName::Ident(ident) => ident,
@@ -1595,7 +1626,7 @@ impl<'a> SymbolFiller<'a> {
                       },
                     )
                     .symbol_id();
-                  add_export(name.sym.to_string(), symbol_id);
+                  module_symbol.add_export(name.sym.to_string(), symbol_id);
                 }
               }
               // https://github.com/tc39/proposal-export-default-from
@@ -1606,8 +1637,9 @@ impl<'a> SymbolFiller<'a> {
           }
         }
         ModuleDecl::ExportDefaultDecl(default_decl) => {
-          let symbol_id =
-            self.builder.ensure_default_export_symbol(SymbolDecl {
+          let symbol_id = self.builder.ensure_default_export_symbol(
+            module_symbol,
+            SymbolDecl {
               range: default_decl.range(),
               kind: SymbolDeclKind::Definition(SymbolNode(
                 SymbolNodeInner::ExportDefaultDecl(NodeRefBox::unsafe_new(
@@ -1615,7 +1647,8 @@ impl<'a> SymbolFiller<'a> {
                   default_decl,
                 )),
               )),
-            });
+            },
+          );
           let maybe_ident = match &default_decl.decl {
             DefaultDecl::Class(expr) => expr.ident.as_ref(),
             DefaultDecl::Fn(expr) => expr.ident.as_ref(),
@@ -1638,7 +1671,12 @@ impl<'a> SymbolFiller<'a> {
           }
         }
         ModuleDecl::ExportDefaultExpr(expr) => {
-          self.handle_export_default_expr(expr.range(), &expr.expr, Some(expr));
+          self.handle_export_default_expr(
+            module_symbol,
+            expr.range(),
+            &expr.expr,
+            Some(expr),
+          );
         }
         ModuleDecl::ExportAll(n) => {
           self.builder.add_re_export(n.src.value.to_string());
@@ -1656,11 +1694,13 @@ impl<'a> SymbolFiller<'a> {
             }
           }
           if import_equals.is_export {
-            add_export(import_equals.id.sym.to_string(), symbol_id);
+            module_symbol
+              .add_export(import_equals.id.sym.to_string(), symbol_id);
           }
         }
         ModuleDecl::TsExportAssignment(export_assignment) => {
           self.handle_export_default_expr(
+            module_symbol,
             export_assignment.range(),
             &export_assignment.expr,
             None,
@@ -1709,7 +1749,7 @@ impl<'a> SymbolFiller<'a> {
               );
               self.fill_class_decl(symbol, n);
               let symbol_id = symbol.symbol_id();
-              add_child(symbol_id);
+              module_symbol.add_child_id(symbol_id);
             }
             Decl::Fn(n) => {
               let id = n.ident.to_id();
@@ -1727,7 +1767,7 @@ impl<'a> SymbolFiller<'a> {
               );
               self.fill_fn_decl(symbol, n);
               let symbol_id = symbol.symbol_id();
-              add_child(symbol_id);
+              module_symbol.add_child_id(symbol_id);
             }
             Decl::Var(var_decl) => {
               for decl in &var_decl.decls {
@@ -1747,7 +1787,7 @@ impl<'a> SymbolFiller<'a> {
                   );
                   self.fill_var_declarator(symbol, decl);
                   let symbol_id = symbol.symbol_id();
-                  add_child(symbol_id);
+                  module_symbol.add_child_id(symbol_id);
                 }
               }
             }
@@ -1767,7 +1807,7 @@ impl<'a> SymbolFiller<'a> {
               );
               self.fill_ts_interface(symbol, n);
               let symbol_id = symbol.symbol_id();
-              add_child(symbol_id);
+              module_symbol.add_child_id(symbol_id);
             }
             Decl::TsTypeAlias(n) => {
               let id = n.id.to_id();
@@ -1785,7 +1825,7 @@ impl<'a> SymbolFiller<'a> {
               );
               self.fill_ts_type_alias(symbol, n);
               let symbol_id = symbol.symbol_id();
-              add_child(symbol_id);
+              module_symbol.add_child_id(symbol_id);
             }
             Decl::TsEnum(n) => {
               let id = n.id.to_id();
@@ -1803,7 +1843,7 @@ impl<'a> SymbolFiller<'a> {
               );
               self.fill_ts_enum(symbol, n);
               let symbol_id = symbol.symbol_id();
-              add_child(symbol_id);
+              module_symbol.add_child_id(symbol_id);
             }
             Decl::TsModule(n) => {
               let symbol_id = self.fill_ts_module(
@@ -1819,7 +1859,7 @@ impl<'a> SymbolFiller<'a> {
                 n,
               );
               if let Some(symbol_id) = symbol_id {
-                add_child(symbol_id);
+                module_symbol.add_child_id(symbol_id);
               }
             }
             Decl::Using(_) => {
@@ -1833,6 +1873,7 @@ impl<'a> SymbolFiller<'a> {
 
   fn handle_export_default_expr(
     &self,
+    module_symbol: &SymbolMut,
     default_export_range: SourceRange,
     expr: &Expr,
     maybe_parent: Option<&ExportDefaultExpr>,
@@ -1840,10 +1881,13 @@ impl<'a> SymbolFiller<'a> {
     match expr {
       Expr::Ident(ident) => {
         let default_export_symbol_id =
-          self.builder.ensure_default_export_symbol(SymbolDecl {
-            kind: SymbolDeclKind::Target(ident.to_id()),
-            range: default_export_range,
-          });
+          self.builder.ensure_default_export_symbol(
+            module_symbol,
+            SymbolDecl {
+              kind: SymbolDeclKind::Target(ident.to_id()),
+              range: default_export_range,
+            },
+          );
         self.builder.ensure_symbol_for_swc_id(
           ident.to_id(),
           SymbolDecl {
@@ -1862,15 +1906,18 @@ impl<'a> SymbolFiller<'a> {
         let Some(parent) = maybe_parent else {
           return;
         };
-        self.builder.ensure_default_export_symbol(SymbolDecl {
-          kind: SymbolDeclKind::Definition(SymbolNode(
-            SymbolNodeInner::ExportDefaultExprLit(
-              NodeRefBox::unsafe_new(self.source, parent),
-              NodeRefBox::unsafe_new(self.source, lit),
-            ),
-          )),
-          range: default_export_range,
-        });
+        self.builder.ensure_default_export_symbol(
+          module_symbol,
+          SymbolDecl {
+            kind: SymbolDeclKind::Definition(SymbolNode(
+              SymbolNodeInner::ExportDefaultExprLit(
+                NodeRefBox::unsafe_new(self.source, parent),
+                NodeRefBox::unsafe_new(self.source, lit),
+              ),
+            )),
+            range: default_export_range,
+          },
+        );
       }
       _ => {
         let line_and_column = self
@@ -2019,22 +2066,21 @@ impl<'a> SymbolFiller<'a> {
       TsModuleName::Ident(ident) => ident.to_id(),
       TsModuleName::Str(_) => return None, // ignore for now
     };
-    let mod_symbol_id = self
-      .builder
-      .ensure_symbol_for_swc_id(id.clone(), symbol_decl);
+    let mod_symbol =
+      self.builder.get_symbol_from_swc_id(id.clone(), symbol_decl);
 
     // fill the exported declarations
     if let Some(body) = &n.body {
-      let mut mod_symbol_id = mod_symbol_id;
+      let mut mod_symbol = mod_symbol;
       let mut current = body;
       let block = loop {
         match current {
           TsNamespaceBody::TsModuleBlock(block) => break block,
           TsNamespaceBody::TsNamespaceDecl(decl) => {
-            let previous_symbol_id = mod_symbol_id;
+            let previous_symbol = mod_symbol;
             let previous_id = id;
             id = decl.id.to_id();
-            mod_symbol_id = self.builder.ensure_symbol_for_swc_id(
+            mod_symbol = self.builder.get_symbol_from_swc_id(
               id.clone(),
               SymbolDecl {
                 kind: SymbolDeclKind::Definition(SymbolNode(
@@ -2046,15 +2092,10 @@ impl<'a> SymbolFiller<'a> {
                 range: decl.range(),
               },
             );
-            let previous_symbol =
-              self.builder.symbol_mut(previous_symbol_id).unwrap();
             previous_symbol.add_dep(id.clone().into());
-            previous_symbol.add_export(id.0.to_string(), mod_symbol_id);
-            self
-              .builder
-              .symbol_mut(mod_symbol_id)
-              .unwrap()
-              .add_dep(previous_id.into());
+            previous_symbol
+              .add_export(id.0.to_string(), mod_symbol.symbol_id());
+            mod_symbol.add_dep(previous_id.into());
             current = &decl.body;
           }
         }
@@ -2076,23 +2117,7 @@ impl<'a> SymbolFiller<'a> {
           continue; // don't fill the types on implementation signatures as they're private
         }
 
-        self.fill_module_item(
-          item,
-          &|name, symbol_id| {
-            self
-              .builder
-              .symbol_mut(mod_symbol_id)
-              .unwrap()
-              .add_export(name, symbol_id);
-          },
-          &|symbol_id| {
-            self
-              .builder
-              .symbol_mut(mod_symbol_id)
-              .unwrap()
-              .add_child_id(symbol_id);
-          },
-        );
+        self.fill_module_item(item, mod_symbol);
         match item {
           ModuleItem::ModuleDecl(decl) => match decl {
             ModuleDecl::Import(_)
@@ -2108,48 +2133,34 @@ impl<'a> SymbolFiller<'a> {
             ModuleDecl::ExportDecl(export_decl) => match &export_decl.decl {
               Decl::Class(n) => {
                 let id = n.ident.to_id();
-                let mod_symbol =
-                  self.builder.symbol_mut(mod_symbol_id).unwrap();
                 mod_symbol.add_dep(id.into());
               }
               Decl::Fn(n) => {
-                let mod_symbol =
-                  self.builder.symbol_mut(mod_symbol_id).unwrap();
                 mod_symbol.add_dep(n.ident.to_id().into());
               }
               Decl::Var(n) => {
                 for decl in &n.decls {
                   for ident in find_pat_ids::<_, Ident>(&decl.name) {
                     let id = ident.to_id();
-                    let mod_symbol =
-                      self.builder.symbol_mut(mod_symbol_id).unwrap();
                     mod_symbol.add_dep(id.into());
                   }
                 }
               }
               Decl::TsInterface(n) => {
                 let id = n.id.to_id();
-                let mod_symbol =
-                  self.builder.symbol_mut(mod_symbol_id).unwrap();
                 mod_symbol.add_dep(id.into());
               }
               Decl::TsTypeAlias(n) => {
                 let id = n.id.to_id();
-                let mod_symbol =
-                  self.builder.symbol_mut(mod_symbol_id).unwrap();
                 mod_symbol.add_dep(id.into());
               }
               Decl::TsEnum(n) => {
                 let id = n.id.to_id();
-                let mod_symbol =
-                  self.builder.symbol_mut(mod_symbol_id).unwrap();
                 mod_symbol.add_dep(id.into());
               }
               Decl::TsModule(n) => match &n.id {
                 TsModuleName::Ident(ident) => {
                   let id = ident.to_id();
-                  let mod_symbol =
-                    self.builder.symbol_mut(mod_symbol_id).unwrap();
                   mod_symbol.add_dep(id.into());
                 }
                 TsModuleName::Str(_) => {
@@ -2167,7 +2178,7 @@ impl<'a> SymbolFiller<'a> {
         }
       }
     }
-    Some(mod_symbol_id)
+    Some(mod_symbol.symbol_id())
   }
 
   fn handle_module_item_fn_overload(&self, module_item: &ModuleItem) {
@@ -2655,7 +2666,8 @@ impl<'a> SymbolFiller<'a> {
         )),
         n.range(),
       ),
-      SymbolNodeRef::ClassDecl(_)
+      SymbolNodeRef::Module(_)
+      | SymbolNodeRef::ClassDecl(_)
       | SymbolNodeRef::ExportDecl(_, _)
       | SymbolNodeRef::ExportDefaultDecl(_)
       | SymbolNodeRef::ExportDefaultExprLit(_, _)

@@ -3,28 +3,21 @@ declare function foo(): number;
 export function bar() {};
 
 # output
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),
     specifier: "file:///mod.ts",
-    child_ids: {
-        0,
-        1,
-    },
-    exports: {
-        "bar": 1,
-    },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
             "foo",
             #2,
-        ): 0,
+        ): 1,
         (
             "bar",
             #2,
-        ): 1,
+        ): 2,
     },
     symbols: {
         0: Symbol {
@@ -32,6 +25,38 @@ file:///mod.ts: EsmModuleSymbol {
                 0,
             ),
             symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            57,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "declare function foo(): number;\nexport function bar() {};",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {
+                1,
+                2,
+            },
+            exports: {
+                "bar": 2,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 1,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -54,11 +79,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        1: Symbol {
+        2: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 1,
+            symbol_id: 2,
             decls: [
                 SymbolDecl {
                     range: SourceRange {

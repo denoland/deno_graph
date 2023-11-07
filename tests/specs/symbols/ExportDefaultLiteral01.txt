@@ -2,15 +2,11 @@
 export default 1;
 
 # output
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),
     specifier: "file:///mod.ts",
-    child_ids: {},
-    exports: {
-        "default": 0,
-    },
     re_exports: [],
     swc_id_to_symbol_id: {},
     symbols: {
@@ -19,6 +15,35 @@ file:///mod.ts: EsmModuleSymbol {
                 0,
             ),
             symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            17,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export default 1;",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {
+                "default": 1,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 1,
             decls: [
                 SymbolDecl {
                     range: SourceRange {

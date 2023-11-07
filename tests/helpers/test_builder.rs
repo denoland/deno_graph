@@ -46,11 +46,23 @@ impl Loader for TestLoader {
 
 #[cfg(feature = "symbols")]
 pub mod symbols {
+  use deno_graph::symbols::RootSymbol;
   use deno_graph::symbols::SymbolFillDiagnostic;
 
   pub struct SymbolsResult {
     pub output: String,
     pub diagnostics: Vec<SymbolFillDiagnostic>,
+  }
+
+  pub struct SymbolsBuildResult {
+    pub graph: deno_graph::ModuleGraph,
+    pub analyzer: deno_graph::CapturingModuleAnalyzer,
+  }
+
+  impl SymbolsBuildResult {
+    pub fn root_symbol(&self) -> RootSymbol {
+      RootSymbol::new(&self.graph, self.analyzer.as_capturing_parser())
+    }
   }
 }
 
@@ -120,31 +132,42 @@ impl TestBuilder {
   }
 
   #[cfg(feature = "symbols")]
-  pub async fn symbols(&mut self) -> anyhow::Result<symbols::SymbolsResult> {
-    use deno_graph::symbols::ModuleSymbolRef;
-
+  pub async fn build_for_symbols(&mut self) -> symbols::SymbolsBuildResult {
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
-    let entry_point_types_url =
-      ModuleSpecifier::parse(&self.entry_point_types).unwrap();
     let roots = vec![entry_point_url.clone()];
-    graph
-      .build(
-        roots.clone(),
-        &mut self.loader,
-        deno_graph::BuildOptions::default(),
-      )
-      .await;
-    graph.valid().unwrap(); // assert valid
     let source_parser = deno_graph::DefaultModuleParser::new_for_analysis();
     let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::new(
       Some(Box::new(source_parser)),
       None,
     );
-    let root_symbol = deno_graph::symbols::RootSymbol::new(
-      &graph,
-      capturing_analyzer.as_capturing_parser(),
-    );
+    graph
+      .build(
+        roots.clone(),
+        &mut self.loader,
+        deno_graph::BuildOptions {
+          module_analyzer: Some(&capturing_analyzer),
+          ..Default::default()
+        },
+      )
+      .await;
+    graph.valid().unwrap(); // assert valid
+    symbols::SymbolsBuildResult {
+      graph,
+      analyzer: capturing_analyzer,
+    }
+  }
+
+  #[cfg(feature = "symbols")]
+  pub async fn symbols(&mut self) -> anyhow::Result<symbols::SymbolsResult> {
+    use deno_graph::symbols::DefinitionOrUnresolved;
+    use deno_graph::symbols::ModuleInfoRef;
+
+    let build_result = self.build_for_symbols().await;
+    let graph = &build_result.graph;
+    let entry_point_types_url =
+      ModuleSpecifier::parse(&self.entry_point_types).unwrap();
+    let root_symbol = build_result.root_symbol();
     Ok(symbols::SymbolsResult {
       output: {
         let entrypoint_symbol = root_symbol
@@ -163,58 +186,69 @@ impl TestBuilder {
             "{}: {}\n",
             specifier.as_str(),
             match module {
-              ModuleSymbolRef::Esm(m) => format!("{:#?}", m),
-              ModuleSymbolRef::Json(m) => format!("{:#?}", m),
+              ModuleInfoRef::Esm(m) => format!("{:#?}", m),
+              ModuleInfoRef::Json(m) => format!("{:#?}", m),
             }
           ));
         }
         let get_symbol_text =
-          |module_symbol: deno_graph::symbols::ModuleSymbolRef,
+          |module_symbol: deno_graph::symbols::ModuleInfoRef,
            symbol_id: deno_graph::symbols::SymbolId| {
             let symbol = module_symbol.symbol(symbol_id).unwrap();
-            let definitions = root_symbol
-              .go_to_definitions(module_symbol, symbol)
+            let items = root_symbol
+              .go_to_definitions_or_unresolveds(module_symbol, symbol)
               .collect::<Vec<_>>();
-            if definitions.is_empty() {
+            if items.is_empty() {
               "NONE".to_string()
             } else {
               let mut results = Vec::new();
-              for definition in definitions {
-                let decl_text = {
-                  let decl_text = definition.text();
-                  let lines = decl_text.split('\n').collect::<Vec<_>>();
-                  if lines.len() > 4 {
-                    lines[0..2]
-                      .iter()
-                      .chain(std::iter::once(&"..."))
-                      .chain(&lines[lines.len() - 2..])
-                      .cloned()
+              for definition_or_unresolved in items {
+                match definition_or_unresolved {
+                  DefinitionOrUnresolved::Definition(definition) => {
+                    let decl_text = {
+                      let decl_text = definition.text();
+                      let lines = decl_text.split('\n').collect::<Vec<_>>();
+                      if lines.len() > 4 {
+                        lines[0..2]
+                          .iter()
+                          .chain(std::iter::once(&"..."))
+                          .chain(&lines[lines.len() - 2..])
+                          .cloned()
+                          .collect::<Vec<_>>()
+                      } else {
+                        lines
+                      }
+                      .into_iter()
+                      .map(|line| format!("  {}", line).trim_end().to_string())
                       .collect::<Vec<_>>()
-                  } else {
-                    lines
+                      .join("\n")
+                    };
+                    let range = definition.byte_range();
+                    results.push(format!(
+                      "{}:{}..{}\n{}",
+                      definition.module.specifier(),
+                      range.start,
+                      range.end,
+                      decl_text
+                    ));
                   }
-                  .into_iter()
-                  .map(|line| format!("  {}", line).trim_end().to_string())
-                  .collect::<Vec<_>>()
-                  .join("\n")
-                };
-                let range = definition.byte_range();
-                results.push(format!(
-                  "{}:{}..{}\n{}",
-                  definition.module.specifier(),
-                  range.start,
-                  range.end,
-                  decl_text
-                ));
+                  DefinitionOrUnresolved::Unresolved(unresolved) => results
+                    .push(format!(
+                      "{}\n  Unresolved {:?} ({:?})",
+                      unresolved.module.specifier(),
+                      unresolved.kind,
+                      unresolved.parts,
+                    )),
+                }
               }
               results.join("\n")
             }
           };
-        let exports = entrypoint_symbol.exports(&graph, &root_symbol);
+        let exports = entrypoint_symbol.exports(&root_symbol).resolved;
         if !exports.is_empty() {
           output_text.push_str("== export definitions ==\n");
-          for (name, (module_symbol, symbol_id)) in exports {
-            let position = get_symbol_text(module_symbol, symbol_id);
+          for (name, resolved) in exports {
+            let position = get_symbol_text(resolved.module, resolved.symbol_id);
             output_text.push_str(&format!("[{}]: {}\n", name, position));
           }
         }

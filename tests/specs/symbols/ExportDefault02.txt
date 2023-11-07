@@ -2,23 +2,17 @@
 export default Test; class Test {}
 
 # output
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),
     specifier: "file:///mod.ts",
-    child_ids: {
-        1,
-    },
-    exports: {
-        "default": 0,
-    },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
             "Test",
             #2,
-        ): 1,
+        ): 2,
     },
     symbols: {
         0: Symbol {
@@ -26,6 +20,37 @@ file:///mod.ts: EsmModuleSymbol {
                 0,
             ),
             symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            34,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export default Test; class Test {}",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {
+                2,
+            },
+            exports: {
+                "default": 1,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 1,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -56,11 +81,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        1: Symbol {
+        2: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 1,
+            symbol_id: 2,
             decls: [
                 SymbolDecl {
                     range: SourceRange {

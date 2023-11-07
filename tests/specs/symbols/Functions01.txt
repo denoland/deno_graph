@@ -22,79 +22,61 @@ class PrivateParam {}
 class PrivateReturn {}
 
 # output
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),
     specifier: "file:///mod.ts",
-    child_ids: {
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-    },
-    exports: {
-        "test": 0,
-        "overloaded": 5,
-    },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
             "test",
             #2,
-        ): 0,
+        ): 1,
         (
             "TypeParam",
             #2,
-        ): 1,
+        ): 2,
         (
             "Param",
             #2,
-        ): 2,
+        ): 3,
         (
             "Return",
             #2,
-        ): 3,
+        ): 4,
         (
             "Default",
             #2,
-        ): 4,
+        ): 5,
         (
             "overloaded",
             #2,
-        ): 5,
+        ): 6,
         (
             "OverloadTypeParam",
             #2,
-        ): 6,
+        ): 7,
         (
             "OverloadParam",
             #2,
-        ): 7,
+        ): 8,
         (
             "OverloadReturn",
             #2,
-        ): 8,
+        ): 9,
         (
             "PrivateTypeParam",
             #2,
-        ): 9,
+        ): 10,
         (
             "PrivateParam",
             #2,
-        ): 10,
+        ): 11,
         (
             "PrivateReturn",
             #2,
-        ): 11,
+        ): 12,
     },
     symbols: {
         0: Symbol {
@@ -102,6 +84,49 @@ file:///mod.ts: EsmModuleSymbol {
                 0,
             ),
             symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            575,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export function test<T extends TypeParam = Default>(param: Param): Return {\n}\n\nclass TypeParam {}\nclass Param {}\nclass Return {}\nclass Default {}\n\n// the top two overloads should appear in the results\nexport function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;\nexport function overloaded(): string;\nexport function overloaded<T extends PrivateTypeParam>(param: PrivateParam): PrivateReturn {\n}\n\nclass OverloadTypeParam {}\nclass OverloadParam {}\nclass OverloadReturn {}\n\nclass PrivateTypeParam {}\nclass PrivateParam {}\nclass PrivateReturn {}",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+            },
+            exports: {
+                "test": 1,
+                "overloaded": 6,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 1,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -149,11 +174,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        1: Symbol {
+        2: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 1,
+            symbol_id: 2,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -176,11 +201,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        2: Symbol {
+        3: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 2,
+            symbol_id: 3,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -203,11 +228,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        3: Symbol {
+        4: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 3,
+            symbol_id: 4,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -230,11 +255,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        4: Symbol {
+        5: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 4,
+            symbol_id: 5,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -257,11 +282,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        5: Symbol {
+        6: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 5,
+            symbol_id: 6,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -333,11 +358,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        6: Symbol {
+        7: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 6,
+            symbol_id: 7,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -360,11 +385,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        7: Symbol {
+        8: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 7,
+            symbol_id: 8,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -387,11 +412,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        8: Symbol {
+        9: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 8,
+            symbol_id: 9,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -414,11 +439,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        9: Symbol {
+        10: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 9,
+            symbol_id: 10,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -441,11 +466,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        10: Symbol {
+        11: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 10,
+            symbol_id: 11,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -468,11 +493,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        11: Symbol {
+        12: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 11,
+            symbol_id: 12,
             decls: [
                 SymbolDecl {
                     range: SourceRange {

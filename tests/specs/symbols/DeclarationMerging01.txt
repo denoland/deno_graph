@@ -25,47 +25,37 @@ namespace Test {
 export { Album, Color, Test };
 
 # output
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),
     specifier: "file:///mod.ts",
-    child_ids: {
-        0,
-        2,
-        4,
-    },
-    exports: {
-        "Album": 0,
-        "Color": 2,
-        "Test": 4,
-    },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
             "Album",
             #2,
-        ): 0,
+        ): 1,
         (
             "Label",
             #3,
-        ): 1,
+        ): 2,
         (
             "Color",
             #2,
-        ): 2,
+        ): 3,
         (
             "mixColor",
             #4,
-        ): 3,
+        ): 4,
         (
             "Test",
             #2,
-        ): 4,
+        ): 5,
         (
             "other",
             #7,
-        ): 5,
+        ): 6,
     },
     symbols: {
         0: Symbol {
@@ -73,6 +63,41 @@ file:///mod.ts: EsmModuleSymbol {
                 0,
             ),
             symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            289,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "class Album {\n}\nnamespace Album {\n  export class Label {}\n}\n\nenum Color {\n  red,\n  green,\n  blue,\n}\nnamespace Color {\n  export function mixColor(colorName: string) {\n    // ...etc...\n  }\n}\n\nfunction Test() {\n}\nnamespace Test {\n  export function other() {}\n}\n\nexport { Album, Color, Test };",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {
+                1,
+                3,
+                5,
+            },
+            exports: {
+                "Album": 1,
+                "Color": 3,
+                "Test": 5,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 1,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -136,18 +161,18 @@ file:///mod.ts: EsmModuleSymbol {
                 ),
             },
             child_ids: {
-                1,
+                2,
             },
             exports: {
-                "Label": 1,
+                "Label": 2,
             },
             members: {},
         },
-        1: Symbol {
+        2: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 1,
+            symbol_id: 2,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -170,11 +195,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        2: Symbol {
+        3: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 2,
+            symbol_id: 3,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -238,18 +263,18 @@ file:///mod.ts: EsmModuleSymbol {
                 ),
             },
             child_ids: {
-                3,
+                4,
             },
             exports: {
-                "mixColor": 3,
+                "mixColor": 4,
             },
             members: {},
         },
-        3: Symbol {
+        4: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 3,
+            symbol_id: 4,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -272,11 +297,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        4: Symbol {
+        5: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 4,
+            symbol_id: 5,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -340,18 +365,18 @@ file:///mod.ts: EsmModuleSymbol {
                 ),
             },
             child_ids: {
-                5,
+                6,
             },
             exports: {
-                "other": 5,
+                "other": 6,
             },
             members: {},
         },
-        5: Symbol {
+        6: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 5,
+            symbol_id: 6,
             decls: [
                 SymbolDecl {
                     range: SourceRange {

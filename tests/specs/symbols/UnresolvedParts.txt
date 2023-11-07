@@ -1,16 +1,19 @@
 # mod.ts
-declare function foo(): void;
-declare namespace Test {
-  function test(): void;
-  export { test };
+import * as other from "./other.ts";
+
+namespace Test {
+  export function test() {}
 }
-class Other {}
-declare class MyClass {
-  method(): void;
-  prop: Other;
-}
-import inner = Test.test;
-export { foo as bar, inner as baz, MyClass };
+
+export import Resolved = Test.test;
+export import Unresolved = Test.NotFound;
+
+export { NonExistent } from "./other.ts";
+
+export import NonExistent2 = other.NotFound;
+
+# other.ts
+export class Other {}
 
 # output
 file:///mod.ts: EsmModuleInfo {
@@ -21,7 +24,7 @@ file:///mod.ts: EsmModuleInfo {
     re_exports: [],
     swc_id_to_symbol_id: {
         (
-            "foo",
+            "other",
             #2,
         ): 1,
         (
@@ -30,20 +33,20 @@ file:///mod.ts: EsmModuleInfo {
         ): 2,
         (
             "test",
-            #4,
+            #3,
         ): 3,
         (
-            "Other",
+            "Resolved",
             #2,
         ): 4,
         (
-            "MyClass",
+            "Unresolved",
             #2,
         ): 5,
         (
-            "inner",
+            "NonExistent2",
             #2,
-        ): 8,
+        ): 7,
     },
     symbols: {
         0: Symbol {
@@ -58,27 +61,25 @@ file:///mod.ts: EsmModuleInfo {
                             0,
                         ),
                         end: SourcePos(
-                            246,
+                            252,
                         ),
                     },
                     kind: Definition(
                         SymbolNode(
-                            "declare function foo(): void;\ndeclare namespace Test {\n  function test(): void;\n  export { test };\n}\nclass Other {}\ndeclare class MyClass {\n  method(): void;\n  prop: Other;\n}\nimport inner = Test.test;\nexport { foo as bar, inner as baz, MyClass };",
+                            "import * as other from \"./other.ts\";\n\nnamespace Test {\n  export function test() {}\n}\n\nexport import Resolved = Test.test;\nexport import Unresolved = Test.NotFound;\n\nexport { NonExistent } from \"./other.ts\";\n\nexport import NonExistent2 = other.NotFound;",
                         ),
                     ),
                 },
             ],
             deps: {},
             child_ids: {
-                1,
                 2,
-                4,
-                5,
             },
             exports: {
-                "bar": 1,
-                "baz": 8,
-                "MyClass": 5,
+                "Resolved": 4,
+                "Unresolved": 5,
+                "NonExistent": 6,
+                "NonExistent2": 7,
             },
             members: {},
         },
@@ -91,28 +92,18 @@ file:///mod.ts: EsmModuleInfo {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            0,
+                            7,
                         ),
                         end: SourcePos(
-                            29,
+                            17,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "declare function foo(): void;",
-                        ),
+                    kind: FileRef(
+                        FileDep {
+                            name: Star,
+                            specifier: "./other.ts",
+                        },
                     ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            201,
-                        ),
-                        end: SourcePos(
-                            246,
-                        ),
-                    },
-                    kind: TargetSelf,
                 },
             ],
             deps: {},
@@ -129,20 +120,27 @@ file:///mod.ts: EsmModuleInfo {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            30,
+                            38,
                         ),
                         end: SourcePos(
-                            100,
+                            84,
                         ),
                     },
                     kind: Definition(
                         SymbolNode(
-                            "declare namespace Test {\n  function test(): void;\n  export { test };\n}",
+                            "namespace Test {\n  export function test() {}\n}",
                         ),
                     ),
                 },
             ],
-            deps: {},
+            deps: {
+                Id(
+                    (
+                        "test",
+                        #3,
+                    ),
+                ),
+            },
             child_ids: {
                 3,
             },
@@ -163,36 +161,14 @@ file:///mod.ts: EsmModuleInfo {
                             57,
                         ),
                         end: SourcePos(
-                            79,
+                            82,
                         ),
                     },
                     kind: Definition(
                         SymbolNode(
-                            "function test(): void;",
+                            "export function test() {}",
                         ),
                     ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            82,
-                        ),
-                        end: SourcePos(
-                            98,
-                        ),
-                    },
-                    kind: TargetSelf,
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            91,
-                        ),
-                        end: SourcePos(
-                            95,
-                        ),
-                    },
-                    kind: TargetSelf,
                 },
             ],
             deps: {},
@@ -209,150 +185,10 @@ file:///mod.ts: EsmModuleInfo {
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            101,
+                            86,
                         ),
                         end: SourcePos(
-                            115,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "class Other {}",
-                        ),
-                    ),
-                },
-            ],
-            deps: {},
-            child_ids: {},
-            exports: {},
-            members: {},
-        },
-        5: Symbol {
-            module_id: ModuleId(
-                0,
-            ),
-            symbol_id: 5,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            116,
-                        ),
-                        end: SourcePos(
-                            174,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "declare class MyClass {\n  method(): void;\n  prop: Other;\n}",
-                        ),
-                    ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            201,
-                        ),
-                        end: SourcePos(
-                            246,
-                        ),
-                    },
-                    kind: TargetSelf,
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            236,
-                        ),
-                        end: SourcePos(
-                            243,
-                        ),
-                    },
-                    kind: TargetSelf,
-                },
-            ],
-            deps: {},
-            child_ids: {},
-            exports: {},
-            members: {
-                6,
-                7,
-            },
-        },
-        6: Symbol {
-            module_id: ModuleId(
-                0,
-            ),
-            symbol_id: 6,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            142,
-                        ),
-                        end: SourcePos(
-                            157,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "method(): void;",
-                        ),
-                    ),
-                },
-            ],
-            deps: {},
-            child_ids: {},
-            exports: {},
-            members: {},
-        },
-        7: Symbol {
-            module_id: ModuleId(
-                0,
-            ),
-            symbol_id: 7,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            160,
-                        ),
-                        end: SourcePos(
-                            172,
-                        ),
-                    },
-                    kind: Definition(
-                        SymbolNode(
-                            "prop: Other;",
-                        ),
-                    ),
-                },
-            ],
-            deps: {
-                Id(
-                    (
-                        "Other",
-                        #2,
-                    ),
-                ),
-            },
-            child_ids: {},
-            exports: {},
-            members: {},
-        },
-        8: Symbol {
-            module_id: ModuleId(
-                0,
-            ),
-            symbol_id: 8,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            175,
-                        ),
-                        end: SourcePos(
-                            200,
+                            121,
                         ),
                     },
                     kind: QualifiedTarget(
@@ -364,17 +200,6 @@ file:///mod.ts: EsmModuleInfo {
                             "test",
                         ],
                     ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            201,
-                        ),
-                        end: SourcePos(
-                            246,
-                        ),
-                    },
-                    kind: TargetSelf,
                 },
             ],
             deps: {
@@ -392,15 +217,199 @@ file:///mod.ts: EsmModuleInfo {
             exports: {},
             members: {},
         },
+        5: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 5,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            122,
+                        ),
+                        end: SourcePos(
+                            163,
+                        ),
+                    },
+                    kind: QualifiedTarget(
+                        (
+                            "Test",
+                            #2,
+                        ),
+                        [
+                            "NotFound",
+                        ],
+                    ),
+                },
+            ],
+            deps: {
+                QualifiedId(
+                    (
+                        "Test",
+                        #2,
+                    ),
+                    [
+                        "NotFound",
+                    ],
+                ),
+            },
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        6: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 6,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            174,
+                        ),
+                        end: SourcePos(
+                            185,
+                        ),
+                    },
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "NonExistent",
+                            ),
+                            specifier: "./other.ts",
+                        },
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        7: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 7,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            208,
+                        ),
+                        end: SourcePos(
+                            252,
+                        ),
+                    },
+                    kind: QualifiedTarget(
+                        (
+                            "other",
+                            #2,
+                        ),
+                        [
+                            "NotFound",
+                        ],
+                    ),
+                },
+            ],
+            deps: {
+                QualifiedId(
+                    (
+                        "other",
+                        #2,
+                    ),
+                    [
+                        "NotFound",
+                    ],
+                ),
+            },
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+    },
+}
+file:///other.ts: EsmModuleInfo {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///other.ts",
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "Other",
+            #2,
+        ): 1,
+    },
+    symbols: {
+        0: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            21,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export class Other {}",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {
+                1,
+            },
+            exports: {
+                "Other": 1,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 1,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            21,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export class Other {}",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
     },
 }
 == export definitions ==
-[bar]: file:///mod.ts:0..29
-  declare function foo(): void;
-[baz]: file:///mod.ts:57..79
-  function test(): void;
-[MyClass]: file:///mod.ts:116..174
-  declare class MyClass {
-    method(): void;
-    prop: Other;
-  }
+[Resolved]: file:///mod.ts:57..82
+  export function test() {}
+[Unresolved]: file:///mod.ts
+  Unresolved Part("NotFound") (["NotFound"])
+[NonExistent]: file:///mod.ts
+  Unresolved Part("NonExistent") ([])
+[NonExistent2]: file:///other.ts
+  Unresolved Part("NotFound") (["NotFound"])

@@ -151,6 +151,90 @@ async fn test_symbols_specs() {
   }
 }
 
+#[cfg(feature = "symbols")]
+#[tokio::test]
+async fn test_symbols_dep_definition() {
+  use deno_graph::symbols::ResolvedSymbolDepEntry;
+
+  let result = TestBuilder::new()
+    .with_loader(|loader| {
+      loader.remote.add_source_with_text(
+        "file:///mod.ts",
+        r#"
+export type MyType = typeof MyClass;
+
+export class MyClass {
+  static staticProp: string = "";
+}
+"#,
+      );
+    })
+    .build_for_symbols()
+    .await;
+
+  let root_symbol = result.root_symbol();
+  let module = root_symbol
+    .get_module_from_specifier(
+      &ModuleSpecifier::parse("file:///mod.ts").unwrap(),
+    )
+    .unwrap();
+  let exports = module.exports(&root_symbol);
+  let resolved_my_type = exports.resolved.get("MyType").unwrap();
+  let my_type_symbol = resolved_my_type.symbol();
+  let deps = my_type_symbol.deps().collect::<Vec<_>>();
+  assert_eq!(deps.len(), 1);
+  let dep = &deps[0];
+  let mut resolved_deps = root_symbol.resolve_symbol_dep(
+    resolved_my_type.module,
+    my_type_symbol,
+    dep,
+  );
+  assert_eq!(resolved_deps.len(), 1);
+  let resolved_dep = resolved_deps.remove(0);
+  let path = match resolved_dep {
+    ResolvedSymbolDepEntry::DefinitionPath(p) => p,
+    ResolvedSymbolDepEntry::ImportType(_) => unreachable!(),
+  };
+  let definitions = path.into_definitions().collect::<Vec<_>>();
+  assert_eq!(definitions.len(), 1);
+  let definition = &definitions[0];
+  assert_eq!(
+    definition.text(),
+    "export class MyClass {\n  static staticProp: string = \"\";\n}"
+  );
+}
+
+#[cfg(feature = "symbols")]
+#[tokio::test]
+async fn test_symbols_re_export_external() {
+  let result = TestBuilder::new()
+    .with_loader(|loader| {
+      loader.remote.add_source_with_text(
+        "file:///mod.ts",
+        r#"export * from 'npm:example';"#,
+      );
+      loader.remote.add_external_source("npm:example");
+    })
+    .build_for_symbols()
+    .await;
+
+  let root_symbol = result.root_symbol();
+  let module = root_symbol
+    .get_module_from_specifier(
+      &ModuleSpecifier::parse("file:///mod.ts").unwrap(),
+    )
+    .unwrap();
+  let exports = module.exports(&root_symbol);
+  assert_eq!(
+    exports
+      .unresolved_specifiers
+      .into_iter()
+      .map(|s| s.specifier.as_str())
+      .collect::<Vec<_>>(),
+    vec!["npm:example"]
+  );
+}
+
 #[tokio::test]
 async fn test_npm_version_not_found_then_found() {
   #[derive(Debug)]

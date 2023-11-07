@@ -13,15 +13,12 @@ console.log(other);
 {}
 
 # output
-file:///bar.json: JsonModuleSymbol {
+file:///bar.json: JsonModuleInfo {
     module_id: ModuleId(
         1,
     ),
     specifier: "file:///bar.json",
-    exports: {
-        "default": 0,
-    },
-    default_symbol: Symbol {
+    module_symbol: Symbol {
         module_id: ModuleId(
             1,
         ),
@@ -45,25 +42,23 @@ file:///bar.json: JsonModuleSymbol {
         ],
         deps: {},
         child_ids: {},
-        exports: {},
+        exports: {
+            "default": 1,
+        },
         members: {},
     },
 }
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),
     specifier: "file:///mod.ts",
-    child_ids: {},
-    exports: {
-        "configFile": 1,
-    },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
             "other",
             #2,
-        ): 0,
+        ): 1,
     },
     symbols: {
         0: Symbol {
@@ -71,6 +66,35 @@ file:///mod.ts: EsmModuleSymbol {
                 0,
             ),
             symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            157,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "import other from \"./non_public.json\" with { type: 'json' };\nexport { default as configFile } from './bar.json' assert { type: 'json' };\n\nconsole.log(other);",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {
+                "configFile": 2,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 1,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -96,11 +120,11 @@ file:///mod.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        1: Symbol {
+        2: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 1,
+            symbol_id: 2,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -128,15 +152,12 @@ file:///mod.ts: EsmModuleSymbol {
         },
     },
 }
-file:///non_public.json: JsonModuleSymbol {
+file:///non_public.json: JsonModuleInfo {
     module_id: ModuleId(
         2,
     ),
     specifier: "file:///non_public.json",
-    exports: {
-        "default": 0,
-    },
-    default_symbol: Symbol {
+    module_symbol: Symbol {
         module_id: ModuleId(
             2,
         ),
@@ -160,7 +181,9 @@ file:///non_public.json: JsonModuleSymbol {
         ],
         deps: {},
         child_ids: {},
-        exports: {},
+        exports: {
+            "default": 1,
+        },
         members: {},
     },
 }

@@ -3,24 +3,17 @@ export function foo(): void {}
 export { foo as bar };
 
 # output
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),
     specifier: "file:///mod.ts",
-    child_ids: {
-        0,
-    },
-    exports: {
-        "foo": 0,
-        "bar": 0,
-    },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
             "foo",
             #2,
-        ): 0,
+        ): 1,
     },
     symbols: {
         0: Symbol {
@@ -28,6 +21,38 @@ file:///mod.ts: EsmModuleSymbol {
                 0,
             ),
             symbol_id: 0,
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            53,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export function foo(): void {}\nexport { foo as bar };",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {
+                1,
+            },
+            exports: {
+                "foo": 1,
+                "bar": 1,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 1,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
