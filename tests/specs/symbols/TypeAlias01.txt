@@ -31,7 +31,23 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            83,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export type Test<T extends Other> = Other2;\n\ninterface Other {}\ninterface Other2 {}",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {
                 1,

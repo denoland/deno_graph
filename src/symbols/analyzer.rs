@@ -354,6 +354,9 @@ impl std::fmt::Debug for SymbolNode {
     f.debug_tuple("SymbolNode")
       .field(&match &self.0 {
         SymbolNodeInner::Json => "<json>".to_string(),
+        SymbolNodeInner::Module(d) => {
+          d.value().text_fast(d.source.text_info()).to_string()
+        }
         SymbolNodeInner::ClassDecl(d) => {
           d.value().text_fast(d.source.text_info()).to_string()
         }
@@ -440,6 +443,7 @@ enum SymbolNodeInnerExportDecl {
 #[derive(Debug, Clone)]
 enum SymbolNodeInner {
   Json,
+  Module(NodeRefBox<Module>),
   ClassDecl(NodeRefBox<ClassDecl>),
   ExportDecl(NodeRefBox<ExportDecl>, SymbolNodeInnerExportDecl),
   ExportDefaultDecl(NodeRefBox<ExportDefaultDecl>),
@@ -476,6 +480,7 @@ pub enum ExportDeclRef<'a> {
 
 #[derive(Debug, Clone, Copy)]
 pub enum SymbolNodeRef<'a> {
+  Module(&'a Module),
   ClassDecl(&'a ClassDecl),
   ExportDecl(&'a ExportDecl, ExportDeclRef<'a>),
   ExportDefaultDecl(&'a ExportDefaultDecl),
@@ -532,6 +537,7 @@ impl<'a> SymbolNodeRef<'a> {
     }
 
     match self {
+      Self::Module(_) => None,
       Self::ClassDecl(n) => Some(n.ident.sym.to_string()),
       Self::ExportDecl(_, n) => match n {
         ExportDeclRef::Class(n) => Some(n.ident.sym.to_string()),
@@ -591,6 +597,9 @@ impl SymbolDeclKind {
       SymbolDeclKind::Definition(SymbolNode(def))
       | SymbolDeclKind::DefinitionPrivateFnImpl(SymbolNode(def)) => match def {
         SymbolNodeInner::Json => None,
+        SymbolNodeInner::Module(n) => {
+          Some((SymbolNodeRef::Module(n.value()), n.source()))
+        }
         SymbolNodeInner::ClassDecl(n) => {
           Some((SymbolNodeRef::ClassDecl(n.value()), n.source()))
         }
@@ -1242,6 +1251,12 @@ impl<'a> SymbolFiller<'a> {
     let mut last_was_overload = false;
     let mut last_override_key = 0;
     let module_symbol = self.builder.create_new_symbol();
+    module_symbol.add_decl(SymbolDecl {
+      kind: SymbolDeclKind::Definition(SymbolNode(SymbolNodeInner::Module(
+        NodeRefBox::unsafe_new(self.source, module),
+      ))),
+      range: module.range(),
+    });
     for module_item in &module.body {
       let current_override_key = module_item_overload_key(module_item);
       let is_overload = is_module_item_overload(module_item);
@@ -2651,7 +2666,8 @@ impl<'a> SymbolFiller<'a> {
         )),
         n.range(),
       ),
-      SymbolNodeRef::ClassDecl(_)
+      SymbolNodeRef::Module(_)
+      | SymbolNodeRef::ClassDecl(_)
       | SymbolNodeRef::ExportDecl(_, _)
       | SymbolNodeRef::ExportDefaultDecl(_)
       | SymbolNodeRef::ExportDefaultExprLit(_, _)

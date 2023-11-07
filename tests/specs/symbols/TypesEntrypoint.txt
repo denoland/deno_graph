@@ -29,7 +29,23 @@ file:///mod.d.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            45,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface MyInterface {\n  a: string;\n}",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {
                 1,
@@ -115,7 +131,23 @@ file:///mod.js: EsmModuleInfo {
                 1,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            143,
+                        ),
+                        end: SourcePos(
+                            167,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export class JsExport {}",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {
                 1,

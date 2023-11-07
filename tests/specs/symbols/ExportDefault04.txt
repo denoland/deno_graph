@@ -15,7 +15,23 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            21,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export default 1 + 1;",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {},
             exports: {},

@@ -84,7 +84,23 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            575,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export function test<T extends TypeParam = Default>(param: Param): Return {\n}\n\nclass TypeParam {}\nclass Param {}\nclass Return {}\nclass Default {}\n\n// the top two overloads should appear in the results\nexport function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;\nexport function overloaded(): string;\nexport function overloaded<T extends PrivateTypeParam>(param: PrivateParam): PrivateReturn {\n}\n\nclass OverloadTypeParam {}\nclass OverloadParam {}\nclass OverloadReturn {}\n\nclass PrivateTypeParam {}\nclass PrivateParam {}\nclass PrivateReturn {}",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {
                 1,

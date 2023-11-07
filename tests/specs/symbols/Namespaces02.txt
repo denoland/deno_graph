@@ -40,7 +40,23 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            114,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace RootNs {\n  export namespace NestedNs {\n    export enum Foo {\n    }\n  }\n\n  export enum Foo {\n  }\n}",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {
                 1,

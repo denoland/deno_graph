@@ -26,7 +26,23 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            187,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export function isPrime(x: number): boolean {\n  // ...\n}\n\n// we just ignore this because this causes typescript to\n// export this module as a \"mathLib\" global\nexport as namespace mathLib;",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {
                 1,

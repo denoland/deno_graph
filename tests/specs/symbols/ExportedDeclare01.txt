@@ -51,7 +51,23 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            246,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "declare function foo(): void;\ndeclare namespace Test {\n  function test(): void;\n  export { test };\n}\nclass Other {}\ndeclare class MyClass {\n  method(): void;\n  prop: Other;\n}\nimport inner = Test.test;\nexport { foo as bar, inner as baz, MyClass };",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {
                 1,

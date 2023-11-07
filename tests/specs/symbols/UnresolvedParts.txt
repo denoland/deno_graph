@@ -37,7 +37,23 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            125,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace Test {\n  export function test() {}\n}\n\nexport import Resolved = Test.test;\nexport import Unresolved = Test.NotFound;",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {
                 1,

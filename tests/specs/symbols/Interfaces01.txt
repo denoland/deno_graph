@@ -66,7 +66,23 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            283,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "interface A {\n}\n\nexport interface Main extends Extends {\n  prop: Prop;\n  method(method: Param): Return;\n  [key: string]: SignatureValueType;\n}\n\ninterface Extends {}\ninterface Prop {}\ninterface Param {}\ninterface Return {}\ninterface SignatureValueType {\n  other: B;\n}\n\ninterface B {\n}",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {
                 1,

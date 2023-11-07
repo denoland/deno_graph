@@ -45,7 +45,23 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            334,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export function test(value: number);\nexport function test(value: string);\nexport function test(value: string | number) {\n}\n\nnamespace Inner {\n  export function inner(value: number);\n  export function inner(value: string);\n  export function inner(value: string | number) {\n  }\n}\n\nimport InnerInner = Inner.inner;\nexport { InnerInner };",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {
                 1,

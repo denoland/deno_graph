@@ -128,7 +128,23 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            859,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export class A {\n  b: B;\n  constructor(c: C) {\n  }\n}\n\ninterface C {}\n\nclass BBase {\n\n}\n\ninterface IBase {\n}\n\nclass B extends BBase implements IBase {\n  private constructor(prop: CtorProp) {}\n  prop: PropValue;\n  method(): ReturnValue {\n  }\n\n  method2(other: Param): void {\n  }\n\n  private asdf(private: PrivateParam): PrivateReturn {\n  }\n\n  private prop: PrivateProp;\n\n  methodOverload(param: OverloadParam): OverloadReturn;\n  methodOverload(param: PrivateImplementationParam): PrivateImplementationReturn {\n  }\n\n  #private: PrivateProp;\n  #privateMethod(private: PrivateParam): PrivateReturn {\n  }\n}\n\nclass PropValue {}\nclass ReturnValue {}\nclass Param {}\nclass PrivateParam {}\nclass PrivateReturn {}\nclass PrivateProp {}\nclass CtorProp {}\nclass OverloadParam {}\nclass OverloadReturn {}\nclass PrivateImplementationParam {}\nclass PrivateImplementationReturn {}",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {
                 1,

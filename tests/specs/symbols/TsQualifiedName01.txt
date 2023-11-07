@@ -38,7 +38,23 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            110,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "export type Test = typeof Other.Test;\n\nnamespace Other {\n  export const Test = 1;\n\n  export const other = 2;\n}",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {
                 1,

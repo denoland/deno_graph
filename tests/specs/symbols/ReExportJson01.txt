@@ -66,7 +66,23 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
-            decls: [],
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            157,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "import other from \"./non_public.json\" with { type: 'json' };\nexport { default as configFile } from './bar.json' assert { type: 'json' };\n\nconsole.log(other);",
+                        ),
+                    ),
+                },
+            ],
             deps: {},
             child_ids: {},
             exports: {
