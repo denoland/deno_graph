@@ -64,9 +64,9 @@ pub enum DefinitionUnresolvedKind<'a> {
   /// Could not resolve the swc Id.
   Id(&'a deno_ast::swc::ast::Id),
   /// Could not resolve the specifier relative this module via deno_graph.
-  Specifier(&'a String),
+  Specifier(&'a str),
   /// Could not resolve the part on the symbol.
-  Part(&'a String),
+  Part(&'a str),
 }
 
 /// The point at which a definition could not be resolved.
@@ -284,8 +284,8 @@ fn find_definition_paths_internal<'a>(
 fn go_to_file_export<'a>(
   module_graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
-  file_ref: &FileDep,
-  export_name: &str,
+  file_ref: &'a FileDep,
+  export_name: &'a str,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
   visited_symbols: &mut HashSet<UniqueSymbolId>,
 ) -> Vec<DefinitionPath<'a>> {
@@ -306,7 +306,12 @@ fn go_to_file_export<'a>(
     .get(export_name)
     .and_then(|symbol_id| dep_module.symbol(*symbol_id));
   let Some(export_symbol) = maybe_export_symbol else {
-    return Vec::new();
+    return vec![DefinitionPath::Unresolved(DefinitionUnresolved {
+      module,
+      symbol: module.module_symbol(),
+      kind: DefinitionUnresolvedKind::Part(export_name),
+      parts: &[],
+    })];
   };
   find_definition_paths_internal(
     module_graph,
