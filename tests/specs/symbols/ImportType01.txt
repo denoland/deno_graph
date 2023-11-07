@@ -11,7 +11,7 @@ export namespace A {
 }
 
 # output
-file:///a.ts: EsmModuleSymbol {
+file:///a.ts: EsmModuleInfo {
     module_id: ModuleId(
         1,
     ),
@@ -139,7 +139,7 @@ file:///a.ts: EsmModuleSymbol {
         },
     },
 }
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),

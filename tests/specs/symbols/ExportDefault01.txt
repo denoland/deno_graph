@@ -41,7 +41,7 @@ export default function Test() {
 }
 
 # output
-file:///a.ts: EsmModuleSymbol {
+file:///a.ts: EsmModuleInfo {
     module_id: ModuleId(
         1,
     ),
@@ -415,7 +415,7 @@ file:///a.ts: EsmModuleSymbol {
         },
     },
 }
-file:///class.ts: EsmModuleSymbol {
+file:///class.ts: EsmModuleInfo {
     module_id: ModuleId(
         2,
     ),
@@ -470,7 +470,7 @@ file:///class.ts: EsmModuleSymbol {
         },
     },
 }
-file:///function.ts: EsmModuleSymbol {
+file:///function.ts: EsmModuleInfo {
     module_id: ModuleId(
         3,
     ),
@@ -525,7 +525,7 @@ file:///function.ts: EsmModuleSymbol {
         },
     },
 }
-file:///interface.ts: EsmModuleSymbol {
+file:///interface.ts: EsmModuleInfo {
     module_id: ModuleId(
         4,
     ),
@@ -580,7 +580,7 @@ file:///interface.ts: EsmModuleSymbol {
         },
     },
 }
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),

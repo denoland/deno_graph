@@ -3,7 +3,7 @@ declare function foo(): number;
 export function bar() {};
 
 # output
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),

@@ -13,7 +13,7 @@ export { MyClass as "some-name" } from "./c.ts";
 export class MyClass {}
 
 # output
-file:///a.ts: EsmModuleSymbol {
+file:///a.ts: EsmModuleInfo {
     module_id: ModuleId(
         1,
     ),
@@ -82,7 +82,7 @@ file:///a.ts: EsmModuleSymbol {
         },
     },
 }
-file:///b.ts: EsmModuleSymbol {
+file:///b.ts: EsmModuleInfo {
     module_id: ModuleId(
         2,
     ),
@@ -135,7 +135,7 @@ file:///b.ts: EsmModuleSymbol {
         },
     },
 }
-file:///c.ts: EsmModuleSymbol {
+file:///c.ts: EsmModuleInfo {
     module_id: ModuleId(
         3,
     ),
@@ -192,7 +192,7 @@ file:///c.ts: EsmModuleSymbol {
         },
     },
 }
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),

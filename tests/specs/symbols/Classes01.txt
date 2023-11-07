@@ -50,7 +50,7 @@ class PrivateImplementationParam {}
 class PrivateImplementationReturn {}
 
 # output
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),

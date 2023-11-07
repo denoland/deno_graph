@@ -160,6 +160,7 @@ impl TestBuilder {
 
   #[cfg(feature = "symbols")]
   pub async fn symbols(&mut self) -> anyhow::Result<symbols::SymbolsResult> {
+    use deno_graph::symbols::DefinitionOrUnresolved;
     use deno_graph::symbols::ModuleInfoRef;
 
     let build_result = self.build_for_symbols().await;
@@ -194,40 +195,50 @@ impl TestBuilder {
           |module_symbol: deno_graph::symbols::ModuleInfoRef,
            symbol_id: deno_graph::symbols::SymbolId| {
             let symbol = module_symbol.symbol(symbol_id).unwrap();
-            let definitions = root_symbol
-              .go_to_definitions(module_symbol, symbol)
+            let items = root_symbol
+              .go_to_definitions_or_unresolveds(module_symbol, symbol)
               .collect::<Vec<_>>();
-            if definitions.is_empty() {
+            if items.is_empty() {
               "NONE".to_string()
             } else {
               let mut results = Vec::new();
-              for definition in definitions {
-                let decl_text = {
-                  let decl_text = definition.text();
-                  let lines = decl_text.split('\n').collect::<Vec<_>>();
-                  if lines.len() > 4 {
-                    lines[0..2]
-                      .iter()
-                      .chain(std::iter::once(&"..."))
-                      .chain(&lines[lines.len() - 2..])
-                      .cloned()
+              for definition_or_unresolved in items {
+                match definition_or_unresolved {
+                  DefinitionOrUnresolved::Definition(definition) => {
+                    let decl_text = {
+                      let decl_text = definition.text();
+                      let lines = decl_text.split('\n').collect::<Vec<_>>();
+                      if lines.len() > 4 {
+                        lines[0..2]
+                          .iter()
+                          .chain(std::iter::once(&"..."))
+                          .chain(&lines[lines.len() - 2..])
+                          .cloned()
+                          .collect::<Vec<_>>()
+                      } else {
+                        lines
+                      }
+                      .into_iter()
+                      .map(|line| format!("  {}", line).trim_end().to_string())
                       .collect::<Vec<_>>()
-                  } else {
-                    lines
+                      .join("\n")
+                    };
+                    let range = definition.byte_range();
+                    results.push(format!(
+                      "{}:{}..{}\n{}",
+                      definition.module.specifier(),
+                      range.start,
+                      range.end,
+                      decl_text
+                    ));
                   }
-                  .into_iter()
-                  .map(|line| format!("  {}", line).trim_end().to_string())
-                  .collect::<Vec<_>>()
-                  .join("\n")
-                };
-                let range = definition.byte_range();
-                results.push(format!(
-                  "{}:{}..{}\n{}",
-                  definition.module.specifier(),
-                  range.start,
-                  range.end,
-                  decl_text
-                ));
+                  DefinitionOrUnresolved::Unresolved(unresolved) => results
+                    .push(format!(
+                      "{} - FAILED: {:#?}",
+                      unresolved.module.specifier(),
+                      unresolved.kind
+                    )),
+                }
               }
               results.join("\n")
             }

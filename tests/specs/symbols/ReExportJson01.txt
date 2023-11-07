@@ -13,7 +13,7 @@ console.log(other);
 {}
 
 # output
-file:///bar.json: JsonModuleSymbol {
+file:///bar.json: JsonModuleInfo {
     module_id: ModuleId(
         1,
     ),
@@ -48,7 +48,7 @@ file:///bar.json: JsonModuleSymbol {
         members: {},
     },
 }
-file:///mod.ts: EsmModuleSymbol {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),
@@ -136,7 +136,7 @@ file:///mod.ts: EsmModuleSymbol {
         },
     },
 }
-file:///non_public.json: JsonModuleSymbol {
+file:///non_public.json: JsonModuleInfo {
     module_id: ModuleId(
         2,
     ),
