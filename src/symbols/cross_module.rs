@@ -63,7 +63,7 @@ impl<'a> Definition<'a> {
 pub enum DefinitionUnresolvedKind<'a> {
   /// Could not resolve the swc Id.
   Id(&'a deno_ast::swc::ast::Id),
-  /// Could not resolve the specifier relative this module via deno_graph.
+  /// Could not resolve the specifier relative to this module via deno_graph.
   Specifier(&'a str),
   /// Could not resolve the part on the symbol.
   Part(&'a str),
