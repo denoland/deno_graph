@@ -173,19 +173,22 @@ export class MyClass {
     .await;
 
   let root_symbol = result.root_symbol();
-  let module_symbol = root_symbol
+  let module = root_symbol
     .get_module_from_specifier(
       &ModuleSpecifier::parse("file:///mod.ts").unwrap(),
     )
     .unwrap();
-  let exports = module_symbol.exports(&root_symbol);
-  let (module, my_type_symbol_id) = exports.get("MyType").unwrap();
-  let my_type_symbol = module.symbol(*my_type_symbol_id).unwrap();
+  let exports = module.exports(&root_symbol);
+  let resolved_my_type = exports.resolved.get("MyType").unwrap();
+  let my_type_symbol = resolved_my_type.symbol();
   let deps = my_type_symbol.deps().collect::<Vec<_>>();
   assert_eq!(deps.len(), 1);
   let dep = &deps[0];
-  let mut resolved_deps =
-    root_symbol.resolve_symbol_dep(*module, my_type_symbol, dep);
+  let mut resolved_deps = root_symbol.resolve_symbol_dep(
+    resolved_my_type.module,
+    my_type_symbol,
+    dep,
+  );
   assert_eq!(resolved_deps.len(), 1);
   let resolved_dep = resolved_deps.remove(0);
   let path = match resolved_dep {

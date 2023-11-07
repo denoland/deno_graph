@@ -233,11 +233,21 @@ impl TestBuilder {
             }
           };
         let exports = entrypoint_symbol.exports(&root_symbol);
-        if !exports.is_empty() {
+        if !exports.resolved.is_empty() {
           output_text.push_str("== export definitions ==\n");
-          for (name, (module_symbol, symbol_id)) in exports {
-            let position = get_symbol_text(module_symbol, symbol_id);
+          for (name, resolved) in exports.resolved {
+            let position = get_symbol_text(resolved.module, resolved.symbol_id);
             output_text.push_str(&format!("[{}]: {}\n", name, position));
+          }
+        }
+        if !exports.unresolved_specifiers.is_empty() {
+          output_text.push_str("== failed unresolved specifiers ==\n");
+          for unresolved in exports.unresolved_specifiers {
+            output_text.push_str(&format!(
+              "[{}]: {}\n",
+              unresolved.referrer.specifier(),
+              unresolved.specifier
+            ));
           }
         }
         output_text

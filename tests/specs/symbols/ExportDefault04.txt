@@ -7,11 +7,21 @@ file:///mod.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.ts",
-    child_ids: {},
-    exports: {},
     re_exports: [],
     swc_id_to_symbol_id: {},
-    symbols: {},
+    symbols: {
+        0: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 0,
+            decls: [],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+    },
 }
 
 # diagnostics

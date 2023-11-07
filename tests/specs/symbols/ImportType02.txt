@@ -16,23 +16,16 @@ file:///a.ts: EsmModuleSymbol {
         1,
     ),
     specifier: "file:///a.ts",
-    child_ids: {
-        0,
-    },
-    exports: {
-        "Test": 0,
-        "default": 2,
-    },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
             "Test",
             #2,
-        ): 0,
+        ): 1,
         (
             "test",
             #2,
-        ): 2,
+        ): 3,
     },
     symbols: {
         0: Symbol {
@@ -40,6 +33,22 @@ file:///a.ts: EsmModuleSymbol {
                 1,
             ),
             symbol_id: 0,
+            decls: [],
+            deps: {},
+            child_ids: {
+                1,
+            },
+            exports: {
+                "Test": 1,
+                "default": 3,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 1,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -61,14 +70,14 @@ file:///a.ts: EsmModuleSymbol {
             child_ids: {},
             exports: {},
             members: {
-                1,
+                2,
             },
         },
-        1: Symbol {
+        2: Symbol {
             module_id: ModuleId(
                 1,
             ),
-            symbol_id: 1,
+            symbol_id: 2,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -91,11 +100,11 @@ file:///a.ts: EsmModuleSymbol {
             exports: {},
             members: {},
         },
-        2: Symbol {
+        3: Symbol {
             module_id: ModuleId(
                 1,
             ),
-            symbol_id: 2,
+            symbol_id: 3,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -125,18 +134,12 @@ file:///mod.ts: EsmModuleSymbol {
         0,
     ),
     specifier: "file:///mod.ts",
-    child_ids: {
-        0,
-    },
-    exports: {
-        "Test": 0,
-    },
     re_exports: [],
     swc_id_to_symbol_id: {
         (
             "Test",
             #2,
-        ): 0,
+        ): 1,
     },
     symbols: {
         0: Symbol {
@@ -144,6 +147,21 @@ file:///mod.ts: EsmModuleSymbol {
                 0,
             ),
             symbol_id: 0,
+            decls: [],
+            deps: {},
+            child_ids: {
+                1,
+            },
+            exports: {
+                "Test": 1,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 1,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
