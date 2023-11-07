@@ -54,6 +54,7 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
+            parent_id: None,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -88,6 +89,9 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 1,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -116,6 +120,9 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 2,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -154,6 +161,9 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 3,
+            parent_id: Some(
+                2,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -181,6 +191,9 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 4,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -222,6 +235,9 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 5,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -263,6 +279,9 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 6,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -293,6 +312,9 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 7,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -349,6 +371,7 @@ file:///other.ts: EsmModuleInfo {
                 1,
             ),
             symbol_id: 0,
+            parent_id: None,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -380,6 +403,9 @@ file:///other.ts: EsmModuleInfo {
                 1,
             ),
             symbol_id: 1,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {

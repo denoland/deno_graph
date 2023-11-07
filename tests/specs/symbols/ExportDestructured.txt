@@ -33,11 +33,11 @@ file:///mod.ts: EsmModuleInfo {
         (
             "a",
             #2,
-        ): 4,
+        ): 3,
         (
             "b",
             #2,
-        ): 5,
+        ): 4,
     },
     symbols: {
         0: Symbol {
@@ -45,6 +45,7 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
+            parent_id: None,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -67,10 +68,11 @@ file:///mod.ts: EsmModuleInfo {
                 1,
                 2,
                 3,
+                4,
             },
             exports: {
-                "a": 4,
-                "b": 5,
+                "a": 3,
+                "b": 4,
             },
             members: {},
         },
@@ -79,6 +81,9 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 1,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -106,6 +111,9 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 2,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -146,42 +154,9 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 3,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            84,
-                        ),
-                        end: SourcePos(
-                            233,
-                        ),
-                    },
-                    kind: TargetSelf,
-                },
-            ],
-            deps: {
-                Id(
-                    (
-                        "a",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "b",
-                        #2,
-                    ),
-                ),
-            },
-            child_ids: {},
-            exports: {},
-            members: {},
-        },
-        4: Symbol {
-            module_id: ModuleId(
+            parent_id: Some(
                 0,
             ),
-            symbol_id: 4,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -217,11 +192,14 @@ file:///mod.ts: EsmModuleInfo {
             exports: {},
             members: {},
         },
-        5: Symbol {
+        4: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 5,
+            symbol_id: 4,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {

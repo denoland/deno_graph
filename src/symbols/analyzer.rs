@@ -225,6 +225,7 @@ impl<'a> RootSymbol<'a> {
       module_symbol: Symbol {
         module_id,
         symbol_id: SymbolId(0),
+        parent_id: None,
         exports: IndexMap::from([("default".to_string(), SymbolId(1))]),
         child_ids: Default::default(),
         decls: decls.clone(),
@@ -234,6 +235,7 @@ impl<'a> RootSymbol<'a> {
       default_symbol: Symbol {
         module_id,
         symbol_id: SymbolId(1),
+        parent_id: Some(SymbolId(0)),
         decls,
         deps: Default::default(),
         child_ids: Default::default(),
@@ -579,7 +581,6 @@ impl<'a> SymbolNodeRef<'a> {
 pub enum SymbolDeclKind {
   Target(Id),
   QualifiedTarget(Id, Vec<String>),
-  TargetSelf,
   FileRef(FileDep),
   Definition(SymbolNode),
   /// An implementation signature of a function where the function has
@@ -740,6 +741,7 @@ impl From<Id> for SymbolDep {
 pub struct Symbol {
   module_id: ModuleId,
   symbol_id: SymbolId,
+  parent_id: Option<SymbolId>,
   decls: Vec<SymbolDecl>,
   deps: IndexSet<SymbolDep>,
   /// The child declarations of module declarations.
@@ -750,10 +752,15 @@ pub struct Symbol {
 }
 
 impl Symbol {
-  pub fn new(module_id: ModuleId, symbol_id: SymbolId) -> Self {
+  pub fn new(
+    module_id: ModuleId,
+    symbol_id: SymbolId,
+    parent_id: Option<SymbolId>,
+  ) -> Self {
     Symbol {
       module_id,
       symbol_id,
+      parent_id,
       decls: Default::default(),
       deps: Default::default(),
       child_ids: Default::default(),
@@ -777,6 +784,11 @@ impl Symbol {
   /// This is module specific. If you need a global identifier, then use unique_id().
   pub fn symbol_id(&self) -> SymbolId {
     self.symbol_id
+  }
+
+  /// Gets the symbol's parent id.
+  pub fn parent_id(&self) -> Option<SymbolId> {
+    self.parent_id
   }
 
   /// The local name of the symbol if it has one.
@@ -1177,19 +1189,34 @@ impl ModuleBuilder {
       symbol_id
     } else {
       let symbol_id = self.get_next_symbol_id();
-      let symbol = SymbolMut::new(Symbol::new(self.module_id, symbol_id));
+      let symbol = SymbolMut::new(Symbol::new(
+        self.module_id,
+        symbol_id,
+        Some(module_symbol.symbol_id()),
+      ));
       symbol.add_decl(symbol_decl);
       self.symbols.insert(symbol_id, symbol);
       module_symbol.add_export("default".to_string(), symbol_id);
+      module_symbol.add_child_id(symbol_id);
       symbol_id
     }
   }
 
-  pub fn create_new_symbol(&self) -> &SymbolMut {
+  pub fn create_new_symbol(&self, parent_id: SymbolId) -> &SymbolMut {
+    self.create_new_symbol_inner(Some(parent_id))
+  }
+
+  pub fn create_new_symbol_for_root(&self) -> &SymbolMut {
+    let symbol = self.create_new_symbol_inner(None);
+    debug_assert_eq!(symbol.symbol_id(), SymbolId(0));
+    symbol
+  }
+
+  fn create_new_symbol_inner(&self, parent_id: Option<SymbolId>) -> &SymbolMut {
     let symbol_id = self.get_next_symbol_id();
     self.symbols.insert(
       symbol_id,
-      SymbolMut::new(Symbol::new(self.module_id, symbol_id)),
+      SymbolMut::new(Symbol::new(self.module_id, symbol_id, parent_id)),
     );
     self.symbols.get(&symbol_id).unwrap()
   }
@@ -1202,8 +1229,9 @@ impl ModuleBuilder {
     &self,
     id: Id,
     symbol_decl: SymbolDecl,
+    parent_id: SymbolId,
   ) -> &SymbolMut {
-    let symbol_id = self.ensure_symbol_for_swc_id(id, symbol_decl);
+    let symbol_id = self.ensure_symbol_for_swc_id(id, symbol_decl, parent_id);
     self.symbols.get(&symbol_id).unwrap()
   }
 
@@ -1211,6 +1239,7 @@ impl ModuleBuilder {
     &self,
     id: Id,
     symbol_decl: SymbolDecl,
+    parent_id: SymbolId,
   ) -> SymbolId {
     match self.swc_id_to_symbol_id.get(&id) {
       Some(symbol_id) => {
@@ -1220,7 +1249,11 @@ impl ModuleBuilder {
       None => {
         let symbol_id = self.get_next_symbol_id();
         self.swc_id_to_symbol_id.insert(id, symbol_id);
-        let symbol = SymbolMut::new(Symbol::new(self.module_id, symbol_id));
+        let symbol = SymbolMut::new(Symbol::new(
+          self.module_id,
+          symbol_id,
+          Some(parent_id),
+        ));
         symbol.add_decl(symbol_decl);
         self.symbols.insert(symbol_id, symbol);
         symbol_id
@@ -1250,7 +1283,7 @@ impl<'a> SymbolFiller<'a> {
   fn fill(&self, module: &Module) {
     let mut last_was_overload = false;
     let mut last_override_key = 0;
-    let module_symbol = self.builder.create_new_symbol();
+    let module_symbol = self.builder.create_new_symbol_for_root();
     module_symbol.add_decl(SymbolDecl {
       kind: SymbolDeclKind::Definition(SymbolNode(SymbolNodeInner::Module(
         NodeRefBox::unsafe_new(self.source, module),
@@ -1268,7 +1301,7 @@ impl<'a> SymbolFiller<'a> {
       last_override_key = current_override_key;
 
       if is_implementation_with_overloads {
-        self.handle_module_item_fn_overload(module_item);
+        self.handle_module_item_fn_overload(module_item, module_symbol);
         continue; // don't fill the types on implementation signatures as they're private
       }
 
@@ -1310,6 +1343,7 @@ impl<'a> SymbolFiller<'a> {
                       specifier: import_decl.src.value.to_string(),
                     }),
                   },
+                  module_symbol.symbol_id(),
                 );
               }
               ImportSpecifier::Default(n) => {
@@ -1322,6 +1356,7 @@ impl<'a> SymbolFiller<'a> {
                       specifier: import_decl.src.value.to_string(),
                     }),
                   },
+                  module_symbol.symbol_id(),
                 );
               }
               ImportSpecifier::Namespace(n) => {
@@ -1334,6 +1369,7 @@ impl<'a> SymbolFiller<'a> {
                       specifier: import_decl.src.value.to_string(),
                     }),
                   },
+                  module_symbol.symbol_id(),
                 );
               }
             }
@@ -1355,6 +1391,7 @@ impl<'a> SymbolFiller<'a> {
                 )),
                 range: export_decl.range(),
               },
+              module_symbol.symbol_id(),
             );
             self.fill_class_decl(symbol, n);
             let symbol_id = symbol.symbol_id();
@@ -1376,6 +1413,7 @@ impl<'a> SymbolFiller<'a> {
                 )),
                 range: export_decl.range(),
               },
+              module_symbol.symbol_id(),
             );
             self.fill_fn_decl(symbol, n);
             let symbol_id = symbol.symbol_id();
@@ -1383,14 +1421,6 @@ impl<'a> SymbolFiller<'a> {
             module_symbol.add_child_id(symbol_id);
           }
           Decl::Var(n) => {
-            let symbol = self.builder.create_new_symbol();
-            symbol.add_decl(SymbolDecl {
-              kind: SymbolDeclKind::TargetSelf,
-              range: export_decl.range(),
-            });
-            let export_decl_symbol_id = symbol.symbol_id();
-            module_symbol.add_child_id(export_decl_symbol_id);
-
             for decl in &n.decls {
               for ident in find_pat_ids::<_, Ident>(&decl.name) {
                 let export_name = ident.sym.to_string();
@@ -1410,15 +1440,11 @@ impl<'a> SymbolFiller<'a> {
                     )),
                     range: decl.range(),
                   },
+                  module_symbol.symbol_id(),
                 );
                 self.fill_var_declarator(symbol, decl);
-                let symbol_id = symbol.symbol_id();
-                module_symbol.add_export(export_name, symbol_id);
-                self
-                  .builder
-                  .symbol_mut(export_decl_symbol_id)
-                  .unwrap()
-                  .add_dep(id.into());
+                module_symbol.add_child_id(symbol.symbol_id());
+                module_symbol.add_export(export_name, symbol.symbol_id());
               }
             }
           }
@@ -1436,6 +1462,7 @@ impl<'a> SymbolFiller<'a> {
                 )),
                 range: export_decl.range(),
               },
+              module_symbol.symbol_id(),
             );
             self.fill_ts_interface(symbol, n);
             let symbol_id = symbol.symbol_id();
@@ -1456,6 +1483,7 @@ impl<'a> SymbolFiller<'a> {
                 )),
                 range: export_decl.range(),
               },
+              module_symbol.symbol_id(),
             );
             self.fill_ts_type_alias(symbol, n);
             let symbol_id = symbol.symbol_id();
@@ -1477,6 +1505,7 @@ impl<'a> SymbolFiller<'a> {
                 )),
                 range: export_decl.range(),
               },
+              module_symbol.symbol_id(),
             );
             self.fill_ts_enum(symbol, n);
             let symbol_id = symbol.symbol_id();
@@ -1497,6 +1526,7 @@ impl<'a> SymbolFiller<'a> {
                 range: export_decl.range(),
               },
               n,
+              module_symbol,
             );
             if let Some(symbol_id) = maybe_symbol_id {
               match &n.id {
@@ -1535,7 +1565,8 @@ impl<'a> SymbolFiller<'a> {
                         ModuleExportName::Str(str) => str.value.to_string(),
                       })
                       .unwrap_or_else(|| imported_name.clone());
-                    let symbol = self.builder.create_new_symbol();
+                    let symbol =
+                      self.builder.create_new_symbol(module_symbol.symbol_id());
                     symbol.add_decl(SymbolDecl {
                       range: named.range(),
                       kind: SymbolDeclKind::FileRef(FileDep {
@@ -1560,13 +1591,14 @@ impl<'a> SymbolFiller<'a> {
                         orig_ident.to_id(),
                         SymbolDecl {
                           range: n.range(),
-                          kind: SymbolDeclKind::TargetSelf,
+                          kind: SymbolDeclKind::Target(orig_ident.to_id()),
                         },
+                        module_symbol.symbol_id(),
                       );
                       let orig_symbol_id = orig_symbol.symbol_id();
                       module_symbol.add_export(exported_name, orig_symbol_id);
                     } else {
-                      self.builder.get_symbol_from_swc_id(
+                      let named_symbol = self.builder.get_symbol_from_swc_id(
                         orig_ident.to_id(),
                         SymbolDecl {
                           range: n.range(),
@@ -1577,19 +1609,16 @@ impl<'a> SymbolFiller<'a> {
                               ),
                               specifier: src.value.to_string(),
                             }),
-                            None => SymbolDeclKind::TargetSelf,
+                            None => SymbolDeclKind::Target(orig_ident.to_id()),
                           },
                         },
+                        module_symbol.symbol_id(),
                       );
-                      let symbol_id = self.builder.ensure_symbol_for_swc_id(
-                        orig_ident.to_id(),
-                        SymbolDecl {
-                          range: named.range(),
-                          kind: SymbolDeclKind::TargetSelf,
-                        },
+                      module_symbol.add_export(
+                        orig_ident.sym.to_string(),
+                        named_symbol.symbol_id(),
                       );
-                      module_symbol
-                        .add_export(orig_ident.sym.to_string(), symbol_id);
+                      module_symbol.add_child_id(named_symbol.symbol_id());
                     }
                   }
                 }
@@ -1600,7 +1629,8 @@ impl<'a> SymbolFiller<'a> {
                     ModuleExportName::Ident(ident) => ident.sym.to_string(),
                     ModuleExportName::Str(str) => str.value.to_string(),
                   };
-                  let symbol = self.builder.create_new_symbol();
+                  let symbol =
+                    self.builder.create_new_symbol(module_symbol.symbol_id());
                   symbol.add_decl(SymbolDecl {
                     kind: SymbolDeclKind::FileRef(FileDep {
                       name: FileDepName::Star,
@@ -1610,6 +1640,7 @@ impl<'a> SymbolFiller<'a> {
                   });
                   let symbol_id = symbol.symbol_id();
                   module_symbol.add_export(name, symbol_id);
+                  module_symbol.add_child_id(symbol_id);
                 } else {
                   let name = match &specifier.name {
                     ModuleExportName::Ident(ident) => ident,
@@ -1624,9 +1655,11 @@ impl<'a> SymbolFiller<'a> {
                         kind: symbol_kind.clone(),
                         range: n.range(),
                       },
+                      module_symbol.symbol_id(),
                     )
                     .symbol_id();
                   module_symbol.add_export(name.sym.to_string(), symbol_id);
+                  module_symbol.add_child_id(symbol_id);
                 }
               }
               // https://github.com/tc39/proposal-export-default-from
@@ -1682,7 +1715,8 @@ impl<'a> SymbolFiller<'a> {
           self.builder.add_re_export(n.src.value.to_string());
         }
         ModuleDecl::TsImportEquals(import_equals) => {
-          let symbol_id = self.ensure_symbol_for_import_equals(import_equals);
+          let symbol_id =
+            self.ensure_symbol_for_import_equals(import_equals, module_symbol);
           let symbol = self.builder.symbol_mut(symbol_id).unwrap();
           match &import_equals.module_ref {
             TsModuleRef::TsEntityName(entity_name) => {
@@ -1746,6 +1780,7 @@ impl<'a> SymbolFiller<'a> {
                   )),
                   range: n.range(),
                 },
+                module_symbol.symbol_id(),
               );
               self.fill_class_decl(symbol, n);
               let symbol_id = symbol.symbol_id();
@@ -1764,6 +1799,7 @@ impl<'a> SymbolFiller<'a> {
                   )),
                   range: n.range(),
                 },
+                module_symbol.symbol_id(),
               );
               self.fill_fn_decl(symbol, n);
               let symbol_id = symbol.symbol_id();
@@ -1784,6 +1820,7 @@ impl<'a> SymbolFiller<'a> {
                       )),
                       range: decl.range(),
                     },
+                    module_symbol.symbol_id(),
                   );
                   self.fill_var_declarator(symbol, decl);
                   let symbol_id = symbol.symbol_id();
@@ -1804,6 +1841,7 @@ impl<'a> SymbolFiller<'a> {
                   )),
                   range: n.range(),
                 },
+                module_symbol.symbol_id(),
               );
               self.fill_ts_interface(symbol, n);
               let symbol_id = symbol.symbol_id();
@@ -1822,6 +1860,7 @@ impl<'a> SymbolFiller<'a> {
                   )),
                   range: n.range(),
                 },
+                module_symbol.symbol_id(),
               );
               self.fill_ts_type_alias(symbol, n);
               let symbol_id = symbol.symbol_id();
@@ -1840,6 +1879,7 @@ impl<'a> SymbolFiller<'a> {
                   )),
                   range: n.range(),
                 },
+                module_symbol.symbol_id(),
               );
               self.fill_ts_enum(symbol, n);
               let symbol_id = symbol.symbol_id();
@@ -1857,6 +1897,7 @@ impl<'a> SymbolFiller<'a> {
                   range: n.range(),
                 },
                 n,
+                module_symbol,
               );
               if let Some(symbol_id) = symbol_id {
                 module_symbol.add_child_id(symbol_id);
@@ -1880,26 +1921,13 @@ impl<'a> SymbolFiller<'a> {
   ) {
     match expr {
       Expr::Ident(ident) => {
-        let default_export_symbol_id =
-          self.builder.ensure_default_export_symbol(
-            module_symbol,
-            SymbolDecl {
-              kind: SymbolDeclKind::Target(ident.to_id()),
-              range: default_export_range,
-            },
-          );
-        self.builder.ensure_symbol_for_swc_id(
-          ident.to_id(),
+        self.builder.ensure_default_export_symbol(
+          module_symbol,
           SymbolDecl {
             kind: SymbolDeclKind::Target(ident.to_id()),
             range: ident.range(),
           },
         );
-        self
-          .builder
-          .symbol_mut(default_export_symbol_id)
-          .unwrap()
-          .add_dep(ident.to_id().into());
       }
       Expr::Lit(lit) => {
         debug_assert!(maybe_parent.is_some());
@@ -1936,6 +1964,7 @@ impl<'a> SymbolFiller<'a> {
   fn ensure_symbol_for_import_equals(
     &self,
     import_equals: &TsImportEqualsDecl,
+    parent_symbol: &SymbolMut,
   ) -> SymbolId {
     let id = import_equals.id.to_id();
     if let Some(symbol_id) = self.builder.swc_id_to_symbol_id.get(&id) {
@@ -1950,6 +1979,7 @@ impl<'a> SymbolFiller<'a> {
             kind: SymbolDeclKind::QualifiedTarget(leftmost_id, parts),
             range: import_equals.range(),
           },
+          parent_symbol.symbol_id(),
         )
       }
       TsModuleRef::TsExternalModuleRef(module_ref) => {
@@ -1962,6 +1992,7 @@ impl<'a> SymbolFiller<'a> {
             }),
             range: import_equals.range(),
           },
+          parent_symbol.symbol_id(),
         )
       }
     }
@@ -2061,13 +2092,17 @@ impl<'a> SymbolFiller<'a> {
     &self,
     symbol_decl: SymbolDecl,
     n: &TsModuleDecl,
+    parent_symbol: &SymbolMut,
   ) -> Option<SymbolId> {
     let mut id = match &n.id {
       TsModuleName::Ident(ident) => ident.to_id(),
       TsModuleName::Str(_) => return None, // ignore for now
     };
-    let mod_symbol =
-      self.builder.get_symbol_from_swc_id(id.clone(), symbol_decl);
+    let mod_symbol = self.builder.get_symbol_from_swc_id(
+      id.clone(),
+      symbol_decl,
+      parent_symbol.symbol_id(),
+    );
 
     // fill the exported declarations
     if let Some(body) = &n.body {
@@ -2091,10 +2126,12 @@ impl<'a> SymbolFiller<'a> {
                 )),
                 range: decl.range(),
               },
+              previous_symbol.symbol_id(),
             );
             previous_symbol.add_dep(id.clone().into());
             previous_symbol
               .add_export(id.0.to_string(), mod_symbol.symbol_id());
+            previous_symbol.add_child_id(mod_symbol.symbol_id());
             mod_symbol.add_dep(previous_id.into());
             current = &decl.body;
           }
@@ -2113,7 +2150,7 @@ impl<'a> SymbolFiller<'a> {
         last_override_key = current_override_key;
 
         if is_implementation_with_overloads {
-          self.handle_module_item_fn_overload(item);
+          self.handle_module_item_fn_overload(item, mod_symbol);
           continue; // don't fill the types on implementation signatures as they're private
         }
 
@@ -2181,7 +2218,11 @@ impl<'a> SymbolFiller<'a> {
     Some(mod_symbol.symbol_id())
   }
 
-  fn handle_module_item_fn_overload(&self, module_item: &ModuleItem) {
+  fn handle_module_item_fn_overload(
+    &self,
+    module_item: &ModuleItem,
+    module_symbol: &SymbolMut,
+  ) {
     // For function implementations with overloads, only add them
     // to the list of declarations, but don't examine their types
     // as the types they use are private.
@@ -2218,6 +2259,7 @@ impl<'a> SymbolFiller<'a> {
         kind: SymbolDeclKind::DefinitionPrivateFnImpl(SymbolNode(symbol_node)),
         range,
       },
+      module_symbol.symbol_id(),
     );
   }
 
@@ -2683,7 +2725,8 @@ impl<'a> SymbolFiller<'a> {
       kind: SymbolDeclKind::Definition(SymbolNode(node_inner)),
       range: source_range,
     };
-    let child_symbol = self.builder.create_new_symbol();
+    let child_symbol =
+      self.builder.create_new_symbol(parent_symbol.symbol_id());
     child_symbol.add_decl(decl);
     parent_symbol.add_member(child_symbol.symbol_id());
     child_symbol

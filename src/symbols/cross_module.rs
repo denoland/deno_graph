@@ -181,7 +181,7 @@ fn find_definition_paths_internal<'a>(
   if !visited_symbols.insert(symbol.unique_id()) {
     return Vec::new();
   }
-  let mut paths = Vec::new(); //Vec::with_capacity(symbol.decls().len());
+  let mut paths = Vec::with_capacity(symbol.decls().len());
   for decl in symbol.decls() {
     match &decl.kind {
       SymbolDeclKind::Definition(_) => {
@@ -273,9 +273,6 @@ fn find_definition_paths_internal<'a>(
           }
         }
       },
-      SymbolDeclKind::TargetSelf => {
-        // ignore
-      }
     }
   }
   paths
