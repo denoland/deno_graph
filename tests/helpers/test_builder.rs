@@ -160,7 +160,7 @@ impl TestBuilder {
 
   #[cfg(feature = "symbols")]
   pub async fn symbols(&mut self) -> anyhow::Result<symbols::SymbolsResult> {
-    use deno_graph::symbols::ModuleSymbolRef;
+    use deno_graph::symbols::ModuleInfoRef;
 
     let build_result = self.build_for_symbols().await;
     let graph = &build_result.graph;
@@ -185,13 +185,13 @@ impl TestBuilder {
             "{}: {}\n",
             specifier.as_str(),
             match module {
-              ModuleSymbolRef::Esm(m) => format!("{:#?}", m),
-              ModuleSymbolRef::Json(m) => format!("{:#?}", m),
+              ModuleInfoRef::Esm(m) => format!("{:#?}", m),
+              ModuleInfoRef::Json(m) => format!("{:#?}", m),
             }
           ));
         }
         let get_symbol_text =
-          |module_symbol: deno_graph::symbols::ModuleSymbolRef,
+          |module_symbol: deno_graph::symbols::ModuleInfoRef,
            symbol_id: deno_graph::symbols::SymbolId| {
             let symbol = module_symbol.symbol(symbol_id).unwrap();
             let definitions = root_symbol

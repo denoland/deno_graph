@@ -45,7 +45,7 @@ pub struct RootSymbol<'a> {
   module_graph: &'a ModuleGraph,
   parser: CapturingModuleParser<'a>,
   specifiers_to_ids: AdditiveOnlyMapForCopyValues<ModuleSpecifier, ModuleId>,
-  ids_to_symbols: AdditiveOnlyMap<ModuleId, ModuleSymbol>,
+  ids_to_modules: AdditiveOnlyMap<ModuleId, ModuleInfo>,
   diagnostics: RefCell<Vec<SymbolFillDiagnostic>>,
 }
 
@@ -58,7 +58,7 @@ impl<'a> RootSymbol<'a> {
       module_graph,
       parser,
       specifiers_to_ids: Default::default(),
-      ids_to_symbols: Default::default(),
+      ids_to_modules: Default::default(),
       diagnostics: Default::default(),
     }
   }
@@ -75,9 +75,9 @@ impl<'a> RootSymbol<'a> {
   pub fn get_module_from_specifier(
     &self,
     specifier: &ModuleSpecifier,
-  ) -> Option<ModuleSymbolRef> {
+  ) -> Option<ModuleInfoRef> {
     if let Some(module_id) = self.specifiers_to_ids.get(specifier) {
-      let module_symbol = self.ids_to_symbols.get(&module_id).unwrap();
+      let module_symbol = self.ids_to_modules.get(&module_id).unwrap();
       return Some(module_symbol.as_ref());
     }
 
@@ -99,14 +99,14 @@ impl<'a> RootSymbol<'a> {
   pub fn get_module_from_id(
     &self,
     module_id: ModuleId,
-  ) -> Option<ModuleSymbolRef> {
-    self.ids_to_symbols.get(&module_id).map(|s| s.as_ref())
+  ) -> Option<ModuleInfoRef> {
+    self.ids_to_modules.get(&module_id).map(|s| s.as_ref())
   }
 
   /// Goes to the definitions of the specified symbol.
   pub fn go_to_definitions<'b>(
     &'b self,
-    module: ModuleSymbolRef<'b>,
+    module: ModuleInfoRef<'b>,
     symbol: &'b Symbol,
   ) -> impl Iterator<Item = Definition<'b>> {
     self
@@ -118,7 +118,7 @@ impl<'a> RootSymbol<'a> {
   /// Finds the graph paths to the definition of the specified symbol.
   pub fn find_definition_paths<'b>(
     &'b self,
-    module: ModuleSymbolRef<'b>,
+    module: ModuleInfoRef<'b>,
     symbol: &'b Symbol,
   ) -> Vec<DefinitionPath<'b>> {
     debug_assert_eq!(symbol.module_id(), module.module_id());
@@ -132,7 +132,7 @@ impl<'a> RootSymbol<'a> {
 
   pub fn resolve_symbol_dep<'b>(
     &'b self,
-    module: ModuleSymbolRef<'b>,
+    module: ModuleInfoRef<'b>,
     symbol: &'b Symbol,
     dep: &'b SymbolDep,
   ) -> Vec<ResolvedSymbolDepEntry<'b>> {
@@ -148,14 +148,14 @@ impl<'a> RootSymbol<'a> {
   fn analyze_esm_module(
     &self,
     esm_module: &EsmModule,
-  ) -> Option<ModuleSymbolRef> {
+  ) -> Option<ModuleInfoRef> {
     let Ok(source) = self.parsed_source(esm_module) else {
       return None;
     };
     let specifier = &esm_module.specifier;
     let module = source.module();
 
-    let module_id = ModuleId(self.ids_to_symbols.len() as u32);
+    let module_id = ModuleId(self.ids_to_modules.len() as u32);
     let builder = ModuleBuilder::new(module_id);
     let filler = SymbolFiller {
       source: &source,
@@ -168,7 +168,7 @@ impl<'a> RootSymbol<'a> {
     if !diagnostics.is_empty() {
       self.diagnostics.borrow_mut().extend(diagnostics);
     }
-    let module_symbol = EsmModuleSymbol {
+    let module_symbol = EsmModuleInfo {
       specifier: specifier.clone(),
       module_id,
       source: source.clone(),
@@ -181,16 +181,16 @@ impl<'a> RootSymbol<'a> {
         .map(|(k, v)| (k, v.0.into_inner()))
         .collect(),
     };
-    Some(self.finalize_insert(ModuleSymbol::Esm(module_symbol)))
+    Some(self.finalize_insert(ModuleInfo::Esm(module_symbol)))
   }
 
-  fn analyze_json_module(&self, json_module: &JsonModule) -> ModuleSymbolRef {
+  fn analyze_json_module(&self, json_module: &JsonModule) -> ModuleInfoRef {
     let specifier = &json_module.specifier;
     // it's not ideal having to use SourceTextInfo here, but it makes
     // it easier to interop with ParsedSource
     let source_text_info = SourceTextInfo::new(json_module.source.clone());
     let range = source_text_info.range();
-    let module_id = ModuleId(self.ids_to_symbols.len() as u32);
+    let module_id = ModuleId(self.ids_to_modules.len() as u32);
     let decls = {
       let range = {
         let source = source_text_info.text_str();
@@ -206,14 +206,13 @@ impl<'a> RootSymbol<'a> {
         kind: SymbolDeclKind::Definition(SymbolNode(SymbolNodeInner::Json)),
       }])
     };
-    let module_symbol = JsonModuleSymbol {
+    let module_symbol = JsonModuleInfo {
       specifier: specifier.clone(),
       module_id,
-      exports: IndexMap::from([("default".to_string(), SymbolId(0))]),
       module_symbol: Symbol {
         module_id,
         symbol_id: SymbolId(0),
-        exports: IndexMap::from([("default".to_string(), SymbolId(0))]),
+        exports: IndexMap::from([("default".to_string(), SymbolId(1))]),
         child_ids: Default::default(),
         decls: decls.clone(),
         deps: Default::default(),
@@ -230,16 +229,16 @@ impl<'a> RootSymbol<'a> {
       },
       source_text_info,
     };
-    self.finalize_insert(ModuleSymbol::Json(Box::new(module_symbol)))
+    self.finalize_insert(ModuleInfo::Json(Box::new(module_symbol)))
   }
 
-  fn finalize_insert(&self, module: ModuleSymbol) -> ModuleSymbolRef {
+  fn finalize_insert(&self, module: ModuleInfo) -> ModuleInfoRef {
     self
       .specifiers_to_ids
       .insert(module.specifier().clone(), module.module_id());
     let module_id = module.module_id();
-    self.ids_to_symbols.insert(module_id, module);
-    self.ids_to_symbols.get(&module_id).unwrap().as_ref()
+    self.ids_to_modules.insert(module_id, module);
+    self.ids_to_modules.get(&module_id).unwrap().as_ref()
   }
 
   fn parsed_source(
@@ -822,20 +821,20 @@ impl UniqueSymbolId {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum ModuleSymbolRef<'a> {
-  Json(&'a JsonModuleSymbol),
-  Esm(&'a EsmModuleSymbol),
+pub enum ModuleInfoRef<'a> {
+  Json(&'a JsonModuleInfo),
+  Esm(&'a EsmModuleInfo),
 }
 
-impl<'a> ModuleSymbolRef<'a> {
-  pub fn json(&self) -> Option<&'a JsonModuleSymbol> {
+impl<'a> ModuleInfoRef<'a> {
+  pub fn json(&self) -> Option<&'a JsonModuleInfo> {
     match self {
       Self::Json(json) => Some(json),
       Self::Esm(_) => None,
     }
   }
 
-  pub fn esm(&self) -> Option<&'a EsmModuleSymbol> {
+  pub fn esm(&self) -> Option<&'a EsmModuleInfo> {
     match self {
       Self::Json(_) => None,
       Self::Esm(esm) => Some(esm),
@@ -907,31 +906,32 @@ impl<'a> ModuleSymbolRef<'a> {
   }
 }
 
+/// Holds information about the module like symbols and re-exports.
 #[derive(Debug, Clone)]
-pub enum ModuleSymbol {
-  Json(Box<JsonModuleSymbol>),
-  Esm(EsmModuleSymbol),
+pub enum ModuleInfo {
+  Json(Box<JsonModuleInfo>),
+  Esm(EsmModuleInfo),
 }
 
-impl ModuleSymbol {
-  pub fn json(&self) -> Option<&JsonModuleSymbol> {
+impl ModuleInfo {
+  pub fn json(&self) -> Option<&JsonModuleInfo> {
     match self {
       Self::Json(json) => Some(json),
       Self::Esm(_) => None,
     }
   }
 
-  pub fn esm(&self) -> Option<&EsmModuleSymbol> {
+  pub fn esm(&self) -> Option<&EsmModuleInfo> {
     match self {
       Self::Json(_) => None,
       Self::Esm(esm) => Some(esm),
     }
   }
 
-  pub fn as_ref(&self) -> ModuleSymbolRef {
+  pub fn as_ref(&self) -> ModuleInfoRef {
     match self {
-      ModuleSymbol::Json(m) => (**m).as_ref(),
-      ModuleSymbol::Esm(m) => m.as_ref(),
+      ModuleInfo::Json(m) => (**m).as_ref(),
+      ModuleInfo::Esm(m) => m.as_ref(),
     }
   }
 
@@ -956,29 +956,27 @@ impl ModuleSymbol {
 }
 
 #[derive(Clone)]
-pub struct JsonModuleSymbol {
+pub struct JsonModuleInfo {
   module_id: ModuleId,
   specifier: ModuleSpecifier,
   source_text_info: SourceTextInfo,
-  exports: IndexMap<String, SymbolId>,
   module_symbol: Symbol,
   default_symbol: Symbol,
 }
 
-impl std::fmt::Debug for JsonModuleSymbol {
+impl std::fmt::Debug for JsonModuleInfo {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("JsonModuleSymbol")
+    f.debug_struct("JsonModuleInfo")
       .field("module_id", &self.module_id)
       .field("specifier", &self.specifier.as_str())
-      .field("exports", &self.exports)
       .field("module_symbol", &self.module_symbol)
       .finish()
   }
 }
 
-impl JsonModuleSymbol {
-  pub fn as_ref(&self) -> ModuleSymbolRef {
-    ModuleSymbolRef::Json(self)
+impl JsonModuleInfo {
+  pub fn as_ref(&self) -> ModuleInfoRef {
+    ModuleInfoRef::Json(self)
   }
 
   pub fn specifier(&self) -> &ModuleSpecifier {
@@ -1007,7 +1005,7 @@ impl JsonModuleSymbol {
 }
 
 #[derive(Clone)]
-pub struct EsmModuleSymbol {
+pub struct EsmModuleInfo {
   module_id: ModuleId,
   specifier: ModuleSpecifier,
   source: ParsedSource,
@@ -1018,9 +1016,9 @@ pub struct EsmModuleSymbol {
   symbols: IndexMap<SymbolId, Symbol>,
 }
 
-impl std::fmt::Debug for EsmModuleSymbol {
+impl std::fmt::Debug for EsmModuleInfo {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("EsmModuleSymbol")
+    f.debug_struct("EsmModuleInfo")
       .field("module_id", &self.module_id)
       .field("specifier", &self.specifier.as_str())
       .field("re_exports", &self.re_exports)
@@ -1030,9 +1028,9 @@ impl std::fmt::Debug for EsmModuleSymbol {
   }
 }
 
-impl EsmModuleSymbol {
-  pub fn as_ref(&self) -> ModuleSymbolRef {
-    ModuleSymbolRef::Esm(self)
+impl EsmModuleInfo {
+  pub fn as_ref(&self) -> ModuleInfoRef {
+    ModuleInfoRef::Esm(self)
   }
 
   pub fn module_id(&self) -> ModuleId {

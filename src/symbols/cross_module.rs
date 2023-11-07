@@ -13,7 +13,7 @@ use super::analyzer::SymbolDeclKind;
 use super::analyzer::SymbolDep;
 use super::FileDep;
 use super::FileDepName;
-use super::ModuleSymbolRef;
+use super::ModuleInfoRef;
 use super::Symbol;
 use super::SymbolDecl;
 use super::SymbolId;
@@ -28,7 +28,7 @@ pub enum DefinitionKind<'a> {
 #[derive(Debug, Clone)]
 pub struct Definition<'a> {
   pub kind: DefinitionKind<'a>,
-  pub module: ModuleSymbolRef<'a>,
+  pub module: ModuleInfoRef<'a>,
   pub symbol: &'a Symbol,
   pub symbol_decl: &'a SymbolDecl,
 }
@@ -66,7 +66,7 @@ pub enum DefinitionUnresolvedKind<'a> {
 /// The point at which a definition could not be resolved.
 #[derive(Debug, Clone)]
 pub struct DefinitionUnresolved<'a> {
-  pub module: ModuleSymbolRef<'a>,
+  pub module: ModuleInfoRef<'a>,
   pub symbol: &'a Symbol,
   pub kind: DefinitionUnresolvedKind<'a>,
   pub parts: &'a [String],
@@ -76,7 +76,7 @@ pub struct DefinitionUnresolved<'a> {
 #[derive(Debug, Clone)]
 pub enum DefinitionPath<'a> {
   Path {
-    module: ModuleSymbolRef<'a>,
+    module: ModuleInfoRef<'a>,
     symbol: &'a Symbol,
     symbol_decl: &'a SymbolDecl,
     parts: &'a [String],
@@ -87,7 +87,7 @@ pub enum DefinitionPath<'a> {
 }
 
 impl<'a> DefinitionPath<'a> {
-  pub fn module(&self) -> ModuleSymbolRef<'a> {
+  pub fn module(&self) -> ModuleInfoRef<'a> {
     match self {
       DefinitionPath::Path { module, .. } => *module,
       DefinitionPath::Definition(def) => def.module,
@@ -141,9 +141,9 @@ impl<'a> DefinitionPath<'a> {
 /// Finds the path to a definition.
 pub fn find_definition_paths<'a>(
   module_graph: &'a ModuleGraph,
-  module: ModuleSymbolRef<'a>,
+  module: ModuleInfoRef<'a>,
   symbol: &'a Symbol,
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
   find_definition_paths_internal(
     module_graph,
@@ -156,10 +156,10 @@ pub fn find_definition_paths<'a>(
 
 fn find_definition_paths_internal<'a>(
   module_graph: &'a ModuleGraph,
-  module: ModuleSymbolRef<'a>,
+  module: ModuleInfoRef<'a>,
   symbol: &'a Symbol,
   visited_symbols: &mut HashSet<UniqueSymbolId>,
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
   if !visited_symbols.insert(symbol.unique_id()) {
     return Vec::new();
@@ -266,10 +266,10 @@ fn find_definition_paths_internal<'a>(
 
 fn go_to_file_export<'a>(
   module_graph: &'a ModuleGraph,
-  module: ModuleSymbolRef<'a>,
+  module: ModuleInfoRef<'a>,
   file_ref: &FileDep,
   export_name: &str,
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
   visited_symbols: &mut HashSet<UniqueSymbolId>,
 ) -> Vec<DefinitionPath<'a>> {
   let maybe_dep = module_graph.resolve_dependency(
@@ -308,15 +308,15 @@ pub enum ResolvedSymbolDepEntry<'a> {
   /// If the symbol dep was an import type with no property access.
   ///
   /// Ex. `type MyType = typeof import("./my_module.ts");`
-  ImportType(ModuleSymbolRef<'a>),
+  ImportType(ModuleInfoRef<'a>),
 }
 
 pub fn resolve_symbol_dep<'a>(
   module_graph: &'a ModuleGraph,
-  module: ModuleSymbolRef<'a>,
+  module: ModuleInfoRef<'a>,
   symbol: &'a Symbol,
   dep: &'a SymbolDep,
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<ResolvedSymbolDepEntry<'a>> {
   match dep {
     SymbolDep::Id(id) => {
@@ -377,11 +377,11 @@ pub fn resolve_symbol_dep<'a>(
 
 fn go_to_id_and_parts_definition_paths<'a>(
   module_graph: &'a ModuleGraph,
-  module: ModuleSymbolRef<'a>,
+  module: ModuleInfoRef<'a>,
   symbol: &'a Symbol,
   target_id: &'a deno_ast::swc::ast::Id,
   parts: &'a [String],
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
   debug_assert_eq!(symbol.module_id(), module.module_id());
   if let Some(symbol_id) =
@@ -406,9 +406,9 @@ fn go_to_id_and_parts_definition_paths<'a>(
 
 fn resolve_qualified_export_name<'a>(
   graph: &'a ModuleGraph,
-  module: ModuleSymbolRef<'a>,
+  module: ModuleInfoRef<'a>,
   parts: &'a [String],
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
   debug_assert!(!parts.is_empty());
   resolve_qualified_export_name_internal(
@@ -422,10 +422,10 @@ fn resolve_qualified_export_name<'a>(
 
 fn resolve_qualified_export_name_internal<'a>(
   graph: &'a ModuleGraph,
-  module: ModuleSymbolRef<'a>,
+  module: ModuleInfoRef<'a>,
   parts: &'a [String],
   visited_symbols: &mut HashSet<UniqueSymbolId>,
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
   debug_assert!(!parts.is_empty());
   let exports = exports_and_re_exports(graph, module, specifier_to_module);
@@ -451,10 +451,10 @@ fn resolve_qualified_export_name_internal<'a>(
 
 pub fn resolve_qualified_name<'a>(
   graph: &'a ModuleGraph,
-  module: ModuleSymbolRef<'a>,
+  module: ModuleInfoRef<'a>,
   symbol: &'a Symbol,
   parts: &'a [String],
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
   resolve_qualified_name_internal(
     graph,
@@ -468,18 +468,18 @@ pub fn resolve_qualified_name<'a>(
 
 fn resolve_qualified_name_internal<'a>(
   graph: &'a ModuleGraph,
-  module: ModuleSymbolRef<'a>,
+  module: ModuleInfoRef<'a>,
   symbol: &'a Symbol,
   parts: &'a [String],
   visited_symbols: &mut HashSet<UniqueSymbolId>,
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
   fn resolve_paths_with_parts<'a>(
     paths: Vec<DefinitionPath<'a>>,
     parts: &'a [String],
     graph: &'a ModuleGraph,
     visited_symbols: &mut HashSet<UniqueSymbolId>,
-    specifier_to_module: &impl Fn(&url::Url) -> Option<ModuleSymbolRef<'a>>,
+    specifier_to_module: &impl Fn(&url::Url) -> Option<ModuleInfoRef<'a>>,
   ) -> Vec<DefinitionPath<'a>> {
     debug_assert!(!parts.is_empty());
     paths
@@ -501,7 +501,7 @@ fn resolve_qualified_name_internal<'a>(
     parts: &'a [String],
     graph: &'a ModuleGraph,
     visited_symbols: &mut HashSet<UniqueSymbolId>,
-    specifier_to_module: &impl Fn(&url::Url) -> Option<ModuleSymbolRef<'a>>,
+    specifier_to_module: &impl Fn(&url::Url) -> Option<ModuleInfoRef<'a>>,
   ) -> Option<DefinitionPath<'a>> {
     match path {
       DefinitionPath::Path {
@@ -626,7 +626,7 @@ pub struct ExportsAndReExports<'a> {
 }
 
 pub struct ResolvedExportOrReExport<'a> {
-  pub module: ModuleSymbolRef<'a>,
+  pub module: ModuleInfoRef<'a>,
   pub symbol_id: SymbolId,
 }
 
@@ -637,14 +637,14 @@ impl<'a> ResolvedExportOrReExport<'a> {
 }
 
 pub struct UnresolvedSpecifier<'a> {
-  pub referrer: ModuleSymbolRef<'a>,
+  pub referrer: ModuleInfoRef<'a>,
   pub specifier: &'a String,
 }
 
 pub fn exports_and_re_exports<'a>(
   module_graph: &'a ModuleGraph,
-  module: ModuleSymbolRef<'a>,
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleSymbolRef<'a>>,
+  module: ModuleInfoRef<'a>,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> ExportsAndReExports<'a> {
   let mut unresolved_specifiers = Vec::new();
   let mut resolved = IndexMap::new();

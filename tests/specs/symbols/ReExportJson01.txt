@@ -18,9 +18,6 @@ file:///bar.json: JsonModuleSymbol {
         1,
     ),
     specifier: "file:///bar.json",
-    exports: {
-        "default": 0,
-    },
     module_symbol: Symbol {
         module_id: ModuleId(
             1,
@@ -46,7 +43,7 @@ file:///bar.json: JsonModuleSymbol {
         deps: {},
         child_ids: {},
         exports: {
-            "default": 0,
+            "default": 1,
         },
         members: {},
     },
@@ -144,9 +141,6 @@ file:///non_public.json: JsonModuleSymbol {
         2,
     ),
     specifier: "file:///non_public.json",
-    exports: {
-        "default": 0,
-    },
     module_symbol: Symbol {
         module_id: ModuleId(
             2,
@@ -172,7 +166,7 @@ file:///non_public.json: JsonModuleSymbol {
         deps: {},
         child_ids: {},
         exports: {
-            "default": 0,
+            "default": 1,
         },
         members: {},
     },
