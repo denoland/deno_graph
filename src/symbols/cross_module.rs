@@ -289,16 +289,21 @@ fn go_to_file_export<'a>(
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
   visited_symbols: &mut HashSet<UniqueSymbolId>,
 ) -> Vec<DefinitionPath<'a>> {
-  let maybe_dep = module_graph.resolve_dependency(
-    &file_ref.specifier,
-    module.specifier(),
-    /* prefer types */ true,
-  );
-  let Some(dep) = maybe_dep else {
-    return Vec::new();
-  };
-  let Some(dep_module) = specifier_to_module(&dep) else {
-    return Vec::new();
+  let maybe_dep_module = module_graph
+    .resolve_dependency(
+      &file_ref.specifier,
+      module.specifier(),
+      /* prefer types */ true,
+    )
+    .and_then(|dep| specifier_to_module(&dep));
+
+  let Some(dep_module) = maybe_dep_module else {
+    return vec![DefinitionPath::Unresolved(DefinitionUnresolved {
+      module,
+      symbol: module.module_symbol(),
+      kind: DefinitionUnresolvedKind::Specifier(&file_ref.specifier),
+      parts: &[],
+    })];
   };
   let maybe_export_symbol = dep_module
     .module_symbol()
