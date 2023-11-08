@@ -264,6 +264,9 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
+== symbol decls ==
+2:31..61 [QualifiedId(("A", #2), ["B"])]
+
 == export definitions ==
 [Test]: file:///mod.ts:31..61
   export type Test = typeof A.B;

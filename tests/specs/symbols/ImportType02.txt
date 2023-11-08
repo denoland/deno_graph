@@ -227,6 +227,9 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
+== symbol decls ==
+1:0..43 [ImportType("./a.ts", [])]
+
 == export definitions ==
 [Test]: file:///mod.ts:0..43
   export type Test = typeof import("./a.ts");

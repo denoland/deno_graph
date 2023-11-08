@@ -455,6 +455,13 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
+== symbol decls ==
+2:17..142 [Id(("Extends", #2))]
+3:59..70 [Id(("Prop", #2))]
+4:73..103 [Id(("method", #1)), Id(("Param", #2)), Id(("Return", #2))]
+5:106..140 [Id(("key", #1)), Id(("SignatureValueType", #2))]
+11:255..264 [Id(("B", #2))]
+
 == export definitions ==
 [Main]: file:///mod.ts:17..142
   export interface Main extends Extends {

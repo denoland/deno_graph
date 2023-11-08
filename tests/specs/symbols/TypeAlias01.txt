@@ -148,6 +148,9 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
+== symbol decls ==
+1:0..43 [Id(("Other", #2)), Id(("Other2", #2))]
+
 == export definitions ==
 [Test]: file:///mod.ts:0..43
   export type Test<T extends Other> = Other2;

@@ -260,6 +260,9 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
+== symbol decls ==
+2:26..53 [ImportType("./a.ts", ["A", "B"])]
+
 == export definitions ==
 [Test]: file:///mod.ts:0..55
   export interface Test {

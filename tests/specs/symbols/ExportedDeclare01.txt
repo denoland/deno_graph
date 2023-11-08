@@ -447,6 +447,9 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
+== symbol decls ==
+8:160..172 [Id(("Other", #2))]
+
 == export definitions ==
 [bar]: file:///mod.ts:0..29
   declare function foo(): void;

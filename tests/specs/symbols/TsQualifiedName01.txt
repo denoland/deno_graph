@@ -189,6 +189,9 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
+== symbol decls ==
+1:0..37 [QualifiedId(("Other", #2), ["Test"])]
+
 == export definitions ==
 [Test]: file:///mod.ts:0..37
   export type Test = typeof Other.Test;

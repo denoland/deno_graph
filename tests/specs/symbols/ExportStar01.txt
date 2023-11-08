@@ -435,6 +435,10 @@ file:///a.ts: EsmModuleInfo {
         },
     },
 }
+== symbol decls ==
+5:172..180 [Id(("A", #2))]
+8:213..218 [Id(("B", #2))]
+
 file:///class.ts: EsmModuleInfo {
     module_id: ModuleId(
         2,

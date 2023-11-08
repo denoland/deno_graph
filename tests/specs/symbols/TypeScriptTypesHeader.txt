@@ -216,6 +216,9 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
+== symbol decls ==
+4:148..223 [Id(("MyInterface", #2)), Id(("MyInterface2", #2)), Id(("MyInterface3", #2))]
+
 file:///other.d.ts: EsmModuleInfo {
     module_id: ModuleId(
         1,

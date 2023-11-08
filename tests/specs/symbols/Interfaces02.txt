@@ -242,6 +242,9 @@ file:///a.ts: EsmModuleInfo {
         },
     },
 }
+== symbol decls ==
+3:51..64 [Id(("Prop2", #2))]
+
 file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
@@ -493,6 +496,10 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
+== symbol decls ==
+2:42..55 [Id(("Prop1", #2))]
+3:77..90 [Id(("Prop2", #2))]
+
 == export definitions ==
 [Test]: file:///mod.ts:23..57
   interface Test {
