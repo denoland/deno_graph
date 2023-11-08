@@ -83,7 +83,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 3,
@@ -125,7 +124,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -157,7 +155,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -187,7 +184,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -219,7 +215,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -249,7 +244,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -281,14 +275,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "AInner",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -318,7 +304,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -348,7 +333,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -378,14 +362,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "C",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -444,7 +420,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 4,
                 5,
@@ -483,7 +458,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -516,7 +490,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -549,7 +522,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -579,14 +551,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "A",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -616,14 +580,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "B",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -654,7 +610,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},

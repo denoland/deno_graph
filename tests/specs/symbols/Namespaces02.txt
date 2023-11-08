@@ -58,7 +58,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -92,20 +91,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "NestedNs",
-                        #3,
-                    ),
-                ),
-                Id(
-                    (
-                        "Foo",
-                        #3,
-                    ),
-                ),
-            },
             child_ids: {
                 2,
                 4,
@@ -141,14 +126,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Foo",
-                        #4,
-                    ),
-                ),
-            },
             child_ids: {
                 3,
             },
@@ -182,7 +159,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -212,7 +188,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},

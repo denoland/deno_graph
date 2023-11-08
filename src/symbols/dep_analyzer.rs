@@ -34,26 +34,26 @@ use super::ExportDeclRef;
 use super::SymbolNodeRef;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum SymbolDep {
+pub enum SymbolNodeDep {
   Id(Id),
   QualifiedId(Id, Vec<String>),
   ImportType(String, Vec<String>),
 }
 
-impl From<Id> for SymbolDep {
+impl From<Id> for SymbolNodeDep {
   fn from(value: Id) -> Self {
     Self::Id(value)
   }
 }
 
-impl SymbolDep {
+impl SymbolNodeDep {
   /// Gets the current reference and any qualified names it has.
   ///
   /// For example, given `MyNamespace.Test.Other`, this will return:
   /// * `MyNamespace`
   /// * `MyNamespace.Test`
   /// * `MyNamespace.Test.Other`
-  pub fn all_qualified_names(&self) -> Vec<SymbolDep> {
+  pub fn all_qualified_names(&self) -> Vec<SymbolNodeDep> {
     let mut deps = Vec::from([self.clone()]);
     let mut current_dep = self.clone();
     while let Some(dep) = current_dep.pop_part() {
@@ -68,24 +68,24 @@ impl SymbolDep {
   ///
   /// For example, `QualifedId(MyNamespace.Test.Other)` will go to
   /// `QualifiedId(MyNamespace.Test)`. Then that will go to `Id(MyNamespace)`.
-  pub fn pop_part(&self) -> Option<SymbolDep> {
+  pub fn pop_part(&self) -> Option<SymbolNodeDep> {
     match self {
-      SymbolDep::Id(_) => None,
-      SymbolDep::QualifiedId(id, parts) => {
+      SymbolNodeDep::Id(_) => None,
+      SymbolNodeDep::QualifiedId(id, parts) => {
         if parts.len() <= 1 {
-          Some(SymbolDep::Id(id.clone()))
+          Some(SymbolNodeDep::Id(id.clone()))
         } else {
-          Some(SymbolDep::QualifiedId(
+          Some(SymbolNodeDep::QualifiedId(
             id.clone(),
             parts[..parts.len() - 1].to_vec(),
           ))
         }
       }
-      SymbolDep::ImportType(specifier, parts) => {
+      SymbolNodeDep::ImportType(specifier, parts) => {
         if parts.is_empty() {
           None
         } else {
-          Some(SymbolDep::ImportType(
+          Some(SymbolNodeDep::ImportType(
             specifier.clone(),
             parts[..parts.len() - 1].to_vec(),
           ))
@@ -95,9 +95,9 @@ impl SymbolDep {
   }
 }
 
-pub fn resolve_deps<'a>(node_ref: SymbolNodeRef<'a>) -> Vec<SymbolDep> {
+pub fn resolve_deps(node_ref: SymbolNodeRef) -> Vec<SymbolNodeDep> {
   let mut result = Vec::new();
-  let mut deps = &mut result;
+  let deps = &mut result;
   match node_ref {
     SymbolNodeRef::Module(_) | SymbolNodeRef::TsNamespace(_) => {
       // no deps, as this has children
@@ -240,7 +240,7 @@ pub fn resolve_deps<'a>(node_ref: SymbolNodeRef<'a>) -> Vec<SymbolDep> {
   result
 }
 
-fn fill_class(deps: &mut Vec<SymbolDep>, n: &Class) {
+fn fill_class(deps: &mut Vec<SymbolNodeDep>, n: &Class) {
   if let Some(type_params) = &n.type_params {
     fill_ts_type_param_decl(deps, type_params);
   }
@@ -255,7 +255,7 @@ fn fill_class(deps: &mut Vec<SymbolDep>, n: &Class) {
   }
 }
 
-fn fill_enum(deps: &mut Vec<SymbolDep>, n: &TsEnumDecl) {
+fn fill_enum(deps: &mut Vec<SymbolNodeDep>, n: &TsEnumDecl) {
   for member in &n.members {
     if let Some(init) = &member.init {
       fill_expr(deps, init);
@@ -263,7 +263,7 @@ fn fill_enum(deps: &mut Vec<SymbolDep>, n: &TsEnumDecl) {
   }
 }
 
-fn fill_function_decl(deps: &mut Vec<SymbolDep>, n: &Function) {
+fn fill_function_decl(deps: &mut Vec<SymbolNodeDep>, n: &Function) {
   if let Some(type_params) = &n.type_params {
     fill_ts_type_param_decl(deps, type_params);
   }
@@ -275,7 +275,7 @@ fn fill_function_decl(deps: &mut Vec<SymbolDep>, n: &Function) {
   }
 }
 
-fn fill_interface(deps: &mut Vec<SymbolDep>, n: &TsInterfaceDecl) {
+fn fill_interface(deps: &mut Vec<SymbolNodeDep>, n: &TsInterfaceDecl) {
   if let Some(type_params) = &n.type_params {
     fill_ts_type_param_decl(deps, type_params);
   }
@@ -284,18 +284,18 @@ fn fill_interface(deps: &mut Vec<SymbolDep>, n: &TsInterfaceDecl) {
   }
 }
 
-fn fill_type_alias(deps: &mut Vec<SymbolDep>, n: &TsTypeAliasDecl) {
+fn fill_type_alias(deps: &mut Vec<SymbolNodeDep>, n: &TsTypeAliasDecl) {
   if let Some(type_params) = &n.type_params {
     fill_ts_type_param_decl(deps, type_params);
   }
   fill_ts_type(deps, &n.type_ann)
 }
 
-fn fill_var_declarator(deps: &mut Vec<SymbolDep>, n: &VarDeclarator) {
+fn fill_var_declarator(deps: &mut Vec<SymbolNodeDep>, n: &VarDeclarator) {
   fill_pat(deps, &n.name);
 }
 
-fn fill_prop_name(deps: &mut Vec<SymbolDep>, key: &PropName) {
+fn fill_prop_name(deps: &mut Vec<SymbolNodeDep>, key: &PropName) {
   match key {
     PropName::Computed(name) => {
       fill_expr(deps, &name.expr);
@@ -310,7 +310,7 @@ fn fill_prop_name(deps: &mut Vec<SymbolDep>, key: &PropName) {
 }
 
 fn fill_ts_expr_with_type_args(
-  deps: &mut Vec<SymbolDep>,
+  deps: &mut Vec<SymbolNodeDep>,
   n: &TsExprWithTypeArgs,
 ) {
   if let Some(type_args) = &n.type_args {
@@ -319,13 +319,13 @@ fn fill_ts_expr_with_type_args(
   fill_expr(deps, &n.expr);
 }
 
-fn fill_ts_fn_param(deps: &mut Vec<SymbolDep>, param: &TsFnParam) {
+fn fill_ts_fn_param(deps: &mut Vec<SymbolNodeDep>, param: &TsFnParam) {
   let mut visitor = SymbolDepFillVisitor { deps };
   param.visit_with(&mut visitor);
 }
 
 fn fill_ts_type_param_decl(
-  deps: &mut Vec<SymbolDep>,
+  deps: &mut Vec<SymbolNodeDep>,
   type_params: &TsTypeParamDecl,
 ) {
   for param in &type_params.params {
@@ -333,7 +333,7 @@ fn fill_ts_type_param_decl(
   }
 }
 
-fn fill_ts_type_param(deps: &mut Vec<SymbolDep>, param: &TsTypeParam) {
+fn fill_ts_type_param(deps: &mut Vec<SymbolNodeDep>, param: &TsTypeParam) {
   if let Some(constraint) = &param.constraint {
     fill_ts_type(deps, constraint);
   }
@@ -343,7 +343,7 @@ fn fill_ts_type_param(deps: &mut Vec<SymbolDep>, param: &TsTypeParam) {
 }
 
 fn fill_ts_type_param_instantiation(
-  deps: &mut Vec<SymbolDep>,
+  deps: &mut Vec<SymbolNodeDep>,
   type_params: &TsTypeParamInstantiation,
 ) {
   for param in &type_params.params {
@@ -351,7 +351,7 @@ fn fill_ts_type_param_instantiation(
   }
 }
 
-fn fill_ts_param_prop(deps: &mut Vec<SymbolDep>, param: &TsParamProp) {
+fn fill_ts_param_prop(deps: &mut Vec<SymbolNodeDep>, param: &TsParamProp) {
   match &param.param {
     TsParamPropParam::Ident(ident) => {
       if let Some(type_ann) = &ident.type_ann {
@@ -364,11 +364,11 @@ fn fill_ts_param_prop(deps: &mut Vec<SymbolDep>, param: &TsParamProp) {
   }
 }
 
-fn fill_param(deps: &mut Vec<SymbolDep>, param: &Param) {
+fn fill_param(deps: &mut Vec<SymbolNodeDep>, param: &Param) {
   fill_pat(deps, &param.pat);
 }
 
-fn fill_pat(deps: &mut Vec<SymbolDep>, pat: &Pat) {
+fn fill_pat(deps: &mut Vec<SymbolNodeDep>, pat: &Pat) {
   match pat {
     Pat::Ident(n) => {
       if let Some(type_ann) = &n.type_ann {
@@ -402,22 +402,22 @@ fn fill_pat(deps: &mut Vec<SymbolDep>, pat: &Pat) {
   }
 }
 
-fn fill_ts_type_ann(deps: &mut Vec<SymbolDep>, type_ann: &TsTypeAnn) {
+fn fill_ts_type_ann(deps: &mut Vec<SymbolNodeDep>, type_ann: &TsTypeAnn) {
   fill_ts_type(deps, &type_ann.type_ann)
 }
 
-fn fill_ts_type(deps: &mut Vec<SymbolDep>, n: &TsType) {
+fn fill_ts_type(deps: &mut Vec<SymbolNodeDep>, n: &TsType) {
   let mut visitor = SymbolDepFillVisitor { deps };
   n.visit_with(&mut visitor);
 }
 
-fn fill_expr(deps: &mut Vec<SymbolDep>, n: &Expr) {
+fn fill_expr(deps: &mut Vec<SymbolNodeDep>, n: &Expr) {
   let mut visitor = SymbolDepFillVisitor { deps };
   n.visit_with(&mut visitor);
 }
 
 struct SymbolDepFillVisitor<'a> {
-  deps: &'a mut Vec<SymbolDep>,
+  deps: &'a mut Vec<SymbolNodeDep>,
 }
 
 impl<'a> Visit for SymbolDepFillVisitor<'a> {
@@ -437,13 +437,13 @@ impl<'a> Visit for SymbolDepFillVisitor<'a> {
     };
     self
       .deps
-      .push(SymbolDep::ImportType(n.arg.value.to_string(), parts));
+      .push(SymbolNodeDep::ImportType(n.arg.value.to_string(), parts));
     n.type_args.visit_with(self);
   }
 
   fn visit_ts_qualified_name(&mut self, n: &TsQualifiedName) {
     let (id, parts) = ts_qualified_name_parts(n);
-    self.deps.push(SymbolDep::QualifiedId(id, parts));
+    self.deps.push(SymbolNodeDep::QualifiedId(id, parts));
   }
 }
 
@@ -458,37 +458,37 @@ mod test {
     let ident = Ident::dummy();
     // Id
     {
-      let dep = SymbolDep::Id(ident.to_id());
+      let dep = SymbolNodeDep::Id(ident.to_id());
       assert!(dep.pop_part().is_none());
     }
     // QualifiedId
     {
-      let dep = SymbolDep::QualifiedId(
+      let dep = SymbolNodeDep::QualifiedId(
         ident.to_id(),
         Vec::from(["part1".to_string(), "part2".to_string()]),
       );
       let dep = dep.pop_part().unwrap();
-      match dep {
-        SymbolDep::QualifiedId(_, parts) => assert_eq!(parts, ["part1"]),
+      match &dep {
+        SymbolNodeDep::QualifiedId(_, parts) => assert_eq!(parts, &["part1"]),
         _ => unreachable!(),
       }
       let dep = dep.pop_part().unwrap();
-      assert!(matches!(dep, SymbolDep::Id(_)));
+      assert!(matches!(dep, SymbolNodeDep::Id(_)));
     }
     // TypeImport
     {
-      let dep = SymbolDep::ImportType(
+      let dep = SymbolNodeDep::ImportType(
         "./src".to_string(),
         Vec::from(["part1".to_string(), "part2".to_string()]),
       );
       let dep = dep.pop_part().unwrap();
-      match dep {
-        SymbolDep::ImportType(_, parts) => assert_eq!(parts, ["part1"]),
+      match &dep {
+        SymbolNodeDep::ImportType(_, parts) => assert_eq!(parts, &["part1"]),
         _ => unreachable!(),
       }
       let dep = dep.pop_part().unwrap();
-      match dep {
-        SymbolDep::ImportType(_, parts) => assert_eq!(parts.len(), 0),
+      match &dep {
+        SymbolNodeDep::ImportType(_, parts) => assert_eq!(parts.len(), 0),
         _ => unreachable!(),
       }
       assert!(dep.pop_part().is_none());

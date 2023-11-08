@@ -51,7 +51,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -85,14 +84,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "B",
-                        #3,
-                    ),
-                ),
-            },
             child_ids: {
                 2,
             },
@@ -126,7 +117,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -157,7 +147,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -204,7 +193,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 2,
             },
@@ -241,7 +229,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -271,17 +258,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                QualifiedId(
-                    (
-                        "A",
-                        #2,
-                    ),
-                    [
-                        "B",
-                    ],
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},

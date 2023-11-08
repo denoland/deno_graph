@@ -63,7 +63,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 2,
@@ -122,14 +121,13 @@ file:///mod.ts: EsmModuleInfo {
                             122,
                         ),
                     },
-                    kind: DefinitionPrivateFnImpl(
+                    kind: Definition(
                         SymbolNode(
                             "export function test(value: string | number) {\n}",
                         ),
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -159,14 +157,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "inner",
-                        #6,
-                    ),
-                ),
-            },
             child_ids: {
                 3,
             },
@@ -223,14 +213,13 @@ file:///mod.ts: EsmModuleInfo {
                             275,
                         ),
                     },
-                    kind: DefinitionPrivateFnImpl(
+                    kind: Definition(
                         SymbolNode(
                             "export function inner(value: string | number) {\n  }",
                         ),
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -264,17 +253,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                QualifiedId(
-                    (
-                        "Inner",
-                        #2,
-                    ),
-                    [
-                        "inner",
-                    ],
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -305,7 +283,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},

@@ -49,7 +49,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 2,
@@ -85,20 +84,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Other",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "Other2",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -128,7 +113,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -158,7 +142,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},

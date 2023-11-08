@@ -56,7 +56,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 2,
@@ -91,17 +90,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                QualifiedId(
-                    (
-                        "Other",
-                        #2,
-                    ),
-                    [
-                        "Test",
-                    ],
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -131,20 +119,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Test",
-                        #3,
-                    ),
-                ),
-                Id(
-                    (
-                        "other",
-                        #3,
-                    ),
-                ),
-            },
             child_ids: {
                 3,
                 4,
@@ -180,7 +154,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -210,7 +183,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},

@@ -90,55 +90,55 @@ file:///mod.ts: EsmModuleInfo {
         (
             "PropValue",
             #2,
-        ): 12,
+        ): 14,
         (
             "ReturnValue",
             #2,
-        ): 13,
+        ): 15,
         (
             "Param",
             #2,
-        ): 14,
+        ): 16,
         (
             "PrivateParam",
             #2,
-        ): 15,
+        ): 17,
         (
             "PrivateReturn",
             #2,
-        ): 16,
+        ): 18,
         (
             "PrivateProp",
             #2,
-        ): 17,
+        ): 19,
         (
             "CtorProp",
             #2,
-        ): 18,
+        ): 20,
         (
             "OverloadParam",
             #2,
-        ): 19,
+        ): 21,
         (
             "OverloadReturn",
             #2,
-        ): 20,
+        ): 22,
         (
             "PrivateImplementationParam",
             #2,
-        ): 21,
+        ): 23,
         (
             "PrivateImplementationReturn",
             #2,
-        ): 22,
+        ): 24,
         (
             "ClassWithStatic",
             #2,
-        ): 23,
+        ): 25,
         (
             "ClassWithIndexSignatures",
             #2,
-        ): 25,
+        ): 27,
     },
     symbols: {
         0: Symbol {
@@ -164,15 +164,12 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 4,
                 5,
                 6,
                 7,
-                12,
-                13,
                 14,
                 15,
                 16,
@@ -183,7 +180,9 @@ file:///mod.ts: EsmModuleInfo {
                 21,
                 22,
                 23,
+                24,
                 25,
+                27,
             },
             exports: {
                 "A": 1,
@@ -215,7 +214,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 3,
             },
@@ -251,14 +249,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "B",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -288,14 +278,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "C",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -325,7 +307,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -355,7 +336,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -385,7 +365,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -415,27 +394,18 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "BBase",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "IBase",
-                        #2,
-                    ),
-                ),
-            },
-            child_ids: {},
-            exports: {},
-            members: {
+            child_ids: {
                 8,
+            },
+            exports: {
+                "%%dg_ctor%%": 8,
+            },
+            members: {
                 9,
                 10,
                 11,
+                12,
+                13,
             },
         },
         8: Symbol {
@@ -443,6 +413,35 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 8,
+            parent_id: Some(
+                7,
+            ),
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            152,
+                        ),
+                        end: SourcePos(
+                            190,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "private constructor(prop: CtorProp) {}",
+                        ),
+                    ),
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        9: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 9,
             parent_id: Some(
                 7,
             ),
@@ -462,24 +461,31 @@ file:///mod.ts: EsmModuleInfo {
                         ),
                     ),
                 },
-            ],
-            deps: {
-                Id(
-                    (
-                        "PropValue",
-                        #2,
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            340,
+                        ),
+                        end: SourcePos(
+                            366,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "private prop: PrivateProp;",
+                        ),
                     ),
-                ),
-            },
+                },
+            ],
             child_ids: {},
             exports: {},
             members: {},
         },
-        9: Symbol {
+        10: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 9,
+            symbol_id: 10,
             parent_id: Some(
                 7,
             ),
@@ -500,23 +506,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "ReturnValue",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
         },
-        10: Symbol {
+        11: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 10,
+            symbol_id: 11,
             parent_id: Some(
                 7,
             ),
@@ -537,23 +535,44 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Param",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
         },
-        11: Symbol {
+        12: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 11,
+            symbol_id: 12,
+            parent_id: Some(
+                7,
+            ),
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            280,
+                        ),
+                        end: SourcePos(
+                            336,
+                        ),
+                    },
+                    kind: Definition(
+                        SymbolNode(
+                            "private asdf(private: PrivateParam): PrivateReturn {\n  }",
+                        ),
+                    ),
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        13: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 13,
             parent_id: Some(
                 7,
             ),
@@ -589,41 +608,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "OverloadParam",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "OverloadReturn",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "PrivateImplementationParam",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "PrivateImplementationReturn",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
         },
-        12: Symbol {
+        14: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 12,
+            symbol_id: 14,
             parent_id: Some(
                 0,
             ),
@@ -644,16 +637,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
-        13: Symbol {
+        15: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 13,
+            symbol_id: 15,
             parent_id: Some(
                 0,
             ),
@@ -674,16 +666,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
-        14: Symbol {
+        16: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 14,
+            symbol_id: 16,
             parent_id: Some(
                 0,
             ),
@@ -704,16 +695,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
-        15: Symbol {
+        17: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 15,
+            symbol_id: 17,
             parent_id: Some(
                 0,
             ),
@@ -734,16 +724,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
-        16: Symbol {
+        18: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 16,
+            symbol_id: 18,
             parent_id: Some(
                 0,
             ),
@@ -764,16 +753,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
-        17: Symbol {
+        19: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 17,
+            symbol_id: 19,
             parent_id: Some(
                 0,
             ),
@@ -794,16 +782,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
-        18: Symbol {
+        20: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 18,
+            symbol_id: 20,
             parent_id: Some(
                 0,
             ),
@@ -824,16 +811,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
-        19: Symbol {
+        21: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 19,
+            symbol_id: 21,
             parent_id: Some(
                 0,
             ),
@@ -854,16 +840,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
-        20: Symbol {
+        22: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 20,
+            symbol_id: 22,
             parent_id: Some(
                 0,
             ),
@@ -884,16 +869,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
-        21: Symbol {
+        23: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 21,
+            symbol_id: 23,
             parent_id: Some(
                 0,
             ),
@@ -914,16 +898,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
-        22: Symbol {
+        24: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 22,
+            symbol_id: 24,
             parent_id: Some(
                 0,
             ),
@@ -944,16 +927,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
-        23: Symbol {
+        25: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 23,
+            symbol_id: 25,
             parent_id: Some(
                 0,
             ),
@@ -974,22 +956,21 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
-                24,
+                26,
             },
             exports: {
-                "prop": 24,
+                "prop": 26,
             },
             members: {},
         },
-        24: Symbol {
+        26: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 24,
+            symbol_id: 26,
             parent_id: Some(
-                23,
+                25,
             ),
             decls: [
                 SymbolDecl {
@@ -1008,16 +989,15 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
-        25: Symbol {
+        27: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 25,
+            symbol_id: 27,
             parent_id: Some(
                 0,
             ),
@@ -1038,24 +1018,23 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
-                26,
+                28,
             },
             exports: {
-                "%%dg_index%%": 26,
+                "%%dg_index%%": 28,
             },
             members: {
-                27,
+                29,
             },
         },
-        26: Symbol {
+        28: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 26,
+            symbol_id: 28,
             parent_id: Some(
-                25,
+                27,
             ),
             decls: [
                 SymbolDecl {
@@ -1074,25 +1053,17 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "value",
-                        #1,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
         },
-        27: Symbol {
+        29: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 27,
+            symbol_id: 29,
             parent_id: Some(
-                25,
+                27,
             ),
             decls: [
                 SymbolDecl {
@@ -1126,14 +1097,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "value",
-                        #1,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},

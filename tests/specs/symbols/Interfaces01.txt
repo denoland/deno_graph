@@ -84,7 +84,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 2,
@@ -125,7 +124,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -155,14 +153,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Extends",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {
@@ -196,14 +186,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Prop",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -233,26 +215,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "method",
-                        #1,
-                    ),
-                ),
-                Id(
-                    (
-                        "Param",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "Return",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -282,20 +244,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "key",
-                        #1,
-                    ),
-                ),
-                Id(
-                    (
-                        "SignatureValueType",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -325,7 +273,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -355,7 +302,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -385,7 +331,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -415,7 +360,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -445,7 +389,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -477,14 +420,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "B",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -514,7 +449,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},

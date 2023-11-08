@@ -72,7 +72,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 2,
             },
@@ -110,7 +109,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -140,14 +138,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "test",
-                        #3,
-                    ),
-                ),
-            },
             child_ids: {
                 3,
             },
@@ -181,7 +171,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -215,17 +204,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                QualifiedId(
-                    (
-                        "Test",
-                        #2,
-                    ),
-                    [
-                        "test",
-                    ],
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -259,17 +237,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                QualifiedId(
-                    (
-                        "Test",
-                        #2,
-                    ),
-                    [
-                        "NotFound",
-                    ],
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -302,7 +269,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -336,17 +302,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                QualifiedId(
-                    (
-                        "other",
-                        #2,
-                    ),
-                    [
-                        "NotFound",
-                    ],
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -389,7 +344,6 @@ file:///other.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -423,7 +377,6 @@ file:///other.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},

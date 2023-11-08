@@ -63,7 +63,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 2,
@@ -101,7 +100,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -131,20 +129,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "f",
-                        #0,
-                    ),
-                ),
-                Id(
-                    (
-                        "g",
-                        #0,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -174,20 +158,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "a",
-                        #0,
-                    ),
-                ),
-                Id(
-                    (
-                        "b",
-                        #0,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -217,20 +187,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "a",
-                        #0,
-                    ),
-                ),
-                Id(
-                    (
-                        "b",
-                        #0,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},

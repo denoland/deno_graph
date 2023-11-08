@@ -70,7 +70,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -121,20 +120,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "test",
-                        #3,
-                    ),
-                ),
-                Id(
-                    (
-                        "Inner",
-                        #5,
-                    ),
-                ),
-            },
             child_ids: {
                 2,
                 3,
@@ -170,7 +155,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -200,20 +184,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Namespace1",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "test2",
-                        #5,
-                    ),
-                ),
-            },
             child_ids: {
                 4,
             },
@@ -247,7 +217,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -281,17 +250,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                QualifiedId(
-                    (
-                        "Namespace1",
-                        #2,
-                    ),
-                    [
-                        "test",
-                    ],
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -326,18 +284,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                QualifiedId(
-                    (
-                        "Namespace1",
-                        #2,
-                    ),
-                    [
-                        "Inner",
-                        "test2",
-                    ],
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -368,7 +314,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -399,7 +344,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},

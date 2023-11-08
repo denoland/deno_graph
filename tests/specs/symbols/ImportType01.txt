@@ -51,7 +51,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -85,14 +84,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "B",
-                        #3,
-                    ),
-                ),
-            },
             child_ids: {
                 2,
             },
@@ -126,7 +117,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -158,7 +148,6 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -201,7 +190,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -235,7 +223,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -267,15 +254,6 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                ImportType(
-                    "./a.ts",
-                    [
-                        "A",
-                        "B",
-                    ],
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},

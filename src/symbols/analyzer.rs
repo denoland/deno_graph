@@ -37,8 +37,7 @@ use super::cross_module::DefinitionPath;
 use super::cross_module::ExportsAndReExports;
 use super::swc_helpers::ts_entity_name_to_parts;
 use super::ResolvedSymbolDepEntry;
-use super::SymbolDep;
-use super::SymbolDepRef;
+use super::SymbolNodeDep;
 
 /// The root symbol from which module symbols can be retrieved.
 ///
@@ -148,7 +147,7 @@ impl<'a> RootSymbol<'a> {
     &'b self,
     module: ModuleInfoRef<'b>,
     symbol: &'b Symbol,
-    dep: &'c SymbolDep,
+    dep: &'c SymbolNodeDep,
   ) -> Vec<ResolvedSymbolDepEntry<'b>> {
     super::cross_module::resolve_symbol_dep(
       self.module_graph,
@@ -702,6 +701,10 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::TsMethodSignature(_) => false,
     }
   }
+
+  pub fn deps(&self) -> Vec<SymbolNodeDep> {
+    super::dep_analyzer::resolve_deps(*self)
+  }
 }
 
 #[derive(Debug, Clone)]
@@ -925,6 +928,11 @@ impl Symbol {
   /// if they have the same name via declaration merging.
   pub fn decls(&self) -> &[SymbolDecl] {
     &self.decls
+  }
+
+  /// Gets the nodes of the declarations.
+  pub fn decl_nodes(&self) -> impl Iterator<Item = SymbolNodeRef> + '_ {
+    self.decls.iter().filter_map(|d| d.maybe_node())
   }
 
   /// Gets a set of the members.
@@ -1433,8 +1441,6 @@ struct SymbolFiller<'a> {
 
 impl<'a> SymbolFiller<'a> {
   fn fill(&self, module: &Module) {
-    let mut last_was_overload = false;
-    let mut last_override_key = 0;
     let module_symbol = self.builder.create_new_symbol_for_root();
     module_symbol.add_decl(SymbolDecl {
       kind: SymbolDeclKind::Definition(SymbolNode(SymbolNodeInner::Module(
@@ -1851,16 +1857,6 @@ impl<'a> SymbolFiller<'a> {
         ModuleDecl::TsImportEquals(import_equals) => {
           let symbol_id =
             self.ensure_symbol_for_import_equals(import_equals, module_symbol);
-          let symbol = self.builder.symbol_mut(symbol_id).unwrap();
-          match &import_equals.module_ref {
-            TsModuleRef::TsEntityName(entity_name) => {
-              let (leftmost_id, parts) = ts_entity_name_to_parts(entity_name);
-              symbol.add_dep(SymbolDep::QualifiedId(leftmost_id, parts));
-            }
-            TsModuleRef::TsExternalModuleRef(_) => {
-              // don't need to do anything in this case
-            }
-          }
           if import_equals.is_export {
             module_symbol
               .add_export(import_equals.id.sym.to_string(), symbol_id);
@@ -2135,43 +2131,43 @@ impl<'a> SymbolFiller<'a> {
     for member in &n.body.body {
       match member {
         TsTypeElement::TsCallSignatureDecl(n) => {
-          let member = self.create_symbol_member_or_export(
+          self.create_symbol_member_or_export(
             symbol,
             SymbolNodeRef::TsCallSignatureDecl(n),
           );
         }
         TsTypeElement::TsConstructSignatureDecl(n) => {
-          let member = self.create_symbol_member_or_export(
+          self.create_symbol_member_or_export(
             symbol,
             SymbolNodeRef::TsConstructSignatureDecl(n),
           );
         }
         TsTypeElement::TsPropertySignature(n) => {
-          let member = self.create_symbol_member_or_export(
+          self.create_symbol_member_or_export(
             symbol,
             SymbolNodeRef::TsPropertySignature(n),
           );
         }
         TsTypeElement::TsIndexSignature(n) => {
-          let member = self.create_symbol_member_or_export(
+          self.create_symbol_member_or_export(
             symbol,
             SymbolNodeRef::TsIndexSignature(n),
           );
         }
         TsTypeElement::TsMethodSignature(n) => {
-          let member = self.create_symbol_member_or_export(
+          self.create_symbol_member_or_export(
             symbol,
             SymbolNodeRef::TsMethodSignature(n),
           );
         }
         TsTypeElement::TsGetterSignature(n) => {
-          let member = self.create_symbol_member_or_export(
+          self.create_symbol_member_or_export(
             symbol,
             SymbolNodeRef::TsGetterSignature(n),
           );
         }
         TsTypeElement::TsSetterSignature(n) => {
-          let member = self.create_symbol_member_or_export(
+          self.create_symbol_member_or_export(
             symbol,
             SymbolNodeRef::TsSetterSignature(n),
           );
@@ -2226,12 +2222,12 @@ impl<'a> SymbolFiller<'a> {
           }
         }
       };
-      let mut last_was_overload = false;
-      let mut last_override_key = 0;
+
       for item in &block.body {
         self.fill_module_item(item, mod_symbol);
       }
     }
+
     Some(mod_symbol.symbol_id())
   }
 
