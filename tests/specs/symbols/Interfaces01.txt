@@ -455,7 +455,7 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-== symbol decls ==
+== symbol deps ==
 2:17..142 [Id(("Extends", #2))]
 3:59..70 [Id(("Prop", #2))]
 4:73..103 [Id(("method", #1)), Id(("Param", #2)), Id(("Return", #2))]

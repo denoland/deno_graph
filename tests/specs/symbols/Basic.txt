@@ -368,7 +368,7 @@ file:///a.ts: EsmModuleInfo {
         },
     },
 }
-== symbol decls ==
+== symbol deps ==
 6:102..115 [Id(("AInner", #2))]
 9:173..198 [Id(("C", #2))]
 
@@ -620,7 +620,7 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-== symbol decls ==
+== symbol deps ==
 4:48..69 [Id(("A", #2))]
 5:78..85 [Id(("B", #2))]
 

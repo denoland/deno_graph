@@ -242,7 +242,7 @@ file:///a.ts: EsmModuleInfo {
         },
     },
 }
-== symbol decls ==
+== symbol deps ==
 3:51..64 [Id(("Prop2", #2))]
 
 file:///mod.ts: EsmModuleInfo {
@@ -496,7 +496,7 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-== symbol decls ==
+== symbol deps ==
 2:42..55 [Id(("Prop1", #2))]
 3:77..90 [Id(("Prop2", #2))]
 

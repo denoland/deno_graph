@@ -193,7 +193,7 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-== symbol decls ==
+== symbol deps ==
 2:34..81 [Id(("f", #0)), Id(("g", #0))]
 3:97..232 [Id(("a", #0)), Id(("b", #0))]
 4:97..232 [Id(("a", #0)), Id(("b", #0))]

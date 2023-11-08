@@ -316,7 +316,7 @@ impl TestBuilder {
           }
           if !symbol_deps_text.is_empty() {
             output_text
-              .push_str(&format!("== symbol decls ==\n{}\n", symbol_deps_text));
+              .push_str(&format!("== symbol deps ==\n{}\n", symbol_deps_text));
           }
 
           // analyze the module graph for any problems
