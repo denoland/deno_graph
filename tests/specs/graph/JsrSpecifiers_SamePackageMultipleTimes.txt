@@ -7,12 +7,15 @@
 
 # https://registry-staging.deno.com/@scope/a/1.0.0_meta.json
 {
+  "exports": {
+    ".": "./mod.ts"
+  },
   "moduleGraph1": {
     "/mod.ts": {
       "dependencies": [{
           "kind": "import",
           "range": [[1, 2], [3, 4]],
-          "specifier": "jsr:@scope/b@1/mod.ts",
+          "specifier": "jsr:@scope/b@1",
           "specifierRange": [[5, 6], [7, 8]]
       }]
     }
@@ -30,17 +33,21 @@
 }
 
 # https://registry-staging.deno.com/@scope/b/1.1.0_meta.json
-{}
+{
+  "exports": {
+    ".": "./mod.ts"
+  }
+}
 
 # https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
-import "jsr:@scope/b@1/mod.ts";
+import "jsr:@scope/b@1";
 
 # https://registry-staging.deno.com/@scope/b/1.1.0/mod.ts
 console.log(1);
 
 # mod.ts
-import "jsr:@scope/a@^1.0/mod.ts";
-import "jsr:@scope/b@1.1/mod.ts";
+import "jsr:@scope/a@^1.0";
+import "jsr:@scope/b@1.1";
 
 # output
 {
@@ -52,9 +59,9 @@ import "jsr:@scope/b@1.1/mod.ts";
       "kind": "esm",
       "dependencies": [
         {
-          "specifier": "jsr:@scope/a@^1.0/mod.ts",
+          "specifier": "jsr:@scope/a@^1.0",
           "code": {
-            "specifier": "jsr:@scope/a@^1.0/mod.ts",
+            "specifier": "jsr:@scope/a@^1.0",
             "span": {
               "start": {
                 "line": 0,
@@ -62,15 +69,15 @@ import "jsr:@scope/b@1.1/mod.ts";
               },
               "end": {
                 "line": 0,
-                "character": 33
+                "character": 26
               }
             }
           }
         },
         {
-          "specifier": "jsr:@scope/b@1.1/mod.ts",
+          "specifier": "jsr:@scope/b@1.1",
           "code": {
-            "specifier": "jsr:@scope/b@1.1/mod.ts",
+            "specifier": "jsr:@scope/b@1.1",
             "span": {
               "start": {
                 "line": 1,
@@ -78,13 +85,13 @@ import "jsr:@scope/b@1.1/mod.ts";
               },
               "end": {
                 "line": 1,
-                "character": 32
+                "character": 25
               }
             }
           }
         }
       ],
-      "size": 69,
+      "size": 55,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
     },
@@ -92,9 +99,9 @@ import "jsr:@scope/b@1.1/mod.ts";
       "kind": "esm",
       "dependencies": [
         {
-          "specifier": "jsr:@scope/b@1/mod.ts",
+          "specifier": "jsr:@scope/b@1",
           "code": {
-            "specifier": "jsr:@scope/b@1/mod.ts",
+            "specifier": "jsr:@scope/b@1",
             "span": {
               "start": {
                 "line": 5,
@@ -108,7 +115,7 @@ import "jsr:@scope/b@1.1/mod.ts";
           }
         }
       ],
-      "size": 32,
+      "size": 25,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
     },
@@ -120,9 +127,9 @@ import "jsr:@scope/b@1.1/mod.ts";
     }
   ],
   "redirects": {
-    "jsr:@scope/a@^1.0/mod.ts": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts",
-    "jsr:@scope/b@1.1/mod.ts": "https://registry-staging.deno.com/@scope/b/1.1.0/mod.ts",
-    "jsr:@scope/b@1/mod.ts": "https://registry-staging.deno.com/@scope/b/1.1.0/mod.ts"
+    "jsr:@scope/a@^1.0": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts",
+    "jsr:@scope/b@1": "https://registry-staging.deno.com/@scope/b/1.1.0/mod.ts",
+    "jsr:@scope/b@1.1": "https://registry-staging.deno.com/@scope/b/1.1.0/mod.ts"
   },
   "packages": {
     "@scope/a@^1.0": "@scope/a@1.0.0",
