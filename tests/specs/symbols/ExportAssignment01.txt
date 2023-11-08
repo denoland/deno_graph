@@ -24,6 +24,7 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
+            parent_id: None,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -55,6 +56,9 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 1,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -71,6 +75,21 @@ file:///mod.ts: EsmModuleInfo {
                         ),
                     ),
                 },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        2: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 2,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -89,41 +108,6 @@ file:///mod.ts: EsmModuleInfo {
                 },
             ],
             deps: {},
-            child_ids: {},
-            exports: {},
-            members: {},
-        },
-        2: Symbol {
-            module_id: ModuleId(
-                0,
-            ),
-            symbol_id: 2,
-            decls: [
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            66,
-                        ),
-                        end: SourcePos(
-                            80,
-                        ),
-                    },
-                    kind: Target(
-                        (
-                            "test",
-                            #2,
-                        ),
-                    ),
-                },
-            ],
-            deps: {
-                Id(
-                    (
-                        "test",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},

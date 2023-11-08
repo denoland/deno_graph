@@ -29,6 +29,7 @@ file:///mod.d.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
+            parent_id: None,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -60,6 +61,9 @@ file:///mod.d.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 1,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -89,6 +93,9 @@ file:///mod.d.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 2,
+            parent_id: Some(
+                1,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -131,6 +138,7 @@ file:///mod.js: EsmModuleInfo {
                 1,
             ),
             symbol_id: 0,
+            parent_id: None,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -162,6 +170,9 @@ file:///mod.js: EsmModuleInfo {
                 1,
             ),
             symbol_id: 1,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {

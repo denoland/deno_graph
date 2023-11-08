@@ -33,6 +33,7 @@ file:///a.ts: EsmModuleInfo {
                 1,
             ),
             symbol_id: 0,
+            parent_id: None,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -64,6 +65,9 @@ file:///a.ts: EsmModuleInfo {
                 1,
             ),
             symbol_id: 1,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -77,22 +81,6 @@ file:///a.ts: EsmModuleInfo {
                     kind: Definition(
                         SymbolNode(
                             "namespace MyNamespace {\n  export function B() {}\n}",
-                        ),
-                    ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            61,
-                        ),
-                        end: SourcePos(
-                            72,
-                        ),
-                    },
-                    kind: Target(
-                        (
-                            "MyNamespace",
-                            #2,
                         ),
                     ),
                 },
@@ -118,6 +106,9 @@ file:///a.ts: EsmModuleInfo {
                 1,
             ),
             symbol_id: 2,
+            parent_id: Some(
+                1,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -145,14 +136,17 @@ file:///a.ts: EsmModuleInfo {
                 1,
             ),
             symbol_id: 3,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            52,
+                            61,
                         ),
                         end: SourcePos(
-                            73,
+                            72,
                         ),
                     },
                     kind: Target(
@@ -163,14 +157,7 @@ file:///a.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "MyNamespace",
-                        #2,
-                    ),
-                ),
-            },
+            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -199,6 +186,7 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 0,
+            parent_id: None,
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -230,6 +218,9 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 1,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
@@ -260,6 +251,9 @@ file:///mod.ts: EsmModuleInfo {
                 0,
             ),
             symbol_id: 2,
+            parent_id: Some(
+                0,
+            ),
             decls: [
                 SymbolDecl {
                     range: SourceRange {
