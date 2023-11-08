@@ -10,12 +10,12 @@ use crate::ModuleGraph;
 use crate::ModuleSpecifier;
 
 use super::analyzer::SymbolDeclKind;
-use super::analyzer::SymbolDep;
 use super::FileDep;
 use super::FileDepName;
 use super::ModuleInfoRef;
 use super::Symbol;
 use super::SymbolDecl;
+use super::SymbolDepRef;
 use super::SymbolId;
 use super::UniqueSymbolId;
 
@@ -40,10 +40,6 @@ pub struct Definition<'a> {
 }
 
 impl<'a> Definition<'a> {
-  pub fn unique_id(&self) -> UniqueSymbolId {
-    self.symbol.unique_id()
-  }
-
   pub fn range(&self) -> &SourceRange {
     &self.symbol_decl.range
   }
@@ -121,11 +117,11 @@ impl<'a> DefinitionPath<'a> {
   pub fn into_definitions_or_unresolveds(
     self,
   ) -> impl Iterator<Item = DefinitionOrUnresolved<'a>> {
-    struct IntoDefinitionIterator<'a> {
+    struct IntoIterator<'a> {
       queue: VecDeque<DefinitionPath<'a>>,
     }
 
-    impl<'a> Iterator for IntoDefinitionIterator<'a> {
+    impl<'a> Iterator for IntoIterator<'a> {
       type Item = DefinitionOrUnresolved<'a>;
 
       fn next(&mut self) -> Option<Self::Item> {
@@ -149,7 +145,7 @@ impl<'a> DefinitionPath<'a> {
       }
     }
 
-    IntoDefinitionIterator {
+    IntoIterator {
       queue: VecDeque::from([self]),
     }
   }
@@ -339,11 +335,11 @@ pub fn resolve_symbol_dep<'a>(
   module_graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
   symbol: &'a Symbol,
-  dep: &'a SymbolDep,
+  dep: SymbolDepRef<'a>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<ResolvedSymbolDepEntry<'a>> {
   match dep {
-    SymbolDep::Id(id) => {
+    SymbolDepRef::Id(id) => {
       if let Some(dep_symbol) = module.esm().and_then(|m| m.symbol_from_swc(id))
       {
         find_definition_paths(
@@ -366,18 +362,20 @@ pub fn resolve_symbol_dep<'a>(
         ))]
       }
     }
-    SymbolDep::QualifiedId(id, parts) => go_to_id_and_parts_definition_paths(
-      module_graph,
-      module,
-      symbol,
-      id,
-      parts,
-      specifier_to_module,
-    )
-    .into_iter()
-    .map(ResolvedSymbolDepEntry::Path)
-    .collect(),
-    SymbolDep::ImportType(import_specifier, parts) => {
+    SymbolDepRef::QualifiedId(id, parts) => {
+      go_to_id_and_parts_definition_paths(
+        module_graph,
+        module,
+        symbol,
+        id,
+        parts,
+        specifier_to_module,
+      )
+      .into_iter()
+      .map(ResolvedSymbolDepEntry::Path)
+      .collect()
+    }
+    SymbolDepRef::ImportType(import_specifier, parts) => {
       let maybe_dep_specifier = module_graph.resolve_dependency(
         import_specifier,
         module.specifier(),

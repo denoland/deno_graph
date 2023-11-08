@@ -12,6 +12,8 @@ pub use self::analyzer::RootSymbol;
 pub use self::analyzer::Symbol;
 pub use self::analyzer::SymbolDecl;
 pub use self::analyzer::SymbolDeclKind;
+pub use self::analyzer::SymbolDep;
+pub use self::analyzer::SymbolDepRef;
 pub use self::analyzer::SymbolFillDiagnostic;
 pub use self::analyzer::SymbolFillDiagnosticKind;
 pub use self::analyzer::SymbolId;

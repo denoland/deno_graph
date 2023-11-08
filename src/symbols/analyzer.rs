@@ -149,7 +149,7 @@ impl<'a> RootSymbol<'a> {
     &'b self,
     module: ModuleInfoRef<'b>,
     symbol: &'b Symbol,
-    dep: &'b SymbolDep,
+    dep: SymbolDepRef<'b>,
   ) -> Vec<ResolvedSymbolDepEntry<'b>> {
     super::cross_module::resolve_symbol_dep(
       self.module_graph,
@@ -496,7 +496,6 @@ pub enum SymbolNodeRef<'a> {
   TsTypeAlias(&'a TsTypeAliasDecl),
   Var(&'a VarDecl, &'a VarDeclarator, &'a Ident),
   // members
-  // todo(dsherret): split this up into two separate enums (one for declarations and one for members)
   AutoAccessor(&'a AutoAccessor),
   ClassMethod(&'a ClassMethod),
   ClassProp(&'a ClassProp),
@@ -596,7 +595,7 @@ impl<'a> SymbolNodeRef<'a> {
     }
   }
 
-  // If the decl is a class.
+  /// If the node is a class.
   pub fn is_class(&self) -> bool {
     matches!(
       self,
@@ -607,6 +606,67 @@ impl<'a> SymbolNodeRef<'a> {
           ..
         })
     )
+  }
+
+  /// If the node is a declaration that can be found in a module.
+  pub fn is_module(&self) -> bool {
+    matches!(self, SymbolNodeRef::Module(_))
+  }
+
+  /// If the node is a declaration that can be found in a module.
+  pub fn is_decl(&self) -> bool {
+    match self {
+      SymbolNodeRef::Module(_) => false,
+      SymbolNodeRef::ClassDecl(_)
+      | SymbolNodeRef::ExportDecl(_, _)
+      | SymbolNodeRef::ExportDefaultDecl(_)
+      | SymbolNodeRef::ExportDefaultExprLit(_, _)
+      | SymbolNodeRef::FnDecl(_)
+      | SymbolNodeRef::TsEnum(_)
+      | SymbolNodeRef::TsInterface(_)
+      | SymbolNodeRef::TsNamespace(_)
+      | SymbolNodeRef::TsTypeAlias(_)
+      | SymbolNodeRef::Var(_, _, _) => true,
+      SymbolNodeRef::AutoAccessor(_)
+      | SymbolNodeRef::ClassMethod(_)
+      | SymbolNodeRef::ClassProp(_)
+      | SymbolNodeRef::Constructor(_)
+      | SymbolNodeRef::TsIndexSignature(_)
+      | SymbolNodeRef::TsCallSignatureDecl(_)
+      | SymbolNodeRef::TsConstructSignatureDecl(_)
+      | SymbolNodeRef::TsPropertySignature(_)
+      | SymbolNodeRef::TsGetterSignature(_)
+      | SymbolNodeRef::TsSetterSignature(_)
+      | SymbolNodeRef::TsMethodSignature(_) => false,
+    }
+  }
+
+  /// If the node is a member found in a class or interface.
+  pub fn is_member(&self) -> bool {
+    match self {
+      SymbolNodeRef::Module(_)
+      | SymbolNodeRef::ClassDecl(_)
+      | SymbolNodeRef::ExportDecl(_, _)
+      | SymbolNodeRef::ExportDefaultDecl(_)
+      | SymbolNodeRef::ExportDefaultExprLit(_, _)
+      | SymbolNodeRef::FnDecl(_)
+      | SymbolNodeRef::TsEnum(_)
+      | SymbolNodeRef::TsInterface(_)
+      | SymbolNodeRef::TsNamespace(_)
+      | SymbolNodeRef::TsTypeAlias(_)
+      | SymbolNodeRef::Var(_, _, _) => false,
+      SymbolNodeRef::AutoAccessor(_)
+      | SymbolNodeRef::ClassMethod(_)
+      | SymbolNodeRef::ClassProp(_)
+      | SymbolNodeRef::Constructor(_)
+      | SymbolNodeRef::TsIndexSignature(_)
+      | SymbolNodeRef::TsCallSignatureDecl(_)
+      | SymbolNodeRef::TsConstructSignatureDecl(_)
+      | SymbolNodeRef::TsPropertySignature(_)
+      | SymbolNodeRef::TsGetterSignature(_)
+      | SymbolNodeRef::TsSetterSignature(_)
+      | SymbolNodeRef::TsMethodSignature(_) => true,
+    }
   }
 }
 
@@ -761,6 +821,59 @@ impl SymbolDecl {
   }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum SymbolDepRef<'a> {
+  Id(&'a Id),
+  QualifiedId(&'a Id, &'a [String]),
+  ImportType(&'a str, &'a [String]),
+}
+
+impl<'a> SymbolDepRef<'a> {
+  /// Gets the current reference and any qualified names it has.
+  ///
+  /// For example, given `MyNamespace.Test.Other`, this will return:
+  /// * `MyNamespace`
+  /// * `MyNamespace.Test`
+  /// * `MyNamespace.Test.Other`
+  pub fn all_qualified_names(&self) -> Vec<SymbolDepRef<'a>> {
+    let mut deps = Vec::from([*self]);
+    let mut current_dep = *self;
+    while let Some(dep) = current_dep.pop_part() {
+      deps.push(dep);
+      current_dep = dep;
+    }
+    deps.reverse();
+    deps
+  }
+
+  /// Pops a part from the right side of a SymbolDepRef.
+  ///
+  /// For example, `QualifedId(MyNamespace.Test.Other)` will go to
+  /// `QualifiedId(MyNamespace.Test)`. Then that will go to `Id(MyNamespace)`.
+  pub fn pop_part(&self) -> Option<SymbolDepRef<'a>> {
+    match self {
+      SymbolDepRef::Id(_) => None,
+      SymbolDepRef::QualifiedId(id, parts) => {
+        if parts.len() <= 1 {
+          Some(SymbolDepRef::Id(id))
+        } else {
+          Some(SymbolDepRef::QualifiedId(id, &parts[..parts.len() - 1]))
+        }
+      }
+      SymbolDepRef::ImportType(specifier, parts) => {
+        if parts.is_empty() {
+          None
+        } else {
+          Some(SymbolDepRef::ImportType(
+            specifier,
+            &parts[..parts.len() - 1],
+          ))
+        }
+      }
+    }
+  }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SymbolDep {
   Id(Id),
@@ -771,6 +884,18 @@ pub enum SymbolDep {
 impl From<Id> for SymbolDep {
   fn from(value: Id) -> Self {
     Self::Id(value)
+  }
+}
+
+impl SymbolDep {
+  pub fn as_ref(&self) -> SymbolDepRef {
+    match self {
+      SymbolDep::Id(id) => SymbolDepRef::Id(id),
+      SymbolDep::QualifiedId(id, parts) => SymbolDepRef::QualifiedId(id, parts),
+      SymbolDep::ImportType(specifier, parts) => {
+        SymbolDepRef::ImportType(specifier, parts)
+      }
+    }
   }
 }
 
@@ -876,6 +1001,36 @@ impl Symbol {
       }
     }
     None
+  }
+
+  /// If the symbol is a declaration that can be found in a module.
+  pub fn is_module(&self) -> bool {
+    self
+      .decls()
+      .first()
+      .and_then(|d| d.maybe_node())
+      .map(|n| n.is_module())
+      .unwrap_or(false)
+  }
+
+  /// If the symbol is a declaration that can be found in a module.
+  pub fn is_decl(&self) -> bool {
+    self
+      .decls()
+      .first()
+      .and_then(|d| d.maybe_node())
+      .map(|n| n.is_decl())
+      .unwrap_or(false)
+  }
+
+  /// If the symbol is a member found in a class or interface.
+  pub fn is_member(&self) -> bool {
+    self
+      .decls()
+      .first()
+      .and_then(|d| d.maybe_node())
+      .map(|n| n.is_member())
+      .unwrap_or(false)
   }
 }
 
@@ -3009,5 +3164,57 @@ fn decl_overload_key(decl: &Decl) -> u64 {
       hasher.finish()
     }
     _ => 0,
+  }
+}
+
+#[cfg(test)]
+mod test {
+  use deno_ast::swc::common::util::take::Take;
+
+  use super::*;
+
+  #[test]
+  fn test_symbol_dep_ref_pop_part() {
+    let ident = Ident::dummy();
+    // Id
+    {
+      let dep = SymbolDep::Id(ident.to_id());
+      let dep_ref = dep.as_ref();
+      assert!(dep_ref.pop_part().is_none());
+    }
+    // QualifiedId
+    {
+      let dep = SymbolDep::QualifiedId(
+        ident.to_id(),
+        Vec::from(["part1".to_string(), "part2".to_string()]),
+      );
+      let dep_ref = dep.as_ref();
+      let dep_ref = dep_ref.pop_part().unwrap();
+      match dep_ref {
+        SymbolDepRef::QualifiedId(_, parts) => assert_eq!(parts, ["part1"]),
+        _ => unreachable!(),
+      }
+      let dep_ref = dep_ref.pop_part().unwrap();
+      assert!(matches!(dep_ref, SymbolDepRef::Id(_)));
+    }
+    // TypeImport
+    {
+      let dep = SymbolDep::ImportType(
+        "./src".to_string(),
+        Vec::from(["part1".to_string(), "part2".to_string()]),
+      );
+      let dep_ref = dep.as_ref();
+      let dep_ref = dep_ref.pop_part().unwrap();
+      match dep_ref {
+        SymbolDepRef::ImportType(_, parts) => assert_eq!(parts, ["part1"]),
+        _ => unreachable!(),
+      }
+      let dep_ref = dep_ref.pop_part().unwrap();
+      match dep_ref {
+        SymbolDepRef::ImportType(_, parts) => assert_eq!(parts.len(), 0),
+        _ => unreachable!(),
+      }
+      assert!(dep_ref.pop_part().is_none());
+    }
   }
 }

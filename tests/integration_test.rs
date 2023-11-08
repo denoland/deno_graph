@@ -192,7 +192,7 @@ export class MyClass {
     let mut resolved_deps = root_symbol.resolve_symbol_dep(
       resolved_type.module,
       type_symbol,
-      deps[0],
+      deps[0].as_ref(),
     );
     assert_eq!(resolved_deps.len(), 1);
     let resolved_dep = resolved_deps.remove(0);
