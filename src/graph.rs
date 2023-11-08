@@ -249,7 +249,7 @@ impl fmt::Display for ModuleError {
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {diagnostic}"),
       Self::UnknownExport { export_name, exports, nv, specifier, .. } => {
         let exports_text = exports.iter().map(|e| format!(" * {}", e)).collect::<Vec<_>>().join("\n");
-        write!(f, "Unknown export for {nv}: {export_name}\n  Specifier: {specifier}\n  Exports:\n{exports_text}")
+        write!(f, "Unknown export '{export_name}' for '{nv}'.\n  Specifier: {specifier}\n  Package exports:\n{exports_text}")
       }
       Self::UnknownPackage { package_name, specifier, .. } =>
         write!(f, "Unknown package: {package_name}\n  Specifier: {specifier}"),
