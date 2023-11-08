@@ -25,6 +25,22 @@ pub enum DefinitionOrUnresolved<'a> {
   Unresolved(DefinitionUnresolved<'a>),
 }
 
+impl<'a> DefinitionOrUnresolved<'a> {
+  pub fn module(&self) -> ModuleInfoRef<'a> {
+    match self {
+      DefinitionOrUnresolved::Definition(def) => def.module,
+      DefinitionOrUnresolved::Unresolved(unresolved) => unresolved.module,
+    }
+  }
+
+  pub fn symbol(&self) -> &'a Symbol {
+    match self {
+      DefinitionOrUnresolved::Definition(def) => def.symbol,
+      DefinitionOrUnresolved::Unresolved(unresolved) => unresolved.symbol,
+    }
+  }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DefinitionKind<'a> {
   ExportStar(&'a FileDep),
