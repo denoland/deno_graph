@@ -54,7 +54,6 @@ file:///a.ts: EsmModuleInfo {
             deps: {},
             child_ids: {
                 1,
-                3,
             },
             exports: {
                 "default": 3,
@@ -202,10 +201,7 @@ file:///mod.ts: EsmModuleInfo {
                 },
             ],
             deps: {},
-            child_ids: {
-                1,
-                2,
-            },
+            child_ids: {},
             exports: {
                 "default": 2,
             },

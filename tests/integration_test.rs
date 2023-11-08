@@ -162,8 +162,12 @@ async fn test_symbols_dep_definition() {
         "file:///mod.ts",
         r#"
 export type MyType = typeof MyClass;
+export type MyTypeProp = typeof MyClass.staticProp;
+export type MyTypeIndexAccess = typeof MyClass["staticProp"];
+export type PrototypeAccess = typeof MyClass.prototype.instanceProp;
 
 export class MyClass {
+  instanceProp: string = "";
   static staticProp: string = "";
 }
 "#,
@@ -179,28 +183,45 @@ export class MyClass {
     )
     .unwrap();
   let exports = module.exports(&root_symbol);
-  let resolved_my_type = exports.resolved.get("MyType").unwrap();
-  let my_type_symbol = resolved_my_type.symbol();
-  let deps = my_type_symbol.deps().collect::<Vec<_>>();
-  assert_eq!(deps.len(), 1);
-  let dep = &deps[0];
-  let mut resolved_deps = root_symbol.resolve_symbol_dep(
-    resolved_my_type.module,
-    my_type_symbol,
-    dep,
-  );
-  assert_eq!(resolved_deps.len(), 1);
-  let resolved_dep = resolved_deps.remove(0);
-  let path = match resolved_dep {
-    ResolvedSymbolDepEntry::DefinitionPath(p) => p,
-    ResolvedSymbolDepEntry::ImportType(_) => unreachable!(),
+
+  let resolve_single_definition_text = |name: &str| -> String {
+    let resolved_type = exports.resolved.get(name).unwrap();
+    let type_symbol = resolved_type.symbol();
+    let deps = type_symbol.deps().collect::<Vec<_>>();
+    assert_eq!(deps.len(), 1);
+    let mut resolved_deps = root_symbol.resolve_symbol_dep(
+      resolved_type.module,
+      type_symbol,
+      &deps[0],
+    );
+    assert_eq!(resolved_deps.len(), 1);
+    let resolved_dep = resolved_deps.remove(0);
+    let path = match resolved_dep {
+      ResolvedSymbolDepEntry::Path(p) => p,
+      ResolvedSymbolDepEntry::ImportType(_) => unreachable!(),
+    };
+    let definitions = path.into_definitions().collect::<Vec<_>>();
+    assert_eq!(definitions.len(), 1);
+    let definition = &definitions[0];
+    definition.text().to_string()
   };
-  let definitions = path.into_definitions().collect::<Vec<_>>();
-  assert_eq!(definitions.len(), 1);
-  let definition = &definitions[0];
+
+  let class_text =
+    "export class MyClass {\n  instanceProp: string = \"\";\n  static staticProp: string = \"\";\n}";
+  assert_eq!(resolve_single_definition_text("MyType"), class_text);
   assert_eq!(
-    definition.text(),
-    "export class MyClass {\n  static staticProp: string = \"\";\n}"
+    resolve_single_definition_text("MyTypeProp"),
+    "static staticProp: string = \"\";"
+  );
+  assert_eq!(
+    resolve_single_definition_text("MyTypeIndexAccess"),
+    // good enough for now
+    class_text
+  );
+  assert_eq!(
+    resolve_single_definition_text("PrototypeAccess"),
+    // good enough for now
+    class_text
   );
 }
 

@@ -328,7 +328,7 @@ fn go_to_file_export<'a>(
 #[derive(Debug)]
 pub enum ResolvedSymbolDepEntry<'a> {
   /// The path to the definition of the symbol dep.
-  DefinitionPath(DefinitionPath<'a>),
+  Path(DefinitionPath<'a>),
   /// If the symbol dep was an import type with no property access.
   ///
   /// Ex. `type MyType = typeof import("./my_module.ts");`
@@ -353,10 +353,17 @@ pub fn resolve_symbol_dep<'a>(
           specifier_to_module,
         )
         .into_iter()
-        .map(ResolvedSymbolDepEntry::DefinitionPath)
+        .map(ResolvedSymbolDepEntry::Path)
         .collect()
       } else {
-        vec![]
+        vec![ResolvedSymbolDepEntry::Path(DefinitionPath::Unresolved(
+          DefinitionUnresolved {
+            module,
+            symbol,
+            kind: DefinitionUnresolvedKind::Id(id),
+            parts: &[],
+          },
+        ))]
       }
     }
     SymbolDep::QualifiedId(id, parts) => go_to_id_and_parts_definition_paths(
@@ -368,7 +375,7 @@ pub fn resolve_symbol_dep<'a>(
       specifier_to_module,
     )
     .into_iter()
-    .map(ResolvedSymbolDepEntry::DefinitionPath)
+    .map(ResolvedSymbolDepEntry::Path)
     .collect(),
     SymbolDep::ImportType(import_specifier, parts) => {
       let maybe_dep_specifier = module_graph.resolve_dependency(
@@ -376,10 +383,17 @@ pub fn resolve_symbol_dep<'a>(
         module.specifier(),
         /* prefer types */ true,
       );
-      let Some(module) =
-        maybe_dep_specifier.as_ref().and_then(specifier_to_module)
-      else {
-        return Vec::new();
+      let maybe_module =
+        maybe_dep_specifier.as_ref().and_then(specifier_to_module);
+      let Some(module) = maybe_module else {
+        return vec![ResolvedSymbolDepEntry::Path(DefinitionPath::Unresolved(
+          DefinitionUnresolved {
+            module,
+            symbol,
+            kind: DefinitionUnresolvedKind::Specifier(import_specifier),
+            parts,
+          },
+        ))];
       };
       if parts.is_empty() {
         // an ImportType includes default exports
@@ -392,7 +406,7 @@ pub fn resolve_symbol_dep<'a>(
           specifier_to_module,
         )
         .into_iter()
-        .map(ResolvedSymbolDepEntry::DefinitionPath)
+        .map(ResolvedSymbolDepEntry::Path)
         .collect()
       }
     }
@@ -569,6 +583,16 @@ fn resolve_qualified_name_internal<'a>(
                 visited_symbols,
                 specifier_to_module,
               ));
+            } else if next_part == "prototype"
+              && definition
+                .symbol_decl
+                .maybe_node()
+                .map(|n| n.is_class())
+                .unwrap_or(false)
+            {
+              // for now, just resolve to this definition
+              debug_assert!(next.is_empty());
+              return Some(DefinitionPath::Definition(definition.clone()));
             } else {
               next.push(DefinitionPath::Unresolved(DefinitionUnresolved {
                 module: definition.module,

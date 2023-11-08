@@ -67,11 +67,10 @@ file:///mod.ts: EsmModuleInfo {
             child_ids: {
                 1,
                 2,
-                4,
             },
             exports: {
                 "test": 1,
-                "InnerInner": 4,
+                "InnerInner": 5,
             },
             members: {},
         },
@@ -264,6 +263,31 @@ file:///mod.ts: EsmModuleInfo {
                         ],
                     ),
                 },
+            ],
+            deps: {
+                QualifiedId(
+                    (
+                        "Inner",
+                        #2,
+                    ),
+                    [
+                        "inner",
+                    ],
+                ),
+            },
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        5: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 5,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -281,17 +305,7 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                QualifiedId(
-                    (
-                        "Inner",
-                        #2,
-                    ),
-                    [
-                        "inner",
-                    ],
-                ),
-            },
+            deps: {},
             child_ids: {},
             exports: {},
             members: {},

@@ -86,9 +86,6 @@ file:///a.ts: EsmModuleInfo {
             ],
             deps: {},
             child_ids: {
-                1,
-                2,
-                3,
                 4,
                 6,
                 9,
@@ -727,9 +724,7 @@ file:///mod.ts: EsmModuleInfo {
                 },
             ],
             deps: {},
-            child_ids: {
-                1,
-            },
+            child_ids: {},
             exports: {
                 "namespace": 1,
             },

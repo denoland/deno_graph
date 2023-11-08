@@ -73,7 +73,7 @@ file:///a.ts: EsmModuleInfo {
                 4,
             },
             exports: {
-                "A1": 1,
+                "A1": 5,
             },
             members: {},
         },
@@ -113,22 +113,6 @@ file:///a.ts: EsmModuleInfo {
                     kind: Definition(
                         SymbolNode(
                             "interface A1 {\n  prop2: Prop2;\n}",
-                        ),
-                    ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            88,
-                        ),
-                        end: SourcePos(
-                            102,
-                        ),
-                    },
-                    kind: Target(
-                        (
-                            "A1",
-                            #2,
                         ),
                     ),
                 },
@@ -238,6 +222,37 @@ file:///a.ts: EsmModuleInfo {
             exports: {},
             members: {},
         },
+        5: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 5,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            88,
+                        ),
+                        end: SourcePos(
+                            102,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            "A1",
+                            #2,
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
     },
 }
 file:///mod.ts: EsmModuleInfo {
@@ -293,7 +308,7 @@ file:///mod.ts: EsmModuleInfo {
                 5,
             },
             exports: {
-                "Test": 1,
+                "Test": 6,
             },
             members: {},
         },
@@ -333,22 +348,6 @@ file:///mod.ts: EsmModuleInfo {
                     kind: Definition(
                         SymbolNode(
                             "interface Test {\n  prop2: Prop2;\n}",
-                        ),
-                    ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            133,
-                        ),
-                        end: SourcePos(
-                            149,
-                        ),
-                    },
-                    kind: Target(
-                        (
-                            "Test",
-                            #2,
                         ),
                     ),
                 },
@@ -486,6 +485,37 @@ file:///mod.ts: EsmModuleInfo {
                     kind: Definition(
                         SymbolNode(
                             "interface Prop2 {}",
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        6: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 6,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            133,
+                        ),
+                        end: SourcePos(
+                            149,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            "Test",
+                            #2,
                         ),
                     ),
                 },

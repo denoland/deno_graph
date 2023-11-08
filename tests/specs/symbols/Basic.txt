@@ -446,15 +446,12 @@ file:///mod.ts: EsmModuleInfo {
             ],
             deps: {},
             child_ids: {
-                1,
-                2,
-                3,
                 4,
                 5,
             },
             exports: {
                 "ExportA": 4,
-                "D": 3,
+                "D": 6,
             },
             members: {},
         },
@@ -551,22 +548,6 @@ file:///mod.ts: EsmModuleInfo {
                         },
                     ),
                 },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            87,
-                        ),
-                        end: SourcePos(
-                            100,
-                        ),
-                    },
-                    kind: Target(
-                        (
-                            "D",
-                            #2,
-                        ),
-                    ),
-                },
             ],
             deps: {},
             child_ids: {},
@@ -643,6 +624,37 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 ),
             },
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        6: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 6,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            87,
+                        ),
+                        end: SourcePos(
+                            100,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            "D",
+                            #2,
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
             child_ids: {},
             exports: {},
             members: {},

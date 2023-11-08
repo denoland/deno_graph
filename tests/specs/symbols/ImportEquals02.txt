@@ -78,7 +78,7 @@ file:///a.ts: EsmModuleInfo {
                 1,
             },
             exports: {
-                "A": 1,
+                "A": 7,
             },
             members: {},
         },
@@ -103,22 +103,6 @@ file:///a.ts: EsmModuleInfo {
                     kind: Definition(
                         SymbolNode(
                             "namespace A.B {\n  export interface Other {\n    prop1: string;\n  }\n  export interface Other {\n    prop2: string;\n  }\n  export namespace Other {\n    export class MyTest {\n    }\n  }\n}",
-                        ),
-                    ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            182,
-                        ),
-                        end: SourcePos(
-                            195,
-                        ),
-                    },
-                    kind: Target(
-                        (
-                            "A",
-                            #2,
                         ),
                     ),
                 },
@@ -350,6 +334,37 @@ file:///a.ts: EsmModuleInfo {
             exports: {},
             members: {},
         },
+        7: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 7,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            182,
+                        ),
+                        end: SourcePos(
+                            195,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            "A",
+                            #2,
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
     },
 }
 file:///mod.ts: EsmModuleInfo {
@@ -402,8 +417,6 @@ file:///mod.ts: EsmModuleInfo {
             ],
             deps: {},
             child_ids: {
-                1,
-                2,
                 3,
             },
             exports: {
@@ -514,11 +527,9 @@ file:///mod.ts: EsmModuleInfo {
                 },
             ],
             deps: {},
-            child_ids: {
-                4,
-            },
+            child_ids: {},
             exports: {
-                "Inner": 4,
+                "Inner": 5,
             },
             members: {},
         },
@@ -551,6 +562,32 @@ file:///mod.ts: EsmModuleInfo {
                         ],
                     ),
                 },
+            ],
+            deps: {
+                QualifiedId(
+                    (
+                        "A",
+                        #2,
+                    ),
+                    [
+                        "B",
+                        "Other",
+                    ],
+                ),
+            },
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        5: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 5,
+            parent_id: Some(
+                3,
+            ),
+            decls: [
                 SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
@@ -568,18 +605,7 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                 },
             ],
-            deps: {
-                QualifiedId(
-                    (
-                        "A",
-                        #2,
-                    ),
-                    [
-                        "B",
-                        "Other",
-                    ],
-                ),
-            },
+            deps: {},
             child_ids: {},
             exports: {},
             members: {},

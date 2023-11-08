@@ -91,9 +91,6 @@ file:///a.ts: EsmModuleInfo {
             ],
             deps: {},
             child_ids: {
-                1,
-                2,
-                3,
                 4,
                 6,
                 9,
@@ -749,18 +746,12 @@ file:///mod.ts: EsmModuleInfo {
                 },
             ],
             deps: {},
-            child_ids: {
-                1,
-                2,
-                3,
-                4,
-                5,
-            },
+            child_ids: {},
             exports: {
                 "default": 5,
-                "C1": 2,
-                "C2": 3,
-                "CInterface": 4,
+                "C1": 6,
+                "C2": 7,
+                "CInterface": 8,
             },
             members: {},
         },
@@ -824,22 +815,6 @@ file:///mod.ts: EsmModuleInfo {
                         },
                     ),
                 },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            101,
-                        ),
-                        end: SourcePos(
-                            131,
-                        ),
-                    },
-                    kind: Target(
-                        (
-                            "C1",
-                            #2,
-                        ),
-                    ),
-                },
             ],
             deps: {},
             child_ids: {},
@@ -871,22 +846,6 @@ file:///mod.ts: EsmModuleInfo {
                             ),
                             specifier: "./a.ts",
                         },
-                    ),
-                },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            101,
-                        ),
-                        end: SourcePos(
-                            131,
-                        ),
-                    },
-                    kind: Target(
-                        (
-                            "C2",
-                            #2,
-                        ),
                     ),
                 },
             ],
@@ -922,22 +881,6 @@ file:///mod.ts: EsmModuleInfo {
                         },
                     ),
                 },
-                SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            101,
-                        ),
-                        end: SourcePos(
-                            131,
-                        ),
-                    },
-                    kind: Target(
-                        (
-                            "CInterface",
-                            #2,
-                        ),
-                    ),
-                },
             ],
             deps: {},
             child_ids: {},
@@ -965,6 +908,99 @@ file:///mod.ts: EsmModuleInfo {
                     kind: Target(
                         (
                             "Test",
+                            #2,
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        6: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 6,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            101,
+                        ),
+                        end: SourcePos(
+                            131,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            "C1",
+                            #2,
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        7: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 7,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            101,
+                        ),
+                        end: SourcePos(
+                            131,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            "C2",
+                            #2,
+                        ),
+                    ),
+                },
+            ],
+            deps: {},
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        8: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 8,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    range: SourceRange {
+                        start: SourcePos(
+                            101,
+                        ),
+                        end: SourcePos(
+                            131,
+                        ),
+                    },
+                    kind: Target(
+                        (
+                            "CInterface",
                             #2,
                         ),
                     ),

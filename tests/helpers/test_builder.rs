@@ -165,7 +165,21 @@ impl TestBuilder {
     ) -> Vec<String> {
       let mut results = Vec::new();
       for symbol in module.symbols() {
-        // ensure it's possible to go from a parent to its child
+        // ensure all decls have the same name as their symbol
+        {
+          let maybe_name = symbol.maybe_name();
+          for decl in symbol.decls() {
+            if decl.maybe_name() != maybe_name {
+              results.push(format!(
+                "Symbol {:?} with name {:?} had a decl with a different name: {:?}",
+                symbol.symbol_id(),
+                maybe_name,
+                decl.maybe_name(),
+              ));
+            }
+          }
+        }
+
         if let Some(parent_id) = symbol.parent_id() {
           let parent_symbol = module.symbol(parent_id).unwrap();
           let has_child =
@@ -174,15 +188,28 @@ impl TestBuilder {
             .members()
             .iter()
             .any(|id| *id == symbol.symbol_id());
-          if !has_child && !has_member {
+          let is_definition_decl =
+            symbol.decls().iter().all(|d| d.kind.is_definition());
+          if is_definition_decl {
+            // ensure it's possible to go from a parent to its child
+            if !has_child && !has_member {
+              results.push(format!(
+                "Parent {:#?} does not have child {:#?}",
+                parent_symbol.symbol_id(),
+                symbol.symbol_id()
+              ));
+            }
+          } else if has_child || has_member {
             results.push(format!(
-              "Parent {:#?} does not have child {:#?}",
+              "Parent {:#?} should not have the child or member {:#?}",
               parent_symbol.symbol_id(),
               symbol.symbol_id()
             ));
-          } else if has_child && has_member {
+          }
+
+          if has_child && has_member {
             results.push(format!(
-              "Parent {:#?} should not have both a child and a member {:#?}",
+              "Parent {:?} should not have both a child and a member {:?}",
               parent_symbol.symbol_id(),
               symbol.symbol_id()
             ));
@@ -197,7 +224,7 @@ impl TestBuilder {
             parent = module.symbol(parent_id).unwrap();
             if i == 1000 {
               results.push(format!(
-                "Could not find root from symbol: {:#?}",
+                "Could not find root from symbol: {:?}",
                 symbol.symbol_id()
               ));
               break;
@@ -216,7 +243,7 @@ impl TestBuilder {
         let mut results = Vec::new();
         if !visited.insert(symbol.symbol_id()) {
           results.push(format!(
-            "Found symbol in multiple paths: {:#?}",
+            "Found symbol in multiple paths: {:?}",
             symbol.symbol_id()
           ));
         } else {
