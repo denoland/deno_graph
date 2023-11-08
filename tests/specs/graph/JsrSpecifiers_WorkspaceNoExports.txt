@@ -10,9 +10,7 @@
   {
     "base": "file:///members/b/",
     "nv": "@scope/b@2.0.0",
-    "exports": {
-      "./export": "./mod.ts"
-    }
+    "exports": {}
   }
 ]
 
@@ -57,12 +55,6 @@ console.log("Test");
     },
     {
       "kind": "esm",
-      "size": 21,
-      "mediaType": "TypeScript",
-      "specifier": "file:///members/b/mod.ts"
-    },
-    {
-      "kind": "esm",
       "dependencies": [
         {
           "specifier": "./members/a/mod.ts",
@@ -84,9 +76,11 @@ console.log("Test");
       "size": 29,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "jsr:@scope/b@2/export",
+      "error": "Expected workspace package '@scope/b@2.0.0' to define exports in its deno.json.\n  Specifier: jsr:@scope/b@2/export"
     }
   ],
-  "redirects": {
-    "jsr:@scope/b@2/export": "file:///members/b/mod.ts"
-  }
+  "redirects": {}
 }

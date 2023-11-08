@@ -149,7 +149,7 @@ pub enum ModuleError {
   LoadingErr(ModuleSpecifier, Option<Range>, Arc<anyhow::Error>),
   Missing(ModuleSpecifier, Option<Range>),
   MissingDynamic(ModuleSpecifier, Range),
-  MissingExports {
+  MissingWorkspaceMemberExports {
     specifier: ModuleSpecifier,
     maybe_range: Option<Range>,
     nv: PackageNv,
@@ -194,7 +194,7 @@ impl ModuleError {
       | Self::UnsupportedMediaType(s, _, _)
       | Self::Missing(s, _)
       | Self::MissingDynamic(s, _)
-      | Self::MissingExports { specifier: s, .. }
+      | Self::MissingWorkspaceMemberExports { specifier: s, .. }
       | Self::UnknownExport { specifier: s, .. }
       | Self::UnknownPackage { specifier: s, .. }
       | Self::UnknownPackageReq { specifier: s, .. }
@@ -208,7 +208,9 @@ impl ModuleError {
       Self::LoadingErr(_, maybe_referrer, _) => maybe_referrer.as_ref(),
       Self::Missing(_, maybe_referrer) => maybe_referrer.as_ref(),
       Self::MissingDynamic(_, range) => Some(range),
-      Self::MissingExports { maybe_range, .. } => maybe_range.as_ref(),
+      Self::MissingWorkspaceMemberExports { maybe_range, .. } => {
+        maybe_range.as_ref()
+      }
       Self::UnknownExport { maybe_range, .. } => maybe_range.as_ref(),
       Self::UnknownPackage { maybe_range, .. } => maybe_range.as_ref(),
       Self::UnknownPackageReq { maybe_range, .. } => maybe_range.as_ref(),
@@ -229,7 +231,7 @@ impl std::error::Error for ModuleError {
       Self::Missing(_, _)
       | Self::MissingDynamic(_, _)
       | Self::ParseErr(_, _)
-      | Self::MissingExports { .. }
+      | Self::MissingWorkspaceMemberExports { .. }
       | Self::UnknownExport { .. }
       | Self::UnknownPackage { .. }
       | Self::UnknownPackageReq { .. }
@@ -257,8 +259,8 @@ impl fmt::Display for ModuleError {
       Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
       Self::Missing(specifier, _) => write!(f, "Module not found \"{specifier}\"."),
       Self::MissingDynamic(specifier, _) => write!(f, "Dynamic import not found \"{specifier}\"."),
-      Self::MissingExports { nv, specifier, .. } => {
-        write!(f, "Expected package '{nv}' to define exports.\n  Specifier: {specifier}")
+      Self::MissingWorkspaceMemberExports { nv, specifier, .. } => {
+        write!(f, "Expected workspace package '{nv}' to define exports in its deno.json.\n  Specifier: {specifier}")
       }
       Self::InvalidTypeAssertion { specifier, actual_media_type: MediaType::Json, expected_media_type, .. } =>
         write!(f, "Expected a {expected_media_type} module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"),
@@ -3113,7 +3115,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     workspace_member: &WorkspaceMember,
   ) -> Result<ModuleSpecifier, ModuleError> {
     if workspace_member.exports.is_empty() {
-      return Err(ModuleError::MissingExports {
+      return Err(ModuleError::MissingWorkspaceMemberExports {
         specifier: specifier.clone(),
         maybe_range: maybe_range.map(ToOwned::to_owned),
         nv: workspace_member.nv.clone(),
