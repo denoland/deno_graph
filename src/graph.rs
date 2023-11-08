@@ -2658,14 +2658,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         .unwrap()
         .clone()
         .await
-        .and_then(|info| {
-          Ok((
-            info,
-            match resolution_item.package_ref.sub_path() {
-              Some(sub_path) => sub_path,
-              None => ".",
-            },
-          ))
+        .map(|info| {
+          (info, resolution_item.package_ref.sub_path().unwrap_or("."))
         });
       match version_info_result {
         Ok((version_info, sub_path)) => {
@@ -3064,7 +3058,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   self
                     .graph
                     .module_slots
-                    .insert(specifier.clone(), ModuleSlot::Err(err));
+                    .insert(specifier.clone(), ModuleSlot::Err(*err));
                 }
               }
               return;
@@ -3113,13 +3107,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_range: Option<&Range>,
     package_ref: &JsrPackageReqReference,
     workspace_member: &WorkspaceMember,
-  ) -> Result<ModuleSpecifier, ModuleError> {
+  ) -> Result<ModuleSpecifier, Box<ModuleError>> {
     if workspace_member.exports.is_empty() {
-      return Err(ModuleError::MissingWorkspaceMemberExports {
+      return Err(Box::new(ModuleError::MissingWorkspaceMemberExports {
         specifier: specifier.clone(),
         maybe_range: maybe_range.map(ToOwned::to_owned),
         nv: workspace_member.nv.clone(),
-      });
+      }));
     }
 
     let export_name =
@@ -3129,24 +3123,24 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Ok(load_specifier) => Ok(load_specifier),
         Err(err) => {
           let err: anyhow::Error = err.into();
-          Err(ModuleError::LoadingErr(
+          Err(Box::new(ModuleError::LoadingErr(
             specifier.clone(),
             maybe_range.map(ToOwned::to_owned),
             Arc::new(err.context(format!(
               "Failed joining '{}' to '{}'.",
               sub_path, workspace_member.base
             ))),
-          ))
+          )))
         }
       }
     } else {
-      Err(ModuleError::UnknownExport {
+      Err(Box::new(ModuleError::UnknownExport {
         specifier: specifier.clone(),
         maybe_range: maybe_range.map(ToOwned::to_owned),
         nv: workspace_member.nv.clone(),
         export_name: export_name.to_string(),
         exports: workspace_member.exports.keys().cloned().collect(),
-      })
+      }))
     }
   }
 
@@ -3532,7 +3526,7 @@ fn normalize_export_name(sub_path: &str) -> Cow<str> {
   if sub_path.is_empty() || matches!(sub_path, "/" | ".") {
     Cow::Borrowed(".")
   } else {
-    let sub_path = if sub_path.starts_with("/") {
+    let sub_path = if sub_path.starts_with('/') {
       Cow::Owned(format!(".{}", sub_path))
     } else if !sub_path.starts_with("./") {
       Cow::Owned(format!("./{}", sub_path))
