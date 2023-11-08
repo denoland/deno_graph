@@ -15,7 +15,7 @@ use super::FileDepName;
 use super::ModuleInfoRef;
 use super::Symbol;
 use super::SymbolDecl;
-use super::SymbolDepRef;
+use super::SymbolDep;
 use super::SymbolId;
 use super::UniqueSymbolId;
 
@@ -87,7 +87,7 @@ pub struct DefinitionUnresolved<'a> {
   pub module: ModuleInfoRef<'a>,
   pub symbol: &'a Symbol,
   pub kind: DefinitionUnresolvedKind<'a>,
-  pub parts: &'a [String],
+  pub parts: Vec<String>,
 }
 
 /// A graph path to a definition.
@@ -97,7 +97,7 @@ pub enum DefinitionPath<'a> {
     module: ModuleInfoRef<'a>,
     symbol: &'a Symbol,
     symbol_decl: &'a SymbolDecl,
-    parts: &'a [String],
+    parts: Vec<String>,
     next: Vec<DefinitionPath<'a>>,
   },
   Definition(Definition<'a>),
@@ -204,14 +204,6 @@ fn find_definition_paths_internal<'a>(
           kind: DefinitionKind::Definition,
         }));
       }
-      SymbolDeclKind::DefinitionPrivateFnImpl(_) => {
-        paths.push(DefinitionPath::Definition(Definition {
-          module,
-          symbol,
-          symbol_decl: decl,
-          kind: DefinitionKind::Definition,
-        }));
-      }
       SymbolDeclKind::Target(target_id) => {
         if let Some(symbol) = module
           .esm()
@@ -231,7 +223,7 @@ fn find_definition_paths_internal<'a>(
               module,
               symbol,
               symbol_decl: decl,
-              parts: &[],
+              parts: Vec::new(),
               next: inner_paths,
             });
           }
@@ -251,7 +243,7 @@ fn find_definition_paths_internal<'a>(
             module,
             symbol,
             symbol_decl: decl,
-            parts,
+            parts: parts.clone(),
             next: inner_paths,
           });
         }
@@ -279,7 +271,7 @@ fn find_definition_paths_internal<'a>(
               module,
               symbol,
               symbol_decl: decl,
-              parts: &[],
+              parts: Vec::new(),
               next: inner_paths,
             });
           }
@@ -311,7 +303,7 @@ fn go_to_file_export<'a>(
       module,
       symbol: module.module_symbol(),
       kind: DefinitionUnresolvedKind::Specifier(&file_ref.specifier),
-      parts: &[],
+      parts: Vec::new(),
     })];
   };
   let maybe_export_symbol = dep_module
@@ -324,7 +316,7 @@ fn go_to_file_export<'a>(
       module,
       symbol: module.module_symbol(),
       kind: DefinitionUnresolvedKind::Part(export_name),
-      parts: &[],
+      parts: Vec::new(),
     })];
   };
   find_definition_paths_internal(
@@ -351,11 +343,11 @@ pub fn resolve_symbol_dep<'a>(
   module_graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
   symbol: &'a Symbol,
-  dep: SymbolDepRef<'a>,
+  dep: &SymbolDep,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<ResolvedSymbolDepEntry<'a>> {
   match dep {
-    SymbolDepRef::Id(id) => {
+    SymbolDep::Id(id) => {
       if let Some(dep_symbol) = module.esm().and_then(|m| m.symbol_from_swc(id))
       {
         find_definition_paths(
@@ -373,25 +365,23 @@ pub fn resolve_symbol_dep<'a>(
             module,
             symbol,
             kind: DefinitionUnresolvedKind::Id(id),
-            parts: &[],
+            parts: Vec::new(),
           },
         ))]
       }
     }
-    SymbolDepRef::QualifiedId(id, parts) => {
-      go_to_id_and_parts_definition_paths(
-        module_graph,
-        module,
-        symbol,
-        id,
-        parts,
-        specifier_to_module,
-      )
-      .into_iter()
-      .map(ResolvedSymbolDepEntry::Path)
-      .collect()
-    }
-    SymbolDepRef::ImportType(import_specifier, parts) => {
+    SymbolDep::QualifiedId(id, parts) => go_to_id_and_parts_definition_paths(
+      module_graph,
+      module,
+      symbol,
+      id,
+      parts,
+      specifier_to_module,
+    )
+    .into_iter()
+    .map(ResolvedSymbolDepEntry::Path)
+    .collect(),
+    SymbolDep::ImportType(import_specifier, parts) => {
       let maybe_dep_specifier = module_graph.resolve_dependency(
         import_specifier,
         module.specifier(),
@@ -405,7 +395,7 @@ pub fn resolve_symbol_dep<'a>(
             module,
             symbol,
             kind: DefinitionUnresolvedKind::Specifier(import_specifier),
-            parts,
+            parts: parts.clone(),
           },
         ))];
       };
@@ -432,7 +422,7 @@ fn go_to_id_and_parts_definition_paths<'a>(
   module: ModuleInfoRef<'a>,
   symbol: &'a Symbol,
   target_id: &'a deno_ast::swc::ast::Id,
-  parts: &'a [String],
+  parts: &[String],
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
   debug_assert_eq!(symbol.module_id(), module.module_id());
@@ -451,7 +441,7 @@ fn go_to_id_and_parts_definition_paths<'a>(
       module,
       symbol,
       kind: DefinitionUnresolvedKind::Id(target_id),
-      parts,
+      parts: parts.to_vec(),
     })]
   }
 }
@@ -459,7 +449,7 @@ fn go_to_id_and_parts_definition_paths<'a>(
 fn resolve_qualified_export_name<'a>(
   graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
-  parts: &'a [String],
+  parts: &[String],
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
   debug_assert!(!parts.is_empty());
@@ -475,7 +465,7 @@ fn resolve_qualified_export_name<'a>(
 fn resolve_qualified_export_name_internal<'a>(
   graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
-  parts: &'a [String],
+  parts: &[String],
   visited_symbols: &mut HashSet<UniqueSymbolId>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
@@ -496,7 +486,7 @@ fn resolve_qualified_export_name_internal<'a>(
       module,
       symbol: module.module_symbol(),
       kind: DefinitionUnresolvedKind::Part(export_name),
-      parts,
+      parts: parts.to_vec(),
     })]
   }
 }
@@ -505,7 +495,7 @@ pub fn resolve_qualified_name<'a>(
   graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
   symbol: &'a Symbol,
-  parts: &'a [String],
+  parts: &[String],
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
   resolve_qualified_name_internal(
@@ -522,13 +512,13 @@ fn resolve_qualified_name_internal<'a>(
   graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
   symbol: &'a Symbol,
-  parts: &'a [String],
+  parts: &[String],
   visited_symbols: &mut HashSet<UniqueSymbolId>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
   fn resolve_paths_with_parts<'a>(
     paths: Vec<DefinitionPath<'a>>,
-    parts: &'a [String],
+    parts: &[String],
     graph: &'a ModuleGraph,
     visited_symbols: &mut HashSet<UniqueSymbolId>,
     specifier_to_module: &impl Fn(&url::Url) -> Option<ModuleInfoRef<'a>>,
@@ -550,7 +540,7 @@ fn resolve_qualified_name_internal<'a>(
 
   fn resolve_path_with_parts<'a>(
     path: DefinitionPath<'a>,
-    parts: &'a [String],
+    parts: &[String],
     graph: &'a ModuleGraph,
     visited_symbols: &mut HashSet<UniqueSymbolId>,
     specifier_to_module: &impl Fn(&url::Url) -> Option<ModuleInfoRef<'a>>,
@@ -577,7 +567,7 @@ fn resolve_qualified_name_internal<'a>(
             module,
             symbol,
             symbol_decl,
-            parts,
+            parts: parts.to_vec(),
             next,
           })
         }
@@ -612,7 +602,7 @@ fn resolve_qualified_name_internal<'a>(
                 module: definition.module,
                 symbol: definition.symbol,
                 kind: DefinitionUnresolvedKind::Part(next_part),
-                parts,
+                parts: parts.to_vec(),
               }))
             }
           }
@@ -637,7 +627,7 @@ fn resolve_qualified_name_internal<'a>(
                 module: definition.module,
                 symbol: definition.symbol,
                 kind: DefinitionUnresolvedKind::Specifier(&file_dep.specifier),
-                parts,
+                parts: parts.to_vec(),
               }))
             }
           }
@@ -651,7 +641,7 @@ fn resolve_qualified_name_internal<'a>(
             module: definition.module,
             symbol: definition.symbol,
             symbol_decl: definition.symbol_decl,
-            parts,
+            parts: parts.to_vec(),
             next,
           })
         }
