@@ -666,7 +666,6 @@ fn is_media_type_unknown(media_type: &MediaType) -> bool {
 pub struct WorkspaceMember {
   pub base: Url,
   pub nv: PackageNv,
-  #[serde(default)]
   pub exports: HashMap<String, String>,
 }
 

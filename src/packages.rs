@@ -18,7 +18,9 @@ pub struct JsrPackageInfo {
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
-pub struct JsrPackageInfoVersion {}
+pub struct JsrPackageInfoVersion {
+  // no fields yet
+}
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct JsrPackageVersionInfo {
