@@ -45,6 +45,7 @@ use serde::ser::SerializeStruct;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
@@ -148,6 +149,11 @@ pub enum ModuleError {
   LoadingErr(ModuleSpecifier, Option<Range>, Arc<anyhow::Error>),
   Missing(ModuleSpecifier, Option<Range>),
   MissingDynamic(ModuleSpecifier, Range),
+  MissingExports {
+    specifier: ModuleSpecifier,
+    maybe_range: Option<Range>,
+    nv: PackageNv,
+  },
   UnknownPackage {
     specifier: ModuleSpecifier,
     maybe_range: Option<Range>,
@@ -157,6 +163,13 @@ pub enum ModuleError {
     specifier: ModuleSpecifier,
     maybe_range: Option<Range>,
     package_req: PackageReq,
+  },
+  UnknownExport {
+    specifier: ModuleSpecifier,
+    maybe_range: Option<Range>,
+    nv: PackageNv,
+    export_name: String,
+    exports: Vec<String>,
   },
   ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
   UnsupportedMediaType(ModuleSpecifier, MediaType, Option<Range>),
@@ -181,6 +194,8 @@ impl ModuleError {
       | Self::UnsupportedMediaType(s, _, _)
       | Self::Missing(s, _)
       | Self::MissingDynamic(s, _)
+      | Self::MissingExports { specifier: s, .. }
+      | Self::UnknownExport { specifier: s, .. }
       | Self::UnknownPackage { specifier: s, .. }
       | Self::UnknownPackageReq { specifier: s, .. }
       | Self::InvalidTypeAssertion { specifier: s, .. }
@@ -193,6 +208,8 @@ impl ModuleError {
       Self::LoadingErr(_, maybe_referrer, _) => maybe_referrer.as_ref(),
       Self::Missing(_, maybe_referrer) => maybe_referrer.as_ref(),
       Self::MissingDynamic(_, range) => Some(range),
+      Self::MissingExports { maybe_range, .. } => maybe_range.as_ref(),
+      Self::UnknownExport { maybe_range, .. } => maybe_range.as_ref(),
       Self::UnknownPackage { maybe_range, .. } => maybe_range.as_ref(),
       Self::UnknownPackageReq { maybe_range, .. } => maybe_range.as_ref(),
       Self::UnsupportedMediaType(_, _, maybe_referrer) => {
@@ -212,6 +229,8 @@ impl std::error::Error for ModuleError {
       Self::Missing(_, _)
       | Self::MissingDynamic(_, _)
       | Self::ParseErr(_, _)
+      | Self::MissingExports { .. }
+      | Self::UnknownExport { .. }
       | Self::UnknownPackage { .. }
       | Self::UnknownPackageReq { .. }
       | Self::UnsupportedMediaType(_, _, _)
@@ -226,6 +245,10 @@ impl fmt::Display for ModuleError {
     match self {
       Self::LoadingErr(_, _, err) => err.fmt(f),
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {diagnostic}"),
+      Self::UnknownExport { export_name, exports, nv, specifier, .. } => {
+        let exports_text = exports.iter().map(|e| format!("* {}", e)).collect::<Vec<_>>().join("\n");
+        write!(f, "Unknown export for {nv}: {export_name}\n  Specifier: {specifier}\n  Exports:\n{exports_text}")
+      }
       Self::UnknownPackage { package_name, specifier, .. } =>
         write!(f, "Unknown package: {package_name}\n  Specifier: {specifier}"),
       Self::UnknownPackageReq { package_req, specifier, .. } =>
@@ -234,6 +257,9 @@ impl fmt::Display for ModuleError {
       Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
       Self::Missing(specifier, _) => write!(f, "Module not found \"{specifier}\"."),
       Self::MissingDynamic(specifier, _) => write!(f, "Dynamic import not found \"{specifier}\"."),
+      Self::MissingExports { nv, specifier, .. } => {
+        write!(f, "Expected package '{nv}' to define exports.\n  Specifier: {specifier}")
+      }
       Self::InvalidTypeAssertion { specifier, actual_media_type: MediaType::Json, expected_media_type, .. } =>
         write!(f, "Expected a {expected_media_type} module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"),
       Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type, .. } =>
@@ -638,6 +664,8 @@ fn is_media_type_unknown(media_type: &MediaType) -> bool {
 pub struct WorkspaceMember {
   pub base: Url,
   pub nv: PackageNv,
+  #[serde(default)]
+  pub exports: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -2628,12 +2656,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         .unwrap()
         .clone()
         .await
-        .and_then(|info| match resolution_item.package_ref.sub_path() {
-          Some(sub_path) => Ok((info, sub_path)),
-          None => Err(Arc::new(anyhow!(
-            "Missing path in package specifier '{0}' (ex. specify {0}/mod.ts)",
-            resolution_item.package_ref
-          ))),
+        .and_then(|info| {
+          Ok((
+            info,
+            match resolution_item.package_ref.sub_path() {
+              Some(sub_path) => sub_path,
+              None => ".",
+            },
+          ))
         });
       match version_info_result {
         Ok((version_info, sub_path)) => {
@@ -2642,22 +2672,42 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .registry_url()
             .join(&format!("{}/{}/", nv.name, nv.version))
             .unwrap();
-          let specifier = base_url.join(sub_path).unwrap();
-          self
-            .graph
-            .redirects
-            .insert(resolution_item.specifier, specifier.clone());
-          let version_info = DenoPackageVersionInfoExt {
-            base_url,
-            inner: version_info,
-          };
-          self.load(
-            &specifier,
-            resolution_item.maybe_range.as_ref(),
-            self.in_dynamic_branch,
-            None,
-            Some(&version_info),
-          );
+          let export_name = normalize_export_name(sub_path);
+          match version_info.export(&export_name) {
+            Some(export_value) => {
+              let specifier = base_url.join(export_value).unwrap();
+              self
+                .graph
+                .redirects
+                .insert(resolution_item.specifier, specifier.clone());
+              let version_info = DenoPackageVersionInfoExt {
+                base_url,
+                inner: version_info,
+              };
+              self.load(
+                &specifier,
+                resolution_item.maybe_range.as_ref(),
+                self.in_dynamic_branch,
+                None,
+                Some(&version_info),
+              );
+            }
+            None => {
+              self.graph.module_slots.insert(
+                resolution_item.specifier.clone(),
+                ModuleSlot::Err(ModuleError::UnknownExport {
+                  specifier: resolution_item.specifier,
+                  maybe_range: resolution_item.maybe_range,
+                  nv,
+                  export_name: export_name.to_string(),
+                  exports: version_info
+                    .exports()
+                    .map(|(k, _)| k.to_string())
+                    .collect::<Vec<_>>(),
+                }),
+              );
+            }
+          }
         }
         Err(err) => {
           self.graph.module_slots.insert(
@@ -2993,16 +3043,28 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               .version_req
               .matches(&workspace_member.nv.version)
             {
-              let mut load_specifier = workspace_member.base.clone();
-              if let Some(sub_path) = package_ref.sub_path() {
-                load_specifier = load_specifier.join(sub_path).unwrap();
-              }
-              self.load_pending_module(
+              let result = self.resolve_workspace_jsr_specifier(
                 &specifier,
-                maybe_range.clone(),
-                &load_specifier,
-                is_dynamic,
+                maybe_range.as_ref(),
+                &package_ref,
+                workspace_member,
               );
+              match result {
+                Ok(load_specifier) => {
+                  self.load_pending_module(
+                    &specifier,
+                    maybe_range.clone(),
+                    &load_specifier,
+                    is_dynamic,
+                  );
+                }
+                Err(err) => {
+                  self
+                    .graph
+                    .module_slots
+                    .insert(specifier.clone(), ModuleSlot::Err(err));
+                }
+              }
               return;
             } else {
               self.diagnostics.push(BuildDiagnostic {
@@ -3040,6 +3102,49 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           )),
         );
       }
+    }
+  }
+
+  fn resolve_workspace_jsr_specifier(
+    &self,
+    specifier: &Url,
+    maybe_range: Option<&Range>,
+    package_ref: &JsrPackageReqReference,
+    workspace_member: &WorkspaceMember,
+  ) -> Result<ModuleSpecifier, ModuleError> {
+    if workspace_member.exports.is_empty() {
+      return Err(ModuleError::MissingExports {
+        specifier: specifier.clone(),
+        maybe_range: maybe_range.map(ToOwned::to_owned),
+        nv: workspace_member.nv.clone(),
+      });
+    }
+
+    let export_name =
+      normalize_export_name(package_ref.sub_path().unwrap_or("."));
+    if let Some(sub_path) = workspace_member.exports.get(export_name.as_ref()) {
+      match workspace_member.base.join(sub_path) {
+        Ok(load_specifier) => Ok(load_specifier),
+        Err(err) => {
+          let err: anyhow::Error = err.into();
+          Err(ModuleError::LoadingErr(
+            specifier.clone(),
+            maybe_range.map(ToOwned::to_owned),
+            Arc::new(err.context(format!(
+              "Failed joining '{}' to '{}'.",
+              sub_path, workspace_member.base
+            ))),
+          ))
+        }
+      }
+    } else {
+      Err(ModuleError::UnknownExport {
+        specifier: specifier.clone(),
+        maybe_range: maybe_range.map(ToOwned::to_owned),
+        nv: workspace_member.nv.clone(),
+        export_name: export_name.to_string(),
+        exports: workspace_member.exports.keys().cloned().collect(),
+      })
     }
   }
 
@@ -3418,6 +3523,25 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
     module_slot
+  }
+}
+
+fn normalize_export_name(sub_path: &str) -> Cow<str> {
+  if sub_path.is_empty() || matches!(sub_path, "/" | ".") {
+    Cow::Borrowed(".")
+  } else {
+    let sub_path = if sub_path.starts_with("/") {
+      Cow::Owned(format!(".{}", sub_path))
+    } else if !sub_path.starts_with("./") {
+      Cow::Owned(format!("./{}", sub_path))
+    } else {
+      Cow::Borrowed(sub_path)
+    };
+    if let Some(prefix) = sub_path.strip_suffix('/') {
+      Cow::Owned(prefix.to_string())
+    } else {
+      sub_path
+    }
   }
 }
 

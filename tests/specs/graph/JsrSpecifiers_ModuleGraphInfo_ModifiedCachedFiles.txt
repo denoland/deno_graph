@@ -7,6 +7,9 @@
 
 # https://registry-staging.deno.com/@scope/a/1.0.0_meta.json
 {
+  "exports": {
+    ".": "./mod.ts"
+  },
   "moduleGraph1": {
     "/mod.ts": {
       "dependencies": [{
@@ -25,7 +28,7 @@
       }, {
           "kind": "import",
           "range": [[1, 2], [3, 4]],
-          "specifier": "jsr:@scope/b/mod.ts",
+          "specifier": "jsr:@scope/b",
           "specifierRange": [[5, 6], [7, 8]]
       }]
     },
@@ -50,6 +53,9 @@
 
 # https://registry-staging.deno.com/@scope/b/9.0.0_meta.json
 {
+  "exports": {
+    ".": "./mod.ts"
+  },
   "moduleGraph1": {
     "/mod.ts": {
       "dependencies": [{
@@ -63,7 +69,7 @@
 }
 
 # mod.ts
-import 'jsr:@scope/a@^1.0/mod.ts';
+import 'jsr:@scope/a@^1.0';
 
 # cache:https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
 import './a.ts';
@@ -75,7 +81,7 @@ import './b.ts';
 1; // will be ignored
 
 # cache:https://registry-staging.deno.com/@scope/a/1.0.0/c.ts
-import 'jsr:@scope/b/mod.ts';
+import 'jsr:@scope/b';
 
 # cache:https://registry-staging.deno.com/@scope/b/9.0.0/mod.ts
 4;
