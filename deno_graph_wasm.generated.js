@@ -706,8 +706,8 @@ const imports = {
       const ret = getObject(arg0).then(getObject(arg1));
       return addHeapObject(ret);
     },
-    __wbindgen_closure_wrapper517: function (arg0, arg1, arg2) {
-      const ret = makeMutClosure(arg0, arg1, 183, __wbg_adapter_48);
+    __wbindgen_closure_wrapper534: function (arg0, arg1, arg2) {
+      const ret = makeMutClosure(arg0, arg1, 182, __wbg_adapter_48);
       return addHeapObject(ret);
     },
   },
