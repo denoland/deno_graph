@@ -66,6 +66,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "import { MyInterface } from \"https://localhost/mod.js\";\nimport { MyInterface2 } from \"./other.js\";\nimport { MyInterface3 } from \"./typescript.ts\";\n\nexport class MyClass implements MyInterface, MyInterface2, MyInterface3 {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -74,14 +79,9 @@ file:///mod.ts: EsmModuleInfo {
                             223,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "import { MyInterface } from \"https://localhost/mod.js\";\nimport { MyInterface2 } from \"./other.js\";\nimport { MyInterface3 } from \"./typescript.ts\";\n\nexport class MyClass implements MyInterface, MyInterface2, MyInterface3 {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 4,
             },
@@ -100,14 +100,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            20,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -116,9 +108,17 @@ file:///mod.ts: EsmModuleInfo {
                             specifier: "https://localhost/mod.js",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            20,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -133,14 +133,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            65,
-                        ),
-                        end: SourcePos(
-                            77,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -149,9 +141,17 @@ file:///mod.ts: EsmModuleInfo {
                             specifier: "./other.js",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            65,
+                        ),
+                        end: SourcePos(
+                            77,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -166,14 +166,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            108,
-                        ),
-                        end: SourcePos(
-                            120,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -182,9 +174,17 @@ file:///mod.ts: EsmModuleInfo {
                             specifier: "./typescript.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            108,
+                        ),
+                        end: SourcePos(
+                            120,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -199,6 +199,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export class MyClass implements MyInterface, MyInterface2, MyInterface3 {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             148,
@@ -207,39 +212,18 @@ file:///mod.ts: EsmModuleInfo {
                             223,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class MyClass implements MyInterface, MyInterface2, MyInterface3 {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "MyInterface",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "MyInterface2",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "MyInterface3",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
         },
     },
 }
+== symbol deps ==
+4:148..223 [Id(("MyInterface", #2)), Id(("MyInterface2", #2)), Id(("MyInterface3", #2))]
+
 file:///other.d.ts: EsmModuleInfo {
     module_id: ModuleId(
         1,
@@ -261,6 +245,11 @@ file:///other.d.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface MyInterface2 {\n  b: string;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -269,14 +258,9 @@ file:///other.d.ts: EsmModuleInfo {
                             46,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface MyInterface2 {\n  b: string;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -295,6 +279,11 @@ file:///other.d.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface MyInterface2 {\n  b: string;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -303,14 +292,9 @@ file:///other.d.ts: EsmModuleInfo {
                             46,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface MyInterface2 {\n  b: string;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -327,6 +311,11 @@ file:///other.d.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "b: string;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             34,
@@ -335,14 +324,9 @@ file:///other.d.ts: EsmModuleInfo {
                             44,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "b: string;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -365,6 +349,11 @@ file:///other.js: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -373,14 +362,9 @@ file:///other.js: EsmModuleInfo {
                             0,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -408,6 +392,11 @@ file:///typescript.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface MyInterface3 {\n  c: string;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -416,14 +405,9 @@ file:///typescript.ts: EsmModuleInfo {
                             46,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface MyInterface3 {\n  c: string;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -442,6 +426,11 @@ file:///typescript.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface MyInterface3 {\n  c: string;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -450,14 +439,9 @@ file:///typescript.ts: EsmModuleInfo {
                             46,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface MyInterface3 {\n  c: string;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -474,6 +458,11 @@ file:///typescript.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "c: string;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             34,
@@ -482,14 +471,9 @@ file:///typescript.ts: EsmModuleInfo {
                             44,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "c: string;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -521,6 +505,11 @@ https://localhost/mod.d.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface MyInterface {\n  a: string;\n}\n\nexport interface MyNonPublicInterface {\n  a1: string;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -529,14 +518,9 @@ https://localhost/mod.d.ts: EsmModuleInfo {
                             102,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface MyInterface {\n  a: string;\n}\n\nexport interface MyNonPublicInterface {\n  a1: string;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 3,
@@ -557,6 +541,11 @@ https://localhost/mod.d.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface MyInterface {\n  a: string;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -565,14 +554,9 @@ https://localhost/mod.d.ts: EsmModuleInfo {
                             45,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface MyInterface {\n  a: string;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -589,6 +573,11 @@ https://localhost/mod.d.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "a: string;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             33,
@@ -597,14 +586,9 @@ https://localhost/mod.d.ts: EsmModuleInfo {
                             43,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "a: string;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -619,6 +603,11 @@ https://localhost/mod.d.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface MyNonPublicInterface {\n  a1: string;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             47,
@@ -627,14 +616,9 @@ https://localhost/mod.d.ts: EsmModuleInfo {
                             102,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface MyNonPublicInterface {\n  a1: string;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -651,6 +635,11 @@ https://localhost/mod.d.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "a1: string;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             89,
@@ -659,14 +648,9 @@ https://localhost/mod.d.ts: EsmModuleInfo {
                             100,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "a1: string;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -694,6 +678,11 @@ https://localhost/mod.js: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export class Dummy {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -702,14 +691,9 @@ https://localhost/mod.js: EsmModuleInfo {
                             21,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class Dummy {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -728,6 +712,11 @@ https://localhost/mod.js: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export class Dummy {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -736,14 +725,9 @@ https://localhost/mod.js: EsmModuleInfo {
                             21,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class Dummy {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},

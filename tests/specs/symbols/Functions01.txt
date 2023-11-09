@@ -87,6 +87,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function test<T extends TypeParam = Default>(param: Param): Return {\n}\n\nclass TypeParam {}\nclass Param {}\nclass Return {}\nclass Default {}\n\n// the top two overloads should appear in the results\nexport function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;\nexport function overloaded(): string;\nexport function overloaded<T extends PrivateTypeParam>(param: PrivateParam): PrivateReturn {\n}\n\nclass OverloadTypeParam {}\nclass OverloadParam {}\nclass OverloadReturn {}\n\nclass PrivateTypeParam {}\nclass PrivateParam {}\nclass PrivateReturn {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -95,14 +100,9 @@ file:///mod.ts: EsmModuleInfo {
                             575,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function test<T extends TypeParam = Default>(param: Param): Return {\n}\n\nclass TypeParam {}\nclass Param {}\nclass Return {}\nclass Default {}\n\n// the top two overloads should appear in the results\nexport function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;\nexport function overloaded(): string;\nexport function overloaded<T extends PrivateTypeParam>(param: PrivateParam): PrivateReturn {\n}\n\nclass OverloadTypeParam {}\nclass OverloadParam {}\nclass OverloadReturn {}\n\nclass PrivateTypeParam {}\nclass PrivateParam {}\nclass PrivateReturn {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 2,
@@ -133,6 +133,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function test<T extends TypeParam = Default>(param: Param): Return {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -141,39 +146,9 @@ file:///mod.ts: EsmModuleInfo {
                             77,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function test<T extends TypeParam = Default>(param: Param): Return {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "TypeParam",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "Default",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "Param",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "Return",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -188,6 +163,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class TypeParam {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             79,
@@ -196,14 +176,9 @@ file:///mod.ts: EsmModuleInfo {
                             97,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class TypeParam {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -218,6 +193,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class Param {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             98,
@@ -226,14 +206,9 @@ file:///mod.ts: EsmModuleInfo {
                             112,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class Param {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -248,6 +223,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class Return {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             113,
@@ -256,14 +236,9 @@ file:///mod.ts: EsmModuleInfo {
                             128,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class Return {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -278,6 +253,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class Default {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             129,
@@ -286,14 +266,9 @@ file:///mod.ts: EsmModuleInfo {
                             145,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class Default {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -308,6 +283,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             201,
@@ -316,13 +296,14 @@ file:///mod.ts: EsmModuleInfo {
                             295,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function overloaded(): string;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             296,
@@ -331,13 +312,14 @@ file:///mod.ts: EsmModuleInfo {
                             333,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function overloaded(): string;",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function overloaded<T extends PrivateTypeParam>(param: PrivateParam): PrivateReturn {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             334,
@@ -346,33 +328,9 @@ file:///mod.ts: EsmModuleInfo {
                             428,
                         ),
                     },
-                    kind: DefinitionPrivateFnImpl(
-                        SymbolNode(
-                            "export function overloaded<T extends PrivateTypeParam>(param: PrivateParam): PrivateReturn {\n}",
-                        ),
-                    ),
+                    flags: 1,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "OverloadTypeParam",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "OverloadParam",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "OverloadReturn",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -387,6 +345,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class OverloadTypeParam {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             430,
@@ -395,14 +358,9 @@ file:///mod.ts: EsmModuleInfo {
                             456,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class OverloadTypeParam {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -417,6 +375,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class OverloadParam {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             457,
@@ -425,14 +388,9 @@ file:///mod.ts: EsmModuleInfo {
                             479,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class OverloadParam {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -447,6 +405,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class OverloadReturn {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             480,
@@ -455,14 +418,9 @@ file:///mod.ts: EsmModuleInfo {
                             503,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class OverloadReturn {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -477,6 +435,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class PrivateTypeParam {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             505,
@@ -485,14 +448,9 @@ file:///mod.ts: EsmModuleInfo {
                             530,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class PrivateTypeParam {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -507,6 +465,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class PrivateParam {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             531,
@@ -515,14 +478,9 @@ file:///mod.ts: EsmModuleInfo {
                             552,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class PrivateParam {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -537,6 +495,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class PrivateReturn {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             553,
@@ -545,20 +508,20 @@ file:///mod.ts: EsmModuleInfo {
                             575,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class PrivateReturn {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
     },
 }
+== symbol deps ==
+1:0..77 [Id(("TypeParam", #2)), Id(("Default", #2)), Id(("Param", #2)), Id(("Return", #2))]
+6:201..295 [Id(("OverloadTypeParam", #2)), Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
+6:334..428 [Id(("PrivateTypeParam", #2)), Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]
+
 == export definitions ==
 [test]: file:///mod.ts:0..77
   export function test<T extends TypeParam = Default>(param: Param): Return {

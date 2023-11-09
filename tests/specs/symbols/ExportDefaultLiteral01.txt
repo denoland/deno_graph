@@ -18,6 +18,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export default 1;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -26,14 +31,9 @@ file:///mod.ts: EsmModuleInfo {
                             17,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export default 1;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -52,6 +52,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export default 1;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -60,14 +65,9 @@ file:///mod.ts: EsmModuleInfo {
                             17,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export default 1;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},

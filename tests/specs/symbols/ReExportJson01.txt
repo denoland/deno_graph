@@ -26,6 +26,11 @@ file:///bar.json: JsonModuleInfo {
         parent_id: None,
         decls: [
             SymbolDecl {
+                kind: Definition(
+                    SymbolNode(
+                        "<json>",
+                    ),
+                ),
                 range: SourceRange {
                     start: SourcePos(
                         0,
@@ -34,14 +39,9 @@ file:///bar.json: JsonModuleInfo {
                         15,
                     ),
                 },
-                kind: Definition(
-                    SymbolNode(
-                        "<json>",
-                    ),
-                ),
+                flags: 0,
             },
         ],
-        deps: {},
         child_ids: {
             1,
         },
@@ -72,6 +72,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "import other from \"./non_public.json\" with { type: 'json' };\nexport { default as configFile } from './bar.json' assert { type: 'json' };\n\nconsole.log(other);",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -80,14 +85,9 @@ file:///mod.ts: EsmModuleInfo {
                             157,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "import other from \"./non_public.json\" with { type: 'json' };\nexport { default as configFile } from './bar.json' assert { type: 'json' };\n\nconsole.log(other);",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {
                 "configFile": 2,
@@ -104,14 +104,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            7,
-                        ),
-                        end: SourcePos(
-                            12,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -120,9 +112,17 @@ file:///mod.ts: EsmModuleInfo {
                             specifier: "./non_public.json",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            7,
+                        ),
+                        end: SourcePos(
+                            12,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -137,14 +137,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            70,
-                        ),
-                        end: SourcePos(
-                            91,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -153,9 +145,17 @@ file:///mod.ts: EsmModuleInfo {
                             specifier: "./bar.json",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            70,
+                        ),
+                        end: SourcePos(
+                            91,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -175,6 +175,11 @@ file:///non_public.json: JsonModuleInfo {
         parent_id: None,
         decls: [
             SymbolDecl {
+                kind: Definition(
+                    SymbolNode(
+                        "<json>",
+                    ),
+                ),
                 range: SourceRange {
                     start: SourcePos(
                         0,
@@ -183,14 +188,9 @@ file:///non_public.json: JsonModuleInfo {
                         2,
                     ),
                 },
-                kind: Definition(
-                    SymbolNode(
-                        "<json>",
-                    ),
-                ),
+                flags: 0,
             },
         ],
-        deps: {},
         child_ids: {
             1,
         },

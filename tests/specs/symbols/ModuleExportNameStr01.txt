@@ -34,6 +34,11 @@ file:///a.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "import { \"some-name\" as someName } from \"./b.ts\";\n\nexport { someName as \"someName\" };",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -42,14 +47,9 @@ file:///a.ts: EsmModuleInfo {
                             85,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "import { \"some-name\" as someName } from \"./b.ts\";\n\nexport { someName as \"someName\" };",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {
                 "someName": 2,
@@ -66,14 +66,6 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            32,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -82,9 +74,17 @@ file:///a.ts: EsmModuleInfo {
                             specifier: "./b.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            32,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -99,6 +99,12 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "someName",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             51,
@@ -107,15 +113,9 @@ file:///a.ts: EsmModuleInfo {
                             85,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "someName",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -138,6 +138,11 @@ file:///b.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export { MyClass as \"some-name\" } from \"./c.ts\";",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -146,14 +151,9 @@ file:///b.ts: EsmModuleInfo {
                             48,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export { MyClass as \"some-name\" } from \"./c.ts\";",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {
                 "some-name": 1,
@@ -170,14 +170,6 @@ file:///b.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            31,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -186,9 +178,17 @@ file:///b.ts: EsmModuleInfo {
                             specifier: "./c.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            31,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -216,6 +216,11 @@ file:///c.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export class MyClass {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -224,14 +229,9 @@ file:///c.ts: EsmModuleInfo {
                             23,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class MyClass {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -250,6 +250,11 @@ file:///c.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export class MyClass {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -258,14 +263,9 @@ file:///c.ts: EsmModuleInfo {
                             23,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class MyClass {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -288,6 +288,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export { \"someName\" as \"someOtherName\" } from \"./a.ts\";",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -296,14 +301,9 @@ file:///mod.ts: EsmModuleInfo {
                             55,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export { \"someName\" as \"someOtherName\" } from \"./a.ts\";",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {
                 "someOtherName": 1,
@@ -320,14 +320,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            38,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -336,9 +328,17 @@ file:///mod.ts: EsmModuleInfo {
                             specifier: "./a.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            38,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},

@@ -52,6 +52,11 @@ file:///a.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface A1 {\n  prop1: string;\n}\ninterface A1 {\n  prop2: Prop2;\n}\n\ninterface Prop2 {}\n\nexport { A1 };",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -60,14 +65,9 @@ file:///a.ts: EsmModuleInfo {
                             102,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface A1 {\n  prop1: string;\n}\ninterface A1 {\n  prop2: Prop2;\n}\n\ninterface Prop2 {}\n\nexport { A1 };",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 4,
@@ -87,6 +87,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface A1 {\n  prop1: string;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -95,13 +100,14 @@ file:///a.ts: EsmModuleInfo {
                             33,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface A1 {\n  prop1: string;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface A1 {\n  prop2: Prop2;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             34,
@@ -110,14 +116,9 @@ file:///a.ts: EsmModuleInfo {
                             66,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface A1 {\n  prop2: Prop2;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -135,6 +136,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "prop1: string;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             17,
@@ -143,14 +149,9 @@ file:///a.ts: EsmModuleInfo {
                             31,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "prop1: string;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -165,6 +166,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "prop2: Prop2;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             51,
@@ -173,21 +179,9 @@ file:///a.ts: EsmModuleInfo {
                             64,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "prop2: Prop2;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Prop2",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -202,6 +196,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Prop2 {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             68,
@@ -210,14 +209,9 @@ file:///a.ts: EsmModuleInfo {
                             86,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface Prop2 {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -232,6 +226,12 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "A1",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             88,
@@ -240,21 +240,18 @@ file:///a.ts: EsmModuleInfo {
                             102,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "A1",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
     },
 }
+== symbol deps ==
+3:51..64 [Id(("Prop2", #2))]
+
 file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
@@ -286,6 +283,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Test {\n  prop1: Prop1;\n}\ninterface Test {\n  prop2: Prop2;\n}\n\ninterface Prop1 {}\ninterface Prop2 {}\n\nexport { Test };\n\nexport * from \"./a.ts\";",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             23,
@@ -294,14 +296,9 @@ file:///mod.ts: EsmModuleInfo {
                             174,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface Test {\n  prop1: Prop1;\n}\ninterface Test {\n  prop2: Prop2;\n}\n\ninterface Prop1 {}\ninterface Prop2 {}\n\nexport { Test };\n\nexport * from \"./a.ts\";",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 4,
@@ -322,6 +319,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Test {\n  prop1: Prop1;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             23,
@@ -330,13 +332,14 @@ file:///mod.ts: EsmModuleInfo {
                             57,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface Test {\n  prop1: Prop1;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Test {\n  prop2: Prop2;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             58,
@@ -345,14 +348,9 @@ file:///mod.ts: EsmModuleInfo {
                             92,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface Test {\n  prop2: Prop2;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -370,6 +368,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "prop1: Prop1;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             42,
@@ -378,21 +381,9 @@ file:///mod.ts: EsmModuleInfo {
                             55,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "prop1: Prop1;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Prop1",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -407,6 +398,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "prop2: Prop2;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             77,
@@ -415,21 +411,9 @@ file:///mod.ts: EsmModuleInfo {
                             90,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "prop2: Prop2;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Prop2",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -444,6 +428,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Prop1 {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             94,
@@ -452,14 +441,9 @@ file:///mod.ts: EsmModuleInfo {
                             112,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface Prop1 {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -474,6 +458,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Prop2 {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             113,
@@ -482,14 +471,9 @@ file:///mod.ts: EsmModuleInfo {
                             131,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface Prop2 {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -504,6 +488,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "Test",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             133,
@@ -512,21 +502,19 @@ file:///mod.ts: EsmModuleInfo {
                             149,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "Test",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
     },
 }
+== symbol deps ==
+2:42..55 [Id(("Prop1", #2))]
+3:77..90 [Id(("Prop2", #2))]
+
 == export definitions ==
 [Test]: file:///mod.ts:23..57
   interface Test {

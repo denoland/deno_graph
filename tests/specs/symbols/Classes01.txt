@@ -90,55 +90,55 @@ file:///mod.ts: EsmModuleInfo {
         (
             "PropValue",
             #2,
-        ): 12,
+        ): 14,
         (
             "ReturnValue",
             #2,
-        ): 13,
+        ): 15,
         (
             "Param",
             #2,
-        ): 14,
+        ): 16,
         (
             "PrivateParam",
             #2,
-        ): 15,
+        ): 17,
         (
             "PrivateReturn",
             #2,
-        ): 16,
+        ): 18,
         (
             "PrivateProp",
             #2,
-        ): 17,
+        ): 19,
         (
             "CtorProp",
             #2,
-        ): 18,
+        ): 20,
         (
             "OverloadParam",
             #2,
-        ): 19,
+        ): 21,
         (
             "OverloadReturn",
             #2,
-        ): 20,
+        ): 22,
         (
             "PrivateImplementationParam",
             #2,
-        ): 21,
+        ): 23,
         (
             "PrivateImplementationReturn",
             #2,
-        ): 22,
+        ): 24,
         (
             "ClassWithStatic",
             #2,
-        ): 23,
+        ): 25,
         (
             "ClassWithIndexSignatures",
             #2,
-        ): 25,
+        ): 27,
     },
     symbols: {
         0: Symbol {
@@ -149,6 +149,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export class A {\n  b: B;\n  constructor(c: C) {\n  }\n}\n\ninterface C {}\n\nclass BBase {\n\n}\n\ninterface IBase {\n}\n\nclass B extends BBase implements IBase {\n  private constructor(prop: CtorProp) {}\n  prop: PropValue;\n  method(): ReturnValue {\n  }\n\n  method2(other: Param): void {\n  }\n\n  private asdf(private: PrivateParam): PrivateReturn {\n  }\n\n  private prop: PrivateProp;\n\n  methodOverload(param: OverloadParam): OverloadReturn;\n  methodOverload(param: PrivateImplementationParam): PrivateImplementationReturn {\n  }\n\n  #private: PrivateProp;\n  #privateMethod(private: PrivateParam): PrivateReturn {\n  }\n}\n\nclass PropValue {}\nclass ReturnValue {}\nclass Param {}\nclass PrivateParam {}\nclass PrivateReturn {}\nclass PrivateProp {}\nclass CtorProp {}\nclass OverloadParam {}\nclass OverloadReturn {}\nclass PrivateImplementationParam {}\nclass PrivateImplementationReturn {}\n\nclass ClassWithStatic {\n  static prop: string;\n}\n\nclass ClassWithIndexSignatures {\n  static [value: string]: number;\n  [value: number]: string;\n  [value: string]: number;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -157,22 +162,15 @@ file:///mod.ts: EsmModuleInfo {
                             1033,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class A {\n  b: B;\n  constructor(c: C) {\n  }\n}\n\ninterface C {}\n\nclass BBase {\n\n}\n\ninterface IBase {\n}\n\nclass B extends BBase implements IBase {\n  private constructor(prop: CtorProp) {}\n  prop: PropValue;\n  method(): ReturnValue {\n  }\n\n  method2(other: Param): void {\n  }\n\n  private asdf(private: PrivateParam): PrivateReturn {\n  }\n\n  private prop: PrivateProp;\n\n  methodOverload(param: OverloadParam): OverloadReturn;\n  methodOverload(param: PrivateImplementationParam): PrivateImplementationReturn {\n  }\n\n  #private: PrivateProp;\n  #privateMethod(private: PrivateParam): PrivateReturn {\n  }\n}\n\nclass PropValue {}\nclass ReturnValue {}\nclass Param {}\nclass PrivateParam {}\nclass PrivateReturn {}\nclass PrivateProp {}\nclass CtorProp {}\nclass OverloadParam {}\nclass OverloadReturn {}\nclass PrivateImplementationParam {}\nclass PrivateImplementationReturn {}\n\nclass ClassWithStatic {\n  static prop: string;\n}\n\nclass ClassWithIndexSignatures {\n  static [value: string]: number;\n  [value: number]: string;\n  [value: string]: number;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 4,
                 5,
                 6,
                 7,
-                12,
-                13,
                 14,
                 15,
                 16,
@@ -183,7 +181,9 @@ file:///mod.ts: EsmModuleInfo {
                 21,
                 22,
                 23,
+                24,
                 25,
+                27,
             },
             exports: {
                 "A": 1,
@@ -200,6 +200,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export class A {\n  b: B;\n  constructor(c: C) {\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -208,14 +213,9 @@ file:///mod.ts: EsmModuleInfo {
                             52,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class A {\n  b: B;\n  constructor(c: C) {\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 3,
             },
@@ -236,6 +236,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "b: B;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             19,
@@ -244,21 +249,9 @@ file:///mod.ts: EsmModuleInfo {
                             24,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "b: B;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "B",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -273,6 +266,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "constructor(c: C) {\n  }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             27,
@@ -281,21 +279,9 @@ file:///mod.ts: EsmModuleInfo {
                             50,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "constructor(c: C) {\n  }",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "C",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -310,6 +296,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface C {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             54,
@@ -318,14 +309,9 @@ file:///mod.ts: EsmModuleInfo {
                             68,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface C {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -340,6 +326,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class BBase {\n\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             70,
@@ -348,14 +339,9 @@ file:///mod.ts: EsmModuleInfo {
                             86,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class BBase {\n\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -370,6 +356,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface IBase {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             88,
@@ -378,14 +369,9 @@ file:///mod.ts: EsmModuleInfo {
                             107,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface IBase {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -400,6 +386,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class B extends BBase implements IBase {\n  private constructor(prop: CtorProp) {}\n  prop: PropValue;\n  method(): ReturnValue {\n  }\n\n  method2(other: Param): void {\n  }\n\n  private asdf(private: PrivateParam): PrivateReturn {\n  }\n\n  private prop: PrivateProp;\n\n  methodOverload(param: OverloadParam): OverloadReturn;\n  methodOverload(param: PrivateImplementationParam): PrivateImplementationReturn {\n  }\n\n  #private: PrivateProp;\n  #privateMethod(private: PrivateParam): PrivateReturn {\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             109,
@@ -408,34 +399,21 @@ file:///mod.ts: EsmModuleInfo {
                             599,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class B extends BBase implements IBase {\n  private constructor(prop: CtorProp) {}\n  prop: PropValue;\n  method(): ReturnValue {\n  }\n\n  method2(other: Param): void {\n  }\n\n  private asdf(private: PrivateParam): PrivateReturn {\n  }\n\n  private prop: PrivateProp;\n\n  methodOverload(param: OverloadParam): OverloadReturn;\n  methodOverload(param: PrivateImplementationParam): PrivateImplementationReturn {\n  }\n\n  #private: PrivateProp;\n  #privateMethod(private: PrivateParam): PrivateReturn {\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "BBase",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "IBase",
-                        #2,
-                    ),
-                ),
-            },
-            child_ids: {},
-            exports: {},
-            members: {
+            child_ids: {
                 8,
+            },
+            exports: {
+                "%%dg_ctor%%": 8,
+            },
+            members: {
                 9,
                 10,
                 11,
+                12,
+                13,
             },
         },
         8: Symbol {
@@ -448,29 +426,22 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            193,
-                        ),
-                        end: SourcePos(
-                            209,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "prop: PropValue;",
+                            "private constructor(prop: CtorProp) {}",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            152,
+                        ),
+                        end: SourcePos(
+                            190,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "PropValue",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -485,29 +456,38 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            212,
-                        ),
-                        end: SourcePos(
-                            239,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "method(): ReturnValue {\n  }",
+                            "prop: PropValue;",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            193,
+                        ),
+                        end: SourcePos(
+                            209,
+                        ),
+                    },
+                    flags: 0,
+                },
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "private prop: PrivateProp;",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            340,
+                        ),
+                        end: SourcePos(
+                            366,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "ReturnValue",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -522,29 +502,22 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            243,
-                        ),
-                        end: SourcePos(
-                            276,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "method2(other: Param): void {\n  }",
+                            "method(): ReturnValue {\n  }",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            212,
+                        ),
+                        end: SourcePos(
+                            239,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Param",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -559,62 +532,22 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            370,
-                        ),
-                        end: SourcePos(
-                            423,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "methodOverload(param: OverloadParam): OverloadReturn;",
+                            "method2(other: Param): void {\n  }",
                         ),
                     ),
-                },
-                SymbolDecl {
                     range: SourceRange {
                         start: SourcePos(
-                            426,
+                            243,
                         ),
                         end: SourcePos(
-                            510,
+                            276,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "methodOverload(param: PrivateImplementationParam): PrivateImplementationReturn {\n  }",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "OverloadParam",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "OverloadReturn",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "PrivateImplementationParam",
-                        #2,
-                    ),
-                ),
-                Id(
-                    (
-                        "PrivateImplementationReturn",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -625,26 +558,26 @@ file:///mod.ts: EsmModuleInfo {
             ),
             symbol_id: 12,
             parent_id: Some(
-                0,
+                7,
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            601,
-                        ),
-                        end: SourcePos(
-                            619,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "class PropValue {}",
+                            "private asdf(private: PrivateParam): PrivateReturn {\n  }",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            280,
+                        ),
+                        end: SourcePos(
+                            336,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -655,26 +588,42 @@ file:///mod.ts: EsmModuleInfo {
             ),
             symbol_id: 13,
             parent_id: Some(
-                0,
+                7,
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            620,
-                        ),
-                        end: SourcePos(
-                            640,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "class ReturnValue {}",
+                            "methodOverload(param: OverloadParam): OverloadReturn;",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            370,
+                        ),
+                        end: SourcePos(
+                            423,
+                        ),
+                    },
+                    flags: 0,
+                },
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "methodOverload(param: PrivateImplementationParam): PrivateImplementationReturn {\n  }",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            426,
+                        ),
+                        end: SourcePos(
+                            510,
+                        ),
+                    },
+                    flags: 1,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -689,22 +638,22 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            641,
-                        ),
-                        end: SourcePos(
-                            655,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "class Param {}",
+                            "class PropValue {}",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            601,
+                        ),
+                        end: SourcePos(
+                            619,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -719,22 +668,22 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            656,
-                        ),
-                        end: SourcePos(
-                            677,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateParam {}",
+                            "class ReturnValue {}",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            620,
+                        ),
+                        end: SourcePos(
+                            640,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -749,22 +698,22 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            678,
-                        ),
-                        end: SourcePos(
-                            700,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateReturn {}",
+                            "class Param {}",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            641,
+                        ),
+                        end: SourcePos(
+                            655,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -779,22 +728,22 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            701,
-                        ),
-                        end: SourcePos(
-                            721,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateProp {}",
+                            "class PrivateParam {}",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            656,
+                        ),
+                        end: SourcePos(
+                            677,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -809,22 +758,22 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            722,
-                        ),
-                        end: SourcePos(
-                            739,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "class CtorProp {}",
+                            "class PrivateReturn {}",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            678,
+                        ),
+                        end: SourcePos(
+                            700,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -839,22 +788,22 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            740,
-                        ),
-                        end: SourcePos(
-                            762,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "class OverloadParam {}",
+                            "class PrivateProp {}",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            701,
+                        ),
+                        end: SourcePos(
+                            721,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -869,22 +818,22 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            763,
-                        ),
-                        end: SourcePos(
-                            786,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "class OverloadReturn {}",
+                            "class CtorProp {}",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            722,
+                        ),
+                        end: SourcePos(
+                            739,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -899,22 +848,22 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            787,
-                        ),
-                        end: SourcePos(
-                            822,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateImplementationParam {}",
+                            "class OverloadParam {}",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            740,
+                        ),
+                        end: SourcePos(
+                            762,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -929,22 +878,22 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            823,
-                        ),
-                        end: SourcePos(
-                            859,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateImplementationReturn {}",
+                            "class OverloadReturn {}",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            763,
+                        ),
+                        end: SourcePos(
+                            786,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -959,28 +908,24 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            861,
-                        ),
-                        end: SourcePos(
-                            909,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "class ClassWithStatic {\n  static prop: string;\n}",
+                            "class PrivateImplementationParam {}",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            787,
+                        ),
+                        end: SourcePos(
+                            822,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
-            child_ids: {
-                24,
-            },
-            exports: {
-                "prop": 24,
-            },
+            child_ids: {},
+            exports: {},
             members: {},
         },
         24: Symbol {
@@ -989,26 +934,26 @@ file:///mod.ts: EsmModuleInfo {
             ),
             symbol_id: 24,
             parent_id: Some(
-                23,
+                0,
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            887,
-                        ),
-                        end: SourcePos(
-                            907,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "static prop: string;",
+                            "class PrivateImplementationReturn {}",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            823,
+                        ),
+                        end: SourcePos(
+                            859,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -1023,31 +968,29 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            911,
-                        ),
-                        end: SourcePos(
-                            1033,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "class ClassWithIndexSignatures {\n  static [value: string]: number;\n  [value: number]: string;\n  [value: string]: number;\n}",
+                            "class ClassWithStatic {\n  static prop: string;\n}",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            861,
+                        ),
+                        end: SourcePos(
+                            909,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 26,
             },
             exports: {
-                "%%dg_index%%": 26,
+                "prop": 26,
             },
-            members: {
-                27,
-            },
+            members: {},
         },
         26: Symbol {
             module_id: ModuleId(
@@ -1059,29 +1002,22 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            946,
-                        ),
-                        end: SourcePos(
-                            977,
-                        ),
-                    },
                     kind: Definition(
                         SymbolNode(
-                            "static [value: string]: number;",
+                            "static prop: string;",
                         ),
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            887,
+                        ),
+                        end: SourcePos(
+                            907,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "value",
-                        #1,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -1092,10 +1028,81 @@ file:///mod.ts: EsmModuleInfo {
             ),
             symbol_id: 27,
             parent_id: Some(
-                25,
+                0,
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class ClassWithIndexSignatures {\n  static [value: string]: number;\n  [value: number]: string;\n  [value: string]: number;\n}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            911,
+                        ),
+                        end: SourcePos(
+                            1033,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {
+                28,
+            },
+            exports: {
+                "%%dg_index%%": 28,
+            },
+            members: {
+                29,
+            },
+        },
+        28: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 28,
+            parent_id: Some(
+                27,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "static [value: string]: number;",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            946,
+                        ),
+                        end: SourcePos(
+                            977,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        29: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 29,
+            parent_id: Some(
+                27,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "[value: number]: string;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             980,
@@ -1104,13 +1111,14 @@ file:///mod.ts: EsmModuleInfo {
                             1004,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "[value: number]: string;",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "[value: string]: number;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             1007,
@@ -1119,27 +1127,31 @@ file:///mod.ts: EsmModuleInfo {
                             1031,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "[value: string]: number;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "value",
-                        #1,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
         },
     },
 }
+== symbol deps ==
+2:19..24 [Id(("B", #2))]
+3:27..50 [Id(("C", #2))]
+7:109..599 [Id(("BBase", #2)), Id(("IBase", #2))]
+8:152..190 [Id(("CtorProp", #2))]
+9:193..209 [Id(("PropValue", #2))]
+9:340..366 [Id(("PrivateProp", #2))]
+10:212..239 [Id(("ReturnValue", #2))]
+11:243..276 [Id(("Param", #2))]
+12:280..336 [Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]
+13:370..423 [Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
+13:426..510 [Id(("PrivateImplementationParam", #2)), Id(("PrivateImplementationReturn", #2))]
+28:946..977 [Id(("value", #1))]
+29:980..1004 [Id(("value", #1))]
+29:1007..1031 [Id(("value", #1))]
+
 == export definitions ==
 [A]: file:///mod.ts:0..52
   export class A {

@@ -36,6 +36,11 @@ file:///a.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace MyNamespace {\n  export function B() {}\n}\n\nexport = MyNamespace;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -44,14 +49,9 @@ file:///a.ts: EsmModuleInfo {
                             73,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace MyNamespace {\n  export function B() {}\n}\n\nexport = MyNamespace;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -70,6 +70,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace MyNamespace {\n  export function B() {}\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -78,21 +83,9 @@ file:///a.ts: EsmModuleInfo {
                             50,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace MyNamespace {\n  export function B() {}\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "B",
-                        #3,
-                    ),
-                ),
-            },
             child_ids: {
                 2,
             },
@@ -111,6 +104,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function B() {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             26,
@@ -119,14 +117,9 @@ file:///a.ts: EsmModuleInfo {
                             48,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function B() {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -141,6 +134,12 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "MyNamespace",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             61,
@@ -149,15 +148,9 @@ file:///a.ts: EsmModuleInfo {
                             72,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "MyNamespace",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -185,6 +178,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "import A = require(\"./a.ts\");\n\nexport default A;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -193,14 +191,9 @@ file:///mod.ts: EsmModuleInfo {
                             48,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "import A = require(\"./a.ts\");\n\nexport default A;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {
                 "default": 2,
@@ -217,14 +210,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            29,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -233,9 +218,17 @@ file:///mod.ts: EsmModuleInfo {
                             specifier: "./a.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            29,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -250,6 +243,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "A",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             46,
@@ -258,15 +257,9 @@ file:///mod.ts: EsmModuleInfo {
                             47,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "A",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
