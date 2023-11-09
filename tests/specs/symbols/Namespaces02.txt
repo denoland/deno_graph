@@ -43,6 +43,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace RootNs {\n  export namespace NestedNs {\n    export enum Foo {\n    }\n  }\n\n  export enum Foo {\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -51,14 +56,9 @@ file:///mod.ts: EsmModuleInfo {
                             114,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export namespace RootNs {\n  export namespace NestedNs {\n    export enum Foo {\n    }\n  }\n\n  export enum Foo {\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -77,6 +77,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace RootNs {\n  export namespace NestedNs {\n    export enum Foo {\n    }\n  }\n\n  export enum Foo {\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -85,27 +90,9 @@ file:///mod.ts: EsmModuleInfo {
                             114,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export namespace RootNs {\n  export namespace NestedNs {\n    export enum Foo {\n    }\n  }\n\n  export enum Foo {\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "NestedNs",
-                        #3,
-                    ),
-                ),
-                Id(
-                    (
-                        "Foo",
-                        #3,
-                    ),
-                ),
-            },
             child_ids: {
                 2,
                 4,
@@ -126,6 +113,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace NestedNs {\n    export enum Foo {\n    }\n  }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             28,
@@ -134,21 +126,9 @@ file:///mod.ts: EsmModuleInfo {
                             87,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export namespace NestedNs {\n    export enum Foo {\n    }\n  }",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Foo",
-                        #4,
-                    ),
-                ),
-            },
             child_ids: {
                 3,
             },
@@ -167,6 +147,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export enum Foo {\n    }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             60,
@@ -175,14 +160,9 @@ file:///mod.ts: EsmModuleInfo {
                             83,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export enum Foo {\n    }",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -197,6 +177,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export enum Foo {\n  }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             91,
@@ -205,14 +190,9 @@ file:///mod.ts: EsmModuleInfo {
                             112,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export enum Foo {\n  }",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},

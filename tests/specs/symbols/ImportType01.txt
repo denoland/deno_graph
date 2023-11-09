@@ -36,6 +36,11 @@ file:///a.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace A {\n  export interface B {\n    prop: string,\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -44,14 +49,9 @@ file:///a.ts: EsmModuleInfo {
                             67,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export namespace A {\n  export interface B {\n    prop: string,\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -70,6 +70,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace A {\n  export interface B {\n    prop: string,\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -78,21 +83,9 @@ file:///a.ts: EsmModuleInfo {
                             67,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export namespace A {\n  export interface B {\n    prop: string,\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "B",
-                        #3,
-                    ),
-                ),
-            },
             child_ids: {
                 2,
             },
@@ -111,6 +104,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface B {\n    prop: string,\n  }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             23,
@@ -119,14 +117,9 @@ file:///a.ts: EsmModuleInfo {
                             65,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface B {\n    prop: string,\n  }",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -143,6 +136,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "prop: string,",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             48,
@@ -151,14 +149,9 @@ file:///a.ts: EsmModuleInfo {
                             61,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "prop: string,",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -186,6 +179,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Test {\n  prop: import(\"./a.ts\").A.B,\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -194,14 +192,9 @@ file:///mod.ts: EsmModuleInfo {
                             55,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface Test {\n  prop: import(\"./a.ts\").A.B,\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
             },
@@ -220,6 +213,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Test {\n  prop: import(\"./a.ts\").A.B,\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -228,14 +226,9 @@ file:///mod.ts: EsmModuleInfo {
                             55,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface Test {\n  prop: import(\"./a.ts\").A.B,\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -252,6 +245,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "prop: import(\"./a.ts\").A.B,",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             26,
@@ -260,28 +258,18 @@ file:///mod.ts: EsmModuleInfo {
                             53,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "prop: import(\"./a.ts\").A.B,",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                ImportType(
-                    "./a.ts",
-                    [
-                        "A",
-                        "B",
-                    ],
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
         },
     },
 }
+== symbol deps ==
+2:26..53 [ImportType("./a.ts", ["A", "B"])]
+
 == export definitions ==
 [Test]: file:///mod.ts:0..55
   export interface Test {

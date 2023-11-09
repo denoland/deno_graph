@@ -187,12 +187,17 @@ export class MyClass {
   let resolve_single_definition_text = |name: &str| -> String {
     let resolved_type = exports.resolved.get(name).unwrap();
     let type_symbol = resolved_type.symbol();
-    let deps = type_symbol.deps().collect::<Vec<_>>();
+    let deps = type_symbol
+      .decls()
+      .iter()
+      .filter_map(|d| d.maybe_node())
+      .flat_map(|s| s.deps())
+      .collect::<Vec<_>>();
     assert_eq!(deps.len(), 1);
     let mut resolved_deps = root_symbol.resolve_symbol_dep(
       resolved_type.module,
       type_symbol,
-      deps[0],
+      &deps[0],
     );
     assert_eq!(resolved_deps.len(), 1);
     let resolved_dep = resolved_deps.remove(0);

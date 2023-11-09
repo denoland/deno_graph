@@ -54,6 +54,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "declare function foo(): void;\ndeclare namespace Test {\n  function test(): void;\n  export { test };\n}\nclass Other {}\ndeclare class MyClass {\n  method(): void;\n  prop: Other;\n}\nimport inner = Test.test;\nexport { foo as bar, inner as baz, MyClass };",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -62,14 +67,9 @@ file:///mod.ts: EsmModuleInfo {
                             246,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "declare function foo(): void;\ndeclare namespace Test {\n  function test(): void;\n  export { test };\n}\nclass Other {}\ndeclare class MyClass {\n  method(): void;\n  prop: Other;\n}\nimport inner = Test.test;\nexport { foo as bar, inner as baz, MyClass };",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 2,
@@ -93,6 +93,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "declare function foo(): void;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -101,14 +106,9 @@ file:///mod.ts: EsmModuleInfo {
                             29,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "declare function foo(): void;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -123,6 +123,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "declare namespace Test {\n  function test(): void;\n  export { test };\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             30,
@@ -131,14 +136,9 @@ file:///mod.ts: EsmModuleInfo {
                             100,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "declare namespace Test {\n  function test(): void;\n  export { test };\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 3,
             },
@@ -157,6 +157,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "function test(): void;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             57,
@@ -165,14 +170,9 @@ file:///mod.ts: EsmModuleInfo {
                             79,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "function test(): void;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -187,6 +187,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "test",
+                            #4,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             82,
@@ -195,15 +201,9 @@ file:///mod.ts: EsmModuleInfo {
                             98,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "test",
-                            #4,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -218,6 +218,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class Other {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             101,
@@ -226,14 +231,9 @@ file:///mod.ts: EsmModuleInfo {
                             115,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class Other {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -248,6 +248,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "declare class MyClass {\n  method(): void;\n  prop: Other;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             116,
@@ -256,14 +261,9 @@ file:///mod.ts: EsmModuleInfo {
                             174,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "declare class MyClass {\n  method(): void;\n  prop: Other;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {
@@ -281,6 +281,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "method(): void;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             142,
@@ -289,14 +294,9 @@ file:///mod.ts: EsmModuleInfo {
                             157,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "method(): void;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -311,6 +311,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "prop: Other;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             160,
@@ -319,21 +324,9 @@ file:///mod.ts: EsmModuleInfo {
                             172,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "prop: Other;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Other",
-                        #2,
-                    ),
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -348,14 +341,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            175,
-                        ),
-                        end: SourcePos(
-                            200,
-                        ),
-                    },
                     kind: QualifiedTarget(
                         (
                             "Test",
@@ -365,19 +350,17 @@ file:///mod.ts: EsmModuleInfo {
                             "test",
                         ],
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            175,
+                        ),
+                        end: SourcePos(
+                            200,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
-            deps: {
-                QualifiedId(
-                    (
-                        "Test",
-                        #2,
-                    ),
-                    [
-                        "test",
-                    ],
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -392,6 +375,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "foo",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             201,
@@ -400,15 +389,9 @@ file:///mod.ts: EsmModuleInfo {
                             246,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "foo",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -423,6 +406,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "inner",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             201,
@@ -431,15 +420,9 @@ file:///mod.ts: EsmModuleInfo {
                             246,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "inner",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -454,6 +437,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "MyClass",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             201,
@@ -462,21 +451,18 @@ file:///mod.ts: EsmModuleInfo {
                             246,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "MyClass",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
     },
 }
+== symbol deps ==
+8:160..172 [Id(("Other", #2))]
+
 == export definitions ==
 [bar]: file:///mod.ts:0..29
   declare function foo(): void;

@@ -23,6 +23,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export default Test; class Test {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -31,14 +36,9 @@ file:///mod.ts: EsmModuleInfo {
                             34,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export default Test; class Test {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 2,
             },
@@ -57,6 +57,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "Test",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             15,
@@ -65,15 +71,9 @@ file:///mod.ts: EsmModuleInfo {
                             19,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "Test",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -88,6 +88,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class Test {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             21,
@@ -96,14 +101,9 @@ file:///mod.ts: EsmModuleInfo {
                             34,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class Test {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},

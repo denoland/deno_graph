@@ -41,6 +41,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export type Test = typeof Other.Test;\n\nnamespace Other {\n  export const Test = 1;\n\n  export const other = 2;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -49,14 +54,9 @@ file:///mod.ts: EsmModuleInfo {
                             110,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export type Test = typeof Other.Test;\n\nnamespace Other {\n  export const Test = 1;\n\n  export const other = 2;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {
                 1,
                 2,
@@ -76,6 +76,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export type Test = typeof Other.Test;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -84,24 +89,9 @@ file:///mod.ts: EsmModuleInfo {
                             37,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export type Test = typeof Other.Test;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                QualifiedId(
-                    (
-                        "Other",
-                        #2,
-                    ),
-                    [
-                        "Test",
-                    ],
-                ),
-            },
             child_ids: {},
             exports: {},
             members: {},
@@ -116,6 +106,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace Other {\n  export const Test = 1;\n\n  export const other = 2;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             39,
@@ -124,27 +119,9 @@ file:///mod.ts: EsmModuleInfo {
                             110,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace Other {\n  export const Test = 1;\n\n  export const other = 2;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {
-                Id(
-                    (
-                        "Test",
-                        #3,
-                    ),
-                ),
-                Id(
-                    (
-                        "other",
-                        #3,
-                    ),
-                ),
-            },
             child_ids: {
                 3,
                 4,
@@ -165,6 +142,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export const Test = 1;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             72,
@@ -173,14 +155,9 @@ file:///mod.ts: EsmModuleInfo {
                             80,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export const Test = 1;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
@@ -195,6 +172,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export const other = 2;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             98,
@@ -203,20 +185,18 @@ file:///mod.ts: EsmModuleInfo {
                             107,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export const other = 2;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
-            deps: {},
             child_ids: {},
             exports: {},
             members: {},
         },
     },
 }
+== symbol deps ==
+1:0..37 [QualifiedId(("Other", #2), ["Test"])]
+
 == export definitions ==
 [Test]: file:///mod.ts:0..37
   export type Test = typeof Other.Test;

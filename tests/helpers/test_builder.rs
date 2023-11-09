@@ -96,11 +96,13 @@ impl TestBuilder {
     self
   }
 
+  #[allow(unused)]
   pub fn entry_point(&mut self, value: impl AsRef<str>) -> &mut Self {
     self.entry_point = value.as_ref().to_string();
     self
   }
 
+  #[allow(unused)]
   pub fn entry_point_types(&mut self, value: impl AsRef<str>) -> &mut Self {
     self.entry_point_types = value.as_ref().to_string();
     self
@@ -296,6 +298,28 @@ impl TestBuilder {
               ModuleInfoRef::Json(m) => format!("{:#?}", m),
             }
           );
+          output_text.push_str(&module_output_text);
+
+          let mut symbol_deps_text = String::new();
+          for symbol in module.symbols() {
+            for decl in symbol.decls() {
+              if let Some((node, source)) = decl.maybe_node_and_source() {
+                let deps = node.deps();
+                if !deps.is_empty() {
+                  symbol_deps_text.push_str(&format!(
+                    "{:?}:{:?} {:?}\n",
+                    symbol.symbol_id(),
+                    decl.range.as_byte_range(source.text_info().range().start),
+                    deps
+                  ));
+                }
+              }
+            }
+          }
+          if !symbol_deps_text.is_empty() {
+            output_text
+              .push_str(&format!("== symbol deps ==\n{}\n", symbol_deps_text));
+          }
 
           // analyze the module graph for any problems
           let diagnostics = check_fatal_diagnostics(module);
@@ -307,8 +331,6 @@ impl TestBuilder {
             eprintln!("== {} == \n\n{}", specifier, diagnostics.join("\n"));
             panic!("FAILED");
           }
-
-          output_text.push_str(&module_output_text);
         }
         let get_symbol_text =
           |module_symbol: deno_graph::symbols::ModuleInfoRef,
