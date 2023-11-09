@@ -46,55 +46,6 @@ impl From<Id> for SymbolNodeDep {
   }
 }
 
-impl SymbolNodeDep {
-  /// Gets the current reference and any qualified names it has.
-  ///
-  /// For example, given `MyNamespace.Test.Other`, this will return:
-  /// * `MyNamespace`
-  /// * `MyNamespace.Test`
-  /// * `MyNamespace.Test.Other`
-  pub fn all_qualified_names(&self) -> Vec<SymbolNodeDep> {
-    let mut deps = Vec::from([self.clone()]);
-    let mut current_dep = self.clone();
-    while let Some(dep) = current_dep.pop_part() {
-      deps.push(dep.clone());
-      current_dep = dep;
-    }
-    deps.reverse();
-    deps
-  }
-
-  /// Pops a part from the right side of a SymbolDepRef.
-  ///
-  /// For example, `QualifedId(MyNamespace.Test.Other)` will go to
-  /// `QualifiedId(MyNamespace.Test)`. Then that will go to `Id(MyNamespace)`.
-  pub fn pop_part(&self) -> Option<SymbolNodeDep> {
-    match self {
-      SymbolNodeDep::Id(_) => None,
-      SymbolNodeDep::QualifiedId(id, parts) => {
-        if parts.len() <= 1 {
-          Some(SymbolNodeDep::Id(id.clone()))
-        } else {
-          Some(SymbolNodeDep::QualifiedId(
-            id.clone(),
-            parts[..parts.len() - 1].to_vec(),
-          ))
-        }
-      }
-      SymbolNodeDep::ImportType(specifier, parts) => {
-        if parts.is_empty() {
-          None
-        } else {
-          Some(SymbolNodeDep::ImportType(
-            specifier.clone(),
-            parts[..parts.len() - 1].to_vec(),
-          ))
-        }
-      }
-    }
-  }
-}
-
 pub fn resolve_deps(node_ref: SymbolNodeRef) -> Vec<SymbolNodeDep> {
   let mut result = Vec::new();
   let deps = &mut result;
@@ -444,54 +395,5 @@ impl<'a> Visit for SymbolDepFillVisitor<'a> {
   fn visit_ts_qualified_name(&mut self, n: &TsQualifiedName) {
     let (id, parts) = ts_qualified_name_parts(n);
     self.deps.push(SymbolNodeDep::QualifiedId(id, parts));
-  }
-}
-
-#[cfg(test)]
-mod test {
-  use deno_ast::swc::common::util::take::Take;
-
-  use super::*;
-
-  #[test]
-  fn test_symbol_dep_pop_part() {
-    let ident = Ident::dummy();
-    // Id
-    {
-      let dep = SymbolNodeDep::Id(ident.to_id());
-      assert!(dep.pop_part().is_none());
-    }
-    // QualifiedId
-    {
-      let dep = SymbolNodeDep::QualifiedId(
-        ident.to_id(),
-        Vec::from(["part1".to_string(), "part2".to_string()]),
-      );
-      let dep = dep.pop_part().unwrap();
-      match &dep {
-        SymbolNodeDep::QualifiedId(_, parts) => assert_eq!(parts, &["part1"]),
-        _ => unreachable!(),
-      }
-      let dep = dep.pop_part().unwrap();
-      assert!(matches!(dep, SymbolNodeDep::Id(_)));
-    }
-    // TypeImport
-    {
-      let dep = SymbolNodeDep::ImportType(
-        "./src".to_string(),
-        Vec::from(["part1".to_string(), "part2".to_string()]),
-      );
-      let dep = dep.pop_part().unwrap();
-      match &dep {
-        SymbolNodeDep::ImportType(_, parts) => assert_eq!(parts, &["part1"]),
-        _ => unreachable!(),
-      }
-      let dep = dep.pop_part().unwrap();
-      match &dep {
-        SymbolNodeDep::ImportType(_, parts) => assert_eq!(parts.len(), 0),
-        _ => unreachable!(),
-      }
-      assert!(dep.pop_part().is_none());
-    }
   }
 }

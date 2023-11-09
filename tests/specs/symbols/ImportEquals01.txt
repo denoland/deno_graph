@@ -36,6 +36,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export import MyExport = Test.Inner;\n\nnamespace Test {\n  export class Inner {\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -44,11 +49,7 @@ file:///mod.ts: EsmModuleInfo {
                             83,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export import MyExport = Test.Inner;\n\nnamespace Test {\n  export class Inner {\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -69,14 +70,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            36,
-                        ),
-                    },
                     kind: QualifiedTarget(
                         (
                             "Test",
@@ -86,6 +79,15 @@ file:///mod.ts: EsmModuleInfo {
                             "Inner",
                         ],
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            36,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -102,6 +104,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace Test {\n  export class Inner {\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             38,
@@ -110,11 +117,7 @@ file:///mod.ts: EsmModuleInfo {
                             83,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace Test {\n  export class Inner {\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -135,6 +138,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export class Inner {\n  }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             57,
@@ -143,11 +151,7 @@ file:///mod.ts: EsmModuleInfo {
                             81,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class Inner {\n  }",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

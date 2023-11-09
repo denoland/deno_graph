@@ -36,6 +36,11 @@ file:///a.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Test {\n  prop: string;\n}\n\n// should be public because import types will include the default exports\nexport default function test() {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -44,11 +49,7 @@ file:///a.ts: EsmModuleInfo {
                             151,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface Test {\n  prop: string;\n}\n\n// should be public because import types will include the default exports\nexport default function test() {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -71,6 +72,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Test {\n  prop: string;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -79,11 +85,7 @@ file:///a.ts: EsmModuleInfo {
                             41,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface Test {\n  prop: string;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -102,6 +104,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "prop: string;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             26,
@@ -110,11 +117,7 @@ file:///a.ts: EsmModuleInfo {
                             39,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "prop: string;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -131,6 +134,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export default function test() {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             117,
@@ -139,11 +147,7 @@ file:///a.ts: EsmModuleInfo {
                             151,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export default function test() {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -173,6 +177,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export type Test = typeof import(\"./a.ts\");",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -181,11 +190,7 @@ file:///mod.ts: EsmModuleInfo {
                             43,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export type Test = typeof import(\"./a.ts\");",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -206,6 +211,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export type Test = typeof import(\"./a.ts\");",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -214,11 +224,7 @@ file:///mod.ts: EsmModuleInfo {
                             43,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export type Test = typeof import(\"./a.ts\");",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

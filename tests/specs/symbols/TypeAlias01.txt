@@ -34,6 +34,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export type Test<T extends Other> = Other2;\n\ninterface Other {}\ninterface Other2 {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -42,11 +47,7 @@ file:///mod.ts: EsmModuleInfo {
                             83,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export type Test<T extends Other> = Other2;\n\ninterface Other {}\ninterface Other2 {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -69,6 +70,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export type Test<T extends Other> = Other2;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -77,11 +83,7 @@ file:///mod.ts: EsmModuleInfo {
                             43,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export type Test<T extends Other> = Other2;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -98,6 +100,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Other {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             45,
@@ -106,11 +113,7 @@ file:///mod.ts: EsmModuleInfo {
                             63,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface Other {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -127,6 +130,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Other2 {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             64,
@@ -135,11 +143,7 @@ file:///mod.ts: EsmModuleInfo {
                             83,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface Other2 {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

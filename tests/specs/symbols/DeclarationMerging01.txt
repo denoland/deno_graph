@@ -66,6 +66,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class Album {\n}\nnamespace Album {\n  export class Label {}\n}\n\nenum Color {\n  red,\n  green,\n  blue,\n}\nnamespace Color {\n  export function mixColor(colorName: string) {\n    // ...etc...\n  }\n}\n\nfunction Test() {\n}\nnamespace Test {\n  export function other() {}\n}\n\nexport { Album, Color, Test };",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -74,11 +79,7 @@ file:///mod.ts: EsmModuleInfo {
                             289,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class Album {\n}\nnamespace Album {\n  export class Label {}\n}\n\nenum Color {\n  red,\n  green,\n  blue,\n}\nnamespace Color {\n  export function mixColor(colorName: string) {\n    // ...etc...\n  }\n}\n\nfunction Test() {\n}\nnamespace Test {\n  export function other() {}\n}\n\nexport { Album, Color, Test };",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -103,6 +104,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class Album {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -111,13 +117,14 @@ file:///mod.ts: EsmModuleInfo {
                             15,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class Album {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace Album {\n  export class Label {}\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             16,
@@ -126,11 +133,7 @@ file:///mod.ts: EsmModuleInfo {
                             59,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace Album {\n  export class Label {}\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -151,6 +154,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export class Label {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             36,
@@ -159,11 +167,7 @@ file:///mod.ts: EsmModuleInfo {
                             57,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class Label {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -180,6 +184,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "enum Color {\n  red,\n  green,\n  blue,\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             61,
@@ -188,13 +197,14 @@ file:///mod.ts: EsmModuleInfo {
                             99,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "enum Color {\n  red,\n  green,\n  blue,\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace Color {\n  export function mixColor(colorName: string) {\n    // ...etc...\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             100,
@@ -203,11 +213,7 @@ file:///mod.ts: EsmModuleInfo {
                             188,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace Color {\n  export function mixColor(colorName: string) {\n    // ...etc...\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -228,6 +234,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function mixColor(colorName: string) {\n    // ...etc...\n  }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             120,
@@ -236,11 +247,7 @@ file:///mod.ts: EsmModuleInfo {
                             186,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function mixColor(colorName: string) {\n    // ...etc...\n  }",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -257,6 +264,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "function Test() {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             190,
@@ -265,13 +277,14 @@ file:///mod.ts: EsmModuleInfo {
                             209,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "function Test() {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace Test {\n  export function other() {}\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             210,
@@ -280,11 +293,7 @@ file:///mod.ts: EsmModuleInfo {
                             257,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace Test {\n  export function other() {}\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -305,6 +314,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function other() {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             229,
@@ -313,11 +327,7 @@ file:///mod.ts: EsmModuleInfo {
                             255,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function other() {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -334,6 +344,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "Album",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             259,
@@ -342,12 +358,7 @@ file:///mod.ts: EsmModuleInfo {
                             289,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "Album",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -364,6 +375,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "Color",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             259,
@@ -372,12 +389,7 @@ file:///mod.ts: EsmModuleInfo {
                             289,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "Color",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -394,6 +406,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "Test",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             259,
@@ -402,12 +420,7 @@ file:///mod.ts: EsmModuleInfo {
                             289,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "Test",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

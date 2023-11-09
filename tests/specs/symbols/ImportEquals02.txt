@@ -58,6 +58,11 @@ file:///a.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace A.B {\n  export interface Other {\n    prop1: string;\n  }\n  export interface Other {\n    prop2: string;\n  }\n  export namespace Other {\n    export class MyTest {\n    }\n  }\n}\n\nexport { A };",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -66,11 +71,7 @@ file:///a.ts: EsmModuleInfo {
                             195,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace A.B {\n  export interface Other {\n    prop1: string;\n  }\n  export interface Other {\n    prop2: string;\n  }\n  export namespace Other {\n    export class MyTest {\n    }\n  }\n}\n\nexport { A };",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -91,6 +92,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace A.B {\n  export interface Other {\n    prop1: string;\n  }\n  export interface Other {\n    prop2: string;\n  }\n  export namespace Other {\n    export class MyTest {\n    }\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -99,11 +105,7 @@ file:///a.ts: EsmModuleInfo {
                             180,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace A.B {\n  export interface Other {\n    prop1: string;\n  }\n  export interface Other {\n    prop2: string;\n  }\n  export namespace Other {\n    export class MyTest {\n    }\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -124,6 +126,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace A.B {\n  export interface Other {\n    prop1: string;\n  }\n  export interface Other {\n    prop2: string;\n  }\n  export namespace Other {\n    export class MyTest {\n    }\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             12,
@@ -132,11 +139,7 @@ file:///a.ts: EsmModuleInfo {
                             180,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace A.B {\n  export interface Other {\n    prop1: string;\n  }\n  export interface Other {\n    prop2: string;\n  }\n  export namespace Other {\n    export class MyTest {\n    }\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -157,6 +160,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Other {\n    prop1: string;\n  }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             18,
@@ -165,13 +173,14 @@ file:///a.ts: EsmModuleInfo {
                             65,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface Other {\n    prop1: string;\n  }",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Other {\n    prop2: string;\n  }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             68,
@@ -180,13 +189,14 @@ file:///a.ts: EsmModuleInfo {
                             115,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface Other {\n    prop2: string;\n  }",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace Other {\n    export class MyTest {\n    }\n  }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             118,
@@ -195,11 +205,7 @@ file:///a.ts: EsmModuleInfo {
                             178,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export namespace Other {\n    export class MyTest {\n    }\n  }",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -223,6 +229,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "prop1: string;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             47,
@@ -231,11 +242,7 @@ file:///a.ts: EsmModuleInfo {
                             61,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "prop1: string;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -252,6 +259,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "prop2: string;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             97,
@@ -260,11 +272,7 @@ file:///a.ts: EsmModuleInfo {
                             111,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "prop2: string;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -281,6 +289,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export class MyTest {\n    }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             147,
@@ -289,11 +302,7 @@ file:///a.ts: EsmModuleInfo {
                             174,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class MyTest {\n    }",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -310,6 +319,12 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "A",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             182,
@@ -318,12 +333,7 @@ file:///a.ts: EsmModuleInfo {
                             195,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "A",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -365,6 +375,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "import { A } from \"./a.ts\";\n\nexport import MyExport = Test.Inner;\n\nnamespace Test {\n  import OtherInner = A.B.Other;\n  export { OtherInner as Inner };\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -373,11 +388,7 @@ file:///mod.ts: EsmModuleInfo {
                             152,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "import { A } from \"./a.ts\";\n\nexport import MyExport = Test.Inner;\n\nnamespace Test {\n  import OtherInner = A.B.Other;\n  export { OtherInner as Inner };\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -398,14 +409,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            10,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -414,6 +417,15 @@ file:///mod.ts: EsmModuleInfo {
                             specifier: "./a.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            10,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -430,14 +442,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            29,
-                        ),
-                        end: SourcePos(
-                            65,
-                        ),
-                    },
                     kind: QualifiedTarget(
                         (
                             "Test",
@@ -447,6 +451,15 @@ file:///mod.ts: EsmModuleInfo {
                             "Inner",
                         ],
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            29,
+                        ),
+                        end: SourcePos(
+                            65,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -463,6 +476,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace Test {\n  import OtherInner = A.B.Other;\n  export { OtherInner as Inner };\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             67,
@@ -471,11 +489,7 @@ file:///mod.ts: EsmModuleInfo {
                             152,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace Test {\n  import OtherInner = A.B.Other;\n  export { OtherInner as Inner };\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -494,14 +508,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            86,
-                        ),
-                        end: SourcePos(
-                            116,
-                        ),
-                    },
                     kind: QualifiedTarget(
                         (
                             "A",
@@ -512,6 +518,15 @@ file:///mod.ts: EsmModuleInfo {
                             "Other",
                         ],
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            86,
+                        ),
+                        end: SourcePos(
+                            116,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -528,6 +543,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "OtherInner",
+                            #3,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             119,
@@ -536,12 +557,7 @@ file:///mod.ts: EsmModuleInfo {
                             150,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "OtherInner",
-                            #3,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

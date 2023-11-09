@@ -36,6 +36,11 @@ file:///a.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace MyNamespace {\n  export function B() {}\n}\n\nexport = MyNamespace;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -44,11 +49,7 @@ file:///a.ts: EsmModuleInfo {
                             73,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace MyNamespace {\n  export function B() {}\n}\n\nexport = MyNamespace;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -69,6 +70,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace MyNamespace {\n  export function B() {}\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -77,11 +83,7 @@ file:///a.ts: EsmModuleInfo {
                             50,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace MyNamespace {\n  export function B() {}\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -102,6 +104,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function B() {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             26,
@@ -110,11 +117,7 @@ file:///a.ts: EsmModuleInfo {
                             48,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function B() {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -131,6 +134,12 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "MyNamespace",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             61,
@@ -139,12 +148,7 @@ file:///a.ts: EsmModuleInfo {
                             72,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "MyNamespace",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -178,6 +182,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "import A = require(\"./a.ts\");\n\nexport type Test = typeof A.B;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -186,11 +195,7 @@ file:///mod.ts: EsmModuleInfo {
                             61,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "import A = require(\"./a.ts\");\n\nexport type Test = typeof A.B;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -211,14 +216,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            29,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -227,6 +224,15 @@ file:///mod.ts: EsmModuleInfo {
                             specifier: "./a.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            29,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -243,6 +249,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export type Test = typeof A.B;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             31,
@@ -251,11 +262,7 @@ file:///mod.ts: EsmModuleInfo {
                             61,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export type Test = typeof A.B;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

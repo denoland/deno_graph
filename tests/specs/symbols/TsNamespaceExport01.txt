@@ -29,6 +29,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function isPrime(x: number): boolean {\n  // ...\n}\n\n// we just ignore this because this causes typescript to\n// export this module as a \"mathLib\" global\nexport as namespace mathLib;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -37,11 +42,7 @@ file:///mod.ts: EsmModuleInfo {
                             187,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function isPrime(x: number): boolean {\n  // ...\n}\n\n// we just ignore this because this causes typescript to\n// export this module as a \"mathLib\" global\nexport as namespace mathLib;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -62,6 +63,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function isPrime(x: number): boolean {\n  // ...\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -70,11 +76,7 @@ file:///mod.ts: EsmModuleInfo {
                             56,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function isPrime(x: number): boolean {\n  // ...\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

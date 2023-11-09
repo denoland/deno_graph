@@ -69,6 +69,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface A {\n}\n\nexport interface Main extends Extends {\n  prop: Prop;\n  method(method: Param): Return;\n  [key: string]: SignatureValueType;\n}\n\ninterface Extends {}\ninterface Prop {}\ninterface Param {}\ninterface Return {}\ninterface SignatureValueType {\n  other: B;\n}\n\ninterface B {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -77,11 +82,7 @@ file:///mod.ts: EsmModuleInfo {
                             283,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface A {\n}\n\nexport interface Main extends Extends {\n  prop: Prop;\n  method(method: Param): Return;\n  [key: string]: SignatureValueType;\n}\n\ninterface Extends {}\ninterface Prop {}\ninterface Param {}\ninterface Return {}\ninterface SignatureValueType {\n  other: B;\n}\n\ninterface B {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -109,6 +110,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface A {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -117,11 +123,7 @@ file:///mod.ts: EsmModuleInfo {
                             15,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface A {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -138,6 +140,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Main extends Extends {\n  prop: Prop;\n  method(method: Param): Return;\n  [key: string]: SignatureValueType;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             17,
@@ -146,11 +153,7 @@ file:///mod.ts: EsmModuleInfo {
                             142,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface Main extends Extends {\n  prop: Prop;\n  method(method: Param): Return;\n  [key: string]: SignatureValueType;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -171,6 +174,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "prop: Prop;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             59,
@@ -179,11 +187,7 @@ file:///mod.ts: EsmModuleInfo {
                             70,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "prop: Prop;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -200,6 +204,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "method(method: Param): Return;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             73,
@@ -208,11 +217,7 @@ file:///mod.ts: EsmModuleInfo {
                             103,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "method(method: Param): Return;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -229,6 +234,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "[key: string]: SignatureValueType;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             106,
@@ -237,11 +247,7 @@ file:///mod.ts: EsmModuleInfo {
                             140,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "[key: string]: SignatureValueType;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -258,6 +264,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Extends {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             144,
@@ -266,11 +277,7 @@ file:///mod.ts: EsmModuleInfo {
                             164,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface Extends {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -287,6 +294,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Prop {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             165,
@@ -295,11 +307,7 @@ file:///mod.ts: EsmModuleInfo {
                             182,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface Prop {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -316,6 +324,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Param {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             183,
@@ -324,11 +337,7 @@ file:///mod.ts: EsmModuleInfo {
                             201,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface Param {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -345,6 +354,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Return {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             202,
@@ -353,11 +367,7 @@ file:///mod.ts: EsmModuleInfo {
                             221,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface Return {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -374,6 +384,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface SignatureValueType {\n  other: B;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             222,
@@ -382,11 +397,7 @@ file:///mod.ts: EsmModuleInfo {
                             266,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface SignatureValueType {\n  other: B;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -405,6 +416,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "other: B;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             255,
@@ -413,11 +429,7 @@ file:///mod.ts: EsmModuleInfo {
                             264,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "other: B;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -434,6 +446,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface B {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             268,
@@ -442,11 +459,7 @@ file:///mod.ts: EsmModuleInfo {
                             283,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "interface B {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

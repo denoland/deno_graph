@@ -188,7 +188,9 @@ export class MyClass {
     let resolved_type = exports.resolved.get(name).unwrap();
     let type_symbol = resolved_type.symbol();
     let deps = type_symbol
-      .decl_nodes()
+      .decls()
+      .iter()
+      .filter_map(|d| d.maybe_node())
       .flat_map(|s| s.deps())
       .collect::<Vec<_>>();
     assert_eq!(deps.len(), 1);

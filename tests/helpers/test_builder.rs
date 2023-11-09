@@ -96,11 +96,13 @@ impl TestBuilder {
     self
   }
 
+  #[allow(unused)]
   pub fn entry_point(&mut self, value: impl AsRef<str>) -> &mut Self {
     self.entry_point = value.as_ref().to_string();
     self
   }
 
+  #[allow(unused)]
   pub fn entry_point_types(&mut self, value: impl AsRef<str>) -> &mut Self {
     self.entry_point_types = value.as_ref().to_string();
     self

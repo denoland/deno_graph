@@ -55,6 +55,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace Namespace1 {\n  export function test() {\n  }\n}\nexport namespace Namespace1.Inner {\n  export function test2() {\n  }\n}\n\nimport test = Namespace1.test;\nimport test2 = Namespace1.Inner.test2;\n\nexport { test, test2 };",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -63,11 +68,7 @@ file:///mod.ts: EsmModuleInfo {
                             228,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export namespace Namespace1 {\n  export function test() {\n  }\n}\nexport namespace Namespace1.Inner {\n  export function test2() {\n  }\n}\n\nimport test = Namespace1.test;\nimport test2 = Namespace1.Inner.test2;\n\nexport { test, test2 };",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -90,6 +91,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace Namespace1 {\n  export function test() {\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -98,13 +104,14 @@ file:///mod.ts: EsmModuleInfo {
                             62,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export namespace Namespace1 {\n  export function test() {\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace Namespace1.Inner {\n  export function test2() {\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             63,
@@ -113,11 +120,7 @@ file:///mod.ts: EsmModuleInfo {
                             132,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export namespace Namespace1.Inner {\n  export function test2() {\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -140,6 +143,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function test() {\n  }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             32,
@@ -148,11 +156,7 @@ file:///mod.ts: EsmModuleInfo {
                             60,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function test() {\n  }",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -169,6 +173,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace Namespace1.Inner {\n  export function test2() {\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             91,
@@ -177,11 +186,7 @@ file:///mod.ts: EsmModuleInfo {
                             132,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace Namespace1.Inner {\n  export function test2() {\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -202,6 +207,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function test2() {\n  }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             101,
@@ -210,11 +220,7 @@ file:///mod.ts: EsmModuleInfo {
                             130,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function test2() {\n  }",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -231,14 +237,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            134,
-                        ),
-                        end: SourcePos(
-                            164,
-                        ),
-                    },
                     kind: QualifiedTarget(
                         (
                             "Namespace1",
@@ -248,6 +246,15 @@ file:///mod.ts: EsmModuleInfo {
                             "test",
                         ],
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            134,
+                        ),
+                        end: SourcePos(
+                            164,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -264,14 +271,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            165,
-                        ),
-                        end: SourcePos(
-                            203,
-                        ),
-                    },
                     kind: QualifiedTarget(
                         (
                             "Namespace1",
@@ -282,6 +281,15 @@ file:///mod.ts: EsmModuleInfo {
                             "test2",
                         ],
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            165,
+                        ),
+                        end: SourcePos(
+                            203,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -298,6 +306,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "test",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             205,
@@ -306,12 +320,7 @@ file:///mod.ts: EsmModuleInfo {
                             228,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "test",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -328,6 +337,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "test2",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             205,
@@ -336,12 +351,7 @@ file:///mod.ts: EsmModuleInfo {
                             228,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "test2",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

@@ -28,6 +28,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "declare function foo(): number;\nexport function bar() {};",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -36,11 +41,7 @@ file:///mod.ts: EsmModuleInfo {
                             57,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "declare function foo(): number;\nexport function bar() {};",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -62,6 +63,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "declare function foo(): number;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -70,11 +76,7 @@ file:///mod.ts: EsmModuleInfo {
                             31,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "declare function foo(): number;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -91,6 +93,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function bar() {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             32,
@@ -99,11 +106,7 @@ file:///mod.ts: EsmModuleInfo {
                             56,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function bar() {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

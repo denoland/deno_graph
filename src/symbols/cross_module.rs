@@ -590,11 +590,7 @@ fn resolve_qualified_name_internal<'a>(
                 specifier_to_module,
               ));
             } else if next_part == "prototype"
-              && definition
-                .symbol_decl
-                .maybe_node()
-                .map(|n| n.is_class())
-                .unwrap_or(false)
+              && definition.symbol_decl.is_class()
             {
               // for now, just resolve to this definition
               debug_assert!(next.is_empty());

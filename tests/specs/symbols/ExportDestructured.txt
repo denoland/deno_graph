@@ -48,6 +48,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "const c = { a: \"a\", b: 2 };\nconst d: { f: string; g: number; } = { f: \"f\", g: 2 };\n\nexport const {\n  /** export a doc */\n  a,\n  /** export b doc */\n  b,\n}: {\n  /** type alias doc */\n  a: string;\n  /** other doc */\n  b: number;\n} = c;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -56,11 +61,7 @@ file:///mod.ts: EsmModuleInfo {
                             233,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "const c = { a: \"a\", b: 2 };\nconst d: { f: string; g: number; } = { f: \"f\", g: 2 };\n\nexport const {\n  /** export a doc */\n  a,\n  /** export b doc */\n  b,\n}: {\n  /** type alias doc */\n  a: string;\n  /** other doc */\n  b: number;\n} = c;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -85,6 +86,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "c: const c = { a: \"a\", b: 2 };",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             6,
@@ -93,11 +99,7 @@ file:///mod.ts: EsmModuleInfo {
                             26,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "c: const c = { a: \"a\", b: 2 };",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -114,6 +116,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "d: const d: { f: string; g: number; } = { f: \"f\", g: 2 };",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             34,
@@ -122,11 +129,7 @@ file:///mod.ts: EsmModuleInfo {
                             81,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "d: const d: { f: string; g: number; } = { f: \"f\", g: 2 };",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -143,6 +146,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export const {\n  /** export a doc */\n  a,\n  /** export b doc */\n  b,\n}: {\n  /** type alias doc */\n  a: string;\n  /** other doc */\n  b: number;\n} = c;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             97,
@@ -151,11 +159,7 @@ file:///mod.ts: EsmModuleInfo {
                             232,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export const {\n  /** export a doc */\n  a,\n  /** export b doc */\n  b,\n}: {\n  /** type alias doc */\n  a: string;\n  /** other doc */\n  b: number;\n} = c;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -172,6 +176,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export const {\n  /** export a doc */\n  a,\n  /** export b doc */\n  b,\n}: {\n  /** type alias doc */\n  a: string;\n  /** other doc */\n  b: number;\n} = c;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             97,
@@ -180,11 +189,7 @@ file:///mod.ts: EsmModuleInfo {
                             232,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export const {\n  /** export a doc */\n  a,\n  /** export b doc */\n  b,\n}: {\n  /** type alias doc */\n  a: string;\n  /** other doc */\n  b: number;\n} = c;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

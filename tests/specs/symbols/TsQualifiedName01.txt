@@ -41,6 +41,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export type Test = typeof Other.Test;\n\nnamespace Other {\n  export const Test = 1;\n\n  export const other = 2;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -49,11 +54,7 @@ file:///mod.ts: EsmModuleInfo {
                             110,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export type Test = typeof Other.Test;\n\nnamespace Other {\n  export const Test = 1;\n\n  export const other = 2;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -75,6 +76,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export type Test = typeof Other.Test;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -83,11 +89,7 @@ file:///mod.ts: EsmModuleInfo {
                             37,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export type Test = typeof Other.Test;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -104,6 +106,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace Other {\n  export const Test = 1;\n\n  export const other = 2;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             39,
@@ -112,11 +119,7 @@ file:///mod.ts: EsmModuleInfo {
                             110,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace Other {\n  export const Test = 1;\n\n  export const other = 2;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -139,6 +142,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export const Test = 1;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             72,
@@ -147,11 +155,7 @@ file:///mod.ts: EsmModuleInfo {
                             80,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export const Test = 1;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -168,6 +172,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export const other = 2;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             98,
@@ -176,11 +185,7 @@ file:///mod.ts: EsmModuleInfo {
                             107,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export const other = 2;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

@@ -48,6 +48,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function test(value: number);\nexport function test(value: string);\nexport function test(value: string | number) {\n}\n\nnamespace Inner {\n  export function inner(value: number);\n  export function inner(value: string);\n  export function inner(value: string | number) {\n  }\n}\n\nimport InnerInner = Inner.inner;\nexport { InnerInner };",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -56,11 +61,7 @@ file:///mod.ts: EsmModuleInfo {
                             334,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function test(value: number);\nexport function test(value: string);\nexport function test(value: string | number) {\n}\n\nnamespace Inner {\n  export function inner(value: number);\n  export function inner(value: string);\n  export function inner(value: string | number) {\n  }\n}\n\nimport InnerInner = Inner.inner;\nexport { InnerInner };",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -83,6 +84,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function test(value: number);",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -91,13 +97,14 @@ file:///mod.ts: EsmModuleInfo {
                             36,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function test(value: number);",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function test(value: string);",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             37,
@@ -106,13 +113,14 @@ file:///mod.ts: EsmModuleInfo {
                             73,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function test(value: string);",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function test(value: string | number) {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             74,
@@ -121,11 +129,7 @@ file:///mod.ts: EsmModuleInfo {
                             122,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function test(value: string | number) {\n}",
-                        ),
-                    ),
+                    flags: 1,
                 },
             ],
             child_ids: {},
@@ -142,6 +146,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace Inner {\n  export function inner(value: number);\n  export function inner(value: string);\n  export function inner(value: string | number) {\n  }\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             124,
@@ -150,11 +159,7 @@ file:///mod.ts: EsmModuleInfo {
                             277,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "namespace Inner {\n  export function inner(value: number);\n  export function inner(value: string);\n  export function inner(value: string | number) {\n  }\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -175,6 +180,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function inner(value: number);",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             144,
@@ -183,13 +193,14 @@ file:///mod.ts: EsmModuleInfo {
                             181,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function inner(value: number);",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function inner(value: string);",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             184,
@@ -198,13 +209,14 @@ file:///mod.ts: EsmModuleInfo {
                             221,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function inner(value: string);",
-                        ),
-                    ),
+                    flags: 0,
                 },
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function inner(value: string | number) {\n  }",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             224,
@@ -213,11 +225,7 @@ file:///mod.ts: EsmModuleInfo {
                             275,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function inner(value: string | number) {\n  }",
-                        ),
-                    ),
+                    flags: 1,
                 },
             ],
             child_ids: {},
@@ -234,14 +242,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            279,
-                        ),
-                        end: SourcePos(
-                            311,
-                        ),
-                    },
                     kind: QualifiedTarget(
                         (
                             "Inner",
@@ -251,6 +251,15 @@ file:///mod.ts: EsmModuleInfo {
                             "inner",
                         ],
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            279,
+                        ),
+                        end: SourcePos(
+                            311,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -267,6 +276,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "InnerInner",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             312,
@@ -275,12 +290,7 @@ file:///mod.ts: EsmModuleInfo {
                             334,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "InnerInner",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

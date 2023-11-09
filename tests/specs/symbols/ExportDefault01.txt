@@ -74,6 +74,11 @@ file:///a.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export { default as C1 } from \"./class.ts\";\nexport { default as C2 } from \"./function.ts\";\nexport { default as C3 } from \"./interface.ts\";\n\nexport default class Test {\n    prop: A;\n}\n\nclass A {\n    a: number;\n    b: B;\n}\n\nclass B {\n    b: number;\n    #c: C;\n}\n\nclass C {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -82,11 +87,7 @@ file:///a.ts: EsmModuleInfo {
                             272,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export { default as C1 } from \"./class.ts\";\nexport { default as C2 } from \"./function.ts\";\nexport { default as C3 } from \"./interface.ts\";\n\nexport default class Test {\n    prop: A;\n}\n\nclass A {\n    a: number;\n    b: B;\n}\n\nclass B {\n    b: number;\n    #c: C;\n}\n\nclass C {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -113,14 +114,6 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            22,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -129,6 +122,15 @@ file:///a.ts: EsmModuleInfo {
                             specifier: "./class.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            9,
+                        ),
+                        end: SourcePos(
+                            22,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -145,14 +147,6 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            53,
-                        ),
-                        end: SourcePos(
-                            66,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -161,6 +155,15 @@ file:///a.ts: EsmModuleInfo {
                             specifier: "./function.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            53,
+                        ),
+                        end: SourcePos(
+                            66,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -177,14 +180,6 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            100,
-                        ),
-                        end: SourcePos(
-                            113,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -193,6 +188,15 @@ file:///a.ts: EsmModuleInfo {
                             specifier: "./interface.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            100,
+                        ),
+                        end: SourcePos(
+                            113,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -209,6 +213,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export default class Test {\n    prop: A;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             140,
@@ -217,11 +226,7 @@ file:///a.ts: EsmModuleInfo {
                             182,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export default class Test {\n    prop: A;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -240,6 +245,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "prop: A;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             172,
@@ -248,11 +258,7 @@ file:///a.ts: EsmModuleInfo {
                             180,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "prop: A;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -269,6 +275,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class A {\n    a: number;\n    b: B;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             184,
@@ -277,11 +288,7 @@ file:///a.ts: EsmModuleInfo {
                             220,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class A {\n    a: number;\n    b: B;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -301,6 +308,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "a: number;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             198,
@@ -309,11 +321,7 @@ file:///a.ts: EsmModuleInfo {
                             208,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "a: number;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -330,6 +338,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "b: B;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             213,
@@ -338,11 +351,7 @@ file:///a.ts: EsmModuleInfo {
                             218,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "b: B;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -359,6 +368,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class B {\n    b: number;\n    #c: C;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             222,
@@ -367,11 +381,7 @@ file:///a.ts: EsmModuleInfo {
                             259,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class B {\n    b: number;\n    #c: C;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -390,6 +400,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "b: number;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             236,
@@ -398,11 +413,7 @@ file:///a.ts: EsmModuleInfo {
                             246,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "b: number;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -419,6 +430,11 @@ file:///a.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class C {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             261,
@@ -427,11 +443,7 @@ file:///a.ts: EsmModuleInfo {
                             272,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "class C {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -465,6 +477,11 @@ file:///class.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export default class Test {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -473,11 +490,7 @@ file:///class.ts: EsmModuleInfo {
                             29,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export default class Test {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -498,6 +511,11 @@ file:///class.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export default class Test {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -506,11 +524,7 @@ file:///class.ts: EsmModuleInfo {
                             29,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export default class Test {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -540,6 +554,11 @@ file:///function.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export default function Test() {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -548,11 +567,7 @@ file:///function.ts: EsmModuleInfo {
                             34,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export default function Test() {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -573,6 +588,11 @@ file:///function.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export default function Test() {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -581,11 +601,7 @@ file:///function.ts: EsmModuleInfo {
                             34,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export default function Test() {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -615,6 +631,11 @@ file:///interface.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export default interface Test {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -623,11 +644,7 @@ file:///interface.ts: EsmModuleInfo {
                             33,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export default interface Test {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -648,6 +665,11 @@ file:///interface.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export default interface Test {\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -656,11 +678,7 @@ file:///interface.ts: EsmModuleInfo {
                             33,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export default interface Test {\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -702,6 +720,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "import Test from \"./a.ts\";\nimport { C1, C2, C3 as CInterface } from \"./a.ts\";\n\nexport default Test;\n\nexport { C1, C2, CInterface };",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -710,11 +733,7 @@ file:///mod.ts: EsmModuleInfo {
                             131,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "import Test from \"./a.ts\";\nimport { C1, C2, C3 as CInterface } from \"./a.ts\";\n\nexport default Test;\n\nexport { C1, C2, CInterface };",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -736,14 +755,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            7,
-                        ),
-                        end: SourcePos(
-                            11,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -752,6 +763,15 @@ file:///mod.ts: EsmModuleInfo {
                             specifier: "./a.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            7,
+                        ),
+                        end: SourcePos(
+                            11,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -768,14 +788,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            36,
-                        ),
-                        end: SourcePos(
-                            38,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -784,6 +796,15 @@ file:///mod.ts: EsmModuleInfo {
                             specifier: "./a.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            36,
+                        ),
+                        end: SourcePos(
+                            38,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -800,14 +821,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            40,
-                        ),
-                        end: SourcePos(
-                            42,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -816,6 +829,15 @@ file:///mod.ts: EsmModuleInfo {
                             specifier: "./a.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            40,
+                        ),
+                        end: SourcePos(
+                            42,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -832,14 +854,6 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    range: SourceRange {
-                        start: SourcePos(
-                            44,
-                        ),
-                        end: SourcePos(
-                            60,
-                        ),
-                    },
                     kind: FileRef(
                         FileDep {
                             name: Name(
@@ -848,6 +862,15 @@ file:///mod.ts: EsmModuleInfo {
                             specifier: "./a.ts",
                         },
                     ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            44,
+                        ),
+                        end: SourcePos(
+                            60,
+                        ),
+                    },
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -864,6 +887,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "Test",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             94,
@@ -872,12 +901,7 @@ file:///mod.ts: EsmModuleInfo {
                             98,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "Test",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -894,6 +918,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "C1",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             101,
@@ -902,12 +932,7 @@ file:///mod.ts: EsmModuleInfo {
                             131,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "C1",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -924,6 +949,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "C2",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             101,
@@ -932,12 +963,7 @@ file:///mod.ts: EsmModuleInfo {
                             131,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "C2",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -954,6 +980,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "CInterface",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             101,
@@ -962,12 +994,7 @@ file:///mod.ts: EsmModuleInfo {
                             131,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "CInterface",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

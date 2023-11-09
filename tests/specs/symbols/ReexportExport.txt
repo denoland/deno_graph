@@ -24,6 +24,11 @@ file:///mod.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function foo(): void {}\nexport { foo as bar };",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -32,11 +37,7 @@ file:///mod.ts: EsmModuleInfo {
                             53,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function foo(): void {}\nexport { foo as bar };",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -58,6 +59,11 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export function foo(): void {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -66,11 +72,7 @@ file:///mod.ts: EsmModuleInfo {
                             30,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export function foo(): void {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -87,6 +89,12 @@ file:///mod.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Target(
+                        (
+                            "foo",
+                            #2,
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             31,
@@ -95,12 +103,7 @@ file:///mod.ts: EsmModuleInfo {
                             53,
                         ),
                     },
-                    kind: Target(
-                        (
-                            "foo",
-                            #2,
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},

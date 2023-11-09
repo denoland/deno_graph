@@ -32,6 +32,11 @@ file:///mod.d.ts: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface MyInterface {\n  a: string;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -40,11 +45,7 @@ file:///mod.d.ts: EsmModuleInfo {
                             45,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface MyInterface {\n  a: string;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -65,6 +66,11 @@ file:///mod.d.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface MyInterface {\n  a: string;\n}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             0,
@@ -73,11 +79,7 @@ file:///mod.d.ts: EsmModuleInfo {
                             45,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface MyInterface {\n  a: string;\n}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -96,6 +98,11 @@ file:///mod.d.ts: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "a: string;",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             33,
@@ -104,11 +111,7 @@ file:///mod.d.ts: EsmModuleInfo {
                             43,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "a: string;",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
@@ -138,6 +141,11 @@ file:///mod.js: EsmModuleInfo {
             parent_id: None,
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export class JsExport {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             143,
@@ -146,11 +154,7 @@ file:///mod.js: EsmModuleInfo {
                             167,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class JsExport {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {
@@ -171,6 +175,11 @@ file:///mod.js: EsmModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export class JsExport {}",
+                        ),
+                    ),
                     range: SourceRange {
                         start: SourcePos(
                             143,
@@ -179,11 +188,7 @@ file:///mod.js: EsmModuleInfo {
                             167,
                         ),
                     },
-                    kind: Definition(
-                        SymbolNode(
-                            "export class JsExport {}",
-                        ),
-                    ),
+                    flags: 0,
                 },
             ],
             child_ids: {},
