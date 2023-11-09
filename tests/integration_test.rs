@@ -390,7 +390,7 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
-            content: "import 'jsr:@scope/a@1.2/mod.ts".into(),
+            content: "import 'jsr:@scope/a@1.2".into(),
           }))
         }),
         "https://registry-staging.deno.com/@scope/a/meta.json" => {
@@ -416,7 +416,7 @@ async fn test_jsr_version_not_found_then_found() {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: "{}".into(),
+              content: r#"{ "exports": { ".": "./mod.ts" } }"#.into(),
             }))
           })
         }

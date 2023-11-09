@@ -19,17 +19,57 @@ pub struct JsrPackageInfo {
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct JsrPackageInfoVersion {
-  // currently not supported because it doesn't work in workspaces
-  // pub main: Option<String>,
+  // no fields yet
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct JsrPackageVersionInfo {
+  // ensure the fields on here are resilient to change
+  #[serde(default)]
+  pub exports: serde_json::Value,
   #[serde(rename = "moduleGraph1")]
   pub module_graph: Option<serde_json::Value>,
 }
 
 impl JsrPackageVersionInfo {
+  /// Resolves the provided export key.
+  ///
+  /// Note: This assumes the provided export name is normalized.
+  pub fn export(&self, export_name: &str) -> Option<&str> {
+    match &self.exports {
+      serde_json::Value::String(value) => {
+        if export_name == "." {
+          Some(value.as_str())
+        } else {
+          None
+        }
+      }
+      serde_json::Value::Object(map) => match map.get(export_name) {
+        Some(serde_json::Value::String(value)) => Some(value.as_str()),
+        _ => None,
+      },
+      _ => None,
+    }
+  }
+
+  /// Gets the key and values of the exports map.
+  pub fn exports(&self) -> Box<dyn Iterator<Item = (&str, &str)> + '_> {
+    match &self.exports {
+      serde_json::Value::String(value) => {
+        Box::new(std::iter::once((".", value.as_str())))
+      }
+      serde_json::Value::Object(map) => {
+        Box::new(map.iter().filter_map(|(key, value)| match value {
+          serde_json::Value::String(value) => {
+            Some((key.as_str(), value.as_str()))
+          }
+          _ => None,
+        }))
+      }
+      _ => Box::new(std::iter::empty()),
+    }
+  }
+
   pub fn module_info(&self, specifier: &str) -> Option<ModuleInfo> {
     let module_graph = self.module_graph.as_ref()?.as_object()?;
     let module_info = module_graph.get(specifier)?;
