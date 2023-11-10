@@ -617,6 +617,19 @@ impl<'a> SymbolNodeRef<'a> {
     )
   }
 
+  /// If the node is an interface.
+  pub fn is_interface(&self) -> bool {
+    matches!(
+      self,
+      Self::TsInterface(_)
+        | Self::ExportDecl(_, ExportDeclRef::TsInterface(_))
+        | Self::ExportDefaultDecl(ExportDefaultDecl {
+          decl: DefaultDecl::TsInterfaceDecl(_),
+          ..
+        })
+    )
+  }
+
   /// If the node is a method.
   pub fn is_class_method(&self) -> bool {
     matches!(self, Self::ClassMethod(_))
@@ -953,15 +966,19 @@ impl SymbolDecl {
     self.maybe_node().map(|n| n.is_class()).unwrap_or(false)
   }
 
-  pub fn is_function(&self) -> bool {
-    self.maybe_node().map(|n| n.is_function()).unwrap_or(false)
-  }
-
   pub fn is_class_method(&self) -> bool {
     self
       .maybe_node()
       .map(|n| n.is_class_method())
       .unwrap_or(false)
+  }
+
+  pub fn is_function(&self) -> bool {
+    self.maybe_node().map(|n| n.is_function()).unwrap_or(false)
+  }
+
+  pub fn is_interface(&self) -> bool {
+    self.maybe_node().map(|n| n.is_interface()).unwrap_or(false)
   }
 
   pub fn has_body(&self) -> bool {
