@@ -474,11 +474,11 @@ fn resolve_qualified_export_name_internal<'a>(
   debug_assert!(!parts.is_empty());
   let exports = exports_and_re_exports(graph, module, specifier_to_module);
   let export_name = &parts[0];
-  if let Some(resolved) = exports.resolved.get(export_name) {
+  if let Some(resolved_symbol_id) = exports.resolved.get(export_name) {
     resolve_qualified_name_internal(
       graph,
-      resolved.module,
-      resolved.module.symbol(resolved.symbol_id).unwrap(),
+      module,
+      module.symbol(*resolved_symbol_id).unwrap(),
       &parts[1..],
       visited_symbols,
       specifier_to_module,
@@ -674,26 +674,8 @@ fn resolve_qualified_name_internal<'a>(
 
 #[derive(Debug, Clone)]
 pub struct ExportsAndReExports<'a> {
-  pub resolved: IndexMap<String, ResolvedExportOrReExport<'a>>,
-  pub unresolved_specifiers: Vec<UnresolvedSpecifier<'a>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct ResolvedExportOrReExport<'a> {
-  pub module: ModuleInfoRef<'a>,
-  pub symbol_id: SymbolId,
-}
-
-impl<'a> ResolvedExportOrReExport<'a> {
-  pub fn symbol(&self) -> &'a Symbol {
-    self.module.symbol(self.symbol_id).unwrap()
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct UnresolvedSpecifier<'a> {
-  pub referrer: ModuleInfoRef<'a>,
-  pub specifier: &'a String,
+  pub resolved: IndexMap<String, SymbolId>,
+  pub unresolved_specifiers: Vec<&'a String>,
 }
 
 pub fn exports_and_re_exports<'a>(
@@ -704,13 +686,7 @@ pub fn exports_and_re_exports<'a>(
   let mut unresolved_specifiers = Vec::new();
   let mut resolved = IndexMap::new();
   for (name, symbol_id) in module.module_symbol().exports() {
-    resolved.insert(
-      name.clone(),
-      ResolvedExportOrReExport {
-        module,
-        symbol_id: *symbol_id,
-      },
-    );
+    resolved.insert(name.clone(), *symbol_id);
   }
   if let Some(re_export_all_specifier) = module.re_export_all_specifiers() {
     for re_export_specifier in re_export_all_specifier.iter() {
@@ -730,10 +706,7 @@ pub fn exports_and_re_exports<'a>(
         }
         unresolved_specifiers.extend(inner.unresolved_specifiers);
       } else {
-        unresolved_specifiers.push(UnresolvedSpecifier {
-          referrer: module,
-          specifier: re_export_specifier,
-        })
+        unresolved_specifiers.push(re_export_specifier);
       }
     }
   }

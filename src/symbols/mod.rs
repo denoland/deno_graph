@@ -22,9 +22,7 @@ pub use self::cross_module::DefinitionKind;
 pub use self::cross_module::DefinitionOrUnresolved;
 pub use self::cross_module::DefinitionPath;
 pub use self::cross_module::ExportsAndReExports;
-pub use self::cross_module::ResolvedExportOrReExport;
 pub use self::cross_module::ResolvedSymbolDepEntry;
-pub use self::cross_module::UnresolvedSpecifier;
 pub use self::dep_analyzer::SymbolNodeDep;
 
 mod analyzer;
