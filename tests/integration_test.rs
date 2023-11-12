@@ -186,6 +186,7 @@ export class MyClass {
 
   let resolve_single_definition_text = |name: &str| -> String {
     let resolved_type = exports.resolved.get(name).unwrap();
+    let resolved_type = resolved_type.as_resolved_export();
     let type_symbol = resolved_type.symbol();
     let deps = type_symbol
       .decls()

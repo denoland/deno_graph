@@ -389,6 +389,7 @@ impl TestBuilder {
         if !exports.is_empty() {
           output_text.push_str("== export definitions ==\n");
           for (name, resolved) in exports {
+            let resolved = resolved.as_resolved_export();
             let position = get_symbol_text(resolved.module, resolved.symbol_id);
             output_text.push_str(&format!("[{}]: {}\n", name, position));
           }
