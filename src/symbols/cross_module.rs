@@ -342,7 +342,6 @@ fn go_to_file_export<'a>(
             );
             for (name, item) in inner.resolved {
               if name == export_name {
-                eprintln!("NAME: {}", name);
                 let paths = find_definition_paths_internal(
                   module_graph,
                   module,
