@@ -334,6 +334,7 @@ fn go_to_file_export<'a>(
             maybe_specifier.and_then(|s| specifier_to_module(&s));
           let mut visited = HashSet::new();
           if let Some(module) = maybe_module {
+            // todo(dsherret): this could be optimized to use an iterator
             let inner = exports_and_re_exports_inner(
               module_graph,
               module,

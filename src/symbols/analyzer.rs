@@ -440,6 +440,14 @@ impl std::fmt::Debug for SymbolNode {
 }
 
 impl SymbolNode {
+  pub fn maybe_name(&self) -> Option<Cow<str>> {
+    self.maybe_ref().and_then(|r| r.maybe_name())
+  }
+
+  pub fn maybe_ref(&self) -> Option<SymbolNodeRef> {
+    self.maybe_ref_and_source().map(|(n, _)| n)
+  }
+
   pub fn maybe_ref_and_source(&self) -> Option<(SymbolNodeRef, &ParsedSource)> {
     match &self.0 {
       SymbolNodeInner::Json => None,
