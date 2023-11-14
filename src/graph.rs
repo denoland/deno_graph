@@ -222,6 +222,15 @@ impl ModuleError {
       Self::UnsupportedImportAttributeType { range, .. } => Some(range),
     }
   }
+
+  /// Converts the error into a string along with the range related to the error.
+  pub fn to_string_with_range(&self) -> String {
+    if let Some(range) = self.maybe_referrer() {
+      format!("{self:#}\n    at {range}")
+    } else {
+      format!("{self:#}")
+    }
+  }
 }
 
 impl std::error::Error for ModuleError {
@@ -292,10 +301,12 @@ impl ModuleGraphError {
   /// We don't include the range in the error messages by default because they're
   /// not useful in cases like the LSP where the range is given by the editor itself.
   pub fn to_string_with_range(&self) -> String {
-    if let Some(range) = self.maybe_range() {
-      format!("{self:#}\n    at {range}")
-    } else {
-      format!("{self:#}")
+    match self {
+      ModuleGraphError::ModuleError(err) => err.to_string_with_range(),
+      ModuleGraphError::ResolutionError(err)
+      | ModuleGraphError::TypesResolutionError(err) => {
+        err.to_string_with_range()
+      }
     }
   }
 
