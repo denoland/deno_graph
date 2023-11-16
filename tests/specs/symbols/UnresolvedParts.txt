@@ -398,7 +398,7 @@ file:///other.ts: EsmModuleInfo {
   export function test() {}
 [Unresolved]: file:///mod.ts
   Unresolved Part("NotFound") (["NotFound"])
-[NonExistent]: file:///mod.ts
+[NonExistent]: file:///other.ts
   Unresolved Part("NonExistent") ([])
 [NonExistent2]: file:///other.ts
   Unresolved Part("NotFound") (["NotFound"])

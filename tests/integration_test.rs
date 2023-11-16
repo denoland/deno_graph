@@ -178,14 +178,13 @@ export class MyClass {
 
   let root_symbol = result.root_symbol();
   let module = root_symbol
-    .get_module_from_specifier(
-      &ModuleSpecifier::parse("file:///mod.ts").unwrap(),
-    )
+    .module_from_specifier(&ModuleSpecifier::parse("file:///mod.ts").unwrap())
     .unwrap();
   let exports = module.exports(&root_symbol);
 
   let resolve_single_definition_text = |name: &str| -> String {
     let resolved_type = exports.resolved.get(name).unwrap();
+    let resolved_type = resolved_type.as_resolved_export();
     let type_symbol = resolved_type.symbol();
     let deps = type_symbol
       .decls()
@@ -246,9 +245,7 @@ async fn test_symbols_re_export_external() {
 
   let root_symbol = result.root_symbol();
   let module = root_symbol
-    .get_module_from_specifier(
-      &ModuleSpecifier::parse("file:///mod.ts").unwrap(),
-    )
+    .module_from_specifier(&ModuleSpecifier::parse("file:///mod.ts").unwrap())
     .unwrap();
   let exports = module.exports(&root_symbol);
   assert_eq!(

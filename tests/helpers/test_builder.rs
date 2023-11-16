@@ -279,14 +279,14 @@ impl TestBuilder {
     Ok(symbols::SymbolsResult {
       output: {
         let entrypoint_symbol = root_symbol
-          .get_module_from_specifier(&entry_point_types_url)
+          .module_from_specifier(&entry_point_types_url)
           .unwrap();
         let mut output_text = String::new();
         let mut specifiers =
           graph.specifiers().map(|(s, _)| s).collect::<Vec<_>>();
         specifiers.sort_unstable();
         for specifier in specifiers {
-          let Some(module) = root_symbol.get_module_from_specifier(specifier)
+          let Some(module) = root_symbol.module_from_specifier(specifier)
           else {
             continue;
           };
@@ -389,6 +389,7 @@ impl TestBuilder {
         if !exports.is_empty() {
           output_text.push_str("== export definitions ==\n");
           for (name, resolved) in exports {
+            let resolved = resolved.as_resolved_export();
             let position = get_symbol_text(resolved.module, resolved.symbol_id);
             output_text.push_str(&format!("[{}]: {}\n", name, position));
           }
