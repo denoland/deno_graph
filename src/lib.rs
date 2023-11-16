@@ -21,14 +21,11 @@ use std::sync::Arc;
 
 pub use analyzer::analyze_deno_types;
 pub use analyzer::Comment;
-pub use analyzer::DependencyDescriptor;
-pub use analyzer::DependencyKind;
-pub use analyzer::ImportAttribute;
-pub use analyzer::ImportAttributes;
 pub use analyzer::ModuleAnalyzer;
 pub use analyzer::ModuleInfo;
 pub use analyzer::PositionRange;
 pub use analyzer::SpecifierWithRange;
+pub use analyzer::StaticDependencyDescriptor;
 pub use analyzer::TypeScriptReference;
 pub use ast::CapturingModuleAnalyzer;
 pub use ast::CapturingModuleParser;
@@ -64,6 +61,10 @@ pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
 pub use source::NpmPackageReqResolution;
+
+pub use deno_ast::dep::DependencyKind;
+pub use deno_ast::dep::ImportAttribute;
+pub use deno_ast::dep::ImportAttributes;
 
 #[derive(Debug, Clone)]
 pub struct ReferrerImports {

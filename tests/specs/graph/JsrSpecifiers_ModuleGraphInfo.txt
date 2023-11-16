@@ -13,6 +13,7 @@
   "moduleGraph1": {
     "/mod.ts": {
       "dependencies": [{
+          "type": "static",
           "kind": "import",
           "range": [[1, 2], [3, 4]],
           "specifier": "./a.ts",
@@ -21,11 +22,13 @@
     },
     "/a.ts": {
       "dependencies": [{
+          "type": "static",
           "kind": "import",
           "range": [[9, 10], [11, 12]],
           "specifier": "./b.ts",
           "specifierRange": [[13, 14], [15, 16]]
       }, {
+          "type": "static",
           "kind": "import",
           "range": [[1, 2], [3, 4]],
           "specifier": "jsr:@scope/b/export",
@@ -50,6 +53,7 @@
   "moduleGraph1": {
     "/mod.ts": {
       "dependencies": [{
+        "type": "static",
         "kind": "import",
         "range": [[1, 2], [3, 4]],
         "specifier": "./inner.ts",
