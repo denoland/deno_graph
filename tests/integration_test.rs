@@ -178,9 +178,7 @@ export class MyClass {
 
   let root_symbol = result.root_symbol();
   let module = root_symbol
-    .get_module_from_specifier(
-      &ModuleSpecifier::parse("file:///mod.ts").unwrap(),
-    )
+    .module_from_specifier(&ModuleSpecifier::parse("file:///mod.ts").unwrap())
     .unwrap();
   let exports = module.exports(&root_symbol);
 
@@ -247,9 +245,7 @@ async fn test_symbols_re_export_external() {
 
   let root_symbol = result.root_symbol();
   let module = root_symbol
-    .get_module_from_specifier(
-      &ModuleSpecifier::parse("file:///mod.ts").unwrap(),
-    )
+    .module_from_specifier(&ModuleSpecifier::parse("file:///mod.ts").unwrap())
     .unwrap();
   let exports = module.exports(&root_symbol);
   assert_eq!(

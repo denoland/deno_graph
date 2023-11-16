@@ -73,7 +73,7 @@ impl<'a> RootSymbol<'a> {
 
   /// Gets a module from the provided specifier. This will lazily analyze
   /// the module if it has not already been analyzed.
-  pub fn get_module_from_specifier(
+  pub fn module_from_specifier(
     &self,
     specifier: &ModuleSpecifier,
   ) -> Option<ModuleInfoRef> {
@@ -107,10 +107,7 @@ impl<'a> RootSymbol<'a> {
       .resolve_dependency(specifier, referrer, /* prefer_types */ true)
   }
 
-  pub fn get_module_from_id(
-    &self,
-    module_id: ModuleId,
-  ) -> Option<ModuleInfoRef> {
+  pub fn module_from_id(&self, module_id: ModuleId) -> Option<ModuleInfoRef> {
     self.ids_to_modules.get(&module_id).map(|s| s.as_ref())
   }
 
@@ -149,7 +146,7 @@ impl<'a> RootSymbol<'a> {
       self.module_graph,
       module,
       symbol,
-      &|specifier| self.get_module_from_specifier(specifier),
+      &|specifier| self.module_from_specifier(specifier),
     )
   }
 
@@ -164,7 +161,7 @@ impl<'a> RootSymbol<'a> {
       module,
       symbol,
       dep,
-      &|specifier| self.get_module_from_specifier(specifier),
+      &|specifier| self.module_from_specifier(specifier),
     )
   }
 
@@ -1247,7 +1244,7 @@ impl<'a> ModuleInfoRef<'a> {
     cross_module::exports_and_re_exports(
       root_symbol.module_graph,
       *self,
-      &|specifier| root_symbol.get_module_from_specifier(specifier),
+      &|specifier| root_symbol.module_from_specifier(specifier),
     )
   }
 
@@ -1472,7 +1469,7 @@ impl SymbolMut {
     self.0.borrow_mut().exports.insert(name, symbol_id);
   }
 
-  pub fn get_export(&self, name: &str) -> Option<SymbolId> {
+  pub fn export(&self, name: &str) -> Option<SymbolId> {
     self.0.borrow().exports.get(name).copied()
   }
 
@@ -1515,7 +1512,7 @@ impl ModuleBuilder {
     module_symbol: &SymbolMut,
     symbol_decl: SymbolDecl,
   ) -> SymbolId {
-    if let Some(symbol_id) = module_symbol.get_export("default") {
+    if let Some(symbol_id) = module_symbol.export("default") {
       let default_export_symbol = self.symbols.get(&symbol_id).unwrap();
       default_export_symbol.add_decl(symbol_decl);
       symbol_id
@@ -2561,7 +2558,7 @@ impl<'a> SymbolFiller<'a> {
         // static members on a class are children and an export if they have a name
         // while instance members are "members"
         if is_static {
-          match parent_symbol.get_export(&decl_name) {
+          match parent_symbol.export(&decl_name) {
             Some(symbol_id) => self.builder.symbol_mut(symbol_id).unwrap(),
             None => {
               if let Some(child_symbol) =

@@ -279,14 +279,14 @@ impl TestBuilder {
     Ok(symbols::SymbolsResult {
       output: {
         let entrypoint_symbol = root_symbol
-          .get_module_from_specifier(&entry_point_types_url)
+          .module_from_specifier(&entry_point_types_url)
           .unwrap();
         let mut output_text = String::new();
         let mut specifiers =
           graph.specifiers().map(|(s, _)| s).collect::<Vec<_>>();
         specifiers.sort_unstable();
         for specifier in specifiers {
-          let Some(module) = root_symbol.get_module_from_specifier(specifier)
+          let Some(module) = root_symbol.module_from_specifier(specifier)
           else {
             continue;
           };
