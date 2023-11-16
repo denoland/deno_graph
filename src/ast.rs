@@ -567,10 +567,9 @@ mod tests {
       }
     }
 
-    let dep_deno_types = analyze_deno_types(match &dependencies[4] {
-      DependencyDescriptor::Static(d) => &d.leading_comments,
-      DependencyDescriptor::Dynamic(d) => &d.leading_comments,
-    })
+    let dep_deno_types = analyze_deno_types(
+      &dependencies[4].as_static().unwrap().leading_comments,
+    )
     .unwrap();
     assert_eq!(
       dep_deno_types.specifier,
