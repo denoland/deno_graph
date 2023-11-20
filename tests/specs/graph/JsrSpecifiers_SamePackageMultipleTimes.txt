@@ -13,6 +13,7 @@
   "moduleGraph1": {
     "/mod.ts": {
       "dependencies": [{
+          "type": "static",
           "kind": "import",
           "range": [[1, 2], [3, 4]],
           "specifier": "jsr:@scope/b@1",

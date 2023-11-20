@@ -2,18 +2,19 @@
 
 use crate::analyzer::Comment;
 use crate::analyzer::DependencyDescriptor;
+use crate::analyzer::DynamicArgument;
+use crate::analyzer::DynamicDependencyDescriptor;
+use crate::analyzer::DynamicTemplatePart;
 use crate::analyzer::ModuleAnalyzer;
 use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
+use crate::analyzer::StaticDependencyDescriptor;
 use crate::analyzer::TypeScriptReference;
 use crate::graph::Position;
 use crate::module_specifier::ModuleSpecifier;
-use crate::DependencyKind;
-use crate::ImportAttributes;
 
 use deno_ast::SourcePos;
-use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 
 use deno_ast::swc::common::comments::CommentKind;
@@ -312,33 +313,73 @@ impl ParsedSourceStore for CapturingModuleAnalyzer {
 fn analyze_dependencies(
   parsed_source: &ParsedSource,
 ) -> Vec<DependencyDescriptor> {
-  deno_ast::swc::dep_graph::analyze_dependencies(
-    parsed_source.module(),
-    &parsed_source.comments().as_swc_comments(),
-  )
-  .into_iter()
-  .filter(|desc| desc.kind != deno_ast::swc::dep_graph::DependencyKind::Require)
-  .map(|d| DependencyDescriptor {
-    kind: DependencyKind::from_swc(d.kind),
-    is_dynamic: d.is_dynamic,
-    leading_comments: d
-      .leading_comments
-      .into_iter()
-      .map(|c| Comment::from_swc(c, parsed_source.text_info()))
-      .collect(),
-    // ok to use this because we received this span from swc
-    range: PositionRange::from_source_range(
-      SourceRange::unsafely_from_span(d.span),
-      parsed_source.text_info(),
-    ),
-    specifier: d.specifier.to_string(),
-    specifier_range: PositionRange::from_source_range(
-      SourceRange::unsafely_from_span(d.specifier_span),
-      parsed_source.text_info(),
-    ),
-    import_attributes: ImportAttributes::from_swc(d.import_attributes),
-  })
-  .collect()
+  parsed_source
+    .analyze_dependencies()
+    .into_iter()
+    .map(|d| match d {
+      deno_ast::dep::DependencyDescriptor::Static(d) => {
+        DependencyDescriptor::Static(StaticDependencyDescriptor {
+          kind: d.kind,
+          leading_comments: d
+            .leading_comments
+            .into_iter()
+            .map(|c| Comment::from_dep_comment(c, parsed_source.text_info()))
+            .collect(),
+          range: PositionRange::from_source_range(
+            d.range,
+            parsed_source.text_info(),
+          ),
+          specifier: d.specifier.to_string(),
+          specifier_range: PositionRange::from_source_range(
+            d.specifier_range,
+            parsed_source.text_info(),
+          ),
+          import_attributes: d.import_attributes,
+        })
+      }
+      deno_ast::dep::DependencyDescriptor::Dynamic(d) => {
+        DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
+          leading_comments: d
+            .leading_comments
+            .into_iter()
+            .map(|c| Comment::from_dep_comment(c, parsed_source.text_info()))
+            .collect(),
+          range: PositionRange::from_source_range(
+            d.range,
+            parsed_source.text_info(),
+          ),
+          argument: match d.argument {
+            deno_ast::dep::DynamicArgument::String(text) => {
+              DynamicArgument::String(text.to_string())
+            }
+            deno_ast::dep::DynamicArgument::Template(parts) => {
+              DynamicArgument::Template(
+                parts
+                  .into_iter()
+                  .map(|part| match part {
+                    deno_ast::dep::DynamicTemplatePart::String(text) => {
+                      DynamicTemplatePart::String {
+                        value: text.to_string(),
+                      }
+                    }
+                    deno_ast::dep::DynamicTemplatePart::Expr => {
+                      DynamicTemplatePart::Expr
+                    }
+                  })
+                  .collect(),
+              )
+            }
+            deno_ast::dep::DynamicArgument::Expr => DynamicArgument::Expr,
+          },
+          argument_range: PositionRange::from_source_range(
+            d.argument_range,
+            parsed_source.text_info(),
+          ),
+          import_attributes: d.import_attributes,
+        })
+      }
+    })
+    .collect()
 }
 
 fn analyze_ts_references(
@@ -526,7 +567,10 @@ mod tests {
       }
     }
 
-    let dep_deno_types = analyze_deno_types(&dependencies[4]).unwrap();
+    let dep_deno_types = analyze_deno_types(
+      &dependencies[4].as_static().unwrap().leading_comments,
+    )
+    .unwrap();
     assert_eq!(
       dep_deno_types.specifier,
       "https://deno.land/x/types/react/index.d.ts"
@@ -568,22 +612,18 @@ mod tests {
     let text_info = parsed_source.text_info();
     let dependencies = module_info.dependencies;
     assert_eq!(dependencies.len(), 10);
-    assert_eq!(dependencies[0].specifier.to_string(), "./a.ts");
+    let dep = dependencies[0].as_static().unwrap();
+    assert_eq!(dep.specifier.to_string(), "./a.ts");
     assert_eq!(
-      text_info.range_text(
-        &dependencies[0].specifier_range.as_source_range(text_info)
-      ),
+      text_info.range_text(&dep.specifier_range.as_source_range(text_info)),
       "\"./a.ts\""
     );
-    assert!(!dependencies[0].is_dynamic);
-    assert_eq!(dependencies[1].specifier.to_string(), "./b.ts");
+    let dep = dependencies[1].as_static().unwrap();
+    assert_eq!(dep.specifier.to_string(), "./b.ts");
     assert_eq!(
-      text_info.range_text(
-        &dependencies[1].specifier_range.as_source_range(text_info)
-      ),
+      text_info.range_text(&dep.specifier_range.as_source_range(text_info)),
       "\"./b.ts\""
     );
-    assert!(!dependencies[1].is_dynamic);
   }
 
   #[test]
@@ -603,18 +643,15 @@ mod tests {
       let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
       let dependencies = module_info.dependencies;
       assert_eq!(dependencies.len(), 2);
-      assert!(!dependencies[0].is_dynamic);
-      assert_eq!(dependencies[0].specifier.to_string(), "./a.json");
+      let dep = dependencies[0].as_static().unwrap();
+      assert_eq!(dep.specifier.to_string(), "./a.json");
+      assert_eq!(dep.import_attributes.get("type"), Some(&"json".to_string()));
+      let dep = dependencies[1].as_dynamic().unwrap();
       assert_eq!(
-        dependencies[0].import_attributes.get("type"),
-        Some(&"json".to_string())
+        dep.argument,
+        DynamicArgument::String("./b.json".to_string())
       );
-      assert!(dependencies[1].is_dynamic);
-      assert_eq!(dependencies[1].specifier.to_string(), "./b.json");
-      assert_eq!(
-        dependencies[1].import_attributes.get("type"),
-        Some(&"json".to_string())
-      );
+      assert_eq!(dep.import_attributes.get("type"), Some(&"json".to_string()));
     }
   }
 

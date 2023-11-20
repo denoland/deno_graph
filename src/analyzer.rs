@@ -1,13 +1,13 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-use std::collections::HashMap;
 use std::sync::Arc;
 
+use deno_ast::dep::DependencyKind;
+use deno_ast::dep::ImportAttributes;
 use deno_ast::Diagnostic;
 use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
 use deno_ast::SourceRange;
-use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
 use once_cell::sync::Lazy;
 use regex::Match;
@@ -32,7 +32,7 @@ pub struct DenoTypesPragma {
 
 /// Searches comments for any `@deno-types` compiler hints.
 pub fn analyze_deno_types(
-  desc: &DependencyDescriptor,
+  leading_comments: &[Comment],
 ) -> Option<DenoTypesPragma> {
   fn comment_position_to_position_range(
     mut comment_start: Position,
@@ -54,7 +54,7 @@ pub fn analyze_deno_types(
     }
   }
 
-  let comment = desc.leading_comments.last()?;
+  let comment = leading_comments.last()?;
   let captures = DENO_TYPES_RE.captures(&comment.text)?;
   if let Some(m) = captures.get(1) {
     Some(DenoTypesPragma {
@@ -140,115 +140,17 @@ impl Serialize for PositionRange {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub enum DependencyKind {
-  Import,
-  ImportType,
-  ImportEquals,
-  Export,
-  ExportType,
-  ExportEquals,
-  Require,
-}
-
-impl DependencyKind {
-  // can't use this type directly because we need to make it serialize & deserialize
-  pub fn from_swc(value: deno_ast::swc::dep_graph::DependencyKind) -> Self {
-    use deno_ast::swc::dep_graph::DependencyKind::*;
-    match value {
-      Import => DependencyKind::Import,
-      ImportType => DependencyKind::ImportType,
-      ImportEquals => DependencyKind::ImportEquals,
-      Export => DependencyKind::Export,
-      ExportType => DependencyKind::ExportType,
-      ExportEquals => DependencyKind::ExportEquals,
-      Require => DependencyKind::Require,
-    }
-  }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-#[serde(untagged)]
-pub enum ImportAttribute {
-  /// The value of this attribute could not be statically analyzed.
-  Unknown,
-  /// The value of this attribute is a statically analyzed string.
-  Known(String),
-}
-
-impl ImportAttribute {
-  // can't use swc's type directly because we need to make it serialize & deserialize
-  pub fn from_swc(value: deno_ast::swc::dep_graph::ImportAssertion) -> Self {
-    use deno_ast::swc::dep_graph::ImportAssertion::*;
-    match value {
-      Unknown => ImportAttribute::Unknown,
-      Known(value) => ImportAttribute::Known(value),
-    }
-  }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum ImportAttributes {
-  /// There was no import attributes object literal.
-  None,
-  /// The set of attribute keys could not be statically analyzed.
-  Unknown,
-  /// The set of attribute keys is statically analyzed, though each respective
-  /// value may or may not not be for dynamic imports.
-  Known(HashMap<String, ImportAttribute>),
-}
-
-impl Default for ImportAttributes {
-  fn default() -> Self {
-    Self::None
-  }
-}
-
-impl ImportAttributes {
-  pub fn is_none(&self) -> bool {
-    matches!(self, ImportAttributes::None)
-  }
-
-  // can't use this type directly because we need to make it serialize & deserialize
-  pub fn from_swc(value: deno_ast::swc::dep_graph::ImportAttributes) -> Self {
-    use deno_ast::swc::dep_graph::ImportAttributes::*;
-    match value {
-      None => ImportAttributes::None,
-      Unknown => ImportAttributes::Unknown,
-      Known(value) => ImportAttributes::Known(
-        value
-          .into_iter()
-          .map(|(key, value)| (key, ImportAttribute::from_swc(value)))
-          .collect(),
-      ),
-    }
-  }
-
-  pub fn get(&self, key: &str) -> Option<&String> {
-    match self {
-      ImportAttributes::Known(map) => match map.get(key) {
-        Some(ImportAttribute::Known(value)) => Some(value),
-        _ => None,
-      },
-      _ => None,
-    }
-  }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct Comment {
   pub text: String,
   pub range: PositionRange,
 }
 
 impl Comment {
-  pub fn from_swc(
-    comment: deno_ast::swc::common::comments::Comment,
+  pub fn from_dep_comment(
+    comment: deno_ast::dep::DependencyComment,
     text_info: &SourceTextInfo,
   ) -> Comment {
-    let range = PositionRange::from_source_range(comment.range(), text_info);
+    let range = PositionRange::from_source_range(comment.range, text_info);
     Comment {
       text: comment.text.to_string(),
       range,
@@ -256,17 +158,33 @@ impl Comment {
   }
 }
 
-fn is_false(v: &bool) -> bool {
-  !v
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", tag = "type")]
+pub enum DependencyDescriptor {
+  Static(StaticDependencyDescriptor),
+  Dynamic(DynamicDependencyDescriptor),
+}
+
+impl DependencyDescriptor {
+  pub fn as_static(&self) -> Option<&StaticDependencyDescriptor> {
+    match self {
+      Self::Static(descriptor) => Some(descriptor),
+      Self::Dynamic(_) => None,
+    }
+  }
+
+  pub fn as_dynamic(&self) -> Option<&DynamicDependencyDescriptor> {
+    match self {
+      Self::Static(_) => None,
+      Self::Dynamic(d) => Some(d),
+    }
+  }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct DependencyDescriptor {
+pub struct StaticDependencyDescriptor {
   pub kind: DependencyKind,
-  /// A flag indicating if the import is dynamic or not.
-  #[serde(skip_serializing_if = "is_false", default)]
-  pub is_dynamic: bool,
   /// Any leading comments associated with the dependency.  This is used for
   /// further processing of supported pragma that impact the dependency.
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
@@ -282,6 +200,63 @@ pub struct DependencyDescriptor {
   pub import_attributes: ImportAttributes,
 }
 
+impl From<StaticDependencyDescriptor> for DependencyDescriptor {
+  fn from(descriptor: StaticDependencyDescriptor) -> Self {
+    DependencyDescriptor::Static(descriptor)
+  }
+}
+
+#[derive(Default, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", untagged)]
+pub enum DynamicArgument {
+  String(String),
+  Template(Vec<DynamicTemplatePart>),
+  /// An expression that could not be analyzed.
+  #[default]
+  Expr,
+}
+
+impl DynamicArgument {
+  pub fn is_expr(&self) -> bool {
+    matches!(self, DynamicArgument::Expr)
+  }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", tag = "type")]
+pub enum DynamicTemplatePart {
+  String {
+    value: String,
+  },
+  /// An expression that could not be analyzed.
+  Expr,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DynamicDependencyDescriptor {
+  /// Any leading comments associated with the dependency.  This is used for
+  /// further processing of supported pragma that impact the dependency.
+  #[serde(skip_serializing_if = "Vec::is_empty", default)]
+  pub leading_comments: Vec<Comment>,
+  /// The range of the dynamic import.
+  pub range: PositionRange,
+  /// The argument associated with the dynamic import.
+  #[serde(skip_serializing_if = "DynamicArgument::is_expr", default)]
+  pub argument: DynamicArgument,
+  /// The range of the argument.
+  pub argument_range: PositionRange,
+  /// Import attributes for this dependency.
+  #[serde(skip_serializing_if = "ImportAttributes::is_none", default)]
+  pub import_attributes: ImportAttributes,
+}
+
+impl From<DynamicDependencyDescriptor> for DependencyDescriptor {
+  fn from(descriptor: DynamicDependencyDescriptor) -> Self {
+    DependencyDescriptor::Dynamic(descriptor)
+  }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SpecifierWithRange {
@@ -291,7 +266,7 @@ pub struct SpecifierWithRange {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[serde(tag = "kind")]
+#[serde(tag = "type")]
 pub enum TypeScriptReference {
   Path(SpecifierWithRange),
   Types(SpecifierWithRange),
@@ -331,6 +306,9 @@ pub trait ModuleAnalyzer {
 
 #[cfg(test)]
 mod test {
+  use std::collections::HashMap;
+
+  use deno_ast::dep::ImportAttribute;
   use pretty_assertions::assert_eq;
   use serde::de::DeserializeOwned;
   use serde_json::json;
@@ -354,9 +332,8 @@ mod test {
     // with dependencies
     let module_info = ModuleInfo {
       dependencies: Vec::from([
-        DependencyDescriptor {
+        StaticDependencyDescriptor {
           kind: DependencyKind::ImportEquals,
-          is_dynamic: false,
           leading_comments: vec![Comment {
             text: "a".to_string(),
             range: PositionRange {
@@ -392,17 +369,16 @@ mod test {
             },
           },
           import_attributes: ImportAttributes::None,
-        },
-        DependencyDescriptor {
-          kind: DependencyKind::Export,
-          is_dynamic: true,
+        }
+        .into(),
+        DynamicDependencyDescriptor {
           leading_comments: vec![],
           range: PositionRange {
             start: Position::zeroed(),
             end: Position::zeroed(),
           },
-          specifier: "./test2".to_string(),
-          specifier_range: PositionRange {
+          argument: DynamicArgument::String("./test2".to_string()),
+          argument_range: PositionRange {
             start: Position::zeroed(),
             end: Position::zeroed(),
           },
@@ -414,7 +390,8 @@ mod test {
             ),
             ("kind".to_string(), ImportAttribute::Unknown),
           ])),
-        },
+        }
+        .into(),
       ]),
       ts_references: Vec::new(),
       jsx_import_source: None,
@@ -424,6 +401,7 @@ mod test {
       &module_info,
       json!({
         "dependencies": [{
+          "type": "static",
           "kind": "importEquals",
           "leadingComments": [{
             "text": "a",
@@ -433,16 +411,15 @@ mod test {
           "specifier": "./test",
           "specifierRange": [[1, 2], [3, 4]],
         }, {
-          "kind": "export",
-          "isDynamic": true,
+          "type": "dynamic",
           "range": [[0, 0], [0, 0]],
-          "specifier": "./test2",
-          "specifierRange": [[0, 0], [0, 0]],
+          "argument": "./test2",
+          "argumentRange": [[0, 0], [0, 0]],
           "importAttributes": {
             "known": {
               "key": null,
-              "key2": "value",
               "kind": null,
+              "key2": "value",
             }
           }
         }]
@@ -477,11 +454,11 @@ mod test {
       &module_info,
       json!({
         "tsReferences": [{
-          "kind": "path",
+          "type": "path",
           "text": "a",
           "range": [[0, 0], [0, 0]],
         }, {
-          "kind": "types",
+          "type": "types",
           "text": "b",
           "range": [[0, 0], [0, 0]],
         }]
@@ -540,11 +517,10 @@ mod test {
   }
 
   #[test]
-  fn dependency_descriptor_serialization() {
+  fn static_dependency_descriptor_serialization() {
     // with dependencies
-    let module_info = DependencyDescriptor {
+    let descriptor = DependencyDescriptor::Static(StaticDependencyDescriptor {
       kind: DependencyKind::ExportEquals,
-      is_dynamic: true,
       leading_comments: Vec::from([Comment {
         text: "a".to_string(),
         range: PositionRange {
@@ -562,12 +538,12 @@ mod test {
         end: Position::zeroed(),
       },
       import_attributes: ImportAttributes::Unknown,
-    };
+    });
     run_serialization_test(
-      &module_info,
+      &descriptor,
       json!({
+        "type": "static",
         "kind": "exportEquals",
-        "isDynamic": true,
         "leadingComments": [{
           "text": "a",
           "range": [[0, 0], [0, 0]],
@@ -576,6 +552,123 @@ mod test {
         "specifier": "./test",
         "specifierRange": [[0, 0], [0, 0]],
         "importAttributes": "unknown",
+      }),
+    );
+  }
+
+  #[test]
+  fn dynamic_dependency_descriptor_serialization() {
+    run_serialization_test(
+      &DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
+        leading_comments: Vec::from([Comment {
+          text: "a".to_string(),
+          range: PositionRange {
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+        }]),
+        range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+        argument: DynamicArgument::Expr,
+        argument_range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+        import_attributes: ImportAttributes::Unknown,
+      }),
+      json!({
+        "type": "dynamic",
+        "leadingComments": [{
+          "text": "a",
+          "range": [[0, 0], [0, 0]],
+        }],
+        "range": [[0, 0], [0, 0]],
+        "argumentRange": [[0, 0], [0, 0]],
+        "importAttributes": "unknown",
+      }),
+    );
+
+    run_serialization_test(
+      &DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
+        leading_comments: Vec::from([Comment {
+          text: "a".to_string(),
+          range: PositionRange {
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+        }]),
+        range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+        argument: DynamicArgument::String("test".to_string()),
+        argument_range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+        import_attributes: ImportAttributes::Unknown,
+      }),
+      json!({
+        "type": "dynamic",
+        "leadingComments": [{
+          "text": "a",
+          "range": [[0, 0], [0, 0]],
+        }],
+        "range": [[0, 0], [0, 0]],
+        "argument": "test",
+        "argumentRange": [[0, 0], [0, 0]],
+        "importAttributes": "unknown",
+      }),
+    );
+  }
+
+  #[test]
+  fn test_dynamic_argument_serialization() {
+    run_serialization_test(
+      &DynamicArgument::String("test".to_string()),
+      json!("test"),
+    );
+    run_serialization_test(
+      &DynamicArgument::Template(vec![
+        DynamicTemplatePart::String {
+          value: "test".to_string(),
+        },
+        DynamicTemplatePart::Expr,
+      ]),
+      json!([{
+        "type": "string",
+        "value": "test",
+      }, {
+        "type": "expr",
+      }]),
+    );
+  }
+
+  #[test]
+  fn test_import_attributes_serialization() {
+    run_serialization_test(&ImportAttributes::Unknown, json!("unknown"));
+    run_serialization_test(
+      &ImportAttributes::Known(HashMap::from([(
+        "type".to_string(),
+        ImportAttribute::Unknown,
+      )])),
+      json!({
+        "known": {
+          "type": null,
+        }
+      }),
+    );
+    run_serialization_test(
+      &ImportAttributes::Known(HashMap::from([(
+        "type".to_string(),
+        ImportAttribute::Known("test".to_string()),
+      )])),
+      json!({
+        "known": {
+          "type": "test",
+        }
       }),
     );
   }

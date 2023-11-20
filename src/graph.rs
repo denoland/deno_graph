@@ -1,14 +1,14 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
 use crate::analyzer::analyze_deno_types;
-use crate::analyzer::DependencyKind;
+use crate::analyzer::DependencyDescriptor;
+use crate::analyzer::DynamicArgument;
 use crate::analyzer::ModuleAnalyzer;
 use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
 use crate::DefaultModuleAnalyzer;
-use crate::ImportAttributes;
 use crate::ReferrerImports;
 
 use crate::module_specifier::resolve_import;
@@ -21,6 +21,8 @@ use crate::packages::PackageSpecifiers;
 use crate::source::*;
 
 use anyhow::anyhow;
+use deno_ast::dep::DependencyKind;
+use deno_ast::dep::ImportAttributes;
 use deno_ast::Diagnostic;
 use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
@@ -2088,110 +2090,133 @@ pub(crate) fn parse_esm_module_from_module_info(
 
   // Analyze ES dependencies
   for desc in module_info.dependencies {
-    let is_import_or_export_type = matches!(
-      desc.kind,
-      DependencyKind::ImportType | DependencyKind::ExportType
-    );
-    if is_import_or_export_type && !graph_kind.include_types() {
-      continue; // skip
-    }
-
-    let dep = module
-      .dependencies
-      .entry(desc.specifier.to_string())
-      .or_default();
-    // TODO(nayeemrmn): Import attributes should be visited and checked for
-    // every import, not one per specifier.
-    if dep.maybe_attribute_type.is_none() {
-      dep.maybe_attribute_type = desc.import_attributes.get("type").cloned();
-    }
-    let range = Range::from_position_range(
-      module.specifier.clone(),
-      desc.specifier_range.clone(),
-    );
-    if is_import_or_export_type {
-      if dep.maybe_type.is_none() {
-        dep.maybe_type = resolve(
-          &desc.specifier,
-          range.clone(),
-          ResolutionMode::Types,
-          maybe_resolver,
-          maybe_npm_resolver,
+    let (import, leading_comments) = match desc {
+      DependencyDescriptor::Static(desc) => {
+        let is_import_or_export_type = matches!(
+          desc.kind,
+          DependencyKind::ImportType | DependencyKind::ExportType
         );
-      }
-      dep.imports.push(Import {
-        specifier: desc.specifier.clone(),
-        kind: ImportKind::TsType,
-        range,
-        is_dynamic: desc.is_dynamic,
-        attributes: desc.import_attributes.clone(),
-      });
-    } else {
-      if dep.maybe_code.is_none() {
-        // This is a code import, the first one of that specifier in this module.
-        // Resolve and determine the initial `is_dynamic` value from it.
-        dep.maybe_code = resolve(
-          &desc.specifier,
-          range.clone(),
-          ResolutionMode::Execution,
-          maybe_resolver,
-          maybe_npm_resolver,
-        );
-        dep.is_dynamic = desc.is_dynamic;
-      } else {
-        // This is a code import, but not the first one of that specifier in this
-        // module. Maybe update the `is_dynamic` value. Static imports take
-        // precedence. Note that `@jsxImportSource` and `/// <reference path />`
-        // count as static imports for this purpose.
-        dep.is_dynamic = dep.is_dynamic && desc.is_dynamic;
-      }
-      dep.imports.push(Import {
-        specifier: desc.specifier.clone(),
-        kind: ImportKind::Es,
-        range,
-        is_dynamic: desc.is_dynamic,
-        attributes: desc.import_attributes.clone(),
-      });
-    }
-    if graph_kind.include_types() && dep.maybe_type.is_none() {
-      let specifier = module.specifier.clone();
-      let maybe_type = if let Some(pragma) = analyze_deno_types(&desc) {
-        resolve(
-          &pragma.specifier,
-          Range::from_position_range(specifier, pragma.range),
-          ResolutionMode::Types,
-          maybe_resolver,
-          maybe_npm_resolver,
-        )
-      } else {
+        if is_import_or_export_type && !graph_kind.include_types() {
+          continue; // skip
+        }
         let range = Range::from_position_range(
           module.specifier.clone(),
           desc.specifier_range.clone(),
         );
-        // only check if the code resolution is for the same range
-        if Some(&range) == dep.maybe_code.maybe_range() {
-          let types_resolution = resolve(
-            &desc.specifier,
+
+        (
+          Import {
+            specifier: desc.specifier,
+            kind: match is_import_or_export_type {
+              true => ImportKind::TsType,
+              false => ImportKind::Es,
+            },
             range,
+            is_dynamic: false,
+            attributes: desc.import_attributes,
+          },
+          desc.leading_comments,
+        )
+      }
+      DependencyDescriptor::Dynamic(desc) => {
+        // todo(#275): resolve more dynamic imports here
+        let specifier = match &desc.argument {
+          DynamicArgument::String(text) => text.to_string(),
+          DynamicArgument::Template(_) | DynamicArgument::Expr => continue,
+        };
+        let range = Range::from_position_range(
+          module.specifier.clone(),
+          desc.argument_range.clone(),
+        );
+        (
+          Import {
+            specifier,
+            kind: ImportKind::Es,
+            range,
+            is_dynamic: true,
+            attributes: desc.import_attributes,
+          },
+          desc.leading_comments,
+        )
+      }
+    };
+
+    let dep = module
+      .dependencies
+      .entry(import.specifier.clone())
+      .or_default();
+    // TODO(nayeemrmn): Import attributes should be visited and checked for
+    // every import, not one per specifier.
+    if dep.maybe_attribute_type.is_none() {
+      dep.maybe_attribute_type = import.attributes.get("type").cloned();
+    }
+
+    if import.kind == ImportKind::TsType {
+      if dep.maybe_type.is_none() {
+        dep.maybe_type = resolve(
+          &import.specifier,
+          import.range.clone(),
+          ResolutionMode::Types,
+          maybe_resolver,
+          maybe_npm_resolver,
+        );
+      }
+    } else if dep.maybe_code.is_none() {
+      // This is a code import, the first one of that specifier in this module.
+      // Resolve and determine the initial `is_dynamic` value from it.
+      dep.maybe_code = resolve(
+        &import.specifier,
+        import.range.clone(),
+        ResolutionMode::Execution,
+        maybe_resolver,
+        maybe_npm_resolver,
+      );
+      dep.is_dynamic = import.is_dynamic;
+    } else {
+      // This is a code import, but not the first one of that specifier in this
+      // module. Maybe update the `is_dynamic` value. Static imports take
+      // precedence. Note that `@jsxImportSource` and `/// <reference path />`
+      // count as static imports for this purpose.
+      dep.is_dynamic = dep.is_dynamic && import.is_dynamic;
+    }
+    if graph_kind.include_types() && dep.maybe_type.is_none() {
+      let specifier = module.specifier.clone();
+      let maybe_type =
+        if let Some(pragma) = analyze_deno_types(&leading_comments) {
+          resolve(
+            &pragma.specifier,
+            Range::from_position_range(specifier, pragma.range),
             ResolutionMode::Types,
             maybe_resolver,
             maybe_npm_resolver,
-          );
-          // only bother setting if the resolved specifier
-          // does not match the code specifier
-          if types_resolution.maybe_specifier()
-            != dep.maybe_code.maybe_specifier()
-          {
-            types_resolution
+          )
+        } else {
+          let range = import.range.clone();
+          // only check if the code resolution is for the same range
+          if Some(&range) == dep.maybe_code.maybe_range() {
+            let types_resolution = resolve(
+              &import.specifier,
+              range,
+              ResolutionMode::Types,
+              maybe_resolver,
+              maybe_npm_resolver,
+            );
+            // only bother setting if the resolved specifier
+            // does not match the code specifier
+            if types_resolution.maybe_specifier()
+              != dep.maybe_code.maybe_specifier()
+            {
+              types_resolution
+            } else {
+              Resolution::None
+            }
           } else {
             Resolution::None
           }
-        } else {
-          Resolution::None
-        }
-      };
-      dep.maybe_type = maybe_type
+        };
+      dep.maybe_type = maybe_type;
     }
+    dep.imports.push(import);
   }
 
   // Return the module as a valid module
@@ -3837,7 +3862,7 @@ where
 #[cfg(test)]
 mod tests {
   use crate::DefaultModuleAnalyzer;
-  use crate::ImportAttribute;
+  use deno_ast::dep::ImportAttribute;
   use pretty_assertions::assert_eq;
 
   use super::*;
