@@ -2384,7 +2384,12 @@ fn analyze_dynamic_arg_template_parts(
           // ignore
         }
         DirEntryKind::Error(err) => {
-          log::warn!("{:#}", err);
+          // For now, errors are swallowed and not stored in the graph.
+          // If we decide to represent these in the graph, we'll need to
+          // figure out what to do with errors like directory errors.
+          // Additionally, take note that these are dynamic import errors,
+          // so they shouldn't be eagerly surfaced.
+          log::warn!("Graph failed resolving '{}'. {:#}", entry.url, err);
         }
       };
     }

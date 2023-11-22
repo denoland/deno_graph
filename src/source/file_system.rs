@@ -107,8 +107,7 @@ impl FileSystem for RealFileSystem {
       Err(()) => {
         return vec![DirEntry {
           kind: DirEntryKind::Error(anyhow::anyhow!(
-            "Failed converting url to path '{}'",
-            dir_url
+            "Failed converting url to path."
           )),
           url: dir_url.clone(),
         }]
@@ -128,7 +127,7 @@ impl FileSystem for RealFileSystem {
         return vec![DirEntry {
           kind: DirEntryKind::Error(
             anyhow::Error::from(err)
-              .context(format!("Failed to read directory '{}'", dir_url)),
+              .context("Failed to read directory.".to_string()),
           ),
           url: dir_url.clone(),
         }];
@@ -156,12 +155,9 @@ impl FileSystem for RealFileSystem {
               continue;
             }
             Err(err) => DirEntry {
-              kind: DirEntryKind::Error(anyhow::Error::from(err).context(
-                format!(
-                  "Failed to read file type of '{}'",
-                  entry.path().display()
-                ),
-              )),
+              kind: DirEntryKind::Error(
+                anyhow::Error::from(err).context("Failed to read file type."),
+              ),
               url: ModuleSpecifier::from_file_path(entry.path()).unwrap(),
             },
           }
@@ -176,10 +172,10 @@ impl FileSystem for RealFileSystem {
         }
         Err(err) => DirEntry {
           url: dir_url.clone(),
-          kind: DirEntryKind::Error(anyhow::Error::from(err).context(format!(
-            "Failed to read entry in directory '{}'",
-            dir_url
-          ))),
+          kind: DirEntryKind::Error(
+            anyhow::Error::from(err)
+              .context("Failed to read entry in directory.".to_string()),
+          ),
         },
       };
 
