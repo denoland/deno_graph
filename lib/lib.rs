@@ -13,6 +13,7 @@ use deno_graph::source::CacheInfo;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::Loader;
+use deno_graph::source::NullFileSystem;
 use deno_graph::source::ResolutionMode;
 use deno_graph::source::ResolveError;
 use deno_graph::source::Resolver;
@@ -249,6 +250,7 @@ pub async fn js_create_graph(
       BuildOptions {
         is_dynamic: false,
         resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+        file_system: Some(&NullFileSystem),
         npm_resolver: None,
         module_analyzer: None,
         imports,
@@ -292,15 +294,16 @@ pub fn js_parse_module(
   } else {
     None
   };
-  match deno_graph::parse_module(
-    GraphKind::All,
-    &specifier,
-    maybe_headers.as_ref(),
-    content.into(),
-    maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-    None,
-    None,
-  ) {
+  match deno_graph::parse_module(deno_graph::ParseModuleOptions {
+    graph_kind: GraphKind::All,
+    specifier: &specifier,
+    maybe_headers: maybe_headers.as_ref(),
+    content: content.into(),
+    file_system: &NullFileSystem,
+    maybe_resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+    maybe_module_analyzer: None,
+    maybe_npm_resolver: None,
+  }) {
     Ok(module) => {
       let serializer =
         serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);

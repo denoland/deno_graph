@@ -12,6 +12,7 @@ pub mod packages;
 pub mod source;
 mod text_encoding;
 
+use source::FileSystem;
 use source::NpmResolver;
 use source::Resolver;
 
@@ -74,60 +75,72 @@ pub struct ReferrerImports {
   pub imports: Vec<String>,
 }
 
+pub struct ParseModuleOptions<'a> {
+  pub graph_kind: GraphKind,
+  pub specifier: &'a ModuleSpecifier,
+  pub maybe_headers: Option<&'a HashMap<String, String>>,
+  pub content: Arc<str>,
+  pub file_system: &'a dyn FileSystem,
+  pub maybe_resolver: Option<&'a dyn Resolver>,
+  pub maybe_module_analyzer: Option<&'a dyn ModuleAnalyzer>,
+  pub maybe_npm_resolver: Option<&'a dyn NpmResolver>,
+}
+
 /// Parse an individual module, returning the module as a result, otherwise
 /// erroring with a module graph error.
 #[allow(clippy::result_large_err)]
 pub fn parse_module(
-  graph_kind: GraphKind,
-  specifier: &ModuleSpecifier,
-  maybe_headers: Option<&HashMap<String, String>>,
-  content: Arc<str>,
-  maybe_resolver: Option<&dyn Resolver>,
-  maybe_module_analyzer: Option<&dyn ModuleAnalyzer>,
-  maybe_npm_resolver: Option<&dyn NpmResolver>,
+  options: ParseModuleOptions,
 ) -> Result<Module, ModuleError> {
   let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
-  let module_analyzer =
-    maybe_module_analyzer.unwrap_or(&default_module_analyzer);
+  let module_analyzer = options
+    .maybe_module_analyzer
+    .unwrap_or(&default_module_analyzer);
   graph::parse_module(
-    graph_kind,
-    specifier,
-    maybe_headers,
-    content,
+    options.graph_kind,
+    options.specifier,
+    options.maybe_headers,
+    options.content,
     None,
     None,
-    maybe_resolver,
+    options.file_system,
+    options.maybe_resolver,
     module_analyzer,
     true,
     false,
-    maybe_npm_resolver,
+    options.maybe_npm_resolver,
   )
 }
 
+pub struct ParseModuleFromAstOptions<'a> {
+  pub graph_kind: GraphKind,
+  pub specifier: &'a ModuleSpecifier,
+  pub maybe_headers: Option<&'a HashMap<String, String>>,
+  pub parsed_source: &'a deno_ast::ParsedSource,
+  pub file_system: &'a dyn FileSystem,
+  pub maybe_resolver: Option<&'a dyn Resolver>,
+  pub maybe_npm_resolver: Option<&'a dyn NpmResolver>,
+}
+
 /// Parse an individual module from an AST, returning the module.
-pub fn parse_module_from_ast(
-  graph_kind: GraphKind,
-  specifier: &ModuleSpecifier,
-  maybe_headers: Option<&HashMap<String, String>>,
-  parsed_source: &deno_ast::ParsedSource,
-  maybe_resolver: Option<&dyn Resolver>,
-  maybe_npm_resolver: Option<&dyn NpmResolver>,
-) -> EsmModule {
+pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> EsmModule {
   graph::parse_esm_module_from_module_info(
-    graph_kind,
-    specifier,
-    parsed_source.media_type(),
-    maybe_headers,
-    DefaultModuleAnalyzer::module_info(parsed_source),
-    parsed_source.text_info().text(),
-    maybe_resolver,
-    maybe_npm_resolver,
+    options.graph_kind,
+    options.specifier,
+    options.parsed_source.media_type(),
+    options.maybe_headers,
+    DefaultModuleAnalyzer::module_info(options.parsed_source),
+    options.parsed_source.text_info().text(),
+    options.file_system,
+    options.maybe_resolver,
+    options.maybe_npm_resolver,
   )
 }
 
 #[cfg(test)]
 mod tests {
   use crate::graph::ResolutionResolved;
+  use crate::source::NullFileSystem;
   use crate::source::ResolutionMode;
 
   use super::*;
@@ -1134,7 +1147,7 @@ console.log(a);
       } = range;
       let line = start.line + 1;
       let column = start.character;
-      eprintln!("Warning: Resolving \"{module_name}\" as \"node:{module_name}\" at {specifier}:{line}:{column}. If you want to use a built-in Node module, add a \"node:\" prefix.");
+      log::warn!("Warning: Resolving \"{module_name}\" as \"node:{module_name}\" at {specifier}:{line}:{column}. If you want to use a built-in Node module, add a \"node:\" prefix.");
     }
 
     fn load_and_cache_npm_package_info(
@@ -2981,11 +2994,7 @@ export function a(a) {
   #[test]
   fn test_parse_module() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
-    let actual = parse_module(
-      GraphKind::All,
-      &specifier,
-      None,
-      r#"
+    let code = r#"
     /// <reference types="./a.d.ts" />
     import { a } from "./a.ts";
     import * as b from "./b.ts";
@@ -2993,12 +3002,17 @@ export function a(a) {
     const d = await import("./d.ts");
     import type { e } from "./e.ts";
     export type { f } from "./f.ts";
-    "#
-      .into(),
-      None,
-      None,
-      None,
-    )
+    "#;
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: code.into(),
+      file_system: &NullFileSystem,
+      maybe_resolver: None,
+      maybe_module_analyzer: None,
+      maybe_npm_resolver: None,
+    })
     .unwrap();
     let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 7);
@@ -3006,24 +3020,16 @@ export function a(a) {
     assert_eq!(actual.media_type, MediaType::TypeScript);
 
     // now try code only
-    let actual = parse_module(
-      GraphKind::CodeOnly,
-      &specifier,
-      None,
-      r#"
-    /// <reference types="./a.d.ts" />
-    import { a } from "./a.ts";
-    import * as b from "./b.ts";
-    export { c } from "./c.ts";
-    const d = await import("./d.ts");
-    import type { e } from "./e.ts";
-    export type { f } from "./f.ts";
-    "#
-      .into(),
-      None,
-      None,
-      None,
-    )
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::CodeOnly,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: code.into(),
+      file_system: &NullFileSystem,
+      maybe_resolver: None,
+      maybe_module_analyzer: None,
+      maybe_npm_resolver: None,
+    })
     .unwrap();
     let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 4);
@@ -3032,19 +3038,20 @@ export function a(a) {
   #[test]
   fn test_parse_module_import_assertions() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
-    let actual = parse_module(
-      GraphKind::All,
-      &specifier,
-      None,
-      r#"
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: r#"
     import a from "./a.json" assert { type: "json" };
     await import("./b.json", { assert: { type: "json" } });
     "#
       .into(),
-      None,
-      None,
-      None,
-    )
+      file_system: &NullFileSystem,
+      maybe_resolver: None,
+      maybe_module_analyzer: None,
+      maybe_npm_resolver: None,
+    })
     .unwrap();
     assert_eq!(
       json!(actual),
@@ -3097,11 +3104,11 @@ export function a(a) {
   #[test]
   fn test_parse_module_jsx_import_source() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
-    let actual = parse_module(
-      GraphKind::All,
-      &specifier,
-      None,
-      r#"
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: r#"
     /** @jsxImportSource https://example.com/preact */
 
     export function A() {
@@ -3109,10 +3116,11 @@ export function a(a) {
     }
     "#
       .into(),
-      None,
-      None,
-      None,
-    )
+      file_system: &NullFileSystem,
+      maybe_resolver: None,
+      maybe_module_analyzer: None,
+      maybe_npm_resolver: None,
+    })
     .unwrap();
     let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
@@ -3140,20 +3148,21 @@ export function a(a) {
     }
 
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
-    let actual = parse_module(
-      GraphKind::All,
-      &specifier,
-      None,
-      r#"
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: r#"
     export function A() {
       return <div>Hello Deno</div>;
     }
     "#
       .into(),
-      Some(&R),
-      None,
-      None,
-    )
+      file_system: &NullFileSystem,
+      maybe_resolver: Some(&R),
+      maybe_module_analyzer: None,
+      maybe_npm_resolver: None,
+    })
     .unwrap();
     let actual = actual.esm().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
@@ -3179,18 +3188,19 @@ export function a(a) {
       "application/typescript; charset=utf-8".to_string(),
     );
     let maybe_headers = Some(&headers);
-    let result = parse_module(
-      GraphKind::All,
-      &specifier,
+    let result = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
       maybe_headers,
-      r#"declare interface A {
+      content: r#"declare interface A {
   a: string;
 }"#
         .into(),
-      None,
-      None,
-      None,
-    );
+      file_system: &NullFileSystem,
+      maybe_resolver: None,
+      maybe_module_analyzer: None,
+      maybe_npm_resolver: None,
+    });
     assert!(result.is_ok());
   }
 
@@ -3208,15 +3218,16 @@ export function a(a) {
   return;
 }
 "#;
-    let actual = parse_module(
-      GraphKind::All,
-      &specifier,
-      None,
-      code.into(),
-      None,
-      None,
-      None,
-    )
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: code.into(),
+      file_system: &NullFileSystem,
+      maybe_resolver: None,
+      maybe_module_analyzer: None,
+      maybe_npm_resolver: None,
+    })
     .unwrap();
     assert_eq!(
       json!(actual),
@@ -3263,15 +3274,16 @@ export function a(a) {
     );
 
     // GraphKind::CodeOnly should not include them
-    let actual = parse_module(
-      GraphKind::CodeOnly,
-      &specifier,
-      None,
-      code.into(),
-      None,
-      None,
-      None,
-    )
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::CodeOnly,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: code.into(),
+      file_system: &NullFileSystem,
+      maybe_resolver: None,
+      maybe_module_analyzer: None,
+      maybe_npm_resolver: None,
+    })
     .unwrap();
     assert_eq!(
       json!(actual),
@@ -3287,11 +3299,11 @@ export function a(a) {
   #[test]
   fn test_parse_ts_jsdoc_imports_ignored() {
     let specifier = ModuleSpecifier::parse("file:///a/test.ts").unwrap();
-    let actual = parse_module(
-      GraphKind::All,
-      &specifier,
-      None,
-      r#"
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: r#"
 /**
  * Some js doc
  *
@@ -3303,10 +3315,11 @@ export function a(a: A): B {
 }
 "#
       .into(),
-      None,
-      None,
-      None,
-    )
+      file_system: &NullFileSystem,
+      maybe_resolver: None,
+      maybe_module_analyzer: None,
+      maybe_npm_resolver: None,
+    })
     .unwrap();
     assert_eq!(
       json!(actual),
