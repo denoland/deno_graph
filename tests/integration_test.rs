@@ -618,4 +618,16 @@ await import(`./a/${test}`);
     ],
   )
   .await;
+
+  // finding itself
+  run_test(
+    "await import(`./${expr}`);",
+    vec![
+      ("file:///main.ts", ""), // self
+      ("file:///other.ts", ""),
+    ],
+    // should not have "file:///" here
+    vec!["file:///other.ts"],
+  )
+  .await;
 }
