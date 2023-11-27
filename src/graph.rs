@@ -2347,6 +2347,9 @@ fn analyze_dynamic_arg_template_parts(
         DirEntryKind::File => {
           let url = &entry.url;
           if matching_media_types.contains(&MediaType::from_specifier(url)) {
+            if url == referrer {
+              continue; // found itself, so skip
+            }
             if let Some(specifier) = referrer.make_relative(url) {
               let specifier = if !specifier.starts_with("../") {
                 format!("./{}", specifier)
