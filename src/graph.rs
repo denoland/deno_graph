@@ -3,6 +3,7 @@
 use crate::analyzer::analyze_deno_types;
 use crate::analyzer::DependencyDescriptor;
 use crate::analyzer::DynamicArgument;
+use crate::analyzer::DynamicTemplatePart;
 use crate::analyzer::ModuleAnalyzer;
 use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
@@ -927,6 +928,7 @@ pub struct BuildOptions<'a> {
   /// be extra modules such as TypeScript's "types" option or JSX
   /// runtime types.
   pub imports: Vec<ReferrerImports>,
+  pub file_system: Option<&'a dyn FileSystem>,
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
@@ -1342,11 +1344,16 @@ impl ModuleGraph {
     options: BuildOptions<'a>,
   ) -> Vec<BuildDiagnostic> {
     let default_analyzer = DefaultModuleAnalyzer::default();
+    #[cfg(not(target_arch = "wasm32"))]
+    let file_system = RealFileSystem;
+    #[cfg(target_arch = "wasm32")]
+    let file_system = NullFileSystem;
     Builder::build(
       self,
       roots,
       options.imports,
       options.is_dynamic,
+      options.file_system.unwrap_or(&file_system),
       options.resolver,
       options.npm_resolver,
       loader,
@@ -1463,12 +1470,12 @@ impl ModuleGraph {
     seen.insert(redirected_specifier);
     while let Some(specifier) = self.redirects.get(redirected_specifier) {
       if !seen.insert(specifier) {
-        eprintln!("An infinite loop of redirections detected.\n  Original specifier: {specifier}");
+        log::warn!("An infinite loop of redirections detected.\n  Original specifier: {specifier}");
         break;
       }
       redirected_specifier = specifier;
       if seen.len() >= max_redirects {
-        eprintln!("An excessive number of redirections detected.\n  Original specifier: {specifier}");
+        log::warn!("An excessive number of redirections detected.\n  Original specifier: {specifier}");
         break;
       }
     }
@@ -1751,6 +1758,7 @@ pub(crate) fn parse_module(
   content: Arc<str>,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_referrer: Option<Range>,
+  file_system: &dyn FileSystem,
   maybe_resolver: Option<&dyn Resolver>,
   module_analyzer: &dyn ModuleAnalyzer,
   is_root: bool,
@@ -1818,6 +1826,7 @@ pub(crate) fn parse_module(
             maybe_headers,
             module_info,
             content,
+            file_system,
             maybe_resolver,
             maybe_npm_resolver,
           )))
@@ -1842,6 +1851,7 @@ pub(crate) fn parse_module(
             maybe_headers,
             module_info,
             content,
+            file_system,
             maybe_resolver,
             maybe_npm_resolver,
           )))
@@ -1867,6 +1877,7 @@ pub(crate) fn parse_esm_module_from_module_info(
   maybe_headers: Option<&HashMap<String, String>>,
   module_info: ModuleInfo,
   source: Arc<str>,
+  file_system: &dyn FileSystem,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> EsmModule {
@@ -2090,7 +2101,7 @@ pub(crate) fn parse_esm_module_from_module_info(
 
   // Analyze ES dependencies
   for desc in module_info.dependencies {
-    let (import, leading_comments) = match desc {
+    let (imports, leading_comments) = match desc {
       DependencyDescriptor::Static(desc) => {
         let is_import_or_export_type = matches!(
           desc.kind,
@@ -2105,7 +2116,7 @@ pub(crate) fn parse_esm_module_from_module_info(
         );
 
         (
-          Import {
+          vec![Import {
             specifier: desc.specifier,
             kind: match is_import_or_export_type {
               true => ImportKind::TsType,
@@ -2114,113 +2125,277 @@ pub(crate) fn parse_esm_module_from_module_info(
             range,
             is_dynamic: false,
             attributes: desc.import_attributes,
-          },
+          }],
           desc.leading_comments,
         )
       }
       DependencyDescriptor::Dynamic(desc) => {
-        // todo(#275): resolve more dynamic imports here
-        let specifier = match &desc.argument {
-          DynamicArgument::String(text) => text.to_string(),
-          DynamicArgument::Template(_) | DynamicArgument::Expr => continue,
+        let import_attributes = desc.import_attributes;
+        let specifiers = match desc.argument {
+          DynamicArgument::String(text) => {
+            vec![text]
+          }
+          DynamicArgument::Template(parts) if specifier.scheme() == "file" => {
+            analyze_dynamic_arg_template_parts(
+              &parts,
+              specifier,
+              &import_attributes,
+              file_system,
+            )
+          }
+          _ => continue,
         };
         let range = Range::from_position_range(
           module.specifier.clone(),
           desc.argument_range.clone(),
         );
         (
-          Import {
-            specifier,
-            kind: ImportKind::Es,
-            range,
-            is_dynamic: true,
-            attributes: desc.import_attributes,
-          },
+          specifiers
+            .into_iter()
+            .map(|specifier| Import {
+              specifier,
+              kind: ImportKind::Es,
+              range: range.clone(),
+              is_dynamic: true,
+              attributes: import_attributes.clone(),
+            })
+            .collect::<Vec<_>>(),
           desc.leading_comments,
         )
       }
     };
 
-    let dep = module
-      .dependencies
-      .entry(import.specifier.clone())
-      .or_default();
-    // TODO(nayeemrmn): Import attributes should be visited and checked for
-    // every import, not one per specifier.
-    if dep.maybe_attribute_type.is_none() {
-      dep.maybe_attribute_type = import.attributes.get("type").cloned();
-    }
-
-    if import.kind == ImportKind::TsType {
-      if dep.maybe_type.is_none() {
-        dep.maybe_type = resolve(
-          &import.specifier,
-          import.range.clone(),
-          ResolutionMode::Types,
-          maybe_resolver,
-          maybe_npm_resolver,
-        );
+    for import in imports {
+      let dep = module
+        .dependencies
+        .entry(import.specifier.clone())
+        .or_default();
+      // TODO(nayeemrmn): Import attributes should be visited and checked for
+      // every import, not one per specifier.
+      if dep.maybe_attribute_type.is_none() {
+        dep.maybe_attribute_type = import.attributes.get("type").cloned();
       }
-    } else if dep.maybe_code.is_none() {
-      // This is a code import, the first one of that specifier in this module.
-      // Resolve and determine the initial `is_dynamic` value from it.
-      dep.maybe_code = resolve(
-        &import.specifier,
-        import.range.clone(),
-        ResolutionMode::Execution,
-        maybe_resolver,
-        maybe_npm_resolver,
-      );
-      dep.is_dynamic = import.is_dynamic;
-    } else {
-      // This is a code import, but not the first one of that specifier in this
-      // module. Maybe update the `is_dynamic` value. Static imports take
-      // precedence. Note that `@jsxImportSource` and `/// <reference path />`
-      // count as static imports for this purpose.
-      dep.is_dynamic = dep.is_dynamic && import.is_dynamic;
-    }
-    if graph_kind.include_types() && dep.maybe_type.is_none() {
-      let specifier = module.specifier.clone();
-      let maybe_type =
-        if let Some(pragma) = analyze_deno_types(&leading_comments) {
-          resolve(
-            &pragma.specifier,
-            Range::from_position_range(specifier, pragma.range),
+
+      if import.kind == ImportKind::TsType {
+        if dep.maybe_type.is_none() {
+          dep.maybe_type = resolve(
+            &import.specifier,
+            import.range.clone(),
             ResolutionMode::Types,
             maybe_resolver,
             maybe_npm_resolver,
-          )
-        } else {
-          let range = import.range.clone();
-          // only check if the code resolution is for the same range
-          if Some(&range) == dep.maybe_code.maybe_range() {
-            let types_resolution = resolve(
-              &import.specifier,
-              range,
+          );
+        }
+      } else if dep.maybe_code.is_none() {
+        // This is a code import, the first one of that specifier in this module.
+        // Resolve and determine the initial `is_dynamic` value from it.
+        dep.maybe_code = resolve(
+          &import.specifier,
+          import.range.clone(),
+          ResolutionMode::Execution,
+          maybe_resolver,
+          maybe_npm_resolver,
+        );
+        dep.is_dynamic = import.is_dynamic;
+      } else {
+        // This is a code import, but not the first one of that specifier in this
+        // module. Maybe update the `is_dynamic` value. Static imports take
+        // precedence. Note that `@jsxImportSource` and `/// <reference path />`
+        // count as static imports for this purpose.
+        dep.is_dynamic = dep.is_dynamic && import.is_dynamic;
+      }
+      if graph_kind.include_types() && dep.maybe_type.is_none() {
+        let specifier = module.specifier.clone();
+        let maybe_type =
+          if let Some(pragma) = analyze_deno_types(&leading_comments) {
+            resolve(
+              &pragma.specifier,
+              Range::from_position_range(specifier, pragma.range),
               ResolutionMode::Types,
               maybe_resolver,
               maybe_npm_resolver,
-            );
-            // only bother setting if the resolved specifier
-            // does not match the code specifier
-            if types_resolution.maybe_specifier()
-              != dep.maybe_code.maybe_specifier()
-            {
-              types_resolution
+            )
+          } else {
+            let range = import.range.clone();
+            // only check if the code resolution is for the same range
+            if Some(&range) == dep.maybe_code.maybe_range() {
+              let types_resolution = resolve(
+                &import.specifier,
+                range,
+                ResolutionMode::Types,
+                maybe_resolver,
+                maybe_npm_resolver,
+              );
+              // only bother setting if the resolved specifier
+              // does not match the code specifier
+              if types_resolution.maybe_specifier()
+                != dep.maybe_code.maybe_specifier()
+              {
+                types_resolution
+              } else {
+                Resolution::None
+              }
             } else {
               Resolution::None
             }
-          } else {
-            Resolution::None
-          }
-        };
-      dep.maybe_type = maybe_type;
+          };
+        dep.maybe_type = maybe_type;
+      }
+      dep.imports.push(import);
     }
-    dep.imports.push(import);
   }
 
   // Return the module as a valid module
   module
+}
+
+fn analyze_dynamic_arg_template_parts(
+  parts: &[DynamicTemplatePart],
+  referrer: &Url,
+  import_attributes: &ImportAttributes,
+  file_system: &dyn FileSystem,
+) -> Vec<String> {
+  fn resolve_initial_dir_path(
+    parts: &[DynamicTemplatePart],
+    referrer: &Url,
+  ) -> Option<ModuleSpecifier> {
+    match parts.first()? {
+      DynamicTemplatePart::String { value } => {
+        if value.starts_with("./") {
+          referrer.join(value).ok()
+        } else if value.starts_with("file://") {
+          ModuleSpecifier::parse(value).ok()
+        } else {
+          None
+        }
+      }
+      // could be a remote module, so ignore
+      DynamicTemplatePart::Expr => None,
+    }
+  }
+
+  fn validate_string_parts(
+    string_parts: &[&String],
+    is_last_string: bool,
+  ) -> bool {
+    fn validate_part(
+      index: usize,
+      part: &str,
+      path_parts: &[&String],
+      is_last_string: bool,
+    ) -> bool {
+      !part.contains("/../")
+        && if index == 0 {
+          let valid_start = part.starts_with("./") || part.starts_with('/');
+          let valid_end = part.ends_with('/');
+          valid_start && valid_end
+        } else if is_last_string && index == path_parts.len() - 1 {
+          part.starts_with('/') || !part.contains('/')
+        } else {
+          part.starts_with('/') && part.ends_with('/')
+        }
+    }
+
+    string_parts.iter().enumerate().all(|(index, part)| {
+      validate_part(index, part, string_parts, is_last_string)
+    })
+  }
+
+  let Some(dir_path) = resolve_initial_dir_path(parts, referrer) else {
+    return Vec::new();
+  };
+
+  let string_parts = parts
+    .iter()
+    .enumerate()
+    .filter_map(|(i, p)| match p {
+      DynamicTemplatePart::String { value } => {
+        if i == 0 && value.starts_with("file://") {
+          None // don't do comparisons on the base
+        } else {
+          Some(value)
+        }
+      }
+      DynamicTemplatePart::Expr => None,
+    })
+    .collect::<Vec<_>>();
+  let is_last_string =
+    matches!(parts.last(), Some(DynamicTemplatePart::String { .. }));
+  if !validate_string_parts(&string_parts, is_last_string) {
+    return Vec::new(); // don't search for this
+  }
+
+  let matching_media_types =
+    if import_attributes.get("type").map(|t| t.as_str()) == Some("json") {
+      vec![MediaType::Json]
+    } else {
+      vec![
+        MediaType::JavaScript,
+        MediaType::TypeScript,
+        MediaType::Jsx,
+        MediaType::Tsx,
+        MediaType::Mjs,
+        MediaType::Mts,
+      ]
+    };
+  let mut specifiers = Vec::new();
+  let mut pending_dirs = VecDeque::from([dir_path]);
+  while let Some(dir_path) = pending_dirs.pop_front() {
+    let entries = file_system.read_dir(&dir_path);
+    for entry in entries {
+      match entry.kind {
+        DirEntryKind::File => {
+          let url = &entry.url;
+          if matching_media_types.contains(&MediaType::from_specifier(url)) {
+            if let Some(specifier) = referrer.make_relative(url) {
+              let specifier = if !specifier.starts_with("../") {
+                format!("./{}", specifier)
+              } else {
+                specifier
+              };
+              let mut valid = true;
+              let mut last_index = 0;
+              for part in &string_parts {
+                if let Some(index) = &specifier[last_index..].find(*part) {
+                  last_index += index + part.len();
+                } else {
+                  valid = false;
+                  break;
+                }
+              }
+              if valid {
+                if let Some(DynamicTemplatePart::String { value }) =
+                  parts.last()
+                {
+                  if specifier.ends_with(value) {
+                    specifiers.push(specifier);
+                  }
+                } else {
+                  specifiers.push(specifier);
+                }
+              }
+            }
+          }
+        }
+        DirEntryKind::Dir => {
+          pending_dirs.push_back(entry.url);
+        }
+        DirEntryKind::Symlink => {
+          // ignore
+        }
+        DirEntryKind::Error(err) => {
+          // For now, errors are swallowed and not stored in the graph.
+          // If we decide to represent these in the graph, we'll need to
+          // figure out what to do with errors like directory errors.
+          // Additionally, take note that these are dynamic import errors,
+          // so they shouldn't be eagerly surfaced.
+          log::warn!("Graph failed resolving '{}'. {:#}", entry.url, err);
+        }
+      };
+    }
+  }
+
+  specifiers
 }
 
 /// Determine if a media type is "untyped" and should be checked to see if there
@@ -2434,6 +2609,7 @@ impl std::fmt::Display for BuildDiagnosticKind {
 
 struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
+  file_system: &'a dyn FileSystem,
   loader: &'a mut dyn Loader,
   resolver: Option<&'a dyn Resolver>,
   npm_resolver: Option<&'a dyn NpmResolver>,
@@ -2453,6 +2629,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     roots: Vec<ModuleSpecifier>,
     imports: Vec<ReferrerImports>,
     is_dynamic: bool,
+    file_system: &'a dyn FileSystem,
     resolver: Option<&'a dyn Resolver>,
     npm_resolver: Option<&'a dyn NpmResolver>,
     loader: &'a mut dyn Loader,
@@ -2466,6 +2643,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     };
     let mut builder = Self {
       in_dynamic_branch: is_dynamic,
+      file_system,
       loader,
       resolver,
       npm_resolver,
@@ -3449,6 +3627,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       content,
       maybe_assert_type,
       maybe_referrer,
+      self.file_system,
       self.resolver,
       maybe_module_analyzer
         .as_ref()
@@ -3916,6 +4095,7 @@ mod tests {
       content.into(),
       None,
       None,
+      &NullFileSystem,
       None,
       &module_analyzer,
       true,

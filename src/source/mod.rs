@@ -26,6 +26,9 @@ use std::sync::Arc;
 use thiserror::Error;
 use url::Url;
 
+mod file_system;
+pub use file_system::*;
+
 pub const DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
 
 /// Information that comes from an external source which can be optionally

@@ -13,6 +13,7 @@ use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadResponse;
+use deno_graph::source::MemoryFileSystem;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
 use deno_graph::source::Source;
@@ -465,4 +466,156 @@ async fn test_jsr_version_not_found_then_found() {
       ),
     ]
   );
+}
+
+#[tokio::test]
+async fn test_dynamic_imports_with_template_arg() {
+  async fn run_test(
+    code: &str,
+    files: Vec<(&str, &str)>,
+    expected_specifiers: Vec<&str>,
+  ) {
+    let mut loader = MemoryLoader::default();
+    let mut file_system = MemoryFileSystem::default();
+    for (specifier, text) in &files {
+      file_system.add_file(ModuleSpecifier::parse(specifier).unwrap());
+      loader.add_source_with_text(specifier, text);
+    }
+    loader.add_source_with_text("file:///main.ts", code);
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///main.ts").unwrap()],
+        &mut loader,
+        BuildOptions {
+          file_system: Some(&file_system),
+          ..Default::default()
+        },
+      )
+      .await;
+    graph.valid().unwrap();
+
+    let specifiers = graph
+      .specifiers()
+      .map(|s| s.0.to_string())
+      .filter(|s| s != "file:///main.ts")
+      .collect::<Vec<_>>();
+    assert_eq!(specifiers, expected_specifiers);
+  }
+
+  // relative with ./
+  run_test(
+    "
+await import(`./${test}`);
+",
+    vec![
+      ("file:///a/mod.ts", ""),
+      ("file:///a/sub_dir/a.ts", ""),
+      ("file:///b.ts", ""),
+    ],
+    vec!["file:///a/mod.ts", "file:///a/sub_dir/a.ts", "file:///b.ts"],
+  )
+  .await;
+
+  // relative with sub dir
+  run_test(
+    "
+await import(`./a/${test}`);
+",
+    vec![
+      ("file:///a/mod.ts", ""),
+      ("file:///a/sub_dir/a.ts", ""),
+      ("file:///b.ts", ""),
+    ],
+    vec!["file:///a/mod.ts", "file:///a/sub_dir/a.ts"],
+  )
+  .await;
+
+  run_test(
+    "
+  // should not match these two because it does not end in a slash
+  await import(`./b${test}`);
+  await import(`./c/a${test}`);
+  ",
+    vec![
+      ("file:///a/mod.ts", ""),
+      ("file:///b.ts", ""),
+      ("file:///c/a.ts", ""),
+      ("file:///c/a/a.ts", ""),
+    ],
+    vec![],
+  )
+  .await;
+
+  run_test(
+    "
+  await import(`./d/other/${test}/main.json`, {
+    with: {
+      type: 'json',
+    },
+  });
+  await import(`./d/sub/${test}`);
+  ",
+    vec![
+      ("file:///d/a.ts", ""),
+      ("file:///d/sub/main.json", ""),
+      ("file:///d/sub/a.ts", ""),
+      ("file:///d/sub/a.js", ""),
+      ("file:///d/sub/a.mjs", ""),
+      ("file:///d/sub/a.mts", ""),
+      // should not match because it's a declaration file
+      ("file:///d/sub/a.d.ts", ""),
+      ("file:///d/other/json/main.json", ""),
+      ("file:///d/other/json/main2.json", ""),
+    ],
+    vec![
+      "file:///d/other/json/main.json",
+      "file:///d/sub/a.js",
+      "file:///d/sub/a.mjs",
+      "file:///d/sub/a.mts",
+      "file:///d/sub/a.ts",
+    ],
+  )
+  .await;
+
+  // only matching one extension
+  run_test(
+    "
+  await import(`./d/sub2/${test}.mjs`);
+  ",
+    vec![
+      ("file:///d/sub2/a.ts", ""),
+      ("file:///d/sub2/a.js", ""),
+      ("file:///d/sub2/a.mjs", ""),
+      ("file:///d/sub2/a.mts", ""),
+    ],
+    vec!["file:///d/sub2/a.mjs"],
+  )
+  .await;
+
+  // file specifiers
+  run_test(
+    "await import(`file:///other/${test}`);",
+    vec![("file:///other/mod.ts", ""), ("file:///b.ts", "")],
+    vec!["file:///other/mod.ts"],
+  )
+  .await;
+
+  // multiple exprs with same string between
+  run_test(
+    "await import(`./other/${test}/other/${test}/mod.ts`);",
+    vec![
+      ("file:///other/mod.ts", ""),
+      ("file:///other/other/mod.ts", ""),
+      ("file:///other/test/other/mod.ts", ""),
+      ("file:///other/test/other/test/mod.ts", ""),
+      ("file:///other/test/other/test/other/mod.ts", ""),
+      ("file:///b.ts", ""),
+    ],
+    vec![
+      "file:///other/test/other/test/mod.ts",
+      "file:///other/test/other/test/other/mod.ts",
+    ],
+  )
+  .await;
 }
