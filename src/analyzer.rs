@@ -179,6 +179,27 @@ impl DependencyDescriptor {
       Self::Dynamic(d) => Some(d),
     }
   }
+
+  pub fn leading_comments(&self) -> &Vec<Comment> {
+    match self {
+      DependencyDescriptor::Static(d) => &d.leading_comments,
+      DependencyDescriptor::Dynamic(d) => &d.leading_comments,
+    }
+  }
+
+  pub fn import_attributes(&self) -> &ImportAttributes {
+    match self {
+      DependencyDescriptor::Static(d) => &d.import_attributes,
+      DependencyDescriptor::Dynamic(d) => &d.import_attributes,
+    }
+  }
+
+  pub fn range(&self) -> &PositionRange {
+    match self {
+      DependencyDescriptor::Static(d) => &d.range,
+      DependencyDescriptor::Dynamic(d) => &d.range,
+    }
+  }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
