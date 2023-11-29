@@ -25,6 +25,7 @@ pub use analyzer::Comment;
 pub use analyzer::DependencyDescriptor;
 pub use analyzer::DynamicArgument;
 pub use analyzer::DynamicDependencyDescriptor;
+pub use analyzer::DynamicTemplatePart;
 pub use analyzer::ModuleAnalyzer;
 pub use analyzer::ModuleInfo;
 pub use analyzer::PositionRange;
