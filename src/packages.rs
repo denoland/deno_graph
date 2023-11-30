@@ -1,6 +1,7 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
 use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::collections::HashMap;
 
 use deno_semver::package::PackageNv;
@@ -77,12 +78,20 @@ impl JsrPackageVersionInfo {
   }
 }
 
+#[derive(Default, Debug, Clone)]
+struct PackageNvInfo {
+  /// Collection of exports used.
+  exports: BTreeSet<String>,
+}
+
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct PackageSpecifiers {
   #[serde(flatten)]
   package_reqs: BTreeMap<PackageReq, PackageNv>,
   #[serde(skip_serializing)]
   packages_by_name: HashMap<String, Vec<PackageNv>>,
+  #[serde(skip_serializing)]
+  packages: BTreeMap<PackageNv, PackageNvInfo>,
 }
 
 impl PackageSpecifiers {
@@ -90,7 +99,12 @@ impl PackageSpecifiers {
     self.package_reqs.is_empty()
   }
 
-  pub fn add(&mut self, package_req: PackageReq, nv: PackageNv) {
+  pub(crate) fn add(
+    &mut self,
+    package_req: PackageReq,
+    nv: PackageNv,
+    export_name: String,
+  ) {
     let nvs = self
       .packages_by_name
       .entry(package_req.name.clone())
@@ -98,7 +112,17 @@ impl PackageSpecifiers {
     if !nvs.contains(&nv) {
       nvs.push(nv.clone());
     }
+    self
+      .packages
+      .entry(nv.clone())
+      .or_default()
+      .exports
+      .insert(export_name);
     self.package_reqs.insert(package_req, nv);
+  }
+
+  pub fn package_exports(&self, nv: &PackageNv) -> Option<&BTreeSet<String>> {
+    self.packages.get(nv).map(|p| &p.exports)
   }
 
   pub fn versions_by_name(&self, name: &str) -> Option<&Vec<PackageNv>> {

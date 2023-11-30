@@ -9,7 +9,10 @@ use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
+use crate::CapturingModuleAnalyzer;
+use crate::CapturingModuleParser;
 use crate::DefaultModuleAnalyzer;
+use crate::DefaultModuleParser;
 use crate::ReferrerImports;
 
 use crate::module_specifier::resolve_import;
@@ -52,6 +55,7 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -2471,7 +2475,7 @@ impl From<LoadResponse> for PendingInfoResponse {
 }
 
 #[derive(Clone)]
-struct DenoPackageVersionInfoExt {
+struct JsrPackageVersionInfoExt {
   base_url: Url,
   inner: Arc<JsrPackageVersionInfo>,
 }
@@ -2480,7 +2484,7 @@ struct PendingInfo {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
   result: Result<Option<PendingInfoResponse>, anyhow::Error>,
-  maybe_version_info: Option<DenoPackageVersionInfoExt>,
+  maybe_version_info: Option<JsrPackageVersionInfoExt>,
 }
 
 type PendingInfoFuture = LocalBoxFuture<'static, PendingInfo>;
@@ -2532,6 +2536,7 @@ struct PendingJsrState {
   pending_resolutions: Vec<PendingJsrResolutionItem>,
   pending_content_loads:
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
+  top_level_nvs: BTreeSet<PackageNv>,
 }
 
 #[derive(Default)]
@@ -2767,6 +2772,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     // resolve any npm package requirements
     NpmSpecifierResolver::fill_builder(self).await;
+
+    // create the low-res type graph
+    self.create_low_res_type_graph();
   }
 
   fn handle_provided_imports(&mut self, imports: Vec<ReferrerImports>) {
@@ -2796,6 +2804,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       std::mem::take(&mut self.state.jsr.pending_resolutions);
     let mut pending_version_resolutions =
       Vec::with_capacity(pending_resolutions.len());
+    let should_collect_top_level_nvs = self.state.jsr.top_level_nvs.is_empty()
+      && self.graph.graph_kind.include_types();
     for pending_resolution in pending_resolutions {
       let package_name = &pending_resolution.package_ref.req().name;
       let fut = self
@@ -2816,10 +2826,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 name: package_name.clone(),
                 version,
               };
-              self
-                .graph
-                .packages
-                .add(package_req.clone(), package_nv.clone());
+              self.graph.packages.add(
+                package_req.clone(),
+                package_nv.clone(),
+                normalize_export_name(
+                  pending_resolution.package_ref.sub_path(),
+                )
+                .to_string(),
+              );
 
               self.queue_load_package_version_info(&package_nv);
               pending_version_resolutions
@@ -2874,25 +2888,23 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         .unwrap()
         .clone()
         .await
-        .map(|info| {
-          (info, resolution_item.package_ref.sub_path().unwrap_or("."))
-        });
+        .map(|info| (info, resolution_item.package_ref.sub_path()));
       match version_info_result {
         Ok((version_info, sub_path)) => {
-          let base_url = self
-            .loader
-            .registry_url()
-            .join(&format!("{}/{}/", nv.name, nv.version))
-            .unwrap();
+          let base_url = self.loader.registry_package_url(&nv);
           let export_name = normalize_export_name(sub_path);
           match version_info.export(&export_name) {
             Some(export_value) => {
+              if should_collect_top_level_nvs {
+                self.state.jsr.top_level_nvs.insert(nv.clone());
+              }
+
               let specifier = base_url.join(export_value).unwrap();
               self
                 .graph
                 .redirects
                 .insert(resolution_item.specifier, specifier.clone());
-              let version_info = DenoPackageVersionInfoExt {
+              let version_info = JsrPackageVersionInfoExt {
                 base_url,
                 inner: version_info,
               };
@@ -3133,7 +3145,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_range: Option<&Range>,
     is_dynamic: bool,
     maybe_assert_type: Option<AttributeTypeWithRange>,
-    maybe_version_info: Option<&DenoPackageVersionInfoExt>,
+    maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     self
@@ -3332,8 +3344,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }));
     }
 
-    let export_name =
-      normalize_export_name(package_ref.sub_path().unwrap_or("."));
+    let export_name = normalize_export_name(package_ref.sub_path());
     if let Some(sub_path) = workspace_member.exports.get(export_name.as_ref()) {
       match workspace_member.base.join(sub_path) {
         Ok(load_specifier) => Ok(load_specifier),
@@ -3531,7 +3542,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     response: &PendingInfoResponse,
     maybe_assert_type: Option<AttributeTypeWithRange>,
     maybe_referrer: Option<Range>,
-    maybe_version_info: Option<&DenoPackageVersionInfoExt>,
+    maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
     let (specifier, module_slot) = match response {
       PendingInfoResponse::External { specifier } => {
@@ -3575,7 +3586,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     content_or_module_info: ContentOrModuleInfo,
     maybe_assert_type: Option<AttributeTypeWithRange>,
     maybe_referrer: Option<Range>,
-    maybe_version_info: Option<&DenoPackageVersionInfoExt>,
+    maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) -> ModuleSlot {
     struct ProvidedModuleAnalyzer(RefCell<Option<ModuleInfo>>);
 
@@ -3737,9 +3748,35 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
     module_slot
   }
+
+  fn create_low_res_type_graph(&mut self) {
+    if self.state.jsr.top_level_nvs.is_empty() {
+      return;
+    }
+
+    // todo: make the caputuring parser provided by the user
+    let parser = DefaultModuleParser::new_for_analysis();
+    let analyzer = CapturingModuleAnalyzer::new(Some(Box::new(parser)), None);
+    let root_symbol = crate::symbols::RootSymbol::new(
+      &self.graph,
+      analyzer.as_capturing_parser(),
+    );
+    let pending_nvs = std::mem::take(&mut self.state.jsr.top_level_nvs)
+      .into_iter()
+      .collect::<VecDeque<_>>();
+    crate::low_res::build_low_res_type_graph(
+      self.loader,
+      self.graph,
+      &root_symbol,
+      pending_nvs,
+    );
+  }
 }
 
-fn normalize_export_name(sub_path: &str) -> Cow<str> {
+fn normalize_export_name(sub_path: Option<&str>) -> Cow<str> {
+  let Some(sub_path) = sub_path else {
+    return Cow::Borrowed(".");
+  };
   if sub_path.is_empty() || matches!(sub_path, "/" | ".") {
     Cow::Borrowed(".")
   } else {

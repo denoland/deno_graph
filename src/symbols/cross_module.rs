@@ -715,7 +715,7 @@ fn resolve_qualified_name_internal<'a>(
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct ResolvedExports<'a> {
+pub struct ModuleExports<'a> {
   pub resolved: IndexMap<String, ResolvedExportOrReExportAllPath<'a>>,
   pub unresolved_specifiers: Vec<UnresolvedSpecifier<'a>>,
 }
@@ -792,7 +792,7 @@ pub fn exports_and_re_exports<'a>(
   module_graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
-) -> ResolvedExports<'a> {
+) -> ModuleExports<'a> {
   exports_and_re_exports_inner(
     module_graph,
     module,
@@ -806,9 +806,9 @@ fn exports_and_re_exports_inner<'a>(
   module: ModuleInfoRef<'a>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
   visited: &mut HashSet<&'a ModuleSpecifier>,
-) -> ResolvedExports<'a> {
+) -> ModuleExports<'a> {
   if !visited.insert(module.specifier()) {
-    return ResolvedExports::default();
+    return ModuleExports::default();
   }
 
   let mut unresolved_specifiers = Vec::new();
@@ -861,7 +861,7 @@ fn exports_and_re_exports_inner<'a>(
       }
     }
   }
-  ResolvedExports {
+  ModuleExports {
     resolved,
     unresolved_specifiers,
   }

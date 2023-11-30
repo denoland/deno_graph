@@ -8,6 +8,7 @@ mod module_specifier;
 #[cfg(feature = "symbols")]
 pub mod symbols;
 
+mod low_res;
 pub mod packages;
 pub mod source;
 mod text_encoding;

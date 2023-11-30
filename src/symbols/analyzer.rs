@@ -34,7 +34,7 @@ use super::cross_module;
 use super::cross_module::Definition;
 use super::cross_module::DefinitionOrUnresolved;
 use super::cross_module::DefinitionPath;
-use super::cross_module::ResolvedExports;
+use super::cross_module::ModuleExports;
 use super::swc_helpers::ts_entity_name_to_parts;
 use super::ResolvedSymbolDepEntry;
 use super::SymbolNodeDep;
@@ -1240,7 +1240,7 @@ impl<'a> ModuleInfoRef<'a> {
     }
   }
 
-  pub fn exports(&self, root_symbol: &'a RootSymbol) -> ResolvedExports<'a> {
+  pub fn exports(&self, root_symbol: &'a RootSymbol) -> ModuleExports<'a> {
     cross_module::exports_and_re_exports(
       root_symbol.module_graph,
       *self,
@@ -1398,7 +1398,7 @@ impl EsmModuleInfo {
   pub fn exports<'a>(
     &'a self,
     root_symbol: &'a RootSymbol,
-  ) -> ResolvedExports<'a> {
+  ) -> ModuleExports<'a> {
     self.as_ref().exports(root_symbol)
   }
 

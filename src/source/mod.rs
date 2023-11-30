@@ -115,6 +115,26 @@ pub trait Loader {
     &DEFAULT_DENO_REGISTRY_URL
   }
 
+  fn registry_package_url(&self, nv: &PackageNv) -> Url {
+    self
+      .registry_url()
+      .join(&format!("{}/{}", nv.name, nv.version))
+      .unwrap()
+  }
+
+  fn registry_package_url_to_nv(&self, url: &Url) -> Option<PackageNv> {
+    let path = url.as_str().strip_prefix(self.registry_url().as_str())?;
+    let path = path.strip_prefix('/').unwrap_or(path);
+    let parts = path.split('/').take(3).collect::<Vec<_>>();
+    if parts.len() != 3 {
+      return None;
+    }
+    Some(PackageNv {
+      name: format!("{}/{}", parts[0], parts[1]),
+      version: deno_semver::Version::parse_standard(&parts[2]).ok()?,
+    })
+  }
+
   /// An optional method which returns cache info for a module specifier.
   fn get_cache_info(&self, _specifier: &ModuleSpecifier) -> Option<CacheInfo> {
     None
