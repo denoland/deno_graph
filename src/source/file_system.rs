@@ -104,14 +104,8 @@ impl FileSystem for RealFileSystem {
   fn read_dir(&self, dir_url: &ModuleSpecifier) -> Vec<DirEntry> {
     let dir_path = match dir_url.to_file_path() {
       Ok(path) => path,
-      Err(()) => {
-        return vec![DirEntry {
-          kind: DirEntryKind::Error(anyhow::anyhow!(
-            "Failed converting url to path."
-          )),
-          url: dir_url.clone(),
-        }]
-      }
+      // consider this as not analyzable
+      Err(()) => return vec![],
     };
     let dir = match std::fs::read_dir(&dir_path) {
       Ok(dir) => dir,
