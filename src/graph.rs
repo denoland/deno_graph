@@ -12,6 +12,7 @@ use crate::analyzer::TypeScriptReference;
 use crate::DefaultModuleAnalyzer;
 use crate::ReferrerImports;
 
+use crate::module_specifier::is_fs_root_specifier;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
@@ -2136,13 +2137,17 @@ pub(crate) fn parse_esm_module_from_module_info(
             vec![text]
           }
           DynamicArgument::Template(parts) if specifier.scheme() == "file" => {
-            analyze_dynamic_arg_template_parts(
+            let mut parts = analyze_dynamic_arg_template_parts(
               &parts,
               specifier,
               &desc.argument_range,
               &import_attributes,
               file_system,
-            )
+            );
+            // operating systems won't always traverse directories in
+            // the same order, so sort here to ensure output is stable
+            parts.sort();
+            parts
           }
           _ => continue,
         };
@@ -2341,6 +2346,10 @@ fn analyze_dynamic_arg_template_parts(
       ]
     };
   let mut specifiers = Vec::new();
+  // skip the root specifier
+  if is_fs_root_specifier(&dir_path) {
+    return specifiers;
+  }
   let mut pending_dirs = VecDeque::from([dir_path]);
   while let Some(dir_path) = pending_dirs.pop_front() {
     let entries = file_system.read_dir(&dir_path);

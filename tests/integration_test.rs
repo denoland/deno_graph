@@ -481,11 +481,11 @@ async fn test_dynamic_imports_with_template_arg() {
       file_system.add_file(ModuleSpecifier::parse(specifier).unwrap());
       loader.add_source_with_text(specifier, text);
     }
-    loader.add_source_with_text("file:///main.ts", code);
+    loader.add_source_with_text("file:///dev/main.ts", code);
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
-        vec![Url::parse("file:///main.ts").unwrap()],
+        vec![Url::parse("file:///dev/main.ts").unwrap()],
         &mut loader,
         BuildOptions {
           file_system: Some(&file_system),
@@ -498,7 +498,7 @@ async fn test_dynamic_imports_with_template_arg() {
     let specifiers = graph
       .specifiers()
       .map(|s| s.0.to_string())
-      .filter(|s| s != "file:///main.ts")
+      .filter(|s| s != "file:///dev/main.ts")
       .collect::<Vec<_>>();
     assert_eq!(specifiers, expected_specifiers);
   }
@@ -509,11 +509,15 @@ async fn test_dynamic_imports_with_template_arg() {
 await import(`./${test}`);
 ",
     vec![
-      ("file:///a/mod.ts", ""),
-      ("file:///a/sub_dir/a.ts", ""),
-      ("file:///b.ts", ""),
+      ("file:///dev/a/mod.ts", ""),
+      ("file:///dev/a/sub_dir/a.ts", ""),
+      ("file:///dev/b.ts", ""),
     ],
-    vec!["file:///a/mod.ts", "file:///a/sub_dir/a.ts", "file:///b.ts"],
+    vec![
+      "file:///dev/a/mod.ts",
+      "file:///dev/a/sub_dir/a.ts",
+      "file:///dev/b.ts",
+    ],
   )
   .await;
 
@@ -523,11 +527,11 @@ await import(`./${test}`);
 await import(`./a/${test}`);
 ",
     vec![
-      ("file:///a/mod.ts", ""),
-      ("file:///a/sub_dir/a.ts", ""),
-      ("file:///b.ts", ""),
+      ("file:///dev/a/mod.ts", ""),
+      ("file:///dev/a/sub_dir/a.ts", ""),
+      ("file:///dev/b.ts", ""),
     ],
-    vec!["file:///a/mod.ts", "file:///a/sub_dir/a.ts"],
+    vec!["file:///dev/a/mod.ts", "file:///dev/a/sub_dir/a.ts"],
   )
   .await;
 
@@ -538,10 +542,10 @@ await import(`./a/${test}`);
   await import(`./c/a${test}`);
   ",
     vec![
-      ("file:///a/mod.ts", ""),
-      ("file:///b.ts", ""),
-      ("file:///c/a.ts", ""),
-      ("file:///c/a/a.ts", ""),
+      ("file:///dev/a/mod.ts", ""),
+      ("file:///dev/b.ts", ""),
+      ("file:///dev/c/a.ts", ""),
+      ("file:///dev/c/a/a.ts", ""),
     ],
     vec![],
   )
@@ -557,23 +561,23 @@ await import(`./a/${test}`);
   await import(`./d/sub/${test}`);
   ",
     vec![
-      ("file:///d/a.ts", ""),
-      ("file:///d/sub/main.json", ""),
-      ("file:///d/sub/a.ts", ""),
-      ("file:///d/sub/a.js", ""),
-      ("file:///d/sub/a.mjs", ""),
-      ("file:///d/sub/a.mts", ""),
+      ("file:///dev/d/a.ts", ""),
+      ("file:///dev/d/sub/main.json", ""),
+      ("file:///dev/d/sub/a.ts", ""),
+      ("file:///dev/d/sub/a.js", ""),
+      ("file:///dev/d/sub/a.mjs", ""),
+      ("file:///dev/d/sub/a.mts", ""),
       // should not match because it's a declaration file
-      ("file:///d/sub/a.d.ts", ""),
-      ("file:///d/other/json/main.json", ""),
-      ("file:///d/other/json/main2.json", ""),
+      ("file:///dev/d/sub/a.d.ts", ""),
+      ("file:///dev/d/other/json/main.json", ""),
+      ("file:///dev/d/other/json/main2.json", ""),
     ],
     vec![
-      "file:///d/other/json/main.json",
-      "file:///d/sub/a.js",
-      "file:///d/sub/a.mjs",
-      "file:///d/sub/a.mts",
-      "file:///d/sub/a.ts",
+      "file:///dev/d/other/json/main.json",
+      "file:///dev/d/sub/a.js",
+      "file:///dev/d/sub/a.mjs",
+      "file:///dev/d/sub/a.mts",
+      "file:///dev/d/sub/a.ts",
     ],
   )
   .await;
@@ -584,20 +588,20 @@ await import(`./a/${test}`);
   await import(`./d/sub2/${test}.mjs`);
   ",
     vec![
-      ("file:///d/sub2/a.ts", ""),
-      ("file:///d/sub2/a.js", ""),
-      ("file:///d/sub2/a.mjs", ""),
-      ("file:///d/sub2/a.mts", ""),
+      ("file:///dev/d/sub2/a.ts", ""),
+      ("file:///dev/d/sub2/a.js", ""),
+      ("file:///dev/d/sub2/a.mjs", ""),
+      ("file:///dev/d/sub2/a.mts", ""),
     ],
-    vec!["file:///d/sub2/a.mjs"],
+    vec!["file:///dev/d/sub2/a.mjs"],
   )
   .await;
 
   // file specifiers
   run_test(
-    "await import(`file:///other/${test}`);",
-    vec![("file:///other/mod.ts", ""), ("file:///b.ts", "")],
-    vec!["file:///other/mod.ts"],
+    "await import(`file:///dev/other/${test}`);",
+    vec![("file:///dev/other/mod.ts", ""), ("file:///dev/b.ts", "")],
+    vec!["file:///dev/other/mod.ts"],
   )
   .await;
 
@@ -605,16 +609,16 @@ await import(`./a/${test}`);
   run_test(
     "await import(`./other/${test}/other/${test}/mod.ts`);",
     vec![
-      ("file:///other/mod.ts", ""),
-      ("file:///other/other/mod.ts", ""),
-      ("file:///other/test/other/mod.ts", ""),
-      ("file:///other/test/other/test/mod.ts", ""),
-      ("file:///other/test/other/test/other/mod.ts", ""),
-      ("file:///b.ts", ""),
+      ("file:///dev/other/mod.ts", ""),
+      ("file:///dev/other/other/mod.ts", ""),
+      ("file:///dev/other/test/other/mod.ts", ""),
+      ("file:///dev/other/test/other/test/mod.ts", ""),
+      ("file:///dev/other/test/other/test/other/mod.ts", ""),
+      ("file:///dev/b.ts", ""),
     ],
     vec![
-      "file:///other/test/other/test/mod.ts",
-      "file:///other/test/other/test/other/mod.ts",
+      "file:///dev/other/test/other/test/mod.ts",
+      "file:///dev/other/test/other/test/other/mod.ts",
     ],
   )
   .await;
@@ -623,11 +627,20 @@ await import(`./a/${test}`);
   run_test(
     "await import(`./${expr}`);",
     vec![
-      ("file:///main.ts", ""), // self
-      ("file:///other.ts", ""),
+      ("file:///dev/main.ts", ""), // self
+      ("file:///dev/other.ts", ""),
     ],
-    // should not have "file:///" here
-    vec!["file:///other.ts"],
+    // should not have "file:///dev/" here
+    vec!["file:///dev/other.ts"],
+  )
+  .await;
+
+  // root directory should be ignored because this is likely
+  // not wanted because it would include the entire file system
+  run_test(
+    "await import(`file:///${expr}`);",
+    vec![("file:///main.ts", ""), ("file:///dev/other.ts", "")],
+    vec![],
   )
   .await;
 }
