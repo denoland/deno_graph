@@ -18,7 +18,7 @@ pub fn find_public_ranges<'a>(
   graph: &'a ModuleGraph,
   root_symbol: &'a RootSymbol<'a>,
   pending_nvs: VecDeque<PackageNv>,
-) -> HashMap<&'a ModuleSpecifier, HashSet<SourceRange>> {
+) -> HashMap<PackageNv, HashMap<ModuleSpecifier, HashSet<SourceRange>>> {
   PublicRangeFinder {
     seen_nvs: pending_nvs.iter().cloned().collect(),
     pending_nvs: pending_nvs,
@@ -37,14 +37,17 @@ struct PublicRangeFinder<'a> {
   graph: &'a ModuleGraph,
   root_symbol: &'a RootSymbol<'a>,
   pending_nvs: VecDeque<PackageNv>,
-  pending_specifiers: VecDeque<ModuleSpecifier>,
+  pending_specifiers: VecDeque<(PackageNv, ModuleSpecifier)>,
   seen_nvs: HashSet<PackageNv>,
   seen_specifiers: HashSet<String>,
-  public_ranges: HashMap<&'a ModuleSpecifier, HashSet<SourceRange>>,
+  public_ranges:
+    HashMap<PackageNv, HashMap<ModuleSpecifier, HashSet<SourceRange>>>,
 }
 
 impl<'a> PublicRangeFinder<'a> {
-  pub fn find(mut self) -> HashMap<&'a ModuleSpecifier, HashSet<SourceRange>> {
+  pub fn find(
+    mut self,
+  ) -> HashMap<PackageNv, HashMap<ModuleSpecifier, HashSet<SourceRange>>> {
     while let Some(nv) = self.pending_nvs.pop_front() {
       let Some(exports) = self.graph.packages.package_exports(&nv) else {
         continue; // should never happen
@@ -53,28 +56,32 @@ impl<'a> PublicRangeFinder<'a> {
       for export in exports {
         let specifier = base_url.join(export).unwrap();
         if self.seen_specifiers.insert(specifier.to_string()) {
-          self.pending_specifiers.push_back(specifier);
+          self.pending_specifiers.push_back((nv.clone(), specifier));
         }
       }
 
-      while let Some(specifier) = self.pending_specifiers.pop_front() {
-        self.analyze_specifier(&specifier);
+      while let Some((nv, specifier)) = self.pending_specifiers.pop_front() {
+        self.analyze_specifier(nv, &specifier);
       }
     }
     self.public_ranges
   }
 
-  fn analyze_specifier(&mut self, specifier: &ModuleSpecifier) {
+  fn analyze_specifier(&mut self, nv: PackageNv, specifier: &ModuleSpecifier) {
     if let Some(module_info) = self.root_symbol.module_from_specifier(specifier)
     {
-      self.analyze_module_info(module_info);
+      self.analyze_module_info(nv, module_info);
     } else {
       // should never happen
       eprintln!("TEMP: NOT FOUND: {}", specifier);
     }
   }
 
-  fn analyze_module_info(&mut self, module_info: ModuleInfoRef<'a>) {
+  fn analyze_module_info(
+    &mut self,
+    nv: PackageNv,
+    module_info: ModuleInfoRef<'a>,
+  ) {
     // add all the specifiers to the list of pending specifiers
     if let Some(specifiers) = module_info.re_export_all_specifiers() {
       for specifier_text in specifiers {
@@ -88,10 +95,10 @@ impl<'a> PublicRangeFinder<'a> {
             self.loader.registry_package_url_to_nv(&dep_specifier)
           {
             if self.seen_nvs.insert(dep_nv.clone()) {
-              self.pending_nvs.push_back(dep_nv);
+              self.pending_nvs.push_back(dep_nv.clone());
             }
             if self.seen_specifiers.insert(dep_specifier.to_string()) {
-              self.pending_specifiers.push_back(dep_specifier);
+              self.pending_specifiers.push_back((dep_nv, dep_specifier));
             }
           }
         }
@@ -160,6 +167,8 @@ impl<'a> PublicRangeFinder<'a> {
 
     self
       .public_ranges
-      .insert(module_info.specifier(), found_ranges);
+      .entry(nv)
+      .or_default()
+      .insert(module_info.specifier().clone(), found_ranges);
   }
 }
