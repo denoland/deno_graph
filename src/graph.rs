@@ -2139,6 +2139,7 @@ pub(crate) fn parse_esm_module_from_module_info(
             analyze_dynamic_arg_template_parts(
               &parts,
               specifier,
+              &desc.argument_range,
               &import_attributes,
               file_system,
             )
@@ -2252,6 +2253,7 @@ pub(crate) fn parse_esm_module_from_module_info(
 fn analyze_dynamic_arg_template_parts(
   parts: &[DynamicTemplatePart],
   referrer: &Url,
+  referrer_range: &PositionRange,
   import_attributes: &ImportAttributes,
   file_system: &dyn FileSystem,
 ) -> Vec<String> {
@@ -2392,7 +2394,14 @@ fn analyze_dynamic_arg_template_parts(
           // figure out what to do with errors like directory errors.
           // Additionally, take note that these are dynamic import errors,
           // so they shouldn't be eagerly surfaced.
-          log::warn!("Graph failed resolving '{}'. {:#}", entry.url, err);
+          log::warn!(
+            "Graph failed resolving '{}'. {:#}\n    at {}:{}:{}",
+            entry.url,
+            err,
+            referrer,
+            referrer_range.start.line + 1,
+            referrer_range.start.character + 1,
+          );
         }
       };
     }
