@@ -11,7 +11,9 @@ export declare namespace Test {
   var Test5: string;
   type Test6 = string;
   enum Test7 {}
-  namespace Test8 {}
+  namespace Test8 {
+    interface Nested {}
+  }
 }
 
 export namespace NonAmbient {
@@ -89,41 +91,45 @@ file:///mod.ts: EsmModuleInfo {
             #3,
         ): 10,
         (
-            "NonAmbient",
-            #2,
+            "Nested",
+            #5,
         ): 11,
         (
-            "NotExported1",
-            #5,
+            "NonAmbient",
+            #2,
         ): 12,
         (
-            "Exported2",
-            #5,
+            "NotExported1",
+            #6,
         ): 13,
         (
-            "NonExported2",
-            #5,
+            "Exported2",
+            #6,
         ): 14,
         (
-            "NonExported3",
-            #5,
+            "NonExported2",
+            #6,
         ): 15,
         (
-            "NonExported4",
-            #5,
+            "NonExported3",
+            #6,
         ): 16,
         (
-            "NonExported5",
-            #5,
+            "NonExported4",
+            #6,
         ): 17,
         (
-            "NonExported6",
-            #5,
+            "NonExported5",
+            #6,
         ): 18,
         (
-            "NonExported7",
-            #5,
+            "NonExported6",
+            #6,
         ): 19,
+        (
+            "NonExported7",
+            #6,
+        ): 20,
     },
     symbols: {
         0: Symbol {
@@ -136,7 +142,7 @@ file:///mod.ts: EsmModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export type { Interface } from \"./other.d.ts\";\n\nexport declare namespace Test {\n  // These are considered \"exports\" according to the ts compiler regardless\n  // of whether they have an \"export\" keyword or not.\n  interface Test1 {}\n  export interface Test2 {}\n  class Test3 {}\n  function Test4();\n  var Test5: string;\n  type Test6 = string;\n  enum Test7 {}\n  namespace Test8 {}\n}\n\nexport namespace NonAmbient {\n  // since this is not ambient, it will only have the exports specified\n  interface NotExported1 {}\n  export interface Exported2 {}\n  class NonExported2 {}\n  function NonExported3();\n  var NonExported4: string;\n  type NonExported5 = string;\n  enum NonExported6 {}\n  namespace NonExported7 {}\n}",
+                            "export type { Interface } from \"./other.d.ts\";\n\nexport declare namespace Test {\n  // These are considered \"exports\" according to the ts compiler regardless\n  // of whether they have an \"export\" keyword or not.\n  interface Test1 {}\n  export interface Test2 {}\n  class Test3 {}\n  function Test4();\n  var Test5: string;\n  type Test6 = string;\n  enum Test7 {}\n  namespace Test8 {\n    interface Nested {}\n  }\n}\n\nexport namespace NonAmbient {\n  // since this is not ambient, it will only have the exports specified\n  interface NotExported1 {}\n  export interface Exported2 {}\n  class NonExported2 {}\n  function NonExported3();\n  var NonExported4: string;\n  type NonExported5 = string;\n  enum NonExported6 {}\n  namespace NonExported7 {}\n}",
                         ),
                     ),
                     range: SourceRange {
@@ -144,7 +150,7 @@ file:///mod.ts: EsmModuleInfo {
                             0,
                         ),
                         end: SourcePos(
-                            703,
+                            730,
                         ),
                     },
                     flags: 0,
@@ -152,12 +158,12 @@ file:///mod.ts: EsmModuleInfo {
             ],
             child_ids: {
                 2,
-                11,
+                12,
             },
             exports: {
                 "Interface": 1,
                 "Test": 2,
-                "NonAmbient": 11,
+                "NonAmbient": 12,
             },
             members: {},
         },
@@ -206,7 +212,7 @@ file:///mod.ts: EsmModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export declare namespace Test {\n  // These are considered \"exports\" according to the ts compiler regardless\n  // of whether they have an \"export\" keyword or not.\n  interface Test1 {}\n  export interface Test2 {}\n  class Test3 {}\n  function Test4();\n  var Test5: string;\n  type Test6 = string;\n  enum Test7 {}\n  namespace Test8 {}\n}",
+                            "export declare namespace Test {\n  // These are considered \"exports\" according to the ts compiler regardless\n  // of whether they have an \"export\" keyword or not.\n  interface Test1 {}\n  export interface Test2 {}\n  class Test3 {}\n  function Test4();\n  var Test5: string;\n  type Test6 = string;\n  enum Test7 {}\n  namespace Test8 {\n    interface Nested {}\n  }\n}",
                         ),
                     ),
                     range: SourceRange {
@@ -214,7 +220,7 @@ file:///mod.ts: EsmModuleInfo {
                             48,
                         ),
                         end: SourcePos(
-                            378,
+                            405,
                         ),
                     },
                     flags: 0,
@@ -464,7 +470,7 @@ file:///mod.ts: EsmModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "namespace Test8 {}",
+                            "namespace Test8 {\n    interface Nested {}\n  }",
                         ),
                     ),
                     range: SourceRange {
@@ -472,7 +478,41 @@ file:///mod.ts: EsmModuleInfo {
                             358,
                         ),
                         end: SourcePos(
-                            376,
+                            403,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {
+                11,
+            },
+            exports: {
+                "Nested": 11,
+            },
+            members: {},
+        },
+        11: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 11,
+            parent_id: Some(
+                10,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Nested {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            380,
+                        ),
+                        end: SourcePos(
+                            399,
                         ),
                     },
                     flags: 0,
@@ -482,11 +522,11 @@ file:///mod.ts: EsmModuleInfo {
             exports: {},
             members: {},
         },
-        11: Symbol {
+        12: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 11,
+            symbol_id: 12,
             parent_id: Some(
                 0,
             ),
@@ -499,17 +539,16 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            380,
+                            407,
                         ),
                         end: SourcePos(
-                            703,
+                            730,
                         ),
                     },
                     flags: 0,
                 },
             ],
             child_ids: {
-                12,
                 13,
                 14,
                 15,
@@ -517,19 +556,20 @@ file:///mod.ts: EsmModuleInfo {
                 17,
                 18,
                 19,
+                20,
             },
             exports: {
-                "Exported2": 13,
+                "Exported2": 14,
             },
             members: {},
         },
-        12: Symbol {
+        13: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 12,
+            symbol_id: 13,
             parent_id: Some(
-                11,
+                12,
             ),
             decls: [
                 SymbolDecl {
@@ -540,40 +580,10 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            484,
+                            511,
                         ),
                         end: SourcePos(
-                            509,
-                        ),
-                    },
-                    flags: 0,
-                },
-            ],
-            child_ids: {},
-            exports: {},
-            members: {},
-        },
-        13: Symbol {
-            module_id: ModuleId(
-                0,
-            ),
-            symbol_id: 13,
-            parent_id: Some(
-                11,
-            ),
-            decls: [
-                SymbolDecl {
-                    kind: Definition(
-                        SymbolNode(
-                            "export interface Exported2 {}",
-                        ),
-                    ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            512,
-                        ),
-                        end: SourcePos(
-                            541,
+                            536,
                         ),
                     },
                     flags: 0,
@@ -589,21 +599,21 @@ file:///mod.ts: EsmModuleInfo {
             ),
             symbol_id: 14,
             parent_id: Some(
-                11,
+                12,
             ),
             decls: [
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class NonExported2 {}",
+                            "export interface Exported2 {}",
                         ),
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            544,
+                            539,
                         ),
                         end: SourcePos(
-                            565,
+                            568,
                         ),
                     },
                     flags: 0,
@@ -619,18 +629,18 @@ file:///mod.ts: EsmModuleInfo {
             ),
             symbol_id: 15,
             parent_id: Some(
-                11,
+                12,
             ),
             decls: [
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "function NonExported3();",
+                            "class NonExported2 {}",
                         ),
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            568,
+                            571,
                         ),
                         end: SourcePos(
                             592,
@@ -649,18 +659,18 @@ file:///mod.ts: EsmModuleInfo {
             ),
             symbol_id: 16,
             parent_id: Some(
-                11,
+                12,
             ),
             decls: [
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "NonExported4: var NonExported4: string;",
+                            "function NonExported3();",
                         ),
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            599,
+                            595,
                         ),
                         end: SourcePos(
                             619,
@@ -679,21 +689,21 @@ file:///mod.ts: EsmModuleInfo {
             ),
             symbol_id: 17,
             parent_id: Some(
-                11,
+                12,
             ),
             decls: [
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "type NonExported5 = string;",
+                            "NonExported4: var NonExported4: string;",
                         ),
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            623,
+                            626,
                         ),
                         end: SourcePos(
-                            650,
+                            646,
                         ),
                     },
                     flags: 0,
@@ -709,21 +719,21 @@ file:///mod.ts: EsmModuleInfo {
             ),
             symbol_id: 18,
             parent_id: Some(
-                11,
+                12,
             ),
             decls: [
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "enum NonExported6 {}",
+                            "type NonExported5 = string;",
                         ),
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            653,
+                            650,
                         ),
                         end: SourcePos(
-                            673,
+                            677,
                         ),
                     },
                     flags: 0,
@@ -739,7 +749,37 @@ file:///mod.ts: EsmModuleInfo {
             ),
             symbol_id: 19,
             parent_id: Some(
-                11,
+                12,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "enum NonExported6 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            680,
+                        ),
+                        end: SourcePos(
+                            700,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        20: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 20,
+            parent_id: Some(
+                12,
             ),
             decls: [
                 SymbolDecl {
@@ -750,10 +790,10 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            676,
+                            703,
                         ),
                         end: SourcePos(
-                            701,
+                            728,
                         ),
                     },
                     flags: 0,
@@ -1207,13 +1247,13 @@ file:///other.d.ts: EsmModuleInfo {
   export interface Interface {
       prop: Inner.Other1;
   }
-[Test]: file:///mod.ts:48..378
+[Test]: file:///mod.ts:48..405
   export declare namespace Test {
     // These are considered "exports" according to the ts compiler regardless
   ...
-    namespace Test8 {}
+    }
   }
-[NonAmbient]: file:///mod.ts:380..703
+[NonAmbient]: file:///mod.ts:407..730
   export namespace NonAmbient {
     // since this is not ambient, it will only have the exports specified
   ...
