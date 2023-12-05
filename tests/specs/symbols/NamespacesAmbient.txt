@@ -1,0 +1,1221 @@
+# mod.ts
+export type { Interface } from "./other.d.ts";
+
+export declare namespace Test {
+  // These are considered "exports" according to the ts compiler regardless
+  // of whether they have an "export" keyword or not.
+  interface Test1 {}
+  export interface Test2 {}
+  class Test3 {}
+  function Test4();
+  var Test5: string;
+  type Test6 = string;
+  enum Test7 {}
+  namespace Test8 {}
+}
+
+export namespace NonAmbient {
+  // since this is not ambient, it will only have the exports specified
+  interface NotExported1 {}
+  export interface Exported2 {}
+  class NonExported2 {}
+  function NonExported3();
+  var NonExported4: string;
+  type NonExported5 = string;
+  enum NonExported6 {}
+  namespace NonExported7 {}
+}
+
+# other.d.ts
+export interface Interface {
+    prop: Inner.Other1;
+}
+
+// this is not an export of the module because it's not exported
+namespace Inner {
+  // These are considered an export of Inner because it's ambient (due to being in a declaration file)
+  interface Other1 {}
+  export interface Other2 {}
+  class Other3 {}
+  function Other4();
+  var Other5: string;
+  type Other6 = string;
+  enum Other7 {}
+  namespace Other8 {}
+}
+
+# output
+file:///mod.ts: EsmModuleInfo {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "Test",
+            #2,
+        ): 2,
+        (
+            "Test1",
+            #3,
+        ): 3,
+        (
+            "Test2",
+            #3,
+        ): 4,
+        (
+            "Test3",
+            #3,
+        ): 5,
+        (
+            "Test4",
+            #3,
+        ): 6,
+        (
+            "Test5",
+            #3,
+        ): 7,
+        (
+            "Test6",
+            #3,
+        ): 8,
+        (
+            "Test7",
+            #3,
+        ): 9,
+        (
+            "Test8",
+            #3,
+        ): 10,
+        (
+            "NonAmbient",
+            #2,
+        ): 11,
+        (
+            "NotExported1",
+            #5,
+        ): 12,
+        (
+            "Exported2",
+            #5,
+        ): 13,
+        (
+            "NonExported2",
+            #5,
+        ): 14,
+        (
+            "NonExported3",
+            #5,
+        ): 15,
+        (
+            "NonExported4",
+            #5,
+        ): 16,
+        (
+            "NonExported5",
+            #5,
+        ): 17,
+        (
+            "NonExported6",
+            #5,
+        ): 18,
+        (
+            "NonExported7",
+            #5,
+        ): 19,
+    },
+    symbols: {
+        0: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 0,
+            parent_id: None,
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export type { Interface } from \"./other.d.ts\";\n\nexport declare namespace Test {\n  // These are considered \"exports\" according to the ts compiler regardless\n  // of whether they have an \"export\" keyword or not.\n  interface Test1 {}\n  export interface Test2 {}\n  class Test3 {}\n  function Test4();\n  var Test5: string;\n  type Test6 = string;\n  enum Test7 {}\n  namespace Test8 {}\n}\n\nexport namespace NonAmbient {\n  // since this is not ambient, it will only have the exports specified\n  interface NotExported1 {}\n  export interface Exported2 {}\n  class NonExported2 {}\n  function NonExported3();\n  var NonExported4: string;\n  type NonExported5 = string;\n  enum NonExported6 {}\n  namespace NonExported7 {}\n}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            703,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {
+                2,
+                11,
+            },
+            exports: {
+                "Interface": 1,
+                "Test": 2,
+                "NonAmbient": 11,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 1,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "Interface",
+                            ),
+                            specifier: "./other.d.ts",
+                        },
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            14,
+                        ),
+                        end: SourcePos(
+                            23,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        2: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 2,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export declare namespace Test {\n  // These are considered \"exports\" according to the ts compiler regardless\n  // of whether they have an \"export\" keyword or not.\n  interface Test1 {}\n  export interface Test2 {}\n  class Test3 {}\n  function Test4();\n  var Test5: string;\n  type Test6 = string;\n  enum Test7 {}\n  namespace Test8 {}\n}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            48,
+                        ),
+                        end: SourcePos(
+                            378,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+            },
+            exports: {
+                "Test1": 3,
+                "Test2": 4,
+                "Test3": 5,
+                "Test4": 6,
+                "Test5": 7,
+                "Test6": 8,
+                "Test7": 9,
+                "Test8": 10,
+            },
+            members: {},
+        },
+        3: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 3,
+            parent_id: Some(
+                2,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Test1 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            212,
+                        ),
+                        end: SourcePos(
+                            230,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        4: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 4,
+            parent_id: Some(
+                2,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Test2 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            233,
+                        ),
+                        end: SourcePos(
+                            258,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        5: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 5,
+            parent_id: Some(
+                2,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class Test3 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            261,
+                        ),
+                        end: SourcePos(
+                            275,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        6: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 6,
+            parent_id: Some(
+                2,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "function Test4();",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            278,
+                        ),
+                        end: SourcePos(
+                            295,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        7: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 7,
+            parent_id: Some(
+                2,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "Test5: var Test5: string;",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            302,
+                        ),
+                        end: SourcePos(
+                            315,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        8: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 8,
+            parent_id: Some(
+                2,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "type Test6 = string;",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            319,
+                        ),
+                        end: SourcePos(
+                            339,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        9: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 9,
+            parent_id: Some(
+                2,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "enum Test7 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            342,
+                        ),
+                        end: SourcePos(
+                            355,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        10: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 10,
+            parent_id: Some(
+                2,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace Test8 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            358,
+                        ),
+                        end: SourcePos(
+                            376,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        11: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 11,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export namespace NonAmbient {\n  // since this is not ambient, it will only have the exports specified\n  interface NotExported1 {}\n  export interface Exported2 {}\n  class NonExported2 {}\n  function NonExported3();\n  var NonExported4: string;\n  type NonExported5 = string;\n  enum NonExported6 {}\n  namespace NonExported7 {}\n}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            380,
+                        ),
+                        end: SourcePos(
+                            703,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+            },
+            exports: {
+                "Exported2": 13,
+            },
+            members: {},
+        },
+        12: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 12,
+            parent_id: Some(
+                11,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface NotExported1 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            484,
+                        ),
+                        end: SourcePos(
+                            509,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        13: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 13,
+            parent_id: Some(
+                11,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Exported2 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            512,
+                        ),
+                        end: SourcePos(
+                            541,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        14: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 14,
+            parent_id: Some(
+                11,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class NonExported2 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            544,
+                        ),
+                        end: SourcePos(
+                            565,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        15: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 15,
+            parent_id: Some(
+                11,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "function NonExported3();",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            568,
+                        ),
+                        end: SourcePos(
+                            592,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        16: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 16,
+            parent_id: Some(
+                11,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "NonExported4: var NonExported4: string;",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            599,
+                        ),
+                        end: SourcePos(
+                            619,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        17: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 17,
+            parent_id: Some(
+                11,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "type NonExported5 = string;",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            623,
+                        ),
+                        end: SourcePos(
+                            650,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        18: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 18,
+            parent_id: Some(
+                11,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "enum NonExported6 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            653,
+                        ),
+                        end: SourcePos(
+                            673,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        19: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 19,
+            parent_id: Some(
+                11,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace NonExported7 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            676,
+                        ),
+                        end: SourcePos(
+                            701,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+    },
+}
+file:///other.d.ts: EsmModuleInfo {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///other.d.ts",
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "Interface",
+            #2,
+        ): 1,
+        (
+            "Inner",
+            #2,
+        ): 3,
+        (
+            "Other1",
+            #3,
+        ): 4,
+        (
+            "Other2",
+            #3,
+        ): 5,
+        (
+            "Other3",
+            #3,
+        ): 6,
+        (
+            "Other4",
+            #3,
+        ): 7,
+        (
+            "Other5",
+            #3,
+        ): 8,
+        (
+            "Other6",
+            #3,
+        ): 9,
+        (
+            "Other7",
+            #3,
+        ): 10,
+        (
+            "Other8",
+            #3,
+        ): 11,
+    },
+    symbols: {
+        0: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 0,
+            parent_id: None,
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Interface {\n    prop: Inner.Other1;\n}\n\n// this is not an export of the module because it's not exported\nnamespace Inner {\n  // These are considered an export of Inner because it's ambient (due to being in a declaration file)\n  interface Other1 {}\n  export interface Other2 {}\n  class Other3 {}\n  function Other4();\n  var Other5: string;\n  type Other6 = string;\n  enum Other7 {}\n  namespace Other8 {}\n}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            418,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {
+                1,
+                3,
+            },
+            exports: {
+                "Interface": 1,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 1,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Interface {\n    prop: Inner.Other1;\n}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            54,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {
+                2,
+            },
+        },
+        2: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 2,
+            parent_id: Some(
+                1,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "prop: Inner.Other1;",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            33,
+                        ),
+                        end: SourcePos(
+                            52,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        3: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 3,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace Inner {\n  // These are considered an export of Inner because it's ambient (due to being in a declaration file)\n  interface Other1 {}\n  export interface Other2 {}\n  class Other3 {}\n  function Other4();\n  var Other5: string;\n  type Other6 = string;\n  enum Other7 {}\n  namespace Other8 {}\n}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            121,
+                        ),
+                        end: SourcePos(
+                            418,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+            },
+            exports: {
+                "Other1": 4,
+                "Other2": 5,
+                "Other3": 6,
+                "Other4": 7,
+                "Other5": 8,
+                "Other6": 9,
+                "Other7": 10,
+                "Other8": 11,
+            },
+            members: {},
+        },
+        4: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 4,
+            parent_id: Some(
+                3,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "interface Other1 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            244,
+                        ),
+                        end: SourcePos(
+                            263,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        5: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 5,
+            parent_id: Some(
+                3,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface Other2 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            266,
+                        ),
+                        end: SourcePos(
+                            292,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        6: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 6,
+            parent_id: Some(
+                3,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "class Other3 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            295,
+                        ),
+                        end: SourcePos(
+                            310,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        7: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 7,
+            parent_id: Some(
+                3,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "function Other4();",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            313,
+                        ),
+                        end: SourcePos(
+                            331,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        8: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 8,
+            parent_id: Some(
+                3,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "Other5: var Other5: string;",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            338,
+                        ),
+                        end: SourcePos(
+                            352,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        9: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 9,
+            parent_id: Some(
+                3,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "type Other6 = string;",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            356,
+                        ),
+                        end: SourcePos(
+                            377,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        10: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 10,
+            parent_id: Some(
+                3,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "enum Other7 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            380,
+                        ),
+                        end: SourcePos(
+                            394,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        11: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 11,
+            parent_id: Some(
+                3,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "namespace Other8 {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            397,
+                        ),
+                        end: SourcePos(
+                            416,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+    },
+}
+== symbol deps ==
+2:33..52 [QualifiedId(("Inner", #2), ["Other1"])]
+
+== export definitions ==
+[Interface]: file:///other.d.ts:0..54
+  export interface Interface {
+      prop: Inner.Other1;
+  }
+[Test]: file:///mod.ts:48..378
+  export declare namespace Test {
+    // These are considered "exports" according to the ts compiler regardless
+  ...
+    namespace Test8 {}
+  }
+[NonAmbient]: file:///mod.ts:380..703
+  export namespace NonAmbient {
+    // since this is not ambient, it will only have the exports specified
+  ...
+    namespace NonExported7 {}
+  }
