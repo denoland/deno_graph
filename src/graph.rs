@@ -1667,7 +1667,7 @@ fn resolve(
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Resolution {
   let response = if let Some(resolver) = maybe_resolver {
-    resolver.resolve(specifier_text, &referrer_range.specifier, mode)
+    resolver.resolve(specifier_text, &referrer_range, mode)
   } else {
     resolve_import(specifier_text, &referrer_range.specifier)
       .map_err(|err| err.into())
