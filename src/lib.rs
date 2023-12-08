@@ -1192,14 +1192,14 @@ console.log(a);
     fn resolve(
       &self,
       specifier_text: &str,
-      referrer: &deno_ast::ModuleSpecifier,
+      referrer_range: &Range,
       _mode: ResolutionMode,
     ) -> Result<deno_ast::ModuleSpecifier, source::ResolveError> {
       use import_map::ImportMapError;
       Err(source::ResolveError::Other(
         ImportMapError::UnmappedBareSpecifier(
           specifier_text.to_string(),
-          Some(referrer.to_string()),
+          Some(referrer_range.specifier.to_string()),
         )
         .into(),
       ))
@@ -3762,14 +3762,14 @@ export function a(a: A): B {
       fn resolve(
         &self,
         specifier_text: &str,
-        referrer: &ModuleSpecifier,
+        referrer_range: &Range,
         mode: ResolutionMode,
       ) -> Result<ModuleSpecifier, crate::source::ResolveError> {
         let specifier_text = match mode {
           ResolutionMode::Types => format!("{}.d.ts", specifier_text),
           ResolutionMode::Execution => format!("{}.js", specifier_text),
         };
-        Ok(resolve_import(&specifier_text, referrer)?)
+        Ok(resolve_import(&specifier_text, &referrer_range.specifier)?)
       }
     }
 
@@ -3949,12 +3949,12 @@ export function a(a: A): B {
       fn resolve(
         &self,
         specifier_text: &str,
-        referrer: &ModuleSpecifier,
+        referrer_range: &Range,
         mode: ResolutionMode,
       ) -> Result<ModuleSpecifier, crate::source::ResolveError> {
         match mode {
           ResolutionMode::Execution => {
-            Ok(resolve_import(specifier_text, referrer)?)
+            Ok(resolve_import(specifier_text, &referrer_range.specifier)?)
           }
           ResolutionMode::Types => Err(crate::source::ResolveError::Other(
             anyhow::anyhow!("Failed."),

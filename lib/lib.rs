@@ -141,13 +141,13 @@ impl Resolver for JsResolver {
   fn resolve(
     &self,
     specifier: &str,
-    referrer: &ModuleSpecifier,
+    referrer_range: &Range,
     _mode: ResolutionMode,
   ) -> Result<ModuleSpecifier, ResolveError> {
     if let Some(resolve) = &self.maybe_resolve {
       let this = JsValue::null();
       let arg1 = JsValue::from(specifier);
-      let arg2 = JsValue::from(referrer.to_string());
+      let arg2 = JsValue::from(referrer_range.specifier.to_string());
       let value = match resolve.call2(&this, &arg1, &arg2) {
         Ok(value) => value,
         Err(_) => return Err(anyhow!("JavaScript resolve threw.").into()),
@@ -159,7 +159,8 @@ impl Resolver for JsResolver {
       ModuleSpecifier::parse(&value)
         .map_err(|err| ResolveError::Specifier(SpecifierError::InvalidUrl(err)))
     } else {
-      resolve_import(specifier, referrer).map_err(|err| err.into())
+      resolve_import(specifier, &referrer_range.specifier)
+        .map_err(|err| err.into())
     }
   }
 

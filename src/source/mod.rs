@@ -200,10 +200,10 @@ pub trait Resolver: fmt::Debug {
   fn resolve(
     &self,
     specifier_text: &str,
-    referrer: &ModuleSpecifier,
+    referrer_range: &Range,
     _mode: ResolutionMode,
   ) -> Result<ModuleSpecifier, ResolveError> {
-    Ok(resolve_import(specifier_text, referrer)?)
+    Ok(resolve_import(specifier_text, &referrer_range.specifier)?)
   }
 
   /// Given a module specifier, return an optional tuple which provides a module
@@ -511,15 +511,15 @@ pub mod tests {
     fn resolve(
       &self,
       specifier: &str,
-      referrer: &ModuleSpecifier,
+      referrer_range: &Range,
       _mode: ResolutionMode,
     ) -> Result<ModuleSpecifier, ResolveError> {
-      if let Some(map) = self.map.get(referrer) {
+      if let Some(map) = self.map.get(&referrer_range.specifier) {
         if let Some(resolved_specifier) = map.get(specifier) {
           return Ok(resolved_specifier.clone());
         }
       }
-      Ok(resolve_import(specifier, referrer)?)
+      Ok(resolve_import(specifier, &referrer_range.specifier)?)
     }
 
     fn resolve_types(

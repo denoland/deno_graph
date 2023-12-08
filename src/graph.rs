@@ -15,6 +15,7 @@ use crate::DefaultModuleAnalyzer;
 use crate::DefaultModuleParser;
 use crate::ReferrerImports;
 
+use crate::module_specifier::is_fs_root_specifier;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
@@ -1670,7 +1671,7 @@ fn resolve(
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Resolution {
   let response = if let Some(resolver) = maybe_resolver {
-    resolver.resolve(specifier_text, &referrer_range.specifier, mode)
+    resolver.resolve(specifier_text, &referrer_range, mode)
   } else {
     resolve_import(specifier_text, &referrer_range.specifier)
       .map_err(|err| err.into())
@@ -2140,12 +2141,17 @@ pub(crate) fn parse_esm_module_from_module_info(
             vec![text]
           }
           DynamicArgument::Template(parts) if specifier.scheme() == "file" => {
-            analyze_dynamic_arg_template_parts(
+            let mut parts = analyze_dynamic_arg_template_parts(
               &parts,
               specifier,
+              &desc.argument_range,
               &import_attributes,
               file_system,
-            )
+            );
+            // operating systems won't always traverse directories in
+            // the same order, so sort here to ensure output is stable
+            parts.sort();
+            parts
           }
           _ => continue,
         };
@@ -2256,6 +2262,7 @@ pub(crate) fn parse_esm_module_from_module_info(
 fn analyze_dynamic_arg_template_parts(
   parts: &[DynamicTemplatePart],
   referrer: &Url,
+  referrer_range: &PositionRange,
   import_attributes: &ImportAttributes,
   file_system: &dyn FileSystem,
 ) -> Vec<String> {
@@ -2343,6 +2350,10 @@ fn analyze_dynamic_arg_template_parts(
       ]
     };
   let mut specifiers = Vec::new();
+  // skip the root specifier
+  if is_fs_root_specifier(&dir_path) {
+    return specifiers;
+  }
   let mut pending_dirs = VecDeque::from([dir_path]);
   while let Some(dir_path) = pending_dirs.pop_front() {
     let entries = file_system.read_dir(&dir_path);
@@ -2396,7 +2407,14 @@ fn analyze_dynamic_arg_template_parts(
           // figure out what to do with errors like directory errors.
           // Additionally, take note that these are dynamic import errors,
           // so they shouldn't be eagerly surfaced.
-          log::warn!("Graph failed resolving '{}'. {:#}", entry.url, err);
+          log::warn!(
+            "Graph failed resolving '{}'. {:#}\n    at {}:{}:{}",
+            entry.url,
+            err,
+            referrer,
+            referrer_range.start.line + 1,
+            referrer_range.start.character + 1,
+          );
         }
       };
     }

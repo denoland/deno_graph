@@ -1622,7 +1622,11 @@ impl<'a> SymbolFiller<'a> {
       module.range(),
     ));
     for module_item in &module.body {
-      self.fill_module_item(module_item, module_symbol);
+      self.fill_module_item(
+        module_item,
+        module_symbol,
+        self.source.media_type().is_declaration(),
+      );
     }
   }
 
@@ -1630,7 +1634,10 @@ impl<'a> SymbolFiller<'a> {
     &self,
     module_item: &ModuleItem,
     module_symbol: &SymbolMut,
+    is_ambient: bool,
   ) {
+    let decls_are_exports =
+      is_ambient && !module_symbol.borrow_inner().is_module();
     match module_item {
       ModuleItem::ModuleDecl(decl) => match decl {
         ModuleDecl::Import(import_decl) => {
@@ -1837,6 +1844,7 @@ impl<'a> SymbolFiller<'a> {
               ),
               n,
               module_symbol,
+              is_ambient || n.declare,
             );
             if let Some(symbol_id) = maybe_symbol_id {
               match &n.id {
@@ -2085,6 +2093,9 @@ impl<'a> SymbolFiller<'a> {
               self.fill_class_decl(symbol, n);
               let symbol_id = symbol.symbol_id();
               module_symbol.add_child_id(symbol_id);
+              if decls_are_exports {
+                module_symbol.add_export(n.ident.sym.to_string(), symbol_id);
+              }
             }
             Decl::Fn(n) => {
               let symbol_id = self.builder.ensure_symbol_for_swc_id(
@@ -2101,10 +2112,15 @@ impl<'a> SymbolFiller<'a> {
                 module_symbol.symbol_id(),
               );
               module_symbol.add_child_id(symbol_id);
+              if decls_are_exports {
+                module_symbol.add_export(n.ident.sym.to_string(), symbol_id);
+              }
             }
             Decl::Var(var_decl) => {
               for decl in &var_decl.decls {
                 for ident in find_pat_ids::<_, Ident>(&decl.name) {
+                  let export_name =
+                    decls_are_exports.then(|| ident.sym.to_string());
                   let symbol_id = self.builder.ensure_symbol_for_swc_id(
                     ident.to_id(),
                     SymbolDecl::new(
@@ -2120,6 +2136,9 @@ impl<'a> SymbolFiller<'a> {
                     module_symbol.symbol_id(),
                   );
                   module_symbol.add_child_id(symbol_id);
+                  if let Some(export_name) = export_name {
+                    module_symbol.add_export(export_name, symbol_id);
+                  }
                 }
               }
             }
@@ -2141,6 +2160,9 @@ impl<'a> SymbolFiller<'a> {
               self.fill_ts_interface(symbol, n);
               let symbol_id = symbol.symbol_id();
               module_symbol.add_child_id(symbol_id);
+              if decls_are_exports {
+                module_symbol.add_export(n.id.sym.to_string(), symbol_id);
+              }
             }
             Decl::TsTypeAlias(n) => {
               let symbol_id = self.builder.ensure_symbol_for_swc_id(
@@ -2157,6 +2179,9 @@ impl<'a> SymbolFiller<'a> {
                 module_symbol.symbol_id(),
               );
               module_symbol.add_child_id(symbol_id);
+              if decls_are_exports {
+                module_symbol.add_export(n.id.sym.to_string(), symbol_id);
+              }
             }
             Decl::TsEnum(n) => {
               let symbol_id = self.builder.ensure_symbol_for_swc_id(
@@ -2173,6 +2198,9 @@ impl<'a> SymbolFiller<'a> {
                 module_symbol.symbol_id(),
               );
               module_symbol.add_child_id(symbol_id);
+              if decls_are_exports {
+                module_symbol.add_export(n.id.sym.to_string(), symbol_id);
+              }
             }
             Decl::TsModule(n) => {
               let symbol_id = self.fill_ts_module(
@@ -2187,9 +2215,19 @@ impl<'a> SymbolFiller<'a> {
                 ),
                 n,
                 module_symbol,
+                is_ambient || n.declare,
               );
               if let Some(symbol_id) = symbol_id {
                 module_symbol.add_child_id(symbol_id);
+                if decls_are_exports {
+                  match &n.id {
+                    TsModuleName::Ident(ident) => {
+                      module_symbol
+                        .add_export(ident.sym.to_string(), symbol_id);
+                    }
+                    TsModuleName::Str(_) => {}
+                  }
+                }
               }
             }
             Decl::Using(_) => {
@@ -2348,6 +2386,7 @@ impl<'a> SymbolFiller<'a> {
     symbol_decl: SymbolDecl,
     n: &TsModuleDecl,
     parent_symbol: &SymbolMut,
+    is_ambient: bool,
   ) -> Option<SymbolId> {
     let mut id = match &n.id {
       TsModuleName::Ident(ident) => ident.to_id(),
@@ -2391,7 +2430,7 @@ impl<'a> SymbolFiller<'a> {
       };
 
       for item in &block.body {
-        self.fill_module_item(item, mod_symbol);
+        self.fill_module_item(item, mod_symbol, is_ambient || n.declare);
       }
     }
 
