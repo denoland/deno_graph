@@ -846,6 +846,13 @@ impl EsmModule {
   pub fn size(&self) -> usize {
     self.source.as_bytes().len()
   }
+
+  pub fn dependencies_prefer_low_res(&self) -> &IndexMap<String, Dependency> {
+    match &self.low_res {
+      Some(low_res) => &low_res.dependencies,
+      None => &self.dependencies,
+    }
+  }
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -1082,7 +1089,12 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
               }
             }
           }
-          for dep in module.dependencies.values().rev() {
+          let module_deps = if check_types {
+            module.dependencies_prefer_low_res()
+          } else {
+            &module.dependencies
+          };
+          for dep in module_deps.values().rev() {
             if !dep.is_dynamic || self.follow_dynamic {
               let mut resolutions = Vec::with_capacity(2);
               resolutions.push(&dep.maybe_code);
@@ -1261,7 +1273,12 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
                 }
               }
             }
-            for (specifier_text, dep) in &module.dependencies {
+            let module_deps = if follow_type_only {
+              module.dependencies_prefer_low_res()
+            } else {
+              &module.dependencies
+            };
+            for (specifier_text, dep) in module_deps {
               if follow_dynamic || !dep.is_dynamic {
                 if let Some(err) = self.check_resolution(
                   module,
