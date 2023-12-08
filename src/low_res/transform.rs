@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::rc::Rc;
 
 use deno_ast::swc::ast::Accessibility;
 use deno_ast::swc::ast::Class;
@@ -20,15 +21,24 @@ use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;
 use deno_ast::swc::ast::TsType;
 use deno_ast::swc::ast::TsTypeAnn;
+use deno_ast::swc::codegen::text_writer::JsWriter;
+use deno_ast::swc::codegen::Node;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::common::comments::SingleThreadedComments;
-use deno_ast::swc::common::comments::SingleThreadedCommentsMap;
 use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
+use deno_ast::swc::common::FileName;
+use deno_ast::swc::common::SourceMap;
 use deno_ast::swc::common::DUMMY_SP;
+use deno_ast::swc_codegen_config;
 use deno_ast::ModuleSpecifier;
+use deno_ast::MultiThreadedComments;
 use deno_ast::ParsedSource;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
+use deno_ast::SourceTextInfo;
+
+use crate::DefaultModuleAnalyzer;
+use crate::ModuleInfo;
 
 struct CommentsMut {
   leading: SingleThreadedCommentsMapInner,
@@ -58,18 +68,34 @@ impl CommentsMut {
     Self { leading, trailing }
   }
 
-  fn remove_leading(&mut self, start: deno_ast::SourcePos) {
+  pub fn remove_leading(&mut self, start: deno_ast::SourcePos) {
     self.leading.remove(&start.as_byte_pos());
+  }
+
+  pub fn into_multi_threaded(self) -> MultiThreadedComments {
+    MultiThreadedComments::from_leading_and_trailing(
+      self.leading,
+      self.trailing,
+    )
   }
 }
 
-pub enum TransformError {}
+pub enum TransformError {
+  Emit(anyhow::Error),
+}
+
+pub struct LowResModule {
+  pub specifier: ModuleSpecifier,
+  pub module_info: ModuleInfo,
+  pub text: String,
+  pub source_map: String,
+}
 
 pub fn transform(
   specifier: &ModuleSpecifier,
   public_ranges: &HashSet<SourceRange>,
   parsed_source: &ParsedSource,
-) -> Result<(), TransformError> {
+) -> Result<LowResModule, TransformError> {
   let mut module = parsed_source.module().clone();
   let mut comments =
     CommentsMut::new(parsed_source.comments().as_single_threaded());
@@ -83,8 +109,67 @@ pub fn transform(
     }
   }
   module.body = final_body;
+  let comments = comments.into_multi_threaded();
+  let module_info = DefaultModuleAnalyzer::module_info_from_swc(
+    parsed_source.media_type(),
+    &module,
+    parsed_source.text_info(),
+    &comments,
+  );
 
-  Ok(())
+  // now emit
+  let comments = comments.into_single_threaded();
+  let (text, source_map) =
+    emit(specifier, &comments, parsed_source.text_info(), &module)
+      .map_err(TransformError::Emit)?;
+
+  Ok(LowResModule {
+    specifier: specifier.clone(),
+    module_info,
+    text,
+    source_map,
+  })
+}
+
+fn emit(
+  specifier: &ModuleSpecifier,
+  comments: &SingleThreadedComments,
+  text_info: &SourceTextInfo,
+  module: &deno_ast::swc::ast::Module,
+) -> Result<(String, String), anyhow::Error> {
+  let source_map = Rc::new(SourceMap::default());
+  let file_name = FileName::Url(specifier.clone());
+  source_map.new_source_file(file_name, text_info.text_str().to_string());
+
+  let mut src_map_buf = vec![];
+  let mut buf = vec![];
+  {
+    let mut writer = Box::new(JsWriter::new(
+      source_map.clone(),
+      "\n",
+      &mut buf,
+      Some(&mut src_map_buf),
+    ));
+    writer.set_indent_str("  "); // two spaces
+
+    let mut emitter = deno_ast::swc::codegen::Emitter {
+      cfg: swc_codegen_config(),
+      comments: Some(comments),
+      cm: source_map.clone(),
+      wr: writer,
+    };
+    module.emit_with(&mut emitter)?;
+  }
+  let src = String::from_utf8(buf)?;
+  let map = {
+    let mut buf = Vec::new();
+    source_map
+      .build_source_map_from(&src_map_buf, None)
+      .to_writer(&mut buf)?;
+    String::from_utf8(buf)?
+  };
+
+  Ok((src, map))
 }
 
 fn transform_item(

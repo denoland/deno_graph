@@ -801,6 +801,13 @@ impl JsonModule {
   }
 }
 
+#[derive(Debug, Clone)]
+pub struct LowResTypeModule {
+  pub dependencies: IndexMap<String, Dependency>,
+  pub source: Arc<str>,
+  pub source_map: Arc<str>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EsmModule {
@@ -818,6 +825,8 @@ pub struct EsmModule {
   #[serde(skip_serializing_if = "is_media_type_unknown")]
   pub media_type: MediaType,
   pub specifier: ModuleSpecifier,
+  #[serde(skip_serializing)]
+  pub low_res: Option<Box<LowResTypeModule>>,
 }
 
 impl EsmModule {
@@ -829,6 +838,7 @@ impl EsmModule {
       maybe_types_dependency: None,
       media_type: MediaType::Unknown,
       specifier,
+      low_res: None,
     }
   }
 
@@ -2105,7 +2115,30 @@ pub(crate) fn parse_esm_module_from_module_info(
   }
 
   // Analyze ES dependencies
-  for desc in module_info.dependencies {
+  fill_module_dependencies(
+    graph_kind,
+    module_info.dependencies,
+    &module.specifier,
+    &mut module.dependencies,
+    file_system,
+    maybe_resolver,
+    maybe_npm_resolver,
+  );
+
+  // Return the module as a valid module
+  module
+}
+
+fn fill_module_dependencies(
+  graph_kind: GraphKind,
+  dependencies: Vec<DependencyDescriptor>,
+  module_specifier: &ModuleSpecifier,
+  module_dependencies: &mut IndexMap<String, Dependency>,
+  file_system: &dyn FileSystem,
+  maybe_resolver: Option<&dyn Resolver>,
+  maybe_npm_resolver: Option<&dyn NpmResolver>,
+) {
+  for desc in dependencies {
     let (imports, leading_comments) = match desc {
       DependencyDescriptor::Static(desc) => {
         let is_import_or_export_type = matches!(
@@ -2116,7 +2149,7 @@ pub(crate) fn parse_esm_module_from_module_info(
           continue; // skip
         }
         let range = Range::from_position_range(
-          module.specifier.clone(),
+          module_specifier.clone(),
           desc.specifier_range.clone(),
         );
 
@@ -2140,10 +2173,12 @@ pub(crate) fn parse_esm_module_from_module_info(
           DynamicArgument::String(text) => {
             vec![text]
           }
-          DynamicArgument::Template(parts) if specifier.scheme() == "file" => {
+          DynamicArgument::Template(parts)
+            if module_specifier.scheme() == "file" =>
+          {
             let mut parts = analyze_dynamic_arg_template_parts(
               &parts,
-              specifier,
+              &module_specifier,
               &desc.argument_range,
               &import_attributes,
               file_system,
@@ -2156,7 +2191,7 @@ pub(crate) fn parse_esm_module_from_module_info(
           _ => continue,
         };
         let range = Range::from_position_range(
-          module.specifier.clone(),
+          module_specifier.clone(),
           desc.argument_range.clone(),
         );
         (
@@ -2176,8 +2211,7 @@ pub(crate) fn parse_esm_module_from_module_info(
     };
 
     for import in imports {
-      let dep = module
-        .dependencies
+      let dep = module_dependencies
         .entry(import.specifier.clone())
         .or_default();
       // TODO(nayeemrmn): Import attributes should be visited and checked for
@@ -2215,7 +2249,7 @@ pub(crate) fn parse_esm_module_from_module_info(
         dep.is_dynamic = dep.is_dynamic && import.is_dynamic;
       }
       if graph_kind.include_types() && dep.maybe_type.is_none() {
-        let specifier = module.specifier.clone();
+        let specifier = module_specifier.clone();
         let maybe_type =
           if let Some(pragma) = analyze_deno_types(&leading_comments) {
             resolve(
@@ -2254,9 +2288,6 @@ pub(crate) fn parse_esm_module_from_module_info(
       dep.imports.push(import);
     }
   }
-
-  // Return the module as a valid module
-  module
 }
 
 fn analyze_dynamic_arg_template_parts(
@@ -3768,7 +3799,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   }
 
   fn create_low_res_type_graph(&mut self) {
-    if self.state.jsr.top_level_nvs.is_empty() {
+    if self.state.jsr.top_level_nvs.is_empty()
+      || !self.graph.graph_kind().include_types()
+    {
       return;
     }
 
@@ -3782,12 +3815,42 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let pending_nvs = std::mem::take(&mut self.state.jsr.top_level_nvs)
       .into_iter()
       .collect::<VecDeque<_>>();
-    crate::low_res::build_low_res_type_graph(
+    let modules = crate::low_res::build_low_res_type_graph(
       self.loader,
       self.graph,
       &root_symbol,
       pending_nvs,
     );
+    for low_res_module in modules {
+      let module_slot = self
+        .graph
+        .module_slots
+        .get_mut(&low_res_module.specifier)
+        .unwrap();
+      let module = match module_slot {
+        ModuleSlot::Module(m) => match m {
+          Module::Esm(m) => m,
+          _ => unreachable!(),
+        },
+        ModuleSlot::Err(_) | ModuleSlot::Pending => unreachable!(),
+      };
+      let mut dependencies: IndexMap<String, Dependency> = Default::default();
+      fill_module_dependencies(
+        GraphKind::TypesOnly,
+        low_res_module.module_info.dependencies,
+        &module.specifier,
+        &mut dependencies,
+        // no need to resolve dynamic imports
+        &NullFileSystem,
+        self.resolver,
+        self.npm_resolver,
+      );
+      module.low_res = Some(Box::new(LowResTypeModule {
+        dependencies,
+        source: low_res_module.text.into(),
+        source_map: low_res_module.source_map.into(),
+      }))
+    }
   }
 }
 
