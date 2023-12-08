@@ -137,9 +137,7 @@ checksum = "41b319d1b62ffbd002e057f36bebd1f42b9f97927c9577461d855f3513c4289f"
 
 [[package]]
 name = "deno_ast"
-version = "0.31.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba56f7fc8458f75d245b7fb90b9b7df6f6051d70efc206ddb053c638e53f07eb"
+version = "0.31.6"
 dependencies = [
  "deno_media_type",
  "dprint-swc-ext",
@@ -1032,9 +1030,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_parser"
-version = "0.141.23"
+version = "0.141.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9cc89c175ed17c7f795fb18cf778a5745ecd794ad19c4662f85843d7571957a8"
+checksum = "9590deff1b29aafbff8901b9d38d00211393f6b17b5cab878562db89a8966d88"
 dependencies = [
  "either",
  "new_debug_unreachable",
@@ -1054,9 +1052,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_base"
-version = "0.134.35"
+version = "0.134.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8110b783faee399cbd749fb35b832551b2b60d034593f1fbadd7af85cb157c1"
+checksum = "d74ca42a400257d8563624122813c1849c3d87e7abe3b9b2ed7514c76f64ad2f"
 dependencies = [
  "better_scoped_tls",
  "bitflags 2.4.0",
@@ -1077,9 +1075,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_utils"
-version = "0.124.29"
+version = "0.124.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5d9434862c93aadda0b539847a5fdb82624472deed788333b35caf281773931"
+checksum = "e4a4a0baf6cfa490666a9fe23a17490273f843d19ebc1d6ec89d64c3f8ccdb80"
 dependencies = [
  "indexmap 1.9.3",
  "num_cpus",

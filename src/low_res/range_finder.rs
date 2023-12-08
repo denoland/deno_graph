@@ -21,7 +21,7 @@ pub fn find_public_ranges<'a>(
 ) -> HashMap<PackageNv, HashMap<ModuleSpecifier, HashSet<SourceRange>>> {
   PublicRangeFinder {
     seen_nvs: pending_nvs.iter().cloned().collect(),
-    pending_nvs: pending_nvs,
+    pending_nvs,
     pending_specifiers: Default::default(),
     seen_specifiers: Default::default(),
     public_ranges: Default::default(),

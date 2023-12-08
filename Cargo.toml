@@ -25,7 +25,7 @@ symbols = ["deno_ast/transforms", "deno_ast/visit", "deno_ast/utils"]
 anyhow = "1.0.43"
 async-trait = "0.1.68"
 data-url = "0.3.0"
-deno_ast = { version = "0.31.4", features = ["dep_analysis", "module_specifier"] }
+deno_ast = { version = "0.31.4", features = ["dep_analysis", "module_specifier"], path = "../deno_ast" }
 deno_semver = "0.5.0"
 futures = "0.3.26"
 import_map = "0.18.0"

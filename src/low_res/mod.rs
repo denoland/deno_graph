@@ -14,6 +14,8 @@ use crate::ModuleGraph;
 use crate::ModuleSpecifier;
 
 mod range_finder;
+mod swc_helpers;
+mod transform;
 
 pub fn build_low_res_type_graph<'a>(
   loader: &'a dyn Loader,
@@ -26,9 +28,8 @@ pub fn build_low_res_type_graph<'a>(
 
   for (nv, modules) in public_modules {
     for (specifier, ranges) in modules {
-      if Some(module_info) = root_symbol.module_from_specifier(&specifier) {
-        module_info
-      }
+      let module_info = root_symbol.module_from_specifier(&specifier).unwrap();
+      //ranges
     }
   }
 }
