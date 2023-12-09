@@ -643,4 +643,21 @@ await import(`./a/${test}`);
     vec![],
   )
   .await;
+
+  // won't search node_modules, vendor, or hidden folders
+  run_test(
+    "await import(`./${test}/mod.ts`);",
+    vec![
+      ("file:///dev/other/.git/mod.ts", ""),
+      ("file:///dev/other/node_modules/mod.ts", ""),
+      ("file:///dev/other/sub_dir/mod.ts", ""),
+      ("file:///dev/other/vendor/mod.ts", ""),
+      ("file:///dev/other/mod.ts", ""),
+    ],
+    vec![
+      "file:///dev/other/mod.ts",
+      "file:///dev/other/sub_dir/mod.ts",
+    ],
+  )
+  .await;
 }
