@@ -283,6 +283,9 @@ fn transform_class(
 ) -> Result<(), TransformError> {
   let mut members = Vec::with_capacity(n.body.len());
   let mut had_private = false;
+  if n.super_class.is_some() {
+    todo!("Handle class extends");
+  }
   for mut member in std::mem::take(&mut n.body) {
     had_private = had_private
       || matches!(
@@ -401,6 +404,10 @@ fn transform_fn(n: &mut Function) -> Result<(), TransformError> {
     None => {
       todo!();
     }
+  }
+
+  for param in &mut n.params {
+    todo!("Handle unsupported params");
   }
 
   Ok(())
