@@ -3822,7 +3822,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       return;
     }
 
-    // todo: make the caputuring parser provided by the user
+    // todo: make the caputuring parser provided by the user and make
+    // it only do analysis when the specifier is a jsr specifier
     let parser = DefaultModuleParser::new_for_analysis();
     let analyzer = CapturingModuleAnalyzer::new(Some(Box::new(parser)), None);
     let root_symbol = crate::symbols::RootSymbol::new(
