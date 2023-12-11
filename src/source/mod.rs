@@ -118,7 +118,7 @@ pub trait Loader {
   fn registry_package_url(&self, nv: &PackageNv) -> Url {
     self
       .registry_url()
-      .join(&format!("{}/{}", nv.name, nv.version))
+      .join(&format!("{}/{}/", nv.name, nv.version))
       .unwrap()
   }
 

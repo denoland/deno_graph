@@ -99,11 +99,10 @@ impl PackageSpecifiers {
     self.package_reqs.is_empty()
   }
 
-  pub(crate) fn add(
+  pub fn add_nv(
     &mut self,
     package_req: PackageReq,
     nv: PackageNv,
-    export_name: String,
   ) {
     let nvs = self
       .packages_by_name
@@ -112,13 +111,22 @@ impl PackageSpecifiers {
     if !nvs.contains(&nv) {
       nvs.push(nv.clone());
     }
+    self.package_reqs.insert(package_req, nv);
+  }
+
+  pub(crate) fn add(
+    &mut self,
+    package_req: PackageReq,
+    nv: PackageNv,
+    export_name: String,
+  ) {
     self
       .packages
       .entry(nv.clone())
       .or_default()
       .exports
       .insert(export_name);
-    self.package_reqs.insert(package_req, nv);
+    self.add_nv(package_req, nv);
   }
 
   pub fn package_exports(&self, nv: &PackageNv) -> Option<&BTreeSet<String>> {
