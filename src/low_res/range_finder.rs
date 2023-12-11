@@ -53,8 +53,8 @@ impl<'a> PublicRangeFinder<'a> {
         continue; // should never happen
       };
       let base_url = self.loader.registry_package_url(&nv);
-      for export in exports {
-        let specifier = base_url.join(export).unwrap();
+      for (key, value) in exports {
+        let specifier = base_url.join(value).unwrap();
         if self.seen_specifiers.insert(specifier.to_string()) {
           self.pending_specifiers.push_back((nv.clone(), specifier));
         }

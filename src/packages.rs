@@ -81,7 +81,7 @@ impl JsrPackageVersionInfo {
 #[derive(Default, Debug, Clone)]
 struct PackageNvInfo {
   /// Collection of exports used.
-  exports: BTreeSet<String>,
+  exports: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
@@ -114,22 +114,20 @@ impl PackageSpecifiers {
     self.package_reqs.insert(package_req, nv);
   }
 
-  pub(crate) fn add(
+  pub(crate) fn add_export(
     &mut self,
-    package_req: PackageReq,
     nv: PackageNv,
-    export_name: String,
+    export: (String, String),
   ) {
     self
       .packages
       .entry(nv.clone())
       .or_default()
       .exports
-      .insert(export_name);
-    self.add_nv(package_req, nv);
+      .insert(export.0, export.1);
   }
 
-  pub fn package_exports(&self, nv: &PackageNv) -> Option<&BTreeSet<String>> {
+  pub fn package_exports(&self, nv: &PackageNv) -> Option<&BTreeMap<String, String>> {
     self.packages.get(nv).map(|p| &p.exports)
   }
 

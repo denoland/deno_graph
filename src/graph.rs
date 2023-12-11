@@ -2892,13 +2892,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 name: package_name.clone(),
                 version,
               };
-              self.graph.packages.add(
+              self.graph.packages.add_nv(
                 package_req.clone(),
                 package_nv.clone(),
-                normalize_export_name(
-                  pending_resolution.package_ref.sub_path(),
-                )
-                .to_string(),
               );
 
               self.queue_load_package_version_info(&package_nv);
@@ -2961,6 +2957,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           let export_name = normalize_export_name(sub_path);
           match version_info.export(&export_name) {
             Some(export_value) => {
+              self.graph.packages.add_export(nv.clone(), (
+                normalize_export_name(
+                  resolution_item.package_ref.sub_path(),
+                )
+                .to_string(),
+                export_value.to_string(),
+              ));
               if should_collect_top_level_nvs {
                 self.state.jsr.top_level_nvs.insert(nv.clone());
               }
