@@ -2392,7 +2392,19 @@ fn analyze_dynamic_arg_template_parts(
           }
         }
         DirEntryKind::Dir => {
-          pending_dirs.push_back(entry.url);
+          // ignore hidden directories and any node_modules/vendor folders
+          let is_allowed_dir = entry
+            .url
+            .path()
+            .rsplit('/')
+            .find(|c| !c.is_empty())
+            .map(|c| {
+              !c.starts_with('.') && c != "node_modules" && c != "vendor"
+            })
+            .unwrap_or(true);
+          if is_allowed_dir {
+            pending_dirs.push_back(entry.url);
+          }
         }
         DirEntryKind::Symlink => {
           // ignore
