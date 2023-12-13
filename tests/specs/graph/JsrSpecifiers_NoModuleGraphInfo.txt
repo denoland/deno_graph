@@ -177,3 +177,9 @@ console.log(1);
     "@scope/c@3": "@scope/c@3.0.0"
   }
 }
+Low res https://registry-staging.deno.com/@scope/a/1.0.1/mod.ts:
+  {}
+  <empty>
+Low res https://registry-staging.deno.com/@scope/c/3.0.0/mod.ts:
+  {}
+  <empty>

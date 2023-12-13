@@ -9,18 +9,22 @@ use deno_ast::swc::ast::DefaultDecl;
 use deno_ast::swc::ast::Expr;
 use deno_ast::swc::ast::Function;
 use deno_ast::swc::ast::Ident;
+use deno_ast::swc::ast::Lit;
 use deno_ast::swc::ast::ModuleDecl;
 use deno_ast::swc::ast::ModuleItem;
 use deno_ast::swc::ast::ObjectLit;
+use deno_ast::swc::ast::Pat;
 use deno_ast::swc::ast::PrivateName;
 use deno_ast::swc::ast::PrivateProp;
 use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
 use deno_ast::swc::ast::TsAsExpr;
+use deno_ast::swc::ast::TsImportEqualsDecl;
 use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;
 use deno_ast::swc::ast::TsType;
 use deno_ast::swc::ast::TsTypeAnn;
+use deno_ast::swc::ast::VarDecl;
 use deno_ast::swc::codegen::text_writer::JsWriter;
 use deno_ast::swc::codegen::Node;
 use deno_ast::swc::common::comments::CommentKind;
@@ -39,6 +43,8 @@ use deno_ast::SourceTextInfo;
 
 use crate::DefaultModuleAnalyzer;
 use crate::ModuleInfo;
+
+use super::swc_helpers::get_return_stmts_with_arg_from_function;
 
 struct CommentsMut {
   leading: SingleThreadedCommentsMapInner,
@@ -81,6 +87,8 @@ impl CommentsMut {
 }
 
 pub enum TransformError {
+  UnsupportedDestructuring { range: SourceRange },
+  MissingExplicitType { range: SourceRange },
   Emit(anyhow::Error),
 }
 
@@ -210,7 +218,7 @@ fn transform_item(
           return Ok(false);
         }
 
-        transform_decl(&mut n.decl, comments)?;
+        transform_decl(&mut n.decl, comments, public_ranges)?;
         Ok(true)
       }
       ModuleDecl::TsImportEquals(_)
@@ -243,7 +251,7 @@ fn transform_item(
           return Ok(false);
         }
 
-        transform_decl(n, comments)?;
+        transform_decl(n, comments, public_ranges)?;
         Ok(true)
       }
     },
@@ -264,11 +272,12 @@ fn transform_default_decl(
 fn transform_decl(
   decl: &mut Decl,
   comments: &mut CommentsMut,
+  public_ranges: &HashSet<SourceRange>,
 ) -> Result<(), TransformError> {
   match decl {
     Decl::Class(n) => transform_class(&mut n.class, comments),
     Decl::Fn(n) => transform_fn(&mut n.function),
-    Decl::Var(_) => todo!(),
+    Decl::Var(n) => transform_var(n, public_ranges),
     Decl::TsInterface(_) => Ok(()),
     Decl::TsTypeAlias(_) => Ok(()),
     Decl::TsEnum(_) => Ok(()),
@@ -380,35 +389,172 @@ fn transform_class_member(n: &mut ClassMember) -> Result<bool, TransformError> {
 }
 
 fn transform_fn(n: &mut Function) -> Result<(), TransformError> {
-  match &n.return_type {
-    Some(_) => {
-      if let Some(body) = &mut n.body {
-        body.stmts.clear();
-        // push a return stmt to suppress type errors
-        body.stmts.push(Stmt::Return(ReturnStmt {
+  if n.return_type.is_none() {
+    let return_stmts = get_return_stmts_with_arg_from_function(n);
+    if return_stmts.is_empty() {
+      n.return_type = Some(Box::new(TsTypeAnn {
+        span: DUMMY_SP,
+        type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
           span: DUMMY_SP,
-          arg: Some(Box::new(Expr::TsAs(TsAsExpr {
-            span: DUMMY_SP,
-            expr: Box::new(Expr::Object(ObjectLit {
-              span: DUMMY_SP,
-              props: Default::default(),
-            })),
-            type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
-              span: DUMMY_SP,
-              kind: TsKeywordTypeKind::TsAnyKeyword,
-            })),
-          }))),
-        }))
-      }
-    }
-    None => {
+          kind: TsKeywordTypeKind::TsVoidKeyword,
+        })),
+      }));
+    } else {
       todo!();
     }
   }
 
+  if let Some(body) = &mut n.body {
+    body.stmts.clear();
+    // push a return stmt to suppress type errors
+    body.stmts.push(Stmt::Return(ReturnStmt {
+      span: DUMMY_SP,
+      arg: Some(Box::new(Expr::TsAs(TsAsExpr {
+        span: DUMMY_SP,
+        expr: Box::new(Expr::Object(ObjectLit {
+          span: DUMMY_SP,
+          props: Default::default(),
+        })),
+        type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
+          span: DUMMY_SP,
+          kind: TsKeywordTypeKind::TsAnyKeyword,
+        })),
+      }))),
+    }))
+  }
+
   for param in &mut n.params {
-    todo!("Handle unsupported params");
+    match &mut param.pat {
+      Pat::Ident(ident) => {
+        if ident.type_ann.is_none() {
+          return Err(TransformError::MissingExplicitType {
+            range: param.pat.range(),
+          });
+        }
+      }
+      Pat::Assign(assign) => match &mut *assign.left {
+        Pat::Ident(ident) => {
+          if ident.type_ann.is_none() {
+            return Err(TransformError::MissingExplicitType {
+              range: param.pat.range(),
+            });
+          }
+        }
+        Pat::Array(_)
+        | Pat::Rest(_)
+        | Pat::Object(_)
+        | Pat::Assign(_)
+        | Pat::Invalid(_)
+        | Pat::Expr(_) => {
+          return Err(TransformError::UnsupportedDestructuring {
+            range: param.pat.range(),
+          });
+        }
+      },
+      Pat::Array(_)
+      | Pat::Rest(_)
+      | Pat::Object(_)
+      | Pat::Invalid(_)
+      | Pat::Expr(_) => {
+        return Err(TransformError::UnsupportedDestructuring {
+          range: param.pat.range(),
+        });
+      }
+    }
+    param.decorators.clear();
   }
 
   Ok(())
+}
+
+fn transform_var(
+  n: &mut VarDecl,
+  public_ranges: &HashSet<SourceRange>,
+) -> Result<(), TransformError> {
+  n.decls.retain(|n| public_ranges.contains(&n.range()));
+
+  for decl in &mut n.decls {
+    match &mut decl.name {
+      Pat::Ident(ident) => {
+        if ident.type_ann.is_none() {
+          return Err(TransformError::MissingExplicitType {
+            range: decl.name.range(),
+          });
+        }
+      }
+      Pat::Array(_)
+      | Pat::Rest(_)
+      | Pat::Object(_)
+      | Pat::Assign(_)
+      | Pat::Invalid(_)
+      | Pat::Expr(_) => {
+        return Err(TransformError::UnsupportedDestructuring {
+          range: decl.name.range(),
+        })
+      }
+    }
+    decl.init = None;
+    decl.definite = true;
+  }
+
+  Ok(())
+}
+
+fn maybe_infer_type_from_expr(expr: &Expr) -> Option<TsType> {
+  match expr {
+    Expr::TsTypeAssertion(n) => Some(*n.type_ann.clone()),
+    Expr::TsAs(n) => Some(*n.type_ann.clone()),
+    Expr::Lit(lit) => {
+      let keyword = match lit {
+        Lit::Str(_) => Some(TsKeywordTypeKind::TsStringKeyword),
+        Lit::Bool(_) => Some(TsKeywordTypeKind::TsBooleanKeyword),
+        Lit::Null(_) => Some(TsKeywordTypeKind::TsNullKeyword),
+        Lit::Num(_) => Some(TsKeywordTypeKind::TsNumberKeyword),
+        Lit::BigInt(_) => Some(TsKeywordTypeKind::TsBigIntKeyword),
+        Lit::Regex(_) => None,
+        Lit::JSXText(_) => None,
+      };
+      keyword.map(|kind| {
+        TsType::TsKeywordType(TsKeywordType {
+          span: DUMMY_SP,
+          kind,
+        })
+      })
+    }
+    Expr::This(_)
+    | Expr::Array(_)
+    | Expr::Object(_)
+    | Expr::Fn(_)
+    | Expr::Unary(_)
+    | Expr::Update(_)
+    | Expr::Bin(_)
+    | Expr::Assign(_)
+    | Expr::Member(_)
+    | Expr::SuperProp(_)
+    | Expr::Cond(_)
+    | Expr::Call(_)
+    | Expr::New(_)
+    | Expr::Seq(_)
+    | Expr::Ident(_)
+    | Expr::Tpl(_)
+    | Expr::TaggedTpl(_)
+    | Expr::Arrow(_)
+    | Expr::Class(_)
+    | Expr::Yield(_)
+    | Expr::MetaProp(_)
+    | Expr::Await(_)
+    | Expr::Paren(_)
+    | Expr::JSXMember(_)
+    | Expr::JSXNamespacedName(_)
+    | Expr::JSXEmpty(_)
+    | Expr::JSXElement(_)
+    | Expr::JSXFragment(_)
+    | Expr::TsConstAssertion(_)
+    | Expr::TsNonNull(_)
+    | Expr::TsInstantiation(_)
+    | Expr::TsSatisfies(_)
+    | Expr::PrivateName(_)
+    | Expr::OptChain(_)
+    | Expr::Invalid(_) => None,
+  }
 }

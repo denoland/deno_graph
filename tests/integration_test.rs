@@ -62,6 +62,29 @@ async fn test_graph_specs() {
     let update_var = std::env::var("UPDATE");
     let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
     output_text.push('\n');
+    for module in result.graph.modules() {
+      let Some(module) = module.esm() else {
+        continue;
+      };
+      let Some(low_res) = &module.low_res else {
+        continue;
+      };
+      output_text.push_str(&format!(
+        "Low res {}:\n  {}\n{}\n",
+        module.specifier,
+        serde_json::to_string_pretty(&low_res.dependencies).unwrap(),
+        if low_res.source.is_empty() {
+          "  <empty>".to_string()
+        } else {
+          low_res
+            .source
+            .split('\n')
+            .map(|l| format!("  {}", l))
+            .collect::<Vec<_>>()
+            .join("\n")
+        },
+      ));
+    }
     let diagnostics = result
       .diagnostics
       .iter()
