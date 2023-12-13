@@ -10,7 +10,6 @@ use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
 use crate::CapturingModuleAnalyzer;
-use crate::CapturingModuleParser;
 use crate::DefaultModuleAnalyzer;
 use crate::DefaultModuleParser;
 use crate::ReferrerImports;

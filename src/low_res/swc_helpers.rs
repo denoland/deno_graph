@@ -1,5 +1,25 @@
+use deno_ast::swc::ast::Ident;
 use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
+use deno_ast::swc::ast::TsKeywordType;
+use deno_ast::swc::ast::TsKeywordTypeKind;
+use deno_ast::swc::ast::TsType;
+use deno_ast::swc::common::DUMMY_SP;
+
+pub fn ident(name: String) -> Ident {
+  Ident {
+    span: DUMMY_SP,
+    sym: name.clone().into(),
+    optional: false,
+  }
+}
+
+pub fn ts_keyword_type(kind: TsKeywordTypeKind) -> TsType {
+  TsType::TsKeywordType(TsKeywordType {
+    span: DUMMY_SP,
+    kind,
+  })
+}
 
 pub fn get_return_stmts_with_arg_from_function(
   func: &deno_ast::swc::ast::Function,

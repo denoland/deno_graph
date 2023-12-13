@@ -28,7 +28,7 @@ pub fn build_low_res_type_graph<'a>(
       if let Some(module_info) = module_info.esm() {
         match transform::transform(&specifier, &ranges, module_info.source()) {
           Ok(output) => result.push(output),
-          Err(_) => todo!(),
+          Err(err) => panic!("{}", err),
         };
       }
     }

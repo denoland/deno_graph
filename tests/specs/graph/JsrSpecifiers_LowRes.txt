@@ -1,0 +1,99 @@
+# https://registry-staging.deno.com/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.0": {}
+  }
+}
+
+# https://registry-staging.deno.com/@scope/a/1.0.0_meta.json
+{
+  "exports": {
+    ".": "./mod.ts"
+  }
+}
+
+# https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
+export class Test {
+  /** Testing */
+  noReturnTypeVoid(param = 5) {
+    console.log(1);
+  }
+
+  async noReturnTypeAsync() {
+  }
+
+  *returnTypeGenerator(): Generator<unknown, any, any> {
+    yield 5;
+  }
+
+  hasReturnType(): string {}
+
+  private inner(param) {}
+}
+
+class Private {}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 280,
+      "mediaType": "TypeScript",
+      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
+  {}
+  export class Test {
+    /** Testing */ noReturnTypeVoid(param?: number): void {
+      return {} as any;
+    }
+    noReturnTypeAsync(): Promise<void> {
+      return {} as any;
+    }
+    returnTypeGenerator(): Generator<unknown, any, any> {
+      return {} as any;
+    }
+    hasReturnType(): string {
+      return {} as any;
+    }
+  }
+  

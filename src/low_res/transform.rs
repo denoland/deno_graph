@@ -19,11 +19,14 @@ use deno_ast::swc::ast::PrivateProp;
 use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
 use deno_ast::swc::ast::TsAsExpr;
+use deno_ast::swc::ast::TsEntityName;
 use deno_ast::swc::ast::TsImportEqualsDecl;
 use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;
 use deno_ast::swc::ast::TsType;
 use deno_ast::swc::ast::TsTypeAnn;
+use deno_ast::swc::ast::TsTypeParamInstantiation;
+use deno_ast::swc::ast::TsTypeRef;
 use deno_ast::swc::ast::VarDecl;
 use deno_ast::swc::codegen::text_writer::JsWriter;
 use deno_ast::swc::codegen::Node;
@@ -45,6 +48,8 @@ use crate::DefaultModuleAnalyzer;
 use crate::ModuleInfo;
 
 use super::swc_helpers::get_return_stmts_with_arg_from_function;
+use super::swc_helpers::ident;
+use super::swc_helpers::ts_keyword_type;
 
 struct CommentsMut {
   leading: SingleThreadedCommentsMapInner,
@@ -86,9 +91,13 @@ impl CommentsMut {
   }
 }
 
+#[derive(Debug, thiserror::Error)]
 pub enum TransformError {
+  #[error("Destructuring is not supported in the public API.")]
   UnsupportedDestructuring { range: SourceRange },
+  #[error("Missing explicit type in the API.")]
   MissingExplicitType { range: SourceRange },
+  #[error("Failed to emit low res module: {0:#}")]
   Emit(anyhow::Error),
 }
 
@@ -317,19 +326,14 @@ fn transform_class(
         span: DUMMY_SP,
         key: PrivateName {
           span: DUMMY_SP,
-          id: Ident {
-            span: DUMMY_SP,
-            sym: "private".into(),
-            optional: false,
-          },
+          id: ident("private".to_string()),
         },
         value: None,
         type_ann: Some(Box::new(TsTypeAnn {
           span: DUMMY_SP,
-          type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
-            span: DUMMY_SP,
-            kind: TsKeywordTypeKind::TsUnknownKeyword,
-          })),
+          type_ann: Box::new(ts_keyword_type(
+            TsKeywordTypeKind::TsUnknownKeyword,
+          )),
         })),
         is_static: false,
         decorators: Default::default(),
@@ -390,17 +394,34 @@ fn transform_class_member(n: &mut ClassMember) -> Result<bool, TransformError> {
 
 fn transform_fn(n: &mut Function) -> Result<(), TransformError> {
   if n.return_type.is_none() {
+    if n.is_generator {
+      todo!(); // error, generator must have return type
+    }
+
     let return_stmts = get_return_stmts_with_arg_from_function(n);
     if return_stmts.is_empty() {
+      let void_type =
+        Box::new(ts_keyword_type(TsKeywordTypeKind::TsVoidKeyword));
       n.return_type = Some(Box::new(TsTypeAnn {
         span: DUMMY_SP,
-        type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
-          span: DUMMY_SP,
-          kind: TsKeywordTypeKind::TsVoidKeyword,
-        })),
+        type_ann: if n.is_async {
+          Box::new(TsType::TsTypeRef(TsTypeRef {
+            span: DUMMY_SP,
+            type_name: TsEntityName::Ident(Ident::new(
+              "Promise".into(),
+              DUMMY_SP,
+            )),
+            type_params: Some(Box::new(TsTypeParamInstantiation {
+              span: DUMMY_SP,
+              params: vec![void_type],
+            })),
+          }))
+        } else {
+          void_type
+        },
       }));
     } else {
-      todo!();
+      todo!(); // require a return type
     }
   }
 
@@ -435,10 +456,23 @@ fn transform_fn(n: &mut Function) -> Result<(), TransformError> {
       Pat::Assign(assign) => match &mut *assign.left {
         Pat::Ident(ident) => {
           if ident.type_ann.is_none() {
-            return Err(TransformError::MissingExplicitType {
-              range: param.pat.range(),
-            });
+            let inferred_type = maybe_infer_type_from_expr(&*assign.right);
+            match inferred_type {
+              Some(t) => {
+                ident.type_ann = Some(Box::new(TsTypeAnn {
+                  span: DUMMY_SP,
+                  type_ann: Box::new(t),
+                }));
+              }
+              None => {
+                return Err(TransformError::MissingExplicitType {
+                  range: param.pat.range(),
+                });
+              }
+            }
           }
+          ident.id.optional = true;
+          param.pat = Pat::Ident((*ident).clone());
         }
         Pat::Array(_)
         | Pat::Rest(_)
@@ -463,6 +497,10 @@ fn transform_fn(n: &mut Function) -> Result<(), TransformError> {
     }
     param.decorators.clear();
   }
+
+  n.is_async = false;
+  n.is_generator = false;
+  n.decorators.clear();
 
   Ok(())
 }
