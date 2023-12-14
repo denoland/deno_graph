@@ -120,12 +120,18 @@ impl TestBuilder {
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
     let roots = vec![entry_point_url.clone()];
+    let source_parser = deno_graph::DefaultModuleParser::new_for_analysis();
+    let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::new(
+      Some(Box::new(source_parser)),
+      None,
+    );
     let diagnostics = graph
       .build(
         roots.clone(),
         &mut self.loader,
         deno_graph::BuildOptions {
           workspace_members: self.workspace_members.clone(),
+          module_analyzer: Some(&capturing_analyzer),
           ..Default::default()
         },
       )

@@ -20,7 +20,6 @@ use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
 use deno_ast::swc::ast::TsAsExpr;
 use deno_ast::swc::ast::TsEntityName;
-use deno_ast::swc::ast::TsImportEqualsDecl;
 use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;
 use deno_ast::swc::ast::TsType;
@@ -95,8 +94,10 @@ impl CommentsMut {
 pub enum TransformError {
   #[error("Destructuring is not supported in the public API.")]
   UnsupportedDestructuring { range: SourceRange },
-  #[error("Missing explicit type in the API.")]
+  #[error("Missing explicit type in the public API.")]
   MissingExplicitType { range: SourceRange },
+  #[error("Missing explicit return type in the public API.")]
+  MissingExplicitReturnType { range: SourceRange },
   #[error("Failed to emit low res module: {0:#}")]
   Emit(anyhow::Error),
 }
@@ -273,7 +274,9 @@ fn transform_default_decl(
 ) -> Result<(), TransformError> {
   match default_decl {
     DefaultDecl::Class(n) => transform_class(&mut n.class, comments),
-    DefaultDecl::Fn(n) => transform_fn(&mut n.function),
+    DefaultDecl::Fn(n) => {
+      transform_fn(&mut n.function, n.ident.as_ref().map(|i| i.range()))
+    }
     DefaultDecl::TsInterfaceDecl(_) => Ok(()),
   }
 }
@@ -285,7 +288,7 @@ fn transform_decl(
 ) -> Result<(), TransformError> {
   match decl {
     Decl::Class(n) => transform_class(&mut n.class, comments),
-    Decl::Fn(n) => transform_fn(&mut n.function),
+    Decl::Fn(n) => transform_fn(&mut n.function, Some(n.ident.range())),
     Decl::Var(n) => transform_var(n, public_ranges),
     Decl::TsInterface(_) => Ok(()),
     Decl::TsTypeAlias(_) => Ok(()),
@@ -347,6 +350,7 @@ fn transform_class(
   }
 
   n.body = members;
+  n.decorators.clear();
   Ok(())
 }
 
@@ -365,7 +369,7 @@ fn transform_class_member(n: &mut ClassMember) -> Result<bool, TransformError> {
       if n.accessibility == Some(Accessibility::Private) {
         return Ok(false);
       }
-      transform_fn(&mut n.function)?;
+      transform_fn(&mut n.function, Some(n.key.range()))?;
       Ok(true)
     }
     ClassMember::ClassProp(n) => {
@@ -392,10 +396,15 @@ fn transform_class_member(n: &mut ClassMember) -> Result<bool, TransformError> {
   }
 }
 
-fn transform_fn(n: &mut Function) -> Result<(), TransformError> {
+fn transform_fn(
+  n: &mut Function,
+  parent_id_range: Option<SourceRange>,
+) -> Result<(), TransformError> {
   if n.return_type.is_none() {
     if n.is_generator {
-      todo!(); // error, generator must have return type
+      return Err(TransformError::MissingExplicitReturnType {
+        range: parent_id_range.unwrap_or_else(|| n.range()),
+      });
     }
 
     let return_stmts = get_return_stmts_with_arg_from_function(n);
@@ -421,7 +430,9 @@ fn transform_fn(n: &mut Function) -> Result<(), TransformError> {
         },
       }));
     } else {
-      todo!(); // require a return type
+      return Err(TransformError::MissingExplicitReturnType {
+        range: parent_id_range.unwrap_or_else(|| n.range()),
+      });
     }
   }
 
