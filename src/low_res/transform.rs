@@ -206,9 +206,7 @@ fn transform_item(
         Ok(!n.specifiers.is_empty())
       }
       ModuleDecl::ExportNamed(n) => {
-        eprintln!("NAMED: {:#?}", n);
         n.specifiers.retain(|s| public_ranges.contains(&s.range()));
-        eprintln!("FINAL: {}", n.specifiers.len());
         Ok(!n.specifiers.is_empty())
       }
       ModuleDecl::ExportAll(n) => Ok(public_ranges.contains(&n.range())),
@@ -224,7 +222,13 @@ fn transform_item(
           return Ok(false);
         }
 
-        transform_default_decl(&mut n.decl, comments, public_ranges)?;
+        let node_range = n.range();
+        transform_default_decl(
+          &mut n.decl,
+          comments,
+          public_ranges,
+          node_range,
+        )?;
         Ok(true)
       }
       ModuleDecl::ExportDecl(n) => {
@@ -282,8 +286,8 @@ fn transform_default_decl(
   default_decl: &mut DefaultDecl,
   comments: &mut CommentsMut,
   public_ranges: &ModulePublicRanges,
+  parent_range: SourceRange,
 ) -> Result<(), TransformError> {
-  let default_decl_range = default_decl.range();
   match default_decl {
     DefaultDecl::Class(n) => {
       transform_class(&mut n.class, comments, public_ranges)
@@ -291,7 +295,7 @@ fn transform_default_decl(
     DefaultDecl::Fn(n) => transform_fn(
       &mut n.function,
       n.ident.as_ref().map(|i| i.range()),
-      public_ranges.is_overload(&default_decl_range),
+      public_ranges.is_overload(&parent_range),
     ),
     DefaultDecl::TsInterfaceDecl(_) => Ok(()),
   }

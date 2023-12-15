@@ -34,12 +34,17 @@ export function test7(param: PrivateOther = new PrivateOther, param2?: string): 
   return new PublicOther();
 }
 
-function test8(param?: number): number;
-function test8(param?: string): string;
-function test8(param?: string): string {
+function test8(param: number): number;
+function test8(param: string): string;
+function test8(param: string): string {
 }
 
 export { test8 };
+
+export default function test9(param: number): number;
+export default function test9(param: string): string;
+export default function test9(param: string): string {
+}
 
 class PublicOther {
 }
@@ -83,7 +88,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 819,
+      "size": 982,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
     }
@@ -120,14 +125,19 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
   export function test7(param0?: any, param1?: any): any {
     return {} as any;
   }
-  function test8(param?: number): number;
-  function test8(param?: string): string;
+  function test8(param: number): number;
+  function test8(param: string): string;
   function test8(param0?: any): any {
     return {} as any;
   }
   export { test8 };
+  export default function test9(param: number): number;
+  export default function test9(param: string): string;
+  export default function test9(param0?: any): any {
+    return {} as any;
+  }
   class PublicOther {
   }
   class PublicOther2 {
   }
-  
+

@@ -217,17 +217,17 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/a.ts:
   }
   export { A4 } from "./a4.ts";
   export * from "./a6.ts";
-  
+
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/a4.ts:
   {}
   export class A4 {
   }
-  
+
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/a6.ts:
   {}
   export class A6 {
   }
-  
+
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
   {
   "./a.ts": {
@@ -261,4 +261,4 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
       return {} as any;
     }
   }
-  
+

@@ -79,7 +79,7 @@ async fn test_graph_specs() {
           low_res
             .source
             .split('\n')
-            .map(|l| format!("  {}", l))
+            .map(|l| format!("  {}", l).trim_end().to_string())
             .collect::<Vec<_>>()
             .join("\n")
         },

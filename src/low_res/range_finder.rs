@@ -146,7 +146,7 @@ impl HandledExports {
     dep_specifier: &ModuleSpecifier,
     traced_exports: ImportedExports,
   ) -> Option<ImportedExports> {
-    if let Some((handled_exports)) = self.0.get_mut(dep_specifier) {
+    if let Some(handled_exports) = self.0.get_mut(dep_specifier) {
       handled_exports.add(traced_exports)
     } else {
       self.0.insert(dep_specifier.clone(), traced_exports.clone());
