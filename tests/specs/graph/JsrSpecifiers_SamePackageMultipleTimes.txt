@@ -1,11 +1,11 @@
-# https://registry-staging.deno.com/@scope/a/meta.json
+# https://jsr.io/@scope/a/meta.json
 {
   "versions": {
     "1.0.0": {}
   }
 }
 
-# https://registry-staging.deno.com/@scope/a/1.0.0_meta.json
+# https://jsr.io/@scope/a/1.0.0_meta.json
 {
   "exports": {
     ".": "./mod.ts"
@@ -23,7 +23,7 @@
   }
 }
 
-# https://registry-staging.deno.com/@scope/b/meta.json
+# https://jsr.io/@scope/b/meta.json
 {
   "versions": {
     "1.0.0": {},
@@ -33,17 +33,17 @@
   }
 }
 
-# https://registry-staging.deno.com/@scope/b/1.1.0_meta.json
+# https://jsr.io/@scope/b/1.1.0_meta.json
 {
   "exports": {
     ".": "./mod.ts"
   }
 }
 
-# https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
+# https://jsr.io/@scope/a/1.0.0/mod.ts
 import "jsr:@scope/b@1";
 
-# https://registry-staging.deno.com/@scope/b/1.1.0/mod.ts
+# https://jsr.io/@scope/b/1.1.0/mod.ts
 console.log(1);
 
 # mod.ts
@@ -118,19 +118,19 @@ import "jsr:@scope/b@1.1";
       ],
       "size": 25,
       "mediaType": "TypeScript",
-      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     },
     {
       "kind": "esm",
       "size": 16,
       "mediaType": "TypeScript",
-      "specifier": "https://registry-staging.deno.com/@scope/b/1.1.0/mod.ts"
+      "specifier": "https://jsr.io/@scope/b/1.1.0/mod.ts"
     }
   ],
   "redirects": {
-    "jsr:@scope/a@^1.0": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts",
-    "jsr:@scope/b@1": "https://registry-staging.deno.com/@scope/b/1.1.0/mod.ts",
-    "jsr:@scope/b@1.1": "https://registry-staging.deno.com/@scope/b/1.1.0/mod.ts"
+    "jsr:@scope/a@^1.0": "https://jsr.io/@scope/a/1.0.0/mod.ts",
+    "jsr:@scope/b@1": "https://jsr.io/@scope/b/1.1.0/mod.ts",
+    "jsr:@scope/b@1.1": "https://jsr.io/@scope/b/1.1.0/mod.ts"
   },
   "packages": {
     "@scope/a@^1.0": "@scope/a@1.0.0",
