@@ -25,17 +25,17 @@ impl NamedExports {
     self.0.insert(export, NamedExports::default());
   }
 
-  pub fn add_qualified(&mut self, export: String, mut qualified: Vec<String>) {
-    if let Some(entry) = self.0.get_mut(&export) {
+  pub fn add_qualified(&mut self, export: &str, mut qualified: &[String]) {
+    if let Some(entry) = self.0.get_mut(export) {
       if !entry.0.is_empty() && !qualified.is_empty() {
-        entry.add_qualified(qualified.remove(0), qualified);
+        entry.add_qualified(&qualified[0], &qualified[1..]);
       }
     } else {
       let mut named_exports = NamedExports::default();
       if !qualified.is_empty() {
-        named_exports.add_qualified(qualified.remove(0), qualified);
+        named_exports.add_qualified(&qualified[0], &qualified[1..]);
       }
-      self.0.insert(export, named_exports);
+      self.0.insert(export.to_string(), named_exports);
     }
   }
 
@@ -51,6 +51,18 @@ impl NamedExports {
         self.0.insert(key, exports);
       }
     }
+  }
+
+  pub fn from_parts(parts: &[String]) -> NamedExports {
+    let mut exports = NamedExports::default();
+    if !parts.is_empty() {
+      exports.add_qualified(&parts[0], &parts[1..]);
+    }
+    exports
+  }
+
+  pub fn is_empty(&self) -> bool {
+    self.0.is_empty()
   }
 }
 
@@ -262,23 +274,31 @@ impl<'a> PublicRangeFinder<'a> {
     &mut self,
     trace: &PendingTrace,
     module_info: ModuleInfoRef<'a>,
-  ) {
+  ) -> bool {
+    #[derive(Debug)]
     enum PendingIdTrace {
       Id(SymbolId),
-      QualifiedId(SymbolId, Vec<String>),
+      QualifiedId(SymbolId, NamedExports),
     }
 
     let pkg_nv = &trace.package_nv;
     let mut pending_traces = VecDeque::new();
     let mut found_ranges = HashSet::new();
+    let mut found = false;
 
     match &trace.exports_to_trace {
       ImportedExports::AllWithDefault | ImportedExports::Star => {
-        for (name, export_symbol_id) in module_info.module_symbol().exports() {
-          if matches!(trace.exports_to_trace, ImportedExports::Star)
-            && name == "default"
+        if matches!(trace.exports_to_trace, ImportedExports::AllWithDefault) {
+          if let Some(default_symbol_id) =
+            module_info.module_symbol().exports().get("default")
           {
-            continue; // ignore default exports for "Star"
+            pending_traces.push_back(PendingIdTrace::Id(*default_symbol_id));
+          }
+        }
+
+        for (name, export_symbol_id) in module_info.module_symbol().exports() {
+          if name == "default" {
+            continue;
           }
 
           pending_traces.push_back(PendingIdTrace::Id(*export_symbol_id));
@@ -309,9 +329,33 @@ impl<'a> PublicRangeFinder<'a> {
             }
           }
         }
+
+        found = true;
       }
       ImportedExports::Named(named_exports) => {
-        todo!()
+        let mut named_exports = named_exports.0.clone();
+        if !named_exports.is_empty() {
+          let module_exports = module_info.module_symbol().exports();
+          for i in (0..named_exports.len()).rev() {
+            let (export_name, _) = named_exports.get_index(i).unwrap();
+            if let Some(export_symbol_id) = module_exports.get(export_name) {
+              let export_name = export_name.clone();
+              let named_exports = named_exports.remove(&export_name).unwrap();
+              if named_exports.is_empty() {
+                pending_traces.push_back(PendingIdTrace::Id(*export_symbol_id));
+              } else {
+                pending_traces.push_back(PendingIdTrace::QualifiedId(
+                  *export_symbol_id,
+                  named_exports,
+                ));
+              }
+            }
+          }
+
+          if !named_exports.is_empty() {
+            todo!();
+          }
+        }
       }
     }
 
@@ -347,7 +391,8 @@ impl<'a> PublicRangeFinder<'a> {
                     if let Some(symbol_id) = module_info.symbol_id_from_swc(&id)
                     {
                       pending_traces.push_back(PendingIdTrace::QualifiedId(
-                        symbol_id, parts,
+                        symbol_id,
+                        NamedExports::from_parts(&parts),
                       ));
                     }
                   }
@@ -409,6 +454,10 @@ impl<'a> PublicRangeFinder<'a> {
       .public_ranges
       .entry(trace.package_nv.clone())
       .or_default()
-      .insert(module_info.specifier().clone(), found_ranges);
+      .entry(module_info.specifier().clone())
+      .or_default()
+      .extend(found_ranges);
+
+    found
   }
 }

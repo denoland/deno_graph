@@ -18,6 +18,7 @@ export class A3 {}
 
 # https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
 import { A1, A2, A3 as RenamedA3 } from "./a.ts";
+import { A3 } from "./a.ts";
 
 @dec
 export class Test {
@@ -43,6 +44,9 @@ export class Test {
 class Private {
   wontCareAboutThis(param) {
     return Math.random();
+  }
+
+  other(): A3 {
   }
 }
 
@@ -105,7 +109,7 @@ import 'jsr:@scope/a'
           }
         }
       ],
-      "size": 467,
+      "size": 517,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
     }
@@ -117,8 +121,32 @@ import 'jsr:@scope/a'
     "@scope/a": "@scope/a@1.0.0"
   }
 }
-Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
+Low res https://registry-staging.deno.com/@scope/a/1.0.0/a.ts:
   {}
+  export class A1 {
+  }
+  export class A3 {
+  }
+  
+Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
+  {
+  "./a.ts": {
+    "code": {
+      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a.ts",
+      "span": {
+        "start": {
+          "line": 0,
+          "character": 40
+        },
+        "end": {
+          "line": 0,
+          "character": 48
+        }
+      }
+    }
+  }
+}
+  import { A1, A3 as RenamedA3 } from "./a.ts";
   export class Test {
     /** Testing */ noReturnTypeVoid(param?: number, param2?: string): void {
       return {} as any;
