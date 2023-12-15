@@ -321,10 +321,10 @@ fn go_to_file_export<'a>(
     ),
     None => {
       // maybe it's in a re-export
-      if let Some(re_export_all_specifier) =
+      if let Some(re_export_all_specifiers) =
         dep_module.re_export_all_specifiers()
       {
-        for re_export_specifier in re_export_all_specifier.iter() {
+        for re_export_specifier in re_export_all_specifiers {
           let maybe_specifier = module_graph.resolve_dependency(
             re_export_specifier,
             dep_module.specifier(),
@@ -740,7 +740,7 @@ pub struct ResolvedReExportAllPath<'a> {
   /// Module that contains this re-export.
   pub referrer_module: ModuleInfoRef<'a>,
   /// Specifier from the referrer that led to the resolved module.
-  pub specifier: &'a String,
+  pub specifier: &'a str,
   /// Holds the next resolved export or re-export.
   pub next: Box<ResolvedExportOrReExportAllPath<'a>>,
 }
@@ -785,7 +785,7 @@ impl<'a> ResolvedExportOrReExportAllPath<'a> {
 #[derive(Debug, Clone)]
 pub struct UnresolvedSpecifier<'a> {
   pub referrer: ModuleInfoRef<'a>,
-  pub specifier: &'a String,
+  pub specifier: &'a str,
 }
 
 pub fn exports_and_re_exports<'a>(
@@ -824,7 +824,7 @@ fn exports_and_re_exports_inner<'a>(
   }
   if let Some(re_export_all_specifier) = module.re_export_all_specifiers() {
     let referrer_module = module;
-    for re_export_specifier in re_export_all_specifier.iter() {
+    for re_export_specifier in re_export_all_specifier {
       let maybe_specifier = module_graph.resolve_dependency(
         re_export_specifier,
         module.specifier(),

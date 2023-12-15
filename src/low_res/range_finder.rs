@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 
 use deno_ast::SourceRange;
+use deno_ast::SourceRangedForSpanned;
 use deno_semver::package::PackageNv;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
@@ -305,8 +306,10 @@ impl<'a> PublicRangeFinder<'a> {
         }
 
         // add all the specifiers to the list of pending specifiers
-        if let Some(specifiers) = module_info.re_export_all_specifiers() {
-          for specifier_text in specifiers {
+        if let Some(re_export_all_nodes) = module_info.re_export_all_nodes() {
+          for re_export_all_node in re_export_all_nodes {
+            found_ranges.insert(re_export_all_node.span.range());
+            let specifier_text = re_export_all_node.src.value.as_str();
             if let Some(dep_specifier) = self.graph.resolve_dependency(
               specifier_text,
               module_info.specifier(),
@@ -353,7 +356,69 @@ impl<'a> PublicRangeFinder<'a> {
           }
 
           if !named_exports.is_empty() {
-            todo!();
+            if let Some(re_export_all_nodes) = module_info.re_export_all_nodes()
+            {
+              for re_export_all_node in re_export_all_nodes {
+                if named_exports.is_empty() {
+                  break; // all done
+                }
+                let specifier_text = re_export_all_node.src.value.as_str();
+                if let Some(dep_specifier) = self.graph.resolve_dependency(
+                  specifier_text,
+                  module_info.specifier(),
+                  /* prefer types */ true,
+                ) {
+                  if let Some(module_info) =
+                    self.root_symbol.module_from_specifier(&dep_specifier)
+                  {
+                    let module_exports = module_info.exports(&self.root_symbol);
+
+                    for i in (0..named_exports.len()).rev() {
+                      let (export_name, _) =
+                        named_exports.get_index(i).unwrap();
+                      if let Some(export_path) =
+                        module_exports.resolved.get(export_name)
+                      {
+                        found_ranges.insert(re_export_all_node.span.range());
+                        let export_name = export_name.clone();
+                        let named_exports =
+                          named_exports.remove(&export_name).unwrap();
+                        let module = match export_path {
+                            crate::symbols::ResolvedExportOrReExportAllPath::Export(e) => e.module,
+                            crate::symbols::ResolvedExportOrReExportAllPath::ReExportAllPath(p) => p.referrer_module,
+                        };
+                        if let Some(nv) = self
+                          .loader
+                          .registry_package_url_to_nv(module.specifier())
+                        {
+                          let mut new_named_exports = NamedExports::default();
+                          new_named_exports
+                            .0
+                            .insert(export_name, named_exports);
+                          self.add_pending_trace(
+                            &nv,
+                            module.specifier(),
+                            ImportedExports::Named(new_named_exports),
+                          );
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+
+              if !named_exports.is_empty() {
+                // in this case, include all re_export all ranges because
+                // we couldn't determine a named export
+                if let Some(re_export_all_nodes) =
+                  module_info.re_export_all_nodes()
+                {
+                  for re_export_all_node in re_export_all_nodes {
+                    found_ranges.insert(re_export_all_node.span.range());
+                  }
+                }
+              }
+            }
           }
         }
       }

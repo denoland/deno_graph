@@ -205,9 +205,7 @@ fn transform_item(
         n.specifiers.retain(|s| public_ranges.contains(&s.range()));
         Ok(!n.specifiers.is_empty())
       }
-      ModuleDecl::ExportAll(_) => {
-        todo!("retain if the referenced module is public");
-      }
+      ModuleDecl::ExportAll(n) => Ok(public_ranges.contains(&n.range())),
       ModuleDecl::ExportDefaultExpr(n) => {
         if !public_ranges.contains(&n.range()) {
           return Ok(false);

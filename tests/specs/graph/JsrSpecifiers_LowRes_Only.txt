@@ -17,13 +17,18 @@ export class A2 {}
 export class A3 {}
 
 export { A4, A5 } from "./a4.ts";
+export * from "./a6.ts";
 
 # https://registry-staging.deno.com/@scope/a/1.0.0/a4.ts
 export class A4 {}
 export class A5 {}
 
+# https://registry-staging.deno.com/@scope/a/1.0.0/a6.ts
+export class A6 {}
+export class A6Private {}
+
 # https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
-import { A1, A2, A3 as RenamedA3, A4 } from "./a.ts";
+import { A1, A2, A3 as RenamedA3, A4, A6 } from "./a.ts";
 import { A3 } from "./a.ts";
 
 @dec
@@ -42,7 +47,7 @@ export class Test {
     yield 5;
   }
 
-  hasReturnType(): A1 & RenamedA3 | A4 {}
+  hasReturnType(): A1 & RenamedA3 | A4 | A6 {}
 
   private inner(param) {}
 }
@@ -107,9 +112,25 @@ import 'jsr:@scope/a'
               }
             }
           }
+        },
+        {
+          "specifier": "./a6.ts",
+          "code": {
+            "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a6.ts",
+            "span": {
+              "start": {
+                "line": 5,
+                "character": 14
+              },
+              "end": {
+                "line": 5,
+                "character": 23
+              }
+            }
+          }
         }
       ],
-      "size": 92,
+      "size": 117,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a.ts"
     },
@@ -121,6 +142,12 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
+      "size": 45,
+      "mediaType": "TypeScript",
+      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a6.ts"
+    },
+    {
+      "kind": "esm",
       "dependencies": [
         {
           "specifier": "./a.ts",
@@ -129,17 +156,17 @@ import 'jsr:@scope/a'
             "span": {
               "start": {
                 "line": 0,
-                "character": 44
+                "character": 48
               },
               "end": {
                 "line": 0,
-                "character": 52
+                "character": 56
               }
             }
           }
         }
       ],
-      "size": 526,
+      "size": 535,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
     }
@@ -167,6 +194,21 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/a.ts:
         }
       }
     }
+  },
+  "./a6.ts": {
+    "code": {
+      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a6.ts",
+      "span": {
+        "start": {
+          "line": 5,
+          "character": 14
+        },
+        "end": {
+          "line": 5,
+          "character": 23
+        }
+      }
+    }
   }
 }
   export class A1 {
@@ -174,10 +216,16 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/a.ts:
   export class A3 {
   }
   export { A4 } from "./a4.ts";
+  export * from "./a6.ts";
   
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/a4.ts:
   {}
   export class A4 {
+  }
+  
+Low res https://registry-staging.deno.com/@scope/a/1.0.0/a6.ts:
+  {}
+  export class A6 {
   }
   
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
@@ -188,17 +236,17 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
       "span": {
         "start": {
           "line": 0,
-          "character": 44
+          "character": 48
         },
         "end": {
           "line": 0,
-          "character": 52
+          "character": 56
         }
       }
     }
   }
 }
-  import { A1, A3 as RenamedA3, A4 } from "./a.ts";
+  import { A1, A3 as RenamedA3, A4, A6 } from "./a.ts";
   export class Test {
     /** Testing */ noReturnTypeVoid(param?: number, param2?: string): void {
       return {} as any;
@@ -209,7 +257,7 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
     returnTypeGenerator(): Generator<unknown, any, any> {
       return {} as any;
     }
-    hasReturnType(): A1 & RenamedA3 | A4 {
+    hasReturnType(): A1 & RenamedA3 | A4 | A6 {
       return {} as any;
     }
   }

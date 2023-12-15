@@ -276,7 +276,7 @@ async fn test_symbols_re_export_external() {
     exports
       .unresolved_specifiers
       .into_iter()
-      .map(|s| s.specifier.as_str())
+      .map(|s| s.specifier)
       .collect::<Vec<_>>(),
     vec!["npm:example"]
   );

@@ -8,6 +8,7 @@ use std::hash::Hash;
 
 use anyhow::Result;
 use deno_ast::swc::ast::*;
+use deno_ast::swc::common::pass::NodeRef;
 use deno_ast::swc::utils::find_pat_ids;
 use deno_ast::LineAndColumnDisplay;
 use deno_ast::ModuleSpecifier;
@@ -1248,10 +1249,23 @@ impl<'a> ModuleInfoRef<'a> {
     )
   }
 
-  pub(crate) fn re_export_all_specifiers(&self) -> Option<&'a Vec<String>> {
+  pub fn re_export_all_nodes(
+    &self,
+  ) -> Option<impl Iterator<Item = &'a ExportAll>> {
     match self {
       Self::Json(_) => None,
-      Self::Esm(m) => Some(&m.re_exports),
+      Self::Esm(m) => Some(m.re_exports.iter().map(|n| n.value())),
+    }
+  }
+
+  pub(crate) fn re_export_all_specifiers(
+    &self,
+  ) -> Option<impl Iterator<Item = &'a str>> {
+    match self {
+      Self::Json(_) => None,
+      Self::Esm(m) => {
+        Some(m.re_exports.iter().map(|e| e.value().src.value.as_str()))
+      }
     }
   }
 }
@@ -1360,7 +1374,7 @@ pub struct EsmModuleInfo {
   specifier: ModuleSpecifier,
   source: ParsedSource,
   /// The re-export specifiers.
-  re_exports: Vec<String>,
+  re_exports: Vec<NodeRefBox<ExportAll>>,
   // note: not all symbol ids have an swc id. For example, default exports
   swc_id_to_symbol_id: IndexMap<Id, SymbolId>,
   symbols: IndexMap<SymbolId, Symbol>,
@@ -1371,7 +1385,14 @@ impl std::fmt::Debug for EsmModuleInfo {
     f.debug_struct("EsmModuleInfo")
       .field("module_id", &self.module_id)
       .field("specifier", &self.specifier.as_str())
-      .field("re_exports", &self.re_exports)
+      .field(
+        "re_exports",
+        &self
+          .re_exports
+          .iter()
+          .map(|e| e.value().src.value.as_str())
+          .collect::<Vec<_>>(),
+      )
       .field("swc_id_to_symbol_id", &self.swc_id_to_symbol_id)
       .field("symbols", &self.symbols)
       .finish()
@@ -1493,7 +1514,7 @@ struct ModuleBuilder {
   // todo(dsherret): make this not an IndexMap
   symbols: AdditiveOnlyIndexMap<SymbolId, SymbolMut>,
   next_symbol_id: Cell<SymbolId>,
-  re_exports: RefCell<Vec<String>>,
+  re_exports: RefCell<Vec<NodeRefBox<ExportAll>>>,
 }
 
 impl ModuleBuilder {
@@ -1600,8 +1621,8 @@ impl ModuleBuilder {
     symbol_id
   }
 
-  fn add_re_export(&self, value: String) {
-    self.re_exports.borrow_mut().push(value)
+  fn add_re_export(&self, export_all: NodeRefBox<ExportAll>) {
+    self.re_exports.borrow_mut().push(export_all)
   }
 }
 
@@ -2030,7 +2051,9 @@ impl<'a> SymbolFiller<'a> {
           );
         }
         ModuleDecl::ExportAll(n) => {
-          self.builder.add_re_export(n.src.value.to_string());
+          self
+            .builder
+            .add_re_export(NodeRefBox::unsafe_new(self.source, n));
         }
         ModuleDecl::TsImportEquals(import_equals) => {
           let symbol_id =
