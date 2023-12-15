@@ -6,12 +6,12 @@ use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_semver::package::PackageNv;
 use indexmap::IndexMap;
-use indexmap::IndexSet;
 
 use crate::source::Loader;
 use crate::symbols::FileDepName;
 use crate::symbols::ModuleInfoRef;
 use crate::symbols::RootSymbol;
+use crate::symbols::SymbolDeclKind;
 use crate::symbols::SymbolId;
 use crate::symbols::SymbolNodeDep;
 use crate::ModuleGraph;
@@ -26,7 +26,7 @@ impl NamedExports {
     self.0.insert(export, NamedExports::default());
   }
 
-  pub fn add_qualified(&mut self, export: &str, mut qualified: &[String]) {
+  pub fn add_qualified(&mut self, export: &str, qualified: &[String]) {
     if let Some(entry) = self.0.get_mut(export) {
       if !entry.0.is_empty() && !qualified.is_empty() {
         entry.add_qualified(&qualified[0], &qualified[1..]);
@@ -196,7 +196,7 @@ pub fn find_public_ranges<'a>(
   graph: &'a ModuleGraph,
   root_symbol: &'a RootSymbol<'a>,
   pending_nvs: VecDeque<PackageNv>,
-) -> HashMap<PackageNv, HashMap<ModuleSpecifier, HashSet<SourceRange>>> {
+) -> HashMap<PackageNv, HashMap<ModuleSpecifier, ModulePublicRanges>> {
   PublicRangeFinder {
     seen_nvs: pending_nvs.iter().cloned().collect(),
     traced_exports: Default::default(),
@@ -210,6 +210,22 @@ pub fn find_public_ranges<'a>(
   .find()
 }
 
+#[derive(Debug, Default)]
+pub struct ModulePublicRanges {
+  ranges: HashSet<SourceRange>,
+  overload_ranges: HashSet<SourceRange>,
+}
+
+impl ModulePublicRanges {
+  pub fn contains(&self, range: &SourceRange) -> bool {
+    self.ranges.contains(range)
+  }
+
+  pub fn is_overload(&self, range: &SourceRange) -> bool {
+    self.overload_ranges.contains(range)
+  }
+}
+
 struct PublicRangeFinder<'a> {
   loader: &'a dyn Loader,
   graph: &'a ModuleGraph,
@@ -219,13 +235,13 @@ struct PublicRangeFinder<'a> {
   traced_exports: HandledExports,
   seen_nvs: HashSet<PackageNv>,
   public_ranges:
-    HashMap<PackageNv, HashMap<ModuleSpecifier, HashSet<SourceRange>>>,
+    HashMap<PackageNv, HashMap<ModuleSpecifier, ModulePublicRanges>>,
 }
 
 impl<'a> PublicRangeFinder<'a> {
   pub fn find(
     mut self,
-  ) -> HashMap<PackageNv, HashMap<ModuleSpecifier, HashSet<SourceRange>>> {
+  ) -> HashMap<PackageNv, HashMap<ModuleSpecifier, ModulePublicRanges>> {
     while let Some(nv) = self.pending_nvs.pop_front() {
       let Some(exports) = self.graph.packages.package_exports(&nv) else {
         continue; // should never happen
@@ -285,6 +301,7 @@ impl<'a> PublicRangeFinder<'a> {
     let pkg_nv = &trace.package_nv;
     let mut pending_traces = VecDeque::new();
     let mut found_ranges = HashSet::new();
+    let mut overload_ranges = HashSet::new();
     let mut found = false;
 
     match &trace.exports_to_trace {
@@ -435,38 +452,82 @@ impl<'a> PublicRangeFinder<'a> {
           for decl in symbol.decls() {
             found_ranges.insert(decl.range);
 
-            if decl.has_overloads() {
+            if decl.has_overloads() && decl.has_body() {
+              overload_ranges.insert(decl.range);
               continue;
             }
-
-            if let Some(node) = decl.maybe_node() {
-              eprintln!("Node: {:#?}", node.maybe_name());
-              for dep in node.deps() {
-                eprintln!("Dep: {:#?}", dep);
-                match dep {
-                  SymbolNodeDep::Id(id) => {
-                    let module_info = module_info.esm().unwrap();
-                    if let Some(symbol_id) = module_info.symbol_id_from_swc(&id)
-                    {
-                      pending_traces.push_back(PendingIdTrace::Id(symbol_id));
+            match &decl.kind {
+              SymbolDeclKind::Target(id) => {
+                found_ranges.insert(decl.range);
+                if let Some(symbol_id) =
+                  module_info.esm().and_then(|m| m.symbol_id_from_swc(&id))
+                {
+                  pending_traces.push_back(PendingIdTrace::Id(symbol_id));
+                }
+              }
+              SymbolDeclKind::QualifiedTarget(_, _) => {
+                found_ranges.insert(decl.range);
+                todo!();
+              }
+              SymbolDeclKind::FileRef(file_dep) => {
+                if let Some(specifier) = self.graph.resolve_dependency(
+                  &file_dep.specifier,
+                  module_info.specifier(),
+                  /* prefer types */ true,
+                ) {
+                  if let Some(dep_nv) =
+                    self.loader.registry_package_url_to_nv(&specifier)
+                  {
+                    if dep_nv == *pkg_nv {
+                      // just add this specifier
+                      self.add_pending_trace(
+                        &dep_nv,
+                        &specifier,
+                        ImportedExports::from_file_dep_name(&file_dep.name),
+                      );
+                    } else {
+                      // need to analyze the whole package
+                      if self.seen_nvs.insert(dep_nv.clone()) {
+                        self.pending_nvs.push_back(dep_nv.clone());
+                      }
                     }
                   }
-                  SymbolNodeDep::QualifiedId(id, parts) => {
-                    let module_info = module_info.esm().unwrap();
-                    if let Some(symbol_id) = module_info.symbol_id_from_swc(&id)
-                    {
-                      pending_traces.push_back(PendingIdTrace::QualifiedId(
-                        symbol_id,
-                        NamedExports::from_parts(&parts),
-                      ));
+                }
+              }
+              SymbolDeclKind::Definition(node) => {
+                if let Some(node) = node.maybe_ref() {
+                  for dep in node.deps() {
+                    match dep {
+                      SymbolNodeDep::Id(id) => {
+                        let module_info = module_info.esm().unwrap();
+                        if let Some(symbol_id) =
+                          module_info.symbol_id_from_swc(&id)
+                        {
+                          pending_traces
+                            .push_back(PendingIdTrace::Id(symbol_id));
+                        }
+                      }
+                      SymbolNodeDep::QualifiedId(id, parts) => {
+                        let module_info = module_info.esm().unwrap();
+                        if let Some(symbol_id) =
+                          module_info.symbol_id_from_swc(&id)
+                        {
+                          pending_traces.push_back(
+                            PendingIdTrace::QualifiedId(
+                              symbol_id,
+                              NamedExports::from_parts(&parts),
+                            ),
+                          );
+                        }
+                      }
+                      SymbolNodeDep::ImportType(_, _) => {
+                        // todo: this needs to resolve the specifier
+                        // if it's in another package, then the entire package needs
+                        // to be analyzed. If it's in the same package, then only
+                        // the types used here need to be analyzed
+                        todo!();
+                      }
                     }
-                  }
-                  SymbolNodeDep::ImportType(_, _) => {
-                    // todo: this needs to resolve the specifier
-                    // if it's in another package, then the entire package needs
-                    // to be analyzed. If it's in the same package, then only
-                    // the types used here need to be analyzed
-                    todo!();
                   }
                 }
               }
@@ -480,48 +541,19 @@ impl<'a> PublicRangeFinder<'a> {
               .map(|id| PendingIdTrace::Id(*id))
               .chain(symbol.members().iter().map(|id| PendingIdTrace::Id(*id))),
           );
-
-          if let Some(file_dep) = symbol.file_dep() {
-            // todo: this needs to resolve the specifier
-            // if it's in another package, then the entire package needs
-            // to be analyzed. If it's in the same package, then only
-            // the types used here need to be analyzed
-            if let Some(specifier) = self.graph.resolve_dependency(
-              &file_dep.specifier,
-              module_info.specifier(),
-              /* prefer types */ true,
-            ) {
-              if let Some(dep_nv) =
-                self.loader.registry_package_url_to_nv(&specifier)
-              {
-                if dep_nv == *pkg_nv {
-                  // just add this specifier
-                  self.add_pending_trace(
-                    &dep_nv,
-                    &specifier,
-                    ImportedExports::from_file_dep_name(&file_dep.name),
-                  );
-                } else {
-                  // need to analyze the whole package
-                  if self.seen_nvs.insert(dep_nv.clone()) {
-                    self.pending_nvs.push_back(dep_nv.clone());
-                  }
-                }
-              }
-            }
-          }
         }
         PendingIdTrace::QualifiedId(_, _) => todo!(),
       }
     }
 
-    self
+    let ranges = self
       .public_ranges
       .entry(trace.package_nv.clone())
       .or_default()
       .entry(module_info.specifier().clone())
-      .or_default()
-      .extend(found_ranges);
+      .or_default();
+    ranges.ranges.extend(found_ranges);
+    ranges.overload_ranges.extend(overload_ranges);
 
     found
   }

@@ -2,10 +2,12 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 use deno_ast::swc::ast::Accessibility;
+use deno_ast::swc::ast::BindingIdent;
 use deno_ast::swc::ast::Class;
 use deno_ast::swc::ast::ClassMember;
 use deno_ast::swc::ast::Decl;
 use deno_ast::swc::ast::DefaultDecl;
+use deno_ast::swc::ast::ExportDecl;
 use deno_ast::swc::ast::Expr;
 use deno_ast::swc::ast::Function;
 use deno_ast::swc::ast::Ident;
@@ -13,6 +15,7 @@ use deno_ast::swc::ast::Lit;
 use deno_ast::swc::ast::ModuleDecl;
 use deno_ast::swc::ast::ModuleItem;
 use deno_ast::swc::ast::ObjectLit;
+use deno_ast::swc::ast::Param;
 use deno_ast::swc::ast::Pat;
 use deno_ast::swc::ast::PrivateName;
 use deno_ast::swc::ast::PrivateProp;
@@ -46,6 +49,7 @@ use deno_ast::SourceTextInfo;
 use crate::DefaultModuleAnalyzer;
 use crate::ModuleInfo;
 
+use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::get_return_stmts_with_arg_from_function;
 use super::swc_helpers::ident;
 use super::swc_helpers::ts_keyword_type;
@@ -111,7 +115,7 @@ pub struct LowResModule {
 
 pub fn transform(
   specifier: &ModuleSpecifier,
-  public_ranges: &HashSet<SourceRange>,
+  public_ranges: &ModulePublicRanges,
   parsed_source: &ParsedSource,
 ) -> Result<LowResModule, TransformError> {
   let mut module = parsed_source.module().clone();
@@ -193,7 +197,7 @@ fn emit(
 fn transform_item(
   item: &mut ModuleItem,
   comments: &mut CommentsMut,
-  public_ranges: &HashSet<SourceRange>,
+  public_ranges: &ModulePublicRanges,
 ) -> Result<bool, TransformError> {
   match item {
     ModuleItem::ModuleDecl(decl) => match decl {
@@ -202,7 +206,9 @@ fn transform_item(
         Ok(!n.specifiers.is_empty())
       }
       ModuleDecl::ExportNamed(n) => {
+        eprintln!("NAMED: {:#?}", n);
         n.specifiers.retain(|s| public_ranges.contains(&s.range()));
+        eprintln!("FINAL: {}", n.specifiers.len());
         Ok(!n.specifiers.is_empty())
       }
       ModuleDecl::ExportAll(n) => Ok(public_ranges.contains(&n.range())),
@@ -218,7 +224,7 @@ fn transform_item(
           return Ok(false);
         }
 
-        transform_default_decl(&mut n.decl, comments)?;
+        transform_default_decl(&mut n.decl, comments, public_ranges)?;
         Ok(true)
       }
       ModuleDecl::ExportDecl(n) => {
@@ -226,7 +232,13 @@ fn transform_item(
           return Ok(false);
         }
 
-        transform_decl(&mut n.decl, comments, public_ranges)?;
+        let export_decl_range = n.range();
+        transform_decl(
+          &mut n.decl,
+          comments,
+          public_ranges,
+          Some(export_decl_range),
+        )?;
         Ok(true)
       }
       ModuleDecl::TsImportEquals(_)
@@ -259,7 +271,7 @@ fn transform_item(
           return Ok(false);
         }
 
-        transform_decl(n, comments, public_ranges)?;
+        transform_decl(n, comments, public_ranges, None)?;
         Ok(true)
       }
     },
@@ -269,12 +281,18 @@ fn transform_item(
 fn transform_default_decl(
   default_decl: &mut DefaultDecl,
   comments: &mut CommentsMut,
+  public_ranges: &ModulePublicRanges,
 ) -> Result<(), TransformError> {
+  let default_decl_range = default_decl.range();
   match default_decl {
-    DefaultDecl::Class(n) => transform_class(&mut n.class, comments),
-    DefaultDecl::Fn(n) => {
-      transform_fn(&mut n.function, n.ident.as_ref().map(|i| i.range()))
+    DefaultDecl::Class(n) => {
+      transform_class(&mut n.class, comments, public_ranges)
     }
+    DefaultDecl::Fn(n) => transform_fn(
+      &mut n.function,
+      n.ident.as_ref().map(|i| i.range()),
+      public_ranges.is_overload(&default_decl_range),
+    ),
     DefaultDecl::TsInterfaceDecl(_) => Ok(()),
   }
 }
@@ -282,11 +300,16 @@ fn transform_default_decl(
 fn transform_decl(
   decl: &mut Decl,
   comments: &mut CommentsMut,
-  public_ranges: &HashSet<SourceRange>,
+  public_ranges: &ModulePublicRanges,
+  parent_range: Option<SourceRange>,
 ) -> Result<(), TransformError> {
   match decl {
-    Decl::Class(n) => transform_class(&mut n.class, comments),
-    Decl::Fn(n) => transform_fn(&mut n.function, Some(n.ident.range())),
+    Decl::Class(n) => transform_class(&mut n.class, comments, public_ranges),
+    Decl::Fn(n) => {
+      let is_overload =
+        public_ranges.is_overload(&parent_range.unwrap_or_else(|| n.range()));
+      transform_fn(&mut n.function, Some(n.ident.range()), is_overload)
+    }
     Decl::Var(n) => transform_var(n, public_ranges),
     Decl::TsInterface(_) => Ok(()),
     Decl::TsTypeAlias(_) => Ok(()),
@@ -299,6 +322,7 @@ fn transform_decl(
 fn transform_class(
   n: &mut Class,
   comments: &mut CommentsMut,
+  public_ranges: &ModulePublicRanges,
 ) -> Result<(), TransformError> {
   let mut members = Vec::with_capacity(n.body.len());
   let mut had_private = false;
@@ -312,7 +336,7 @@ fn transform_class(
         ClassMember::PrivateMethod(_) | ClassMember::PrivateProp(_)
       );
 
-    let retain = transform_class_member(&mut member)?;
+    let retain = transform_class_member(&mut member, public_ranges)?;
     if retain {
       members.push(member);
     } else {
@@ -352,7 +376,10 @@ fn transform_class(
   Ok(())
 }
 
-fn transform_class_member(n: &mut ClassMember) -> Result<bool, TransformError> {
+fn transform_class_member(
+  n: &mut ClassMember,
+  public_ranges: &ModulePublicRanges,
+) -> Result<bool, TransformError> {
   match n {
     ClassMember::Constructor(n) => {
       if n.accessibility == Some(Accessibility::Private) {
@@ -367,7 +394,8 @@ fn transform_class_member(n: &mut ClassMember) -> Result<bool, TransformError> {
       if n.accessibility == Some(Accessibility::Private) {
         return Ok(false);
       }
-      transform_fn(&mut n.function, Some(n.key.range()))?;
+      let is_overload = public_ranges.is_overload(&n.range());
+      transform_fn(&mut n.function, Some(n.key.range()), is_overload)?;
       Ok(true)
     }
     ClassMember::ClassProp(n) => {
@@ -397,7 +425,30 @@ fn transform_class_member(n: &mut ClassMember) -> Result<bool, TransformError> {
 fn transform_fn(
   n: &mut Function,
   parent_id_range: Option<SourceRange>,
+  is_overload: bool,
 ) -> Result<(), TransformError> {
+  if is_overload {
+    let any_type = Box::new(TsTypeAnn {
+      span: DUMMY_SP,
+      type_ann: Box::new(ts_keyword_type(TsKeywordTypeKind::TsAnyKeyword)),
+    });
+    for (i, param) in n.params.iter_mut().enumerate() {
+      *param = Param {
+        span: DUMMY_SP,
+        decorators: Vec::new(),
+        pat: Pat::Ident(BindingIdent {
+          id: Ident {
+            span: DUMMY_SP,
+            sym: format!("param{}", i).into(),
+            optional: true,
+          },
+          type_ann: Some(any_type.clone()),
+        }),
+      };
+    }
+    n.return_type = Some(any_type);
+  }
+
   if n.return_type.is_none() {
     if n.is_generator {
       return Err(TransformError::MissingExplicitReturnType {
@@ -516,7 +567,7 @@ fn transform_fn(
 
 fn transform_var(
   n: &mut VarDecl,
-  public_ranges: &HashSet<SourceRange>,
+  public_ranges: &ModulePublicRanges,
 ) -> Result<(), TransformError> {
   n.decls.retain(|n| public_ranges.contains(&n.range()));
 

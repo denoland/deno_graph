@@ -234,10 +234,10 @@ file:///a.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            88,
+                            97,
                         ),
                         end: SourcePos(
-                            102,
+                            99,
                         ),
                     },
                     flags: 0,
@@ -496,10 +496,10 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            133,
+                            142,
                         ),
                         end: SourcePos(
-                            149,
+                            146,
                         ),
                     },
                     flags: 0,

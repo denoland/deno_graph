@@ -97,10 +97,10 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            31,
+                            40,
                         ),
                         end: SourcePos(
-                            53,
+                            50,
                         ),
                     },
                     flags: 0,

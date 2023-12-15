@@ -1,0 +1,133 @@
+# https://registry-staging.deno.com/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.0": {}
+  }
+}
+
+# https://registry-staging.deno.com/@scope/a/1.0.0_meta.json
+{
+  "exports": {
+    ".": "./mod.ts"
+  }
+}
+
+# https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
+export function test1() {}
+export function test2(): number {
+  return 2;
+}
+export function test3(param: number): number {
+}
+export function test4(param = 2): number {
+  return 1;
+}
+export function test5<T extends PublicOther>(param = 2): T {
+  return new PublicOther();
+}
+export function test6<T = PublicOther>(param: number = 2): T {
+  return new PublicOther();
+}
+export function test7(param?: number): number;
+export function test7(param?: number, param2?: PublicOther2): number;
+export function test7(param: PrivateOther = new PrivateOther, param2?: string): PrivateOther {
+  return new PublicOther();
+}
+
+function test8(param?: number): number;
+function test8(param?: string): string;
+function test8(param?: string): string {
+}
+
+export { test8 };
+
+class PublicOther {
+}
+class PublicOther2 {
+}
+
+class PrivateOther {}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 819,
+      "mediaType": "TypeScript",
+      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
+  {}
+  export function test1(): void {
+    return {} as any;
+  }
+  export function test2(): number {
+    return {} as any;
+  }
+  export function test3(param: number): number {
+    return {} as any;
+  }
+  export function test4(param?: number): number {
+    return {} as any;
+  }
+  export function test5<T extends PublicOther>(param?: number): T {
+    return {} as any;
+  }
+  export function test6<T = PublicOther>(param?: number): T {
+    return {} as any;
+  }
+  export function test7(param?: number): number;
+  export function test7(param?: number, param2?: PublicOther2): number;
+  export function test7(param0?: any, param1?: any): any {
+    return {} as any;
+  }
+  function test8(param?: number): number;
+  function test8(param?: string): string;
+  function test8(param0?: any): any {
+    return {} as any;
+  }
+  export { test8 };
+  class PublicOther {
+  }
+  class PublicOther2 {
+  }
+  

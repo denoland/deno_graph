@@ -1934,7 +1934,7 @@ impl<'a> SymbolFiller<'a> {
                         .create_new_symbol(module_symbol.symbol_id());
                       orig_symbol.add_decl(SymbolDecl::new(
                         SymbolDeclKind::Target(orig_ident.to_id()),
-                        n.range(),
+                        named.range(),
                       ));
                       module_symbol
                         .add_export(exported_name, orig_symbol.symbol_id());
@@ -1950,7 +1950,7 @@ impl<'a> SymbolFiller<'a> {
                           }),
                           None => SymbolDeclKind::Target(orig_ident.to_id()),
                         },
-                        n.range(),
+                        named.range(),
                       ));
                       module_symbol.add_export(
                         orig_ident.sym.to_string(),

@@ -255,10 +255,10 @@ file:///a.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            113,
+                            122,
                         ),
                         end: SourcePos(
-                            144,
+                            127,
                         ),
                     },
                     flags: 0,
@@ -286,10 +286,10 @@ file:///a.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            113,
+                            129,
                         ),
                         end: SourcePos(
-                            144,
+                            134,
                         ),
                     },
                     flags: 0,
@@ -317,10 +317,10 @@ file:///a.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            113,
+                            136,
                         ),
                         end: SourcePos(
-                            144,
+                            141,
                         ),
                     },
                     flags: 0,
@@ -348,10 +348,10 @@ file:///a.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            145,
+                            154,
                         ),
                         end: SourcePos(
-                            169,
+                            159,
                         ),
                     },
                     flags: 0,
@@ -379,10 +379,10 @@ file:///a.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            145,
+                            161,
                         ),
                         end: SourcePos(
-                            169,
+                            166,
                         ),
                     },
                     flags: 0,
