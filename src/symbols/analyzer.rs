@@ -760,6 +760,11 @@ impl<'a> SymbolNodeRef<'a> {
     matches!(self, Self::ClassMethod(_))
   }
 
+  /// If the node is a contructor.
+  pub fn is_ctor(&self) -> bool {
+    matches!(self, Self::Constructor(_))
+  }
+
   /// If the node has a body.
   pub fn has_body(&self) -> bool {
     match self {
@@ -1005,6 +1010,10 @@ impl SymbolDecl {
       .maybe_node()
       .map(|n| n.is_class_method())
       .unwrap_or(false)
+  }
+
+  pub fn is_ctor(&self) -> bool {
+    self.maybe_node().map(|n| n.is_ctor()).unwrap_or(false)
   }
 
   pub fn is_function(&self) -> bool {
@@ -1468,12 +1477,16 @@ impl SymbolMut {
     let mut inner = self.0.borrow_mut();
     // check if this is an implementation with overloads
     if !inner.decls.is_empty()
-      && (symbol_decl.is_function() || symbol_decl.is_class_method())
+      && (symbol_decl.is_function()
+        || symbol_decl.is_class_method()
+        || symbol_decl.is_ctor())
       && symbol_decl.has_body()
       && inner
         .decls
         .last()
-        .map(|d| d.is_function() || d.is_class_method())
+        .map(|d| {
+          d.is_function() || d.is_class_method() || symbol_decl.is_ctor()
+        })
         .unwrap_or(false)
     {
       symbol_decl.flags.set_has_overloads();

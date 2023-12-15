@@ -260,5 +260,6 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
     hasReturnType(): A1 & RenamedA3 | A4 | A6 {
       return {} as any;
     }
+    private inner: unknown;
   }
 

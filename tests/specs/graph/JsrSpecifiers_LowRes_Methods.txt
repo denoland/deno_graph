@@ -147,6 +147,7 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
     protected method2(): void {
       return {} as any;
     }
+    private tsPrivateMethod: unknown;
   }
   class PublicOther {
   }

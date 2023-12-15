@@ -213,7 +213,7 @@ pub fn find_public_ranges<'a>(
 #[derive(Debug, Default)]
 pub struct ModulePublicRanges {
   ranges: HashSet<SourceRange>,
-  overload_ranges: HashSet<SourceRange>,
+  impl_with_overload_ranges: HashSet<SourceRange>,
 }
 
 impl ModulePublicRanges {
@@ -221,8 +221,8 @@ impl ModulePublicRanges {
     self.ranges.contains(range)
   }
 
-  pub fn is_overload(&self, range: &SourceRange) -> bool {
-    self.overload_ranges.contains(range)
+  pub fn is_impl_with_overloads(&self, range: &SourceRange) -> bool {
+    self.impl_with_overload_ranges.contains(range)
   }
 }
 
@@ -301,7 +301,7 @@ impl<'a> PublicRangeFinder<'a> {
     let pkg_nv = &trace.package_nv;
     let mut pending_traces = VecDeque::new();
     let mut found_ranges = HashSet::new();
-    let mut overload_ranges = HashSet::new();
+    let mut impl_with_overload_ranges = HashSet::new();
     let mut found = false;
 
     match &trace.exports_to_trace {
@@ -453,7 +453,7 @@ impl<'a> PublicRangeFinder<'a> {
             found_ranges.insert(decl.range);
 
             if decl.has_overloads() && decl.has_body() {
-              overload_ranges.insert(decl.range);
+              impl_with_overload_ranges.insert(decl.range);
               continue;
             }
             match &decl.kind {
@@ -553,7 +553,9 @@ impl<'a> PublicRangeFinder<'a> {
       .entry(module_info.specifier().clone())
       .or_default();
     ranges.ranges.extend(found_ranges);
-    ranges.overload_ranges.extend(overload_ranges);
+    ranges
+      .impl_with_overload_ranges
+      .extend(impl_with_overload_ranges);
 
     found
   }

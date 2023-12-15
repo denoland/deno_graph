@@ -5,6 +5,7 @@ use deno_ast::swc::ast::Accessibility;
 use deno_ast::swc::ast::BindingIdent;
 use deno_ast::swc::ast::Class;
 use deno_ast::swc::ast::ClassMember;
+use deno_ast::swc::ast::ClassProp;
 use deno_ast::swc::ast::Decl;
 use deno_ast::swc::ast::DefaultDecl;
 use deno_ast::swc::ast::ExportDecl;
@@ -16,6 +17,7 @@ use deno_ast::swc::ast::ModuleDecl;
 use deno_ast::swc::ast::ModuleItem;
 use deno_ast::swc::ast::ObjectLit;
 use deno_ast::swc::ast::Param;
+use deno_ast::swc::ast::ParamOrTsParamProp;
 use deno_ast::swc::ast::Pat;
 use deno_ast::swc::ast::PrivateName;
 use deno_ast::swc::ast::PrivateProp;
@@ -295,7 +297,7 @@ fn transform_default_decl(
     DefaultDecl::Fn(n) => transform_fn(
       &mut n.function,
       n.ident.as_ref().map(|i| i.range()),
-      public_ranges.is_overload(&parent_range),
+      public_ranges.is_impl_with_overloads(&parent_range),
     ),
     DefaultDecl::TsInterfaceDecl(_) => Ok(()),
   }
@@ -310,8 +312,8 @@ fn transform_decl(
   match decl {
     Decl::Class(n) => transform_class(&mut n.class, comments, public_ranges),
     Decl::Fn(n) => {
-      let is_overload =
-        public_ranges.is_overload(&parent_range.unwrap_or_else(|| n.range()));
+      let is_overload = public_ranges
+        .is_impl_with_overloads(&parent_range.unwrap_or_else(|| n.range()));
       transform_fn(&mut n.function, Some(n.ident.range()), is_overload)
     }
     Decl::Var(n) => transform_var(n, public_ranges),
@@ -381,33 +383,104 @@ fn transform_class(
 }
 
 fn transform_class_member(
-  n: &mut ClassMember,
+  member: &mut ClassMember,
   public_ranges: &ModulePublicRanges,
 ) -> Result<bool, TransformError> {
-  match n {
+  match member {
     ClassMember::Constructor(n) => {
-      if n.accessibility == Some(Accessibility::Private) {
-        return Ok(false);
-      }
       if let Some(body) = &mut n.body {
         body.stmts.clear();
       }
+
+      if n.accessibility == Some(Accessibility::Private) {
+        if n.body.is_none() {
+          return Ok(false);
+        }
+        n.params.clear();
+        return Ok(true);
+      }
+      let is_overload = public_ranges.is_impl_with_overloads(&n.range());
+      if is_overload {
+        for (i, param) in n.params.iter_mut().enumerate() {
+          *param = ParamOrTsParamProp::Param(Param {
+            span: DUMMY_SP,
+            decorators: Vec::new(),
+            pat: Pat::Ident(BindingIdent {
+              id: Ident {
+                span: DUMMY_SP,
+                sym: format!("param{}", i).into(),
+                optional: true,
+              },
+              type_ann: Some(any_type_ann()),
+            }),
+          });
+        }
+      }
+
+      for param in &mut n.params {
+        match param {
+          ParamOrTsParamProp::Param(param) => {
+            handle_param_pat(&mut param.pat)?;
+            param.decorators.clear();
+          }
+          ParamOrTsParamProp::TsParamProp(_) => {
+            // should have been converted to a param
+            unreachable!();
+          }
+        }
+      }
+
       Ok(true)
     }
     ClassMember::Method(n) => {
       if n.accessibility == Some(Accessibility::Private) {
-        return Ok(false);
+        *member = ClassMember::ClassProp(ClassProp {
+          span: DUMMY_SP,
+          key: n.key.clone(),
+          value: None,
+          type_ann: Some(unknown_type_ann()),
+          is_static: n.is_static,
+          decorators: Vec::new(),
+          accessibility: Some(Accessibility::Private),
+          is_abstract: n.is_abstract,
+          is_optional: n.is_optional,
+          is_override: n.is_override,
+          readonly: false,
+          declare: false,
+          definite: !n.is_optional,
+        });
+        return Ok(true);
       }
-      let is_overload = public_ranges.is_overload(&n.range());
+      let is_overload = public_ranges.is_impl_with_overloads(&n.range());
       transform_fn(&mut n.function, Some(n.key.range()), is_overload)?;
       Ok(true)
     }
     ClassMember::ClassProp(n) => {
       if n.accessibility == Some(Accessibility::Private) {
-        return Ok(false);
+        n.type_ann = Some(unknown_type_ann());
+        if !n.is_optional {
+          n.definite = true;
+        }
+        return Ok(true);
       }
       if n.type_ann.is_none() {
-        todo!("no type ann on property");
+        let inferred_type = n
+          .value
+          .as_ref()
+          .and_then(|e| maybe_infer_type_from_expr(&*e));
+        match inferred_type {
+          Some(t) => {
+            n.type_ann = Some(Box::new(TsTypeAnn {
+              span: DUMMY_SP,
+              type_ann: Box::new(t),
+            }));
+          }
+          None => {
+            return Err(TransformError::MissingExplicitType {
+              range: n.key.range(),
+            });
+          }
+        }
       }
       n.definite = true;
       n.decorators.clear();
@@ -432,10 +505,6 @@ fn transform_fn(
   is_overload: bool,
 ) -> Result<(), TransformError> {
   if is_overload {
-    let any_type = Box::new(TsTypeAnn {
-      span: DUMMY_SP,
-      type_ann: Box::new(ts_keyword_type(TsKeywordTypeKind::TsAnyKeyword)),
-    });
     for (i, param) in n.params.iter_mut().enumerate() {
       *param = Param {
         span: DUMMY_SP,
@@ -446,11 +515,11 @@ fn transform_fn(
             sym: format!("param{}", i).into(),
             optional: true,
           },
-          type_ann: Some(any_type.clone()),
+          type_ann: Some(any_type_ann()),
         }),
       };
     }
-    n.return_type = Some(any_type);
+    n.return_type = Some(any_type_ann());
   }
 
   if n.return_type.is_none() {
@@ -509,56 +578,7 @@ fn transform_fn(
   }
 
   for param in &mut n.params {
-    match &mut param.pat {
-      Pat::Ident(ident) => {
-        if ident.type_ann.is_none() {
-          return Err(TransformError::MissingExplicitType {
-            range: param.pat.range(),
-          });
-        }
-      }
-      Pat::Assign(assign) => match &mut *assign.left {
-        Pat::Ident(ident) => {
-          if ident.type_ann.is_none() {
-            let inferred_type = maybe_infer_type_from_expr(&*assign.right);
-            match inferred_type {
-              Some(t) => {
-                ident.type_ann = Some(Box::new(TsTypeAnn {
-                  span: DUMMY_SP,
-                  type_ann: Box::new(t),
-                }));
-              }
-              None => {
-                return Err(TransformError::MissingExplicitType {
-                  range: param.pat.range(),
-                });
-              }
-            }
-          }
-          ident.id.optional = true;
-          param.pat = Pat::Ident((*ident).clone());
-        }
-        Pat::Array(_)
-        | Pat::Rest(_)
-        | Pat::Object(_)
-        | Pat::Assign(_)
-        | Pat::Invalid(_)
-        | Pat::Expr(_) => {
-          return Err(TransformError::UnsupportedDestructuring {
-            range: param.pat.range(),
-          });
-        }
-      },
-      Pat::Array(_)
-      | Pat::Rest(_)
-      | Pat::Object(_)
-      | Pat::Invalid(_)
-      | Pat::Expr(_) => {
-        return Err(TransformError::UnsupportedDestructuring {
-          range: param.pat.range(),
-        });
-      }
-    }
+    handle_param_pat(&mut param.pat)?;
     param.decorators.clear();
   }
 
@@ -566,6 +586,58 @@ fn transform_fn(
   n.is_generator = false;
   n.decorators.clear();
 
+  Ok(())
+}
+
+fn handle_param_pat(pat: &mut Pat) -> Result<(), TransformError> {
+  match pat {
+    Pat::Ident(ident) => {
+      if ident.type_ann.is_none() {
+        return Err(TransformError::MissingExplicitType { range: pat.range() });
+      }
+    }
+    Pat::Assign(assign) => match &mut *assign.left {
+      Pat::Ident(ident) => {
+        if ident.type_ann.is_none() {
+          let inferred_type = maybe_infer_type_from_expr(&*assign.right);
+          match inferred_type {
+            Some(t) => {
+              ident.type_ann = Some(Box::new(TsTypeAnn {
+                span: DUMMY_SP,
+                type_ann: Box::new(t),
+              }));
+            }
+            None => {
+              return Err(TransformError::MissingExplicitType {
+                range: pat.range(),
+              });
+            }
+          }
+        }
+        ident.id.optional = true;
+        *pat = Pat::Ident((*ident).clone());
+      }
+      Pat::Array(_)
+      | Pat::Rest(_)
+      | Pat::Object(_)
+      | Pat::Assign(_)
+      | Pat::Invalid(_)
+      | Pat::Expr(_) => {
+        return Err(TransformError::UnsupportedDestructuring {
+          range: pat.range(),
+        });
+      }
+    },
+    Pat::Array(_)
+    | Pat::Rest(_)
+    | Pat::Object(_)
+    | Pat::Invalid(_)
+    | Pat::Expr(_) => {
+      return Err(TransformError::UnsupportedDestructuring {
+        range: pat.range(),
+      });
+    }
+  }
   Ok(())
 }
 
@@ -659,4 +731,18 @@ fn maybe_infer_type_from_expr(expr: &Expr) -> Option<TsType> {
     | Expr::OptChain(_)
     | Expr::Invalid(_) => None,
   }
+}
+
+fn any_type_ann() -> Box<TsTypeAnn> {
+  Box::new(TsTypeAnn {
+    span: DUMMY_SP,
+    type_ann: Box::new(ts_keyword_type(TsKeywordTypeKind::TsAnyKeyword)),
+  })
+}
+
+fn unknown_type_ann() -> Box<TsTypeAnn> {
+  Box::new(TsTypeAnn {
+    span: DUMMY_SP,
+    type_ann: Box::new(ts_keyword_type(TsKeywordTypeKind::TsUnknownKeyword)),
+  })
 }

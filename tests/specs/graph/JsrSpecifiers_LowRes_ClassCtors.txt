@@ -1,0 +1,118 @@
+# https://registry-staging.deno.com/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.0": {}
+  }
+}
+
+# https://registry-staging.deno.com/@scope/a/1.0.0_meta.json
+{
+  "exports": {
+    ".": "./mod.ts"
+  }
+}
+
+# https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
+export class ClassBasic {
+  constructor(prop: string, other = 5) {
+  }
+}
+export class ClassPrivateCtor {
+  private constructor(prop: string, other: Private1) {
+  }
+}
+export class ClassPrivateCtorWithOverloads {
+  private constructor(prop: string, other: Private1);
+  private constructor(prop: string, other: Private1) {
+  }
+}
+export class ClassProtectedCtor {
+  protected constructor(prop: string, other = 5) {
+  }
+}
+export class ClassProtectedCtorWithOverloads {
+  protected constructor(prop: Public1);
+  protected constructor(prop: Private1) {
+  }
+}
+export class ClassCtorWithOverloads {
+  constructor(prop: Public1);
+  constructor(prop: Private1) {
+  }
+}
+
+class Public1 {}
+class Private1 {}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 694,
+      "mediaType": "TypeScript",
+      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
+  {}
+  export class ClassBasic {
+    constructor(prop: string, other?: number){}
+  }
+  export class ClassPrivateCtor {
+    private constructor(){}
+  }
+  export class ClassPrivateCtorWithOverloads {
+    private constructor(){}
+  }
+  export class ClassProtectedCtor {
+    protected constructor(prop: string, other?: number){}
+  }
+  export class ClassProtectedCtorWithOverloads {
+    protected constructor(prop: Public1);
+    protected constructor(param0?: any){}
+  }
+  export class ClassCtorWithOverloads {
+    constructor(prop: Public1);
+    constructor(param0?: any){}
+  }
+  class Public1 {
+  }
+
