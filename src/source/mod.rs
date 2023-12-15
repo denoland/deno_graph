@@ -105,7 +105,7 @@ impl CacheSetting {
 }
 
 pub static DEFAULT_DENO_REGISTRY_URL: Lazy<Url> =
-  Lazy::new(|| Url::parse("https://registry-staging.deno.com").unwrap());
+  Lazy::new(|| Url::parse("https://jsr.io").unwrap());
 
 /// A trait which allows asynchronous loading of source files into a module
 /// graph in a thread safe way as well as a way to provide additional meta data
