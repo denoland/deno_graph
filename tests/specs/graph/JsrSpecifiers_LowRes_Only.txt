@@ -16,8 +16,14 @@ export class A1 {}
 export class A2 {}
 export class A3 {}
 
+export { A4, A5 } from "./a4.ts";
+
+# https://registry-staging.deno.com/@scope/a/1.0.0/a4.ts
+export class A4 {}
+export class A5 {}
+
 # https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
-import { A1, A2, A3 as RenamedA3 } from "./a.ts";
+import { A1, A2, A3 as RenamedA3, A4 } from "./a.ts";
 import { A3 } from "./a.ts";
 
 @dec
@@ -36,7 +42,7 @@ export class Test {
     yield 5;
   }
 
-  hasReturnType(): A1 & RenamedA3 {}
+  hasReturnType(): A1 & RenamedA3 | A4 {}
 
   private inner(param) {}
 }
@@ -85,9 +91,33 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 57,
+      "dependencies": [
+        {
+          "specifier": "./a4.ts",
+          "code": {
+            "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a4.ts",
+            "span": {
+              "start": {
+                "line": 4,
+                "character": 23
+              },
+              "end": {
+                "line": 4,
+                "character": 32
+              }
+            }
+          }
+        }
+      ],
+      "size": 92,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 38,
+      "mediaType": "TypeScript",
+      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a4.ts"
     },
     {
       "kind": "esm",
@@ -99,17 +129,17 @@ import 'jsr:@scope/a'
             "span": {
               "start": {
                 "line": 0,
-                "character": 40
+                "character": 44
               },
               "end": {
                 "line": 0,
-                "character": 48
+                "character": 52
               }
             }
           }
         }
       ],
-      "size": 517,
+      "size": 526,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
     }
@@ -122,10 +152,32 @@ import 'jsr:@scope/a'
   }
 }
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/a.ts:
-  {}
+  {
+  "./a4.ts": {
+    "code": {
+      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a4.ts",
+      "span": {
+        "start": {
+          "line": 4,
+          "character": 23
+        },
+        "end": {
+          "line": 4,
+          "character": 32
+        }
+      }
+    }
+  }
+}
   export class A1 {
   }
   export class A3 {
+  }
+  export { A4 } from "./a4.ts";
+  
+Low res https://registry-staging.deno.com/@scope/a/1.0.0/a4.ts:
+  {}
+  export class A4 {
   }
   
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
@@ -136,17 +188,17 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
       "span": {
         "start": {
           "line": 0,
-          "character": 40
+          "character": 44
         },
         "end": {
           "line": 0,
-          "character": 48
+          "character": 52
         }
       }
     }
   }
 }
-  import { A1, A3 as RenamedA3 } from "./a.ts";
+  import { A1, A3 as RenamedA3, A4 } from "./a.ts";
   export class Test {
     /** Testing */ noReturnTypeVoid(param?: number, param2?: string): void {
       return {} as any;
@@ -157,7 +209,7 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
     returnTypeGenerator(): Generator<unknown, any, any> {
       return {} as any;
     }
-    hasReturnType(): A1 & RenamedA3 {
+    hasReturnType(): A1 & RenamedA3 | A4 {
       return {} as any;
     }
   }
