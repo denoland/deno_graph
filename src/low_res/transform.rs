@@ -236,18 +236,13 @@ fn transform_item(
         Ok(true)
       }
       ModuleDecl::ExportDecl(n) => {
-        if !public_ranges.contains(&n.range()) {
-          return Ok(false);
-        }
-
         let export_decl_range = n.range();
         transform_decl(
           &mut n.decl,
           comments,
           public_ranges,
           Some(export_decl_range),
-        )?;
-        Ok(true)
+        )
       }
       ModuleDecl::TsImportEquals(_)
       | ModuleDecl::TsExportAssignment(_)
@@ -274,14 +269,7 @@ fn transform_item(
       | Stmt::ForIn(_)
       | Stmt::ForOf(_)
       | Stmt::Expr(_) => Ok(false),
-      Stmt::Decl(n) => {
-        if !public_ranges.contains(&n.range()) {
-          return Ok(false);
-        }
-
-        transform_decl(n, comments, public_ranges, None)?;
-        Ok(true)
-      }
+      Stmt::Decl(n) => transform_decl(n, comments, public_ranges, None),
     },
   }
 }
@@ -310,18 +298,28 @@ fn transform_decl(
   comments: &mut CommentsMut,
   public_ranges: &ModulePublicRanges,
   parent_range: Option<SourceRange>,
-) -> Result<(), TransformError> {
+) -> Result<bool, TransformError> {
+  let public_range = parent_range.unwrap_or_else(|| decl.range());
   match decl {
-    Decl::Class(n) => transform_class(&mut n.class, comments, public_ranges),
+    Decl::Class(n) => {
+      if !public_ranges.contains(&public_range) {
+        return Ok(false);
+      }
+      transform_class(&mut n.class, comments, public_ranges)?;
+      Ok(true)
+    }
     Decl::Fn(n) => {
-      let is_overload = public_ranges
-        .is_impl_with_overloads(&parent_range.unwrap_or_else(|| n.range()));
-      transform_fn(&mut n.function, Some(n.ident.range()), is_overload)
+      if !public_ranges.contains(&public_range) {
+        return Ok(false);
+      }
+      let is_overload = public_ranges.is_impl_with_overloads(&public_range);
+      transform_fn(&mut n.function, Some(n.ident.range()), is_overload)?;
+      Ok(true)
     }
     Decl::Var(n) => transform_var(n, public_ranges),
-    Decl::TsInterface(_) => Ok(()),
-    Decl::TsTypeAlias(_) => Ok(()),
-    Decl::TsEnum(_) => Ok(()),
+    Decl::TsInterface(_) => Ok(public_ranges.contains(&public_range)),
+    Decl::TsTypeAlias(_) => Ok(public_ranges.contains(&public_range)),
+    Decl::TsEnum(_) => Ok(public_ranges.contains(&public_range)),
     Decl::TsModule(_) => todo!(),
     Decl::Using(_) => todo!("not implemented using"),
   }
@@ -725,16 +723,30 @@ fn handle_param_pat(pat: &mut Pat) -> Result<(), TransformError> {
 fn transform_var(
   n: &mut VarDecl,
   public_ranges: &ModulePublicRanges,
-) -> Result<(), TransformError> {
+) -> Result<bool, TransformError> {
   n.decls.retain(|n| public_ranges.contains(&n.range()));
 
   for decl in &mut n.decls {
     match &mut decl.name {
       Pat::Ident(ident) => {
         if ident.type_ann.is_none() {
-          return Err(TransformError::MissingExplicitType {
-            range: decl.name.range(),
-          });
+          let inferred_type = decl
+            .init
+            .as_ref()
+            .and_then(|e| maybe_infer_type_from_expr(&*e));
+          match inferred_type {
+            Some(t) => {
+              ident.type_ann = Some(Box::new(TsTypeAnn {
+                span: DUMMY_SP,
+                type_ann: Box::new(t),
+              }));
+            }
+            None => {
+              return Err(TransformError::MissingExplicitType {
+                range: ident.range(),
+              });
+            }
+          }
         }
       }
       Pat::Array(_)
@@ -752,7 +764,7 @@ fn transform_var(
     decl.definite = true;
   }
 
-  Ok(())
+  Ok(!n.decls.is_empty())
 }
 
 fn maybe_infer_type_from_expr(expr: &Expr) -> Option<TsType> {
