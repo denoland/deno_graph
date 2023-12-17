@@ -21,12 +21,14 @@ use deno_ast::swc::ast::ParamOrTsParamProp;
 use deno_ast::swc::ast::Pat;
 use deno_ast::swc::ast::PrivateName;
 use deno_ast::swc::ast::PrivateProp;
+use deno_ast::swc::ast::PropName;
 use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
 use deno_ast::swc::ast::TsAsExpr;
 use deno_ast::swc::ast::TsEntityName;
 use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;
+use deno_ast::swc::ast::TsParamPropParam;
 use deno_ast::swc::ast::TsType;
 use deno_ast::swc::ast::TsTypeAnn;
 use deno_ast::swc::ast::TsTypeParamInstantiation;
@@ -335,6 +337,7 @@ fn transform_class(
   if n.super_class.is_some() {
     todo!("Handle class extends");
   }
+  let mut insert_members = Vec::new();
   for mut member in std::mem::take(&mut n.body) {
     had_private = had_private
       || matches!(
@@ -342,7 +345,8 @@ fn transform_class(
         ClassMember::PrivateMethod(_) | ClassMember::PrivateProp(_)
       );
 
-    let retain = transform_class_member(&mut member, public_ranges)?;
+    let retain =
+      transform_class_member(&mut member, public_ranges, &mut insert_members)?;
     if retain {
       members.push(member);
     } else {
@@ -351,7 +355,7 @@ fn transform_class(
   }
 
   if had_private {
-    members.insert(
+    insert_members.insert(
       0,
       ClassMember::PrivateProp(PrivateProp {
         span: DUMMY_SP,
@@ -377,7 +381,10 @@ fn transform_class(
     )
   }
 
-  n.body = members;
+  n.body = insert_members
+    .into_iter()
+    .chain(members.into_iter())
+    .collect();
   n.decorators.clear();
   Ok(())
 }
@@ -385,11 +392,78 @@ fn transform_class(
 fn transform_class_member(
   member: &mut ClassMember,
   public_ranges: &ModulePublicRanges,
+  insert_members: &mut Vec<ClassMember>,
 ) -> Result<bool, TransformError> {
   match member {
     ClassMember::Constructor(n) => {
       if let Some(body) = &mut n.body {
         body.stmts.clear();
+      }
+
+      for param in &mut n.params {
+        match param {
+          ParamOrTsParamProp::Param(_) => {
+            // ignore
+          }
+          ParamOrTsParamProp::TsParamProp(prop) => {
+            insert_members.push(ClassMember::ClassProp(ClassProp {
+              span: DUMMY_SP,
+              key: match &prop.param {
+                TsParamPropParam::Ident(ident) => {
+                  PropName::Ident(ident.id.clone())
+                }
+                TsParamPropParam::Assign(assign) => match &*assign.left {
+                  Pat::Ident(ident) => PropName::Ident(ident.id.clone()),
+                  Pat::Array(_) => todo!(),
+                  Pat::Rest(_) => todo!(),
+                  Pat::Object(_) => todo!(),
+                  Pat::Assign(_) => todo!(),
+                  Pat::Invalid(_) => todo!(),
+                  Pat::Expr(_) => todo!(),
+                },
+              },
+              value: None,
+              type_ann: if prop.accessibility == Some(Accessibility::Private) {
+                Some(unknown_type_ann())
+              } else {
+                match &prop.param {
+                  TsParamPropParam::Ident(ident) => ident.type_ann.clone(),
+                  TsParamPropParam::Assign(assign) => {
+                    let explicit_type_ann = match &*assign.left {
+                      Pat::Ident(binding_ident) => {
+                        binding_ident.type_ann.clone()
+                      }
+                      _ => None,
+                    };
+                    explicit_type_ann.or_else(|| {
+                      maybe_infer_type_from_expr(&*assign.right).map(
+                        |type_ann| {
+                          Box::new(TsTypeAnn {
+                            span: DUMMY_SP,
+                            type_ann: Box::new(type_ann),
+                          })
+                        },
+                      )
+                    })
+                  }
+                }
+              },
+              is_static: false,
+              decorators: Vec::new(),
+              accessibility: match prop.accessibility {
+                Some(Accessibility::Public) | None => None,
+                Some(accessibility) => Some(accessibility),
+              },
+              is_abstract: false,
+              is_optional: false,
+              is_override: prop.is_override,
+              readonly: prop.readonly,
+              declare: false,
+              definite: false,
+            }));
+            prop.accessibility = None;
+          }
+        }
       }
 
       if n.accessibility == Some(Accessibility::Private) {

@@ -116,6 +116,7 @@ pub fn resolve_deps(node_ref: SymbolNodeRef) -> Vec<SymbolNodeDep> {
         fill_ts_type_ann(deps, type_ann)
       }
     }
+    SymbolNodeRef::ClassParamProp(n) => fill_ts_param_prop(deps, n),
     SymbolNodeRef::Constructor(n) => {
       for param in &n.params {
         match param {
@@ -311,9 +312,16 @@ fn fill_ts_param_prop(deps: &mut Vec<SymbolNodeDep>, param: &TsParamProp) {
         fill_ts_type_ann(deps, type_ann)
       }
     }
-    TsParamPropParam::Assign(_) => {
-      // nothing to fill
-    }
+    TsParamPropParam::Assign(assign) => match &*assign.left {
+      Pat::Ident(ident) => {
+        if let Some(type_ann) = &ident.type_ann {
+          fill_ts_type_ann(deps, type_ann)
+        }
+      }
+      _ => {
+        unreachable!();
+      }
+    },
   }
 }
 

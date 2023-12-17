@@ -408,6 +408,9 @@ impl std::fmt::Debug for SymbolNode {
         SymbolNodeInner::ClassProp(d) => {
           d.value().text_fast(d.source.text_info()).to_string()
         }
+        SymbolNodeInner::ClassParamProp(d) => {
+          d.value().text_fast(d.source.text_info()).to_string()
+        }
         SymbolNodeInner::Constructor(d) => {
           d.value().text_fast(d.source.text_info()).to_string()
         }
@@ -517,6 +520,9 @@ impl SymbolNode {
       SymbolNodeInner::ClassProp(n) => {
         Some((SymbolNodeRef::ClassProp(n.value()), n.source()))
       }
+      SymbolNodeInner::ClassParamProp(n) => {
+        Some((SymbolNodeRef::ClassParamProp(n.value()), n.source()))
+      }
       SymbolNodeInner::Constructor(n) => {
         Some((SymbolNodeRef::Constructor(n.value()), n.source()))
       }
@@ -574,6 +580,7 @@ enum SymbolNodeInner {
   AutoAccessor(NodeRefBox<AutoAccessor>),
   ClassMethod(NodeRefBox<ClassMethod>),
   ClassProp(NodeRefBox<ClassProp>),
+  ClassParamProp(NodeRefBox<TsParamProp>),
   Constructor(NodeRefBox<Constructor>),
   TsIndexSignature(NodeRefBox<TsIndexSignature>),
   TsCallSignatureDecl(NodeRefBox<TsCallSignatureDecl>),
@@ -612,6 +619,7 @@ pub enum SymbolNodeRef<'a> {
   AutoAccessor(&'a AutoAccessor),
   ClassMethod(&'a ClassMethod),
   ClassProp(&'a ClassProp),
+  ClassParamProp(&'a TsParamProp),
   Constructor(&'a Constructor),
   TsIndexSignature(&'a TsIndexSignature),
   TsCallSignatureDecl(&'a TsCallSignatureDecl),
@@ -646,6 +654,21 @@ impl<'a> SymbolNodeRef<'a> {
         PropName::Num(n) => Some(Cow::Owned(n.value.to_string())),
         PropName::Computed(prop_name) => maybe_expr(&prop_name.expr),
         PropName::BigInt(_) => None,
+      }
+    }
+
+    fn maybe_param_prop_name(param: &TsParamPropParam) -> Option<Cow<str>> {
+      match param {
+        TsParamPropParam::Ident(ident) => Some(Cow::Borrowed(&ident.sym)),
+        TsParamPropParam::Assign(assign_pat) => match &*assign_pat.left {
+          Pat::Ident(ident) => Some(Cow::Borrowed(&ident.sym)),
+          Pat::Array(_)
+          | Pat::Rest(_)
+          | Pat::Object(_)
+          | Pat::Assign(_)
+          | Pat::Invalid(_)
+          | Pat::Expr(_) => unreachable!(),
+        },
       }
     }
 
@@ -693,6 +716,7 @@ impl<'a> SymbolNodeRef<'a> {
       Self::AutoAccessor(n) => maybe_key_name(&n.key),
       Self::ClassMethod(n) => maybe_prop_name(&n.key),
       Self::ClassProp(n) => maybe_prop_name(&n.key),
+      Self::ClassParamProp(n) => maybe_param_prop_name(&n.param),
       Self::TsPropertySignature(n) => maybe_expr(&n.key),
       Self::TsGetterSignature(n) => maybe_expr(&n.key),
       Self::TsSetterSignature(n) => maybe_expr(&n.key),
@@ -793,6 +817,7 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::ExportDefaultExprLit(_, _)
       | SymbolNodeRef::Var(_, _, _)
       | SymbolNodeRef::ClassProp(_)
+      | SymbolNodeRef::ClassParamProp(_)
       | SymbolNodeRef::TsIndexSignature(_)
       | SymbolNodeRef::TsCallSignatureDecl(_)
       | SymbolNodeRef::TsConstructSignatureDecl(_)
@@ -825,6 +850,7 @@ impl<'a> SymbolNodeRef<'a> {
       SymbolNodeRef::AutoAccessor(_)
       | SymbolNodeRef::ClassMethod(_)
       | SymbolNodeRef::ClassProp(_)
+      | SymbolNodeRef::ClassParamProp(_)
       | SymbolNodeRef::Constructor(_)
       | SymbolNodeRef::TsIndexSignature(_)
       | SymbolNodeRef::TsCallSignatureDecl(_)
@@ -853,6 +879,7 @@ impl<'a> SymbolNodeRef<'a> {
       SymbolNodeRef::AutoAccessor(_)
       | SymbolNodeRef::ClassMethod(_)
       | SymbolNodeRef::ClassProp(_)
+      | SymbolNodeRef::ClassParamProp(_)
       | SymbolNodeRef::Constructor(_)
       | SymbolNodeRef::TsIndexSignature(_)
       | SymbolNodeRef::TsCallSignatureDecl(_)
@@ -886,6 +913,9 @@ impl<'a> SymbolNodeRef<'a> {
         n.accessibility == Some(Accessibility::Private)
       }
       SymbolNodeRef::ClassProp(n) => {
+        n.accessibility == Some(Accessibility::Private)
+      }
+      SymbolNodeRef::ClassParamProp(n) => {
         n.accessibility == Some(Accessibility::Private)
       }
       SymbolNodeRef::Constructor(n) => {
@@ -2481,6 +2511,14 @@ impl<'a> SymbolFiller<'a> {
             symbol,
             SymbolNodeRef::Constructor(ctor),
           );
+          for param in &ctor.params {
+            if let ParamOrTsParamProp::TsParamProp(prop) = param {
+              self.create_symbol_member_or_export(
+                symbol,
+                SymbolNodeRef::ClassParamProp(prop),
+              );
+            }
+          }
         }
         ClassMember::Method(method) => {
           self.create_symbol_member_or_export(
@@ -2540,6 +2578,12 @@ impl<'a> SymbolFiller<'a> {
       SymbolNodeRef::ClassProp(n) => (
         SymbolNodeInner::ClassProp(NodeRefBox::unsafe_new(self.source, n)),
         n.is_static,
+        n.range(),
+      ),
+
+      SymbolNodeRef::ClassParamProp(n) => (
+        SymbolNodeInner::ClassParamProp(NodeRefBox::unsafe_new(self.source, n)),
+        /* is_static */ false,
         n.range(),
       ),
 

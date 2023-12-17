@@ -40,8 +40,13 @@ export class ClassCtorWithOverloads {
   constructor(prop: Private1) {
   }
 }
+export class ClassPrivateCtorPublicParamProp {
+  private constructor(public param1: Public2, private param2: Private1) {
+  }
+}
 
 class Public1 {}
+class Public2 {}
 class Private1 {}
 
 # mod.ts
@@ -79,7 +84,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 694,
+      "size": 838,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
     }
@@ -113,6 +118,13 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
     constructor(prop: Public1);
     constructor(param0?: any){}
   }
+  export class ClassPrivateCtorPublicParamProp {
+    param1: Public2;
+    private param2: unknown;
+    private constructor(){}
+  }
   class Public1 {
+  }
+  class Public2 {
   }
 
