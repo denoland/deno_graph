@@ -461,7 +461,14 @@ fn transform_class_member(
               declare: false,
               definite: false,
             }));
-            prop.accessibility = None;
+            *param = ParamOrTsParamProp::Param(Param {
+              span: prop.span,
+              decorators: vec![],
+              pat: match prop.param.clone() {
+                TsParamPropParam::Ident(ident) => Pat::Ident(ident),
+                TsParamPropParam::Assign(pat) => Pat::Assign(pat),
+              },
+            });
           }
         }
       }
