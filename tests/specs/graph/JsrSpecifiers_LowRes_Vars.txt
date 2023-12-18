@@ -22,7 +22,7 @@ class Public1 {
 
 class Private {}
 
-// object that can be left as-is
+// object that can be left as-is because this is low cost inference
 const ERROR_STATUS_MAP = {
   "BadRequest": 400,
   "Unauthorized": 401,
