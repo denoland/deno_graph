@@ -21,7 +21,9 @@ use deno_ast::swc::ast::ParamOrTsParamProp;
 use deno_ast::swc::ast::Pat;
 use deno_ast::swc::ast::PrivateName;
 use deno_ast::swc::ast::PrivateProp;
+use deno_ast::swc::ast::Prop;
 use deno_ast::swc::ast::PropName;
+use deno_ast::swc::ast::PropOrSpread;
 use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
 use deno_ast::swc::ast::TsArrayType;
@@ -742,13 +744,23 @@ fn transform_var(
                 span: DUMMY_SP,
                 type_ann: Box::new(t),
               }));
+              decl.init = Some(obj_as_any_expr());
             }
             None => {
-              return Err(TransformError::MissingExplicitType {
-                range: ident.range(),
-              });
+              let is_init_leavable = decl
+                .init
+                .as_ref()
+                .map(|i| is_expr_leavable(i))
+                .unwrap_or(false);
+              if !is_init_leavable {
+                return Err(TransformError::MissingExplicitType {
+                  range: ident.range(),
+                });
+              }
             }
           }
+        } else {
+          decl.init = Some(obj_as_any_expr());
         }
       }
       Pat::Array(_)
@@ -762,8 +774,6 @@ fn transform_var(
         })
       }
     }
-    decl.init = Some(obj_as_any_expr());
-    decl.definite = true;
   }
 
   Ok(!n.decls.is_empty())
@@ -930,6 +940,75 @@ fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
       TsLit::Tpl(_) => None,
     },
     TsType::TsTypePredicate(_) | TsType::TsImportType(_) => None,
+  }
+}
+
+fn is_expr_leavable(expr: &Expr) -> bool {
+  match expr {
+    Expr::This(_) => true,
+    Expr::Array(n) => n.elems.iter().all(|elem| match elem {
+      Some(elem) => is_expr_leavable(&*elem.expr),
+      None => true,
+    }),
+    Expr::Object(n) => n.props.iter().all(|prop| match prop {
+      PropOrSpread::Prop(prop) => match &**prop {
+        Prop::Shorthand(_) => false,
+        Prop::KeyValue(prop) => match &prop.key {
+          PropName::Ident(_) => is_expr_leavable(&*prop.value),
+          PropName::Str(_) => is_expr_leavable(&*prop.value),
+          PropName::Num(_) => is_expr_leavable(&*prop.value),
+          PropName::Computed(c) => {
+            is_expr_leavable(&*c.expr) && is_expr_leavable(&*prop.value)
+          }
+          PropName::BigInt(_) => is_expr_leavable(&*prop.value),
+        },
+        Prop::Assign(n) => is_expr_leavable(&n.value),
+        Prop::Getter(_) | Prop::Setter(_) | Prop::Method(_) => false,
+      },
+      PropOrSpread::Spread(_) => false,
+    }),
+    Expr::Unary(n) => is_expr_leavable(&n.arg),
+    Expr::Update(n) => is_expr_leavable(&n.arg),
+    Expr::Bin(n) => is_expr_leavable(&n.left) && is_expr_leavable(&n.right),
+    Expr::Assign(_) | Expr::Member(_) | Expr::SuperProp(_) => false,
+    Expr::Cond(n) => {
+      is_expr_leavable(&n.test)
+        && is_expr_leavable(&n.cons)
+        && is_expr_leavable(&n.alt)
+    }
+    Expr::Call(_) | Expr::New(_) | Expr::Seq(_) | Expr::Ident(_) => false,
+    Expr::Lit(n) => match n {
+      Lit::Str(_)
+      | Lit::Bool(_)
+      | Lit::Null(_)
+      | Lit::Num(_)
+      | Lit::BigInt(_)
+      | Lit::Regex(_) => true,
+      Lit::JSXText(_) => false,
+    },
+    Expr::Await(n) => is_expr_leavable(&*n.arg),
+    Expr::Paren(n) => is_expr_leavable(&n.expr),
+    Expr::TsTypeAssertion(_) | Expr::TsAs(_) => false,
+    Expr::TsConstAssertion(n) => is_expr_leavable(&n.expr),
+    Expr::TsNonNull(n) => is_expr_leavable(&n.expr),
+    Expr::Tpl(_)
+    | Expr::Fn(_)
+    | Expr::TaggedTpl(_)
+    | Expr::Arrow(_)
+    | Expr::Class(_)
+    | Expr::Yield(_)
+    | Expr::MetaProp(_)
+    | Expr::JSXMember(_)
+    | Expr::JSXNamespacedName(_)
+    | Expr::JSXEmpty(_)
+    | Expr::JSXElement(_)
+    | Expr::JSXFragment(_)
+    | Expr::TsInstantiation(_)
+    | Expr::TsSatisfies(_)
+    | Expr::PrivateName(_)
+    // todo: probably could analyze this more
+    | Expr::OptChain(_)
+    | Expr::Invalid(_) => false,
   }
 }
 

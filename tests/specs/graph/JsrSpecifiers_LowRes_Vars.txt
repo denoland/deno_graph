@@ -22,15 +22,16 @@ class Public1 {
 
 class Private {}
 
-// const ERROR_STATUS_MAP = {
-//   "BadRequest": 400,
-//   "Unauthorized": 401,
-//   "PaymentRequired": 402,
-//   "Forbidden": 403,
-//   // etc...
-// } as const;
-// 
-// export type ErrorStatusKeys = keyof typeof ERROR_STATUS_MAP;
+// object that can be left as-is
+const ERROR_STATUS_MAP = {
+  "BadRequest": 400,
+  "Unauthorized": 401,
+  "PaymentRequired": 402,
+  "Forbidden": 403,
+  // etc...
+} as const;
+
+export type ErrorStatusKeys = keyof typeof ERROR_STATUS_MAP;
 
 // inferring simple types
 export const inferred1 = 1 as 1;
@@ -80,7 +81,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 820,
+      "size": 826,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
     }
@@ -98,6 +99,13 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
   export { public1 };
   class Public1 {
   }
+  const ERROR_STATUS_MAP = {
+    "BadRequest": 400,
+    "Unauthorized": 401,
+    "PaymentRequired": 402,
+    "Forbidden": 403
+  } as const;
+  export type ErrorStatusKeys = keyof typeof ERROR_STATUS_MAP;
   export const inferred1: 1 = {} as any;
   export const inferred2: string = {} as any;
   export const inferred3: true = {} as any;
