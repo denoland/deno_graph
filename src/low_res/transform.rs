@@ -24,15 +24,26 @@ use deno_ast::swc::ast::PrivateProp;
 use deno_ast::swc::ast::PropName;
 use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
+use deno_ast::swc::ast::TsArrayType;
 use deno_ast::swc::ast::TsAsExpr;
 use deno_ast::swc::ast::TsEntityName;
+use deno_ast::swc::ast::TsIntersectionType;
 use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;
+use deno_ast::swc::ast::TsLit;
+use deno_ast::swc::ast::TsOptionalType;
 use deno_ast::swc::ast::TsParamPropParam;
+use deno_ast::swc::ast::TsParenthesizedType;
+use deno_ast::swc::ast::TsRestType;
+use deno_ast::swc::ast::TsTupleElement;
+use deno_ast::swc::ast::TsTupleType;
 use deno_ast::swc::ast::TsType;
 use deno_ast::swc::ast::TsTypeAnn;
+use deno_ast::swc::ast::TsTypeOperator;
 use deno_ast::swc::ast::TsTypeParamInstantiation;
 use deno_ast::swc::ast::TsTypeRef;
+use deno_ast::swc::ast::TsUnionOrIntersectionType;
+use deno_ast::swc::ast::TsUnionType;
 use deno_ast::swc::ast::VarDecl;
 use deno_ast::swc::codegen::text_writer::JsWriter;
 use deno_ast::swc::codegen::Node;
@@ -41,6 +52,7 @@ use deno_ast::swc::common::comments::SingleThreadedComments;
 use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
 use deno_ast::swc::common::FileName;
 use deno_ast::swc::common::SourceMap;
+use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::swc_codegen_config;
 use deno_ast::ModuleSpecifier;
@@ -759,25 +771,25 @@ fn transform_var(
 
 fn maybe_infer_type_from_expr(expr: &Expr) -> Option<TsType> {
   match expr {
-    Expr::TsTypeAssertion(n) => Some(*n.type_ann.clone()),
-    Expr::TsAs(n) => Some(*n.type_ann.clone()),
-    Expr::Lit(lit) => {
-      let keyword = match lit {
-        Lit::Str(_) => Some(TsKeywordTypeKind::TsStringKeyword),
-        Lit::Bool(_) => Some(TsKeywordTypeKind::TsBooleanKeyword),
-        Lit::Null(_) => Some(TsKeywordTypeKind::TsNullKeyword),
-        Lit::Num(_) => Some(TsKeywordTypeKind::TsNumberKeyword),
-        Lit::BigInt(_) => Some(TsKeywordTypeKind::TsBigIntKeyword),
-        Lit::Regex(_) => None,
-        Lit::JSXText(_) => None,
-      };
-      keyword.map(|kind| {
-        TsType::TsKeywordType(TsKeywordType {
-          span: DUMMY_SP,
-          kind,
-        })
-      })
-    }
+    Expr::TsTypeAssertion(n) => infer_simple_type_from_type(&n.type_ann),
+    Expr::TsAs(n) => infer_simple_type_from_type(&n.type_ann),
+    Expr::Lit(lit) => match lit {
+      Lit::Str(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsStringKeyword)),
+      Lit::Bool(_) => {
+        Some(ts_keyword_type(TsKeywordTypeKind::TsBooleanKeyword))
+      }
+      Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
+      Lit::Num(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword)),
+      Lit::BigInt(_) => {
+        Some(ts_keyword_type(TsKeywordTypeKind::TsBigIntKeyword))
+      }
+      Lit::Regex(_) => Some(TsType::TsTypeRef(TsTypeRef {
+        span: DUMMY_SP,
+        type_name: TsEntityName::Ident(Ident::new("RegExp".into(), DUMMY_SP)),
+        type_params: None,
+      })),
+      Lit::JSXText(_) => None,
+    },
     Expr::This(_)
     | Expr::Array(_)
     | Expr::Object(_)
@@ -813,6 +825,111 @@ fn maybe_infer_type_from_expr(expr: &Expr) -> Option<TsType> {
     | Expr::PrivateName(_)
     | Expr::OptChain(_)
     | Expr::Invalid(_) => None,
+  }
+}
+
+fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
+  match t {
+    TsType::TsKeywordType(_) => Some(t.clone()),
+    TsType::TsThisType(_) => Some(t.clone()),
+    TsType::TsFnOrConstructorType(_) => None,
+    TsType::TsTypeRef(_) => None,
+    TsType::TsTypeQuery(_) => None,
+    TsType::TsTypeLit(_) => None,
+    TsType::TsTupleType(t) => {
+      let mut elems = Vec::with_capacity(t.elem_types.len());
+      for elem_type in &t.elem_types {
+        let inferred_type = infer_simple_type_from_type(&elem_type.ty)?;
+        elems.push(TsTupleElement {
+          span: elem_type.span.clone(),
+          label: elem_type.label.clone(),
+          ty: Box::new(inferred_type),
+        });
+      }
+      Some(TsType::TsTupleType(TsTupleType {
+        span: t.span(),
+        elem_types: elems,
+      }))
+    }
+    TsType::TsArrayType(t) => {
+      infer_simple_type_from_type(&t.elem_type).map(|inner| {
+        TsType::TsArrayType(TsArrayType {
+          span: t.span(),
+          elem_type: Box::new(inner),
+        })
+      })
+    }
+    TsType::TsOptionalType(t) => {
+      infer_simple_type_from_type(&t.type_ann).map(|inner| {
+        TsType::TsOptionalType(TsOptionalType {
+          span: t.span(),
+          type_ann: Box::new(inner),
+        })
+      })
+    }
+    TsType::TsRestType(t) => {
+      infer_simple_type_from_type(&t.type_ann).map(|inner| {
+        TsType::TsRestType(TsRestType {
+          span: t.span(),
+          type_ann: Box::new(inner),
+        })
+      })
+    }
+    TsType::TsUnionOrIntersectionType(t) => match t {
+      TsUnionOrIntersectionType::TsUnionType(t) => {
+        let mut types = Vec::with_capacity(t.types.len());
+        for ty in &t.types {
+          let inferred_type = infer_simple_type_from_type(&ty)?;
+          types.push(Box::new(inferred_type));
+        }
+        Some(TsType::TsUnionOrIntersectionType(
+          TsUnionOrIntersectionType::TsUnionType(TsUnionType {
+            span: t.span(),
+            types,
+          }),
+        ))
+      }
+      TsUnionOrIntersectionType::TsIntersectionType(t) => {
+        let mut types = Vec::with_capacity(t.types.len());
+        for ty in &t.types {
+          let inferred_type = infer_simple_type_from_type(&ty)?;
+          types.push(Box::new(inferred_type));
+        }
+        Some(TsType::TsUnionOrIntersectionType(
+          TsUnionOrIntersectionType::TsIntersectionType(TsIntersectionType {
+            span: t.span(),
+            types,
+          }),
+        ))
+      }
+    },
+    TsType::TsConditionalType(_) => None,
+    TsType::TsInferType(_) => None,
+    TsType::TsParenthesizedType(t) => infer_simple_type_from_type(&t.type_ann)
+      .map(|inner| {
+        TsType::TsParenthesizedType(TsParenthesizedType {
+          span: t.span(),
+          type_ann: Box::new(inner),
+        })
+      }),
+    TsType::TsTypeOperator(t) => {
+      infer_simple_type_from_type(&t.type_ann).map(|inner| {
+        TsType::TsTypeOperator(TsTypeOperator {
+          span: t.span(),
+          op: t.op.clone(),
+          type_ann: Box::new(inner),
+        })
+      })
+    }
+    TsType::TsIndexedAccessType(_) => None,
+    TsType::TsMappedType(_) => None,
+    TsType::TsLitType(t) => match &t.lit {
+      TsLit::Number(_) | TsLit::Str(_) | TsLit::Bool(_) | TsLit::BigInt(_) => {
+        Some(TsType::TsLitType(t.clone()))
+      }
+      TsLit::Tpl(_) => None,
+    },
+    TsType::TsTypePredicate(_) | TsType::TsImportType(_) => None,
   }
 }
 
