@@ -13,34 +13,14 @@
 }
 
 # https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
-export enum EnumWithNoInits {
-  Value1,
-  Value2,
+const public1: Public1 = new Public1(), private1 = new Private();
+
+export { public1 }
+
+class Public1 {
 }
 
-export enum EnumWithNumInits {
-  Value1 = 1,
-  Value2 = 2,
-}
-
-export enum EnumWithStringInits {
-  Value1 = "a",
-  Value2 = "b",
-}
-
-const value = 10;
-
-export enum EnumWithNonConstInits {
-  Value1 = new Public1().test,
-  Value2 = new Public2().asdf * value + NonExportedEnum.Value,
-}
-
-class Public1 {}
-class Public2 {}
-class Private1 {}
-enum NonExportedEnum {
-  Value
-}
+class Private {}
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -77,7 +57,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 421,
+      "size": 123,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
     }
@@ -91,28 +71,8 @@ import 'jsr:@scope/a'
 }
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
   {}
-  export enum EnumWithNoInits {
-    Value1,
-    Value2
-  }
-  export enum EnumWithNumInits {
-    Value1 = 1,
-    Value2 = 2
-  }
-  export enum EnumWithStringInits {
-    Value1 = "a",
-    Value2 = "b"
-  }
-  const value: number = {} as any;
-  export enum EnumWithNonConstInits {
-    Value1 = new Public1().test,
-    Value2 = new Public2().asdf * value + NonExportedEnum.Value
-  }
+  const public1: Public1 = {} as any;
+  export { public1 };
   class Public1 {
-  }
-  class Public2 {
-  }
-  enum NonExportedEnum {
-    Value
   }
 

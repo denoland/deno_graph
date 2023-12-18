@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 
-use deno_ast::swc::ast::ParamOrTsParamProp;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_semver::package::PackageNv;
@@ -15,7 +14,6 @@ use crate::symbols::RootSymbol;
 use crate::symbols::SymbolDeclKind;
 use crate::symbols::SymbolId;
 use crate::symbols::SymbolNodeDep;
-use crate::symbols::SymbolNodeRef;
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
 

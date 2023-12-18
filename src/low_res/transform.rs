@@ -642,17 +642,7 @@ fn transform_fn(
     // push a return stmt to suppress type errors
     body.stmts.push(Stmt::Return(ReturnStmt {
       span: DUMMY_SP,
-      arg: Some(Box::new(Expr::TsAs(TsAsExpr {
-        span: DUMMY_SP,
-        expr: Box::new(Expr::Object(ObjectLit {
-          span: DUMMY_SP,
-          props: Default::default(),
-        })),
-        type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
-          span: DUMMY_SP,
-          kind: TsKeywordTypeKind::TsAnyKeyword,
-        })),
-      }))),
+      arg: Some(obj_as_any_expr()),
     }))
   }
 
@@ -760,7 +750,7 @@ fn transform_var(
         })
       }
     }
-    decl.init = None;
+    decl.init = Some(obj_as_any_expr());
     decl.definite = true;
   }
 
@@ -824,6 +814,20 @@ fn maybe_infer_type_from_expr(expr: &Expr) -> Option<TsType> {
     | Expr::OptChain(_)
     | Expr::Invalid(_) => None,
   }
+}
+
+fn obj_as_any_expr() -> Box<Expr> {
+  Box::new(Expr::TsAs(TsAsExpr {
+    span: DUMMY_SP,
+    expr: Box::new(Expr::Object(ObjectLit {
+      span: DUMMY_SP,
+      props: Default::default(),
+    })),
+    type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
+      span: DUMMY_SP,
+      kind: TsKeywordTypeKind::TsAnyKeyword,
+    })),
+  }))
 }
 
 fn any_type_ann() -> Box<TsTypeAnn> {
