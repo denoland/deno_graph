@@ -561,7 +561,7 @@ fn transform_class_member(
           }
         }
       }
-      n.definite = true;
+      n.definite = !n.is_optional;
       n.decorators.clear();
       n.value = None;
       Ok(true)

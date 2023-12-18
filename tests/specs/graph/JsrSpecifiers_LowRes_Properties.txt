@@ -80,11 +80,11 @@ import 'jsr:@scope/a'
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
   {}
   export class Test {
-    #private: unknown;
-    prop1: PublicOther;
+    #private!: unknown;
+    prop1!: PublicOther;
     protected prop2?: PublicOther2;
-    private prop3: unknown;
-    prop4: number;
+    private prop3!: unknown;
+    prop4!: number;
   }
   class PublicOther {
   }

@@ -140,14 +140,14 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
     }
   }
   export class Test2 {
-    #private: unknown;
+    #private!: unknown;
     public method1(): void {
       return {} as any;
     }
     protected method2(): void {
       return {} as any;
     }
-    private tsPrivateMethod: unknown;
+    private tsPrivateMethod!: unknown;
   }
   class PublicOther {
   }
