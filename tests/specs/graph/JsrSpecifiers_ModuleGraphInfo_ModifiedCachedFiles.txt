@@ -233,6 +233,7 @@ import 'jsr:@scope/b';
     "@scope/b": "@scope/b@9.0.0"
   }
 }
+
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
   {}
   <empty>

@@ -69,12 +69,14 @@ async fn test_graph_specs() {
       let Some(low_res) = &module.low_res else {
         continue;
       };
-      output_text.push_str(&format!("Low res {}:\n", module.specifier,));
+      output_text.push_str(&format!("\nLow res {}:\n", module.specifier,));
       match low_res {
         deno_graph::LowResTypeModuleSlot::Module(low_res) => {
           output_text.push_str(&format!(
-            "  {}\n{}\n",
-            serde_json::to_string_pretty(&low_res.dependencies).unwrap(),
+            "{}\n{}",
+            indent(
+              &serde_json::to_string_pretty(&low_res.dependencies).unwrap()
+            ),
             if low_res.source.is_empty() {
               "  <empty>".to_string()
             } else {
@@ -83,7 +85,7 @@ async fn test_graph_specs() {
           ));
         }
         deno_graph::LowResTypeModuleSlot::Error(diagnostic) => {
-          output_text.push_str(&indent(&format!("{}", diagnostic)));
+          output_text.push_str(&indent(&diagnostic.message_with_range()));
         }
       }
     }

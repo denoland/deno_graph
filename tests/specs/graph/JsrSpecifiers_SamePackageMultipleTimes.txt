@@ -144,6 +144,7 @@ import "jsr:@scope/b@1.1";
     "@scope/b@1": "@scope/b@1.1.0"
   }
 }
+
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
   {}
   <empty>
@@ -154,4 +155,3 @@ Low res https://registry-staging.deno.com/@scope/b/1.1.0/mod.ts:
       return {} as any;
     }
   }
-

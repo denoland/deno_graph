@@ -5,33 +5,8 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
-export enum EnumWithNoInits {
-  Value1,
-  Value2,
-}
-
-export enum EnumWithNumInits {
-  Value1 = 1,
-  Value2 = 2,
-}
-
-export enum EnumWithStringInits {
-  Value1 = "a",
-  Value2 = "b",
-}
-
-const value = 10;
-
-export enum EnumWithNonConstInits {
-  Value1 = new Public1().test,
-  Value2 = new Public2().asdf * value + NonExportedEnum.Value,
-}
-
-class Public1 {}
-class Public2 {}
-class Private1 {}
-enum NonExportedEnum {
-  Value
+export function missingReturnType() {
+  return Math.random();
 }
 
 # mod.ts
@@ -69,7 +44,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 421,
+      "size": 64,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
     }
@@ -83,28 +58,5 @@ import 'jsr:@scope/a'
 }
 
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
-  {}
-  export enum EnumWithNoInits {
-    Value1,
-    Value2
-  }
-  export enum EnumWithNumInits {
-    Value1 = 1,
-    Value2 = 2
-  }
-  export enum EnumWithStringInits {
-    Value1 = "a",
-    Value2 = "b"
-  }
-  const value: number = {} as any;
-  export enum EnumWithNonConstInits {
-    Value1 = new Public1().test,
-    Value2 = new Public2().asdf * value + NonExportedEnum.Value
-  }
-  class Public1 {
-  }
-  class Public2 {
-  }
-  enum NonExportedEnum {
-    Value
-  }
+  Missing explicit return type in the public API.
+      at https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:1:17

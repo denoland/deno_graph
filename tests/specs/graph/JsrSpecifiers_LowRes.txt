@@ -1,16 +1,9 @@
 # https://registry-staging.deno.com/@scope/a/meta.json
-{
-  "versions": {
-    "1.0.0": {}
-  }
-}
+{"versions": { "1.0.0": {} } }
 
 # https://registry-staging.deno.com/@scope/a/1.0.0_meta.json
-{
-  "exports": {
-    ".": "./mod.ts"
-  }
-}
+{ "exports": { ".": "./mod.ts" } }
+
 # https://registry-staging.deno.com/@scope/a/1.0.0/a.ts
 export class A1 {}
 export class A2 {}
@@ -178,39 +171,40 @@ import 'jsr:@scope/a'
     "@scope/a": "@scope/a@1.0.0"
   }
 }
+
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/a.ts:
   {
-  "./a4.ts": {
-    "code": {
-      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a4.ts",
-      "span": {
-        "start": {
-          "line": 4,
-          "character": 23
-        },
-        "end": {
-          "line": 4,
-          "character": 32
+    "./a4.ts": {
+      "code": {
+        "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a4.ts",
+        "span": {
+          "start": {
+            "line": 4,
+            "character": 23
+          },
+          "end": {
+            "line": 4,
+            "character": 32
+          }
         }
       }
-    }
-  },
-  "./a6.ts": {
-    "code": {
-      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a6.ts",
-      "span": {
-        "start": {
-          "line": 5,
-          "character": 14
-        },
-        "end": {
-          "line": 5,
-          "character": 23
+    },
+    "./a6.ts": {
+      "code": {
+        "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a6.ts",
+        "span": {
+          "start": {
+            "line": 5,
+            "character": 14
+          },
+          "end": {
+            "line": 5,
+            "character": 23
+          }
         }
       }
     }
   }
-}
   export class A1 {
   }
   export class A3 {
@@ -230,22 +224,22 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/a6.ts:
 
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
   {
-  "./a.ts": {
-    "code": {
-      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a.ts",
-      "span": {
-        "start": {
-          "line": 0,
-          "character": 48
-        },
-        "end": {
-          "line": 0,
-          "character": 56
+    "./a.ts": {
+      "code": {
+        "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a.ts",
+        "span": {
+          "start": {
+            "line": 0,
+            "character": 48
+          },
+          "end": {
+            "line": 0,
+            "character": 56
+          }
         }
       }
     }
   }
-}
   import { A1, A3 as RenamedA3, A4, A6 } from "./a.ts";
   export class Test {
     /** Testing */ noReturnTypeVoid(param?: number, param2?: string): void {
@@ -262,4 +256,3 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
     }
     private inner!: unknown;
   }
-

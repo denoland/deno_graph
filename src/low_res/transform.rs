@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::rc::Rc;
 
 use deno_ast::swc::ast::Accessibility;
@@ -8,7 +7,6 @@ use deno_ast::swc::ast::ClassMember;
 use deno_ast::swc::ast::ClassProp;
 use deno_ast::swc::ast::Decl;
 use deno_ast::swc::ast::DefaultDecl;
-use deno_ast::swc::ast::ExportDecl;
 use deno_ast::swc::ast::Expr;
 use deno_ast::swc::ast::Function;
 use deno_ast::swc::ast::Ident;
@@ -57,15 +55,20 @@ use deno_ast::swc::common::SourceMap;
 use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::swc_codegen_config;
+use deno_ast::text_lines::LineAndColumnDisplay;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
 use deno_ast::ParsedSource;
+use deno_ast::SourcePos;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
 
 use crate::DefaultModuleAnalyzer;
 use crate::ModuleInfo;
+use crate::Position;
+use crate::PositionRange;
+use crate::Range;
 
 use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::get_return_stmts_with_arg_from_function;
@@ -118,24 +121,43 @@ fn format_diagnostics(diagnostics: &[LowResTransformDiagnostic]) -> String {
     .map(|diag| format!("{}", diag))
     .collect::<Vec<_>>()
     .join("\n")
-    .split('\n')
-    .map(|l| format!("  {}", l))
-    .collect::<Vec<_>>()
-    .join("\n")
 }
 
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum LowResTransformDiagnostic {
   #[error("Destructuring is not supported in the public API.")]
-  UnsupportedDestructuring { range: SourceRange },
+  UnsupportedDestructuring { range: Range },
   #[error("Missing explicit type in the public API.")]
-  MissingExplicitType { range: SourceRange },
+  MissingExplicitType { range: Range },
   #[error("Missing explicit return type in the public API.")]
-  MissingExplicitReturnType { range: SourceRange },
-  #[error("Had multiple non-low resolution type checking compatible errors.\n{}", format_diagnostics(.0))]
-  Collection(Vec<LowResTransformDiagnostic>),
+  MissingExplicitReturnType { range: Range },
   #[error("Failed to emit low res module: {0:#}")]
   Emit(Rc<anyhow::Error>),
+  #[error("{}", format_diagnostics(.0))]
+  Multiple(Vec<LowResTransformDiagnostic>),
+}
+
+impl LowResTransformDiagnostic {
+  pub fn line_and_column_display(&self) -> Option<&Range> {
+    match self {
+      LowResTransformDiagnostic::UnsupportedDestructuring { range } => {
+        Some(range)
+      }
+      LowResTransformDiagnostic::MissingExplicitType { range } => Some(range),
+      LowResTransformDiagnostic::MissingExplicitReturnType { range } => {
+        Some(range)
+      }
+      LowResTransformDiagnostic::Emit(_) => None,
+      LowResTransformDiagnostic::Multiple(_) => None,
+    }
+  }
+
+  pub fn message_with_range(&self) -> String {
+    match self.line_and_column_display() {
+      Some(range) => format!("{}\n    at {}", self, range),
+      None => format!("{}", self),
+    }
+  }
 }
 
 pub struct LowResModule {
@@ -162,9 +184,7 @@ pub fn transform(
   );
   let (module, comments) = transformer.transform()?;
   if !transformer.diagnostics.is_empty() {
-    return Err(LowResTransformDiagnostic::Collection(
-      transformer.diagnostics,
-    ));
+    return Err(LowResTransformDiagnostic::Multiple(transformer.diagnostics));
   }
   let module_info = DefaultModuleAnalyzer::module_info_from_swc(
     parsed_source.media_type(),
@@ -586,7 +606,7 @@ impl<'a> LowResTransformer<'a> {
             None => {
               self.mark_diagnostic(
                 LowResTransformDiagnostic::MissingExplicitType {
-                  range: n.key.range(),
+                  range: self.source_range_to_range(n.key.range()),
                 },
               )?;
             }
@@ -637,7 +657,9 @@ impl<'a> LowResTransformer<'a> {
       if n.is_generator {
         self.mark_diagnostic(
           LowResTransformDiagnostic::MissingExplicitReturnType {
-            range: parent_id_range.unwrap_or_else(|| n.range()),
+            range: self.source_range_to_range(
+              parent_id_range.unwrap_or_else(|| n.range()),
+            ),
           },
         )?;
       }
@@ -667,7 +689,9 @@ impl<'a> LowResTransformer<'a> {
       } else {
         self.mark_diagnostic(
           LowResTransformDiagnostic::MissingExplicitReturnType {
-            range: parent_id_range.unwrap_or_else(|| n.range()),
+            range: self.source_range_to_range(
+              parent_id_range.unwrap_or_else(|| n.range()),
+            ),
           },
         )?;
       }
@@ -703,7 +727,7 @@ impl<'a> LowResTransformer<'a> {
         if ident.type_ann.is_none() {
           self.mark_diagnostic(
             LowResTransformDiagnostic::MissingExplicitType {
-              range: pat.range(),
+              range: self.source_range_to_range(pat.range()),
             },
           )?;
         }
@@ -722,7 +746,7 @@ impl<'a> LowResTransformer<'a> {
               None => {
                 self.mark_diagnostic(
                   LowResTransformDiagnostic::MissingExplicitType {
-                    range: ident.range(),
+                    range: self.source_range_to_range(ident.range()),
                   },
                 )?;
               }
@@ -739,7 +763,7 @@ impl<'a> LowResTransformer<'a> {
         | Pat::Expr(_) => {
           self.mark_diagnostic(
             LowResTransformDiagnostic::UnsupportedDestructuring {
-              range: pat.range(),
+              range: self.source_range_to_range(pat.range()),
             },
           )?;
         }
@@ -751,7 +775,7 @@ impl<'a> LowResTransformer<'a> {
       | Pat::Expr(_) => {
         self.mark_diagnostic(
           LowResTransformDiagnostic::UnsupportedDestructuring {
-            range: pat.range(),
+            range: self.source_range_to_range(pat.range()),
           },
         )?;
       }
@@ -790,7 +814,7 @@ impl<'a> LowResTransformer<'a> {
                 if !is_init_leavable {
                   self.mark_diagnostic(
                     LowResTransformDiagnostic::MissingExplicitType {
-                      range: ident.range(),
+                      range: self.source_range_to_range(ident.range()),
                     },
                   )?;
                 }
@@ -808,7 +832,7 @@ impl<'a> LowResTransformer<'a> {
         | Pat::Expr(_) => {
           self.mark_diagnostic(
             LowResTransformDiagnostic::UnsupportedDestructuring {
-              range: decl.name.range(),
+              range: self.source_range_to_range(decl.name.range()),
             },
           )?;
         }
@@ -828,6 +852,12 @@ impl<'a> LowResTransformer<'a> {
       self.diagnostics.push(diagnostic);
       Ok(())
     }
+  }
+
+  fn source_range_to_range(&self, range: SourceRange) -> Range {
+    let text_info = self.parsed_source.text_info();
+    let position_range = PositionRange::from_source_range(range, text_info);
+    Range::from_position_range(self.specifier.clone(), position_range)
   }
 }
 

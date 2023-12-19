@@ -1,16 +1,8 @@
 # https://registry-staging.deno.com/@scope/a/meta.json
-{
-  "versions": {
-    "1.0.0": {}
-  }
-}
+{"versions": { "1.0.0": {} } }
 
 # https://registry-staging.deno.com/@scope/a/1.0.0_meta.json
-{
-  "exports": {
-    ".": "./mod.ts"
-  }
-}
+{ "exports": { ".": "./mod.ts" } }
 
 # https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
 export class Test {
@@ -77,6 +69,7 @@ import 'jsr:@scope/a'
     "@scope/a": "@scope/a@1.0.0"
   }
 }
+
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
   {}
   export class Test {
@@ -90,4 +83,3 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
   }
   class PublicOther2 {
   }
-
