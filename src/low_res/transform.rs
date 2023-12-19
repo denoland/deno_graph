@@ -31,6 +31,7 @@ use deno_ast::swc::ast::TsIntersectionType;
 use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;
 use deno_ast::swc::ast::TsLit;
+use deno_ast::swc::ast::TsModuleRef;
 use deno_ast::swc::ast::TsOptionalType;
 use deno_ast::swc::ast::TsParamPropParam;
 use deno_ast::swc::ast::TsParenthesizedType;
@@ -55,18 +56,15 @@ use deno_ast::swc::common::SourceMap;
 use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::swc_codegen_config;
-use deno_ast::text_lines::LineAndColumnDisplay;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
 use deno_ast::ParsedSource;
-use deno_ast::SourcePos;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
 
 use crate::DefaultModuleAnalyzer;
 use crate::ModuleInfo;
-use crate::Position;
 use crate::PositionRange;
 use crate::Range;
 
@@ -131,6 +129,14 @@ pub enum LowResTransformDiagnostic {
   MissingExplicitType { range: Range },
   #[error("Missing explicit return type in the public API.")]
   MissingExplicitReturnType { range: Range },
+  #[error("Require is not supported in ES modules.")]
+  UnsupportedRequire { range: Range },
+  #[error(
+    "CommonJS export assignments (`export =`) are not supported in ES modules."
+  )]
+  UnsupportedTsExportAssignment { range: Range },
+  #[error("Global augmentations such as namespace exports are not supported.")]
+  UnsupportedTsNamespaceExport { range: Range },
   #[error("Failed to emit low res module: {0:#}")]
   Emit(Rc<anyhow::Error>),
   #[error("{}", format_diagnostics(.0))]
@@ -139,16 +145,16 @@ pub enum LowResTransformDiagnostic {
 
 impl LowResTransformDiagnostic {
   pub fn line_and_column_display(&self) -> Option<&Range> {
+    use LowResTransformDiagnostic::*;
     match self {
-      LowResTransformDiagnostic::UnsupportedDestructuring { range } => {
-        Some(range)
-      }
-      LowResTransformDiagnostic::MissingExplicitType { range } => Some(range),
-      LowResTransformDiagnostic::MissingExplicitReturnType { range } => {
-        Some(range)
-      }
-      LowResTransformDiagnostic::Emit(_) => None,
-      LowResTransformDiagnostic::Multiple(_) => None,
+      UnsupportedDestructuring { range } => Some(range),
+      MissingExplicitType { range } => Some(range),
+      MissingExplicitReturnType { range } => Some(range),
+      UnsupportedRequire { range } => Some(range),
+      UnsupportedTsExportAssignment { range } => Some(range),
+      UnsupportedTsNamespaceExport { range } => Some(range),
+      Emit(_) => None,
+      Multiple(_) => None,
     }
   }
 
@@ -290,10 +296,34 @@ impl<'a> LowResTransformer<'a> {
           let export_decl_range = n.range();
           self.transform_decl(&mut n.decl, comments, Some(export_decl_range))
         }
-        ModuleDecl::TsImportEquals(_)
-        | ModuleDecl::TsExportAssignment(_)
-        | ModuleDecl::TsNamespaceExport(_) => {
-          todo!("should exit as non-analyzable");
+        ModuleDecl::TsImportEquals(n) => match &n.module_ref {
+          TsModuleRef::TsEntityName(n) => {
+            Ok(self.public_ranges.contains(&n.range()))
+          }
+          TsModuleRef::TsExternalModuleRef(_) => {
+            self.mark_diagnostic(
+              LowResTransformDiagnostic::UnsupportedRequire {
+                range: self.source_range_to_range(n.range()),
+              },
+            )?;
+            Ok(false)
+          }
+        },
+        ModuleDecl::TsExportAssignment(n) => {
+          self.mark_diagnostic(
+            LowResTransformDiagnostic::UnsupportedTsExportAssignment {
+              range: self.source_range_to_range(n.range()),
+            },
+          )?;
+          Ok(false)
+        }
+        ModuleDecl::TsNamespaceExport(n) => {
+          self.mark_diagnostic(
+            LowResTransformDiagnostic::UnsupportedTsNamespaceExport {
+              range: self.source_range_to_range(n.range()),
+            },
+          )?;
+          Ok(false)
         }
       },
       ModuleItem::Stmt(stmt) => match stmt {

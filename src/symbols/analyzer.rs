@@ -2322,7 +2322,6 @@ impl<'a> SymbolFiller<'a> {
         );
       }
       Expr::Lit(lit) => {
-        debug_assert!(maybe_parent.is_some());
         let Some(parent) = maybe_parent else {
           return;
         };
