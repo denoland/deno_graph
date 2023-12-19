@@ -129,6 +129,8 @@ pub enum LowResTransformDiagnostic {
   MissingExplicitType { range: Range },
   #[error("Missing explicit return type in the public API.")]
   MissingExplicitReturnType { range: Range },
+  #[error("Global augmentations are not supported.")]
+  UnsupportedGlobalModule { range: Range },
   #[error("Require is not supported in ES modules.")]
   UnsupportedRequire { range: Range },
   #[error(
@@ -150,6 +152,7 @@ impl LowResTransformDiagnostic {
       UnsupportedDestructuring { range } => Some(range),
       MissingExplicitType { range } => Some(range),
       MissingExplicitReturnType { range } => Some(range),
+      UnsupportedGlobalModule { range } => Some(range),
       UnsupportedRequire { range } => Some(range),
       UnsupportedTsExportAssignment { range } => Some(range),
       UnsupportedTsNamespaceExport { range } => Some(range),
@@ -398,7 +401,18 @@ impl<'a> LowResTransformer<'a> {
       Decl::TsInterface(_) => Ok(self.public_ranges.contains(&public_range)),
       Decl::TsTypeAlias(_) => Ok(self.public_ranges.contains(&public_range)),
       Decl::TsEnum(_) => Ok(self.public_ranges.contains(&public_range)),
-      Decl::TsModule(_) => todo!(),
+      Decl::TsModule(m) => {
+        if m.global {
+          self.mark_diagnostic(
+            LowResTransformDiagnostic::UnsupportedGlobalModule {
+              range: self.source_range_to_range(m.range()),
+            },
+          )?;
+          return Ok(false);
+        }
+
+        todo!()
+      }
       Decl::Using(_) => todo!("not implemented using"),
     }
   }
