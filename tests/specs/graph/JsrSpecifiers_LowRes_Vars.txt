@@ -22,7 +22,7 @@ class Public1 {
 
 class Private {}
 
-// object that can be left as-is because this is low cost inference
+// can be left as-is because this is low cost inference
 const ERROR_STATUS_MAP = {
   "BadRequest": 400,
   "Unauthorized": 401,
@@ -30,8 +30,19 @@ const ERROR_STATUS_MAP = {
   "Forbidden": 403,
   // etc...
 } as const;
-
 export type ErrorStatusKeys = keyof typeof ERROR_STATUS_MAP;
+export const asIs1 = [1, 2, 3];
+export const asIs2 = {
+  a: [1, 2, 3],
+  b: true,
+  c: 10,
+  d: 10n,
+  e: 1 * 2,
+  [1]: 4,
+  f: 1 ? true : false,
+  g: 1++,
+  h: [...[1, 2], ...["test"]],
+};
 
 // inferring simple types
 export const inferred1 = 1 as 1;
@@ -81,7 +92,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 826,
+      "size": 1038,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
     }
@@ -106,6 +117,34 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
     "Forbidden": 403
   } as const;
   export type ErrorStatusKeys = keyof typeof ERROR_STATUS_MAP;
+  export const asIs1 = [
+    1,
+    2,
+    3
+  ];
+  export const asIs2 = {
+    a: [
+      1,
+      2,
+      3
+    ],
+    b: true,
+    c: 10,
+    d: 10n,
+    e: 1 * 2,
+    [1]: 4,
+    f: 1 ? true : false,
+    g: 1++,
+    h: [
+      ...[
+        1,
+        2
+      ],
+      ...[
+        "test"
+      ]
+    ]
+  };
   export const inferred1: 1 = {} as any;
   export const inferred2: string = {} as any;
   export const inferred3: true = {} as any;
