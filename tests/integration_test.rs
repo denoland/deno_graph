@@ -69,21 +69,23 @@ async fn test_graph_specs() {
       let Some(low_res) = &module.low_res else {
         continue;
       };
-      output_text.push_str(&format!(
-        "Low res {}:\n  {}\n{}\n",
-        module.specifier,
-        serde_json::to_string_pretty(&low_res.dependencies).unwrap(),
-        if low_res.source.is_empty() {
-          "  <empty>".to_string()
-        } else {
-          low_res
-            .source
-            .split('\n')
-            .map(|l| format!("  {}", l).trim_end().to_string())
-            .collect::<Vec<_>>()
-            .join("\n")
-        },
-      ));
+      output_text.push_str(&format!("Low res {}:\n", module.specifier,));
+      match low_res {
+        deno_graph::LowResTypeModuleSlot::Module(low_res) => {
+          output_text.push_str(&format!(
+            "  {}\n{}\n",
+            serde_json::to_string_pretty(&low_res.dependencies).unwrap(),
+            if low_res.source.is_empty() {
+              "  <empty>".to_string()
+            } else {
+              indent(&low_res.source)
+            },
+          ));
+        }
+        deno_graph::LowResTypeModuleSlot::Error(diagnostic) => {
+          output_text.push_str(&indent(&format!("{}", diagnostic)));
+        }
+      }
     }
     let diagnostics = result
       .diagnostics
@@ -112,6 +114,14 @@ async fn test_graph_specs() {
       test_file_path.display()
     );
   }
+}
+
+fn indent(text: &str) -> String {
+  text
+    .split('\n')
+    .map(|l| format!("  {}", l).trim_end().to_string())
+    .collect::<Vec<_>>()
+    .join("\n")
 }
 
 #[cfg(feature = "symbols")]

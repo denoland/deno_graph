@@ -14,6 +14,7 @@ use crate::DefaultModuleAnalyzer;
 use crate::DefaultModuleParser;
 use crate::ReferrerImports;
 
+use crate::low_res::LowResTransformDiagnostic;
 use crate::module_specifier::is_fs_root_specifier;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -801,6 +802,12 @@ impl JsonModule {
 }
 
 #[derive(Debug, Clone)]
+pub enum LowResTypeModuleSlot {
+  Module(Box<LowResTypeModule>),
+  Error(Box<LowResTransformDiagnostic>),
+}
+
+#[derive(Debug, Clone)]
 pub struct LowResTypeModule {
   pub dependencies: IndexMap<String, Dependency>,
   pub source: Arc<str>,
@@ -825,7 +832,7 @@ pub struct EsmModule {
   pub media_type: MediaType,
   pub specifier: ModuleSpecifier,
   #[serde(skip_serializing)]
-  pub low_res: Option<Box<LowResTypeModule>>,
+  pub low_res: Option<LowResTypeModuleSlot>,
 }
 
 impl EsmModule {
@@ -846,8 +853,16 @@ impl EsmModule {
     self.source.as_bytes().len()
   }
 
+  pub fn low_res_module(&self) -> Option<&LowResTypeModule> {
+    let module_slot = self.low_res.as_ref()?;
+    match module_slot {
+      LowResTypeModuleSlot::Module(m) => Some(m),
+      LowResTypeModuleSlot::Error(_) => None,
+    }
+  }
+
   pub fn dependencies_prefer_low_res(&self) -> &IndexMap<String, Dependency> {
-    match &self.low_res {
+    match self.low_res_module() {
       Some(low_res) => &low_res.dependencies,
       None => &self.dependencies,
     }
@@ -3841,13 +3856,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       self.graph,
       &root_symbol,
       pending_nvs,
+      &crate::low_res::TransformOptions {
+        // todo(THIS PR): should be false when analyzing local dependencies
+        should_error_on_first_diagnostic: true,
+      },
     );
-    for low_res_module in modules {
-      let module_slot = self
-        .graph
-        .module_slots
-        .get_mut(&low_res_module.specifier)
-        .unwrap();
+    for (specifier, low_res_module_result) in modules {
+      let module_slot = self.graph.module_slots.get_mut(&specifier).unwrap();
       let module = match module_slot {
         ModuleSlot::Module(m) => match m {
           Module::Esm(m) => m,
@@ -3855,22 +3870,28 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         },
         ModuleSlot::Err(_) | ModuleSlot::Pending => unreachable!(),
       };
-      let mut dependencies: IndexMap<String, Dependency> = Default::default();
-      fill_module_dependencies(
-        GraphKind::TypesOnly,
-        low_res_module.module_info.dependencies,
-        &module.specifier,
-        &mut dependencies,
-        // no need to resolve dynamic imports
-        &NullFileSystem,
-        self.resolver,
-        self.npm_resolver,
-      );
-      module.low_res = Some(Box::new(LowResTypeModule {
-        dependencies,
-        source: low_res_module.text.into(),
-        source_map: low_res_module.source_map.into(),
-      }))
+      module.low_res = Some(match low_res_module_result {
+        Ok(low_res_module) => {
+          let mut dependencies: IndexMap<String, Dependency> =
+            Default::default();
+          fill_module_dependencies(
+            GraphKind::TypesOnly,
+            low_res_module.module_info.dependencies,
+            &module.specifier,
+            &mut dependencies,
+            // no need to resolve dynamic imports
+            &NullFileSystem,
+            self.resolver,
+            self.npm_resolver,
+          );
+          LowResTypeModuleSlot::Module(Box::new(LowResTypeModule {
+            dependencies,
+            source: low_res_module.text.into(),
+            source_map: low_res_module.source_map.into(),
+          }))
+        }
+        Err(diagnostic) => LowResTypeModuleSlot::Error(Box::new(diagnostic)),
+      });
     }
   }
 }
