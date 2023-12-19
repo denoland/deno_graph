@@ -62,13 +62,12 @@ async fn test_graph_specs() {
     let update_var = std::env::var("UPDATE");
     let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
     output_text.push('\n');
-    for module in result.graph.modules() {
-      let Some(module) = module.esm() else {
-        continue;
-      };
-      let Some(low_res) = &module.low_res else {
-        continue;
-      };
+    let low_res_modules = result.graph.modules().filter_map(|module| {
+      let module = module.esm()?;
+      let low_res = module.low_res.as_ref()?;
+      Some((module, low_res))
+    });
+    for (module, low_res) in low_res_modules {
       output_text.push_str(&format!("\nLow res {}:\n", module.specifier,));
       match low_res {
         deno_graph::LowResTypeModuleSlot::Module(low_res) => {
@@ -88,6 +87,9 @@ async fn test_graph_specs() {
           output_text.push_str(&indent(&diagnostic.message_with_range()));
         }
       }
+    }
+    if !output_text.ends_with("\n") {
+      output_text.push('\n');
     }
     let diagnostics = result
       .diagnostics
