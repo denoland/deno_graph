@@ -5,6 +5,12 @@ use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;
 use deno_ast::swc::ast::TsType;
 use deno_ast::swc::common::DUMMY_SP;
+use deno_ast::SourceRange;
+use deno_ast::SourceTextInfo;
+
+use crate::ModuleSpecifier;
+use crate::PositionRange;
+use crate::Range;
 
 pub fn ident(name: String) -> Ident {
   Ident {
@@ -83,4 +89,13 @@ fn get_return_stmts_with_arg_from_stmt(stmt: &Stmt) -> Vec<&ReturnStmt> {
     | Stmt::Expr(_)
     | Stmt::Empty(_) => Vec::new(),
   }
+}
+
+pub fn source_range_to_range(
+  range: SourceRange,
+  specifier: &ModuleSpecifier,
+  text_info: &SourceTextInfo,
+) -> Range {
+  let position_range = PositionRange::from_source_range(range, text_info);
+  Range::from_position_range(specifier.clone(), position_range)
 }

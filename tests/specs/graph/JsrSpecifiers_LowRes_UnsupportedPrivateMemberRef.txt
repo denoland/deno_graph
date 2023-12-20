@@ -5,23 +5,10 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
-export class Test {
-  prop1: PublicOther;
-  protected prop2?: PublicOther2;
-  private prop3: PrivateOther;
-  prop4 = 5;
-  #prop5;
-  #prop6: PrivateOther2;
-  static myMember: string;
+export class MyClass {
+  prop!: typeof MyClass.prototype.myPrivateMember;
+  private myPrivateMember!: string;
 }
-
-class PublicOther {
-}
-class PublicOther2 {
-}
-
-class PrivateOther {}
-class PrivateOther2 {}
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -58,7 +45,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 276,
+      "size": 112,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
     }
@@ -72,16 +59,5 @@ import 'jsr:@scope/a'
 }
 
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
-  {}
-  export class Test {
-    #private!: unknown;
-    prop1!: PublicOther;
-    protected prop2?: PublicOther2;
-    private prop3!: unknown;
-    prop4!: number;
-    static myMember: string;
-  }
-  class PublicOther {
-  }
-  class PublicOther2 {
-  }
+  Public API members (MyClass.prototype.prop) referencing or transitively referencing a class private member (MyClass.prototype.myPrivateMember) is not supported.
+      at https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:3:3

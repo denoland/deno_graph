@@ -7,6 +7,7 @@ use deno_ast::SourceRangedForSpanned;
 use deno_semver::package::PackageNv;
 use indexmap::IndexMap;
 
+use crate::low_res::swc_helpers::source_range_to_range;
 use crate::source::Loader;
 use crate::symbols::FileDepName;
 use crate::symbols::ModuleInfoRef;
@@ -16,6 +17,8 @@ use crate::symbols::SymbolId;
 use crate::symbols::SymbolNodeDep;
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
+
+use super::LowResDiagnostic;
 
 #[derive(Default, Debug, Clone)]
 struct NamedExports(IndexMap<String, NamedExports>);
@@ -62,8 +65,34 @@ impl NamedExports {
     exports
   }
 
+  pub fn from_many_parts(many_parts: &[Vec<String>]) -> NamedExports {
+    let mut exports = NamedExports::default();
+    for parts in many_parts {
+      if !parts.is_empty() {
+        exports.add_qualified(&parts[0], &parts[1..]);
+      }
+    }
+    exports
+  }
+
   pub fn is_empty(&self) -> bool {
     self.0.is_empty()
+  }
+
+  pub fn into_separate_parts(self) -> Vec<Vec<String>> {
+    let mut parts = Vec::new();
+    for (key, exports) in self.0 {
+      if exports.is_empty() {
+        parts.push(vec![key]);
+      } else {
+        let mut sub_parts = exports.into_separate_parts();
+        for sub_part in &mut sub_parts {
+          sub_part.insert(0, key.clone());
+        }
+        parts.extend(sub_parts);
+      }
+    }
+    parts
   }
 }
 
@@ -214,6 +243,7 @@ pub fn find_public_ranges<'a>(
 pub struct ModulePublicRanges {
   ranges: HashSet<SourceRange>,
   impl_with_overload_ranges: HashSet<SourceRange>,
+  diagnostics: Vec<LowResDiagnostic>,
 }
 
 impl ModulePublicRanges {
@@ -223,6 +253,10 @@ impl ModulePublicRanges {
 
   pub fn is_impl_with_overloads(&self, range: &SourceRange) -> bool {
     self.impl_with_overload_ranges.contains(range)
+  }
+
+  pub fn take_diagnostics(&mut self) -> Vec<LowResDiagnostic> {
+    std::mem::take(&mut self.diagnostics)
   }
 }
 
@@ -294,23 +328,56 @@ impl<'a> PublicRangeFinder<'a> {
   ) -> bool {
     #[derive(Debug)]
     enum PendingIdTrace {
-      Id(SymbolId),
-      QualifiedId(SymbolId, NamedExports),
+      Id {
+        symbol_id: SymbolId,
+        referrer_id: SymbolId,
+      },
+      QualifiedId {
+        symbol_id: SymbolId,
+        parts: NamedExports,
+        referrer_id: SymbolId,
+      },
+    }
+
+    #[derive(Default)]
+    struct PendingTraces {
+      traces: VecDeque<PendingIdTrace>,
+      done_id_traces: HashSet<(SymbolId, SymbolId)>,
+    }
+
+    impl PendingTraces {
+      fn maybe_add_id_trace(
+        &mut self,
+        symbol_id: SymbolId,
+        referrer_id: SymbolId,
+      ) {
+        if self.done_id_traces.insert((symbol_id, referrer_id)) {
+          self.traces.push_back(PendingIdTrace::Id {
+            symbol_id,
+            referrer_id,
+          });
+        }
+      }
     }
 
     let pkg_nv = &trace.package_nv;
-    let mut pending_traces = VecDeque::new();
     let mut found_ranges = HashSet::new();
     let mut impl_with_overload_ranges = HashSet::new();
     let mut found = false;
+    let mut diagnostics = Vec::new();
+    let mut pending_traces = PendingTraces::default();
+    let module_symbol = module_info.module_symbol();
 
     match &trace.exports_to_trace {
       ImportedExports::AllWithDefault | ImportedExports::Star => {
         if matches!(trace.exports_to_trace, ImportedExports::AllWithDefault) {
           if let Some(default_symbol_id) =
-            module_info.module_symbol().exports().get("default")
+            module_symbol.exports().get("default")
           {
-            pending_traces.push_back(PendingIdTrace::Id(*default_symbol_id));
+            pending_traces.maybe_add_id_trace(
+              *default_symbol_id,
+              module_symbol.symbol_id(),
+            );
           }
         }
 
@@ -319,7 +386,8 @@ impl<'a> PublicRangeFinder<'a> {
             continue;
           }
 
-          pending_traces.push_back(PendingIdTrace::Id(*export_symbol_id));
+          pending_traces
+            .maybe_add_id_trace(*export_symbol_id, module_symbol.symbol_id());
         }
 
         // add all the specifiers to the list of pending specifiers
@@ -362,12 +430,18 @@ impl<'a> PublicRangeFinder<'a> {
               let export_name = export_name.clone();
               let named_exports = named_exports.remove(&export_name).unwrap();
               if named_exports.is_empty() {
-                pending_traces.push_back(PendingIdTrace::Id(*export_symbol_id));
-              } else {
-                pending_traces.push_back(PendingIdTrace::QualifiedId(
+                pending_traces.maybe_add_id_trace(
                   *export_symbol_id,
-                  named_exports,
-                ));
+                  module_symbol.symbol_id(),
+                );
+              } else {
+                pending_traces
+                  .traces
+                  .push_back(PendingIdTrace::QualifiedId {
+                    symbol_id: *export_symbol_id,
+                    parts: named_exports,
+                    referrer_id: module_symbol.symbol_id(),
+                  });
               }
             }
           }
@@ -441,11 +515,31 @@ impl<'a> PublicRangeFinder<'a> {
       }
     }
 
-    while let Some(trace) = pending_traces.pop_front() {
+    while let Some(trace) = pending_traces.traces.pop_front() {
       match trace {
-        PendingIdTrace::Id(symbol_id) => {
+        PendingIdTrace::Id {
+          symbol_id,
+          referrer_id,
+        } => {
           let symbol = module_info.symbol(symbol_id).unwrap();
           if symbol.is_private_member() {
+            if Some(referrer_id) != symbol.parent_id() {
+              diagnostics.push(
+                LowResDiagnostic::UnsupportedPrivateMemberReference {
+                  range: source_range_to_range(
+                    symbol.decls()[0].range,
+                    module_info.specifier(),
+                    module_info.text_info(),
+                  ),
+                  name: module_info
+                    .fully_qualified_symbol_name(symbol.symbol_id())
+                    .unwrap_or_else(|| "<unknown>".to_string()),
+                  referrer: module_info
+                    .fully_qualified_symbol_name(referrer_id)
+                    .unwrap_or_else(|| "<unknown>".to_string()),
+                },
+              );
+            }
             continue;
           }
 
@@ -456,18 +550,29 @@ impl<'a> PublicRangeFinder<'a> {
               impl_with_overload_ranges.insert(decl.range);
               continue;
             }
+            let referrer_id = symbol_id;
             match &decl.kind {
               SymbolDeclKind::Target(id) => {
                 found_ranges.insert(decl.range);
                 if let Some(symbol_id) =
                   module_info.esm().and_then(|m| m.symbol_id_from_swc(&id))
                 {
-                  pending_traces.push_back(PendingIdTrace::Id(symbol_id));
+                  pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
                 }
               }
-              SymbolDeclKind::QualifiedTarget(_, _) => {
+              SymbolDeclKind::QualifiedTarget(id, parts) => {
                 found_ranges.insert(decl.range);
-                todo!();
+                if let Some(symbol_id) =
+                  module_info.esm().and_then(|m| m.symbol_id_from_swc(&id))
+                {
+                  pending_traces.traces.push_back(
+                    PendingIdTrace::QualifiedId {
+                      symbol_id,
+                      parts: NamedExports::from_parts(parts),
+                      referrer_id,
+                    },
+                  );
+                }
               }
               SymbolDeclKind::FileRef(file_dep) => {
                 if let Some(specifier) = self.graph.resolve_dependency(
@@ -504,7 +609,7 @@ impl<'a> PublicRangeFinder<'a> {
                           module_info.symbol_id_from_swc(&id)
                         {
                           pending_traces
-                            .push_back(PendingIdTrace::Id(symbol_id));
+                            .maybe_add_id_trace(symbol_id, referrer_id);
                         }
                       }
                       SymbolNodeDep::QualifiedId(id, parts) => {
@@ -512,11 +617,12 @@ impl<'a> PublicRangeFinder<'a> {
                         if let Some(symbol_id) =
                           module_info.symbol_id_from_swc(&id)
                         {
-                          pending_traces.push_back(
-                            PendingIdTrace::QualifiedId(
+                          pending_traces.traces.push_back(
+                            PendingIdTrace::QualifiedId {
                               symbol_id,
-                              NamedExports::from_parts(&parts),
-                            ),
+                              parts: NamedExports::from_parts(&parts),
+                              referrer_id,
+                            },
                           );
                         }
                       }
@@ -534,15 +640,168 @@ impl<'a> PublicRangeFinder<'a> {
             }
           }
 
-          pending_traces.extend(
+          pending_traces.traces.extend(
             symbol
               .exports()
               .values()
-              .map(|id| PendingIdTrace::Id(*id))
-              .chain(symbol.members().iter().map(|id| PendingIdTrace::Id(*id))),
+              .map(|id| (*id, symbol.symbol_id()))
+              .chain(
+                symbol.members().iter().map(|id| (*id, symbol.symbol_id())),
+              )
+              .filter(|(symbol_id, referrer_id)| {
+                !pending_traces
+                  .done_id_traces
+                  .contains(&(*symbol_id, *referrer_id))
+              })
+              .map(|(symbol_id, referrer_id)| PendingIdTrace::Id {
+                symbol_id,
+                referrer_id,
+              }),
           );
         }
-        PendingIdTrace::QualifiedId(_, _) => todo!(),
+        PendingIdTrace::QualifiedId {
+          symbol_id,
+          parts,
+          referrer_id,
+        } => {
+          let symbol = module_info.symbol(symbol_id).unwrap();
+
+          let mut handled = false;
+          for decl in symbol.decls() {
+            found_ranges.insert(decl.range);
+            match &decl.kind {
+              SymbolDeclKind::Target(id) => {
+                handled = true;
+                let symbol_id = module_info
+                  .esm()
+                  .and_then(|m| m.symbol_id_from_swc(&id))
+                  .unwrap();
+                pending_traces
+                  .traces
+                  .push_back(PendingIdTrace::QualifiedId {
+                    symbol_id,
+                    parts: parts.clone(),
+                    referrer_id,
+                  });
+              }
+              SymbolDeclKind::QualifiedTarget(id, target_parts) => {
+                handled = true;
+                let symbol_id = module_info
+                  .esm()
+                  .and_then(|m| m.symbol_id_from_swc(&id))
+                  .unwrap();
+                let mut new_parts = NamedExports::default();
+                for parts in parts.clone().into_separate_parts() {
+                  let combined_vec = target_parts
+                    .iter()
+                    .cloned()
+                    .chain(parts.into_iter())
+                    .collect::<Vec<_>>();
+                  new_parts.add_qualified(&combined_vec[0], &combined_vec[1..]);
+                }
+                pending_traces
+                  .traces
+                  .push_back(PendingIdTrace::QualifiedId {
+                    symbol_id,
+                    parts: new_parts,
+                    referrer_id,
+                  });
+              }
+              SymbolDeclKind::FileRef(file_dep) => {
+                handled = true;
+                if let Some(specifier) = self.graph.resolve_dependency(
+                  &file_dep.specifier,
+                  module_info.specifier(),
+                  /* prefer types */ true,
+                ) {
+                  if let Some(dep_nv) =
+                    self.loader.registry_package_url_to_nv(&specifier)
+                  {
+                    if dep_nv == *pkg_nv {
+                      let named_exports = match &file_dep.name {
+                        FileDepName::Star => parts.clone(),
+                        FileDepName::Name(first_part) => {
+                          let mut separate_parts =
+                            parts.clone().into_separate_parts();
+                          for parts in &mut separate_parts {
+                            parts[0] = first_part.clone();
+                          }
+                          NamedExports::from_many_parts(&separate_parts)
+                        }
+                      };
+                      // just add this specifier
+                      self.add_pending_trace(
+                        &dep_nv,
+                        &specifier,
+                        ImportedExports::Named(named_exports),
+                      );
+                    } else {
+                      // need to analyze the whole package
+                      if self.seen_nvs.insert(dep_nv.clone()) {
+                        self.pending_nvs.push_back(dep_nv.clone());
+                      }
+                    }
+                  }
+                }
+              }
+              SymbolDeclKind::Definition(_) => {}
+            }
+          }
+
+          if !handled {
+            for parts in parts.into_separate_parts() {
+              if parts[0] == "prototype"
+                && symbol.decls().iter().any(|d| d.is_class())
+              {
+                if parts.len() > 1 {
+                  let member_symbols = symbol
+                    .members()
+                    .iter()
+                    .filter_map(|id| module_info.symbol(*id));
+                  let member_symbol = member_symbols
+                    .filter(|s| {
+                      let maybe_name = s.maybe_name();
+                      maybe_name.as_deref() == Some(parts[1].as_str())
+                    })
+                    .next();
+                  match member_symbol {
+                    Some(member) => {
+                      if parts.len() > 2 {
+                        todo!(); // error
+                      } else {
+                        pending_traces
+                          .maybe_add_id_trace(member.symbol_id(), referrer_id);
+                      }
+                    }
+                    None => todo!(),
+                  }
+                } else {
+                  pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
+                }
+              } else {
+                match symbol.export(&parts[0]) {
+                  Some(symbol_id) => {
+                    if parts.len() > 1 {
+                      pending_traces.traces.push_back(
+                        PendingIdTrace::QualifiedId {
+                          symbol_id,
+                          parts: NamedExports::from_parts(&parts[1..]),
+                          referrer_id,
+                        },
+                      );
+                    } else {
+                      pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
+                    }
+                  }
+                  None => {
+                    // couldn't find
+                    todo!();
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
 
@@ -556,6 +815,7 @@ impl<'a> PublicRangeFinder<'a> {
     ranges
       .impl_with_overload_ranges
       .extend(impl_with_overload_ranges);
+    ranges.diagnostics.extend(diagnostics);
 
     found
   }

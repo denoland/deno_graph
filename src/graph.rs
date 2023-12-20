@@ -14,7 +14,7 @@ use crate::DefaultModuleAnalyzer;
 use crate::DefaultModuleParser;
 use crate::ReferrerImports;
 
-use crate::low_res::LowResTransformDiagnostic;
+use crate::low_res::LowResDiagnostic;
 use crate::module_specifier::is_fs_root_specifier;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -804,7 +804,7 @@ impl JsonModule {
 #[derive(Debug, Clone)]
 pub enum LowResTypeModuleSlot {
   Module(Box<LowResTypeModule>),
-  Error(Box<LowResTransformDiagnostic>),
+  Error(Box<LowResDiagnostic>),
 }
 
 #[derive(Debug, Clone)]

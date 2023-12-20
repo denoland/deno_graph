@@ -69,13 +69,14 @@ use deno_ast::SourceTextInfo;
 
 use crate::DefaultModuleAnalyzer;
 use crate::ModuleInfo;
-use crate::PositionRange;
 use crate::Range;
 
 use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::get_return_stmts_with_arg_from_function;
 use super::swc_helpers::ident;
+use super::swc_helpers::source_range_to_range;
 use super::swc_helpers::ts_keyword_type;
+use super::LowResDiagnostic;
 
 struct CommentsMut {
   leading: SingleThreadedCommentsMapInner,
@@ -117,88 +118,6 @@ impl CommentsMut {
   }
 }
 
-fn format_diagnostics(diagnostics: &[LowResTransformDiagnostic]) -> String {
-  diagnostics
-    .iter()
-    .map(|diag| format!("{}", diag))
-    .collect::<Vec<_>>()
-    .join("\n")
-}
-
-#[derive(Debug, Clone, thiserror::Error)]
-pub enum LowResTransformDiagnostic {
-  #[error("Missing explicit type in the public API.")]
-  MissingExplicitType { range: Range },
-  #[error("Missing explicit return type in the public API.")]
-  MissingExplicitReturnType { range: Range },
-  #[error("Global augmentations such as ambient modules are not supported.")]
-  UnsupportedAmbientModule { range: Range },
-  #[error(
-    "Default export expression was too complex. Extract it out to a variable and add an explicit type."
-  )]
-  UnsupportedDefaultExportExpr { range: Range },
-  #[error("Destructuring is not supported in the public API.")]
-  UnsupportedDestructuring { range: Range },
-  #[error("Global augmentations are not supported.")]
-  UnsupportedGlobalModule { range: Range },
-  #[error("Require is not supported in ES modules.")]
-  UnsupportedRequire { range: Range },
-  #[error(
-    "Super class expression was too complex. Extract it out to a variable and add an explicit type."
-  )]
-  UnsupportedSuperClassExpr { range: Range },
-  #[error(
-    "CommonJS export assignments (`export =`) are not supported in ES modules."
-  )]
-  UnsupportedTsExportAssignment { range: Range },
-  #[error("Global augmentations such as namespace exports are not supported.")]
-  UnsupportedTsNamespaceExport { range: Range },
-  #[error("Using declarations are not supported in the public API.")]
-  UnsupportedUsing { range: Range },
-  #[error("Failed to emit low res module: {0:#}")]
-  Emit(Rc<anyhow::Error>),
-  #[error("{}", format_diagnostics(.0))]
-  Multiple(Vec<LowResTransformDiagnostic>),
-}
-
-impl LowResTransformDiagnostic {
-  pub fn from_vec(
-    mut diagnostics: Vec<LowResTransformDiagnostic>,
-  ) -> Option<Self> {
-    match diagnostics.len() {
-      0 => None,
-      1 => diagnostics.pop(),
-      _ => Some(LowResTransformDiagnostic::Multiple(diagnostics)),
-    }
-  }
-
-  pub fn line_and_column_display(&self) -> Option<&Range> {
-    use LowResTransformDiagnostic::*;
-    match self {
-      MissingExplicitType { range } => Some(range),
-      MissingExplicitReturnType { range } => Some(range),
-      UnsupportedAmbientModule { range } => Some(range),
-      UnsupportedDefaultExportExpr { range } => Some(range),
-      UnsupportedDestructuring { range } => Some(range),
-      UnsupportedGlobalModule { range } => Some(range),
-      UnsupportedRequire { range } => Some(range),
-      UnsupportedSuperClassExpr { range } => Some(range),
-      UnsupportedTsExportAssignment { range } => Some(range),
-      UnsupportedTsNamespaceExport { range } => Some(range),
-      UnsupportedUsing { range } => Some(range),
-      Emit(_) => None,
-      Multiple(_) => None,
-    }
-  }
-
-  pub fn message_with_range(&self) -> String {
-    match self.line_and_column_display() {
-      Some(range) => format!("{}\n    at {}", self, range),
-      None => format!("{}", self),
-    }
-  }
-}
-
 pub struct LowResModule {
   pub module_info: ModuleInfo,
   pub text: String,
@@ -214,7 +133,7 @@ pub fn transform(
   public_ranges: &ModulePublicRanges,
   parsed_source: &ParsedSource,
   options: &TransformOptions,
-) -> Result<LowResModule, LowResTransformDiagnostic> {
+) -> Result<LowResModule, LowResDiagnostic> {
   let mut transformer = LowResTransformer::new(
     specifier,
     public_ranges,
@@ -223,7 +142,7 @@ pub fn transform(
   );
   let (module, comments) = transformer.transform()?;
   if !transformer.diagnostics.is_empty() {
-    return Err(LowResTransformDiagnostic::Multiple(transformer.diagnostics));
+    return Err(LowResDiagnostic::Multiple(transformer.diagnostics));
   }
   let module_info = DefaultModuleAnalyzer::module_info_from_swc(
     parsed_source.media_type(),
@@ -236,7 +155,7 @@ pub fn transform(
   let comments = comments.into_single_threaded();
   let (text, source_map) =
     emit(specifier, &comments, parsed_source.text_info(), &module)
-      .map_err(|e| LowResTransformDiagnostic::Emit(Rc::new(e)))?;
+      .map_err(|e| LowResDiagnostic::Emit(Rc::new(e)))?;
 
   Ok(LowResModule {
     module_info,
@@ -250,7 +169,7 @@ struct LowResTransformer<'a> {
   public_ranges: &'a ModulePublicRanges,
   parsed_source: &'a ParsedSource,
   should_error_on_first_diagnostic: bool,
-  diagnostics: Vec<LowResTransformDiagnostic>,
+  diagnostics: Vec<LowResDiagnostic>,
 }
 
 impl<'a> LowResTransformer<'a> {
@@ -273,7 +192,7 @@ impl<'a> LowResTransformer<'a> {
     &mut self,
   ) -> Result<
     (deno_ast::swc::ast::Module, MultiThreadedComments),
-    LowResTransformDiagnostic,
+    LowResDiagnostic,
   > {
     let mut module = self.parsed_source.module().clone();
     let mut comments =
@@ -287,7 +206,7 @@ impl<'a> LowResTransformer<'a> {
     &mut self,
     body: Vec<ModuleItem>,
     comments: &mut CommentsMut,
-  ) -> Result<Vec<ModuleItem>, LowResTransformDiagnostic> {
+  ) -> Result<Vec<ModuleItem>, LowResDiagnostic> {
     let mut final_body = Vec::with_capacity(body.len());
     for mut item in body {
       let retain = self.transform_item(&mut item, comments)?;
@@ -304,7 +223,7 @@ impl<'a> LowResTransformer<'a> {
     &mut self,
     item: &mut ModuleItem,
     comments: &mut CommentsMut,
-  ) -> Result<bool, LowResTransformDiagnostic> {
+  ) -> Result<bool, LowResDiagnostic> {
     match item {
       ModuleItem::ModuleDecl(decl) => match decl {
         ModuleDecl::Import(n) => {
@@ -329,7 +248,7 @@ impl<'a> LowResTransformer<'a> {
             Ok(true)
           } else {
             self.mark_diagnostic(
-              LowResTransformDiagnostic::UnsupportedDefaultExportExpr {
+              LowResDiagnostic::UnsupportedDefaultExportExpr {
                 range: self.source_range_to_range(n.range()),
               },
             )?;
@@ -354,17 +273,15 @@ impl<'a> LowResTransformer<'a> {
             Ok(self.public_ranges.contains(&n.range()))
           }
           TsModuleRef::TsExternalModuleRef(_) => {
-            self.mark_diagnostic(
-              LowResTransformDiagnostic::UnsupportedRequire {
-                range: self.source_range_to_range(n.range()),
-              },
-            )?;
+            self.mark_diagnostic(LowResDiagnostic::UnsupportedRequire {
+              range: self.source_range_to_range(n.range()),
+            })?;
             Ok(false)
           }
         },
         ModuleDecl::TsExportAssignment(n) => {
           self.mark_diagnostic(
-            LowResTransformDiagnostic::UnsupportedTsExportAssignment {
+            LowResDiagnostic::UnsupportedTsExportAssignment {
               range: self.source_range_to_range(n.range()),
             },
           )?;
@@ -372,7 +289,7 @@ impl<'a> LowResTransformer<'a> {
         }
         ModuleDecl::TsNamespaceExport(n) => {
           self.mark_diagnostic(
-            LowResTransformDiagnostic::UnsupportedTsNamespaceExport {
+            LowResDiagnostic::UnsupportedTsNamespaceExport {
               range: self.source_range_to_range(n.range()),
             },
           )?;
@@ -407,7 +324,7 @@ impl<'a> LowResTransformer<'a> {
     default_decl: &mut DefaultDecl,
     comments: &mut CommentsMut,
     parent_range: SourceRange,
-  ) -> Result<(), LowResTransformDiagnostic> {
+  ) -> Result<(), LowResDiagnostic> {
     match default_decl {
       DefaultDecl::Class(n) => self.transform_class(&mut n.class, comments),
       DefaultDecl::Fn(n) => self.transform_fn(
@@ -424,7 +341,7 @@ impl<'a> LowResTransformer<'a> {
     decl: &mut Decl,
     comments: &mut CommentsMut,
     parent_range: Option<SourceRange>,
-  ) -> Result<bool, LowResTransformDiagnostic> {
+  ) -> Result<bool, LowResDiagnostic> {
     let public_range = parent_range.unwrap_or_else(|| decl.range());
     match decl {
       Decl::Class(n) => {
@@ -454,16 +371,14 @@ impl<'a> LowResTransformer<'a> {
       Decl::TsModule(m) => self.transform_ts_module(m, &public_range, comments),
       Decl::Using(n) => {
         if self.public_ranges.contains(&public_range) {
-          self.mark_diagnostic(
-            LowResTransformDiagnostic::UnsupportedUsing {
-              range: self.source_range_to_range(
-                n.decls
-                  .first()
-                  .map(|n| n.range())
-                  .unwrap_or_else(|| n.range()),
-              ),
-            },
-          )?;
+          self.mark_diagnostic(LowResDiagnostic::UnsupportedUsing {
+            range: self.source_range_to_range(
+              n.decls
+                .first()
+                .map(|n| n.range())
+                .unwrap_or_else(|| n.range()),
+            ),
+          })?;
         }
         Ok(false)
       }
@@ -474,16 +389,14 @@ impl<'a> LowResTransformer<'a> {
     &mut self,
     n: &mut Class,
     comments: &mut CommentsMut,
-  ) -> Result<(), LowResTransformDiagnostic> {
+  ) -> Result<(), LowResDiagnostic> {
     let mut members = Vec::with_capacity(n.body.len());
     let mut had_private = false;
     if let Some(super_class) = &n.super_class {
       if !is_expr_ident_or_member_idents(&super_class) {
-        self.mark_diagnostic(
-          LowResTransformDiagnostic::UnsupportedSuperClassExpr {
-            range: self.source_range_to_range(n.super_class.range()),
-          },
-        )?;
+        self.mark_diagnostic(LowResDiagnostic::UnsupportedSuperClassExpr {
+          range: self.source_range_to_range(n.super_class.range()),
+        })?;
       }
     }
     let mut insert_members = Vec::new();
@@ -542,7 +455,7 @@ impl<'a> LowResTransformer<'a> {
     &mut self,
     member: &mut ClassMember,
     insert_members: &mut Vec<ClassMember>,
-  ) -> Result<bool, LowResTransformDiagnostic> {
+  ) -> Result<bool, LowResDiagnostic> {
     match member {
       ClassMember::Constructor(n) => {
         if let Some(body) = &mut n.body {
@@ -570,7 +483,7 @@ impl<'a> LowResTransformer<'a> {
                     | Pat::Invalid(_)
                     | Pat::Expr(_) => {
                       self.mark_diagnostic(
-                        LowResTransformDiagnostic::UnsupportedDestructuring {
+                        LowResDiagnostic::UnsupportedDestructuring {
                           range: self
                             .source_range_to_range(assign.left.range()),
                         },
@@ -686,7 +599,7 @@ impl<'a> LowResTransformer<'a> {
             is_override: n.is_override,
             readonly: false,
             declare: false,
-            definite: !n.is_optional,
+            definite: !n.is_optional && !n.is_static,
           });
           return Ok(true);
         }
@@ -697,7 +610,7 @@ impl<'a> LowResTransformer<'a> {
       ClassMember::ClassProp(n) => {
         if n.accessibility == Some(Accessibility::Private) {
           n.type_ann = Some(unknown_type_ann());
-          if !n.is_optional {
+          if !n.is_optional && !n.is_static {
             n.definite = true;
           }
           return Ok(true);
@@ -715,15 +628,13 @@ impl<'a> LowResTransformer<'a> {
               }));
             }
             None => {
-              self.mark_diagnostic(
-                LowResTransformDiagnostic::MissingExplicitType {
-                  range: self.source_range_to_range(n.key.range()),
-                },
-              )?;
+              self.mark_diagnostic(LowResDiagnostic::MissingExplicitType {
+                range: self.source_range_to_range(n.key.range()),
+              })?;
             }
           }
         }
-        n.definite = !n.is_optional;
+        n.definite = !n.is_optional && !n.is_static;
         n.decorators.clear();
         n.value = None;
         Ok(true)
@@ -778,7 +689,7 @@ impl<'a> LowResTransformer<'a> {
     n: &mut Function,
     parent_id_range: Option<SourceRange>,
     is_overload: bool,
-  ) -> Result<(), LowResTransformDiagnostic> {
+  ) -> Result<(), LowResDiagnostic> {
     if is_overload {
       for (i, param) in n.params.iter_mut().enumerate() {
         *param = Param {
@@ -799,13 +710,11 @@ impl<'a> LowResTransformer<'a> {
 
     if n.return_type.is_none() {
       if n.is_generator {
-        self.mark_diagnostic(
-          LowResTransformDiagnostic::MissingExplicitReturnType {
-            range: self.source_range_to_range(
-              parent_id_range.unwrap_or_else(|| n.range()),
-            ),
-          },
-        )?;
+        self.mark_diagnostic(LowResDiagnostic::MissingExplicitReturnType {
+          range: self.source_range_to_range(
+            parent_id_range.unwrap_or_else(|| n.range()),
+          ),
+        })?;
       }
 
       let return_stmts = get_return_stmts_with_arg_from_function(n);
@@ -831,13 +740,11 @@ impl<'a> LowResTransformer<'a> {
           },
         }));
       } else {
-        self.mark_diagnostic(
-          LowResTransformDiagnostic::MissingExplicitReturnType {
-            range: self.source_range_to_range(
-              parent_id_range.unwrap_or_else(|| n.range()),
-            ),
-          },
-        )?;
+        self.mark_diagnostic(LowResDiagnostic::MissingExplicitReturnType {
+          range: self.source_range_to_range(
+            parent_id_range.unwrap_or_else(|| n.range()),
+          ),
+        })?;
       }
     }
 
@@ -865,15 +772,13 @@ impl<'a> LowResTransformer<'a> {
   fn handle_param_pat(
     &mut self,
     pat: &mut Pat,
-  ) -> Result<(), LowResTransformDiagnostic> {
+  ) -> Result<(), LowResDiagnostic> {
     match pat {
       Pat::Ident(ident) => {
         if ident.type_ann.is_none() {
-          self.mark_diagnostic(
-            LowResTransformDiagnostic::MissingExplicitType {
-              range: self.source_range_to_range(pat.range()),
-            },
-          )?;
+          self.mark_diagnostic(LowResDiagnostic::MissingExplicitType {
+            range: self.source_range_to_range(pat.range()),
+          })?;
         }
       }
       Pat::Assign(assign) => match &mut *assign.left {
@@ -889,7 +794,7 @@ impl<'a> LowResTransformer<'a> {
               }
               None => {
                 self.mark_diagnostic(
-                  LowResTransformDiagnostic::MissingExplicitType {
+                  LowResDiagnostic::MissingExplicitType {
                     range: self.source_range_to_range(ident.range()),
                   },
                 )?;
@@ -905,11 +810,9 @@ impl<'a> LowResTransformer<'a> {
         | Pat::Assign(_)
         | Pat::Invalid(_)
         | Pat::Expr(_) => {
-          self.mark_diagnostic(
-            LowResTransformDiagnostic::UnsupportedDestructuring {
-              range: self.source_range_to_range(pat.range()),
-            },
-          )?;
+          self.mark_diagnostic(LowResDiagnostic::UnsupportedDestructuring {
+            range: self.source_range_to_range(pat.range()),
+          })?;
         }
       },
       Pat::Array(_)
@@ -917,11 +820,9 @@ impl<'a> LowResTransformer<'a> {
       | Pat::Object(_)
       | Pat::Invalid(_)
       | Pat::Expr(_) => {
-        self.mark_diagnostic(
-          LowResTransformDiagnostic::UnsupportedDestructuring {
-            range: self.source_range_to_range(pat.range()),
-          },
-        )?;
+        self.mark_diagnostic(LowResDiagnostic::UnsupportedDestructuring {
+          range: self.source_range_to_range(pat.range()),
+        })?;
       }
     }
     Ok(())
@@ -930,7 +831,7 @@ impl<'a> LowResTransformer<'a> {
   fn transform_var(
     &mut self,
     n: &mut VarDecl,
-  ) -> Result<bool, LowResTransformDiagnostic> {
+  ) -> Result<bool, LowResDiagnostic> {
     n.decls.retain(|n| self.public_ranges.contains(&n.range()));
 
     for decl in &mut n.decls {
@@ -957,7 +858,7 @@ impl<'a> LowResTransformer<'a> {
                   .unwrap_or(false);
                 if !is_init_leavable {
                   self.mark_diagnostic(
-                    LowResTransformDiagnostic::MissingExplicitType {
+                    LowResDiagnostic::MissingExplicitType {
                       range: self.source_range_to_range(ident.range()),
                     },
                   )?;
@@ -974,11 +875,9 @@ impl<'a> LowResTransformer<'a> {
         | Pat::Assign(_)
         | Pat::Invalid(_)
         | Pat::Expr(_) => {
-          self.mark_diagnostic(
-            LowResTransformDiagnostic::UnsupportedDestructuring {
-              range: self.source_range_to_range(decl.name.range()),
-            },
-          )?;
+          self.mark_diagnostic(LowResDiagnostic::UnsupportedDestructuring {
+            range: self.source_range_to_range(decl.name.range()),
+          })?;
         }
       }
     }
@@ -991,13 +890,11 @@ impl<'a> LowResTransformer<'a> {
     n: &mut TsModuleDecl,
     public_range: &SourceRange,
     comments: &mut CommentsMut,
-  ) -> Result<bool, LowResTransformDiagnostic> {
+  ) -> Result<bool, LowResDiagnostic> {
     if n.global {
-      self.mark_diagnostic(
-        LowResTransformDiagnostic::UnsupportedGlobalModule {
-          range: self.source_range_to_range(n.range()),
-        },
-      )?;
+      self.mark_diagnostic(LowResDiagnostic::UnsupportedGlobalModule {
+        range: self.source_range_to_range(n.range()),
+      })?;
       return Ok(false);
     }
 
@@ -1007,11 +904,9 @@ impl<'a> LowResTransformer<'a> {
       }
       TsModuleName::Str(_) => {
         // not ok
-        self.mark_diagnostic(
-          LowResTransformDiagnostic::UnsupportedAmbientModule {
-            range: self.source_range_to_range(n.id.range()),
-          },
-        )?;
+        self.mark_diagnostic(LowResDiagnostic::UnsupportedAmbientModule {
+          range: self.source_range_to_range(n.id.range()),
+        })?;
         return Ok(false);
       }
     }
@@ -1034,11 +929,9 @@ impl<'a> LowResTransformer<'a> {
         }
       },
       None => {
-        self.mark_diagnostic(
-          LowResTransformDiagnostic::UnsupportedAmbientModule {
-            range: self.source_range_to_range(n.id.range()),
-          },
-        )?;
+        self.mark_diagnostic(LowResDiagnostic::UnsupportedAmbientModule {
+          range: self.source_range_to_range(n.id.range()),
+        })?;
         return Ok(false);
       }
     };
@@ -1056,8 +949,8 @@ impl<'a> LowResTransformer<'a> {
 
   fn mark_diagnostic(
     &mut self,
-    diagnostic: LowResTransformDiagnostic,
-  ) -> Result<(), LowResTransformDiagnostic> {
+    diagnostic: LowResDiagnostic,
+  ) -> Result<(), LowResDiagnostic> {
     if self.should_error_on_first_diagnostic {
       Err(diagnostic)
     } else {
@@ -1068,8 +961,7 @@ impl<'a> LowResTransformer<'a> {
 
   fn source_range_to_range(&self, range: SourceRange) -> Range {
     let text_info = self.parsed_source.text_info();
-    let position_range = PositionRange::from_source_range(range, text_info);
-    Range::from_position_range(self.specifier.clone(), position_range)
+    source_range_to_range(range, self.specifier, text_info)
   }
 }
 
