@@ -45,7 +45,7 @@ pub enum LowResDiagnostic {
   UnsupportedGlobalModule { range: Range },
   #[error("Require is not supported in ES modules.")]
   UnsupportedRequire { range: Range },
-  #[error("Public API members ({referrer}) referencing or transitively referencing a class private member ({name}) is not supported.")]
+  #[error("Public API members ({referrer}) referencing or transitively referencing a class private member ({name}) are not supported. Extract out the shared type to a type alias.")]
   UnsupportedPrivateMemberReference {
     range: Range,
     name: String,
