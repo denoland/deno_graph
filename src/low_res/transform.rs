@@ -11,6 +11,7 @@ use deno_ast::swc::ast::Expr;
 use deno_ast::swc::ast::Function;
 use deno_ast::swc::ast::Ident;
 use deno_ast::swc::ast::Lit;
+use deno_ast::swc::ast::MemberProp;
 use deno_ast::swc::ast::ModuleDecl;
 use deno_ast::swc::ast::ModuleItem;
 use deno_ast::swc::ast::ObjectLit;
@@ -138,6 +139,10 @@ pub enum LowResTransformDiagnostic {
   #[error("Require is not supported in ES modules.")]
   UnsupportedRequire { range: Range },
   #[error(
+    "Super class expression was too complex. Extract it out to a variable and add an explicit type."
+  )]
+  UnsupportedSuperClassExpr { range: Range },
+  #[error(
     "CommonJS export assignments (`export =`) are not supported in ES modules."
   )]
   UnsupportedTsExportAssignment { range: Range },
@@ -152,6 +157,16 @@ pub enum LowResTransformDiagnostic {
 }
 
 impl LowResTransformDiagnostic {
+  pub fn from_vec(
+    mut diagnostics: Vec<LowResTransformDiagnostic>,
+  ) -> Option<Self> {
+    match diagnostics.len() {
+      0 => None,
+      1 => diagnostics.pop(),
+      _ => Some(LowResTransformDiagnostic::Multiple(diagnostics)),
+    }
+  }
+
   pub fn line_and_column_display(&self) -> Option<&Range> {
     use LowResTransformDiagnostic::*;
     match self {
@@ -161,6 +176,7 @@ impl LowResTransformDiagnostic {
       UnsupportedDestructuring { range } => Some(range),
       UnsupportedGlobalModule { range } => Some(range),
       UnsupportedRequire { range } => Some(range),
+      UnsupportedSuperClassExpr { range } => Some(range),
       UnsupportedTsExportAssignment { range } => Some(range),
       UnsupportedTsNamespaceExport { range } => Some(range),
       UnsupportedUsing { range } => Some(range),
@@ -292,7 +308,9 @@ impl<'a> LowResTransformer<'a> {
             return Ok(false);
           }
 
-          if is_expr_leavable(&n.expr) {
+          if is_expr_leavable(&n.expr)
+            || is_expr_ident_or_member_idents(&n.expr)
+          {
             Ok(true)
           } else {
             self.mark_diagnostic(
@@ -455,8 +473,14 @@ impl<'a> LowResTransformer<'a> {
   ) -> Result<(), LowResTransformDiagnostic> {
     let mut members = Vec::with_capacity(n.body.len());
     let mut had_private = false;
-    if n.super_class.is_some() {
-      todo!("Handle class extends");
+    if let Some(super_class) = &n.super_class {
+      if !is_expr_ident_or_member_idents(&super_class) {
+        self.mark_diagnostic(
+          LowResTransformDiagnostic::UnsupportedSuperClassExpr {
+            range: self.source_range_to_range(n.super_class.range()),
+          },
+        )?;
+      }
     }
     let mut insert_members = Vec::new();
     for mut member in std::mem::take(&mut n.body) {
@@ -1248,6 +1272,21 @@ fn is_expr_leavable(expr: &Expr) -> bool {
     // todo: probably could analyze this more
     | Expr::OptChain(_)
     | Expr::Invalid(_) => false,
+  }
+}
+
+fn is_expr_ident_or_member_idents(expr: &Expr) -> bool {
+  match expr {
+    Expr::Ident(_) => true,
+    Expr::Member(n) => {
+      is_expr_ident_or_member_idents(&n.obj)
+        && match &n.prop {
+          MemberProp::Ident(_) => true,
+          MemberProp::PrivateName(_) => false,
+          MemberProp::Computed(p) => is_expr_ident_or_member_idents(&p.expr),
+        }
+    }
+    _ => false,
   }
 }
 
