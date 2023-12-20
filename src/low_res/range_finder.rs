@@ -24,6 +24,11 @@ use super::LowResDiagnostic;
 struct NamedExports(IndexMap<String, NamedExports>);
 
 impl NamedExports {
+  pub fn retain_default_or_non_top_level(&mut self) {
+    // retain non-top level and the default export
+    self.0.retain(|k, v| k == "default" || !v.is_empty());
+  }
+
   pub fn add(&mut self, export: String) {
     // replace because it's for everything
     self.0.insert(export, NamedExports::default());
@@ -47,14 +52,17 @@ impl NamedExports {
     self.0.contains_key(arg)
   }
 
-  pub fn extend(&mut self, new_named: NamedExports) {
+  pub fn extend(&mut self, new_named: NamedExports) -> NamedExports {
+    let mut difference = NamedExports::default();
     for (key, exports) in new_named.0 {
       if let Some(entry) = self.0.get_mut(&key) {
-        entry.extend(exports);
+        difference.extend(entry.extend(exports));
       } else {
+        difference.add_named(key.clone(), exports.clone());
         self.0.insert(key, exports);
       }
     }
+    difference
   }
 
   pub fn from_parts(parts: &[String]) -> NamedExports {
@@ -94,74 +102,98 @@ impl NamedExports {
     }
     parts
   }
+
+  pub fn add_named(&mut self, key: String, exports: NamedExports) {
+    if let Some(entry) = self.0.get_mut(&key) {
+      entry.extend(exports);
+    } else {
+      self.0.insert(key, exports);
+    }
+  }
 }
 
 #[derive(Debug, Clone)]
-enum ImportedExports {
-  AllWithDefault,
-  Star,
-  Named(NamedExports),
+struct ImportedExports {
+  star: bool,
+  named: NamedExports,
 }
 
 impl ImportedExports {
   pub(crate) fn from_file_dep_name(dep_name: &FileDepName) -> Self {
     match dep_name {
-      FileDepName::Star => Self::Star,
+      FileDepName::Star => ImportedExports {
+        star: true,
+        named: Default::default(),
+      },
       FileDepName::Name(value) => {
         let mut named_exports = NamedExports::default();
         named_exports.add(value.clone());
-        Self::Named(named_exports)
+        ImportedExports {
+          star: false,
+          named: named_exports,
+        }
       }
     }
   }
 
+  pub fn star_with_default() -> ImportedExports {
+    Self {
+      star: true,
+      named: {
+        let mut named_exports = NamedExports::default();
+        named_exports.add("default".to_string());
+        named_exports
+      },
+    }
+  }
+
+  pub fn star() -> ImportedExports {
+    ImportedExports {
+      star: true,
+      named: Default::default(),
+    }
+  }
+
+  pub fn named(named: NamedExports) -> ImportedExports {
+    ImportedExports { star: false, named }
+  }
+
+  /// Adds the incoming exports to the existing exports and
+  /// returns the newly added exports that have not previously
+  /// been added.
   pub(crate) fn add(
     &mut self,
-    exports_to_trace: ImportedExports,
+    mut exports_to_trace: ImportedExports,
   ) -> Option<ImportedExports> {
-    match self {
-      ImportedExports::AllWithDefault => return None,
-      ImportedExports::Star => match exports_to_trace {
-        Self::Star => return None,
-        Self::AllWithDefault => {
-          *self = Self::AllWithDefault;
-          let mut named_exports = NamedExports::default();
-          named_exports.add("default".to_string());
-          Some(Self::Named(named_exports))
-        }
-        Self::Named(new_named) => {
-          if new_named.contains("default") {
-            *self = Self::AllWithDefault;
-            let mut named = NamedExports::default();
-            named.add("default".to_string());
-            Some(ImportedExports::Named(named))
-          } else {
-            None
-          }
-        }
-      },
-      ImportedExports::Named(current_named) => match exports_to_trace {
-        Self::AllWithDefault => {
-          *self = exports_to_trace.clone();
-          Some(exports_to_trace)
-        }
-        Self::Star => {
-          let exports_to_trace = if current_named.contains("default") {
-            ImportedExports::AllWithDefault
-          } else {
-            ImportedExports::Star
-          };
-          *self = exports_to_trace.clone();
-          Some(exports_to_trace)
-        }
-        Self::Named(new_named) => {
-          current_named.extend(new_named.clone());
-          // todo(dsherret): instead return a difference between
-          // the current_named and the new_named, which would be
-          // more efficient
-          Some(ImportedExports::Named(new_named))
-        }
-      },
+    let difference = if self.star {
+      // retain named exports in the incoming that are not top level
+      exports_to_trace.named.retain_default_or_non_top_level();
+      let named_difference = self.named.extend(exports_to_trace.named);
+      ImportedExports {
+        star: false,
+        named: named_difference,
+      }
+    } else if exports_to_trace.star {
+      // retain named exports in the existing that are not top level
+      self.named.retain_default_or_non_top_level();
+      let named_difference = self.named.extend(exports_to_trace.named);
+      self.star = true;
+      ImportedExports {
+        star: true,
+        named: named_difference,
+      }
+    } else {
+      let named_difference = self.named.extend(exports_to_trace.named);
+      ImportedExports {
+        star: false,
+        named: named_difference,
+      }
+    };
+
+    if difference.star || !difference.named.is_empty() {
+      Some(difference)
+    } else {
+      None
     }
   }
 }
@@ -287,7 +319,7 @@ impl<'a> PublicRangeFinder<'a> {
         self.add_pending_trace(
           &nv,
           &specifier,
-          ImportedExports::AllWithDefault,
+          ImportedExports::star_with_default(),
         );
       }
 
@@ -369,146 +401,126 @@ impl<'a> PublicRangeFinder<'a> {
     let mut pending_traces = PendingTraces::default();
     let module_symbol = module_info.module_symbol();
 
-    match &trace.exports_to_trace {
-      ImportedExports::AllWithDefault | ImportedExports::Star => {
-        if matches!(trace.exports_to_trace, ImportedExports::AllWithDefault) {
-          if let Some(default_symbol_id) =
-            module_symbol.exports().get("default")
-          {
-            pending_traces.maybe_add_id_trace(
-              *default_symbol_id,
-              module_symbol.symbol_id(),
-            );
-          }
+    if trace.exports_to_trace.star {
+      for (name, export_symbol_id) in module_info.module_symbol().exports() {
+        if name == "default"
+          && !trace.exports_to_trace.named.contains("default")
+        {
+          continue;
         }
 
-        for (name, export_symbol_id) in module_info.module_symbol().exports() {
-          if name == "default" {
-            continue;
+        pending_traces
+          .maybe_add_id_trace(*export_symbol_id, module_symbol.symbol_id());
+      }
+
+      // add all the specifiers to the list of pending specifiers
+      if let Some(re_export_all_nodes) = module_info.re_export_all_nodes() {
+        for re_export_all_node in re_export_all_nodes {
+          found_ranges.insert(re_export_all_node.span.range());
+          let specifier_text = re_export_all_node.src.value.as_str();
+          if let Some(dep_specifier) = self.graph.resolve_dependency(
+            specifier_text,
+            module_info.specifier(),
+            /* prefer types */ true,
+          ) {
+            // only analyze registry specifiers
+            if let Some(dep_nv) =
+              self.loader.registry_package_url_to_nv(&dep_specifier)
+            {
+              if self.seen_nvs.insert(dep_nv.clone()) {
+                self.pending_nvs.push_back(dep_nv.clone());
+              }
+
+              self.add_pending_trace(
+                &dep_nv,
+                &dep_specifier,
+                ImportedExports::star(),
+              );
+            }
           }
-
-          pending_traces
-            .maybe_add_id_trace(*export_symbol_id, module_symbol.symbol_id());
         }
+      }
 
-        // add all the specifiers to the list of pending specifiers
+      found = true;
+    }
+
+    if !trace.exports_to_trace.named.is_empty() {
+      let mut named_exports = trace.exports_to_trace.named.0.clone();
+      let module_exports = module_info.module_symbol().exports();
+      for i in (0..named_exports.len()).rev() {
+        let (export_name, _) = named_exports.get_index(i).unwrap();
+        if let Some(export_symbol_id) = module_exports.get(export_name) {
+          let export_name = export_name.clone();
+          let named_exports = named_exports.remove(&export_name).unwrap();
+          if named_exports.is_empty() {
+            pending_traces
+              .maybe_add_id_trace(*export_symbol_id, module_symbol.symbol_id());
+          } else {
+            pending_traces
+              .traces
+              .push_back(PendingIdTrace::QualifiedId {
+                symbol_id: *export_symbol_id,
+                parts: named_exports,
+                referrer_id: module_symbol.symbol_id(),
+              });
+          }
+        }
+      }
+
+      if !named_exports.is_empty() {
         if let Some(re_export_all_nodes) = module_info.re_export_all_nodes() {
           for re_export_all_node in re_export_all_nodes {
-            found_ranges.insert(re_export_all_node.span.range());
+            if named_exports.is_empty() {
+              break; // all done
+            }
             let specifier_text = re_export_all_node.src.value.as_str();
             if let Some(dep_specifier) = self.graph.resolve_dependency(
               specifier_text,
               module_info.specifier(),
               /* prefer types */ true,
             ) {
-              // only analyze registry specifiers
-              if let Some(dep_nv) =
-                self.loader.registry_package_url_to_nv(&dep_specifier)
+              if let Some(module_info) =
+                self.root_symbol.module_from_specifier(&dep_specifier)
               {
-                if self.seen_nvs.insert(dep_nv.clone()) {
-                  self.pending_nvs.push_back(dep_nv.clone());
+                let module_exports = module_info.exports(&self.root_symbol);
+
+                for i in (0..named_exports.len()).rev() {
+                  let (export_name, _) = named_exports.get_index(i).unwrap();
+                  if let Some(export_path) =
+                    module_exports.resolved.get(export_name)
+                  {
+                    found_ranges.insert(re_export_all_node.span.range());
+                    let export_name = export_name.clone();
+                    let named_exports =
+                      named_exports.remove(&export_name).unwrap();
+                    let module = match export_path {
+                            crate::symbols::ResolvedExportOrReExportAllPath::Export(e) => e.module,
+                            crate::symbols::ResolvedExportOrReExportAllPath::ReExportAllPath(p) => p.referrer_module,
+                        };
+                    if let Some(nv) =
+                      self.loader.registry_package_url_to_nv(module.specifier())
+                    {
+                      let mut new_named_exports = NamedExports::default();
+                      new_named_exports.0.insert(export_name, named_exports);
+                      self.add_pending_trace(
+                        &nv,
+                        module.specifier(),
+                        ImportedExports::named(new_named_exports),
+                      );
+                    }
+                  }
                 }
-
-                self.add_pending_trace(
-                  &dep_nv,
-                  &dep_specifier,
-                  ImportedExports::Star,
-                );
-              }
-            }
-          }
-        }
-
-        found = true;
-      }
-      ImportedExports::Named(named_exports) => {
-        let mut named_exports = named_exports.0.clone();
-        if !named_exports.is_empty() {
-          let module_exports = module_info.module_symbol().exports();
-          for i in (0..named_exports.len()).rev() {
-            let (export_name, _) = named_exports.get_index(i).unwrap();
-            if let Some(export_symbol_id) = module_exports.get(export_name) {
-              let export_name = export_name.clone();
-              let named_exports = named_exports.remove(&export_name).unwrap();
-              if named_exports.is_empty() {
-                pending_traces.maybe_add_id_trace(
-                  *export_symbol_id,
-                  module_symbol.symbol_id(),
-                );
-              } else {
-                pending_traces
-                  .traces
-                  .push_back(PendingIdTrace::QualifiedId {
-                    symbol_id: *export_symbol_id,
-                    parts: named_exports,
-                    referrer_id: module_symbol.symbol_id(),
-                  });
               }
             }
           }
 
           if !named_exports.is_empty() {
+            // in this case, include all re_export all ranges because
+            // we couldn't determine a named export
             if let Some(re_export_all_nodes) = module_info.re_export_all_nodes()
             {
               for re_export_all_node in re_export_all_nodes {
-                if named_exports.is_empty() {
-                  break; // all done
-                }
-                let specifier_text = re_export_all_node.src.value.as_str();
-                if let Some(dep_specifier) = self.graph.resolve_dependency(
-                  specifier_text,
-                  module_info.specifier(),
-                  /* prefer types */ true,
-                ) {
-                  if let Some(module_info) =
-                    self.root_symbol.module_from_specifier(&dep_specifier)
-                  {
-                    let module_exports = module_info.exports(&self.root_symbol);
-
-                    for i in (0..named_exports.len()).rev() {
-                      let (export_name, _) =
-                        named_exports.get_index(i).unwrap();
-                      if let Some(export_path) =
-                        module_exports.resolved.get(export_name)
-                      {
-                        found_ranges.insert(re_export_all_node.span.range());
-                        let export_name = export_name.clone();
-                        let named_exports =
-                          named_exports.remove(&export_name).unwrap();
-                        let module = match export_path {
-                            crate::symbols::ResolvedExportOrReExportAllPath::Export(e) => e.module,
-                            crate::symbols::ResolvedExportOrReExportAllPath::ReExportAllPath(p) => p.referrer_module,
-                        };
-                        if let Some(nv) = self
-                          .loader
-                          .registry_package_url_to_nv(module.specifier())
-                        {
-                          let mut new_named_exports = NamedExports::default();
-                          new_named_exports
-                            .0
-                            .insert(export_name, named_exports);
-                          self.add_pending_trace(
-                            &nv,
-                            module.specifier(),
-                            ImportedExports::Named(new_named_exports),
-                          );
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-
-              if !named_exports.is_empty() {
-                // in this case, include all re_export all ranges because
-                // we couldn't determine a named export
-                if let Some(re_export_all_nodes) =
-                  module_info.re_export_all_nodes()
-                {
-                  for re_export_all_node in re_export_all_nodes {
-                    found_ranges.insert(re_export_all_node.span.range());
-                  }
-                }
+                found_ranges.insert(re_export_all_node.span.range());
               }
             }
           }
@@ -734,7 +746,7 @@ impl<'a> PublicRangeFinder<'a> {
                       self.add_pending_trace(
                         &dep_nv,
                         &specifier,
-                        ImportedExports::Named(named_exports),
+                        ImportedExports::named(named_exports),
                       );
                     } else {
                       // need to analyze the whole package
