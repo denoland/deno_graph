@@ -32,7 +32,10 @@ use deno_ast::swc::ast::TsIntersectionType;
 use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;
 use deno_ast::swc::ast::TsLit;
+use deno_ast::swc::ast::TsModuleDecl;
+use deno_ast::swc::ast::TsModuleName;
 use deno_ast::swc::ast::TsModuleRef;
+use deno_ast::swc::ast::TsNamespaceBody;
 use deno_ast::swc::ast::TsOptionalType;
 use deno_ast::swc::ast::TsParamPropParam;
 use deno_ast::swc::ast::TsParenthesizedType;
@@ -128,6 +131,8 @@ pub enum LowResTransformDiagnostic {
   MissingExplicitType { range: Range },
   #[error("Missing explicit return type in the public API.")]
   MissingExplicitReturnType { range: Range },
+  #[error("Global augmentations such as ambient modules are not supported.")]
+  UnsupportedAmbientModule { range: Range },
   #[error(
     "Default export expression was too complex. Extract it out to a variable and add an explicit type."
   )]
@@ -172,6 +177,7 @@ impl LowResTransformDiagnostic {
     match self {
       MissingExplicitType { range } => Some(range),
       MissingExplicitReturnType { range } => Some(range),
+      UnsupportedAmbientModule { range } => Some(range),
       UnsupportedDefaultExportExpr { range } => Some(range),
       UnsupportedDestructuring { range } => Some(range),
       UnsupportedGlobalModule { range } => Some(range),
@@ -272,17 +278,26 @@ impl<'a> LowResTransformer<'a> {
     let mut module = self.parsed_source.module().clone();
     let mut comments =
       CommentsMut::new(self.parsed_source.comments().as_single_threaded());
-    let mut final_body = Vec::with_capacity(module.body.len());
-    for mut item in std::mem::take(&mut module.body) {
-      let retain = self.transform_item(&mut item, &mut comments)?;
+    module.body = self
+      .transform_module_body(std::mem::take(&mut module.body), &mut comments)?;
+    Ok((module, comments.into_multi_threaded()))
+  }
+
+  fn transform_module_body(
+    &mut self,
+    body: Vec<ModuleItem>,
+    comments: &mut CommentsMut,
+  ) -> Result<Vec<ModuleItem>, LowResTransformDiagnostic> {
+    let mut final_body = Vec::with_capacity(body.len());
+    for mut item in body {
+      let retain = self.transform_item(&mut item, comments)?;
       if retain {
         final_body.push(item);
       } else {
         comments.remove_leading(item.start());
       }
     }
-    module.body = final_body;
-    Ok((module, comments.into_multi_threaded()))
+    Ok(final_body)
   }
 
   fn transform_item(
@@ -436,18 +451,7 @@ impl<'a> LowResTransformer<'a> {
       Decl::TsInterface(_) => Ok(self.public_ranges.contains(&public_range)),
       Decl::TsTypeAlias(_) => Ok(self.public_ranges.contains(&public_range)),
       Decl::TsEnum(_) => Ok(self.public_ranges.contains(&public_range)),
-      Decl::TsModule(m) => {
-        if m.global {
-          self.mark_diagnostic(
-            LowResTransformDiagnostic::UnsupportedGlobalModule {
-              range: self.source_range_to_range(m.range()),
-            },
-          )?;
-          return Ok(false);
-        }
-
-        todo!()
-      }
+      Decl::TsModule(m) => self.transform_ts_module(m, &public_range, comments),
       Decl::Using(n) => {
         if self.public_ranges.contains(&public_range) {
           self.mark_diagnostic(
@@ -980,6 +984,74 @@ impl<'a> LowResTransformer<'a> {
     }
 
     Ok(!n.decls.is_empty())
+  }
+
+  fn transform_ts_module(
+    &mut self,
+    n: &mut TsModuleDecl,
+    public_range: &SourceRange,
+    comments: &mut CommentsMut,
+  ) -> Result<bool, LowResTransformDiagnostic> {
+    if n.global {
+      self.mark_diagnostic(
+        LowResTransformDiagnostic::UnsupportedGlobalModule {
+          range: self.source_range_to_range(n.range()),
+        },
+      )?;
+      return Ok(false);
+    }
+
+    match &n.id {
+      TsModuleName::Ident(_) => {
+        // ok
+      }
+      TsModuleName::Str(_) => {
+        // not ok
+        self.mark_diagnostic(
+          LowResTransformDiagnostic::UnsupportedAmbientModule {
+            range: self.source_range_to_range(n.id.range()),
+          },
+        )?;
+        return Ok(false);
+      }
+    }
+
+    let ts_module_block = match &mut n.body {
+      Some(body) => match body {
+        TsNamespaceBody::TsModuleBlock(block) => block,
+        TsNamespaceBody::TsNamespaceDecl(decl) => {
+          let mut body = &mut *decl.body;
+          loop {
+            match body {
+              TsNamespaceBody::TsModuleBlock(block) => {
+                break block;
+              }
+              TsNamespaceBody::TsNamespaceDecl(decl) => {
+                body = &mut decl.body;
+              }
+            }
+          }
+        }
+      },
+      None => {
+        self.mark_diagnostic(
+          LowResTransformDiagnostic::UnsupportedAmbientModule {
+            range: self.source_range_to_range(n.id.range()),
+          },
+        )?;
+        return Ok(false);
+      }
+    };
+
+    // allow the above diagnostics to error before checking for a public range
+    if !self.public_ranges.contains(&public_range) {
+      return Ok(false);
+    }
+
+    let body = std::mem::take(&mut ts_module_block.body);
+    ts_module_block.body = self.transform_module_body(body, comments)?;
+
+    Ok(true)
   }
 
   fn mark_diagnostic(

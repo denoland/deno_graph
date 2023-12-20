@@ -247,7 +247,7 @@ impl<'a> PublicRangeFinder<'a> {
         continue; // should never happen
       };
       let base_url = self.loader.registry_package_url(&nv);
-      for (key, value) in exports {
+      for (_name, value) in exports {
         let specifier = base_url.join(value).unwrap();
         self.add_pending_trace(
           &nv,
