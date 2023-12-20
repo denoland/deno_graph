@@ -14,10 +14,10 @@ export class Private2 {}
 # https://registry-staging.deno.com/@scope/a/1.0.0/b.ts
 export { A as B } from "./a.ts";
 
-export class Private1 {}
+export class Public1 {}
 
 # https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
-export * from "./a.ts";
+export * from "./b.ts";
 import * as mod from "./b.ts";
 import { Private2 } from "./a.ts";
 
@@ -84,7 +84,7 @@ import 'jsr:@scope/a'
           }
         }
       ],
-      "size": 59,
+      "size": 58,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/b.ts"
     },
@@ -92,9 +92,9 @@ import 'jsr:@scope/a'
       "kind": "esm",
       "dependencies": [
         {
-          "specifier": "./a.ts",
+          "specifier": "./b.ts",
           "code": {
-            "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a.ts",
+            "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/b.ts",
             "span": {
               "start": {
                 "line": 0,
@@ -108,17 +108,17 @@ import 'jsr:@scope/a'
           }
         },
         {
-          "specifier": "./b.ts",
+          "specifier": "./a.ts",
           "code": {
-            "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/b.ts",
+            "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a.ts",
             "span": {
               "start": {
-                "line": 1,
-                "character": 21
+                "line": 2,
+                "character": 25
               },
               "end": {
-                "line": 1,
-                "character": 29
+                "line": 2,
+                "character": 33
               }
             }
           }
@@ -159,12 +159,14 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/b.ts:
     }
   }
   export { A as B } from "./a.ts";
+  export class Public1 {
+  }
 
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
   {
-    "./a.ts": {
+    "./b.ts": {
       "code": {
-        "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a.ts",
+        "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/b.ts",
         "span": {
           "start": {
             "line": 0,
@@ -176,24 +178,9 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
           }
         }
       }
-    },
-    "./b.ts": {
-      "code": {
-        "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/b.ts",
-        "span": {
-          "start": {
-            "line": 1,
-            "character": 21
-          },
-          "end": {
-            "line": 1,
-            "character": 29
-          }
-        }
-      }
     }
   }
-  export * from "./a.ts";
+  export * from "./b.ts";
   import * as mod from "./b.ts";
   export class Export {
     prop!: typeof mod.B.prototype.notExistent;

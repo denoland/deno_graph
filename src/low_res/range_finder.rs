@@ -30,8 +30,8 @@ impl NamedExports {
   }
 
   pub fn add(&mut self, export: String) {
-    // replace because it's for everything
-    self.0.insert(export, NamedExports::default());
+    let entry = self.0.entry(export).or_default();
+    entry.retain_default_or_non_top_level()
   }
 
   pub fn add_qualified(&mut self, export: &str, qualified: &[String]) {
