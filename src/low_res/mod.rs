@@ -29,6 +29,12 @@ fn format_diagnostics(diagnostics: &[LowResDiagnostic]) -> String {
 
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum LowResDiagnostic {
+  #[error("Could not resolve '{name}' referenced from '{referrer}'. This may indicate a bug in Deno. Please open an issue to help us improve if so.")]
+  NotFoundReference {
+    range: Range,
+    name: String,
+    referrer: String,
+  },
   #[error("Missing explicit type in the public API.")]
   MissingExplicitType { range: Range },
   #[error("Missing explicit return type in the public API.")]
@@ -81,6 +87,7 @@ impl LowResDiagnostic {
   pub fn line_and_column_display(&self) -> Option<&Range> {
     use LowResDiagnostic::*;
     match self {
+      NotFoundReference { range, .. } => Some(range),
       MissingExplicitType { range } => Some(range),
       MissingExplicitReturnType { range } => Some(range),
       UnsupportedAmbientModule { range } => Some(range),

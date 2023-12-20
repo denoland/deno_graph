@@ -773,7 +773,25 @@ impl<'a> PublicRangeFinder<'a> {
                           .maybe_add_id_trace(member.symbol_id(), referrer_id);
                       }
                     }
-                    None => todo!(),
+                    None => {
+                      diagnostics.push(LowResDiagnostic::NotFoundReference {
+                        range: source_range_to_range(
+                          symbol.decls()[0].range,
+                          module_info.specifier(),
+                          module_info.text_info(),
+                        ),
+                        name: format!(
+                          "{}.prototype.{}",
+                          module_info
+                            .fully_qualified_symbol_name(symbol.symbol_id())
+                            .unwrap_or_else(|| "<unknown>".to_string()),
+                          parts[1],
+                        ),
+                        referrer: module_info
+                          .fully_qualified_symbol_name(referrer_id)
+                          .unwrap_or_else(|| "<unknown>".to_string()),
+                      });
+                    }
                   }
                 } else {
                   pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
@@ -794,8 +812,23 @@ impl<'a> PublicRangeFinder<'a> {
                     }
                   }
                   None => {
-                    // couldn't find
-                    todo!();
+                    diagnostics.push(LowResDiagnostic::NotFoundReference {
+                      range: source_range_to_range(
+                        symbol.decls()[0].range,
+                        module_info.specifier(),
+                        module_info.text_info(),
+                      ),
+                      name: format!(
+                        "{}.{}",
+                        module_info
+                          .fully_qualified_symbol_name(symbol.symbol_id())
+                          .unwrap_or_else(|| "<unknown>".to_string()),
+                        parts[0],
+                      ),
+                      referrer: module_info
+                        .fully_qualified_symbol_name(referrer_id)
+                        .unwrap_or_else(|| "<unknown>".to_string()),
+                    });
                   }
                 }
               }
