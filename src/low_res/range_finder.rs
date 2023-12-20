@@ -214,6 +214,7 @@ impl PendingTraces {
   }
 }
 
+#[derive(Debug)]
 struct PendingTrace {
   pub package_nv: PackageNv,
   pub specifier: ModuleSpecifier,
@@ -724,7 +725,7 @@ impl<'a> PublicRangeFinder<'a> {
                           let mut separate_parts =
                             parts.clone().into_separate_parts();
                           for parts in &mut separate_parts {
-                            parts[0] = first_part.clone();
+                            parts.insert(0, first_part.clone());
                           }
                           NamedExports::from_many_parts(&separate_parts)
                         }
