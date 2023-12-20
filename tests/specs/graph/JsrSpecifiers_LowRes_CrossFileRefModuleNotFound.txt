@@ -21,8 +21,7 @@ import * as mod from "./b.ts";
 import { Private2 } from "./a.ts";
 
 export class Export {
-  prop: typeof mod.B.prototype.member;
-  prop2: typeof mod.B.prototype.member2;
+  prop: typeof mod.B.prototype.notExistent;
 }
 
 # mod.ts
@@ -124,7 +123,7 @@ import 'jsr:@scope/a'
           }
         }
       ],
-      "size": 171,
+      "size": 135,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
     }
@@ -138,12 +137,8 @@ import 'jsr:@scope/a'
 }
 
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/a.ts:
-  {}
-  export class A {
-    member!: string;
-    member2!: string;
-  }
-
+  Could not resolve 'A.prototype.notExistent' referenced from '<unknown>'. This may indicate a bug in Deno. Please open an issue to help us improve if so.
+      at https://registry-staging.deno.com/@scope/a/1.0.0/a.ts:1:1
 Low res https://registry-staging.deno.com/@scope/a/1.0.0/b.ts:
   {
     "./a.ts": {
@@ -184,6 +179,5 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
   }
   import * as mod from "./b.ts";
   export class Export {
-    prop!: typeof mod.B.prototype.member;
-    prop2!: typeof mod.B.prototype.member2;
+    prop!: typeof mod.B.prototype.notExistent;
   }

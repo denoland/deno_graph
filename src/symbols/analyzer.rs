@@ -1114,6 +1114,13 @@ impl Symbol {
     self.parent_id
   }
 
+  /// Gets the symbol's parent's unique symbol id.
+  pub fn parent_unique_id(&self) -> Option<UniqueSymbolId> {
+    self
+      .parent_id
+      .map(|id| UniqueSymbolId::new(self.module_id, id))
+  }
+
   /// The local name of the symbol if it has one.
   pub fn maybe_name(&self) -> Option<Cow<str>> {
     self.decls.first().and_then(|d| d.maybe_name())
