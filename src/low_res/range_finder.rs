@@ -30,21 +30,13 @@ impl NamedExports {
   }
 
   pub fn add(&mut self, export: String) {
-    let entry = self.0.entry(export).or_default();
-    entry.retain_default_or_non_top_level()
+    self.0.entry(export).or_default();
   }
 
   pub fn add_qualified(&mut self, export: &str, qualified: &[String]) {
-    if let Some(entry) = self.0.get_mut(export) {
-      if !entry.0.is_empty() && !qualified.is_empty() {
-        entry.add_qualified(&qualified[0], &qualified[1..]);
-      }
-    } else {
-      let mut named_exports = NamedExports::default();
-      if !qualified.is_empty() {
-        named_exports.add_qualified(&qualified[0], &qualified[1..]);
-      }
-      self.0.insert(export.to_string(), named_exports);
+    let entry = self.0.entry(export.to_string()).or_default();
+    if !qualified.is_empty() {
+      entry.add_qualified(&qualified[0], &qualified[1..]);
     }
   }
 
@@ -56,7 +48,10 @@ impl NamedExports {
     let mut difference = NamedExports::default();
     for (key, exports) in new_named.0 {
       if let Some(entry) = self.0.get_mut(&key) {
-        difference.extend(entry.extend(exports));
+        let sub_diff = entry.extend(exports);
+        if !sub_diff.is_empty() {
+          difference.add_named(key.clone(), sub_diff);
+        }
       } else {
         difference.add_named(key.clone(), exports.clone());
         self.0.insert(key, exports);
@@ -104,11 +99,7 @@ impl NamedExports {
   }
 
   pub fn add_named(&mut self, key: String, exports: NamedExports) {
-    if let Some(entry) = self.0.get_mut(&key) {
-      entry.extend(exports);
-    } else {
-      self.0.insert(key, exports);
-    }
+    self.0.entry(key).or_default().extend(exports);
   }
 }
 
