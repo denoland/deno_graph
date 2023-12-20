@@ -1,9 +1,12 @@
+use std::collections::HashMap;
 use std::collections::VecDeque;
 
 use deno_semver::package::PackageNv;
 
 use crate::source::Loader;
 use crate::symbols::RootSymbol;
+use crate::symbols::SymbolFillDiagnostic;
+use crate::symbols::SymbolFillDiagnosticKind;
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
 
@@ -27,6 +30,14 @@ pub fn build_low_res_type_graph<'a>(
 )> {
   let public_modules =
     range_finder::find_public_ranges(loader, graph, root_symbol, pending_nvs);
+  let symbol_fill_diagnostics =
+    root_symbol.take_diagnostics().into_iter().fold(
+      HashMap::<ModuleSpecifier, Vec<SymbolFillDiagnostic>>::new(),
+      |mut acc, d| {
+        acc.entry(d.range.specifier.clone()).or_default().push(d);
+        acc
+      },
+    );
 
   let mut result = Vec::new();
   for (nv, modules) in public_modules {
@@ -39,6 +50,20 @@ pub fn build_low_res_type_graph<'a>(
           module_info.source(),
           options,
         );
+        let transform_result =
+          if let Some(diagnostics) = symbol_fill_diagnostics.get(&specifier) {
+            // for now, just surface the first symbol fill diagnostic
+            let diagnostic = &diagnostics[0];
+            match diagnostic.kind {
+              SymbolFillDiagnosticKind::UnsupportedDefaultExpr => {
+                Err(LowResTransformDiagnostic::UnsupportedDefaultExportExpr {
+                  range: diagnostic.range.clone(),
+                })
+              }
+            }
+          } else {
+            transform_result
+          };
         result.push((specifier, transform_result));
       }
     }

@@ -45,10 +45,15 @@ file:///mod.ts: EsmModuleInfo {
 [
   {
     "kind": "UnsupportedDefaultExpr",
-    "specifier": "file:///mod.ts",
-    "line_and_column": {
-      "line_number": 1,
-      "column_number": 1
+    "range": {
+      "start": {
+        "line": 0,
+        "character": 0
+      },
+      "end": {
+        "line": 0,
+        "character": 21
+      }
     }
   }
 ]

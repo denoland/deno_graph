@@ -26,6 +26,8 @@ use crate::EsmModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
 use crate::ModuleParser;
+use crate::PositionRange;
+use crate::Range;
 
 use super::collections::AdditiveOnlyIndexMap;
 use super::collections::AdditiveOnlyIndexMapForCopyValues;
@@ -1492,8 +1494,7 @@ pub enum SymbolFillDiagnosticKind {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SymbolFillDiagnostic {
   pub kind: SymbolFillDiagnosticKind,
-  pub specifier: ModuleSpecifier,
-  pub line_and_column: Option<LineAndColumnDisplay>,
+  pub range: Range,
 }
 
 struct SymbolMut(RefCell<Symbol>);
@@ -2339,14 +2340,14 @@ impl<'a> SymbolFiller<'a> {
         );
       }
       _ => {
-        let line_and_column = self
-          .source
-          .text_info()
-          .line_and_column_display(default_export_range.start);
         self.add_diagnostic(SymbolFillDiagnostic {
           kind: SymbolFillDiagnosticKind::UnsupportedDefaultExpr,
-          specifier: self.specifier.clone(),
-          line_and_column: Some(line_and_column),
+          range: {
+            let text_info = self.source.text_info();
+            let position_range =
+              PositionRange::from_source_range(default_export_range, text_info);
+            Range::from_position_range(self.specifier.clone(), position_range)
+          },
         });
       }
     }

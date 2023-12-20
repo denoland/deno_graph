@@ -44,6 +44,10 @@ export class ClassCtorPublicParamProp {
   ) {
   }
 }
+export class ClassCtorPublicParamPropInit {
+  constructor(public param1: Public3 = new Private1()) {
+  }
+}
 
 class Public1 {}
 class Public2 {}
@@ -87,7 +91,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1058,
+      "size": 1165,
       "mediaType": "TypeScript",
       "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
     }
@@ -132,6 +136,10 @@ Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
     private param2: unknown;
     private param3: unknown;
     constructor(param1: Public3, param2: Public4, param3?: Public5){}
+  }
+  export class ClassCtorPublicParamPropInit {
+    param1: Public3;
+    constructor(param1?: Public3){}
   }
   class Public1 {
   }

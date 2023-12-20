@@ -123,12 +123,16 @@ fn format_diagnostics(diagnostics: &[LowResTransformDiagnostic]) -> String {
 
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum LowResTransformDiagnostic {
-  #[error("Destructuring is not supported in the public API.")]
-  UnsupportedDestructuring { range: Range },
   #[error("Missing explicit type in the public API.")]
   MissingExplicitType { range: Range },
   #[error("Missing explicit return type in the public API.")]
   MissingExplicitReturnType { range: Range },
+  #[error(
+    "Default export expression was too complex. Extract it out to a variable and add an explicit type."
+  )]
+  UnsupportedDefaultExportExpr { range: Range },
+  #[error("Destructuring is not supported in the public API.")]
+  UnsupportedDestructuring { range: Range },
   #[error("Global augmentations are not supported.")]
   UnsupportedGlobalModule { range: Range },
   #[error("Require is not supported in ES modules.")]
@@ -139,6 +143,8 @@ pub enum LowResTransformDiagnostic {
   UnsupportedTsExportAssignment { range: Range },
   #[error("Global augmentations such as namespace exports are not supported.")]
   UnsupportedTsNamespaceExport { range: Range },
+  #[error("Using declarations are not supported in the public API.")]
+  UnsupportedUsing { range: Range },
   #[error("Failed to emit low res module: {0:#}")]
   Emit(Rc<anyhow::Error>),
   #[error("{}", format_diagnostics(.0))]
@@ -149,13 +155,15 @@ impl LowResTransformDiagnostic {
   pub fn line_and_column_display(&self) -> Option<&Range> {
     use LowResTransformDiagnostic::*;
     match self {
-      UnsupportedDestructuring { range } => Some(range),
       MissingExplicitType { range } => Some(range),
       MissingExplicitReturnType { range } => Some(range),
+      UnsupportedDefaultExportExpr { range } => Some(range),
+      UnsupportedDestructuring { range } => Some(range),
       UnsupportedGlobalModule { range } => Some(range),
       UnsupportedRequire { range } => Some(range),
       UnsupportedTsExportAssignment { range } => Some(range),
       UnsupportedTsNamespaceExport { range } => Some(range),
+      UnsupportedUsing { range } => Some(range),
       Emit(_) => None,
       Multiple(_) => None,
     }
@@ -284,7 +292,16 @@ impl<'a> LowResTransformer<'a> {
             return Ok(false);
           }
 
-          todo!("Handle default export expr")
+          if is_expr_leavable(&n.expr) {
+            Ok(true)
+          } else {
+            self.mark_diagnostic(
+              LowResTransformDiagnostic::UnsupportedDefaultExportExpr {
+                range: self.source_range_to_range(n.range()),
+              },
+            )?;
+            Ok(false)
+          }
         }
         ModuleDecl::ExportDefaultDecl(n) => {
           if !self.public_ranges.contains(&n.range()) {
@@ -413,7 +430,21 @@ impl<'a> LowResTransformer<'a> {
 
         todo!()
       }
-      Decl::Using(_) => todo!("not implemented using"),
+      Decl::Using(n) => {
+        if self.public_ranges.contains(&public_range) {
+          self.mark_diagnostic(
+            LowResTransformDiagnostic::UnsupportedUsing {
+              range: self.source_range_to_range(
+                n.decls
+                  .first()
+                  .map(|n| n.range())
+                  .unwrap_or_else(|| n.range()),
+              ),
+            },
+          )?;
+        }
+        Ok(false)
+      }
     }
   }
 
@@ -504,12 +535,20 @@ impl<'a> LowResTransformer<'a> {
                   }
                   TsParamPropParam::Assign(assign) => match &*assign.left {
                     Pat::Ident(ident) => PropName::Ident(ident.id.clone()),
-                    Pat::Array(_) => todo!(),
-                    Pat::Rest(_) => todo!(),
-                    Pat::Object(_) => todo!(),
-                    Pat::Assign(_) => todo!(),
-                    Pat::Invalid(_) => todo!(),
-                    Pat::Expr(_) => todo!(),
+                    Pat::Array(_)
+                    | Pat::Rest(_)
+                    | Pat::Object(_)
+                    | Pat::Assign(_)
+                    | Pat::Invalid(_)
+                    | Pat::Expr(_) => {
+                      self.mark_diagnostic(
+                        LowResTransformDiagnostic::UnsupportedDestructuring {
+                          range: self
+                            .source_range_to_range(assign.left.range()),
+                        },
+                      )?;
+                      return Ok(false);
+                    }
                   },
                 },
                 value: None,
@@ -661,11 +700,44 @@ impl<'a> LowResTransformer<'a> {
         n.value = None;
         Ok(true)
       }
+      ClassMember::AutoAccessor(n) => {
+        // waiting on https://github.com/swc-project/swc/pull/8436
+        // if n.accessibility == Some(Accessibility::Private) {
+        //   n.type_ann = Some(unknown_type_ann());
+        //   n.definite = true;
+        //   return Ok(true);
+        // }
+        // if n.type_ann.is_none() {
+        //   let inferred_type = n
+        //     .value
+        //     .as_ref()
+        //     .and_then(|e| maybe_infer_type_from_expr(&*e));
+        //   match inferred_type {
+        //     Some(t) => {
+        //       n.type_ann = Some(Box::new(TsTypeAnn {
+        //         span: DUMMY_SP,
+        //         type_ann: Box::new(t),
+        //       }));
+        //     }
+        //     None => {
+        //       self.mark_diagnostic(
+        //         LowResTransformDiagnostic::MissingExplicitType {
+        //           range: self.source_range_to_range(n.key.range()),
+        //         },
+        //       )?;
+        //     }
+        //   }
+        // }
+        // n.definite = true;
+        // n.decorators.clear();
+        // n.value = None;
+        // Ok(true)
+        todo!();
+      }
       ClassMember::TsIndexSignature(_) => {
         // ok, as-is
         Ok(true)
       }
-      ClassMember::AutoAccessor(_) => todo!(),
       ClassMember::PrivateMethod(_)
       | ClassMember::PrivateProp(_)
       | ClassMember::Empty(_)
