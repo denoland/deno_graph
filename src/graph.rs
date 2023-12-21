@@ -853,6 +853,14 @@ impl EsmModule {
     self.source.as_bytes().len()
   }
 
+  pub fn low_res_diagnostic(&self) -> Option<&LowResDiagnostic> {
+    let module_slot = self.low_res.as_ref()?;
+    match module_slot {
+      LowResTypeModuleSlot::Module(_) => None,
+      LowResTypeModuleSlot::Error(d) => Some(d),
+    }
+  }
+
   pub fn low_res_module(&self) -> Option<&LowResTypeModule> {
     let module_slot = self.low_res.as_ref()?;
     match module_slot {

@@ -5,6 +5,7 @@
 #![allow(clippy::disallowed_types)]
 
 use std::rc::Rc;
+use std::sync::Arc;
 
 use deno_ast::swc::ast::Accessibility;
 use deno_ast::swc::ast::BindingIdent;
@@ -165,7 +166,7 @@ pub fn transform(
   let comments = comments.into_single_threaded();
   let (text, source_map) =
     emit(specifier, &comments, parsed_source.text_info(), &module)
-      .map_err(|e| LowResDiagnostic::Emit(Rc::new(e)))?;
+      .map_err(|e| LowResDiagnostic::Emit(Arc::new(e)))?;
 
   Ok(LowResModule {
     module_info,

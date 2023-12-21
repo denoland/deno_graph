@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 use std::collections::VecDeque;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use deno_semver::package::PackageNv;
 
@@ -78,12 +78,19 @@ pub enum LowResDiagnostic {
   #[error("Using declarations are not supported in the public API.")]
   UnsupportedUsing { range: Range },
   #[error("Failed to emit low res module: {0:#}")]
-  Emit(Rc<anyhow::Error>),
+  Emit(Arc<anyhow::Error>),
   #[error("{}", format_diagnostics(.0))]
   Multiple(Vec<LowResDiagnostic>),
 }
 
 impl LowResDiagnostic {
+  pub fn count(&self) -> usize {
+    match self {
+      LowResDiagnostic::Multiple(diagnostics) => diagnostics.iter().map(|d| d.count()).sum(),
+      _ => 1,
+    }
+  }
+
   pub fn from_vec(mut diagnostics: Vec<LowResDiagnostic>) -> Option<Self> {
     match diagnostics.len() {
       0 => None,
