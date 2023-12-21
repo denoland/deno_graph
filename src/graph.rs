@@ -2209,7 +2209,7 @@ fn fill_module_dependencies(
           {
             let mut parts = analyze_dynamic_arg_template_parts(
               &parts,
-              &module_specifier,
+              module_specifier,
               &desc.argument_range,
               &import_attributes,
               file_system,
@@ -3845,7 +3845,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let parser = DefaultModuleParser::new_for_analysis();
     let analyzer = CapturingModuleAnalyzer::new(Some(Box::new(parser)), None);
     let root_symbol = crate::symbols::RootSymbol::new(
-      &self.graph,
+      self.graph,
       analyzer.as_capturing_parser(),
     );
     let pending_nvs = std::mem::take(&mut self.state.jsr.top_level_nvs)
@@ -3890,7 +3890,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             source_map: low_res_module.source_map.into(),
           }))
         }
-        Err(diagnostic) => LowResTypeModuleSlot::Error(Box::new(diagnostic)),
+        Err(diagnostic) => LowResTypeModuleSlot::Error(diagnostic),
       });
     }
   }

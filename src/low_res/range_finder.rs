@@ -1,3 +1,5 @@
+// Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -305,7 +307,7 @@ impl<'a> PublicRangeFinder<'a> {
         continue; // should never happen
       };
       let base_url = self.loader.registry_package_url(&nv);
-      for (_name, value) in exports {
+      for value in exports.values() {
         let specifier = base_url.join(value).unwrap();
         self.add_pending_trace(
           &nv,
@@ -473,7 +475,7 @@ impl<'a> PublicRangeFinder<'a> {
               if let Some(module_info) =
                 self.root_symbol.module_from_specifier(&dep_specifier)
               {
-                let module_exports = module_info.exports(&self.root_symbol);
+                let module_exports = module_info.exports(self.root_symbol);
 
                 for i in (0..named_exports.len()).rev() {
                   let (export_name, _) = named_exports.get_index(i).unwrap();
@@ -559,7 +561,7 @@ impl<'a> PublicRangeFinder<'a> {
               SymbolDeclKind::Target(id) => {
                 found_ranges.insert(decl.range);
                 if let Some(symbol_id) =
-                  module_info.esm().and_then(|m| m.symbol_id_from_swc(&id))
+                  module_info.esm().and_then(|m| m.symbol_id_from_swc(id))
                 {
                   pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
                 }
@@ -567,7 +569,7 @@ impl<'a> PublicRangeFinder<'a> {
               SymbolDeclKind::QualifiedTarget(id, parts) => {
                 found_ranges.insert(decl.range);
                 if let Some(symbol_id) =
-                  module_info.esm().and_then(|m| m.symbol_id_from_swc(&id))
+                  module_info.esm().and_then(|m| m.symbol_id_from_swc(id))
                 {
                   pending_traces.traces.push_back(
                     PendingIdTrace::QualifiedId {
@@ -702,7 +704,7 @@ impl<'a> PublicRangeFinder<'a> {
                 handled = true;
                 let symbol_id = module_info
                   .esm()
-                  .and_then(|m| m.symbol_id_from_swc(&id))
+                  .and_then(|m| m.symbol_id_from_swc(id))
                   .unwrap();
                 pending_traces
                   .traces
@@ -716,7 +718,7 @@ impl<'a> PublicRangeFinder<'a> {
                 handled = true;
                 let symbol_id = module_info
                   .esm()
-                  .and_then(|m| m.symbol_id_from_swc(&id))
+                  .and_then(|m| m.symbol_id_from_swc(id))
                   .unwrap();
                 let mut new_parts = NamedExports::default();
                 for parts in parts.clone().into_separate_parts() {
@@ -782,16 +784,14 @@ impl<'a> PublicRangeFinder<'a> {
                 && symbol.decls().iter().any(|d| d.is_class())
               {
                 if parts.len() > 1 {
-                  let member_symbols = symbol
+                  let mut member_symbols = symbol
                     .members()
                     .iter()
                     .filter_map(|id| module_info.symbol(*id));
-                  let member_symbol = member_symbols
-                    .filter(|s| {
-                      let maybe_name = s.maybe_name();
-                      maybe_name.as_deref() == Some(parts[1].as_str())
-                    })
-                    .next();
+                  let member_symbol = member_symbols.find(|s| {
+                    let maybe_name = s.maybe_name();
+                    maybe_name.as_deref() == Some(parts[1].as_str())
+                  });
                   match member_symbol {
                     Some(member) => {
                       if parts.len() > 2 {

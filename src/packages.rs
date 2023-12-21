@@ -1,7 +1,6 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
 use std::collections::BTreeMap;
-use std::collections::BTreeSet;
 use std::collections::HashMap;
 
 use deno_semver::package::PackageNv;
@@ -99,11 +98,7 @@ impl PackageSpecifiers {
     self.package_reqs.is_empty()
   }
 
-  pub fn add_nv(
-    &mut self,
-    package_req: PackageReq,
-    nv: PackageNv,
-  ) {
+  pub fn add_nv(&mut self, package_req: PackageReq, nv: PackageNv) {
     let nvs = self
       .packages_by_name
       .entry(package_req.name.clone())
@@ -114,11 +109,7 @@ impl PackageSpecifiers {
     self.package_reqs.insert(package_req, nv);
   }
 
-  pub(crate) fn add_export(
-    &mut self,
-    nv: PackageNv,
-    export: (String, String),
-  ) {
+  pub(crate) fn add_export(&mut self, nv: PackageNv, export: (String, String)) {
     self
       .packages
       .entry(nv.clone())
@@ -127,7 +118,10 @@ impl PackageSpecifiers {
       .insert(export.0, export.1);
   }
 
-  pub fn package_exports(&self, nv: &PackageNv) -> Option<&BTreeMap<String, String>> {
+  pub fn package_exports(
+    &self,
+    nv: &PackageNv,
+  ) -> Option<&BTreeMap<String, String>> {
     self.packages.get(nv).map(|p| &p.exports)
   }
 

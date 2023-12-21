@@ -1,3 +1,5 @@
+// Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+
 use deno_ast::swc::ast::Ident;
 use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
@@ -62,8 +64,7 @@ fn get_return_stmts_with_arg_from_stmt(stmt: &Stmt) -> Vec<&ReturnStmt> {
     Stmt::Switch(n) => n
       .cases
       .iter()
-      .map(|case| get_return_stmts_with_arg_from_stmts(&case.cons))
-      .flatten()
+      .flat_map(|case| get_return_stmts_with_arg_from_stmts(&case.cons))
       .collect(),
     Stmt::Try(n) => {
       let mut result = Vec::new();

@@ -131,7 +131,7 @@ pub trait Loader {
     }
     Some(PackageNv {
       name: format!("{}/{}", parts[0], parts[1]),
-      version: deno_semver::Version::parse_standard(&parts[2]).ok()?,
+      version: deno_semver::Version::parse_standard(parts[2]).ok()?,
     })
   }
 

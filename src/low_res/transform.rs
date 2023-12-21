@@ -1,3 +1,9 @@
+// Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+
+// for span methods, which actually make sense to use here in the transforms
+#![allow(clippy::disallowed_methods)]
+#![allow(clippy::disallowed_types)]
+
 use std::rc::Rc;
 
 use deno_ast::swc::ast::Accessibility;
@@ -91,7 +97,7 @@ impl CommentsMut {
           match c.kind {
             // only keep js docs and @deno-types comments
             CommentKind::Line => c.text.starts_with("@deno-types"),
-            CommentKind::Block => c.text.starts_with("*"),
+            CommentKind::Block => c.text.starts_with('*'),
           }
         });
         !value.is_empty()
@@ -133,7 +139,7 @@ pub fn transform(
   public_ranges: &ModulePublicRanges,
   parsed_source: &ParsedSource,
   options: &TransformOptions,
-) -> Result<LowResModule, LowResDiagnostic> {
+) -> Result<LowResModule, Box<LowResDiagnostic>> {
   let mut transformer = LowResTransformer::new(
     specifier,
     public_ranges,
@@ -142,7 +148,9 @@ pub fn transform(
   );
   let (module, comments) = transformer.transform()?;
   if !transformer.diagnostics.is_empty() {
-    return Err(LowResDiagnostic::Multiple(transformer.diagnostics));
+    return Err(Box::new(LowResDiagnostic::Multiple(
+      transformer.diagnostics,
+    )));
   }
   let module_info = DefaultModuleAnalyzer::module_info_from_swc(
     parsed_source.media_type(),
@@ -192,7 +200,7 @@ impl<'a> LowResTransformer<'a> {
     &mut self,
   ) -> Result<
     (deno_ast::swc::ast::Module, MultiThreadedComments),
-    LowResDiagnostic,
+    Box<LowResDiagnostic>,
   > {
     let mut module = self.parsed_source.module().clone();
     let mut comments =
@@ -206,7 +214,7 @@ impl<'a> LowResTransformer<'a> {
     &mut self,
     body: Vec<ModuleItem>,
     comments: &mut CommentsMut,
-  ) -> Result<Vec<ModuleItem>, LowResDiagnostic> {
+  ) -> Result<Vec<ModuleItem>, Box<LowResDiagnostic>> {
     let mut final_body = Vec::with_capacity(body.len());
     for mut item in body {
       let retain = self.transform_item(&mut item, comments)?;
@@ -223,7 +231,7 @@ impl<'a> LowResTransformer<'a> {
     &mut self,
     item: &mut ModuleItem,
     comments: &mut CommentsMut,
-  ) -> Result<bool, LowResDiagnostic> {
+  ) -> Result<bool, Box<LowResDiagnostic>> {
     match item {
       ModuleItem::ModuleDecl(decl) => match decl {
         ModuleDecl::Import(n) => {
@@ -319,12 +327,13 @@ impl<'a> LowResTransformer<'a> {
       },
     }
   }
+
   fn transform_default_decl(
     &mut self,
     default_decl: &mut DefaultDecl,
     comments: &mut CommentsMut,
     parent_range: SourceRange,
-  ) -> Result<(), LowResDiagnostic> {
+  ) -> Result<(), Box<LowResDiagnostic>> {
     match default_decl {
       DefaultDecl::Class(n) => self.transform_class(&mut n.class, comments),
       DefaultDecl::Fn(n) => self.transform_fn(
@@ -341,7 +350,7 @@ impl<'a> LowResTransformer<'a> {
     decl: &mut Decl,
     comments: &mut CommentsMut,
     parent_range: Option<SourceRange>,
-  ) -> Result<bool, LowResDiagnostic> {
+  ) -> Result<bool, Box<LowResDiagnostic>> {
     let public_range = parent_range.unwrap_or_else(|| decl.range());
     match decl {
       Decl::Class(n) => {
@@ -389,11 +398,11 @@ impl<'a> LowResTransformer<'a> {
     &mut self,
     n: &mut Class,
     comments: &mut CommentsMut,
-  ) -> Result<(), LowResDiagnostic> {
+  ) -> Result<(), Box<LowResDiagnostic>> {
     let mut members = Vec::with_capacity(n.body.len());
     let mut had_private = false;
     if let Some(super_class) = &n.super_class {
-      if !is_expr_ident_or_member_idents(&super_class) {
+      if !is_expr_ident_or_member_idents(super_class) {
         self.mark_diagnostic(LowResDiagnostic::UnsupportedSuperClassExpr {
           range: self.source_range_to_range(n.super_class.range()),
         })?;
@@ -443,10 +452,7 @@ impl<'a> LowResTransformer<'a> {
       )
     }
 
-    n.body = insert_members
-      .into_iter()
-      .chain(members.into_iter())
-      .collect();
+    n.body = insert_members.into_iter().chain(members).collect();
     n.decorators.clear();
     Ok(())
   }
@@ -455,7 +461,7 @@ impl<'a> LowResTransformer<'a> {
     &mut self,
     member: &mut ClassMember,
     insert_members: &mut Vec<ClassMember>,
-  ) -> Result<bool, LowResDiagnostic> {
+  ) -> Result<bool, Box<LowResDiagnostic>> {
     match member {
       ClassMember::Constructor(n) => {
         if let Some(body) = &mut n.body {
@@ -507,7 +513,7 @@ impl<'a> LowResTransformer<'a> {
                         _ => None,
                       };
                       explicit_type_ann.or_else(|| {
-                        maybe_infer_type_from_expr(&*assign.right).map(
+                        maybe_infer_type_from_expr(&assign.right).map(
                           |type_ann| {
                             Box::new(TsTypeAnn {
                               span: DUMMY_SP,
@@ -616,10 +622,8 @@ impl<'a> LowResTransformer<'a> {
           return Ok(true);
         }
         if n.type_ann.is_none() {
-          let inferred_type = n
-            .value
-            .as_ref()
-            .and_then(|e| maybe_infer_type_from_expr(&*e));
+          let inferred_type =
+            n.value.as_ref().and_then(|e| maybe_infer_type_from_expr(e));
           match inferred_type {
             Some(t) => {
               n.type_ann = Some(Box::new(TsTypeAnn {
@@ -689,7 +693,7 @@ impl<'a> LowResTransformer<'a> {
     n: &mut Function,
     parent_id_range: Option<SourceRange>,
     is_overload: bool,
-  ) -> Result<(), LowResDiagnostic> {
+  ) -> Result<(), Box<LowResDiagnostic>> {
     if is_overload {
       for (i, param) in n.params.iter_mut().enumerate() {
         *param = Param {
@@ -772,7 +776,7 @@ impl<'a> LowResTransformer<'a> {
   fn handle_param_pat(
     &mut self,
     pat: &mut Pat,
-  ) -> Result<(), LowResDiagnostic> {
+  ) -> Result<(), Box<LowResDiagnostic>> {
     match pat {
       Pat::Ident(ident) => {
         if ident.type_ann.is_none() {
@@ -784,7 +788,7 @@ impl<'a> LowResTransformer<'a> {
       Pat::Assign(assign) => match &mut *assign.left {
         Pat::Ident(ident) => {
           if ident.type_ann.is_none() {
-            let inferred_type = maybe_infer_type_from_expr(&*assign.right);
+            let inferred_type = maybe_infer_type_from_expr(&assign.right);
             match inferred_type {
               Some(t) => {
                 ident.type_ann = Some(Box::new(TsTypeAnn {
@@ -831,7 +835,7 @@ impl<'a> LowResTransformer<'a> {
   fn transform_var(
     &mut self,
     n: &mut VarDecl,
-  ) -> Result<bool, LowResDiagnostic> {
+  ) -> Result<bool, Box<LowResDiagnostic>> {
     n.decls.retain(|n| self.public_ranges.contains(&n.range()));
 
     for decl in &mut n.decls {
@@ -841,7 +845,7 @@ impl<'a> LowResTransformer<'a> {
             let inferred_type = decl
               .init
               .as_ref()
-              .and_then(|e| maybe_infer_type_from_expr(&*e));
+              .and_then(|e| maybe_infer_type_from_expr(e));
             match inferred_type {
               Some(t) => {
                 ident.type_ann = Some(Box::new(TsTypeAnn {
@@ -890,7 +894,7 @@ impl<'a> LowResTransformer<'a> {
     n: &mut TsModuleDecl,
     public_range: &SourceRange,
     comments: &mut CommentsMut,
-  ) -> Result<bool, LowResDiagnostic> {
+  ) -> Result<bool, Box<LowResDiagnostic>> {
     if n.global {
       self.mark_diagnostic(LowResDiagnostic::UnsupportedGlobalModule {
         range: self.source_range_to_range(n.range()),
@@ -937,7 +941,7 @@ impl<'a> LowResTransformer<'a> {
     };
 
     // allow the above diagnostics to error before checking for a public range
-    if !self.public_ranges.contains(&public_range) {
+    if !self.public_ranges.contains(public_range) {
       return Ok(false);
     }
 
@@ -950,9 +954,9 @@ impl<'a> LowResTransformer<'a> {
   fn mark_diagnostic(
     &mut self,
     diagnostic: LowResDiagnostic,
-  ) -> Result<(), LowResDiagnostic> {
+  ) -> Result<(), Box<LowResDiagnostic>> {
     if self.should_error_on_first_diagnostic {
-      Err(diagnostic)
+      Err(Box::new(diagnostic))
     } else {
       self.diagnostics.push(diagnostic);
       Ok(())
@@ -1078,7 +1082,7 @@ fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
       for elem_type in &t.elem_types {
         let inferred_type = infer_simple_type_from_type(&elem_type.ty)?;
         elems.push(TsTupleElement {
-          span: elem_type.span.clone(),
+          span: elem_type.span,
           label: elem_type.label.clone(),
           ty: Box::new(inferred_type),
         });
@@ -1116,7 +1120,7 @@ fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
       TsUnionOrIntersectionType::TsUnionType(t) => {
         let mut types = Vec::with_capacity(t.types.len());
         for ty in &t.types {
-          let inferred_type = infer_simple_type_from_type(&ty)?;
+          let inferred_type = infer_simple_type_from_type(ty)?;
           types.push(Box::new(inferred_type));
         }
         Some(TsType::TsUnionOrIntersectionType(
@@ -1129,7 +1133,7 @@ fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
       TsUnionOrIntersectionType::TsIntersectionType(t) => {
         let mut types = Vec::with_capacity(t.types.len());
         for ty in &t.types {
-          let inferred_type = infer_simple_type_from_type(&ty)?;
+          let inferred_type = infer_simple_type_from_type(ty)?;
           types.push(Box::new(inferred_type));
         }
         Some(TsType::TsUnionOrIntersectionType(
@@ -1153,7 +1157,7 @@ fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
       infer_simple_type_from_type(&t.type_ann).map(|inner| {
         TsType::TsTypeOperator(TsTypeOperator {
           span: t.span(),
-          op: t.op.clone(),
+          op: t.op,
           type_ann: Box::new(inner),
         })
       })
@@ -1174,20 +1178,20 @@ fn is_expr_leavable(expr: &Expr) -> bool {
   match expr {
     Expr::This(_) => true,
     Expr::Array(n) => n.elems.iter().all(|elem| match elem {
-      Some(elem) => is_expr_leavable(&*elem.expr),
+      Some(elem) => is_expr_leavable(&elem.expr),
       None => true,
     }),
     Expr::Object(n) => n.props.iter().all(|prop| match prop {
       PropOrSpread::Prop(prop) => match &**prop {
         Prop::Shorthand(_) => false,
         Prop::KeyValue(prop) => match &prop.key {
-          PropName::Ident(_) => is_expr_leavable(&*prop.value),
-          PropName::Str(_) => is_expr_leavable(&*prop.value),
-          PropName::Num(_) => is_expr_leavable(&*prop.value),
+          PropName::Ident(_) => is_expr_leavable(&prop.value),
+          PropName::Str(_) => is_expr_leavable(&prop.value),
+          PropName::Num(_) => is_expr_leavable(&prop.value),
           PropName::Computed(c) => {
-            is_expr_leavable(&*c.expr) && is_expr_leavable(&*prop.value)
+            is_expr_leavable(&c.expr) && is_expr_leavable(&prop.value)
           }
-          PropName::BigInt(_) => is_expr_leavable(&*prop.value),
+          PropName::BigInt(_) => is_expr_leavable(&prop.value),
         },
         Prop::Assign(n) => is_expr_leavable(&n.value),
         Prop::Getter(_) | Prop::Setter(_) | Prop::Method(_) => false,
@@ -1213,7 +1217,7 @@ fn is_expr_leavable(expr: &Expr) -> bool {
       | Lit::Regex(_) => true,
       Lit::JSXText(_) => false,
     },
-    Expr::Await(n) => is_expr_leavable(&*n.arg),
+    Expr::Await(n) => is_expr_leavable(&n.arg),
     Expr::Paren(n) => is_expr_leavable(&n.expr),
     Expr::TsTypeAssertion(_) | Expr::TsAs(_) => false,
     Expr::TsConstAssertion(n) => is_expr_leavable(&n.expr),

@@ -1,3 +1,5 @@
+// Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::rc::Rc;
@@ -126,7 +128,7 @@ pub fn build_low_res_type_graph<'a>(
   root_symbol: &'a RootSymbol<'a>,
   pending_nvs: VecDeque<PackageNv>,
   options: &TransformOptions,
-) -> Vec<(ModuleSpecifier, Result<LowResModule, LowResDiagnostic>)> {
+) -> Vec<(ModuleSpecifier, Result<LowResModule, Box<LowResDiagnostic>>)> {
   let public_modules =
     range_finder::find_public_ranges(loader, graph, root_symbol, pending_nvs);
   let symbol_fill_diagnostics =
@@ -139,13 +141,13 @@ pub fn build_low_res_type_graph<'a>(
     );
 
   let mut result = Vec::new();
-  for (nv, modules) in public_modules {
+  for (_nv, modules) in public_modules {
     for (specifier, mut ranges) in modules {
       let module_info = root_symbol.module_from_specifier(&specifier).unwrap();
       if let Some(module_info) = module_info.esm() {
         let transform_result =
           match LowResDiagnostic::from_vec(ranges.take_diagnostics()) {
-            Some(diagnostic) => Err(diagnostic),
+            Some(diagnostic) => Err(Box::new(diagnostic)),
             None => {
               let maybe_symbol_fill_diagnostic = symbol_fill_diagnostics
                 .get(&specifier)
@@ -160,7 +162,7 @@ pub fn build_low_res_type_graph<'a>(
                       }
                     })
                     .collect::<Vec<_>>();
-                  LowResDiagnostic::from_vec(diagnostics)
+                  LowResDiagnostic::from_vec(diagnostics).map(Box::new)
                 });
               match maybe_symbol_fill_diagnostic {
                 Some(diagnostic) => Err(diagnostic),
