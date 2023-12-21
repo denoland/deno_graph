@@ -1,14 +1,14 @@
-# https://registry-staging.deno.com/@scope/a/meta.json
+# https://jsr.io/@scope/a/meta.json
 {"versions": { "1.0.0": {} } }
 
-# https://registry-staging.deno.com/@scope/a/1.0.0_meta.json
+# https://jsr.io/@scope/a/1.0.0_meta.json
 { "exports": { ".": "./mod.ts" } }
 
-# https://registry-staging.deno.com/@scope/a/1.0.0/a.ts
+# https://jsr.io/@scope/a/1.0.0/a.ts
 export default class Test {}
 export class A {}
 
-# https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts
+# https://jsr.io/@scope/a/1.0.0/mod.ts
 export type Example = import("./a.ts");
 
 # mod.ts
@@ -48,7 +48,7 @@ import 'jsr:@scope/a'
       "kind": "esm",
       "size": 47,
       "mediaType": "TypeScript",
-      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a.ts"
+      "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts"
     },
     {
       "kind": "esm",
@@ -56,7 +56,7 @@ import 'jsr:@scope/a'
         {
           "specifier": "./a.ts",
           "type": {
-            "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a.ts",
+            "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
             "span": {
               "start": {
                 "line": 0,
@@ -72,29 +72,29 @@ import 'jsr:@scope/a'
       ],
       "size": 40,
       "mediaType": "TypeScript",
-      "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
   ],
   "redirects": {
-    "jsr:@scope/a": "https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts"
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
   },
   "packages": {
     "@scope/a": "@scope/a@1.0.0"
   }
 }
 
-Low res https://registry-staging.deno.com/@scope/a/1.0.0/a.ts:
+Low res https://jsr.io/@scope/a/1.0.0/a.ts:
   {}
   export default class Test {
   }
   export class A {
   }
 
-Low res https://registry-staging.deno.com/@scope/a/1.0.0/mod.ts:
+Low res https://jsr.io/@scope/a/1.0.0/mod.ts:
   {
     "./a.ts": {
       "type": {
-        "specifier": "https://registry-staging.deno.com/@scope/a/1.0.0/a.ts",
+        "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
         "span": {
           "start": {
             "line": 0,

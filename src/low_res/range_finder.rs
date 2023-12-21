@@ -254,7 +254,7 @@ pub fn find_public_ranges<'a>(
   root_symbol: &'a RootSymbol<'a>,
   workspace_members: &'a [WorkspaceMember],
   pending_nvs: VecDeque<PackageNv>,
-) -> HashMap<PackageNv, HashMap<ModuleSpecifier, ModulePublicRanges>> {
+) -> HashMap<PackageNv, PackagePublicRanges> {
   PublicRangeFinder {
     seen_nvs: pending_nvs.iter().cloned().collect(),
     traced_exports: Default::default(),
@@ -302,7 +302,7 @@ impl<'a> RegistryUrlConverter<'a> {
     if let Some(member) = self.workspace_members.iter().find(|m| m.nv == *nv) {
       member.base.clone()
     } else {
-      self.registry_package_url(nv)
+      self.loader.registry_package_url(nv)
     }
   }
 
@@ -320,6 +320,12 @@ impl<'a> RegistryUrlConverter<'a> {
   }
 }
 
+#[derive(Debug, Default)]
+pub struct PackagePublicRanges {
+  pub entrypoints: Vec<ModuleSpecifier>,
+  pub module_ranges: HashMap<ModuleSpecifier, ModulePublicRanges>,
+}
+
 struct PublicRangeFinder<'a> {
   url_converter: RegistryUrlConverter<'a>,
   graph: &'a ModuleGraph,
@@ -328,32 +334,35 @@ struct PublicRangeFinder<'a> {
   pending_traces: PendingTraces,
   traced_exports: HandledExports,
   seen_nvs: HashSet<PackageNv>,
-  public_ranges:
-    HashMap<PackageNv, HashMap<ModuleSpecifier, ModulePublicRanges>>,
+  public_ranges: HashMap<PackageNv, PackagePublicRanges>,
 }
 
 impl<'a> PublicRangeFinder<'a> {
-  pub fn find(
-    mut self,
-  ) -> HashMap<PackageNv, HashMap<ModuleSpecifier, ModulePublicRanges>> {
+  pub fn find(mut self) -> HashMap<PackageNv, PackagePublicRanges> {
     while let Some(nv) = self.pending_nvs.pop_front() {
       let Some(exports) = self.graph.packages.package_exports(&nv) else {
         continue; // should never happen
       };
       let base_url = self.url_converter.registry_package_url(&nv);
+      let mut entrypoints = Vec::with_capacity(exports.len());
       for value in exports.values() {
+        // todo: don't unwrap here
         let specifier = base_url.join(value).unwrap();
         self.add_pending_trace(
           &nv,
           &specifier,
           ImportedExports::star_with_default(),
         );
+        entrypoints.push(specifier);
       }
 
       while let Some(trace) = self.pending_traces.pop() {
         self.analyze_trace(&trace);
       }
+
+      self.public_ranges.entry(nv).or_default().entrypoints = entrypoints;
     }
+
     self.public_ranges
   }
 
@@ -925,6 +934,7 @@ impl<'a> PublicRangeFinder<'a> {
       .public_ranges
       .entry(trace.package_nv.clone())
       .or_default()
+      .module_ranges
       .entry(module_info.specifier().clone())
       .or_default();
     ranges.ranges.extend(found_ranges);

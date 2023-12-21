@@ -86,7 +86,9 @@ pub enum LowResDiagnostic {
 impl LowResDiagnostic {
   pub fn count(&self) -> usize {
     match self {
-      LowResDiagnostic::Multiple(diagnostics) => diagnostics.iter().map(|d| d.count()).sum(),
+      LowResDiagnostic::Multiple(diagnostics) => {
+        diagnostics.iter().map(|d| d.count()).sum()
+      }
       _ => 1,
     }
   }
@@ -122,9 +124,16 @@ impl LowResDiagnostic {
   }
 
   pub fn message_with_range(&self) -> String {
-    match self.line_and_column_display() {
-      Some(range) => format!("{}\n    at {}", self, range),
-      None => format!("{}", self),
+    match self {
+      LowResDiagnostic::Multiple(errors) => errors
+        .iter()
+        .map(|e| e.message_with_range())
+        .collect::<Vec<_>>()
+        .join("\n"),
+      _ => match self.line_and_column_display() {
+        Some(range) => format!("{}\n    at {}", self, range),
+        None => format!("{}", self),
+      },
     }
   }
 }
@@ -152,9 +161,11 @@ pub fn build_low_res_type_graph<'a>(
       },
     );
 
-  let mut result = Vec::new();
-  for (_nv, modules) in public_modules {
-    for (specifier, mut ranges) in modules {
+  let mut final_result = Vec::new();
+  for (nv, package) in public_modules {
+    let mut errors = Vec::with_capacity(package.module_ranges.len());
+    let mut low_res_modules = Vec::with_capacity(package.module_ranges.len());
+    for (specifier, mut ranges) in package.module_ranges {
       let module_info = root_symbol.module_from_specifier(&specifier).unwrap();
       if let Some(module_info) = module_info.esm() {
         let transform_result =
@@ -187,9 +198,29 @@ pub fn build_low_res_type_graph<'a>(
               }
             }
           };
-        result.push((specifier, transform_result));
+        match transform_result {
+          Ok(modules) => {
+            if errors.is_empty() {
+              low_res_modules.push((specifier.clone(), Ok(modules)));
+            }
+          }
+          Err(d) => {
+            errors.push(*d);
+          }
+        }
+      }
+    }
+
+    if errors.is_empty() {
+      final_result.extend(low_res_modules);
+    } else {
+      // if there are errors, insert a copy into each entrypoint
+      let combined_errors = LowResDiagnostic::Multiple(errors);
+      for entrypoint in package.entrypoints {
+        final_result.push((entrypoint, Err(Box::new(combined_errors.clone()))));
       }
     }
   }
-  result
+
+  final_result
 }
