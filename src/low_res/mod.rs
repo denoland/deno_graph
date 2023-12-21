@@ -84,12 +84,10 @@ pub enum LowResDiagnostic {
 }
 
 impl LowResDiagnostic {
-  pub fn count(&self) -> usize {
+  pub fn flatten_multiple<'a>(&'a self) -> Box<dyn Iterator<Item = &LowResDiagnostic> + 'a> {
     match self {
-      LowResDiagnostic::Multiple(diagnostics) => {
-        diagnostics.iter().map(|d| d.count()).sum()
-      }
-      _ => 1,
+      LowResDiagnostic::Multiple(diagnostics) => Box::new(diagnostics.iter().flat_map(|d| d.flatten_multiple())),
+      _ => Box::new(std::iter::once(self))
     }
   }
 

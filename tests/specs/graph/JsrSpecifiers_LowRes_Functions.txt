@@ -38,6 +38,10 @@ export default function test9(param: string): string;
 export default function test9(param: string): string {
 }
 
+export function test10(...params: string[]): string[] {
+  return params;
+}
+
 class PublicOther {
 }
 class PublicOther2 {
@@ -80,7 +84,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 982,
+      "size": 1058,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -127,6 +131,9 @@ Low res https://jsr.io/@scope/a/1.0.0/mod.ts:
   export default function test9(param: number): number;
   export default function test9(param: string): string;
   export default function test9(param0?: any): any {
+    return {} as any;
+  }
+  export function test10(...params: string[]): string[] {
     return {} as any;
   }
   class PublicOther {

@@ -812,21 +812,24 @@ impl<'a> LowResTransformer<'a> {
           *pat = Pat::Ident((*ident).clone());
         }
         Pat::Array(_)
-        | Pat::Rest(_)
         | Pat::Object(_)
         | Pat::Assign(_)
         | Pat::Invalid(_)
+        | Pat::Rest(_)
         | Pat::Expr(_) => {
           self.mark_diagnostic(LowResDiagnostic::UnsupportedDestructuring {
             range: self.source_range_to_range(pat.range()),
           })?;
         }
       },
-      Pat::Array(_)
-      | Pat::Rest(_)
-      | Pat::Object(_)
-      | Pat::Invalid(_)
-      | Pat::Expr(_) => {
+      Pat::Rest(p) => {
+        if p.type_ann.is_none() {
+          self.mark_diagnostic(LowResDiagnostic::MissingExplicitType {
+            range: self.source_range_to_range(p.range()),
+          })?;
+        }
+      }
+      Pat::Array(_) | Pat::Object(_) | Pat::Invalid(_) | Pat::Expr(_) => {
         self.mark_diagnostic(LowResDiagnostic::UnsupportedDestructuring {
           range: self.source_range_to_range(pat.range()),
         })?;
