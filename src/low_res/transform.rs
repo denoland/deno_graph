@@ -798,18 +798,23 @@ impl<'a> LowResTransformer<'a> {
                   span: DUMMY_SP,
                   type_ann: Box::new(t),
                 }));
+                ident.id.optional = true;
+                *pat = Pat::Ident((*ident).clone());
               }
               None => {
-                self.mark_diagnostic(
-                  LowResDiagnostic::MissingExplicitType {
-                    range: self.source_range_to_range(ident.range()),
-                  },
-                )?;
+                if !is_expr_leavable(&assign.right) {
+                  self.mark_diagnostic(
+                    LowResDiagnostic::MissingExplicitType {
+                      range: self.source_range_to_range(ident.range()),
+                    },
+                  )?;
+                }
               }
             }
+          } else {
+            ident.id.optional = true;
+            *pat = Pat::Ident((*ident).clone());
           }
-          ident.id.optional = true;
-          *pat = Pat::Ident((*ident).clone());
         }
         Pat::Array(_)
         | Pat::Object(_)

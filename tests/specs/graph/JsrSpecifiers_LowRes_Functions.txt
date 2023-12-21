@@ -42,6 +42,10 @@ export function test10(...params: string[]): string[] {
   return params;
 }
 
+// should support leaving this expr as-is
+export function test11(options = { copy: true }) {
+}
+
 class PublicOther {
 }
 class PublicOther2 {
@@ -84,7 +88,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1058,
+      "size": 1154,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -134,6 +138,11 @@ Low res https://jsr.io/@scope/a/1.0.0/mod.ts:
     return {} as any;
   }
   export function test10(...params: string[]): string[] {
+    return {} as any;
+  }
+  export function test11(options = {
+    copy: true
+  }): void {
     return {} as any;
   }
   class PublicOther {
