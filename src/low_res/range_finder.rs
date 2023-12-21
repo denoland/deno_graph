@@ -630,12 +630,36 @@ impl<'a> PublicRangeFinder<'a> {
                           );
                         }
                       }
-                      SymbolNodeDep::ImportType(_, _) => {
-                        // todo: this needs to resolve the specifier
-                        // if it's in another package, then the entire package needs
-                        // to be analyzed. If it's in the same package, then only
-                        // the types used here need to be analyzed
-                        todo!();
+                      SymbolNodeDep::ImportType(specifier, parts) => {
+                        if let Some(specifier) = self.graph.resolve_dependency(
+                          &specifier,
+                          module_info.specifier(),
+                          /* prefer types */ true,
+                        ) {
+                          if let Some(dep_nv) =
+                            self.loader.registry_package_url_to_nv(&specifier)
+                          {
+                            if dep_nv == *pkg_nv {
+                              // just add this specifier
+                              self.add_pending_trace(
+                                &dep_nv,
+                                &specifier,
+                                if parts.is_empty() {
+                                  ImportedExports::star_with_default()
+                                } else {
+                                  ImportedExports::named(
+                                    NamedExports::from_parts(&parts),
+                                  )
+                                },
+                              );
+                            } else {
+                              // need to analyze the whole package
+                              if self.seen_nvs.insert(dep_nv.clone()) {
+                                self.pending_nvs.push_back(dep_nv.clone());
+                              }
+                            }
+                          }
+                        }
                       }
                     }
                   }
