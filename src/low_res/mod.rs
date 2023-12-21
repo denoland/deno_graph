@@ -41,6 +41,12 @@ pub enum LowResDiagnostic {
   MissingExplicitReturnType { range: Range },
   #[error("Global augmentations such as ambient modules are not supported.")]
   UnsupportedAmbientModule { range: Range },
+  #[error("The reference '{name}' from '{referrer}' was too complex. Extract out the shared type to a type alias.")]
+  UnsupportedComplexReference {
+    range: Range,
+    name: String,
+    referrer: String,
+  },
   #[error(
     "Default export expression was too complex. Extract it out to a variable and add an explicit type."
   )]
@@ -91,6 +97,7 @@ impl LowResDiagnostic {
       MissingExplicitType { range } => Some(range),
       MissingExplicitReturnType { range } => Some(range),
       UnsupportedAmbientModule { range } => Some(range),
+      UnsupportedComplexReference { range, .. } => Some(range),
       UnsupportedDefaultExportExpr { range } => Some(range),
       UnsupportedDestructuring { range } => Some(range),
       UnsupportedGlobalModule { range } => Some(range),

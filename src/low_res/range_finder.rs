@@ -771,7 +771,25 @@ impl<'a> PublicRangeFinder<'a> {
                   match member_symbol {
                     Some(member) => {
                       if parts.len() > 2 {
-                        todo!(); // error
+                        diagnostics.push(
+                          LowResDiagnostic::UnsupportedComplexReference {
+                            range: source_range_to_range(
+                              symbol.decls()[0].range,
+                              module_info.specifier(),
+                              module_info.text_info(),
+                            ),
+                            name: format!(
+                              "{}.prototype.{}",
+                              module_info
+                                .fully_qualified_symbol_name(symbol.symbol_id())
+                                .unwrap_or_else(|| "<unknown>".to_string()),
+                              parts[1..].join("."),
+                            ),
+                            referrer: module_info
+                              .fully_qualified_symbol_name(referrer_id)
+                              .unwrap_or_else(|| "<unknown>".to_string()),
+                          },
+                        );
                       } else {
                         pending_traces
                           .maybe_add_id_trace(member.symbol_id(), referrer_id);
