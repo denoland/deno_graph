@@ -8,6 +8,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use deno_ast::swc::ast::Accessibility;
+use deno_ast::swc::ast::ArrayLit;
 use deno_ast::swc::ast::BindingIdent;
 use deno_ast::swc::ast::Class;
 use deno_ast::swc::ast::ClassMember;
@@ -816,12 +817,29 @@ impl<'a> LowResTransformer<'a> {
             *pat = Pat::Ident((*ident).clone());
           }
         }
-        Pat::Array(_)
-        | Pat::Object(_)
-        | Pat::Assign(_)
-        | Pat::Invalid(_)
-        | Pat::Rest(_)
-        | Pat::Expr(_) => {
+        Pat::Array(p) => {
+          if p.type_ann.is_none() {
+            if !is_expr_leavable(&assign.right) {
+              self.mark_diagnostic(LowResDiagnostic::MissingExplicitType {
+                range: self.source_range_to_range(p.range()),
+              })?;
+            }
+          } else {
+            assign.right = array_as_any_expr();
+          }
+        }
+        Pat::Object(p) => {
+          if p.type_ann.is_none() {
+            if !is_expr_leavable(&assign.right) {
+              self.mark_diagnostic(LowResDiagnostic::MissingExplicitType {
+                range: self.source_range_to_range(p.range()),
+              })?;
+            }
+          } else {
+            assign.right = obj_as_any_expr();
+          }
+        }
+        Pat::Assign(_) | Pat::Invalid(_) | Pat::Rest(_) | Pat::Expr(_) => {
           self.mark_diagnostic(LowResDiagnostic::UnsupportedDestructuring {
             range: self.source_range_to_range(pat.range()),
           })?;
@@ -834,7 +852,21 @@ impl<'a> LowResTransformer<'a> {
           })?;
         }
       }
-      Pat::Array(_) | Pat::Object(_) | Pat::Invalid(_) | Pat::Expr(_) => {
+      Pat::Array(p) => {
+        if p.type_ann.is_none() {
+          self.mark_diagnostic(LowResDiagnostic::MissingExplicitType {
+            range: self.source_range_to_range(p.range()),
+          })?;
+        }
+      }
+      Pat::Object(p) => {
+        if p.type_ann.is_none() {
+          self.mark_diagnostic(LowResDiagnostic::MissingExplicitType {
+            range: self.source_range_to_range(p.range()),
+          })?;
+        }
+      }
+      Pat::Invalid(_) | Pat::Expr(_) => {
         self.mark_diagnostic(LowResDiagnostic::UnsupportedDestructuring {
           range: self.source_range_to_range(pat.range()),
         })?;
@@ -1269,13 +1301,24 @@ fn is_expr_ident_or_member_idents(expr: &Expr) -> bool {
   }
 }
 
+fn array_as_any_expr() -> Box<Expr> {
+  expr_as_any_expr(Expr::Array(ArrayLit {
+    span: DUMMY_SP,
+    elems: Default::default(),
+  }))
+}
+
 fn obj_as_any_expr() -> Box<Expr> {
+  expr_as_any_expr(Expr::Object(ObjectLit {
+    span: DUMMY_SP,
+    props: Default::default(),
+  }))
+}
+
+fn expr_as_any_expr(expr: Expr) -> Box<Expr> {
   Box::new(Expr::TsAs(TsAsExpr {
     span: DUMMY_SP,
-    expr: Box::new(Expr::Object(ObjectLit {
-      span: DUMMY_SP,
-      props: Default::default(),
-    })),
+    expr: Box::new(expr),
     type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
       span: DUMMY_SP,
       kind: TsKeywordTypeKind::TsAnyKeyword,
