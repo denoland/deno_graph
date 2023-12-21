@@ -154,10 +154,10 @@ Low res https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export interface GlobOptions {
   }
-  export function test12({ globstar = false }: GlobOptions = {} as any): void {
+  export function test12({}: GlobOptions = {} as any): void {
     return {} as any;
   }
-  export function test13([test]: number[] = [] as any): void {
+  export function test13([]: number[] = [] as any): void {
     return {} as any;
   }
   class PublicOther {

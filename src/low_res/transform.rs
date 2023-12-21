@@ -827,6 +827,7 @@ impl<'a> LowResTransformer<'a> {
           } else {
             assign.right = array_as_any_expr();
           }
+          p.elems.clear();
         }
         Pat::Object(p) => {
           if p.type_ann.is_none() {
@@ -838,6 +839,7 @@ impl<'a> LowResTransformer<'a> {
           } else {
             assign.right = obj_as_any_expr();
           }
+          p.props.clear();
         }
         Pat::Assign(_) | Pat::Invalid(_) | Pat::Rest(_) | Pat::Expr(_) => {
           self.mark_diagnostic(LowResDiagnostic::UnsupportedDestructuring {
@@ -858,6 +860,7 @@ impl<'a> LowResTransformer<'a> {
             range: self.source_range_to_range(p.range()),
           })?;
         }
+        p.elems.clear();
       }
       Pat::Object(p) => {
         if p.type_ann.is_none() {
@@ -865,6 +868,7 @@ impl<'a> LowResTransformer<'a> {
             range: self.source_range_to_range(p.range()),
           })?;
         }
+        p.props.clear();
       }
       Pat::Invalid(_) | Pat::Expr(_) => {
         self.mark_diagnostic(LowResDiagnostic::UnsupportedDestructuring {
