@@ -163,6 +163,7 @@ pub fn build_low_res_type_graph<'a>(
 
   let mut final_result = Vec::new();
   for (nv, package) in public_modules {
+    log::debug!("Analyzing '{}' low res", nv);
     let mut errors = Vec::with_capacity(package.module_ranges.len());
     let mut low_res_modules = Vec::with_capacity(package.module_ranges.len());
     for (specifier, mut ranges) in package.module_ranges {

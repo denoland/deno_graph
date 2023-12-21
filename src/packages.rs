@@ -7,6 +7,7 @@ use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
 use deno_semver::VersionReq;
+use indexmap::IndexMap;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -80,7 +81,7 @@ impl JsrPackageVersionInfo {
 #[derive(Default, Debug, Clone)]
 struct PackageNvInfo {
   /// Collection of exports used.
-  exports: BTreeMap<String, String>,
+  exports: IndexMap<String, String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
@@ -121,7 +122,7 @@ impl PackageSpecifiers {
   pub fn package_exports(
     &self,
     nv: &PackageNv,
-  ) -> Option<&BTreeMap<String, String>> {
+  ) -> Option<&IndexMap<String, String>> {
     self.packages.get(nv).map(|p| &p.exports)
   }
 

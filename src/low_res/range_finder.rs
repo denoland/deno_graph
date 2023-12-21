@@ -340,7 +340,19 @@ struct PublicRangeFinder<'a> {
 impl<'a> PublicRangeFinder<'a> {
   pub fn find(mut self) -> HashMap<PackageNv, PackagePublicRanges> {
     while let Some(nv) = self.pending_nvs.pop_front() {
-      let Some(exports) = self.graph.packages.package_exports(&nv) else {
+      let Some(exports) =
+        self.graph.packages.package_exports(&nv).or_else(|| {
+          // todo: fix this up to not piggy back on url_converter
+          Some(
+            &self
+              .url_converter
+              .workspace_members
+              .iter()
+              .find(|m| m.nv == nv)?
+              .exports,
+          )
+        })
+      else {
         continue; // should never happen
       };
       let base_url = self.url_converter.registry_package_url(&nv);
