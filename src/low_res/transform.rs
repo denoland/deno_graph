@@ -76,6 +76,7 @@ use deno_ast::SourceTextInfo;
 use crate::DefaultModuleAnalyzer;
 use crate::ModuleInfo;
 use crate::Range;
+use crate::WorkspaceMember;
 
 use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::get_return_stmts_with_arg_from_function;
@@ -130,7 +131,8 @@ pub struct LowResModule {
   pub source_map: String,
 }
 
-pub struct TransformOptions {
+pub struct TransformOptions<'a> {
+  pub workspace_members: &'a [WorkspaceMember],
   pub should_error_on_first_diagnostic: bool,
 }
 

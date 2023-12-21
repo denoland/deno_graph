@@ -129,8 +129,13 @@ pub fn build_low_res_type_graph<'a>(
   pending_nvs: VecDeque<PackageNv>,
   options: &TransformOptions,
 ) -> Vec<(ModuleSpecifier, Result<LowResModule, Box<LowResDiagnostic>>)> {
-  let public_modules =
-    range_finder::find_public_ranges(loader, graph, root_symbol, pending_nvs);
+  let public_modules = range_finder::find_public_ranges(
+    loader,
+    graph,
+    root_symbol,
+    options.workspace_members,
+    pending_nvs,
+  );
   let symbol_fill_diagnostics =
     root_symbol.take_diagnostics().into_iter().fold(
       HashMap::<ModuleSpecifier, Vec<SymbolFillDiagnostic>>::new(),

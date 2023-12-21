@@ -969,6 +969,8 @@ pub struct BuildOptions<'a> {
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
   pub reporter: Option<&'a dyn Reporter>,
+  /// Whether to fill workspace members with low resolution TypeScript data.
+  pub workspace_low_res: bool,
   pub workspace_members: Vec<WorkspaceMember>,
 }
 
@@ -1405,6 +1407,7 @@ impl ModuleGraph {
       loader,
       options.module_analyzer.unwrap_or(&default_analyzer),
       options.reporter,
+      options.workspace_low_res,
       options.workspace_members,
     )
     .await
@@ -2706,6 +2709,7 @@ struct Builder<'a, 'graph> {
   graph: &'graph mut ModuleGraph,
   state: PendingState,
   fill_pass_mode: FillPassMode,
+  workspace_low_res: bool,
   workspace_members: Vec<WorkspaceMember>,
   diagnostics: Vec<BuildDiagnostic>,
 }
@@ -2723,6 +2727,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     loader: &'a mut dyn Loader,
     module_analyzer: &'a dyn ModuleAnalyzer,
     reporter: Option<&'a dyn Reporter>,
+    workspace_low_res: bool,
     workspace_members: Vec<WorkspaceMember>,
   ) -> Vec<BuildDiagnostic> {
     let fill_pass_mode = match graph.roots.is_empty() {
@@ -2740,6 +2745,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       graph,
       state: PendingState::default(),
       fill_pass_mode,
+      workspace_low_res,
       workspace_members,
       diagnostics: Vec::new(),
     };
@@ -3834,9 +3840,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   }
 
   fn create_low_res_type_graph(&mut self) {
-    if self.state.jsr.top_level_nvs.is_empty()
-      || !self.graph.graph_kind().include_types()
-    {
+    if !self.graph.graph_kind().include_types() {
+      return;
+    }
+
+    let mut pending_nvs = std::mem::take(&mut self.state.jsr.top_level_nvs)
+      .into_iter()
+      .collect::<VecDeque<_>>();
+    if self.workspace_low_res {
+      pending_nvs.extend(self.workspace_members.iter().map(|n| n.nv.clone()));
+    }
+    if pending_nvs.is_empty() {
       return;
     }
 
@@ -3848,17 +3862,19 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       self.graph,
       analyzer.as_capturing_parser(),
     );
-    let pending_nvs = std::mem::take(&mut self.state.jsr.top_level_nvs)
-      .into_iter()
-      .collect::<VecDeque<_>>();
+
     let modules = crate::low_res::build_low_res_type_graph(
       self.loader,
       self.graph,
       &root_symbol,
       pending_nvs,
       &crate::low_res::TransformOptions {
-        // todo(THIS PR): should be false when analyzing local dependencies
-        should_error_on_first_diagnostic: true,
+        workspace_members: if self.workspace_low_res {
+          &self.workspace_members
+        } else {
+          &[]
+        },
+        should_error_on_first_diagnostic: !self.workspace_low_res,
       },
     );
     for (specifier, low_res_module_result) in modules {

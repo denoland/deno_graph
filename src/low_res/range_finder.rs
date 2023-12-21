@@ -8,6 +8,7 @@ use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_semver::package::PackageNv;
 use indexmap::IndexMap;
+use url::Url;
 
 use crate::low_res::swc_helpers::source_range_to_range;
 use crate::source::Loader;
@@ -19,6 +20,7 @@ use crate::symbols::SymbolId;
 use crate::symbols::SymbolNodeDep;
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
+use crate::WorkspaceMember;
 
 use super::LowResDiagnostic;
 
@@ -250,6 +252,7 @@ pub fn find_public_ranges<'a>(
   loader: &'a dyn Loader,
   graph: &'a ModuleGraph,
   root_symbol: &'a RootSymbol<'a>,
+  workspace_members: &'a [WorkspaceMember],
   pending_nvs: VecDeque<PackageNv>,
 ) -> HashMap<PackageNv, HashMap<ModuleSpecifier, ModulePublicRanges>> {
   PublicRangeFinder {
@@ -258,9 +261,12 @@ pub fn find_public_ranges<'a>(
     pending_nvs,
     pending_traces: Default::default(),
     public_ranges: Default::default(),
-    loader,
     graph,
     root_symbol,
+    url_converter: RegistryUrlConverter {
+      loader,
+      workspace_members,
+    },
   }
   .find()
 }
@@ -286,8 +292,36 @@ impl ModulePublicRanges {
   }
 }
 
-struct PublicRangeFinder<'a> {
+struct RegistryUrlConverter<'a> {
   loader: &'a dyn Loader,
+  workspace_members: &'a [WorkspaceMember],
+}
+
+impl<'a> RegistryUrlConverter<'a> {
+  fn registry_package_url(&self, nv: &PackageNv) -> Url {
+    if let Some(member) = self.workspace_members.iter().find(|m| m.nv == *nv) {
+      member.base.clone()
+    } else {
+      self.registry_package_url(nv)
+    }
+  }
+
+  fn registry_package_url_to_nv(&self, url: &Url) -> Option<PackageNv> {
+    if url.scheme() == "file" {
+      for member in self.workspace_members.iter() {
+        if url.as_str().starts_with(member.base.as_str()) {
+          return Some(member.nv.clone());
+        }
+      }
+      None
+    } else {
+      self.loader.registry_package_url_to_nv(url)
+    }
+  }
+}
+
+struct PublicRangeFinder<'a> {
+  url_converter: RegistryUrlConverter<'a>,
   graph: &'a ModuleGraph,
   root_symbol: &'a RootSymbol<'a>,
   pending_nvs: VecDeque<PackageNv>,
@@ -306,7 +340,7 @@ impl<'a> PublicRangeFinder<'a> {
       let Some(exports) = self.graph.packages.package_exports(&nv) else {
         continue; // should never happen
       };
-      let base_url = self.loader.registry_package_url(&nv);
+      let base_url = self.url_converter.registry_package_url(&nv);
       for value in exports.values() {
         let specifier = base_url.join(value).unwrap();
         self.add_pending_trace(
@@ -417,8 +451,9 @@ impl<'a> PublicRangeFinder<'a> {
             /* prefer types */ true,
           ) {
             // only analyze registry specifiers
-            if let Some(dep_nv) =
-              self.loader.registry_package_url_to_nv(&dep_specifier)
+            if let Some(dep_nv) = self
+              .url_converter
+              .registry_package_url_to_nv(&dep_specifier)
             {
               if self.seen_nvs.insert(dep_nv.clone()) {
                 self.pending_nvs.push_back(dep_nv.clone());
@@ -490,8 +525,9 @@ impl<'a> PublicRangeFinder<'a> {
                             crate::symbols::ResolvedExportOrReExportAllPath::Export(e) => e.module,
                             crate::symbols::ResolvedExportOrReExportAllPath::ReExportAllPath(p) => p.referrer_module,
                         };
-                    if let Some(nv) =
-                      self.loader.registry_package_url_to_nv(module.specifier())
+                    if let Some(nv) = self
+                      .url_converter
+                      .registry_package_url_to_nv(module.specifier())
                     {
                       let mut new_named_exports = NamedExports::default();
                       new_named_exports.0.insert(export_name, named_exports);
@@ -587,7 +623,7 @@ impl<'a> PublicRangeFinder<'a> {
                   /* prefer types */ true,
                 ) {
                   if let Some(dep_nv) =
-                    self.loader.registry_package_url_to_nv(&specifier)
+                    self.url_converter.registry_package_url_to_nv(&specifier)
                   {
                     if dep_nv == *pkg_nv {
                       // just add this specifier
@@ -638,8 +674,9 @@ impl<'a> PublicRangeFinder<'a> {
                           module_info.specifier(),
                           /* prefer types */ true,
                         ) {
-                          if let Some(dep_nv) =
-                            self.loader.registry_package_url_to_nv(&specifier)
+                          if let Some(dep_nv) = self
+                            .url_converter
+                            .registry_package_url_to_nv(&specifier)
                           {
                             if dep_nv == *pkg_nv {
                               // just add this specifier
@@ -745,7 +782,7 @@ impl<'a> PublicRangeFinder<'a> {
                   /* prefer types */ true,
                 ) {
                   if let Some(dep_nv) =
-                    self.loader.registry_package_url_to_nv(&specifier)
+                    self.url_converter.registry_package_url_to_nv(&specifier)
                   {
                     if dep_nv == *pkg_nv {
                       let named_exports = match &file_dep.name {
