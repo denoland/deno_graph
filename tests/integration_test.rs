@@ -428,7 +428,7 @@ async fn test_jsr_version_not_found_then_found() {
             content: "import 'jsr:@scope/a@1.2".into(),
           }))
         }),
-        "https://registry-staging.deno.com/@scope/a/meta.json" => {
+        "https://jsr.io/@scope/a/meta.json" => {
           Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
@@ -446,24 +446,20 @@ async fn test_jsr_version_not_found_then_found() {
             }))
           })
         }
-        "https://registry-staging.deno.com/@scope/a/1.2.0_meta.json" => {
-          Box::pin(async move {
-            Ok(Some(LoadResponse::Module {
-              specifier: specifier.clone(),
-              maybe_headers: None,
-              content: r#"{ "exports": { ".": "./mod.ts" } }"#.into(),
-            }))
-          })
-        }
-        "https://registry-staging.deno.com/@scope/a/1.2.0/mod.ts" => {
-          Box::pin(async move {
-            Ok(Some(LoadResponse::Module {
-              specifier: specifier.clone(),
-              maybe_headers: None,
-              content: "console.log('Hello, world!')".into(),
-            }))
-          })
-        }
+        "https://jsr.io/@scope/a/1.2.0_meta.json" => Box::pin(async move {
+          Ok(Some(LoadResponse::Module {
+            specifier: specifier.clone(),
+            maybe_headers: None,
+            content: r#"{ "exports": { ".": "./mod.ts" } }"#.into(),
+          }))
+        }),
+        "https://jsr.io/@scope/a/1.2.0/mod.ts" => Box::pin(async move {
+          Ok(Some(LoadResponse::Module {
+            specifier: specifier.clone(),
+            maybe_headers: None,
+            content: "console.log('Hello, world!')".into(),
+          }))
+        }),
         _ => unreachable!(),
       }
     }
@@ -484,21 +480,20 @@ async fn test_jsr_version_not_found_then_found() {
     vec![
       ("file:///main.ts".to_string(), CacheSetting::Use),
       (
-        "https://registry-staging.deno.com/@scope/a/meta.json".to_string(),
+        "https://jsr.io/@scope/a/meta.json".to_string(),
         CacheSetting::Use
       ),
       ("file:///main.ts".to_string(), CacheSetting::Use),
       (
-        "https://registry-staging.deno.com/@scope/a/meta.json".to_string(),
+        "https://jsr.io/@scope/a/meta.json".to_string(),
         CacheSetting::Reload
       ),
       (
-        "https://registry-staging.deno.com/@scope/a/1.2.0_meta.json"
-          .to_string(),
+        "https://jsr.io/@scope/a/1.2.0_meta.json".to_string(),
         CacheSetting::Reload
       ),
       (
-        "https://registry-staging.deno.com/@scope/a/1.2.0/mod.ts".to_string(),
+        "https://jsr.io/@scope/a/1.2.0/mod.ts".to_string(),
         CacheSetting::Use
       ),
     ]
@@ -678,6 +673,23 @@ await import(`./a/${test}`);
     "await import(`file:///${expr}`);",
     vec![("file:///main.ts", ""), ("file:///dev/other.ts", "")],
     vec![],
+  )
+  .await;
+
+  // won't search node_modules, vendor, or hidden folders
+  run_test(
+    "await import(`./${test}/mod.ts`);",
+    vec![
+      ("file:///dev/other/.git/mod.ts", ""),
+      ("file:///dev/other/node_modules/mod.ts", ""),
+      ("file:///dev/other/sub_dir/mod.ts", ""),
+      ("file:///dev/other/vendor/mod.ts", ""),
+      ("file:///dev/other/mod.ts", ""),
+    ],
+    vec![
+      "file:///dev/other/mod.ts",
+      "file:///dev/other/sub_dir/mod.ts",
+    ],
   )
   .await;
 }
