@@ -10,12 +10,14 @@ use std::sync::Arc;
 use deno_ast::swc::ast::Accessibility;
 use deno_ast::swc::ast::ArrayLit;
 use deno_ast::swc::ast::BindingIdent;
+use deno_ast::swc::ast::Callee;
 use deno_ast::swc::ast::Class;
 use deno_ast::swc::ast::ClassMember;
 use deno_ast::swc::ast::ClassProp;
 use deno_ast::swc::ast::Decl;
 use deno_ast::swc::ast::DefaultDecl;
 use deno_ast::swc::ast::Expr;
+use deno_ast::swc::ast::ExprOrSpread;
 use deno_ast::swc::ast::Function;
 use deno_ast::swc::ast::Ident;
 use deno_ast::swc::ast::Lit;
@@ -25,6 +27,7 @@ use deno_ast::swc::ast::ModuleItem;
 use deno_ast::swc::ast::ObjectLit;
 use deno_ast::swc::ast::Param;
 use deno_ast::swc::ast::ParamOrTsParamProp;
+use deno_ast::swc::ast::ParenExpr;
 use deno_ast::swc::ast::Pat;
 use deno_ast::swc::ast::PrivateName;
 use deno_ast::swc::ast::PrivateProp;
@@ -470,7 +473,25 @@ impl<'a> LowResTransformer<'a> {
     match member {
       ClassMember::Constructor(n) => {
         if let Some(body) = &mut n.body {
-          body.stmts.clear();
+          body.stmts.retain_mut(|stmt| match stmt {
+            Stmt::Expr(e) => match &mut *e.expr {
+              Expr::Call(c) => {
+                if !matches!(c.callee, Callee::Super(_)) {
+                  return false;
+                }
+                for arg in c.args.iter_mut() {
+                  arg.expr = if arg.spread.is_some() {
+                    Box::new(paren_expr(obj_as_any_expr()))
+                  } else {
+                    obj_as_any_expr()
+                  };
+                }
+                true
+              }
+              _ => false,
+            },
+            _ => false,
+          });
         }
 
         for param in &mut n.params {
@@ -1260,6 +1281,13 @@ fn expr_as_any_expr(expr: Expr) -> Box<Expr> {
       kind: TsKeywordTypeKind::TsAnyKeyword,
     })),
   }))
+}
+
+fn paren_expr(expr: Box<Expr>) -> Expr {
+  Expr::Paren(ParenExpr {
+    span: DUMMY_SP,
+    expr,
+  })
 }
 
 fn any_type_ann() -> Box<TsTypeAnn> {

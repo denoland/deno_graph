@@ -5,8 +5,23 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-class Base {}
+class Base {
+  constructor(a: number, b: number) {
+  }
+}
 export class Child extends Base {
+  constructor() {
+    super(1, 2);
+  }
+}
+class SpreadBase {
+  constructor(...params: string[]) {
+  }
+}
+export class SpreadChild extends SpreadBase {
+  constructor() {
+    super(...[1, 2]);
+  }
 }
 
 # mod.ts
@@ -44,7 +59,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 50,
+      "size": 286,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -60,6 +75,18 @@ import 'jsr:@scope/a'
 Low res https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   class Base {
+    constructor(a: number, b: number){}
   }
   export class Child extends Base {
+    constructor(){
+      super({} as any, {} as any);
+    }
+  }
+  class SpreadBase {
+    constructor(...params: string[]){}
+  }
+  export class SpreadChild extends SpreadBase {
+    constructor(){
+      super(...({} as any));
+    }
   }
