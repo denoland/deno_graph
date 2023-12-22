@@ -254,7 +254,10 @@ impl<'a> LowResTransformer<'a> {
         }
         ModuleDecl::ExportAll(n) => Ok(self.public_ranges.contains(&n.range())),
         ModuleDecl::ExportDefaultExpr(n) => {
-          if !self.public_ranges.contains(&n.range()) {
+          // todo: investigate why both these checks are needed
+          if !self.public_ranges.contains(&n.range())
+            && !self.public_ranges.contains(&n.expr.range())
+          {
             return Ok(false);
           }
 
