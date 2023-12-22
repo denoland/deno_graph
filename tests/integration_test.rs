@@ -160,15 +160,9 @@ async fn test_symbols_specs() {
 
     let result = builder.symbols().await.unwrap();
     let update_var = std::env::var("UPDATE");
-    let diagnostics = result
-      .diagnostics
-      .iter()
-      .map(|d| serde_json::to_value(d.clone()).unwrap())
-      .collect::<Vec<_>>();
     let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
       let mut spec = spec;
       spec.output_file.text = result.output.clone();
-      spec.diagnostics = diagnostics.clone();
       std::fs::write(&test_file_path, spec.emit()).unwrap();
       spec
     } else {
@@ -177,12 +171,6 @@ async fn test_symbols_specs() {
     assert_eq!(
       result.output,
       spec.output_file.text,
-      "Should be same for {}",
-      test_file_path.display()
-    );
-    assert_eq!(
-      diagnostics,
-      spec.diagnostics,
       "Should be same for {}",
       test_file_path.display()
     );

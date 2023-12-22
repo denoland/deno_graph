@@ -1243,7 +1243,9 @@ fn is_expr_leavable(expr: &Expr) -> bool {
         Prop::Assign(n) => is_expr_leavable(&n.value),
         Prop::Getter(_) | Prop::Setter(_) | Prop::Method(_) => false,
       },
-      PropOrSpread::Spread(_) => false,
+      PropOrSpread::Spread(n) => {
+        is_expr_leavable(&n.expr)
+      },
     }),
     Expr::Unary(n) => is_expr_leavable(&n.arg),
     Expr::Update(n) => is_expr_leavable(&n.arg),

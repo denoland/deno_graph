@@ -47,11 +47,9 @@ impl Loader for TestLoader {
 #[cfg(feature = "symbols")]
 pub mod symbols {
   use deno_graph::symbols::RootSymbol;
-  use deno_graph::symbols::SymbolFillDiagnostic;
 
   pub struct SymbolsResult {
     pub output: String,
-    pub diagnostics: Vec<SymbolFillDiagnostic>,
   }
 
   pub struct SymbolsBuildResult {
@@ -402,7 +400,6 @@ impl TestBuilder {
         }
         output_text
       },
-      diagnostics: root_symbol.take_diagnostics(),
     })
   }
 }

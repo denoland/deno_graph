@@ -16,16 +16,12 @@ use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
-use serde::Deserialize;
-use serde::Serialize;
 
 use crate::CapturingModuleParser;
 use crate::EsmModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
 use crate::ModuleParser;
-use crate::PositionRange;
-use crate::Range;
 
 use super::collections::AdditiveOnlyIndexMap;
 use super::collections::AdditiveOnlyIndexMapForCopyValues;
@@ -48,7 +44,6 @@ pub struct RootSymbol<'a> {
   parser: CapturingModuleParser<'a>,
   specifiers_to_ids: AdditiveOnlyMapForCopyValues<ModuleSpecifier, ModuleId>,
   ids_to_modules: AdditiveOnlyMap<ModuleId, ModuleInfo>,
-  diagnostics: RefCell<Vec<SymbolFillDiagnostic>>,
 }
 
 impl<'a> RootSymbol<'a> {
@@ -61,7 +56,6 @@ impl<'a> RootSymbol<'a> {
       parser,
       specifiers_to_ids: Default::default(),
       ids_to_modules: Default::default(),
-      diagnostics: Default::default(),
     }
   }
 
@@ -181,14 +175,9 @@ impl<'a> RootSymbol<'a> {
     let filler = SymbolFiller {
       source: &source,
       specifier,
-      diagnostics: RefCell::new(Vec::new()),
       builder: &builder,
     };
     filler.fill(module);
-    let diagnostics = filler.diagnostics.take();
-    if !diagnostics.is_empty() {
-      self.diagnostics.borrow_mut().extend(diagnostics);
-    }
     let module_symbol = EsmModuleInfo {
       specifier: specifier.clone(),
       module_id,
@@ -271,10 +260,6 @@ impl<'a> RootSymbol<'a> {
       graph_module.source.clone(),
       graph_module.media_type,
     )
-  }
-
-  pub fn take_diagnostics(&self) -> Vec<SymbolFillDiagnostic> {
-    std::mem::take(&mut *self.diagnostics.borrow_mut())
   }
 }
 
@@ -374,7 +359,7 @@ impl std::fmt::Debug for SymbolNode {
         SymbolNodeInner::ExportDefaultDecl(d) => {
           d.value().text_fast(d.source.text_info()).to_string()
         }
-        SymbolNodeInner::ExportDefaultExprLit(d, _) => {
+        SymbolNodeInner::ExportDefaultExpr(d) => {
           d.value().text_fast(d.source.text_info()).to_string()
         }
         SymbolNodeInner::FnDecl(d) => {
@@ -488,10 +473,9 @@ impl SymbolNode {
       SymbolNodeInner::ExportDefaultDecl(n) => {
         Some((SymbolNodeRef::ExportDefaultDecl(n.value()), n.source()))
       }
-      SymbolNodeInner::ExportDefaultExprLit(n, lit) => Some((
-        SymbolNodeRef::ExportDefaultExprLit(n.value(), lit.value()),
-        n.source(),
-      )),
+      SymbolNodeInner::ExportDefaultExpr(n) => {
+        Some((SymbolNodeRef::ExportDefaultExpr(n.value()), n.source()))
+      }
       SymbolNodeInner::FnDecl(n) => {
         Some((SymbolNodeRef::FnDecl(n.value()), n.source()))
       }
@@ -570,7 +554,7 @@ enum SymbolNodeInner {
   ClassDecl(NodeRefBox<ClassDecl>),
   ExportDecl(NodeRefBox<ExportDecl>, SymbolNodeInnerExportDecl),
   ExportDefaultDecl(NodeRefBox<ExportDefaultDecl>),
-  ExportDefaultExprLit(NodeRefBox<ExportDefaultExpr>, NodeRefBox<Lit>),
+  ExportDefaultExpr(NodeRefBox<ExportDefaultExpr>),
   FnDecl(NodeRefBox<FnDecl>),
   TsEnum(NodeRefBox<TsEnumDecl>),
   TsNamespace(NodeRefBox<TsModuleDecl>),
@@ -607,7 +591,7 @@ pub enum SymbolNodeRef<'a> {
   Module(&'a Module),
   ExportDecl(&'a ExportDecl, ExportDeclRef<'a>),
   ExportDefaultDecl(&'a ExportDefaultDecl),
-  ExportDefaultExprLit(&'a ExportDefaultExpr, &'a Lit),
+  ExportDefaultExpr(&'a ExportDefaultExpr),
   ClassDecl(&'a ClassDecl),
   FnDecl(&'a FnDecl),
   TsEnum(&'a TsEnumDecl),
@@ -704,7 +688,7 @@ impl<'a> SymbolNodeRef<'a> {
         DefaultDecl::Fn(n) => Some(Cow::Borrowed(&n.ident.as_ref()?.sym)),
         DefaultDecl::TsInterfaceDecl(n) => Some(Cow::Borrowed(&n.id.sym)),
       },
-      Self::ExportDefaultExprLit(_, _) => None,
+      Self::ExportDefaultExpr(_) => None,
       Self::FnDecl(n) => Some(Cow::Borrowed(&n.ident.sym)),
       Self::TsEnum(n) => Some(Cow::Borrowed(&n.id.sym)),
       Self::TsInterface(n) => Some(Cow::Borrowed(&n.id.sym)),
@@ -814,7 +798,7 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::TsEnum(_)
       | SymbolNodeRef::TsInterface(_) => true,
       SymbolNodeRef::TsTypeAlias(_)
-      | SymbolNodeRef::ExportDefaultExprLit(_, _)
+      | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::Var(_, _, _)
       | SymbolNodeRef::ClassProp(_)
       | SymbolNodeRef::ClassParamProp(_)
@@ -840,7 +824,7 @@ impl<'a> SymbolNodeRef<'a> {
       SymbolNodeRef::ClassDecl(_)
       | SymbolNodeRef::ExportDecl(_, _)
       | SymbolNodeRef::ExportDefaultDecl(_)
-      | SymbolNodeRef::ExportDefaultExprLit(_, _)
+      | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::FnDecl(_)
       | SymbolNodeRef::TsEnum(_)
       | SymbolNodeRef::TsInterface(_)
@@ -869,7 +853,7 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::ClassDecl(_)
       | SymbolNodeRef::ExportDecl(_, _)
       | SymbolNodeRef::ExportDefaultDecl(_)
-      | SymbolNodeRef::ExportDefaultExprLit(_, _)
+      | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::FnDecl(_)
       | SymbolNodeRef::TsEnum(_)
       | SymbolNodeRef::TsInterface(_)
@@ -898,7 +882,7 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::ClassDecl(_)
       | SymbolNodeRef::ExportDecl(_, _)
       | SymbolNodeRef::ExportDefaultDecl(_)
-      | SymbolNodeRef::ExportDefaultExprLit(_, _)
+      | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::FnDecl(_)
       | SymbolNodeRef::TsEnum(_)
       | SymbolNodeRef::TsInterface(_)
@@ -1538,17 +1522,6 @@ impl EsmModuleInfo {
   }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum SymbolFillDiagnosticKind {
-  UnsupportedDefaultExpr,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct SymbolFillDiagnostic {
-  pub kind: SymbolFillDiagnosticKind,
-  pub range: Range,
-}
-
 struct SymbolMut(RefCell<Symbol>);
 
 impl SymbolMut {
@@ -1725,7 +1698,6 @@ impl ModuleBuilder {
 struct SymbolFiller<'a> {
   specifier: &'a ModuleSpecifier,
   source: &'a ParsedSource,
-  diagnostics: RefCell<Vec<SymbolFillDiagnostic>>,
   builder: &'a ModuleBuilder,
 }
 
@@ -2374,7 +2346,7 @@ impl<'a> SymbolFiller<'a> {
           SymbolDecl::new(SymbolDeclKind::Target(ident.to_id()), ident.range()),
         );
       }
-      Expr::Lit(lit) => {
+      _ => {
         let Some(parent) = maybe_parent else {
           return;
         };
@@ -2382,25 +2354,14 @@ impl<'a> SymbolFiller<'a> {
           module_symbol,
           SymbolDecl::new(
             SymbolDeclKind::Definition(SymbolNode(
-              SymbolNodeInner::ExportDefaultExprLit(
-                NodeRefBox::unsafe_new(self.source, parent),
-                NodeRefBox::unsafe_new(self.source, lit),
-              ),
+              SymbolNodeInner::ExportDefaultExpr(NodeRefBox::unsafe_new(
+                self.source,
+                parent,
+              )),
             )),
             default_export_range,
           ),
         );
-      }
-      _ => {
-        self.add_diagnostic(SymbolFillDiagnostic {
-          kind: SymbolFillDiagnosticKind::UnsupportedDefaultExpr,
-          range: {
-            let text_info = self.source.text_info();
-            let position_range =
-              PositionRange::from_source_range(default_export_range, text_info);
-            Range::from_position_range(self.specifier.clone(), position_range)
-          },
-        });
       }
     }
   }
@@ -2710,7 +2671,7 @@ impl<'a> SymbolFiller<'a> {
       | SymbolNodeRef::ClassDecl(_)
       | SymbolNodeRef::ExportDecl(_, _)
       | SymbolNodeRef::ExportDefaultDecl(_)
-      | SymbolNodeRef::ExportDefaultExprLit(_, _)
+      | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::FnDecl(_)
       | SymbolNodeRef::TsEnum(_)
       | SymbolNodeRef::TsInterface(_)
@@ -2805,9 +2766,5 @@ impl<'a> SymbolFiller<'a> {
       }
     }
     None
-  }
-
-  fn add_diagnostic(&self, diagnostic: SymbolFillDiagnostic) {
-    self.diagnostics.borrow_mut().push(diagnostic);
   }
 }

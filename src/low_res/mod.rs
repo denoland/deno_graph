@@ -8,8 +8,6 @@ use deno_semver::package::PackageNv;
 
 use crate::source::Loader;
 use crate::symbols::RootSymbol;
-use crate::symbols::SymbolFillDiagnostic;
-use crate::symbols::SymbolFillDiagnosticKind;
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
 use crate::Range;
@@ -84,10 +82,14 @@ pub enum LowResDiagnostic {
 }
 
 impl LowResDiagnostic {
-  pub fn flatten_multiple<'a>(&'a self) -> Box<dyn Iterator<Item = &LowResDiagnostic> + 'a> {
+  pub fn flatten_multiple<'a>(
+    &'a self,
+  ) -> Box<dyn Iterator<Item = &LowResDiagnostic> + 'a> {
     match self {
-      LowResDiagnostic::Multiple(diagnostics) => Box::new(diagnostics.iter().flat_map(|d| d.flatten_multiple())),
-      _ => Box::new(std::iter::once(self))
+      LowResDiagnostic::Multiple(diagnostics) => {
+        Box::new(diagnostics.iter().flat_map(|d| d.flatten_multiple()))
+      }
+      _ => Box::new(std::iter::once(self)),
     }
   }
 
@@ -150,14 +152,6 @@ pub fn build_low_res_type_graph<'a>(
     options.workspace_members,
     pending_nvs,
   );
-  let symbol_fill_diagnostics =
-    root_symbol.take_diagnostics().into_iter().fold(
-      HashMap::<ModuleSpecifier, Vec<SymbolFillDiagnostic>>::new(),
-      |mut acc, d| {
-        acc.entry(d.range.specifier.clone()).or_default().push(d);
-        acc
-      },
-    );
 
   let mut final_result = Vec::new();
   for (nv, package) in public_modules {
@@ -170,32 +164,12 @@ pub fn build_low_res_type_graph<'a>(
         let transform_result =
           match LowResDiagnostic::from_vec(ranges.take_diagnostics()) {
             Some(diagnostic) => Err(Box::new(diagnostic)),
-            None => {
-              let maybe_symbol_fill_diagnostic = symbol_fill_diagnostics
-                .get(&specifier)
-                .and_then(|diagnostics| {
-                  let diagnostics = diagnostics
-                    .iter()
-                    .map(|d| match d.kind {
-                      SymbolFillDiagnosticKind::UnsupportedDefaultExpr => {
-                        LowResDiagnostic::UnsupportedDefaultExportExpr {
-                          range: d.range.clone(),
-                        }
-                      }
-                    })
-                    .collect::<Vec<_>>();
-                  LowResDiagnostic::from_vec(diagnostics).map(Box::new)
-                });
-              match maybe_symbol_fill_diagnostic {
-                Some(diagnostic) => Err(diagnostic),
-                None => transform::transform(
-                  &specifier,
-                  &ranges,
-                  module_info.source(),
-                  options,
-                ),
-              }
-            }
+            None => transform::transform(
+              &specifier,
+              &ranges,
+              module_info.source(),
+              options,
+            ),
           };
         match transform_result {
           Ok(modules) => {

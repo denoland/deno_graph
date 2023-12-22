@@ -80,7 +80,7 @@ pub fn resolve_deps(node_ref: SymbolNodeRef) -> Vec<SymbolNodeDep> {
         fill_interface(deps, n);
       }
     },
-    SymbolNodeRef::ExportDefaultExprLit(n, _) => {
+    SymbolNodeRef::ExportDefaultExpr(n) => {
       fill_expr(deps, &n.expr);
     }
     SymbolNodeRef::FnDecl(n) => fill_function_decl(deps, &n.function),
