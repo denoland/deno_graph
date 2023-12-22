@@ -931,6 +931,11 @@ impl<'a> PublicRangeFinder<'a> {
                             Some(init) => is_expr_leavable(init),
                             None => false,
                           },
+                          SymbolNodeRef::ExportDecl(
+                            _,
+                            ExportDeclRef::TsEnum(_),
+                          )
+                          | SymbolNodeRef::TsEnum(_) => true,
                           _ => false,
                         },
                       );
