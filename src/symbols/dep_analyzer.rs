@@ -7,6 +7,7 @@ use deno_ast::swc::ast::Function;
 use deno_ast::swc::ast::Id;
 use deno_ast::swc::ast::Ident;
 use deno_ast::swc::ast::Lit;
+use deno_ast::swc::ast::MemberExpr;
 use deno_ast::swc::ast::MemberProp;
 use deno_ast::swc::ast::Param;
 use deno_ast::swc::ast::ParamOrTsParamProp;
@@ -247,6 +248,11 @@ fn fill_type_alias(deps: &mut Vec<SymbolNodeDep>, n: &TsTypeAliasDecl) {
 
 fn fill_var_declarator(deps: &mut Vec<SymbolNodeDep>, n: &VarDeclarator) {
   fill_pat(deps, &n.name);
+  if !pat_has_type_ann(&n.name) {
+    if let Some(init) = &n.init {
+      fill_expr(deps, init);
+    }
+  }
 }
 
 fn fill_prop_name(deps: &mut Vec<SymbolNodeDep>, key: &PropName) {
@@ -329,6 +335,18 @@ fn fill_param(deps: &mut Vec<SymbolNodeDep>, param: &Param) {
   fill_pat(deps, &param.pat);
 }
 
+fn pat_has_type_ann(n: &Pat) -> bool {
+  match n {
+    Pat::Ident(n) => n.type_ann.is_some(),
+    Pat::Array(n) => n.type_ann.is_some(),
+    Pat::Rest(n) => n.type_ann.is_some(),
+    Pat::Object(n) => n.type_ann.is_some(),
+    Pat::Assign(n) => pat_has_type_ann(&n.left),
+    Pat::Invalid(_) => false,
+    Pat::Expr(_) => false,
+  }
+}
+
 fn fill_pat(deps: &mut Vec<SymbolNodeDep>, pat: &Pat) {
   match pat {
     Pat::Ident(n) => {
@@ -353,6 +371,10 @@ fn fill_pat(deps: &mut Vec<SymbolNodeDep>, pat: &Pat) {
     }
     Pat::Assign(n) => {
       fill_pat(deps, &n.left);
+      let has_type_ann = pat_has_type_ann(&*n.left);
+      if !has_type_ann {
+        fill_expr(deps, &n.right);
+      }
     }
     Pat::Invalid(_) => {
       // ignore
@@ -373,29 +395,6 @@ fn fill_ts_type(deps: &mut Vec<SymbolNodeDep>, n: &TsType) {
 }
 
 fn fill_expr(deps: &mut Vec<SymbolNodeDep>, n: &Expr) {
-  fn member_prop_to_str(member_prop: &MemberProp) -> Option<String> {
-    match member_prop {
-      MemberProp::Ident(ident) => Some(ident.sym.to_string()),
-      MemberProp::PrivateName(n) => Some(format!("#{}", n.id.sym)),
-      MemberProp::Computed(n) => match &*n.expr {
-        Expr::Lit(Lit::Str(str)) => Some(str.value.to_string()),
-        _ => None,
-      },
-    }
-  }
-
-  fn expr_into_id_and_parts(expr: &Expr) -> Option<(Id, Vec<String>)> {
-    match expr {
-      Expr::Member(member) => {
-        let (id, mut parts) = expr_into_id_and_parts(&member.obj)?;
-        parts.push(member_prop_to_str(&member.prop)?);
-        Some((id, parts))
-      }
-      Expr::Ident(ident) => Some((ident.to_id(), vec![])),
-      _ => None,
-    }
-  }
-
   if let Some((id, parts)) = expr_into_id_and_parts(n) {
     if parts.is_empty() {
       deps.push(SymbolNodeDep::Id(id))
@@ -408,6 +407,33 @@ fn fill_expr(deps: &mut Vec<SymbolNodeDep>, n: &Expr) {
   }
 }
 
+fn expr_into_id_and_parts(expr: &Expr) -> Option<(Id, Vec<String>)> {
+  match expr {
+    Expr::Member(member) => member_expr_into_id_and_parts(member),
+    Expr::Ident(ident) => Some((ident.to_id(), vec![])),
+    _ => None,
+  }
+}
+
+fn member_expr_into_id_and_parts(
+  member: &MemberExpr,
+) -> Option<(Id, Vec<String>)> {
+  fn member_prop_to_str(member_prop: &MemberProp) -> Option<String> {
+    match member_prop {
+      MemberProp::Ident(ident) => Some(ident.sym.to_string()),
+      MemberProp::PrivateName(n) => Some(format!("#{}", n.id.sym)),
+      MemberProp::Computed(n) => match &*n.expr {
+        Expr::Lit(Lit::Str(str)) => Some(str.value.to_string()),
+        _ => None,
+      },
+    }
+  }
+
+  let (id, mut parts) = expr_into_id_and_parts(&member.obj)?;
+  parts.push(member_prop_to_str(&member.prop)?);
+  Some((id, parts))
+}
+
 struct SymbolDepFillVisitor<'a> {
   deps: &'a mut Vec<SymbolNodeDep>,
 }
@@ -416,6 +442,14 @@ impl<'a> Visit for SymbolDepFillVisitor<'a> {
   fn visit_ident(&mut self, n: &Ident) {
     let id = n.to_id();
     self.deps.push(id.into());
+  }
+
+  fn visit_member_expr(&mut self, n: &MemberExpr) {
+    if let Some((id, parts)) = member_expr_into_id_and_parts(n) {
+      self.deps.push(SymbolNodeDep::QualifiedId(id, parts))
+    } else {
+      n.visit_children_with(self);
+    }
   }
 
   fn visit_ts_import_type(&mut self, n: &TsImportType) {

@@ -10,14 +10,17 @@ use deno_semver::package::PackageNv;
 use indexmap::IndexMap;
 use url::Url;
 
+use crate::low_res::swc_helpers::is_expr_leavable;
 use crate::low_res::swc_helpers::source_range_to_range;
 use crate::source::Loader;
+use crate::symbols::ExportDeclRef;
 use crate::symbols::FileDepName;
 use crate::symbols::ModuleInfoRef;
 use crate::symbols::RootSymbol;
 use crate::symbols::SymbolDeclKind;
 use crate::symbols::SymbolId;
 use crate::symbols::SymbolNodeDep;
+use crate::symbols::SymbolNodeRef;
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
 use crate::WorkspaceMember;
@@ -916,23 +919,40 @@ impl<'a> PublicRangeFinder<'a> {
                     }
                   }
                   None => {
-                    diagnostics.push(LowResDiagnostic::NotFoundReference {
-                      range: source_range_to_range(
-                        symbol.decls()[0].range,
-                        module_info.specifier(),
-                        module_info.text_info(),
-                      ),
-                      name: format!(
-                        "{}.{}",
-                        module_info
-                          .fully_qualified_symbol_name(symbol.symbol_id())
+                    // if the init expression of the variable is leavable, just ignore it
+                    let ignore =
+                      symbol.decls().iter().filter_map(|d| d.maybe_node()).all(
+                        |n| match n {
+                          SymbolNodeRef::ExportDecl(
+                            _,
+                            ExportDeclRef::Var(_, v, _),
+                          )
+                          | SymbolNodeRef::Var(_, v, _) => match &v.init {
+                            Some(init) => is_expr_leavable(init),
+                            None => false,
+                          },
+                          _ => false,
+                        },
+                      );
+                    if !ignore {
+                      diagnostics.push(LowResDiagnostic::NotFoundReference {
+                        range: source_range_to_range(
+                          symbol.decls()[0].range,
+                          module_info.specifier(),
+                          module_info.text_info(),
+                        ),
+                        name: format!(
+                          "{}.{}",
+                          module_info
+                            .fully_qualified_symbol_name(symbol.symbol_id())
+                            .unwrap_or_else(|| "<unknown>".to_string()),
+                          parts[0],
+                        ),
+                        referrer: module_info
+                          .fully_qualified_symbol_name(referrer_id)
                           .unwrap_or_else(|| "<unknown>".to_string()),
-                        parts[0],
-                      ),
-                      referrer: module_info
-                        .fully_qualified_symbol_name(referrer_id)
-                        .unwrap_or_else(|| "<unknown>".to_string()),
-                    });
+                      });
+                    }
                   }
                 }
               }
