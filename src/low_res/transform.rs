@@ -503,6 +503,7 @@ impl<'a> LowResTransformer<'a> {
         }
 
         for param in &mut n.params {
+          let mut is_optional = false;
           match param {
             ParamOrTsParamProp::Param(_) => {
               // ignore
@@ -512,6 +513,9 @@ impl<'a> LowResTransformer<'a> {
                 span: DUMMY_SP,
                 key: match &prop.param {
                   TsParamPropParam::Ident(ident) => {
+                    if ident.optional {
+                      is_optional = true;
+                    }
                     PropName::Ident(ident.id.clone())
                   }
                   TsParamPropParam::Assign(assign) => match &*assign.left {
@@ -570,7 +574,7 @@ impl<'a> LowResTransformer<'a> {
                 is_override: prop.is_override,
                 readonly: prop.readonly,
                 declare: false,
-                definite: false,
+                definite: !is_optional,
               }));
               *param = ParamOrTsParamProp::Param(Param {
                 span: prop.span,
