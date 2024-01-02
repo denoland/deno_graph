@@ -55,6 +55,10 @@ const private1 = 1;
 export function test13([test = private1]: number[] = [1 , 2]) {
 }
 
+export function test14(): never {
+  throw new Error("test");
+}
+
 class PublicOther {
 }
 class PublicOther2 {
@@ -97,7 +101,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1374,
+      "size": 1438,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -154,6 +158,9 @@ Low res https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export function test12({}: GlobOptions = {} as any): void {}
   export function test13([]: number[] = [] as any): void {}
+  export function test14(): never {
+    return {} as never;
+  }
   class PublicOther {
   }
   class PublicOther2 {

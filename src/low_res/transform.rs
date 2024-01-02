@@ -89,7 +89,8 @@ use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::get_return_stmts_with_arg_from_function;
 use super::swc_helpers::ident;
 use super::swc_helpers::is_expr_leavable;
-use super::swc_helpers::is_void_return_type;
+use super::swc_helpers::is_never_type;
+use super::swc_helpers::is_void_type;
 use super::swc_helpers::source_range_to_range;
 use super::swc_helpers::ts_keyword_type;
 use super::LowResDiagnostic;
@@ -681,7 +682,7 @@ impl<'a> LowResTransformer<'a> {
             }
           }
         }
-        n.definite = !n.is_optional && !n.is_static;
+        n.definite = !n.is_optional && !n.is_static && !n.declare;
         n.decorators.clear();
         n.value = None;
         Ok(true)
@@ -809,12 +810,21 @@ impl<'a> LowResTransformer<'a> {
       let has_void_return_type = n
         .return_type
         .as_ref()
-        .map(|t| is_void_return_type(&*t.type_ann))
+        .map(|t| is_void_type(&*t.type_ann))
         .unwrap_or(true);
       if !has_void_return_type {
+        let has_never_return_type = n
+          .return_type
+          .as_ref()
+          .map(|t| is_never_type(&t.type_ann))
+          .unwrap_or(false);
         body.stmts.push(Stmt::Return(ReturnStmt {
           span: DUMMY_SP,
-          arg: Some(obj_as_any_expr()),
+          arg: Some(if has_never_return_type {
+            obj_as_never_expr()
+          } else {
+            obj_as_any_expr()
+          }),
         }));
       }
     }
@@ -1336,26 +1346,42 @@ fn is_expr_ident_or_member_idents(expr: &Expr) -> bool {
 }
 
 fn array_as_any_expr() -> Box<Expr> {
-  expr_as_any_expr(Expr::Array(ArrayLit {
-    span: DUMMY_SP,
-    elems: Default::default(),
-  }))
+  expr_as_keyword_expr(
+    Expr::Array(ArrayLit {
+      span: DUMMY_SP,
+      elems: Default::default(),
+    }),
+    TsKeywordTypeKind::TsAnyKeyword,
+  )
 }
 
 fn obj_as_any_expr() -> Box<Expr> {
-  expr_as_any_expr(Expr::Object(ObjectLit {
-    span: DUMMY_SP,
-    props: Default::default(),
-  }))
+  expr_as_keyword_expr(
+    Expr::Object(ObjectLit {
+      span: DUMMY_SP,
+      props: Default::default(),
+    }),
+    TsKeywordTypeKind::TsAnyKeyword,
+  )
 }
 
-fn expr_as_any_expr(expr: Expr) -> Box<Expr> {
+fn obj_as_never_expr() -> Box<Expr> {
+  expr_as_keyword_expr(
+    Expr::Object(ObjectLit {
+      span: DUMMY_SP,
+      props: Default::default(),
+    }),
+    TsKeywordTypeKind::TsNeverKeyword,
+  )
+}
+
+fn expr_as_keyword_expr(expr: Expr, keyword: TsKeywordTypeKind) -> Box<Expr> {
   Box::new(Expr::TsAs(TsAsExpr {
     span: DUMMY_SP,
     expr: Box::new(expr),
     type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
       span: DUMMY_SP,
-      kind: TsKeywordTypeKind::TsAnyKeyword,
+      kind: keyword,
     })),
   }))
 }

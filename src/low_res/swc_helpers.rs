@@ -190,12 +190,17 @@ pub fn is_expr_leavable(expr: &Expr) -> bool {
   }
 }
 
-pub fn is_void_return_type(return_type: &TsType) -> bool {
+pub fn is_void_type(return_type: &TsType) -> bool {
+  is_keyword_type(return_type, TsKeywordTypeKind::TsVoidKeyword)
+}
+
+pub fn is_never_type(return_type: &TsType) -> bool {
+  is_keyword_type(return_type, TsKeywordTypeKind::TsNeverKeyword)
+}
+
+fn is_keyword_type(return_type: &TsType, kind: TsKeywordTypeKind) -> bool {
   match return_type {
-    TsType::TsKeywordType(TsKeywordType {
-      kind: TsKeywordTypeKind::TsVoidKeyword,
-      ..
-    }) => true,
+    TsType::TsKeywordType(TsKeywordType { kind: k, .. }) => k == &kind,
     _ => false,
   }
 }

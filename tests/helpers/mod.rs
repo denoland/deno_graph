@@ -84,7 +84,7 @@ impl SpecFile {
 
 pub fn get_specs_in_dir(path: &Path) -> Vec<(PathBuf, Spec)> {
   let files = collect_files_in_dir_recursive(path);
-  let files = if files
+  let files: Vec<_> = if files
     .iter()
     .any(|file| file.path.to_string_lossy().to_lowercase().contains("_only"))
   {
@@ -96,6 +96,11 @@ pub fn get_specs_in_dir(path: &Path) -> Vec<(PathBuf, Spec)> {
       .collect()
   } else {
     files
+      .into_iter()
+      .filter(|file| {
+        !file.path.to_string_lossy().to_lowercase().contains("_skip")
+      })
+      .collect()
   };
   files
     .into_iter()
