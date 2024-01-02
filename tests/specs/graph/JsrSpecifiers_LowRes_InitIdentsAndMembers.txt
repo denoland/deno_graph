@@ -144,6 +144,4 @@ Low res https://jsr.io/@scope/b/1.0.0/mod.ts:
     export class A {
     }
   }
-  export function test(a = BaseHandler, C = Test.A): void {
-    return {} as any;
-  }
+  export function test(a = BaseHandler, C = Test.A): void {}

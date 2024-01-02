@@ -151,7 +151,5 @@ Low res https://jsr.io/@scope/a/1.0.0/mod.ts:
 Low res https://jsr.io/@scope/b/1.1.0/mod.ts:
   {}
   export class Test {
-    method(value: string): void {
-      return {} as any;
-    }
+    method(value: string): void {}
   }

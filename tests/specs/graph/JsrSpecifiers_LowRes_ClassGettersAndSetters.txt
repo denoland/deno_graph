@@ -69,6 +69,5 @@ Low res https://jsr.io/@scope/a/1.0.0/mod.ts:
     get value(): string {
       return {} as any;
     }
-    set value(value: string) {
-    }
+    set value(_value: string) {}
   }

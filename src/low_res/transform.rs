@@ -22,9 +22,11 @@ use deno_ast::swc::ast::Function;
 use deno_ast::swc::ast::Ident;
 use deno_ast::swc::ast::Lit;
 use deno_ast::swc::ast::MemberProp;
+use deno_ast::swc::ast::MethodKind;
 use deno_ast::swc::ast::ModuleDecl;
 use deno_ast::swc::ast::ModuleItem;
 use deno_ast::swc::ast::ObjectLit;
+use deno_ast::swc::ast::ObjectPatProp;
 use deno_ast::swc::ast::Param;
 use deno_ast::swc::ast::ParamOrTsParamProp;
 use deno_ast::swc::ast::ParenExpr;
@@ -87,6 +89,7 @@ use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::get_return_stmts_with_arg_from_function;
 use super::swc_helpers::ident;
 use super::swc_helpers::is_expr_leavable;
+use super::swc_helpers::is_void_return_type;
 use super::swc_helpers::source_range_to_range;
 use super::swc_helpers::ts_keyword_type;
 use super::LowResDiagnostic;
@@ -351,6 +354,7 @@ impl<'a> LowResTransformer<'a> {
         &mut n.function,
         n.ident.as_ref().map(|i| i.range()),
         self.public_ranges.is_impl_with_overloads(&parent_range),
+        /* is setter */ false,
       ),
       DefaultDecl::TsInterfaceDecl(_) => Ok(()),
     }
@@ -381,6 +385,7 @@ impl<'a> LowResTransformer<'a> {
           &mut n.function,
           Some(n.ident.range()),
           is_overload,
+          /* is setter */ false,
         )?;
         Ok(true)
       }
@@ -639,7 +644,12 @@ impl<'a> LowResTransformer<'a> {
           return Ok(true);
         }
         let is_overload = self.public_ranges.is_impl_with_overloads(&n.range());
-        self.transform_fn(&mut n.function, Some(n.key.range()), is_overload)?;
+        self.transform_fn(
+          &mut n.function,
+          Some(n.key.range()),
+          is_overload,
+          n.kind == MethodKind::Setter,
+        )?;
         Ok(true)
       }
       ClassMember::ClassProp(n) => {
@@ -722,6 +732,7 @@ impl<'a> LowResTransformer<'a> {
     n: &mut Function,
     parent_id_range: Option<SourceRange>,
     is_overload: bool,
+    is_set_accessor: bool,
   ) -> Result<(), Box<LowResDiagnostic>> {
     if is_overload {
       for (i, param) in n.params.iter_mut().enumerate() {
@@ -740,8 +751,14 @@ impl<'a> LowResTransformer<'a> {
       }
       n.return_type = Some(any_type_ann());
     }
+    if is_set_accessor {
+      // suppress any unused param errors
+      for param in n.params.iter_mut() {
+        prefix_idents_in_pat(&mut param.pat, "_");
+      }
+    }
 
-    if n.return_type.is_none() {
+    if !is_set_accessor && n.return_type.is_none() {
       if n.is_generator {
         self.mark_diagnostic(LowResDiagnostic::MissingExplicitReturnType {
           range: self.source_range_to_range(
@@ -783,11 +800,19 @@ impl<'a> LowResTransformer<'a> {
 
     if let Some(body) = &mut n.body {
       body.stmts.clear();
+
       // push a return stmt to suppress type errors
-      body.stmts.push(Stmt::Return(ReturnStmt {
-        span: DUMMY_SP,
-        arg: Some(obj_as_any_expr()),
-      }))
+      let has_void_return_type = n
+        .return_type
+        .as_ref()
+        .map(|t| is_void_return_type(&*t.type_ann))
+        .unwrap_or(true);
+      if !has_void_return_type {
+        body.stmts.push(Stmt::Return(ReturnStmt {
+          span: DUMMY_SP,
+          arg: Some(obj_as_any_expr()),
+        }));
+      }
     }
 
     for param in &mut n.params {
@@ -1038,6 +1063,51 @@ impl<'a> LowResTransformer<'a> {
   fn source_range_to_range(&self, range: SourceRange) -> Range {
     let text_info = self.parsed_source.text_info();
     source_range_to_range(range, self.specifier, text_info)
+  }
+}
+
+fn prefix_ident(ident: &mut Ident, prefix: &str) {
+  ident.sym = format!("{}{}", prefix, ident.sym).into();
+}
+
+fn prefix_idents_in_pat(pat: &mut Pat, prefix: &str) {
+  match pat {
+    Pat::Ident(ident) => {
+      prefix_ident(&mut ident.id, prefix);
+    }
+    Pat::Array(array) => {
+      for pat in &mut array.elems {
+        if let Some(pat) = pat {
+          prefix_idents_in_pat(pat, prefix);
+        }
+      }
+    }
+    Pat::Rest(rest) => {
+      prefix_idents_in_pat(&mut rest.arg, prefix);
+    }
+    Pat::Object(o) => {
+      for prop in &mut o.props {
+        match prop {
+          ObjectPatProp::KeyValue(n) => match &mut n.key {
+            PropName::Ident(ident) => {
+              prefix_ident(ident, prefix);
+            }
+            PropName::Str(str) => {
+              str.value = format!("{}{}", prefix, str.value).into();
+            }
+            PropName::Num(_) | PropName::Computed(_) | PropName::BigInt(_) => {
+              // ignore
+            }
+          },
+          ObjectPatProp::Assign(n) => prefix_ident(&mut n.key, prefix),
+          ObjectPatProp::Rest(n) => prefix_idents_in_pat(&mut n.arg, prefix),
+        }
+      }
+    }
+    Pat::Assign(a) => prefix_idents_in_pat(&mut a.left, prefix),
+    Pat::Expr(_) | Pat::Invalid(_) => {
+      // ignore
+    }
   }
 }
 

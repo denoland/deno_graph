@@ -242,9 +242,7 @@ Low res https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   import { A1, A3 as RenamedA3, A4, A6 } from "./a.ts";
   export class Test {
-    /** Testing */ noReturnTypeVoid(param?: number, param2?: string): void {
-      return {} as any;
-    }
+    /** Testing */ noReturnTypeVoid(param?: number, param2?: string): void {}
     noReturnTypeAsync(): Promise<void> {
       return {} as any;
     }

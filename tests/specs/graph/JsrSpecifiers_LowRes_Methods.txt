@@ -103,9 +103,7 @@ import 'jsr:@scope/a'
 Low res https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export class Test {
-    test1(): void {
-      return {} as any;
-    }
+    test1(): void {}
     test2(): number {
       return {} as any;
     }
@@ -134,12 +132,8 @@ Low res https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export class Test2 {
     #private!: unknown;
-    public method1(): void {
-      return {} as any;
-    }
-    protected method2(): void {
-      return {} as any;
-    }
+    public method1(): void {}
+    protected method2(): void {}
     private tsPrivateMethod!: unknown;
   }
   class PublicOther {

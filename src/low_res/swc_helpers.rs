@@ -189,3 +189,13 @@ pub fn is_expr_leavable(expr: &Expr) -> bool {
     | Expr::Invalid(_) => false,
   }
 }
+
+pub fn is_void_return_type(return_type: &TsType) -> bool {
+  match return_type {
+    TsType::TsKeywordType(TsKeywordType {
+      kind: TsKeywordTypeKind::TsVoidKeyword,
+      ..
+    }) => true,
+    _ => false,
+  }
+}
