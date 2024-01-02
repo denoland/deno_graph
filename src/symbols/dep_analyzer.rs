@@ -113,6 +113,7 @@ pub fn resolve_deps(node_ref: SymbolNodeRef) -> Vec<SymbolNodeDep> {
       }
     }
     SymbolNodeRef::ClassProp(n) => {
+      fill_prop_name(deps, &n.key);
       if let Some(type_ann) = &n.type_ann {
         fill_ts_type_ann(deps, type_ann)
       }
@@ -260,10 +261,8 @@ fn fill_prop_name(deps: &mut Vec<SymbolNodeDep>, key: &PropName) {
     PropName::Computed(name) => {
       fill_expr(deps, &name.expr);
     }
-    PropName::Ident(_)
-    | PropName::Str(_)
-    | PropName::Num(_)
-    | PropName::BigInt(_) => {
+    PropName::Ident(ident) => deps.push(SymbolNodeDep::Id(ident.to_id())),
+    PropName::Str(_) | PropName::Num(_) | PropName::BigInt(_) => {
       // ignore
     }
   }
