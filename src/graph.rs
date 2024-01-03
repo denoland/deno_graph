@@ -811,7 +811,7 @@ pub enum FastCheckTypeModuleSlot {
 pub struct FastCheckTypeModule {
   pub dependencies: IndexMap<String, Dependency>,
   pub source: Arc<str>,
-  pub source_map: Arc<str>,
+  pub source_map: Arc<[u8]>,
 }
 
 #[derive(Debug, Clone, Serialize)]
