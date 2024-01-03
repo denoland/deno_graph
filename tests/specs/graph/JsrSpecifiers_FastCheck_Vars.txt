@@ -1,0 +1,151 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+const public1: Public1 = new Public1(), private1 = new Private();
+
+export { public1 }
+
+class Public1 {
+}
+
+class Private {}
+
+// can be left as-is because this is low cost inference
+const ERROR_STATUS_MAP = {
+  "BadRequest": 400,
+  "Unauthorized": 401,
+  "PaymentRequired": 402,
+  "Forbidden": 403,
+  // etc...
+} as const;
+export type ErrorStatusKeys = keyof typeof ERROR_STATUS_MAP;
+export const asIs1 = [1, 2, 3];
+export const asIs2 = {
+  a: [1, 2, 3],
+  b: true,
+  c: 10,
+  d: 10n,
+  e: 1 * 2,
+  [1]: 4,
+  f: 1 ? true : false,
+  g: 1++,
+  h: [...[1, 2], ...["test"]],
+};
+
+// inferring simple types
+export const inferred1 = 1 as 1;
+export const inferred2 = 1 as string;
+export const inferred3 = 1 as true;
+export const inferred4 = /test/;
+export const inferred5 = 1 as boolean;
+export const inferred6 = <boolean>2;
+export const inferred7 = 1 as 1 | 2 | 3 & 4;
+export const inferred8 = 1 as ["test", 1];
+export const inferred9 = 1 as [...string];
+export const inferred10 = 1 as (1 | 2n)[];
+export const inferred10 = 1 as (keyof string)[];
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 1038,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast checkhttps://jsr.io/@scope/a/1.0.0/mod.ts:
+  {}
+  const public1: Public1 = {} as any;
+  export { public1 };
+  class Public1 {
+  }
+  const ERROR_STATUS_MAP = {
+    "BadRequest": 400,
+    "Unauthorized": 401,
+    "PaymentRequired": 402,
+    "Forbidden": 403
+  } as const;
+  export type ErrorStatusKeys = keyof typeof ERROR_STATUS_MAP;
+  export const asIs1 = [
+    1,
+    2,
+    3
+  ];
+  export const asIs2 = {
+    a: [
+      1,
+      2,
+      3
+    ],
+    b: true,
+    c: 10,
+    d: 10n,
+    e: 1 * 2,
+    [1]: 4,
+    f: 1 ? true : false,
+    g: 1++,
+    h: [
+      ...[
+        1,
+        2
+      ],
+      ...[
+        "test"
+      ]
+    ]
+  };
+  export const inferred1: 1 = {} as any;
+  export const inferred2: string = {} as any;
+  export const inferred3: true = {} as any;
+  export const inferred4: RegExp = {} as any;
+  export const inferred5: boolean = {} as any;
+  export const inferred6: boolean = {} as any;
+  export const inferred7: 1 | 2 | 3 & 4 = {} as any;
+  export const inferred8: ["test", 1] = {} as any;
+  export const inferred9: [...string] = {} as any;
+  export const inferred10: (1 | 2n)[] = {} as any;
+  export const inferred10: (keyof string)[] = {} as any;

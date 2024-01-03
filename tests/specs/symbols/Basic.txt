@@ -379,7 +379,7 @@ file:///a.ts: EsmModuleInfo {
     },
 }
 == symbol deps ==
-6:102..115 [Id(("AInner", #2))]
+6:102..115 [Id(("prop", #0)), Id(("AInner", #2))]
 9:173..198 [Id(("C", #2))]
 
 file:///mod.ts: EsmModuleInfo {

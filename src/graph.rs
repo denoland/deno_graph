@@ -14,7 +14,7 @@ use crate::DefaultModuleAnalyzer;
 use crate::DefaultModuleParser;
 use crate::ReferrerImports;
 
-use crate::low_res::LowResDiagnostic;
+use crate::fast_check::FastCheckDiagnostic;
 use crate::module_specifier::is_fs_root_specifier;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -802,13 +802,13 @@ impl JsonModule {
 }
 
 #[derive(Debug, Clone)]
-pub enum LowResTypeModuleSlot {
-  Module(Box<LowResTypeModule>),
-  Error(Box<LowResDiagnostic>),
+pub enum FastCheckTypeModuleSlot {
+  Module(Box<FastCheckTypeModule>),
+  Error(Box<FastCheckDiagnostic>),
 }
 
 #[derive(Debug, Clone)]
-pub struct LowResTypeModule {
+pub struct FastCheckTypeModule {
   pub dependencies: IndexMap<String, Dependency>,
   pub source: Arc<str>,
   pub source_map: Arc<str>,
@@ -832,7 +832,7 @@ pub struct EsmModule {
   pub media_type: MediaType,
   pub specifier: ModuleSpecifier,
   #[serde(skip_serializing)]
-  pub low_res: Option<LowResTypeModuleSlot>,
+  pub fast_check: Option<FastCheckTypeModuleSlot>,
 }
 
 impl EsmModule {
@@ -844,7 +844,7 @@ impl EsmModule {
       maybe_types_dependency: None,
       media_type: MediaType::Unknown,
       specifier,
-      low_res: None,
+      fast_check: None,
     }
   }
 
@@ -853,25 +853,27 @@ impl EsmModule {
     self.source.as_bytes().len()
   }
 
-  pub fn low_res_diagnostic(&self) -> Option<&LowResDiagnostic> {
-    let module_slot = self.low_res.as_ref()?;
+  pub fn fast_check_diagnostic(&self) -> Option<&FastCheckDiagnostic> {
+    let module_slot = self.fast_check.as_ref()?;
     match module_slot {
-      LowResTypeModuleSlot::Module(_) => None,
-      LowResTypeModuleSlot::Error(d) => Some(d),
+      FastCheckTypeModuleSlot::Module(_) => None,
+      FastCheckTypeModuleSlot::Error(d) => Some(d),
     }
   }
 
-  pub fn low_res_module(&self) -> Option<&LowResTypeModule> {
-    let module_slot = self.low_res.as_ref()?;
+  pub fn fast_check_module(&self) -> Option<&FastCheckTypeModule> {
+    let module_slot = self.fast_check.as_ref()?;
     match module_slot {
-      LowResTypeModuleSlot::Module(m) => Some(m),
-      LowResTypeModuleSlot::Error(_) => None,
+      FastCheckTypeModuleSlot::Module(m) => Some(m),
+      FastCheckTypeModuleSlot::Error(_) => None,
     }
   }
 
-  pub fn dependencies_prefer_low_res(&self) -> &IndexMap<String, Dependency> {
-    match self.low_res_module() {
-      Some(low_res) => &low_res.dependencies,
+  pub fn dependencies_prefer_fast_check(
+    &self,
+  ) -> &IndexMap<String, Dependency> {
+    match self.fast_check_module() {
+      Some(fast_check) => &fast_check.dependencies,
       None => &self.dependencies,
     }
   }
@@ -977,8 +979,8 @@ pub struct BuildOptions<'a> {
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
   pub reporter: Option<&'a dyn Reporter>,
-  /// Whether to fill workspace members with low resolution TypeScript data.
-  pub workspace_low_res: bool,
+  /// Whether to fill workspace members with fast check TypeScript data.
+  pub workspace_fast_check: bool,
   pub workspace_members: Vec<WorkspaceMember>,
 }
 
@@ -1114,7 +1116,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
             }
           }
           let module_deps = if check_types {
-            module.dependencies_prefer_low_res()
+            module.dependencies_prefer_fast_check()
           } else {
             &module.dependencies
           };
@@ -1298,7 +1300,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
               }
             }
             let module_deps = if follow_type_only {
-              module.dependencies_prefer_low_res()
+              module.dependencies_prefer_fast_check()
             } else {
               &module.dependencies
             };
@@ -1415,7 +1417,7 @@ impl ModuleGraph {
       loader,
       options.module_analyzer.unwrap_or(&default_analyzer),
       options.reporter,
-      options.workspace_low_res,
+      options.workspace_fast_check,
       options.workspace_members,
     )
     .await
@@ -2729,7 +2731,7 @@ struct Builder<'a, 'graph> {
   graph: &'graph mut ModuleGraph,
   state: PendingState,
   fill_pass_mode: FillPassMode,
-  workspace_low_res: bool,
+  workspace_fast_check: bool,
   workspace_members: Vec<WorkspaceMember>,
   diagnostics: Vec<BuildDiagnostic>,
 }
@@ -2747,7 +2749,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     loader: &'a mut dyn Loader,
     module_analyzer: &'a dyn ModuleAnalyzer,
     reporter: Option<&'a dyn Reporter>,
-    workspace_low_res: bool,
+    workspace_fast_check: bool,
     workspace_members: Vec<WorkspaceMember>,
   ) -> Vec<BuildDiagnostic> {
     let fill_pass_mode = match graph.roots.is_empty() {
@@ -2765,7 +2767,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       graph,
       state: PendingState::default(),
       fill_pass_mode,
-      workspace_low_res,
+      workspace_fast_check,
       workspace_members,
       diagnostics: Vec::new(),
     };
@@ -2879,8 +2881,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     // resolve any npm package requirements
     NpmSpecifierResolver::fill_builder(self).await;
 
-    // create the low-res type graph
-    self.create_low_res_type_graph();
+    // create the fast check type graph
+    self.create_fast_check_type_graph();
   }
 
   fn handle_provided_imports(&mut self, imports: Vec<ReferrerImports>) {
@@ -3859,7 +3861,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     module_slot
   }
 
-  fn create_low_res_type_graph(&mut self) {
+  fn create_fast_check_type_graph(&mut self) {
     if !self.graph.graph_kind().include_types() {
       return;
     }
@@ -3867,7 +3869,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let mut pending_nvs = std::mem::take(&mut self.state.jsr.top_level_nvs)
       .into_iter()
       .collect::<VecDeque<_>>();
-    if self.workspace_low_res {
+    if self.workspace_fast_check {
       pending_nvs.extend(self.workspace_members.iter().map(|n| n.nv.clone()));
     }
     if pending_nvs.is_empty() {
@@ -3883,21 +3885,21 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       analyzer.as_capturing_parser(),
     );
 
-    let modules = crate::low_res::build_low_res_type_graph(
+    let modules = crate::fast_check::build_fast_check_type_graph(
       self.loader,
       self.graph,
       &root_symbol,
       pending_nvs,
-      &crate::low_res::TransformOptions {
-        workspace_members: if self.workspace_low_res {
+      &crate::fast_check::TransformOptions {
+        workspace_members: if self.workspace_fast_check {
           &self.workspace_members
         } else {
           &[]
         },
-        should_error_on_first_diagnostic: !self.workspace_low_res,
+        should_error_on_first_diagnostic: !self.workspace_fast_check,
       },
     );
-    for (specifier, low_res_module_result) in modules {
+    for (specifier, fast_check_module_result) in modules {
       let module_slot = self.graph.module_slots.get_mut(&specifier).unwrap();
       let module = match module_slot {
         ModuleSlot::Module(m) => match m {
@@ -3906,13 +3908,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         },
         ModuleSlot::Err(_) | ModuleSlot::Pending => unreachable!(),
       };
-      module.low_res = Some(match low_res_module_result {
-        Ok(low_res_module) => {
+      module.fast_check = Some(match fast_check_module_result {
+        Ok(fast_check_module) => {
           let mut dependencies: IndexMap<String, Dependency> =
             Default::default();
           fill_module_dependencies(
             GraphKind::TypesOnly,
-            low_res_module.module_info.dependencies,
+            fast_check_module.module_info.dependencies,
             &module.specifier,
             &mut dependencies,
             // no need to resolve dynamic imports
@@ -3920,13 +3922,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             self.resolver,
             self.npm_resolver,
           );
-          LowResTypeModuleSlot::Module(Box::new(LowResTypeModule {
+          FastCheckTypeModuleSlot::Module(Box::new(FastCheckTypeModule {
             dependencies,
-            source: low_res_module.text.into(),
-            source_map: low_res_module.source_map.into(),
+            source: fast_check_module.text.into(),
+            source_map: fast_check_module.source_map.into(),
           }))
         }
-        Err(diagnostic) => LowResTypeModuleSlot::Error(diagnostic),
+        Err(diagnostic) => FastCheckTypeModuleSlot::Error(diagnostic),
       });
     }
   }

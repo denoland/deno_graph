@@ -174,7 +174,6 @@ impl<'a> RootSymbol<'a> {
     let builder = ModuleBuilder::new(module_id);
     let filler = SymbolFiller {
       source: &source,
-      specifier,
       builder: &builder,
     };
     filler.fill(module);
@@ -1701,7 +1700,6 @@ impl ModuleBuilder {
 }
 
 struct SymbolFiller<'a> {
-  specifier: &'a ModuleSpecifier,
   source: &'a ParsedSource,
   builder: &'a ModuleBuilder,
 }

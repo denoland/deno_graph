@@ -178,9 +178,9 @@ console.log(1);
   }
 }
 
-Low res https://jsr.io/@scope/a/1.0.1/mod.ts:
+Fast checkhttps://jsr.io/@scope/a/1.0.1/mod.ts:
   {}
   <empty>
-Low res https://jsr.io/@scope/c/3.0.0/mod.ts:
+Fast checkhttps://jsr.io/@scope/c/3.0.0/mod.ts:
   {}
   <empty>

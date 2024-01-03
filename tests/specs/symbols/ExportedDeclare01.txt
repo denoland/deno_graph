@@ -461,7 +461,8 @@ file:///mod.ts: EsmModuleInfo {
     },
 }
 == symbol deps ==
-8:160..172 [Id(("Other", #2))]
+7:142..157 [Id(("method", #0))]
+8:160..172 [Id(("prop", #0)), Id(("Other", #2))]
 
 == export definitions ==
 [bar]: file:///mod.ts:0..29

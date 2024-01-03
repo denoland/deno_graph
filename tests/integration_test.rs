@@ -62,28 +62,28 @@ async fn test_graph_specs() {
     let update_var = std::env::var("UPDATE");
     let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
     output_text.push('\n');
-    let low_res_modules = result.graph.modules().filter_map(|module| {
+    let fast_check_modules = result.graph.modules().filter_map(|module| {
       let module = module.esm()?;
-      let low_res = module.low_res.as_ref()?;
-      Some((module, low_res))
+      let fast_check = module.fast_check.as_ref()?;
+      Some((module, fast_check))
     });
-    for (module, low_res) in low_res_modules {
-      output_text.push_str(&format!("\nLow res {}:\n", module.specifier,));
-      match low_res {
-        deno_graph::LowResTypeModuleSlot::Module(low_res) => {
+    for (module, fast_check) in fast_check_modules {
+      output_text.push_str(&format!("\nFast check{}:\n", module.specifier,));
+      match fast_check {
+        deno_graph::FastCheckTypeModuleSlot::Module(fast_check) => {
           output_text.push_str(&format!(
             "{}\n{}",
             indent(
-              &serde_json::to_string_pretty(&low_res.dependencies).unwrap()
+              &serde_json::to_string_pretty(&fast_check.dependencies).unwrap()
             ),
-            if low_res.source.is_empty() {
+            if fast_check.source.is_empty() {
               "  <empty>".to_string()
             } else {
-              indent(&low_res.source)
+              indent(&fast_check.source)
             },
           ));
         }
-        deno_graph::LowResTypeModuleSlot::Error(diagnostic) => {
+        deno_graph::FastCheckTypeModuleSlot::Error(diagnostic) => {
           output_text.push_str(&indent(&diagnostic.message_with_range()));
         }
       }

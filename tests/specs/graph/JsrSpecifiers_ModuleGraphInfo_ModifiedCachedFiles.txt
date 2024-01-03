@@ -234,6 +234,6 @@ import 'jsr:@scope/b';
   }
 }
 
-Low res https://jsr.io/@scope/a/1.0.0/mod.ts:
+Fast checkhttps://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   <empty>
