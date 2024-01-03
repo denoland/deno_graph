@@ -257,7 +257,6 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "sourcemap",
  "tempfile",
  "thiserror",
  "tokio",
