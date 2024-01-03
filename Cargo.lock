@@ -1337,9 +1337,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_react"
-version = "0.181.11"
+version = "0.181.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd5605b54aa99929d3460253117dde16369c5ac5403b5a2e26454df39b1efc5d"
+checksum = "c4cccf16783c6705385c486adc213c5d9b4c901cb39d62430ce28f4f36251e8d"
 dependencies = [
  "base64 0.21.5",
  "dashmap",
@@ -1361,9 +1361,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_typescript"
-version = "0.186.11"
+version = "0.186.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8ed0e5715a1e29bb247f6d0ed79397ed0ce4331f9e40ff3cf0fea432ced649e"
+checksum = "0cdbcd6e965300c12dfb5e0cac6f5479317eb9fb9e592668ca1cbbc83c2a3f2a"
 dependencies = [
  "ryu-js",
  "serde",
