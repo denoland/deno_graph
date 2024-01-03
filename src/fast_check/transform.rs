@@ -135,7 +135,7 @@ impl CommentsMut {
 pub struct FastCheckModule {
   pub module_info: ModuleInfo,
   pub text: String,
-  pub source_map: String,
+  pub source_map: sourcemap::SourceMap,
 }
 
 pub struct TransformOptions<'a> {
@@ -1149,7 +1149,7 @@ fn emit(
   comments: &SingleThreadedComments,
   text_info: &SourceTextInfo,
   module: &deno_ast::swc::ast::Module,
-) -> Result<(String, String), anyhow::Error> {
+) -> Result<(String, sourcemap::SourceMap), anyhow::Error> {
   let source_map = Rc::new(SourceMap::default());
   let file_name = FileName::Url(specifier.clone());
   source_map.new_source_file(file_name, text_info.text_str().to_string());
@@ -1174,13 +1174,7 @@ fn emit(
     module.emit_with(&mut emitter)?;
   }
   let src = String::from_utf8(buf)?;
-  let map = {
-    let mut buf = Vec::new();
-    source_map
-      .build_source_map_from(&src_map_buf, None)
-      .to_writer(&mut buf)?;
-    String::from_utf8(buf)?
-  };
+  let map = source_map.build_source_map_from(&src_map_buf, None);
 
   Ok((src, map))
 }
