@@ -145,10 +145,10 @@ import "jsr:@scope/b@1.1";
   }
 }
 
-Fast checkhttps://jsr.io/@scope/a/1.0.0/mod.ts:
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   <empty>
-Fast checkhttps://jsr.io/@scope/b/1.1.0/mod.ts:
+Fast check https://jsr.io/@scope/b/1.1.0/mod.ts:
   {}
   export class Test {
     method(value: string): void {}

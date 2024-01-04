@@ -5,11 +5,16 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-class Class {}
+// this will fail because Symbol is local
+function Symbol() {}
 
-export default {
-  test: new Class(),
-};
+const key = Symbol("#keys");
+const key2 = Symbol.for("#keys");
+
+export class MyClass {
+  [key] = 5;
+  [key2] = "";
+}
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -46,7 +51,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 57,
+      "size": 181,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -60,5 +65,5 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  Default export expression was too complex. Extract it out to a variable and add an explicit type.
-      at https://jsr.io/@scope/a/1.0.0/mod.ts:3:1
+  Could not resolve 'Symbol.for' referenced from 'key2'. This may indicate a bug in Deno. Please open an issue to help us improve if so.
+      at https://jsr.io/@scope/a/1.0.0/mod.ts:2:1

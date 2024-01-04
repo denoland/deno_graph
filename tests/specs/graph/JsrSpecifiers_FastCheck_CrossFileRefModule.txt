@@ -137,14 +137,14 @@ import 'jsr:@scope/a'
   }
 }
 
-Fast checkhttps://jsr.io/@scope/a/1.0.0/a.ts:
+Fast check https://jsr.io/@scope/a/1.0.0/a.ts:
   {}
   export class A {
     member!: string;
     member2!: string;
   }
 
-Fast checkhttps://jsr.io/@scope/a/1.0.0/b.ts:
+Fast check https://jsr.io/@scope/a/1.0.0/b.ts:
   {
     "./a.ts": {
       "code": {
@@ -164,7 +164,7 @@ Fast checkhttps://jsr.io/@scope/a/1.0.0/b.ts:
   }
   export { A as B } from "./a.ts";
 
-Fast checkhttps://jsr.io/@scope/a/1.0.0/mod.ts:
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {
     "./b.ts": {
       "code": {

@@ -178,9 +178,9 @@ console.log(1);
   }
 }
 
-Fast checkhttps://jsr.io/@scope/a/1.0.1/mod.ts:
+Fast check https://jsr.io/@scope/a/1.0.1/mod.ts:
   {}
   <empty>
-Fast checkhttps://jsr.io/@scope/c/3.0.0/mod.ts:
+Fast check https://jsr.io/@scope/c/3.0.0/mod.ts:
   {}
   <empty>

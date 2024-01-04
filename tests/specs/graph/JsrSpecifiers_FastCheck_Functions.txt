@@ -114,7 +114,7 @@ import 'jsr:@scope/a'
   }
 }
 
-Fast checkhttps://jsr.io/@scope/a/1.0.0/mod.ts:
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export function test1(): void {}
   export function test2(): number {

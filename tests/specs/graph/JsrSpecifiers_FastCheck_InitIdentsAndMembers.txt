@@ -120,7 +120,7 @@ import 'jsr:@scope/b'
   }
 }
 
-Fast checkhttps://jsr.io/@scope/a/1.0.0/mod.ts:
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   class BaseHandler {
   }
@@ -136,7 +136,7 @@ Fast checkhttps://jsr.io/@scope/a/1.0.0/mod.ts:
     C: Test.A
   };
 
-Fast checkhttps://jsr.io/@scope/b/1.0.0/mod.ts:
+Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
   {}
   class BaseHandler {
   }

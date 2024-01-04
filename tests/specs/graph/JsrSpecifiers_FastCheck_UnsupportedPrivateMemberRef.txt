@@ -58,6 +58,6 @@ import 'jsr:@scope/a'
   }
 }
 
-Fast checkhttps://jsr.io/@scope/a/1.0.0/mod.ts:
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   Public API members (MyClass.prototype.prop) referencing or transitively referencing a class private member (MyClass.prototype.myPrivateMember) are not supported. Extract out the shared type to a type alias.
       at https://jsr.io/@scope/a/1.0.0/mod.ts:3:3

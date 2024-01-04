@@ -55,6 +55,6 @@ import 'jsr:@scope/a'
   }
 }
 
-Fast checkhttps://jsr.io/@scope/a/1.0.0/mod.ts:
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   CommonJS export assignments (`export =`) are not supported in ES modules.
       at https://jsr.io/@scope/a/1.0.0/mod.ts:1:1
