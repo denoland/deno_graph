@@ -256,7 +256,12 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-== symbol deps ==
+== symbol deps (types and exprs) ==
+2:23..156 [Id(("PublicClass", #2)), Id(("PrivateClass", #2)), Id(("PrivateClass", #2))]
+3:48..73 [Id(("PublicClass", #2))]
+4:79..113 [Id(("PrivateClass", #2))]
+
+== symbol deps (types only) ==
 2:23..156 [Id(("PublicClass", #2)), Id(("PrivateClass", #2)), Id(("PrivateClass", #2))]
 3:48..73 [Id(("PublicClass", #2))]
 4:79..113 [Id(("PrivateClass", #2))]

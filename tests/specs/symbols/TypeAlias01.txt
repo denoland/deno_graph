@@ -152,7 +152,10 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-== symbol deps ==
+== symbol deps (types and exprs) ==
+1:0..43 [Id(("Other", #2)), Id(("Other2", #2))]
+
+== symbol deps (types only) ==
 1:0..43 [Id(("Other", #2)), Id(("Other2", #2))]
 
 == export definitions ==

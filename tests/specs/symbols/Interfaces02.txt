@@ -249,7 +249,10 @@ file:///a.ts: EsmModuleInfo {
         },
     },
 }
-== symbol deps ==
+== symbol deps (types and exprs) ==
+3:51..64 [Id(("Prop2", #2))]
+
+== symbol deps (types only) ==
 3:51..64 [Id(("Prop2", #2))]
 
 file:///mod.ts: EsmModuleInfo {
@@ -511,7 +514,11 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-== symbol deps ==
+== symbol deps (types and exprs) ==
+2:42..55 [Id(("Prop1", #2))]
+3:77..90 [Id(("Prop2", #2))]
+
+== symbol deps (types only) ==
 2:42..55 [Id(("Prop1", #2))]
 3:77..90 [Id(("Prop2", #2))]
 

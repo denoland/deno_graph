@@ -233,7 +233,11 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-== symbol deps ==
+== symbol deps (types and exprs) ==
+1:0..51 [QualifiedId(("MyNamespace", #2), ["MyClass"])]
+2:52..112 [QualifiedId(("MyNamespace", #2), ["MyClass"]), Id(("Test", #2))]
+
+== symbol deps (types only) ==
 1:0..51 [QualifiedId(("MyNamespace", #2), ["MyClass"])]
 2:52..112 [QualifiedId(("MyNamespace", #2), ["MyClass"]), Id(("Test", #2))]
 

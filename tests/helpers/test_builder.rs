@@ -252,6 +252,7 @@ impl TestBuilder {
 
     use deno_graph::symbols::DefinitionOrUnresolved;
     use deno_graph::symbols::ModuleInfoRef;
+    use deno_graph::symbols::ResolveDepsMode;
 
     let build_result = self.build().await;
     let graph = &build_result.graph;
@@ -282,27 +283,48 @@ impl TestBuilder {
           );
           output_text.push_str(&module_output_text);
 
-          let mut symbol_deps_text = String::new();
-          for symbol in module.symbols() {
-            for decl in symbol.decls() {
-              if let Some((node, source)) = decl.maybe_node_and_source() {
-                let deps = node.deps(
-                  deno_graph::symbols::ResolveDepsMode::TypesAndExpressions,
-                );
-                if !deps.is_empty() {
-                  symbol_deps_text.push_str(&format!(
-                    "{:?}:{:?} {:?}\n",
-                    symbol.symbol_id(),
-                    decl.range.as_byte_range(source.text_info().range().start),
-                    deps
-                  ));
+          fn get_symbol_deps_text_for_mode(
+            module: ModuleInfoRef<'_>,
+            resolve_mode: ResolveDepsMode,
+          ) -> String {
+            let mut symbol_deps_text = String::new();
+            for symbol in module.symbols() {
+              for decl in symbol.decls() {
+                if let Some((node, source)) = decl.maybe_node_and_source() {
+                  let deps = node.deps(resolve_mode);
+                  if !deps.is_empty() {
+                    symbol_deps_text.push_str(&format!(
+                      "{:?}:{:?} {:?}\n",
+                      symbol.symbol_id(),
+                      decl
+                        .range
+                        .as_byte_range(source.text_info().range().start),
+                      deps
+                    ));
+                  }
                 }
               }
             }
+            symbol_deps_text
           }
+
+          let symbol_deps_text = get_symbol_deps_text_for_mode(
+            module,
+            ResolveDepsMode::TypesAndExpressions,
+          );
           if !symbol_deps_text.is_empty() {
-            output_text
-              .push_str(&format!("== symbol deps ==\n{}\n", symbol_deps_text));
+            output_text.push_str(&format!(
+              "== symbol deps (types and exprs) ==\n{}\n",
+              symbol_deps_text
+            ));
+          }
+          let symbol_deps_text =
+            get_symbol_deps_text_for_mode(module, ResolveDepsMode::TypesOnly);
+          if !symbol_deps_text.is_empty() {
+            output_text.push_str(&format!(
+              "== symbol deps (types only) ==\n{}\n",
+              symbol_deps_text
+            ));
           }
 
           // analyze the module graph for any problems

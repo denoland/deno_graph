@@ -221,7 +221,10 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-== symbol deps ==
+== symbol deps (types and exprs) ==
+4:148..223 [Id(("MyInterface", #2)), Id(("MyInterface2", #2)), Id(("MyInterface3", #2))]
+
+== symbol deps (types only) ==
 4:148..223 [Id(("MyInterface", #2)), Id(("MyInterface2", #2)), Id(("MyInterface3", #2))]
 
 file:///other.d.ts: EsmModuleInfo {
