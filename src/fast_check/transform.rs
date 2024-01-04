@@ -10,6 +10,7 @@ use std::sync::Arc;
 use deno_ast::swc::ast::Accessibility;
 use deno_ast::swc::ast::ArrayLit;
 use deno_ast::swc::ast::BindingIdent;
+use deno_ast::swc::ast::CallExpr;
 use deno_ast::swc::ast::Callee;
 use deno_ast::swc::ast::Class;
 use deno_ast::swc::ast::ClassMember;
@@ -55,6 +56,7 @@ use deno_ast::swc::ast::TsTupleType;
 use deno_ast::swc::ast::TsType;
 use deno_ast::swc::ast::TsTypeAnn;
 use deno_ast::swc::ast::TsTypeOperator;
+use deno_ast::swc::ast::TsTypeOperatorOp;
 use deno_ast::swc::ast::TsTypeParamInstantiation;
 use deno_ast::swc::ast::TsTypeRef;
 use deno_ast::swc::ast::TsUnionOrIntersectionType;
@@ -551,7 +553,7 @@ impl<'a> FastCheckTransformer<'a> {
                         _ => None,
                       };
                       explicit_type_ann.or_else(|| {
-                        maybe_infer_type_from_expr(&assign.right).map(
+                        self.maybe_infer_type_from_expr(&assign.right).map(
                           |type_ann| {
                             Box::new(TsTypeAnn {
                               span: DUMMY_SP,
@@ -665,8 +667,10 @@ impl<'a> FastCheckTransformer<'a> {
           return Ok(true);
         }
         if n.type_ann.is_none() {
-          let inferred_type =
-            n.value.as_ref().and_then(|e| maybe_infer_type_from_expr(e));
+          let inferred_type = n
+            .value
+            .as_ref()
+            .and_then(|e| self.maybe_infer_type_from_expr(e));
           match inferred_type {
             Some(t) => {
               n.type_ann = Some(Box::new(TsTypeAnn {
@@ -699,7 +703,7 @@ impl<'a> FastCheckTransformer<'a> {
         //   let inferred_type = n
         //     .value
         //     .as_ref()
-        //     .and_then(|e| maybe_infer_type_from_expr(&*e));
+        //     .and_then(|e| self.maybe_infer_type_from_expr(&*e));
         //   match inferred_type {
         //     Some(t) => {
         //       n.type_ann = Some(Box::new(TsTypeAnn {
@@ -861,7 +865,7 @@ impl<'a> FastCheckTransformer<'a> {
       Pat::Assign(assign) => match &mut *assign.left {
         Pat::Ident(ident) => {
           if ident.type_ann.is_none() {
-            let inferred_type = maybe_infer_type_from_expr(&assign.right);
+            let inferred_type = self.maybe_infer_type_from_expr(&assign.right);
             match inferred_type {
               Some(t) => {
                 ident.type_ann = Some(Box::new(TsTypeAnn {
@@ -969,7 +973,7 @@ impl<'a> FastCheckTransformer<'a> {
             let inferred_type = decl
               .init
               .as_ref()
-              .and_then(|e| maybe_infer_type_from_expr(e));
+              .and_then(|e| self.maybe_infer_type_from_expr(e));
             match inferred_type {
               Some(t) => {
                 ident.type_ann = Some(Box::new(TsTypeAnn {
@@ -1097,6 +1101,117 @@ impl<'a> FastCheckTransformer<'a> {
     let text_info = self.parsed_source.text_info();
     source_range_to_range(range, self.specifier, text_info)
   }
+
+  fn maybe_infer_type_from_expr(&self, expr: &Expr) -> Option<TsType> {
+    match expr {
+      Expr::TsTypeAssertion(n) => infer_simple_type_from_type(&n.type_ann),
+      Expr::TsAs(n) => infer_simple_type_from_type(&n.type_ann),
+      Expr::Lit(lit) => match lit {
+        Lit::Str(_) => {
+          Some(ts_keyword_type(TsKeywordTypeKind::TsStringKeyword))
+        }
+        Lit::Bool(_) => {
+          Some(ts_keyword_type(TsKeywordTypeKind::TsBooleanKeyword))
+        }
+        Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
+        Lit::Num(_) => {
+          Some(ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword))
+        }
+        Lit::BigInt(_) => {
+          Some(ts_keyword_type(TsKeywordTypeKind::TsBigIntKeyword))
+        }
+        Lit::Regex(_) => Some(TsType::TsTypeRef(TsTypeRef {
+          span: DUMMY_SP,
+          type_name: TsEntityName::Ident(Ident::new("RegExp".into(), DUMMY_SP)),
+          type_params: None,
+        })),
+        Lit::JSXText(_) => None,
+      },
+      Expr::Call(call_expr) => {
+        if self.is_call_expr_symbol_create(&call_expr) {
+          Some(TsType::TsTypeOperator(TsTypeOperator {
+            span: DUMMY_SP,
+            op: TsTypeOperatorOp::Unique,
+            type_ann: Box::new(TsType::TsTypeRef(TsTypeRef {
+              span: DUMMY_SP,
+              type_name: TsEntityName::Ident(ident("symbol".to_string())),
+              type_params: None,
+            })),
+          }))
+        } else {
+          None
+        }
+      }
+      Expr::This(_)
+      | Expr::Array(_)
+      | Expr::Object(_)
+      | Expr::Fn(_)
+      | Expr::Unary(_)
+      | Expr::Update(_)
+      | Expr::Bin(_)
+      | Expr::Assign(_)
+      | Expr::Member(_)
+      | Expr::SuperProp(_)
+      | Expr::Cond(_)
+      | Expr::New(_)
+      | Expr::Seq(_)
+      | Expr::Ident(_)
+      | Expr::Tpl(_)
+      | Expr::TaggedTpl(_)
+      | Expr::Arrow(_)
+      | Expr::Class(_)
+      | Expr::Yield(_)
+      | Expr::MetaProp(_)
+      | Expr::Await(_)
+      | Expr::Paren(_)
+      | Expr::JSXMember(_)
+      | Expr::JSXNamespacedName(_)
+      | Expr::JSXEmpty(_)
+      | Expr::JSXElement(_)
+      | Expr::JSXFragment(_)
+      | Expr::TsConstAssertion(_)
+      | Expr::TsNonNull(_)
+      | Expr::TsInstantiation(_)
+      | Expr::TsSatisfies(_)
+      | Expr::PrivateName(_)
+      | Expr::OptChain(_)
+      | Expr::Invalid(_) => None,
+    }
+  }
+
+  /// Looks if the call expr is `Symbol("example")` or `Symbol.for("example")`
+  fn is_call_expr_symbol_create(&self, call_expr: &CallExpr) -> bool {
+    let Some(expr) = call_expr.callee.as_expr() else {
+      return false;
+    };
+    let expr_ident = match &**expr {
+      Expr::Ident(ident) => ident,
+      Expr::Member(member_expr) => {
+        let Some(ident) = member_expr.obj.as_ident() else {
+          return false;
+        };
+        let Some(prop_ident) = member_expr.prop.as_ident() else {
+          return false;
+        };
+        if prop_ident.sym != "for" {
+          return false;
+        }
+        ident
+      }
+      _ => return false,
+    };
+
+    let is_symbol_global = expr_ident.sym == "Symbol"
+      && expr_ident.to_id().1 == self.parsed_source.unresolved_context();
+    if !is_symbol_global || call_expr.args.len() != 1 {
+      return false;
+    }
+    let Some(arg_lit) = call_expr.args.first().and_then(|a| a.expr.as_lit())
+    else {
+      return false;
+    };
+    matches!(arg_lit, Lit::Str(_))
+  }
 }
 
 fn prefix_ident(ident: &mut Ident, prefix: &str) {
@@ -1183,65 +1298,6 @@ fn emit(
   };
 
   Ok((src, map))
-}
-
-fn maybe_infer_type_from_expr(expr: &Expr) -> Option<TsType> {
-  match expr {
-    Expr::TsTypeAssertion(n) => infer_simple_type_from_type(&n.type_ann),
-    Expr::TsAs(n) => infer_simple_type_from_type(&n.type_ann),
-    Expr::Lit(lit) => match lit {
-      Lit::Str(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsStringKeyword)),
-      Lit::Bool(_) => {
-        Some(ts_keyword_type(TsKeywordTypeKind::TsBooleanKeyword))
-      }
-      Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
-      Lit::Num(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword)),
-      Lit::BigInt(_) => {
-        Some(ts_keyword_type(TsKeywordTypeKind::TsBigIntKeyword))
-      }
-      Lit::Regex(_) => Some(TsType::TsTypeRef(TsTypeRef {
-        span: DUMMY_SP,
-        type_name: TsEntityName::Ident(Ident::new("RegExp".into(), DUMMY_SP)),
-        type_params: None,
-      })),
-      Lit::JSXText(_) => None,
-    },
-    Expr::This(_)
-    | Expr::Array(_)
-    | Expr::Object(_)
-    | Expr::Fn(_)
-    | Expr::Unary(_)
-    | Expr::Update(_)
-    | Expr::Bin(_)
-    | Expr::Assign(_)
-    | Expr::Member(_)
-    | Expr::SuperProp(_)
-    | Expr::Cond(_)
-    | Expr::Call(_)
-    | Expr::New(_)
-    | Expr::Seq(_)
-    | Expr::Ident(_)
-    | Expr::Tpl(_)
-    | Expr::TaggedTpl(_)
-    | Expr::Arrow(_)
-    | Expr::Class(_)
-    | Expr::Yield(_)
-    | Expr::MetaProp(_)
-    | Expr::Await(_)
-    | Expr::Paren(_)
-    | Expr::JSXMember(_)
-    | Expr::JSXNamespacedName(_)
-    | Expr::JSXEmpty(_)
-    | Expr::JSXElement(_)
-    | Expr::JSXFragment(_)
-    | Expr::TsConstAssertion(_)
-    | Expr::TsNonNull(_)
-    | Expr::TsInstantiation(_)
-    | Expr::TsSatisfies(_)
-    | Expr::PrivateName(_)
-    | Expr::OptChain(_)
-    | Expr::Invalid(_) => None,
-  }
 }
 
 fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
