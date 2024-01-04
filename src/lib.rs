@@ -41,7 +41,9 @@ pub use ast::DefaultParsedSourceStore;
 pub use ast::ModuleParser;
 pub use ast::ParsedSourceStore;
 pub use deno_ast::MediaType;
+#[cfg(feature = "fast_check")]
 pub use fast_check::FastCheckDiagnostic;
+#[cfg(feature = "fast_check")]
 pub use fast_check::FastCheckModule;
 pub use graph::BuildDiagnostic;
 pub use graph::BuildOptions;

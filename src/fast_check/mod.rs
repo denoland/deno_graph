@@ -1,21 +1,19 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
-use std::collections::VecDeque;
 use std::sync::Arc;
 
-use deno_semver::package::PackageNv;
-
-use crate::source::Loader;
-use crate::symbols::RootSymbol;
-use crate::ModuleGraph;
-use crate::ModuleSpecifier;
 use crate::Range;
 
+#[cfg(feature = "fast_check")]
 mod range_finder;
+#[cfg(feature = "fast_check")]
 mod swc_helpers;
+#[cfg(feature = "fast_check")]
 mod transform;
 
+#[cfg(feature = "fast_check")]
 pub use transform::FastCheckModule;
+#[cfg(feature = "fast_check")]
 pub use transform::TransformOptions;
 
 fn format_diagnostics(diagnostics: &[FastCheckDiagnostic]) -> String {
@@ -137,14 +135,15 @@ impl FastCheckDiagnostic {
   }
 }
 
+#[cfg(feature = "fast_check")]
 pub fn build_fast_check_type_graph<'a>(
-  loader: &'a dyn Loader,
-  graph: &'a ModuleGraph,
-  root_symbol: &'a RootSymbol<'a>,
-  pending_nvs: VecDeque<PackageNv>,
+  loader: &'a dyn crate::source::Loader,
+  graph: &'a crate::ModuleGraph,
+  root_symbol: &'a crate::symbols::RootSymbol<'a>,
+  pending_nvs: std::collections::VecDeque<deno_semver::package::PackageNv>,
   options: &TransformOptions,
 ) -> Vec<(
-  ModuleSpecifier,
+  crate::ModuleSpecifier,
   Result<FastCheckModule, Box<FastCheckDiagnostic>>,
 )> {
   let public_modules = range_finder::find_public_ranges(

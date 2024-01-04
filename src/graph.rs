@@ -9,9 +9,7 @@ use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
-use crate::CapturingModuleAnalyzer;
 use crate::DefaultModuleAnalyzer;
-use crate::DefaultModuleParser;
 use crate::ReferrerImports;
 
 use crate::fast_check::FastCheckDiagnostic;
@@ -2731,6 +2729,7 @@ struct Builder<'a, 'graph> {
   graph: &'graph mut ModuleGraph,
   state: PendingState,
   fill_pass_mode: FillPassMode,
+  #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
   workspace_fast_check: bool,
   workspace_members: Vec<WorkspaceMember>,
   diagnostics: Vec<BuildDiagnostic>,
@@ -2882,6 +2881,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     NpmSpecifierResolver::fill_builder(self).await;
 
     // create the fast check type graph
+    #[cfg(feature = "fast_check")]
     self.create_fast_check_type_graph();
   }
 
@@ -3861,7 +3861,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     module_slot
   }
 
+  #[cfg(feature = "fast_check")]
   fn create_fast_check_type_graph(&mut self) {
+    use crate::CapturingModuleAnalyzer;
+    use crate::DefaultModuleParser;
+
     if !self.graph.graph_kind().include_types() {
       return;
     }
