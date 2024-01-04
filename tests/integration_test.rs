@@ -58,6 +58,10 @@ async fn test_graph_specs() {
     });
     builder.workspace_members(spec.workspace_members.clone());
 
+    if let Some(options) = &spec.options {
+      builder.workspace_fast_check(options.workspace_fast_check);
+    }
+
     let result = builder.build().await;
     let update_var = std::env::var("UPDATE");
     let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
@@ -143,6 +147,10 @@ async fn test_symbols_specs() {
       builder.entry_point_types("file:///mod.d.ts");
     }
 
+    if let Some(options) = &spec.options {
+      builder.workspace_fast_check(options.workspace_fast_check);
+    }
+
     builder.with_loader(|loader| {
       for file in &spec.files {
         let source = Source::Module {
@@ -199,7 +207,7 @@ export class MyClass {
 "#,
       );
     })
-    .build_for_symbols()
+    .build()
     .await;
 
   let root_symbol = result.root_symbol();
@@ -266,7 +274,7 @@ async fn test_symbols_re_export_external() {
       );
       loader.remote.add_external_source("npm:example");
     })
-    .build_for_symbols()
+    .build()
     .await;
 
   let root_symbol = result.root_symbol();

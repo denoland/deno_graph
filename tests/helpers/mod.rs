@@ -8,10 +8,19 @@ mod test_builder;
 use deno_graph::WorkspaceMember;
 use indexmap::IndexMap;
 use serde::de::DeserializeOwned;
+use serde::Deserialize;
+use serde::Serialize;
 pub use test_builder::*;
 use url::Url;
 
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecOptions {
+  pub workspace_fast_check: bool,
+}
+
 pub struct Spec {
+  pub options: Option<SpecOptions>,
   pub files: Vec<SpecFile>,
   pub output_file: SpecFile,
   pub diagnostics: Vec<serde_json::Value>,
@@ -21,6 +30,12 @@ pub struct Spec {
 impl Spec {
   pub fn emit(&self) -> String {
     let mut text = String::new();
+    if let Some(options) = &self.options {
+      text.push_str("~~ ");
+      text.push_str(&serde_json::to_string(options).unwrap());
+      text.push_str(" ~~");
+      text.push_str("\n");
+    }
     if !self.workspace_members.is_empty() {
       text.push_str("# workspace_members\n");
       text.push_str(
@@ -111,7 +126,13 @@ pub fn get_specs_in_dir(path: &Path) -> Vec<(PathBuf, Spec)> {
 fn parse_spec(text: String) -> Spec {
   let mut files = Vec::new();
   let mut current_file = None;
-  for line in text.split('\n') {
+  let mut options: Option<SpecOptions> = None;
+  for (i, line) in text.split('\n').enumerate() {
+    if i == 0 && line.starts_with("~~ ") {
+      let line = line.replace("~~", "").trim().to_string(); // not ideal, being lazy
+      options = Some(serde_json::from_str(&line).unwrap());
+      continue;
+    }
     if let Some(specifier) = line.strip_prefix("# ") {
       if let Some(file) = current_file.take() {
         files.push(file);
@@ -138,6 +159,7 @@ fn parse_spec(text: String) -> Spec {
   let diagnostics = take_vec_file(&mut files, "diagnostics");
   let workspace_members = take_vec_file(&mut files, "workspace_members");
   Spec {
+    options,
     files,
     output_file,
     diagnostics,

@@ -3885,8 +3885,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       return;
     }
 
-    // todo: make the caputuring parser provided by the user and make
-    // it only do analysis when the specifier is a jsr specifier
     let root_symbol =
       crate::symbols::RootSymbol::new(self.graph, self.module_parser);
 
