@@ -59,7 +59,7 @@ pub mod symbols {
 
   impl SymbolsBuildResult {
     pub fn root_symbol(&self) -> RootSymbol {
-      RootSymbol::new(&self.graph, self.analyzer.as_capturing_parser())
+      RootSymbol::new(&self.graph, &self.analyzer)
     }
   }
 }
@@ -118,11 +118,7 @@ impl TestBuilder {
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
     let roots = vec![entry_point_url.clone()];
-    let source_parser = deno_graph::DefaultModuleParser::new_for_analysis();
-    let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::new(
-      Some(Box::new(source_parser)),
-      None,
-    );
+    let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::default();
     let diagnostics = graph
       .build(
         roots.clone(),
@@ -142,11 +138,7 @@ impl TestBuilder {
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
     let roots = vec![entry_point_url.clone()];
-    let source_parser = deno_graph::DefaultModuleParser::new_for_analysis();
-    let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::new(
-      Some(Box::new(source_parser)),
-      None,
-    );
+    let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::default();
     graph
       .build(
         roots.clone(),

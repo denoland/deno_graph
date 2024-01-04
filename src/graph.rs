@@ -9,7 +9,8 @@ use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
-use crate::DefaultModuleAnalyzer;
+use crate::CapturingModuleAnalyzer;
+use crate::ModuleParser;
 use crate::ReferrerImports;
 
 use crate::fast_check::FastCheckDiagnostic;
@@ -976,6 +977,7 @@ pub struct BuildOptions<'a> {
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
+  pub module_parser: Option<&'a dyn ModuleParser>,
   pub reporter: Option<&'a dyn Reporter>,
   /// Whether to fill workspace members with fast check TypeScript data.
   pub workspace_fast_check: bool,
@@ -1399,7 +1401,7 @@ impl ModuleGraph {
     loader: &mut dyn Loader,
     options: BuildOptions<'a>,
   ) -> Vec<BuildDiagnostic> {
-    let default_analyzer = DefaultModuleAnalyzer::default();
+    let default_module_parser = CapturingModuleAnalyzer::default();
     #[cfg(not(target_arch = "wasm32"))]
     let file_system = RealFileSystem;
     #[cfg(target_arch = "wasm32")]
@@ -1413,7 +1415,8 @@ impl ModuleGraph {
       options.resolver,
       options.npm_resolver,
       loader,
-      options.module_analyzer.unwrap_or(&default_analyzer),
+      options.module_analyzer.unwrap_or(&default_module_parser),
+      options.module_parser.unwrap_or(&default_module_parser),
       options.reporter,
       options.workspace_fast_check,
       options.workspace_members,
@@ -2725,6 +2728,8 @@ struct Builder<'a, 'graph> {
   resolver: Option<&'a dyn Resolver>,
   npm_resolver: Option<&'a dyn NpmResolver>,
   module_analyzer: &'a dyn ModuleAnalyzer,
+  #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
+  module_parser: &'a dyn ModuleParser,
   reporter: Option<&'a dyn Reporter>,
   graph: &'graph mut ModuleGraph,
   state: PendingState,
@@ -2747,6 +2752,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     npm_resolver: Option<&'a dyn NpmResolver>,
     loader: &'a mut dyn Loader,
     module_analyzer: &'a dyn ModuleAnalyzer,
+    #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
+    module_parser: &'a dyn ModuleParser,
     reporter: Option<&'a dyn Reporter>,
     workspace_fast_check: bool,
     workspace_members: Vec<WorkspaceMember>,
@@ -2762,6 +2769,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       resolver,
       npm_resolver,
       module_analyzer,
+      module_parser,
       reporter,
       graph,
       state: PendingState::default(),
@@ -3863,9 +3871,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
   #[cfg(feature = "fast_check")]
   fn create_fast_check_type_graph(&mut self) {
-    use crate::CapturingModuleAnalyzer;
-    use crate::DefaultModuleParser;
-
     if !self.graph.graph_kind().include_types() {
       return;
     }
@@ -3882,12 +3887,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     // todo: make the caputuring parser provided by the user and make
     // it only do analysis when the specifier is a jsr specifier
-    let parser = DefaultModuleParser::new_for_analysis();
-    let analyzer = CapturingModuleAnalyzer::new(Some(Box::new(parser)), None);
-    let root_symbol = crate::symbols::RootSymbol::new(
-      self.graph,
-      analyzer.as_capturing_parser(),
-    );
+    let root_symbol =
+      crate::symbols::RootSymbol::new(self.graph, self.module_parser);
 
     let modules = crate::fast_check::build_fast_check_type_graph(
       self.loader,

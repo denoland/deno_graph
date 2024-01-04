@@ -17,10 +17,10 @@ use deno_ast::SourceTextInfo;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
-use crate::CapturingModuleParser;
 use crate::EsmModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
+use crate::ModuleParseOptions;
 use crate::ModuleParser;
 
 use super::collections::AdditiveOnlyIndexMap;
@@ -41,7 +41,7 @@ use super::SymbolNodeDep;
 /// Building the symbols for modules is lazy.
 pub struct RootSymbol<'a> {
   module_graph: &'a ModuleGraph,
-  parser: CapturingModuleParser<'a>,
+  parser: &'a dyn ModuleParser,
   specifiers_to_ids: AdditiveOnlyMapForCopyValues<ModuleSpecifier, ModuleId>,
   ids_to_modules: AdditiveOnlyMap<ModuleId, ModuleInfo>,
 }
@@ -49,7 +49,7 @@ pub struct RootSymbol<'a> {
 impl<'a> RootSymbol<'a> {
   pub fn new(
     module_graph: &'a ModuleGraph,
-    parser: CapturingModuleParser<'a>,
+    parser: &'a dyn ModuleParser,
   ) -> Self {
     Self {
       module_graph,
@@ -254,11 +254,12 @@ impl<'a> RootSymbol<'a> {
     &self,
     graph_module: &EsmModule,
   ) -> Result<ParsedSource, deno_ast::Diagnostic> {
-    self.parser.parse_module(
-      &graph_module.specifier,
-      graph_module.source.clone(),
-      graph_module.media_type,
-    )
+    self.parser.parse_module(ModuleParseOptions {
+      specifier: &graph_module.specifier,
+      source: graph_module.source.clone(),
+      media_type: graph_module.media_type,
+      scope_analysis: true,
+    })
   }
 }
 

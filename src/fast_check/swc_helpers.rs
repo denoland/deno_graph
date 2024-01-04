@@ -184,7 +184,7 @@ pub fn is_expr_leavable(expr: &Expr) -> bool {
     | Expr::TsInstantiation(_)
     | Expr::TsSatisfies(_)
     | Expr::PrivateName(_)
-    // todo: probably could analyze this more
+    // todo(dsherret): probably could analyze this more
     | Expr::OptChain(_)
     | Expr::Invalid(_) => false,
   }
