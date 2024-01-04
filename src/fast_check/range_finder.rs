@@ -265,6 +265,7 @@ pub fn find_public_ranges<'a>(
     pending_traces: Default::default(),
     public_ranges: Default::default(),
     graph,
+    workspace_members,
     root_symbol,
     url_converter: RegistryUrlConverter {
       loader,
@@ -327,11 +328,13 @@ impl<'a> RegistryUrlConverter<'a> {
 pub struct PackagePublicRanges {
   pub entrypoints: Vec<ModuleSpecifier>,
   pub module_ranges: HashMap<ModuleSpecifier, ModulePublicRanges>,
+  pub errors: Vec<FastCheckDiagnostic>,
 }
 
 struct PublicRangeFinder<'a> {
   url_converter: RegistryUrlConverter<'a>,
   graph: &'a ModuleGraph,
+  workspace_members: &'a [WorkspaceMember],
   root_symbol: &'a RootSymbol<'a>,
   pending_nvs: VecDeque<PackageNv>,
   pending_traces: PendingTraces,
@@ -345,15 +348,7 @@ impl<'a> PublicRangeFinder<'a> {
     while let Some(nv) = self.pending_nvs.pop_front() {
       let Some(exports) =
         self.graph.packages.package_exports(&nv).or_else(|| {
-          // todo: fix this up to not piggy back on url_converter
-          Some(
-            &self
-              .url_converter
-              .workspace_members
-              .iter()
-              .find(|m| m.nv == nv)?
-              .exports,
-          )
+          Some(&self.workspace_members.iter().find(|m| m.nv == nv)?.exports)
         })
       else {
         continue; // should never happen
@@ -361,7 +356,7 @@ impl<'a> PublicRangeFinder<'a> {
       let base_url = self.url_converter.registry_package_url(&nv);
       let mut entrypoints = Vec::with_capacity(exports.len());
       for value in exports.values() {
-        // todo: don't unwrap here
+        // if we got this far, then the export must be valid, so we can unwrap
         let specifier = base_url.join(value).unwrap();
         self.add_pending_trace(
           &nv,

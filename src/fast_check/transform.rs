@@ -692,7 +692,7 @@ impl<'a> FastCheckTransformer<'a> {
         n.value = None;
         Ok(true)
       }
-      ClassMember::AutoAccessor(n) => {
+      ClassMember::AutoAccessor(_n) => {
         // waiting on https://github.com/swc-project/swc/pull/8436
         // if n.accessibility == Some(Accessibility::Private) {
         //   n.type_ann = Some(unknown_type_ann());
@@ -724,7 +724,7 @@ impl<'a> FastCheckTransformer<'a> {
         // n.decorators.clear();
         // n.value = None;
         // Ok(true)
-        todo!();
+        todo!("Remove auto-accessor for now. Waiting on https://github.com/swc-project/swc/pull/8436")
       }
       ClassMember::TsIndexSignature(_) => {
         // ok, as-is
