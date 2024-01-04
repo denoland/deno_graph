@@ -1,5 +1,6 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 
+use deno_ast::swc::ast::BindingIdent;
 use deno_ast::swc::ast::Class;
 use deno_ast::swc::ast::DefaultDecl;
 use deno_ast::swc::ast::Expr;
@@ -486,6 +487,11 @@ impl<'a> Visit for SymbolDepFillVisitor<'a> {
   fn visit_ident(&mut self, n: &Ident) {
     let id = n.to_id();
     self.deps.push(id.into());
+  }
+
+  fn visit_binding_ident(&mut self, n: &BindingIdent) {
+    // skip over the ident because it's not a dep
+    n.type_ann.visit_with(self);
   }
 
   fn visit_member_expr(&mut self, n: &MemberExpr) {

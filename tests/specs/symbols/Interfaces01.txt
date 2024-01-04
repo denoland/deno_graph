@@ -471,15 +471,15 @@ file:///mod.ts: EsmModuleInfo {
 == symbol deps (types and exprs) ==
 2:17..142 [Id(("Extends", #2))]
 3:59..70 [Id(("Prop", #2))]
-4:73..103 [Id(("method", #1)), Id(("Param", #2)), Id(("Return", #2))]
-5:106..140 [Id(("key", #1)), Id(("SignatureValueType", #2))]
+4:73..103 [Id(("Param", #2)), Id(("Return", #2))]
+5:106..140 [Id(("SignatureValueType", #2))]
 11:255..264 [Id(("B", #2))]
 
 == symbol deps (types only) ==
 2:17..142 [Id(("Extends", #2))]
 3:59..70 [Id(("Prop", #2))]
-4:73..103 [Id(("method", #1)), Id(("Param", #2)), Id(("Return", #2))]
-5:106..140 [Id(("key", #1)), Id(("SignatureValueType", #2))]
+4:73..103 [Id(("Param", #2)), Id(("Return", #2))]
+5:106..140 [Id(("SignatureValueType", #2))]
 11:255..264 [Id(("B", #2))]
 
 == export definitions ==

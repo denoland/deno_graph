@@ -1148,9 +1148,6 @@ file:///mod.ts: EsmModuleInfo {
 12:280..336 [Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]
 13:370..423 [Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
 13:426..510 [Id(("PrivateImplementationParam", #2)), Id(("PrivateImplementationReturn", #2))]
-28:946..977 [Id(("value", #1))]
-29:980..1004 [Id(("value", #1))]
-29:1007..1031 [Id(("value", #1))]
 
 == symbol deps (types only) ==
 2:19..24 [Id(("B", #2))]
@@ -1164,9 +1161,6 @@ file:///mod.ts: EsmModuleInfo {
 12:280..336 [Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]
 13:370..423 [Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
 13:426..510 [Id(("PrivateImplementationParam", #2)), Id(("PrivateImplementationReturn", #2))]
-28:946..977 [Id(("value", #1))]
-29:980..1004 [Id(("value", #1))]
-29:1007..1031 [Id(("value", #1))]
 
 == export definitions ==
 [A]: file:///mod.ts:0..52
