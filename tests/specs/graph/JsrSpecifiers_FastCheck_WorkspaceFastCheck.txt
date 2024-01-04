@@ -1,60 +1,47 @@
 ~~ {"workspaceFastCheck":true} ~~
-# https://jsr.io/@scope/a/meta.json
+# workspace_members
+[
+  {
+    "base": "file:///",
+    "nv": "@scope/b@1.0.1",
+    "exports": {
+      ".": "./mod.ts"
+    }
+  }
+]
+
+# https://jsr.io/@scope/b/meta.json
 {"versions": { "1.0.0": {} } }
 
-# https://jsr.io/@scope/a/1.0.0_meta.json
+# https://jsr.io/@scope/b/1.0.0_meta.json
 { "exports": { ".": "./mod.ts" } }
 
-# https://jsr.io/@scope/a/1.0.0/mod.ts
-export class Test {
-  test1() {}
-  test2(): number {
-    return 2;
-  }
-  test3(param: number): number {
-  }
-  test4(param = 2): number {
-    return 1;
-  }
-  test5<T extends PublicOther>(param = 2): T {
-    return new PublicOther();
-  }
-  test6<T = PublicOther>(param: number = 2): T {
-    return new PublicOther();
-  }
+# https://jsr.io/@scope/b/1.0.0/mod.ts
+export class B {}
 
-  test7(param?: number): number;
-  test7(param?: number, param2?: PublicOther2): number;
-  test7(param: PrivateOther = new PrivateOther, param2?: string): PrivateOther {
-    return new PublicOther();
-  }
+# https://jsr.io/@scope/c/meta.json
+{"versions": { "1.0.0": {} } }
 
-  test8(param: number): number;
-  test8(param: string): string;
-  test8(param: string): string {
-  }
-}
+# https://jsr.io/@scope/c/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
 
-export class Test2 {
-  public method1() {
-  }
-  protected method2() {
-  }
-  private tsPrivateMethod() {
-  }
-  #privateMethod() {
-  }
-}
-
-class PublicOther {
-}
-class PublicOther2 {
-}
-
-class PrivateOther {}
+# https://jsr.io/@scope/c/1.0.0/mod.ts
+export class C {}
 
 # mod.ts
-import 'jsr:@scope/a'
+import { B } from 'jsr:@scope/b'
+import { C } from "jsr:@scope/c";
+
+export class MyClass {
+  prop: Public1;
+  c: C;
+}
+
+class Public1 {}
+
+class Private {
+  b: B;
+}
 
 # output
 {
@@ -66,78 +53,85 @@ import 'jsr:@scope/a'
       "kind": "esm",
       "dependencies": [
         {
-          "specifier": "jsr:@scope/a",
+          "specifier": "jsr:@scope/b",
           "code": {
-            "specifier": "jsr:@scope/a",
+            "specifier": "jsr:@scope/b",
             "span": {
               "start": {
                 "line": 0,
-                "character": 7
+                "character": 18
               },
               "end": {
                 "line": 0,
-                "character": 21
+                "character": 32
+              }
+            }
+          }
+        },
+        {
+          "specifier": "jsr:@scope/c",
+          "code": {
+            "specifier": "jsr:@scope/c",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 18
+              },
+              "end": {
+                "line": 1,
+                "character": 32
               }
             }
           }
         }
       ],
-      "size": 22,
+      "size": 163,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
     },
     {
       "kind": "esm",
-      "size": 833,
+      "size": 18,
       "mediaType": "TypeScript",
-      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+      "specifier": "https://jsr.io/@scope/c/1.0.0/mod.ts"
     }
   ],
   "redirects": {
-    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    "jsr:@scope/b": "file:///mod.ts",
+    "jsr:@scope/c": "https://jsr.io/@scope/c/1.0.0/mod.ts"
   },
   "packages": {
-    "@scope/a": "@scope/a@1.0.0"
+    "@scope/c": "@scope/c@1.0.0"
   }
 }
 
-Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+Fast check file:///mod.ts:
+  {
+    "jsr:@scope/c": {
+      "code": {
+        "specifier": "jsr:@scope/c",
+        "span": {
+          "start": {
+            "line": 1,
+            "character": 18
+          },
+          "end": {
+            "line": 1,
+            "character": 32
+          }
+        }
+      }
+    }
+  }
+  import { C } from "jsr:@scope/c";
+  export class MyClass {
+    prop!: Public1;
+    c!: C;
+  }
+  class Public1 {
+  }
+
+Fast check https://jsr.io/@scope/c/1.0.0/mod.ts:
   {}
-  export class Test {
-    test1(): void {}
-    test2(): number {
-      return {} as any;
-    }
-    test3(param: number): number {
-      return {} as any;
-    }
-    test4(param?: number): number {
-      return {} as any;
-    }
-    test5<T extends PublicOther>(param?: number): T {
-      return {} as any;
-    }
-    test6<T = PublicOther>(param?: number): T {
-      return {} as any;
-    }
-    test7(param?: number): number;
-    test7(param?: number, param2?: PublicOther2): number;
-    test7(param0?: any, param1?: any): any {
-      return {} as any;
-    }
-    test8(param: number): number;
-    test8(param: string): string;
-    test8(param0?: any): any {
-      return {} as any;
-    }
-  }
-  export class Test2 {
-    #private!: unknown;
-    public method1(): void {}
-    protected method2(): void {}
-    private tsPrivateMethod!: unknown;
-  }
-  class PublicOther {
-  }
-  class PublicOther2 {
+  export class C {
   }
