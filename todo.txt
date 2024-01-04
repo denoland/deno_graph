@@ -1,8 +1,0 @@
-Todo:
-
-- Convert parameter properties to regular properties
-
-Done:
-
-- Tests for function overloads (make all the params and return type `any`)
-- Private class constructors should go to no params
