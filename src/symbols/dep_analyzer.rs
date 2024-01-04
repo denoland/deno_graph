@@ -299,8 +299,8 @@ impl DepsFiller {
       PropName::Computed(name) => {
         self.fill_expr(&name.expr);
       }
-      PropName::Ident(ident) => {
-        self.deps.push(SymbolNodeDep::Id(ident.to_id()))
+      PropName::Ident(_) => {
+        // property name idents aren't a dep
       }
       PropName::Str(_) | PropName::Num(_) | PropName::BigInt(_) => {
         // ignore

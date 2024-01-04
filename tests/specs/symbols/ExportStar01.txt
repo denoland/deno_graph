@@ -448,10 +448,8 @@ file:///a.ts: EsmModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-5:172..180 [Id(("prop", #0)), Id(("A", #2))]
-7:198..208 [Id(("a", #0))]
-8:213..218 [Id(("b", #0)), Id(("B", #2))]
-10:236..246 [Id(("b", #0))]
+5:172..180 [Id(("A", #2))]
+8:213..218 [Id(("B", #2))]
 
 == symbol deps (types only) ==
 5:172..180 [Id(("A", #2))]

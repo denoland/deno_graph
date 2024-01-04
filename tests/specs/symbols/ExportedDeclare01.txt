@@ -461,8 +461,7 @@ file:///mod.ts: EsmModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-7:142..157 [Id(("method", #0))]
-8:160..172 [Id(("prop", #0)), Id(("Other", #2))]
+8:160..172 [Id(("Other", #2))]
 
 == symbol deps (types only) ==
 8:160..172 [Id(("Other", #2))]
