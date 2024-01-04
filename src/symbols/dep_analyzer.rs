@@ -370,7 +370,7 @@ fn fill_pat(deps: &mut Vec<SymbolNodeDep>, pat: &Pat) {
     }
     Pat::Assign(n) => {
       fill_pat(deps, &n.left);
-      let has_type_ann = pat_has_type_ann(&*n.left);
+      let has_type_ann = pat_has_type_ann(&n.left);
       if !has_type_ann {
         fill_expr(deps, &n.right);
       }

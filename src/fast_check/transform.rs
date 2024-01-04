@@ -819,7 +819,7 @@ impl<'a> FastCheckTransformer<'a> {
       let has_void_return_type = n
         .return_type
         .as_ref()
-        .map(|t| is_void_type(&*t.type_ann))
+        .map(|t| is_void_type(&t.type_ann))
         .unwrap_or(true);
       if !has_void_return_type {
         let has_never_return_type = n
@@ -1128,7 +1128,7 @@ impl<'a> FastCheckTransformer<'a> {
         Lit::JSXText(_) => None,
       },
       Expr::Call(call_expr) => {
-        if self.is_call_expr_symbol_create(&call_expr) {
+        if self.is_call_expr_symbol_create(call_expr) {
           Some(TsType::TsTypeOperator(TsTypeOperator {
             span: DUMMY_SP,
             op: TsTypeOperatorOp::Unique,
@@ -1224,10 +1224,8 @@ fn prefix_idents_in_pat(pat: &mut Pat, prefix: &str) {
       prefix_ident(&mut ident.id, prefix);
     }
     Pat::Array(array) => {
-      for pat in &mut array.elems {
-        if let Some(pat) = pat {
-          prefix_idents_in_pat(pat, prefix);
-        }
+      for pat in array.elems.iter_mut().flatten() {
+        prefix_idents_in_pat(pat, prefix);
       }
     }
     Pat::Rest(rest) => {

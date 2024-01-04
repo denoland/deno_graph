@@ -196,7 +196,7 @@ impl<'a> ModuleParser for CapturingModuleParser<'a> {
     if let Some(parsed_source) = self.get_from_store_if_matches(&options) {
       Ok(parsed_source)
     } else {
-      let default_parser = DefaultModuleParser::default();
+      let default_parser = DefaultModuleParser;
       let parser = self.parser.unwrap_or(&default_parser);
       let specifier = options.specifier.clone();
       let parsed_source = parser.parse_module(options)?;
@@ -261,7 +261,7 @@ impl<'a> ModuleAnalyzer for DefaultModuleAnalyzer<'a> {
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ModuleInfo, Diagnostic> {
-    let default_parser = DefaultModuleParser::default();
+    let default_parser = DefaultModuleParser;
     let parser = self.parser.unwrap_or(&default_parser);
     let parsed_source = parser.parse_module(ModuleParseOptions {
       specifier,
@@ -589,7 +589,7 @@ mod tests {
 
     const a = await import("./a.ts");
     "#;
-    let parsed_source = DefaultModuleParser::default()
+    let parsed_source = DefaultModuleParser
       .parse_module(ModuleParseOptions {
         specifier: &specifier,
         source: source.into(),
