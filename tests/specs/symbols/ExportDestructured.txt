@@ -199,7 +199,6 @@ file:///mod.ts: EsmModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-1:6..26 [Id(("a", #0)), Id(("b", #0))]
 2:34..81 [Id(("f", #0)), Id(("g", #0))]
 3:97..232 [Id(("a", #0)), Id(("b", #0))]
 4:97..232 [Id(("a", #0)), Id(("b", #0))]

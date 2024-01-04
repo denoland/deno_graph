@@ -299,10 +299,11 @@ impl DepsFiller {
       PropName::Computed(name) => {
         self.fill_expr(&name.expr);
       }
-      PropName::Ident(_) => {
-        // property name idents aren't a dep
-      }
-      PropName::Str(_) | PropName::Num(_) | PropName::BigInt(_) => {
+      // property name idents aren't a dep
+      PropName::Ident(_)
+      | PropName::Str(_)
+      | PropName::Num(_)
+      | PropName::BigInt(_) => {
         // ignore
       }
     }
@@ -513,5 +514,18 @@ impl<'a> Visit for SymbolDepFillVisitor<'a> {
   fn visit_ts_qualified_name(&mut self, n: &TsQualifiedName) {
     let (id, parts) = ts_qualified_name_parts(n);
     self.deps.push(SymbolNodeDep::QualifiedId(id, parts));
+  }
+
+  fn visit_prop_name(&mut self, n: &PropName) {
+    match n {
+      PropName::Computed(computed) => computed.visit_with(self),
+      // property name idents aren't a dep
+      PropName::Ident(_)
+      | PropName::Str(_)
+      | PropName::Num(_)
+      | PropName::BigInt(_) => {
+        // ignore
+      }
+    }
   }
 }
