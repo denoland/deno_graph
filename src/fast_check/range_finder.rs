@@ -593,10 +593,13 @@ impl<'a> PublicRangeFinder<'a> {
                     module_info.text_info(),
                   ),
                   name: module_info
-                    .fully_qualified_symbol_name(symbol.symbol_id())
+                    .fully_qualified_symbol_name(symbol)
                     .unwrap_or_else(|| "<unknown>".to_string()),
                   referrer: module_info
-                    .fully_qualified_symbol_name(referrer_id)
+                    .symbol(referrer_id)
+                    .and_then(|symbol| {
+                      module_info.fully_qualified_symbol_name(symbol)
+                    })
                     .unwrap_or_else(|| "<unknown>".to_string()),
                 },
               );
@@ -861,12 +864,15 @@ impl<'a> PublicRangeFinder<'a> {
                             name: format!(
                               "{}.prototype.{}",
                               module_info
-                                .fully_qualified_symbol_name(symbol.symbol_id())
+                                .fully_qualified_symbol_name(symbol)
                                 .unwrap_or_else(|| "<unknown>".to_string()),
                               parts[1..].join("."),
                             ),
                             referrer: module_info
-                              .fully_qualified_symbol_name(referrer_id)
+                              .symbol(referrer_id)
+                              .and_then(|symbol| {
+                                module_info.fully_qualified_symbol_name(symbol)
+                              })
                               .unwrap_or_else(|| "<unknown>".to_string()),
                           },
                         );
@@ -886,12 +892,15 @@ impl<'a> PublicRangeFinder<'a> {
                           name: format!(
                             "{}.prototype.{}",
                             module_info
-                              .fully_qualified_symbol_name(symbol.symbol_id())
+                              .fully_qualified_symbol_name(symbol)
                               .unwrap_or_else(|| "<unknown>".to_string()),
                             parts[1],
                           ),
                           referrer: module_info
-                            .fully_qualified_symbol_name(referrer_id)
+                            .symbol(referrer_id)
+                            .and_then(|symbol| {
+                              module_info.fully_qualified_symbol_name(symbol)
+                            })
                             .unwrap_or_else(|| "<unknown>".to_string()),
                         },
                       );
@@ -947,12 +956,15 @@ impl<'a> PublicRangeFinder<'a> {
                           name: format!(
                             "{}.{}",
                             module_info
-                              .fully_qualified_symbol_name(symbol.symbol_id())
+                              .fully_qualified_symbol_name(symbol)
                               .unwrap_or_else(|| "<unknown>".to_string()),
                             parts[0],
                           ),
                           referrer: module_info
-                            .fully_qualified_symbol_name(referrer_id)
+                            .symbol(referrer_id)
+                            .and_then(|symbol| {
+                              module_info.fully_qualified_symbol_name(symbol)
+                            })
                             .unwrap_or_else(|| "<unknown>".to_string()),
                         },
                       );

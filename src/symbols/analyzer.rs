@@ -1290,11 +1290,8 @@ impl<'a> ModuleInfoRef<'a> {
     }
   }
 
-  pub fn fully_qualified_symbol_name(
-    &self,
-    symbol_id: SymbolId,
-  ) -> Option<String> {
-    let symbol = self.symbol(symbol_id)?;
+  pub fn fully_qualified_symbol_name(&self, symbol: &Symbol) -> Option<String> {
+    debug_assert_eq!(symbol.module_id(), self.module_id());
     let mut text = String::new();
     let mut last: Option<&Symbol> = None;
     let mut next = Some(symbol);
