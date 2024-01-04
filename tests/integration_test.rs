@@ -224,7 +224,9 @@ export class MyClass {
       .decls()
       .iter()
       .filter_map(|d| d.maybe_node())
-      .flat_map(|s| s.deps())
+      .flat_map(|s| {
+        s.deps(deno_graph::symbols::ResolveDepsMode::TypesAndExpressions)
+      })
       .collect::<Vec<_>>();
     assert_eq!(deps.len(), 1);
     let mut resolved_deps = root_symbol.resolve_symbol_dep(

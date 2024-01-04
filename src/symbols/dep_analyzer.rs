@@ -49,289 +49,393 @@ impl From<Id> for SymbolNodeDep {
   }
 }
 
-pub fn resolve_deps(node_ref: SymbolNodeRef) -> Vec<SymbolNodeDep> {
-  let mut result = Vec::new();
-  let deps = &mut result;
-  match node_ref {
-    SymbolNodeRef::Module(_) | SymbolNodeRef::TsNamespace(_) => {
-      // no deps, as this has children
+#[derive(Debug, Copy, Clone)]
+pub enum ResolveDepsMode {
+  /// Resolve dependencies of types only (used for deno doc).
+  TypesOnly,
+  /// Resolve dependencies of types and expressions (used for fast check).
+  TypesAndExpressions,
+}
+
+impl ResolveDepsMode {
+  pub fn visit_exprs(&self) -> bool {
+    match self {
+      ResolveDepsMode::TypesOnly => false,
+      ResolveDepsMode::TypesAndExpressions => true,
     }
-    SymbolNodeRef::ClassDecl(n) => {
-      fill_class(deps, &n.class);
-    }
-    SymbolNodeRef::ExportDecl(_, n) => match n {
-      ExportDeclRef::Class(n) => fill_class(deps, &n.class),
-      ExportDeclRef::Fn(n) => fill_function_decl(deps, &n.function),
-      ExportDeclRef::Var(_, n, _) => {
-        fill_var_declarator(deps, n);
-      }
-      ExportDeclRef::TsEnum(n) => fill_enum(deps, n),
-      ExportDeclRef::TsInterface(n) => fill_interface(deps, n),
-      ExportDeclRef::TsModule(_) => {
+  }
+}
+
+pub fn resolve_deps(
+  node_ref: SymbolNodeRef,
+  mode: ResolveDepsMode,
+) -> Vec<SymbolNodeDep> {
+  let mut filler = DepsFiller {
+    deps: Vec::new(),
+    mode,
+  };
+  filler.fill(node_ref);
+  filler.deps
+}
+
+struct DepsFiller {
+  deps: Vec<SymbolNodeDep>,
+  mode: ResolveDepsMode,
+}
+
+impl DepsFiller {
+  fn fill(&mut self, node_ref: SymbolNodeRef<'_>) {
+    match node_ref {
+      SymbolNodeRef::Module(_) | SymbolNodeRef::TsNamespace(_) => {
         // no deps, as this has children
       }
-      ExportDeclRef::TsTypeAlias(n) => fill_type_alias(deps, n),
-    },
-    SymbolNodeRef::ExportDefaultDecl(n) => match &n.decl {
-      DefaultDecl::Class(n) => fill_class(deps, &n.class),
-      DefaultDecl::Fn(n) => {
-        fill_function_decl(deps, &n.function);
+      SymbolNodeRef::ClassDecl(n) => {
+        self.fill_class(&n.class);
       }
-      DefaultDecl::TsInterfaceDecl(n) => {
-        fill_interface(deps, n);
+      SymbolNodeRef::ExportDecl(_, n) => match n {
+        ExportDeclRef::Class(n) => self.fill_class(&n.class),
+        ExportDeclRef::Fn(n) => self.fill_function_decl(&n.function),
+        ExportDeclRef::Var(_, n, _) => {
+          self.fill_var_declarator(n);
+        }
+        ExportDeclRef::TsEnum(n) => self.fill_enum(n),
+        ExportDeclRef::TsInterface(n) => self.fill_interface(n),
+        ExportDeclRef::TsModule(_) => {
+          // no deps, as this has children
+        }
+        ExportDeclRef::TsTypeAlias(n) => self.fill_type_alias(n),
+      },
+      SymbolNodeRef::ExportDefaultDecl(n) => match &n.decl {
+        DefaultDecl::Class(n) => self.fill_class(&n.class),
+        DefaultDecl::Fn(n) => {
+          self.fill_function_decl(&n.function);
+        }
+        DefaultDecl::TsInterfaceDecl(n) => {
+          self.fill_interface(n);
+        }
+      },
+      SymbolNodeRef::ExportDefaultExpr(n) => {
+        self.fill_expr(&n.expr);
       }
-    },
-    SymbolNodeRef::ExportDefaultExpr(n) => {
-      fill_expr(deps, &n.expr);
-    }
-    SymbolNodeRef::FnDecl(n) => fill_function_decl(deps, &n.function),
-    SymbolNodeRef::TsEnum(n) => {
-      fill_enum(deps, n);
-    }
-    SymbolNodeRef::TsInterface(n) => fill_interface(deps, n),
-    SymbolNodeRef::TsTypeAlias(n) => {
-      fill_type_alias(deps, n);
-    }
-    SymbolNodeRef::Var(_, n, _) => {
-      fill_var_declarator(deps, n);
-    }
-    SymbolNodeRef::AutoAccessor(n) => {
-      if let Some(type_ann) = &n.type_ann {
-        fill_ts_type_ann(deps, type_ann)
+      SymbolNodeRef::FnDecl(n) => self.fill_function_decl(&n.function),
+      SymbolNodeRef::TsEnum(n) => {
+        self.fill_enum(n);
       }
-    }
-    SymbolNodeRef::ClassMethod(n) => {
-      fill_prop_name(deps, &n.key);
-      if let Some(type_params) = &n.function.type_params {
-        fill_ts_type_param_decl(deps, type_params)
+      SymbolNodeRef::TsInterface(n) => self.fill_interface(n),
+      SymbolNodeRef::TsTypeAlias(n) => {
+        self.fill_type_alias(n);
       }
-      for param in &n.function.params {
-        fill_param(deps, param)
+      SymbolNodeRef::Var(_, n, _) => {
+        self.fill_var_declarator(n);
       }
-      if let Some(return_type) = &n.function.return_type {
-        fill_ts_type_ann(deps, return_type)
+      SymbolNodeRef::AutoAccessor(n) => {
+        if let Some(type_ann) = &n.type_ann {
+          self.fill_ts_type_ann(type_ann)
+        }
       }
-    }
-    SymbolNodeRef::ClassProp(n) => {
-      fill_prop_name(deps, &n.key);
-      if let Some(type_ann) = &n.type_ann {
-        fill_ts_type_ann(deps, type_ann)
+      SymbolNodeRef::ClassMethod(n) => {
+        if self.mode.visit_exprs() {
+          self.fill_prop_name(&n.key);
+        }
+
+        if let Some(type_params) = &n.function.type_params {
+          self.fill_ts_type_param_decl(type_params)
+        }
+        for param in &n.function.params {
+          self.fill_param(param)
+        }
+        if let Some(return_type) = &n.function.return_type {
+          self.fill_ts_type_ann(return_type)
+        }
       }
-    }
-    SymbolNodeRef::ClassParamProp(n) => fill_ts_param_prop(deps, n),
-    SymbolNodeRef::Constructor(n) => {
-      for param in &n.params {
-        match param {
-          ParamOrTsParamProp::TsParamProp(param) => {
-            fill_ts_param_prop(deps, param)
+      SymbolNodeRef::ClassProp(n) => {
+        if self.mode.visit_exprs() {
+          self.fill_prop_name(&n.key);
+        }
+
+        if let Some(type_ann) = &n.type_ann {
+          self.fill_ts_type_ann(type_ann)
+        }
+      }
+      SymbolNodeRef::ClassParamProp(n) => self.fill_ts_param_prop(n),
+      SymbolNodeRef::Constructor(n) => {
+        for param in &n.params {
+          match param {
+            ParamOrTsParamProp::TsParamProp(param) => {
+              self.fill_ts_param_prop(param)
+            }
+            ParamOrTsParamProp::Param(param) => self.fill_param(param),
           }
-          ParamOrTsParamProp::Param(param) => fill_param(deps, param),
+        }
+      }
+      SymbolNodeRef::TsIndexSignature(n) => {
+        for param in &n.params {
+          self.fill_ts_fn_param(param)
+        }
+        if let Some(type_ann) = &n.type_ann {
+          self.fill_ts_type_ann(type_ann)
+        }
+      }
+      SymbolNodeRef::TsCallSignatureDecl(n) => {
+        if let Some(type_params) = &n.type_params {
+          self.fill_ts_type_param_decl(type_params);
+        }
+        for param in &n.params {
+          self.fill_ts_fn_param(param);
+        }
+        if let Some(type_ann) = &n.type_ann {
+          self.fill_ts_type_ann(type_ann)
+        }
+      }
+      SymbolNodeRef::TsConstructSignatureDecl(n) => {
+        if let Some(type_params) = &n.type_params {
+          self.fill_ts_type_param_decl(type_params);
+        }
+        for param in &n.params {
+          self.fill_ts_fn_param(param);
+        }
+        if let Some(type_ann) = &n.type_ann {
+          self.fill_ts_type_ann(type_ann)
+        }
+      }
+      SymbolNodeRef::TsPropertySignature(n) => {
+        if let Some(init) = &n.init {
+          self.fill_expr(init);
+        }
+        if let Some(type_params) = &n.type_params {
+          self.fill_ts_type_param_decl(type_params);
+        }
+        for param in &n.params {
+          self.fill_ts_fn_param(param);
+        }
+        if let Some(type_ann) = &n.type_ann {
+          self.fill_ts_type_ann(type_ann)
+        }
+      }
+      SymbolNodeRef::TsGetterSignature(n) => {
+        if let Some(type_ann) = &n.type_ann {
+          self.fill_ts_type_ann(type_ann)
+        }
+      }
+      SymbolNodeRef::TsSetterSignature(n) => {
+        self.fill_ts_fn_param(&n.param);
+      }
+      SymbolNodeRef::TsMethodSignature(n) => {
+        if let Some(type_params) = &n.type_params {
+          self.fill_ts_type_param_decl(type_params);
+        }
+        for param in &n.params {
+          self.fill_ts_fn_param(param)
+        }
+        if let Some(type_ann) = &n.type_ann {
+          self.fill_ts_type_ann(type_ann)
         }
       }
     }
-    SymbolNodeRef::TsIndexSignature(n) => {
-      for param in &n.params {
-        fill_ts_fn_param(deps, param)
-      }
-      if let Some(type_ann) = &n.type_ann {
-        fill_ts_type_ann(deps, type_ann)
+  }
+
+  fn fill_class(&mut self, n: &Class) {
+    if let Some(type_params) = &n.type_params {
+      self.fill_ts_type_param_decl(type_params);
+    }
+    if let Some(expr) = &n.super_class {
+      self.fill_expr(expr);
+    }
+    if let Some(type_params) = &n.super_type_params {
+      self.fill_ts_type_param_instantiation(type_params)
+    }
+    for expr in &n.implements {
+      self.fill_ts_expr_with_type_args(expr);
+    }
+  }
+
+  fn fill_enum(&mut self, n: &TsEnumDecl) {
+    for member in &n.members {
+      if let Some(init) = &member.init {
+        self.fill_expr(init);
       }
     }
-    SymbolNodeRef::TsCallSignatureDecl(n) => {
-      if let Some(type_params) = &n.type_params {
-        fill_ts_type_param_decl(deps, type_params);
-      }
-      for param in &n.params {
-        fill_ts_fn_param(deps, param);
-      }
-      if let Some(type_ann) = &n.type_ann {
-        fill_ts_type_ann(deps, type_ann)
-      }
+  }
+
+  fn fill_function_decl(&mut self, n: &Function) {
+    if let Some(type_params) = &n.type_params {
+      self.fill_ts_type_param_decl(type_params);
     }
-    SymbolNodeRef::TsConstructSignatureDecl(n) => {
-      if let Some(type_params) = &n.type_params {
-        fill_ts_type_param_decl(deps, type_params);
-      }
-      for param in &n.params {
-        fill_ts_fn_param(deps, param);
-      }
-      if let Some(type_ann) = &n.type_ann {
-        fill_ts_type_ann(deps, type_ann)
-      }
+    for param in &n.params {
+      self.fill_param(param);
     }
-    SymbolNodeRef::TsPropertySignature(n) => {
+    if let Some(return_type) = &n.return_type {
+      self.fill_ts_type_ann(return_type);
+    }
+  }
+
+  fn fill_interface(&mut self, n: &TsInterfaceDecl) {
+    if let Some(type_params) = &n.type_params {
+      self.fill_ts_type_param_decl(type_params);
+    }
+    for extends in &n.extends {
+      self.fill_ts_expr_with_type_args(extends);
+    }
+  }
+
+  fn fill_type_alias(&mut self, n: &TsTypeAliasDecl) {
+    if let Some(type_params) = &n.type_params {
+      self.fill_ts_type_param_decl(type_params);
+    }
+    self.fill_ts_type(&n.type_ann)
+  }
+
+  fn fill_var_declarator(&mut self, n: &VarDeclarator) {
+    self.fill_pat(&n.name);
+    if self.mode.visit_exprs() && !pat_has_type_ann(&n.name) {
       if let Some(init) = &n.init {
-        fill_expr(deps, init);
-      }
-      if let Some(type_params) = &n.type_params {
-        fill_ts_type_param_decl(deps, type_params);
-      }
-      for param in &n.params {
-        fill_ts_fn_param(deps, param);
-      }
-      if let Some(type_ann) = &n.type_ann {
-        fill_ts_type_ann(deps, type_ann)
-      }
-    }
-    SymbolNodeRef::TsGetterSignature(n) => {
-      if let Some(type_ann) = &n.type_ann {
-        fill_ts_type_ann(deps, type_ann)
-      }
-    }
-    SymbolNodeRef::TsSetterSignature(n) => {
-      fill_ts_fn_param(deps, &n.param);
-    }
-    SymbolNodeRef::TsMethodSignature(n) => {
-      if let Some(type_params) = &n.type_params {
-        fill_ts_type_param_decl(deps, type_params);
-      }
-      for param in &n.params {
-        fill_ts_fn_param(deps, param)
-      }
-      if let Some(type_ann) = &n.type_ann {
-        fill_ts_type_ann(deps, type_ann)
+        self.fill_expr(init);
       }
     }
   }
-  result
-}
 
-fn fill_class(deps: &mut Vec<SymbolNodeDep>, n: &Class) {
-  if let Some(type_params) = &n.type_params {
-    fill_ts_type_param_decl(deps, type_params);
-  }
-  if let Some(expr) = &n.super_class {
-    fill_expr(deps, expr);
-  }
-  if let Some(type_params) = &n.super_type_params {
-    fill_ts_type_param_instantiation(deps, type_params)
-  }
-  for expr in &n.implements {
-    fill_ts_expr_with_type_args(deps, expr);
-  }
-}
-
-fn fill_enum(deps: &mut Vec<SymbolNodeDep>, n: &TsEnumDecl) {
-  for member in &n.members {
-    if let Some(init) = &member.init {
-      fill_expr(deps, init);
-    }
-  }
-}
-
-fn fill_function_decl(deps: &mut Vec<SymbolNodeDep>, n: &Function) {
-  if let Some(type_params) = &n.type_params {
-    fill_ts_type_param_decl(deps, type_params);
-  }
-  for param in &n.params {
-    fill_param(deps, param);
-  }
-  if let Some(return_type) = &n.return_type {
-    fill_ts_type_ann(deps, return_type);
-  }
-}
-
-fn fill_interface(deps: &mut Vec<SymbolNodeDep>, n: &TsInterfaceDecl) {
-  if let Some(type_params) = &n.type_params {
-    fill_ts_type_param_decl(deps, type_params);
-  }
-  for extends in &n.extends {
-    fill_ts_expr_with_type_args(deps, extends);
-  }
-}
-
-fn fill_type_alias(deps: &mut Vec<SymbolNodeDep>, n: &TsTypeAliasDecl) {
-  if let Some(type_params) = &n.type_params {
-    fill_ts_type_param_decl(deps, type_params);
-  }
-  fill_ts_type(deps, &n.type_ann)
-}
-
-fn fill_var_declarator(deps: &mut Vec<SymbolNodeDep>, n: &VarDeclarator) {
-  fill_pat(deps, &n.name);
-  if !pat_has_type_ann(&n.name) {
-    if let Some(init) = &n.init {
-      fill_expr(deps, init);
-    }
-  }
-}
-
-fn fill_prop_name(deps: &mut Vec<SymbolNodeDep>, key: &PropName) {
-  match key {
-    PropName::Computed(name) => {
-      fill_expr(deps, &name.expr);
-    }
-    PropName::Ident(ident) => deps.push(SymbolNodeDep::Id(ident.to_id())),
-    PropName::Str(_) | PropName::Num(_) | PropName::BigInt(_) => {
-      // ignore
-    }
-  }
-}
-
-fn fill_ts_expr_with_type_args(
-  deps: &mut Vec<SymbolNodeDep>,
-  n: &TsExprWithTypeArgs,
-) {
-  if let Some(type_args) = &n.type_args {
-    fill_ts_type_param_instantiation(deps, type_args);
-  }
-  fill_expr(deps, &n.expr);
-}
-
-fn fill_ts_fn_param(deps: &mut Vec<SymbolNodeDep>, param: &TsFnParam) {
-  let mut visitor = SymbolDepFillVisitor { deps };
-  param.visit_with(&mut visitor);
-}
-
-fn fill_ts_type_param_decl(
-  deps: &mut Vec<SymbolNodeDep>,
-  type_params: &TsTypeParamDecl,
-) {
-  for param in &type_params.params {
-    fill_ts_type_param(deps, param);
-  }
-}
-
-fn fill_ts_type_param(deps: &mut Vec<SymbolNodeDep>, param: &TsTypeParam) {
-  if let Some(constraint) = &param.constraint {
-    fill_ts_type(deps, constraint);
-  }
-  if let Some(default) = &param.default {
-    fill_ts_type(deps, default);
-  }
-}
-
-fn fill_ts_type_param_instantiation(
-  deps: &mut Vec<SymbolNodeDep>,
-  type_params: &TsTypeParamInstantiation,
-) {
-  for param in &type_params.params {
-    fill_ts_type(deps, param);
-  }
-}
-
-fn fill_ts_param_prop(deps: &mut Vec<SymbolNodeDep>, param: &TsParamProp) {
-  match &param.param {
-    TsParamPropParam::Ident(ident) => {
-      if let Some(type_ann) = &ident.type_ann {
-        fill_ts_type_ann(deps, type_ann)
+  fn fill_prop_name(&mut self, key: &PropName) {
+    match key {
+      PropName::Computed(name) => {
+        self.fill_expr(&name.expr);
+      }
+      PropName::Ident(ident) => {
+        self.deps.push(SymbolNodeDep::Id(ident.to_id()))
+      }
+      PropName::Str(_) | PropName::Num(_) | PropName::BigInt(_) => {
+        // ignore
       }
     }
-    TsParamPropParam::Assign(assign) => match &*assign.left {
-      Pat::Ident(ident) => {
+  }
+
+  fn fill_ts_expr_with_type_args(&mut self, n: &TsExprWithTypeArgs) {
+    if let Some(type_args) = &n.type_args {
+      self.fill_ts_type_param_instantiation(type_args);
+    }
+    // visit this expr unconditionally because it's in a TsExprWithTypeArgs
+    self.fill_expr(&n.expr);
+  }
+
+  fn fill_ts_fn_param(&mut self, param: &TsFnParam) {
+    let mut visitor = SymbolDepFillVisitor {
+      deps: &mut self.deps,
+    };
+    param.visit_with(&mut visitor);
+  }
+
+  fn fill_ts_type_param_decl(&mut self, type_params: &TsTypeParamDecl) {
+    for param in &type_params.params {
+      self.fill_ts_type_param(param);
+    }
+  }
+
+  fn fill_ts_type_param(&mut self, param: &TsTypeParam) {
+    if let Some(constraint) = &param.constraint {
+      self.fill_ts_type(constraint);
+    }
+    if let Some(default) = &param.default {
+      self.fill_ts_type(default);
+    }
+  }
+
+  fn fill_ts_type_param_instantiation(
+    &mut self,
+    type_params: &TsTypeParamInstantiation,
+  ) {
+    for param in &type_params.params {
+      self.fill_ts_type(param);
+    }
+  }
+
+  fn fill_ts_param_prop(&mut self, param: &TsParamProp) {
+    match &param.param {
+      TsParamPropParam::Ident(ident) => {
         if let Some(type_ann) = &ident.type_ann {
-          fill_ts_type_ann(deps, type_ann)
+          self.fill_ts_type_ann(type_ann)
         }
       }
-      _ => {
-        unreachable!();
-      }
-    },
+      TsParamPropParam::Assign(assign) => match &*assign.left {
+        Pat::Ident(ident) => {
+          if let Some(type_ann) = &ident.type_ann {
+            self.fill_ts_type_ann(type_ann)
+          }
+        }
+        _ => {
+          unreachable!();
+        }
+      },
+    }
   }
-}
 
-fn fill_param(deps: &mut Vec<SymbolNodeDep>, param: &Param) {
-  fill_pat(deps, &param.pat);
+  fn fill_param(&mut self, param: &Param) {
+    self.fill_pat(&param.pat);
+  }
+
+  fn fill_pat(&mut self, pat: &Pat) {
+    match pat {
+      Pat::Ident(n) => {
+        if let Some(type_ann) = &n.type_ann {
+          self.fill_ts_type_ann(type_ann);
+        }
+      }
+      Pat::Array(n) => {
+        if let Some(type_ann) = &n.type_ann {
+          self.fill_ts_type_ann(type_ann);
+        }
+      }
+      Pat::Rest(n) => {
+        if let Some(type_ann) = &n.type_ann {
+          self.fill_ts_type_ann(type_ann);
+        }
+      }
+      Pat::Object(n) => {
+        if let Some(type_ann) = &n.type_ann {
+          self.fill_ts_type_ann(type_ann);
+        }
+      }
+      Pat::Assign(n) => {
+        self.fill_pat(&n.left);
+        let has_type_ann = pat_has_type_ann(&n.left);
+        if self.mode.visit_exprs() && !has_type_ann {
+          self.fill_expr(&n.right);
+        }
+      }
+      Pat::Invalid(_) => {
+        // ignore
+      }
+      Pat::Expr(expr) => {
+        if self.mode.visit_exprs() {
+          self.fill_expr(expr);
+        }
+      }
+    }
+  }
+
+  fn fill_ts_type_ann(&mut self, type_ann: &TsTypeAnn) {
+    self.fill_ts_type(&type_ann.type_ann)
+  }
+
+  fn fill_ts_type(&mut self, n: &TsType) {
+    let mut visitor = SymbolDepFillVisitor {
+      deps: &mut self.deps,
+    };
+    n.visit_with(&mut visitor);
+  }
+
+  fn fill_expr(&mut self, n: &Expr) {
+    if let Some((id, parts)) = expr_into_id_and_parts(n) {
+      if parts.is_empty() {
+        self.deps.push(SymbolNodeDep::Id(id))
+      } else {
+        self.deps.push(SymbolNodeDep::QualifiedId(id, parts))
+      }
+    } else {
+      let mut visitor = SymbolDepFillVisitor {
+        deps: &mut self.deps,
+      };
+      n.visit_with(&mut visitor);
+    }
+  }
 }
 
 fn pat_has_type_ann(n: &Pat) -> bool {
@@ -343,66 +447,6 @@ fn pat_has_type_ann(n: &Pat) -> bool {
     Pat::Assign(n) => pat_has_type_ann(&n.left),
     Pat::Invalid(_) => false,
     Pat::Expr(_) => false,
-  }
-}
-
-fn fill_pat(deps: &mut Vec<SymbolNodeDep>, pat: &Pat) {
-  match pat {
-    Pat::Ident(n) => {
-      if let Some(type_ann) = &n.type_ann {
-        fill_ts_type_ann(deps, type_ann);
-      }
-    }
-    Pat::Array(n) => {
-      if let Some(type_ann) = &n.type_ann {
-        fill_ts_type_ann(deps, type_ann);
-      }
-    }
-    Pat::Rest(n) => {
-      if let Some(type_ann) = &n.type_ann {
-        fill_ts_type_ann(deps, type_ann);
-      }
-    }
-    Pat::Object(n) => {
-      if let Some(type_ann) = &n.type_ann {
-        fill_ts_type_ann(deps, type_ann);
-      }
-    }
-    Pat::Assign(n) => {
-      fill_pat(deps, &n.left);
-      let has_type_ann = pat_has_type_ann(&n.left);
-      if !has_type_ann {
-        fill_expr(deps, &n.right);
-      }
-    }
-    Pat::Invalid(_) => {
-      // ignore
-    }
-    Pat::Expr(expr) => {
-      fill_expr(deps, expr);
-    }
-  }
-}
-
-fn fill_ts_type_ann(deps: &mut Vec<SymbolNodeDep>, type_ann: &TsTypeAnn) {
-  fill_ts_type(deps, &type_ann.type_ann)
-}
-
-fn fill_ts_type(deps: &mut Vec<SymbolNodeDep>, n: &TsType) {
-  let mut visitor = SymbolDepFillVisitor { deps };
-  n.visit_with(&mut visitor);
-}
-
-fn fill_expr(deps: &mut Vec<SymbolNodeDep>, n: &Expr) {
-  if let Some((id, parts)) = expr_into_id_and_parts(n) {
-    if parts.is_empty() {
-      deps.push(SymbolNodeDep::Id(id))
-    } else {
-      deps.push(SymbolNodeDep::QualifiedId(id, parts))
-    }
-  } else {
-    let mut visitor = SymbolDepFillVisitor { deps };
-    n.visit_with(&mut visitor);
   }
 }
 

@@ -16,6 +16,7 @@ use crate::source::Loader;
 use crate::symbols::ExportDeclRef;
 use crate::symbols::FileDepName;
 use crate::symbols::ModuleInfoRef;
+use crate::symbols::ResolveDepsMode;
 use crate::symbols::RootSymbol;
 use crate::symbols::SymbolDeclKind;
 use crate::symbols::SymbolId;
@@ -665,7 +666,7 @@ impl<'a> PublicRangeFinder<'a> {
               }
               SymbolDeclKind::Definition(node) => {
                 if let Some(node) = node.maybe_ref() {
-                  for dep in node.deps() {
+                  for dep in node.deps(ResolveDepsMode::TypesAndExpressions) {
                     match dep {
                       SymbolNodeDep::Id(id) => {
                         let module_info = module_info.esm().unwrap();

@@ -286,7 +286,9 @@ impl TestBuilder {
           for symbol in module.symbols() {
             for decl in symbol.decls() {
               if let Some((node, source)) = decl.maybe_node_and_source() {
-                let deps = node.deps();
+                let deps = node.deps(
+                  deno_graph::symbols::ResolveDepsMode::TypesAndExpressions,
+                );
                 if !deps.is_empty() {
                   symbol_deps_text.push_str(&format!(
                     "{:?}:{:?} {:?}\n",

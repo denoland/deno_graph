@@ -32,6 +32,7 @@ use super::cross_module::Definition;
 use super::cross_module::DefinitionOrUnresolved;
 use super::cross_module::DefinitionPath;
 use super::cross_module::ModuleExports;
+use super::dep_analyzer::ResolveDepsMode;
 use super::swc_helpers::ts_entity_name_to_parts;
 use super::ResolvedSymbolDepEntry;
 use super::SymbolNodeDep;
@@ -913,8 +914,8 @@ impl<'a> SymbolNodeRef<'a> {
     }
   }
 
-  pub fn deps(&self) -> Vec<SymbolNodeDep> {
-    super::dep_analyzer::resolve_deps(*self)
+  pub fn deps(&self, mode: ResolveDepsMode) -> Vec<SymbolNodeDep> {
+    super::dep_analyzer::resolve_deps(*self, mode)
   }
 }
 
@@ -998,9 +999,9 @@ impl SymbolDecl {
     self.maybe_node().and_then(|n| n.maybe_name())
   }
 
-  pub fn deps(&self) -> Vec<SymbolNodeDep> {
+  pub fn deps(&self, mode: ResolveDepsMode) -> Vec<SymbolNodeDep> {
     match self.maybe_node() {
-      Some(node) => node.deps(),
+      Some(node) => node.deps(mode),
       None => Vec::new(),
     }
   }
