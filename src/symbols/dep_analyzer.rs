@@ -200,7 +200,7 @@ impl DepsFiller {
   }
 }
 
-impl<'a> Visit for DepsFiller {
+impl Visit for DepsFiller {
   fn visit_ts_index_signature(&mut self, n: &TsIndexSignature) {
     for param in &n.params {
       self.visit_ts_fn_param(param)
