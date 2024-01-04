@@ -14,13 +14,21 @@ use deno_ast::swc::ast::Param;
 use deno_ast::swc::ast::ParamOrTsParamProp;
 use deno_ast::swc::ast::Pat;
 use deno_ast::swc::ast::PropName;
+use deno_ast::swc::ast::TsCallSignatureDecl;
+use deno_ast::swc::ast::TsConstructSignatureDecl;
 use deno_ast::swc::ast::TsEnumDecl;
 use deno_ast::swc::ast::TsExprWithTypeArgs;
+use deno_ast::swc::ast::TsGetterSignature;
 use deno_ast::swc::ast::TsImportType;
+use deno_ast::swc::ast::TsIndexSignature;
 use deno_ast::swc::ast::TsInterfaceDecl;
+use deno_ast::swc::ast::TsMethodSignature;
 use deno_ast::swc::ast::TsParamProp;
 use deno_ast::swc::ast::TsParamPropParam;
+use deno_ast::swc::ast::TsPropertySignature;
 use deno_ast::swc::ast::TsQualifiedName;
+use deno_ast::swc::ast::TsSetterSignature;
+use deno_ast::swc::ast::TsTupleElement;
 use deno_ast::swc::ast::TsTypeAliasDecl;
 use deno_ast::swc::ast::TsTypeAnn;
 use deno_ast::swc::ast::TsTypeParam;
@@ -168,73 +176,104 @@ impl DepsFiller {
         }
       }
       SymbolNodeRef::TsIndexSignature(n) => {
-        for param in &n.params {
-          self.visit_ts_fn_param(param)
-        }
-        if let Some(type_ann) = &n.type_ann {
-          self.visit_ts_type_ann(type_ann)
-        }
+        self.visit_ts_index_signature(n);
       }
       SymbolNodeRef::TsCallSignatureDecl(n) => {
-        if let Some(type_params) = &n.type_params {
-          self.visit_ts_type_param_decl(type_params);
-        }
-        for param in &n.params {
-          self.visit_ts_fn_param(param);
-        }
-        if let Some(type_ann) = &n.type_ann {
-          self.visit_ts_type_ann(type_ann)
-        }
+        self.visit_ts_call_signature_decl(n);
       }
       SymbolNodeRef::TsConstructSignatureDecl(n) => {
-        if let Some(type_params) = &n.type_params {
-          self.visit_ts_type_param_decl(type_params);
-        }
-        for param in &n.params {
-          self.visit_ts_fn_param(param);
-        }
-        if let Some(type_ann) = &n.type_ann {
-          self.visit_ts_type_ann(type_ann)
-        }
+        self.visit_ts_construct_signature_decl(n);
       }
       SymbolNodeRef::TsPropertySignature(n) => {
-        if let Some(init) = &n.init {
-          self.visit_expr(init);
-        }
-        if let Some(type_params) = &n.type_params {
-          self.visit_ts_type_param_decl(type_params);
-        }
-        for param in &n.params {
-          self.visit_ts_fn_param(param);
-        }
-        if let Some(type_ann) = &n.type_ann {
-          self.visit_ts_type_ann(type_ann)
-        }
+        self.visit_ts_property_signature(n);
       }
       SymbolNodeRef::TsGetterSignature(n) => {
-        if let Some(type_ann) = &n.type_ann {
-          self.visit_ts_type_ann(type_ann)
-        }
+        self.visit_ts_getter_signature(n);
       }
       SymbolNodeRef::TsSetterSignature(n) => {
-        self.visit_ts_fn_param(&n.param);
+        self.visit_ts_setter_signature(n);
       }
       SymbolNodeRef::TsMethodSignature(n) => {
-        if let Some(type_params) = &n.type_params {
-          self.visit_ts_type_param_decl(type_params);
-        }
-        for param in &n.params {
-          self.visit_ts_fn_param(param)
-        }
-        if let Some(type_ann) = &n.type_ann {
-          self.visit_ts_type_ann(type_ann)
-        }
+        self.visit_ts_method_signature(n);
       }
     }
   }
 }
 
 impl<'a> Visit for DepsFiller {
+  fn visit_ts_index_signature(&mut self, n: &TsIndexSignature) {
+    for param in &n.params {
+      self.visit_ts_fn_param(param)
+    }
+    if let Some(type_ann) = &n.type_ann {
+      self.visit_ts_type_ann(type_ann)
+    }
+  }
+
+  fn visit_ts_call_signature_decl(&mut self, n: &TsCallSignatureDecl) {
+    if let Some(type_params) = &n.type_params {
+      self.visit_ts_type_param_decl(type_params);
+    }
+    for param in &n.params {
+      self.visit_ts_fn_param(param);
+    }
+    if let Some(type_ann) = &n.type_ann {
+      self.visit_ts_type_ann(type_ann)
+    }
+  }
+
+  fn visit_ts_construct_signature_decl(
+    &mut self,
+    n: &TsConstructSignatureDecl,
+  ) {
+    if let Some(type_params) = &n.type_params {
+      self.visit_ts_type_param_decl(type_params);
+    }
+    for param in &n.params {
+      self.visit_ts_fn_param(param);
+    }
+    if let Some(type_ann) = &n.type_ann {
+      self.visit_ts_type_ann(type_ann)
+    }
+  }
+
+  fn visit_ts_property_signature(&mut self, n: &TsPropertySignature) {
+    if let Some(init) = &n.init {
+      self.visit_expr(init);
+    }
+    if let Some(type_params) = &n.type_params {
+      self.visit_ts_type_param_decl(type_params);
+    }
+    for param in &n.params {
+      self.visit_ts_fn_param(param);
+    }
+    if let Some(type_ann) = &n.type_ann {
+      self.visit_ts_type_ann(type_ann)
+    }
+  }
+
+  fn visit_ts_getter_signature(&mut self, n: &TsGetterSignature) {
+    if let Some(type_ann) = &n.type_ann {
+      self.visit_ts_type_ann(type_ann)
+    }
+  }
+
+  fn visit_ts_setter_signature(&mut self, n: &TsSetterSignature) {
+    self.visit_ts_fn_param(&n.param);
+  }
+
+  fn visit_ts_method_signature(&mut self, n: &TsMethodSignature) {
+    if let Some(type_params) = &n.type_params {
+      self.visit_ts_type_param_decl(type_params);
+    }
+    for param in &n.params {
+      self.visit_ts_fn_param(param)
+    }
+    if let Some(type_ann) = &n.type_ann {
+      self.visit_ts_type_ann(type_ann)
+    }
+  }
+
   fn visit_class(&mut self, n: &Class) {
     if let Some(type_params) = &n.type_params {
       self.visit_ts_type_param_decl(type_params);
@@ -434,6 +473,10 @@ impl<'a> Visit for DepsFiller {
     } else {
       n.visit_children_with(self);
     }
+  }
+
+  fn visit_ts_tuple_element(&mut self, n: &TsTupleElement) {
+    n.ty.visit_with(self);
   }
 
   fn visit_ts_import_type(&mut self, n: &TsImportType) {
