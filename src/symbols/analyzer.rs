@@ -93,16 +93,6 @@ impl<'a> RootSymbol<'a> {
     }
   }
 
-  pub fn resolve_types_dependency(
-    &self,
-    specifier: &str,
-    referrer: &ModuleSpecifier,
-  ) -> Option<ModuleSpecifier> {
-    self
-      .module_graph
-      .resolve_dependency(specifier, referrer, /* prefer_types */ true)
-  }
-
   pub fn module_from_id(&self, module_id: ModuleId) -> Option<ModuleInfoRef> {
     self.ids_to_modules.get(&module_id).map(|s| s.as_ref())
   }
