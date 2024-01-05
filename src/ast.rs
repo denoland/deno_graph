@@ -663,7 +663,7 @@ mod tests {
     import type { i } from "./i.d.ts";
     export type { j } from "./j.d.ts";
     "#;
-    let parsed_source = DefaultModuleParser::default()
+    let parsed_source = DefaultModuleParser
       .parse_module(ModuleParseOptions {
         specifier: &specifier,
         source: source.into(),
@@ -700,7 +700,7 @@ mod tests {
       await import(\"./b.json\", {{ {keyword}: {{ type: \"json\" }} }});
       "
       );
-      let parsed_source = DefaultModuleParser::default()
+      let parsed_source = DefaultModuleParser
         .parse_module(ModuleParseOptions {
           specifier: &specifier,
           source: source.into(),
@@ -751,7 +751,7 @@ function b(c) {
  */
 const f = new Set();
 "#;
-    let parsed_source = DefaultModuleParser::default()
+    let parsed_source = DefaultModuleParser
       .parse_module(ModuleParseOptions {
         specifier: &specifier,
         source: source.into(),

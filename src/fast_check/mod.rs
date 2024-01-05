@@ -189,7 +189,11 @@ pub fn build_fast_check_type_graph<'a>(
     if errors.is_empty() {
       final_result.extend(fast_check_modules);
     } else {
-      // if there are errors, insert a copy into each entrypoint
+      // If there are errors, insert a copy into each entrypoint.
+      //
+      // If one entrypoint can't be analyzed then we consider all
+      // entrypoints are non-analyzable because it's very difficult
+      // to determine the overlap of internal types between entrypoints.
       let combined_errors = FastCheckDiagnostic::Multiple(errors);
       for entrypoint in package.entrypoints {
         final_result.push((entrypoint, Err(Box::new(combined_errors.clone()))));

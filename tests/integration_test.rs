@@ -92,7 +92,7 @@ async fn test_graph_specs() {
         }
       }
     }
-    if !output_text.ends_with("\n") {
+    if !output_text.ends_with('\n') {
       output_text.push('\n');
     }
     let diagnostics = result

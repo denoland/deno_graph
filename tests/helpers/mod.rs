@@ -34,7 +34,7 @@ impl Spec {
       text.push_str("~~ ");
       text.push_str(&serde_json::to_string(options).unwrap());
       text.push_str(" ~~");
-      text.push_str("\n");
+      text.push('\n');
     }
     if !self.workspace_members.is_empty() {
       text.push_str("# workspace_members\n");
