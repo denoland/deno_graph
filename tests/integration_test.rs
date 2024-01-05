@@ -40,6 +40,11 @@ async fn test_graph_specs() {
   for (test_file_path, spec) in
     get_specs_in_dir(&PathBuf::from("./tests/specs/graph"))
   {
+    if !cfg!(feature = "fast_check")
+      && spec.output_file.text.contains("Fast check ")
+    {
+      continue;
+    }
     eprintln!("Running {}", test_file_path.display());
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
