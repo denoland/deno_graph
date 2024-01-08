@@ -1558,81 +1558,77 @@ impl ModuleGraph {
     prefer_types: bool,
   ) -> Option<ModuleSpecifier> {
     let referrer = self.resolve(referrer);
-    let specifier = if let Some(ModuleSlot::Module(referring_module)) =
+    if let Some(ModuleSlot::Module(referring_module)) =
       self.module_slots.get(&referrer)
     {
-      match referring_module {
-        Module::Esm(referring_module) => {
-          let dependency = referring_module.dependencies.get(specifier)?;
-          self.resolve_dependency_specifier(dependency, prefer_types)
-        }
-        Module::Json(_)
-        | Module::Npm(_)
-        | Module::Node(_)
-        | Module::External(_) => None,
-      }
+      self.resolve_dependency_from_module(
+        specifier,
+        referring_module,
+        prefer_types,
+      )
     } else if let Some(graph_import) = self.imports.get(&referrer) {
       let dependency = graph_import.dependencies.get(specifier)?;
-      self.resolve_dependency_specifier(dependency, prefer_types)
+      self.resolve_dependency_from_dep(dependency, prefer_types)
     } else {
       None
-    }?;
-    let resolved_specifier = self.resolve(specifier);
-    // Even if we resolved the specifier, it doesn't mean the module is actually
-    // there, so check in the module slots
-    match self.module_slots.get(&resolved_specifier) {
-      Some(ModuleSlot::Module(_)) => Some(resolved_specifier),
-      _ => None,
     }
   }
 
-  fn resolve_dependency_specifier<'a>(
-    &'a self,
-    dependency: &'a Dependency,
+  pub fn resolve_dependency_from_module(
+    &self,
+    specifier: &str,
+    referring_module: &Module,
     prefer_types: bool,
-  ) -> Option<&'a ModuleSpecifier> {
+  ) -> Option<ModuleSpecifier> {
+    match referring_module {
+      Module::Esm(referring_module) => {
+        let dependency = referring_module.dependencies.get(specifier)?;
+        self.resolve_dependency_from_dep(dependency, prefer_types)
+      }
+      Module::Json(_)
+      | Module::Npm(_)
+      | Module::Node(_)
+      | Module::External(_) => None,
+    }
+  }
+
+  pub fn resolve_dependency_from_dep(
+    &self,
+    dependency: &Dependency,
+    prefer_types: bool,
+  ) -> Option<ModuleSpecifier> {
     let (maybe_first, maybe_second) = if prefer_types {
       (&dependency.maybe_type, &dependency.maybe_code)
     } else {
       (&dependency.maybe_code, &dependency.maybe_type)
     };
-    let specifier = maybe_first
+    let unresolved_specifier = maybe_first
       .maybe_specifier()
-      .or_else(|| maybe_second.maybe_specifier());
-    match specifier {
-      Some(specifier) => {
-        if prefer_types {
-          return Some(
-            self
-              .resolve_types_dependency(specifier)
-              .unwrap_or(specifier),
-          );
+      .or_else(|| maybe_second.maybe_specifier())?;
+    let resolved_specifier = self.resolve(unresolved_specifier);
+    // Even if we resolved the specifier, it doesn't mean the module is actually
+    // there, so check in the module slots
+    match self.module_slots.get(&resolved_specifier) {
+      Some(ModuleSlot::Module(Module::Esm(module))) if prefer_types => {
+        // check for if this module has a types dependency
+        if let Some(Resolution::Ok(resolved)) = module
+          .maybe_types_dependency
+          .as_ref()
+          .map(|d| &d.dependency)
+        {
+          let resolved_specifier = self.resolve(&resolved.specifier);
+          if matches!(
+            self.module_slots.get(&resolved_specifier),
+            Some(ModuleSlot::Module(_))
+          ) {
+            return Some(resolved_specifier);
+          }
         }
-        Some(specifier)
+        Some(resolved_specifier)
       }
-      None => None,
+      Some(ModuleSlot::Module(_)) => Some(resolved_specifier),
+      _ => None,
     }
-  }
-
-  /// For a given specifier, return optionally if it has a types only dependency
-  /// assigned on the module. This occurs when there is a header or text in the
-  /// module that assigns expresses the types only dependency.
-  pub(crate) fn resolve_types_dependency(
-    &self,
-    specifier: &ModuleSpecifier,
-  ) -> Option<&ModuleSpecifier> {
-    if let Some(ModuleSlot::Module(Module::Esm(module))) =
-      self.module_slots.get(specifier)
-    {
-      if let Some(Resolution::Ok(resolved)) = module
-        .maybe_types_dependency
-        .as_ref()
-        .map(|d| &d.dependency)
-      {
-        return Some(&resolved.specifier);
-      }
-    }
-    None
   }
 
   /// Return the entries of the specifiers in the graph, where the first value
