@@ -1,4 +1,4 @@
-// Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
 // todo(dsherret): move the integration-like tests to this file because it
 // helps ensure we're testing the public API and ensures we export types
