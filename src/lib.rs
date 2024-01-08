@@ -38,8 +38,8 @@ pub use ast::CapturingModuleParser;
 pub use ast::DefaultModuleAnalyzer;
 pub use ast::DefaultModuleParser;
 pub use ast::DefaultParsedSourceStore;
-pub use ast::ModuleParseOptions;
 pub use ast::ModuleParser;
+pub use ast::ParseOptions;
 pub use ast::ParsedSourceStore;
 pub use deno_ast::MediaType;
 #[cfg(feature = "fast_check")]

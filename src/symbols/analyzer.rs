@@ -20,8 +20,8 @@ use indexmap::IndexSet;
 use crate::EsmModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
-use crate::ModuleParseOptions;
 use crate::ModuleParser;
+use crate::ParseOptions;
 
 use super::collections::AdditiveOnlyIndexMap;
 use super::collections::AdditiveOnlyIndexMapForCopyValues;
@@ -245,7 +245,7 @@ impl<'a> RootSymbol<'a> {
     &self,
     graph_module: &EsmModule,
   ) -> Result<ParsedSource, deno_ast::Diagnostic> {
-    self.parser.parse_module(ModuleParseOptions {
+    self.parser.parse_module(ParseOptions {
       specifier: &graph_module.specifier,
       source: graph_module.source.clone(),
       media_type: graph_module.media_type,

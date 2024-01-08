@@ -49,7 +49,7 @@ static PATH_REFERENCE_RE: Lazy<Regex> =
 static TYPES_REFERENCE_RE: Lazy<Regex> =
   Lazy::new(|| Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap());
 
-pub struct ModuleParseOptions<'a> {
+pub struct ParseOptions<'a> {
   pub specifier: &'a ModuleSpecifier,
   pub source: Arc<str>,
   pub media_type: MediaType,
@@ -60,7 +60,7 @@ pub struct ModuleParseOptions<'a> {
 pub trait ModuleParser {
   fn parse_module(
     &self,
-    options: ModuleParseOptions,
+    options: ParseOptions,
   ) -> Result<ParsedSource, Diagnostic>;
 }
 
@@ -70,7 +70,7 @@ pub struct DefaultModuleParser;
 impl ModuleParser for DefaultModuleParser {
   fn parse_module(
     &self,
-    options: ModuleParseOptions,
+    options: ParseOptions,
   ) -> Result<ParsedSource, Diagnostic> {
     deno_ast::parse_module(deno_ast::ParseParams {
       specifier: options.specifier.to_string(),
@@ -169,7 +169,7 @@ impl<'a> CapturingModuleParser<'a> {
 
   fn get_from_store_if_matches(
     &self,
-    options: &ModuleParseOptions,
+    options: &ParseOptions,
   ) -> Option<ParsedSource> {
     let parsed_source = if options.scope_analysis {
       self
@@ -191,7 +191,7 @@ impl<'a> CapturingModuleParser<'a> {
 impl<'a> ModuleParser for CapturingModuleParser<'a> {
   fn parse_module(
     &self,
-    options: ModuleParseOptions,
+    options: ParseOptions,
   ) -> Result<ParsedSource, Diagnostic> {
     if let Some(parsed_source) = self.get_from_store_if_matches(&options) {
       Ok(parsed_source)
@@ -263,7 +263,7 @@ impl<'a> ModuleAnalyzer for DefaultModuleAnalyzer<'a> {
   ) -> Result<ModuleInfo, Diagnostic> {
     let default_parser = DefaultModuleParser;
     let parser = self.parser.unwrap_or(&default_parser);
-    let parsed_source = parser.parse_module(ModuleParseOptions {
+    let parsed_source = parser.parse_module(ParseOptions {
       specifier,
       source,
       media_type,
@@ -322,7 +322,7 @@ impl ModuleAnalyzer for CapturingModuleAnalyzer {
 impl ModuleParser for CapturingModuleAnalyzer {
   fn parse_module(
     &self,
-    options: ModuleParseOptions,
+    options: ParseOptions,
   ) -> Result<ParsedSource, Diagnostic> {
     let capturing_parser = self.as_capturing_parser();
     capturing_parser.parse_module(options)
@@ -590,7 +590,7 @@ mod tests {
     const a = await import("./a.ts");
     "#;
     let parsed_source = DefaultModuleParser
-      .parse_module(ModuleParseOptions {
+      .parse_module(ParseOptions {
         specifier: &specifier,
         source: source.into(),
         media_type: MediaType::Tsx,
@@ -664,7 +664,7 @@ mod tests {
     export type { j } from "./j.d.ts";
     "#;
     let parsed_source = DefaultModuleParser
-      .parse_module(ModuleParseOptions {
+      .parse_module(ParseOptions {
         specifier: &specifier,
         source: source.into(),
         media_type: MediaType::TypeScript,
@@ -701,7 +701,7 @@ mod tests {
       "
       );
       let parsed_source = DefaultModuleParser
-        .parse_module(ModuleParseOptions {
+        .parse_module(ParseOptions {
           specifier: &specifier,
           source: source.into(),
           media_type: MediaType::TypeScript,
@@ -752,7 +752,7 @@ function b(c) {
 const f = new Set();
 "#;
     let parsed_source = DefaultModuleParser
-      .parse_module(ModuleParseOptions {
+      .parse_module(ParseOptions {
         specifier: &specifier,
         source: source.into(),
         media_type: MediaType::JavaScript,
