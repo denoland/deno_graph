@@ -14,6 +14,7 @@ use crate::analyzer::TypeScriptReference;
 use crate::graph::Position;
 use crate::module_specifier::ModuleSpecifier;
 
+use deno_ast::MultiThreadedComments;
 use deno_ast::SourcePos;
 use deno_ast::SourceRangedForSpanned;
 
@@ -48,48 +49,35 @@ static PATH_REFERENCE_RE: Lazy<Regex> =
 static TYPES_REFERENCE_RE: Lazy<Regex> =
   Lazy::new(|| Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap());
 
+pub struct ParseOptions<'a> {
+  pub specifier: &'a ModuleSpecifier,
+  pub source: Arc<str>,
+  pub media_type: MediaType,
+  pub scope_analysis: bool,
+}
+
 /// Parses modules to a ParsedSource.
 pub trait ModuleParser {
   fn parse_module(
     &self,
-    specifier: &ModuleSpecifier,
-    source: Arc<str>,
-    media_type: MediaType,
+    options: ParseOptions,
   ) -> Result<ParsedSource, Diagnostic>;
 }
 
 #[derive(Default, Clone)]
-pub struct DefaultModuleParser {
-  analysis: bool,
-}
-
-impl DefaultModuleParser {
-  /// Creates a new default parser that parses using only settings
-  /// necessary for deno_graph to analyze the modules.
-  pub fn new() -> Self {
-    Self::default()
-  }
-
-  /// Creates a new parser that also collects scope analysis information
-  /// and captures tokens.
-  pub fn new_for_analysis() -> Self {
-    Self { analysis: true }
-  }
-}
+pub struct DefaultModuleParser;
 
 impl ModuleParser for DefaultModuleParser {
   fn parse_module(
     &self,
-    specifier: &ModuleSpecifier,
-    source: Arc<str>,
-    media_type: MediaType,
+    options: ParseOptions,
   ) -> Result<ParsedSource, Diagnostic> {
     deno_ast::parse_module(deno_ast::ParseParams {
-      specifier: specifier.to_string(),
-      text_info: SourceTextInfo::new(source),
-      media_type,
-      capture_tokens: self.analysis,
-      scope_analysis: self.analysis,
+      specifier: options.specifier.to_string(),
+      text_info: SourceTextInfo::new(options.source),
+      media_type: options.media_type,
+      capture_tokens: options.scope_analysis,
+      scope_analysis: options.scope_analysis,
       maybe_syntax: None,
     })
   }
@@ -108,6 +96,12 @@ pub trait ParsedSourceStore {
     parsed_source: ParsedSource,
   ) -> Option<ParsedSource>;
   fn get_parsed_source(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<ParsedSource>;
+  /// Gets a `deno_ast::ParsedSource` from the store, upgrading it
+  /// to have scope analysis if it doesn't already.
+  fn get_scope_analysis_parsed_source(
     &self,
     specifier: &ModuleSpecifier,
   ) -> Option<ParsedSource>;
@@ -134,6 +128,22 @@ impl ParsedSourceStore for DefaultParsedSourceStore {
   ) -> Option<ParsedSource> {
     self.store.borrow().get(specifier).cloned()
   }
+
+  fn get_scope_analysis_parsed_source(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<ParsedSource> {
+    let mut store = self.store.borrow_mut();
+    let parsed_source = store.get_mut(specifier)?;
+    if parsed_source.has_scope_analysis() {
+      Some(parsed_source.clone())
+    } else {
+      let parsed_source = store.remove(specifier).unwrap();
+      let parsed_source = parsed_source.into_with_scope_analysis();
+      store.insert(specifier.clone(), parsed_source.clone());
+      Some(parsed_source.clone())
+    }
+  }
 }
 
 /// Stores parsed files in the provided store after parsing.
@@ -159,13 +169,17 @@ impl<'a> CapturingModuleParser<'a> {
 
   fn get_from_store_if_matches(
     &self,
-    specifier: &ModuleSpecifier,
-    source: &str,
-    media_type: MediaType,
+    options: &ParseOptions,
   ) -> Option<ParsedSource> {
-    let parsed_source = self.store.get_parsed_source(specifier)?;
-    if parsed_source.media_type() == media_type
-      && parsed_source.text_info().text_str() == source
+    let parsed_source = if options.scope_analysis {
+      self
+        .store
+        .get_scope_analysis_parsed_source(options.specifier)?
+    } else {
+      self.store.get_parsed_source(options.specifier)?
+    };
+    if parsed_source.media_type() == options.media_type
+      && parsed_source.text_info().text_str() == options.source.as_ref()
     {
       Some(parsed_source)
     } else {
@@ -177,21 +191,18 @@ impl<'a> CapturingModuleParser<'a> {
 impl<'a> ModuleParser for CapturingModuleParser<'a> {
   fn parse_module(
     &self,
-    specifier: &ModuleSpecifier,
-    source: Arc<str>,
-    media_type: MediaType,
+    options: ParseOptions,
   ) -> Result<ParsedSource, Diagnostic> {
-    if let Some(parsed_source) =
-      self.get_from_store_if_matches(specifier, &source, media_type)
-    {
+    if let Some(parsed_source) = self.get_from_store_if_matches(&options) {
       Ok(parsed_source)
     } else {
-      let default_parser = DefaultModuleParser::default();
+      let default_parser = DefaultModuleParser;
       let parser = self.parser.unwrap_or(&default_parser);
-      let parsed_source = parser.parse_module(specifier, source, media_type)?;
+      let specifier = options.specifier.clone();
+      let parsed_source = parser.parse_module(options)?;
       self
         .store
-        .set_parsed_source(specifier.clone(), parsed_source.clone());
+        .set_parsed_source(specifier, parsed_source.clone());
       Ok(parsed_source)
     }
   }
@@ -213,11 +224,32 @@ impl<'a> DefaultModuleAnalyzer<'a> {
 
   /// Gets the module info from a parsed source.
   pub fn module_info(parsed_source: &ParsedSource) -> ModuleInfo {
+    let module = match parsed_source.program_ref() {
+      deno_ast::swc::ast::Program::Module(m) => m,
+      deno_ast::swc::ast::Program::Script(_) => return ModuleInfo::default(),
+    };
+    Self::module_info_from_swc(
+      parsed_source.media_type(),
+      module,
+      parsed_source.text_info(),
+      parsed_source.comments(),
+    )
+  }
+
+  pub fn module_info_from_swc(
+    media_type: MediaType,
+    module: &deno_ast::swc::ast::Module,
+    text_info: &SourceTextInfo,
+    comments: &MultiThreadedComments,
+  ) -> ModuleInfo {
+    let start_pos = module.start();
     ModuleInfo {
-      dependencies: analyze_dependencies(parsed_source),
-      ts_references: analyze_ts_references(parsed_source),
-      jsx_import_source: analyze_jsx_import_source(parsed_source),
-      jsdoc_imports: analyze_jsdoc_imports(parsed_source),
+      dependencies: analyze_dependencies(module, text_info, comments),
+      ts_references: analyze_ts_references(start_pos, text_info, comments),
+      jsx_import_source: analyze_jsx_import_source(
+        media_type, start_pos, text_info, comments,
+      ),
+      jsdoc_imports: analyze_jsdoc_imports(media_type, text_info, comments),
     }
   }
 }
@@ -229,9 +261,15 @@ impl<'a> ModuleAnalyzer for DefaultModuleAnalyzer<'a> {
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ModuleInfo, Diagnostic> {
-    let default_parser = DefaultModuleParser::default();
+    let default_parser = DefaultModuleParser;
     let parser = self.parser.unwrap_or(&default_parser);
-    let parsed_source = parser.parse_module(specifier, source, media_type)?;
+    let parsed_source = parser.parse_module(ParseOptions {
+      specifier,
+      source,
+      media_type,
+      // scope analysis is not necessary for module parsing
+      scope_analysis: false,
+    })?;
     Ok(DefaultModuleAnalyzer::module_info(&parsed_source))
   }
 }
@@ -284,12 +322,10 @@ impl ModuleAnalyzer for CapturingModuleAnalyzer {
 impl ModuleParser for CapturingModuleAnalyzer {
   fn parse_module(
     &self,
-    specifier: &ModuleSpecifier,
-    source: Arc<str>,
-    media_type: MediaType,
+    options: ParseOptions,
   ) -> Result<ParsedSource, Diagnostic> {
     let capturing_parser = self.as_capturing_parser();
-    capturing_parser.parse_module(specifier, source, media_type)
+    capturing_parser.parse_module(options)
   }
 }
 
@@ -308,13 +344,23 @@ impl ParsedSourceStore for CapturingModuleAnalyzer {
   ) -> Option<ParsedSource> {
     self.store.get_parsed_source(specifier)
   }
+
+  fn get_scope_analysis_parsed_source(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<ParsedSource> {
+    self.store.get_scope_analysis_parsed_source(specifier)
+  }
 }
 
 fn analyze_dependencies(
-  parsed_source: &ParsedSource,
+  module: &deno_ast::swc::ast::Module,
+  text_info: &SourceTextInfo,
+  comments: &MultiThreadedComments,
 ) -> Vec<DependencyDescriptor> {
-  parsed_source
-    .analyze_dependencies()
+  let deps = deno_ast::dep::analyze_module_dependencies(module, comments);
+
+  deps
     .into_iter()
     .map(|d| match d {
       deno_ast::dep::DependencyDescriptor::Static(d) => {
@@ -323,16 +369,13 @@ fn analyze_dependencies(
           leading_comments: d
             .leading_comments
             .into_iter()
-            .map(|c| Comment::from_dep_comment(c, parsed_source.text_info()))
+            .map(|c| Comment::from_dep_comment(c, text_info))
             .collect(),
-          range: PositionRange::from_source_range(
-            d.range,
-            parsed_source.text_info(),
-          ),
+          range: PositionRange::from_source_range(d.range, text_info),
           specifier: d.specifier.to_string(),
           specifier_range: PositionRange::from_source_range(
             d.specifier_range,
-            parsed_source.text_info(),
+            text_info,
           ),
           import_attributes: d.import_attributes,
         })
@@ -342,12 +385,9 @@ fn analyze_dependencies(
           leading_comments: d
             .leading_comments
             .into_iter()
-            .map(|c| Comment::from_dep_comment(c, parsed_source.text_info()))
+            .map(|c| Comment::from_dep_comment(c, text_info))
             .collect(),
-          range: PositionRange::from_source_range(
-            d.range,
-            parsed_source.text_info(),
-          ),
+          range: PositionRange::from_source_range(d.range, text_info),
           argument: match d.argument {
             deno_ast::dep::DynamicArgument::String(text) => {
               DynamicArgument::String(text.to_string())
@@ -373,7 +413,7 @@ fn analyze_dependencies(
           },
           argument_range: PositionRange::from_source_range(
             d.argument_range,
-            parsed_source.text_info(),
+            text_info,
           ),
           import_attributes: d.import_attributes,
         })
@@ -383,35 +423,40 @@ fn analyze_dependencies(
 }
 
 fn analyze_ts_references(
-  parsed_source: &ParsedSource,
+  start_pos: SourcePos,
+  text_info: &SourceTextInfo,
+  comments: &MultiThreadedComments,
 ) -> Vec<TypeScriptReference> {
   let mut references = Vec::new();
-  for comment in parsed_source.get_leading_comments().iter() {
-    if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
-      let comment_start = comment.start();
-      if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
-        let m = captures.get(1).unwrap();
-        references.push(TypeScriptReference::Path(SpecifierWithRange {
-          text: m.as_str().to_string(),
-          range: comment_source_to_position_range(
-            comment_start,
-            &m,
-            parsed_source.text_info(),
-            false,
-          ),
-        }));
-      } else if let Some(captures) = TYPES_REFERENCE_RE.captures(&comment.text)
-      {
-        let m = captures.get(1).unwrap();
-        references.push(TypeScriptReference::Types(SpecifierWithRange {
-          text: m.as_str().to_string(),
-          range: comment_source_to_position_range(
-            comment_start,
-            &m,
-            parsed_source.text_info(),
-            false,
-          ),
-        }));
+  if let Some(leading_comments) = comments.get_leading(start_pos) {
+    for comment in leading_comments {
+      if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
+        let comment_start = comment.start();
+        if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
+          let m = captures.get(1).unwrap();
+          references.push(TypeScriptReference::Path(SpecifierWithRange {
+            text: m.as_str().to_string(),
+            range: comment_source_to_position_range(
+              comment_start,
+              &m,
+              text_info,
+              false,
+            ),
+          }));
+        } else if let Some(captures) =
+          TYPES_REFERENCE_RE.captures(&comment.text)
+        {
+          let m = captures.get(1).unwrap();
+          references.push(TypeScriptReference::Types(SpecifierWithRange {
+            text: m.as_str().to_string(),
+            range: comment_source_to_position_range(
+              comment_start,
+              &m,
+              text_info,
+              false,
+            ),
+          }));
+        }
       }
     }
   }
@@ -419,24 +464,29 @@ fn analyze_ts_references(
 }
 
 fn analyze_jsx_import_source(
-  parsed_source: &ParsedSource,
+  media_type: MediaType,
+  start_pos: SourcePos,
+  text_info: &SourceTextInfo,
+  comments: &MultiThreadedComments,
 ) -> Option<SpecifierWithRange> {
-  match parsed_source.media_type() {
+  match media_type {
     MediaType::Jsx | MediaType::Tsx => {
-      parsed_source.get_leading_comments().iter().find_map(|c| {
-        if c.kind != CommentKind::Block {
-          return None; // invalid
-        }
-        let captures = JSX_IMPORT_SOURCE_RE.captures(&c.text)?;
-        let m = captures.get(1)?;
-        Some(SpecifierWithRange {
-          text: m.as_str().to_string(),
-          range: comment_source_to_position_range(
-            c.start(),
-            &m,
-            parsed_source.text_info(),
-            true,
-          ),
+      comments.get_leading(start_pos).and_then(|c| {
+        c.iter().find_map(|c| {
+          if c.kind != CommentKind::Block {
+            return None; // invalid
+          }
+          let captures = JSX_IMPORT_SOURCE_RE.captures(&c.text)?;
+          let m = captures.get(1)?;
+          Some(SpecifierWithRange {
+            text: m.as_str().to_string(),
+            range: comment_source_to_position_range(
+              c.start(),
+              &m,
+              text_info,
+              true,
+            ),
+          })
         })
       })
     }
@@ -445,21 +495,23 @@ fn analyze_jsx_import_source(
 }
 
 fn analyze_jsdoc_imports(
-  parsed_source: &ParsedSource,
+  media_type: MediaType,
+  text_info: &SourceTextInfo,
+  comments: &MultiThreadedComments,
 ) -> Vec<SpecifierWithRange> {
   // Analyze any JSDoc type imports
   // We only analyze these on JavaScript types of modules, since they are
   // ignored by TypeScript when type checking anyway and really shouldn't be
   // there, but some people do strange things.
   if !matches!(
-    parsed_source.media_type(),
+    media_type,
     MediaType::JavaScript | MediaType::Jsx | MediaType::Mjs | MediaType::Cjs
   ) {
     return Vec::new();
   }
 
   let mut deps = Vec::new();
-  for comment in parsed_source.comments().get_vec().iter() {
+  for comment in comments.iter_unstable() {
     if comment.kind != CommentKind::Block || !comment.text.starts_with('*') {
       continue;
     }
@@ -470,13 +522,14 @@ fn analyze_jsdoc_imports(
           range: comment_source_to_position_range(
             comment.range().start,
             &m,
-            parsed_source.text_info(),
+            text_info,
             false,
           ),
         });
       }
     }
   }
+  deps.sort_by(|a, b| a.range.start.cmp(&b.range.start));
   deps
 }
 
@@ -536,8 +589,13 @@ mod tests {
 
     const a = await import("./a.ts");
     "#;
-    let parsed_source = DefaultModuleParser::default()
-      .parse_module(&specifier, source.into(), MediaType::Tsx)
+    let parsed_source = DefaultModuleParser
+      .parse_module(ParseOptions {
+        specifier: &specifier,
+        source: source.into(),
+        media_type: MediaType::Tsx,
+        scope_analysis: false,
+      })
       .unwrap();
     let text_info = parsed_source.text_info();
     let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
@@ -605,8 +663,13 @@ mod tests {
     import type { i } from "./i.d.ts";
     export type { j } from "./j.d.ts";
     "#;
-    let parsed_source = DefaultModuleParser::default()
-      .parse_module(&specifier, source.into(), MediaType::TypeScript)
+    let parsed_source = DefaultModuleParser
+      .parse_module(ParseOptions {
+        specifier: &specifier,
+        source: source.into(),
+        media_type: MediaType::TypeScript,
+        scope_analysis: false,
+      })
       .unwrap();
     let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
     let text_info = parsed_source.text_info();
@@ -637,8 +700,13 @@ mod tests {
       await import(\"./b.json\", {{ {keyword}: {{ type: \"json\" }} }});
       "
       );
-      let parsed_source = DefaultModuleParser::default()
-        .parse_module(&specifier, source.into(), MediaType::TypeScript)
+      let parsed_source = DefaultModuleParser
+        .parse_module(ParseOptions {
+          specifier: &specifier,
+          source: source.into(),
+          media_type: MediaType::TypeScript,
+          scope_analysis: false,
+        })
         .unwrap();
       let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
       let dependencies = module_info.dependencies;
@@ -683,8 +751,13 @@ function b(c) {
  */
 const f = new Set();
 "#;
-    let parsed_source = DefaultModuleParser::default()
-      .parse_module(&specifier, source.into(), MediaType::JavaScript)
+    let parsed_source = DefaultModuleParser
+      .parse_module(ParseOptions {
+        specifier: &specifier,
+        source: source.into(),
+        media_type: MediaType::JavaScript,
+        scope_analysis: false,
+      })
       .unwrap();
     let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
     let dependencies = module_info.jsdoc_imports;

@@ -9,9 +9,11 @@ use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
-use crate::DefaultModuleAnalyzer;
+use crate::CapturingModuleAnalyzer;
+use crate::ModuleParser;
 use crate::ReferrerImports;
 
+use crate::fast_check::FastCheckDiagnostic;
 use crate::module_specifier::is_fs_root_specifier;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -53,6 +55,7 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -797,6 +800,19 @@ impl JsonModule {
   }
 }
 
+#[derive(Debug, Clone)]
+pub enum FastCheckTypeModuleSlot {
+  Module(Box<FastCheckTypeModule>),
+  Error(Box<FastCheckDiagnostic>),
+}
+
+#[derive(Debug, Clone)]
+pub struct FastCheckTypeModule {
+  pub dependencies: IndexMap<String, Dependency>,
+  pub source: Arc<str>,
+  pub source_map: Arc<[u8]>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EsmModule {
@@ -814,6 +830,8 @@ pub struct EsmModule {
   #[serde(skip_serializing_if = "is_media_type_unknown")]
   pub media_type: MediaType,
   pub specifier: ModuleSpecifier,
+  #[serde(skip_serializing)]
+  pub fast_check: Option<FastCheckTypeModuleSlot>,
 }
 
 impl EsmModule {
@@ -825,12 +843,38 @@ impl EsmModule {
       maybe_types_dependency: None,
       media_type: MediaType::Unknown,
       specifier,
+      fast_check: None,
     }
   }
 
   /// Return the size in bytes of the content of the module.
   pub fn size(&self) -> usize {
     self.source.as_bytes().len()
+  }
+
+  pub fn fast_check_diagnostic(&self) -> Option<&FastCheckDiagnostic> {
+    let module_slot = self.fast_check.as_ref()?;
+    match module_slot {
+      FastCheckTypeModuleSlot::Module(_) => None,
+      FastCheckTypeModuleSlot::Error(d) => Some(d),
+    }
+  }
+
+  pub fn fast_check_module(&self) -> Option<&FastCheckTypeModule> {
+    let module_slot = self.fast_check.as_ref()?;
+    match module_slot {
+      FastCheckTypeModuleSlot::Module(m) => Some(m),
+      FastCheckTypeModuleSlot::Error(_) => None,
+    }
+  }
+
+  pub fn dependencies_prefer_fast_check(
+    &self,
+  ) -> &IndexMap<String, Dependency> {
+    match self.fast_check_module() {
+      Some(fast_check) => &fast_check.dependencies,
+      None => &self.dependencies,
+    }
   }
 }
 
@@ -933,7 +977,10 @@ pub struct BuildOptions<'a> {
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
+  pub module_parser: Option<&'a dyn ModuleParser>,
   pub reporter: Option<&'a dyn Reporter>,
+  /// Whether to fill workspace members with fast check TypeScript data.
+  pub workspace_fast_check: bool,
   pub workspace_members: Vec<WorkspaceMember>,
 }
 
@@ -1068,7 +1115,12 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
               }
             }
           }
-          for dep in module.dependencies.values().rev() {
+          let module_deps = if check_types {
+            module.dependencies_prefer_fast_check()
+          } else {
+            &module.dependencies
+          };
+          for dep in module_deps.values().rev() {
             if !dep.is_dynamic || self.follow_dynamic {
               let mut resolutions = Vec::with_capacity(2);
               resolutions.push(&dep.maybe_code);
@@ -1247,7 +1299,12 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
                 }
               }
             }
-            for (specifier_text, dep) in &module.dependencies {
+            let module_deps = if follow_type_only {
+              module.dependencies_prefer_fast_check()
+            } else {
+              &module.dependencies
+            };
+            for (specifier_text, dep) in module_deps {
               if follow_dynamic || !dep.is_dynamic {
                 if let Some(err) = self.check_resolution(
                   module,
@@ -1344,7 +1401,7 @@ impl ModuleGraph {
     loader: &mut dyn Loader,
     options: BuildOptions<'a>,
   ) -> Vec<BuildDiagnostic> {
-    let default_analyzer = DefaultModuleAnalyzer::default();
+    let default_module_parser = CapturingModuleAnalyzer::default();
     #[cfg(not(target_arch = "wasm32"))]
     let file_system = RealFileSystem;
     #[cfg(target_arch = "wasm32")]
@@ -1358,8 +1415,10 @@ impl ModuleGraph {
       options.resolver,
       options.npm_resolver,
       loader,
-      options.module_analyzer.unwrap_or(&default_analyzer),
+      options.module_analyzer.unwrap_or(&default_module_parser),
+      options.module_parser.unwrap_or(&default_module_parser),
       options.reporter,
+      options.workspace_fast_check,
       options.workspace_members,
     )
     .await
@@ -2101,7 +2160,30 @@ pub(crate) fn parse_esm_module_from_module_info(
   }
 
   // Analyze ES dependencies
-  for desc in module_info.dependencies {
+  fill_module_dependencies(
+    graph_kind,
+    module_info.dependencies,
+    &module.specifier,
+    &mut module.dependencies,
+    file_system,
+    maybe_resolver,
+    maybe_npm_resolver,
+  );
+
+  // Return the module as a valid module
+  module
+}
+
+fn fill_module_dependencies(
+  graph_kind: GraphKind,
+  dependencies: Vec<DependencyDescriptor>,
+  module_specifier: &ModuleSpecifier,
+  module_dependencies: &mut IndexMap<String, Dependency>,
+  file_system: &dyn FileSystem,
+  maybe_resolver: Option<&dyn Resolver>,
+  maybe_npm_resolver: Option<&dyn NpmResolver>,
+) {
+  for desc in dependencies {
     let (imports, leading_comments) = match desc {
       DependencyDescriptor::Static(desc) => {
         let is_import_or_export_type = matches!(
@@ -2112,7 +2194,7 @@ pub(crate) fn parse_esm_module_from_module_info(
           continue; // skip
         }
         let range = Range::from_position_range(
-          module.specifier.clone(),
+          module_specifier.clone(),
           desc.specifier_range.clone(),
         );
 
@@ -2136,10 +2218,12 @@ pub(crate) fn parse_esm_module_from_module_info(
           DynamicArgument::String(text) => {
             vec![text]
           }
-          DynamicArgument::Template(parts) if specifier.scheme() == "file" => {
+          DynamicArgument::Template(parts)
+            if module_specifier.scheme() == "file" =>
+          {
             let mut parts = analyze_dynamic_arg_template_parts(
               &parts,
-              specifier,
+              module_specifier,
               &desc.argument_range,
               &import_attributes,
               file_system,
@@ -2152,7 +2236,7 @@ pub(crate) fn parse_esm_module_from_module_info(
           _ => continue,
         };
         let range = Range::from_position_range(
-          module.specifier.clone(),
+          module_specifier.clone(),
           desc.argument_range.clone(),
         );
         (
@@ -2172,8 +2256,7 @@ pub(crate) fn parse_esm_module_from_module_info(
     };
 
     for import in imports {
-      let dep = module
-        .dependencies
+      let dep = module_dependencies
         .entry(import.specifier.clone())
         .or_default();
       // TODO(nayeemrmn): Import attributes should be visited and checked for
@@ -2211,7 +2294,7 @@ pub(crate) fn parse_esm_module_from_module_info(
         dep.is_dynamic = dep.is_dynamic && import.is_dynamic;
       }
       if graph_kind.include_types() && dep.maybe_type.is_none() {
-        let specifier = module.specifier.clone();
+        let specifier = module_specifier.clone();
         let maybe_type =
           if let Some(pragma) = analyze_deno_types(&leading_comments) {
             resolve(
@@ -2250,9 +2333,6 @@ pub(crate) fn parse_esm_module_from_module_info(
       dep.imports.push(import);
     }
   }
-
-  // Return the module as a valid module
-  module
 }
 
 fn analyze_dynamic_arg_template_parts(
@@ -2501,7 +2581,7 @@ impl From<LoadResponse> for PendingInfoResponse {
 }
 
 #[derive(Clone)]
-struct DenoPackageVersionInfoExt {
+struct JsrPackageVersionInfoExt {
   base_url: Url,
   inner: Arc<JsrPackageVersionInfo>,
 }
@@ -2510,7 +2590,7 @@ struct PendingInfo {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
   result: Result<Option<PendingInfoResponse>, anyhow::Error>,
-  maybe_version_info: Option<DenoPackageVersionInfoExt>,
+  maybe_version_info: Option<JsrPackageVersionInfoExt>,
 }
 
 type PendingInfoFuture = LocalBoxFuture<'static, PendingInfo>;
@@ -2562,6 +2642,7 @@ struct PendingJsrState {
   pending_resolutions: Vec<PendingJsrResolutionItem>,
   pending_content_loads:
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
+  top_level_nvs: BTreeSet<PackageNv>,
 }
 
 #[derive(Default)]
@@ -2647,10 +2728,14 @@ struct Builder<'a, 'graph> {
   resolver: Option<&'a dyn Resolver>,
   npm_resolver: Option<&'a dyn NpmResolver>,
   module_analyzer: &'a dyn ModuleAnalyzer,
+  #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
+  module_parser: &'a dyn ModuleParser,
   reporter: Option<&'a dyn Reporter>,
   graph: &'graph mut ModuleGraph,
   state: PendingState,
   fill_pass_mode: FillPassMode,
+  #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
+  workspace_fast_check: bool,
   workspace_members: Vec<WorkspaceMember>,
   diagnostics: Vec<BuildDiagnostic>,
 }
@@ -2667,7 +2752,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     npm_resolver: Option<&'a dyn NpmResolver>,
     loader: &'a mut dyn Loader,
     module_analyzer: &'a dyn ModuleAnalyzer,
+    #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
+    module_parser: &'a dyn ModuleParser,
     reporter: Option<&'a dyn Reporter>,
+    workspace_fast_check: bool,
     workspace_members: Vec<WorkspaceMember>,
   ) -> Vec<BuildDiagnostic> {
     let fill_pass_mode = match graph.roots.is_empty() {
@@ -2681,10 +2769,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       resolver,
       npm_resolver,
       module_analyzer,
+      module_parser,
       reporter,
       graph,
       state: PendingState::default(),
       fill_pass_mode,
+      workspace_fast_check,
       workspace_members,
       diagnostics: Vec::new(),
     };
@@ -2797,6 +2887,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     // resolve any npm package requirements
     NpmSpecifierResolver::fill_builder(self).await;
+
+    // create the fast check type graph
+    #[cfg(feature = "fast_check")]
+    self.create_fast_check_type_graph();
   }
 
   fn handle_provided_imports(&mut self, imports: Vec<ReferrerImports>) {
@@ -2826,6 +2920,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       std::mem::take(&mut self.state.jsr.pending_resolutions);
     let mut pending_version_resolutions =
       Vec::with_capacity(pending_resolutions.len());
+    let should_collect_top_level_nvs = self.state.jsr.top_level_nvs.is_empty()
+      && self.graph.graph_kind.include_types();
     for pending_resolution in pending_resolutions {
       let package_name = &pending_resolution.package_ref.req().name;
       let fut = self
@@ -2849,7 +2945,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               self
                 .graph
                 .packages
-                .add(package_req.clone(), package_nv.clone());
+                .add_nv(package_req.clone(), package_nv.clone());
 
               self.queue_load_package_version_info(&package_nv);
               pending_version_resolutions
@@ -2904,25 +3000,31 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         .unwrap()
         .clone()
         .await
-        .map(|info| {
-          (info, resolution_item.package_ref.sub_path().unwrap_or("."))
-        });
+        .map(|info| (info, resolution_item.package_ref.sub_path()));
       match version_info_result {
         Ok((version_info, sub_path)) => {
-          let base_url = self
-            .loader
-            .registry_url()
-            .join(&format!("{}/{}/", nv.name, nv.version))
-            .unwrap();
+          let base_url = self.loader.registry_package_url(&nv);
           let export_name = normalize_export_name(sub_path);
           match version_info.export(&export_name) {
             Some(export_value) => {
+              self.graph.packages.add_export(
+                nv.clone(),
+                (
+                  normalize_export_name(resolution_item.package_ref.sub_path())
+                    .to_string(),
+                  export_value.to_string(),
+                ),
+              );
+              if should_collect_top_level_nvs {
+                self.state.jsr.top_level_nvs.insert(nv.clone());
+              }
+
               let specifier = base_url.join(export_value).unwrap();
               self
                 .graph
                 .redirects
                 .insert(resolution_item.specifier, specifier.clone());
-              let version_info = DenoPackageVersionInfoExt {
+              let version_info = JsrPackageVersionInfoExt {
                 base_url,
                 inner: version_info,
               };
@@ -3163,7 +3265,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_range: Option<&Range>,
     is_dynamic: bool,
     maybe_assert_type: Option<AttributeTypeWithRange>,
-    maybe_version_info: Option<&DenoPackageVersionInfoExt>,
+    maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     self
@@ -3362,8 +3464,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }));
     }
 
-    let export_name =
-      normalize_export_name(package_ref.sub_path().unwrap_or("."));
+    let export_name = normalize_export_name(package_ref.sub_path());
     if let Some(sub_path) = workspace_member.exports.get(export_name.as_ref()) {
       match workspace_member.base.join(sub_path) {
         Ok(load_specifier) => Ok(load_specifier),
@@ -3561,7 +3662,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     response: &PendingInfoResponse,
     maybe_assert_type: Option<AttributeTypeWithRange>,
     maybe_referrer: Option<Range>,
-    maybe_version_info: Option<&DenoPackageVersionInfoExt>,
+    maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
     let (specifier, module_slot) = match response {
       PendingInfoResponse::External { specifier } => {
@@ -3605,7 +3706,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     content_or_module_info: ContentOrModuleInfo,
     maybe_assert_type: Option<AttributeTypeWithRange>,
     maybe_referrer: Option<Range>,
-    maybe_version_info: Option<&DenoPackageVersionInfoExt>,
+    maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) -> ModuleSlot {
     struct ProvidedModuleAnalyzer(RefCell<Option<ModuleInfo>>);
 
@@ -3767,9 +3868,79 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
     module_slot
   }
+
+  #[cfg(feature = "fast_check")]
+  fn create_fast_check_type_graph(&mut self) {
+    if !self.graph.graph_kind().include_types() {
+      return;
+    }
+
+    let mut pending_nvs = std::mem::take(&mut self.state.jsr.top_level_nvs)
+      .into_iter()
+      .collect::<VecDeque<_>>();
+    if self.workspace_fast_check {
+      pending_nvs.extend(self.workspace_members.iter().map(|n| n.nv.clone()));
+    }
+    if pending_nvs.is_empty() {
+      return;
+    }
+
+    let root_symbol =
+      crate::symbols::RootSymbol::new(self.graph, self.module_parser);
+
+    let modules = crate::fast_check::build_fast_check_type_graph(
+      self.loader,
+      self.graph,
+      &root_symbol,
+      pending_nvs,
+      &crate::fast_check::TransformOptions {
+        workspace_members: if self.workspace_fast_check {
+          &self.workspace_members
+        } else {
+          &[]
+        },
+        should_error_on_first_diagnostic: !self.workspace_fast_check,
+      },
+    );
+    for (specifier, fast_check_module_result) in modules {
+      let module_slot = self.graph.module_slots.get_mut(&specifier).unwrap();
+      let module = match module_slot {
+        ModuleSlot::Module(m) => match m {
+          Module::Esm(m) => m,
+          _ => unreachable!(),
+        },
+        ModuleSlot::Err(_) | ModuleSlot::Pending => unreachable!(),
+      };
+      module.fast_check = Some(match fast_check_module_result {
+        Ok(fast_check_module) => {
+          let mut dependencies: IndexMap<String, Dependency> =
+            Default::default();
+          fill_module_dependencies(
+            GraphKind::TypesOnly,
+            fast_check_module.module_info.dependencies,
+            &module.specifier,
+            &mut dependencies,
+            // no need to resolve dynamic imports
+            &NullFileSystem,
+            self.resolver,
+            self.npm_resolver,
+          );
+          FastCheckTypeModuleSlot::Module(Box::new(FastCheckTypeModule {
+            dependencies,
+            source: fast_check_module.text.into(),
+            source_map: fast_check_module.source_map.into(),
+          }))
+        }
+        Err(diagnostic) => FastCheckTypeModuleSlot::Error(diagnostic),
+      });
+    }
+  }
 }
 
-fn normalize_export_name(sub_path: &str) -> Cow<str> {
+fn normalize_export_name(sub_path: Option<&str>) -> Cow<str> {
+  let Some(sub_path) = sub_path else {
+    return Cow::Borrowed(".");
+  };
   if sub_path.is_empty() || matches!(sub_path, "/" | ".") {
     Cow::Borrowed(".")
   } else {

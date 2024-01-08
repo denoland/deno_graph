@@ -321,10 +321,10 @@ fn go_to_file_export<'a>(
     ),
     None => {
       // maybe it's in a re-export
-      if let Some(re_export_all_specifier) =
+      if let Some(re_export_all_specifiers) =
         dep_module.re_export_all_specifiers()
       {
-        for re_export_specifier in re_export_all_specifier.iter() {
+        for re_export_specifier in re_export_all_specifiers {
           let maybe_specifier = module_graph.resolve_dependency(
             re_export_specifier,
             dep_module.specifier(),
@@ -715,7 +715,7 @@ fn resolve_qualified_name_internal<'a>(
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct ResolvedExports<'a> {
+pub struct ModuleExports<'a> {
   pub resolved: IndexMap<String, ResolvedExportOrReExportAllPath<'a>>,
   pub unresolved_specifiers: Vec<UnresolvedSpecifier<'a>>,
 }
@@ -740,7 +740,7 @@ pub struct ResolvedReExportAllPath<'a> {
   /// Module that contains this re-export.
   pub referrer_module: ModuleInfoRef<'a>,
   /// Specifier from the referrer that led to the resolved module.
-  pub specifier: &'a String,
+  pub specifier: &'a str,
   /// Holds the next resolved export or re-export.
   pub next: Box<ResolvedExportOrReExportAllPath<'a>>,
 }
@@ -785,14 +785,14 @@ impl<'a> ResolvedExportOrReExportAllPath<'a> {
 #[derive(Debug, Clone)]
 pub struct UnresolvedSpecifier<'a> {
   pub referrer: ModuleInfoRef<'a>,
-  pub specifier: &'a String,
+  pub specifier: &'a str,
 }
 
 pub fn exports_and_re_exports<'a>(
   module_graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
-) -> ResolvedExports<'a> {
+) -> ModuleExports<'a> {
   exports_and_re_exports_inner(
     module_graph,
     module,
@@ -806,9 +806,9 @@ fn exports_and_re_exports_inner<'a>(
   module: ModuleInfoRef<'a>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
   visited: &mut HashSet<&'a ModuleSpecifier>,
-) -> ResolvedExports<'a> {
+) -> ModuleExports<'a> {
   if !visited.insert(module.specifier()) {
-    return ResolvedExports::default();
+    return ModuleExports::default();
   }
 
   let mut unresolved_specifiers = Vec::new();
@@ -824,7 +824,7 @@ fn exports_and_re_exports_inner<'a>(
   }
   if let Some(re_export_all_specifier) = module.re_export_all_specifiers() {
     let referrer_module = module;
-    for re_export_specifier in re_export_all_specifier.iter() {
+    for re_export_specifier in re_export_all_specifier {
       let maybe_specifier = module_graph.resolve_dependency(
         re_export_specifier,
         module.specifier(),
@@ -861,7 +861,7 @@ fn exports_and_re_exports_inner<'a>(
       }
     }
   }
-  ResolvedExports {
+  ModuleExports {
     resolved,
     unresolved_specifiers,
   }

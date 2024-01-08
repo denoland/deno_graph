@@ -1,0 +1,107 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+export class RedBlackNode<T> extends BinarySearchNode<T> {
+  declare parent: RedBlackNode<T> | null;
+  declare left: RedBlackNode<T> | null;
+  declare right: RedBlackNode<T> | null;
+  red: boolean;
+
+  constructor(parent: RedBlackNode<T> | null, value: T) {
+    super(parent, value);
+    this.red = true;
+  }
+
+  static override from<T>(node: RedBlackNode<T>): RedBlackNode<T> {
+    const copy: RedBlackNode<T> = new RedBlackNode(node.parent, node.value);
+    copy.left = node.left;
+    copy.right = node.right;
+    copy.red = node.red;
+    return copy;
+  }
+}
+
+const isSecure: Symbol = Symbol("#secure");
+const public2: Symbol = Symbol("#public");
+
+export class CookieMapBase {
+  [isSecure] = false;
+  [public2](): number {
+    return 5;
+  }
+}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 742,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {}
+  export class RedBlackNode<T> extends BinarySearchNode<T> {
+    declare parent: RedBlackNode<T> | null;
+    declare left: RedBlackNode<T> | null;
+    declare right: RedBlackNode<T> | null;
+    red!: boolean;
+    constructor(parent: RedBlackNode<T> | null, value: T){
+      super({} as any, {} as any);
+    }
+    static override from<T>(node: RedBlackNode<T>): RedBlackNode<T> {
+      return {} as any;
+    }
+  }
+  const isSecure: Symbol = {} as any;
+  const public2: Symbol = {} as any;
+  export class CookieMapBase {
+    [isSecure]!: boolean;
+    [public2](): number {
+      return {} as any;
+    }
+  }

@@ -46,6 +46,12 @@ import "jsr:@scope/b@1";
 # https://jsr.io/@scope/b/1.1.0/mod.ts
 console.log(1);
 
+export class Test {
+  method(value: string) {
+    console.log(1);
+  }
+}
+
 # mod.ts
 import "jsr:@scope/a@^1.0";
 import "jsr:@scope/b@1.1";
@@ -122,7 +128,7 @@ import "jsr:@scope/b@1.1";
     },
     {
       "kind": "esm",
-      "size": 16,
+      "size": 89,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/b/1.1.0/mod.ts"
     }
@@ -138,3 +144,12 @@ import "jsr:@scope/b@1.1";
     "@scope/b@1": "@scope/b@1.1.0"
   }
 }
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {}
+  <empty>
+Fast check https://jsr.io/@scope/b/1.1.0/mod.ts:
+  {}
+  export class Test {
+    method(value: string): void {}
+  }

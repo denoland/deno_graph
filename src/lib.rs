@@ -8,6 +8,7 @@ mod module_specifier;
 #[cfg(feature = "symbols")]
 pub mod symbols;
 
+mod fast_check;
 pub mod packages;
 pub mod source;
 mod text_encoding;
@@ -38,13 +39,20 @@ pub use ast::DefaultModuleAnalyzer;
 pub use ast::DefaultModuleParser;
 pub use ast::DefaultParsedSourceStore;
 pub use ast::ModuleParser;
+pub use ast::ParseOptions;
 pub use ast::ParsedSourceStore;
 pub use deno_ast::MediaType;
+#[cfg(feature = "fast_check")]
+pub use fast_check::FastCheckDiagnostic;
+#[cfg(feature = "fast_check")]
+pub use fast_check::FastCheckModule;
 pub use graph::BuildDiagnostic;
 pub use graph::BuildOptions;
 pub use graph::Dependency;
 pub use graph::EsmModule;
 pub use graph::ExternalModule;
+pub use graph::FastCheckTypeModule;
+pub use graph::FastCheckTypeModuleSlot;
 pub use graph::GraphImport;
 pub use graph::GraphKind;
 pub use graph::JsonModule;

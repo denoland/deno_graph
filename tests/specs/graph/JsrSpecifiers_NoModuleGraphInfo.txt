@@ -177,3 +177,10 @@ console.log(1);
     "@scope/c@3": "@scope/c@3.0.0"
   }
 }
+
+Fast check https://jsr.io/@scope/a/1.0.1/mod.ts:
+  {}
+  <empty>
+Fast check https://jsr.io/@scope/c/3.0.0/mod.ts:
+  {}
+  <empty>

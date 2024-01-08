@@ -1,0 +1,189 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/a.ts
+export class A {
+  member: string;
+  member2: string;
+}
+export class Private2 {}
+
+# https://jsr.io/@scope/a/1.0.0/b.ts
+export { A as B } from "./a.ts";
+
+export class Private1 {}
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+import * as mod from "./b.ts";
+import { Private2 } from "./a.ts";
+
+export class Export {
+  prop: typeof mod.B.prototype.member;
+  prop2: typeof mod.B.prototype.member2;
+}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 81,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 23
+              },
+              "end": {
+                "line": 0,
+                "character": 31
+              }
+            }
+          }
+        }
+      ],
+      "size": 59,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./b.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 21
+              },
+              "end": {
+                "line": 0,
+                "character": 29
+              }
+            }
+          }
+        },
+        {
+          "specifier": "./a.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 25
+              },
+              "end": {
+                "line": 1,
+                "character": 33
+              }
+            }
+          }
+        }
+      ],
+      "size": 171,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/a.ts:
+  {}
+  export class A {
+    member!: string;
+    member2!: string;
+  }
+
+Fast check https://jsr.io/@scope/a/1.0.0/b.ts:
+  {
+    "./a.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
+        "span": {
+          "start": {
+            "line": 0,
+            "character": 23
+          },
+          "end": {
+            "line": 0,
+            "character": 31
+          }
+        }
+      }
+    }
+  }
+  export { A as B } from "./a.ts";
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {
+    "./b.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts",
+        "span": {
+          "start": {
+            "line": 0,
+            "character": 21
+          },
+          "end": {
+            "line": 0,
+            "character": 29
+          }
+        }
+      }
+    }
+  }
+  import * as mod from "./b.ts";
+  export class Export {
+    prop!: typeof mod.B.prototype.member;
+    prop2!: typeof mod.B.prototype.member2;
+  }

@@ -40,6 +40,11 @@ async fn test_graph_specs() {
   for (test_file_path, spec) in
     get_specs_in_dir(&PathBuf::from("./tests/specs/graph"))
   {
+    if !cfg!(feature = "fast_check")
+      && spec.output_file.text.contains("Fast check ")
+    {
+      continue;
+    }
     eprintln!("Running {}", test_file_path.display());
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
@@ -58,10 +63,43 @@ async fn test_graph_specs() {
     });
     builder.workspace_members(spec.workspace_members.clone());
 
+    if let Some(options) = &spec.options {
+      builder.workspace_fast_check(options.workspace_fast_check);
+    }
+
     let result = builder.build().await;
     let update_var = std::env::var("UPDATE");
     let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
     output_text.push('\n');
+    let fast_check_modules = result.graph.modules().filter_map(|module| {
+      let module = module.esm()?;
+      let fast_check = module.fast_check.as_ref()?;
+      Some((module, fast_check))
+    });
+    for (module, fast_check) in fast_check_modules {
+      output_text.push_str(&format!("\nFast check {}:\n", module.specifier,));
+      match fast_check {
+        deno_graph::FastCheckTypeModuleSlot::Module(fast_check) => {
+          output_text.push_str(&format!(
+            "{}\n{}",
+            indent(
+              &serde_json::to_string_pretty(&fast_check.dependencies).unwrap()
+            ),
+            if fast_check.source.is_empty() {
+              "  <empty>".to_string()
+            } else {
+              indent(&fast_check.source)
+            },
+          ));
+        }
+        deno_graph::FastCheckTypeModuleSlot::Error(diagnostic) => {
+          output_text.push_str(&indent(&diagnostic.message_with_range()));
+        }
+      }
+    }
+    if !output_text.ends_with('\n') {
+      output_text.push('\n');
+    }
     let diagnostics = result
       .diagnostics
       .iter()
@@ -91,6 +129,14 @@ async fn test_graph_specs() {
   }
 }
 
+fn indent(text: &str) -> String {
+  text
+    .split('\n')
+    .map(|l| format!("  {}", l).trim_end().to_string())
+    .collect::<Vec<_>>()
+    .join("\n")
+}
+
 #[cfg(feature = "symbols")]
 #[tokio::test]
 async fn test_symbols_specs() {
@@ -104,6 +150,10 @@ async fn test_symbols_specs() {
       // this is for the TypesEntrypoint test
       builder.entry_point("file:///mod.js");
       builder.entry_point_types("file:///mod.d.ts");
+    }
+
+    if let Some(options) = &spec.options {
+      builder.workspace_fast_check(options.workspace_fast_check);
     }
 
     builder.with_loader(|loader| {
@@ -123,15 +173,9 @@ async fn test_symbols_specs() {
 
     let result = builder.symbols().await.unwrap();
     let update_var = std::env::var("UPDATE");
-    let diagnostics = result
-      .diagnostics
-      .iter()
-      .map(|d| serde_json::to_value(d.clone()).unwrap())
-      .collect::<Vec<_>>();
     let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
       let mut spec = spec;
       spec.output_file.text = result.output.clone();
-      spec.diagnostics = diagnostics.clone();
       std::fs::write(&test_file_path, spec.emit()).unwrap();
       spec
     } else {
@@ -140,12 +184,6 @@ async fn test_symbols_specs() {
     assert_eq!(
       result.output,
       spec.output_file.text,
-      "Should be same for {}",
-      test_file_path.display()
-    );
-    assert_eq!(
-      diagnostics,
-      spec.diagnostics,
       "Should be same for {}",
       test_file_path.display()
     );
@@ -174,7 +212,7 @@ export class MyClass {
 "#,
       );
     })
-    .build_for_symbols()
+    .build()
     .await;
 
   let root_symbol = result.root_symbol();
@@ -191,7 +229,9 @@ export class MyClass {
       .decls()
       .iter()
       .filter_map(|d| d.maybe_node())
-      .flat_map(|s| s.deps())
+      .flat_map(|s| {
+        s.deps(deno_graph::symbols::ResolveDepsMode::TypesAndExpressions)
+      })
       .collect::<Vec<_>>();
     assert_eq!(deps.len(), 1);
     let mut resolved_deps = root_symbol.resolve_symbol_dep(
@@ -241,7 +281,7 @@ async fn test_symbols_re_export_external() {
       );
       loader.remote.add_external_source("npm:example");
     })
-    .build_for_symbols()
+    .build()
     .await;
 
   let root_symbol = result.root_symbol();
@@ -253,7 +293,7 @@ async fn test_symbols_re_export_external() {
     exports
       .unresolved_specifiers
       .into_iter()
-      .map(|s| s.specifier.as_str())
+      .map(|s| s.specifier)
       .collect::<Vec<_>>(),
     vec!["npm:example"]
   );

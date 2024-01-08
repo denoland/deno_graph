@@ -7,6 +7,7 @@ use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
 use deno_semver::VersionReq;
+use indexmap::IndexMap;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -77,12 +78,20 @@ impl JsrPackageVersionInfo {
   }
 }
 
+#[derive(Default, Debug, Clone)]
+struct PackageNvInfo {
+  /// Collection of exports used.
+  exports: IndexMap<String, String>,
+}
+
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct PackageSpecifiers {
   #[serde(flatten)]
   package_reqs: BTreeMap<PackageReq, PackageNv>,
   #[serde(skip_serializing)]
   packages_by_name: HashMap<String, Vec<PackageNv>>,
+  #[serde(skip_serializing)]
+  packages: BTreeMap<PackageNv, PackageNvInfo>,
 }
 
 impl PackageSpecifiers {
@@ -90,7 +99,7 @@ impl PackageSpecifiers {
     self.package_reqs.is_empty()
   }
 
-  pub fn add(&mut self, package_req: PackageReq, nv: PackageNv) {
+  pub fn add_nv(&mut self, package_req: PackageReq, nv: PackageNv) {
     let nvs = self
       .packages_by_name
       .entry(package_req.name.clone())
@@ -99,6 +108,22 @@ impl PackageSpecifiers {
       nvs.push(nv.clone());
     }
     self.package_reqs.insert(package_req, nv);
+  }
+
+  pub(crate) fn add_export(&mut self, nv: PackageNv, export: (String, String)) {
+    self
+      .packages
+      .entry(nv.clone())
+      .or_default()
+      .exports
+      .insert(export.0, export.1);
+  }
+
+  pub fn package_exports(
+    &self,
+    nv: &PackageNv,
+  ) -> Option<&IndexMap<String, String>> {
+    self.packages.get(nv).map(|p| &p.exports)
   }
 
   pub fn versions_by_name(&self, name: &str) -> Option<&Vec<PackageNv>> {

@@ -1239,7 +1239,10 @@ file:///other.d.ts: EsmModuleInfo {
         },
     },
 }
-== symbol deps ==
+== symbol deps (types and exprs) ==
+2:33..52 [QualifiedId(("Inner", #2), ["Other1"])]
+
+== symbol deps (types only) ==
 2:33..52 [QualifiedId(("Inner", #2), ["Other1"])]
 
 == export definitions ==

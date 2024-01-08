@@ -194,7 +194,10 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-== symbol deps ==
+== symbol deps (types and exprs) ==
+1:0..37 [QualifiedId(("Other", #2), ["Test"])]
+
+== symbol deps (types only) ==
 1:0..37 [QualifiedId(("Other", #2), ["Test"])]
 
 == export definitions ==

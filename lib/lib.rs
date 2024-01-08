@@ -254,8 +254,10 @@ pub async fn js_create_graph(
         file_system: Some(&NullFileSystem),
         npm_resolver: None,
         module_analyzer: None,
+        module_parser: None,
         imports,
         reporter: None,
+        workspace_fast_check: false,
         workspace_members: Vec::new(),
       },
     )

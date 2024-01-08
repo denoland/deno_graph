@@ -267,7 +267,10 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-== symbol deps ==
+== symbol deps (types and exprs) ==
+2:26..53 [ImportType("./a.ts", ["A", "B"])]
+
+== symbol deps (types only) ==
 2:26..53 [ImportType("./a.ts", ["A", "B"])]
 
 == export definitions ==

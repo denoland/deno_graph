@@ -46,29 +46,23 @@ impl Loader for TestLoader {
 
 #[cfg(feature = "symbols")]
 pub mod symbols {
-  use deno_graph::symbols::RootSymbol;
-  use deno_graph::symbols::SymbolFillDiagnostic;
-
   pub struct SymbolsResult {
     pub output: String,
-    pub diagnostics: Vec<SymbolFillDiagnostic>,
-  }
-
-  pub struct SymbolsBuildResult {
-    pub graph: deno_graph::ModuleGraph,
-    pub analyzer: deno_graph::CapturingModuleAnalyzer,
-  }
-
-  impl SymbolsBuildResult {
-    pub fn root_symbol(&self) -> RootSymbol {
-      RootSymbol::new(&self.graph, self.analyzer.as_capturing_parser())
-    }
   }
 }
 
 pub struct BuildResult {
   pub graph: ModuleGraph,
   pub diagnostics: Vec<BuildDiagnostic>,
+  pub analyzer: deno_graph::CapturingModuleAnalyzer,
+}
+
+#[cfg(feature = "symbols")]
+impl BuildResult {
+  pub fn root_symbol(&self) -> deno_graph::symbols::RootSymbol {
+    self.graph.valid().unwrap(); // assert valid
+    deno_graph::symbols::RootSymbol::new(&self.graph, &self.analyzer)
+  }
 }
 
 pub struct TestBuilder {
@@ -76,6 +70,7 @@ pub struct TestBuilder {
   entry_point: String,
   entry_point_types: String,
   workspace_members: Vec<WorkspaceMember>,
+  workspace_fast_check: bool,
 }
 
 impl TestBuilder {
@@ -85,6 +80,7 @@ impl TestBuilder {
       entry_point: "file:///mod.ts".to_string(),
       entry_point_types: "file:///mod.ts".to_string(),
       workspace_members: Default::default(),
+      workspace_fast_check: false,
     }
   }
 
@@ -116,46 +112,32 @@ impl TestBuilder {
     self
   }
 
+  pub fn workspace_fast_check(&mut self, value: bool) -> &mut Self {
+    self.workspace_fast_check = value;
+    self
+  }
+
   pub async fn build(&mut self) -> BuildResult {
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
     let roots = vec![entry_point_url.clone()];
+    let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::default();
     let diagnostics = graph
       .build(
         roots.clone(),
         &mut self.loader,
         deno_graph::BuildOptions {
           workspace_members: self.workspace_members.clone(),
-          ..Default::default()
-        },
-      )
-      .await;
-    BuildResult { graph, diagnostics }
-  }
-
-  #[cfg(feature = "symbols")]
-  pub async fn build_for_symbols(&mut self) -> symbols::SymbolsBuildResult {
-    let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
-    let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
-    let roots = vec![entry_point_url.clone()];
-    let source_parser = deno_graph::DefaultModuleParser::new_for_analysis();
-    let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::new(
-      Some(Box::new(source_parser)),
-      None,
-    );
-    graph
-      .build(
-        roots.clone(),
-        &mut self.loader,
-        deno_graph::BuildOptions {
           module_analyzer: Some(&capturing_analyzer),
+          module_parser: Some(&capturing_analyzer),
+          workspace_fast_check: self.workspace_fast_check,
           ..Default::default()
         },
       )
       .await;
-    graph.valid().unwrap(); // assert valid
-    symbols::SymbolsBuildResult {
+    BuildResult {
       graph,
+      diagnostics,
       analyzer: capturing_analyzer,
     }
   }
@@ -270,8 +252,9 @@ impl TestBuilder {
 
     use deno_graph::symbols::DefinitionOrUnresolved;
     use deno_graph::symbols::ModuleInfoRef;
+    use deno_graph::symbols::ResolveDepsMode;
 
-    let build_result = self.build_for_symbols().await;
+    let build_result = self.build().await;
     let graph = &build_result.graph;
     let entry_point_types_url =
       ModuleSpecifier::parse(&self.entry_point_types).unwrap();
@@ -300,25 +283,48 @@ impl TestBuilder {
           );
           output_text.push_str(&module_output_text);
 
-          let mut symbol_deps_text = String::new();
-          for symbol in module.symbols() {
-            for decl in symbol.decls() {
-              if let Some((node, source)) = decl.maybe_node_and_source() {
-                let deps = node.deps();
-                if !deps.is_empty() {
-                  symbol_deps_text.push_str(&format!(
-                    "{:?}:{:?} {:?}\n",
-                    symbol.symbol_id(),
-                    decl.range.as_byte_range(source.text_info().range().start),
-                    deps
-                  ));
+          fn get_symbol_deps_text_for_mode(
+            module: ModuleInfoRef<'_>,
+            resolve_mode: ResolveDepsMode,
+          ) -> String {
+            let mut symbol_deps_text = String::new();
+            for symbol in module.symbols() {
+              for decl in symbol.decls() {
+                if let Some((node, source)) = decl.maybe_node_and_source() {
+                  let deps = node.deps(resolve_mode);
+                  if !deps.is_empty() {
+                    symbol_deps_text.push_str(&format!(
+                      "{:?}:{:?} {:?}\n",
+                      symbol.symbol_id(),
+                      decl
+                        .range
+                        .as_byte_range(source.text_info().range().start),
+                      deps
+                    ));
+                  }
                 }
               }
             }
+            symbol_deps_text
           }
+
+          let symbol_deps_text = get_symbol_deps_text_for_mode(
+            module,
+            ResolveDepsMode::TypesAndExpressions,
+          );
           if !symbol_deps_text.is_empty() {
-            output_text
-              .push_str(&format!("== symbol deps ==\n{}\n", symbol_deps_text));
+            output_text.push_str(&format!(
+              "== symbol deps (types and exprs) ==\n{}\n",
+              symbol_deps_text
+            ));
+          }
+          let symbol_deps_text =
+            get_symbol_deps_text_for_mode(module, ResolveDepsMode::TypesOnly);
+          if !symbol_deps_text.is_empty() {
+            output_text.push_str(&format!(
+              "== symbol deps (types only) ==\n{}\n",
+              symbol_deps_text
+            ));
           }
 
           // analyze the module graph for any problems
@@ -396,7 +402,6 @@ impl TestBuilder {
         }
         output_text
       },
-      diagnostics: root_symbol.take_diagnostics(),
     })
   }
 }

@@ -452,7 +452,11 @@ file:///a.ts: EsmModuleInfo {
         },
     },
 }
-== symbol deps ==
+== symbol deps (types and exprs) ==
+5:172..180 [Id(("A", #2))]
+8:213..218 [Id(("B", #2))]
+
+== symbol deps (types only) ==
 5:172..180 [Id(("A", #2))]
 8:213..218 [Id(("B", #2))]
 
@@ -926,10 +930,10 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            101,
+                            110,
                         ),
                         end: SourcePos(
-                            131,
+                            112,
                         ),
                     },
                     flags: 0,
@@ -957,10 +961,10 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            101,
+                            114,
                         ),
                         end: SourcePos(
-                            131,
+                            116,
                         ),
                     },
                     flags: 0,
@@ -988,10 +992,10 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            101,
+                            118,
                         ),
                         end: SourcePos(
-                            131,
+                            128,
                         ),
                     },
                     flags: 0,

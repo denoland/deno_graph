@@ -517,7 +517,12 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-== symbol deps ==
+== symbol deps (types and exprs) ==
+1:0..77 [Id(("TypeParam", #2)), Id(("Default", #2)), Id(("Param", #2)), Id(("Return", #2))]
+6:201..295 [Id(("OverloadTypeParam", #2)), Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
+6:334..428 [Id(("PrivateTypeParam", #2)), Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]
+
+== symbol deps (types only) ==
 1:0..77 [Id(("TypeParam", #2)), Id(("Default", #2)), Id(("Param", #2)), Id(("Return", #2))]
 6:201..295 [Id(("OverloadTypeParam", #2)), Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
 6:334..428 [Id(("PrivateTypeParam", #2)), Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]

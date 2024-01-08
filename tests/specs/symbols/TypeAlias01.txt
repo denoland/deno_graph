@@ -4,6 +4,9 @@ export type Test<T extends Other> = Other2;
 interface Other {}
 interface Other2 {}
 
+// should not have lat and long in deps
+export type Tuple = [lat: number, long: number];
+
 # output
 file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
@@ -24,6 +27,10 @@ file:///mod.ts: EsmModuleInfo {
             "Other2",
             #2,
         ): 3,
+        (
+            "Tuple",
+            #2,
+        ): 4,
     },
     symbols: {
         0: Symbol {
@@ -36,7 +43,7 @@ file:///mod.ts: EsmModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export type Test<T extends Other> = Other2;\n\ninterface Other {}\ninterface Other2 {}",
+                            "export type Test<T extends Other> = Other2;\n\ninterface Other {}\ninterface Other2 {}\n\n// should not have lat and long in deps\nexport type Tuple = [lat: number, long: number];",
                         ),
                     ),
                     range: SourceRange {
@@ -44,7 +51,7 @@ file:///mod.ts: EsmModuleInfo {
                             0,
                         ),
                         end: SourcePos(
-                            83,
+                            173,
                         ),
                     },
                     flags: 0,
@@ -54,9 +61,11 @@ file:///mod.ts: EsmModuleInfo {
                 1,
                 2,
                 3,
+                4,
             },
             exports: {
                 "Test": 1,
+                "Tuple": 4,
             },
             members: {},
         },
@@ -150,11 +159,46 @@ file:///mod.ts: EsmModuleInfo {
             exports: {},
             members: {},
         },
+        4: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 4,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export type Tuple = [lat: number, long: number];",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            125,
+                        ),
+                        end: SourcePos(
+                            173,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
     },
 }
-== symbol deps ==
+== symbol deps (types and exprs) ==
+1:0..43 [Id(("Other", #2)), Id(("Other2", #2))]
+
+== symbol deps (types only) ==
 1:0..43 [Id(("Other", #2)), Id(("Other2", #2))]
 
 == export definitions ==
 [Test]: file:///mod.ts:0..43
   export type Test<T extends Other> = Other2;
+[Tuple]: file:///mod.ts:125..173
+  export type Tuple = [lat: number, long: number];

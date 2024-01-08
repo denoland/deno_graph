@@ -1,0 +1,256 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/a.ts
+export class A1 {}
+export class A2 {}
+export class A3 {}
+
+export { A4, A5 } from "./a4.ts";
+export * from "./a6.ts";
+
+# https://jsr.io/@scope/a/1.0.0/a4.ts
+export class A4 {}
+export class A5 {}
+
+# https://jsr.io/@scope/a/1.0.0/a6.ts
+export class A6 {}
+export class A6Private {}
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+import { A1, A2, A3 as RenamedA3, A4, A6 } from "./a.ts";
+import { A3 } from "./a.ts";
+
+@dec
+export class Test {
+  /** Testing */
+  @dec
+  noReturnTypeVoid(@dec param = 5, param2 = "test") {
+    // should remove this comment
+    console.log(1);
+  }
+
+  async noReturnTypeAsync() {
+  }
+
+  *returnTypeGenerator(): Generator<unknown, any, any> {
+    yield 5;
+  }
+
+  hasReturnType(): A1 & RenamedA3 | A4 | A6 {}
+
+  private inner(param) {}
+}
+
+class Private {
+  wontCareAboutThis(param) {
+    return Math.random();
+  }
+
+  other(): A3 {
+  }
+}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a4.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/a4.ts",
+            "span": {
+              "start": {
+                "line": 4,
+                "character": 23
+              },
+              "end": {
+                "line": 4,
+                "character": 32
+              }
+            }
+          }
+        },
+        {
+          "specifier": "./a6.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/a6.ts",
+            "span": {
+              "start": {
+                "line": 5,
+                "character": 14
+              },
+              "end": {
+                "line": 5,
+                "character": 23
+              }
+            }
+          }
+        }
+      ],
+      "size": 117,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 38,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/a4.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 45,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/a6.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 48
+              },
+              "end": {
+                "line": 0,
+                "character": 56
+              }
+            }
+          }
+        }
+      ],
+      "size": 535,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/a.ts:
+  {
+    "./a4.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/a4.ts",
+        "span": {
+          "start": {
+            "line": 4,
+            "character": 23
+          },
+          "end": {
+            "line": 4,
+            "character": 32
+          }
+        }
+      }
+    },
+    "./a6.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/a6.ts",
+        "span": {
+          "start": {
+            "line": 5,
+            "character": 14
+          },
+          "end": {
+            "line": 5,
+            "character": 23
+          }
+        }
+      }
+    }
+  }
+  export class A1 {
+  }
+  export class A3 {
+  }
+  export { A4 } from "./a4.ts";
+  export * from "./a6.ts";
+
+Fast check https://jsr.io/@scope/a/1.0.0/a4.ts:
+  {}
+  export class A4 {
+  }
+
+Fast check https://jsr.io/@scope/a/1.0.0/a6.ts:
+  {}
+  export class A6 {
+  }
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {
+    "./a.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
+        "span": {
+          "start": {
+            "line": 0,
+            "character": 48
+          },
+          "end": {
+            "line": 0,
+            "character": 56
+          }
+        }
+      }
+    }
+  }
+  import { A1, A3 as RenamedA3, A4, A6 } from "./a.ts";
+  export class Test {
+    /** Testing */ noReturnTypeVoid(param?: number, param2?: string): void {}
+    noReturnTypeAsync(): Promise<void> {
+      return {} as any;
+    }
+    returnTypeGenerator(): Generator<unknown, any, any> {
+      return {} as any;
+    }
+    hasReturnType(): A1 & RenamedA3 | A4 | A6 {
+      return {} as any;
+    }
+    private inner!: unknown;
+  }
