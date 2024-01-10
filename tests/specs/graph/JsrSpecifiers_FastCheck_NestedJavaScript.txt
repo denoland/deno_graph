@@ -89,5 +89,5 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  Referencing a JavaScript file from a TypeScript file is not supported. Add a declaration file or convert to TypeScript.
+  Referencing a JavaScript file with no corresponding declaration file from TypeScript is not supported. Add a declaration file or convert the JavaScript to TypeScript.
       at https://jsr.io/@scope/a/1.0.0/a.js:1:1

@@ -72,7 +72,7 @@ pub enum FastCheckDiagnostic {
   UnsupportedTsNamespaceExport { range: Range },
   #[error("Using declarations are not supported in the public API.")]
   UnsupportedUsing { range: Range },
-  #[error("Referencing a JavaScript file from a TypeScript file is not supported. Add a declaration file or convert to TypeScript.")]
+  #[error("Referencing a JavaScript file with no corresponding declaration file from TypeScript is not supported. Add a declaration file or convert the JavaScript to TypeScript.")]
   UnsupportedNestedJavaScript { range: Range },
   #[error("JavaScript entrypoints are not supported for fast check.")]
   UnsupportedJavaScriptEntrypoint { range: Range },
