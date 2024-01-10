@@ -22,11 +22,28 @@ export class A1 {
 export class A2 {}
 export class A3 {}
 
+# https://jsr.io/@scope/a/1.0.0/b.js
+export class B1 {
+  prop = "";
+}
+
+# https://jsr.io/@scope/a/1.0.0/b.d.ts
+export class B1 {
+  prop: string;
+}
+
 # https://jsr.io/@scope/a/1.0.0/mod.ts
 export * from "./a.js";
 export { A1 as A4 } from "./a.js";
 import { A3 } from "./a.js";
 export { A3 as A5 };
+// @deno-types="./b.d.ts"
+export * from "./b.js";
+// @deno-types="./b.d.ts"
+export { B1 as B2 } from "./b.js";
+// @deno-types="./b.d.ts"
+import { B1 as B3 } from "./b.js";
+export { B3 };
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -91,6 +108,18 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
+      "size": 36,
+      "mediaType": "Dts",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/b.d.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 33,
+      "mediaType": "JavaScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/b.js"
+    },
+    {
+      "kind": "esm",
       "dependencies": [
         {
           "specifier": "./a.js",
@@ -107,9 +136,38 @@ import 'jsr:@scope/a'
               }
             }
           }
+        },
+        {
+          "specifier": "./b.js",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/b.js",
+            "span": {
+              "start": {
+                "line": 5,
+                "character": 14
+              },
+              "end": {
+                "line": 5,
+                "character": 22
+              }
+            }
+          },
+          "type": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/b.d.ts",
+            "span": {
+              "start": {
+                "line": 4,
+                "character": 15
+              },
+              "end": {
+                "line": 4,
+                "character": 25
+              }
+            }
+          }
         }
       ],
-      "size": 109,
+      "size": 296,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -132,6 +190,12 @@ Fast check https://jsr.io/@scope/a/1.0.0/a.d.ts:
   export class A3 {
   }
 
+Fast check https://jsr.io/@scope/a/1.0.0/b.d.ts:
+  {}
+  export class B1 {
+    prop!: string;
+  }
+
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {
     "./a.d.ts": {
@@ -148,9 +212,28 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
           }
         }
       }
+    },
+    "./b.d.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/b.d.ts",
+        "span": {
+          "start": {
+            "line": 5,
+            "character": 14
+          },
+          "end": {
+            "line": 5,
+            "character": 22
+          }
+        }
+      }
     }
   }
   export * from "./a.d.ts";
   export { A1 as A4 } from "./a.d.ts";
   import { A3 } from "./a.d.ts";
   export { A3 as A5 };
+  export * from "./b.d.ts";
+  export { B1 as B2 } from "./b.d.ts";
+  import { B1 as B3 } from "./b.d.ts";
+  export { B3 };
