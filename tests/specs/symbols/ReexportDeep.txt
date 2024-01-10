@@ -1,8 +1,6 @@
 # mod.ts
-// import type { MessageEntity } from 'https://deno.land/x/grammy@v1.19.2/types.ts';
 import type { MessageEntity } from "./a.ts";
 export type UrlMessageEntity = MessageEntity.TextLinkMessageEntity;
-export * from "./a.ts";
 
 # a.ts
 export * from "./c.ts";
@@ -210,9 +208,7 @@ file:///mod.ts: EsmModuleInfo {
         0,
     ),
     specifier: "file:///mod.ts",
-    re_exports: [
-        "./a.ts",
-    ],
+    re_exports: [],
     swc_id_to_symbol_id: {
         (
             "MessageEntity",
@@ -234,15 +230,15 @@ file:///mod.ts: EsmModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "import type { MessageEntity } from \"./a.ts\";\nexport type UrlMessageEntity = MessageEntity.TextLinkMessageEntity;\nexport * from \"./a.ts\";",
+                            "import type { MessageEntity } from \"./a.ts\";\nexport type UrlMessageEntity = MessageEntity.TextLinkMessageEntity;",
                         ),
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            85,
+                            0,
                         ),
                         end: SourcePos(
-                            221,
+                            112,
                         ),
                     },
                     flags: 0,
@@ -276,10 +272,10 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            99,
+                            14,
                         ),
                         end: SourcePos(
-                            112,
+                            27,
                         ),
                     },
                     flags: 0,
@@ -306,10 +302,10 @@ file:///mod.ts: EsmModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            130,
+                            45,
                         ),
                         end: SourcePos(
-                            197,
+                            112,
                         ),
                     },
                     flags: 0,
@@ -322,17 +318,11 @@ file:///mod.ts: EsmModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:130..197 [QualifiedId(("MessageEntity", #2), ["TextLinkMessageEntity"])]
+2:45..112 [QualifiedId(("MessageEntity", #2), ["TextLinkMessageEntity"])]
 
 == symbol deps (types only) ==
-2:130..197 [QualifiedId(("MessageEntity", #2), ["TextLinkMessageEntity"])]
+2:45..112 [QualifiedId(("MessageEntity", #2), ["TextLinkMessageEntity"])]
 
 == export definitions ==
-[UrlMessageEntity]: file:///mod.ts:130..197
+[UrlMessageEntity]: file:///mod.ts:45..112
   export type UrlMessageEntity = MessageEntity.TextLinkMessageEntity;
-[MessageEntity]: file:///c.ts:0..112
-  export declare namespace MessageEntity {
-    export interface TextLinkMessageEntity {
-  ...
-    }
-  }
