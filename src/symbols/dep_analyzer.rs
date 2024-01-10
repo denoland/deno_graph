@@ -132,7 +132,7 @@ impl DepsFiller {
       SymbolNodeRef::TsTypeAlias(n) => {
         self.visit_ts_type_alias_decl(n);
       }
-      SymbolNodeRef::Var(_, n, _) => {
+      SymbolNodeRef::Var(_, n, _) | SymbolNodeRef::UsingVar(_, n, _) => {
         self.visit_var_declarator(n);
       }
       SymbolNodeRef::AutoAccessor(n) => {

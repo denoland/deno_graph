@@ -440,7 +440,12 @@ impl<'a> FastCheckTransformer<'a> {
       Decl::TsEnum(_) => Ok(self.public_ranges.contains(&public_range)),
       Decl::TsModule(m) => self.transform_ts_module(m, &public_range, comments),
       Decl::Using(n) => {
-        if self.public_ranges.contains(&public_range) {
+        if self.public_ranges.contains(&public_range)
+          || n
+            .decls
+            .iter()
+            .any(|d| self.public_ranges.contains(&d.range()))
+        {
           self.mark_diagnostic(FastCheckDiagnostic::UnsupportedUsing {
             range: self.source_range_to_range(
               n.decls
