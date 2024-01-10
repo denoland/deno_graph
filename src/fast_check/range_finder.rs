@@ -1034,12 +1034,16 @@ impl<'a> PublicRangeFinder<'a> {
   }
 
   fn is_typed_specifier(&mut self, specifier: &ModuleSpecifier) -> bool {
-    self
-      .graph
-      .get(specifier)
-      .and_then(|m| m.esm().map(|e| e.media_type))
-      .map(is_typed_media_type)
-      .unwrap_or(false)
+    let Some(module) = self.graph.get(specifier) else {
+      return true; // just analyze it
+    };
+    match module {
+      crate::Module::Esm(m) => is_typed_media_type(m.media_type),
+      crate::Module::Json(_) => true,
+      crate::Module::Npm(_)
+      | crate::Module::Node(_)
+      | crate::Module::External(_) => false,
+    }
   }
 }
 
