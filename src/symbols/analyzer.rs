@@ -375,6 +375,13 @@ impl std::fmt::Debug for SymbolNode {
             d.value().text_fast(d.source.text_info())
           )
         }
+        SymbolNodeInner::UsingVar(d, _, ident) => {
+          format!(
+            "{}: {}",
+            ident.sym,
+            d.value().text_fast(d.source.text_info())
+          )
+        }
         SymbolNodeInner::AutoAccessor(d) => {
           d.value().text_fast(d.source.text_info()).to_string()
         }
@@ -486,6 +493,10 @@ impl SymbolNode {
         SymbolNodeRef::Var(decl.value(), declarator.value(), ident),
         decl.source(),
       )),
+      SymbolNodeInner::UsingVar(decl, declarator, ident) => Some((
+        SymbolNodeRef::UsingVar(decl.value(), declarator.value(), ident),
+        decl.source(),
+      )),
       SymbolNodeInner::AutoAccessor(n) => {
         Some((SymbolNodeRef::AutoAccessor(n.value()), n.source()))
       }
@@ -552,6 +563,7 @@ enum SymbolNodeInner {
   TsTypeAlias(NodeRefBox<TsTypeAliasDecl>),
   TsInterface(NodeRefBox<TsInterfaceDecl>),
   Var(NodeRefBox<VarDecl>, NodeRefBox<VarDeclarator>, Ident),
+  UsingVar(NodeRefBox<UsingDecl>, NodeRefBox<VarDeclarator>, Ident),
   AutoAccessor(NodeRefBox<AutoAccessor>),
   ClassMethod(NodeRefBox<ClassMethod>),
   ClassProp(NodeRefBox<ClassProp>),
@@ -590,6 +602,7 @@ pub enum SymbolNodeRef<'a> {
   TsNamespace(&'a TsModuleDecl),
   TsTypeAlias(&'a TsTypeAliasDecl),
   Var(&'a VarDecl, &'a VarDeclarator, &'a Ident),
+  UsingVar(&'a UsingDecl, &'a VarDeclarator, &'a Ident),
   // members
   AutoAccessor(&'a AutoAccessor),
   ClassMethod(&'a ClassMethod),
@@ -688,6 +701,7 @@ impl<'a> SymbolNodeRef<'a> {
       }
       Self::TsTypeAlias(n) => Some(Cow::Borrowed(&n.id.sym)),
       Self::Var(_, _, ident) => Some(Cow::Borrowed(&ident.sym)),
+      Self::UsingVar(_, _, ident) => Some(Cow::Borrowed(&ident.sym)),
       Self::AutoAccessor(n) => maybe_key_name(&n.key),
       Self::ClassMethod(n) => maybe_prop_name(&n.key),
       Self::ClassProp(n) => maybe_prop_name(&n.key),
@@ -786,6 +800,7 @@ impl<'a> SymbolNodeRef<'a> {
       SymbolNodeRef::TsTypeAlias(_)
       | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::Var(_, _, _)
+      | SymbolNodeRef::UsingVar(_, _, _)
       | SymbolNodeRef::ClassProp(_)
       | SymbolNodeRef::ClassParamProp(_)
       | SymbolNodeRef::TsIndexSignature(_)
@@ -816,7 +831,8 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::TsInterface(_)
       | SymbolNodeRef::TsNamespace(_)
       | SymbolNodeRef::TsTypeAlias(_)
-      | SymbolNodeRef::Var(_, _, _) => true,
+      | SymbolNodeRef::Var(_, _, _)
+      | SymbolNodeRef::UsingVar(_, _, _) => true,
       SymbolNodeRef::AutoAccessor(_)
       | SymbolNodeRef::ClassMethod(_)
       | SymbolNodeRef::ClassProp(_)
@@ -845,7 +861,8 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::TsInterface(_)
       | SymbolNodeRef::TsNamespace(_)
       | SymbolNodeRef::TsTypeAlias(_)
-      | SymbolNodeRef::Var(_, _, _) => false,
+      | SymbolNodeRef::Var(_, _, _)
+      | SymbolNodeRef::UsingVar(_, _, _) => false,
       SymbolNodeRef::AutoAccessor(_)
       | SymbolNodeRef::ClassMethod(_)
       | SymbolNodeRef::ClassProp(_)
@@ -874,7 +891,8 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::TsInterface(_)
       | SymbolNodeRef::TsNamespace(_)
       | SymbolNodeRef::TsTypeAlias(_)
-      | SymbolNodeRef::Var(_, _, _) => false,
+      | SymbolNodeRef::Var(_, _, _)
+      | SymbolNodeRef::UsingVar(_, _, _) => false,
       SymbolNodeRef::AutoAccessor(n) => {
         n.accessibility == Some(Accessibility::Private)
           || match &n.key {
@@ -2313,8 +2331,32 @@ impl<'a> SymbolFiller<'a> {
                 }
               }
             }
-            Decl::Using(_) => {
-              // ignore
+            Decl::Using(using_decl) => {
+              for decl in &using_decl.decls {
+                for ident in find_pat_ids::<_, Ident>(&decl.name) {
+                  let export_name =
+                    decls_are_exports.then(|| ident.sym.to_string());
+                  let symbol_id = self.builder.ensure_symbol_for_swc_id(
+                    ident.to_id(),
+                    SymbolDecl::new(
+                      SymbolDeclKind::Definition(SymbolNode(
+                        SymbolNodeInner::UsingVar(
+                          NodeRefBox::unsafe_new(self.source, using_decl),
+                          NodeRefBox::unsafe_new(self.source, decl),
+                          ident,
+                        ),
+                      )),
+                      decl.range(),
+                    ),
+                    module_symbol.symbol_id(),
+                  );
+                  module_symbol.add_child_id(symbol_id);
+                  // should never happen
+                  if let Some(export_name) = export_name {
+                    module_symbol.add_export(export_name, symbol_id);
+                  }
+                }
+              }
             }
           };
         }
@@ -2669,7 +2711,8 @@ impl<'a> SymbolFiller<'a> {
       | SymbolNodeRef::TsInterface(_)
       | SymbolNodeRef::TsNamespace(_)
       | SymbolNodeRef::TsTypeAlias(_)
-      | SymbolNodeRef::Var(_, _, _) => unreachable!(),
+      | SymbolNodeRef::Var(_, _, _)
+      | SymbolNodeRef::UsingVar(_, _, _) => unreachable!(),
     };
 
     let decl = SymbolDecl::new(
