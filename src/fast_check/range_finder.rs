@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 
+use deno_ast::MediaType;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_semver::package::PackageNv;
@@ -24,6 +25,7 @@ use crate::symbols::SymbolNodeDep;
 use crate::symbols::SymbolNodeRef;
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
+use crate::Range;
 use crate::WorkspaceMember;
 
 use super::FastCheckDiagnostic;
@@ -356,14 +358,26 @@ impl<'a> PublicRangeFinder<'a> {
       };
       let base_url = self.url_converter.registry_package_url(&nv);
       let mut entrypoints = Vec::with_capacity(exports.len());
+      let mut errors = Vec::new();
       for value in exports.values() {
         // if we got this far, then the export must be valid, so we can unwrap
         let specifier = base_url.join(value).unwrap();
-        self.add_pending_trace(
-          &nv,
-          &specifier,
-          ImportedExports::star_with_default(),
-        );
+        if self.is_typed_specifier(&specifier) {
+          self.add_pending_trace(
+            &nv,
+            &specifier,
+            ImportedExports::star_with_default(),
+          );
+        } else {
+          errors.push(FastCheckDiagnostic::UnsupportedJavaScriptEntrypoint {
+            range: Range {
+              start: crate::Position::zeroed(),
+              end: crate::Position::zeroed(),
+              specifier: specifier.clone(),
+            },
+          });
+        }
+
         entrypoints.push(specifier);
       }
 
@@ -371,7 +385,9 @@ impl<'a> PublicRangeFinder<'a> {
         self.analyze_trace(&trace);
       }
 
-      self.public_ranges.entry(nv).or_default().entrypoints = entrypoints;
+      let public_ranges = self.public_ranges.entry(nv).or_default();
+      public_ranges.entrypoints = entrypoints;
+      public_ranges.errors.extend(errors);
     }
 
     self.public_ranges
@@ -391,13 +407,35 @@ impl<'a> PublicRangeFinder<'a> {
   }
 
   fn analyze_trace(&mut self, trace: &PendingTrace) {
-    if let Some(module_info) =
+    if !self.is_typed_specifier(&trace.specifier) {
+      let ranges = self
+        .public_ranges
+        .entry(trace.package_nv.clone())
+        .or_default()
+        .module_ranges
+        .entry(trace.specifier.clone())
+        .or_default();
+      // if there are any diagnostics present then that means
+      // we already inserted this diagnostic, so we can ignore
+      // doing it again
+      if ranges.diagnostics.is_empty() {
+        ranges.diagnostics.push(
+          FastCheckDiagnostic::UnsupportedNestedJavaScript {
+            range: Range {
+              start: crate::Position::zeroed(),
+              end: crate::Position::zeroed(),
+              specifier: trace.specifier.clone(),
+            },
+          },
+        );
+      }
+    } else if let Some(module_info) =
       self.root_symbol.module_from_specifier(&trace.specifier)
     {
       self.analyze_module_info(trace, module_info);
     } else {
-      // should never happen
-      eprintln!("TEMP: NOT FOUND: {}", trace.specifier);
+      // should never happen except when the graph is not valid, so ignore
+      log::debug!("Tracing did not find: {}", trace.specifier);
     }
   }
 
@@ -993,5 +1031,35 @@ impl<'a> PublicRangeFinder<'a> {
     ranges.diagnostics.extend(diagnostics);
 
     found
+  }
+
+  fn is_typed_specifier(&mut self, specifier: &ModuleSpecifier) -> bool {
+    self
+      .graph
+      .get(specifier)
+      .and_then(|m| m.esm().map(|e| e.media_type))
+      .map(is_typed_media_type)
+      .unwrap_or(false)
+  }
+}
+
+fn is_typed_media_type(media_type: MediaType) -> bool {
+  match media_type {
+    MediaType::JavaScript
+    | MediaType::Jsx
+    | MediaType::Mjs
+    | MediaType::Cjs
+    | MediaType::TsBuildInfo
+    | MediaType::SourceMap
+    | MediaType::Unknown => false,
+    MediaType::TypeScript
+    | MediaType::Mts
+    | MediaType::Cts
+    | MediaType::Dts
+    | MediaType::Dmts
+    | MediaType::Dcts
+    | MediaType::Tsx
+    | MediaType::Json
+    | MediaType::Wasm => true,
   }
 }

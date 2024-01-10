@@ -77,7 +77,7 @@ async fn test_graph_specs() {
       Some((module, fast_check))
     });
     for (module, fast_check) in fast_check_modules {
-      output_text.push_str(&format!("\nFast check {}:\n", module.specifier,));
+      output_text.push_str(&format!("\nFast check {}:\n", module.specifier));
       match fast_check {
         deno_graph::FastCheckTypeModuleSlot::Module(fast_check) => {
           output_text.push_str(&format!(

@@ -74,6 +74,8 @@ pub enum FastCheckDiagnostic {
   UnsupportedUsing { range: Range },
   #[error("Referencing a JavaScript file from a TypeScript file is not supported. Add a declaration file or convert to TypeScript.")]
   UnsupportedNestedJavaScript { range: Range },
+  #[error("JavaScript entrypoints are not supported for fast check.")]
+  UnsupportedJavaScriptEntrypoint { range: Range },
   #[error("Failed to emit fast check module: {0:#}")]
   Emit(Arc<anyhow::Error>),
   #[error("{}", format_diagnostics(.0))]
@@ -117,6 +119,7 @@ impl FastCheckDiagnostic {
       UnsupportedTsExportAssignment { range } => Some(range),
       UnsupportedTsNamespaceExport { range } => Some(range),
       UnsupportedUsing { range } => Some(range),
+      UnsupportedJavaScriptEntrypoint { range } => Some(range),
       UnsupportedNestedJavaScript { range } => Some(range),
       Emit(_) => None,
       Multiple(_) => None,
@@ -160,7 +163,9 @@ pub fn build_fast_check_type_graph<'a>(
   let mut final_result = Vec::new();
   for (nv, package) in public_modules {
     log::debug!("Analyzing '{}' for fast check", nv);
-    let mut errors = Vec::with_capacity(package.module_ranges.len());
+    let mut errors =
+      Vec::with_capacity(package.module_ranges.len() + package.errors.len());
+    errors.extend(package.errors);
     let mut fast_check_modules =
       Vec::with_capacity(package.module_ranges.len());
     for (specifier, mut ranges) in package.module_ranges {
