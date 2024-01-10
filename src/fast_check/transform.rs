@@ -36,6 +36,7 @@ use deno_ast::swc::ast::PrivateProp;
 use deno_ast::swc::ast::PropName;
 use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
+use deno_ast::swc::ast::Str;
 use deno_ast::swc::ast::TsArrayType;
 use deno_ast::swc::ast::TsAsExpr;
 use deno_ast::swc::ast::TsEntityName;
@@ -80,6 +81,7 @@ use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
 
 use crate::DefaultModuleAnalyzer;
+use crate::ModuleGraph;
 use crate::ModuleInfo;
 use crate::Range;
 use crate::WorkspaceMember;
@@ -146,12 +148,14 @@ pub struct TransformOptions<'a> {
 }
 
 pub fn transform(
+  graph: &ModuleGraph,
   specifier: &ModuleSpecifier,
   public_ranges: &ModulePublicRanges,
   parsed_source: &ParsedSource,
   options: &TransformOptions,
 ) -> Result<FastCheckModule, Box<FastCheckDiagnostic>> {
   let mut transformer = FastCheckTransformer::new(
+    graph,
     specifier,
     public_ranges,
     parsed_source,
@@ -184,6 +188,7 @@ pub fn transform(
 }
 
 struct FastCheckTransformer<'a> {
+  graph: &'a ModuleGraph,
   specifier: &'a ModuleSpecifier,
   public_ranges: &'a ModulePublicRanges,
   parsed_source: &'a ParsedSource,
@@ -193,12 +198,14 @@ struct FastCheckTransformer<'a> {
 
 impl<'a> FastCheckTransformer<'a> {
   pub fn new(
+    graph: &'a ModuleGraph,
     specifier: &'a ModuleSpecifier,
     public_ranges: &'a ModulePublicRanges,
     parsed_source: &'a ParsedSource,
     should_error_on_first_diagnostic: bool,
   ) -> Self {
     Self {
+      graph,
       specifier,
       public_ranges,
       parsed_source,
@@ -238,6 +245,28 @@ impl<'a> FastCheckTransformer<'a> {
     Ok(final_body)
   }
 
+  fn transform_module_specifier(&mut self, src: &mut Str) {
+    // only do this for relative specifiers (specifiers to specifiers within the package)
+    if !src.value.starts_with('.') {
+      return;
+    }
+    let Some(resolved_specifier) =
+      self
+        .graph
+        .resolve_dependency(&src.value, self.specifier, true)
+    else {
+      return;
+    };
+    if let Some(relative) = self.specifier.make_relative(&resolved_specifier) {
+      if !relative.starts_with("../") {
+        src.value = format!("./{}", relative).into();
+      } else {
+        src.value = relative.into();
+      }
+      src.raw = None;
+    }
+  }
+
   fn transform_item(
     &mut self,
     item: &mut ModuleItem,
@@ -248,14 +277,30 @@ impl<'a> FastCheckTransformer<'a> {
         ModuleDecl::Import(n) => {
           n.specifiers
             .retain(|s| self.public_ranges.contains(&s.range()));
-          Ok(!n.specifiers.is_empty())
+          let retain = !n.specifiers.is_empty();
+          if retain {
+            self.transform_module_specifier(&mut n.src);
+          }
+          Ok(retain)
         }
         ModuleDecl::ExportNamed(n) => {
           n.specifiers
             .retain(|s| self.public_ranges.contains(&s.range()));
-          Ok(!n.specifiers.is_empty())
+          let retain = !n.specifiers.is_empty();
+          if retain {
+            if let Some(src) = &mut n.src {
+              self.transform_module_specifier(src);
+            }
+          }
+          Ok(retain)
         }
-        ModuleDecl::ExportAll(n) => Ok(self.public_ranges.contains(&n.range())),
+        ModuleDecl::ExportAll(n) => {
+          let retain = self.public_ranges.contains(&n.range());
+          if retain {
+            self.transform_module_specifier(&mut n.src);
+          }
+          Ok(retain)
+        }
         ModuleDecl::ExportDefaultExpr(n) => {
           // todo: investigate why both these checks are needed
           if !self.public_ranges.contains(&n.range())

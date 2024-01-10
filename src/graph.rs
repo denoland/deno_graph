@@ -1708,7 +1708,7 @@ impl ModuleGraph {
   /// This is useful for pre-allocating actions that will take
   /// place on the graph.
   pub fn specifiers_count(&self) -> usize {
-    self.module_slots.len() + self.redirects.len()
+    self.module_slots.len() + self.redirects.len() + self.imports.len()
   }
 }
 
@@ -3903,9 +3903,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let module = match module_slot {
         ModuleSlot::Module(m) => match m {
           Module::Esm(m) => m,
-          _ => unreachable!(),
+          _ => continue,
         },
-        ModuleSlot::Err(_) | ModuleSlot::Pending => unreachable!(),
+        ModuleSlot::Err(_) | ModuleSlot::Pending => continue,
       };
       module.fast_check = Some(match fast_check_module_result {
         Ok(fast_check_module) => {
