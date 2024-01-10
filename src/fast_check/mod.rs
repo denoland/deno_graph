@@ -72,6 +72,8 @@ pub enum FastCheckDiagnostic {
   UnsupportedTsNamespaceExport { range: Range },
   #[error("Using declarations are not supported in the public API.")]
   UnsupportedUsing { range: Range },
+  #[error("Referencing a JavaScript file from a TypeScript file is not supported. Add a declaration file or convert to TypeScript.")]
+  UnsupportedNestedJavaScript { range: Range },
   #[error("Failed to emit fast check module: {0:#}")]
   Emit(Arc<anyhow::Error>),
   #[error("{}", format_diagnostics(.0))]
@@ -115,6 +117,7 @@ impl FastCheckDiagnostic {
       UnsupportedTsExportAssignment { range } => Some(range),
       UnsupportedTsNamespaceExport { range } => Some(range),
       UnsupportedUsing { range } => Some(range),
+      UnsupportedNestedJavaScript { range } => Some(range),
       Emit(_) => None,
       Multiple(_) => None,
     }
@@ -167,6 +170,8 @@ pub fn build_fast_check_type_graph<'a>(
           match FastCheckDiagnostic::from_vec(ranges.take_diagnostics()) {
             Some(diagnostic) => Err(Box::new(diagnostic)),
             None => transform::transform(
+              graph,
+              root_symbol,
               &specifier,
               &ranges,
               module_info.source(),

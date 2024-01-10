@@ -1,0 +1,156 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/a.js
+/// <reference types="./a.d.ts" />
+export class A1 {
+  method() {
+    return Math.random();
+  }
+}
+export class A2 {}
+export class A3 {}
+
+# https://jsr.io/@scope/a/1.0.0/a.d.ts
+export class A1 {
+  method(): string;
+}
+
+export class A2 {}
+export class A3 {}
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+export * from "./a.js";
+export { A1 as A4 } from "./a.js";
+import { A3 } from "./a.js";
+export { A3 as A5 };
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 79,
+      "mediaType": "Dts",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/a.d.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 136,
+      "typesDependency": {
+        "specifier": "./a.d.ts",
+        "dependency": {
+          "specifier": "https://jsr.io/@scope/a/1.0.0/a.d.ts",
+          "span": {
+            "start": {
+              "line": 0,
+              "character": 21
+            },
+            "end": {
+              "line": 0,
+              "character": 31
+            }
+          }
+        }
+      },
+      "mediaType": "JavaScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/a.js"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.js",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/a.js",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 14
+              },
+              "end": {
+                "line": 0,
+                "character": 22
+              }
+            }
+          }
+        }
+      ],
+      "size": 109,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/a.d.ts:
+  {}
+  export class A1 {
+    method(): string;
+  }
+  export class A2 {
+  }
+  export class A3 {
+  }
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {
+    "./a.d.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/a.d.ts",
+        "span": {
+          "start": {
+            "line": 0,
+            "character": 14
+          },
+          "end": {
+            "line": 0,
+            "character": 22
+          }
+        }
+      }
+    }
+  }
+  export * from "./a.d.ts";
+  export { A1 as A4 } from "./a.d.ts";
+  import { A3 } from "./a.d.ts";
+  export { A3 as A5 };
