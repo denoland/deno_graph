@@ -3,7 +3,7 @@ import type { MessageEntity } from "./a.ts";
 export type UrlMessageEntity = MessageEntity.TextLinkMessageEntity;
 
 # a.ts
-export * from "./c.ts";
+export * from "./b.ts";
 
 # b.ts
 export * from "./c.ts";
@@ -22,13 +22,53 @@ file:///a.ts: EsmModuleInfo {
     ),
     specifier: "file:///a.ts",
     re_exports: [
-        "./c.ts",
+        "./b.ts",
     ],
     swc_id_to_symbol_id: {},
     symbols: {
         0: Symbol {
             module_id: ModuleId(
                 1,
+            ),
+            symbol_id: 0,
+            parent_id: None,
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export * from \"./b.ts\";",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            23,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+    },
+}
+file:///b.ts: EsmModuleInfo {
+    module_id: ModuleId(
+        2,
+    ),
+    specifier: "file:///b.ts",
+    re_exports: [
+        "./c.ts",
+    ],
+    swc_id_to_symbol_id: {},
+    symbols: {
+        0: Symbol {
+            module_id: ModuleId(
+                2,
             ),
             symbol_id: 0,
             parent_id: None,
@@ -58,7 +98,7 @@ file:///a.ts: EsmModuleInfo {
 }
 file:///c.ts: EsmModuleInfo {
     module_id: ModuleId(
-        2,
+        3,
     ),
     specifier: "file:///c.ts",
     re_exports: [],
@@ -75,7 +115,7 @@ file:///c.ts: EsmModuleInfo {
     symbols: {
         0: Symbol {
             module_id: ModuleId(
-                2,
+                3,
             ),
             symbol_id: 0,
             parent_id: None,
@@ -107,7 +147,7 @@ file:///c.ts: EsmModuleInfo {
         },
         1: Symbol {
             module_id: ModuleId(
-                2,
+                3,
             ),
             symbol_id: 1,
             parent_id: Some(
@@ -141,7 +181,7 @@ file:///c.ts: EsmModuleInfo {
         },
         2: Symbol {
             module_id: ModuleId(
-                2,
+                3,
             ),
             symbol_id: 2,
             parent_id: Some(
@@ -173,7 +213,7 @@ file:///c.ts: EsmModuleInfo {
         },
         3: Symbol {
             module_id: ModuleId(
-                2,
+                3,
             ),
             symbol_id: 3,
             parent_id: Some(
