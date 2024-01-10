@@ -190,6 +190,7 @@ fn find_definition_paths_internal<'a>(
   visited_symbols: &mut HashSet<UniqueSymbolId>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
+  debug_assert_eq!(module.module_id(), symbol.module_id());
   if !visited_symbols.insert(symbol.unique_id()) {
     return Vec::new();
   }
@@ -343,10 +344,11 @@ fn go_to_file_export<'a>(
             );
             for (name, item) in inner.resolved {
               if name == export_name {
+                let resolved_rexport = item.as_resolved_export();
                 let paths = find_definition_paths_internal(
                   module_graph,
-                  module,
-                  item.as_resolved_export().symbol(),
+                  resolved_rexport.module,
+                  resolved_rexport.symbol(),
                   visited_symbols,
                   specifier_to_module,
                 );
@@ -387,6 +389,7 @@ pub fn resolve_symbol_dep<'a>(
   dep: &SymbolNodeDep,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<ResolvedSymbolDepEntry<'a>> {
+  debug_assert_eq!(symbol.module_id(), module.module_id());
   match dep {
     SymbolNodeDep::Id(id) => {
       if let Some(dep_symbol) = module.esm().and_then(|m| m.symbol_from_swc(id))
