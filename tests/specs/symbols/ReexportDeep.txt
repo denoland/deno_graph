@@ -1,0 +1,368 @@
+# mod.ts
+import type { MessageEntity } from "./a.ts";
+export type UrlMessageEntity = MessageEntity.TextLinkMessageEntity;
+
+# a.ts
+export * from "./b.ts";
+
+# b.ts
+export * from "./c.ts";
+
+# c.ts
+export declare namespace MessageEntity {
+  export interface TextLinkMessageEntity {
+    type: "text_link";
+  }
+}
+
+# output
+file:///a.ts: EsmModuleInfo {
+    module_id: ModuleId(
+        1,
+    ),
+    specifier: "file:///a.ts",
+    re_exports: [
+        "./b.ts",
+    ],
+    swc_id_to_symbol_id: {},
+    symbols: {
+        0: Symbol {
+            module_id: ModuleId(
+                1,
+            ),
+            symbol_id: 0,
+            parent_id: None,
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export * from \"./b.ts\";",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            23,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+    },
+}
+file:///b.ts: EsmModuleInfo {
+    module_id: ModuleId(
+        2,
+    ),
+    specifier: "file:///b.ts",
+    re_exports: [
+        "./c.ts",
+    ],
+    swc_id_to_symbol_id: {},
+    symbols: {
+        0: Symbol {
+            module_id: ModuleId(
+                2,
+            ),
+            symbol_id: 0,
+            parent_id: None,
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export * from \"./c.ts\";",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            23,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+    },
+}
+file:///c.ts: EsmModuleInfo {
+    module_id: ModuleId(
+        3,
+    ),
+    specifier: "file:///c.ts",
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "MessageEntity",
+            #2,
+        ): 1,
+        (
+            "TextLinkMessageEntity",
+            #3,
+        ): 2,
+    },
+    symbols: {
+        0: Symbol {
+            module_id: ModuleId(
+                3,
+            ),
+            symbol_id: 0,
+            parent_id: None,
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export declare namespace MessageEntity {\n  export interface TextLinkMessageEntity {\n    type: \"text_link\";\n  }\n}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            112,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {
+                1,
+            },
+            exports: {
+                "MessageEntity": 1,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                3,
+            ),
+            symbol_id: 1,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export declare namespace MessageEntity {\n  export interface TextLinkMessageEntity {\n    type: \"text_link\";\n  }\n}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            112,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {
+                2,
+            },
+            exports: {
+                "TextLinkMessageEntity": 2,
+            },
+            members: {},
+        },
+        2: Symbol {
+            module_id: ModuleId(
+                3,
+            ),
+            symbol_id: 2,
+            parent_id: Some(
+                1,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export interface TextLinkMessageEntity {\n    type: \"text_link\";\n  }",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            43,
+                        ),
+                        end: SourcePos(
+                            110,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {
+                3,
+            },
+        },
+        3: Symbol {
+            module_id: ModuleId(
+                3,
+            ),
+            symbol_id: 3,
+            parent_id: Some(
+                2,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "type: \"text_link\";",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            88,
+                        ),
+                        end: SourcePos(
+                            106,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+    },
+}
+file:///mod.ts: EsmModuleInfo {
+    module_id: ModuleId(
+        0,
+    ),
+    specifier: "file:///mod.ts",
+    re_exports: [],
+    swc_id_to_symbol_id: {
+        (
+            "MessageEntity",
+            #2,
+        ): 1,
+        (
+            "UrlMessageEntity",
+            #2,
+        ): 2,
+    },
+    symbols: {
+        0: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 0,
+            parent_id: None,
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "import type { MessageEntity } from \"./a.ts\";\nexport type UrlMessageEntity = MessageEntity.TextLinkMessageEntity;",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            0,
+                        ),
+                        end: SourcePos(
+                            112,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {
+                2,
+            },
+            exports: {
+                "UrlMessageEntity": 2,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 1,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: FileRef(
+                        FileDep {
+                            name: Name(
+                                "MessageEntity",
+                            ),
+                            specifier: "./a.ts",
+                        },
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            14,
+                        ),
+                        end: SourcePos(
+                            27,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        2: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 2,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export type UrlMessageEntity = MessageEntity.TextLinkMessageEntity;",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            45,
+                        ),
+                        end: SourcePos(
+                            112,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+    },
+}
+== symbol deps (types and exprs) ==
+2:45..112 [QualifiedId(("MessageEntity", #2), ["TextLinkMessageEntity"])]
+
+== symbol deps (types only) ==
+2:45..112 [QualifiedId(("MessageEntity", #2), ["TextLinkMessageEntity"])]
+
+== export definitions ==
+[UrlMessageEntity]: file:///mod.ts:45..112
+  export type UrlMessageEntity = MessageEntity.TextLinkMessageEntity;
