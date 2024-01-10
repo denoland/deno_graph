@@ -171,7 +171,6 @@ pub fn build_fast_check_type_graph<'a>(
             Some(diagnostic) => Err(Box::new(diagnostic)),
             None => transform::transform(
               graph,
-              root_symbol,
               &specifier,
               &ranges,
               module_info.source(),

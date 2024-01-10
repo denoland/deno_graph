@@ -80,7 +80,6 @@ use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
 
-use crate::symbols::RootSymbol;
 use crate::DefaultModuleAnalyzer;
 use crate::ModuleGraph;
 use crate::ModuleInfo;
@@ -150,7 +149,6 @@ pub struct TransformOptions<'a> {
 
 pub fn transform(
   graph: &ModuleGraph,
-  root_symbol: &RootSymbol,
   specifier: &ModuleSpecifier,
   public_ranges: &ModulePublicRanges,
   parsed_source: &ParsedSource,
@@ -158,7 +156,6 @@ pub fn transform(
 ) -> Result<FastCheckModule, Box<FastCheckDiagnostic>> {
   let mut transformer = FastCheckTransformer::new(
     graph,
-    root_symbol,
     specifier,
     public_ranges,
     parsed_source,
@@ -192,7 +189,6 @@ pub fn transform(
 
 struct FastCheckTransformer<'a> {
   graph: &'a ModuleGraph,
-  root_symbol: &'a RootSymbol<'a>,
   specifier: &'a ModuleSpecifier,
   public_ranges: &'a ModulePublicRanges,
   parsed_source: &'a ParsedSource,
@@ -203,7 +199,6 @@ struct FastCheckTransformer<'a> {
 impl<'a> FastCheckTransformer<'a> {
   pub fn new(
     graph: &'a ModuleGraph,
-    root_symbol: &'a RootSymbol<'a>,
     specifier: &'a ModuleSpecifier,
     public_ranges: &'a ModulePublicRanges,
     parsed_source: &'a ParsedSource,
@@ -211,7 +206,6 @@ impl<'a> FastCheckTransformer<'a> {
   ) -> Self {
     Self {
       graph,
-      root_symbol,
       specifier,
       public_ranges,
       parsed_source,
@@ -252,8 +246,9 @@ impl<'a> FastCheckTransformer<'a> {
   }
 
   fn transform_module_specifier(&mut self, src: &mut Str) {
-    if src.value.ends_with(".ts") {
-      return; // optimization
+    // only do this for relative specifiers (specifiers to specifiers within the package)
+    if !src.value.starts_with('.') {
+      return;
     }
     let Some(resolved_specifier) =
       self
@@ -262,16 +257,13 @@ impl<'a> FastCheckTransformer<'a> {
     else {
       return;
     };
-    if self.root_symbol.has_analyzed(&resolved_specifier) {
-      if let Some(relative) = self.specifier.make_relative(&resolved_specifier)
-      {
-        if !relative.starts_with("../") {
-          src.value = format!("./{}", relative).into();
-        } else {
-          src.value = relative.into();
-        }
-        src.raw = None;
+    if let Some(relative) = self.specifier.make_relative(&resolved_specifier) {
+      if !relative.starts_with("../") {
+        src.value = format!("./{}", relative).into();
+      } else {
+        src.value = relative.into();
       }
+      src.raw = None;
     }
   }
 
