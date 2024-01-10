@@ -1708,7 +1708,7 @@ impl ModuleGraph {
   /// This is useful for pre-allocating actions that will take
   /// place on the graph.
   pub fn specifiers_count(&self) -> usize {
-    self.module_slots.len() + self.redirects.len()
+    self.module_slots.len() + self.redirects.len() + self.imports.len()
   }
 }
 
