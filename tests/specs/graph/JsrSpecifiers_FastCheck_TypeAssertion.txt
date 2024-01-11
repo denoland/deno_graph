@@ -1,0 +1,113 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+export class Application<S> {
+  prop: S;
+}
+
+export function createMockApp<
+  S extends Record<string | number | symbol, any> = Record<string, any>,
+>(
+  state = {} as S,
+): Application<S> {
+  return new Application();
+}
+
+class Private1 {}
+class Private2 {}
+
+export class A {
+  constructor(public prop = Private1 as Public1) {
+  }
+  handler = (() => {}) as Public2<Public3>;
+  secondProp: Public4;
+}
+
+export const var1 = Private2 as Public5<Public6>;
+
+interface Public1<T> {}
+interface Public2 {}
+interface Public3 {}
+interface Public4 {}
+interface Public5 {}
+interface Public6 {}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 580,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {}
+  export class Application<S> {
+    prop!: S;
+  }
+  export function createMockApp<S extends Record<string | number | symbol, any> = Record<string, any>>(state?: S): Application<S> {
+    return {} as any;
+  }
+  export class A {
+    prop!: Public1;
+    constructor(prop?: Public1){}
+    handler!: Public2<Public3>;
+    secondProp!: Public4;
+  }
+  export const var1: Public5<Public6> = {} as any;
+  interface Public1<T> {
+  }
+  interface Public2 {
+  }
+  interface Public3 {
+  }
+  interface Public4 {
+  }
+  interface Public5 {
+  }
+  interface Public6 {
+  }

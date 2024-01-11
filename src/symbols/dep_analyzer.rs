@@ -14,6 +14,7 @@ use deno_ast::swc::ast::Param;
 use deno_ast::swc::ast::ParamOrTsParamProp;
 use deno_ast::swc::ast::Pat;
 use deno_ast::swc::ast::PropName;
+use deno_ast::swc::ast::TsAsExpr;
 use deno_ast::swc::ast::TsCallSignatureDecl;
 use deno_ast::swc::ast::TsConstructSignatureDecl;
 use deno_ast::swc::ast::TsEnumDecl;
@@ -31,6 +32,7 @@ use deno_ast::swc::ast::TsSetterSignature;
 use deno_ast::swc::ast::TsTupleElement;
 use deno_ast::swc::ast::TsTypeAliasDecl;
 use deno_ast::swc::ast::TsTypeAnn;
+use deno_ast::swc::ast::TsTypeAssertion;
 use deno_ast::swc::ast::TsTypeParam;
 use deno_ast::swc::ast::TsTypeParamDecl;
 use deno_ast::swc::ast::TsTypeParamInstantiation;
@@ -161,7 +163,9 @@ impl DepsFiller {
         }
 
         if let Some(type_ann) = &n.type_ann {
-          self.visit_ts_type_ann(type_ann)
+          self.visit_ts_type_ann(type_ann);
+        } else if let Some(value) = &n.value {
+          self.visit_type_if_type_assertion(value);
         }
       }
       SymbolNodeRef::ClassParamProp(n) => self.visit_ts_param_prop(n),
@@ -196,6 +200,15 @@ impl DepsFiller {
       SymbolNodeRef::TsMethodSignature(n) => {
         self.visit_ts_method_signature(n);
       }
+    }
+  }
+
+  fn visit_type_if_type_assertion(&mut self, expr: &Expr) -> bool {
+    if matches!(expr, Expr::TsAs(_) | Expr::TsTypeAssertion(_)) {
+      self.visit_expr(expr);
+      true
+    } else {
+      false
     }
   }
 }
@@ -327,9 +340,12 @@ impl Visit for DepsFiller {
 
   fn visit_var_declarator(&mut self, n: &VarDeclarator) {
     self.visit_pat(&n.name);
-    if self.mode.visit_exprs() && !pat_has_type_ann(&n.name) {
+    if !pat_has_type_ann(&n.name) {
       if let Some(init) = &n.init {
-        self.visit_expr(init);
+        let visited_type_assertion = self.visit_type_if_type_assertion(init);
+        if !visited_type_assertion && self.mode.visit_exprs() {
+          self.visit_expr(init);
+        }
       }
     }
   }
@@ -392,6 +408,8 @@ impl Visit for DepsFiller {
         Pat::Ident(ident) => {
           if let Some(type_ann) = &ident.type_ann {
             self.visit_ts_type_ann(type_ann)
+          } else {
+            self.visit_type_if_type_assertion(&assign.right);
           }
         }
         _ => {
@@ -429,9 +447,12 @@ impl Visit for DepsFiller {
       }
       Pat::Assign(n) => {
         self.visit_pat(&n.left);
-        let has_type_ann = pat_has_type_ann(&n.left);
-        if self.mode.visit_exprs() && !has_type_ann {
-          self.visit_expr(&n.right);
+        if !pat_has_type_ann(&n.left) {
+          let visited_type_assertion =
+            self.visit_type_if_type_assertion(&n.right);
+          if !visited_type_assertion && self.mode.visit_exprs() {
+            self.visit_expr(&n.right);
+          }
         }
       }
       Pat::Invalid(_) => {
@@ -501,6 +522,14 @@ impl Visit for DepsFiller {
 
   fn visit_ts_type_ann(&mut self, type_ann: &TsTypeAnn) {
     self.visit_ts_type(&type_ann.type_ann)
+  }
+
+  fn visit_ts_type_assertion(&mut self, n: &TsTypeAssertion) {
+    self.visit_ts_type(&n.type_ann);
+  }
+
+  fn visit_ts_as_expr(&mut self, n: &TsAsExpr) {
+    self.visit_ts_type(&n.type_ann);
   }
 }
 
