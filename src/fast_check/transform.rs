@@ -1353,7 +1353,23 @@ fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
     TsType::TsKeywordType(_) => Some(t.clone()),
     TsType::TsThisType(_) => Some(t.clone()),
     TsType::TsFnOrConstructorType(_) => None,
-    TsType::TsTypeRef(_) => None,
+    TsType::TsTypeRef(type_ref) => Some(TsType::TsTypeRef(TsTypeRef {
+      span: type_ref.span,
+      type_name: type_ref.type_name.clone(),
+      type_params: match type_ref.type_params.as_deref() {
+        Some(type_params) => Some(Box::new(TsTypeParamInstantiation {
+          span: type_params.span,
+          params: {
+            let mut params = Vec::with_capacity(type_params.params.len());
+            for param in &type_params.params {
+              params.push(Box::new(infer_simple_type_from_type(param)?));
+            }
+            params
+          },
+        })),
+        None => None,
+      },
+    })),
     TsType::TsTypeQuery(_) => None,
     TsType::TsTypeLit(_) => None,
     TsType::TsTupleType(t) => {
