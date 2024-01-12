@@ -826,7 +826,7 @@ impl EsModuleSource {
   pub fn new_with_text(bytes: Arc<[u8]>) -> Result<Self, std::io::Error> {
     let charset = text_encoding::detect_charset(bytes.as_ref());
     let mut text =
-      match text_encoding::convert_to_utf8(bytes.as_ref(), &charset)? {
+      match text_encoding::convert_to_utf8(bytes.as_ref(), charset)? {
         Cow::Borrowed(text) => {
           if text.starts_with(text_encoding::BOM_CHAR) {
             text.to_string()
@@ -1877,7 +1877,7 @@ pub(crate) fn parse_module(
         Some("json")
       ))
   {
-    let source = new_source_with_text(&specifier, content)?;
+    let source = new_source_with_text(specifier, content)?;
     return Ok(Module::Json(JsonModule {
       maybe_cache_info: None,
       text: source.text.unwrap(),
@@ -1917,7 +1917,7 @@ pub(crate) fn parse_module(
     | MediaType::Dts
     | MediaType::Dmts
     | MediaType::Dcts => {
-      let source = new_source_with_text(&specifier, content)?;
+      let source = new_source_with_text(specifier, content)?;
       match module_analyzer.analyze(
         specifier,
         source.text.clone().unwrap(),
@@ -1943,7 +1943,7 @@ pub(crate) fn parse_module(
       }
     }
     MediaType::Unknown if is_root => {
-      let source = new_source_with_text(&specifier, content)?;
+      let source = new_source_with_text(specifier, content)?;
       match module_analyzer.analyze(
         specifier,
         source.text.clone().unwrap(),
@@ -4264,6 +4264,7 @@ impl<'a> NpmSpecifierResolver<'a> {
   }
 }
 
+#[allow(clippy::result_large_err)]
 fn new_source_with_text(
   specifier: &ModuleSpecifier,
   text: Arc<[u8]>,
