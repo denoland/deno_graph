@@ -14,7 +14,7 @@ import test2 = Namespace1.Inner.test2;
 export { test, test2 };
 
 # output
-file:///mod.ts: EsModuleInfo {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),

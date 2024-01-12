@@ -1449,7 +1449,8 @@ pub struct EsModuleInfo {
 
 impl std::fmt::Debug for EsModuleInfo {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("EsModuleInfo")
+    // todo(dsherret): rename in a separate PR in order to reduce noise
+    f.debug_struct("EsmModuleInfo")
       .field("module_id", &self.module_id)
       .field("specifier", &self.specifier.as_str())
       .field(

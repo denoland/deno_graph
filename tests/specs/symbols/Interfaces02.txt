@@ -27,7 +27,7 @@ interface Prop2 {}
 export { A1 };
 
 # output
-file:///a.ts: EsModuleInfo {
+file:///a.ts: EsmModuleInfo {
     module_id: ModuleId(
         1,
     ),
@@ -255,7 +255,7 @@ file:///a.ts: EsModuleInfo {
 == symbol deps (types only) ==
 3:51..64 [Id(("Prop2", #2))]
 
-file:///mod.ts: EsModuleInfo {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),

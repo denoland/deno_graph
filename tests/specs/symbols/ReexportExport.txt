@@ -3,7 +3,7 @@ export function foo(): void {}
 export { foo as bar };
 
 # output
-file:///mod.ts: EsModuleInfo {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),

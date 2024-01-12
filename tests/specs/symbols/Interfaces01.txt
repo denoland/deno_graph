@@ -20,7 +20,7 @@ interface B {
 }
 
 # output
-file:///mod.ts: EsModuleInfo {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),

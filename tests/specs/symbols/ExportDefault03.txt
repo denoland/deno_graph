@@ -13,7 +13,7 @@ export class B {}
 export class B1 {}
 
 # output
-file:///a.ts: EsModuleInfo {
+file:///a.ts: EsmModuleInfo {
     module_id: ModuleId(
         1,
     ),
@@ -122,7 +122,7 @@ file:///a.ts: EsModuleInfo {
         },
     },
 }
-file:///b.ts: EsModuleInfo {
+file:///b.ts: EsmModuleInfo {
     module_id: ModuleId(
         2,
     ),
@@ -235,7 +235,7 @@ file:///b.ts: EsModuleInfo {
         },
     },
 }
-file:///mod.ts: EsModuleInfo {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),

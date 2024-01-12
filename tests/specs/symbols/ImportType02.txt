@@ -11,7 +11,7 @@ export default function test() {
 }
 
 # output
-file:///a.ts: EsModuleInfo {
+file:///a.ts: EsmModuleInfo {
     module_id: ModuleId(
         1,
     ),
@@ -156,7 +156,7 @@ file:///a.ts: EsModuleInfo {
         },
     },
 }
-file:///mod.ts: EsModuleInfo {
+file:///mod.ts: EsmModuleInfo {
     module_id: ModuleId(
         0,
     ),
