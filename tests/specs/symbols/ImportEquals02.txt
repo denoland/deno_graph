@@ -25,7 +25,7 @@ namespace A.B {
 export { A };
 
 # output
-file:///a.ts: EsmModuleInfo {
+file:///a.ts: EsModuleInfo {
     module_id: ModuleId(
         1,
     ),
@@ -342,7 +342,7 @@ file:///a.ts: EsmModuleInfo {
         },
     },
 }
-file:///mod.ts: EsmModuleInfo {
+file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
         0,
     ),

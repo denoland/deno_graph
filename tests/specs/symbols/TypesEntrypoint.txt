@@ -11,7 +11,7 @@ export interface MyInterface {
 }
 
 # output
-file:///mod.d.ts: EsmModuleInfo {
+file:///mod.d.ts: EsModuleInfo {
     module_id: ModuleId(
         0,
     ),
@@ -120,7 +120,7 @@ file:///mod.d.ts: EsmModuleInfo {
         },
     },
 }
-file:///mod.js: EsmModuleInfo {
+file:///mod.js: EsModuleInfo {
     module_id: ModuleId(
         1,
     ),

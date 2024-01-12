@@ -1,6 +1,6 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
-pub use self::analyzer::EsmModuleInfo;
+pub use self::analyzer::EsModuleInfo;
 pub use self::analyzer::ExportDeclRef;
 pub use self::analyzer::FileDep;
 pub use self::analyzer::FileDepName;

@@ -17,7 +17,7 @@ use deno_ast::SourceTextInfo;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
-use crate::EsmModule;
+use crate::EsModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
 use crate::ModuleParser;
@@ -83,7 +83,7 @@ impl<'a> RootSymbol<'a> {
     };
 
     match graph_module {
-      crate::Module::Esm(esm_module) => self.analyze_esm_module(esm_module),
+      crate::Module::Esm(es_module) => self.analyze_es_module(es_module),
       crate::Module::Json(json_module) => {
         Some(self.analyze_json_module(json_module))
       }
@@ -151,14 +151,11 @@ impl<'a> RootSymbol<'a> {
     )
   }
 
-  fn analyze_esm_module(
-    &self,
-    esm_module: &EsmModule,
-  ) -> Option<ModuleInfoRef> {
-    let Ok(source) = self.parsed_source(esm_module) else {
+  fn analyze_es_module(&self, es_module: &EsModule) -> Option<ModuleInfoRef> {
+    let Some(source) = self.parsed_source(es_module) else {
       return None;
     };
-    let specifier = &esm_module.specifier;
+    let specifier = &es_module.specifier;
     let module = source.module();
 
     let module_id = ModuleId(self.ids_to_modules.len() as u32);
@@ -168,7 +165,7 @@ impl<'a> RootSymbol<'a> {
       builder: &builder,
     };
     filler.fill(module);
-    let module_symbol = EsmModuleInfo {
+    let module_symbol = EsModuleInfo {
       specifier: specifier.clone(),
       module_id,
       source: source.clone(),
@@ -188,7 +185,7 @@ impl<'a> RootSymbol<'a> {
     let specifier = &json_module.specifier;
     // it's not ideal having to use SourceTextInfo here, but it makes
     // it easier to interop with ParsedSource
-    let source_text_info = SourceTextInfo::new(json_module.source.clone());
+    let source_text_info = SourceTextInfo::new(json_module.text.clone());
     let range = source_text_info.range();
     let module_id = ModuleId(self.ids_to_modules.len() as u32);
     let decls = {
@@ -241,16 +238,16 @@ impl<'a> RootSymbol<'a> {
     self.ids_to_modules.get(&module_id).unwrap().as_ref()
   }
 
-  fn parsed_source(
-    &self,
-    graph_module: &EsmModule,
-  ) -> Result<ParsedSource, deno_ast::Diagnostic> {
-    self.parser.parse_module(ParseOptions {
-      specifier: &graph_module.specifier,
-      source: graph_module.source.clone(),
-      media_type: graph_module.media_type,
-      scope_analysis: true,
-    })
+  fn parsed_source(&self, graph_module: &EsModule) -> Option<ParsedSource> {
+    self
+      .parser
+      .parse_module(ParseOptions {
+        specifier: &graph_module.specifier,
+        source: graph_module.source.text.clone()?,
+        media_type: graph_module.media_type,
+        scope_analysis: true,
+      })
+      .ok()
   }
 }
 
@@ -1207,7 +1204,7 @@ impl UniqueSymbolId {
 #[derive(Debug, Clone, Copy)]
 pub enum ModuleInfoRef<'a> {
   Json(&'a JsonModuleInfo),
-  Esm(&'a EsmModuleInfo),
+  Esm(&'a EsModuleInfo),
 }
 
 impl<'a> ModuleInfoRef<'a> {
@@ -1218,7 +1215,7 @@ impl<'a> ModuleInfoRef<'a> {
     }
   }
 
-  pub fn esm(&self) -> Option<&'a EsmModuleInfo> {
+  pub fn esm(&self) -> Option<&'a EsModuleInfo> {
     match self {
       Self::Json(_) => None,
       Self::Esm(esm) => Some(esm),
@@ -1345,7 +1342,7 @@ impl<'a> ModuleInfoRef<'a> {
 #[derive(Debug, Clone)]
 pub enum ModuleInfo {
   Json(Box<JsonModuleInfo>),
-  Esm(EsmModuleInfo),
+  Esm(EsModuleInfo),
 }
 
 impl ModuleInfo {
@@ -1356,7 +1353,7 @@ impl ModuleInfo {
     }
   }
 
-  pub fn esm(&self) -> Option<&EsmModuleInfo> {
+  pub fn esm(&self) -> Option<&EsModuleInfo> {
     match self {
       Self::Json(_) => None,
       Self::Esm(esm) => Some(esm),
@@ -1440,7 +1437,7 @@ impl JsonModuleInfo {
 }
 
 #[derive(Clone)]
-pub struct EsmModuleInfo {
+pub struct EsModuleInfo {
   module_id: ModuleId,
   specifier: ModuleSpecifier,
   source: ParsedSource,
@@ -1451,9 +1448,9 @@ pub struct EsmModuleInfo {
   symbols: IndexMap<SymbolId, Symbol>,
 }
 
-impl std::fmt::Debug for EsmModuleInfo {
+impl std::fmt::Debug for EsModuleInfo {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("EsmModuleInfo")
+    f.debug_struct("EsModuleInfo")
       .field("module_id", &self.module_id)
       .field("specifier", &self.specifier.as_str())
       .field(
@@ -1470,7 +1467,7 @@ impl std::fmt::Debug for EsmModuleInfo {
   }
 }
 
-impl EsmModuleInfo {
+impl EsModuleInfo {
   pub fn as_ref(&self) -> ModuleInfoRef {
     ModuleInfoRef::Esm(self)
   }

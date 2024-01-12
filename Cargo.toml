@@ -29,6 +29,7 @@ async-trait = "0.1.68"
 data-url = "0.3.0"
 deno_ast = { version = "1.0.0", features = ["dep_analysis", "module_specifier"] }
 deno_semver = "0.5.0"
+encoding_rs = "0.8.33"
 futures = "0.3.26"
 import_map = "0.18.0"
 indexmap = { version = "2", features = ["serde"] }

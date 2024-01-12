@@ -23,6 +23,7 @@ use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
 use crate::packages::PackageSpecifiers;
 use crate::source::*;
+use crate::text_encoding;
 
 use anyhow::anyhow;
 use deno_ast::dep::DependencyKind;
@@ -691,7 +692,7 @@ pub struct WorkspaceMember {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "kind")]
 pub enum Module {
-  Esm(EsmModule),
+  Esm(EsModule),
   // todo(#239): remove this when updating the --json output for 2.0
   #[serde(rename = "asserted")]
   Json(JsonModule),
@@ -719,7 +720,7 @@ impl Module {
     }
   }
 
-  pub fn esm(&self) -> Option<&EsmModule> {
+  pub fn esm(&self) -> Option<&EsModule> {
     if let Module::Esm(module) = &self {
       Some(module)
     } else {
@@ -786,8 +787,10 @@ pub struct JsonModule {
   pub specifier: ModuleSpecifier,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
-  #[serde(rename = "size", serialize_with = "serialize_source")]
-  pub source: Arc<str>,
+  #[serde(skip_serializing)]
+  pub text: Arc<str>,
+  #[serde(rename = "size", serialize_with = "serialize_source_bytes")]
+  pub bytes: Arc<[u8]>,
   // todo(#240): This will always be MediaType::Json, but it's currently
   // used in the --json output. It's redundant though.
   pub media_type: MediaType,
@@ -796,7 +799,7 @@ pub struct JsonModule {
 impl JsonModule {
   /// Return the size in bytes of the content of the JSON module.
   pub fn size(&self) -> usize {
-    self.source.as_bytes().len()
+    self.text.as_bytes().len()
   }
 }
 
@@ -813,9 +816,54 @@ pub struct FastCheckTypeModule {
   pub source_map: Arc<[u8]>,
 }
 
+#[derive(Debug, Clone)]
+pub struct EsModuleSource {
+  pub bytes: Arc<[u8]>,
+  pub text: Option<Arc<str>>,
+}
+
+impl EsModuleSource {
+  pub fn new_with_text(bytes: Arc<[u8]>) -> Result<Self, std::io::Error> {
+    let charset = text_encoding::detect_charset(bytes.as_ref());
+    let mut text =
+      match text_encoding::convert_to_utf8(bytes.as_ref(), &charset)? {
+        Cow::Borrowed(text) => {
+          if text.starts_with(text_encoding::BOM_CHAR) {
+            text.to_string()
+          } else {
+            return Ok(Self {
+              bytes: bytes.clone(),
+              // SAFETY: we know it's avalid utf-8 string at this point
+              text: unsafe {
+                let raw_ptr = Arc::into_raw(bytes);
+                Some(Arc::from_raw(std::mem::transmute::<
+                  *const [u8],
+                  *const str,
+                >(raw_ptr)))
+              },
+            });
+          }
+        }
+        Cow::Owned(text) => text,
+      };
+    text_encoding::strip_bom_mut(&mut text);
+    let text: Arc<str> = Arc::from(text);
+    Ok(Self::from_text(text))
+  }
+
+  /// This is internal because generally we don't want consumers doing
+  /// their own bytes decoding and instead to use `EsModuleSource::new_with_text`.
+  pub(crate) fn from_text(text: Arc<str>) -> Self {
+    Self {
+      bytes: text.clone().into(),
+      text: Some(text),
+    }
+  }
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct EsmModule {
+pub struct EsModule {
   #[serde(
     skip_serializing_if = "IndexMap::is_empty",
     serialize_with = "serialize_dependencies"
@@ -823,8 +871,8 @@ pub struct EsmModule {
   pub dependencies: IndexMap<String, Dependency>,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
-  #[serde(rename = "size", serialize_with = "serialize_source")]
-  pub source: Arc<str>,
+  #[serde(rename = "size", serialize_with = "serialize_esm_source")]
+  pub source: EsModuleSource,
   #[serde(rename = "typesDependency", skip_serializing_if = "Option::is_none")]
   pub maybe_types_dependency: Option<TypesDependency>,
   #[serde(skip_serializing_if = "is_media_type_unknown")]
@@ -834,8 +882,8 @@ pub struct EsmModule {
   pub fast_check: Option<FastCheckTypeModuleSlot>,
 }
 
-impl EsmModule {
-  fn new(specifier: ModuleSpecifier, source: Arc<str>) -> Self {
+impl EsModule {
+  fn new(specifier: ModuleSpecifier, source: EsModuleSource) -> Self {
     Self {
       dependencies: Default::default(),
       maybe_cache_info: None,
@@ -845,11 +893,6 @@ impl EsmModule {
       specifier,
       fast_check: None,
     }
-  }
-
-  /// Return the size in bytes of the content of the module.
-  pub fn size(&self) -> usize {
-    self.source.as_bytes().len()
   }
 
   pub fn fast_check_diagnostic(&self) -> Option<&FastCheckDiagnostic> {
@@ -1199,7 +1242,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
 
   fn check_resolution(
     &self,
-    module: &EsmModule,
+    module: &EsModule,
     mode: ResolutionMode,
     specifier_text: &str,
     resolution: &Resolution,
@@ -1811,7 +1854,7 @@ pub(crate) fn parse_module(
   graph_kind: GraphKind,
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  content: Arc<str>,
+  content: Arc<[u8]>,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_referrer: Option<Range>,
   file_system: &dyn FileSystem,
@@ -1834,9 +1877,11 @@ pub(crate) fn parse_module(
         Some("json")
       ))
   {
+    let source = new_source_with_text(&specifier, content)?;
     return Ok(Module::Json(JsonModule {
       maybe_cache_info: None,
-      source: content,
+      text: source.text.unwrap(),
+      bytes: source.bytes,
       media_type: MediaType::Json,
       specifier: specifier.clone(),
     }));
@@ -1860,7 +1905,7 @@ pub(crate) fn parse_module(
   }
 
   // Here we check for known ES Modules that we will analyze the dependencies of
-  match &media_type {
+  match media_type {
     MediaType::JavaScript
     | MediaType::Mjs
     | MediaType::Cjs
@@ -1872,16 +1917,21 @@ pub(crate) fn parse_module(
     | MediaType::Dts
     | MediaType::Dmts
     | MediaType::Dcts => {
-      match module_analyzer.analyze(specifier, content.clone(), media_type) {
+      let source = new_source_with_text(&specifier, content)?;
+      match module_analyzer.analyze(
+        specifier,
+        source.text.clone().unwrap(),
+        media_type,
+      ) {
         Ok(module_info) => {
           // Return the module as a valid module
-          Ok(Module::Esm(parse_esm_module_from_module_info(
+          Ok(Module::Esm(parse_es_module_from_module_info(
             graph_kind,
             specifier,
             media_type,
             maybe_headers,
             module_info,
-            content,
+            source,
             file_system,
             maybe_resolver,
             maybe_npm_resolver,
@@ -1893,20 +1943,21 @@ pub(crate) fn parse_module(
       }
     }
     MediaType::Unknown if is_root => {
+      let source = new_source_with_text(&specifier, content)?;
       match module_analyzer.analyze(
         specifier,
-        content.clone(),
+        source.text.clone().unwrap(),
         MediaType::JavaScript,
       ) {
         Ok(module_info) => {
           // Return the module as a valid module
-          Ok(Module::Esm(parse_esm_module_from_module_info(
+          Ok(Module::Esm(parse_es_module_from_module_info(
             graph_kind,
             specifier,
             media_type,
             maybe_headers,
             module_info,
-            content,
+            source,
             file_system,
             maybe_resolver,
             maybe_npm_resolver,
@@ -1917,7 +1968,11 @@ pub(crate) fn parse_module(
         }
       }
     }
-    _ => Err(ModuleError::UnsupportedMediaType(
+    MediaType::Json
+    | MediaType::Wasm
+    | MediaType::TsBuildInfo
+    | MediaType::SourceMap
+    | MediaType::Unknown => Err(ModuleError::UnsupportedMediaType(
       specifier.clone(),
       media_type,
       maybe_referrer,
@@ -1926,18 +1981,18 @@ pub(crate) fn parse_module(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn parse_esm_module_from_module_info(
+pub(crate) fn parse_es_module_from_module_info(
   graph_kind: GraphKind,
   specifier: &ModuleSpecifier,
   media_type: MediaType,
   maybe_headers: Option<&HashMap<String, String>>,
   module_info: ModuleInfo,
-  source: Arc<str>,
+  source: EsModuleSource,
   file_system: &dyn FileSystem,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
-) -> EsmModule {
-  let mut module = EsmModule::new(specifier.clone(), source);
+) -> EsModule {
+  let mut module = EsModule::new(specifier.clone(), source);
   module.media_type = media_type;
 
   // Analyze the TypeScript triple-slash references
@@ -2654,7 +2709,7 @@ struct PendingState {
 
 #[derive(Clone)]
 enum ContentOrModuleInfo {
-  Content(Arc<str>),
+  Content(Arc<[u8]>),
   ModuleInfo(ModuleInfo),
 }
 
@@ -3120,11 +3175,40 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 match slot {
                   ModuleSlot::Module(module) => {
                     match module {
-                      Module::Esm(module) => {
-                        module.source = content;
-                      }
+                      Module::Esm(module) => match module.media_type {
+                        MediaType::JavaScript
+                        | MediaType::Jsx
+                        | MediaType::Mjs
+                        | MediaType::Cjs
+                        | MediaType::TypeScript
+                        | MediaType::Mts
+                        | MediaType::Cts
+                        | MediaType::Dts
+                        | MediaType::Dmts
+                        | MediaType::Dcts
+                        | MediaType::Tsx
+                        | MediaType::Json => {
+                          match new_source_with_text(&module.specifier, content)
+                          {
+                            Ok(source) => {
+                              module.source = source;
+                            }
+                            Err(err) => *slot = ModuleSlot::Err(err),
+                          }
+                        }
+                        MediaType::Wasm
+                        | MediaType::TsBuildInfo
+                        | MediaType::SourceMap
+                        | MediaType::Unknown => todo!(),
+                      },
                       Module::Json(module) => {
-                        module.source = content;
+                        match new_source_with_text(&module.specifier, content) {
+                          Ok(source) => {
+                            module.bytes = source.bytes;
+                            module.text = source.text.unwrap();
+                          }
+                          Err(err) => *slot = ModuleSlot::Err(err),
+                        }
                       }
                       Module::Npm(_)
                       | Module::Node(_)
@@ -3587,7 +3671,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       match data {
         Some(LoadResponse::Module { content, .. }) => {
           let package_info: JsrPackageInfo =
-            serde_json::from_str(&content).map_err(|e| Arc::new(e.into()))?;
+            serde_json::from_slice(&content).map_err(|e| Arc::new(e.into()))?;
           Ok(Some(Arc::new(package_info)))
         }
         _ => Ok(None),
@@ -3629,7 +3713,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       match data {
         Some(LoadResponse::Module { content, .. }) => {
           let version_info: JsrPackageVersionInfo =
-            serde_json::from_str(&content).map_err(|e| Arc::new(e.into()))?;
+            serde_json::from_slice(&content).map_err(|e| Arc::new(e.into()))?;
           Ok(Arc::new(version_info))
         }
         _ => Err(Arc::new(anyhow!("Not found: {}", specifier))),
@@ -3744,7 +3828,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           .boxed_local()
         });
         (
-          String::new().into(),
+          Arc::new([]) as Arc<[u8]>,
           Some(ProvidedModuleAnalyzer(RefCell::new(Some(info)))),
         )
       }
@@ -4180,6 +4264,15 @@ impl<'a> NpmSpecifierResolver<'a> {
   }
 }
 
+fn new_source_with_text(
+  specifier: &ModuleSpecifier,
+  text: Arc<[u8]>,
+) -> Result<EsModuleSource, ModuleError> {
+  EsModuleSource::new_with_text(text).map_err(|err| {
+    ModuleError::LoadingErr(specifier.clone(), None, Arc::new(err.into()))
+  })
+}
+
 impl Serialize for Resolution {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
@@ -4228,8 +4321,18 @@ where
   seq.end()
 }
 
-fn serialize_source<S>(
-  source: &Arc<str>,
+fn serialize_esm_source<S>(
+  source: &EsModuleSource,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  serializer.serialize_u32(source.bytes.len() as u32)
+}
+
+fn serialize_source_bytes<S>(
+  source: &Arc<[u8]>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
@@ -4286,13 +4389,14 @@ mod tests {
   fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let module_analyzer = DefaultModuleAnalyzer::default();
-    let content =
-      "import * as b from \"./b.ts\";\nimport * as c from \"./b.ts\"";
+    let content: Arc<[u8]> = Arc::from(
+      b"import * as b from \"./b.ts\";\nimport * as c from \"./b.ts\"".to_vec(),
+    );
     let module = parse_module(
       GraphKind::All,
       &specifier,
       None,
-      content.into(),
+      content,
       None,
       None,
       &NullFileSystem,
@@ -4389,7 +4493,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "await import('file:///bar.js')".into(),
+                content: b"await import('file:///bar.js')".to_vec().into(),
               }))
             })
           }
@@ -4400,7 +4504,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "import 'file:///baz.js'".into(),
+                content: b"import 'file:///baz.js'".to_vec().into(),
               }))
             })
           }
@@ -4411,7 +4515,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "console.log('Hello, world!')".into(),
+                content: b"console.log('Hello, world!')".to_vec().into(),
               }))
             })
           }
@@ -4455,7 +4559,7 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: "await import('file:///bar.js')".into(),
+              content: b"await import('file:///bar.js')".to_vec().into(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move { Ok(None) }),
@@ -4542,14 +4646,14 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///foo_actual.js").unwrap(),
               maybe_headers: None,
-              content: "import 'file:///bar.js'".into(),
+              content: b"import 'file:///bar.js'".to_vec().into(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///bar_actual.js").unwrap(),
               maybe_headers: None,
-              content: "(".into(),
+              content: b"(".to_vec().into(),
             }))
           }),
           _ => unreachable!(),
@@ -4611,29 +4715,29 @@ mod tests {
               specifier: specifier.clone(),
               maybe_headers: None,
               content:
-                "import 'FILE:///baz.js'; import 'file:///bar.js'; import 'http://deno.land/foo.js';"
-                  .into(),
+                b"import 'FILE:///baz.js'; import 'file:///bar.js'; import 'http://deno.land/foo.js';"
+                  .to_vec().into(),
             }))
           }),
           "http://deno.land/foo.js" => Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: "export {}".into(),
+              content: b"export {}".to_vec().into(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: "console.log('Hello, world!')".into(),
+              content: b"console.log('Hello, world!')".to_vec().into(),
             }))
           }),
           "file:///baz.js" => Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: "console.log('Hello, world 2!')".into(),
+              content: b"console.log('Hello, world 2!')".to_vec().into(),
             }))
           }),
           _ => unreachable!(),
@@ -4736,7 +4840,9 @@ mod tests {
               specifier: specifier.clone(),
               maybe_headers: None,
               content:
-                "import 'file:///bar.js'; await import('file:///bar.js')".into(),
+                b"import 'file:///bar.js'; await import('file:///bar.js')"
+                  .to_vec()
+                  .into(),
             }))
           }),
           "file:///bar.js" => {
@@ -4746,7 +4852,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "console.log('Hello, world!')".into(),
+                content: b"console.log('Hello, world!')".to_vec().into(),
               }))
             })
           }
@@ -4782,7 +4888,7 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: "
+              content: b"
                 /// <reference path='file:///bar.ts' />
                 /// <reference types='file:///bar.ts' />
                 /* @jsxImportSource file:///bar.ts */
@@ -4793,6 +4899,7 @@ mod tests {
                 import type {} from 'file:///bar.ts';
                 /** @typedef { import('file:///bar.ts') } bar */
               "
+              .to_vec()
               .into(),
             }))
           }),
@@ -4802,7 +4909,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "".into(),
+                content: b"".to_vec().into(),
               }))
             })
           }
@@ -4812,7 +4919,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "{}".into(),
+                content: b"{}".to_vec().into(),
               }))
             })
           }
