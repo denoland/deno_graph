@@ -6,7 +6,6 @@ use std::cell::Ref;
 use std::cell::RefCell;
 use std::hash::Hash;
 
-use anyhow::Result;
 use deno_ast::swc::ast::*;
 use deno_ast::swc::utils::find_pat_ids;
 use deno_ast::ModuleSpecifier;

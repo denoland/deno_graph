@@ -4,8 +4,6 @@ use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
-use crate::text_encoding::strip_bom_mut;
-use crate::text_encoding::BOM_CHAR;
 use crate::ModuleInfo;
 use crate::SpecifierError;
 use deno_semver::package::PackageNv;
@@ -20,7 +18,6 @@ use futures::future::LocalBoxFuture;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
@@ -32,96 +29,6 @@ mod file_system;
 pub use file_system::*;
 
 pub const DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum StringOrBytes {
-  String(Arc<str>),
-  Bytes(Arc<[u8]>),
-}
-
-impl StringOrBytes {
-  pub fn from_vec(bytes: Vec<u8>) -> StringOrBytes {
-    StringOrBytes::Bytes(Arc::from(bytes.into_boxed_slice()))
-  }
-
-  pub fn into_arc_string(self) -> Arc<str> {
-    match self {
-      Self::String(s) => s,
-      // note, this should never happen in practice
-      Self::Bytes(bytes) => {
-        // Parse some bytes into a UTF-8 string as the WHATWG encoding spec specifies
-        // in https://encoding.spec.whatwg.org/#utf-8-decode.
-        //
-        // This is used by the HTML spec to parse the bytes representing ES modules
-        // into strings.
-        let mut string = match String::from_utf8_lossy(&bytes) {
-          Cow::Borrowed(text) => {
-            if text.starts_with(BOM_CHAR) {
-              text.to_string()
-            } else {
-              // SAFETY: we know it's avalid utf-8 string at this point
-              unsafe {
-                let raw_ptr = Arc::into_raw(bytes);
-                return Arc::from_raw(std::mem::transmute::<
-                  *const [u8],
-                  *const str,
-                >(raw_ptr));
-              }
-            }
-          }
-          Cow::Owned(string) => string,
-        };
-        strip_bom_mut(&mut string);
-        string.into()
-      }
-    }
-  }
-
-  pub fn into_arc_bytes(self) -> Arc<[u8]> {
-    match self {
-      Self::String(s) => s.into(),
-      Self::Bytes(b) => b,
-    }
-  }
-
-  pub fn as_bytes(&self) -> &[u8] {
-    match self {
-      Self::String(s) => s.as_bytes(),
-      Self::Bytes(b) => b,
-    }
-  }
-
-  pub fn len(&self) -> usize {
-    match self {
-      Self::String(s) => s.len(),
-      Self::Bytes(b) => b.len(),
-    }
-  }
-}
-
-impl From<String> for StringOrBytes {
-  fn from(s: String) -> Self {
-    Self::String(s.into())
-  }
-}
-
-impl From<Arc<str>> for StringOrBytes {
-  fn from(s: Arc<str>) -> Self {
-    Self::String(s)
-  }
-}
-
-impl From<&'static str> for StringOrBytes {
-  fn from(s: &'static str) -> Self {
-    Self::String(s.into())
-  }
-}
-
-impl From<Arc<[u8]>> for StringOrBytes {
-  fn from(s: Arc<[u8]>) -> Self {
-    Self::Bytes(s)
-  }
-}
 
 /// Information that comes from an external source which can be optionally
 /// included in the module graph.
