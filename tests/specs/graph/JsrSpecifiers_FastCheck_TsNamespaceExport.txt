@@ -58,5 +58,5 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  Global augmentations such as namespace exports are not supported.
-      at https://jsr.io/@scope/a/1.0.0/mod.ts:3:1
+  found namespace export, which is a global augmentation, which are not unsupported
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@17

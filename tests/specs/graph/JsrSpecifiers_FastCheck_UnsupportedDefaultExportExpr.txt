@@ -60,5 +60,5 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  Default export expression was too complex. Extract it out to a variable and add an explicit type.
-      at https://jsr.io/@scope/a/1.0.0/mod.ts:3:1
+  default export expression was too complex
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@16

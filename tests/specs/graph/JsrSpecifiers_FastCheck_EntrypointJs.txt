@@ -60,5 +60,5 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.js:
-  JavaScript entrypoints are not supported for fast check.
-      at https://jsr.io/@scope/a/1.0.0/mod.js:1:1
+  used a JavaScript module without type declarations as an entrypoints
+      at https://jsr.io/@scope/a/1.0.0/mod.js

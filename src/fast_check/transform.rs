@@ -81,9 +81,9 @@ use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
 
 use crate::DefaultModuleAnalyzer;
+use crate::DiagnosticRange;
 use crate::ModuleGraph;
 use crate::ModuleInfo;
-use crate::Range;
 use crate::WorkspaceMember;
 
 use super::range_finder::ModulePublicRanges;
@@ -92,7 +92,6 @@ use super::swc_helpers::ident;
 use super::swc_helpers::is_expr_leavable;
 use super::swc_helpers::is_never_type;
 use super::swc_helpers::is_void_type;
-use super::swc_helpers::source_range_to_range;
 use super::swc_helpers::ts_keyword_type;
 use super::FastCheckDiagnostic;
 
@@ -177,8 +176,12 @@ pub fn transform(
   // now emit
   let comments = comments.into_single_threaded();
   let (text, source_map) =
-    emit(specifier, &comments, parsed_source.text_info(), &module)
-      .map_err(|e| FastCheckDiagnostic::Emit(Arc::new(e)))?;
+    emit(specifier, &comments, parsed_source.text_info(), &module).map_err(
+      |e| FastCheckDiagnostic::Emit {
+        specifier: specifier.clone(),
+        inner: Arc::new(e),
+      },
+    )?;
 
   Ok(FastCheckModule {
     module_info,
@@ -1147,9 +1150,8 @@ impl<'a> FastCheckTransformer<'a> {
     }
   }
 
-  fn source_range_to_range(&self, range: SourceRange) -> Range {
-    let text_info = self.parsed_source.text_info();
-    source_range_to_range(range, self.specifier, text_info)
+  fn source_range_to_range(&self, range: SourceRange) -> DiagnosticRange {
+    DiagnosticRange::new(self.specifier.clone(), range)
   }
 
   fn maybe_infer_type_from_expr(&self, expr: &Expr) -> Option<TsType> {

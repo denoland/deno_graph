@@ -138,5 +138,5 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  Could not resolve 'A.prototype.notExistent' referenced from '<unknown>'. This may indicate a bug in Deno. Please open an issue to help us improve if so.
-      at https://jsr.io/@scope/a/1.0.0/a.ts:1:1
+  could not resolve 'A.prototype.notExistent' referenced from '<unknown>'
+      at https://jsr.io/@scope/a/1.0.0/a.ts@0

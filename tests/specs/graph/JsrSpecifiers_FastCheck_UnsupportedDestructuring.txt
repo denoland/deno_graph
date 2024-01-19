@@ -61,5 +61,5 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  Destructuring is not supported in the public API.
-      at https://jsr.io/@scope/a/1.0.0/mod.ts:6:14
+  found destructuring, which is not supported in the public API
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@113

@@ -31,6 +31,7 @@ use deno_ast::Diagnostic;
 use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
+use deno_ast::SourceRange;
 use deno_ast::SourceTextInfo;
 use deno_semver::jsr::JsrPackageReqReference;
 use deno_semver::npm::NpmPackageNvReference;
@@ -2672,6 +2673,18 @@ impl FillPassMode {
     } else {
       CacheSetting::Use
     }
+  }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct DiagnosticRange {
+  pub specifier: ModuleSpecifier,
+  pub range: SourceRange,
+}
+
+impl DiagnosticRange {
+  pub fn new(specifier: ModuleSpecifier, range: SourceRange) -> Self {
+    Self { specifier, range }
   }
 }
 
