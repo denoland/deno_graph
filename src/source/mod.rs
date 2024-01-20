@@ -116,11 +116,11 @@ pub trait Loader {
   }
 
   fn registry_package_url(&self, nv: &PackageNv) -> Url {
-    default_registry_package_url(self.registry_url(), nv)
+    recommended_registry_package_url(self.registry_url(), nv)
   }
 
   fn registry_package_url_to_nv(&self, url: &Url) -> Option<PackageNv> {
-    default_registry_package_url_to_nv(self.registry_url(), url)
+    recommended_registry_package_url_to_nv(self.registry_url(), url)
   }
 
   /// An optional method which returns cache info for a module specifier.
@@ -148,14 +148,21 @@ pub trait Loader {
   }
 }
 
-/// Default function used to get a package's
-pub fn default_registry_package_url(registry_url: &Url, nv: &PackageNv) -> Url {
+/// The recommended way for getting the registry URL for a package.
+///
+/// This will concat the registry URL with the package name, a slash, then the version.
+pub fn recommended_registry_package_url(
+  registry_url: &Url,
+  nv: &PackageNv,
+) -> Url {
   registry_url
     .join(&format!("{}/{}/", nv.name, nv.version))
     .unwrap()
 }
 
-pub fn default_registry_package_url_to_nv(
+/// The recommended way to get the package name and version from a URL
+/// that is found on the registry.
+pub fn recommended_registry_package_url_to_nv(
   registry_url: &Url,
   url: &Url,
 ) -> Option<PackageNv> {
