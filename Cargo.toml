@@ -28,7 +28,7 @@ anyhow = "1.0.43"
 async-trait = "0.1.68"
 data-url = "0.3.0"
 deno_ast = { version = "1.0.0", features = ["dep_analysis", "module_specifier"] }
-deno_semver = "0.5.2"
+deno_semver = "0.5.3"
 futures = "0.3.26"
 import_map = "0.18.0"
 indexmap = { version = "2", features = ["serde"] }
@@ -52,6 +52,3 @@ codegen-units = 1
 incremental = true
 lto = true
 opt-level = "z"
-
-[patch.crates-io]
-deno_semver = { path = "../deno_semver" }
