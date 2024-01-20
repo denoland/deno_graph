@@ -116,23 +116,11 @@ pub trait Loader {
   }
 
   fn registry_package_url(&self, nv: &PackageNv) -> Url {
-    self
-      .registry_url()
-      .join(&format!("{}/{}/", nv.name, nv.version))
-      .unwrap()
+    default_registry_package_url(self.registry_url(), nv)
   }
 
   fn registry_package_url_to_nv(&self, url: &Url) -> Option<PackageNv> {
-    let path = url.as_str().strip_prefix(self.registry_url().as_str())?;
-    let path = path.strip_prefix('/').unwrap_or(path);
-    let parts = path.split('/').take(3).collect::<Vec<_>>();
-    if parts.len() != 3 {
-      return None;
-    }
-    Some(PackageNv {
-      name: format!("{}/{}", parts[0], parts[1]),
-      version: deno_semver::Version::parse_standard(parts[2]).ok()?,
-    })
+    default_registry_package_url_to_nv(self.registry_url(), url)
   }
 
   /// An optional method which returns cache info for a module specifier.
@@ -158,6 +146,29 @@ pub trait Loader {
     _module_info: &ModuleInfo,
   ) {
   }
+}
+
+/// Default function used to get a package's
+pub fn default_registry_package_url(registry_url: &Url, nv: &PackageNv) -> Url {
+  registry_url
+    .join(&format!("{}/{}/", nv.name, nv.version))
+    .unwrap()
+}
+
+pub fn default_registry_package_url_to_nv(
+  registry_url: &Url,
+  url: &Url,
+) -> Option<PackageNv> {
+  let path = url.as_str().strip_prefix(registry_url.as_str())?;
+  let path = path.strip_prefix('/').unwrap_or(path);
+  let parts = path.split('/').take(3).collect::<Vec<_>>();
+  if parts.len() != 3 {
+    return None;
+  }
+  Some(PackageNv {
+    name: format!("{}/{}", parts[0], parts[1]),
+    version: deno_semver::Version::parse_standard(parts[2]).ok()?,
+  })
 }
 
 #[derive(Error, Debug)]

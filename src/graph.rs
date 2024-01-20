@@ -19,6 +19,7 @@ use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
 use crate::packages::resolve_version;
+use crate::packages::JsrOrNpmPackageReq;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
 use crate::packages::PackageSpecifiers;
@@ -3376,6 +3377,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   ) {
     match JsrPackageReqReference::from_specifier(&specifier) {
       Ok(package_ref) => {
+        if let Some(range) = &maybe_range {
+          if let Some(nv) =
+            self.loader.registry_package_url_to_nv(&range.specifier)
+          {
+            self.graph.packages.add_dependency(
+              nv,
+              JsrOrNpmPackageReq::jsr(package_ref.req().clone()),
+            );
+          }
+        }
         for workspace_member in &self.workspace_members {
           if workspace_member.nv.name == package_ref.req().name {
             if package_ref
@@ -3495,6 +3506,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   ) {
     match NpmPackageReqReference::from_specifier(&specifier) {
       Ok(package_ref) => {
+        if let Some(range) = &maybe_range {
+          if let Some(nv) =
+            self.loader.registry_package_url_to_nv(&range.specifier)
+          {
+            self.graph.packages.add_dependency(
+              nv,
+              JsrOrNpmPackageReq::npm(package_ref.req().clone()),
+            );
+          }
+        }
+
         if self
           .state
           .npm
