@@ -141,6 +141,7 @@ impl PackageSpecifiers {
     self.package_reqs.insert(package_req, nv);
   }
 
+  /// Gets the package constraint dependencies of JSR packages found in the graph.
   pub fn package_deps(
     &self,
   ) -> impl Iterator<Item = (&PackageNv, impl Iterator<Item = &JsrOrNpmPackageReq>)>
