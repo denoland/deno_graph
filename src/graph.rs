@@ -32,6 +32,7 @@ use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
+use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::jsr::JsrPackageReqReference;
 use deno_semver::npm::NpmPackageNvReference;
 use deno_semver::npm::NpmPackageReqReference;
@@ -3376,6 +3377,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   ) {
     match JsrPackageReqReference::from_specifier(&specifier) {
       Ok(package_ref) => {
+        if let Some(range) = &maybe_range {
+          if let Some(nv) =
+            self.loader.registry_package_url_to_nv(&range.specifier)
+          {
+            self.graph.packages.add_dependency(
+              nv,
+              JsrDepPackageReq::jsr(package_ref.req().clone()),
+            );
+          }
+        }
         for workspace_member in &self.workspace_members {
           if workspace_member.nv.name == package_ref.req().name {
             if package_ref
@@ -3495,6 +3506,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   ) {
     match NpmPackageReqReference::from_specifier(&specifier) {
       Ok(package_ref) => {
+        if let Some(range) = &maybe_range {
+          if let Some(nv) =
+            self.loader.registry_package_url_to_nv(&range.specifier)
+          {
+            self.graph.packages.add_dependency(
+              nv,
+              JsrDepPackageReq::npm(package_ref.req().clone()),
+            );
+          }
+        }
+
         if self
           .state
           .npm

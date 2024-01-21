@@ -2,7 +2,9 @@
 
 use std::collections::BTreeMap;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
+use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
@@ -82,6 +84,7 @@ impl JsrPackageVersionInfo {
 struct PackageNvInfo {
   /// Collection of exports used.
   exports: IndexMap<String, String>,
+  found_dependencies: HashSet<JsrDepPackageReq>,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
@@ -108,6 +111,30 @@ impl PackageSpecifiers {
       nvs.push(nv.clone());
     }
     self.package_reqs.insert(package_req, nv);
+  }
+
+  /// Gets the dependencies (package constraints) of JSR packages found in the graph.
+  pub fn package_deps(
+    &self,
+  ) -> impl Iterator<Item = (&PackageNv, impl Iterator<Item = &JsrDepPackageReq>)>
+  {
+    self.packages.iter().map(|(nv, info)| {
+      let deps = info.found_dependencies.iter();
+      (nv, deps)
+    })
+  }
+
+  pub(crate) fn add_dependency(
+    &mut self,
+    nv: PackageNv,
+    dep: JsrDepPackageReq,
+  ) {
+    self
+      .packages
+      .entry(nv.clone())
+      .or_default()
+      .found_dependencies
+      .insert(dep);
   }
 
   pub(crate) fn add_export(&mut self, nv: PackageNv, export: (String, String)) {

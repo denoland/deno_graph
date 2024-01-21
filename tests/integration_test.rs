@@ -5,6 +5,7 @@
 // out of deno_graph that should be public
 
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::rc::Rc;
 
@@ -71,6 +72,22 @@ async fn test_graph_specs() {
     let update_var = std::env::var("UPDATE");
     let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
     output_text.push('\n');
+    // include the list of jsr dependencies
+    let jsr_deps = result
+      .graph
+      .packages
+      .package_deps()
+      .map(|(k, v)| {
+        (k.to_string(), v.map(|v| v.to_string()).collect::<Vec<_>>())
+      })
+      .filter(|(_, v)| !v.is_empty())
+      .collect::<BTreeMap<_, _>>();
+    if !jsr_deps.is_empty() {
+      output_text.push_str("\njsr deps: ");
+      output_text.push_str(&format!("{:#?}", jsr_deps));
+      output_text.push('\n');
+    }
+    // now the fast check modules
     let fast_check_modules = result.graph.modules().filter_map(|module| {
       let module = module.esm()?;
       let fast_check = module.fast_check.as_ref()?;
