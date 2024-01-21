@@ -19,7 +19,6 @@ use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
 use crate::packages::resolve_version;
-use crate::packages::JsrOrNpmPackageReq;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
 use crate::packages::PackageSpecifiers;
@@ -33,6 +32,7 @@ use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
+use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::jsr::JsrPackageReqReference;
 use deno_semver::npm::NpmPackageNvReference;
 use deno_semver::npm::NpmPackageReqReference;
@@ -3383,7 +3383,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           {
             self.graph.packages.add_dependency(
               nv,
-              JsrOrNpmPackageReq::jsr(package_ref.req().clone()),
+              JsrDepPackageReq::jsr(package_ref.req().clone()),
             );
           }
         }
@@ -3512,7 +3512,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           {
             self.graph.packages.add_dependency(
               nv,
-              JsrOrNpmPackageReq::npm(package_ref.req().clone()),
+              JsrDepPackageReq::npm(package_ref.req().clone()),
             );
           }
         }

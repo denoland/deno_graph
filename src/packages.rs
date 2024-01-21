@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use deno_semver::package::PackageKind;
+use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
@@ -14,34 +14,6 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::ModuleInfo;
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct JsrOrNpmPackageReq {
-  pub kind: PackageKind,
-  pub req: PackageReq,
-}
-
-impl std::fmt::Display for JsrOrNpmPackageReq {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{}{}", self.kind.scheme_with_colon(), self.req)
-  }
-}
-
-impl JsrOrNpmPackageReq {
-  pub fn jsr(req: PackageReq) -> Self {
-    Self {
-      kind: PackageKind::Jsr,
-      req,
-    }
-  }
-
-  pub fn npm(req: PackageReq) -> Self {
-    Self {
-      kind: PackageKind::Npm,
-      req,
-    }
-  }
-}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct JsrPackageInfo {
@@ -112,7 +84,7 @@ impl JsrPackageVersionInfo {
 struct PackageNvInfo {
   /// Collection of exports used.
   exports: IndexMap<String, String>,
-  found_dependencies: HashSet<JsrOrNpmPackageReq>,
+  found_dependencies: HashSet<JsrDepPackageReq>,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
@@ -144,7 +116,7 @@ impl PackageSpecifiers {
   /// Gets the dependencies (package constraints) of JSR packages found in the graph.
   pub fn package_deps(
     &self,
-  ) -> impl Iterator<Item = (&PackageNv, impl Iterator<Item = &JsrOrNpmPackageReq>)>
+  ) -> impl Iterator<Item = (&PackageNv, impl Iterator<Item = &JsrDepPackageReq>)>
   {
     self.packages.iter().map(|(nv, info)| {
       let deps = info.found_dependencies.iter();
@@ -155,7 +127,7 @@ impl PackageSpecifiers {
   pub(crate) fn add_dependency(
     &mut self,
     nv: PackageNv,
-    dep: JsrOrNpmPackageReq,
+    dep: JsrDepPackageReq,
   ) {
     self
       .packages
