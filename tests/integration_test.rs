@@ -110,7 +110,8 @@ async fn test_graph_specs() {
           ));
         }
         deno_graph::FastCheckTypeModuleSlot::Error(diagnostic) => {
-          output_text.push_str(&indent(&diagnostic.message_with_range()));
+          output_text
+            .push_str(&indent(&diagnostic.message_with_range_for_test()));
         }
       }
     }
