@@ -956,7 +956,7 @@ impl<'a> FastCheckTransformer<'a> {
           }
         }
         BlockStmtOrExpr::Expr(expr) => {
-          let inferred_type = self.maybe_infer_type_from_expr(&expr);
+          let inferred_type = self.maybe_infer_type_from_expr(expr);
           match inferred_type {
             Some(t) => {
               n.return_type = Some(Box::new(TsTypeAnn {
@@ -966,7 +966,7 @@ impl<'a> FastCheckTransformer<'a> {
             }
             None => {
               let is_expr_leavable =
-                self.maybe_transform_expr_if_leavable(&mut **expr, None)?;
+                self.maybe_transform_expr_if_leavable(expr, None)?;
               if is_expr_leavable {
                 clear_body = false;
               } else {
@@ -986,8 +986,8 @@ impl<'a> FastCheckTransformer<'a> {
       *n.body = BlockStmtOrExpr::Expr(obj_as_any_expr());
     }
 
-    for mut pat in &mut n.params {
-      self.handle_param_pat(&mut pat)?;
+    for pat in &mut n.params {
+      self.handle_param_pat(pat)?;
     }
 
     n.is_async = false;
@@ -1139,7 +1139,7 @@ impl<'a> FastCheckTransformer<'a> {
               None => {
                 let is_init_leavable = match decl.init.as_mut() {
                   Some(init) => self.maybe_transform_expr_if_leavable(
-                    &mut **init,
+                    init,
                     Some(ident.id.range()),
                   )?,
                   None => false,
