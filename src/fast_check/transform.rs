@@ -720,6 +720,7 @@ impl<'a> FastCheckTransformer<'a> {
           if !n.is_optional && !n.is_static {
             n.definite = true;
           }
+          n.value = None;
           return Ok(true);
         }
         if n.type_ann.is_none() {
@@ -752,8 +753,14 @@ impl<'a> FastCheckTransformer<'a> {
               }
             }
           }
+        } else {
+          n.value = None;
         }
-        n.definite = !n.is_optional && !n.is_static && !n.declare;
+        n.definite = !n.is_optional
+          && !n.is_static
+          && !n.declare
+          && !n.is_abstract
+          && n.value.is_none();
         n.decorators.clear();
         Ok(true)
       }
@@ -992,7 +999,11 @@ impl<'a> FastCheckTransformer<'a> {
     }
 
     if clear_body {
-      *n.body = BlockStmtOrExpr::Expr(obj_as_any_expr());
+      // replace the body with `({} as any)`
+      *n.body = BlockStmtOrExpr::Expr(Box::new(Expr::Paren(ParenExpr {
+        span: DUMMY_SP,
+        expr: obj_as_any_expr(),
+      })));
     }
 
     for pat in &mut n.params {
@@ -1419,6 +1430,7 @@ impl<'a> FastCheckTransformer<'a> {
           None
         }
       }
+      Expr::Paren(n) => self.maybe_infer_type_from_expr(&n.expr),
       Expr::This(_)
       | Expr::Array(_)
       | Expr::Object(_)
@@ -1440,7 +1452,6 @@ impl<'a> FastCheckTransformer<'a> {
       | Expr::Yield(_)
       | Expr::MetaProp(_)
       | Expr::Await(_)
-      | Expr::Paren(_)
       | Expr::JSXMember(_)
       | Expr::JSXNamespacedName(_)
       | Expr::JSXEmpty(_)
