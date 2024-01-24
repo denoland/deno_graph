@@ -8,9 +8,10 @@
 import type { Foo, Bar } from "./b.ts";
 
 export class Foo {
-  bar = (a: string) => "test";
+  fizz = (a: string) => "test";
   foo = () => "test" as Foo;
   bar = (b: Bar) => 1;
+  bax = function(b: Bax) {};
 }
 
 # https://jsr.io/@scope/a/1.0.0/b.ts
@@ -76,7 +77,7 @@ import 'jsr:@scope/a'
           }
         }
       ],
-      "size": 145,
+      "size": 175,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -114,7 +115,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   import type { Foo, Bar } from "./b.ts";
   export class Foo {
-    bar = (a: string): string =>({} as any);
+    fizz = (a: string): string =>({} as any);
     foo = (): Foo =>({} as any);
     bar = (b: Bar): number =>({} as any);
+    bax = function(b: Bax): void {};
   }
