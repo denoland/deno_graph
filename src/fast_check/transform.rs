@@ -11,6 +11,7 @@ use deno_ast::swc::ast::Accessibility;
 use deno_ast::swc::ast::ArrayLit;
 use deno_ast::swc::ast::ArrowExpr;
 use deno_ast::swc::ast::BindingIdent;
+use deno_ast::swc::ast::BlockStmt;
 use deno_ast::swc::ast::BlockStmtOrExpr;
 use deno_ast::swc::ast::CallExpr;
 use deno_ast::swc::ast::Callee;
@@ -853,25 +854,9 @@ impl<'a> FastCheckTransformer<'a> {
       if let Some(body) = &mut n.body {
         let return_stmts = get_return_stmts_with_arg_from_function_body(body);
         if return_stmts.is_empty() {
-          let void_type =
-            Box::new(ts_keyword_type(TsKeywordTypeKind::TsVoidKeyword));
           n.return_type = Some(Box::new(TsTypeAnn {
             span: DUMMY_SP,
-            type_ann: if n.is_async {
-              Box::new(TsType::TsTypeRef(TsTypeRef {
-                span: DUMMY_SP,
-                type_name: TsEntityName::Ident(Ident::new(
-                  "Promise".into(),
-                  DUMMY_SP,
-                )),
-                type_params: Some(Box::new(TsTypeParamInstantiation {
-                  span: DUMMY_SP,
-                  params: vec![void_type],
-                })),
-              }))
-            } else {
-              void_type
-            },
+            type_ann: void_or_promise_void(n.is_async),
           }));
         } else {
           self.mark_diagnostic(
@@ -886,25 +871,16 @@ impl<'a> FastCheckTransformer<'a> {
     if let Some(body) = &mut n.body {
       body.stmts.clear();
 
-      // push a return stmt to suppress type errors
-      let has_void_return_type = n
+      // push a return stmt to suppress type errors, if the function is not a
+      // void function
+      let return_expr = n
         .return_type
         .as_ref()
-        .map(|t| is_void_type(&t.type_ann))
-        .unwrap_or(true);
-      if !has_void_return_type {
-        let has_never_return_type = n
-          .return_type
-          .as_ref()
-          .map(|t| is_never_type(&t.type_ann))
-          .unwrap_or(false);
+        .and_then(|t| replacement_return_value(&t.type_ann));
+      if let Some(return_expr) = return_expr {
         body.stmts.push(Stmt::Return(ReturnStmt {
           span: DUMMY_SP,
-          arg: Some(if has_never_return_type {
-            obj_as_never_expr()
-          } else {
-            obj_as_any_expr()
-          }),
+          arg: Some(return_expr),
         }));
       }
     }
@@ -928,40 +904,16 @@ impl<'a> FastCheckTransformer<'a> {
   ) -> Result<(), Box<FastCheckDiagnostic>> {
     let range = parent_id_range.unwrap_or_else(|| n.range());
 
-    let mut clear_body = true;
-
     if n.return_type.is_none() {
-      if n.is_generator {
-        self.mark_diagnostic(
-          FastCheckDiagnostic::MissingExplicitReturnType {
-            range: self.source_range_to_range(range),
-          },
-        )?;
-      }
+      // arrow functions can not be generators, let's ignore
 
       match &mut *n.body {
         BlockStmtOrExpr::BlockStmt(body) => {
           let return_stmts = get_return_stmts_with_arg_from_function_body(body);
           if return_stmts.is_empty() {
-            let void_type =
-              Box::new(ts_keyword_type(TsKeywordTypeKind::TsVoidKeyword));
             n.return_type = Some(Box::new(TsTypeAnn {
               span: DUMMY_SP,
-              type_ann: if n.is_async {
-                Box::new(TsType::TsTypeRef(TsTypeRef {
-                  span: DUMMY_SP,
-                  type_name: TsEntityName::Ident(Ident::new(
-                    "Promise".into(),
-                    DUMMY_SP,
-                  )),
-                  type_params: Some(Box::new(TsTypeParamInstantiation {
-                    span: DUMMY_SP,
-                    params: vec![void_type],
-                  })),
-                }))
-              } else {
-                void_type
-              },
+              type_ann: void_or_promise_void(n.is_async),
             }));
           } else {
             self.mark_diagnostic(
@@ -975,17 +927,19 @@ impl<'a> FastCheckTransformer<'a> {
           let inferred_type = self.maybe_infer_type_from_expr(expr);
           match inferred_type {
             Some(t) => {
+              let mut return_type = Box::new(t);
+              if n.is_async {
+                return_type = self.promise_wrap_type(return_type)
+              }
               n.return_type = Some(Box::new(TsTypeAnn {
                 span: DUMMY_SP,
-                type_ann: Box::new(t),
+                type_ann: return_type,
               }));
             }
             None => {
               let is_expr_leavable =
                 self.maybe_transform_expr_if_leavable(expr, None)?;
-              if is_expr_leavable {
-                clear_body = false;
-              } else {
+              if !is_expr_leavable {
                 self.mark_diagnostic(
                   FastCheckDiagnostic::MissingExplicitReturnType {
                     range: self.source_range_to_range(range),
@@ -998,20 +952,25 @@ impl<'a> FastCheckTransformer<'a> {
       }
     }
 
-    if clear_body {
-      // replace the body with `({} as any)`
-      *n.body = BlockStmtOrExpr::Expr(Box::new(Expr::Paren(ParenExpr {
-        span: DUMMY_SP,
-        expr: obj_as_any_expr(),
-      })));
+    if let Some(t) = &n.return_type {
+      // there is an explicit return type, so we can clear the body
+      let return_expr = replacement_return_value(&t.type_ann);
+      *n.body = return_expr
+        .map(|e| BlockStmtOrExpr::Expr(Box::new(paren_expr(e))))
+        .unwrap_or_else(|| {
+          BlockStmtOrExpr::BlockStmt(BlockStmt {
+            span: DUMMY_SP,
+            stmts: vec![],
+          })
+        });
+
+      // Only reset is_async if there is an explicit return type
+      n.is_async = false;
     }
 
     for pat in &mut n.params {
       self.handle_param_pat(pat)?;
     }
-
-    n.is_async = false;
-    n.is_generator = false;
 
     Ok(())
   }
@@ -1277,6 +1236,7 @@ impl<'a> FastCheckTransformer<'a> {
     DiagnosticRange::new(self.specifier.clone(), range)
   }
 
+  // KEEP IN SYNC with is_expr_leavable
   fn maybe_transform_expr_if_leavable(
     &mut self,
     expr: &mut Expr,
@@ -1499,6 +1459,55 @@ impl<'a> FastCheckTransformer<'a> {
       return false;
     };
     matches!(arg_lit, Lit::Str(_))
+  }
+
+  fn promise_wrap_type(&self, ty: Box<TsType>) -> Box<TsType> {
+    match ty.as_ref() {
+      TsType::TsTypeRef(TsTypeRef {
+        type_name: TsEntityName::Ident(ident),
+        type_params: Some(type_params),
+        ..
+      }) if type_params.params.len() == 1
+        && ident.sym == "Promise"
+        && ident.to_id().1 == self.parsed_source.unresolved_context() =>
+      {
+        ty
+      }
+      _ => Box::new(TsType::TsTypeRef(TsTypeRef {
+        span: DUMMY_SP,
+        type_name: TsEntityName::Ident(ident("Promise".into())),
+        type_params: Some(Box::new(TsTypeParamInstantiation {
+          span: DUMMY_SP,
+          params: vec![ty],
+        })),
+      })),
+    }
+  }
+}
+
+fn void_or_promise_void(is_async: bool) -> Box<TsType> {
+  let void_type = Box::new(ts_keyword_type(TsKeywordTypeKind::TsVoidKeyword));
+  if is_async {
+    Box::new(TsType::TsTypeRef(TsTypeRef {
+      span: DUMMY_SP,
+      type_name: TsEntityName::Ident(ident("Promise".into())),
+      type_params: Some(Box::new(TsTypeParamInstantiation {
+        span: DUMMY_SP,
+        params: vec![void_type],
+      })),
+    }))
+  } else {
+    void_type
+  }
+}
+
+fn replacement_return_value(ty: &TsType) -> Option<Box<Expr>> {
+  if is_void_type(ty) {
+    None
+  } else if is_never_type(ty) {
+    Some(obj_as_never_expr())
+  } else {
+    Some(obj_as_any_expr())
   }
 }
 

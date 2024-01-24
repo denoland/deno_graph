@@ -89,6 +89,7 @@ fn get_return_stmts_with_arg_from_stmt(stmt: &Stmt) -> Vec<&ReturnStmt> {
   }
 }
 
+// KEEP IN SYNC with maybe_transform_expr_if_leavable
 pub fn is_expr_leavable(expr: &Expr) -> bool {
   fn is_member_prop_leavable(n: &MemberProp) -> bool {
     match n {

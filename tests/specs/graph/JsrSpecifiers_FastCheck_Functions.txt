@@ -59,6 +59,10 @@ export function test14(): never {
   throw new Error("test");
 }
 
+export function* test15(): Generator<number> {
+  yield 1;
+}
+
 class PublicOther {
 }
 class PublicOther2 {
@@ -101,7 +105,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1438,
+      "size": 1499,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -160,6 +164,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export function test13([]: number[] = [] as any): void {}
   export function test14(): never {
     return {} as never;
+  }
+  export function test15(): Generator<number> {
+    return {} as any;
   }
   class PublicOther {
   }
