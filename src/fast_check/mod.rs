@@ -51,7 +51,7 @@ pub enum FastCheckDiagnostic {
   UnsupportedDefaultExportExpr { range: DiagnosticRange },
   #[error("found destructuring, which is not supported in the public API")]
   UnsupportedDestructuring { range: DiagnosticRange },
-  #[error("found global augmentations, which are not supported.")]
+  #[error("found global augmentations, which are not supported")]
   UnsupportedGlobalModule { range: DiagnosticRange },
   #[error("require statements are a CommonJS feature, which are not supported in ES modules")]
   UnsupportedRequire { range: DiagnosticRange },

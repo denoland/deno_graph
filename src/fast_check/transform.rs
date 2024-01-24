@@ -733,19 +733,28 @@ impl<'a> FastCheckTransformer<'a> {
                 span: DUMMY_SP,
                 type_ann: Box::new(t),
               }));
+              n.value = None;
             }
             None => {
-              self.mark_diagnostic(
-                FastCheckDiagnostic::MissingExplicitType {
-                  range: self.source_range_to_range(n.key.range()),
-                },
-              )?;
+              let is_value_leavable = match n.value.as_mut() {
+                Some(init) => self.maybe_transform_expr_if_leavable(
+                  init,
+                  Some(n.key.range()),
+                )?,
+                None => false,
+              };
+              if !is_value_leavable {
+                self.mark_diagnostic(
+                  FastCheckDiagnostic::MissingExplicitType {
+                    range: self.source_range_to_range(n.key.range()),
+                  },
+                )?;
+              }
             }
           }
         }
         n.definite = !n.is_optional && !n.is_static && !n.declare;
         n.decorators.clear();
-        n.value = None;
         Ok(true)
       }
       ClassMember::AutoAccessor(_n) => {
