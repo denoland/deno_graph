@@ -9,7 +9,9 @@ use std::sync::Arc;
 
 use deno_ast::swc::ast::Accessibility;
 use deno_ast::swc::ast::ArrayLit;
+use deno_ast::swc::ast::ArrowExpr;
 use deno_ast::swc::ast::BindingIdent;
+use deno_ast::swc::ast::BlockStmtOrExpr;
 use deno_ast::swc::ast::CallExpr;
 use deno_ast::swc::ast::Callee;
 use deno_ast::swc::ast::Class;
@@ -33,7 +35,9 @@ use deno_ast::swc::ast::ParenExpr;
 use deno_ast::swc::ast::Pat;
 use deno_ast::swc::ast::PrivateName;
 use deno_ast::swc::ast::PrivateProp;
+use deno_ast::swc::ast::Prop;
 use deno_ast::swc::ast::PropName;
+use deno_ast::swc::ast::PropOrSpread;
 use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
 use deno_ast::swc::ast::Str;
@@ -87,9 +91,8 @@ use crate::ModuleInfo;
 use crate::WorkspaceMember;
 
 use super::range_finder::ModulePublicRanges;
-use super::swc_helpers::get_return_stmts_with_arg_from_function;
+use super::swc_helpers::get_return_stmts_with_arg_from_function_body;
 use super::swc_helpers::ident;
-use super::swc_helpers::is_expr_leavable;
 use super::swc_helpers::is_never_type;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::ts_keyword_type;
@@ -312,7 +315,7 @@ impl<'a> FastCheckTransformer<'a> {
             return Ok(false);
           }
 
-          if is_expr_leavable(&n.expr)
+          if self.maybe_transform_expr_if_leavable(&mut n.expr, None)?
             || is_expr_ident_or_member_idents(&n.expr)
           {
             Ok(true)
@@ -822,46 +825,45 @@ impl<'a> FastCheckTransformer<'a> {
     }
 
     if !is_set_accessor && n.return_type.is_none() {
+      let range = parent_id_range.unwrap_or_else(|| n.range());
       if n.is_generator {
         self.mark_diagnostic(
           FastCheckDiagnostic::MissingExplicitReturnType {
-            range: self.source_range_to_range(
-              parent_id_range.unwrap_or_else(|| n.range()),
-            ),
+            range: self.source_range_to_range(range),
           },
         )?;
       }
 
-      let return_stmts = get_return_stmts_with_arg_from_function(n);
-      if return_stmts.is_empty() {
-        let void_type =
-          Box::new(ts_keyword_type(TsKeywordTypeKind::TsVoidKeyword));
-        n.return_type = Some(Box::new(TsTypeAnn {
-          span: DUMMY_SP,
-          type_ann: if n.is_async {
-            Box::new(TsType::TsTypeRef(TsTypeRef {
-              span: DUMMY_SP,
-              type_name: TsEntityName::Ident(Ident::new(
-                "Promise".into(),
-                DUMMY_SP,
-              )),
-              type_params: Some(Box::new(TsTypeParamInstantiation {
+      if let Some(body) = &mut n.body {
+        let return_stmts = get_return_stmts_with_arg_from_function_body(body);
+        if return_stmts.is_empty() {
+          let void_type =
+            Box::new(ts_keyword_type(TsKeywordTypeKind::TsVoidKeyword));
+          n.return_type = Some(Box::new(TsTypeAnn {
+            span: DUMMY_SP,
+            type_ann: if n.is_async {
+              Box::new(TsType::TsTypeRef(TsTypeRef {
                 span: DUMMY_SP,
-                params: vec![void_type],
-              })),
-            }))
-          } else {
-            void_type
-          },
-        }));
-      } else {
-        self.mark_diagnostic(
-          FastCheckDiagnostic::MissingExplicitReturnType {
-            range: self.source_range_to_range(
-              parent_id_range.unwrap_or_else(|| n.range()),
-            ),
-          },
-        )?;
+                type_name: TsEntityName::Ident(Ident::new(
+                  "Promise".into(),
+                  DUMMY_SP,
+                )),
+                type_params: Some(Box::new(TsTypeParamInstantiation {
+                  span: DUMMY_SP,
+                  params: vec![void_type],
+                })),
+              }))
+            } else {
+              void_type
+            },
+          }));
+        } else {
+          self.mark_diagnostic(
+            FastCheckDiagnostic::MissingExplicitReturnType {
+              range: self.source_range_to_range(range),
+            },
+          )?;
+        }
       }
     }
 
@@ -903,6 +905,97 @@ impl<'a> FastCheckTransformer<'a> {
     Ok(())
   }
 
+  fn transform_arrow(
+    &mut self,
+    n: &mut ArrowExpr,
+    parent_id_range: Option<SourceRange>,
+  ) -> Result<(), Box<FastCheckDiagnostic>> {
+    let range = parent_id_range.unwrap_or_else(|| n.range());
+
+    let mut clear_body = true;
+
+    if n.return_type.is_none() {
+      if n.is_generator {
+        self.mark_diagnostic(
+          FastCheckDiagnostic::MissingExplicitReturnType {
+            range: self.source_range_to_range(range),
+          },
+        )?;
+      }
+
+      match &mut *n.body {
+        BlockStmtOrExpr::BlockStmt(body) => {
+          let return_stmts = get_return_stmts_with_arg_from_function_body(body);
+          if return_stmts.is_empty() {
+            let void_type =
+              Box::new(ts_keyword_type(TsKeywordTypeKind::TsVoidKeyword));
+            n.return_type = Some(Box::new(TsTypeAnn {
+              span: DUMMY_SP,
+              type_ann: if n.is_async {
+                Box::new(TsType::TsTypeRef(TsTypeRef {
+                  span: DUMMY_SP,
+                  type_name: TsEntityName::Ident(Ident::new(
+                    "Promise".into(),
+                    DUMMY_SP,
+                  )),
+                  type_params: Some(Box::new(TsTypeParamInstantiation {
+                    span: DUMMY_SP,
+                    params: vec![void_type],
+                  })),
+                }))
+              } else {
+                void_type
+              },
+            }));
+          } else {
+            self.mark_diagnostic(
+              FastCheckDiagnostic::MissingExplicitReturnType {
+                range: self.source_range_to_range(range),
+              },
+            )?;
+          }
+        }
+        BlockStmtOrExpr::Expr(expr) => {
+          let inferred_type = self.maybe_infer_type_from_expr(&expr);
+          match inferred_type {
+            Some(t) => {
+              n.return_type = Some(Box::new(TsTypeAnn {
+                span: DUMMY_SP,
+                type_ann: Box::new(t),
+              }));
+            }
+            None => {
+              let is_expr_leavable =
+                self.maybe_transform_expr_if_leavable(&mut **expr, None)?;
+              if is_expr_leavable {
+                clear_body = false;
+              } else {
+                self.mark_diagnostic(
+                  FastCheckDiagnostic::MissingExplicitReturnType {
+                    range: self.source_range_to_range(range),
+                  },
+                )?;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if clear_body {
+      *n.body = BlockStmtOrExpr::Expr(obj_as_any_expr());
+    }
+
+    for mut pat in &mut n.params {
+      self.handle_param_pat(&mut pat)?;
+    }
+
+    n.is_async = false;
+    n.is_generator = false;
+
+    Ok(())
+  }
+
   fn handle_param_pat(
     &mut self,
     pat: &mut Pat,
@@ -929,7 +1022,11 @@ impl<'a> FastCheckTransformer<'a> {
                 *pat = Pat::Ident((*ident).clone());
               }
               None => {
-                if !is_expr_leavable(&assign.right) {
+                let is_expr_leavable = self.maybe_transform_expr_if_leavable(
+                  &mut assign.right,
+                  Some(ident.range()),
+                )?;
+                if !is_expr_leavable {
                   self.mark_diagnostic(
                     FastCheckDiagnostic::MissingExplicitType {
                       range: self.source_range_to_range(ident.range()),
@@ -945,7 +1042,9 @@ impl<'a> FastCheckTransformer<'a> {
         }
         Pat::Array(p) => {
           if p.type_ann.is_none() {
-            if !is_expr_leavable(&assign.right) {
+            if !self
+              .maybe_transform_expr_if_leavable(&mut assign.right, None)?
+            {
               self.mark_diagnostic(
                 FastCheckDiagnostic::MissingExplicitType {
                   range: self.source_range_to_range(p.range()),
@@ -959,7 +1058,9 @@ impl<'a> FastCheckTransformer<'a> {
         }
         Pat::Object(p) => {
           if p.type_ann.is_none() {
-            if !is_expr_leavable(&assign.right) {
+            if !self
+              .maybe_transform_expr_if_leavable(&mut assign.right, None)?
+            {
               self.mark_diagnostic(
                 FastCheckDiagnostic::MissingExplicitType {
                   range: self.source_range_to_range(p.range()),
@@ -1036,11 +1137,13 @@ impl<'a> FastCheckTransformer<'a> {
                 decl.init = Some(obj_as_any_expr());
               }
               None => {
-                let is_init_leavable = decl
-                  .init
-                  .as_ref()
-                  .map(|i| is_expr_leavable(i))
-                  .unwrap_or(false);
+                let is_init_leavable = match decl.init.as_mut() {
+                  Some(init) => self.maybe_transform_expr_if_leavable(
+                    &mut **init,
+                    Some(ident.id.range()),
+                  )?,
+                  None => false,
+                };
                 if !is_init_leavable {
                   self.mark_diagnostic(
                     FastCheckDiagnostic::MissingExplicitType {
@@ -1152,6 +1255,119 @@ impl<'a> FastCheckTransformer<'a> {
 
   fn source_range_to_range(&self, range: SourceRange) -> DiagnosticRange {
     DiagnosticRange::new(self.specifier.clone(), range)
+  }
+
+  fn maybe_transform_expr_if_leavable(
+    &mut self,
+    expr: &mut Expr,
+    parent_id_range: Option<SourceRange>,
+  ) -> Result<bool, Box<FastCheckDiagnostic>> {
+    let mut recurse =
+      |expr: &mut Expr| self.maybe_transform_expr_if_leavable(expr, None);
+
+    let is_leavable = match expr {
+      Expr::This(_) => true,
+      Expr::Array(n) => {
+        let mut is_leavable = true;
+        for elem in &mut n.elems {
+          is_leavable = match elem {
+            Some(elem) => recurse(&mut elem.expr)?,
+            None => true,
+          };
+          if !is_leavable {
+            break
+          }
+        }
+        is_leavable
+    },
+      Expr::Object(n) =>  {
+        let mut is_leavable = true;
+        for prop in &mut n.props {
+          is_leavable = match prop {
+            PropOrSpread::Prop(prop) => match &mut **prop {
+              Prop::Shorthand(_) => true,
+              Prop::KeyValue(prop) => match &mut prop.key {
+                PropName::Ident(_) => recurse(&mut prop.value)?,
+                PropName::Str(_) => recurse(&mut prop.value)?,
+                PropName::Num(_) => recurse(&mut prop.value)?,
+                PropName::Computed(c) => {
+                  recurse(&mut c.expr)? && recurse(&mut prop.value)?
+                }
+                PropName::BigInt(_) => recurse(&mut prop.value)?,
+              },
+              Prop::Assign(n) => recurse(&mut n.value)?,
+              Prop::Getter(_) | Prop::Setter(_) | Prop::Method(_) => false,
+            },
+            PropOrSpread::Spread(n) => {
+              recurse(&mut n.expr)?
+            },
+          };
+          if !is_leavable {
+            break
+          }
+        }
+        is_leavable
+      }
+      Expr::Unary(n) => recurse(&mut n.arg)?,
+      Expr::Update(n) => recurse(&mut n.arg)?,
+      Expr::Bin(n) => recurse(&mut n.left)? && recurse(&mut n.right)?,
+      Expr::Assign(_) | Expr::SuperProp(_) => false,
+      Expr::Cond(n) => {
+        recurse(&mut n.test)?
+          && recurse(&mut n.cons)?
+          && recurse(&mut n.alt)?
+      }
+      Expr::Member(n) => {
+        recurse(&mut n.obj)? && match &mut n.prop {
+          MemberProp::Ident(_) => true,
+          MemberProp::PrivateName(_) => false,
+          MemberProp::Computed(n) => {
+            self.maybe_transform_expr_if_leavable(&mut n.expr, None)?
+          }
+        }
+      }
+      Expr::Ident(_) => true,
+      Expr::Call(_) | Expr::New(_) | Expr::Seq(_)  => false,
+      Expr::Lit(n) => match n {
+        Lit::Str(_)
+        | Lit::Bool(_)
+        | Lit::Null(_)
+        | Lit::Num(_)
+        | Lit::BigInt(_)
+        | Lit::Regex(_) => true,
+        Lit::JSXText(_) => false,
+      },
+      Expr::Await(n) => recurse(&mut n.arg)?,
+      Expr::Paren(n) => recurse(&mut n.expr)?,
+      Expr::TsTypeAssertion(_) | Expr::TsAs(_) => false,
+      Expr::TsConstAssertion(n) => recurse(&mut n.expr)?,
+      Expr::TsNonNull(n) => recurse(&mut n.expr)?,
+      Expr::Fn(n) => {
+        self.transform_fn(&mut n.function, parent_id_range, false, false)?;
+        true
+      }
+      Expr::Arrow(n) => {
+        self.transform_arrow(n, parent_id_range)?;
+        true
+      }
+      Expr::Tpl(_)
+      | Expr::TaggedTpl(_)
+      | Expr::Class(_)
+      | Expr::Yield(_)
+      | Expr::MetaProp(_)
+      | Expr::JSXMember(_)
+      | Expr::JSXNamespacedName(_)
+      | Expr::JSXEmpty(_)
+      | Expr::JSXElement(_)
+      | Expr::JSXFragment(_)
+      | Expr::TsInstantiation(_)
+      | Expr::TsSatisfies(_)
+      | Expr::PrivateName(_)
+      // todo(dsherret): probably could analyze this more
+      | Expr::OptChain(_)
+      | Expr::Invalid(_) => false,
+    };
+    Ok(is_leavable)
   }
 
   fn maybe_infer_type_from_expr(&self, expr: &Expr) -> Option<TsType> {

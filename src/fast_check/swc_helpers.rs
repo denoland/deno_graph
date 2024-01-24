@@ -29,12 +29,9 @@ pub fn ts_keyword_type(kind: TsKeywordTypeKind) -> TsType {
   })
 }
 
-pub fn get_return_stmts_with_arg_from_function(
-  func: &deno_ast::swc::ast::Function,
+pub fn get_return_stmts_with_arg_from_function_body(
+  body: &deno_ast::swc::ast::BlockStmt,
 ) -> Vec<&ReturnStmt> {
-  let Some(body) = func.body.as_ref() else {
-    return Vec::new();
-  };
   let stmts = get_return_stmts_with_arg_from_stmts(&body.stmts);
   debug_assert!(stmts.iter().all(|stmt| stmt.arg.is_some()));
   stmts
