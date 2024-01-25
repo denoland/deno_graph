@@ -35,6 +35,15 @@ export const asIs2 = {
   g: 1++,
   h: [...[1, 2], ...["test"]],
 };
+export const func1 = function (): string { return "test" };
+export const func2 = (): string => "test";
+export const func3 = () => "test";
+export const func4 = () => "test" as const;
+export const func5 = async () => "test";
+export const func6 = async () => 1 as 1;
+export const func7 = async () => 1 as Promise<1>;
+export const func8 = async () => "test" as const;
+
 
 // inferring simple types
 export const inferred1 = 1 as 1;
@@ -47,7 +56,8 @@ export const inferred7 = 1 as 1 | 2 | 3 & 4;
 export const inferred8 = 1 as ["test", 1];
 export const inferred9 = 1 as [...string];
 export const inferred10 = 1 as (1 | 2n)[];
-export const inferred10 = 1 as (keyof string)[];
+export const inferred11 = 1 as (keyof string)[];
+export const inferred12 = (1);
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -84,7 +94,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1038,
+      "size": 1434,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -138,6 +148,16 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       ]
     ]
   };
+  export const func1 = function(): string {
+    return {} as any;
+  };
+  export const func2 = (): string =>({} as any);
+  export const func3 = (): string =>({} as any);
+  export const func4 = ()=>"test" as const;
+  export const func5 = (): Promise<string> =>({} as any);
+  export const func6 = (): Promise<1> =>({} as any);
+  export const func7 = (): Promise<1> =>({} as any);
+  export const func8 = async ()=>"test" as const;
   export const inferred1: 1 = {} as any;
   export const inferred2: string = {} as any;
   export const inferred3: true = {} as any;
@@ -148,4 +168,5 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export const inferred8: ["test", 1] = {} as any;
   export const inferred9: [...string] = {} as any;
   export const inferred10: (1 | 2n)[] = {} as any;
-  export const inferred10: (keyof string)[] = {} as any;
+  export const inferred11: (keyof string)[] = {} as any;
+  export const inferred12: number = {} as any;

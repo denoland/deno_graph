@@ -35,6 +35,11 @@ export class CookieMapBase {
   }
 }
 
+export class Bar {
+  abstract foo: string;
+  bar: number;
+}
+
 # mod.ts
 import 'jsr:@scope/a'
 
@@ -70,7 +75,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 742,
+      "size": 803,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -104,4 +109,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     [public2](): number {
       return {} as any;
     }
+  }
+  export class Bar {
+    abstract foo: string;
+    bar!: number;
   }

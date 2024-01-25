@@ -5,9 +5,7 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-global {
-  declare var Test: 5;
-}
+export const test4 = function () { return "test" };
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -44,7 +42,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 34,
+      "size": 52,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -58,5 +56,5 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  found global augmentations, which are not supported
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@0
+  missing explicit return type in the public API
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@13

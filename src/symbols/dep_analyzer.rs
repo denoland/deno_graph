@@ -165,7 +165,10 @@ impl DepsFiller {
         if let Some(type_ann) = &n.type_ann {
           self.visit_ts_type_ann(type_ann);
         } else if let Some(value) = &n.value {
-          self.visit_type_if_type_assertion(value);
+          let visited_type_assertion = self.visit_type_if_type_assertion(value);
+          if !visited_type_assertion && self.mode.visit_exprs() {
+            self.visit_expr(value);
+          }
         }
       }
       SymbolNodeRef::ClassParamProp(n) => self.visit_ts_param_prop(n),
