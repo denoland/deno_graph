@@ -13,7 +13,7 @@ import inner = Test.test;
 export { foo as bar, inner as baz, MyClass };
 
 # output
-file:///mod.ts: EsmModuleInfo {
+file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
         0,
     ),

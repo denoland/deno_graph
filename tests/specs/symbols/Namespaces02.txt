@@ -10,7 +10,7 @@ export namespace RootNs {
 }
 
 # output
-file:///mod.ts: EsmModuleInfo {
+file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
         0,
     ),

@@ -18,7 +18,7 @@ export { Test } from "./b.ts";
 export { Test, test1 } from "./c.ts";
 
 # output
-file:///a.ts: EsmModuleInfo {
+file:///a.ts: EsModuleInfo {
     module_id: ModuleId(
         1,
     ),
@@ -394,7 +394,7 @@ file:///a.ts: EsmModuleInfo {
         },
     },
 }
-file:///b.ts: EsmModuleInfo {
+file:///b.ts: EsModuleInfo {
     module_id: ModuleId(
         2,
     ),
@@ -471,7 +471,7 @@ file:///b.ts: EsmModuleInfo {
         },
     },
 }
-file:///c.ts: EsmModuleInfo {
+file:///c.ts: EsModuleInfo {
     module_id: ModuleId(
         3,
     ),
@@ -546,7 +546,7 @@ file:///c.ts: EsmModuleInfo {
         },
     },
 }
-file:///mod.ts: EsmModuleInfo {
+file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
         0,
     ),

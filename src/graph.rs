@@ -693,7 +693,7 @@ pub struct WorkspaceMember {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "kind")]
 pub enum Module {
-  Esm(EsmModule),
+  Esm(EsModule),
   // todo(#239): remove this when updating the --json output for 2.0
   #[serde(rename = "asserted")]
   Json(JsonModule),
@@ -721,7 +721,7 @@ impl Module {
     }
   }
 
-  pub fn esm(&self) -> Option<&EsmModule> {
+  pub fn esm(&self) -> Option<&EsModule> {
     if let Module::Esm(module) = &self {
       Some(module)
     } else {
@@ -817,7 +817,7 @@ pub struct FastCheckTypeModule {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct EsmModule {
+pub struct EsModule {
   #[serde(
     skip_serializing_if = "IndexMap::is_empty",
     serialize_with = "serialize_dependencies"
@@ -836,7 +836,7 @@ pub struct EsmModule {
   pub fast_check: Option<FastCheckTypeModuleSlot>,
 }
 
-impl EsmModule {
+impl EsModule {
   fn new(specifier: ModuleSpecifier, source: Arc<str>) -> Self {
     Self {
       dependencies: Default::default(),
@@ -1201,7 +1201,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
 
   fn check_resolution(
     &self,
-    module: &EsmModule,
+    module: &EsModule,
     mode: ResolutionMode,
     specifier_text: &str,
     resolution: &Resolution,
@@ -1877,7 +1877,7 @@ pub(crate) fn parse_module(
       match module_analyzer.analyze(specifier, content.clone(), media_type) {
         Ok(module_info) => {
           // Return the module as a valid module
-          Ok(Module::Esm(parse_esm_module_from_module_info(
+          Ok(Module::Esm(parse_es_module_from_module_info(
             graph_kind,
             specifier,
             media_type,
@@ -1902,7 +1902,7 @@ pub(crate) fn parse_module(
       ) {
         Ok(module_info) => {
           // Return the module as a valid module
-          Ok(Module::Esm(parse_esm_module_from_module_info(
+          Ok(Module::Esm(parse_es_module_from_module_info(
             graph_kind,
             specifier,
             media_type,
@@ -1928,7 +1928,7 @@ pub(crate) fn parse_module(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn parse_esm_module_from_module_info(
+pub(crate) fn parse_es_module_from_module_info(
   graph_kind: GraphKind,
   specifier: &ModuleSpecifier,
   media_type: MediaType,
@@ -1938,8 +1938,8 @@ pub(crate) fn parse_esm_module_from_module_info(
   file_system: &dyn FileSystem,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
-) -> EsmModule {
-  let mut module = EsmModule::new(specifier.clone(), source);
+) -> EsModule {
+  let mut module = EsModule::new(specifier.clone(), source);
   module.media_type = media_type;
 
   // Analyze the TypeScript triple-slash references

@@ -16,7 +16,7 @@ export import NonExistent2 = other.NotFound;
 export class Other {}
 
 # output
-file:///mod.ts: EsmModuleInfo {
+file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
         0,
     ),
@@ -316,7 +316,7 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-file:///other.ts: EsmModuleInfo {
+file:///other.ts: EsModuleInfo {
     module_id: ModuleId(
         1,
     ),
