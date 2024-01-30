@@ -5,8 +5,7 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-export function missingReturnType() {
-  return Math.random();
+export function* missingReturnType() {
 }
 
 # mod.ts
@@ -44,7 +43,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 64,
+      "size": 41,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -59,4 +58,4 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   missing explicit return type in the public API
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@16
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@17

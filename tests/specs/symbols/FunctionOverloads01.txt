@@ -15,7 +15,7 @@ import InnerInner = Inner.inner;
 export { InnerInner };
 
 # output
-file:///mod.ts: EsmModuleInfo {
+file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
         0,
     ),

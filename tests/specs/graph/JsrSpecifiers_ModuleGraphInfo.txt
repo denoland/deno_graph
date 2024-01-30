@@ -249,6 +249,12 @@ import './c.ts';
   }
 }
 
+jsr deps: {
+    "@scope/a@1.0.0": [
+        "jsr:@scope/b",
+    ],
+}
+
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   <empty>

@@ -48,6 +48,7 @@ pub use fast_check::FastCheckModule;
 pub use graph::BuildDiagnostic;
 pub use graph::BuildOptions;
 pub use graph::Dependency;
+pub use graph::DiagnosticRange;
 pub use graph::EsModule;
 pub use graph::ExternalModule;
 pub use graph::FastCheckTypeModule;

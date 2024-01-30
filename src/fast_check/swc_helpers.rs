@@ -13,12 +13,6 @@ use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;
 use deno_ast::swc::ast::TsType;
 use deno_ast::swc::common::DUMMY_SP;
-use deno_ast::SourceRange;
-use deno_ast::SourceTextInfo;
-
-use crate::ModuleSpecifier;
-use crate::PositionRange;
-use crate::Range;
 
 pub fn ident(name: String) -> Ident {
   Ident {
@@ -35,12 +29,9 @@ pub fn ts_keyword_type(kind: TsKeywordTypeKind) -> TsType {
   })
 }
 
-pub fn get_return_stmts_with_arg_from_function(
-  func: &deno_ast::swc::ast::Function,
+pub fn get_return_stmts_with_arg_from_function_body(
+  body: &deno_ast::swc::ast::BlockStmt,
 ) -> Vec<&ReturnStmt> {
-  let Some(body) = func.body.as_ref() else {
-    return Vec::new();
-  };
   let stmts = get_return_stmts_with_arg_from_stmts(&body.stmts);
   debug_assert!(stmts.iter().all(|stmt| stmt.arg.is_some()));
   stmts
@@ -98,15 +89,7 @@ fn get_return_stmts_with_arg_from_stmt(stmt: &Stmt) -> Vec<&ReturnStmt> {
   }
 }
 
-pub fn source_range_to_range(
-  range: SourceRange,
-  specifier: &ModuleSpecifier,
-  text_info: &SourceTextInfo,
-) -> Range {
-  let position_range = PositionRange::from_source_range(range, text_info);
-  Range::from_position_range(specifier.clone(), position_range)
-}
-
+// KEEP IN SYNC with maybe_transform_expr_if_leavable
 pub fn is_expr_leavable(expr: &Expr) -> bool {
   fn is_member_prop_leavable(n: &MemberProp) -> bool {
     match n {

@@ -62,5 +62,5 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  The reference 'MyClass.prototype.member.additional' from 'Export.prototype.prop' was too complex. Extract out the shared type to a type alias.
-      at https://jsr.io/@scope/a/1.0.0/mod.ts:5:1
+  the reference 'MyClass.prototype.member.additional' from 'Export.prototype.prop' was too complex
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@70

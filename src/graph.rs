@@ -32,7 +32,9 @@ use deno_ast::Diagnostic;
 use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::SourcePos;
+use deno_ast::SourceRange;
 use deno_ast::SourceTextInfo;
+use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::jsr::JsrPackageReqReference;
 use deno_semver::npm::NpmPackageNvReference;
 use deno_semver::npm::NpmPackageReqReference;
@@ -2730,6 +2732,18 @@ impl FillPassMode {
   }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct DiagnosticRange {
+  pub specifier: ModuleSpecifier,
+  pub range: SourceRange,
+}
+
+impl DiagnosticRange {
+  pub fn new(specifier: ModuleSpecifier, range: SourceRange) -> Self {
+    Self { specifier, range }
+  }
+}
+
 #[derive(Debug, Clone)]
 pub struct BuildDiagnostic {
   pub maybe_range: Option<Range>,
@@ -3460,6 +3474,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   ) {
     match JsrPackageReqReference::from_specifier(&specifier) {
       Ok(package_ref) => {
+        if let Some(range) = &maybe_range {
+          if let Some(nv) =
+            self.loader.registry_package_url_to_nv(&range.specifier)
+          {
+            self.graph.packages.add_dependency(
+              nv,
+              JsrDepPackageReq::jsr(package_ref.req().clone()),
+            );
+          }
+        }
         for workspace_member in &self.workspace_members {
           if workspace_member.nv.name == package_ref.req().name {
             if package_ref
@@ -3579,6 +3603,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   ) {
     match NpmPackageReqReference::from_specifier(&specifier) {
       Ok(package_ref) => {
+        if let Some(range) = &maybe_range {
+          if let Some(nv) =
+            self.loader.registry_package_url_to_nv(&range.specifier)
+          {
+            self.graph.packages.add_dependency(
+              nv,
+              JsrDepPackageReq::npm(package_ref.req().clone()),
+            );
+          }
+        }
+
         if self
           .state
           .npm

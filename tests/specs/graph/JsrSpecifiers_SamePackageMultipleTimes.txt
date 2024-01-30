@@ -145,6 +145,12 @@ import "jsr:@scope/b@1.1";
   }
 }
 
+jsr deps: {
+    "@scope/a@1.0.0": [
+        "jsr:@scope/b@1",
+    ],
+}
+
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   <empty>

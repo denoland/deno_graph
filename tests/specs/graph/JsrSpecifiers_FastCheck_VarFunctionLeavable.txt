@@ -4,17 +4,15 @@
 # https://jsr.io/@scope/a/1.0.0_meta.json
 { "exports": { ".": "./mod.ts" } }
 
-# https://jsr.io/@scope/a/1.0.0/a.js
-export class A1 {
-  method() {
-    return Math.random();
-  }
-}
-export class A2 {}
-export class A3 {}
-
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-export * from "./a.js";
+import type { Foo, Bar } from "./b.ts";
+
+export const foo = function(foo: Foo): string { return "test" };
+export const bar = function (): Bar { return new Bar() };
+
+# https://jsr.io/@scope/a/1.0.0/b.ts
+export type Foo = string;
+export class Bar {}
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -51,31 +49,31 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 101,
-      "mediaType": "JavaScript",
-      "specifier": "https://jsr.io/@scope/a/1.0.0/a.js"
+      "size": 46,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts"
     },
     {
       "kind": "esm",
       "dependencies": [
         {
-          "specifier": "./a.js",
-          "code": {
-            "specifier": "https://jsr.io/@scope/a/1.0.0/a.js",
+          "specifier": "./b.ts",
+          "type": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts",
             "span": {
               "start": {
                 "line": 0,
-                "character": 14
+                "character": 30
               },
               "end": {
                 "line": 0,
-                "character": 22
+                "character": 38
               }
             }
           }
         }
       ],
-      "size": 24,
+      "size": 164,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -88,6 +86,34 @@ import 'jsr:@scope/a'
   }
 }
 
+Fast check https://jsr.io/@scope/a/1.0.0/b.ts:
+  {}
+  export type Foo = string;
+  export class Bar {
+  }
+
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  referenced a JavaScript module without type declarations from a TypeScript module
-      at https://jsr.io/@scope/a/1.0.0/a.js
+  {
+    "./b.ts": {
+      "type": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts",
+        "span": {
+          "start": {
+            "line": 0,
+            "character": 30
+          },
+          "end": {
+            "line": 0,
+            "character": 38
+          }
+        }
+      }
+    }
+  }
+  import type { Foo, Bar } from "./b.ts";
+  export const foo = function(foo: Foo): string {
+    return {} as any;
+  };
+  export const bar = function(): Bar {
+    return {} as any;
+  };

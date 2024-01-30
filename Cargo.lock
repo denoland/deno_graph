@@ -88,15 +88,9 @@ dependencies = [
 
 [[package]]
 name = "base64"
-version = "0.13.1"
+version = "0.21.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
-
-[[package]]
-name = "base64"
-version = "0.21.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35636a1494ede3b646cc98f74f8e62c773a38a659ebc777a2cf26b9b74171df9"
+checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
 
 [[package]]
 name = "better_scoped_tls"
@@ -205,12 +199,12 @@ dependencies = [
 
 [[package]]
 name = "deno_ast"
-version = "1.0.0"
+version = "0.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d19e5fe5dfe61c87726fdf404babc2369adfec28d5a83adee7ef06f6ce0ec68"
+checksum = "d83d58de6f05f4eb41ec518c19067e3e40cd0edd3d366ad95c601bc6e71bdf49"
 dependencies = [
  "anyhow",
- "base64 0.13.1",
+ "base64",
  "deno_media_type",
  "dprint-swc-ext",
  "serde",
@@ -241,7 +235,7 @@ dependencies = [
 
 [[package]]
 name = "deno_graph"
-version = "0.63.3"
+version = "0.63.6"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -295,9 +289,9 @@ dependencies = [
 
 [[package]]
 name = "deno_semver"
-version = "0.5.0"
+version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "594fd570fecc994ef602b96214f9d6c8ae11e60e29e37e89ab90af7f6b7f9d00"
+checksum = "b49e14effd9df8ed261f7a1a34ac19bbaf0fa940c59bd19a6d8313cf41525e1c"
 dependencies = [
  "monch",
  "once_cell",
@@ -661,9 +655,9 @@ dependencies = [
 
 [[package]]
 name = "monch"
-version = "0.4.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4519a88847ba2d5ead3dc53f1060ec6a571de93f325d9c5c4968147382b1cbc3"
+checksum = "b52c1b33ff98142aecea13138bd399b68aa7ab5d9546c300988c345004001eea"
 
 [[package]]
 name = "new_debug_unreachable"
@@ -1329,9 +1323,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_proposal"
-version = "0.169.14"
+version = "0.169.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86de99757fc31d8977f47c02a26e5c9a243cb63b03fe8aa8b36d79924b8fa29c"
+checksum = "ed89d6ff74f60de490fb56e1cc505b057905e36c13d405d7d61dd5c9f6ee8fc9"
 dependencies = [
  "either",
  "rustc-hash",
@@ -1349,11 +1343,11 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_react"
-version = "0.181.15"
+version = "0.181.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9918e22caf1ea4a71085f5d818d6c0bf5c19d669cfb9d38f9fdc3da0496abdc7"
+checksum = "e31a2f879fd21d18080b6c42e633e0ae8c6f3d54b83c1de876767d82b458c999"
 dependencies = [
- "base64 0.21.5",
+ "base64",
  "dashmap",
  "indexmap 2.0.0",
  "once_cell",
@@ -1373,9 +1367,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_typescript"
-version = "0.186.14"
+version = "0.186.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1d1495c969ffdc224384f1fb73646b9c1b170779f20fdb984518deb054aa522"
+checksum = "3e4263372cc7cd1a3b4570ccf7438f3c1e1575f134fd05cdf074edb322480a5b"
 dependencies = [
  "ryu-js",
  "serde",

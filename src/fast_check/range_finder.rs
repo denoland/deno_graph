@@ -12,7 +12,6 @@ use indexmap::IndexMap;
 use url::Url;
 
 use crate::fast_check::swc_helpers::is_expr_leavable;
-use crate::fast_check::swc_helpers::source_range_to_range;
 use crate::source::Loader;
 use crate::symbols::ExportDeclRef;
 use crate::symbols::FileDepName;
@@ -23,9 +22,9 @@ use crate::symbols::SymbolDeclKind;
 use crate::symbols::SymbolId;
 use crate::symbols::SymbolNodeDep;
 use crate::symbols::SymbolNodeRef;
+use crate::DiagnosticRange;
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
-use crate::Range;
 use crate::WorkspaceMember;
 
 use super::FastCheckDiagnostic;
@@ -370,11 +369,7 @@ impl<'a> PublicRangeFinder<'a> {
           );
         } else {
           errors.push(FastCheckDiagnostic::UnsupportedJavaScriptEntrypoint {
-            range: Range {
-              start: crate::Position::zeroed(),
-              end: crate::Position::zeroed(),
-              specifier: specifier.clone(),
-            },
+            specifier: specifier.clone(),
           });
         }
 
@@ -421,11 +416,7 @@ impl<'a> PublicRangeFinder<'a> {
       if ranges.diagnostics.is_empty() {
         ranges.diagnostics.push(
           FastCheckDiagnostic::UnsupportedNestedJavaScript {
-            range: Range {
-              start: crate::Position::zeroed(),
-              end: crate::Position::zeroed(),
-              specifier: trace.specifier.clone(),
-            },
+            specifier: trace.specifier.clone(),
           },
         );
       }
@@ -626,10 +617,9 @@ impl<'a> PublicRangeFinder<'a> {
             if Some(referrer_id) != symbol.parent_id() {
               diagnostics.push(
                 FastCheckDiagnostic::UnsupportedPrivateMemberReference {
-                  range: source_range_to_range(
+                  range: DiagnosticRange::new(
+                    module_info.specifier().clone(),
                     symbol.decls()[0].range,
-                    module_info.specifier(),
-                    module_info.text_info(),
                   ),
                   name: module_info
                     .fully_qualified_symbol_name(symbol)
@@ -895,10 +885,9 @@ impl<'a> PublicRangeFinder<'a> {
                       if parts.len() > 2 {
                         diagnostics.push(
                           FastCheckDiagnostic::UnsupportedComplexReference {
-                            range: source_range_to_range(
+                            range: DiagnosticRange::new(
+                              module_info.specifier().clone(),
                               symbol.decls()[0].range,
-                              module_info.specifier(),
-                              module_info.text_info(),
                             ),
                             name: format!(
                               "{}.prototype.{}",
@@ -923,10 +912,9 @@ impl<'a> PublicRangeFinder<'a> {
                     None => {
                       diagnostics.push(
                         FastCheckDiagnostic::NotFoundReference {
-                          range: source_range_to_range(
+                          range: DiagnosticRange::new(
+                            module_info.specifier().clone(),
                             symbol.decls()[0].range,
-                            module_info.specifier(),
-                            module_info.text_info(),
                           ),
                           name: format!(
                             "{}.prototype.{}",
@@ -987,10 +975,9 @@ impl<'a> PublicRangeFinder<'a> {
                     if !ignore {
                       diagnostics.push(
                         FastCheckDiagnostic::NotFoundReference {
-                          range: source_range_to_range(
+                          range: DiagnosticRange::new(
+                            module_info.specifier().clone(),
                             symbol.decls()[0].range,
-                            module_info.specifier(),
-                            module_info.text_info(),
                           ),
                           name: format!(
                             "{}.{}",

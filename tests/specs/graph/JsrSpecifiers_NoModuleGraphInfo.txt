@@ -178,6 +178,15 @@ console.log(1);
   }
 }
 
+jsr deps: {
+    "@scope/a@1.0.1": [
+        "jsr:@scope/b@2",
+    ],
+    "@scope/b@2.0.0": [
+        "jsr:@scope/c@3",
+    ],
+}
+
 Fast check https://jsr.io/@scope/a/1.0.1/mod.ts:
   {}
   <empty>
