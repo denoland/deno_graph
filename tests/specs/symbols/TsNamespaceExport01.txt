@@ -8,7 +8,7 @@ export function isPrime(x: number): boolean {
 export as namespace mathLib;
 
 # output
-file:///mod.ts: EsmModuleInfo {
+file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
         0,
     ),

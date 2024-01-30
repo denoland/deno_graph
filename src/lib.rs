@@ -50,7 +50,7 @@ pub use graph::BuildDiagnostic;
 pub use graph::BuildOptions;
 pub use graph::Dependency;
 pub use graph::DiagnosticRange;
-pub use graph::EsmModule;
+pub use graph::EsModule;
 pub use graph::ExternalModule;
 pub use graph::FastCheckTypeModule;
 pub use graph::FastCheckTypeModuleSlot;
@@ -136,8 +136,8 @@ pub struct ParseModuleFromAstOptions<'a> {
 }
 
 /// Parse an individual module from an AST, returning the module.
-pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> EsmModule {
-  graph::parse_esm_module_from_module_info(
+pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> EsModule {
+  graph::parse_es_module_from_module_info(
     options.graph_kind,
     options.specifier,
     options.parsed_source.media_type(),

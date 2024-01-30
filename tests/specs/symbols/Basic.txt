@@ -27,7 +27,7 @@ export default class C {
 export type D = typeof C;
 
 # output
-file:///a.ts: EsmModuleInfo {
+file:///a.ts: EsModuleInfo {
     module_id: ModuleId(
         1,
     ),
@@ -386,7 +386,7 @@ file:///a.ts: EsmModuleInfo {
 6:102..115 [Id(("AInner", #2))]
 9:173..198 [Id(("C", #2))]
 
-file:///mod.ts: EsmModuleInfo {
+file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
         0,
     ),

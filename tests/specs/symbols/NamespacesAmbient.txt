@@ -47,7 +47,7 @@ namespace Inner {
 }
 
 # output
-file:///mod.ts: EsmModuleInfo {
+file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
         0,
     ),
@@ -805,7 +805,7 @@ file:///mod.ts: EsmModuleInfo {
         },
     },
 }
-file:///other.d.ts: EsmModuleInfo {
+file:///other.d.ts: EsModuleInfo {
     module_id: ModuleId(
         1,
     ),
