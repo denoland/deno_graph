@@ -789,10 +789,8 @@ pub struct JsonModule {
   pub specifier: ModuleSpecifier,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
-  #[serde(skip_serializing)]
+  #[serde(rename = "size", serialize_with = "serialize_text")]
   pub text: Arc<str>,
-  #[serde(rename = "size", serialize_with = "serialize_source_bytes")]
-  pub bytes: Arc<[u8]>,
   // todo(#240): This will always be MediaType::Json, but it's currently
   // used in the --json output. It's redundant though.
   pub media_type: MediaType,
@@ -819,46 +817,29 @@ pub struct FastCheckTypeModule {
 }
 
 #[derive(Debug, Clone)]
-pub struct EsModuleSource {
-  pub bytes: Arc<[u8]>,
-  pub text: Option<Arc<str>>,
+pub enum EsModuleSource {
+  Bytes(Arc<[u8]>),
+  Text(Arc<str>),
 }
 
 impl EsModuleSource {
-  pub fn new_with_text(bytes: Arc<[u8]>) -> Result<Self, std::io::Error> {
-    let charset = text_encoding::detect_charset(bytes.as_ref());
-    let mut text =
-      match text_encoding::convert_to_utf8(bytes.as_ref(), charset)? {
-        Cow::Borrowed(text) => {
-          if text.starts_with(text_encoding::BOM_CHAR) {
-            text.to_string()
-          } else {
-            return Ok(Self {
-              bytes: bytes.clone(),
-              // SAFETY: we know it's avalid utf-8 string at this point
-              text: unsafe {
-                let raw_ptr = Arc::into_raw(bytes);
-                Some(Arc::from_raw(std::mem::transmute::<
-                  *const [u8],
-                  *const str,
-                >(raw_ptr)))
-              },
-            });
-          }
-        }
-        Cow::Owned(text) => text,
-      };
-    text_encoding::strip_bom_mut(&mut text);
-    let text: Arc<str> = Arc::from(text);
-    Ok(Self::from_text(text))
+  pub fn new_as_text_from_bytes(
+    bytes: Arc<[u8]>,
+  ) -> Result<Self, std::io::Error> {
+    text_encoding::arc_bytes_to_text(bytes).map(EsModuleSource::Text)
   }
 
-  /// This is internal because generally we don't want consumers doing
-  /// their own bytes decoding and instead to use `EsModuleSource::new_with_text`.
-  pub(crate) fn from_text(text: Arc<str>) -> Self {
-    Self {
-      bytes: text.clone().into(),
-      text: Some(text),
+  pub fn text(&self) -> Option<&Arc<str>> {
+    match self {
+      Self::Bytes(_) => None,
+      Self::Text(text) => Some(text),
+    }
+  }
+
+  pub fn len(&self) -> usize {
+    match self {
+      Self::Bytes(bytes) => bytes.len(),
+      Self::Text(text) => text.len(),
     }
   }
 }
@@ -1879,11 +1860,12 @@ pub(crate) fn parse_module(
         Some("json")
       ))
   {
-    let source = new_source_with_text(specifier, content)?;
+    let text = text_encoding::arc_bytes_to_text(content).map_err(|err| {
+      ModuleError::LoadingErr(specifier.clone(), None, Arc::new(err.into()))
+    })?;
     return Ok(Module::Json(JsonModule {
       maybe_cache_info: None,
-      text: source.text.unwrap(),
-      bytes: source.bytes,
+      text,
       media_type: MediaType::Json,
       specifier: specifier.clone(),
     }));
@@ -1920,11 +1902,7 @@ pub(crate) fn parse_module(
     | MediaType::Dmts
     | MediaType::Dcts => {
       let source = new_source_with_text(specifier, content)?;
-      match module_analyzer.analyze(
-        specifier,
-        source.text.clone().unwrap(),
-        media_type,
-      ) {
+      match module_analyzer.analyze(specifier, source.clone(), media_type) {
         Ok(module_info) => {
           // Return the module as a valid module
           Ok(Module::Esm(parse_es_module_from_module_info(
@@ -1933,7 +1911,7 @@ pub(crate) fn parse_module(
             media_type,
             maybe_headers,
             module_info,
-            source,
+            EsModuleSource::Text(source),
             file_system,
             maybe_resolver,
             maybe_npm_resolver,
@@ -1948,7 +1926,7 @@ pub(crate) fn parse_module(
       let source = new_source_with_text(specifier, content)?;
       match module_analyzer.analyze(
         specifier,
-        source.text.clone().unwrap(),
+        source.clone(),
         MediaType::JavaScript,
       ) {
         Ok(module_info) => {
@@ -1959,7 +1937,7 @@ pub(crate) fn parse_module(
             media_type,
             maybe_headers,
             module_info,
-            source,
+            EsModuleSource::Text(source),
             file_system,
             maybe_resolver,
             maybe_npm_resolver,
@@ -3205,7 +3183,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                           match new_source_with_text(&module.specifier, content)
                           {
                             Ok(source) => {
-                              module.source = source;
+                              module.source = EsModuleSource::Text(source);
                             }
                             Err(err) => *slot = ModuleSlot::Err(err),
                           }
@@ -3218,8 +3196,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       Module::Json(module) => {
                         match new_source_with_text(&module.specifier, content) {
                           Ok(source) => {
-                            module.bytes = source.bytes;
-                            module.text = source.text.unwrap();
+                            module.text = source;
                           }
                           Err(err) => *slot = ModuleSlot::Err(err),
                         }
@@ -4303,8 +4280,8 @@ impl<'a> NpmSpecifierResolver<'a> {
 fn new_source_with_text(
   specifier: &ModuleSpecifier,
   text: Arc<[u8]>,
-) -> Result<EsModuleSource, ModuleError> {
-  EsModuleSource::new_with_text(text).map_err(|err| {
+) -> Result<Arc<str>, ModuleError> {
+  text_encoding::arc_bytes_to_text(text).map_err(|err| {
     ModuleError::LoadingErr(specifier.clone(), None, Arc::new(err.into()))
   })
 }
@@ -4364,11 +4341,11 @@ fn serialize_esm_source<S>(
 where
   S: Serializer,
 {
-  serializer.serialize_u32(source.bytes.len() as u32)
+  serializer.serialize_u32(source.len() as u32)
 }
 
-fn serialize_source_bytes<S>(
-  source: &Arc<[u8]>,
+fn serialize_text<S>(
+  source: &Arc<str>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where

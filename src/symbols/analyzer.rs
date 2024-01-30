@@ -242,7 +242,7 @@ impl<'a> RootSymbol<'a> {
       .parser
       .parse_module(ParseOptions {
         specifier: &graph_module.specifier,
-        source: graph_module.source.text.clone()?,
+        source: graph_module.source.text()?.clone(),
         media_type: graph_module.media_type,
         scope_analysis: true,
       })

@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::sync::Arc;
 
 pub const BOM_CHAR: char = '\u{FEFF}';
 
@@ -44,6 +45,34 @@ pub fn strip_bom_mut(text: &mut String) {
   if text.starts_with(BOM_CHAR) {
     text.drain(..BOM_CHAR.len_utf8());
   }
+}
+
+/// Converts an `Arc<[u8]>` to an `Arc<str>`.
+pub fn arc_bytes_to_text(bytes: Arc<[u8]>) -> Result<Arc<str>, std::io::Error> {
+  let charset = detect_charset(bytes.as_ref());
+  let text = match convert_to_utf8(bytes.as_ref(), charset)? {
+    Cow::Borrowed(text) => {
+      if text.starts_with(BOM_CHAR) {
+        text[..BOM_CHAR.len_utf8()].to_string()
+      } else {
+        return Ok(
+          // SAFETY: we know it's avalid utf-8 string at this point
+          unsafe {
+            let raw_ptr = Arc::into_raw(bytes);
+            Arc::from_raw(std::mem::transmute::<*const [u8], *const str>(
+              raw_ptr,
+            ))
+          },
+        );
+      }
+    }
+    Cow::Owned(mut text) => {
+      strip_bom_mut(&mut text);
+      text
+    }
+  };
+  let text: Arc<str> = Arc::from(text);
+  Ok(text)
 }
 
 #[cfg(test)]
