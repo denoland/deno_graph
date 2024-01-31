@@ -694,7 +694,9 @@ pub struct WorkspaceMember {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "kind")]
 pub enum Module {
-  Esm(EsModule),
+  // todo(#239): remove this when updating the --json output for 2.0
+  #[serde(rename = "esm")]
+  Script(ScriptModule),
   // todo(#239): remove this when updating the --json output for 2.0
   #[serde(rename = "asserted")]
   Json(JsonModule),
@@ -706,7 +708,7 @@ pub enum Module {
 impl Module {
   pub fn specifier(&self) -> &ModuleSpecifier {
     match self {
-      Module::Esm(module) => &module.specifier,
+      Module::Script(module) => &module.specifier,
       Module::Json(module) => &module.specifier,
       Module::Npm(module) => &module.specifier,
       Module::Node(module) => &module.specifier,
@@ -722,8 +724,8 @@ impl Module {
     }
   }
 
-  pub fn esm(&self) -> Option<&EsModule> {
-    if let Module::Esm(module) = &self {
+  pub fn esm(&self) -> Option<&ScriptModule> {
+    if let Module::Script(module) = &self {
       Some(module)
     } else {
       None
@@ -816,51 +818,9 @@ pub struct FastCheckTypeModule {
   pub source_map: Arc<[u8]>,
 }
 
-#[derive(Debug, Clone)]
-pub enum EsModuleSource {
-  Bytes(Arc<[u8]>),
-  Text(Arc<str>),
-}
-
-impl EsModuleSource {
-  pub fn new_as_text_from_bytes(
-    bytes: Arc<[u8]>,
-  ) -> Result<Self, std::io::Error> {
-    text_encoding::arc_bytes_to_text(bytes).map(EsModuleSource::Text)
-  }
-
-  pub fn as_bytes(&self) -> &[u8] {
-    match self {
-      Self::Bytes(bytes) => bytes,
-      Self::Text(text) => text.as_bytes(),
-    }
-  }
-
-  pub fn bytes(&self) -> Arc<[u8]> {
-    match self {
-      Self::Bytes(bytes) => bytes.clone(),
-      Self::Text(text) => Arc::from(text.clone()),
-    }
-  }
-
-  pub fn maybe_text(&self) -> Option<&Arc<str>> {
-    match self {
-      Self::Bytes(_) => None,
-      Self::Text(text) => Some(text),
-    }
-  }
-
-  pub fn len(&self) -> usize {
-    match self {
-      Self::Bytes(bytes) => bytes.len(),
-      Self::Text(text) => text.len(),
-    }
-  }
-}
-
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct EsModule {
+pub struct ScriptModule {
   #[serde(
     skip_serializing_if = "IndexMap::is_empty",
     serialize_with = "serialize_dependencies"
@@ -868,8 +828,8 @@ pub struct EsModule {
   pub dependencies: IndexMap<String, Dependency>,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
-  #[serde(rename = "size", serialize_with = "serialize_esm_source")]
-  pub source: EsModuleSource,
+  #[serde(rename = "size", serialize_with = "serialize_source")]
+  pub source: Arc<str>,
   #[serde(rename = "typesDependency", skip_serializing_if = "Option::is_none")]
   pub maybe_types_dependency: Option<TypesDependency>,
   #[serde(skip_serializing_if = "is_media_type_unknown")]
@@ -879,8 +839,8 @@ pub struct EsModule {
   pub fast_check: Option<FastCheckTypeModuleSlot>,
 }
 
-impl EsModule {
-  fn new(specifier: ModuleSpecifier, source: EsModuleSource) -> Self {
+impl ScriptModule {
+  fn new(specifier: ModuleSpecifier, source: Arc<str>) -> Self {
     Self {
       dependencies: Default::default(),
       maybe_cache_info: None,
@@ -1133,7 +1093,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
   fn next(&mut self) -> Option<Self::Item> {
     match self.previous_module.take() {
       Some(ModuleEntryRef::Module(module)) => match module {
-        Module::Esm(module) => {
+        Module::Script(module) => {
           let check_types = (self.check_js
             || !matches!(
               module.media_type,
@@ -1239,7 +1199,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
 
   fn check_resolution(
     &self,
-    module: &EsModule,
+    module: &ScriptModule,
     mode: ResolutionMode,
     specifier_text: &str,
     resolution: &Resolution,
@@ -1316,7 +1276,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
 
       if let Some((_, module_entry)) = self.iterator.next() {
         match module_entry {
-          ModuleEntryRef::Module(Module::Esm(module)) => {
+          ModuleEntryRef::Module(Module::Script(module)) => {
             let check_types = (check_js
               || !matches!(
                 module.media_type,
@@ -1621,7 +1581,7 @@ impl ModuleGraph {
     prefer_types: bool,
   ) -> Option<ModuleSpecifier> {
     match referring_module {
-      Module::Esm(referring_module) => {
+      Module::Script(referring_module) => {
         let dependency = referring_module.dependencies.get(specifier)?;
         self.resolve_dependency_from_dep(dependency, prefer_types)
       }
@@ -1649,7 +1609,7 @@ impl ModuleGraph {
     // Even if we resolved the specifier, it doesn't mean the module is actually
     // there, so check in the module slots
     match self.module_slots.get(&resolved_specifier) {
-      Some(ModuleSlot::Module(Module::Esm(module))) if prefer_types => {
+      Some(ModuleSlot::Module(Module::Script(module))) if prefer_types => {
         // check for if this module has a types dependency
         if let Some(Resolution::Ok(resolved)) = module
           .maybe_types_dependency
@@ -1919,13 +1879,13 @@ pub(crate) fn parse_module(
       match module_analyzer.analyze(specifier, source.clone(), media_type) {
         Ok(module_info) => {
           // Return the module as a valid module
-          Ok(Module::Esm(parse_es_module_from_module_info(
+          Ok(Module::Script(parse_es_module_from_module_info(
             graph_kind,
             specifier,
             media_type,
             maybe_headers,
             module_info,
-            EsModuleSource::Text(source),
+            source,
             file_system,
             maybe_resolver,
             maybe_npm_resolver,
@@ -1945,13 +1905,13 @@ pub(crate) fn parse_module(
       ) {
         Ok(module_info) => {
           // Return the module as a valid module
-          Ok(Module::Esm(parse_es_module_from_module_info(
+          Ok(Module::Script(parse_es_module_from_module_info(
             graph_kind,
             specifier,
             media_type,
             maybe_headers,
             module_info,
-            EsModuleSource::Text(source),
+            source,
             file_system,
             maybe_resolver,
             maybe_npm_resolver,
@@ -1981,12 +1941,12 @@ pub(crate) fn parse_es_module_from_module_info(
   media_type: MediaType,
   maybe_headers: Option<&HashMap<String, String>>,
   module_info: ModuleInfo,
-  source: EsModuleSource,
+  source: Arc<str>,
   file_system: &dyn FileSystem,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
-) -> EsModule {
-  let mut module = EsModule::new(specifier.clone(), source);
+) -> ScriptModule {
+  let mut module = ScriptModule::new(specifier.clone(), source);
   module.media_type = media_type;
 
   // Analyze the TypeScript triple-slash references
@@ -3181,7 +3141,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 match slot {
                   ModuleSlot::Module(module) => {
                     match module {
-                      Module::Esm(module) => match module.media_type {
+                      Module::Script(module) => match module.media_type {
                         MediaType::JavaScript
                         | MediaType::Jsx
                         | MediaType::Mjs
@@ -3197,7 +3157,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                           match new_source_with_text(&module.specifier, content)
                           {
                             Ok(source) => {
-                              module.source = EsModuleSource::Text(source);
+                              module.source = source;
                             }
                             Err(err) => *slot = ModuleSlot::Err(err),
                           }
@@ -3276,7 +3236,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
           }
-          Module::Esm(module) => {
+          Module::Script(module) => {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
           }
@@ -3881,7 +3841,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       Err(err) => ModuleSlot::Err(err),
     };
 
-    if let ModuleSlot::Module(Module::Esm(module)) = module_slot.borrow_mut() {
+    if let ModuleSlot::Module(Module::Script(module)) = module_slot.borrow_mut()
+    {
       if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::CodeOnly)
         || module.maybe_types_dependency.is_none()
       {
@@ -4012,7 +3973,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let module_slot = self.graph.module_slots.get_mut(&specifier).unwrap();
       let module = match module_slot {
         ModuleSlot::Module(m) => match m {
-          Module::Esm(m) => m,
+          Module::Script(m) => m,
           _ => continue,
         },
         ModuleSlot::Err(_) | ModuleSlot::Pending => continue,
@@ -4346,16 +4307,6 @@ where
     })?
   }
   seq.end()
-}
-
-fn serialize_esm_source<S>(
-  source: &EsModuleSource,
-  serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-  S: Serializer,
-{
-  serializer.serialize_u32(source.len() as u32)
 }
 
 fn serialize_source<S>(

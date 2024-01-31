@@ -49,7 +49,6 @@ pub use graph::BuildDiagnostic;
 pub use graph::BuildOptions;
 pub use graph::Dependency;
 pub use graph::DiagnosticRange;
-pub use graph::EsModule;
 pub use graph::ExternalModule;
 pub use graph::FastCheckTypeModule;
 pub use graph::FastCheckTypeModuleSlot;
@@ -67,6 +66,7 @@ pub use graph::Range;
 pub use graph::Resolution;
 pub use graph::ResolutionError;
 pub use graph::ResolutionResolved;
+pub use graph::ScriptModule;
 pub use graph::TypesDependency;
 pub use graph::WalkOptions;
 pub use graph::WorkspaceMember;
@@ -135,14 +135,16 @@ pub struct ParseModuleFromAstOptions<'a> {
 }
 
 /// Parse an individual module from an AST, returning the module.
-pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> EsModule {
+pub fn parse_module_from_ast(
+  options: ParseModuleFromAstOptions,
+) -> ScriptModule {
   graph::parse_es_module_from_module_info(
     options.graph_kind,
     options.specifier,
     options.parsed_source.media_type(),
     options.maybe_headers,
     DefaultModuleAnalyzer::module_info(options.parsed_source),
-    graph::EsModuleSource::Text(options.parsed_source.text_info().text()),
+    options.parsed_source.text_info().text(),
     options.file_system,
     options.maybe_resolver,
     options.maybe_npm_resolver,
@@ -1769,9 +1771,8 @@ export function a(a) {
     assert_eq!(graph.module_slots.len(), 3);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
     let module = graph.get(&data_specifier).unwrap().esm().unwrap();
-    let source = module.source.maybe_text().unwrap();
     assert_eq!(
-      source.as_ref(),
+      module.source.as_ref(),
       r#"export * from "https://example.com/c.ts";"#,
     );
   }
