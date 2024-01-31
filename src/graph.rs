@@ -1838,14 +1838,10 @@ pub(crate) fn parse_module(
         Some("json")
       ))
   {
-    let text = crate::source::decode_source(
-      specifier,
-      content,
-      maybe_charset.as_deref(),
-    )
-    .map_err(|err| {
-      ModuleError::LoadingErr(specifier.clone(), None, Arc::new(err.into()))
-    })?;
+    let text = crate::source::decode_source(specifier, content, maybe_charset)
+      .map_err(|err| {
+        ModuleError::LoadingErr(specifier.clone(), None, Arc::new(err.into()))
+      })?;
     return Ok(Module::Json(JsonModule {
       maybe_cache_info: None,
       source: text,
@@ -1884,9 +1880,8 @@ pub(crate) fn parse_module(
     | MediaType::Dts
     | MediaType::Dmts
     | MediaType::Dcts => {
-      let source =
-        new_source_with_text(specifier, content, maybe_charset.as_deref())
-          .map_err(|err| *err)?;
+      let source = new_source_with_text(specifier, content, maybe_charset)
+        .map_err(|err| *err)?;
       match module_analyzer.analyze(specifier, source.clone(), media_type) {
         Ok(module_info) => {
           // Return the module as a valid module
@@ -1908,9 +1903,8 @@ pub(crate) fn parse_module(
       }
     }
     MediaType::Unknown if is_root => {
-      let source =
-        new_source_with_text(specifier, content, maybe_charset.as_deref())
-          .map_err(|err| *err)?;
+      let source = new_source_with_text(specifier, content, maybe_charset)
+        .map_err(|err| *err)?;
       match module_analyzer.analyze(
         specifier,
         source.clone(),
