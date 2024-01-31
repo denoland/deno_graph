@@ -184,7 +184,7 @@ impl<'a> RootSymbol<'a> {
     let specifier = &json_module.specifier;
     // it's not ideal having to use SourceTextInfo here, but it makes
     // it easier to interop with ParsedSource
-    let source_text_info = SourceTextInfo::new(json_module.text.clone());
+    let source_text_info = SourceTextInfo::new(json_module.source.clone());
     let range = source_text_info.range();
     let module_id = ModuleId(self.ids_to_modules.len() as u32);
     let decls = {
@@ -242,7 +242,7 @@ impl<'a> RootSymbol<'a> {
       .parser
       .parse_module(ParseOptions {
         specifier: &graph_module.specifier,
-        source: graph_module.source.text()?.clone(),
+        source: graph_module.source.maybe_text()?.clone(),
         media_type: graph_module.media_type,
         scope_analysis: true,
       })

@@ -1769,7 +1769,7 @@ export function a(a) {
     assert_eq!(graph.module_slots.len(), 3);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
     let module = graph.get(&data_specifier).unwrap().esm().unwrap();
-    let source = module.source.text().clone().unwrap();
+    let source = module.source.maybe_text().unwrap();
     assert_eq!(
       source.as_ref(),
       r#"export * from "https://example.com/c.ts";"#,

@@ -789,8 +789,8 @@ pub struct JsonModule {
   pub specifier: ModuleSpecifier,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
-  #[serde(rename = "size", serialize_with = "serialize_text")]
-  pub text: Arc<str>,
+  #[serde(rename = "size", serialize_with = "serialize_source")]
+  pub source: Arc<str>,
   // todo(#240): This will always be MediaType::Json, but it's currently
   // used in the --json output. It's redundant though.
   pub media_type: MediaType,
@@ -799,7 +799,7 @@ pub struct JsonModule {
 impl JsonModule {
   /// Return the size in bytes of the content of the JSON module.
   pub fn size(&self) -> usize {
-    self.text.as_bytes().len()
+    self.source.as_bytes().len()
   }
 }
 
@@ -829,7 +829,21 @@ impl EsModuleSource {
     text_encoding::arc_bytes_to_text(bytes).map(EsModuleSource::Text)
   }
 
-  pub fn text(&self) -> Option<&Arc<str>> {
+  pub fn as_bytes(&self) -> &[u8] {
+    match self {
+      Self::Bytes(bytes) => bytes,
+      Self::Text(text) => text.as_bytes(),
+    }
+  }
+
+  pub fn bytes(&self) -> Arc<[u8]> {
+    match self {
+      Self::Bytes(bytes) => bytes.clone(),
+      Self::Text(text) => Arc::from(text.clone()),
+    }
+  }
+
+  pub fn maybe_text(&self) -> Option<&Arc<str>> {
     match self {
       Self::Bytes(_) => None,
       Self::Text(text) => Some(text),
@@ -1865,7 +1879,7 @@ pub(crate) fn parse_module(
     })?;
     return Ok(Module::Json(JsonModule {
       maybe_cache_info: None,
-      text,
+      source: text,
       media_type: MediaType::Json,
       specifier: specifier.clone(),
     }));
@@ -3196,7 +3210,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       Module::Json(module) => {
                         match new_source_with_text(&module.specifier, content) {
                           Ok(source) => {
-                            module.text = source;
+                            module.source = source;
                           }
                           Err(err) => *slot = ModuleSlot::Err(err),
                         }
@@ -4344,7 +4358,7 @@ where
   serializer.serialize_u32(source.len() as u32)
 }
 
-fn serialize_text<S>(
+fn serialize_source<S>(
   source: &Arc<str>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
