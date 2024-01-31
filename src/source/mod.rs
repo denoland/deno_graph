@@ -344,6 +344,9 @@ impl RawDataUrl {
       return MediaType::Unknown;
     };
     MediaType::from_content_type(
+      // this data url will be ignored when resolving the MediaType
+      // as in this rare case the MediaType is determined solely based
+      // on the provided content type
       &ModuleSpecifier::parse("data:image/png;base64,").unwrap(),
       content_type,
     )
