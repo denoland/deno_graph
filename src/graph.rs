@@ -1875,7 +1875,8 @@ pub(crate) fn parse_module(
     | MediaType::Dts
     | MediaType::Dmts
     | MediaType::Dcts => {
-      let source = new_source_with_text(specifier, content)?;
+      let source =
+        new_source_with_text(specifier, content).map_err(|err| *err)?;
       match module_analyzer.analyze(specifier, source.clone(), media_type) {
         Ok(module_info) => {
           // Return the module as a valid module
@@ -1897,7 +1898,8 @@ pub(crate) fn parse_module(
       }
     }
     MediaType::Unknown if is_root => {
-      let source = new_source_with_text(specifier, content)?;
+      let source =
+        new_source_with_text(specifier, content).map_err(|err| *err)?;
       match module_analyzer.analyze(
         specifier,
         source.clone(),
@@ -3146,7 +3148,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                           Ok(source) => {
                             module.source = source;
                           }
-                          Err(err) => *slot = ModuleSlot::Err(err),
+                          Err(err) => *slot = ModuleSlot::Err(*err),
                         }
                       }
                       Module::Json(module) => {
@@ -3154,7 +3156,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                           Ok(source) => {
                             module.source = source;
                           }
-                          Err(err) => *slot = ModuleSlot::Err(err),
+                          Err(err) => *slot = ModuleSlot::Err(*err),
                         }
                       }
                       Module::Npm(_)
@@ -4232,13 +4234,16 @@ impl<'a> NpmSpecifierResolver<'a> {
   }
 }
 
-#[allow(clippy::result_large_err)]
 fn new_source_with_text(
   specifier: &ModuleSpecifier,
   text: Arc<[u8]>,
-) -> Result<Arc<str>, ModuleError> {
+) -> Result<Arc<str>, Box<ModuleError>> {
   text_encoding::arc_bytes_to_text(text).map_err(|err| {
-    ModuleError::LoadingErr(specifier.clone(), None, Arc::new(err.into()))
+    Box::new(ModuleError::LoadingErr(
+      specifier.clone(),
+      None,
+      Arc::new(err.into()),
+    ))
   })
 }
 
