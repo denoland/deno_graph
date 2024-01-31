@@ -693,7 +693,9 @@ pub struct WorkspaceMember {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "kind")]
 pub enum Module {
-  Esm(EsModule),
+  // todo(#239): remove this when updating the --json output for 2.0
+  #[serde(rename = "esm")]
+  Js(JsModule),
   // todo(#239): remove this when updating the --json output for 2.0
   #[serde(rename = "asserted")]
   Json(JsonModule),
@@ -705,7 +707,7 @@ pub enum Module {
 impl Module {
   pub fn specifier(&self) -> &ModuleSpecifier {
     match self {
-      Module::Esm(module) => &module.specifier,
+      Module::Js(module) => &module.specifier,
       Module::Json(module) => &module.specifier,
       Module::Npm(module) => &module.specifier,
       Module::Node(module) => &module.specifier,
@@ -721,8 +723,8 @@ impl Module {
     }
   }
 
-  pub fn esm(&self) -> Option<&EsModule> {
-    if let Module::Esm(module) = &self {
+  pub fn js(&self) -> Option<&JsModule> {
+    if let Module::Js(module) = &self {
       Some(module)
     } else {
       None
@@ -817,7 +819,7 @@ pub struct FastCheckTypeModule {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct EsModule {
+pub struct JsModule {
   #[serde(
     skip_serializing_if = "IndexMap::is_empty",
     serialize_with = "serialize_dependencies"
@@ -836,7 +838,7 @@ pub struct EsModule {
   pub fast_check: Option<FastCheckTypeModuleSlot>,
 }
 
-impl EsModule {
+impl JsModule {
   fn new(specifier: ModuleSpecifier, source: Arc<str>) -> Self {
     Self {
       dependencies: Default::default(),
@@ -1095,7 +1097,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
   fn next(&mut self) -> Option<Self::Item> {
     match self.previous_module.take() {
       Some(ModuleEntryRef::Module(module)) => match module {
-        Module::Esm(module) => {
+        Module::Js(module) => {
           let check_types = (self.check_js
             || !matches!(
               module.media_type,
@@ -1201,7 +1203,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
 
   fn check_resolution(
     &self,
-    module: &EsModule,
+    module: &JsModule,
     mode: ResolutionMode,
     specifier_text: &str,
     resolution: &Resolution,
@@ -1278,7 +1280,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
 
       if let Some((_, module_entry)) = self.iterator.next() {
         match module_entry {
-          ModuleEntryRef::Module(Module::Esm(module)) => {
+          ModuleEntryRef::Module(Module::Js(module)) => {
             let check_types = (check_js
               || !matches!(
                 module.media_type,
@@ -1583,7 +1585,7 @@ impl ModuleGraph {
     prefer_types: bool,
   ) -> Option<ModuleSpecifier> {
     match referring_module {
-      Module::Esm(referring_module) => {
+      Module::Js(referring_module) => {
         let dependency = referring_module.dependencies.get(specifier)?;
         self.resolve_dependency_from_dep(dependency, prefer_types)
       }
@@ -1611,7 +1613,7 @@ impl ModuleGraph {
     // Even if we resolved the specifier, it doesn't mean the module is actually
     // there, so check in the module slots
     match self.module_slots.get(&resolved_specifier) {
-      Some(ModuleSlot::Module(Module::Esm(module))) if prefer_types => {
+      Some(ModuleSlot::Module(Module::Js(module))) if prefer_types => {
         // check for if this module has a types dependency
         if let Some(Resolution::Ok(resolved)) = module
           .maybe_types_dependency
@@ -1676,7 +1678,7 @@ impl ModuleGraph {
       return Ok(None);
     };
 
-    if let Some(specifier) = module.esm().and_then(|m| {
+    if let Some(specifier) = module.js().and_then(|m| {
       m.maybe_types_dependency
         .as_ref()
         .and_then(|d| d.dependency.ok())
@@ -1813,7 +1815,7 @@ pub(crate) fn parse_module(
   graph_kind: GraphKind,
   specifier: &ModuleSpecifier,
   maybe_headers: Option<&HashMap<String, String>>,
-  content: Arc<str>,
+  content: Arc<[u8]>,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_referrer: Option<Range>,
   file_system: &dyn FileSystem,
@@ -1823,8 +1825,8 @@ pub(crate) fn parse_module(
   is_dynamic_branch: bool,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Result<Module, ModuleError> {
-  let media_type =
-    MediaType::from_specifier_and_headers(specifier, maybe_headers);
+  let (media_type, maybe_charset) =
+    resolve_media_type_and_charset_from_headers(specifier, maybe_headers);
 
   // here we check any media types that should have assertions made against them
   // if they aren't the root and add them to the graph, otherwise we continue
@@ -1836,9 +1838,13 @@ pub(crate) fn parse_module(
         Some("json")
       ))
   {
+    let text = crate::source::decode_source(specifier, content, maybe_charset)
+      .map_err(|err| {
+        ModuleError::LoadingErr(specifier.clone(), None, Arc::new(err.into()))
+      })?;
     return Ok(Module::Json(JsonModule {
       maybe_cache_info: None,
-      source: content,
+      source: text,
       media_type: MediaType::Json,
       specifier: specifier.clone(),
     }));
@@ -1862,7 +1868,7 @@ pub(crate) fn parse_module(
   }
 
   // Here we check for known ES Modules that we will analyze the dependencies of
-  match &media_type {
+  match media_type {
     MediaType::JavaScript
     | MediaType::Mjs
     | MediaType::Cjs
@@ -1874,16 +1880,18 @@ pub(crate) fn parse_module(
     | MediaType::Dts
     | MediaType::Dmts
     | MediaType::Dcts => {
-      match module_analyzer.analyze(specifier, content.clone(), media_type) {
+      let source = new_source_with_text(specifier, content, maybe_charset)
+        .map_err(|err| *err)?;
+      match module_analyzer.analyze(specifier, source.clone(), media_type) {
         Ok(module_info) => {
           // Return the module as a valid module
-          Ok(Module::Esm(parse_es_module_from_module_info(
+          Ok(Module::Js(parse_js_module_from_module_info(
             graph_kind,
             specifier,
             media_type,
             maybe_headers,
             module_info,
-            content,
+            source,
             file_system,
             maybe_resolver,
             maybe_npm_resolver,
@@ -1895,20 +1903,22 @@ pub(crate) fn parse_module(
       }
     }
     MediaType::Unknown if is_root => {
+      let source = new_source_with_text(specifier, content, maybe_charset)
+        .map_err(|err| *err)?;
       match module_analyzer.analyze(
         specifier,
-        content.clone(),
+        source.clone(),
         MediaType::JavaScript,
       ) {
         Ok(module_info) => {
           // Return the module as a valid module
-          Ok(Module::Esm(parse_es_module_from_module_info(
+          Ok(Module::Js(parse_js_module_from_module_info(
             graph_kind,
             specifier,
             media_type,
             maybe_headers,
             module_info,
-            content,
+            source,
             file_system,
             maybe_resolver,
             maybe_npm_resolver,
@@ -1919,7 +1929,11 @@ pub(crate) fn parse_module(
         }
       }
     }
-    _ => Err(ModuleError::UnsupportedMediaType(
+    MediaType::Json
+    | MediaType::Wasm
+    | MediaType::TsBuildInfo
+    | MediaType::SourceMap
+    | MediaType::Unknown => Err(ModuleError::UnsupportedMediaType(
       specifier.clone(),
       media_type,
       maybe_referrer,
@@ -1928,7 +1942,7 @@ pub(crate) fn parse_module(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn parse_es_module_from_module_info(
+pub(crate) fn parse_js_module_from_module_info(
   graph_kind: GraphKind,
   specifier: &ModuleSpecifier,
   media_type: MediaType,
@@ -1938,8 +1952,8 @@ pub(crate) fn parse_es_module_from_module_info(
   file_system: &dyn FileSystem,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
-) -> EsModule {
-  let mut module = EsModule::new(specifier.clone(), source);
+) -> JsModule {
+  let mut module = JsModule::new(specifier.clone(), source);
   module.media_type = media_type;
 
   // Analyze the TypeScript triple-slash references
@@ -2656,7 +2670,7 @@ struct PendingState {
 
 #[derive(Clone)]
 enum ContentOrModuleInfo {
-  Content(Arc<str>),
+  Content(Arc<[u8]>),
   ModuleInfo(ModuleInfo),
 }
 
@@ -3134,11 +3148,29 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 match slot {
                   ModuleSlot::Module(module) => {
                     match module {
-                      Module::Esm(module) => {
-                        module.source = content;
+                      Module::Js(module) => {
+                        match new_source_with_text(
+                          &module.specifier,
+                          content,
+                          None, // no charset for JSR
+                        ) {
+                          Ok(source) => {
+                            module.source = source;
+                          }
+                          Err(err) => *slot = ModuleSlot::Err(*err),
+                        }
                       }
                       Module::Json(module) => {
-                        module.source = content;
+                        match new_source_with_text(
+                          &module.specifier,
+                          content,
+                          None, // no charset for JSR
+                        ) {
+                          Ok(source) => {
+                            module.source = source;
+                          }
+                          Err(err) => *slot = ModuleSlot::Err(*err),
+                        }
                       }
                       Module::Npm(_)
                       | Module::Node(_)
@@ -3201,7 +3233,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
           }
-          Module::Esm(module) => {
+          Module::Js(module) => {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
           }
@@ -3622,7 +3654,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       match data {
         Some(LoadResponse::Module { content, .. }) => {
           let package_info: JsrPackageInfo =
-            serde_json::from_str(&content).map_err(|e| Arc::new(e.into()))?;
+            serde_json::from_slice(&content).map_err(|e| Arc::new(e.into()))?;
           Ok(Some(Arc::new(package_info)))
         }
         _ => Ok(None),
@@ -3664,7 +3696,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       match data {
         Some(LoadResponse::Module { content, .. }) => {
           let version_info: JsrPackageVersionInfo =
-            serde_json::from_str(&content).map_err(|e| Arc::new(e.into()))?;
+            serde_json::from_slice(&content).map_err(|e| Arc::new(e.into()))?;
           Ok(Arc::new(version_info))
         }
         _ => Err(Arc::new(anyhow!("Not found: {}", specifier))),
@@ -3779,7 +3811,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           .boxed_local()
         });
         (
-          String::new().into(),
+          Arc::new([]) as Arc<[u8]>,
           Some(ProvidedModuleAnalyzer(RefCell::new(Some(info)))),
         )
       }
@@ -3806,7 +3838,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       Err(err) => ModuleSlot::Err(err),
     };
 
-    if let ModuleSlot::Module(Module::Esm(module)) = module_slot.borrow_mut() {
+    if let ModuleSlot::Module(Module::Js(module)) = module_slot.borrow_mut() {
       if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::CodeOnly)
         || module.maybe_types_dependency.is_none()
       {
@@ -3937,7 +3969,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let module_slot = self.graph.module_slots.get_mut(&specifier).unwrap();
       let module = match module_slot {
         ModuleSlot::Module(m) => match m {
-          Module::Esm(m) => m,
+          Module::Js(m) => m,
           _ => continue,
         },
         ModuleSlot::Err(_) | ModuleSlot::Pending => continue,
@@ -4215,6 +4247,20 @@ impl<'a> NpmSpecifierResolver<'a> {
   }
 }
 
+fn new_source_with_text(
+  specifier: &ModuleSpecifier,
+  text: Arc<[u8]>,
+  maybe_charset: Option<&str>,
+) -> Result<Arc<str>, Box<ModuleError>> {
+  crate::source::decode_source(specifier, text, maybe_charset).map_err(|err| {
+    Box::new(ModuleError::LoadingErr(
+      specifier.clone(),
+      None,
+      Arc::new(err.into()),
+    ))
+  })
+}
+
 impl Serialize for Resolution {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
@@ -4321,13 +4367,14 @@ mod tests {
   fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
     let module_analyzer = DefaultModuleAnalyzer::default();
-    let content =
-      "import * as b from \"./b.ts\";\nimport * as c from \"./b.ts\"";
+    let content: Arc<[u8]> = Arc::from(
+      b"import * as b from \"./b.ts\";\nimport * as c from \"./b.ts\"".to_vec(),
+    );
     let module = parse_module(
       GraphKind::All,
       &specifier,
       None,
-      content.into(),
+      content,
       None,
       None,
       &NullFileSystem,
@@ -4338,7 +4385,7 @@ mod tests {
       None,
     )
     .unwrap();
-    let module = module.esm().unwrap();
+    let module = module.js().unwrap();
     assert_eq!(module.dependencies.len(), 1);
     let dependency = module.dependencies.first().unwrap().1;
     assert_eq!(
@@ -4424,7 +4471,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "await import('file:///bar.js')".into(),
+                content: b"await import('file:///bar.js')".to_vec().into(),
               }))
             })
           }
@@ -4435,7 +4482,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "import 'file:///baz.js'".into(),
+                content: b"import 'file:///baz.js'".to_vec().into(),
               }))
             })
           }
@@ -4446,7 +4493,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "console.log('Hello, world!')".into(),
+                content: b"console.log('Hello, world!')".to_vec().into(),
               }))
             })
           }
@@ -4490,7 +4537,7 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: "await import('file:///bar.js')".into(),
+              content: b"await import('file:///bar.js')".to_vec().into(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move { Ok(None) }),
@@ -4577,14 +4624,14 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///foo_actual.js").unwrap(),
               maybe_headers: None,
-              content: "import 'file:///bar.js'".into(),
+              content: b"import 'file:///bar.js'".to_vec().into(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: Url::parse("file:///bar_actual.js").unwrap(),
               maybe_headers: None,
-              content: "(".into(),
+              content: b"(".to_vec().into(),
             }))
           }),
           _ => unreachable!(),
@@ -4646,29 +4693,29 @@ mod tests {
               specifier: specifier.clone(),
               maybe_headers: None,
               content:
-                "import 'FILE:///baz.js'; import 'file:///bar.js'; import 'http://deno.land/foo.js';"
-                  .into(),
+                b"import 'FILE:///baz.js'; import 'file:///bar.js'; import 'http://deno.land/foo.js';"
+                  .to_vec().into(),
             }))
           }),
           "http://deno.land/foo.js" => Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: "export {}".into(),
+              content: b"export {}".to_vec().into(),
             }))
           }),
           "file:///bar.js" => Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: "console.log('Hello, world!')".into(),
+              content: b"console.log('Hello, world!')".to_vec().into(),
             }))
           }),
           "file:///baz.js" => Box::pin(async move {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: "console.log('Hello, world 2!')".into(),
+              content: b"console.log('Hello, world 2!')".to_vec().into(),
             }))
           }),
           _ => unreachable!(),
@@ -4771,7 +4818,9 @@ mod tests {
               specifier: specifier.clone(),
               maybe_headers: None,
               content:
-                "import 'file:///bar.js'; await import('file:///bar.js')".into(),
+                b"import 'file:///bar.js'; await import('file:///bar.js')"
+                  .to_vec()
+                  .into(),
             }))
           }),
           "file:///bar.js" => {
@@ -4781,7 +4830,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "console.log('Hello, world!')".into(),
+                content: b"console.log('Hello, world!')".to_vec().into(),
               }))
             })
           }
@@ -4817,7 +4866,7 @@ mod tests {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: "
+              content: b"
                 /// <reference path='file:///bar.ts' />
                 /// <reference types='file:///bar.ts' />
                 /* @jsxImportSource file:///bar.ts */
@@ -4828,6 +4877,7 @@ mod tests {
                 import type {} from 'file:///bar.ts';
                 /** @typedef { import('file:///bar.ts') } bar */
               "
+              .to_vec()
               .into(),
             }))
           }),
@@ -4837,7 +4887,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "".into(),
+                content: b"".to_vec().into(),
               }))
             })
           }
@@ -4847,7 +4897,7 @@ mod tests {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
                 maybe_headers: None,
-                content: "{}".into(),
+                content: b"{}".to_vec().into(),
               }))
             })
           }
@@ -4865,7 +4915,7 @@ mod tests {
       .await;
     graph.valid().unwrap();
     let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
-    let module = module.esm().unwrap();
+    let module = module.js().unwrap();
     let dependency_a = module.dependencies.get("file:///bar.ts").unwrap();
     let dependency_b = module.dependencies.get("file:///baz.json").unwrap();
     assert_eq!(

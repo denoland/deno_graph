@@ -6,7 +6,6 @@ use std::cell::Ref;
 use std::cell::RefCell;
 use std::hash::Hash;
 
-use anyhow::Result;
 use deno_ast::swc::ast::*;
 use deno_ast::swc::utils::find_pat_ids;
 use deno_ast::ModuleSpecifier;
@@ -17,7 +16,7 @@ use deno_ast::SourceTextInfo;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
-use crate::EsModule;
+use crate::JsModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
 use crate::ModuleParser;
@@ -83,7 +82,7 @@ impl<'a> RootSymbol<'a> {
     };
 
     match graph_module {
-      crate::Module::Esm(es_module) => self.analyze_es_module(es_module),
+      crate::Module::Js(js_module) => self.analyze_js_module(js_module),
       crate::Module::Json(json_module) => {
         Some(self.analyze_json_module(json_module))
       }
@@ -151,11 +150,14 @@ impl<'a> RootSymbol<'a> {
     )
   }
 
-  fn analyze_es_module(&self, es_module: &EsModule) -> Option<ModuleInfoRef> {
-    let Ok(source) = self.parsed_source(es_module) else {
+  fn analyze_js_module(
+    &self,
+    script_module: &JsModule,
+  ) -> Option<ModuleInfoRef> {
+    let Ok(source) = self.parsed_source(script_module) else {
       return None;
     };
-    let specifier = &es_module.specifier;
+    let specifier = &script_module.specifier;
     let module = source.module();
 
     let module_id = ModuleId(self.ids_to_modules.len() as u32);
@@ -240,7 +242,7 @@ impl<'a> RootSymbol<'a> {
 
   fn parsed_source(
     &self,
-    graph_module: &EsModule,
+    graph_module: &JsModule,
   ) -> Result<ParsedSource, deno_ast::Diagnostic> {
     self.parser.parse_module(ParseOptions {
       specifier: &graph_module.specifier,

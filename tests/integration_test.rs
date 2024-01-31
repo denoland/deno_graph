@@ -89,7 +89,7 @@ async fn test_graph_specs() {
     }
     // now the fast check modules
     let fast_check_modules = result.graph.modules().filter_map(|module| {
-      let module = module.esm()?;
+      let module = module.js()?;
       let fast_check = module.fast_check.as_ref()?;
       Some((module, fast_check))
     });
@@ -446,7 +446,7 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
-            content: "import 'jsr:@scope/a@1.2".into(),
+            content: b"import 'jsr:@scope/a@1.2".to_vec().into(),
           }))
         }),
         "https://jsr.io/@scope/a/meta.json" => {
@@ -457,11 +457,11 @@ async fn test_jsr_version_not_found_then_found() {
               content: match cache_setting {
                 CacheSetting::Only | CacheSetting::Use => {
                   // first time it won't have the version
-                  r#"{ "versions": { "1.0.0": {} } }"#.into()
+                  br#"{ "versions": { "1.0.0": {} } }"#.to_vec().into()
                 }
                 CacheSetting::Reload => {
                   // then on reload it will
-                  r#"{ "versions": { "1.0.0": {}, "1.2.0": {} } }"#.into()
+                  br#"{ "versions": { "1.0.0": {}, "1.2.0": {} } }"#.to_vec().into()
                 }
               },
             }))
@@ -471,14 +471,14 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
-            content: r#"{ "exports": { ".": "./mod.ts" } }"#.into(),
+            content: br#"{ "exports": { ".": "./mod.ts" } }"#.to_vec().into(),
           }))
         }),
         "https://jsr.io/@scope/a/1.2.0/mod.ts" => Box::pin(async move {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
-            content: "console.log('Hello, world!')".into(),
+            content: b"console.log('Hello, world!')".to_vec().into(),
           }))
         }),
         _ => unreachable!(),

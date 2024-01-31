@@ -1025,7 +1025,7 @@ impl<'a> PublicRangeFinder<'a> {
       return true; // just analyze it
     };
     match module {
-      crate::Module::Esm(m) => is_typed_media_type(m.media_type),
+      crate::Module::Js(m) => is_typed_media_type(m.media_type),
       crate::Module::Json(_) => true,
       crate::Module::Npm(_)
       | crate::Module::Node(_)
