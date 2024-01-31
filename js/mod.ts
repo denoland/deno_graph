@@ -192,7 +192,7 @@ export async function init(opts?: wasm.InstantiateOptions) {
  */
 export function parseModule(
   specifier: string,
-  content: string,
+  content: Uint8Array,
   options: ParseModuleOptions = {},
 ): ModuleJson {
   const {
