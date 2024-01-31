@@ -40,6 +40,8 @@ export type {
   TypesDependency,
 } from "./types.ts";
 
+const encoder = new TextEncoder();
+
 // note: keep this in line with deno_cache
 export type CacheSetting = "only" | "use" | "reload";
 
@@ -139,7 +141,22 @@ export async function createGraph(
   const { createGraph } = await wasm.instantiate();
   return await createGraph(
     rootSpecifiers,
-    load,
+    async (
+      specifier: string,
+      isDynamic: boolean,
+      cacheSetting: CacheSetting,
+    ) => {
+      const result = await load(specifier, isDynamic, cacheSetting);
+      if (result?.kind === "module") {
+        if (typeof result.content === "string") {
+          result.content = encoder.encode(result.content);
+        }
+        // need to convert to an array for serde_wasm_bindgen to work
+        // deno-lint-ignore no-explicit-any
+        (result as any).content = Array.from(result.content);
+      }
+      return result;
+    },
     defaultJsxImportSource,
     jsxImportSourceModule,
     cacheInfo,

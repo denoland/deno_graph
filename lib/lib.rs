@@ -197,6 +197,7 @@ pub async fn js_create_graph(
   maybe_graph_kind: Option<String>,
   maybe_imports: JsValue,
 ) -> Result<JsValue, JsValue> {
+  console_error_panic_hook::set_once();
   let roots_vec: Vec<String> = serde_wasm_bindgen::from_value(roots)
     .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
   let maybe_imports_map: Option<HashMap<String, Vec<String>>> =
@@ -278,6 +279,7 @@ pub fn js_parse_module(
   maybe_resolve: Option<js_sys::Function>,
   maybe_resolve_types: Option<js_sys::Function>,
 ) -> Result<JsValue, JsValue> {
+  console_error_panic_hook::set_once();
   let maybe_headers: Option<HashMap<String, String>> =
     serde_wasm_bindgen::from_value(maybe_headers)
       .map_err(|err| js_sys::Error::new(&err.to_string()))?;
