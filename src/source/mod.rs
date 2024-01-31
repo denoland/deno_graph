@@ -4,8 +4,10 @@ use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
+use crate::text_encoding;
 use crate::ModuleInfo;
 use crate::SpecifierError;
+use deno_ast::MediaType;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 
@@ -18,6 +20,7 @@ use futures::future::LocalBoxFuture;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
@@ -475,6 +478,83 @@ pub trait Reporter: fmt::Debug {
     modules_done: usize,
     modules_total: usize,
   );
+}
+
+/// Resolve a media type and optionally the charset from a module specifier and
+/// the value of a content type header.
+pub fn resolve_media_type_and_charset_from_headers(
+  specifier: &ModuleSpecifier,
+  maybe_headers: Option<&HashMap<String, String>>,
+) -> (MediaType, Option<String>) {
+  resolve_media_type_and_charset_from_content_type(
+    specifier,
+    maybe_headers.and_then(|h| h.get("content-type")),
+  )
+}
+
+/// Resolve a media type and optionally the charset from a module specifier and
+/// the value of a content type header.
+pub fn resolve_media_type_and_charset_from_content_type(
+  specifier: &ModuleSpecifier,
+  maybe_content_type: Option<&String>,
+) -> (MediaType, Option<String>) {
+  if let Some(content_type) = maybe_content_type {
+    let mut content_types = content_type.split(';');
+    let content_type = content_types.next().unwrap();
+    let media_type = MediaType::from_content_type(specifier, content_type);
+    let charset = content_types
+      .map(str::trim)
+      .find_map(|s| s.strip_prefix("charset="))
+      .map(String::from);
+
+    (media_type, charset)
+  } else {
+    (MediaType::from_specifier(specifier), None)
+  }
+}
+
+/// Decodes the source bytes into a string handling any encoding rules
+/// for local vs remote files and dealing with the charset.
+pub fn decode_source(
+  specifier: &ModuleSpecifier,
+  bytes: Arc<[u8]>,
+  maybe_charset: Option<&str>,
+) -> Result<Arc<str>, std::io::Error> {
+  let charset = if specifier.scheme() == "file" {
+    text_encoding::detect_charset(bytes.as_ref())
+  } else {
+    maybe_charset.unwrap_or("utf-8")
+  };
+  decode_with_charset(bytes, charset)
+}
+
+fn decode_with_charset(
+  bytes: Arc<[u8]>,
+  charset: &str,
+) -> Result<Arc<str>, std::io::Error> {
+  let text = match text_encoding::convert_to_utf8(bytes.as_ref(), charset)? {
+    Cow::Borrowed(text) => {
+      if text.starts_with(text_encoding::BOM_CHAR) {
+        text[..text_encoding::BOM_CHAR.len_utf8()].to_string()
+      } else {
+        return Ok(
+          // SAFETY: we know it's a valid utf-8 string at this point
+          unsafe {
+            let raw_ptr = Arc::into_raw(bytes);
+            Arc::from_raw(std::mem::transmute::<*const [u8], *const str>(
+              raw_ptr,
+            ))
+          },
+        );
+      }
+    }
+    Cow::Owned(mut text) => {
+      text_encoding::strip_bom_mut(&mut text);
+      text
+    }
+  };
+  let text: Arc<str> = Arc::from(text);
+  Ok(text)
 }
 
 #[cfg(test)]

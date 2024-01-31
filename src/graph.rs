@@ -23,7 +23,6 @@ use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
 use crate::packages::PackageSpecifiers;
 use crate::source::*;
-use crate::text_encoding;
 
 use anyhow::anyhow;
 use deno_ast::dep::DependencyKind;
@@ -850,6 +849,11 @@ impl JsModule {
       specifier,
       fast_check: None,
     }
+  }
+
+  /// Return the size in bytes of the content of the module.
+  pub fn size(&self) -> usize {
+    self.source.as_bytes().len()
   }
 
   pub fn fast_check_diagnostic(&self) -> Option<&FastCheckDiagnostic> {
@@ -1821,8 +1825,8 @@ pub(crate) fn parse_module(
   is_dynamic_branch: bool,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Result<Module, ModuleError> {
-  let media_type =
-    MediaType::from_specifier_and_headers(specifier, maybe_headers);
+  let (media_type, maybe_charset) =
+    resolve_media_type_and_charset_from_headers(specifier, maybe_headers);
 
   // here we check any media types that should have assertions made against them
   // if they aren't the root and add them to the graph, otherwise we continue
@@ -1834,7 +1838,12 @@ pub(crate) fn parse_module(
         Some("json")
       ))
   {
-    let text = text_encoding::arc_bytes_to_text(content).map_err(|err| {
+    let text = crate::source::decode_source(
+      specifier,
+      content,
+      maybe_charset.as_deref(),
+    )
+    .map_err(|err| {
       ModuleError::LoadingErr(specifier.clone(), None, Arc::new(err.into()))
     })?;
     return Ok(Module::Json(JsonModule {
@@ -1876,7 +1885,8 @@ pub(crate) fn parse_module(
     | MediaType::Dmts
     | MediaType::Dcts => {
       let source =
-        new_source_with_text(specifier, content).map_err(|err| *err)?;
+        new_source_with_text(specifier, content, maybe_charset.as_deref())
+          .map_err(|err| *err)?;
       match module_analyzer.analyze(specifier, source.clone(), media_type) {
         Ok(module_info) => {
           // Return the module as a valid module
@@ -1899,7 +1909,8 @@ pub(crate) fn parse_module(
     }
     MediaType::Unknown if is_root => {
       let source =
-        new_source_with_text(specifier, content).map_err(|err| *err)?;
+        new_source_with_text(specifier, content, maybe_charset.as_deref())
+          .map_err(|err| *err)?;
       match module_analyzer.analyze(
         specifier,
         source.clone(),
@@ -3144,7 +3155,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   ModuleSlot::Module(module) => {
                     match module {
                       Module::Js(module) => {
-                        match new_source_with_text(&module.specifier, content) {
+                        match new_source_with_text(
+                          &module.specifier,
+                          content,
+                          None, // no charset for JSR
+                        ) {
                           Ok(source) => {
                             module.source = source;
                           }
@@ -3152,7 +3167,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                         }
                       }
                       Module::Json(module) => {
-                        match new_source_with_text(&module.specifier, content) {
+                        match new_source_with_text(
+                          &module.specifier,
+                          content,
+                          None, // no charset for JSR
+                        ) {
                           Ok(source) => {
                             module.source = source;
                           }
@@ -4237,8 +4256,9 @@ impl<'a> NpmSpecifierResolver<'a> {
 fn new_source_with_text(
   specifier: &ModuleSpecifier,
   text: Arc<[u8]>,
+  maybe_charset: Option<&str>,
 ) -> Result<Arc<str>, Box<ModuleError>> {
-  text_encoding::arc_bytes_to_text(text).map_err(|err| {
+  crate::source::decode_source(specifier, text, maybe_charset).map_err(|err| {
     Box::new(ModuleError::LoadingErr(
       specifier.clone(),
       None,
