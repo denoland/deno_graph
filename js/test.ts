@@ -673,7 +673,10 @@ Deno.test({
     await init();
     assertThrows(
       () => {
-        parseModule("./bad.ts", new TextEncoder().encode(`console.log("hello");`));
+        parseModule(
+          "./bad.ts",
+          new TextEncoder().encode(`console.log("hello");`),
+        );
       },
       Error,
       "relative URL without a base",
@@ -687,7 +690,10 @@ Deno.test({
     await init();
     assertThrows(
       () => {
-        parseModule("file:///a/test.md", new TextEncoder().encode(`# Some Markdown\n\n**bold**`));
+        parseModule(
+          "file:///a/test.md",
+          new TextEncoder().encode(`# Some Markdown\n\n**bold**`),
+        );
       },
       Error,
       "The module's source code could not be parsed",
