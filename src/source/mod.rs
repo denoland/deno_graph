@@ -562,6 +562,8 @@ pub fn resolve_media_type_and_charset_from_content_type<'a>(
   }
 }
 
+/// Decodes the source bytes into a string handling any encoding rules
+/// where the bytes may be from a remote module, file module, or other.
 pub fn decode_owned_source(
   specifier: &ModuleSpecifier,
   bytes: Vec<u8>,
@@ -577,7 +579,9 @@ pub fn decode_owned_source(
   decode_owned_source_with_charset(bytes, charset)
 }
 
-pub fn decode_owned_local_source(
+/// Decodes the source bytes into a string handling any encoding rules
+/// where the source is a `file:` specifier.
+pub fn decode_owned_file_source(
   bytes: Vec<u8>,
 ) -> Result<String, std::io::Error> {
   let charset = text_encoding::detect_charset(&bytes);
@@ -921,5 +925,82 @@ pub mod tests {
         (media_type, maybe_charset.as_deref())
       );
     }
+  }
+
+  #[test]
+  fn test_parse_valid_data_url() {
+    let valid_data_url = "data:text/plain;base64,SGVsbG8sIFdvcmxkIQ==";
+    let specifier = ModuleSpecifier::parse(valid_data_url).unwrap();
+    let raw_data_url = RawDataUrl::parse(&specifier).unwrap();
+    assert_eq!(raw_data_url.mime_type, "text/plain");
+    assert_eq!(raw_data_url.bytes, b"Hello, World!");
+  }
+
+  #[test]
+  fn test_charset_with_valid_mime_type() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "text/plain; charset=utf-8".to_string(),
+      bytes: vec![],
+    };
+    assert_eq!(raw_data_url.charset(), Some("utf-8"));
+  }
+
+  #[test]
+  fn test_charset_with_no_charset_in_mime_type() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "text/plain".to_string(),
+      bytes: vec![],
+    };
+    assert_eq!(raw_data_url.charset(), None);
+  }
+
+  #[test]
+  fn test_media_type_with_known_type() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "application/javascript;charset=utf-8".to_string(),
+      bytes: vec![],
+    };
+    assert_eq!(raw_data_url.media_type(), MediaType::JavaScript);
+  }
+
+  #[test]
+  fn test_media_type_with_unknown_type() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "unknown/unknown".to_string(),
+      bytes: vec![],
+    };
+    assert_eq!(raw_data_url.media_type(), MediaType::Unknown);
+  }
+
+  #[test]
+  fn test_decode_with_valid_charset() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "text/plain; charset=utf-8".to_string(),
+      bytes: "Hello, World!".as_bytes().to_vec(),
+    };
+    assert_eq!(raw_data_url.decode().unwrap(), "Hello, World!");
+  }
+
+  #[test]
+  fn test_decode_with_invalid_charset() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "text/plain; charset=invalid-charset".to_string(),
+      bytes: vec![],
+    };
+    assert!(raw_data_url.decode().is_err());
+  }
+
+  #[test]
+  fn test_into_bytes_and_headers() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "text/plain; charset=utf-8".to_string(),
+      bytes: "Hello, World!".as_bytes().to_vec(),
+    };
+    let (bytes, headers) = raw_data_url.into_bytes_and_headers();
+    assert_eq!(bytes, "Hello, World!".as_bytes());
+    assert_eq!(
+      headers.get("content-type").unwrap(),
+      "text/plain; charset=utf-8"
+    );
   }
 }
