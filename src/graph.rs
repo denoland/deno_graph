@@ -696,7 +696,7 @@ pub struct WorkspaceMember {
 pub enum Module {
   // todo(#239): remove this when updating the --json output for 2.0
   #[serde(rename = "esm")]
-  Script(ScriptModule),
+  Js(JsModule),
   // todo(#239): remove this when updating the --json output for 2.0
   #[serde(rename = "asserted")]
   Json(JsonModule),
@@ -708,7 +708,7 @@ pub enum Module {
 impl Module {
   pub fn specifier(&self) -> &ModuleSpecifier {
     match self {
-      Module::Script(module) => &module.specifier,
+      Module::Js(module) => &module.specifier,
       Module::Json(module) => &module.specifier,
       Module::Npm(module) => &module.specifier,
       Module::Node(module) => &module.specifier,
@@ -724,8 +724,8 @@ impl Module {
     }
   }
 
-  pub fn esm(&self) -> Option<&ScriptModule> {
-    if let Module::Script(module) = &self {
+  pub fn js(&self) -> Option<&JsModule> {
+    if let Module::Js(module) = &self {
       Some(module)
     } else {
       None
@@ -820,7 +820,7 @@ pub struct FastCheckTypeModule {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ScriptModule {
+pub struct JsModule {
   #[serde(
     skip_serializing_if = "IndexMap::is_empty",
     serialize_with = "serialize_dependencies"
@@ -839,7 +839,7 @@ pub struct ScriptModule {
   pub fast_check: Option<FastCheckTypeModuleSlot>,
 }
 
-impl ScriptModule {
+impl JsModule {
   fn new(specifier: ModuleSpecifier, source: Arc<str>) -> Self {
     Self {
       dependencies: Default::default(),
@@ -1093,7 +1093,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
   fn next(&mut self) -> Option<Self::Item> {
     match self.previous_module.take() {
       Some(ModuleEntryRef::Module(module)) => match module {
-        Module::Script(module) => {
+        Module::Js(module) => {
           let check_types = (self.check_js
             || !matches!(
               module.media_type,
@@ -1199,7 +1199,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
 
   fn check_resolution(
     &self,
-    module: &ScriptModule,
+    module: &JsModule,
     mode: ResolutionMode,
     specifier_text: &str,
     resolution: &Resolution,
@@ -1276,7 +1276,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
 
       if let Some((_, module_entry)) = self.iterator.next() {
         match module_entry {
-          ModuleEntryRef::Module(Module::Script(module)) => {
+          ModuleEntryRef::Module(Module::Js(module)) => {
             let check_types = (check_js
               || !matches!(
                 module.media_type,
@@ -1581,7 +1581,7 @@ impl ModuleGraph {
     prefer_types: bool,
   ) -> Option<ModuleSpecifier> {
     match referring_module {
-      Module::Script(referring_module) => {
+      Module::Js(referring_module) => {
         let dependency = referring_module.dependencies.get(specifier)?;
         self.resolve_dependency_from_dep(dependency, prefer_types)
       }
@@ -1609,7 +1609,7 @@ impl ModuleGraph {
     // Even if we resolved the specifier, it doesn't mean the module is actually
     // there, so check in the module slots
     match self.module_slots.get(&resolved_specifier) {
-      Some(ModuleSlot::Module(Module::Script(module))) if prefer_types => {
+      Some(ModuleSlot::Module(Module::Js(module))) if prefer_types => {
         // check for if this module has a types dependency
         if let Some(Resolution::Ok(resolved)) = module
           .maybe_types_dependency
@@ -1674,7 +1674,7 @@ impl ModuleGraph {
       return Ok(None);
     };
 
-    if let Some(specifier) = module.esm().and_then(|m| {
+    if let Some(specifier) = module.js().and_then(|m| {
       m.maybe_types_dependency
         .as_ref()
         .and_then(|d| d.dependency.ok())
@@ -1879,7 +1879,7 @@ pub(crate) fn parse_module(
       match module_analyzer.analyze(specifier, source.clone(), media_type) {
         Ok(module_info) => {
           // Return the module as a valid module
-          Ok(Module::Script(parse_es_module_from_module_info(
+          Ok(Module::Js(parse_js_module_from_module_info(
             graph_kind,
             specifier,
             media_type,
@@ -1905,7 +1905,7 @@ pub(crate) fn parse_module(
       ) {
         Ok(module_info) => {
           // Return the module as a valid module
-          Ok(Module::Script(parse_es_module_from_module_info(
+          Ok(Module::Js(parse_js_module_from_module_info(
             graph_kind,
             specifier,
             media_type,
@@ -1935,7 +1935,7 @@ pub(crate) fn parse_module(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn parse_es_module_from_module_info(
+pub(crate) fn parse_js_module_from_module_info(
   graph_kind: GraphKind,
   specifier: &ModuleSpecifier,
   media_type: MediaType,
@@ -1945,8 +1945,8 @@ pub(crate) fn parse_es_module_from_module_info(
   file_system: &dyn FileSystem,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
-) -> ScriptModule {
-  let mut module = ScriptModule::new(specifier.clone(), source);
+) -> JsModule {
+  let mut module = JsModule::new(specifier.clone(), source);
   module.media_type = media_type;
 
   // Analyze the TypeScript triple-slash references
@@ -3141,32 +3141,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 match slot {
                   ModuleSlot::Module(module) => {
                     match module {
-                      Module::Script(module) => match module.media_type {
-                        MediaType::JavaScript
-                        | MediaType::Jsx
-                        | MediaType::Mjs
-                        | MediaType::Cjs
-                        | MediaType::TypeScript
-                        | MediaType::Mts
-                        | MediaType::Cts
-                        | MediaType::Dts
-                        | MediaType::Dmts
-                        | MediaType::Dcts
-                        | MediaType::Tsx
-                        | MediaType::Json => {
-                          match new_source_with_text(&module.specifier, content)
-                          {
-                            Ok(source) => {
-                              module.source = source;
-                            }
-                            Err(err) => *slot = ModuleSlot::Err(err),
+                      Module::Js(module) => {
+                        match new_source_with_text(&module.specifier, content) {
+                          Ok(source) => {
+                            module.source = source;
                           }
+                          Err(err) => *slot = ModuleSlot::Err(err),
                         }
-                        MediaType::Wasm
-                        | MediaType::TsBuildInfo
-                        | MediaType::SourceMap
-                        | MediaType::Unknown => todo!(),
-                      },
+                      }
                       Module::Json(module) => {
                         match new_source_with_text(&module.specifier, content) {
                           Ok(source) => {
@@ -3236,7 +3218,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
           }
-          Module::Script(module) => {
+          Module::Js(module) => {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
           }
@@ -3841,8 +3823,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       Err(err) => ModuleSlot::Err(err),
     };
 
-    if let ModuleSlot::Module(Module::Script(module)) = module_slot.borrow_mut()
-    {
+    if let ModuleSlot::Module(Module::Js(module)) = module_slot.borrow_mut() {
       if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::CodeOnly)
         || module.maybe_types_dependency.is_none()
       {
@@ -3973,7 +3954,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let module_slot = self.graph.module_slots.get_mut(&specifier).unwrap();
       let module = match module_slot {
         ModuleSlot::Module(m) => match m {
-          Module::Script(m) => m,
+          Module::Js(m) => m,
           _ => continue,
         },
         ModuleSlot::Err(_) | ModuleSlot::Pending => continue,
@@ -4385,7 +4366,7 @@ mod tests {
       None,
     )
     .unwrap();
-    let module = module.esm().unwrap();
+    let module = module.js().unwrap();
     assert_eq!(module.dependencies.len(), 1);
     let dependency = module.dependencies.first().unwrap().1;
     assert_eq!(
@@ -4915,7 +4896,7 @@ mod tests {
       .await;
     graph.valid().unwrap();
     let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
-    let module = module.esm().unwrap();
+    let module = module.js().unwrap();
     let dependency_a = module.dependencies.get("file:///bar.ts").unwrap();
     let dependency_b = module.dependencies.get("file:///baz.json").unwrap();
     assert_eq!(

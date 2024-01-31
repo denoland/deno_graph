@@ -89,7 +89,7 @@ async fn test_graph_specs() {
     }
     // now the fast check modules
     let fast_check_modules = result.graph.modules().filter_map(|module| {
-      let module = module.esm()?;
+      let module = module.js()?;
       let fast_check = module.fast_check.as_ref()?;
       Some((module, fast_check))
     });

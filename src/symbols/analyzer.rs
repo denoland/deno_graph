@@ -16,11 +16,11 @@ use deno_ast::SourceTextInfo;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
+use crate::JsModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
 use crate::ModuleParser;
 use crate::ParseOptions;
-use crate::ScriptModule;
 
 use super::collections::AdditiveOnlyIndexMap;
 use super::collections::AdditiveOnlyIndexMapForCopyValues;
@@ -82,7 +82,7 @@ impl<'a> RootSymbol<'a> {
     };
 
     match graph_module {
-      crate::Module::Script(es_module) => self.analyze_script_module(es_module),
+      crate::Module::Js(js_module) => self.analyze_js_module(js_module),
       crate::Module::Json(json_module) => {
         Some(self.analyze_json_module(json_module))
       }
@@ -150,11 +150,11 @@ impl<'a> RootSymbol<'a> {
     )
   }
 
-  fn analyze_script_module(
+  fn analyze_js_module(
     &self,
-    script_module: &ScriptModule,
+    script_module: &JsModule,
   ) -> Option<ModuleInfoRef> {
-    let Some(source) = self.parsed_source(script_module) else {
+    let Ok(source) = self.parsed_source(script_module) else {
       return None;
     };
     let specifier = &script_module.specifier;
@@ -240,16 +240,16 @@ impl<'a> RootSymbol<'a> {
     self.ids_to_modules.get(&module_id).unwrap().as_ref()
   }
 
-  fn parsed_source(&self, graph_module: &ScriptModule) -> Option<ParsedSource> {
-    self
-      .parser
-      .parse_module(ParseOptions {
-        specifier: &graph_module.specifier,
-        source: graph_module.source.clone(),
-        media_type: graph_module.media_type,
-        scope_analysis: true,
-      })
-      .ok()
+  fn parsed_source(
+    &self,
+    graph_module: &JsModule,
+  ) -> Result<ParsedSource, deno_ast::Diagnostic> {
+    self.parser.parse_module(ParseOptions {
+      specifier: &graph_module.specifier,
+      source: graph_module.source.clone(),
+      media_type: graph_module.media_type,
+      scope_analysis: true,
+    })
   }
 }
 

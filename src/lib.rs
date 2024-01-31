@@ -54,6 +54,7 @@ pub use graph::FastCheckTypeModule;
 pub use graph::FastCheckTypeModuleSlot;
 pub use graph::GraphImport;
 pub use graph::GraphKind;
+pub use graph::JsModule;
 pub use graph::JsonModule;
 pub use graph::Module;
 pub use graph::ModuleEntryRef;
@@ -66,7 +67,6 @@ pub use graph::Range;
 pub use graph::Resolution;
 pub use graph::ResolutionError;
 pub use graph::ResolutionResolved;
-pub use graph::ScriptModule;
 pub use graph::TypesDependency;
 pub use graph::WalkOptions;
 pub use graph::WorkspaceMember;
@@ -135,10 +135,8 @@ pub struct ParseModuleFromAstOptions<'a> {
 }
 
 /// Parse an individual module from an AST, returning the module.
-pub fn parse_module_from_ast(
-  options: ParseModuleFromAstOptions,
-) -> ScriptModule {
-  graph::parse_es_module_from_module_info(
+pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
+  graph::parse_js_module_from_module_info(
     options.graph_kind,
     options.specifier,
     options.parsed_source.media_type(),
@@ -221,7 +219,7 @@ mod tests {
       .unwrap()
       .module()
       .unwrap()
-      .esm()
+      .js()
       .unwrap();
     assert_eq!(module.dependencies.len(), 1);
     let maybe_dependency = module.dependencies.get("./test02.ts");
@@ -1008,7 +1006,7 @@ console.log(a);
       .unwrap()
       .module()
       .unwrap()
-      .esm()
+      .js()
       .unwrap();
     assert_eq!(module.media_type, MediaType::TypeScript);
   }
@@ -1770,7 +1768,7 @@ export function a(a) {
       .await;
     assert_eq!(graph.module_slots.len(), 3);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
-    let module = graph.get(&data_specifier).unwrap().esm().unwrap();
+    let module = graph.get(&data_specifier).unwrap().js().unwrap();
     assert_eq!(
       module.source.as_ref(),
       r#"export * from "https://example.com/c.ts";"#,
@@ -1817,7 +1815,7 @@ export function a(a) {
         },
       )
       .await;
-    let module = graph.get(&graph.roots[0]).unwrap().esm().unwrap();
+    let module = graph.get(&graph.roots[0]).unwrap().js().unwrap();
     let maybe_dep = module.dependencies.get("b");
     assert!(maybe_dep.is_some());
     let dep = maybe_dep.unwrap();
@@ -1877,7 +1875,7 @@ export function a(a) {
         },
       )
       .await;
-    let module = graph.get(&graph.roots[0]).unwrap().esm().unwrap();
+    let module = graph.get(&graph.roots[0]).unwrap().js().unwrap();
     let types_dep = module.maybe_types_dependency.as_ref().unwrap();
     assert_eq!(types_dep.specifier, "file:///a.js");
     assert_eq!(
@@ -3030,7 +3028,7 @@ export function a(a) {
       maybe_npm_resolver: None,
     })
     .unwrap();
-    let actual = actual.esm().unwrap();
+    let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 7);
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::TypeScript);
@@ -3047,7 +3045,7 @@ export function a(a) {
       maybe_npm_resolver: None,
     })
     .unwrap();
-    let actual = actual.esm().unwrap();
+    let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 4);
   }
 
@@ -3140,7 +3138,7 @@ export function a(a) {
       maybe_npm_resolver: None,
     })
     .unwrap();
-    let actual = actual.esm().unwrap();
+    let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
     let dep = actual
       .dependencies
@@ -3183,7 +3181,7 @@ export function a(a) {
       maybe_npm_resolver: None,
     })
     .unwrap();
-    let actual = actual.esm().unwrap();
+    let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
     let dep = actual
       .dependencies
