@@ -637,7 +637,7 @@ fn decode_with_charset(
   let text = match text_encoding::convert_to_utf8(bytes.as_ref(), charset)? {
     Cow::Borrowed(text) => {
       if text.starts_with(text_encoding::BOM_CHAR) {
-        text[..text_encoding::BOM_CHAR.len_utf8()].to_string()
+        text[text_encoding::BOM_CHAR.len_utf8()..].to_string()
       } else {
         return Ok(
           // SAFETY: we know it's a valid utf-8 string at this point
@@ -1005,5 +1005,22 @@ pub mod tests {
       headers.get("content-type").unwrap(),
       "text/plain; charset=utf-8"
     );
+  }
+
+  #[test]
+  fn test_decode_owned_with_bom() {
+    let text = decode_owned_file_source(
+      format!("{}{}", text_encoding::BOM_CHAR, "Hello").into_bytes(),
+    )
+    .unwrap();
+    assert_eq!(text, "Hello");
+  }
+
+  #[test]
+  fn test_decode_with_charset_with_bom() {
+    let bytes = format!("{}{}", text_encoding::BOM_CHAR, "Hello").into_bytes();
+    let charset = "utf-8";
+    let text = decode_with_charset(Arc::from(bytes), charset).unwrap();
+    assert_eq!(text.as_ref(), "Hello");
   }
 }
