@@ -528,7 +528,7 @@ impl<'a> PublicRangeFinder<'a> {
         let (export_name, _) = named_exports.get_index(i).unwrap();
         if let Some(export_symbol_id) = module_exports.get(export_name) {
           let export_name = export_name.clone();
-          let named_exports = named_exports.remove(&export_name).unwrap();
+          let named_exports = named_exports.swap_remove(&export_name).unwrap();
           if named_exports.is_empty() {
             pending_traces
               .maybe_add_id_trace(*export_symbol_id, module_symbol.symbol_id());
@@ -569,7 +569,7 @@ impl<'a> PublicRangeFinder<'a> {
                     found_ranges.insert(re_export_all_node.span.range());
                     let export_name = export_name.clone();
                     let named_exports =
-                      named_exports.remove(&export_name).unwrap();
+                      named_exports.swap_remove(&export_name).unwrap();
                     let module = match export_path {
                             crate::symbols::ResolvedExportOrReExportAllPath::Export(e) => e.module,
                             crate::symbols::ResolvedExportOrReExportAllPath::ReExportAllPath(p) => p.referrer_module,
