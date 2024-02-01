@@ -538,13 +538,13 @@ Deno.test({
     await init();
     const module = parseModule(
       "file:///a/test01.js",
-      `
+      new TextEncoder().encode(`
         /// <reference types="./test01.d.ts" />
         import { a } from "./a.ts";
         import * as b from "./b.ts";
         export { c } from "./c.ts";
         const d = await import("./d.ts");
-      `,
+      `),
     );
     assertEquals(module, {
       "specifier": "file:///a/test01.js",
@@ -609,9 +609,9 @@ Deno.test({
     await init();
     const module = parseModule(
       `https://example.com/a`,
-      `declare interface A {
+      new TextEncoder().encode(`declare interface A {
       a: string;
-    }`,
+    }`),
       {
         headers: {
           "content-type": "application/typescript; charset=utf-8",
@@ -628,10 +628,10 @@ Deno.test({
     await init();
     const module = parseModule(
       `file:///a/test01.tsx`,
-      `/* @jsxImportSource http://example.com/preact */
+      new TextEncoder().encode(`/* @jsxImportSource http://example.com/preact */
     export function A() {
       <div>Hello Deno</div>
-    }`,
+    }`),
       {
         jsxImportSourceModule: "jsx-dev-runtime",
       },
@@ -651,10 +651,10 @@ Deno.test({
     await init();
     const module = parseModule(
       `file:///a/test01.tsx`,
-      `
+      new TextEncoder().encode(`
     export function A() {
       <div>Hello Deno</div>
-    }`,
+    }`),
       {
         defaultJsxImportSource: "http://example.com/preact",
       },
@@ -673,7 +673,10 @@ Deno.test({
     await init();
     assertThrows(
       () => {
-        parseModule("./bad.ts", `console.log("hello");`);
+        parseModule(
+          "./bad.ts",
+          new TextEncoder().encode(`console.log("hello");`),
+        );
       },
       Error,
       "relative URL without a base",
@@ -687,7 +690,10 @@ Deno.test({
     await init();
     assertThrows(
       () => {
-        parseModule("file:///a/test.md", `# Some Markdown\n\n**bold**`);
+        parseModule(
+          "file:///a/test.md",
+          new TextEncoder().encode(`# Some Markdown\n\n**bold**`),
+        );
       },
       Error,
       "The module's source code could not be parsed",
@@ -701,10 +707,10 @@ Deno.test({
     await init();
     const module = parseModule(
       "file:///a/test01.js",
-      `
+      new TextEncoder().encode(`
         import a from "./a.json" with { type: "json" };
         await import("./b.json", { with: { type: "json" } });
-      `,
+      `),
     );
     assertEquals(module, {
       "dependencies": [
@@ -758,10 +764,10 @@ Deno.test({
     await init();
     const module = parseModule(
       "file:///a/foo.ts",
-      `
+      new TextEncoder().encode(`
         /// <reference path="./a.d.ts" />
         /// <reference types="./b.d.ts" />
-      `,
+      `),
     );
     assertEquals(module, {
       "dependencies": [
