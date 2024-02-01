@@ -306,18 +306,69 @@ pub trait NpmResolver: fmt::Debug {
 pub fn load_data_url(
   specifier: &ModuleSpecifier,
 ) -> Result<Option<LoadResponse>, anyhow::Error> {
-  let url = DataUrl::process(specifier.as_str())
-    .map_err(|_| anyhow!("Unable to decode data url."))?;
-  let (bytes, _) = url
-    .decode_to_vec()
-    .map_err(|_| anyhow!("Unable to decode data url."))?;
-  let mut headers: HashMap<String, String> = HashMap::with_capacity(1);
-  headers.insert("content-type".to_string(), url.mime_type().to_string());
+  let data_url = RawDataUrl::parse(specifier)?;
+  let (bytes, headers) = data_url.into_bytes_and_headers();
   Ok(Some(LoadResponse::Module {
     specifier: specifier.clone(),
     maybe_headers: Some(headers),
     content: Arc::from(bytes),
   }))
+}
+
+#[derive(Debug, Clone)]
+pub struct RawDataUrl {
+  pub mime_type: String,
+  pub bytes: Vec<u8>,
+}
+
+impl RawDataUrl {
+  pub fn parse(specifier: &ModuleSpecifier) -> Result<Self, Error> {
+    let url = DataUrl::process(specifier.as_str())
+      .map_err(|_| anyhow!("Unable to decode data url."))?;
+    let (bytes, _) = url
+      .decode_to_vec()
+      .map_err(|_| anyhow!("Unable to decode data url."))?;
+    Ok(RawDataUrl {
+      mime_type: url.mime_type().to_string(),
+      bytes,
+    })
+  }
+
+  pub fn charset(&self) -> Option<&str> {
+    get_mime_type_charset(&self.mime_type)
+  }
+
+  pub fn media_type(&self) -> MediaType {
+    let mut content_types = self.mime_type.split(';');
+    let Some(content_type) = content_types.next() else {
+      return MediaType::Unknown;
+    };
+    MediaType::from_content_type(
+      // this data url will be ignored when resolving the MediaType
+      // as in this rare case the MediaType is determined solely based
+      // on the provided content type
+      &ModuleSpecifier::parse("data:image/png;base64,").unwrap(),
+      content_type,
+    )
+  }
+
+  pub fn decode(self) -> Result<String, std::io::Error> {
+    let charset = get_mime_type_charset(&self.mime_type).unwrap_or("utf-8");
+    decode_owned_source_with_charset(self.bytes, charset)
+  }
+
+  pub fn into_bytes_and_headers(self) -> (Vec<u8>, HashMap<String, String>) {
+    let headers = HashMap::from([("content-type".to_string(), self.mime_type)]);
+    (self.bytes, headers)
+  }
+}
+
+fn get_mime_type_charset(mime_type: &str) -> Option<&str> {
+  mime_type
+    .split(';')
+    .skip(1)
+    .map(str::trim)
+    .find_map(|s| s.strip_prefix("charset="))
 }
 
 /// An implementation of the loader attribute where the responses are provided
@@ -500,8 +551,10 @@ pub fn resolve_media_type_and_charset_from_content_type<'a>(
 ) -> (MediaType, Option<&'a str>) {
   if let Some(content_type) = maybe_content_type {
     let mut content_types = content_type.split(';');
-    let content_type = content_types.next().unwrap();
-    let media_type = MediaType::from_content_type(specifier, content_type);
+    let media_type = content_types
+      .next()
+      .map(|content_type| MediaType::from_content_type(specifier, content_type))
+      .unwrap_or(MediaType::Unknown);
     let charset = content_types
       .map(str::trim)
       .find_map(|s| s.strip_prefix("charset="));
@@ -509,6 +562,54 @@ pub fn resolve_media_type_and_charset_from_content_type<'a>(
     (media_type, charset)
   } else {
     (MediaType::from_specifier(specifier), None)
+  }
+}
+
+/// Decodes the source bytes into a string handling any encoding rules
+/// where the bytes may be from a remote module, file module, or other.
+pub fn decode_owned_source(
+  specifier: &ModuleSpecifier,
+  bytes: Vec<u8>,
+  maybe_charset: Option<&str>,
+) -> Result<String, std::io::Error> {
+  let charset = maybe_charset.unwrap_or_else(|| {
+    if specifier.scheme() == "file" {
+      text_encoding::detect_charset(&bytes)
+    } else {
+      "utf-8"
+    }
+  });
+  decode_owned_source_with_charset(bytes, charset)
+}
+
+/// Decodes the source bytes into a string handling any encoding rules
+/// where the source is a `file:` specifier.
+pub fn decode_owned_file_source(
+  bytes: Vec<u8>,
+) -> Result<String, std::io::Error> {
+  let charset = text_encoding::detect_charset(&bytes);
+  decode_owned_source_with_charset(bytes, charset)
+}
+
+fn decode_owned_source_with_charset(
+  bytes: Vec<u8>,
+  charset: &str,
+) -> Result<String, std::io::Error> {
+  match text_encoding::convert_to_utf8(&bytes, charset)? {
+    Cow::Borrowed(text) => {
+      if text.starts_with(text_encoding::BOM_CHAR) {
+        Ok(text[text_encoding::BOM_CHAR.len_utf8()..].to_string())
+      } else {
+        Ok(
+          // SAFETY: we know it's a valid utf-8 string at this point
+          unsafe { String::from_utf8_unchecked(bytes) },
+        )
+      }
+    }
+    Cow::Owned(mut text) => {
+      text_encoding::strip_bom_mut(&mut text);
+      Ok(text)
+    }
   }
 }
 
@@ -827,5 +928,82 @@ pub mod tests {
         (media_type, maybe_charset.as_deref())
       );
     }
+  }
+
+  #[test]
+  fn test_parse_valid_data_url() {
+    let valid_data_url = "data:text/plain;base64,SGVsbG8sIFdvcmxkIQ==";
+    let specifier = ModuleSpecifier::parse(valid_data_url).unwrap();
+    let raw_data_url = RawDataUrl::parse(&specifier).unwrap();
+    assert_eq!(raw_data_url.mime_type, "text/plain");
+    assert_eq!(raw_data_url.bytes, b"Hello, World!");
+  }
+
+  #[test]
+  fn test_charset_with_valid_mime_type() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "text/plain; charset=utf-8".to_string(),
+      bytes: vec![],
+    };
+    assert_eq!(raw_data_url.charset(), Some("utf-8"));
+  }
+
+  #[test]
+  fn test_charset_with_no_charset_in_mime_type() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "text/plain".to_string(),
+      bytes: vec![],
+    };
+    assert_eq!(raw_data_url.charset(), None);
+  }
+
+  #[test]
+  fn test_media_type_with_known_type() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "application/javascript;charset=utf-8".to_string(),
+      bytes: vec![],
+    };
+    assert_eq!(raw_data_url.media_type(), MediaType::JavaScript);
+  }
+
+  #[test]
+  fn test_media_type_with_unknown_type() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "unknown/unknown".to_string(),
+      bytes: vec![],
+    };
+    assert_eq!(raw_data_url.media_type(), MediaType::Unknown);
+  }
+
+  #[test]
+  fn test_decode_with_valid_charset() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "text/plain; charset=utf-8".to_string(),
+      bytes: "Hello, World!".as_bytes().to_vec(),
+    };
+    assert_eq!(raw_data_url.decode().unwrap(), "Hello, World!");
+  }
+
+  #[test]
+  fn test_decode_with_invalid_charset() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "text/plain; charset=invalid-charset".to_string(),
+      bytes: vec![],
+    };
+    assert!(raw_data_url.decode().is_err());
+  }
+
+  #[test]
+  fn test_into_bytes_and_headers() {
+    let raw_data_url = RawDataUrl {
+      mime_type: "text/plain; charset=utf-8".to_string(),
+      bytes: "Hello, World!".as_bytes().to_vec(),
+    };
+    let (bytes, headers) = raw_data_url.into_bytes_and_headers();
+    assert_eq!(bytes, "Hello, World!".as_bytes());
+    assert_eq!(
+      headers.get("content-type").unwrap(),
+      "text/plain; charset=utf-8"
+    );
   }
 }

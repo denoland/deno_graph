@@ -48,6 +48,8 @@ pub fn strip_bom_mut(text: &mut String) {
 
 #[cfg(test)]
 mod test {
+  use std::io::ErrorKind;
+
   use super::*;
 
   fn test_detection(test_data: &[u8], expected_charset: &str) {
@@ -90,5 +92,23 @@ mod test {
     let mut text = "text".to_string();
     strip_bom_mut(&mut text);
     assert_eq!(text, "text");
+  }
+
+  #[test]
+  fn test_decoding_unsupported_charset() {
+    let test_data = Vec::new();
+    let result = convert_to_utf8(&test_data, "utf-32le");
+    assert!(result.is_err());
+    let err = result.expect_err("Err expected");
+    assert!(err.kind() == ErrorKind::InvalidInput);
+  }
+
+  #[test]
+  fn test_decoding_invalid_utf8() {
+    let test_data = b"\xFE\xFE\xFF\xFF".to_vec();
+    let result = convert_to_utf8(&test_data, "utf-8");
+    assert!(result.is_err());
+    let err = result.expect_err("Err expected");
+    assert!(err.kind() == ErrorKind::InvalidData);
   }
 }
