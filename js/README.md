@@ -46,7 +46,8 @@ There are several options that can be passed the function in the optional
 
 ## Usage with `import_map`
 
-You can use [`import_map`](https://deno.land/x/import_map) in combination with `deno_graph` in order to fully resolve the specifiers in your graph.
+You can use [`import_map`](https://deno.land/x/import_map) in combination with
+`deno_graph` in order to fully resolve the specifiers in your graph.
 
 ```ts
 import { createGraph } from "https://deno.land/x/deno_graph@0.63.6/mod.ts";
