@@ -162,10 +162,10 @@ impl FastCheckDiagnostic {
         "fix the reference to point to a symbol that exists"
       }
       MissingExplicitType { .. } => {
-        "add an explit type annotation to the symbol"
+        "add an explicit type annotation to the symbol"
       }
       MissingExplicitReturnType { .. } => {
-        "add an explit return type to the function"
+        "add an explicit return type to the function"
       }
       UnsupportedAmbientModule { .. } => {
         "remove the ambient module declaration"
