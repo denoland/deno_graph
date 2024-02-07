@@ -4,9 +4,9 @@ use std::sync::Arc;
 
 use deno_ast::dep::DependencyKind;
 use deno_ast::dep::ImportAttributes;
-use deno_ast::Diagnostic;
 use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
+use deno_ast::ParseDiagnostic;
 use deno_ast::SourceRange;
 use deno_ast::SourceTextInfo;
 use once_cell::sync::Lazy;
@@ -322,7 +322,7 @@ pub trait ModuleAnalyzer {
     specifier: &ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, Diagnostic>;
+  ) -> Result<ModuleInfo, ParseDiagnostic>;
 }
 
 #[cfg(test)]

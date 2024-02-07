@@ -19,8 +19,8 @@ use deno_ast::SourcePos;
 use deno_ast::SourceRangedForSpanned;
 
 use deno_ast::swc::common::comments::CommentKind;
-use deno_ast::Diagnostic;
 use deno_ast::MediaType;
+use deno_ast::ParseDiagnostic;
 use deno_ast::ParsedSource;
 use deno_ast::SourceTextInfo;
 use once_cell::sync::Lazy;
@@ -50,6 +50,7 @@ static TYPES_REFERENCE_RE: Lazy<Regex> =
   Lazy::new(|| Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap());
 
 pub struct ParseOptions<'a> {
+  // this is not cloned in lazy parsing scenarios (thus the reference)
   pub specifier: &'a ModuleSpecifier,
   pub source: Arc<str>,
   pub media_type: MediaType,
@@ -61,7 +62,7 @@ pub trait ModuleParser {
   fn parse_module(
     &self,
     options: ParseOptions,
-  ) -> Result<ParsedSource, Diagnostic>;
+  ) -> Result<ParsedSource, ParseDiagnostic>;
 }
 
 #[derive(Default, Clone)]
@@ -71,9 +72,9 @@ impl ModuleParser for DefaultModuleParser {
   fn parse_module(
     &self,
     options: ParseOptions,
-  ) -> Result<ParsedSource, Diagnostic> {
+  ) -> Result<ParsedSource, ParseDiagnostic> {
     deno_ast::parse_module(deno_ast::ParseParams {
-      specifier: options.specifier.to_string(),
+      specifier: options.specifier.clone(),
       text_info: SourceTextInfo::new(options.source),
       media_type: options.media_type,
       capture_tokens: options.scope_analysis,
@@ -192,7 +193,7 @@ impl<'a> ModuleParser for CapturingModuleParser<'a> {
   fn parse_module(
     &self,
     options: ParseOptions,
-  ) -> Result<ParsedSource, Diagnostic> {
+  ) -> Result<ParsedSource, ParseDiagnostic> {
     if let Some(parsed_source) = self.get_from_store_if_matches(&options) {
       Ok(parsed_source)
     } else {
@@ -260,7 +261,7 @@ impl<'a> ModuleAnalyzer for DefaultModuleAnalyzer<'a> {
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, Diagnostic> {
+  ) -> Result<ModuleInfo, ParseDiagnostic> {
     let default_parser = DefaultModuleParser;
     let parser = self.parser.unwrap_or(&default_parser);
     let parsed_source = parser.parse_module(ParseOptions {
@@ -312,7 +313,7 @@ impl ModuleAnalyzer for CapturingModuleAnalyzer {
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, Diagnostic> {
+  ) -> Result<ModuleInfo, ParseDiagnostic> {
     let capturing_parser = self.as_capturing_parser();
     let module_analyzer = DefaultModuleAnalyzer::new(&capturing_parser);
     module_analyzer.analyze(specifier, source, media_type)
@@ -323,7 +324,7 @@ impl ModuleParser for CapturingModuleAnalyzer {
   fn parse_module(
     &self,
     options: ParseOptions,
-  ) -> Result<ParsedSource, Diagnostic> {
+  ) -> Result<ParsedSource, ParseDiagnostic> {
     let capturing_parser = self.as_capturing_parser();
     capturing_parser.parse_module(options)
   }

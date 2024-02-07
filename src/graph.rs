@@ -27,11 +27,10 @@ use crate::source::*;
 use anyhow::anyhow;
 use deno_ast::dep::DependencyKind;
 use deno_ast::dep::ImportAttributes;
-use deno_ast::Diagnostic;
 use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
+use deno_ast::ParseDiagnostic;
 use deno_ast::SourcePos;
-use deno_ast::SourceRange;
 use deno_ast::SourceTextInfo;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::jsr::JsrPackageReqReference;
@@ -180,7 +179,7 @@ pub enum ModuleError {
     export_name: String,
     exports: Vec<String>,
   },
-  ParseErr(ModuleSpecifier, deno_ast::Diagnostic),
+  ParseErr(ModuleSpecifier, deno_ast::ParseDiagnostic),
   UnsupportedMediaType(ModuleSpecifier, MediaType, Option<Range>),
   InvalidTypeAssertion {
     specifier: ModuleSpecifier,
@@ -807,7 +806,7 @@ impl JsonModule {
 #[derive(Debug, Clone)]
 pub enum FastCheckTypeModuleSlot {
   Module(Box<FastCheckTypeModule>),
-  Error(Box<FastCheckDiagnostic>),
+  Error(Vec<FastCheckDiagnostic>),
 }
 
 #[derive(Debug, Clone)]
@@ -856,7 +855,7 @@ impl JsModule {
     self.source.as_bytes().len()
   }
 
-  pub fn fast_check_diagnostic(&self) -> Option<&FastCheckDiagnostic> {
+  pub fn fast_check_diagnostics(&self) -> Option<&Vec<FastCheckDiagnostic>> {
     let module_slot = self.fast_check.as_ref()?;
     match module_slot {
       FastCheckTypeModuleSlot::Module(_) => None,
@@ -2691,18 +2690,6 @@ impl FillPassMode {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct DiagnosticRange {
-  pub specifier: ModuleSpecifier,
-  pub range: SourceRange,
-}
-
-impl DiagnosticRange {
-  pub fn new(specifier: ModuleSpecifier, range: SourceRange) -> Self {
-    Self { specifier, range }
-  }
-}
-
 #[derive(Debug, Clone)]
 pub struct BuildDiagnostic {
   pub maybe_range: Option<Range>,
@@ -3779,7 +3766,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         _specifier: &ModuleSpecifier,
         _source: Arc<str>,
         _media_type: MediaType,
-      ) -> Result<ModuleInfo, Diagnostic> {
+      ) -> Result<ModuleInfo, ParseDiagnostic> {
         Ok(self.0.borrow_mut().take().unwrap()) // will only be called once
       }
     }
