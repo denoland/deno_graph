@@ -209,10 +209,10 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
     }
   }
 
-  fn code(&self) -> impl std::fmt::Display + '_ {
+  fn code(&self) -> Cow<'_, str> {
     // WARNING: When adding a code, make sure to update jsr
     use FastCheckDiagnostic::*;
-    match self {
+    Cow::Borrowed(match self {
       NotFoundReference { .. } => "zap-not-found-reference",
       MissingExplicitType { .. } => "zap-missing-explicit-type",
       MissingExplicitReturnType { .. } => "zap-missing-explicit-return-type",
@@ -240,11 +240,11 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
         "zap-unsupported-javascript-entrypoint"
       }
       Emit { .. } => "zap-emit",
-    }
+    })
   }
 
-  fn message(&self) -> impl std::fmt::Display + '_ {
-    self.to_string()
+  fn message(&self) -> Cow<'_, str> {
+    Cow::Owned(self.to_string())
   }
 
   fn location(&self) -> deno_ast::diagnostics::DiagnosticLocation {
@@ -274,9 +274,9 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
     })
   }
 
-  fn hint(&self) -> Option<impl std::fmt::Display + '_> {
+  fn hint(&self) -> Option<Cow<'_, str>> {
     use FastCheckDiagnostic::*;
-    Some(match self {
+    Some(Cow::Borrowed(match self {
       NotFoundReference { .. } => {
         "fix the reference to point to a symbol that exists"
       }
@@ -304,7 +304,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       UnsupportedNestedJavaScript { .. } => "add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript",
       UnsupportedJavaScriptEntrypoint { .. } => "add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript",
       Emit { .. } => "this error may be the result of a bug in Deno - if you think this is the case, please open an issue",
-    })
+    }))
   }
 
   fn snippet_fixed(
@@ -374,8 +374,8 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
     }
   }
 
-  fn docs_url(&self) -> Option<impl std::fmt::Display + '_> {
-    Some(format!("https://jsr.io/go/{}", self.code()))
+  fn docs_url(&self) -> Option<Cow<'_, str>> {
+    Some(Cow::Owned(format!("https://jsr.io/go/{}", self.code())))
   }
 }
 
