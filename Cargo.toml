@@ -27,7 +27,7 @@ symbols = ["deno_ast/transforms", "deno_ast/visit", "deno_ast/utils"]
 anyhow = "1.0.43"
 async-trait = "0.1.68"
 data-url = "0.3.0"
-deno_ast = { version = "0.33.0", features = ["dep_analysis"] }
+deno_ast = { version = "0.33.1", features = ["dep_analysis"] }
 deno_semver = "0.5.4"
 encoding_rs = "0.8.33"
 futures = "0.3.26"
