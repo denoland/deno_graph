@@ -86,7 +86,6 @@ use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
 
 use crate::DefaultModuleAnalyzer;
-use crate::DiagnosticRange;
 use crate::ModuleGraph;
 use crate::ModuleInfo;
 use crate::WorkspaceMember;
@@ -98,6 +97,7 @@ use super::swc_helpers::is_never_type;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::ts_keyword_type;
 use super::FastCheckDiagnostic;
+use super::FastCheckDiagnosticRange;
 
 struct CommentsMut {
   leading: SingleThreadedCommentsMapInner,
@@ -156,7 +156,7 @@ pub fn transform(
   public_ranges: &ModulePublicRanges,
   parsed_source: &ParsedSource,
   options: &TransformOptions,
-) -> Result<FastCheckModule, Box<FastCheckDiagnostic>> {
+) -> Result<FastCheckModule, Vec<FastCheckDiagnostic>> {
   let mut transformer = FastCheckTransformer::new(
     graph,
     specifier,
@@ -166,9 +166,7 @@ pub fn transform(
   );
   let (module, comments) = transformer.transform()?;
   if !transformer.diagnostics.is_empty() {
-    return Err(Box::new(FastCheckDiagnostic::Multiple(
-      transformer.diagnostics,
-    )));
+    return Err(transformer.diagnostics);
   }
   let module_info = DefaultModuleAnalyzer::module_info_from_swc(
     parsed_source.media_type(),
@@ -181,9 +179,11 @@ pub fn transform(
   let comments = comments.into_single_threaded();
   let (text, source_map) =
     emit(specifier, &comments, parsed_source.text_info(), &module).map_err(
-      |e| FastCheckDiagnostic::Emit {
-        specifier: specifier.clone(),
-        inner: Arc::new(e),
+      |e| {
+        vec![FastCheckDiagnostic::Emit {
+          specifier: specifier.clone(),
+          inner: Arc::new(e),
+        }]
       },
     )?;
 
@@ -225,7 +225,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
   ) -> Result<
     (deno_ast::swc::ast::Module, MultiThreadedComments),
-    Box<FastCheckDiagnostic>,
+    Vec<FastCheckDiagnostic>,
   > {
     let mut module = self.parsed_source.module().clone();
     let mut comments =
@@ -239,7 +239,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     body: Vec<ModuleItem>,
     comments: &mut CommentsMut,
-  ) -> Result<Vec<ModuleItem>, Box<FastCheckDiagnostic>> {
+  ) -> Result<Vec<ModuleItem>, Vec<FastCheckDiagnostic>> {
     let mut final_body = Vec::with_capacity(body.len());
     for mut item in body {
       let retain = self.transform_item(&mut item, comments)?;
@@ -278,7 +278,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     item: &mut ModuleItem,
     comments: &mut CommentsMut,
-  ) -> Result<bool, Box<FastCheckDiagnostic>> {
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     match item {
       ModuleItem::ModuleDecl(decl) => match decl {
         ModuleDecl::Import(n) => {
@@ -399,7 +399,7 @@ impl<'a> FastCheckTransformer<'a> {
     default_decl: &mut DefaultDecl,
     comments: &mut CommentsMut,
     parent_range: SourceRange,
-  ) -> Result<(), Box<FastCheckDiagnostic>> {
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
     match default_decl {
       DefaultDecl::Class(n) => self.transform_class(&mut n.class, comments),
       DefaultDecl::Fn(n) => self.transform_fn(
@@ -417,7 +417,7 @@ impl<'a> FastCheckTransformer<'a> {
     decl: &mut Decl,
     comments: &mut CommentsMut,
     parent_range: Option<SourceRange>,
-  ) -> Result<bool, Box<FastCheckDiagnostic>> {
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     let public_range = parent_range.unwrap_or_else(|| decl.range());
     match decl {
       Decl::Class(n) => {
@@ -471,7 +471,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     n: &mut Class,
     comments: &mut CommentsMut,
-  ) -> Result<(), Box<FastCheckDiagnostic>> {
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
     let mut members = Vec::with_capacity(n.body.len());
     let mut had_private = false;
     if let Some(super_class) = &n.super_class {
@@ -536,7 +536,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     member: &mut ClassMember,
     insert_members: &mut Vec<ClassMember>,
-  ) -> Result<bool, Box<FastCheckDiagnostic>> {
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     match member {
       ClassMember::Constructor(n) => {
         if let Some(body) = &mut n.body {
@@ -816,7 +816,7 @@ impl<'a> FastCheckTransformer<'a> {
     parent_id_range: Option<SourceRange>,
     is_overload: bool,
     is_set_accessor: bool,
-  ) -> Result<(), Box<FastCheckDiagnostic>> {
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
     if is_overload {
       for (i, param) in n.params.iter_mut().enumerate() {
         *param = Param {
@@ -901,7 +901,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     n: &mut ArrowExpr,
     parent_id_range: Option<SourceRange>,
-  ) -> Result<(), Box<FastCheckDiagnostic>> {
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
     let range = parent_id_range.unwrap_or_else(|| n.range());
 
     if n.return_type.is_none() {
@@ -978,7 +978,7 @@ impl<'a> FastCheckTransformer<'a> {
   fn handle_param_pat(
     &mut self,
     pat: &mut Pat,
-  ) -> Result<(), Box<FastCheckDiagnostic>> {
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
     match pat {
       Pat::Ident(ident) => {
         if ident.type_ann.is_none() {
@@ -1096,7 +1096,7 @@ impl<'a> FastCheckTransformer<'a> {
   fn transform_var(
     &mut self,
     n: &mut VarDecl,
-  ) -> Result<bool, Box<FastCheckDiagnostic>> {
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     n.decls.retain(|n| self.public_ranges.contains(&n.range()));
 
     for decl in &mut n.decls {
@@ -1159,7 +1159,7 @@ impl<'a> FastCheckTransformer<'a> {
     n: &mut TsModuleDecl,
     public_range: &SourceRange,
     comments: &mut CommentsMut,
-  ) -> Result<bool, Box<FastCheckDiagnostic>> {
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     if n.global {
       self.mark_diagnostic(FastCheckDiagnostic::UnsupportedGlobalModule {
         range: self.source_range_to_range(n.range()),
@@ -1223,17 +1223,24 @@ impl<'a> FastCheckTransformer<'a> {
   fn mark_diagnostic(
     &mut self,
     diagnostic: FastCheckDiagnostic,
-  ) -> Result<(), Box<FastCheckDiagnostic>> {
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
     if self.should_error_on_first_diagnostic {
-      Err(Box::new(diagnostic))
+      Err(vec![diagnostic])
     } else {
       self.diagnostics.push(diagnostic);
       Ok(())
     }
   }
 
-  fn source_range_to_range(&self, range: SourceRange) -> DiagnosticRange {
-    DiagnosticRange::new(self.specifier.clone(), range)
+  fn source_range_to_range(
+    &self,
+    range: SourceRange,
+  ) -> FastCheckDiagnosticRange {
+    FastCheckDiagnosticRange {
+      specifier: self.specifier.clone(),
+      text_info: self.parsed_source.text_info().clone(),
+      range,
+    }
   }
 
   // KEEP IN SYNC with is_expr_leavable
@@ -1241,7 +1248,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     expr: &mut Expr,
     parent_id_range: Option<SourceRange>,
-  ) -> Result<bool, Box<FastCheckDiagnostic>> {
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     let mut recurse =
       |expr: &mut Expr| self.maybe_transform_expr_if_leavable(expr, None);
 

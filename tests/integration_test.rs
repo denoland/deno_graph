@@ -109,9 +109,21 @@ async fn test_graph_specs() {
             },
           ));
         }
-        deno_graph::FastCheckTypeModuleSlot::Error(diagnostic) => {
-          output_text
-            .push_str(&indent(&diagnostic.message_with_range_for_test()));
+        deno_graph::FastCheckTypeModuleSlot::Error(diagnostics) => {
+          let message = diagnostics
+            .iter()
+            .map(|d| match d.range() {
+              Some(range) => {
+                format!(
+                  "{}\n    at {}@{}",
+                  d, range.specifier, range.range.start
+                )
+              }
+              None => format!("{}\n    at {}", d, d.specifier()),
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+          output_text.push_str(&indent(&message));
         }
       }
     }

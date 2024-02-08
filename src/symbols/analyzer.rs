@@ -243,7 +243,7 @@ impl<'a> RootSymbol<'a> {
   fn parsed_source(
     &self,
     graph_module: &JsModule,
-  ) -> Result<ParsedSource, deno_ast::Diagnostic> {
+  ) -> Result<ParsedSource, deno_ast::ParseDiagnostic> {
     self.parser.parse_module(ParseOptions {
       specifier: &graph_module.specifier,
       source: graph_module.source.clone(),

@@ -22,7 +22,7 @@ use crate::symbols::SymbolDeclKind;
 use crate::symbols::SymbolId;
 use crate::symbols::SymbolNodeDep;
 use crate::symbols::SymbolNodeRef;
-use crate::DiagnosticRange;
+use crate::FastCheckDiagnosticRange;
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
 use crate::WorkspaceMember;
@@ -617,10 +617,11 @@ impl<'a> PublicRangeFinder<'a> {
             if Some(referrer_id) != symbol.parent_id() {
               diagnostics.push(
                 FastCheckDiagnostic::UnsupportedPrivateMemberReference {
-                  range: DiagnosticRange::new(
-                    module_info.specifier().clone(),
-                    symbol.decls()[0].range,
-                  ),
+                  range: FastCheckDiagnosticRange {
+                    specifier: module_info.specifier().clone(),
+                    range: symbol.decls()[0].range,
+                    text_info: module_info.text_info().clone(),
+                  },
                   name: module_info
                     .fully_qualified_symbol_name(symbol)
                     .unwrap_or_else(|| "<unknown>".to_string()),
@@ -885,10 +886,11 @@ impl<'a> PublicRangeFinder<'a> {
                       if parts.len() > 2 {
                         diagnostics.push(
                           FastCheckDiagnostic::UnsupportedComplexReference {
-                            range: DiagnosticRange::new(
-                              module_info.specifier().clone(),
-                              symbol.decls()[0].range,
-                            ),
+                            range: FastCheckDiagnosticRange {
+                              specifier: module_info.specifier().clone(),
+                              range: symbol.decls()[0].range,
+                              text_info: module_info.text_info().clone(),
+                            },
                             name: format!(
                               "{}.prototype.{}",
                               module_info
@@ -912,10 +914,11 @@ impl<'a> PublicRangeFinder<'a> {
                     None => {
                       diagnostics.push(
                         FastCheckDiagnostic::NotFoundReference {
-                          range: DiagnosticRange::new(
-                            module_info.specifier().clone(),
-                            symbol.decls()[0].range,
-                          ),
+                          range: FastCheckDiagnosticRange {
+                            specifier: module_info.specifier().clone(),
+                            range: symbol.decls()[0].range,
+                            text_info: module_info.text_info().clone(),
+                          },
                           name: format!(
                             "{}.prototype.{}",
                             module_info
@@ -975,10 +978,11 @@ impl<'a> PublicRangeFinder<'a> {
                     if !ignore {
                       diagnostics.push(
                         FastCheckDiagnostic::NotFoundReference {
-                          range: DiagnosticRange::new(
-                            module_info.specifier().clone(),
-                            symbol.decls()[0].range,
-                          ),
+                          range: FastCheckDiagnosticRange {
+                            specifier: module_info.specifier().clone(),
+                            range: symbol.decls()[0].range,
+                            text_info: module_info.text_info().clone(),
+                          },
                           name: format!(
                             "{}.{}",
                             module_info
