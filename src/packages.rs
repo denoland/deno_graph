@@ -110,7 +110,10 @@ impl PackageSpecifiers {
     if !nvs.contains(&nv) {
       nvs.push(nv.clone());
     }
-    self.package_reqs.insert(package_req, nv);
+    self.package_reqs.insert(package_req, nv.clone());
+    // always create an entry because this is used in the lockfile
+    // todo(dsherret): add integrity for the package here
+    self.packages.entry(nv.clone()).or_default();
   }
 
   /// Gets the dependencies (package constraints) of JSR packages found in the graph.
