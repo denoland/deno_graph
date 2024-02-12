@@ -226,19 +226,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
             "character": 22
           }
         }
-      },
-      "type": {
-        "specifier": "https://jsr.io/@scope/a/1.0.0/b.d.ts",
-        "span": {
-          "start": {
-            "line": 4,
-            "character": 15
-          },
-          "end": {
-            "line": 4,
-            "character": 25
-          }
-        }
       }
     }
   }
@@ -246,10 +233,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export { A1 as A4 } from "./a.d.ts";
   import { A3 } from "./a.d.ts";
   export { A3 as A5 };
-  // @deno-types="./b.d.ts"
   export * from "./b.d.ts";
-  // @deno-types="./b.d.ts"
   export { B1 as B2 } from "./b.d.ts";
-  // @deno-types="./b.d.ts"
   import { B1 as B3 } from "./b.d.ts";
   export { B3 };

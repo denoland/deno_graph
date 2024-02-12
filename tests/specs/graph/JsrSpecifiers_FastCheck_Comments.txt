@@ -60,6 +60,5 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  // @deno-types="./example.d.ts"
   // @ts-ignore broken line
   export const value1: number = {} as any;
