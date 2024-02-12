@@ -17,6 +17,7 @@ use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
 use futures::future;
 use futures::future::LocalBoxFuture;
+use futures::FutureExt;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
@@ -109,6 +110,49 @@ impl CacheSetting {
 pub static DEFAULT_DENO_REGISTRY_URL: Lazy<Url> =
   Lazy::new(|| Url::parse("https://jsr.io").unwrap());
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct LoaderChecksum(String);
+
+impl LoaderChecksum {
+  pub fn new(checksum: String) -> Self {
+    Self(checksum)
+  }
+
+  pub fn into_string(self) -> String {
+    self.0
+  }
+
+  pub fn check_source(&self, source: &[u8]) -> Result<(), anyhow::Error> {
+    let actual_checksum = Self::gen(source);
+    if self.0 == actual_checksum {
+      Ok(())
+    } else {
+      Err(anyhow!(
+        "Integrity check failed.
+Actual: {}
+Expected: {}",
+        actual_checksum,
+        self.0
+      ))
+    }
+  }
+
+  pub fn gen(source: &[u8]) -> String {
+    use ring::digest::Context;
+    use ring::digest::SHA256;
+
+    let mut ctx = Context::new(&SHA256);
+    ctx.update(source);
+    let digest = ctx.finish();
+    let out: Vec<String> = digest
+      .as_ref()
+      .iter()
+      .map(|byte| format!("{byte:02x}"))
+      .collect();
+    out.join("")
+  }
+}
+
 /// A trait which allows asynchronous loading of source files into a module
 /// graph in a thread safe way as well as a way to provide additional meta data
 /// about any cached resources.
@@ -138,6 +182,38 @@ pub trait Loader {
     is_dynamic: bool,
     cache_setting: CacheSetting,
   ) -> LoadFuture;
+
+  /// Loads a given specifier and also checks if the source matches
+  /// the provided checksum.
+  ///
+  /// This is the loader's responsibility in the CLI because we only verify
+  /// the checksum of the source when it is loaded from the global cache. We
+  /// don't verify it when loaded from the vendor folder.
+  ///
+  /// The source should be verified by running `checksum.check_source(content)?`.
+  fn load_with_checksum(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    is_dynamic: bool,
+    cache_setting: CacheSetting,
+    checksum: LoaderChecksum,
+  ) -> LoadFuture {
+    let fut = self.load(specifier, is_dynamic, cache_setting);
+    async move {
+      let result = fut.await?;
+      match &result {
+        Some(source) => match source {
+          LoadResponse::External { .. } => Ok(result),
+          LoadResponse::Module { content, .. } => {
+            checksum.check_source(content)?;
+            Ok(result)
+          }
+        },
+        None => Ok(None),
+      }
+    }
+    .boxed_local()
+  }
 
   /// Cache the module info for the provided specifier if the loader
   /// supports caching this information.

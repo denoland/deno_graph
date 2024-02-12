@@ -26,12 +26,18 @@ pub struct JsrPackageInfoVersion {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct JsrPackageVersionManifestEntry {
+  pub checksum: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct JsrPackageVersionInfo {
   // ensure the fields on here are resilient to change
   #[serde(default)]
   pub exports: serde_json::Value,
   #[serde(rename = "moduleGraph1")]
   pub module_graph: Option<serde_json::Value>,
+  pub manifest: HashMap<String, JsrPackageVersionManifestEntry>,
 }
 
 impl JsrPackageVersionInfo {

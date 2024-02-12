@@ -2670,7 +2670,11 @@ struct PendingState {
 #[derive(Clone)]
 enum ContentOrModuleInfo {
   Content(Arc<[u8]>),
-  ModuleInfo(ModuleInfo),
+  ModuleInfo {
+    info: ModuleInfo,
+    /// The checksum to use when loading the content
+    checksum: LoaderChecksum,
+  },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -3311,14 +3315,29 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let base_url = version_info.base_url.as_str();
       let base_url = base_url.strip_suffix('/').unwrap_or(base_url);
       if let Some(sub_path) = specifier.as_str().strip_prefix(base_url) {
+        let checksum = match version_info.inner.manifest.get(sub_path) {
+          Some(manifest_entry) => &manifest_entry.checksum,
+          None => {
+            self.graph.module_slots.insert(
+              specifier.clone(),
+              ModuleSlot::Err(ModuleError::Missing(
+                specifier.clone(),
+                maybe_range.cloned(),
+              )),
+            );
+            return;
+          }
+        };
         if let Some(module_info) = version_info.inner.module_info(sub_path) {
           // Check if this specifier is in the cache. If it is, then
           // don't use the module information as it may be out of date
           // with what's in the cache
-          let fut = self.loader.load(
+          let checksum = LoaderChecksum::new(checksum.clone());
+          let fut = self.loader.load_with_checksum(
             specifier,
             self.in_dynamic_branch,
             CacheSetting::Only,
+            checksum.clone(),
           );
           self.state.pending.push_back({
             let specifier = specifier.clone();
@@ -3331,9 +3350,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   specifier: specifier.clone(),
                   maybe_range,
                   result: Ok(Some(PendingInfoResponse::Module {
-                    content_or_module_info: ContentOrModuleInfo::ModuleInfo(
-                      module_info,
-                    ),
+                    content_or_module_info: ContentOrModuleInfo::ModuleInfo {
+                      info: module_info,
+                      checksum,
+                    },
                     specifier,
                     maybe_headers: None,
                   })),
@@ -3776,15 +3796,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     let (content, maybe_module_analyzer) = match content_or_module_info {
       ContentOrModuleInfo::Content(content) => (content, None),
-      ContentOrModuleInfo::ModuleInfo(info) => {
+      ContentOrModuleInfo::ModuleInfo { info, checksum } => {
         self.state.jsr.pending_content_loads.push({
           let specifier = specifier.clone();
           let maybe_range = maybe_referrer.clone();
           let module_info = info.clone();
-          let fut = self.loader.load(
+          let fut = self.loader.load_with_checksum(
             &specifier,
             self.in_dynamic_branch,
             CacheSetting::Use,
+            checksum,
           );
           async move {
             let result = fut.await;
