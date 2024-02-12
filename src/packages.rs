@@ -15,17 +15,17 @@ use serde::Serialize;
 
 use crate::ModuleInfo;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JsrPackageInfo {
   pub versions: HashMap<Version, JsrPackageInfoVersion>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct JsrPackageInfoVersion {
-  // no fields yet
+  // no used fields yet
 }
 
-#[derive(Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct JsrPackageVersionInfo {
   // ensure the fields on here are resilient to change
   #[serde(default)]
