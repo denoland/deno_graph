@@ -110,8 +110,8 @@ impl CommentsMut {
       comments.retain(|_key, value| {
         value.retain(|c| {
           match c.kind {
-            // only keep js docs and @deno-types comments
-            CommentKind::Line => c.text.starts_with("@deno-types"),
+            // only keep js docs and @ts-* comments
+            CommentKind::Line => c.text.trim_start().starts_with("@ts-"),
             CommentKind::Block => c.text.starts_with('*'),
           }
         });
