@@ -810,12 +810,6 @@ pub enum FastCheckTypeModuleSlot {
 }
 
 #[derive(Debug, Clone)]
-pub struct FastCheckDtsModule {
-  pub source: Arc<str>,
-  pub specifier: ModuleSpecifier,
-}
-
-#[derive(Debug, Clone)]
 pub struct FastCheckTypeModule {
   pub dependencies: IndexMap<String, Dependency>,
   pub source: Arc<str>,
