@@ -150,15 +150,15 @@ impl PackageSpecifiers {
     &mut self,
     nv: PackageNv,
     checksum: String,
-  ) -> Result<(), PackageManifestIntegrityError> {
+  ) -> Result<(), Box<PackageManifestIntegrityError>> {
     let package = self.packages.get(&nv);
     if let Some(package) = package {
       if package.manifest_checksum != checksum {
-        Err(PackageManifestIntegrityError {
+        Err(Box::new(PackageManifestIntegrityError {
           nv,
           actual: checksum,
           expected: package.manifest_checksum.clone(),
-        })
+        }))
       } else {
         Ok(())
       }

@@ -174,7 +174,7 @@ fn indent(text: &str) -> String {
 #[cfg(feature = "symbols")]
 #[tokio::test]
 async fn test_symbols_specs() {
-  for (test_file_path, mut spec) in
+  for (test_file_path, spec) in
     get_specs_in_dir(&PathBuf::from("./tests/specs/symbols"))
   {
     eprintln!("Running {}", test_file_path.display());
@@ -487,7 +487,17 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
-            content: br#"{ "exports": { ".": "./mod.ts" } }"#.to_vec().into(),
+            content: br#"{
+                "exports": { ".": "./mod.ts" },
+                "manifest": {
+                  "/mod.ts": {
+                    "size": 123,
+                    "checksum": "sha256-b8059cfb1ea623e79efbf432db31595df213c99c6534c58bec9d5f5e069344df"
+                  }
+                }
+              }"#
+              .to_vec()
+              .into(),
           }))
         }),
         "https://jsr.io/@scope/a/1.2.0/mod.ts" => Box::pin(async move {

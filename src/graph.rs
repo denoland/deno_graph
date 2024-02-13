@@ -2848,37 +2848,43 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           maybe_version_info,
         }) => match result {
           Ok(Some(response)) => {
-            // if maybe_version_info.is_none()
-            //   && specifier.scheme() != "jsr"
-            //   && self
-            //     .loader
-            //     .registry_package_url_to_nv(&response.specifier())
-            //     .is_some()
-            // {
-            //   self.graph.module_slots.insert(
-            //     specifier.clone(),
-            //     ModuleSlot::Err(ModuleError::LoadingErr(
-            //       specifier.clone(),
-            //       maybe_range,
-            //       Arc::new(anyhow!(concat!(
-            //         "Importing a JSR package via an HTTPS URL is not implemented. ",
-            //         "Use a `jsr:` specifier instead for the time being."
-            //       )),
-            //     ))),
-            //   );
-            // } else {
-            let assert_types =
-              self.state.pending_specifiers.remove(&specifier).unwrap();
-            for maybe_assert_type in assert_types {
-              self.visit(
-                &specifier,
-                &response,
-                maybe_assert_type,
-                maybe_range.clone(),
-                maybe_version_info.as_ref(),
-              )
+            if maybe_version_info.is_none()
+              && self
+                .loader
+                .registry_package_url_to_nv(response.specifier())
+                .is_some()
+            {
+              self.graph.module_slots.insert(
+                specifier.clone(),
+                ModuleSlot::Err(ModuleError::LoadingErr(
+                  specifier.clone(),
+                  maybe_range,
+                  // Two tasks we need to do before removing this error message:
+                  // 1. If someone imports a package via an HTTPS URL then we should probably
+                  //    bail completely on fast check because it could expose additional types
+                  //    not found in fast check, which might cause strange behaviour.
+                  // 2. For HTTPS URLS imported from the registry, we should probably still
+                  //    compare it against the checksums found in the registry otherwise it might
+                  //    not end up in the lockfile causing a security issue.
+                  Arc::new(anyhow!(concat!(
+                    "Importing a JSR package via an HTTPS URL is not implemented. ",
+                    "Use a jsr: specifier instead for the time being."
+                  )),
+                ))),
+              );
+            } else {
+              let assert_types =
+                self.state.pending_specifiers.remove(&specifier).unwrap();
+              for maybe_assert_type in assert_types {
+                self.visit(
+                  &specifier,
+                  &response,
+                  maybe_assert_type,
+                  maybe_range.clone(),
+                  maybe_version_info.as_ref(),
+                )
+              }
             }
-            //}
             Some(specifier)
           }
           Ok(None) => {
@@ -3386,11 +3392,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             return;
           }
         };
+        let checksum = LoaderChecksum::new(checksum.clone());
         if let Some(module_info) = version_info.inner.module_info(sub_path) {
           // Check if this specifier is in the cache. If it is, then
           // don't use the module information as it may be out of date
           // with what's in the cache
-          let checksum = LoaderChecksum::new(checksum.clone());
           let fut = self.loader.load_with_checksum(
             specifier,
             self.in_dynamic_branch,
@@ -3431,6 +3437,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .graph
             .module_slots
             .insert(specifier.clone(), ModuleSlot::Pending);
+          return;
+        } else {
+          self.load_pending_module(
+            specifier.clone(),
+            maybe_range.map(ToOwned::to_owned),
+            specifier.clone(),
+            is_dynamic,
+            Some(checksum),
+            Some(version_info.clone()),
+          );
           return;
         }
       }
@@ -3475,8 +3491,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
 
-    let specifier = specifier.clone();
-    self.load_pending_module(&specifier, maybe_range, &specifier, is_dynamic);
+    self.load_pending_module(
+      specifier.clone(),
+      maybe_range,
+      specifier.clone(),
+      is_dynamic,
+      None,
+      None,
+    );
   }
 
   fn load_jsr_specifier(
@@ -3513,10 +3535,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               match result {
                 Ok(load_specifier) => {
                   self.load_pending_module(
-                    &specifier,
+                    specifier.clone(),
                     maybe_range.clone(),
-                    &load_specifier,
+                    load_specifier,
                     is_dynamic,
+                    None,
+                    None,
                   );
                 }
                 Err(err) => {
@@ -3670,25 +3694,30 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
   fn load_pending_module(
     &mut self,
-    requested_specifier: &Url,
+    requested_specifier: Url,
     maybe_range: Option<Range>,
-    load_specifier: &Url,
+    load_specifier: Url,
     is_dynamic: bool,
+    maybe_checksum: Option<LoaderChecksum>,
+    maybe_version_info: Option<JsrPackageVersionInfoExt>,
   ) {
     self
       .graph
       .module_slots
       .insert(requested_specifier.clone(), ModuleSlot::Pending);
-    let load_specifier = load_specifier.clone();
-    let requested_specifier = requested_specifier.clone();
     let fut = self
       .loader
-      .load(&load_specifier, is_dynamic, CacheSetting::Use)
+      .load_with_maybe_checksum(
+        &load_specifier,
+        is_dynamic,
+        CacheSetting::Use,
+        maybe_checksum,
+      )
       .map(move |result| PendingInfo {
         specifier: requested_specifier,
         maybe_range,
         result: result.map(|r| r.map(Into::into)),
-        maybe_version_info: None,
+        maybe_version_info,
       });
     self.state.pending.push_back(Box::pin(fut));
   }
@@ -3754,7 +3783,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let maybe_expected_checksum = self
       .graph
       .packages
-      .get_manifest_checksum(&package_nv)
+      .get_manifest_checksum(package_nv)
       .map(|checksum| LoaderChecksum::new(checksum.clone()));
     let fut = self.loader.load_with_maybe_checksum(
       &specifier,
