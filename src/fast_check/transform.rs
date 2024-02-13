@@ -96,9 +96,7 @@ use super::swc_helpers::ident;
 use super::swc_helpers::is_never_type;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::maybe_lit_to_ts_type;
-use super::swc_helpers::paren_expr;
 use super::swc_helpers::ts_keyword_type;
-use super::swc_helpers::unknown_type_ann;
 use super::transform_dts::FastCheckDtsTransformer;
 use super::FastCheckDiagnostic;
 use super::FastCheckDiagnosticRange;
@@ -1796,4 +1794,18 @@ fn expr_as_keyword_expr(expr: Expr, keyword: TsKeywordTypeKind) -> Box<Expr> {
       kind: keyword,
     })),
   }))
+}
+
+fn paren_expr(expr: Box<Expr>) -> Expr {
+  Expr::Paren(ParenExpr {
+    span: DUMMY_SP,
+    expr,
+  })
+}
+
+fn unknown_type_ann() -> Box<TsTypeAnn> {
+  Box::new(TsTypeAnn {
+    span: DUMMY_SP,
+    type_ann: Box::new(ts_keyword_type(TsKeywordTypeKind::TsUnknownKeyword)),
+  })
 }

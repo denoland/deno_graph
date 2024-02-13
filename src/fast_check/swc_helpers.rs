@@ -200,13 +200,6 @@ fn is_keyword_type(return_type: &TsType, kind: TsKeywordTypeKind) -> bool {
   }
 }
 
-pub fn paren_expr(expr: Box<Expr>) -> Expr {
-  Expr::Paren(ParenExpr {
-    span: DUMMY_SP,
-    expr,
-  })
-}
-
 pub fn any_type_ann() -> Box<TsTypeAnn> {
   type_ann(ts_keyword_type(TsKeywordTypeKind::TsAnyKeyword))
 }
@@ -216,13 +209,6 @@ pub fn ts_readonly(ann: TsType) -> TsType {
     span: DUMMY_SP,
     op: TsTypeOperatorOp::ReadOnly,
     type_ann: Box::new(ann),
-  })
-}
-
-pub fn unknown_type_ann() -> Box<TsTypeAnn> {
-  Box::new(TsTypeAnn {
-    span: DUMMY_SP,
-    type_ann: Box::new(ts_keyword_type(TsKeywordTypeKind::TsUnknownKeyword)),
   })
 }
 
