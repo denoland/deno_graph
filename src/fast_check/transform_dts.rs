@@ -1,10 +1,12 @@
 use deno_ast::swc::{
   ast::{
-    ClassMember, Decl, Expr, Lit, MethodKind, Module, ModuleDecl, ModuleItem,
-    Pat, Prop, PropName, PropOrSpread, Stmt, TsPropertySignature,
-    TsTupleElement, TsTupleType, TsType, TsTypeElement, TsTypeLit,
+    BindingIdent, ClassMember, Decl, DefaultDecl, ExportDecl,
+    ExportDefaultExpr, Expr, Ident, Lit, MethodKind, Module, ModuleDecl,
+    ModuleItem, Pat, Prop, PropName, PropOrSpread, Stmt, TsFnOrConstructorType,
+    TsFnParam, TsFnType, TsPropertySignature, TsTupleElement, TsTupleType,
+    TsType, TsTypeElement, TsTypeLit, VarDecl, VarDeclKind, VarDeclarator,
   },
-  common::DUMMY_SP,
+  common::{Spanned, DUMMY_SP},
 };
 
 use crate::FastCheckDiagnostic;
@@ -14,11 +16,18 @@ use super::swc_helpers::{
   ts_tuple_element, type_ann,
 };
 
-pub struct FastCheckDtsTransformer {}
+pub struct FastCheckDtsTransformer {
+  id_counter: usize,
+}
 
 impl FastCheckDtsTransformer {
   pub fn new() -> Self {
-    Self {}
+    Self { id_counter: 0 }
+  }
+
+  fn gen_unique_name(&mut self) -> String {
+    self.id_counter += 1;
+    format!("_dts_{}", self.id_counter)
   }
 
   pub fn transform(
@@ -33,56 +42,63 @@ impl FastCheckDtsTransformer {
       match item {
         ModuleItem::ModuleDecl(module_decl) => match module_decl {
           ModuleDecl::Import(_) => {
-            new_items.push(ModuleItem::ModuleDecl(module_decl.clone()));
+            new_items.push(item.clone());
           }
           ModuleDecl::ExportDecl(export_decl) => {
-            match &mut export_decl.decl {
-              Decl::Class(class_decl) => {
-                class_decl.class.body = class_decl
-                  .class
-                  .body
-                  .iter()
-                  .filter_map(|member| class_member_to_type(member))
-                  .collect();
-                class_decl.declare = true;
-              }
-              Decl::Fn(fn_decl) => {
-                fn_decl.function.body = None;
-              }
-              Decl::Var(var_decl) => {
-                for decl in &mut var_decl.decls {
-                  var_decl.declare = true;
-
-                  match &mut decl.name {
-                    Pat::Ident(ident) => {
-                      if ident.type_ann.is_some() {
-                        decl.init = None;
-                        continue;
-                      }
-
-                      if let Some(init_box) = &decl.init {
-                        let init = *init_box.clone();
-                        ident.type_ann = self
-                          .expr_to_ts_type(init, false)
-                          .map(|ann| type_ann(ann))
-                          .or_else(|| Some(any_type_ann()));
-                      } else {
-                        ident.type_ann = Some(any_type_ann());
-                      }
-                    }
-                    _ => {}
-                  }
-
-                  decl.init = None;
-                }
-              }
-              Decl::Using(_) => {}
-              Decl::TsInterface(_)
-              | Decl::TsTypeAlias(_)
-              | Decl::TsEnum(_)
-              | Decl::TsModule(_) => {}
+            if let Some(decl) = self.decl_to_type_decl(&export_decl.decl) {
+              new_items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
+                ExportDecl {
+                  decl,
+                  span: export_decl.span(),
+                },
+              )));
             }
-            new_items.push(ModuleItem::ModuleDecl(module_decl.clone()));
+          }
+          ModuleDecl::ExportDefaultDecl(export_decl) => {
+            match &mut export_decl.decl {
+              DefaultDecl::Class(class_expr) => {
+                class_expr.class.body =
+                  self.class_body_to_type(&class_expr.class.body);
+                new_items.push(item.clone());
+              }
+              DefaultDecl::Fn(fn_expr) => {
+                fn_expr.function.body = None;
+                new_items.push(item.clone());
+              }
+              DefaultDecl::TsInterfaceDecl(_) => new_items.push(item.clone()),
+            }
+          }
+          ModuleDecl::ExportDefaultExpr(export_default_expr) => {
+            let name = self.gen_unique_name();
+            let name_ident = Ident::new(name.into(), DUMMY_SP);
+            let type_ann = self
+              .expr_to_ts_type(*export_default_expr.expr.clone(), false)
+              .map(|ts_type| type_ann(ts_type))
+              .or(Some(any_type_ann()));
+
+            new_items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(
+              VarDecl {
+                span: DUMMY_SP,
+                kind: VarDeclKind::Const,
+                declare: true,
+                decls: vec![VarDeclarator {
+                  span: DUMMY_SP,
+                  name: Pat::Ident(BindingIdent {
+                    id: name_ident.clone(),
+                    type_ann,
+                  }),
+                  init: None,
+                  definite: false,
+                }],
+              },
+            )))));
+
+            new_items.push(ModuleItem::ModuleDecl(
+              ModuleDecl::ExportDefaultExpr(ExportDefaultExpr {
+                span: DUMMY_SP,
+                expr: Box::new(Expr::Ident(name_ident)),
+              }),
+            ))
           }
           // Keep all these
           ModuleDecl::TsImportEquals(_)
@@ -194,36 +210,145 @@ impl FastCheckDtsTransformer {
         self.expr_to_ts_type(*satisifies.expr, as_const)
       }
       Expr::TsAs(ts_as) => Some(*ts_as.type_ann.clone()),
+      Expr::Fn(fn_expr) => {
+        let return_type = fn_expr
+          .function
+          .return_type
+          .map_or(any_type_ann(), |val| val);
+
+        let params: Vec<TsFnParam> = fn_expr
+          .function
+          .params
+          .iter()
+          .filter_map(|param| match &param.pat {
+            Pat::Ident(binding_id) => {
+              Some(TsFnParam::Ident(binding_id.clone()))
+            }
+            Pat::Array(arr_pat) => Some(TsFnParam::Array(arr_pat.clone())),
+            Pat::Rest(rest_pat) => Some(TsFnParam::Rest(rest_pat.clone())),
+            Pat::Object(obj) => Some(TsFnParam::Object(obj.clone())),
+            Pat::Assign(assign_pat) => self
+              .expr_to_ts_type(*assign_pat.right.clone(), false)
+              .map(|param| {
+                let name = match *assign_pat.left.clone() {
+                  Pat::Ident(ident) => ident.id.sym.as_str().to_string(),
+                  _ => self.gen_unique_name(),
+                };
+
+                TsFnParam::Ident(BindingIdent {
+                  id: Ident::new(name.into(), DUMMY_SP),
+                  type_ann: Some(type_ann(param)),
+                })
+              }),
+            _ => None,
+          })
+          .collect();
+
+        Some(TsType::TsFnOrConstructorType(
+          TsFnOrConstructorType::TsFnType(TsFnType {
+            span: DUMMY_SP,
+            params,
+            type_ann: return_type,
+            type_params: fn_expr.function.type_params,
+          }),
+        ))
+      }
       _ => None,
     }
   }
-}
 
-fn class_member_to_type(member: &ClassMember) -> Option<ClassMember> {
-  match member {
-    ClassMember::Constructor(class_constructor) => {
-      let mut new_constructor = class_constructor.clone();
-      new_constructor.body = None;
-      Some(ClassMember::Constructor(new_constructor))
-    }
-    ClassMember::Method(method) => {
-      let mut new_method = method.clone();
-      new_method.function.body = None;
-      if new_method.kind == MethodKind::Setter {
-        new_method.function.return_type = None;
+  fn decl_to_type_decl(&mut self, decl: &Decl) -> Option<Decl> {
+    match decl {
+      Decl::Class(class_decl) => {
+        let mut decl = class_decl.clone();
+        decl.class.body = self.class_body_to_type(&decl.class.body);
+        decl.declare = true;
+        Some(Decl::Class(decl))
       }
-      Some(ClassMember::Method(new_method))
-    }
-    ClassMember::ClassProp(prop) => {
-      let mut new_prop = prop.clone();
-      new_prop.value = None;
-      Some(ClassMember::ClassProp(new_prop))
-    }
-    ClassMember::TsIndexSignature(index_sig) => {
-      Some(ClassMember::TsIndexSignature(index_sig.clone()))
-    }
+      Decl::Fn(fn_decl) => {
+        let mut decl = fn_decl.clone();
+        decl.function.body = None;
+        Some(Decl::Fn(decl))
+      }
+      Decl::Var(var_decl) => {
+        let mut decl = *var_decl.clone();
+        decl.declare = true;
 
-    _ => None,
+        for decl in &mut decl.decls {
+          match &mut decl.name {
+            Pat::Ident(ident) => {
+              if ident.type_ann.is_some() {
+                decl.init = None;
+                continue;
+              }
+
+              if let Some(init_box) = &decl.init {
+                let init = *init_box.clone();
+                ident.type_ann = self
+                  .expr_to_ts_type(init, false)
+                  .map(|ann| type_ann(ann))
+                  .or_else(|| Some(any_type_ann()));
+              } else {
+                ident.type_ann = Some(any_type_ann());
+              }
+            }
+            _ => {}
+          }
+
+          decl.init = None;
+        }
+
+        Some(Decl::Var(Box::new(decl)))
+      }
+      Decl::TsInterface(_)
+      | Decl::TsTypeAlias(_)
+      | Decl::TsEnum(_)
+      | Decl::TsModule(_) => Some(decl.clone()),
+      _ => None,
+    }
+  }
+
+  fn class_body_to_type(
+    &mut self,
+    body: &Vec<ClassMember>,
+  ) -> Vec<ClassMember> {
+    body
+      .iter()
+      .filter_map(|member| match member {
+        ClassMember::Constructor(class_constructor) => {
+          let mut new_constructor = class_constructor.clone();
+          new_constructor.body = None;
+          Some(ClassMember::Constructor(new_constructor))
+        }
+        ClassMember::Method(method) => {
+          let mut new_method = method.clone();
+          new_method.function.body = None;
+          if new_method.kind == MethodKind::Setter {
+            new_method.function.return_type = None;
+          }
+          Some(ClassMember::Method(new_method))
+        }
+        ClassMember::ClassProp(prop) => {
+          let mut new_prop = prop.clone();
+          if new_prop.type_ann.is_none() {
+            if let Some(value) = new_prop.value {
+              new_prop.type_ann = self
+                .expr_to_ts_type(*value, false)
+                .map(|ts_type| type_ann(ts_type))
+                .or(Some(any_type_ann()));
+            }
+          }
+          new_prop.value = None;
+
+          Some(ClassMember::ClassProp(new_prop))
+        }
+        ClassMember::TsIndexSignature(index_sig) => {
+          Some(ClassMember::TsIndexSignature(index_sig.clone()))
+        }
+
+        _ => None,
+      })
+      .collect()
   }
 }
 
@@ -299,6 +424,16 @@ mod tests {
   return {};
 }"#,
       "export function foo(a: number): number;",
+    )
+    .await;
+    transform_dts_test(
+      r#"export function foo(a: string): number;
+export function foo(a: string | number): number {
+  return {};
+}"#,
+      r#"export function foo(a: string): number;
+export function foo(a: string | number): number;
+"#,
     )
     .await;
   }
@@ -489,6 +624,32 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn dts_fn_expr() {
+    transform_dts_test(
+      r#"export let foo = function add(a: number, b: number): number {
+  return a + b;
+}"#,
+      "export declare let foo: (a: number, b: number) => number;",
+    )
+    .await;
+    transform_dts_test(
+      r#"export let foo = function add<T>([a, b]: T): void {}"#,
+      "export declare let foo: <T>([a, b]: T) => void;",
+    )
+    .await;
+    transform_dts_test(
+      r#"export let foo = function add<T>({a, b}: T): void {}"#,
+      "export declare let foo: <T>({ a, b }: T) => void;",
+    )
+    .await;
+    transform_dts_test(
+      r#"export let foo = function add(a = 2): void {}"#,
+      "export declare let foo: (a: number) => void;",
+    )
+    .await;
+  }
+
+  #[tokio::test]
   async fn dts_type_export() {
     transform_dts_test(r#"interface Foo {}"#, "interface Foo {\n}").await;
     transform_dts_test(r#"type Foo = number;"#, "type Foo = number;").await;
@@ -521,7 +682,34 @@ mod tests {
 
   #[tokio::test]
   async fn dts_default_export() {
-    transform_dts_test(r#"export default 42;"#, "").await;
+    transform_dts_test(
+      r#"export default function(a: number, b: number): number {};"#,
+      "export default function(a: number, b: number): number;",
+    )
+    .await;
+    transform_dts_test(
+      r#"export default class {foo = 2};"#,
+      r#"export default class {
+  foo: number;
+}"#,
+    )
+    .await;
+    transform_dts_test(
+      r#"export default 42;"#,
+      r#"declare const _dts_1: number;
+export default _dts_1;"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_imports() {
+    transform_dts_test(
+      r#"import { foo } from "bar";export const foobar = foo;"#,
+      r#"import { foo } from "bar";
+export declare const foobar: any;"#,
+    )
+    .await;
   }
 
   #[tokio::test]
