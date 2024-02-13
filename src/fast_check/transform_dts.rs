@@ -162,6 +162,10 @@ impl FastCheckDtsTransformer {
         let mut members: Vec<TsTypeElement> =
           Vec::with_capacity(obj.props.len());
 
+        // TODO: Prescan all object properties to know which ones
+        // have a getter or a setter. This allows us to apply
+        // TypeScript's `readonly` keyword accordingly.
+
         for item in obj.props {
           match item {
             PropOrSpread::Prop(prop_box) => {
@@ -200,7 +204,11 @@ impl FastCheckDtsTransformer {
                 }
                 // TODO: Requires type resolving, skip for now
                 Prop::Shorthand(_) => {}
-                _ => {}
+
+                Prop::Assign(_)
+                | Prop::Getter(_)
+                | Prop::Setter(_)
+                | Prop::Method(_) => {}
               }
             }
             PropOrSpread::Spread(_) => {}
@@ -255,7 +263,7 @@ impl FastCheckDtsTransformer {
                 })
               })
             }
-            _ => None,
+            Pat::Invalid(_) | Pat::Expr(_) => None,
           })
           .collect();
 
@@ -268,7 +276,37 @@ impl FastCheckDtsTransformer {
           }),
         ))
       }
-      _ => None,
+      Expr::This(_)
+      | Expr::Unary(_)
+      | Expr::Update(_)
+      | Expr::Bin(_)
+      | Expr::Assign(_)
+      | Expr::Member(_)
+      | Expr::SuperProp(_)
+      | Expr::Cond(_)
+      | Expr::Call(_)
+      | Expr::New(_)
+      | Expr::Seq(_)
+      | Expr::Ident(_)
+      | Expr::Tpl(_)
+      | Expr::TaggedTpl(_)
+      | Expr::Arrow(_)
+      | Expr::Class(_)
+      | Expr::Yield(_)
+      | Expr::MetaProp(_)
+      | Expr::Await(_)
+      | Expr::Paren(_)
+      | Expr::JSXMember(_)
+      | Expr::JSXNamespacedName(_)
+      | Expr::JSXEmpty(_)
+      | Expr::JSXElement(_)
+      | Expr::JSXFragment(_)
+      | Expr::TsTypeAssertion(_)
+      | Expr::TsNonNull(_)
+      | Expr::TsInstantiation(_)
+      | Expr::PrivateName(_)
+      | Expr::OptChain(_)
+      | Expr::Invalid(_) => None,
     }
   }
 
@@ -313,7 +351,7 @@ impl FastCheckDtsTransformer {
       | Decl::TsTypeAlias(_)
       | Decl::TsEnum(_)
       | Decl::TsModule(_) => Some(decl),
-      _ => None,
+      Decl::Using(_) => None,
     }
   }
 
