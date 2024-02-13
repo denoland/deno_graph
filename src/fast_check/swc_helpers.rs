@@ -307,7 +307,7 @@ pub fn ts_tuple_element(ts_type: TsType) -> TsTupleElement {
 pub fn maybe_lit_to_ts_type_const(lit: &Lit) -> Option<TsType> {
   match lit {
     Lit::Str(lit_str) => Some(ts_lit_type(TsLit::Str(lit_str.clone()))),
-    Lit::Bool(lit_bool) => Some(ts_lit_type(TsLit::Bool(lit_bool.clone()))),
+    Lit::Bool(lit_bool) => Some(ts_lit_type(TsLit::Bool(*lit_bool))),
     Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
     Lit::Num(lit_num) => Some(ts_lit_type(TsLit::Number(lit_num.clone()))),
     Lit::BigInt(lit_bigint) => {

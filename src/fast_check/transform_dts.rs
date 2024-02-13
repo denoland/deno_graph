@@ -6,7 +6,7 @@ use deno_ast::swc::{
     TsFnParam, TsFnType, TsPropertySignature, TsTupleElement, TsTupleType,
     TsType, TsTypeElement, TsTypeLit, VarDecl, VarDeclKind, VarDeclarator,
   },
-  common::{Spanned, DUMMY_SP},
+  common::DUMMY_SP,
 };
 
 use crate::FastCheckDiagnostic;
@@ -49,7 +49,7 @@ impl FastCheckDtsTransformer {
               new_items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
                 ExportDecl {
                   decl,
-                  span: export_decl.span(),
+                  span: DUMMY_SP,
                 },
               )));
             }
@@ -73,7 +73,7 @@ impl FastCheckDtsTransformer {
             let name_ident = Ident::new(name.into(), DUMMY_SP);
             let type_ann = self
               .expr_to_ts_type(*export_default_expr.expr.clone(), false)
-              .map(|ts_type| type_ann(ts_type))
+              .map(type_ann)
               .or(Some(any_type_ann()));
 
             new_items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(
@@ -108,18 +108,19 @@ impl FastCheckDtsTransformer {
           }
           _ => {}
         },
-        ModuleItem::Stmt(stmt) => match stmt {
-          Stmt::Decl(decl) => match decl {
-            Decl::TsInterface(_)
-            | Decl::TsTypeAlias(_)
-            | Decl::TsEnum(_)
-            | Decl::TsModule(_) => {
-              new_items.push(ModuleItem::Stmt(stmt.clone()));
+        ModuleItem::Stmt(stmt) => {
+          if let Stmt::Decl(decl) = stmt {
+            match decl {
+              Decl::TsInterface(_)
+              | Decl::TsTypeAlias(_)
+              | Decl::TsEnum(_)
+              | Decl::TsModule(_) => {
+                new_items.push(ModuleItem::Stmt(stmt.clone()));
+              }
+              _ => {}
             }
-            _ => {}
-          },
-          _ => {}
-        },
+          }
+        }
       }
     }
 
@@ -168,7 +169,7 @@ impl FastCheckDtsTransformer {
 
                   let init_type = self
                     .expr_to_ts_type(*key_value.value, as_const)
-                    .map(|ts_type| type_ann(ts_type));
+                    .map(type_ann);
 
                   members.push(TsTypeElement::TsPropertySignature(
                     TsPropertySignature {
@@ -184,6 +185,8 @@ impl FastCheckDtsTransformer {
                     },
                   ));
                 }
+                // TODO: Requires type resolving, skip for now
+                Prop::Shorthand(_) => {}
                 _ => {}
               }
             }
@@ -230,9 +233,10 @@ impl FastCheckDtsTransformer {
             Pat::Assign(assign_pat) => self
               .expr_to_ts_type(*assign_pat.right.clone(), false)
               .map(|param| {
-                let name = match *assign_pat.left.clone() {
-                  Pat::Ident(ident) => ident.id.sym.as_str().to_string(),
-                  _ => self.gen_unique_name(),
+                let name = if let Pat::Ident(ident) = *assign_pat.left.clone() {
+                  ident.id.sym.as_str().to_string()
+                } else {
+                  self.gen_unique_name()
                 };
 
                 TsFnParam::Ident(BindingIdent {
@@ -275,24 +279,21 @@ impl FastCheckDtsTransformer {
         decl.declare = true;
 
         for decl in &mut decl.decls {
-          match &mut decl.name {
-            Pat::Ident(ident) => {
-              if ident.type_ann.is_some() {
-                decl.init = None;
-                continue;
-              }
-
-              if let Some(init_box) = &decl.init {
-                let init = *init_box.clone();
-                ident.type_ann = self
-                  .expr_to_ts_type(init, false)
-                  .map(|ann| type_ann(ann))
-                  .or_else(|| Some(any_type_ann()));
-              } else {
-                ident.type_ann = Some(any_type_ann());
-              }
+          if let Pat::Ident(ident) = &mut decl.name {
+            if ident.type_ann.is_some() {
+              decl.init = None;
+              continue;
             }
-            _ => {}
+
+            if let Some(init_box) = &decl.init {
+              let init = *init_box.clone();
+              ident.type_ann = self
+                .expr_to_ts_type(init, false)
+                .map(type_ann)
+                .or_else(|| Some(any_type_ann()));
+            } else {
+              ident.type_ann = Some(any_type_ann());
+            }
           }
 
           decl.init = None;
@@ -308,10 +309,7 @@ impl FastCheckDtsTransformer {
     }
   }
 
-  fn class_body_to_type(
-    &mut self,
-    body: &Vec<ClassMember>,
-  ) -> Vec<ClassMember> {
+  fn class_body_to_type(&mut self, body: &[ClassMember]) -> Vec<ClassMember> {
     body
       .iter()
       .filter_map(|member| match member {
@@ -334,7 +332,7 @@ impl FastCheckDtsTransformer {
             if let Some(value) = new_prop.value {
               new_prop.type_ann = self
                 .expr_to_ts_type(*value, false)
-                .map(|ts_type| type_ann(ts_type))
+                .map(type_ann)
                 .or(Some(any_type_ann()));
             }
           }
@@ -380,7 +378,7 @@ mod tests {
       )],
       vec![],
     );
-    let parser = DefaultModuleParser::default();
+    let parser = DefaultModuleParser {};
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
@@ -555,6 +553,14 @@ export function foo(a: string | number): number;
       r#"export const foo = { str: [1, 2] as const } as const;"#,
       r#"export declare const foo: {
   readonly str: readonly [1, 2];
+};"#,
+    )
+    .await;
+
+    // TODO: Requires type resolving
+    transform_dts_test(
+      r#"export const foo = { bar } as const;"#,
+      r#"export declare const foo: {
 };"#,
     )
     .await;
