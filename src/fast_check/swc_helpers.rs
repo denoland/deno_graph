@@ -248,50 +248,6 @@ pub fn ts_lit_type(lit: TsLit) -> TsType {
   })
 }
 
-pub fn array_as_any_expr() -> Box<Expr> {
-  expr_as_keyword_expr(
-    Expr::Array(ArrayLit {
-      span: DUMMY_SP,
-      elems: Default::default(),
-    }),
-    TsKeywordTypeKind::TsAnyKeyword,
-  )
-}
-
-pub fn obj_as_any_expr() -> Box<Expr> {
-  expr_as_keyword_expr(
-    Expr::Object(ObjectLit {
-      span: DUMMY_SP,
-      props: Default::default(),
-    }),
-    TsKeywordTypeKind::TsAnyKeyword,
-  )
-}
-
-pub fn obj_as_never_expr() -> Box<Expr> {
-  expr_as_keyword_expr(
-    Expr::Object(ObjectLit {
-      span: DUMMY_SP,
-      props: Default::default(),
-    }),
-    TsKeywordTypeKind::TsNeverKeyword,
-  )
-}
-
-pub fn expr_as_keyword_expr(
-  expr: Expr,
-  keyword: TsKeywordTypeKind,
-) -> Box<Expr> {
-  Box::new(Expr::TsAs(TsAsExpr {
-    span: DUMMY_SP,
-    expr: Box::new(expr),
-    type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
-      span: DUMMY_SP,
-      kind: keyword,
-    })),
-  }))
-}
-
 pub fn regex_type() -> TsType {
   TsType::TsTypeRef(type_ref("RegExp".to_string()))
 }

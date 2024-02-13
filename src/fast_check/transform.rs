@@ -8,6 +8,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use deno_ast::swc::ast::Accessibility;
+use deno_ast::swc::ast::ArrayLit;
 use deno_ast::swc::ast::ArrowExpr;
 use deno_ast::swc::ast::BindingIdent;
 use deno_ast::swc::ast::BlockStmt;
@@ -27,6 +28,7 @@ use deno_ast::swc::ast::MemberProp;
 use deno_ast::swc::ast::MethodKind;
 use deno_ast::swc::ast::ModuleDecl;
 use deno_ast::swc::ast::ModuleItem;
+use deno_ast::swc::ast::ObjectLit;
 use deno_ast::swc::ast::ObjectPatProp;
 use deno_ast::swc::ast::Param;
 use deno_ast::swc::ast::ParamOrTsParamProp;
@@ -40,8 +42,10 @@ use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
 use deno_ast::swc::ast::Str;
 use deno_ast::swc::ast::TsArrayType;
+use deno_ast::swc::ast::TsAsExpr;
 use deno_ast::swc::ast::TsEntityName;
 use deno_ast::swc::ast::TsIntersectionType;
+use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;
 use deno_ast::swc::ast::TsLit;
 use deno_ast::swc::ast::TsModuleDecl;
@@ -87,14 +91,11 @@ use crate::WorkspaceMember;
 
 use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::any_type_ann;
-use super::swc_helpers::array_as_any_expr;
 use super::swc_helpers::get_return_stmts_with_arg_from_function_body;
 use super::swc_helpers::ident;
 use super::swc_helpers::is_never_type;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::maybe_lit_to_ts_type;
-use super::swc_helpers::obj_as_any_expr;
-use super::swc_helpers::obj_as_never_expr;
 use super::swc_helpers::paren_expr;
 use super::swc_helpers::ts_keyword_type;
 use super::swc_helpers::unknown_type_ann;
@@ -1754,4 +1755,45 @@ fn is_expr_ident_or_member_idents(expr: &Expr) -> bool {
     }
     _ => false,
   }
+}
+
+fn array_as_any_expr() -> Box<Expr> {
+  expr_as_keyword_expr(
+    Expr::Array(ArrayLit {
+      span: DUMMY_SP,
+      elems: Default::default(),
+    }),
+    TsKeywordTypeKind::TsAnyKeyword,
+  )
+}
+
+fn obj_as_any_expr() -> Box<Expr> {
+  expr_as_keyword_expr(
+    Expr::Object(ObjectLit {
+      span: DUMMY_SP,
+      props: Default::default(),
+    }),
+    TsKeywordTypeKind::TsAnyKeyword,
+  )
+}
+
+fn obj_as_never_expr() -> Box<Expr> {
+  expr_as_keyword_expr(
+    Expr::Object(ObjectLit {
+      span: DUMMY_SP,
+      props: Default::default(),
+    }),
+    TsKeywordTypeKind::TsNeverKeyword,
+  )
+}
+
+fn expr_as_keyword_expr(expr: Expr, keyword: TsKeywordTypeKind) -> Box<Expr> {
+  Box::new(Expr::TsAs(TsAsExpr {
+    span: DUMMY_SP,
+    expr: Box::new(expr),
+    type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
+      span: DUMMY_SP,
+      kind: keyword,
+    })),
+  }))
 }
