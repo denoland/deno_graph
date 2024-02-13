@@ -354,10 +354,7 @@ impl FastCheckDtsTransformer {
 #[cfg(test)]
 mod tests {
   use crate::{
-    fast_check::{
-      transform::{emit, CommentsMut},
-      transform_dts::FastCheckDtsTransformer,
-    },
+    fast_check::{transform::emit, transform_dts::FastCheckDtsTransformer},
     source::{MemoryLoader, Source},
     symbols::RootSymbol,
     BuildOptions, DefaultModuleParser, GraphKind, ModuleGraph,
@@ -406,12 +403,10 @@ mod tests {
     let module = transformer.transform(module).unwrap();
 
     let parsed_source = module_info.source();
-    let comments =
-      CommentsMut::new(parsed_source.comments().as_single_threaded());
-    let comments2 = comments.into_multi_threaded().into_single_threaded();
+    let comments = parsed_source.comments().as_single_threaded();
 
     let (actual, _) =
-      emit(&specifier, &comments2, parsed_source.text_info(), &module).unwrap();
+      emit(&specifier, &comments, parsed_source.text_info(), &module).unwrap();
 
     assert_eq!(actual.trim(), expected.trim());
   }
