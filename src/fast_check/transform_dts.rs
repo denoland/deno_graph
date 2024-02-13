@@ -46,7 +46,7 @@ impl FastCheckDtsTransformer {
             new_items.push(ModuleItem::ModuleDecl(module_decl));
           }
           ModuleDecl::ExportDecl(export_decl) => {
-            if let Some(decl) = self.decl_to_type_decl(&export_decl.decl) {
+            if let Some(decl) = self.decl_to_type_decl(export_decl.decl) {
               new_items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
                 ExportDecl {
                   decl,
@@ -273,7 +273,7 @@ impl FastCheckDtsTransformer {
     }
   }
 
-  fn decl_to_type_decl(&mut self, decl: &Decl) -> Option<Decl> {
+  fn decl_to_type_decl(&mut self, decl: Decl) -> Option<Decl> {
     match decl {
       Decl::Class(class_decl) => {
         let mut decl = class_decl.clone();
