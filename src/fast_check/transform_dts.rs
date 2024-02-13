@@ -36,7 +36,7 @@ impl FastCheckDtsTransformer {
   ) -> Result<Module, Vec<FastCheckDiagnostic>> {
     let mut body = module.body;
 
-    let mut new_items: Vec<ModuleItem> = vec![];
+    let mut new_items: Vec<ModuleItem> = Vec::with_capacity(body.len());
 
     for item in &mut body {
       match item {
@@ -147,7 +147,7 @@ impl FastCheckDtsTransformer {
         })))
       }
       Expr::Object(obj) => {
-        let mut members: Vec<TsTypeElement> = vec![];
+        let mut members: Vec<TsTypeElement> = Vec::with_capacity(obj.len());
 
         for item in obj.props {
           match item {
