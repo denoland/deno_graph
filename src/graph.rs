@@ -5057,4 +5057,72 @@ mod tests {
       },]
     );
   }
+
+  #[tokio::test]
+  async fn fast_check_dts() {
+    struct TestLoader;
+    impl Loader for TestLoader {
+      fn load(
+        &mut self,
+        specifier: &ModuleSpecifier,
+        _is_dynamic: bool,
+        _cache_setting: CacheSetting,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///foo.ts" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: b"
+                export function add(a: number, b: number): number {
+                  return a + b;
+                }
+              "
+              .to_vec()
+              .into(),
+            }))
+          }),
+          _ => unreachable!(),
+        }
+      }
+    }
+
+    let mut exports = IndexMap::new();
+    exports.insert(".".to_string(), "./foo.ts".to_string());
+
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.ts").unwrap()],
+        &mut TestLoader,
+        BuildOptions {
+          workspace_fast_check: true,
+          fast_check_dts: true,
+          workspace_members: vec![WorkspaceMember {
+            base: Url::parse("file:///").unwrap(),
+            exports,
+            nv: PackageNv {
+              name: "foo".to_string(),
+              version: Version::parse_standard("1.0.0").unwrap(),
+            },
+          }],
+          ..Default::default()
+        },
+      )
+      .await;
+    graph.valid().unwrap();
+    let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
+    let module = module.js().unwrap();
+    if let FastCheckTypeModuleSlot::Module(fsm) =
+      module.fast_check.clone().unwrap()
+    {
+      assert_eq!(
+        fsm.dts.unwrap().source.to_string().trim(),
+        "export function add(a: number, b: number): number;"
+      );
+    } else {
+      panic!()
+    }
+  }
 }
