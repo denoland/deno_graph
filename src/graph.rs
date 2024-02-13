@@ -2757,6 +2757,7 @@ struct Builder<'a, 'graph> {
   #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
   workspace_fast_check: bool,
   workspace_members: Vec<WorkspaceMember>,
+  #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
   fast_check_dts: bool,
   diagnostics: Vec<BuildDiagnostic>,
 }
