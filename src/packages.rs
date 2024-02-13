@@ -86,11 +86,19 @@ impl JsrPackageVersionInfo {
   }
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 struct PackageNvInfo {
+  manifest_checksum: String,
   /// Collection of exports used.
   exports: IndexMap<String, String>,
   found_dependencies: HashSet<JsrDepPackageReq>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PackageManifestIntegrityError {
+  pub nv: PackageNv,
+  pub actual: String,
+  pub expected: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
@@ -117,40 +125,90 @@ impl PackageSpecifiers {
       nvs.push(nv.clone());
     }
     self.package_reqs.insert(package_req, nv.clone());
-    // always create an entry because this is used in the lockfile
-    // todo(dsherret): add integrity for the package here
-    self.packages.entry(nv.clone()).or_default();
+  }
+
+  pub(crate) fn ensure_package(
+    &mut self,
+    nv: PackageNv,
+    manifest_checksum: String,
+  ) {
+    self.packages.entry(nv).or_insert_with(|| PackageNvInfo {
+      manifest_checksum,
+      exports: Default::default(),
+      found_dependencies: Default::default(),
+    });
+  }
+
+  pub(crate) fn get_manifest_checksum(
+    &self,
+    nv: &PackageNv,
+  ) -> Option<&String> {
+    self.packages.get(nv).map(|p| &p.manifest_checksum)
+  }
+
+  pub fn add_manifest_checksum(
+    &mut self,
+    nv: PackageNv,
+    checksum: String,
+  ) -> Result<(), PackageManifestIntegrityError> {
+    let package = self.packages.get(&nv);
+    if let Some(package) = package {
+      if package.manifest_checksum != checksum {
+        Err(PackageManifestIntegrityError {
+          nv,
+          actual: checksum,
+          expected: package.manifest_checksum.clone(),
+        })
+      } else {
+        Ok(())
+      }
+    } else {
+      self.packages.insert(
+        nv,
+        PackageNvInfo {
+          manifest_checksum: checksum,
+          exports: Default::default(),
+          found_dependencies: Default::default(),
+        },
+      );
+      Ok(())
+    }
   }
 
   /// Gets the dependencies (package constraints) of JSR packages found in the graph.
-  pub fn package_deps(
+  pub fn packages_with_checksum_and_deps(
     &self,
-  ) -> impl Iterator<Item = (&PackageNv, impl Iterator<Item = &JsrDepPackageReq>)>
-  {
+  ) -> impl Iterator<
+    Item = (&PackageNv, &String, impl Iterator<Item = &JsrDepPackageReq>),
+  > {
     self.packages.iter().map(|(nv, info)| {
       let deps = info.found_dependencies.iter();
-      (nv, deps)
+      (nv, &info.manifest_checksum, deps)
     })
   }
 
   pub(crate) fn add_dependency(
     &mut self,
-    nv: PackageNv,
+    nv: &PackageNv,
     dep: JsrDepPackageReq,
   ) {
     self
       .packages
-      .entry(nv.clone())
-      .or_default()
+      .get_mut(nv)
+      .unwrap()
       .found_dependencies
       .insert(dep);
   }
 
-  pub(crate) fn add_export(&mut self, nv: PackageNv, export: (String, String)) {
+  pub(crate) fn add_export(
+    &mut self,
+    nv: &PackageNv,
+    export: (String, String),
+  ) {
     self
       .packages
-      .entry(nv.clone())
-      .or_default()
+      .get_mut(nv)
+      .unwrap()
       .exports
       .insert(export.0, export.1);
   }

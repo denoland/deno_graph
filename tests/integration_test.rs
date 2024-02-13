@@ -76,7 +76,7 @@ async fn test_graph_specs() {
     let jsr_deps = result
       .graph
       .packages
-      .package_deps()
+      .packages()
       .map(|(k, v)| {
         (k.to_string(), v.map(|v| v.to_string()).collect::<Vec<_>>())
       })

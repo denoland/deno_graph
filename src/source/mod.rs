@@ -110,6 +110,8 @@ impl CacheSetting {
 pub static DEFAULT_DENO_REGISTRY_URL: Lazy<Url> =
   Lazy::new(|| Url::parse("https://jsr.io").unwrap());
 
+/// A SHA-256 checksum to verify the contents of a module
+/// with while loading.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LoaderChecksum(String);
 
@@ -138,18 +140,11 @@ Expected: {}",
   }
 
   pub fn gen(source: &[u8]) -> String {
-    use ring::digest::Context;
-    use ring::digest::SHA256;
-
-    let mut ctx = Context::new(&SHA256);
-    ctx.update(source);
-    let digest = ctx.finish();
-    let out: Vec<String> = digest
-      .as_ref()
-      .iter()
-      .map(|byte| format!("{byte:02x}"))
-      .collect();
-    out.join("")
+    use sha2::Digest;
+    use sha2::Sha256;
+    let mut hasher = Sha256::new();
+    hasher.update(source);
+    format!("{:x}", hasher.finalize())
   }
 }
 
@@ -213,6 +208,21 @@ pub trait Loader {
       }
     }
     .boxed_local()
+  }
+
+  fn load_with_maybe_checksum(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    is_dynamic: bool,
+    cache_setting: CacheSetting,
+    maybe_checksum: Option<LoaderChecksum>,
+  ) -> LoadFuture {
+    match maybe_checksum {
+      Some(checksum) => {
+        self.load_with_checksum(specifier, is_dynamic, cache_setting, checksum)
+      }
+      None => self.load(specifier, is_dynamic, cache_setting),
+    }
   }
 
   /// Cache the module info for the provided specifier if the loader

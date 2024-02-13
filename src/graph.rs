@@ -2641,6 +2641,12 @@ struct PendingContentLoadItem {
   module_info: ModuleInfo,
 }
 
+#[derive(Clone)]
+struct PendingJsrPackageVersionInfoLoadItem {
+  checksum: String,
+  info: Arc<JsrPackageVersionInfo>,
+}
+
 type PendingResult<T> =
   Shared<LocalBoxFuture<'static, Result<T, Arc<anyhow::Error>>>>;
 
@@ -2649,7 +2655,7 @@ struct PendingJsrState {
   pending_package_info_loads:
     HashMap<String, PendingResult<Option<Arc<JsrPackageInfo>>>>,
   pending_package_version_info_loads:
-    HashMap<PackageNv, PendingResult<Arc<JsrPackageVersionInfo>>>,
+    HashMap<PackageNv, PendingResult<PendingJsrPackageVersionInfoLoadItem>>,
   pending_resolutions: Vec<PendingJsrResolutionItem>,
   pending_content_loads:
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
@@ -3017,13 +3023,18 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         .await
         .map(|info| (info, resolution_item.package_ref.sub_path()));
       match version_info_result {
-        Ok((version_info, sub_path)) => {
+        Ok((version_info_load_item, sub_path)) => {
+          let version_info = version_info_load_item.info;
+          self
+            .graph
+            .packages
+            .ensure_package(nv.clone(), version_info_load_item.checksum);
           let base_url = self.loader.registry_package_url(&nv);
           let export_name = normalize_export_name(sub_path);
           match version_info.export(&export_name) {
             Some(export_value) => {
               self.graph.packages.add_export(
-                nv.clone(),
+                &nv,
                 (
                   normalize_export_name(resolution_item.package_ref.sub_path())
                     .to_string(),
@@ -3316,7 +3327,25 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let base_url = base_url.strip_suffix('/').unwrap_or(base_url);
       if let Some(sub_path) = specifier.as_str().strip_prefix(base_url) {
         let checksum = match version_info.inner.manifest.get(sub_path) {
-          Some(manifest_entry) => &manifest_entry.checksum,
+          Some(manifest_entry) => {
+            match manifest_entry.checksum.strip_prefix("sha256-") {
+              Some(checksum) => checksum.to_string(),
+              None => {
+                self.graph.module_slots.insert(
+                  specifier.clone(),
+                  ModuleSlot::Err(ModuleError::LoadingErr(
+                    specifier.clone(),
+                    maybe_range.cloned(),
+                    Arc::new(anyhow!(
+                      "Unsupported checksum in manifest for {}. Maybe try upgrading deno?",
+                      specifier
+                    )),
+                  )),
+                );
+                return;
+              }
+            }
+          }
           None => {
             self.graph.module_slots.insert(
               specifier.clone(),
@@ -3434,7 +3463,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             self.loader.registry_package_url_to_nv(&range.specifier)
           {
             self.graph.packages.add_dependency(
-              nv,
+              &nv,
               JsrDepPackageReq::jsr(package_ref.req().clone()),
             );
           }
@@ -3563,7 +3592,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             self.loader.registry_package_url_to_nv(&range.specifier)
           {
             self.graph.packages.add_dependency(
-              nv,
+              &nv,
               JsrDepPackageReq::npm(package_ref.req().clone()),
             );
           }
@@ -3693,18 +3722,33 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         package_nv.name, package_nv.version
       ))
       .unwrap();
-    let fut = self.loader.load(
+    let maybe_expected_checksum = self
+      .graph
+      .packages
+      .get_manifest_checksum(&package_nv)
+      .map(|checksum| LoaderChecksum::new(checksum.clone()));
+    let fut = self.loader.load_with_maybe_checksum(
       &specifier,
       false,
       self.fill_pass_mode.to_cache_setting(),
+      // we won't have a checksum when loading this the
+      // first time or when not using a lockfile
+      maybe_expected_checksum.clone(),
     );
     let fut = async move {
       let data = fut.await.map_err(Arc::new)?;
       match data {
         Some(LoadResponse::Module { content, .. }) => {
+          // if we have the expected checksum, then we can re-use that here
+          let checksum = maybe_expected_checksum
+            .map(|c| c.into_string())
+            .unwrap_or_else(|| LoaderChecksum::gen(&content));
           let version_info: JsrPackageVersionInfo =
             serde_json::from_slice(&content).map_err(|e| Arc::new(e.into()))?;
-          Ok(Arc::new(version_info))
+          Ok(PendingJsrPackageVersionInfoLoadItem {
+            checksum,
+            info: Arc::new(version_info),
+          })
         }
         _ => Err(Arc::new(anyhow!("Not found: {}", specifier))),
       }
