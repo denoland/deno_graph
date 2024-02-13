@@ -38,7 +38,7 @@ mod helpers;
 
 #[tokio::test]
 async fn test_graph_specs() {
-  for (test_file_path, spec) in
+  for (test_file_path, mut spec) in
     get_specs_in_dir(&PathBuf::from("./tests/specs/graph"))
   {
     if !cfg!(feature = "fast_check")
@@ -47,6 +47,11 @@ async fn test_graph_specs() {
       continue;
     }
     eprintln!("Running {}", test_file_path.display());
+    let update =
+      std::env::var("UPDATE").as_ref().map(|v| v.as_str()) == Ok("1");
+    if update {
+      spec.fill_jsr_meta_files_with_checksums();
+    }
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
       for file in &spec.files {
@@ -69,16 +74,18 @@ async fn test_graph_specs() {
     }
 
     let result = builder.build().await;
-    let update_var = std::env::var("UPDATE");
     let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
     output_text.push('\n');
     // include the list of jsr dependencies
     let jsr_deps = result
       .graph
       .packages
-      .packages()
-      .map(|(k, v)| {
-        (k.to_string(), v.map(|v| v.to_string()).collect::<Vec<_>>())
+      .packages_with_checksum_and_deps()
+      .map(|(k, _checksum, deps)| {
+        (
+          k.to_string(),
+          deps.map(|d| d.to_string()).collect::<Vec<_>>(),
+        )
       })
       .filter(|(_, v)| !v.is_empty())
       .collect::<BTreeMap<_, _>>();
@@ -135,7 +142,7 @@ async fn test_graph_specs() {
       .iter()
       .map(|d| serde_json::to_value(d.to_string()).unwrap())
       .collect::<Vec<_>>();
-    let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
+    let spec = if update {
       let mut spec = spec;
       spec.output_file.text = output_text.clone();
       spec.diagnostics = diagnostics.clone();

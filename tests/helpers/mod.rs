@@ -1,11 +1,17 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
+use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
 
 mod test_builder;
 
+use deno_graph::source::recommended_registry_package_url;
+use deno_graph::source::recommended_registry_package_url_to_nv;
+use deno_graph::source::LoaderChecksum;
+use deno_graph::source::DEFAULT_DENO_REGISTRY_URL;
 use deno_graph::WorkspaceMember;
+use deno_semver::package::PackageNv;
 use indexmap::IndexMap;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -57,6 +63,63 @@ impl Spec {
       text.push('\n');
     }
     text
+  }
+
+  pub fn fill_jsr_meta_files_with_checksums(&mut self) {
+    for (nv, checksums_by_files) in self.get_jsr_checksums() {
+      let base_specifier =
+        recommended_registry_package_url(&DEFAULT_DENO_REGISTRY_URL, &nv);
+      let meta_file = base_specifier
+        .join(&format!("../{}_meta.json", nv.version.to_string()))
+        .unwrap();
+
+      let meta_file = self
+        .files
+        .iter_mut()
+        .find(|f| f.url() == meta_file)
+        .unwrap_or_else(|| panic!("Could not find in specs: {}", meta_file));
+      let mut meta_value = serde_json::from_str::<
+        HashMap<String, serde_json::Value>,
+      >(&meta_file.text)
+      .unwrap();
+      meta_value.insert(
+        "checksums".to_string(),
+        serde_json::to_value(checksums_by_files).unwrap(),
+      );
+      meta_file.text = serde_json::to_string_pretty(&meta_value).unwrap();
+    }
+  }
+
+  pub fn get_jsr_checksums(
+    &self,
+  ) -> HashMap<PackageNv, HashMap<String, serde_json::Value>> {
+    let mut checksums_by_package: HashMap<
+      PackageNv,
+      HashMap<String, serde_json::Value>,
+    > = Default::default();
+    for file in &self.files {
+      if let Some(nv) = recommended_registry_package_url_to_nv(
+        &DEFAULT_DENO_REGISTRY_URL,
+        &file.url(),
+      ) {
+        let base_specifier =
+          recommended_registry_package_url(&DEFAULT_DENO_REGISTRY_URL, &nv);
+        let relative_url = file
+          .url()
+          .to_string()
+          .strip_prefix(&base_specifier.to_string())
+          .unwrap()
+          .to_string();
+        checksums_by_package.entry(nv.clone()).or_default().insert(
+          relative_url,
+          serde_json::json!({
+            "size": file.text.len(),
+            "checksum": LoaderChecksum::gen(file.text.as_bytes()),
+          }),
+        );
+      }
+    }
+    checksums_by_package
   }
 }
 

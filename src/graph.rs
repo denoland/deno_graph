@@ -2574,6 +2574,15 @@ enum PendingInfoResponse {
   },
 }
 
+impl PendingInfoResponse {
+  fn specifier(&self) -> &ModuleSpecifier {
+    match self {
+      Self::External { specifier } => specifier,
+      Self::Module { specifier, .. } => specifier,
+    }
+  }
+}
+
 impl From<LoadResponse> for PendingInfoResponse {
   fn from(load_response: LoadResponse) -> Self {
     match load_response {
@@ -2839,16 +2848,35 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           maybe_version_info,
         }) => match result {
           Ok(Some(response)) => {
-            let assert_types =
-              self.state.pending_specifiers.remove(&specifier).unwrap();
-            for maybe_assert_type in assert_types {
-              self.visit(
-                &specifier,
-                &response,
-                maybe_assert_type,
-                maybe_range.clone(),
-                maybe_version_info.as_ref(),
-              )
+            if maybe_version_info.is_none()
+              && self
+                .loader
+                .registry_package_url_to_nv(&response.specifier())
+                .is_some()
+            {
+              self.graph.module_slots.insert(
+                specifier.clone(),
+                ModuleSlot::Err(ModuleError::LoadingErr(
+                  specifier.clone(),
+                  maybe_range,
+                  Arc::new(anyhow!(concat!(
+                    "Importing a JSR package via an HTTPS URL is not implemented. ",
+                    "Use a `jsr:` specifier instead for the time being."
+                  )),
+                ))),
+              );
+            } else {
+              let assert_types =
+                self.state.pending_specifiers.remove(&specifier).unwrap();
+              for maybe_assert_type in assert_types {
+                self.visit(
+                  &specifier,
+                  &response,
+                  maybe_assert_type,
+                  maybe_range.clone(),
+                  maybe_version_info.as_ref(),
+                )
+              }
             }
             Some(specifier)
           }
