@@ -50,7 +50,7 @@ impl FastCheckDtsTransformer {
               new_items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
                 ExportDecl {
                   decl,
-                  span: DUMMY_SP,
+                  span: export_decl.span,
                 },
               )));
             }
@@ -106,7 +106,7 @@ impl FastCheckDtsTransformer {
 
             new_items.push(ModuleItem::ModuleDecl(
               ModuleDecl::ExportDefaultExpr(ExportDefaultExpr {
-                span: DUMMY_SP,
+                span: export_default_expr.span,
                 expr: Box::new(Expr::Ident(name_ident)),
               }),
             ))
@@ -154,7 +154,7 @@ impl FastCheckDtsTransformer {
         }
 
         Some(ts_readonly(TsType::TsTupleType(TsTupleType {
-          span: DUMMY_SP,
+          span: arr.span,
           elem_types,
         })))
       }
@@ -208,7 +208,7 @@ impl FastCheckDtsTransformer {
         }
 
         Some(TsType::TsTypeLit(TsTypeLit {
-          span: DUMMY_SP,
+          span: obj.span,
           members,
         }))
       }
@@ -250,7 +250,7 @@ impl FastCheckDtsTransformer {
                 };
 
                 TsFnParam::Ident(BindingIdent {
-                  id: Ident::new(name.into(), DUMMY_SP),
+                  id: Ident::new(name.into(), assign_pat.span),
                   type_ann: Some(type_ann(param)),
                 })
               })
@@ -261,7 +261,7 @@ impl FastCheckDtsTransformer {
 
         Some(TsType::TsFnOrConstructorType(
           TsFnOrConstructorType::TsFnType(TsFnType {
-            span: DUMMY_SP,
+            span: fn_expr.function.span,
             params,
             type_ann: return_type,
             type_params: fn_expr.function.type_params,
