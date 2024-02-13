@@ -8,7 +8,6 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use deno_ast::swc::ast::Accessibility;
-use deno_ast::swc::ast::ArrayLit;
 use deno_ast::swc::ast::ArrowExpr;
 use deno_ast::swc::ast::BindingIdent;
 use deno_ast::swc::ast::BlockStmt;
@@ -28,11 +27,9 @@ use deno_ast::swc::ast::MemberProp;
 use deno_ast::swc::ast::MethodKind;
 use deno_ast::swc::ast::ModuleDecl;
 use deno_ast::swc::ast::ModuleItem;
-use deno_ast::swc::ast::ObjectLit;
 use deno_ast::swc::ast::ObjectPatProp;
 use deno_ast::swc::ast::Param;
 use deno_ast::swc::ast::ParamOrTsParamProp;
-use deno_ast::swc::ast::ParenExpr;
 use deno_ast::swc::ast::Pat;
 use deno_ast::swc::ast::PrivateName;
 use deno_ast::swc::ast::PrivateProp;
@@ -43,10 +40,8 @@ use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
 use deno_ast::swc::ast::Str;
 use deno_ast::swc::ast::TsArrayType;
-use deno_ast::swc::ast::TsAsExpr;
 use deno_ast::swc::ast::TsEntityName;
 use deno_ast::swc::ast::TsIntersectionType;
-use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;
 use deno_ast::swc::ast::TsLit;
 use deno_ast::swc::ast::TsModuleDecl;
@@ -91,15 +86,23 @@ use crate::ModuleInfo;
 use crate::WorkspaceMember;
 
 use super::range_finder::ModulePublicRanges;
+use super::swc_helpers::any_type_ann;
+use super::swc_helpers::array_as_any_expr;
 use super::swc_helpers::get_return_stmts_with_arg_from_function_body;
 use super::swc_helpers::ident;
 use super::swc_helpers::is_never_type;
 use super::swc_helpers::is_void_type;
+use super::swc_helpers::maybe_lit_to_ts_type;
+use super::swc_helpers::obj_as_any_expr;
+use super::swc_helpers::obj_as_never_expr;
+use super::swc_helpers::paren_expr;
 use super::swc_helpers::ts_keyword_type;
+use super::swc_helpers::unknown_type_ann;
+use super::transform_dts::FastCheckDtsTransformer;
 use super::FastCheckDiagnostic;
 use super::FastCheckDiagnosticRange;
 
-struct CommentsMut {
+pub struct CommentsMut {
   leading: SingleThreadedCommentsMapInner,
   trailing: SingleThreadedCommentsMapInner,
 }
@@ -139,15 +142,22 @@ impl CommentsMut {
   }
 }
 
+pub struct FastCheckDtsFile {
+  pub text: String,
+  pub specifier: ModuleSpecifier,
+}
+
 pub struct FastCheckModule {
   pub module_info: ModuleInfo,
   pub text: String,
+  pub dts: Option<FastCheckDtsFile>,
   pub source_map: Vec<u8>,
 }
 
 pub struct TransformOptions<'a> {
   pub workspace_members: &'a [WorkspaceMember],
   pub should_error_on_first_diagnostic: bool,
+  pub dts: bool,
 }
 
 pub fn transform(
@@ -175,8 +185,9 @@ pub fn transform(
     &comments,
   );
 
-  // now emit
   let comments = comments.into_single_threaded();
+
+  // now emit
   let (text, source_map) =
     emit(specifier, &comments, parsed_source.text_info(), &module).map_err(
       |e| {
@@ -187,9 +198,36 @@ pub fn transform(
       },
     )?;
 
+  let dts = if options.dts {
+    let mut dts_transformer = FastCheckDtsTransformer::new();
+
+    let module = dts_transformer.transform(module)?;
+    let (text, _source_map) =
+      emit(specifier, &comments, parsed_source.text_info(), &module).map_err(
+        |e| {
+          vec![FastCheckDiagnostic::Emit {
+            specifier: specifier.clone(),
+            inner: Arc::new(e),
+          }]
+        },
+      )?;
+
+    let mut path = specifier.to_file_path().unwrap();
+    path.set_extension("d.ts");
+    let dts_specifier = ModuleSpecifier::from_file_path(path).unwrap();
+
+    Some(FastCheckDtsFile {
+      text,
+      specifier: dts_specifier,
+    })
+  } else {
+    None
+  };
+
   Ok(FastCheckModule {
     module_info,
     text,
+    dts,
     source_map,
   })
 }
@@ -1361,27 +1399,7 @@ impl<'a> FastCheckTransformer<'a> {
     match expr {
       Expr::TsTypeAssertion(n) => infer_simple_type_from_type(&n.type_ann),
       Expr::TsAs(n) => infer_simple_type_from_type(&n.type_ann),
-      Expr::Lit(lit) => match lit {
-        Lit::Str(_) => {
-          Some(ts_keyword_type(TsKeywordTypeKind::TsStringKeyword))
-        }
-        Lit::Bool(_) => {
-          Some(ts_keyword_type(TsKeywordTypeKind::TsBooleanKeyword))
-        }
-        Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
-        Lit::Num(_) => {
-          Some(ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword))
-        }
-        Lit::BigInt(_) => {
-          Some(ts_keyword_type(TsKeywordTypeKind::TsBigIntKeyword))
-        }
-        Lit::Regex(_) => Some(TsType::TsTypeRef(TsTypeRef {
-          span: DUMMY_SP,
-          type_name: TsEntityName::Ident(Ident::new("RegExp".into(), DUMMY_SP)),
-          type_params: None,
-        })),
-        Lit::JSXText(_) => None,
-      },
+      Expr::Lit(lit) => maybe_lit_to_ts_type(lit),
       Expr::Call(call_expr) => {
         if self.is_call_expr_symbol_create(call_expr) {
           Some(TsType::TsTypeOperator(TsTypeOperator {
@@ -1497,7 +1515,7 @@ fn void_or_promise_void(is_async: bool) -> Box<TsType> {
   if is_async {
     Box::new(TsType::TsTypeRef(TsTypeRef {
       span: DUMMY_SP,
-      type_name: TsEntityName::Ident(ident("Promise".into())),
+      type_name: TsEntityName::Ident(Ident::new("Promise".into(), DUMMY_SP)),
       type_params: Some(Box::new(TsTypeParamInstantiation {
         span: DUMMY_SP,
         params: vec![void_type],
@@ -1561,7 +1579,7 @@ fn prefix_idents_in_pat(pat: &mut Pat, prefix: &str) {
   }
 }
 
-fn emit(
+pub fn emit(
   specifier: &ModuleSpecifier,
   comments: &SingleThreadedComments,
   text_info: &SourceTextInfo,
@@ -1736,66 +1754,4 @@ fn is_expr_ident_or_member_idents(expr: &Expr) -> bool {
     }
     _ => false,
   }
-}
-
-fn array_as_any_expr() -> Box<Expr> {
-  expr_as_keyword_expr(
-    Expr::Array(ArrayLit {
-      span: DUMMY_SP,
-      elems: Default::default(),
-    }),
-    TsKeywordTypeKind::TsAnyKeyword,
-  )
-}
-
-fn obj_as_any_expr() -> Box<Expr> {
-  expr_as_keyword_expr(
-    Expr::Object(ObjectLit {
-      span: DUMMY_SP,
-      props: Default::default(),
-    }),
-    TsKeywordTypeKind::TsAnyKeyword,
-  )
-}
-
-fn obj_as_never_expr() -> Box<Expr> {
-  expr_as_keyword_expr(
-    Expr::Object(ObjectLit {
-      span: DUMMY_SP,
-      props: Default::default(),
-    }),
-    TsKeywordTypeKind::TsNeverKeyword,
-  )
-}
-
-fn expr_as_keyword_expr(expr: Expr, keyword: TsKeywordTypeKind) -> Box<Expr> {
-  Box::new(Expr::TsAs(TsAsExpr {
-    span: DUMMY_SP,
-    expr: Box::new(expr),
-    type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
-      span: DUMMY_SP,
-      kind: keyword,
-    })),
-  }))
-}
-
-fn paren_expr(expr: Box<Expr>) -> Expr {
-  Expr::Paren(ParenExpr {
-    span: DUMMY_SP,
-    expr,
-  })
-}
-
-fn any_type_ann() -> Box<TsTypeAnn> {
-  Box::new(TsTypeAnn {
-    span: DUMMY_SP,
-    type_ann: Box::new(ts_keyword_type(TsKeywordTypeKind::TsAnyKeyword)),
-  })
-}
-
-fn unknown_type_ann() -> Box<TsTypeAnn> {
-  Box::new(TsTypeAnn {
-    span: DUMMY_SP,
-    type_ann: Box::new(ts_keyword_type(TsKeywordTypeKind::TsUnknownKeyword)),
-  })
 }

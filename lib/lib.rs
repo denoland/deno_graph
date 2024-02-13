@@ -260,6 +260,7 @@ pub async fn js_create_graph(
         reporter: None,
         workspace_fast_check: false,
         workspace_members: Vec::new(),
+        fast_check_dts: false,
       },
     )
     .await;

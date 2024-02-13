@@ -810,10 +810,17 @@ pub enum FastCheckTypeModuleSlot {
 }
 
 #[derive(Debug, Clone)]
+pub struct FastCheckDtsModule {
+  pub source: Arc<str>,
+  pub specifier: ModuleSpecifier,
+}
+
+#[derive(Debug, Clone)]
 pub struct FastCheckTypeModule {
   pub dependencies: IndexMap<String, Dependency>,
   pub source: Arc<str>,
   pub source_map: Arc<[u8]>,
+  pub dts: Option<FastCheckDtsModule>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -985,6 +992,7 @@ pub struct BuildOptions<'a> {
   /// Whether to fill workspace members with fast check TypeScript data.
   pub workspace_fast_check: bool,
   pub workspace_members: Vec<WorkspaceMember>,
+  pub fast_check_dts: bool,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -1423,6 +1431,7 @@ impl ModuleGraph {
       options.reporter,
       options.workspace_fast_check,
       options.workspace_members,
+      options.fast_check_dts,
     )
     .await
   }
@@ -2748,6 +2757,7 @@ struct Builder<'a, 'graph> {
   #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
   workspace_fast_check: bool,
   workspace_members: Vec<WorkspaceMember>,
+  fast_check_dts: bool,
   diagnostics: Vec<BuildDiagnostic>,
 }
 
@@ -2768,6 +2778,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     reporter: Option<&'a dyn Reporter>,
     workspace_fast_check: bool,
     workspace_members: Vec<WorkspaceMember>,
+    fast_check_dts: bool,
   ) -> Vec<BuildDiagnostic> {
     let fill_pass_mode = match graph.roots.is_empty() {
       true => FillPassMode::AllowRestart,
@@ -2787,6 +2798,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       fill_pass_mode,
       workspace_fast_check,
       workspace_members,
+      fast_check_dts,
       diagnostics: Vec::new(),
     };
     builder.fill(roots, imports).await;
@@ -3950,6 +3962,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           &[]
         },
         should_error_on_first_diagnostic: !self.workspace_fast_check,
+        dts: self.fast_check_dts,
       },
     );
     for (specifier, fast_check_module_result) in modules {
@@ -3979,6 +3992,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             dependencies,
             source: fast_check_module.text.into(),
             source_map: fast_check_module.source_map.into(),
+            dts: if let Some(dts_file) = fast_check_module.dts {
+              Some(FastCheckDtsModule {
+                source: dts_file.text.into(),
+                specifier: dts_file.specifier,
+              })
+            } else {
+              None
+            },
           }))
         }
         Err(diagnostic) => FastCheckTypeModuleSlot::Error(diagnostic),

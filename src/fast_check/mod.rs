@@ -11,6 +11,8 @@ mod range_finder;
 mod swc_helpers;
 #[cfg(feature = "fast_check")]
 mod transform;
+#[cfg(feature = "fast_check")]
+mod transform_dts;
 
 use deno_ast::diagnostics::DiagnosticLevel;
 use deno_ast::diagnostics::DiagnosticLocation;
