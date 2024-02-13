@@ -25,6 +25,7 @@
 
 # https://jsr.io/@scope/b/2.0.3_meta.json
 {
+  "manifest": {},
   "exports": {
     ".": "./mod.ts"
   }

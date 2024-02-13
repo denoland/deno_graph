@@ -38,7 +38,7 @@ mod helpers;
 
 #[tokio::test]
 async fn test_graph_specs() {
-  for (test_file_path, mut spec) in
+  for (test_file_path, spec) in
     get_specs_in_dir(&PathBuf::from("./tests/specs/graph"))
   {
     if !cfg!(feature = "fast_check")
@@ -47,11 +47,6 @@ async fn test_graph_specs() {
       continue;
     }
     eprintln!("Running {}", test_file_path.display());
-    let update =
-      std::env::var("UPDATE").as_ref().map(|v| v.as_str()) == Ok("1");
-    if update {
-      spec.fill_jsr_meta_files_with_checksums();
-    }
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
       for file in &spec.files {
@@ -142,6 +137,8 @@ async fn test_graph_specs() {
       .iter()
       .map(|d| serde_json::to_value(d.to_string()).unwrap())
       .collect::<Vec<_>>();
+    let update =
+      std::env::var("UPDATE").as_ref().map(|v| v.as_str()) == Ok("1");
     let spec = if update {
       let mut spec = spec;
       spec.output_file.text = output_text.clone();
@@ -177,7 +174,7 @@ fn indent(text: &str) -> String {
 #[cfg(feature = "symbols")]
 #[tokio::test]
 async fn test_symbols_specs() {
-  for (test_file_path, spec) in
+  for (test_file_path, mut spec) in
     get_specs_in_dir(&PathBuf::from("./tests/specs/symbols"))
   {
     eprintln!("Running {}", test_file_path.display());

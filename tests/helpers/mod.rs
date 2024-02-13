@@ -83,9 +83,10 @@ impl Spec {
       >(&meta_file.text)
       .unwrap();
       meta_value.insert(
-        "checksums".to_string(),
+        "manifest".to_string(),
         serde_json::to_value(checksums_by_files).unwrap(),
       );
+      meta_file.emit_text = Some(std::mem::take(&mut meta_file.text));
       meta_file.text = serde_json::to_string_pretty(&meta_value).unwrap();
     }
   }
@@ -107,14 +108,14 @@ impl Spec {
         let relative_url = file
           .url()
           .to_string()
-          .strip_prefix(&base_specifier.to_string())
+          .strip_prefix(&base_specifier.to_string().strip_suffix("/").unwrap())
           .unwrap()
           .to_string();
         checksums_by_package.entry(nv.clone()).or_default().insert(
           relative_url,
           serde_json::json!({
             "size": file.text.len(),
-            "checksum": LoaderChecksum::gen(file.text.as_bytes()),
+            "checksum": format!("sha256-{}", LoaderChecksum::gen(file.text.as_bytes())),
           }),
         );
       }
@@ -127,6 +128,7 @@ impl Spec {
 pub struct SpecFile {
   pub specifier: String,
   pub text: String,
+  pub emit_text: Option<String>,
   pub headers: IndexMap<String, String>,
 }
 
@@ -139,7 +141,7 @@ impl SpecFile {
         serde_json::to_string(&self.headers).unwrap()
       ));
     }
-    text.push_str(&self.text);
+    text.push_str(self.emit_text.as_ref().unwrap_or(&self.text));
     text
   }
 
@@ -182,7 +184,11 @@ pub fn get_specs_in_dir(path: &Path) -> Vec<(PathBuf, Spec)> {
   };
   files
     .into_iter()
-    .map(|file| (file.path, parse_spec(file.text)))
+    .map(|file| {
+      let mut spec = parse_spec(file.text);
+      spec.fill_jsr_meta_files_with_checksums();
+      (file.path, spec)
+    })
     .collect()
 }
 
@@ -203,6 +209,7 @@ fn parse_spec(text: String) -> Spec {
       current_file = Some(SpecFile {
         specifier: specifier.to_string(),
         text: String::new(),
+        emit_text: None,
         headers: Default::default(),
       });
     } else if let Some(headers) = line.strip_prefix("HEADERS: ") {
