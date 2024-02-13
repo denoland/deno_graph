@@ -142,15 +142,10 @@ impl CommentsMut {
   }
 }
 
-pub struct FastCheckDtsFile {
-  pub text: String,
-  pub specifier: ModuleSpecifier,
-}
-
 pub struct FastCheckModule {
   pub module_info: ModuleInfo,
   pub text: String,
-  pub dts: Option<FastCheckDtsFile>,
+  pub dts: Option<String>,
   pub source_map: Vec<u8>,
 }
 
@@ -212,14 +207,7 @@ pub fn transform(
         },
       )?;
 
-    let mut path = specifier.to_file_path().unwrap();
-    path.set_extension("d.ts");
-    let dts_specifier = ModuleSpecifier::from_file_path(path).unwrap();
-
-    Some(FastCheckDtsFile {
-      text,
-      specifier: dts_specifier,
-    })
+    Some(text)
   } else {
     None
   };

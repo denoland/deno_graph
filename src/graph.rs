@@ -820,7 +820,7 @@ pub struct FastCheckTypeModule {
   pub dependencies: IndexMap<String, Dependency>,
   pub source: Arc<str>,
   pub source_map: Arc<[u8]>,
-  pub dts: Option<FastCheckDtsModule>,
+  pub dts: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -3993,14 +3993,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             dependencies,
             source: fast_check_module.text.into(),
             source_map: fast_check_module.source_map.into(),
-            dts: if let Some(dts_file) = fast_check_module.dts {
-              Some(FastCheckDtsModule {
-                source: dts_file.text.into(),
-                specifier: dts_file.specifier,
-              })
-            } else {
-              None
-            },
+            dts: fast_check_module.dts,
           }))
         }
         Err(diagnostic) => FastCheckTypeModuleSlot::Error(diagnostic),
@@ -5119,7 +5112,7 @@ mod tests {
       module.fast_check.clone().unwrap()
     {
       assert_eq!(
-        fsm.dts.unwrap().source.to_string().trim(),
+        fsm.dts.unwrap().to_string().trim(),
         "export function add(a: number, b: number): number;"
       );
     } else {
