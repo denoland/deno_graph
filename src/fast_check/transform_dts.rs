@@ -1,12 +1,13 @@
 use deno_ast::swc::{
   ast::{
     BindingIdent, ClassMember, Decl, DefaultDecl, ExportDecl,
-    ExportDefaultExpr, Expr, Ident, Lit, MethodKind, Module, ModuleDecl,
-    ModuleItem, Pat, Prop, PropName, PropOrSpread, Stmt, TsFnOrConstructorType,
-    TsFnParam, TsFnType, TsPropertySignature, TsTupleElement, TsTupleType,
-    TsType, TsTypeElement, TsTypeLit, VarDecl, VarDeclKind, VarDeclarator,
+    ExportDefaultDecl, ExportDefaultExpr, Expr, Ident, Lit, MethodKind, Module,
+    ModuleDecl, ModuleItem, Pat, Prop, PropName, PropOrSpread, Stmt,
+    TsFnOrConstructorType, TsFnParam, TsFnType, TsPropertySignature,
+    TsTupleElement, TsTupleType, TsType, TsTypeElement, TsTypeLit, VarDecl,
+    VarDeclKind, VarDeclarator,
   },
-  common::DUMMY_SP,
+  common::{Spanned, DUMMY_SP},
 };
 
 use crate::FastCheckDiagnostic;
@@ -36,13 +37,13 @@ impl FastCheckDtsTransformer {
   ) -> Result<Module, Vec<FastCheckDiagnostic>> {
     let mut body = module.body;
 
-    let mut new_items: Vec<ModuleItem> = Vec::with_capacity(body.len());
+    let mut new_items: Vec<ModuleItem> = vec![];
 
-    for item in &mut body {
+    for item in body {
       match item {
         ModuleItem::ModuleDecl(module_decl) => match module_decl {
           ModuleDecl::Import(_) => {
-            new_items.push(item.clone());
+            new_items.push(ModuleItem::ModuleDecl(module_decl));
           }
           ModuleDecl::ExportDecl(export_decl) => {
             if let Some(decl) = self.decl_to_type_decl(&export_decl.decl) {
@@ -55,18 +56,28 @@ impl FastCheckDtsTransformer {
             }
           }
           ModuleDecl::ExportDefaultDecl(export_decl) => {
-            match &mut export_decl.decl {
-              DefaultDecl::Class(class_expr) => {
+            let value = match export_decl.decl {
+              DefaultDecl::Class(mut class_expr) => {
                 class_expr.class.body =
                   self.class_body_to_type(&class_expr.class.body);
-                new_items.push(item.clone());
+                ExportDefaultDecl {
+                  span: export_decl.span,
+                  decl: DefaultDecl::Class(class_expr),
+                }
               }
-              DefaultDecl::Fn(fn_expr) => {
+              DefaultDecl::Fn(mut fn_expr) => {
                 fn_expr.function.body = None;
-                new_items.push(item.clone());
+                ExportDefaultDecl {
+                  span: export_decl.span,
+                  decl: DefaultDecl::Fn(fn_expr),
+                }
               }
-              DefaultDecl::TsInterfaceDecl(_) => new_items.push(item.clone()),
-            }
+              DefaultDecl::TsInterfaceDecl(_) => export_decl,
+            };
+
+            new_items.push(ModuleItem::ModuleDecl(
+              ModuleDecl::ExportDefaultDecl(value),
+            ))
           }
           ModuleDecl::ExportDefaultExpr(export_default_expr) => {
             let name = self.gen_unique_name();
@@ -115,7 +126,7 @@ impl FastCheckDtsTransformer {
               | Decl::TsTypeAlias(_)
               | Decl::TsEnum(_)
               | Decl::TsModule(_) => {
-                new_items.push(ModuleItem::Stmt(stmt.clone()));
+                new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
               }
               _ => {}
             }
