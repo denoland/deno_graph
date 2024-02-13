@@ -1,18 +1,14 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
-use deno_ast::swc::ast::ArrayLit;
 use deno_ast::swc::ast::Expr;
 use deno_ast::swc::ast::Ident;
 use deno_ast::swc::ast::Lit;
 use deno_ast::swc::ast::MemberProp;
-use deno_ast::swc::ast::ObjectLit;
-use deno_ast::swc::ast::ParenExpr;
 use deno_ast::swc::ast::Prop;
 use deno_ast::swc::ast::PropName;
 use deno_ast::swc::ast::PropOrSpread;
 use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
-use deno_ast::swc::ast::TsAsExpr;
 use deno_ast::swc::ast::TsEntityName;
 use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;

@@ -32,6 +32,7 @@ use deno_ast::swc::ast::ObjectLit;
 use deno_ast::swc::ast::ObjectPatProp;
 use deno_ast::swc::ast::Param;
 use deno_ast::swc::ast::ParamOrTsParamProp;
+use deno_ast::swc::ast::ParenExpr;
 use deno_ast::swc::ast::Pat;
 use deno_ast::swc::ast::PrivateName;
 use deno_ast::swc::ast::PrivateProp;
