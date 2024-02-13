@@ -147,7 +147,8 @@ impl FastCheckDtsTransformer {
         })))
       }
       Expr::Object(obj) => {
-        let mut members: Vec<TsTypeElement> = Vec::with_capacity(obj.len());
+        let mut members: Vec<TsTypeElement> =
+          Vec::with_capacity(obj.props.len());
 
         for item in obj.props {
           match item {
