@@ -61,6 +61,7 @@ export interface CreateGraphOptions {
     specifier: string,
     isDynamic: boolean,
     cacheSetting: CacheSetting,
+    checksum: string | undefined,
   ): Promise<LoadResponse | undefined>;
   /** The type of graph to build. `"all"` includes all dependencies of the
    * roots. `"typesOnly"` skips any code only dependencies that do not impact
@@ -143,10 +144,13 @@ export async function createGraph(
     rootSpecifiers,
     async (
       specifier: string,
-      isDynamic: boolean,
-      cacheSetting: CacheSetting,
+      options: {
+        isDynamic: boolean,
+        cacheSetting: CacheSetting,
+        checksum: string | undefined
+      }
     ) => {
-      const result = await load(specifier, isDynamic, cacheSetting);
+      const result = await load(specifier, options.isDynamic, options.cacheSetting, options.checksum);
       if (result?.kind === "module") {
         if (typeof result.content === "string") {
           result.content = encoder.encode(result.content);
