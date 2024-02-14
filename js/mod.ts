@@ -145,12 +145,17 @@ export async function createGraph(
     async (
       specifier: string,
       options: {
-        isDynamic: boolean,
-        cacheSetting: CacheSetting,
-        checksum: string | undefined
-      }
+        isDynamic: boolean;
+        cacheSetting: CacheSetting;
+        checksum: string | undefined;
+      },
     ) => {
-      const result = await load(specifier, options.isDynamic, options.cacheSetting, options.checksum);
+      const result = await load(
+        specifier,
+        options.isDynamic,
+        options.cacheSetting,
+        options.checksum,
+      );
       if (result?.kind === "module") {
         if (typeof result.content === "string") {
           result.content = encoder.encode(result.content);
