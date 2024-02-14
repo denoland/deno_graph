@@ -151,7 +151,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
             let type_ann = self
               .expr_to_ts_type(*export_default_expr.expr, false)
               .map(type_ann)
-              .or(Some(any_type_ann()));
+              .or_else(|| Some(any_type_ann()));
 
             new_items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(
               VarDecl {
@@ -430,9 +430,9 @@ impl<'a> FastCheckDtsTransformer<'a> {
                 let init = *init_box.clone();
                 self.expr_to_ts_type(init, false)
               })
-              .map(|ts_type| type_ann(ts_type))
-              .or({
-                self.mark_diagnostic_any_fallback(decl.init.range());
+              .map(type_ann)
+              .or_else(|| {
+                self.mark_diagnostic_any_fallback(ident.range());
                 Some(any_type_ann())
               });
             ident.type_ann = ts_type;
@@ -479,7 +479,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
               prop.type_ann = self
                 .expr_to_ts_type(*value, false)
                 .map(type_ann)
-                .or(Some(any_type_ann()));
+                .or_else(|| Some(any_type_ann()));
             }
           }
           prop.value = None;
@@ -550,7 +550,7 @@ mod tests {
     let module = parsed_source.module().to_owned();
 
     let mut transformer =
-      FastCheckDtsTransformer::new(&parsed_source, &specifier);
+      FastCheckDtsTransformer::new(parsed_source, &specifier);
     let module = transformer.transform(module).unwrap();
 
     let comments = parsed_source.comments().as_single_threaded();
