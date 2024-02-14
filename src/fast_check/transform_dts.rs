@@ -1,12 +1,13 @@
 use deno_ast::{
   swc::{
     ast::{
-      BindingIdent, ClassMember, Decl, DefaultDecl, ExportDecl,
+      AssignPat, BindingIdent, ClassMember, Decl, DefaultDecl, ExportDecl,
       ExportDefaultDecl, ExportDefaultExpr, Expr, Ident, Lit, MethodKind,
-      Module, ModuleDecl, ModuleItem, Pat, Prop, PropName, PropOrSpread, Stmt,
-      TsFnOrConstructorType, TsFnParam, TsFnType, TsKeywordType,
+      Module, ModuleDecl, ModuleItem, Param, Pat, Prop, PropName, PropOrSpread,
+      Stmt, TsFnOrConstructorType, TsFnParam, TsFnType, TsKeywordType,
       TsKeywordTypeKind, TsPropertySignature, TsTupleElement, TsTupleType,
-      TsType, TsTypeElement, TsTypeLit, VarDecl, VarDeclKind, VarDeclarator,
+      TsType, TsTypeAnn, TsTypeElement, TsTypeLit, VarDecl, VarDeclKind,
+      VarDeclarator,
     },
     common::DUMMY_SP,
   },
@@ -441,6 +442,55 @@ impl<'a> FastCheckDtsTransformer<'a> {
       }
       Decl::Fn(mut fn_decl) => {
         fn_decl.function.body = None;
+
+        fn_decl.function.params = fn_decl
+          .function
+          .params
+          .into_iter()
+          .map(|param| match param.pat {
+            Pat::Ident(mut ident) => {
+              if ident.type_ann.is_none() {
+                self.mark_diagnostic_any_fallback(ident.range());
+                ident.type_ann = Some(any_type_ann());
+              }
+              Param {
+                span: param.span,
+                decorators: param.decorators,
+                pat: Pat::Ident(ident),
+              }
+            }
+            Pat::Assign(mut assign_pat) => {
+              {
+                match &mut assign_pat.left {
+                  Pat::Ident(mut ident) => {
+                    if ident.type_ann.is_none() {
+                      ident.type_ann =
+                        self.infer_expr_fallback_any(*assign_pat.right);
+                    }
+                  }
+                  Pat::Array(_)
+                  | Pat::Rest(_)
+                  | Pat::Object(_)
+                  | Pat::Assign(_)
+                  | Pat::Expr(_)
+                  | Pat::Invalid(_) => {}
+                };
+              }
+
+              Param {
+                span: param.span,
+                decorators: param.decorators,
+                pat: Pat::Assign(assign_pat),
+              }
+            }
+            Pat::Array(_)
+            | Pat::Rest(_)
+            | Pat::Object(_)
+            | Pat::Invalid(_)
+            | Pat::Expr(_) => param,
+          })
+          .collect();
+
         Some(Decl::Fn(fn_decl))
       }
       Decl::Var(mut var_decl) => {
@@ -485,6 +535,15 @@ impl<'a> FastCheckDtsTransformer<'a> {
         });
         None
       }
+    }
+  }
+
+  fn infer_expr_fallback_any(&mut self, expr: Expr) -> Option<Box<TsTypeAnn>> {
+    if let Some(ts_type) = self.expr_to_ts_type(expr.clone(), true) {
+      Some(type_ann(ts_type))
+    } else {
+      self.mark_diagnostic_any_fallback(expr.range());
+      Some(any_type_ann())
     }
   }
 
@@ -664,17 +723,24 @@ mod tests {
 
   #[tokio::test]
   async fn dts_function_test() {
+    //     transform_dts_test(
+    //       r#"export function foo(a: number): number {
+    //   return {};
+    // }"#,
+    //       "export function foo(a: number): number;",
+    //     )
+    //     .await;
+    //     transform_dts_test(
+    //       r#"export function foo(a: string): number;
+    // export function foo(a: any): number {
+    //   return {};
+    // }"#,
+    //       r#"export function foo(a: string): number;"#,
+    //     )
+    //     .await;
     transform_dts_test(
-      r#"export function foo(a: number): number {
-  return {};
-}"#,
-      "export function foo(a: number): number;",
-    )
-    .await;
-    transform_dts_test(
-      r#"export function foo(a: string): number;
-export function foo(a: any): number {
-  return {};
+      r#"export function foo(a = 2): number {
+  return 2;
 }"#,
       r#"export function foo(a: string): number;"#,
     )
@@ -1075,6 +1141,17 @@ export function foo(a: any): number {
       "export const enum Foo {\n  A,\n  B\n}",
     )
     .await;
+
+    transform_dts_test(
+      r#"export enum Foo { A = "foo", B = "bar" }"#,
+      r#"export enum Foo {
+  A = "foo",
+  B = "bar"
+}"#,
+    )
+    .await;
+
+    // TODO: Enum rules https://www.typescriptlang.org/docs/handbook/enums.html
   }
 
   #[tokio::test]
@@ -1105,6 +1182,13 @@ export default function(a: number, b: number): any {
 export default _dts_1;"#,
     )
     .await;
+    // TODO
+    //     transform_dts_test(
+    //       r#"const a: number = 42; export default a;"#,
+    //       r#"declare const a: number;
+    // export default a;"#,
+    //     )
+    //     .await;
   }
 
   #[tokio::test]
