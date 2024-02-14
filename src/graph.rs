@@ -5108,7 +5108,7 @@ mod tests {
     {
       let dts = fsm.dts.unwrap();
       assert_eq!(
-        dts.text.to_string(),
+        dts.text.to_string().trim(),
         "export function add(a: number, b: number): number;"
       );
       assert!(dts.diagnostics.is_empty());
