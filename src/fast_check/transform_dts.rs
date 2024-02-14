@@ -3,8 +3,8 @@ use deno_ast::{
     ast::{
       BindingIdent, ClassMember, Decl, DefaultDecl, ExportDecl,
       ExportDefaultDecl, ExportDefaultExpr, Expr, Ident, Lit, MethodKind,
-      Module, ModuleDecl, ModuleItem, Pat, Prop, PropName, PropOrSpread, Stmt,
-      TsFnOrConstructorType, TsFnParam, TsFnType, TsKeywordType,
+      Module, ModuleDecl, ModuleItem, Param, Pat, Prop, PropName, PropOrSpread,
+      Stmt, TsFnOrConstructorType, TsFnParam, TsFnType, TsKeywordType,
       TsKeywordTypeKind, TsPropertySignature, TsTupleElement, TsTupleType,
       TsType, TsTypeElement, TsTypeLit, VarDecl, VarDeclKind, VarDeclarator,
     },
@@ -366,33 +366,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
           .function
           .params
           .into_iter()
-          .filter_map(|param| match param.pat {
-            Pat::Ident(binding_id) => Some(TsFnParam::Ident(binding_id)),
-            Pat::Array(arr_pat) => Some(TsFnParam::Array(arr_pat)),
-            Pat::Rest(rest_pat) => Some(TsFnParam::Rest(rest_pat)),
-            Pat::Object(obj) => Some(TsFnParam::Object(obj)),
-            Pat::Assign(assign_pat) => {
-              self.expr_to_ts_type(*assign_pat.right, false).map(|param| {
-                let name = if let Pat::Ident(ident) = *assign_pat.left {
-                  ident.id.sym.as_str().to_string()
-                } else {
-                  self.gen_unique_name()
-                };
-
-                TsFnParam::Ident(BindingIdent {
-                  id: Ident::new(name.into(), assign_pat.span),
-                  type_ann: Some(type_ann(param)),
-                })
-              })
-            }
-            Pat::Expr(expr) => {
-              self.mark_diagnostic_unable_to_infer(expr.range());
-              None
-            }
-            // Invalid code is invalid, not sure why SWC doesn't throw
-            // a parse error here.
-            Pat::Invalid(_) => None,
-          })
+          .filter_map(|param| self.pat_to_ts_fn_param(param.pat))
           .collect();
 
         Some(TsType::TsFnOrConstructorType(
@@ -401,6 +375,25 @@ impl<'a> FastCheckDtsTransformer<'a> {
             params,
             type_ann: return_type,
             type_params: fn_expr.function.type_params,
+          }),
+        ))
+      }
+      Expr::Arrow(arrow_expr) => {
+        let return_type =
+          arrow_expr.return_type.map_or(any_type_ann(), |val| val);
+
+        let params = arrow_expr
+          .params
+          .into_iter()
+          .filter_map(|pat| self.pat_to_ts_fn_param(pat))
+          .collect();
+
+        Some(TsType::TsFnOrConstructorType(
+          TsFnOrConstructorType::TsFnType(TsFnType {
+            span: arrow_expr.span,
+            params,
+            type_ann: return_type,
+            type_params: arrow_expr.type_params,
           }),
         ))
       }
@@ -420,7 +413,6 @@ impl<'a> FastCheckDtsTransformer<'a> {
       | Expr::Ident(_)
       | Expr::Tpl(_)
       | Expr::TaggedTpl(_)
-      | Expr::Arrow(_)
       | Expr::Class(_)
       | Expr::Yield(_)
       | Expr::MetaProp(_)
@@ -560,6 +552,8 @@ impl<'a> FastCheckDtsTransformer<'a> {
             }
           }
           prop.value = None;
+          prop.definite = false;
+          prop.declare = false;
 
           Some(ClassMember::ClassProp(prop))
         }
@@ -575,6 +569,36 @@ impl<'a> FastCheckDtsTransformer<'a> {
         | ClassMember::AutoAccessor(_) => None,
       })
       .collect()
+  }
+
+  fn pat_to_ts_fn_param(&mut self, pat: Pat) -> Option<TsFnParam> {
+    match pat {
+      Pat::Ident(binding_id) => Some(TsFnParam::Ident(binding_id)),
+      Pat::Array(arr_pat) => Some(TsFnParam::Array(arr_pat)),
+      Pat::Rest(rest_pat) => Some(TsFnParam::Rest(rest_pat)),
+      Pat::Object(obj) => Some(TsFnParam::Object(obj)),
+      Pat::Assign(assign_pat) => {
+        self.expr_to_ts_type(*assign_pat.right, false).map(|param| {
+          let name = if let Pat::Ident(ident) = *assign_pat.left {
+            ident.id.sym.as_str().to_string()
+          } else {
+            self.gen_unique_name()
+          };
+
+          TsFnParam::Ident(BindingIdent {
+            id: Ident::new(name.into(), assign_pat.span),
+            type_ann: Some(type_ann(param)),
+          })
+        })
+      }
+      Pat::Expr(expr) => {
+        self.mark_diagnostic_unable_to_infer(expr.range());
+        None
+      }
+      // Invalid code is invalid, not sure why SWC doesn't throw
+      // a parse error here.
+      Pat::Invalid(_) => None,
+    }
   }
 }
 
@@ -694,8 +718,10 @@ export function foo(a: any): number {
 }"#,
     )
     .await;
+  }
 
-    // Should only keep overloads and ignore implementation
+  #[tokio::test]
+  async fn dts_class_decl_overloads_test() {
     transform_dts_test(
       r#"export class Foo {
   constructor(arg: string);
@@ -742,6 +768,43 @@ export function foo(a: any): number {
   bar(arg: number): number;
   foo(arg: string);
   foo(arg: number);
+}"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_class_decl_prop_test() {
+    transform_dts_test(
+      r#"export class Foo { private a!: string }"#,
+      r#"export declare class Foo {
+  private a: string;
+}"#,
+    )
+    .await;
+
+    transform_dts_test(
+      r#"export class Foo { declare a: string }"#,
+      r#"export declare class Foo {
+  a: string;
+}"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_class_decl_prop_infer_test() {
+    transform_dts_test(
+      r#"export class Foo { foo = (a: string): string => ({} as any) }"#,
+      r#"export declare class Foo {
+  foo: (a: string) => string;
+}"#,
+    )
+    .await;
+    transform_dts_test(
+      r#"export class Foo { foo = function(a: string): void {} }"#,
+      r#"export declare class Foo {
+  foo: (a: string) => void;
 }"#,
     )
     .await;
@@ -928,6 +991,32 @@ export function foo(a: any): number {
     .await;
     transform_dts_test(
       r#"export let foo = function add(a = 2): void {}"#,
+      "export declare let foo: (a: number) => void;",
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_fn_arrow_expr() {
+    transform_dts_test(
+      r#"export let foo = (a: number, b: number): number => {
+  return a + b;
+}"#,
+      "export declare let foo: (a: number, b: number) => number;",
+    )
+    .await;
+    transform_dts_test(
+      r#"export let foo = <T>([a, b]: T): void => {}"#,
+      "export declare let foo: <T>([a, b]: T) => void;",
+    )
+    .await;
+    transform_dts_test(
+      r#"export let foo = <T>({a, b}: T): void => {}"#,
+      "export declare let foo: <T>({ a, b }: T) => void;",
+    )
+    .await;
+    transform_dts_test(
+      r#"export let foo = (a = 2): void => {}"#,
       "export declare let foo: (a: number) => void;",
     )
     .await;
