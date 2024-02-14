@@ -99,14 +99,28 @@ impl<'a> FastCheckDtsTransformer<'a> {
     let body = module.body;
 
     let mut new_items: Vec<ModuleItem> = vec![];
+    let mut prev_is_overload = false;
 
     for item in body {
       match item {
         ModuleItem::ModuleDecl(module_decl) => match module_decl {
           ModuleDecl::Import(_) => {
+            prev_is_overload = false;
             new_items.push(ModuleItem::ModuleDecl(module_decl));
           }
           ModuleDecl::ExportDecl(export_decl) => {
+            let is_overload = if let Decl::Fn(fn_decl) = &export_decl.decl {
+              fn_decl.function.body.is_none()
+            } else {
+              false
+            };
+
+            let should_keep = prev_is_overload && !is_overload;
+            prev_is_overload = is_overload;
+            if should_keep {
+              continue;
+            }
+
             if let Some(decl) = self.decl_to_type_decl(export_decl.decl.clone())
             {
               new_items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
@@ -122,6 +136,8 @@ impl<'a> FastCheckDtsTransformer<'a> {
             }
           }
           ModuleDecl::ExportDefaultDecl(export_decl) => {
+            let mut is_overload = false;
+
             let value = match export_decl.decl {
               DefaultDecl::Class(mut class_expr) => {
                 class_expr.class.body =
@@ -132,6 +148,8 @@ impl<'a> FastCheckDtsTransformer<'a> {
                 }
               }
               DefaultDecl::Fn(mut fn_expr) => {
+                is_overload = fn_expr.function.body.is_none();
+
                 fn_expr.function.body = None;
                 ExportDefaultDecl {
                   span: export_decl.span,
@@ -141,11 +159,29 @@ impl<'a> FastCheckDtsTransformer<'a> {
               DefaultDecl::TsInterfaceDecl(_) => export_decl,
             };
 
+            let should_keep = prev_is_overload && !is_overload;
+            prev_is_overload = is_overload;
+            if should_keep {
+              continue;
+            }
+
             new_items.push(ModuleItem::ModuleDecl(
               ModuleDecl::ExportDefaultDecl(value),
             ))
           }
           ModuleDecl::ExportDefaultExpr(export_default_expr) => {
+            let is_overload =
+              if let Expr::Fn(fn_expr) = &*export_default_expr.expr {
+                fn_expr.function.body.is_none()
+              } else {
+                false
+              };
+            let should_keep = prev_is_overload && !is_overload;
+            prev_is_overload = is_overload;
+            if should_keep {
+              continue;
+            }
+
             let name = self.gen_unique_name();
             let name_ident = Ident::new(name.into(), DUMMY_SP);
             let type_ann = self
@@ -183,10 +219,12 @@ impl<'a> FastCheckDtsTransformer<'a> {
           | ModuleDecl::TsExportAssignment(_)
           | ModuleDecl::ExportNamed(_)
           | ModuleDecl::ExportAll(_) => {
+            prev_is_overload = false;
             new_items.push(ModuleItem::ModuleDecl(module_decl));
           }
         },
         ModuleItem::Stmt(stmt) => {
+          prev_is_overload = false;
           if let Stmt::Decl(decl) = stmt {
             match decl {
               Decl::TsInterface(_)
@@ -459,8 +497,47 @@ impl<'a> FastCheckDtsTransformer<'a> {
   }
 
   fn class_body_to_type(&mut self, body: Vec<ClassMember>) -> Vec<ClassMember> {
+    // Track if the previous member was an overload signature or not.
+    // When overloads are present the last item has the implementation
+    // body. For declaration files the implementation always needs to
+    // be dropped. Needs to be unique for each class because another
+    // class could be created inside a class method.
+    let mut prev_is_overload = false;
+
     body
       .into_iter()
+      .filter(|member| match member {
+        ClassMember::Constructor(class_constructor) => {
+          let is_overload = class_constructor.body.is_none();
+          if !prev_is_overload || is_overload {
+            prev_is_overload = is_overload;
+            true
+          } else {
+            prev_is_overload = false;
+            false
+          }
+        }
+        ClassMember::Method(method) => {
+          let is_overload = method.function.body.is_none();
+          if !prev_is_overload || is_overload {
+            prev_is_overload = is_overload;
+            true
+          } else {
+            prev_is_overload = false;
+            false
+          }
+        }
+        ClassMember::TsIndexSignature(_)
+        | ClassMember::ClassProp(_)
+        | ClassMember::PrivateProp(_)
+        | ClassMember::Empty(_)
+        | ClassMember::StaticBlock(_)
+        | ClassMember::AutoAccessor(_)
+        | ClassMember::PrivateMethod(_) => {
+          prev_is_overload = false;
+          true
+        }
+      })
       .filter_map(|member| match member {
         ClassMember::Constructor(mut class_constructor) => {
           class_constructor.body = None;
@@ -572,12 +649,10 @@ mod tests {
     .await;
     transform_dts_test(
       r#"export function foo(a: string): number;
-export function foo(a: string | number): number {
+export function foo(a: any): number {
   return {};
 }"#,
-      r#"export function foo(a: string): number;
-export function foo(a: string | number): number;
-"#,
+      r#"export function foo(a: string): number;"#,
     )
     .await;
   }
@@ -618,7 +693,58 @@ export function foo(a: string | number): number;
   set asdf(value: number);
 }"#,
     )
-    .await
+    .await;
+
+    // Should only keep overloads and ignore implementation
+    transform_dts_test(
+      r#"export class Foo {
+  constructor(arg: string);
+  constructor(arg: number);
+  constructor(arg: any) {}
+}"#,
+      r#"export declare class Foo {
+  constructor(arg: string);
+  constructor(arg: number);
+}"#,
+    )
+    .await;
+
+    transform_dts_test(
+      r#"export class Foo {
+  foo(arg: string);
+  foo(arg: number);
+  foo(arg: any) {}
+}"#,
+      r#"export declare class Foo {
+  foo(arg: string);
+  foo(arg: number);
+}"#,
+    )
+    .await;
+
+    transform_dts_test(
+      r#"export class Foo {
+  constructor(arg: string);
+  constructor(arg: number);
+  constructor(arg: any) {}
+
+  bar(arg: number): number {
+    return 2
+  }
+
+  foo(arg: string);
+  foo(arg: number);
+  foo(arg: any) {}
+}"#,
+      r#"export declare class Foo {
+  constructor(arg: string);
+  constructor(arg: number);
+  bar(arg: number): number;
+  foo(arg: string);
+  foo(arg: number);
+}"#,
+    )
+    .await;
   }
 
   #[tokio::test]
@@ -842,6 +968,14 @@ export function foo(a: string | number): number;
   async fn dts_default_export() {
     transform_dts_test(
       r#"export default function(a: number, b: number): number {};"#,
+      "export default function(a: number, b: number): number;",
+    )
+    .await;
+    transform_dts_test(
+      r#"export default function(a: number, b: number): number;
+export default function(a: number, b: number): any {
+  return foo
+};"#,
       "export default function(a: number, b: number): number;",
     )
     .await;
