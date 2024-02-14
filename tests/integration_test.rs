@@ -108,6 +108,13 @@ async fn test_graph_specs() {
               indent(&fast_check.source)
             },
           ));
+
+          if let Some(dts) = &fast_check.dts {
+            if !dts.text.is_empty() {
+              output_text.push_str(&indent("--- DTS ---\n"));
+              output_text.push_str(&indent(&dts.text));
+            }
+          }
         }
         deno_graph::FastCheckTypeModuleSlot::Error(diagnostics) => {
           let message = diagnostics

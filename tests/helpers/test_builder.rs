@@ -131,6 +131,7 @@ impl TestBuilder {
           module_analyzer: Some(&capturing_analyzer),
           module_parser: Some(&capturing_analyzer),
           workspace_fast_check: self.workspace_fast_check,
+          fast_check_dts: true,
           ..Default::default()
         },
       )
