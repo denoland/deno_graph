@@ -123,6 +123,10 @@ impl LoaderChecksum {
     self.0
   }
 
+  pub fn as_str(&self) -> &str {
+    &self.0
+  }
+
   pub fn check_source(&self, source: &[u8]) -> Result<(), anyhow::Error> {
     let actual_checksum = Self::gen(source);
     if self.0 == actual_checksum {
