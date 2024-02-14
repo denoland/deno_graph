@@ -35,6 +35,40 @@ pub enum FastCheckDtsDiagnostic {
   UnsupportedUsing { range: FastCheckDiagnosticRange },
 }
 
+impl FastCheckDtsDiagnostic {
+  pub fn specifier(&self) -> &ModuleSpecifier {
+    match self {
+      FastCheckDtsDiagnostic::UnableToInferType { range } => &range.specifier,
+      FastCheckDtsDiagnostic::UnableToInferTypeFallbackAny { range } => {
+        &range.specifier
+      }
+      FastCheckDtsDiagnostic::UnableToInferTypeFromProp { range } => {
+        &range.specifier
+      }
+      FastCheckDtsDiagnostic::UnableToInferTypeFromSpread { range } => {
+        &range.specifier
+      }
+      FastCheckDtsDiagnostic::UnsupportedUsing { range } => &range.specifier,
+    }
+  }
+
+  pub fn range(&self) -> Option<&FastCheckDiagnosticRange> {
+    match self {
+      FastCheckDtsDiagnostic::UnableToInferType { range } => Some(range),
+      FastCheckDtsDiagnostic::UnableToInferTypeFallbackAny { range } => {
+        Some(range)
+      }
+      FastCheckDtsDiagnostic::UnableToInferTypeFromProp { range } => {
+        Some(range)
+      }
+      FastCheckDtsDiagnostic::UnableToInferTypeFromSpread { range } => {
+        Some(range)
+      }
+      FastCheckDtsDiagnostic::UnsupportedUsing { range } => Some(range),
+    }
+  }
+}
+
 pub struct FastCheckDtsTransformer<'a> {
   id_counter: usize,
   parsed_source: &'a ParsedSource,
@@ -172,7 +206,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
           }
           ModuleDecl::ExportDefaultExpr(export_default_expr) => {
             let is_overload =
-              if let Expr::Fn(fn_expr) = &*export_default_expr.expr {
+              if let Expr::Fn(fn_expr) = &*export_default_expr.expr.clone() {
                 fn_expr.function.body.is_none()
               } else {
                 false
@@ -186,33 +220,41 @@ impl<'a> FastCheckDtsTransformer<'a> {
             let name = self.gen_unique_name();
             let name_ident = Ident::new(name.into(), DUMMY_SP);
             let type_ann = self
-              .expr_to_ts_type(*export_default_expr.expr, false, false)
-              .map(type_ann)
-              .or_else(|| Some(any_type_ann()));
+              .expr_to_ts_type(*export_default_expr.expr.clone(), false, true)
+              .map(type_ann);
 
-            new_items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(
-              VarDecl {
-                span: DUMMY_SP,
-                kind: VarDeclKind::Const,
-                declare: true,
-                decls: vec![VarDeclarator {
+            if let Some(type_ann) = type_ann {
+              new_items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(
+                Box::new(VarDecl {
                   span: DUMMY_SP,
-                  name: Pat::Ident(BindingIdent {
-                    id: name_ident.clone(),
-                    type_ann,
-                  }),
-                  init: None,
-                  definite: false,
-                }],
-              },
-            )))));
+                  kind: VarDeclKind::Const,
+                  declare: true,
+                  decls: vec![VarDeclarator {
+                    span: DUMMY_SP,
+                    name: Pat::Ident(BindingIdent {
+                      id: name_ident.clone(),
+                      type_ann: Some(type_ann),
+                    }),
+                    init: None,
+                    definite: false,
+                  }],
+                }),
+              ))));
 
-            new_items.push(ModuleItem::ModuleDecl(
-              ModuleDecl::ExportDefaultExpr(ExportDefaultExpr {
-                span: export_default_expr.span,
-                expr: Box::new(Expr::Ident(name_ident)),
-              }),
-            ))
+              new_items.push(ModuleItem::ModuleDecl(
+                ModuleDecl::ExportDefaultExpr(ExportDefaultExpr {
+                  span: export_default_expr.span,
+                  expr: Box::new(Expr::Ident(name_ident)),
+                }),
+              ))
+            } else {
+              new_items.push(ModuleItem::ModuleDecl(
+                ModuleDecl::ExportDefaultExpr(ExportDefaultExpr {
+                  span: export_default_expr.span,
+                  expr: export_default_expr.expr,
+                }),
+              ))
+            }
           }
           // Keep all these
           ModuleDecl::TsImportEquals(_)
@@ -231,12 +273,39 @@ impl<'a> FastCheckDtsTransformer<'a> {
               Decl::TsInterface(_)
               | Decl::TsTypeAlias(_)
               | Decl::TsEnum(_)
+              | Decl::Using(_)
               | Decl::TsModule(_) => {
                 new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
               }
               // Since fast check requires explicit type annotations we
               // can drop other statements not part of an export statement.
-              Decl::Class(_) | Decl::Fn(_) | Decl::Var(_) | Decl::Using(_) => {}
+              Decl::Class(class_decl) => {
+                if let Some(decl) =
+                  self.decl_to_type_decl(Decl::Class(class_decl.clone()))
+                {
+                  new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
+                } else {
+                  self.mark_diagnostic_unable_to_infer(class_decl.range())
+                }
+              }
+              Decl::Fn(fn_decl) => {
+                if let Some(decl) =
+                  self.decl_to_type_decl(Decl::Fn(fn_decl.clone()))
+                {
+                  new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
+                } else {
+                  self.mark_diagnostic_unable_to_infer(fn_decl.range())
+                }
+              }
+              Decl::Var(var_decl) => {
+                if let Some(decl) =
+                  self.decl_to_type_decl(Decl::Var(var_decl.clone()))
+                {
+                  new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
+                } else {
+                  self.mark_diagnostic_unable_to_infer(var_decl.range())
+                }
+              }
             }
           }
         }
@@ -1272,15 +1341,5 @@ export default _dts_1;"#,
 export declare const foobar: any;"#,
     )
     .await;
-  }
-
-  #[tokio::test]
-  async fn dts_mod_stmt_test() {
-    transform_dts_test(r#"const foo: number = 42;"#, "").await;
-    transform_dts_test(r#"let foo: number = 42;"#, "").await;
-    transform_dts_test(r#"var foo: number = 42;"#, "").await;
-
-    transform_dts_test(r#"type Foo = number;"#, "type Foo = number;").await;
-    transform_dts_test(r#"interface Foo {}"#, "interface Foo {\n}").await;
   }
 }

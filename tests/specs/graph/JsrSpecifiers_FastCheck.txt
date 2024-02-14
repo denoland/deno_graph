@@ -211,15 +211,28 @@ Fast check https://jsr.io/@scope/a/1.0.0/a.ts:
   }
   export { A4 } from "./a4.ts";
   export * from "./a6.ts";
+  --- DTS ---
+  export declare class A1 {
+  }
+  export declare class A3 {
+  }
+  export { A4 } from "./a4.ts";
+  export * from "./a6.ts";
 
 Fast check https://jsr.io/@scope/a/1.0.0/a4.ts:
   {}
   export class A4 {
   }
+  --- DTS ---
+  export declare class A4 {
+  }
 
 Fast check https://jsr.io/@scope/a/1.0.0/a6.ts:
   {}
   export class A6 {
+  }
+  --- DTS ---
+  export declare class A6 {
   }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
@@ -253,4 +266,13 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       return {} as any;
     }
     private inner!: unknown;
+  }
+  --- DTS ---
+  import { A1, A3 as RenamedA3, A4, A6 } from "./a.ts";
+  export declare class Test {
+    noReturnTypeVoid(param?: number, param2?: string): void;
+    noReturnTypeAsync(): Promise<void>;
+    returnTypeGenerator(): Generator<unknown, any, any>;
+    hasReturnType(): A1 & RenamedA3 | A4 | A6;
+    private inner: unknown;
   }

@@ -114,3 +114,22 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     abstract foo: string;
     bar!: number;
   }
+  --- DTS ---
+  export declare class RedBlackNode<T> extends BinarySearchNode<T> {
+    parent: RedBlackNode<T> | null;
+    left: RedBlackNode<T> | null;
+    right: RedBlackNode<T> | null;
+    red: boolean;
+    constructor(parent: RedBlackNode<T> | null, value: T);
+    static override from<T>(node: RedBlackNode<T>): RedBlackNode<T>;
+  }
+  declare const isSecure: Symbol;
+  declare const public2: Symbol;
+  export declare class CookieMapBase {
+    [isSecure]: boolean;
+    [public2](): number;
+  }
+  export declare class Bar {
+    abstract foo: string;
+    bar: number;
+  }

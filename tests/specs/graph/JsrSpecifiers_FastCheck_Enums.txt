@@ -108,3 +108,28 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   enum NonExportedEnum {
     Value
   }
+  --- DTS ---
+  export enum EnumWithNoInits {
+    Value1,
+    Value2
+  }
+  export enum EnumWithNumInits {
+    Value1 = 1,
+    Value2 = 2
+  }
+  export enum EnumWithStringInits {
+    Value1 = "a",
+    Value2 = "b"
+  }
+  declare const value: number;
+  export enum EnumWithNonConstInits {
+    Value1 = new Public1().test,
+    Value2 = new Public2().asdf * value + NonExportedEnum.Value
+  }
+  declare class Public1 {
+  }
+  declare class Public2 {
+  }
+  enum NonExportedEnum {
+    Value
+  }

@@ -130,8 +130,19 @@ Fast check file:///mod.ts:
   }
   class Public1 {
   }
+  --- DTS ---
+  import { C } from "jsr:@scope/c";
+  export declare class MyClass {
+    prop: Public1;
+    c: C;
+  }
+  declare class Public1 {
+  }
 
 Fast check https://jsr.io/@scope/c/1.0.0/mod.ts:
   {}
   export class C {
+  }
+  --- DTS ---
+  export declare class C {
   }
