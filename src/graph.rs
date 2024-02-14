@@ -3372,8 +3372,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     specifier.clone(),
                     maybe_range.cloned(),
                     Arc::new(anyhow!(
-                      "Unsupported checksum in manifest for {}. Maybe try upgrading deno?",
-                      specifier
+                      "Unsupported checksum in manifest. Maybe try upgrading deno?",
                     )),
                   )),
                 );

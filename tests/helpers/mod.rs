@@ -65,12 +65,14 @@ impl Spec {
     text
   }
 
+  /// Fills the `manifest` field in the `_meta.json` files with the checksums
+  /// so that we don't need to bother having them in the tests.
   pub fn fill_jsr_meta_files_with_checksums(&mut self) {
     for (nv, checksums_by_files) in self.get_jsr_checksums() {
       let base_specifier =
         recommended_registry_package_url(&DEFAULT_DENO_REGISTRY_URL, &nv);
       let meta_file = base_specifier
-        .join(&format!("../{}_meta.json", nv.version.to_string()))
+        .join(&format!("../{}_meta.json", nv.version))
         .unwrap();
 
       let meta_file = self
@@ -82,10 +84,18 @@ impl Spec {
         HashMap<String, serde_json::Value>,
       >(&meta_file.text)
       .unwrap();
-      meta_value.insert(
-        "manifest".to_string(),
-        serde_json::to_value(checksums_by_files).unwrap(),
-      );
+      let manifest = meta_value
+        .entry("manifest".to_string())
+        .or_insert_with(|| serde_json::Value::Object(Default::default()))
+        .as_object_mut()
+        .unwrap();
+      for (file, checksum) in checksums_by_files {
+        if !manifest.contains_key(&file) {
+          manifest.insert(file, checksum);
+        }
+      }
+      // use the original text as the emit text so we don't
+      // end up with these hashes in the output
       meta_file.emit_text = Some(std::mem::take(&mut meta_file.text));
       meta_file.text = serde_json::to_string_pretty(&meta_value).unwrap();
     }
@@ -108,7 +118,7 @@ impl Spec {
         let relative_url = file
           .url()
           .to_string()
-          .strip_prefix(&base_specifier.to_string().strip_suffix("/").unwrap())
+          .strip_prefix(base_specifier.to_string().strip_suffix('/').unwrap())
           .unwrap()
           .to_string();
         checksums_by_package.entry(nv.clone()).or_default().insert(
@@ -128,6 +138,7 @@ impl Spec {
 pub struct SpecFile {
   pub specifier: String,
   pub text: String,
+  /// Text to use when emitting the spec file.
   pub emit_text: Option<String>,
   pub headers: IndexMap<String, String>,
 }
@@ -186,6 +197,7 @@ pub fn get_specs_in_dir(path: &Path) -> Vec<(PathBuf, Spec)> {
     .into_iter()
     .map(|file| {
       let mut spec = parse_spec(file.text);
+      // always do this as we want this for the spec tests
       spec.fill_jsr_meta_files_with_checksums();
       (file.path, spec)
     })

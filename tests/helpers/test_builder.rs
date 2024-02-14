@@ -11,6 +11,7 @@ use deno_graph::BuildDiagnostic;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 use deno_graph::WorkspaceMember;
+use futures::FutureExt;
 
 #[derive(Default)]
 pub struct TestLoader {
@@ -28,13 +29,27 @@ impl Loader for TestLoader {
     specifier: &ModuleSpecifier,
     options: LoadOptions,
   ) -> LoadFuture {
-    match options.cache_setting {
+    let checksum = options.maybe_checksum.clone();
+    let future = match options.cache_setting {
       // todo(dsherret): in the future, actually make this use the cache
       CacheSetting::Use => self.remote.load(specifier, options),
       // todo(dsherret): in the future, make this update the cache
       CacheSetting::Reload => self.remote.load(specifier, options),
       CacheSetting::Only => self.cache.load(specifier, options),
+    };
+    async move {
+      let response = future.await?;
+      if let Some(deno_graph::source::LoadResponse::Module {
+        content, ..
+      }) = &response
+      {
+        if let Some(checksum) = checksum {
+          checksum.check_source(content)?;
+        }
+      }
+      Ok(response)
     }
+    .boxed_local()
   }
 }
 

@@ -109,6 +109,13 @@ impl CacheSetting {
 pub static DEFAULT_DENO_REGISTRY_URL: Lazy<Url> =
   Lazy::new(|| Url::parse("https://jsr.io").unwrap());
 
+#[derive(Debug, Error)]
+#[error("Integrity check failed.\n\nActual: {}\nExpected: {}", .actual, .expected)]
+pub struct ChecksumIntegrityError {
+  pub actual: String,
+  pub expected: String,
+}
+
 /// A SHA-256 checksum to verify the contents of a module
 /// with while loading.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -127,18 +134,18 @@ impl LoaderChecksum {
     &self.0
   }
 
-  pub fn check_source(&self, source: &[u8]) -> Result<(), anyhow::Error> {
+  pub fn check_source(
+    &self,
+    source: &[u8],
+  ) -> Result<(), ChecksumIntegrityError> {
     let actual_checksum = Self::gen(source);
     if self.0 == actual_checksum {
       Ok(())
     } else {
-      Err(anyhow!(
-        "Integrity check failed.
-Actual: {}
-Expected: {}",
-        actual_checksum,
-        self.0
-      ))
+      Err(ChecksumIntegrityError {
+        actual: actual_checksum,
+        expected: self.0.to_string(),
+      })
     }
   }
 
