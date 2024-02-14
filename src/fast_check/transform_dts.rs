@@ -1,10 +1,10 @@
 use deno_ast::{
   swc::{
     ast::{
-      AssignPat, BindingIdent, ClassMember, Decl, DefaultDecl, ExportDecl,
+      BindingIdent, ClassMember, Decl, DefaultDecl, ExportDecl,
       ExportDefaultDecl, ExportDefaultExpr, Expr, Ident, Lit, MethodKind,
-      Module, ModuleDecl, ModuleItem, Param, Pat, Prop, PropName, PropOrSpread,
-      Stmt, TsFnOrConstructorType, TsFnParam, TsFnType, TsKeywordType,
+      Module, ModuleDecl, ModuleItem, Pat, Prop, PropName, PropOrSpread, Stmt,
+      TsFnOrConstructorType, TsFnParam, TsFnType, TsKeywordType,
       TsKeywordTypeKind, TsPropertySignature, TsTupleElement, TsTupleType,
       TsType, TsTypeAnn, TsTypeElement, TsTypeLit, VarDecl, VarDeclKind,
       VarDeclarator,
@@ -186,7 +186,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
             let name = self.gen_unique_name();
             let name_ident = Ident::new(name.into(), DUMMY_SP);
             let type_ann = self
-              .expr_to_ts_type(*export_default_expr.expr, false)
+              .expr_to_ts_type(*export_default_expr.expr, false, false)
               .map(type_ann)
               .or_else(|| Some(any_type_ann()));
 
@@ -247,16 +247,23 @@ impl<'a> FastCheckDtsTransformer<'a> {
     Ok(module)
   }
 
-  fn expr_to_ts_type(&mut self, expr: Expr, as_const: bool) -> Option<TsType> {
+  fn expr_to_ts_type(
+    &mut self,
+    expr: Expr,
+    as_const: bool,
+    as_readonly: bool,
+  ) -> Option<TsType> {
     match expr {
       Expr::Array(arr) => {
         let mut elem_types: Vec<TsTupleElement> = vec![];
 
         for elems in arr.elems {
           if let Some(expr_or_spread) = elems {
-            if let Some(ts_expr) =
-              self.expr_to_ts_type(*expr_or_spread.expr.clone(), as_const)
-            {
+            if let Some(ts_expr) = self.expr_to_ts_type(
+              *expr_or_spread.expr.clone(),
+              as_const,
+              as_readonly,
+            ) {
               elem_types.push(ts_tuple_element(ts_expr));
             } else {
               self.mark_diagnostic_unable_to_infer(expr_or_spread.range());
@@ -273,10 +280,15 @@ impl<'a> FastCheckDtsTransformer<'a> {
           }
         }
 
-        Some(ts_readonly(TsType::TsTupleType(TsTupleType {
+        let mut result = TsType::TsTupleType(TsTupleType {
           span: arr.span,
           elem_types,
-        })))
+        });
+
+        if as_readonly {
+          result = ts_readonly(result);
+        }
+        Some(result)
       }
       Expr::Object(obj) => {
         let mut members: Vec<TsTypeElement> = vec![];
@@ -304,13 +316,13 @@ impl<'a> FastCheckDtsTransformer<'a> {
                   };
 
                   let init_type = self
-                    .expr_to_ts_type(*key_value.value, as_const)
+                    .expr_to_ts_type(*key_value.value, as_const, as_readonly)
                     .map(type_ann);
 
                   members.push(TsTypeElement::TsPropertySignature(
                     TsPropertySignature {
                       span: DUMMY_SP,
-                      readonly: true,
+                      readonly: as_readonly,
                       key: Box::new(key),
                       computed,
                       optional: false,
@@ -351,10 +363,10 @@ impl<'a> FastCheckDtsTransformer<'a> {
         }
       }
       Expr::TsConstAssertion(ts_const) => {
-        self.expr_to_ts_type(*ts_const.expr, true)
+        self.expr_to_ts_type(*ts_const.expr, true, true)
       }
       Expr::TsSatisfies(satisifies) => {
-        self.expr_to_ts_type(*satisifies.expr, as_const)
+        self.expr_to_ts_type(*satisifies.expr, as_const, as_readonly)
       }
       Expr::TsAs(ts_as) => Some(*ts_as.type_ann),
       Expr::Fn(fn_expr) => {
@@ -443,53 +455,65 @@ impl<'a> FastCheckDtsTransformer<'a> {
       Decl::Fn(mut fn_decl) => {
         fn_decl.function.body = None;
 
-        fn_decl.function.params = fn_decl
-          .function
-          .params
-          .into_iter()
-          .map(|param| match param.pat {
-            Pat::Ident(mut ident) => {
+        for param in &mut fn_decl.function.params {
+          match &mut param.pat {
+            Pat::Ident(ident) => {
               if ident.type_ann.is_none() {
                 self.mark_diagnostic_any_fallback(ident.range());
                 ident.type_ann = Some(any_type_ann());
               }
-              Param {
-                span: param.span,
-                decorators: param.decorators,
-                pat: Pat::Ident(ident),
-              }
             }
-            Pat::Assign(mut assign_pat) => {
-              {
-                match &mut assign_pat.left {
-                  Pat::Ident(mut ident) => {
-                    if ident.type_ann.is_none() {
-                      ident.type_ann =
-                        self.infer_expr_fallback_any(*assign_pat.right);
-                    }
+            Pat::Assign(assign_pat) => {
+              match &mut *assign_pat.left {
+                Pat::Ident(ident) => {
+                  if ident.type_ann.is_none() {
+                    ident.type_ann = self.infer_expr_fallback_any(
+                      *assign_pat.right.clone(),
+                      false,
+                      false,
+                    );
                   }
-                  Pat::Array(_)
-                  | Pat::Rest(_)
-                  | Pat::Object(_)
-                  | Pat::Assign(_)
-                  | Pat::Expr(_)
-                  | Pat::Invalid(_) => {}
-                };
-              }
 
-              Param {
-                span: param.span,
-                decorators: param.decorators,
-                pat: Pat::Assign(assign_pat),
-              }
+                  ident.optional = true;
+                  param.pat = Pat::Ident(ident.clone());
+                }
+                Pat::Array(arr_pat) => {
+                  if arr_pat.type_ann.is_none() {
+                    arr_pat.type_ann = self.infer_expr_fallback_any(
+                      *assign_pat.right.clone(),
+                      false,
+                      false,
+                    );
+                  }
+
+                  arr_pat.optional = true;
+                  param.pat = Pat::Array(arr_pat.clone());
+                }
+                Pat::Object(obj_pat) => {
+                  if obj_pat.type_ann.is_none() {
+                    obj_pat.type_ann = self.infer_expr_fallback_any(
+                      *assign_pat.right.clone(),
+                      false,
+                      false,
+                    );
+                  }
+
+                  obj_pat.optional = true;
+                  param.pat = Pat::Object(obj_pat.clone());
+                }
+                Pat::Rest(_)
+                | Pat::Assign(_)
+                | Pat::Expr(_)
+                | Pat::Invalid(_) => {}
+              };
             }
             Pat::Array(_)
             | Pat::Rest(_)
             | Pat::Object(_)
             | Pat::Invalid(_)
-            | Pat::Expr(_) => param,
-          })
-          .collect();
+            | Pat::Expr(_) => {}
+          }
+        }
 
         Some(Decl::Fn(fn_decl))
       }
@@ -508,7 +532,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
               .as_ref()
               .and_then(|init_box| {
                 let init = *init_box.clone();
-                self.expr_to_ts_type(init, false)
+                self.expr_to_ts_type(init, false, true)
               })
               .map(type_ann)
               .or_else(|| {
@@ -538,8 +562,15 @@ impl<'a> FastCheckDtsTransformer<'a> {
     }
   }
 
-  fn infer_expr_fallback_any(&mut self, expr: Expr) -> Option<Box<TsTypeAnn>> {
-    if let Some(ts_type) = self.expr_to_ts_type(expr.clone(), true) {
+  fn infer_expr_fallback_any(
+    &mut self,
+    expr: Expr,
+    as_const: bool,
+    as_readonly: bool,
+  ) -> Option<Box<TsTypeAnn>> {
+    if let Some(ts_type) =
+      self.expr_to_ts_type(expr.clone(), as_const, as_readonly)
+    {
       Some(type_ann(ts_type))
     } else {
       self.mark_diagnostic_any_fallback(expr.range());
@@ -605,7 +636,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
           if prop.type_ann.is_none() {
             if let Some(value) = prop.value {
               prop.type_ann = self
-                .expr_to_ts_type(*value, false)
+                .expr_to_ts_type(*value, false, false)
                 .map(type_ann)
                 .or_else(|| Some(any_type_ann()));
             }
@@ -636,8 +667,9 @@ impl<'a> FastCheckDtsTransformer<'a> {
       Pat::Array(arr_pat) => Some(TsFnParam::Array(arr_pat)),
       Pat::Rest(rest_pat) => Some(TsFnParam::Rest(rest_pat)),
       Pat::Object(obj) => Some(TsFnParam::Object(obj)),
-      Pat::Assign(assign_pat) => {
-        self.expr_to_ts_type(*assign_pat.right, false).map(|param| {
+      Pat::Assign(assign_pat) => self
+        .expr_to_ts_type(*assign_pat.right, false, false)
+        .map(|param| {
           let name = if let Pat::Ident(ident) = *assign_pat.left {
             ident.id.sym.as_str().to_string()
           } else {
@@ -648,8 +680,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
             id: Ident::new(name.into(), assign_pat.span),
             type_ann: Some(type_ann(param)),
           })
-        })
-      }
+        }),
       Pat::Expr(expr) => {
         self.mark_diagnostic_unable_to_infer(expr.range());
         None
@@ -723,26 +754,50 @@ mod tests {
 
   #[tokio::test]
   async fn dts_function_test() {
-    //     transform_dts_test(
-    //       r#"export function foo(a: number): number {
-    //   return {};
-    // }"#,
-    //       "export function foo(a: number): number;",
-    //     )
-    //     .await;
-    //     transform_dts_test(
-    //       r#"export function foo(a: string): number;
-    // export function foo(a: any): number {
-    //   return {};
-    // }"#,
-    //       r#"export function foo(a: string): number;"#,
-    //     )
-    //     .await;
+    transform_dts_test(
+      r#"export function foo(a: number): number {
+  return {};
+}"#,
+      "export function foo(a: number): number;",
+    )
+    .await;
+    transform_dts_test(
+      r#"export function foo(a: string): number;
+export function foo(a: any): number {
+  return {};
+}"#,
+      r#"export function foo(a: string): number;"#,
+    )
+    .await;
     transform_dts_test(
       r#"export function foo(a = 2): number {
   return 2;
 }"#,
-      r#"export function foo(a: string): number;"#,
+      r#"export function foo(a?: number): number;"#,
+    )
+    .await;
+    transform_dts_test(
+      r#"export function foo(a: string = 2): number {
+  return 2;
+}"#,
+      r#"export function foo(a?: string): number;"#,
+    )
+    .await;
+    transform_dts_test(
+      r#"export function foo([a, b] = [1, 2]): number {
+  return 2;
+}"#,
+      r#"export function foo([a, b]?: [number, number]): number;"#,
+    )
+    .await;
+    transform_dts_test(
+      r#"export function foo({a, b} = { a: 1, b: 2 }): number {
+  return 2;
+}"#,
+      r#"export function foo({ a, b }?: {
+  a: number;
+  b: number;
+}): number;"#,
     )
     .await;
   }
