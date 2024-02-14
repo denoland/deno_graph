@@ -1,34 +1,95 @@
-use deno_ast::swc::{
-  ast::{
-    BindingIdent, ClassMember, Decl, DefaultDecl, ExportDecl,
-    ExportDefaultDecl, ExportDefaultExpr, Expr, Ident, Lit, MethodKind, Module,
-    ModuleDecl, ModuleItem, Pat, Prop, PropName, PropOrSpread, Stmt,
-    TsFnOrConstructorType, TsFnParam, TsFnType, TsPropertySignature,
-    TsTupleElement, TsTupleType, TsType, TsTypeElement, TsTypeLit, VarDecl,
-    VarDeclKind, VarDeclarator,
+use deno_ast::{
+  swc::{
+    ast::{
+      BindingIdent, ClassMember, Decl, DefaultDecl, ExportDecl,
+      ExportDefaultDecl, ExportDefaultExpr, Expr, Ident, Lit, MethodKind,
+      Module, ModuleDecl, ModuleItem, Pat, Prop, PropName, PropOrSpread, Stmt,
+      TsFnOrConstructorType, TsFnParam, TsFnType, TsKeywordType,
+      TsKeywordTypeKind, TsPropertySignature, TsTupleElement, TsTupleType,
+      TsType, TsTypeElement, TsTypeLit, VarDecl, VarDeclKind, VarDeclarator,
+    },
+    common::DUMMY_SP,
   },
-  common::DUMMY_SP,
+  ModuleSpecifier, ParsedSource, SourceRange, SourceRangedForSpanned,
 };
 
-use crate::FastCheckDiagnostic;
+use crate::{FastCheckDiagnostic, FastCheckDiagnosticRange};
 
 use super::swc_helpers::{
   any_type_ann, maybe_lit_to_ts_type, maybe_lit_to_ts_type_const, ts_readonly,
   ts_tuple_element, type_ann,
 };
 
-pub struct FastCheckDtsTransformer {
-  id_counter: usize,
+#[derive(Debug, Clone, thiserror::Error)]
+pub enum FastCheckDtsDiagnostic {
+  #[error("unable to infer type from expression or declaration")]
+  UnableToInferType { range: FastCheckDiagnosticRange },
+  #[error("unable to infer type, falling back to any type")]
+  UnableToInferTypeFallbackAny { range: FastCheckDiagnosticRange },
+  #[error("unable to infer type from object property, skipping")]
+  UnableToInferTypeFromProp { range: FastCheckDiagnosticRange },
+  #[error("unable to infer type from spread, skipping")]
+  UnableToInferTypeFromSpread { range: FastCheckDiagnosticRange },
+  #[error("cannot infer type from using, skipping")]
+  UnsupportedUsing { range: FastCheckDiagnosticRange },
 }
 
-impl FastCheckDtsTransformer {
-  pub fn new() -> Self {
-    Self { id_counter: 0 }
+pub struct FastCheckDtsTransformer<'a> {
+  id_counter: usize,
+  parsed_source: &'a ParsedSource,
+  pub diagnostics: Vec<FastCheckDtsDiagnostic>,
+  specifier: &'a ModuleSpecifier,
+}
+
+impl<'a> FastCheckDtsTransformer<'a> {
+  pub fn new(
+    parsed_source: &'a ParsedSource,
+    specifier: &'a ModuleSpecifier,
+  ) -> Self {
+    Self {
+      id_counter: 0,
+      parsed_source,
+      specifier,
+      diagnostics: vec![],
+    }
   }
 
   fn gen_unique_name(&mut self) -> String {
     self.id_counter += 1;
     format!("_dts_{}", self.id_counter)
+  }
+
+  fn mark_diagnostic(&mut self, diagnostic: FastCheckDtsDiagnostic) {
+    self.diagnostics.push(diagnostic)
+  }
+
+  fn source_range_to_range(
+    &self,
+    range: SourceRange,
+  ) -> FastCheckDiagnosticRange {
+    FastCheckDiagnosticRange {
+      specifier: self.specifier.clone(),
+      text_info: self.parsed_source.text_info().clone(),
+      range,
+    }
+  }
+
+  fn mark_diagnostic_unable_to_infer(&mut self, range: SourceRange) {
+    self.mark_diagnostic(FastCheckDtsDiagnostic::UnableToInferType {
+      range: self.source_range_to_range(range),
+    })
+  }
+
+  fn mark_diagnostic_any_fallback(&mut self, range: SourceRange) {
+    self.mark_diagnostic(FastCheckDtsDiagnostic::UnableToInferTypeFallbackAny {
+      range: self.source_range_to_range(range),
+    })
+  }
+
+  fn mark_diagnostic_unsupported_prop(&mut self, range: SourceRange) {
+    self.mark_diagnostic(FastCheckDtsDiagnostic::UnableToInferTypeFromProp {
+      range: self.source_range_to_range(range),
+    })
   }
 
   pub fn transform(
@@ -46,13 +107,18 @@ impl FastCheckDtsTransformer {
             new_items.push(ModuleItem::ModuleDecl(module_decl));
           }
           ModuleDecl::ExportDecl(export_decl) => {
-            if let Some(decl) = self.decl_to_type_decl(export_decl.decl) {
+            if let Some(decl) = self.decl_to_type_decl(export_decl.decl.clone())
+            {
               new_items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
                 ExportDecl {
                   decl,
                   span: export_decl.span,
                 },
               )));
+            } else {
+              self.mark_diagnostic(FastCheckDtsDiagnostic::UnableToInferType {
+                range: self.source_range_to_range(export_decl.range()),
+              })
             }
           }
           ModuleDecl::ExportDefaultDecl(export_decl) => {
@@ -129,6 +195,8 @@ impl FastCheckDtsTransformer {
               | Decl::TsModule(_) => {
                 new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
               }
+              // Since fast check requires explicit type annotations we
+              // can drop other statements not part of an export statement.
               Decl::Class(_) | Decl::Fn(_) | Decl::Var(_) | Decl::Using(_) => {}
             }
           }
@@ -146,10 +214,23 @@ impl FastCheckDtsTransformer {
         let mut elem_types: Vec<TsTupleElement> = vec![];
 
         for elems in arr.elems {
-          if let Some(ts_expr) =
-            elems.and_then(|item| self.expr_to_ts_type(*item.expr, as_const))
-          {
-            elem_types.push(ts_tuple_element(ts_expr));
+          if let Some(expr_or_spread) = elems {
+            if let Some(ts_expr) =
+              self.expr_to_ts_type(*expr_or_spread.expr.clone(), as_const)
+            {
+              elem_types.push(ts_tuple_element(ts_expr));
+            } else {
+              self.mark_diagnostic_unable_to_infer(expr_or_spread.range());
+            }
+          } else {
+            // TypeScript converts holey arrays to any
+            // Example: const a = [,,] -> const a = [any, any, any]
+            elem_types.push(ts_tuple_element(TsType::TsKeywordType(
+              TsKeywordType {
+                kind: TsKeywordTypeKind::TsAnyKeyword,
+                span: DUMMY_SP,
+              },
+            )))
           }
         }
 
@@ -159,8 +240,7 @@ impl FastCheckDtsTransformer {
         })))
       }
       Expr::Object(obj) => {
-        let mut members: Vec<TsTypeElement> =
-          Vec::with_capacity(obj.props.len());
+        let mut members: Vec<TsTypeElement> = vec![];
 
         // TODO: Prescan all object properties to know which ones
         // have a getter or a setter. This allows us to apply
@@ -202,16 +282,20 @@ impl FastCheckDtsTransformer {
                     },
                   ));
                 }
-                // TODO: Requires type resolving, skip for now
-                Prop::Shorthand(_) => {}
-
-                Prop::Assign(_)
+                Prop::Shorthand(_)
+                | Prop::Assign(_)
                 | Prop::Getter(_)
                 | Prop::Setter(_)
-                | Prop::Method(_) => {}
+                | Prop::Method(_) => {
+                  self.mark_diagnostic_unsupported_prop(prop.range());
+                }
               }
             }
-            PropOrSpread::Spread(_) => {}
+            PropOrSpread::Spread(_) => self.mark_diagnostic(
+              FastCheckDtsDiagnostic::UnableToInferTypeFromSpread {
+                range: self.source_range_to_range(item.range()),
+              },
+            ),
           }
         }
 
@@ -263,7 +347,13 @@ impl FastCheckDtsTransformer {
                 })
               })
             }
-            Pat::Invalid(_) | Pat::Expr(_) => None,
+            Pat::Expr(expr) => {
+              self.mark_diagnostic_unable_to_infer(expr.range());
+              None
+            }
+            // Invalid code is invalid, not sure why SWC doesn't throw
+            // a parse error here.
+            Pat::Invalid(_) => None,
           })
           .collect();
 
@@ -276,6 +366,8 @@ impl FastCheckDtsTransformer {
           }),
         ))
       }
+      // Since fast check requires explicit type annotations these
+      // can be dropped as they are not part of an export declaration
       Expr::This(_)
       | Expr::Unary(_)
       | Expr::Update(_)
@@ -331,15 +423,21 @@ impl FastCheckDtsTransformer {
               continue;
             }
 
-            if let Some(init_box) = &decl.init {
-              let init = *init_box.clone();
-              ident.type_ann = self
-                .expr_to_ts_type(init, false)
-                .map(type_ann)
-                .or_else(|| Some(any_type_ann()));
-            } else {
-              ident.type_ann = Some(any_type_ann());
-            }
+            let ts_type = decl
+              .init
+              .as_ref()
+              .and_then(|init_box| {
+                let init = *init_box.clone();
+                self.expr_to_ts_type(init, false)
+              })
+              .map(|ts_type| type_ann(ts_type))
+              .or({
+                self.mark_diagnostic_any_fallback(decl.init.range());
+                Some(any_type_ann())
+              });
+            ident.type_ann = ts_type;
+          } else {
+            self.mark_diagnostic_unable_to_infer(decl.range());
           }
 
           decl.init = None;
@@ -351,7 +449,12 @@ impl FastCheckDtsTransformer {
       | Decl::TsTypeAlias(_)
       | Decl::TsEnum(_)
       | Decl::TsModule(_) => Some(decl),
-      Decl::Using(_) => None,
+      Decl::Using(_) => {
+        self.mark_diagnostic(FastCheckDtsDiagnostic::UnsupportedUsing {
+          range: self.source_range_to_range(decl.range()),
+        });
+        None
+      }
     }
   }
 
@@ -443,12 +546,13 @@ mod tests {
       .esm()
       .unwrap();
 
-    let module = module_info.source().module().to_owned();
+    let parsed_source = module_info.source();
+    let module = parsed_source.module().to_owned();
 
-    let mut transformer = FastCheckDtsTransformer::new();
+    let mut transformer =
+      FastCheckDtsTransformer::new(&parsed_source, &specifier);
     let module = transformer.transform(module).unwrap();
 
-    let parsed_source = module_info.source();
     let comments = parsed_source.comments().as_single_threaded();
 
     let (actual, _) =
@@ -580,6 +684,12 @@ export function foo(a: string | number): number;
       "export declare const foo: readonly [1, 2];",
     )
     .await;
+    transform_dts_test(
+      r#"export const foo = [1, ,2] as const;"#,
+      "export declare const foo: readonly [1, any, 2];",
+    )
+    .await;
+
     transform_dts_test(
       r#"export const foo = { str: "bar", bool: true, bool2: false, num: 42,   nullish: null } as const;"#,
       r#"export declare const foo: {

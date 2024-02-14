@@ -9,6 +9,7 @@ use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
+use crate::fast_check::FastCheckDtsModule;
 use crate::CapturingModuleAnalyzer;
 use crate::ModuleParser;
 use crate::ReferrerImports;
@@ -814,7 +815,7 @@ pub struct FastCheckTypeModule {
   pub dependencies: IndexMap<String, Dependency>,
   pub source: Arc<str>,
   pub source_map: Arc<[u8]>,
-  pub dts: Option<String>,
+  pub dts: Option<FastCheckDtsModule>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -5105,10 +5106,12 @@ mod tests {
     if let FastCheckTypeModuleSlot::Module(fsm) =
       module.fast_check.clone().unwrap()
     {
+      let dts = fsm.dts.unwrap();
       assert_eq!(
-        fsm.dts.unwrap().to_string().trim(),
+        dts.text.to_string(),
         "export function add(a: number, b: number): number;"
       );
+      assert!(dts.diagnostics.is_empty());
     } else {
       panic!()
     }

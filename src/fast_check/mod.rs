@@ -24,6 +24,8 @@ use deno_ast::diagnostics::DiagnosticSourceRange;
 use deno_ast::SourceRange;
 use deno_ast::SourceTextInfo;
 #[cfg(feature = "fast_check")]
+pub use transform::FastCheckDtsModule;
+#[cfg(feature = "fast_check")]
 pub use transform::FastCheckModule;
 #[cfg(feature = "fast_check")]
 pub use transform::TransformOptions;

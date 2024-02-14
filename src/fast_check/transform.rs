@@ -98,6 +98,7 @@ use super::swc_helpers::is_never_type;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::ts_keyword_type;
+use super::transform_dts::FastCheckDtsDiagnostic;
 use super::transform_dts::FastCheckDtsTransformer;
 use super::FastCheckDiagnostic;
 use super::FastCheckDiagnosticRange;
@@ -142,10 +143,16 @@ impl CommentsMut {
   }
 }
 
+#[derive(Debug, Clone)]
+pub struct FastCheckDtsModule {
+  pub text: String,
+  pub diagnostics: Vec<FastCheckDtsDiagnostic>,
+}
+
 pub struct FastCheckModule {
   pub module_info: ModuleInfo,
   pub text: String,
-  pub dts: Option<String>,
+  pub dts: Option<FastCheckDtsModule>,
   pub source_map: Vec<u8>,
 }
 
@@ -194,7 +201,8 @@ pub fn transform(
     )?;
 
   let dts = if options.dts {
-    let mut dts_transformer = FastCheckDtsTransformer::new();
+    let mut dts_transformer =
+      FastCheckDtsTransformer::new(parsed_source, specifier);
 
     let module = dts_transformer.transform(module)?;
     let (text, _source_map) =
@@ -207,7 +215,10 @@ pub fn transform(
         },
       )?;
 
-    Some(text)
+    Some(FastCheckDtsModule {
+      text,
+      diagnostics: dts_transformer.diagnostics,
+    })
   } else {
     None
   };
