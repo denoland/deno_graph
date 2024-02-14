@@ -3,8 +3,8 @@ use deno_ast::{
     ast::{
       BindingIdent, ClassMember, Decl, DefaultDecl, ExportDecl,
       ExportDefaultDecl, ExportDefaultExpr, Expr, Ident, Lit, MethodKind,
-      Module, ModuleDecl, ModuleItem, Param, Pat, Prop, PropName, PropOrSpread,
-      Stmt, TsFnOrConstructorType, TsFnParam, TsFnType, TsKeywordType,
+      Module, ModuleDecl, ModuleItem, Pat, Prop, PropName, PropOrSpread, Stmt,
+      TsFnOrConstructorType, TsFnParam, TsFnType, TsKeywordType,
       TsKeywordTypeKind, TsPropertySignature, TsTupleElement, TsTupleType,
       TsType, TsTypeElement, TsTypeLit, VarDecl, VarDeclKind, VarDeclarator,
     },
@@ -721,6 +721,19 @@ export function foo(a: any): number {
   }
 
   #[tokio::test]
+  async fn dts_class_decl_rest_test() {
+    transform_dts_test(
+      r#"export class Foo {
+  constructor(...args: string[]) {}
+}"#,
+      r#"export declare class Foo {
+  constructor(...args: string[]);
+}"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
   async fn dts_class_decl_overloads_test() {
     transform_dts_test(
       r#"export class Foo {
@@ -994,6 +1007,11 @@ export function foo(a: any): number {
       "export declare let foo: (a: number) => void;",
     )
     .await;
+    transform_dts_test(
+      r#"export let foo = function add(...params: any[]): void {}"#,
+      "export declare let foo: (...params: any[]) => void;",
+    )
+    .await;
   }
 
   #[tokio::test]
@@ -1018,6 +1036,12 @@ export function foo(a: any): number {
     transform_dts_test(
       r#"export let foo = (a = 2): void => {}"#,
       "export declare let foo: (a: number) => void;",
+    )
+    .await;
+
+    transform_dts_test(
+      r#"export let foo = (...params: any[]): void => {}"#,
+      "export declare let foo: (...params: any[]) => void;",
     )
     .await;
   }
