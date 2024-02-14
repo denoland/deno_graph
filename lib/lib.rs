@@ -10,8 +10,8 @@ use std::collections::HashMap;
 use deno_graph::resolve_import;
 use deno_graph::source::load_data_url;
 use deno_graph::source::CacheInfo;
-use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
+use deno_graph::source::LoadOptions;
 use deno_graph::source::Loader;
 use deno_graph::source::NullFileSystem;
 use deno_graph::source::ResolutionMode;
@@ -65,18 +65,28 @@ impl Loader for JsLoader {
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
-    is_dynamic: bool,
-    cache_setting: CacheSetting,
+    options: LoadOptions,
   ) -> LoadFuture {
+    #[derive(Serialize)]
+    struct JsLoadOptions {
+      is_dynamic: bool,
+      cache_setting: &'static str,
+      maybe_checksum: Option<String>,
+    }
+
     if specifier.scheme() == "data" {
       Box::pin(future::ready(load_data_url(specifier)))
     } else {
       let specifier = specifier.clone();
       let context = JsValue::null();
       let arg1 = JsValue::from(specifier.to_string());
-      let arg2 = JsValue::from(is_dynamic);
-      let arg3 = JsValue::from(cache_setting.as_js_str());
-      let result = self.load.call3(&context, &arg1, &arg2, &arg3);
+      let arg2 = serde_wasm_bindgen::to_value(&JsLoadOptions {
+        is_dynamic: options.is_dynamic,
+        cache_setting: options.cache_setting.as_js_str(),
+        maybe_checksum: options.maybe_checksum.map(|c| c.into_string()),
+      })
+      .unwrap();
+      let result = self.load.call2(&context, &arg1, &arg2);
       let f = async move {
         let response = match result {
           Ok(result) => {

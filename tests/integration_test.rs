@@ -13,6 +13,7 @@ use anyhow::anyhow;
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
+use deno_graph::source::LoadOptions;
 use deno_graph::source::LoadResponse;
 use deno_graph::source::MemoryFileSystem;
 use deno_graph::source::MemoryLoader;
@@ -451,11 +452,12 @@ async fn test_jsr_version_not_found_then_found() {
     fn load(
       &mut self,
       specifier: &ModuleSpecifier,
-      is_dynamic: bool,
-      cache_setting: CacheSetting,
+      options: LoadOptions,
     ) -> LoadFuture {
-      assert!(!is_dynamic);
-      self.requests.push((specifier.to_string(), cache_setting));
+      assert!(!options.is_dynamic);
+      self
+        .requests
+        .push((specifier.to_string(), options.cache_setting));
       let specifier = specifier.clone();
       match specifier.as_str() {
         "file:///main.ts" => Box::pin(async move {
@@ -470,7 +472,7 @@ async fn test_jsr_version_not_found_then_found() {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: match cache_setting {
+              content: match options.cache_setting {
                 CacheSetting::Only | CacheSetting::Use => {
                   // first time it won't have the version
                   br#"{ "versions": { "1.0.0": {} } }"#.to_vec().into()

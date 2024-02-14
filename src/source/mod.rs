@@ -17,7 +17,6 @@ use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
 use futures::future;
 use futures::future::LocalBoxFuture;
-use futures::FutureExt;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
@@ -148,6 +147,19 @@ Expected: {}",
   }
 }
 
+#[derive(Debug, Clone)]
+pub struct LoadOptions {
+  pub is_dynamic: bool,
+  pub cache_setting: CacheSetting,
+  /// It is the loader's responsibility to verify the provided checksum if it
+  /// exists because in the CLI we only verify the checksum of the source when
+  /// it is loaded from the global cache. We don't verify it when loaded from
+  /// the vendor folder.
+  ///
+  /// The source may be verified by running `checksum.check_source(content)?`.
+  pub maybe_checksum: Option<LoaderChecksum>,
+}
+
 /// A trait which allows asynchronous loading of source files into a module
 /// graph in a thread safe way as well as a way to provide additional meta data
 /// about any cached resources.
@@ -174,56 +186,8 @@ pub trait Loader {
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
-    is_dynamic: bool,
-    cache_setting: CacheSetting,
+    options: LoadOptions,
   ) -> LoadFuture;
-
-  /// Loads a given specifier and also checks if the source matches
-  /// the provided checksum.
-  ///
-  /// This is the loader's responsibility in the CLI because we only verify
-  /// the checksum of the source when it is loaded from the global cache. We
-  /// don't verify it when loaded from the vendor folder.
-  ///
-  /// The source should be verified by running `checksum.check_source(content)?`.
-  fn load_with_checksum(
-    &mut self,
-    specifier: &ModuleSpecifier,
-    is_dynamic: bool,
-    cache_setting: CacheSetting,
-    checksum: LoaderChecksum,
-  ) -> LoadFuture {
-    let fut = self.load(specifier, is_dynamic, cache_setting);
-    async move {
-      let result = fut.await?;
-      match &result {
-        Some(source) => match source {
-          LoadResponse::External { .. } => Ok(result),
-          LoadResponse::Module { content, .. } => {
-            checksum.check_source(content)?;
-            Ok(result)
-          }
-        },
-        None => Ok(None),
-      }
-    }
-    .boxed_local()
-  }
-
-  fn load_with_maybe_checksum(
-    &mut self,
-    specifier: &ModuleSpecifier,
-    is_dynamic: bool,
-    cache_setting: CacheSetting,
-    maybe_checksum: Option<LoaderChecksum>,
-  ) -> LoadFuture {
-    match maybe_checksum {
-      Some(checksum) => {
-        self.load_with_checksum(specifier, is_dynamic, cache_setting, checksum)
-      }
-      None => self.load(specifier, is_dynamic, cache_setting),
-    }
-  }
 
   /// Cache the module info for the provided specifier if the loader
   /// supports caching this information.
@@ -588,8 +552,7 @@ impl Loader for MemoryLoader {
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
-    _is_dynamic: bool,
-    _cache_setting: CacheSetting,
+    _options: LoadOptions,
   ) -> LoadFuture {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),

@@ -3397,11 +3397,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           // Check if this specifier is in the cache. If it is, then
           // don't use the module information as it may be out of date
           // with what's in the cache
-          let fut = self.loader.load_with_checksum(
+          let fut = self.loader.load(
             specifier,
-            self.in_dynamic_branch,
-            CacheSetting::Only,
-            checksum.clone(),
+            LoadOptions {
+              is_dynamic: self.in_dynamic_branch,
+              cache_setting: CacheSetting::Only,
+              maybe_checksum: Some(checksum.clone()),
+            },
           );
           self.state.pending.push_back({
             let specifier = specifier.clone();
@@ -3707,11 +3709,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .insert(requested_specifier.clone(), ModuleSlot::Pending);
     let fut = self
       .loader
-      .load_with_maybe_checksum(
+      .load(
         &load_specifier,
-        is_dynamic,
-        CacheSetting::Use,
-        maybe_checksum,
+        LoadOptions {
+          is_dynamic,
+          cache_setting: CacheSetting::Use,
+          maybe_checksum,
+        },
       )
       .map(move |result| PendingInfo {
         specifier: requested_specifier,
@@ -3740,8 +3744,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .unwrap();
     let fut = self.loader.load(
       &specifier,
-      false,
-      self.fill_pass_mode.to_cache_setting(),
+      LoadOptions {
+        is_dynamic: false,
+        cache_setting: self.fill_pass_mode.to_cache_setting(),
+        maybe_checksum: None,
+      },
     );
     let fut = async move {
       let data = fut.await.map_err(Arc::new)?;
@@ -3785,13 +3792,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .packages
       .get_manifest_checksum(package_nv)
       .map(|checksum| LoaderChecksum::new(checksum.clone()));
-    let fut = self.loader.load_with_maybe_checksum(
+    let fut = self.loader.load(
       &specifier,
-      false,
-      self.fill_pass_mode.to_cache_setting(),
-      // we won't have a checksum when loading this the
-      // first time or when not using a lockfile
-      maybe_expected_checksum.clone(),
+      LoadOptions {
+        is_dynamic: false,
+        cache_setting: self.fill_pass_mode.to_cache_setting(),
+        // we won't have a checksum when loading this the
+        // first time or when not using a lockfile
+        maybe_checksum: maybe_expected_checksum.clone(),
+      },
     );
     let fut = async move {
       let data = fut.await.map_err(Arc::new)?;
@@ -3903,11 +3912,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           let specifier = specifier.clone();
           let maybe_range = maybe_referrer.clone();
           let module_info = info.clone();
-          let fut = self.loader.load_with_checksum(
+          let fut = self.loader.load(
             &specifier,
-            self.in_dynamic_branch,
-            CacheSetting::Use,
-            checksum,
+            LoadOptions {
+              is_dynamic: self.in_dynamic_branch,
+              cache_setting: CacheSetting::Use,
+              maybe_checksum: Some(checksum),
+            },
           );
           async move {
             let result = fut.await;
@@ -4569,13 +4580,12 @@ mod tests {
       fn load(
         &mut self,
         specifier: &ModuleSpecifier,
-        is_dynamic: bool,
-        _cache_setting: CacheSetting,
+        options: LoadOptions,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
           "file:///foo.js" => {
-            assert!(!is_dynamic);
+            assert!(!options.is_dynamic);
             self.loaded_foo = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
@@ -4586,7 +4596,7 @@ mod tests {
             })
           }
           "file:///bar.js" => {
-            assert!(is_dynamic);
+            assert!(options.is_dynamic);
             self.loaded_bar = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
@@ -4597,7 +4607,7 @@ mod tests {
             })
           }
           "file:///baz.js" => {
-            assert!(is_dynamic);
+            assert!(options.is_dynamic);
             self.loaded_baz = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
@@ -4638,8 +4648,7 @@ mod tests {
       fn load(
         &mut self,
         specifier: &ModuleSpecifier,
-        _is_dynamic: bool,
-        _cache_setting: CacheSetting,
+        _options: LoadOptions,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4725,8 +4734,7 @@ mod tests {
       fn load(
         &mut self,
         specifier: &ModuleSpecifier,
-        _is_dynamic: bool,
-        _cache_setting: CacheSetting,
+        _options: LoadOptions,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4793,8 +4801,7 @@ mod tests {
       fn load(
         &mut self,
         specifier: &ModuleSpecifier,
-        _is_dynamic: bool,
-        _cache_setting: CacheSetting,
+        _options: LoadOptions,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4918,8 +4925,7 @@ mod tests {
       fn load(
         &mut self,
         specifier: &ModuleSpecifier,
-        is_dynamic: bool,
-        _cache_setting: CacheSetting,
+        options: LoadOptions,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4934,7 +4940,7 @@ mod tests {
             }))
           }),
           "file:///bar.js" => {
-            assert!(!is_dynamic);
+            assert!(!options.is_dynamic);
             self.loaded_bar = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
@@ -4967,8 +4973,7 @@ mod tests {
       fn load(
         &mut self,
         specifier: &ModuleSpecifier,
-        is_dynamic: bool,
-        _cache_setting: CacheSetting,
+        options: LoadOptions,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4992,7 +4997,7 @@ mod tests {
             }))
           }),
           "file:///bar.ts" => {
-            assert!(!is_dynamic);
+            assert!(!options.is_dynamic);
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -5002,7 +5007,7 @@ mod tests {
             })
           }
           "file:///baz.json" => {
-            assert!(!is_dynamic);
+            assert!(!options.is_dynamic);
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
