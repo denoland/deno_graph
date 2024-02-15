@@ -815,3 +815,104 @@ Deno.test({
     });
   },
 });
+
+Deno.test({
+  name: "createGraph() - jsr specifiers",
+  async fn() {
+    const fixtures: Record<string, LoadResponse> = {
+      "file:///a/mod.js": {
+        kind: "module",
+        specifier: "file:///a/mod.js",
+        content: `import "jsr:@denotest/a";`,
+      },
+      "https://jsr.io/@denotest/a/meta.json": {
+        kind: "module",
+        specifier: "https://jsr.io/@denotest/a/meta.json",
+        content: JSON.stringify({
+          scope: "@denotest",
+          name: "a",
+          versions: {
+            "1.0.0": {},
+          },
+        }),
+      },
+      "https://jsr.io/@denotest/a/1.0.0_meta.json": {
+        kind: "module",
+        specifier: "https://jsr.io/@denotest/a/1.0.0_meta.json",
+        content: JSON.stringify({
+          exports: {
+            ".": "./mod.js",
+          },
+          manifest: {
+            "/mod.js": {
+              "size": 123,
+              "checksum": "sha256-bad",
+            },
+          },
+        }),
+      },
+      "https://jsr.io/@denotest/a/1.0.0/mod.js": {
+        kind: "module",
+        specifier: "https://jsr.io/@denotest/a/1.0.0/mod.js",
+        content: "console.log(5);",
+      },
+    };
+    let resolveCount = 0;
+    let foundChecksum: string | undefined = undefined;
+    const graph = await createGraph("file:///a/mod.js", {
+      resolve(specifier, referrer) {
+        resolveCount++;
+        return new URL(specifier, referrer).toString();
+      },
+      load(specifier, _isDynamic, _cacheSetting, checksum) {
+        if (checksum != null) {
+          foundChecksum = checksum;
+        }
+        return Promise.resolve(fixtures[specifier]);
+      },
+    });
+    assertEquals(foundChecksum, "bad"); // found
+    assertEquals(resolveCount, 2);
+    assertEquals(graph as unknown, {
+      "roots": [
+        "file:///a/mod.js",
+      ],
+      "redirects": {
+        "jsr:@denotest/a": "https://jsr.io/@denotest/a/1.0.0/mod.js",
+      },
+      "packages": {
+        "@denotest/a": "@denotest/a@1.0.0",
+      },
+      "modules": [
+        {
+          "kind": "esm",
+          "size": 25,
+          "mediaType": MediaType.JavaScript,
+          "specifier": "file:///a/mod.js",
+          "dependencies": [{
+            "specifier": "jsr:@denotest/a",
+            "code": {
+              "specifier": "jsr:@denotest/a",
+              "span": {
+                "start": {
+                  "character": 7,
+                  "line": 0,
+                },
+                "end": {
+                  "character": 24,
+                  "line": 0,
+                },
+              },
+            },
+          }],
+        },
+        {
+          "kind": "esm",
+          "mediaType": "JavaScript",
+          "size": 15,
+          "specifier": "https://jsr.io/@denotest/a/1.0.0/mod.js",
+        },
+      ],
+    });
+  },
+});
