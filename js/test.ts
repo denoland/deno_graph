@@ -77,7 +77,11 @@ Deno.test({
   name: "createGraph() - root module missing",
   async fn() {
     const graph = await createGraph("file:///a/test.ts", {
-      load() {
+      load(specifier, isDynamic, cacheSetting, checksum) {
+        assert(specifier != null);
+        assert(isDynamic != null);
+        assert(cacheSetting != null);
+        assert(checksum === undefined); // in this case
         return Promise.resolve(undefined);
       },
     });
