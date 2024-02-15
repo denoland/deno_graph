@@ -372,7 +372,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
 
   fn docs_url(&self) -> Option<Cow<'_, str>> {
     Some(Cow::Owned(format!(
-      "https://jsr.io/go/slow-type/{}",
+      "https://jsr.io/go/slow-type-{}",
       self.code()
     )))
   }
