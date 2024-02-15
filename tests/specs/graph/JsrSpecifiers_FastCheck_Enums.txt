@@ -109,20 +109,20 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     Value
   }
   --- DTS ---
-  export enum EnumWithNoInits {
+  export declare enum EnumWithNoInits {
     Value1,
     Value2
   }
-  export enum EnumWithNumInits {
+  export declare enum EnumWithNumInits {
     Value1 = 1,
     Value2 = 2
   }
-  export enum EnumWithStringInits {
+  export declare enum EnumWithStringInits {
     Value1 = "a",
     Value2 = "b"
   }
   declare const value: number;
-  export enum EnumWithNonConstInits {
+  export declare enum EnumWithNonConstInits {
     Value1 = new Public1().test,
     Value2 = new Public2().asdf * value + NonExportedEnum.Value
   }
@@ -130,6 +130,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   declare class Public2 {
   }
-  enum NonExportedEnum {
+  declare enum NonExportedEnum {
     Value
   }
