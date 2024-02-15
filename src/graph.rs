@@ -9,6 +9,7 @@ use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
+#[cfg(feature = "fast_check")]
 use crate::fast_check::FastCheckDtsModule;
 use crate::CapturingModuleAnalyzer;
 use crate::ModuleParser;
@@ -815,6 +816,7 @@ pub struct FastCheckTypeModule {
   pub dependencies: IndexMap<String, Dependency>,
   pub source: Arc<str>,
   pub source_map: Arc<[u8]>,
+  #[cfg(feature = "fast_check")]
   pub dts: Option<FastCheckDtsModule>,
 }
 
