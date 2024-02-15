@@ -270,9 +270,13 @@ impl<'a> FastCheckDtsTransformer<'a> {
           prev_is_overload = false;
           if let Stmt::Decl(decl) = stmt {
             match decl {
+              Decl::TsEnum(mut ts_enum) => {
+                ts_enum.declare = true;
+                new_items
+                  .push(ModuleItem::Stmt(Stmt::Decl(Decl::TsEnum(ts_enum))));
+              }
               Decl::TsInterface(_)
               | Decl::TsTypeAlias(_)
-              | Decl::TsEnum(_)
               | Decl::Using(_)
               | Decl::TsModule(_) => {
                 new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
@@ -618,10 +622,13 @@ impl<'a> FastCheckDtsTransformer<'a> {
 
         Some(Decl::Var(var_decl))
       }
-      Decl::TsInterface(_)
-      | Decl::TsTypeAlias(_)
-      | Decl::TsEnum(_)
-      | Decl::TsModule(_) => Some(decl),
+      Decl::TsEnum(mut ts_enum) => {
+        ts_enum.declare = true;
+        Some(Decl::TsEnum(ts_enum))
+      }
+      Decl::TsInterface(_) | Decl::TsTypeAlias(_) | Decl::TsModule(_) => {
+        Some(decl)
+      }
       Decl::Using(_) => {
         self.mark_diagnostic(FastCheckDtsDiagnostic::UnsupportedUsing {
           range: self.source_range_to_range(decl.range()),
@@ -1257,18 +1264,18 @@ export function foo(a: any): number {
   async fn dts_enum_export() {
     transform_dts_test(
       r#"export enum Foo { A, B }"#,
-      "export enum Foo {\n  A,\n  B\n}",
+      "export declare enum Foo {\n  A,\n  B\n}",
     )
     .await;
     transform_dts_test(
       r#"export const enum Foo { A, B }"#,
-      "export const enum Foo {\n  A,\n  B\n}",
+      "export declare const enum Foo {\n  A,\n  B\n}",
     )
     .await;
 
     transform_dts_test(
       r#"export enum Foo { A = "foo", B = "bar" }"#,
-      r#"export enum Foo {
+      r#"export declare enum Foo {
   A = "foo",
   B = "bar"
 }"#,
