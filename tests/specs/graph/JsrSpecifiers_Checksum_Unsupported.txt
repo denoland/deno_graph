@@ -7,16 +7,22 @@
 
 # https://jsr.io/@scope/a/1.0.0_meta.json
 {
-  "manifest": {},
   "exports": {
-    ".": "./mod.ts",
-    "./sub": "./sub_dir/sub.ts",
-    "./other": "./other.js"
+    ".": "./mod.ts"
+  },
+  "manifest": {
+    "/mod.ts": {
+      "size": 1,
+      "checksum": "sha1-somechecksum"
+    }
   }
 }
 
 # mod.ts
-import 'jsr:@scope/a/non_existent' // invalid export
+import 'jsr:@scope/a'
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+console.log('HI');
 
 # output
 {
@@ -28,9 +34,9 @@ import 'jsr:@scope/a/non_existent' // invalid export
       "kind": "esm",
       "dependencies": [
         {
-          "specifier": "jsr:@scope/a/non_existent",
+          "specifier": "jsr:@scope/a",
           "code": {
-            "specifier": "jsr:@scope/a/non_existent",
+            "specifier": "jsr:@scope/a",
             "span": {
               "start": {
                 "line": 0,
@@ -38,22 +44,24 @@ import 'jsr:@scope/a/non_existent' // invalid export
               },
               "end": {
                 "line": 0,
-                "character": 34
+                "character": 21
               }
             }
           }
         }
       ],
-      "size": 53,
+      "size": 22,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
     },
     {
-      "specifier": "jsr:@scope/a/non_existent",
-      "error": "Unknown export './non_existent' for '@scope/a@1.0.0'.\n  Specifier: jsr:@scope/a/non_existent\n  Package exports:\n * .\n * ./sub\n * ./other"
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
+      "error": "Unsupported checksum in manifest. Maybe try upgrading deno?"
     }
   ],
-  "redirects": {},
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
   "packages": {
     "@scope/a": "@scope/a@1.0.0"
   }

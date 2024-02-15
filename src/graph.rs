@@ -2574,6 +2574,15 @@ enum PendingInfoResponse {
   },
 }
 
+impl PendingInfoResponse {
+  fn specifier(&self) -> &ModuleSpecifier {
+    match self {
+      Self::External { specifier } => specifier,
+      Self::Module { specifier, .. } => specifier,
+    }
+  }
+}
+
 impl From<LoadResponse> for PendingInfoResponse {
   fn from(load_response: LoadResponse) -> Self {
     match load_response {
@@ -2641,6 +2650,12 @@ struct PendingContentLoadItem {
   module_info: ModuleInfo,
 }
 
+#[derive(Clone)]
+struct PendingJsrPackageVersionInfoLoadItem {
+  checksum: String,
+  info: Arc<JsrPackageVersionInfo>,
+}
+
 type PendingResult<T> =
   Shared<LocalBoxFuture<'static, Result<T, Arc<anyhow::Error>>>>;
 
@@ -2649,7 +2664,7 @@ struct PendingJsrState {
   pending_package_info_loads:
     HashMap<String, PendingResult<Option<Arc<JsrPackageInfo>>>>,
   pending_package_version_info_loads:
-    HashMap<PackageNv, PendingResult<Arc<JsrPackageVersionInfo>>>,
+    HashMap<PackageNv, PendingResult<PendingJsrPackageVersionInfoLoadItem>>,
   pending_resolutions: Vec<PendingJsrResolutionItem>,
   pending_content_loads:
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
@@ -2670,7 +2685,11 @@ struct PendingState {
 #[derive(Clone)]
 enum ContentOrModuleInfo {
   Content(Arc<[u8]>),
-  ModuleInfo(ModuleInfo),
+  ModuleInfo {
+    info: ModuleInfo,
+    /// The checksum to use when loading the content
+    checksum: LoaderChecksum,
+  },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -2829,16 +2848,42 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           maybe_version_info,
         }) => match result {
           Ok(Some(response)) => {
-            let assert_types =
-              self.state.pending_specifiers.remove(&specifier).unwrap();
-            for maybe_assert_type in assert_types {
-              self.visit(
-                &specifier,
-                &response,
-                maybe_assert_type,
-                maybe_range.clone(),
-                maybe_version_info.as_ref(),
-              )
+            if maybe_version_info.is_none()
+              && self
+                .loader
+                .registry_package_url_to_nv(response.specifier())
+                .is_some()
+            {
+              self.graph.module_slots.insert(
+                specifier.clone(),
+                ModuleSlot::Err(ModuleError::LoadingErr(
+                  specifier.clone(),
+                  maybe_range,
+                  // Two tasks we need to do before removing this error message:
+                  // 1. If someone imports a package via an HTTPS URL then we should probably
+                  //    bail completely on fast check because it could expose additional types
+                  //    not found in fast check, which might cause strange behaviour.
+                  // 2. For HTTPS URLS imported from the registry, we should probably still
+                  //    compare it against the checksums found in the registry otherwise it might
+                  //    not end up in the lockfile causing a security issue.
+                  Arc::new(anyhow!(concat!(
+                    "Importing a JSR package via an HTTPS URL is not implemented. ",
+                    "Use a jsr: specifier instead for the time being."
+                  )),
+                ))),
+              );
+            } else {
+              let assert_types =
+                self.state.pending_specifiers.remove(&specifier).unwrap();
+              for maybe_assert_type in assert_types {
+                self.visit(
+                  &specifier,
+                  &response,
+                  maybe_assert_type,
+                  maybe_range.clone(),
+                  maybe_version_info.as_ref(),
+                )
+              }
             }
             Some(specifier)
           }
@@ -3013,13 +3058,18 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         .await
         .map(|info| (info, resolution_item.package_ref.sub_path()));
       match version_info_result {
-        Ok((version_info, sub_path)) => {
+        Ok((version_info_load_item, sub_path)) => {
+          let version_info = version_info_load_item.info;
+          self
+            .graph
+            .packages
+            .ensure_package(nv.clone(), version_info_load_item.checksum);
           let base_url = self.loader.registry_package_url(&nv);
           let export_name = normalize_export_name(sub_path);
           match version_info.export(&export_name) {
             Some(export_value) => {
               self.graph.packages.add_export(
-                nv.clone(),
+                &nv,
                 (
                   normalize_export_name(resolution_item.package_ref.sub_path())
                     .to_string(),
@@ -3311,14 +3361,48 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let base_url = version_info.base_url.as_str();
       let base_url = base_url.strip_suffix('/').unwrap_or(base_url);
       if let Some(sub_path) = specifier.as_str().strip_prefix(base_url) {
+        let checksum = match version_info.inner.manifest.get(sub_path) {
+          Some(manifest_entry) => {
+            match manifest_entry.checksum.strip_prefix("sha256-") {
+              Some(checksum) => checksum.to_string(),
+              None => {
+                self.graph.module_slots.insert(
+                  specifier.clone(),
+                  ModuleSlot::Err(ModuleError::LoadingErr(
+                    specifier.clone(),
+                    maybe_range.cloned(),
+                    Arc::new(anyhow!(
+                      "Unsupported checksum in manifest. Maybe try upgrading deno?",
+                    )),
+                  )),
+                );
+                return;
+              }
+            }
+          }
+          None => {
+            self.graph.module_slots.insert(
+              specifier.clone(),
+              ModuleSlot::Err(ModuleError::Missing(
+                specifier.clone(),
+                maybe_range.cloned(),
+              )),
+            );
+            return;
+          }
+        };
+        let checksum = LoaderChecksum::new(checksum.clone());
         if let Some(module_info) = version_info.inner.module_info(sub_path) {
           // Check if this specifier is in the cache. If it is, then
           // don't use the module information as it may be out of date
           // with what's in the cache
           let fut = self.loader.load(
             specifier,
-            self.in_dynamic_branch,
-            CacheSetting::Only,
+            LoadOptions {
+              is_dynamic: self.in_dynamic_branch,
+              cache_setting: CacheSetting::Only,
+              maybe_checksum: Some(checksum.clone()),
+            },
           );
           self.state.pending.push_back({
             let specifier = specifier.clone();
@@ -3331,9 +3415,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   specifier: specifier.clone(),
                   maybe_range,
                   result: Ok(Some(PendingInfoResponse::Module {
-                    content_or_module_info: ContentOrModuleInfo::ModuleInfo(
-                      module_info,
-                    ),
+                    content_or_module_info: ContentOrModuleInfo::ModuleInfo {
+                      info: module_info,
+                      checksum,
+                    },
                     specifier,
                     maybe_headers: None,
                   })),
@@ -3353,6 +3438,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .graph
             .module_slots
             .insert(specifier.clone(), ModuleSlot::Pending);
+          return;
+        } else {
+          self.load_pending_module(
+            specifier.clone(),
+            maybe_range.map(ToOwned::to_owned),
+            specifier.clone(),
+            is_dynamic,
+            Some(checksum),
+            Some(version_info.clone()),
+          );
           return;
         }
       }
@@ -3397,8 +3492,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
 
-    let specifier = specifier.clone();
-    self.load_pending_module(&specifier, maybe_range, &specifier, is_dynamic);
+    self.load_pending_module(
+      specifier.clone(),
+      maybe_range,
+      specifier.clone(),
+      is_dynamic,
+      None,
+      None,
+    );
   }
 
   fn load_jsr_specifier(
@@ -3414,7 +3515,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             self.loader.registry_package_url_to_nv(&range.specifier)
           {
             self.graph.packages.add_dependency(
-              nv,
+              &nv,
               JsrDepPackageReq::jsr(package_ref.req().clone()),
             );
           }
@@ -3435,10 +3536,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               match result {
                 Ok(load_specifier) => {
                   self.load_pending_module(
-                    &specifier,
+                    specifier.clone(),
                     maybe_range.clone(),
-                    &load_specifier,
+                    load_specifier,
                     is_dynamic,
+                    None,
+                    None,
                   );
                 }
                 Err(err) => {
@@ -3543,7 +3646,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             self.loader.registry_package_url_to_nv(&range.specifier)
           {
             self.graph.packages.add_dependency(
-              nv,
+              &nv,
               JsrDepPackageReq::npm(package_ref.req().clone()),
             );
           }
@@ -3592,25 +3695,32 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
   fn load_pending_module(
     &mut self,
-    requested_specifier: &Url,
+    requested_specifier: Url,
     maybe_range: Option<Range>,
-    load_specifier: &Url,
+    load_specifier: Url,
     is_dynamic: bool,
+    maybe_checksum: Option<LoaderChecksum>,
+    maybe_version_info: Option<JsrPackageVersionInfoExt>,
   ) {
     self
       .graph
       .module_slots
       .insert(requested_specifier.clone(), ModuleSlot::Pending);
-    let load_specifier = load_specifier.clone();
-    let requested_specifier = requested_specifier.clone();
     let fut = self
       .loader
-      .load(&load_specifier, is_dynamic, CacheSetting::Use)
+      .load(
+        &load_specifier,
+        LoadOptions {
+          is_dynamic,
+          cache_setting: CacheSetting::Use,
+          maybe_checksum,
+        },
+      )
       .map(move |result| PendingInfo {
         specifier: requested_specifier,
         maybe_range,
         result: result.map(|r| r.map(Into::into)),
-        maybe_version_info: None,
+        maybe_version_info,
       });
     self.state.pending.push_back(Box::pin(fut));
   }
@@ -3633,8 +3743,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .unwrap();
     let fut = self.loader.load(
       &specifier,
-      false,
-      self.fill_pass_mode.to_cache_setting(),
+      LoadOptions {
+        is_dynamic: false,
+        cache_setting: self.fill_pass_mode.to_cache_setting(),
+        maybe_checksum: None,
+      },
     );
     let fut = async move {
       let data = fut.await.map_err(Arc::new)?;
@@ -3673,18 +3786,35 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         package_nv.name, package_nv.version
       ))
       .unwrap();
+    let maybe_expected_checksum = self
+      .graph
+      .packages
+      .get_manifest_checksum(package_nv)
+      .map(|checksum| LoaderChecksum::new(checksum.clone()));
     let fut = self.loader.load(
       &specifier,
-      false,
-      self.fill_pass_mode.to_cache_setting(),
+      LoadOptions {
+        is_dynamic: false,
+        cache_setting: self.fill_pass_mode.to_cache_setting(),
+        // we won't have a checksum when loading this the
+        // first time or when not using a lockfile
+        maybe_checksum: maybe_expected_checksum.clone(),
+      },
     );
     let fut = async move {
       let data = fut.await.map_err(Arc::new)?;
       match data {
         Some(LoadResponse::Module { content, .. }) => {
+          // if we have the expected checksum, then we can re-use that here
+          let checksum = maybe_expected_checksum
+            .map(|c| c.into_string())
+            .unwrap_or_else(|| LoaderChecksum::gen(&content));
           let version_info: JsrPackageVersionInfo =
             serde_json::from_slice(&content).map_err(|e| Arc::new(e.into()))?;
-          Ok(Arc::new(version_info))
+          Ok(PendingJsrPackageVersionInfoLoadItem {
+            checksum,
+            info: Arc::new(version_info),
+          })
         }
         _ => Err(Arc::new(anyhow!("Not found: {}", specifier))),
       }
@@ -3776,15 +3906,18 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     let (content, maybe_module_analyzer) = match content_or_module_info {
       ContentOrModuleInfo::Content(content) => (content, None),
-      ContentOrModuleInfo::ModuleInfo(info) => {
+      ContentOrModuleInfo::ModuleInfo { info, checksum } => {
         self.state.jsr.pending_content_loads.push({
           let specifier = specifier.clone();
           let maybe_range = maybe_referrer.clone();
           let module_info = info.clone();
           let fut = self.loader.load(
             &specifier,
-            self.in_dynamic_branch,
-            CacheSetting::Use,
+            LoadOptions {
+              is_dynamic: self.in_dynamic_branch,
+              cache_setting: CacheSetting::Use,
+              maybe_checksum: Some(checksum),
+            },
           );
           async move {
             let result = fut.await;
@@ -4446,13 +4579,12 @@ mod tests {
       fn load(
         &mut self,
         specifier: &ModuleSpecifier,
-        is_dynamic: bool,
-        _cache_setting: CacheSetting,
+        options: LoadOptions,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
           "file:///foo.js" => {
-            assert!(!is_dynamic);
+            assert!(!options.is_dynamic);
             self.loaded_foo = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
@@ -4463,7 +4595,7 @@ mod tests {
             })
           }
           "file:///bar.js" => {
-            assert!(is_dynamic);
+            assert!(options.is_dynamic);
             self.loaded_bar = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
@@ -4474,7 +4606,7 @@ mod tests {
             })
           }
           "file:///baz.js" => {
-            assert!(is_dynamic);
+            assert!(options.is_dynamic);
             self.loaded_baz = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
@@ -4515,8 +4647,7 @@ mod tests {
       fn load(
         &mut self,
         specifier: &ModuleSpecifier,
-        _is_dynamic: bool,
-        _cache_setting: CacheSetting,
+        _options: LoadOptions,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4602,8 +4733,7 @@ mod tests {
       fn load(
         &mut self,
         specifier: &ModuleSpecifier,
-        _is_dynamic: bool,
-        _cache_setting: CacheSetting,
+        _options: LoadOptions,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4670,8 +4800,7 @@ mod tests {
       fn load(
         &mut self,
         specifier: &ModuleSpecifier,
-        _is_dynamic: bool,
-        _cache_setting: CacheSetting,
+        _options: LoadOptions,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4795,8 +4924,7 @@ mod tests {
       fn load(
         &mut self,
         specifier: &ModuleSpecifier,
-        is_dynamic: bool,
-        _cache_setting: CacheSetting,
+        options: LoadOptions,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4811,7 +4939,7 @@ mod tests {
             }))
           }),
           "file:///bar.js" => {
-            assert!(!is_dynamic);
+            assert!(!options.is_dynamic);
             self.loaded_bar = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
@@ -4844,8 +4972,7 @@ mod tests {
       fn load(
         &mut self,
         specifier: &ModuleSpecifier,
-        is_dynamic: bool,
-        _cache_setting: CacheSetting,
+        options: LoadOptions,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
@@ -4869,7 +4996,7 @@ mod tests {
             }))
           }),
           "file:///bar.ts" => {
-            assert!(!is_dynamic);
+            assert!(!options.is_dynamic);
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -4879,7 +5006,7 @@ mod tests {
             })
           }
           "file:///baz.json" => {
-            assert!(!is_dynamic);
+            assert!(!options.is_dynamic);
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),

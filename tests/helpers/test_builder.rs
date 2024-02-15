@@ -4,12 +4,14 @@ use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheInfo;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
+use deno_graph::source::LoadOptions;
 use deno_graph::source::Loader;
 use deno_graph::source::MemoryLoader;
 use deno_graph::BuildDiagnostic;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 use deno_graph::WorkspaceMember;
+use futures::FutureExt;
 
 #[derive(Default)]
 pub struct TestLoader {
@@ -25,22 +27,29 @@ impl Loader for TestLoader {
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
-    is_dynamic: bool,
-    cache_setting: CacheSetting,
+    options: LoadOptions,
   ) -> LoadFuture {
-    match cache_setting {
+    let checksum = options.maybe_checksum.clone();
+    let future = match options.cache_setting {
       // todo(dsherret): in the future, actually make this use the cache
-      CacheSetting::Use => {
-        self.remote.load(specifier, is_dynamic, cache_setting)
-      }
+      CacheSetting::Use => self.remote.load(specifier, options),
       // todo(dsherret): in the future, make this update the cache
-      CacheSetting::Reload => {
-        self.remote.load(specifier, is_dynamic, cache_setting)
+      CacheSetting::Reload => self.remote.load(specifier, options),
+      CacheSetting::Only => self.cache.load(specifier, options),
+    };
+    async move {
+      let response = future.await?;
+      if let Some(deno_graph::source::LoadResponse::Module {
+        content, ..
+      }) = &response
+      {
+        if let Some(checksum) = checksum {
+          checksum.check_source(content)?;
+        }
       }
-      CacheSetting::Only => {
-        self.cache.load(specifier, is_dynamic, cache_setting)
-      }
+      Ok(response)
     }
+    .boxed_local()
   }
 }
 

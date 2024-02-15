@@ -109,6 +109,68 @@ impl CacheSetting {
 pub static DEFAULT_DENO_REGISTRY_URL: Lazy<Url> =
   Lazy::new(|| Url::parse("https://jsr.io").unwrap());
 
+#[derive(Debug, Error)]
+#[error("Integrity check failed.\n\nActual: {}\nExpected: {}", .actual, .expected)]
+pub struct ChecksumIntegrityError {
+  pub actual: String,
+  pub expected: String,
+}
+
+/// A SHA-256 checksum to verify the contents of a module
+/// with while loading.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct LoaderChecksum(String);
+
+impl LoaderChecksum {
+  pub fn new(checksum: String) -> Self {
+    Self(checksum)
+  }
+
+  pub fn into_string(self) -> String {
+    self.0
+  }
+
+  pub fn as_str(&self) -> &str {
+    &self.0
+  }
+
+  pub fn check_source(
+    &self,
+    source: &[u8],
+  ) -> Result<(), ChecksumIntegrityError> {
+    let actual_checksum = Self::gen(source);
+    if self.0 == actual_checksum {
+      Ok(())
+    } else {
+      Err(ChecksumIntegrityError {
+        actual: actual_checksum,
+        expected: self.0.to_string(),
+      })
+    }
+  }
+
+  pub fn gen(source: &[u8]) -> String {
+    use sha2::Digest;
+    use sha2::Sha256;
+    let mut hasher = Sha256::new();
+    hasher.update(source);
+    format!("{:x}", hasher.finalize())
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct LoadOptions {
+  pub is_dynamic: bool,
+  pub cache_setting: CacheSetting,
+  /// It is the loader's responsibility to verify the provided checksum if it
+  /// exists because in the CLI we only verify the checksum of the source when
+  /// it is loaded from the global cache. We don't verify it when loaded from
+  /// the vendor folder.
+  ///
+  /// The source may be verified by running `checksum.check_source(content)?`.
+  pub maybe_checksum: Option<LoaderChecksum>,
+}
+
 /// A trait which allows asynchronous loading of source files into a module
 /// graph in a thread safe way as well as a way to provide additional meta data
 /// about any cached resources.
@@ -135,8 +197,7 @@ pub trait Loader {
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
-    is_dynamic: bool,
-    cache_setting: CacheSetting,
+    options: LoadOptions,
   ) -> LoadFuture;
 
   /// Cache the module info for the provided specifier if the loader
@@ -502,8 +563,7 @@ impl Loader for MemoryLoader {
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
-    _is_dynamic: bool,
-    _cache_setting: CacheSetting,
+    _options: LoadOptions,
   ) -> LoadFuture {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),

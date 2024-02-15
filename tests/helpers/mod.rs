@@ -1,11 +1,17 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
+use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
 
 mod test_builder;
 
+use deno_graph::source::recommended_registry_package_url;
+use deno_graph::source::recommended_registry_package_url_to_nv;
+use deno_graph::source::LoaderChecksum;
+use deno_graph::source::DEFAULT_DENO_REGISTRY_URL;
 use deno_graph::WorkspaceMember;
+use deno_semver::package::PackageNv;
 use indexmap::IndexMap;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -58,12 +64,82 @@ impl Spec {
     }
     text
   }
+
+  /// Fills the `manifest` field in the `_meta.json` files with the checksums
+  /// so that we don't need to bother having them in the tests.
+  pub fn fill_jsr_meta_files_with_checksums(&mut self) {
+    for (nv, checksums_by_files) in self.get_jsr_checksums() {
+      let base_specifier =
+        recommended_registry_package_url(&DEFAULT_DENO_REGISTRY_URL, &nv);
+      let meta_file = base_specifier
+        .join(&format!("../{}_meta.json", nv.version))
+        .unwrap();
+
+      let meta_file = self
+        .files
+        .iter_mut()
+        .find(|f| f.url() == meta_file)
+        .unwrap_or_else(|| panic!("Could not find in specs: {}", meta_file));
+      let mut meta_value = serde_json::from_str::<
+        HashMap<String, serde_json::Value>,
+      >(&meta_file.text)
+      .unwrap();
+      let manifest = meta_value
+        .entry("manifest".to_string())
+        .or_insert_with(|| serde_json::Value::Object(Default::default()))
+        .as_object_mut()
+        .unwrap();
+      for (file, checksum) in checksums_by_files {
+        if !manifest.contains_key(&file) {
+          manifest.insert(file, checksum);
+        }
+      }
+      // use the original text as the emit text so we don't
+      // end up with these hashes in the output
+      meta_file.emit_text = Some(std::mem::take(&mut meta_file.text));
+      meta_file.text = serde_json::to_string_pretty(&meta_value).unwrap();
+    }
+  }
+
+  pub fn get_jsr_checksums(
+    &self,
+  ) -> HashMap<PackageNv, HashMap<String, serde_json::Value>> {
+    let mut checksums_by_package: HashMap<
+      PackageNv,
+      HashMap<String, serde_json::Value>,
+    > = Default::default();
+    for file in &self.files {
+      if let Some(nv) = recommended_registry_package_url_to_nv(
+        &DEFAULT_DENO_REGISTRY_URL,
+        &file.url(),
+      ) {
+        let base_specifier =
+          recommended_registry_package_url(&DEFAULT_DENO_REGISTRY_URL, &nv);
+        let relative_url = file
+          .url()
+          .to_string()
+          .strip_prefix(base_specifier.to_string().strip_suffix('/').unwrap())
+          .unwrap()
+          .to_string();
+        checksums_by_package.entry(nv.clone()).or_default().insert(
+          relative_url,
+          serde_json::json!({
+            "size": file.text.len(),
+            "checksum": format!("sha256-{}", LoaderChecksum::gen(file.text.as_bytes())),
+          }),
+        );
+      }
+    }
+    checksums_by_package
+  }
 }
 
 #[derive(Debug)]
 pub struct SpecFile {
   pub specifier: String,
   pub text: String,
+  /// Text to use when emitting the spec file.
+  pub emit_text: Option<String>,
   pub headers: IndexMap<String, String>,
 }
 
@@ -76,7 +152,7 @@ impl SpecFile {
         serde_json::to_string(&self.headers).unwrap()
       ));
     }
-    text.push_str(&self.text);
+    text.push_str(self.emit_text.as_ref().unwrap_or(&self.text));
     text
   }
 
@@ -119,7 +195,12 @@ pub fn get_specs_in_dir(path: &Path) -> Vec<(PathBuf, Spec)> {
   };
   files
     .into_iter()
-    .map(|file| (file.path, parse_spec(file.text)))
+    .map(|file| {
+      let mut spec = parse_spec(file.text);
+      // always do this as we want this for the spec tests
+      spec.fill_jsr_meta_files_with_checksums();
+      (file.path, spec)
+    })
     .collect()
 }
 
@@ -140,6 +221,7 @@ fn parse_spec(text: String) -> Spec {
       current_file = Some(SpecFile {
         specifier: specifier.to_string(),
         text: String::new(),
+        emit_text: None,
         headers: Default::default(),
       });
     } else if let Some(headers) = line.strip_prefix("HEADERS: ") {

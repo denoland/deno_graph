@@ -13,6 +13,7 @@ use anyhow::anyhow;
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
+use deno_graph::source::LoadOptions;
 use deno_graph::source::LoadResponse;
 use deno_graph::source::MemoryFileSystem;
 use deno_graph::source::MemoryLoader;
@@ -69,16 +70,18 @@ async fn test_graph_specs() {
     }
 
     let result = builder.build().await;
-    let update_var = std::env::var("UPDATE");
     let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
     output_text.push('\n');
     // include the list of jsr dependencies
     let jsr_deps = result
       .graph
       .packages
-      .package_deps()
-      .map(|(k, v)| {
-        (k.to_string(), v.map(|v| v.to_string()).collect::<Vec<_>>())
+      .packages_with_checksum_and_deps()
+      .map(|(k, _checksum, deps)| {
+        (
+          k.to_string(),
+          deps.map(|d| d.to_string()).collect::<Vec<_>>(),
+        )
       })
       .filter(|(_, v)| !v.is_empty())
       .collect::<BTreeMap<_, _>>();
@@ -135,7 +138,9 @@ async fn test_graph_specs() {
       .iter()
       .map(|d| serde_json::to_value(d.to_string()).unwrap())
       .collect::<Vec<_>>();
-    let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
+    let update =
+      std::env::var("UPDATE").as_ref().map(|v| v.as_str()) == Ok("1");
+    let spec = if update {
       let mut spec = spec;
       spec.output_file.text = output_text.clone();
       spec.diagnostics = diagnostics.clone();
@@ -447,11 +452,12 @@ async fn test_jsr_version_not_found_then_found() {
     fn load(
       &mut self,
       specifier: &ModuleSpecifier,
-      is_dynamic: bool,
-      cache_setting: CacheSetting,
+      options: LoadOptions,
     ) -> LoadFuture {
-      assert!(!is_dynamic);
-      self.requests.push((specifier.to_string(), cache_setting));
+      assert!(!options.is_dynamic);
+      self
+        .requests
+        .push((specifier.to_string(), options.cache_setting));
       let specifier = specifier.clone();
       match specifier.as_str() {
         "file:///main.ts" => Box::pin(async move {
@@ -466,7 +472,7 @@ async fn test_jsr_version_not_found_then_found() {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: match cache_setting {
+              content: match options.cache_setting {
                 CacheSetting::Only | CacheSetting::Use => {
                   // first time it won't have the version
                   br#"{ "versions": { "1.0.0": {} } }"#.to_vec().into()
@@ -483,7 +489,17 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
-            content: br#"{ "exports": { ".": "./mod.ts" } }"#.to_vec().into(),
+            content: br#"{
+                "exports": { ".": "./mod.ts" },
+                "manifest": {
+                  "/mod.ts": {
+                    "size": 123,
+                    "checksum": "sha256-b8059cfb1ea623e79efbf432db31595df213c99c6534c58bec9d5f5e069344df"
+                  }
+                }
+              }"#
+              .to_vec()
+              .into(),
           }))
         }),
         "https://jsr.io/@scope/a/1.2.0/mod.ts" => Box::pin(async move {
