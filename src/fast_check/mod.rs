@@ -92,7 +92,7 @@ pub enum FastCheckDiagnostic {
   #[error("referenced a JavaScript module without type declarations from a TypeScript module")]
   UnsupportedNestedJavaScript { specifier: ModuleSpecifier },
   #[error(
-    "used a JavaScript module without type declarations as an entrypoints"
+    "used a JavaScript module without type declarations as an entrypoint"
   )]
   UnsupportedJavaScriptEntrypoint { specifier: ModuleSpecifier },
   #[error("failed to emit fast check module: {inner:#}")]
