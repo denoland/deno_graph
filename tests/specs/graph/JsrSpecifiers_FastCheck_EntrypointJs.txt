@@ -60,5 +60,5 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.js:
-  used a JavaScript module without type declarations as an entrypoints
+  used a JavaScript module without type declarations as an entrypoint
       at https://jsr.io/@scope/a/1.0.0/mod.js
