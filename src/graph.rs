@@ -5183,8 +5183,7 @@ mod tests {
       fn load(
         &mut self,
         specifier: &ModuleSpecifier,
-        _is_dynamic: bool,
-        _cache_setting: CacheSetting,
+        _options: LoadOptions,
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
