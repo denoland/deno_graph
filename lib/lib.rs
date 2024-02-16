@@ -68,10 +68,11 @@ impl Loader for JsLoader {
     options: LoadOptions,
   ) -> LoadFuture {
     #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
     struct JsLoadOptions {
       is_dynamic: bool,
       cache_setting: &'static str,
-      maybe_checksum: Option<String>,
+      checksum: Option<String>,
     }
 
     if specifier.scheme() == "data" {
@@ -83,7 +84,7 @@ impl Loader for JsLoader {
       let arg2 = serde_wasm_bindgen::to_value(&JsLoadOptions {
         is_dynamic: options.is_dynamic,
         cache_setting: options.cache_setting.as_js_str(),
-        maybe_checksum: options.maybe_checksum.map(|c| c.into_string()),
+        checksum: options.maybe_checksum.map(|c| c.into_string()),
       })
       .unwrap();
       let result = self.load.call2(&context, &arg1, &arg2);
