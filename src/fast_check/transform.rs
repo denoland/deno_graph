@@ -4,86 +4,19 @@
 #![allow(clippy::disallowed_methods)]
 #![allow(clippy::disallowed_types)]
 
-use std::rc::Rc;
 use std::sync::Arc;
 
-use deno_ast::swc::ast::Accessibility;
-use deno_ast::swc::ast::ArrayLit;
-use deno_ast::swc::ast::ArrowExpr;
-use deno_ast::swc::ast::BindingIdent;
-use deno_ast::swc::ast::BlockStmt;
-use deno_ast::swc::ast::BlockStmtOrExpr;
-use deno_ast::swc::ast::CallExpr;
-use deno_ast::swc::ast::Callee;
-use deno_ast::swc::ast::Class;
-use deno_ast::swc::ast::ClassMember;
-use deno_ast::swc::ast::ClassProp;
-use deno_ast::swc::ast::Decl;
-use deno_ast::swc::ast::DefaultDecl;
-use deno_ast::swc::ast::Expr;
-use deno_ast::swc::ast::Function;
-use deno_ast::swc::ast::Ident;
-use deno_ast::swc::ast::Lit;
-use deno_ast::swc::ast::MemberProp;
-use deno_ast::swc::ast::MethodKind;
-use deno_ast::swc::ast::ModuleDecl;
-use deno_ast::swc::ast::ModuleItem;
-use deno_ast::swc::ast::ObjectLit;
-use deno_ast::swc::ast::ObjectPatProp;
-use deno_ast::swc::ast::Param;
-use deno_ast::swc::ast::ParamOrTsParamProp;
-use deno_ast::swc::ast::ParenExpr;
-use deno_ast::swc::ast::Pat;
-use deno_ast::swc::ast::PrivateName;
-use deno_ast::swc::ast::PrivateProp;
-use deno_ast::swc::ast::Prop;
-use deno_ast::swc::ast::PropName;
-use deno_ast::swc::ast::PropOrSpread;
-use deno_ast::swc::ast::ReturnStmt;
-use deno_ast::swc::ast::Stmt;
-use deno_ast::swc::ast::Str;
-use deno_ast::swc::ast::TsArrayType;
-use deno_ast::swc::ast::TsAsExpr;
-use deno_ast::swc::ast::TsEntityName;
-use deno_ast::swc::ast::TsIntersectionType;
-use deno_ast::swc::ast::TsKeywordType;
-use deno_ast::swc::ast::TsKeywordTypeKind;
-use deno_ast::swc::ast::TsLit;
-use deno_ast::swc::ast::TsModuleDecl;
-use deno_ast::swc::ast::TsModuleName;
-use deno_ast::swc::ast::TsModuleRef;
-use deno_ast::swc::ast::TsNamespaceBody;
-use deno_ast::swc::ast::TsOptionalType;
-use deno_ast::swc::ast::TsParamPropParam;
-use deno_ast::swc::ast::TsParenthesizedType;
-use deno_ast::swc::ast::TsRestType;
-use deno_ast::swc::ast::TsTupleElement;
-use deno_ast::swc::ast::TsTupleType;
-use deno_ast::swc::ast::TsType;
-use deno_ast::swc::ast::TsTypeAnn;
-use deno_ast::swc::ast::TsTypeOperator;
-use deno_ast::swc::ast::TsTypeOperatorOp;
-use deno_ast::swc::ast::TsTypeParamInstantiation;
-use deno_ast::swc::ast::TsTypeRef;
-use deno_ast::swc::ast::TsUnionOrIntersectionType;
-use deno_ast::swc::ast::TsUnionType;
-use deno_ast::swc::ast::VarDecl;
-use deno_ast::swc::codegen::text_writer::JsWriter;
-use deno_ast::swc::codegen::Node;
+use deno_ast::swc::ast::*;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::common::comments::SingleThreadedComments;
 use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
-use deno_ast::swc::common::FileName;
-use deno_ast::swc::common::SourceMap;
 use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::DUMMY_SP;
-use deno_ast::swc_codegen_config;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
 use deno_ast::ParsedSource;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
-use deno_ast::SourceTextInfo;
 
 use crate::DefaultModuleAnalyzer;
 use crate::ModuleGraph;
@@ -92,6 +25,7 @@ use crate::WorkspaceMember;
 
 use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::any_type_ann;
+use super::swc_helpers::emit;
 use super::swc_helpers::get_return_stmts_with_arg_from_function_body;
 use super::swc_helpers::ident;
 use super::swc_helpers::is_never_type;
@@ -238,6 +172,7 @@ struct FastCheckTransformer<'a> {
   parsed_source: &'a ParsedSource,
   should_error_on_first_diagnostic: bool,
   diagnostics: Vec<FastCheckDiagnostic>,
+  is_decl_file: bool,
 }
 
 impl<'a> FastCheckTransformer<'a> {
@@ -249,6 +184,7 @@ impl<'a> FastCheckTransformer<'a> {
     should_error_on_first_diagnostic: bool,
   ) -> Self {
     Self {
+      is_decl_file: parsed_source.media_type().is_declaration(),
       graph,
       specifier,
       public_ranges,
@@ -1136,59 +1072,71 @@ impl<'a> FastCheckTransformer<'a> {
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     n.decls.retain(|n| self.public_ranges.contains(&n.range()));
 
-    for decl in &mut n.decls {
-      match &mut decl.name {
-        Pat::Ident(ident) => {
-          if ident.type_ann.is_none() {
-            let inferred_type = decl
-              .init
-              .as_ref()
-              .and_then(|e| self.maybe_infer_type_from_expr(e));
-            match inferred_type {
-              Some(t) => {
-                ident.type_ann = Some(Box::new(TsTypeAnn {
-                  span: DUMMY_SP,
-                  type_ann: Box::new(t),
-                }));
-                decl.init = Some(obj_as_any_expr());
-              }
-              None => {
-                let is_init_leavable = match decl.init.as_mut() {
-                  Some(init) => self.maybe_transform_expr_if_leavable(
-                    init,
-                    Some(ident.id.range()),
-                  )?,
-                  None => false,
-                };
-                if !is_init_leavable {
-                  self.mark_diagnostic(
-                    FastCheckDiagnostic::MissingExplicitType {
-                      range: self.source_range_to_range(ident.range()),
-                    },
-                  )?;
-                }
-              }
-            }
-          } else {
-            decl.init = Some(obj_as_any_expr());
-          }
-        }
-        Pat::Array(_)
-        | Pat::Rest(_)
-        | Pat::Object(_)
-        | Pat::Assign(_)
-        | Pat::Invalid(_)
-        | Pat::Expr(_) => {
-          self.mark_diagnostic(
-            FastCheckDiagnostic::UnsupportedDestructuring {
-              range: self.source_range_to_range(decl.name.range()),
-            },
-          )?;
-        }
+    // don't need to do anything for these in a declaration file
+    if !self.is_decl_file {
+      for decl in &mut n.decls {
+        self.transform_var_declarator(decl)?;
       }
     }
 
     Ok(!n.decls.is_empty())
+  }
+
+  fn transform_var_declarator(
+    &mut self,
+    n: &mut VarDeclarator,
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
+    match &mut n.name {
+      Pat::Ident(ident) => {
+        if ident.type_ann.is_none() {
+          let inferred_type = n
+            .init
+            .as_ref()
+            .and_then(|e| self.maybe_infer_type_from_expr(e));
+          match inferred_type {
+            Some(t) => {
+              ident.type_ann = Some(Box::new(TsTypeAnn {
+                span: DUMMY_SP,
+                type_ann: Box::new(t),
+              }));
+              n.init = Some(obj_as_any_expr());
+            }
+            None => {
+              let is_init_leavable = match n.init.as_mut() {
+                Some(init) => self.maybe_transform_expr_if_leavable(
+                  init,
+                  Some(ident.id.range()),
+                )?,
+                None => false,
+              };
+              if !is_init_leavable {
+                self.mark_diagnostic(
+                  FastCheckDiagnostic::MissingExplicitType {
+                    range: self.source_range_to_range(ident.range()),
+                  },
+                )?;
+              }
+            }
+          }
+        } else {
+          n.init = Some(obj_as_any_expr());
+        }
+      }
+      Pat::Array(_)
+      | Pat::Rest(_)
+      | Pat::Object(_)
+      | Pat::Assign(_)
+      | Pat::Invalid(_)
+      | Pat::Expr(_) => {
+        self.mark_diagnostic(
+          FastCheckDiagnostic::UnsupportedDestructuring {
+            range: self.source_range_to_range(n.name.range()),
+          },
+        )?;
+      }
+    }
+
+    Ok(())
   }
 
   fn transform_ts_module(
@@ -1576,47 +1524,6 @@ fn prefix_idents_in_pat(pat: &mut Pat, prefix: &str) {
       // ignore
     }
   }
-}
-
-pub fn emit(
-  specifier: &ModuleSpecifier,
-  comments: &SingleThreadedComments,
-  text_info: &SourceTextInfo,
-  module: &deno_ast::swc::ast::Module,
-) -> Result<(String, Vec<u8>), anyhow::Error> {
-  let source_map = Rc::new(SourceMap::default());
-  let file_name = FileName::Url(specifier.clone());
-  source_map.new_source_file(file_name, text_info.text_str().to_string());
-
-  let mut src_map_buf = vec![];
-  let mut buf = vec![];
-  {
-    let mut writer = Box::new(JsWriter::new(
-      source_map.clone(),
-      "\n",
-      &mut buf,
-      Some(&mut src_map_buf),
-    ));
-    writer.set_indent_str("  "); // two spaces
-
-    let mut emitter = deno_ast::swc::codegen::Emitter {
-      cfg: swc_codegen_config(),
-      comments: Some(comments),
-      cm: source_map.clone(),
-      wr: writer,
-    };
-    module.emit_with(&mut emitter)?;
-  }
-  let src = String::from_utf8(buf)?;
-  let map = {
-    let mut buf = Vec::new();
-    source_map
-      .build_source_map_from(&src_map_buf, None)
-      .to_writer(&mut buf)?;
-    buf
-  };
-
-  Ok((src, map))
 }
 
 fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {

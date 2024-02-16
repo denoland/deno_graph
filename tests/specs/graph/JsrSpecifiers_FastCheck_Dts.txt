@@ -1,0 +1,109 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.js" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.d.ts
+export class Test {
+  prop: typeof random;
+  method(): typeof public;
+  static prop: number;
+}
+
+declare function random(): number;
+
+declare var private: number; // will be removed
+declare var public: number;
+
+# https://jsr.io/@scope/a/1.0.0/mod.js
+/// <reference types="./mod.d.ts" />
+export class Test {}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 208,
+      "mediaType": "Dts",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.d.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 58,
+      "typesDependency": {
+        "specifier": "./mod.d.ts",
+        "dependency": {
+          "specifier": "https://jsr.io/@scope/a/1.0.0/mod.d.ts",
+          "span": {
+            "start": {
+              "line": 0,
+              "character": 21
+            },
+            "end": {
+              "line": 0,
+              "character": 33
+            }
+          }
+        }
+      },
+      "mediaType": "JavaScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.js"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.js"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.d.ts:
+  {}
+  export class Test {
+    prop!: typeof random;
+    method(): typeof public;
+    static prop: number;
+  }
+  declare function random(): number;
+  declare var public: number;
+  --- DTS ---
+  export declare class Test {
+    prop: typeof random;
+    method(): typeof public;
+    static prop: number;
+  }
+  declare function random(): number;
+  declare var public: number;
