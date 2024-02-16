@@ -4,7 +4,12 @@
 # https://jsr.io/@scope/a/1.0.0_meta.json
 { "exports": { ".": "./mod.js" } }
 
+# https://jsr.io/@scope/a/1.0.0/other.d.ts
+export class Other {}
+
 # https://jsr.io/@scope/a/1.0.0/mod.d.ts
+import { Other } from "./other.d.ts"; // will be removed because not used
+
 export class Test {
   prop: typeof random;
   method(): typeof public;
@@ -55,7 +60,25 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 208,
+      "dependencies": [
+        {
+          "specifier": "./other.d.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/other.d.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 22
+              },
+              "end": {
+                "line": 0,
+                "character": 36
+              }
+            }
+          }
+        }
+      ],
+      "size": 283,
       "mediaType": "Dts",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.d.ts"
     },
@@ -80,6 +103,12 @@ import 'jsr:@scope/a'
       },
       "mediaType": "JavaScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.js"
+    },
+    {
+      "kind": "esm",
+      "size": 22,
+      "mediaType": "Dts",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/other.d.ts"
     }
   ],
   "redirects": {
