@@ -270,49 +270,19 @@ impl<'a> FastCheckDtsTransformer<'a> {
           prev_is_overload = false;
           if let Stmt::Decl(decl) = stmt {
             match decl {
-              Decl::TsEnum(ts_enum) => {
-                if let Some(decl) =
-                  self.decl_to_type_decl(Decl::TsEnum(ts_enum.clone()))
-                {
+              Decl::TsEnum(_) | Decl::Class(_) | Decl::Fn(_) | Decl::Var(_) => {
+                if let Some(decl) = self.decl_to_type_decl(decl.clone()) {
                   new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
                 } else {
-                  self.mark_diagnostic_unable_to_infer(ts_enum.range())
+                  self.mark_diagnostic_unable_to_infer(decl.range())
                 }
               }
+
               Decl::TsInterface(_)
               | Decl::TsTypeAlias(_)
               | Decl::Using(_)
               | Decl::TsModule(_) => {
                 new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
-              }
-              // Since fast check requires explicit type annotations we
-              // can drop other statements not part of an export statement.
-              Decl::Class(class_decl) => {
-                if let Some(decl) =
-                  self.decl_to_type_decl(Decl::Class(class_decl.clone()))
-                {
-                  new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
-                } else {
-                  self.mark_diagnostic_unable_to_infer(class_decl.range())
-                }
-              }
-              Decl::Fn(fn_decl) => {
-                if let Some(decl) =
-                  self.decl_to_type_decl(Decl::Fn(fn_decl.clone()))
-                {
-                  new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
-                } else {
-                  self.mark_diagnostic_unable_to_infer(fn_decl.range())
-                }
-              }
-              Decl::Var(var_decl) => {
-                if let Some(decl) =
-                  self.decl_to_type_decl(Decl::Var(var_decl.clone()))
-                {
-                  new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
-                } else {
-                  self.mark_diagnostic_unable_to_infer(var_decl.range())
-                }
               }
             }
           }
