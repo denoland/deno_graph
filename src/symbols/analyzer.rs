@@ -82,7 +82,20 @@ impl<'a> RootSymbol<'a> {
     };
 
     match graph_module {
-      crate::Module::Js(js_module) => self.analyze_js_module(js_module),
+      crate::Module::Js(js_module) => js_module
+        .maybe_types_dependency
+        .as_ref()
+        .and_then(|types| {
+          types.dependency.maybe_specifier().and_then(|specifier| {
+            // shouldn't happen, but prevent circular loops
+            if specifier != &js_module.specifier {
+              self.module_from_specifier(specifier)
+            } else {
+              None
+            }
+          })
+        })
+        .or_else(|| self.analyze_js_module(js_module)),
       crate::Module::Json(json_module) => {
         Some(self.analyze_json_module(json_module))
       }
