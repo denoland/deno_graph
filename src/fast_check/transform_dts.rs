@@ -206,7 +206,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
           }
           ModuleDecl::ExportDefaultExpr(export_default_expr) => {
             let is_overload =
-              if let Expr::Fn(fn_expr) = &*export_default_expr.expr.clone() {
+              if let Expr::Fn(fn_expr) = &*export_default_expr.expr {
                 fn_expr.function.body.is_none()
               } else {
                 false
