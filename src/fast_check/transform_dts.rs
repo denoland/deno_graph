@@ -1,25 +1,19 @@
-use deno_ast::{
-  swc::{
-    ast::{
-      BindingIdent, ClassMember, Decl, DefaultDecl, ExportDecl,
-      ExportDefaultDecl, ExportDefaultExpr, Expr, Ident, Lit, MethodKind,
-      Module, ModuleDecl, ModuleItem, OptChainBase, Pat, Prop, PropName,
-      PropOrSpread, Stmt, TsFnOrConstructorType, TsFnParam, TsFnType,
-      TsKeywordType, TsKeywordTypeKind, TsLit, TsNamespaceBody,
-      TsPropertySignature, TsTupleElement, TsTupleType, TsType, TsTypeAnn,
-      TsTypeElement, TsTypeLit, VarDecl, VarDeclKind, VarDeclarator,
-    },
-    common::DUMMY_SP,
-  },
-  ModuleSpecifier, ParsedSource, SourceRange, SourceRangedForSpanned,
-};
+use deno_ast::swc::ast::*;
+use deno_ast::swc::common::DUMMY_SP;
+use deno_ast::ModuleSpecifier;
+use deno_ast::ParsedSource;
+use deno_ast::SourceRange;
+use deno_ast::SourceRangedForSpanned;
 
-use crate::{FastCheckDiagnostic, FastCheckDiagnosticRange};
+use crate::FastCheckDiagnostic;
+use crate::FastCheckDiagnosticRange;
 
-use super::swc_helpers::{
-  any_type_ann, maybe_lit_to_ts_type, maybe_lit_to_ts_type_const, ts_readonly,
-  ts_tuple_element, type_ann,
-};
+use super::swc_helpers::any_type_ann;
+use super::swc_helpers::maybe_lit_to_ts_type;
+use super::swc_helpers::maybe_lit_to_ts_type_const;
+use super::swc_helpers::ts_readonly;
+use super::swc_helpers::ts_tuple_element;
+use super::swc_helpers::type_ann;
 
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum FastCheckDtsDiagnostic {
@@ -927,12 +921,15 @@ impl<'a> FastCheckDtsTransformer<'a> {
 
 #[cfg(test)]
 mod tests {
-  use crate::{
-    fast_check::{transform::emit, transform_dts::FastCheckDtsTransformer},
-    source::{MemoryLoader, Source},
-    symbols::RootSymbol,
-    BuildOptions, DefaultModuleParser, GraphKind, ModuleGraph,
-  };
+  use crate::fast_check::swc_helpers::emit;
+  use crate::fast_check::transform_dts::FastCheckDtsTransformer;
+  use crate::source::MemoryLoader;
+  use crate::source::Source;
+  use crate::symbols::RootSymbol;
+  use crate::BuildOptions;
+  use crate::DefaultModuleParser;
+  use crate::GraphKind;
+  use crate::ModuleGraph;
   use url::Url;
 
   async fn transform_dts_test(source: &str, expected: &str) {

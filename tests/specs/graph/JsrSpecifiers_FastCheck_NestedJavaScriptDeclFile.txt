@@ -201,7 +201,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/a.d.ts:
 Fast check https://jsr.io/@scope/a/1.0.0/b.d.ts:
   {}
   export class B1 {
-    prop!: string;
+    prop: string;
   }
   --- DTS ---
   export declare class B1 {
