@@ -140,8 +140,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   declare class Public {
   }
-  module Test {
-    export class A {
+  declare module Test {
+    export declare class A {
     }
   }
   export declare const handlers: {
@@ -163,8 +163,8 @@ Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
   --- DTS ---
   declare class BaseHandler {
   }
-  module Test {
-    export class A {
+  declare module Test {
+    export declare class A {
     }
   }
   export function test(a?: any, C?: any): void;
