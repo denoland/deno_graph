@@ -122,7 +122,7 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.d.ts:
   {}
   export class Test {
-    prop!: typeof random;
+    prop: typeof random;
     method(): typeof public;
     static prop: number;
   }

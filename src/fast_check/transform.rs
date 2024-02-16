@@ -445,6 +445,10 @@ impl<'a> FastCheckTransformer<'a> {
     n: &mut Class,
     comments: &mut CommentsMut,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
+    if self.is_decl_file {
+      return Ok(()); // no need to do anything
+    }
+
     let mut members = Vec::with_capacity(n.body.len());
     let mut had_private = false;
     if let Some(super_class) = &n.super_class {
@@ -790,6 +794,9 @@ impl<'a> FastCheckTransformer<'a> {
     is_overload: bool,
     is_set_accessor: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
+    if self.is_decl_file {
+      return Ok(()); // no need to do anything
+    }
     if is_overload {
       for (i, param) in n.params.iter_mut().enumerate() {
         *param = Param {
