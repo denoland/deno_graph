@@ -5,15 +5,6 @@ use std::sync::Arc;
 
 use crate::ModuleSpecifier;
 
-#[cfg(feature = "fast_check")]
-mod range_finder;
-#[cfg(feature = "fast_check")]
-mod swc_helpers;
-#[cfg(feature = "fast_check")]
-mod transform;
-#[cfg(feature = "fast_check")]
-mod transform_dts;
-
 use deno_ast::diagnostics::DiagnosticLevel;
 use deno_ast::diagnostics::DiagnosticLocation;
 use deno_ast::diagnostics::DiagnosticSnippet;
@@ -23,6 +14,20 @@ use deno_ast::diagnostics::DiagnosticSourcePos;
 use deno_ast::diagnostics::DiagnosticSourceRange;
 use deno_ast::SourceRange;
 use deno_ast::SourceTextInfo;
+
+mod cache;
+#[cfg(feature = "fast_check")]
+mod range_finder;
+#[cfg(feature = "fast_check")]
+mod swc_helpers;
+#[cfg(feature = "fast_check")]
+mod transform;
+#[cfg(feature = "fast_check")]
+mod transform_dts;
+
+pub use cache::FastCheckCache;
+pub use cache::FastCheckCacheItem;
+pub use cache::FastCheckCacheKey;
 #[cfg(feature = "fast_check")]
 pub use transform::FastCheckDtsModule;
 #[cfg(feature = "fast_check")]
@@ -384,6 +389,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
 
 #[cfg(feature = "fast_check")]
 pub fn build_fast_check_type_graph<'a>(
+  fast_check_cache: Option<&'a dyn FastCheckCache>,
   loader: &'a dyn crate::source::Loader,
   graph: &'a crate::ModuleGraph,
   root_symbol: &'a crate::symbols::RootSymbol<'a>,
@@ -393,7 +399,13 @@ pub fn build_fast_check_type_graph<'a>(
   crate::ModuleSpecifier,
   Result<FastCheckModule, Vec<FastCheckDiagnostic>>,
 )> {
+  use crate::fast_check::cache::fast_insecure_hash;
+  use crate::fast_check::cache::FastCheckCacheModuleItem;
+  use crate::fast_check::cache::FastCheckCacheModuleItemDiagnostic;
+  use crate::fast_check::cache::FastCheckCacheModuleItemInfo;
+
   let public_modules = range_finder::find_public_ranges(
+    fast_check_cache,
     loader,
     graph,
     root_symbol,
@@ -430,6 +442,8 @@ pub fn build_fast_check_type_graph<'a>(
             }
           }
           Err(d) => {
+            // don't clear the fast_check_modules here because we still
+            // use that to construct the package's cache items
             errors.extend(d);
           }
         }
@@ -437,8 +451,69 @@ pub fn build_fast_check_type_graph<'a>(
     }
 
     if errors.is_empty() {
+      if let Some(fast_check_cache) = fast_check_cache {
+        let package_cache_items = fast_check_modules
+          .iter()
+          .map(|(specifier, module_result)| {
+            let source_hash = graph
+              .get(specifier)
+              .and_then(|m| m.source())
+              .map(|s| fast_insecure_hash(s.as_bytes()))
+              .unwrap_or(0);
+            let module = module_result.as_ref().ok().unwrap();
+            (
+              specifier.clone(),
+              FastCheckCacheModuleItem::Info(FastCheckCacheModuleItemInfo {
+                source_hash,
+                module_info: module.module_info.clone(),
+                text: module.text.clone(),
+                source_map: module.source_map.clone(),
+              }),
+            )
+          })
+          .collect::<Vec<_>>();
+        let cache_key = FastCheckCacheKey::build(&nv, &package.entrypoints);
+        fast_check_cache.set(
+          cache_key,
+          FastCheckCacheItem {
+            dependencies: package.dependencies,
+            modules: package_cache_items,
+          },
+        );
+      }
       final_result.extend(fast_check_modules);
     } else {
+      let specifiers = errors
+        .iter()
+        .map(|e| e.specifier())
+        .chain(fast_check_modules.iter().map(|m| &m.0));
+      if let Some(fast_check_cache) = fast_check_cache {
+        let package_cache_items = specifiers
+          .map(|specifier| {
+            let source_hash = graph
+              .get(specifier)
+              .and_then(|m| m.source())
+              .map(|s| fast_insecure_hash(s.as_bytes()))
+              .unwrap_or(0);
+            (
+              specifier.clone(),
+              FastCheckCacheModuleItem::Diagnostic(
+                FastCheckCacheModuleItemDiagnostic { source_hash },
+              ),
+            )
+          })
+          .collect::<Vec<_>>();
+
+        let cache_key = FastCheckCacheKey::build(&nv, &package.entrypoints);
+        fast_check_cache.set(
+          cache_key,
+          FastCheckCacheItem {
+            dependencies: package.dependencies,
+            modules: package_cache_items,
+          },
+        );
+      }
+
       // If there are errors, insert a copy into each entrypoint.
       //
       // If one entrypoint can't be analyzed then we consider all

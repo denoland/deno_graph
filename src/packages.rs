@@ -9,7 +9,6 @@ use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
 use deno_semver::VersionReq;
-use indexmap::IndexMap;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -90,7 +89,7 @@ impl JsrPackageVersionInfo {
 struct PackageNvInfo {
   manifest_checksum: String,
   /// Collection of exports used.
-  exports: IndexMap<String, String>,
+  exports: BTreeMap<String, String>,
   found_dependencies: HashSet<JsrDepPackageReq>,
 }
 
@@ -216,7 +215,7 @@ impl PackageSpecifiers {
   pub fn package_exports(
     &self,
     nv: &PackageNv,
-  ) -> Option<&IndexMap<String, String>> {
+  ) -> Option<&BTreeMap<String, String>> {
     self.packages.get(nv).map(|p| &p.exports)
   }
 

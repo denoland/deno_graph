@@ -1,5 +1,7 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
+use std::borrow::Cow;
+use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -22,11 +24,15 @@ use crate::symbols::SymbolDeclKind;
 use crate::symbols::SymbolId;
 use crate::symbols::SymbolNodeDep;
 use crate::symbols::SymbolNodeRef;
+use crate::FastCheckCache;
+use crate::FastCheckCacheItem;
+use crate::FastCheckCacheKey;
 use crate::FastCheckDiagnosticRange;
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
 use crate::WorkspaceMember;
 
+use super::cache::fast_insecure_hash;
 use super::FastCheckDiagnostic;
 
 #[derive(Default, Debug, Clone)]
@@ -254,6 +260,7 @@ struct PendingTrace {
 }
 
 pub fn find_public_ranges<'a>(
+  fast_check_cache: Option<&'a dyn FastCheckCache>,
   loader: &'a dyn Loader,
   graph: &'a ModuleGraph,
   root_symbol: &'a RootSymbol<'a>,
@@ -266,6 +273,7 @@ pub fn find_public_ranges<'a>(
     pending_nvs,
     pending_traces: Default::default(),
     public_ranges: Default::default(),
+    fast_check_cache,
     graph,
     workspace_members,
     root_symbol,
@@ -328,14 +336,16 @@ impl<'a> RegistryUrlConverter<'a> {
 
 #[derive(Debug, Default)]
 pub struct PackagePublicRanges {
-  pub entrypoints: Vec<ModuleSpecifier>,
+  pub entrypoints: BTreeSet<ModuleSpecifier>,
   pub module_ranges: HashMap<ModuleSpecifier, ModulePublicRanges>,
+  pub dependencies: HashSet<PackageNv>,
   pub errors: Vec<FastCheckDiagnostic>,
 }
 
 struct PublicRangeFinder<'a> {
   url_converter: RegistryUrlConverter<'a>,
   graph: &'a ModuleGraph,
+  fast_check_cache: Option<&'a dyn FastCheckCache>,
   workspace_members: &'a [WorkspaceMember],
   root_symbol: &'a RootSymbol<'a>,
   pending_nvs: VecDeque<PackageNv>,
@@ -348,19 +358,45 @@ struct PublicRangeFinder<'a> {
 impl<'a> PublicRangeFinder<'a> {
   pub fn find(mut self) -> HashMap<PackageNv, PackagePublicRanges> {
     while let Some(nv) = self.pending_nvs.pop_front() {
-      let Some(exports) =
-        self.graph.packages.package_exports(&nv).or_else(|| {
-          Some(&self.workspace_members.iter().find(|m| m.nv == nv)?.exports)
+      let Some(exports) = self
+        .graph
+        .packages
+        .package_exports(&nv)
+        .map(Cow::Borrowed)
+        .or_else(|| {
+          Some(Cow::Owned(
+            self
+              .workspace_members
+              .iter()
+              .find(|m| m.nv == nv)?
+              .exports
+              .iter()
+              .map(|(k, v)| (k.clone(), v.clone()))
+              .collect(),
+          ))
         })
       else {
         continue; // should never happen
       };
       let base_url = self.url_converter.registry_package_url(&nv);
-      let mut entrypoints = Vec::with_capacity(exports.len());
+      let export_specifiers = exports
+        .values()
+        .map(|value| {
+          // if we got this far, then the export must be valid, so we can unwrap
+          base_url.join(value).unwrap()
+        })
+        .collect::<BTreeSet<_>>();
+      if let Some(fast_check_cache) = &self.fast_check_cache {
+        let cache_key = FastCheckCacheKey::build(&nv, &export_specifiers);
+        if let Some(cache_item) = fast_check_cache.get(cache_key) {
+          if self.is_cache_item_valid(&cache_item) {
+            eprintln!("VALID");
+          }
+        }
+      }
+      let mut entrypoints = BTreeSet::new();
       let mut errors = Vec::new();
-      for value in exports.values() {
-        // if we got this far, then the export must be valid, so we can unwrap
-        let specifier = base_url.join(value).unwrap();
+      for specifier in export_specifiers {
         if self.is_typed_specifier(&specifier) {
           self.add_pending_trace(
             &nv,
@@ -373,7 +409,7 @@ impl<'a> PublicRangeFinder<'a> {
           });
         }
 
-        entrypoints.push(specifier);
+        entrypoints.insert(specifier);
       }
 
       while let Some(trace) = self.pending_traces.pop() {
@@ -388,6 +424,22 @@ impl<'a> PublicRangeFinder<'a> {
     self.public_ranges
   }
 
+  fn is_cache_item_valid(&self, cache_item: &FastCheckCacheItem) -> bool {
+    for (specifier, module_item) in &cache_item.modules {
+      let hash = self
+        .graph
+        .get(specifier)
+        .and_then(|m| m.source())
+        .map(|s| fast_insecure_hash(s.as_bytes()))
+        .unwrap_or(0);
+      if hash != module_item.source_hash() {
+        return false;
+      }
+    }
+
+    true
+  }
+
   fn add_pending_trace(
     &mut self,
     nv: &PackageNv,
@@ -398,6 +450,23 @@ impl<'a> PublicRangeFinder<'a> {
       self
         .pending_traces
         .add(nv.clone(), specifier.clone(), trace);
+    }
+  }
+
+  fn add_pending_nv(&mut self, dep: &PackageNv, referrer_nv: &PackageNv) {
+    // when a package is referenced then we need to analyze
+    // all the dependencies for it in the graph
+    let is_new_dep = self
+      .public_ranges
+      .entry(referrer_nv.clone())
+      .or_default()
+      .dependencies
+      .insert(dep.clone());
+    if is_new_dep {
+      let never_seen = self.seen_nvs.insert(dep.clone());
+      if never_seen {
+        self.pending_nvs.push_back(dep.clone());
+      }
     }
   }
 
@@ -504,9 +573,7 @@ impl<'a> PublicRangeFinder<'a> {
               .url_converter
               .registry_package_url_to_nv(&dep_specifier)
             {
-              if self.seen_nvs.insert(dep_nv.clone()) {
-                self.pending_nvs.push_back(dep_nv.clone());
-              }
+              self.add_pending_nv(&dep_nv, &pkg_nv);
 
               self.add_pending_trace(
                 &dep_nv,
@@ -686,9 +753,7 @@ impl<'a> PublicRangeFinder<'a> {
                       );
                     } else {
                       // need to analyze the whole package
-                      if self.seen_nvs.insert(dep_nv.clone()) {
-                        self.pending_nvs.push_back(dep_nv.clone());
-                      }
+                      self.add_pending_nv(&dep_nv, &pkg_nv);
                     }
                   }
                 }
@@ -745,9 +810,7 @@ impl<'a> PublicRangeFinder<'a> {
                               );
                             } else {
                               // need to analyze the whole package
-                              if self.seen_nvs.insert(dep_nv.clone()) {
-                                self.pending_nvs.push_back(dep_nv.clone());
-                              }
+                              self.add_pending_nv(&dep_nv, &pkg_nv);
                             }
                           }
                         }
@@ -856,9 +919,7 @@ impl<'a> PublicRangeFinder<'a> {
                       );
                     } else {
                       // need to analyze the whole package
-                      if self.seen_nvs.insert(dep_nv.clone()) {
-                        self.pending_nvs.push_back(dep_nv.clone());
-                      }
+                      self.add_pending_nv(&dep_nv, &pkg_nv);
                     }
                   }
                 }

@@ -9,6 +9,7 @@ use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
+use crate::fast_check::FastCheckCache;
 #[cfg(feature = "fast_check")]
 use crate::fast_check::FastCheckDtsModule;
 use crate::CapturingModuleAnalyzer;
@@ -755,6 +756,16 @@ impl Module {
       None
     }
   }
+
+  pub fn source(&self) -> Option<&Arc<str>> {
+    match self {
+      crate::Module::Js(m) => Some(&m.source),
+      crate::Module::Json(m) => Some(&m.source),
+      crate::Module::Npm(_)
+      | crate::Module::Node(_)
+      | crate::Module::External(_) => None,
+    }
+  }
 }
 
 /// An npm package entrypoint.
@@ -980,6 +991,8 @@ pub struct BuildOptions<'a> {
   /// be extra modules such as TypeScript's "types" option or JSX
   /// runtime types.
   pub imports: Vec<ReferrerImports>,
+  pub fast_check_cache: Option<&'a dyn FastCheckCache>,
+  pub fast_check_dts: bool,
   pub file_system: Option<&'a dyn FileSystem>,
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
@@ -989,7 +1002,6 @@ pub struct BuildOptions<'a> {
   /// Whether to fill workspace members with fast check TypeScript data.
   pub workspace_fast_check: bool,
   pub workspace_members: Vec<WorkspaceMember>,
-  pub fast_check_dts: bool,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -1423,6 +1435,7 @@ impl ModuleGraph {
       options.resolver,
       options.npm_resolver,
       loader,
+      options.fast_check_cache,
       options.module_analyzer.unwrap_or(&default_module_parser),
       options.module_parser.unwrap_or(&default_module_parser),
       options.reporter,
@@ -2763,6 +2776,7 @@ struct Builder<'a, 'graph> {
   loader: &'a mut dyn Loader,
   resolver: Option<&'a dyn Resolver>,
   npm_resolver: Option<&'a dyn NpmResolver>,
+  fast_check_cache: Option<&'a dyn FastCheckCache>,
   module_analyzer: &'a dyn ModuleAnalyzer,
   #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
   module_parser: &'a dyn ModuleParser,
@@ -2789,6 +2803,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     resolver: Option<&'a dyn Resolver>,
     npm_resolver: Option<&'a dyn NpmResolver>,
     loader: &'a mut dyn Loader,
+    fast_check_cache: Option<&'a dyn FastCheckCache>,
     module_analyzer: &'a dyn ModuleAnalyzer,
     #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
     module_parser: &'a dyn ModuleParser,
@@ -2807,6 +2822,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       loader,
       resolver,
       npm_resolver,
+      fast_check_cache,
       module_analyzer,
       module_parser,
       reporter,
@@ -4082,6 +4098,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       crate::symbols::RootSymbol::new(self.graph, self.module_parser);
 
     let modules = crate::fast_check::build_fast_check_type_graph(
+      self.fast_check_cache,
       self.loader,
       self.graph,
       &root_symbol,
@@ -4111,7 +4128,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             Default::default();
           fill_module_dependencies(
             GraphKind::TypesOnly,
-            fast_check_module.module_info.dependencies,
+            match Arc::try_unwrap(fast_check_module.module_info) {
+              Ok(module_info) => module_info.dependencies,
+              Err(module_info) => module_info.dependencies.clone(),
+            },
             &module.specifier,
             &mut dependencies,
             // no need to resolve dynamic imports
@@ -4121,8 +4141,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           );
           FastCheckTypeModuleSlot::Module(Box::new(FastCheckTypeModule {
             dependencies,
-            source: fast_check_module.text.into(),
-            source_map: fast_check_module.source_map.into(),
+            source: fast_check_module.text,
+            source_map: fast_check_module.source_map,
             dts: fast_check_module.dts,
           }))
         }

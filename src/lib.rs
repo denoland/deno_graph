@@ -45,6 +45,12 @@ pub use ast::ParseOptions;
 pub use ast::ParsedSourceStore;
 pub use deno_ast::MediaType;
 #[cfg(feature = "fast_check")]
+pub use fast_check::FastCheckCache;
+#[cfg(feature = "fast_check")]
+pub use fast_check::FastCheckCacheItem;
+#[cfg(feature = "fast_check")]
+pub use fast_check::FastCheckCacheKey;
+#[cfg(feature = "fast_check")]
 pub use fast_check::FastCheckDiagnostic;
 #[cfg(feature = "fast_check")]
 pub use fast_check::FastCheckDiagnosticRange;

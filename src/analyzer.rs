@@ -1,5 +1,6 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
+use std::fmt;
 use std::sync::Arc;
 
 use deno_ast::dep::DependencyKind;
@@ -12,6 +13,8 @@ use deno_ast::SourceTextInfo;
 use once_cell::sync::Lazy;
 use regex::Match;
 use regex::Regex;
+use serde::de;
+use serde::de::SeqAccess;
 use serde::ser::SerializeTuple;
 use serde::Deserialize;
 use serde::Serialize;
@@ -77,7 +80,7 @@ pub fn analyze_deno_types(
   }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PositionRange {
   pub start: Position,
   pub end: Position,
@@ -109,9 +112,7 @@ impl PositionRange {
   }
 }
 
-// Custom serialization to serialize to an array. Interestingly we
-// don't need to implement custom deserialization logic that does
-// the same thing, and serde_json will handle it fine.
+// Custom serialization to serialize to an array.
 impl Serialize for PositionRange {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
@@ -135,6 +136,48 @@ impl Serialize for PositionRange {
     seq.serialize_element(&PositionSerializer(&self.start))?;
     seq.serialize_element(&PositionSerializer(&self.end))?;
     seq.end()
+  }
+}
+
+impl<'de> Deserialize<'de> for PositionRange {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'de>,
+  {
+    struct PositionRangeVisitor;
+
+    impl<'de> de::Visitor<'de> for PositionRangeVisitor {
+      type Value = PositionRange;
+
+      fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a tuple of two tuples")
+      }
+
+      fn visit_seq<V>(self, mut seq: V) -> Result<PositionRange, V::Error>
+      where
+        V: SeqAccess<'de>,
+      {
+        fn read_position<'de, V>(seq: &mut V) -> Result<Position, V::Error>
+        where
+          V: SeqAccess<'de>,
+        {
+          if let Some((line, character)) = seq.next_element()? {
+            Ok(Position { line, character })
+          } else {
+            Err(de::Error::invalid_length(
+              0,
+              &"expected a tuple for position",
+            ))
+          }
+        }
+
+        let start = read_position(&mut seq)?;
+        let end = read_position(&mut seq)?;
+        Ok(PositionRange { start, end })
+      }
+    }
+
+    deserializer.deserialize_tuple(2, PositionRangeVisitor)
   }
 }
 
