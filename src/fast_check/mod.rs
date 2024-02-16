@@ -213,33 +213,29 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
     // WARNING: When adding a code, make sure to update jsr
     use FastCheckDiagnostic::*;
     Cow::Borrowed(match self {
-      NotFoundReference { .. } => "zap-not-found-reference",
-      MissingExplicitType { .. } => "zap-missing-explicit-type",
-      MissingExplicitReturnType { .. } => "zap-missing-explicit-return-type",
-      UnsupportedAmbientModule { .. } => "zap-unsupported-ambient-module",
-      UnsupportedComplexReference { .. } => "zap-unsupported-complex-reference",
-      UnsupportedDefaultExportExpr { .. } => {
-        "zap-unsupported-default-export-expr"
-      }
-      UnsupportedDestructuring { .. } => "zap-unsupported-destructuring",
-      UnsupportedGlobalModule { .. } => "zap-unsupported-global-module",
-      UnsupportedRequire { .. } => "zap-unsupported-require",
+      NotFoundReference { .. } => "not-found-reference",
+      MissingExplicitType { .. } => "missing-explicit-type",
+      MissingExplicitReturnType { .. } => "missing-explicit-return-type",
+      UnsupportedAmbientModule { .. } => "unsupported-ambient-module",
+      UnsupportedComplexReference { .. } => "unsupported-complex-reference",
+      UnsupportedDefaultExportExpr { .. } => "unsupported-default-export-expr",
+      UnsupportedDestructuring { .. } => "unsupported-destructuring",
+      UnsupportedGlobalModule { .. } => "unsupported-global-module",
+      UnsupportedRequire { .. } => "unsupported-require",
       UnsupportedPrivateMemberReference { .. } => {
-        "zap-unsupported-private-member-reference"
+        "unsupported-private-member-reference"
       }
-      UnsupportedSuperClassExpr { .. } => "zap-unsupported-super-class-expr",
+      UnsupportedSuperClassExpr { .. } => "unsupported-super-class-expr",
       UnsupportedTsExportAssignment { .. } => {
-        "zap-unsupported-ts-export-assignment"
+        "unsupported-ts-export-assignment"
       }
-      UnsupportedTsNamespaceExport { .. } => {
-        "zap-unsupported-ts-namespace-export"
-      }
-      UnsupportedUsing { .. } => "zap-unsupported-using",
-      UnsupportedNestedJavaScript { .. } => "zap-unsupported-nested-javascript",
+      UnsupportedTsNamespaceExport { .. } => "unsupported-ts-namespace-export",
+      UnsupportedUsing { .. } => "unsupported-using",
+      UnsupportedNestedJavaScript { .. } => "unsupported-nested-javascript",
       UnsupportedJavaScriptEntrypoint { .. } => {
-        "zap-unsupported-javascript-entrypoint"
+        "unsupported-javascript-entrypoint"
       }
-      Emit { .. } => "zap-emit",
+      Emit { .. } => "emit",
     })
   }
 
@@ -375,7 +371,10 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
   }
 
   fn docs_url(&self) -> Option<Cow<'_, str>> {
-    Some(Cow::Owned(format!("https://jsr.io/go/{}", self.code())))
+    Some(Cow::Owned(format!(
+      "https://jsr.io/go/slow-type-{}",
+      self.code()
+    )))
   }
 }
 
