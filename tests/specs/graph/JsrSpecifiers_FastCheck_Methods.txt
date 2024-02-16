@@ -140,3 +140,25 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   class PublicOther2 {
   }
+  --- DTS ---
+  export declare class Test {
+    test1(): void;
+    test2(): number;
+    test3(param: number): number;
+    test4(param?: number): number;
+    test5<T extends PublicOther>(param?: number): T;
+    test6<T = PublicOther>(param?: number): T;
+    test7(param?: number): number;
+    test7(param?: number, param2?: PublicOther2): number;
+    test8(param: number): number;
+    test8(param: string): string;
+  }
+  export declare class Test2 {
+    public method1(): void;
+    protected method2(): void;
+    private tsPrivateMethod: unknown;
+  }
+  declare class PublicOther {
+  }
+  declare class PublicOther2 {
+  }

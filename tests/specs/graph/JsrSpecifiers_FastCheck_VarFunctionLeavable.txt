@@ -91,6 +91,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/b.ts:
   export type Foo = string;
   export class Bar {
   }
+  --- DTS ---
+  export type Foo = string;
+  export declare class Bar {
+  }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {
@@ -117,3 +121,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export const bar = function(): Bar {
     return {} as any;
   };
+  --- DTS ---
+  import type { Foo, Bar } from "./b.ts";
+  export declare const foo: (foo: Foo) => string;
+  export declare const bar: () => Bar;

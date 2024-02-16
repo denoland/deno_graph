@@ -9,9 +9,17 @@ use deno_ast::swc::ast::PropName;
 use deno_ast::swc::ast::PropOrSpread;
 use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
+use deno_ast::swc::ast::TsEntityName;
 use deno_ast::swc::ast::TsKeywordType;
 use deno_ast::swc::ast::TsKeywordTypeKind;
+use deno_ast::swc::ast::TsLit;
+use deno_ast::swc::ast::TsLitType;
+use deno_ast::swc::ast::TsTupleElement;
 use deno_ast::swc::ast::TsType;
+use deno_ast::swc::ast::TsTypeAnn;
+use deno_ast::swc::ast::TsTypeOperator;
+use deno_ast::swc::ast::TsTypeOperatorOp;
+use deno_ast::swc::ast::TsTypeRef;
 use deno_ast::swc::common::DUMMY_SP;
 
 pub fn ident(name: String) -> Ident {
@@ -185,5 +193,77 @@ fn is_keyword_type(return_type: &TsType, kind: TsKeywordTypeKind) -> bool {
   match return_type {
     TsType::TsKeywordType(TsKeywordType { kind: k, .. }) => k == &kind,
     _ => false,
+  }
+}
+
+pub fn any_type_ann() -> Box<TsTypeAnn> {
+  type_ann(ts_keyword_type(TsKeywordTypeKind::TsAnyKeyword))
+}
+
+pub fn ts_readonly(ann: TsType) -> TsType {
+  TsType::TsTypeOperator(TsTypeOperator {
+    span: DUMMY_SP,
+    op: TsTypeOperatorOp::ReadOnly,
+    type_ann: Box::new(ann),
+  })
+}
+
+pub fn type_ann(ts_type: TsType) -> Box<TsTypeAnn> {
+  Box::new(TsTypeAnn {
+    span: DUMMY_SP,
+    type_ann: Box::new(ts_type),
+  })
+}
+
+pub fn type_ref(name: String) -> TsTypeRef {
+  TsTypeRef {
+    span: DUMMY_SP,
+    type_name: TsEntityName::Ident(Ident::new(name.into(), DUMMY_SP)),
+    type_params: None,
+  }
+}
+
+pub fn ts_lit_type(lit: TsLit) -> TsType {
+  TsType::TsLitType(TsLitType {
+    lit,
+    span: DUMMY_SP,
+  })
+}
+
+pub fn regex_type() -> TsType {
+  TsType::TsTypeRef(type_ref("RegExp".to_string()))
+}
+
+pub fn ts_tuple_element(ts_type: TsType) -> TsTupleElement {
+  TsTupleElement {
+    label: None,
+    span: DUMMY_SP,
+    ty: Box::new(ts_type),
+  }
+}
+
+pub fn maybe_lit_to_ts_type_const(lit: &Lit) -> Option<TsType> {
+  match lit {
+    Lit::Str(lit_str) => Some(ts_lit_type(TsLit::Str(lit_str.clone()))),
+    Lit::Bool(lit_bool) => Some(ts_lit_type(TsLit::Bool(*lit_bool))),
+    Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
+    Lit::Num(lit_num) => Some(ts_lit_type(TsLit::Number(lit_num.clone()))),
+    Lit::BigInt(lit_bigint) => {
+      Some(ts_lit_type(TsLit::BigInt(lit_bigint.clone())))
+    }
+    Lit::Regex(_) => Some(regex_type()),
+    Lit::JSXText(_) => None,
+  }
+}
+
+pub fn maybe_lit_to_ts_type(lit: &Lit) -> Option<TsType> {
+  match lit {
+    Lit::Str(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsStringKeyword)),
+    Lit::Bool(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsBooleanKeyword)),
+    Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
+    Lit::Num(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword)),
+    Lit::BigInt(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsBigIntKeyword)),
+    Lit::Regex(_) => Some(regex_type()),
+    Lit::JSXText(_) => None,
   }
 }

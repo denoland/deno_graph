@@ -111,6 +111,31 @@ async fn test_graph_specs() {
               indent(&fast_check.source)
             },
           ));
+
+          if let Some(dts) = &fast_check.dts {
+            if !dts.text.is_empty() {
+              output_text.push_str(&indent("--- DTS ---\n"));
+              output_text.push_str(&indent(&dts.text));
+            }
+            if !dts.diagnostics.is_empty() {
+              output_text.push_str(&indent("--- DTS Diagnostics ---\n"));
+              let message = dts
+                .diagnostics
+                .iter()
+                .map(|d| match d.range() {
+                  Some(range) => {
+                    format!(
+                      "{}\n    at {}@{}",
+                      d, range.specifier, range.range.start
+                    )
+                  }
+                  None => format!("{}\n    at {}", d, d.specifier()),
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+              output_text.push_str(&indent(&message));
+            }
+          }
         }
         deno_graph::FastCheckTypeModuleSlot::Error(diagnostics) => {
           let message = diagnostics

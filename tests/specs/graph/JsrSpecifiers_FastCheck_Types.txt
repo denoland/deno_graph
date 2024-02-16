@@ -68,3 +68,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     prop: string;
     prop2?: number;
   };
+  --- DTS ---
+  export type NewLocation = [lat: number, long: number];
+  export type Value = [string, number];
+  export type Value2 = {
+    prop: string;
+    prop2?: number;
+  };

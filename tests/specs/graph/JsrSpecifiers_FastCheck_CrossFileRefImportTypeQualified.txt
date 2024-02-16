@@ -87,6 +87,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/a.ts:
   {}
   export default class Test {
   }
+  --- DTS ---
+  export default class Test {
+  }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {
@@ -106,4 +109,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       }
     }
   }
+  export type Example = import("./a.ts").default;
+  --- DTS ---
   export type Example = import("./a.ts").default;

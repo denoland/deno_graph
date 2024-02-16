@@ -111,3 +111,27 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   interface Public6 {
   }
+  --- DTS ---
+  export declare class Application<S> {
+    prop: S;
+  }
+  export function createMockApp<S extends Record<string | number | symbol, any> = Record<string, any>>(state?: S): Application<S>;
+  export declare class A {
+    prop: Public1;
+    constructor(prop?: Public1);
+    handler: Public2<Public3>;
+    secondProp: Public4;
+  }
+  export declare const var1: Public5<Public6>;
+  interface Public1<T> {
+  }
+  interface Public2 {
+  }
+  interface Public3 {
+  }
+  interface Public4 {
+  }
+  interface Public5 {
+  }
+  interface Public6 {
+  }

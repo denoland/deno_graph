@@ -5,14 +5,20 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-export namespace Test.Test {
-  export class MyClass extends Public1 {
-    prop: string;
-  }
-}
+export const foo = [1, 2] as const;
+export const bar = [1, , 2] as const;
+export const obj = {
+  str: "bar",
+  bool: true,
+  bool2: false,
+  num: 42,
+  nullish: null
+} as const;
 
-class Public1 {
-}
+export const spread = {
+  foo: 1,
+  ...obj,
+} as const;
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -49,7 +55,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 113,
+      "size": 235,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -64,18 +70,39 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  export module Test.Test {
-    export class MyClass extends Public1 {
-      prop!: string;
-    }
-  }
-  class Public1 {
-  }
+  export const foo = [
+    1,
+    2
+  ] as const;
+  export const bar = [
+    1,
+    ,
+    2
+  ] as const;
+  export const obj = {
+    str: "bar",
+    bool: true,
+    bool2: false,
+    num: 42,
+    nullish: null
+  } as const;
+  export const spread = {
+    foo: 1,
+    ...obj
+  } as const;
   --- DTS ---
-  export declare module Test {
-    export declare class MyClass extends Public1 {
-      prop: string;
-    }
-  }
-  declare class Public1 {
-  }
+  export declare const foo: readonly [1, 2];
+  export declare const bar: readonly [1, any, 2];
+  export declare const obj: {
+    readonly str: "bar";
+    readonly bool: true;
+    readonly bool2: false;
+    readonly num: 42;
+    readonly nullish: null;
+  };
+  export declare const spread: {
+    readonly foo: 1;
+  };
+  --- DTS Diagnostics ---
+  unable to infer type from spread, skipping
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@215

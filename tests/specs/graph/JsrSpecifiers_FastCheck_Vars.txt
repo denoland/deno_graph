@@ -170,3 +170,47 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export const inferred10: (1 | 2n)[] = {} as any;
   export const inferred11: (keyof string)[] = {} as any;
   export const inferred12: number = {} as any;
+  --- DTS ---
+  declare const public1: Public1;
+  export { public1 };
+  declare class Public1 {
+  }
+  declare const ERROR_STATUS_MAP: {
+    readonly "BadRequest": 400;
+    readonly "Unauthorized": 401;
+    readonly "PaymentRequired": 402;
+    readonly "Forbidden": 403;
+  };
+  export type ErrorStatusKeys = keyof typeof ERROR_STATUS_MAP;
+  export declare const asIs1: readonly [number, number, number];
+  export declare const asIs2: {
+    readonly a: readonly [number, number, number];
+    readonly b: boolean;
+    readonly c: number;
+    readonly d: bigint;
+    readonly e;
+    readonly [1]: number;
+    readonly f;
+    readonly g;
+    readonly h: readonly [readonly [number, number], readonly [string]];
+  };
+  export declare const func1: () => string;
+  export declare const func2: () => string;
+  export declare const func3: () => string;
+  export declare const func4: () => any;
+  export declare const func5: () => Promise<string>;
+  export declare const func6: () => Promise<1>;
+  export declare const func7: () => Promise<1>;
+  export declare const func8: () => any;
+  export declare const inferred1: 1;
+  export declare const inferred2: string;
+  export declare const inferred3: true;
+  export declare const inferred4: RegExp;
+  export declare const inferred5: boolean;
+  export declare const inferred6: boolean;
+  export declare const inferred7: 1 | 2 | 3 & 4;
+  export declare const inferred8: ["test", 1];
+  export declare const inferred9: [...string];
+  export declare const inferred10: (1 | 2n)[];
+  export declare const inferred11: (keyof string)[];
+  export declare const inferred12: number;
