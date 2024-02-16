@@ -34,6 +34,18 @@ enum NonExportedEnum {
   Value
 }
 
+const NUM = 1 as any;
+export enum Foo1 {
+  A = 1,
+  B = "2",
+  C = 1 << 2,
+  D = 1 + 2,
+  F = Foo1.A | Foo1.C,
+  G = Foo1.A + Foo1.C,
+  H = new Public1().test + 1,
+  I = 1 + NUM,
+}
+
 # mod.ts
 import 'jsr:@scope/a'
 
@@ -69,7 +81,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 421,
+      "size": 603,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -108,6 +120,17 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   enum NonExportedEnum {
     Value
   }
+  const NUM: any = {} as any;
+  export enum Foo1 {
+    A = 1,
+    B = "2",
+    C = 1 << 2,
+    D = 1 + 2,
+    F = Foo1.A | Foo1.C,
+    G = Foo1.A + Foo1.C,
+    H = new Public1().test + 1,
+    I = 1 + NUM
+  }
   --- DTS ---
   export declare enum EnumWithNoInits {
     Value1,
@@ -123,8 +146,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   declare const value: number;
   export declare enum EnumWithNonConstInits {
-    Value1 = new Public1().test,
-    Value2 = new Public2().asdf * value + NonExportedEnum.Value
+    Value1,
+    Value2
   }
   declare class Public1 {
   }
@@ -132,4 +155,15 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   declare enum NonExportedEnum {
     Value
+  }
+  declare const NUM: any;
+  export declare enum Foo1 {
+    A = 1,
+    B = "2",
+    C = 1 << 2,
+    D = 1 + 2,
+    F = Foo1.A | Foo1.C,
+    G = Foo1.A + Foo1.C,
+    H,
+    I = 1 + NUM
   }
