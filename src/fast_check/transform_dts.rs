@@ -5,9 +5,9 @@ use deno_ast::{
       ExportDefaultDecl, ExportDefaultExpr, Expr, Ident, Lit, MethodKind,
       Module, ModuleDecl, ModuleItem, OptChainBase, Pat, Prop, PropName,
       PropOrSpread, Stmt, TsFnOrConstructorType, TsFnParam, TsFnType,
-      TsKeywordType, TsKeywordTypeKind, TsLit, TsPropertySignature,
-      TsTupleElement, TsTupleType, TsType, TsTypeAnn, TsTypeElement, TsTypeLit,
-      VarDecl, VarDeclKind, VarDeclarator,
+      TsKeywordType, TsKeywordTypeKind, TsLit, TsNamespaceBody,
+      TsPropertySignature, TsTupleElement, TsTupleType, TsType, TsTypeAnn,
+      TsTypeElement, TsTypeLit, VarDecl, VarDeclKind, VarDeclarator,
     },
     common::DUMMY_SP,
   },
@@ -133,6 +133,14 @@ impl<'a> FastCheckDtsTransformer<'a> {
   ) -> Result<Module, Vec<FastCheckDiagnostic>> {
     let body = module.body;
 
+    module.body = self.transform_module_items(body);
+    Ok(module)
+  }
+
+  fn transform_module_items(
+    &mut self,
+    body: Vec<ModuleItem>,
+  ) -> Vec<ModuleItem> {
     let mut new_items: Vec<ModuleItem> = vec![];
     let mut prev_is_overload = false;
 
@@ -270,7 +278,11 @@ impl<'a> FastCheckDtsTransformer<'a> {
           prev_is_overload = false;
           if let Stmt::Decl(decl) = stmt {
             match decl {
-              Decl::TsEnum(_) | Decl::Class(_) | Decl::Fn(_) | Decl::Var(_) => {
+              Decl::TsEnum(_)
+              | Decl::Class(_)
+              | Decl::Fn(_)
+              | Decl::Var(_)
+              | Decl::TsModule(_) => {
                 if let Some(decl) = self.decl_to_type_decl(decl.clone()) {
                   new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
                 } else {
@@ -278,10 +290,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
                 }
               }
 
-              Decl::TsInterface(_)
-              | Decl::TsTypeAlias(_)
-              | Decl::Using(_)
-              | Decl::TsModule(_) => {
+              Decl::TsInterface(_) | Decl::TsTypeAlias(_) | Decl::Using(_) => {
                 new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
               }
             }
@@ -290,8 +299,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
       }
     }
 
-    module.body = new_items;
-    Ok(module)
+    new_items
   }
 
   fn expr_to_ts_type(
@@ -613,14 +621,36 @@ impl<'a> FastCheckDtsTransformer<'a> {
 
         Some(Decl::TsEnum(ts_enum))
       }
-      Decl::TsInterface(_) | Decl::TsTypeAlias(_) | Decl::TsModule(_) => {
-        Some(decl)
+      Decl::TsModule(mut ts_module) => {
+        ts_module.declare = true;
+
+        if let Some(body) = ts_module.body.clone() {
+          ts_module.body = Some(self.transform_ts_ns_body(body));
+
+          Some(Decl::TsModule(ts_module))
+        } else {
+          Some(Decl::TsModule(ts_module))
+        }
       }
+      Decl::TsInterface(_) | Decl::TsTypeAlias(_) => Some(decl),
       Decl::Using(_) => {
         self.mark_diagnostic(FastCheckDtsDiagnostic::UnsupportedUsing {
           range: self.source_range_to_range(decl.range()),
         });
         None
+      }
+    }
+  }
+
+  fn transform_ts_ns_body(&mut self, ns: TsNamespaceBody) -> TsNamespaceBody {
+    match ns {
+      TsNamespaceBody::TsModuleBlock(mut ts_module_block) => {
+        ts_module_block.body =
+          self.transform_module_items(ts_module_block.body);
+        TsNamespaceBody::TsModuleBlock(ts_module_block)
+      }
+      TsNamespaceBody::TsNamespaceDecl(ts_ns) => {
+        self.transform_ts_ns_body(*ts_ns.body)
       }
     }
   }
