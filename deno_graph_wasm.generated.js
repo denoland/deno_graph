@@ -1,7 +1,7 @@
 // @generated file from wasmbuild -- do not edit
 // deno-lint-ignore-file
 // deno-fmt-ignore-file
-// source-hash: c3f58f058542ed3ed78ce805bccd74bf05b27df1
+// source-hash: 512127a265a19afb39f9378531df621bd3550e51
 let wasm;
 
 const heap = new Array(128).fill(undefined);
@@ -506,9 +506,6 @@ const imports = {
       const ret = getObject(arg0) === getObject(arg1);
       return ret;
     },
-    __wbindgen_object_drop_ref: function (arg0) {
-      takeObject(arg0);
-    },
     __wbg_getwithrefkey_5e6d9547403deab8: function (arg0, arg1) {
       const ret = getObject(arg0)[getObject(arg1)];
       return addHeapObject(ret);
@@ -572,6 +569,9 @@ const imports = {
       } finally {
         wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
       }
+    },
+    __wbindgen_object_drop_ref: function (arg0) {
+      takeObject(arg0);
     },
     __wbindgen_is_function: function (arg0) {
       const ret = typeof (getObject(arg0)) === "function";
@@ -723,7 +723,7 @@ const imports = {
       const ret = getObject(arg0).then(getObject(arg1));
       return addHeapObject(ret);
     },
-    __wbindgen_closure_wrapper560: function (arg0, arg1, arg2) {
+    __wbindgen_closure_wrapper564: function (arg0, arg1, arg2) {
       const ret = makeMutClosure(arg0, arg1, 228, __wbg_adapter_48);
       return addHeapObject(ret);
     },
