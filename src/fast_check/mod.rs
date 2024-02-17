@@ -404,6 +404,13 @@ pub fn build_fast_check_type_graph<'a>(
   use crate::fast_check::cache::FastCheckCacheModuleItemDiagnostic;
   use crate::fast_check::cache::FastCheckCacheModuleItemInfo;
 
+  let fast_check_cache = if options.dts && fast_check_cache.is_some() {
+    debug_assert!(false, "using fast check cache with dts is not supported");
+    None
+  } else {
+    fast_check_cache
+  };
+
   let public_modules = range_finder::find_public_ranges(
     fast_check_cache,
     loader,
@@ -418,92 +425,86 @@ pub fn build_fast_check_type_graph<'a>(
     log::debug!("Analyzing '{}' for fast check", nv);
     let mut errors = Vec::new();
     errors.extend(package.errors);
+
     let mut fast_check_modules =
       Vec::with_capacity(package.module_ranges.len());
-    for (specifier, mut ranges) in package.module_ranges {
-      let module_info = root_symbol.module_from_specifier(&specifier).unwrap();
-      if let Some(module_info) = module_info.esm() {
-        let diagnostics = ranges.take_diagnostics();
-        let transform_result = if diagnostics.is_empty() {
-          transform::transform(
-            graph,
-            &specifier,
-            &ranges,
-            module_info.source(),
-            options,
-          )
-        } else {
-          Err(diagnostics)
-        };
-        match transform_result {
-          Ok(modules) => {
-            if errors.is_empty() {
-              fast_check_modules.push((specifier.clone(), Ok(modules)));
+    if package.sources.is_empty() {
+      for (specifier, mut ranges) in package.module_ranges {
+        let module_info =
+          root_symbol.module_from_specifier(&specifier).unwrap();
+        if let Some(module_info) = module_info.esm() {
+          let diagnostics = ranges.take_diagnostics();
+          let transform_result = if diagnostics.is_empty() {
+            transform::transform(
+              graph,
+              &specifier,
+              &ranges,
+              module_info.source(),
+              options,
+            )
+          } else {
+            Err(diagnostics)
+          };
+          match transform_result {
+            Ok(modules) => {
+              if errors.is_empty() {
+                fast_check_modules.push((specifier.clone(), Ok(modules)));
+              }
             }
-          }
-          Err(d) => {
-            // don't clear the fast_check_modules here because we still
-            // use that to construct the package's cache items
-            errors.extend(d);
+            Err(d) => {
+              // don't clear the fast_check_modules here because we still
+              // use that to construct the package's cache items
+              errors.extend(d);
+            }
           }
         }
       }
-    }
 
-    if errors.is_empty() {
+      // fill the cache
       if let Some(fast_check_cache) = fast_check_cache {
-        let package_cache_items = fast_check_modules
-          .iter()
-          .map(|(specifier, module_result)| {
-            let source_hash = graph
-              .get(specifier)
-              .and_then(|m| m.source())
-              .map(|s| fast_insecure_hash(s.as_bytes()))
-              .unwrap_or(0);
+        let mut package_cache_items =
+          Vec::with_capacity(fast_check_modules.len() + errors.len());
+        for (specifier, module_result) in &fast_check_modules {
+          let source_hash = graph
+            .get(specifier)
+            .and_then(|m| m.source())
+            .map(|s| fast_insecure_hash(s.as_bytes()))
+            .unwrap_or(0);
+          if errors.is_empty() {
             let module = module_result.as_ref().ok().unwrap();
-            (
+            package_cache_items.push((
               specifier.clone(),
               FastCheckCacheModuleItem::Info(FastCheckCacheModuleItemInfo {
                 source_hash,
-                module_info: module.module_info.clone(),
+                module_info: serde_json::to_string(&module.module_info)
+                  .unwrap(),
                 text: module.text.clone(),
                 source_map: module.source_map.clone(),
               }),
-            )
-          })
-          .collect::<Vec<_>>();
-        let cache_key = FastCheckCacheKey::build(&nv, &package.entrypoints);
-        fast_check_cache.set(
-          cache_key,
-          FastCheckCacheItem {
-            dependencies: package.dependencies,
-            modules: package_cache_items,
-          },
-        );
-      }
-      final_result.extend(fast_check_modules);
-    } else {
-      let specifiers = errors
-        .iter()
-        .map(|e| e.specifier())
-        .chain(fast_check_modules.iter().map(|m| &m.0));
-      if let Some(fast_check_cache) = fast_check_cache {
-        let package_cache_items = specifiers
-          .map(|specifier| {
-            let source_hash = graph
-              .get(specifier)
-              .and_then(|m| m.source())
-              .map(|s| fast_insecure_hash(s.as_bytes()))
-              .unwrap_or(0);
-            (
+            ));
+          } else {
+            package_cache_items.push((
               specifier.clone(),
               FastCheckCacheModuleItem::Diagnostic(
                 FastCheckCacheModuleItemDiagnostic { source_hash },
               ),
-            )
-          })
-          .collect::<Vec<_>>();
-
+            ));
+          }
+        }
+        for error in &errors {
+          let specifier = error.specifier();
+          let source_hash = graph
+            .get(specifier)
+            .and_then(|m| m.source())
+            .map(|s| fast_insecure_hash(s.as_bytes()))
+            .unwrap_or(0);
+          package_cache_items.push((
+            specifier.clone(),
+            FastCheckCacheModuleItem::Diagnostic(
+              FastCheckCacheModuleItemDiagnostic { source_hash },
+            ),
+          ));
+        }
         let cache_key = FastCheckCacheKey::build(&nv, &package.entrypoints);
         fast_check_cache.set(
           cache_key,
@@ -514,6 +515,15 @@ pub fn build_fast_check_type_graph<'a>(
         );
       }
 
+      if errors.is_empty() {
+        final_result.extend(fast_check_modules);
+      }
+    } else {
+      // these were sources in the cache, so use those
+      final_result.extend(package.sources);
+    }
+
+    if !errors.is_empty() {
       // If there are errors, insert a copy into each entrypoint.
       //
       // If one entrypoint can't be analyzed then we consider all

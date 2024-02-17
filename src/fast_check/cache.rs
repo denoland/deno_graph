@@ -1,15 +1,12 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
 use std::collections::BTreeSet;
-use std::collections::HashSet;
 use std::sync::Arc;
 
 use deno_semver::package::PackageNv;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::FastCheckModule;
-use crate::ModuleInfo;
 use crate::ModuleSpecifier;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -37,11 +34,11 @@ impl FastCheckCacheKey {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FastCheckCacheItem {
-  pub dependencies: HashSet<PackageNv>,
+  pub dependencies: BTreeSet<PackageNv>, // ordered for determinism when deserializing
   pub modules: Vec<(ModuleSpecifier, FastCheckCacheModuleItem)>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum FastCheckCacheModuleItem {
   Info(FastCheckCacheModuleItemInfo),
   Diagnostic(FastCheckCacheModuleItemDiagnostic),
@@ -58,15 +55,17 @@ impl FastCheckCacheModuleItem {
   }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FastCheckCacheModuleItemInfo {
   pub source_hash: u64,
-  pub module_info: Arc<ModuleInfo>,
+  /// Serialized module_info as JSON because bincode doesn't work
+  /// well with the ModuleInfo since it makes heavy use of skip_serializing_if.
+  pub module_info: String,
   pub text: Arc<str>,
   pub source_map: Arc<[u8]>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FastCheckCacheModuleItemDiagnostic {
   pub source_hash: u64,
 }
@@ -83,4 +82,25 @@ pub(crate) fn fast_insecure_hash(bytes: &[u8]) -> u64 {
   let mut hasher = twox_hash::XxHash64::default();
   bytes.hash(&mut hasher);
   hasher.finish()
+}
+
+#[cfg(test)]
+mod test {
+  use std::sync::Arc;
+
+  #[test]
+  fn module_item_info_serialization() {
+    let item = super::FastCheckCacheModuleItem::Info(
+      super::FastCheckCacheModuleItemInfo {
+        source_hash: 0,
+        module_info: Default::default(),
+        text: "test".to_string().into(),
+        source_map: Arc::new([0, 1, 2]),
+      },
+    );
+
+    let data = bincode::serialize(&item).unwrap();
+    let result = bincode::deserialize(&data).unwrap();
+    assert_eq!(item, result);
+  }
 }

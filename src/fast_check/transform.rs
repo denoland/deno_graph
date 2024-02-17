@@ -83,6 +83,7 @@ pub struct FastCheckDtsModule {
   pub diagnostics: Vec<FastCheckDtsDiagnostic>,
 }
 
+#[derive(Debug)]
 pub struct FastCheckModule {
   pub module_info: Arc<ModuleInfo>,
   pub text: Arc<str>,

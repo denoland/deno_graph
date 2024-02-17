@@ -5,6 +5,7 @@ use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
+use std::sync::Arc;
 
 use deno_ast::MediaType;
 use deno_ast::SourceRange;
@@ -28,6 +29,7 @@ use crate::FastCheckCache;
 use crate::FastCheckCacheItem;
 use crate::FastCheckCacheKey;
 use crate::FastCheckDiagnosticRange;
+use crate::FastCheckModule;
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
 use crate::WorkspaceMember;
@@ -338,7 +340,13 @@ impl<'a> RegistryUrlConverter<'a> {
 pub struct PackagePublicRanges {
   pub entrypoints: BTreeSet<ModuleSpecifier>,
   pub module_ranges: HashMap<ModuleSpecifier, ModulePublicRanges>,
-  pub dependencies: HashSet<PackageNv>,
+  pub sources: Vec<(
+    ModuleSpecifier,
+    // this is a result to avoid an extra
+    // allocation at a higher level
+    Result<FastCheckModule, Vec<FastCheckDiagnostic>>,
+  )>,
+  pub dependencies: BTreeSet<PackageNv>,
   pub errors: Vec<FastCheckDiagnostic>,
 }
 
@@ -379,49 +387,94 @@ impl<'a> PublicRangeFinder<'a> {
         continue; // should never happen
       };
       let base_url = self.url_converter.registry_package_url(&nv);
-      let export_specifiers = exports
+      let entrypoints = exports
         .values()
         .map(|value| {
           // if we got this far, then the export must be valid, so we can unwrap
           base_url.join(value).unwrap()
         })
         .collect::<BTreeSet<_>>();
-      if let Some(fast_check_cache) = &self.fast_check_cache {
-        let cache_key = FastCheckCacheKey::build(&nv, &export_specifiers);
-        if let Some(cache_item) = fast_check_cache.get(cache_key) {
-          if self.is_cache_item_valid(&cache_item) {
-            eprintln!("VALID");
+
+      if let Some(mut public_ranges) =
+        self.try_get_cache_item(&nv, &entrypoints)
+      {
+        public_ranges.entrypoints = entrypoints;
+        self.public_ranges.insert(nv, public_ranges);
+      } else {
+        let mut errors = Vec::new();
+        for specifier in &entrypoints {
+          if self.is_typed_specifier(&specifier) {
+            self.add_pending_trace(
+              &nv,
+              &specifier,
+              ImportedExports::star_with_default(),
+            );
+          } else {
+            errors.push(FastCheckDiagnostic::UnsupportedJavaScriptEntrypoint {
+              specifier: specifier.clone(),
+            });
           }
         }
-      }
-      let mut entrypoints = BTreeSet::new();
-      let mut errors = Vec::new();
-      for specifier in export_specifiers {
-        if self.is_typed_specifier(&specifier) {
-          self.add_pending_trace(
-            &nv,
-            &specifier,
-            ImportedExports::star_with_default(),
-          );
-        } else {
-          errors.push(FastCheckDiagnostic::UnsupportedJavaScriptEntrypoint {
-            specifier: specifier.clone(),
-          });
+
+        while let Some(trace) = self.pending_traces.pop() {
+          self.analyze_trace(&trace);
         }
 
-        entrypoints.insert(specifier);
+        let public_ranges = self.public_ranges.entry(nv).or_default();
+        public_ranges.entrypoints = entrypoints;
+        public_ranges.errors.extend(errors);
       }
-
-      while let Some(trace) = self.pending_traces.pop() {
-        self.analyze_trace(&trace);
-      }
-
-      let public_ranges = self.public_ranges.entry(nv).or_default();
-      public_ranges.entrypoints = entrypoints;
-      public_ranges.errors.extend(errors);
     }
 
     self.public_ranges
+  }
+
+  fn try_get_cache_item(
+    &mut self,
+    nv: &PackageNv,
+    entrypoints: &BTreeSet<ModuleSpecifier>,
+  ) -> Option<PackagePublicRanges> {
+    let Some(fast_check_cache) = &self.fast_check_cache else {
+      return None;
+    };
+    let cache_key = FastCheckCacheKey::build(&nv, &entrypoints);
+    let Some(cache_item) = fast_check_cache.get(cache_key) else {
+      return None;
+    };
+    if !self.is_cache_item_valid(&cache_item) {
+      return None;
+    }
+    // fill in the dependencies
+    for dep in cache_item.dependencies {
+      if self.seen_nvs.insert(dep.clone()) {
+        self.pending_nvs.push_back(dep);
+      }
+    }
+    // now fill in the entry
+    let mut package = PackagePublicRanges::default();
+    for (url, cache_item) in cache_item.modules {
+      match cache_item {
+        super::cache::FastCheckCacheModuleItem::Info(info) => {
+          let Ok(module_info) = serde_json::from_str(&info.module_info) else {
+            return None;
+          };
+          package.sources.push((
+            url,
+            Ok(FastCheckModule {
+              module_info: Arc::new(module_info),
+              text: info.text.into(),
+              source_map: info.source_map.into(),
+              dts: None,
+            }),
+          ));
+        }
+        super::cache::FastCheckCacheModuleItem::Diagnostic(diagnostic) => {
+          // put diagnostics in package.errors
+          todo!();
+        }
+      }
+    }
+    Some(package)
   }
 
   fn is_cache_item_valid(&self, cache_item: &FastCheckCacheItem) -> bool {
