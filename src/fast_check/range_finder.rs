@@ -384,7 +384,9 @@ impl<'a> PublicRangeFinder<'a> {
           ))
         })
       else {
-        continue; // should never happen
+        // may happen in a segmented graph since graph
+        // segmentation is not that smart at the moment
+        continue;
       };
       let base_url = self.url_converter.registry_package_url(&nv);
       let entrypoints = exports
