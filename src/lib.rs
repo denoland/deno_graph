@@ -57,6 +57,8 @@ pub use fast_check::FastCheckDiagnosticRange;
 #[cfg(feature = "fast_check")]
 pub use fast_check::FastCheckModule;
 pub use graph::BuildDiagnostic;
+#[cfg(feature = "fast_check")]
+pub use graph::BuildFastCheckTypeGraphOptions;
 pub use graph::BuildOptions;
 pub use graph::Dependency;
 pub use graph::ExternalModule;

@@ -1,6 +1,7 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
 use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
@@ -108,6 +109,9 @@ pub struct PackageSpecifiers {
   packages_by_name: HashMap<String, Vec<PackageNv>>,
   #[serde(skip_serializing)]
   packages: BTreeMap<PackageNv, PackageNvInfo>,
+  /// Cache for packages that have a referrer outside JSR.
+  #[serde(skip_serializing)]
+  top_level_packages: BTreeSet<PackageNv>,
 }
 
 impl PackageSpecifiers {
@@ -210,6 +214,14 @@ impl PackageSpecifiers {
       .unwrap()
       .exports
       .insert(export.0, export.1);
+  }
+
+  pub(crate) fn add_top_level_package(&mut self, nv: PackageNv) {
+    self.top_level_packages.insert(nv);
+  }
+
+  pub(crate) fn top_level_packages(&self) -> &BTreeSet<PackageNv> {
+    &self.top_level_packages
   }
 
   pub fn package_exports(

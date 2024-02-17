@@ -136,15 +136,25 @@ impl TestBuilder {
         roots.clone(),
         &mut self.loader,
         deno_graph::BuildOptions {
-          workspace_members: self.workspace_members.clone(),
+          workspace_members: &self.workspace_members,
           module_analyzer: Some(&capturing_analyzer),
           module_parser: Some(&capturing_analyzer),
-          workspace_fast_check: self.workspace_fast_check,
-          fast_check_dts: true,
           ..Default::default()
         },
       )
       .await;
+    graph.build_fast_check_type_graph(
+      &mut self.loader,
+      deno_graph::BuildFastCheckTypeGraphOptions {
+        fast_check_cache: None,
+        fast_check_dts: true,
+        module_parser: Some(&capturing_analyzer),
+        resolver: None,
+        npm_resolver: None,
+        workspace_fast_check: self.workspace_fast_check,
+        workspace_members: &self.workspace_members,
+      },
+    );
     BuildResult {
       graph,
       diagnostics,
