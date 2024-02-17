@@ -398,6 +398,7 @@ impl<'a> PublicRangeFinder<'a> {
       if let Some(mut public_ranges) =
         self.try_get_cache_item(&nv, &entrypoints)
       {
+        log::debug!("Using FastCheck cache for: {}", nv);
         public_ranges.entrypoints = entrypoints;
         self.public_ranges.insert(nv, public_ranges);
       } else {
