@@ -278,7 +278,6 @@ dependencies = [
  "data-url",
  "deno_ast",
  "deno_semver",
- "deno_unsync",
  "encoding_rs",
  "futures",
  "import_map",
@@ -349,15 +348,6 @@ checksum = "7e6337d4e7f375f8b986409a76fbeecfa4bd8a1343e63355729ae4befa058eaf"
 dependencies = [
  "once_cell",
  "termcolor",
-]
-
-[[package]]
-name = "deno_unsync"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30dff7e03584dbae188dae96a0f1876740054809b2ad0cf7c9fc5d361f20e739"
-dependencies = [
- "tokio",
 ]
 
 [[package]]

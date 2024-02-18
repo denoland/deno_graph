@@ -3848,10 +3848,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       },
     );
     let fut = async move {
-      let data = deno_unsync::spawn(fut)
-        .await
-        .map_err(|e| Arc::new(e.into()))?
-        .map_err(Arc::new)?;
+      let data = fut.await.map_err(Arc::new)?;
       match data {
         Some(LoadResponse::Module { content, .. }) => {
           let package_info: JsrPackageInfo =
@@ -3903,10 +3900,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       },
     );
     let fut = async move {
-      let data = deno_unsync::spawn(fut)
-        .await
-        .map_err(|e| Arc::new(e.into()))?
-        .map_err(Arc::new)?;
+      let data = fut.await.map_err(Arc::new)?;
       match data {
         Some(LoadResponse::Module { content, .. }) => {
           // if we have the expected checksum, then we can re-use that here
