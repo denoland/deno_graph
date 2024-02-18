@@ -991,6 +991,7 @@ pub struct BuildFastCheckTypeGraphOptions<'a> {
   pub module_parser: Option<&'a dyn ModuleParser>,
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
+  // todo(THIS PR): combine these options?
   /// Whether to fill workspace members with fast check TypeScript data.
   pub workspace_fast_check: bool,
   pub workspace_members: &'a [WorkspaceMember],
@@ -3847,7 +3848,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       },
     );
     let fut = async move {
-      let data = fut.await.map_err(Arc::new)?;
+      let data = deno_unsync::spawn(fut)
+        .await
+        .map_err(|e| Arc::new(e.into()))?
+        .map_err(Arc::new)?;
       match data {
         Some(LoadResponse::Module { content, .. }) => {
           let package_info: JsrPackageInfo =
@@ -3899,7 +3903,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       },
     );
     let fut = async move {
-      let data = fut.await.map_err(Arc::new)?;
+      let data = deno_unsync::spawn(fut)
+        .await
+        .map_err(|e| Arc::new(e.into()))?
+        .map_err(Arc::new)?;
       match data {
         Some(LoadResponse::Module { content, .. }) => {
           // if we have the expected checksum, then we can re-use that here
