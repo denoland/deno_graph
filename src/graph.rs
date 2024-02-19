@@ -3496,12 +3496,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               }
             }
           }
-          // If the checksum is missing then leave it up to the loader
-          // to error by providing this special checksum value. For
-          // example, someone may be making modifications to their
-          // vendor folder in which case this checksum will be ignored
-          // and if not, then a loading error will occur about an
-          // incorrect checksum.
+          // If the checksum is missing then leave it up to the loader to error
+          // by providing this special checksum value. For example, someone may
+          // be making modifications to their vendor folder in which case this
+          // checksum will be ignored and if not, then a loading error will
+          // occur about an incorrect checksum.
           None => "package-manifest-missing-checksum".to_string(),
         };
         let checksum = LoaderChecksum::new(checksum.clone());
