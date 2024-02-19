@@ -13,6 +13,7 @@ use crate::ModuleSpecifier;
 pub struct FastCheckCacheKey(u64);
 
 impl FastCheckCacheKey {
+  #[cfg(feature = "fast_check")]
   pub fn build(
     package_nv: &PackageNv,
     entrypoints: &BTreeSet<ModuleSpecifier>,
@@ -76,6 +77,7 @@ pub trait FastCheckCache {
   fn set(&self, key: FastCheckCacheKey, value: FastCheckCacheItem);
 }
 
+#[cfg(feature = "fast_check")]
 pub(crate) fn fast_insecure_hash(bytes: &[u8]) -> u64 {
   use std::hash::Hash;
   use std::hash::Hasher;

@@ -21,6 +21,7 @@ use deno_graph::source::NpmResolver;
 use deno_graph::source::Source;
 use deno_graph::source::UnknownBuiltInNodeModuleError;
 use deno_graph::BuildOptions;
+use deno_graph::FastCheckCacheModuleItem;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 use deno_graph::NpmPackageReqResolution;
@@ -42,11 +43,6 @@ async fn test_graph_specs() {
   for (test_file_path, spec) in
     get_specs_in_dir(&PathBuf::from("./tests/specs/graph"))
   {
-    if !cfg!(feature = "fast_check")
-      && spec.output_file.text.contains("Fast check ")
-    {
-      continue;
-    }
     eprintln!("Running {}", test_file_path.display());
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
@@ -67,6 +63,7 @@ async fn test_graph_specs() {
 
     if let Some(options) = &spec.options {
       builder.workspace_fast_check(options.workspace_fast_check);
+      builder.fast_check_cache(options.fast_check_cache);
     }
 
     let result = builder.build().await;
@@ -153,6 +150,30 @@ async fn test_graph_specs() {
             .join("\n");
           output_text.push_str(&indent(&message));
         }
+      }
+    }
+    if let Some(fast_check_cache) = result.fast_check_cache.as_ref() {
+      output_text.push_str("\n== fast check cache ==\n");
+      for (key, item) in fast_check_cache.inner.borrow().iter() {
+        output_text.push_str(&format!(
+          "{:?}: Deps - {} - Modules: {}\n",
+          key,
+          serde_json::to_string(&item.dependencies).unwrap(),
+          serde_json::to_string(
+            &item
+              .modules
+              .iter()
+              .map(|(url, module_item)| (
+                url.as_str(),
+                match module_item {
+                  FastCheckCacheModuleItem::Info(_) => "info",
+                  FastCheckCacheModuleItem::Diagnostic(_) => "diagnostic",
+                }
+              ))
+              .collect::<Vec<_>>()
+          )
+          .unwrap()
+        ));
       }
     }
     if !output_text.ends_with('\n') {

@@ -106,7 +106,7 @@ impl CacheSetting {
   }
 }
 
-pub static DEFAULT_DENO_REGISTRY_URL: Lazy<Url> =
+pub static DEFAULT_JSR_URL: Lazy<Url> =
   Lazy::new(|| Url::parse("https://jsr.io").unwrap());
 
 #[derive(Debug, Error)]
@@ -201,7 +201,7 @@ pub trait Loader {
 
 pub trait JsrUrlProvider {
   fn url(&self) -> &Url {
-    &DEFAULT_DENO_REGISTRY_URL
+    &DEFAULT_JSR_URL
   }
 
   fn package_url(&self, nv: &PackageNv) -> Url {
@@ -537,12 +537,12 @@ impl MemoryLoader {
     );
   }
 
-  pub fn add_deno_package_info(
+  pub fn add_jsr_package_info(
     &mut self,
     name: &str,
     package_info: &JsrPackageInfo,
   ) {
-    let specifier = DEFAULT_DENO_REGISTRY_URL
+    let specifier = DEFAULT_JSR_URL
       .join(&format!("{}/meta.json", name))
       .unwrap();
     let json_text = serde_json::to_string(package_info).unwrap();
@@ -554,7 +554,7 @@ impl MemoryLoader {
     nv: &PackageNv,
     version_info: &JsrPackageVersionInfo,
   ) {
-    let specifier = DEFAULT_DENO_REGISTRY_URL
+    let specifier = DEFAULT_JSR_URL
       .join(&format!("{}/{}_meta.json", nv.name, nv.version))
       .unwrap();
     let json_text = serde_json::to_string(version_info).unwrap();

@@ -16,7 +16,6 @@ use url::Url;
 
 use crate::fast_check::swc_helpers::is_expr_leavable;
 use crate::source::JsrUrlProvider;
-use crate::source::Loader;
 use crate::symbols::ExportDeclRef;
 use crate::symbols::FileDepName;
 use crate::symbols::ModuleInfoRef;
@@ -340,13 +339,10 @@ impl<'a> RegistryUrlConverter<'a> {
 #[derive(Debug, Default)]
 pub struct PackagePublicRanges {
   pub entrypoints: BTreeSet<ModuleSpecifier>,
-  pub module_ranges: HashMap<ModuleSpecifier, ModulePublicRanges>,
-  pub sources: Vec<(
-    ModuleSpecifier,
-    // this is a result to avoid an extra
-    // allocation at a higher level
-    Result<FastCheckModule, Vec<FastCheckDiagnostic>>,
-  )>,
+  // uses an IndexMap to maintain order so that when transforming
+  // it goes over the modules in the exact same deterministic order
+  pub module_ranges: IndexMap<ModuleSpecifier, ModulePublicRanges>,
+  pub sources: Vec<(ModuleSpecifier, FastCheckModule)>,
   pub dependencies: BTreeSet<PackageNv>,
   pub errors: Vec<FastCheckDiagnostic>,
 }
@@ -407,10 +403,10 @@ impl<'a> PublicRangeFinder<'a> {
       } else {
         let mut errors = Vec::new();
         for specifier in &entrypoints {
-          if self.is_typed_specifier(&specifier) {
+          if self.is_typed_specifier(specifier) {
             self.add_pending_trace(
               &nv,
-              &specifier,
+              specifier,
               ImportedExports::star_with_default(),
             );
           } else {
@@ -441,7 +437,7 @@ impl<'a> PublicRangeFinder<'a> {
     let Some(fast_check_cache) = &self.fast_check_cache else {
       return None;
     };
-    let cache_key = FastCheckCacheKey::build(&nv, &entrypoints);
+    let cache_key = FastCheckCacheKey::build(nv, entrypoints);
     let Some(cache_item) = fast_check_cache.get(cache_key) else {
       return None;
     };
@@ -464,17 +460,18 @@ impl<'a> PublicRangeFinder<'a> {
           };
           package.sources.push((
             url,
-            Ok(FastCheckModule {
+            FastCheckModule {
               module_info: Arc::new(module_info),
-              text: info.text.into(),
-              source_map: info.source_map.into(),
+              text: info.text,
+              source_map: info.source_map,
               dts: None,
-            }),
+            },
           ));
         }
-        super::cache::FastCheckCacheModuleItem::Diagnostic(diagnostic) => {
-          // put diagnostics in package.errors
-          todo!();
+        super::cache::FastCheckCacheModuleItem::Diagnostic(_) => {
+          package
+            .errors
+            .push(FastCheckDiagnostic::Cached { specifier: url });
         }
       }
     }
@@ -511,6 +508,10 @@ impl<'a> PublicRangeFinder<'a> {
   }
 
   fn add_pending_nv(&mut self, dep: &PackageNv, referrer_nv: &PackageNv) {
+    if dep == referrer_nv {
+      return;
+    }
+
     // when a package is referenced then we need to analyze
     // all the dependencies for it in the graph
     let is_new_dep = self
@@ -630,7 +631,7 @@ impl<'a> PublicRangeFinder<'a> {
               .url_converter
               .registry_package_url_to_nv(&dep_specifier)
             {
-              self.add_pending_nv(&dep_nv, &pkg_nv);
+              self.add_pending_nv(&dep_nv, pkg_nv);
 
               self.add_pending_trace(
                 &dep_nv,
@@ -810,7 +811,7 @@ impl<'a> PublicRangeFinder<'a> {
                       );
                     } else {
                       // need to analyze the whole package
-                      self.add_pending_nv(&dep_nv, &pkg_nv);
+                      self.add_pending_nv(&dep_nv, pkg_nv);
                     }
                   }
                 }
@@ -867,7 +868,7 @@ impl<'a> PublicRangeFinder<'a> {
                               );
                             } else {
                               // need to analyze the whole package
-                              self.add_pending_nv(&dep_nv, &pkg_nv);
+                              self.add_pending_nv(&dep_nv, pkg_nv);
                             }
                           }
                         }
@@ -976,7 +977,7 @@ impl<'a> PublicRangeFinder<'a> {
                       );
                     } else {
                       // need to analyze the whole package
-                      self.add_pending_nv(&dep_nv, &pkg_nv);
+                      self.add_pending_nv(&dep_nv, pkg_nv);
                     }
                   }
                 }

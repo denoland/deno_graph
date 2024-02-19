@@ -1,5 +1,7 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
+use std::cell::RefCell;
+
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheInfo;
 use deno_graph::source::CacheSetting;
@@ -8,10 +10,13 @@ use deno_graph::source::LoadOptions;
 use deno_graph::source::Loader;
 use deno_graph::source::MemoryLoader;
 use deno_graph::BuildDiagnostic;
+use deno_graph::FastCheckCache;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
+use deno_graph::WorkspaceFastCheckOption;
 use deno_graph::WorkspaceMember;
 use futures::FutureExt;
+use indexmap::IndexMap;
 
 #[derive(Default)]
 pub struct TestLoader {
@@ -64,6 +69,7 @@ pub struct BuildResult {
   pub graph: ModuleGraph,
   pub diagnostics: Vec<BuildDiagnostic>,
   pub analyzer: deno_graph::CapturingModuleAnalyzer,
+  pub fast_check_cache: Option<TestFastCheckCache>,
 }
 
 #[cfg(feature = "symbols")]
@@ -74,10 +80,35 @@ impl BuildResult {
   }
 }
 
+#[derive(Default)]
+pub struct TestFastCheckCache {
+  pub inner: RefCell<
+    IndexMap<deno_graph::FastCheckCacheKey, deno_graph::FastCheckCacheItem>,
+  >,
+}
+
+impl FastCheckCache for TestFastCheckCache {
+  fn get(
+    &self,
+    key: deno_graph::FastCheckCacheKey,
+  ) -> Option<deno_graph::FastCheckCacheItem> {
+    self.inner.borrow().get(&key).cloned()
+  }
+
+  fn set(
+    &self,
+    key: deno_graph::FastCheckCacheKey,
+    value: deno_graph::FastCheckCacheItem,
+  ) {
+    self.inner.borrow_mut().insert(key, value);
+  }
+}
+
 pub struct TestBuilder {
   loader: TestLoader,
   entry_point: String,
   entry_point_types: String,
+  fast_check_cache: bool,
   workspace_members: Vec<WorkspaceMember>,
   workspace_fast_check: bool,
 }
@@ -88,6 +119,7 @@ impl TestBuilder {
       loader: Default::default(),
       entry_point: "file:///mod.ts".to_string(),
       entry_point_types: "file:///mod.ts".to_string(),
+      fast_check_cache: false,
       workspace_members: Default::default(),
       workspace_fast_check: false,
     }
@@ -126,6 +158,11 @@ impl TestBuilder {
     self
   }
 
+  pub fn fast_check_cache(&mut self, value: bool) -> &mut Self {
+    self.fast_check_cache = value;
+    self
+  }
+
   pub async fn build(&mut self) -> BuildResult {
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
@@ -143,22 +180,31 @@ impl TestBuilder {
         },
       )
       .await;
+    let fast_check_cache = if self.fast_check_cache {
+      Some(TestFastCheckCache::default())
+    } else {
+      None
+    };
     graph.build_fast_check_type_graph(
       deno_graph::BuildFastCheckTypeGraphOptions {
-        fast_check_cache: None,
-        fast_check_dts: true,
+        fast_check_cache: fast_check_cache.as_ref().map(|c| c as _),
+        fast_check_dts: !self.fast_check_cache,
         jsr_url_provider: None,
         module_parser: Some(&capturing_analyzer),
         resolver: None,
         npm_resolver: None,
-        workspace_fast_check: self.workspace_fast_check,
-        workspace_members: &self.workspace_members,
+        workspace_fast_check: if self.workspace_fast_check {
+          WorkspaceFastCheckOption::Enabled(&self.workspace_members)
+        } else {
+          WorkspaceFastCheckOption::Disabled
+        },
       },
     );
     BuildResult {
       graph,
       diagnostics,
       analyzer: capturing_analyzer,
+      fast_check_cache,
     }
   }
 

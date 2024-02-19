@@ -20,7 +20,7 @@ all-features = true
 
 [features]
 default = ["fast_check"]
-fast_check = ["symbols", "deno_ast/transpiling"]
+fast_check = ["symbols", "deno_ast/transpiling", "twox-hash"]
 symbols = ["deno_ast/transforms", "deno_ast/visit", "deno_ast/utils"]
 
 [dependencies]
@@ -42,7 +42,7 @@ serde = { version = "1.0.130", features = ["derive", "rc"] }
 serde_json = { version = "1.0.67", features = ["preserve_order"] }
 sha2 = "^0.10.0"
 thiserror = "1.0.24"
-twox-hash = "1.6.3"
+twox-hash = { version = "1.6.3", optional = true }
 url = { version = "2.2.2", features = ["serde"] }
 
 [dev-dependencies]

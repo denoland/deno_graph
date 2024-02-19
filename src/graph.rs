@@ -9,7 +9,6 @@ use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
-use crate::fast_check::FastCheckCache;
 #[cfg(feature = "fast_check")]
 use crate::fast_check::FastCheckDtsModule;
 use crate::CapturingModuleAnalyzer;
@@ -59,7 +58,6 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
-use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -984,18 +982,24 @@ impl GraphImport {
 }
 
 #[cfg(feature = "fast_check")]
+#[derive(Debug, Default)]
+pub enum WorkspaceFastCheckOption<'a> {
+  #[default]
+  Disabled,
+  Enabled(&'a [WorkspaceMember]),
+}
+
+#[cfg(feature = "fast_check")]
 #[derive(Default)]
 pub struct BuildFastCheckTypeGraphOptions<'a> {
-  pub fast_check_cache: Option<&'a dyn FastCheckCache>,
+  pub fast_check_cache: Option<&'a dyn crate::fast_check::FastCheckCache>,
   pub fast_check_dts: bool,
   pub jsr_url_provider: Option<&'a dyn JsrUrlProvider>,
   pub module_parser: Option<&'a dyn ModuleParser>,
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
-  // todo(THIS PR): combine these options?
   /// Whether to fill workspace members with fast check TypeScript data.
-  pub workspace_fast_check: bool,
-  pub workspace_members: &'a [WorkspaceMember],
+  pub workspace_fast_check: WorkspaceFastCheckOption<'a>,
 }
 
 #[derive(Default)]
@@ -1433,7 +1437,7 @@ impl ModuleGraph {
     loader: &mut dyn Loader,
     options: BuildOptions<'a>,
   ) -> Vec<BuildDiagnostic> {
-    let default_jsr_url_provider = DefaultJsrUrlProvider::default();
+    let default_jsr_url_provider = DefaultJsrUrlProvider;
     let default_module_parser = CapturingModuleAnalyzer::default();
     #[cfg(not(target_arch = "wasm32"))]
     let file_system = RealFileSystem;
@@ -1473,9 +1477,10 @@ impl ModuleGraph {
       .iter()
       .cloned()
       .collect::<VecDeque<_>>();
-    if options.workspace_fast_check {
-      pending_nvs
-        .extend(options.workspace_members.iter().map(|n| n.nv.clone()));
+    if let WorkspaceFastCheckOption::Enabled(workspace_members) =
+      options.workspace_fast_check
+    {
+      pending_nvs.extend(workspace_members.iter().map(|n| n.nv.clone()));
     }
     if pending_nvs.is_empty() {
       return;
@@ -1487,7 +1492,7 @@ impl ModuleGraph {
       options.module_parser.unwrap_or(&default_module_parser),
     );
 
-    let default_jsr_url_provider = DefaultJsrUrlProvider::default();
+    let default_jsr_url_provider = DefaultJsrUrlProvider;
     let modules = crate::fast_check::build_fast_check_type_graph(
       options.fast_check_cache,
       options
@@ -1497,12 +1502,14 @@ impl ModuleGraph {
       &root_symbol,
       pending_nvs,
       &crate::fast_check::TransformOptions {
-        workspace_members: if options.workspace_fast_check {
-          &options.workspace_members
-        } else {
-          &[]
+        workspace_members: match options.workspace_fast_check {
+          WorkspaceFastCheckOption::Disabled => &[],
+          WorkspaceFastCheckOption::Enabled(members) => members,
         },
-        should_error_on_first_diagnostic: !options.workspace_fast_check,
+        should_error_on_first_diagnostic: match options.workspace_fast_check {
+          WorkspaceFastCheckOption::Disabled => true,
+          WorkspaceFastCheckOption::Enabled(_) => false,
+        },
         dts: options.fast_check_dts,
       },
     );
@@ -5206,35 +5213,9 @@ mod tests {
     );
   }
 
+  #[cfg(feature = "fast_check")]
   #[tokio::test]
   async fn fast_check_dts() {
-    struct TestLoader;
-    impl Loader for TestLoader {
-      fn load(
-        &mut self,
-        specifier: &ModuleSpecifier,
-        _options: LoadOptions,
-      ) -> LoadFuture {
-        let specifier = specifier.clone();
-        match specifier.as_str() {
-          "file:///foo.ts" => Box::pin(async move {
-            Ok(Some(LoadResponse::Module {
-              specifier: specifier.clone(),
-              maybe_headers: None,
-              content: b"
-                export function add(a: number, b: number): number {
-                  return a + b;
-                }
-              "
-              .to_vec()
-              .into(),
-            }))
-          }),
-          _ => unreachable!(),
-        }
-      }
-    }
-
     let mut exports = IndexMap::new();
     exports.insert(".".to_string(), "./foo.ts".to_string());
 
@@ -5246,11 +5227,20 @@ mod tests {
         version: Version::parse_standard("1.0.0").unwrap(),
       },
     }];
+    let mut test_loader = MemoryLoader::default();
+    test_loader.add_source_with_text(
+      "file:///foo.ts",
+      "
+    export function add(a: number, b: number): number {
+      return a + b;
+    }
+  ",
+    );
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
-        &mut TestLoader,
+        &mut test_loader,
         BuildOptions {
           workspace_members: &workspace_members,
           ..Default::default()
@@ -5260,24 +5250,24 @@ mod tests {
     graph.build_fast_check_type_graph(BuildFastCheckTypeGraphOptions {
       fast_check_cache: None,
       fast_check_dts: true,
-      workspace_fast_check: true,
-      workspace_members: &workspace_members,
+      workspace_fast_check: WorkspaceFastCheckOption::Enabled(
+        &workspace_members,
+      ),
       ..Default::default()
     });
     graph.valid().unwrap();
     let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
     let module = module.js().unwrap();
-    if let FastCheckTypeModuleSlot::Module(fsm) =
+    let FastCheckTypeModuleSlot::Module(fsm) =
       module.fast_check.clone().unwrap()
-    {
-      let dts = fsm.dts.unwrap();
-      assert_eq!(
-        dts.text.to_string().trim(),
-        "export function add(a: number, b: number): number;"
-      );
-      assert!(dts.diagnostics.is_empty());
-    } else {
-      panic!()
-    }
+    else {
+      unreachable!();
+    };
+    let dts = fsm.dts.unwrap();
+    assert_eq!(
+      dts.text.to_string().trim(),
+      "export function add(a: number, b: number): number;"
+    );
+    assert!(dts.diagnostics.is_empty());
   }
 }

@@ -44,15 +44,13 @@ pub use ast::ModuleParser;
 pub use ast::ParseOptions;
 pub use ast::ParsedSourceStore;
 pub use deno_ast::MediaType;
-#[cfg(feature = "fast_check")]
 pub use fast_check::FastCheckCache;
-#[cfg(feature = "fast_check")]
 pub use fast_check::FastCheckCacheItem;
-#[cfg(feature = "fast_check")]
 pub use fast_check::FastCheckCacheKey;
-#[cfg(feature = "fast_check")]
+pub use fast_check::FastCheckCacheModuleItem;
+pub use fast_check::FastCheckCacheModuleItemDiagnostic;
+pub use fast_check::FastCheckCacheModuleItemInfo;
 pub use fast_check::FastCheckDiagnostic;
-#[cfg(feature = "fast_check")]
 pub use fast_check::FastCheckDiagnosticRange;
 #[cfg(feature = "fast_check")]
 pub use fast_check::FastCheckModule;
@@ -81,6 +79,8 @@ pub use graph::ResolutionError;
 pub use graph::ResolutionResolved;
 pub use graph::TypesDependency;
 pub use graph::WalkOptions;
+#[cfg(feature = "fast_check")]
+pub use graph::WorkspaceFastCheckOption;
 pub use graph::WorkspaceMember;
 pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
