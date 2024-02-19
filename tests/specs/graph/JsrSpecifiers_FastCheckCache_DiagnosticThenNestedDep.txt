@@ -16,7 +16,9 @@ export * from "./a.ts";
 // should still grab this as a dep for this module for fast check
 export * from "jsr:@scope/b@1";
 
-// but not this because it's not part of the public api
+// even though this is private, it should still grab this as a
+// dependency because we couldn't fast check this package
+// todo(dsherret): fix this
 import { Private } from "jsr:@scope/c@1";
 console.log(Private);
 
@@ -100,18 +102,18 @@ import 'jsr:@scope/a'
             "specifier": "jsr:@scope/c@1",
             "span": {
               "start": {
-                "line": 4,
+                "line": 6,
                 "character": 24
               },
               "end": {
-                "line": 4,
+                "line": 6,
                 "character": 40
               }
             }
           }
         }
       ],
-      "size": 219,
+      "size": 312,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts"
     },

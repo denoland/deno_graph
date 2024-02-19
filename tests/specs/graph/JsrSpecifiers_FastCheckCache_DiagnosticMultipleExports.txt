@@ -1,0 +1,173 @@
+~~ {"fastCheckCache":true} ~~
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts", "./c": "./c.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+export * from "./a.ts";
+export * from "./b.ts";
+export * from "./c.ts";
+
+# https://jsr.io/@scope/a/1.0.0/a.ts
+export function add(a: number, b: number) {
+  return Math.random();
+}
+# https://jsr.io/@scope/a/1.0.0/b.ts
+export function add(a: number, b: number): number {
+  return Math.random();
+}
+# https://jsr.io/@scope/a/1.0.0/c.ts
+export function add(a: number, b: number) {
+  return Math.random();
+}
+
+# mod.ts
+// In this case, the diagnostic occurs in @scope/a/a.ts and
+// the diagnostics in the cache will be for both entrypoints
+// as well as @scope/a/1.0.0/a.ts (so that its hash contributes
+// to the cache)
+import 'jsr:@scope/a'
+import 'jsr:@scope/a/c'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 4,
+                "character": 7
+              },
+              "end": {
+                "line": 4,
+                "character": 21
+              }
+            }
+          }
+        },
+        {
+          "specifier": "jsr:@scope/a/c",
+          "code": {
+            "specifier": "jsr:@scope/a/c",
+            "span": {
+              "start": {
+                "line": 5,
+                "character": 7
+              },
+              "end": {
+                "line": 5,
+                "character": 23
+              }
+            }
+          }
+        }
+      ],
+      "size": 248,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 69,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 77,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 70,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/c.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 14
+              },
+              "end": {
+                "line": 0,
+                "character": 22
+              }
+            }
+          }
+        },
+        {
+          "specifier": "./b.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 14
+              },
+              "end": {
+                "line": 1,
+                "character": 22
+              }
+            }
+          }
+        },
+        {
+          "specifier": "./c.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/c.ts",
+            "span": {
+              "start": {
+                "line": 2,
+                "character": 14
+              },
+              "end": {
+                "line": 2,
+                "character": 22
+              }
+            }
+          }
+        }
+      ],
+      "size": 72,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts",
+    "jsr:@scope/a/c": "https://jsr.io/@scope/a/1.0.0/c.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/c.ts:
+  missing explicit return type in the public API
+      at https://jsr.io/@scope/a/1.0.0/a.ts@16
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  missing explicit return type in the public API
+      at https://jsr.io/@scope/a/1.0.0/a.ts@16
+== fast check cache ==
+FastCheckCacheKey(2640350593211828171):
+    Deps - []
+    Modules: [["https://jsr.io/@scope/a/1.0.0/mod.ts","diagnostic"],["https://jsr.io/@scope/a/1.0.0/b.ts","diagnostic"],["https://jsr.io/@scope/a/1.0.0/a.ts","diagnostic"]]

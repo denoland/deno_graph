@@ -446,9 +446,7 @@ impl<'a> PublicRangeFinder<'a> {
     }
     // fill in the dependencies
     for dep in cache_item.dependencies {
-      if self.seen_nvs.insert(dep.clone()) {
-        self.pending_nvs.push_back(dep);
-      }
+      self.add_pending_nv_no_referrer(&dep)
     }
     // now fill in the entry
     let mut package = PackagePublicRanges::default();
@@ -520,11 +518,17 @@ impl<'a> PublicRangeFinder<'a> {
       .or_default()
       .dependencies
       .insert(dep.clone());
+    // if it's not a new dep then we've been here before
+    // so no reason to attempt this again
     if is_new_dep {
-      let never_seen = self.seen_nvs.insert(dep.clone());
-      if never_seen {
-        self.pending_nvs.push_back(dep.clone());
-      }
+      self.add_pending_nv_no_referrer(dep);
+    }
+  }
+
+  fn add_pending_nv_no_referrer(&mut self, nv: &PackageNv) {
+    let never_seen = self.seen_nvs.insert(nv.clone());
+    if never_seen {
+      self.pending_nvs.push_back(nv.clone());
     }
   }
 

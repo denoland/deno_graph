@@ -9,6 +9,7 @@ use serde::Serialize;
 
 use crate::ModuleSpecifier;
 
+/// Hash key is the package name, version, and sorted export names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct FastCheckCacheKey(u64);
 
@@ -33,6 +34,14 @@ impl FastCheckCacheKey {
   }
 }
 
+// On successful fast check, The value in the hash is a list of files
+// used, these files' hashes, and the package's dependencies that are
+// used in fast check (not any deps that aren't). The cache is invalidated
+// when any of these files change.
+//
+// On failure, the value in the hash is the entrypoint files along with
+// any imported file until a diagnostic is found. These hashes are stored
+// so that the cache can be invalidated when any of them change.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FastCheckCacheItem {
   pub dependencies: BTreeSet<PackageNv>, // ordered for determinism when deserializing
@@ -72,7 +81,9 @@ pub struct FastCheckCacheModuleItemDiagnostic {
   pub source_hash: u64,
 }
 
-/// Implementors should bust their cache when their version changes.
+/// Cache for storing the results of fast checks based on a package.
+///
+/// Note: Implementors should bust their cache when their version changes.
 pub trait FastCheckCache {
   fn get(&self, key: FastCheckCacheKey) -> Option<FastCheckCacheItem>;
   fn set(&self, key: FastCheckCacheKey, value: FastCheckCacheItem);
