@@ -17,8 +17,8 @@ export * from "./a.ts";
 export * from "jsr:@scope/b@1";
 
 // even though this is private, it should still grab this as a
-// dependency because we couldn't fast check this package
-// todo(dsherret): fix this
+// dependency because we couldn't fast check this current package
+// todo(#391): fix this
 import { Private } from "jsr:@scope/c@1";
 console.log(Private);
 
