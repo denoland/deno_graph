@@ -43,7 +43,7 @@ impl FastCheckCacheKey {
 // On failure, the value in the hash is the entrypoint files along with
 // any imported file until a diagnostic is found. These hashes are stored
 // so that the cache can be invalidated when any of them change.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FastCheckCacheItem {
   pub dependencies: BTreeSet<PackageNv>, // ordered for determinism when deserializing
   pub modules: Vec<(ModuleSpecifier, FastCheckCacheModuleItem)>,
