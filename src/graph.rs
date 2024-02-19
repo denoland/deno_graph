@@ -3488,7 +3488,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     specifier.clone(),
                     maybe_range.cloned(),
                     Arc::new(anyhow!(
-                      "Unsupported checksum in manifest. Maybe try upgrading deno?",
+                      "Unsupported checksum in package manifest. Maybe try upgrading deno?",
                     )),
                   )),
                 );
@@ -3496,16 +3496,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               }
             }
           }
-          None => {
-            self.graph.module_slots.insert(
-              specifier.clone(),
-              ModuleSlot::Err(ModuleError::Missing(
-                specifier.clone(),
-                maybe_range.cloned(),
-              )),
-            );
-            return;
-          }
+          // If the checksum is missing then leave it up to the loader
+          // to error by providing this special checksum value. For
+          // example, someone may be making modifications to their
+          // vendor folder in which case this checksum will be ignored
+          // and if not, then a loading error will occur about an
+          // incorrect checksum.
+          None => "package-manifest-missing-checksum".to_string(),
         };
         let checksum = LoaderChecksum::new(checksum.clone());
         if let Some(module_info) = version_info.inner.module_info(sub_path) {

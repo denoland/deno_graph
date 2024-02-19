@@ -56,7 +56,7 @@ console.log('HI');
     },
     {
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
-      "error": "Unsupported checksum in manifest. Maybe try upgrading deno?"
+      "error": "Unsupported checksum in package manifest. Maybe try upgrading deno?"
     }
   ],
   "redirects": {
