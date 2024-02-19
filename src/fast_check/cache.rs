@@ -9,7 +9,7 @@ use serde::Serialize;
 
 use crate::ModuleSpecifier;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct FastCheckCacheKey(u64);
 
 impl FastCheckCacheKey {

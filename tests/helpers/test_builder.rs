@@ -1,6 +1,7 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheInfo;
@@ -16,7 +17,6 @@ use deno_graph::ModuleGraph;
 use deno_graph::WorkspaceFastCheckOption;
 use deno_graph::WorkspaceMember;
 use futures::FutureExt;
-use indexmap::IndexMap;
 
 #[derive(Default)]
 pub struct TestLoader {
@@ -82,8 +82,9 @@ impl BuildResult {
 
 #[derive(Default)]
 pub struct TestFastCheckCache {
+  // BTreeMap because the cache items are inserted non-deterministically
   pub inner: RefCell<
-    IndexMap<deno_graph::FastCheckCacheKey, deno_graph::FastCheckCacheItem>,
+    BTreeMap<deno_graph::FastCheckCacheKey, deno_graph::FastCheckCacheItem>,
   >,
 }
 

@@ -166,8 +166,8 @@ import 'jsr:@scope/a'
 
 jsr deps: {
     "@scope/a@1.0.0": [
-        "jsr:@scope/c@1",
         "jsr:@scope/b@1",
+        "jsr:@scope/c@1",
     ],
 }
 
