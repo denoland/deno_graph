@@ -1,6 +1,5 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
-use std::fmt;
 use std::sync::Arc;
 
 use deno_ast::dep::DependencyKind;
@@ -13,8 +12,6 @@ use deno_ast::SourceTextInfo;
 use once_cell::sync::Lazy;
 use regex::Match;
 use regex::Regex;
-use serde::de;
-use serde::de::SeqAccess;
 use serde::ser::SerializeTuple;
 use serde::Deserialize;
 use serde::Serialize;
