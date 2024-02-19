@@ -59,8 +59,9 @@ impl FastCheckCacheModuleItem {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FastCheckCacheModuleItemInfo {
   pub source_hash: u64,
-  /// Serialized module_info as JSON because bincode doesn't work
-  /// well with the ModuleInfo since it makes heavy use of skip_serializing_if.
+  /// Serialized module_info as JSON because bincode (used in the CLI's cache)
+  /// doesn't work well with the ModuleInfo since it makes heavy use of
+  /// skip_serializing_if.
   pub module_info: String,
   pub text: Arc<str>,
   pub source_map: Arc<[u8]>,
