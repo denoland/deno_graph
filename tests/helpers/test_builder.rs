@@ -144,10 +144,10 @@ impl TestBuilder {
       )
       .await;
     graph.build_fast_check_type_graph(
-      &mut self.loader,
       deno_graph::BuildFastCheckTypeGraphOptions {
         fast_check_cache: None,
         fast_check_dts: true,
+        jsr_url_provider: None,
         module_parser: Some(&capturing_analyzer),
         resolver: None,
         npm_resolver: None,

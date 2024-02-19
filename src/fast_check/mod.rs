@@ -390,7 +390,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
 #[cfg(feature = "fast_check")]
 pub fn build_fast_check_type_graph<'a>(
   fast_check_cache: Option<&'a dyn FastCheckCache>,
-  loader: &'a dyn crate::source::Loader,
+  jsr_url_provider: &'a dyn crate::source::JsrUrlProvider,
   graph: &'a crate::ModuleGraph,
   root_symbol: &'a crate::symbols::RootSymbol<'a>,
   pending_nvs: std::collections::VecDeque<deno_semver::package::PackageNv>,
@@ -413,7 +413,7 @@ pub fn build_fast_check_type_graph<'a>(
 
   let public_modules = range_finder::find_public_ranges(
     fast_check_cache,
-    loader,
+    jsr_url_provider,
     graph,
     root_symbol,
     options.workspace_members,

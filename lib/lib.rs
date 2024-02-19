@@ -264,6 +264,7 @@ pub async fn js_create_graph(
         is_dynamic: false,
         resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         file_system: Some(&NullFileSystem),
+        jsr_url_provider: None,
         npm_resolver: None,
         module_analyzer: None,
         module_parser: None,

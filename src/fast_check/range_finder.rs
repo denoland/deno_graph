@@ -15,6 +15,7 @@ use indexmap::IndexMap;
 use url::Url;
 
 use crate::fast_check::swc_helpers::is_expr_leavable;
+use crate::source::JsrUrlProvider;
 use crate::source::Loader;
 use crate::symbols::ExportDeclRef;
 use crate::symbols::FileDepName;
@@ -263,7 +264,7 @@ struct PendingTrace {
 
 pub fn find_public_ranges<'a>(
   fast_check_cache: Option<&'a dyn FastCheckCache>,
-  loader: &'a dyn Loader,
+  jsr_url_provider: &'a dyn JsrUrlProvider,
   graph: &'a ModuleGraph,
   root_symbol: &'a RootSymbol<'a>,
   workspace_members: &'a [WorkspaceMember],
@@ -280,7 +281,7 @@ pub fn find_public_ranges<'a>(
     workspace_members,
     root_symbol,
     url_converter: RegistryUrlConverter {
-      loader,
+      jsr_url_provider,
       workspace_members,
     },
   }
@@ -309,7 +310,7 @@ impl ModulePublicRanges {
 }
 
 struct RegistryUrlConverter<'a> {
-  loader: &'a dyn Loader,
+  jsr_url_provider: &'a dyn JsrUrlProvider,
   workspace_members: &'a [WorkspaceMember],
 }
 
@@ -318,7 +319,7 @@ impl<'a> RegistryUrlConverter<'a> {
     if let Some(member) = self.workspace_members.iter().find(|m| m.nv == *nv) {
       member.base.clone()
     } else {
-      self.loader.registry_package_url(nv)
+      self.jsr_url_provider.package_url(nv)
     }
   }
 
@@ -331,7 +332,7 @@ impl<'a> RegistryUrlConverter<'a> {
       }
       None
     } else {
-      self.loader.registry_package_url_to_nv(url)
+      self.jsr_url_provider.package_url_to_nv(url)
     }
   }
 }

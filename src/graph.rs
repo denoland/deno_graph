@@ -988,6 +988,7 @@ impl GraphImport {
 pub struct BuildFastCheckTypeGraphOptions<'a> {
   pub fast_check_cache: Option<&'a dyn FastCheckCache>,
   pub fast_check_dts: bool,
+  pub jsr_url_provider: Option<&'a dyn JsrUrlProvider>,
   pub module_parser: Option<&'a dyn ModuleParser>,
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
@@ -1006,6 +1007,7 @@ pub struct BuildOptions<'a> {
   /// runtime types.
   pub imports: Vec<ReferrerImports>,
   pub file_system: Option<&'a dyn FileSystem>,
+  pub jsr_url_provider: Option<&'a dyn JsrUrlProvider>,
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
@@ -1431,6 +1433,7 @@ impl ModuleGraph {
     loader: &mut dyn Loader,
     options: BuildOptions<'a>,
   ) -> Vec<BuildDiagnostic> {
+    let default_jsr_url_provider = DefaultJsrUrlProvider::default();
     let default_module_parser = CapturingModuleAnalyzer::default();
     #[cfg(not(target_arch = "wasm32"))]
     let file_system = RealFileSystem;
@@ -1442,6 +1445,9 @@ impl ModuleGraph {
       options.imports,
       options.is_dynamic,
       options.file_system.unwrap_or(&file_system),
+      options
+        .jsr_url_provider
+        .unwrap_or(&default_jsr_url_provider),
       options.resolver,
       options.npm_resolver,
       loader,
@@ -1455,7 +1461,6 @@ impl ModuleGraph {
   #[cfg(feature = "fast_check")]
   pub fn build_fast_check_type_graph(
     &mut self,
-    loader: &mut dyn Loader,
     options: BuildFastCheckTypeGraphOptions,
   ) {
     if !self.graph_kind().include_types() {
@@ -1482,9 +1487,12 @@ impl ModuleGraph {
       options.module_parser.unwrap_or(&default_module_parser),
     );
 
+    let default_jsr_url_provider = DefaultJsrUrlProvider::default();
     let modules = crate::fast_check::build_fast_check_type_graph(
       options.fast_check_cache,
-      loader,
+      options
+        .jsr_url_provider
+        .unwrap_or(&default_jsr_url_provider),
       self,
       &root_symbol,
       pending_nvs,
@@ -2864,6 +2872,7 @@ impl std::fmt::Display for BuildDiagnosticKind {
 struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
   file_system: &'a dyn FileSystem,
+  jsr_url_provider: &'a dyn JsrUrlProvider,
   loader: &'a mut dyn Loader,
   resolver: Option<&'a dyn Resolver>,
   npm_resolver: Option<&'a dyn NpmResolver>,
@@ -2884,6 +2893,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     imports: Vec<ReferrerImports>,
     is_dynamic: bool,
     file_system: &'a dyn FileSystem,
+    jsr_url_provider: &'a dyn JsrUrlProvider,
     resolver: Option<&'a dyn Resolver>,
     npm_resolver: Option<&'a dyn NpmResolver>,
     loader: &'a mut dyn Loader,
@@ -2898,6 +2908,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let mut builder = Self {
       in_dynamic_branch: is_dynamic,
       file_system,
+      jsr_url_provider,
       loader,
       resolver,
       npm_resolver,
@@ -2951,8 +2962,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           Ok(Some(response)) => {
             if maybe_version_info.is_none()
               && self
-                .loader
-                .registry_package_url_to_nv(response.specifier())
+                .jsr_url_provider
+                .package_url_to_nv(response.specifier())
                 .is_some()
             {
               self.graph.module_slots.insert(
@@ -3162,7 +3173,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .graph
             .packages
             .ensure_package(nv.clone(), version_info_load_item.checksum);
-          let base_url = self.loader.registry_package_url(&nv);
+          let base_url = self.jsr_url_provider.package_url(&nv);
           let export_name = normalize_export_name(sub_path);
           match version_info.export(&export_name) {
             Some(export_value) => {
@@ -3610,7 +3621,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       Ok(package_ref) => {
         if let Some(range) = &maybe_range {
           if let Some(nv) =
-            self.loader.registry_package_url_to_nv(&range.specifier)
+            self.jsr_url_provider.package_url_to_nv(&range.specifier)
           {
             self.graph.packages.add_dependency(
               &nv,
@@ -3741,7 +3752,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       Ok(package_ref) => {
         if let Some(range) = &maybe_range {
           if let Some(nv) =
-            self.loader.registry_package_url_to_nv(&range.specifier)
+            self.jsr_url_provider.package_url_to_nv(&range.specifier)
           {
             self.graph.packages.add_dependency(
               &nv,
@@ -3835,8 +3846,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     // request to load
     let specifier = self
-      .loader
-      .registry_url()
+      .jsr_url_provider
+      .url()
       .join(&format!("{}/meta.json", package_name))
       .unwrap();
     let fut = self.loader.load(
@@ -3877,8 +3888,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     let specifier = self
-      .loader
-      .registry_url()
+      .jsr_url_provider
+      .url()
       .join(&format!(
         "{}/{}_meta.json",
         package_nv.name, package_nv.version
@@ -5246,16 +5257,13 @@ mod tests {
         },
       )
       .await;
-    graph.build_fast_check_type_graph(
-      &mut TestLoader,
-      BuildFastCheckTypeGraphOptions {
-        fast_check_cache: None,
-        fast_check_dts: true,
-        workspace_fast_check: true,
-        workspace_members: &workspace_members,
-        ..Default::default()
-      },
-    );
+    graph.build_fast_check_type_graph(BuildFastCheckTypeGraphOptions {
+      fast_check_cache: None,
+      fast_check_dts: true,
+      workspace_fast_check: true,
+      workspace_members: &workspace_members,
+      ..Default::default()
+    });
     graph.valid().unwrap();
     let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
     let module = module.js().unwrap();
