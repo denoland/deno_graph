@@ -156,7 +156,7 @@ async fn test_graph_specs() {
       output_text.push_str("\n== fast check cache ==\n");
       for (key, item) in fast_check_cache.inner.borrow().iter() {
         output_text.push_str(&format!(
-          "{:?}: Deps - {} - Modules: {}\n",
+          "{:?}:\n    Deps - {}\n    Modules: {}\n",
           key,
           serde_json::to_string(&item.dependencies).unwrap(),
           serde_json::to_string(

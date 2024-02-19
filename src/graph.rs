@@ -5213,7 +5213,6 @@ mod tests {
     );
   }
 
-  #[cfg(feature = "fast_check")]
   #[tokio::test]
   async fn fast_check_dts() {
     let mut exports = IndexMap::new();
