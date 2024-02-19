@@ -113,7 +113,7 @@ import 'jsr:@scope/a'
           }
         }
       ],
-      "size": 312,
+      "size": 316,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts"
     },
