@@ -9,7 +9,8 @@ use serde::Serialize;
 
 use crate::ModuleSpecifier;
 
-/// Hash key is the package name, version, and sorted export names.
+/// Cache key that's a hash of the package name, version, and
+/// sorted export names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct FastCheckCacheKey(u64);
 
