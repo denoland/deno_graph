@@ -75,10 +75,11 @@ async fn test_graph_specs() {
       .packages
       .packages_with_checksum_and_deps()
       .map(|(k, _checksum, deps)| {
-        (
-          k.to_string(),
-          deps.map(|d| d.to_string()).collect::<Vec<_>>(),
-        )
+        (k.to_string(), {
+          let mut deps = deps.map(|d| d.to_string()).collect::<Vec<_>>();
+          deps.sort();
+          deps
+        })
       })
       .filter(|(_, v)| !v.is_empty())
       .collect::<BTreeMap<_, _>>();

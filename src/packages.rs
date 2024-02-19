@@ -3,6 +3,7 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::package::PackageNv;
@@ -90,8 +91,7 @@ struct PackageNvInfo {
   manifest_checksum: String,
   /// Collection of exports used.
   exports: BTreeMap<String, String>,
-  /// BTreeSet to be deterministically ordered in the lockfile
-  found_dependencies: BTreeSet<JsrDepPackageReq>,
+  found_dependencies: HashSet<JsrDepPackageReq>,
 }
 
 #[derive(Debug, Clone)]
