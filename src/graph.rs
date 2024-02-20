@@ -60,7 +60,6 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
-use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -758,6 +757,16 @@ impl Module {
       None
     }
   }
+
+  pub fn source(&self) -> Option<&Arc<str>> {
+    match self {
+      crate::Module::Js(m) => Some(&m.source),
+      crate::Module::Json(m) => Some(&m.source),
+      crate::Module::Npm(_)
+      | crate::Module::Node(_)
+      | crate::Module::External(_) => None,
+    }
+  }
 }
 
 /// An npm package entrypoint.
@@ -975,6 +984,27 @@ impl GraphImport {
   }
 }
 
+#[cfg(feature = "fast_check")]
+#[derive(Debug, Default)]
+pub enum WorkspaceFastCheckOption<'a> {
+  #[default]
+  Disabled,
+  Enabled(&'a [WorkspaceMember]),
+}
+
+#[cfg(feature = "fast_check")]
+#[derive(Default)]
+pub struct BuildFastCheckTypeGraphOptions<'a> {
+  pub fast_check_cache: Option<&'a dyn crate::fast_check::FastCheckCache>,
+  pub fast_check_dts: bool,
+  pub jsr_url_provider: Option<&'a dyn JsrUrlProvider>,
+  pub module_parser: Option<&'a dyn ModuleParser>,
+  pub resolver: Option<&'a dyn Resolver>,
+  pub npm_resolver: Option<&'a dyn NpmResolver>,
+  /// Whether to fill workspace members with fast check TypeScript data.
+  pub workspace_fast_check: WorkspaceFastCheckOption<'a>,
+}
+
 #[derive(Default)]
 pub struct BuildOptions<'a> {
   pub is_dynamic: bool,
@@ -984,15 +1014,13 @@ pub struct BuildOptions<'a> {
   /// runtime types.
   pub imports: Vec<ReferrerImports>,
   pub file_system: Option<&'a dyn FileSystem>,
+  pub jsr_url_provider: Option<&'a dyn JsrUrlProvider>,
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
   pub module_parser: Option<&'a dyn ModuleParser>,
   pub reporter: Option<&'a dyn Reporter>,
-  /// Whether to fill workspace members with fast check TypeScript data.
-  pub workspace_fast_check: bool,
-  pub workspace_members: Vec<WorkspaceMember>,
-  pub fast_check_dts: bool,
+  pub workspace_members: &'a [WorkspaceMember],
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -1412,6 +1440,7 @@ impl ModuleGraph {
     loader: &mut dyn Loader,
     options: BuildOptions<'a>,
   ) -> Vec<BuildDiagnostic> {
+    let default_jsr_url_provider = DefaultJsrUrlProvider;
     let default_module_parser = CapturingModuleAnalyzer::default();
     #[cfg(not(target_arch = "wasm32"))]
     let file_system = RealFileSystem;
@@ -1423,17 +1452,106 @@ impl ModuleGraph {
       options.imports,
       options.is_dynamic,
       options.file_system.unwrap_or(&file_system),
+      options
+        .jsr_url_provider
+        .unwrap_or(&default_jsr_url_provider),
       options.resolver,
       options.npm_resolver,
       loader,
       options.module_analyzer.unwrap_or(&default_module_parser),
-      options.module_parser.unwrap_or(&default_module_parser),
       options.reporter,
-      options.workspace_fast_check,
       options.workspace_members,
-      options.fast_check_dts,
     )
     .await
+  }
+
+  #[cfg(feature = "fast_check")]
+  pub fn build_fast_check_type_graph(
+    &mut self,
+    options: BuildFastCheckTypeGraphOptions,
+  ) {
+    if !self.graph_kind().include_types() {
+      return;
+    }
+
+    let mut pending_nvs = self
+      .packages
+      .top_level_packages()
+      .iter()
+      .cloned()
+      .collect::<VecDeque<_>>();
+    if let WorkspaceFastCheckOption::Enabled(workspace_members) =
+      options.workspace_fast_check
+    {
+      pending_nvs.extend(workspace_members.iter().map(|n| n.nv.clone()));
+    }
+    if pending_nvs.is_empty() {
+      return;
+    }
+
+    let default_module_parser = CapturingModuleAnalyzer::default();
+    let root_symbol = crate::symbols::RootSymbol::new(
+      self,
+      options.module_parser.unwrap_or(&default_module_parser),
+    );
+
+    let default_jsr_url_provider = DefaultJsrUrlProvider;
+    let modules = crate::fast_check::build_fast_check_type_graph(
+      options.fast_check_cache,
+      options
+        .jsr_url_provider
+        .unwrap_or(&default_jsr_url_provider),
+      self,
+      &root_symbol,
+      pending_nvs,
+      &crate::fast_check::TransformOptions {
+        workspace_members: match options.workspace_fast_check {
+          WorkspaceFastCheckOption::Disabled => &[],
+          WorkspaceFastCheckOption::Enabled(members) => members,
+        },
+        should_error_on_first_diagnostic: match options.workspace_fast_check {
+          WorkspaceFastCheckOption::Disabled => true,
+          WorkspaceFastCheckOption::Enabled(_) => false,
+        },
+        dts: options.fast_check_dts,
+      },
+    );
+    for (specifier, fast_check_module_result) in modules {
+      let module_slot = self.module_slots.get_mut(&specifier).unwrap();
+      let module = match module_slot {
+        ModuleSlot::Module(m) => match m {
+          Module::Js(m) => m,
+          _ => continue,
+        },
+        ModuleSlot::Err(_) | ModuleSlot::Pending => continue,
+      };
+      module.fast_check = Some(match fast_check_module_result {
+        Ok(fast_check_module) => {
+          let mut dependencies: IndexMap<String, Dependency> =
+            Default::default();
+          fill_module_dependencies(
+            GraphKind::TypesOnly,
+            match Arc::try_unwrap(fast_check_module.module_info) {
+              Ok(module_info) => module_info.dependencies,
+              Err(module_info) => module_info.dependencies.clone(),
+            },
+            &module.specifier,
+            &mut dependencies,
+            // no need to resolve dynamic imports
+            &NullFileSystem,
+            options.resolver,
+            options.npm_resolver,
+          );
+          FastCheckTypeModuleSlot::Module(Box::new(FastCheckTypeModule {
+            dependencies,
+            source: fast_check_module.text,
+            source_map: fast_check_module.source_map,
+            dts: fast_check_module.dts,
+          }))
+        }
+        Err(diagnostic) => FastCheckTypeModuleSlot::Error(diagnostic),
+      });
+    }
   }
 
   /// Creates a new cloned module graph from the provided roots.
@@ -1475,6 +1593,8 @@ impl ModuleGraph {
     new_graph.imports = self.imports.clone();
     new_graph.roots = roots.iter().map(|r| (*r).to_owned()).collect();
     new_graph.npm_packages = self.npm_packages.clone();
+    // todo(dsherret): it should be a bit smarter about this, but this is not terrible
+    new_graph.packages = self.packages.clone();
     new_graph.has_node_specifier = self.has_node_specifier;
 
     new_graph
@@ -2677,7 +2797,6 @@ struct PendingJsrState {
   pending_resolutions: Vec<PendingJsrResolutionItem>,
   pending_content_loads:
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
-  top_level_nvs: BTreeSet<PackageNv>,
 }
 
 #[derive(Default)]
@@ -2763,21 +2882,16 @@ impl std::fmt::Display for BuildDiagnosticKind {
 struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
   file_system: &'a dyn FileSystem,
+  jsr_url_provider: &'a dyn JsrUrlProvider,
   loader: &'a mut dyn Loader,
   resolver: Option<&'a dyn Resolver>,
   npm_resolver: Option<&'a dyn NpmResolver>,
   module_analyzer: &'a dyn ModuleAnalyzer,
-  #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
-  module_parser: &'a dyn ModuleParser,
   reporter: Option<&'a dyn Reporter>,
   graph: &'graph mut ModuleGraph,
   state: PendingState,
   fill_pass_mode: FillPassMode,
-  #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
-  workspace_fast_check: bool,
-  workspace_members: Vec<WorkspaceMember>,
-  #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
-  fast_check_dts: bool,
+  workspace_members: &'a [WorkspaceMember],
   diagnostics: Vec<BuildDiagnostic>,
 }
 
@@ -2789,16 +2903,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     imports: Vec<ReferrerImports>,
     is_dynamic: bool,
     file_system: &'a dyn FileSystem,
+    jsr_url_provider: &'a dyn JsrUrlProvider,
     resolver: Option<&'a dyn Resolver>,
     npm_resolver: Option<&'a dyn NpmResolver>,
     loader: &'a mut dyn Loader,
     module_analyzer: &'a dyn ModuleAnalyzer,
-    #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
-    module_parser: &'a dyn ModuleParser,
     reporter: Option<&'a dyn Reporter>,
-    workspace_fast_check: bool,
-    workspace_members: Vec<WorkspaceMember>,
-    fast_check_dts: bool,
+    workspace_members: &'a [WorkspaceMember],
   ) -> Vec<BuildDiagnostic> {
     let fill_pass_mode = match graph.roots.is_empty() {
       true => FillPassMode::AllowRestart,
@@ -2807,18 +2918,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let mut builder = Self {
       in_dynamic_branch: is_dynamic,
       file_system,
+      jsr_url_provider,
       loader,
       resolver,
       npm_resolver,
       module_analyzer,
-      module_parser,
       reporter,
       graph,
       state: PendingState::default(),
       fill_pass_mode,
-      workspace_fast_check,
       workspace_members,
-      fast_check_dts,
       diagnostics: Vec::new(),
     };
     builder.fill(roots, imports).await;
@@ -2863,8 +2972,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           Ok(Some(response)) => {
             if maybe_version_info.is_none()
               && self
-                .loader
-                .registry_package_url_to_nv(response.specifier())
+                .jsr_url_provider
+                .package_url_to_nv(response.specifier())
                 .is_some()
             {
               self.graph.module_slots.insert(
@@ -2956,10 +3065,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     // resolve any npm package requirements
     NpmSpecifierResolver::fill_builder(self).await;
-
-    // create the fast check type graph
-    #[cfg(feature = "fast_check")]
-    self.create_fast_check_type_graph();
   }
 
   fn handle_provided_imports(&mut self, imports: Vec<ReferrerImports>) {
@@ -2989,8 +3094,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       std::mem::take(&mut self.state.jsr.pending_resolutions);
     let mut pending_version_resolutions =
       Vec::with_capacity(pending_resolutions.len());
-    let should_collect_top_level_nvs = self.state.jsr.top_level_nvs.is_empty()
-      && self.graph.graph_kind.include_types();
+    let should_collect_top_level_nvs =
+      self.graph.packages.top_level_packages().is_empty()
+        && self.graph.graph_kind.include_types();
     for pending_resolution in pending_resolutions {
       let package_name = &pending_resolution.package_ref.req().name;
       let fut = self
@@ -3077,7 +3183,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .graph
             .packages
             .ensure_package(nv.clone(), version_info_load_item.checksum);
-          let base_url = self.loader.registry_package_url(&nv);
+          let base_url = self.jsr_url_provider.package_url(&nv);
           let export_name = normalize_export_name(sub_path);
           match version_info.export(&export_name) {
             Some(export_value) => {
@@ -3090,7 +3196,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 ),
               );
               if should_collect_top_level_nvs {
-                self.state.jsr.top_level_nvs.insert(nv.clone());
+                self.graph.packages.add_top_level_package(nv.clone());
               }
 
               let specifier = base_url.join(export_value).unwrap();
@@ -3385,7 +3491,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     specifier.clone(),
                     maybe_range.cloned(),
                     Arc::new(anyhow!(
-                      "Unsupported checksum in manifest. Maybe try upgrading deno?",
+                      "Unsupported checksum in package manifest. Maybe try upgrading deno?",
                     )),
                   )),
                 );
@@ -3393,16 +3499,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               }
             }
           }
-          None => {
-            self.graph.module_slots.insert(
-              specifier.clone(),
-              ModuleSlot::Err(ModuleError::Missing(
-                specifier.clone(),
-                maybe_range.cloned(),
-              )),
-            );
-            return;
-          }
+          // If the checksum is missing then leave it up to the loader to error
+          // by providing this special checksum value. For example, someone may
+          // be making modifications to their vendor folder in which case this
+          // checksum will be ignored and if not, then a loading error will
+          // occur about an incorrect checksum.
+          None => "package-manifest-missing-checksum".to_string(),
         };
         let checksum = LoaderChecksum::new(checksum.clone());
         if let Some(module_info) = version_info.inner.module_info(sub_path) {
@@ -3525,7 +3627,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       Ok(package_ref) => {
         if let Some(range) = &maybe_range {
           if let Some(nv) =
-            self.loader.registry_package_url_to_nv(&range.specifier)
+            self.jsr_url_provider.package_url_to_nv(&range.specifier)
           {
             self.graph.packages.add_dependency(
               &nv,
@@ -3533,7 +3635,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             );
           }
         }
-        for workspace_member in &self.workspace_members {
+        for workspace_member in self.workspace_members {
           if workspace_member.nv.name == package_ref.req().name {
             if package_ref
               .req()
@@ -3656,7 +3758,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       Ok(package_ref) => {
         if let Some(range) = &maybe_range {
           if let Some(nv) =
-            self.loader.registry_package_url_to_nv(&range.specifier)
+            self.jsr_url_provider.package_url_to_nv(&range.specifier)
           {
             self.graph.packages.add_dependency(
               &nv,
@@ -3750,8 +3852,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     // request to load
     let specifier = self
-      .loader
-      .registry_url()
+      .jsr_url_provider
+      .url()
       .join(&format!("{}/meta.json", package_name))
       .unwrap();
     let fut = self.loader.load(
@@ -3792,8 +3894,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     let specifier = self
-      .loader
-      .registry_url()
+      .jsr_url_provider
+      .url()
       .join(&format!(
         "{}/{}_meta.json",
         package_nv.name, package_nv.version
@@ -4063,75 +4165,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
     module_slot
-  }
-
-  #[cfg(feature = "fast_check")]
-  fn create_fast_check_type_graph(&mut self) {
-    if !self.graph.graph_kind().include_types() {
-      return;
-    }
-
-    let mut pending_nvs = std::mem::take(&mut self.state.jsr.top_level_nvs)
-      .into_iter()
-      .collect::<VecDeque<_>>();
-    if self.workspace_fast_check {
-      pending_nvs.extend(self.workspace_members.iter().map(|n| n.nv.clone()));
-    }
-    if pending_nvs.is_empty() {
-      return;
-    }
-
-    let root_symbol =
-      crate::symbols::RootSymbol::new(self.graph, self.module_parser);
-
-    let modules = crate::fast_check::build_fast_check_type_graph(
-      self.loader,
-      self.graph,
-      &root_symbol,
-      pending_nvs,
-      &crate::fast_check::TransformOptions {
-        workspace_members: if self.workspace_fast_check {
-          &self.workspace_members
-        } else {
-          &[]
-        },
-        should_error_on_first_diagnostic: !self.workspace_fast_check,
-        dts: self.fast_check_dts,
-      },
-    );
-    for (specifier, fast_check_module_result) in modules {
-      let module_slot = self.graph.module_slots.get_mut(&specifier).unwrap();
-      let module = match module_slot {
-        ModuleSlot::Module(m) => match m {
-          Module::Js(m) => m,
-          _ => continue,
-        },
-        ModuleSlot::Err(_) | ModuleSlot::Pending => continue,
-      };
-      module.fast_check = Some(match fast_check_module_result {
-        Ok(fast_check_module) => {
-          let mut dependencies: IndexMap<String, Dependency> =
-            Default::default();
-          fill_module_dependencies(
-            GraphKind::TypesOnly,
-            fast_check_module.module_info.dependencies,
-            &module.specifier,
-            &mut dependencies,
-            // no need to resolve dynamic imports
-            &NullFileSystem,
-            self.resolver,
-            self.npm_resolver,
-          );
-          FastCheckTypeModuleSlot::Module(Box::new(FastCheckTypeModule {
-            dependencies,
-            source: fast_check_module.text.into(),
-            source_map: fast_check_module.source_map.into(),
-            dts: fast_check_module.dts,
-          }))
-        }
-        Err(diagnostic) => FastCheckTypeModuleSlot::Error(diagnostic),
-      });
-    }
   }
 }
 
@@ -5222,70 +5255,58 @@ mod tests {
 
   #[tokio::test]
   async fn fast_check_dts() {
-    struct TestLoader;
-    impl Loader for TestLoader {
-      fn load(
-        &mut self,
-        specifier: &ModuleSpecifier,
-        _options: LoadOptions,
-      ) -> LoadFuture {
-        let specifier = specifier.clone();
-        match specifier.as_str() {
-          "file:///foo.ts" => Box::pin(async move {
-            Ok(Some(LoadResponse::Module {
-              specifier: specifier.clone(),
-              maybe_headers: None,
-              content: b"
-                export function add(a: number, b: number): number {
-                  return a + b;
-                }
-              "
-              .to_vec()
-              .into(),
-            }))
-          }),
-          _ => unreachable!(),
-        }
-      }
-    }
-
     let mut exports = IndexMap::new();
     exports.insert(".".to_string(), "./foo.ts".to_string());
 
+    let workspace_members = vec![WorkspaceMember {
+      base: Url::parse("file:///").unwrap(),
+      exports: exports.clone(),
+      nv: PackageNv {
+        name: "foo".to_string(),
+        version: Version::parse_standard("1.0.0").unwrap(),
+      },
+    }];
+    let mut test_loader = MemoryLoader::default();
+    test_loader.add_source_with_text(
+      "file:///foo.ts",
+      "
+    export function add(a: number, b: number): number {
+      return a + b;
+    }
+  ",
+    );
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
-        &mut TestLoader,
+        &mut test_loader,
         BuildOptions {
-          workspace_fast_check: true,
-          fast_check_dts: true,
-          workspace_members: vec![WorkspaceMember {
-            base: Url::parse("file:///").unwrap(),
-            exports,
-            nv: PackageNv {
-              name: "foo".to_string(),
-              version: Version::parse_standard("1.0.0").unwrap(),
-            },
-          }],
+          workspace_members: &workspace_members,
           ..Default::default()
         },
       )
       .await;
+    graph.build_fast_check_type_graph(BuildFastCheckTypeGraphOptions {
+      fast_check_cache: None,
+      fast_check_dts: true,
+      workspace_fast_check: WorkspaceFastCheckOption::Enabled(
+        &workspace_members,
+      ),
+      ..Default::default()
+    });
     graph.valid().unwrap();
     let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
     let module = module.js().unwrap();
-    if let FastCheckTypeModuleSlot::Module(fsm) =
+    let FastCheckTypeModuleSlot::Module(fsm) =
       module.fast_check.clone().unwrap()
-    {
-      let dts = fsm.dts.unwrap();
-      assert_eq!(
-        dts.text.to_string().trim(),
-        "export function add(a: number, b: number): number;"
-      );
-      assert!(dts.diagnostics.is_empty());
-    } else {
-      panic!()
-    }
+    else {
+      unreachable!();
+    };
+    let dts = fsm.dts.unwrap();
+    assert_eq!(
+      dts.text.to_string().trim(),
+      "export function add(a: number, b: number): number;"
+    );
+    assert!(dts.diagnostics.is_empty());
   }
 }

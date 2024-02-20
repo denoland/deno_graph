@@ -1,6 +1,7 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
 use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
@@ -9,7 +10,6 @@ use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
 use deno_semver::VersionReq;
-use indexmap::IndexMap;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -90,7 +90,7 @@ impl JsrPackageVersionInfo {
 struct PackageNvInfo {
   manifest_checksum: String,
   /// Collection of exports used.
-  exports: IndexMap<String, String>,
+  exports: BTreeMap<String, String>,
   found_dependencies: HashSet<JsrDepPackageReq>,
 }
 
@@ -109,6 +109,9 @@ pub struct PackageSpecifiers {
   packages_by_name: HashMap<String, Vec<PackageNv>>,
   #[serde(skip_serializing)]
   packages: BTreeMap<PackageNv, PackageNvInfo>,
+  /// Cache for packages that have a referrer outside JSR.
+  #[serde(skip_serializing)]
+  top_level_packages: BTreeSet<PackageNv>,
 }
 
 impl PackageSpecifiers {
@@ -213,10 +216,18 @@ impl PackageSpecifiers {
       .insert(export.0, export.1);
   }
 
+  pub(crate) fn add_top_level_package(&mut self, nv: PackageNv) {
+    self.top_level_packages.insert(nv);
+  }
+
+  pub(crate) fn top_level_packages(&self) -> &BTreeSet<PackageNv> {
+    &self.top_level_packages
+  }
+
   pub fn package_exports(
     &self,
     nv: &PackageNv,
-  ) -> Option<&IndexMap<String, String>> {
+  ) -> Option<&BTreeMap<String, String>> {
     self.packages.get(nv).map(|p| &p.exports)
   }
 

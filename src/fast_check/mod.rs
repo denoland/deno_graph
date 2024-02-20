@@ -5,15 +5,6 @@ use std::sync::Arc;
 
 use crate::ModuleSpecifier;
 
-#[cfg(feature = "fast_check")]
-mod range_finder;
-#[cfg(feature = "fast_check")]
-mod swc_helpers;
-#[cfg(feature = "fast_check")]
-mod transform;
-#[cfg(feature = "fast_check")]
-mod transform_dts;
-
 use deno_ast::diagnostics::DiagnosticLevel;
 use deno_ast::diagnostics::DiagnosticLocation;
 use deno_ast::diagnostics::DiagnosticSnippet;
@@ -23,6 +14,23 @@ use deno_ast::diagnostics::DiagnosticSourcePos;
 use deno_ast::diagnostics::DiagnosticSourceRange;
 use deno_ast::SourceRange;
 use deno_ast::SourceTextInfo;
+
+mod cache;
+#[cfg(feature = "fast_check")]
+mod range_finder;
+#[cfg(feature = "fast_check")]
+mod swc_helpers;
+#[cfg(feature = "fast_check")]
+mod transform;
+#[cfg(feature = "fast_check")]
+mod transform_dts;
+
+pub use cache::FastCheckCache;
+pub use cache::FastCheckCacheItem;
+pub use cache::FastCheckCacheKey;
+pub use cache::FastCheckCacheModuleItem;
+pub use cache::FastCheckCacheModuleItemDiagnostic;
+pub use cache::FastCheckCacheModuleItemInfo;
 #[cfg(feature = "fast_check")]
 pub use transform::FastCheckDtsModule;
 #[cfg(feature = "fast_check")]
@@ -104,6 +112,17 @@ pub enum FastCheckDiagnostic {
     specifier: ModuleSpecifier,
     inner: Arc<anyhow::Error>,
   },
+  /// This is a special diagnostic that appears when a module is loaded from the
+  /// fast check cache that had a diagnostic. When we load a diagnostic from the
+  /// cache, we're only really interested in if there was a fast check diagnostic
+  /// and not what the diagnostic was because we just need to know if we can use
+  /// fast check for the package or not.
+  ///
+  /// Note: This diagnostic will never (should never) be displayed to the user
+  /// because the fast check cache should not be used in deno lint or when
+  /// publishing.
+  #[error("diagnostic was cached")]
+  Cached { specifier: ModuleSpecifier },
 }
 
 impl FastCheckDiagnostic {
@@ -137,6 +156,7 @@ impl FastCheckDiagnostic {
       UnsupportedNestedJavaScript { .. } => None,
       UnsupportedJavaScriptEntrypoint { .. } => None,
       Emit { .. } => None,
+      Cached { .. } => None,
     }
   }
 }
@@ -162,6 +182,7 @@ impl FastCheckDiagnostic {
       UnsupportedJavaScriptEntrypoint { specifier } => specifier,
       UnsupportedNestedJavaScript { specifier } => specifier,
       Emit { specifier, .. } => specifier,
+      Cached { specifier, .. } => specifier,
     }
   }
 
@@ -185,6 +206,7 @@ impl FastCheckDiagnostic {
       UnsupportedJavaScriptEntrypoint { .. } => None,
       UnsupportedNestedJavaScript { .. } => None,
       Emit { .. } => None,
+      Cached { .. } => None,
     }
   }
 }
@@ -208,7 +230,8 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       | UnsupportedTsNamespaceExport { .. }
       | UnsupportedUsing { .. }
       | UnsupportedNestedJavaScript { .. }
-      | Emit { .. } => DiagnosticLevel::Error,
+      | Emit { .. }
+      | Cached { .. } => DiagnosticLevel::Error,
       UnsupportedJavaScriptEntrypoint { .. } => DiagnosticLevel::Warning,
     }
   }
@@ -240,6 +263,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
         "unsupported-javascript-entrypoint"
       }
       Emit { .. } => "emit",
+      Cached { .. } => "cached",
     })
   }
 
@@ -304,6 +328,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       UnsupportedNestedJavaScript { .. } => "add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript",
       UnsupportedJavaScriptEntrypoint { .. } => "add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript",
       Emit { .. } => "this error may be the result of a bug in Deno - if you think this is the case, please open an issue",
+      Cached { .. } => "this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist",
     }))
   }
 
@@ -371,6 +396,9 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       Emit {  .. } => Cow::Borrowed(&[
         Cow::Borrowed("this error may be the result of a bug in Deno - if you think this is the case, please open an issue")
       ]),
+      Cached {  .. } => Cow::Borrowed(&[
+        Cow::Borrowed("this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist")
+      ]),
     }
   }
 
@@ -384,7 +412,8 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
 
 #[cfg(feature = "fast_check")]
 pub fn build_fast_check_type_graph<'a>(
-  loader: &'a dyn crate::source::Loader,
+  fast_check_cache: Option<&'a dyn FastCheckCache>,
+  jsr_url_provider: &'a dyn crate::source::JsrUrlProvider,
   graph: &'a crate::ModuleGraph,
   root_symbol: &'a crate::symbols::RootSymbol<'a>,
   pending_nvs: std::collections::VecDeque<deno_semver::package::PackageNv>,
@@ -393,8 +422,18 @@ pub fn build_fast_check_type_graph<'a>(
   crate::ModuleSpecifier,
   Result<FastCheckModule, Vec<FastCheckDiagnostic>>,
 )> {
+  use crate::fast_check::cache::fast_insecure_hash;
+
+  let fast_check_cache = if options.dts && fast_check_cache.is_some() {
+    debug_assert!(false, "using fast check cache with dts is not supported");
+    None
+  } else {
+    fast_check_cache
+  };
+
   let public_modules = range_finder::find_public_ranges(
-    loader,
+    fast_check_cache,
+    jsr_url_provider,
     graph,
     root_symbol,
     options.workspace_members,
@@ -406,39 +445,88 @@ pub fn build_fast_check_type_graph<'a>(
     log::debug!("Analyzing '{}' for fast check", nv);
     let mut errors = Vec::new();
     errors.extend(package.errors);
+
     let mut fast_check_modules =
       Vec::with_capacity(package.module_ranges.len());
-    for (specifier, mut ranges) in package.module_ranges {
-      let module_info = root_symbol.module_from_specifier(&specifier).unwrap();
-      if let Some(module_info) = module_info.esm() {
-        let diagnostics = ranges.take_diagnostics();
-        let transform_result = if diagnostics.is_empty() {
-          transform::transform(
-            graph,
-            &specifier,
-            &ranges,
-            module_info.source(),
-            options,
-          )
-        } else {
-          Err(diagnostics)
-        };
-        match transform_result {
-          Ok(modules) => {
-            if errors.is_empty() {
-              fast_check_modules.push((specifier.clone(), Ok(modules)));
-            }
-          }
-          Err(d) => {
-            errors.extend(d);
+    if package.sources.is_empty() {
+      transform_package(
+        package.module_ranges,
+        root_symbol,
+        graph,
+        options,
+        &mut errors,
+        &mut fast_check_modules,
+      );
+
+      // fill the cache
+      if let Some(fast_check_cache) = fast_check_cache {
+        let mut package_cache_items =
+          Vec::with_capacity(fast_check_modules.len() + errors.len());
+        for (specifier, module_result) in &fast_check_modules {
+          let source_hash = graph
+            .get(specifier)
+            .and_then(|m| m.source())
+            .map(|s| fast_insecure_hash(s.as_bytes()))
+            .unwrap_or(0);
+          if errors.is_empty() {
+            let module = module_result.as_ref().ok().unwrap();
+            package_cache_items.push((
+              specifier.clone(),
+              FastCheckCacheModuleItem::Info(FastCheckCacheModuleItemInfo {
+                source_hash,
+                module_info: serde_json::to_string(&module.module_info)
+                  .unwrap(),
+                text: module.text.clone(),
+                source_map: module.source_map.clone(),
+              }),
+            ));
+          } else {
+            package_cache_items.push((
+              specifier.clone(),
+              FastCheckCacheModuleItem::Diagnostic(
+                FastCheckCacheModuleItemDiagnostic { source_hash },
+              ),
+            ));
           }
         }
+        for error in &errors {
+          let specifier = error.specifier();
+          let source_hash = graph
+            .get(specifier)
+            .and_then(|m| m.source())
+            .map(|s| fast_insecure_hash(s.as_bytes()))
+            .unwrap_or(0);
+          package_cache_items.push((
+            specifier.clone(),
+            FastCheckCacheModuleItem::Diagnostic(
+              FastCheckCacheModuleItemDiagnostic { source_hash },
+            ),
+          ));
+        }
+        let cache_key = FastCheckCacheKey::build(&nv, &package.entrypoints);
+        fast_check_cache.set(
+          cache_key,
+          FastCheckCacheItem {
+            dependencies: package.dependencies,
+            modules: package_cache_items,
+          },
+        );
       }
+
+      if errors.is_empty() {
+        final_result.extend(fast_check_modules);
+      }
+    } else {
+      // these were sources in the cache, so use those
+      final_result.extend(
+        package
+          .sources
+          .into_iter()
+          .map(|(url, module_item)| (url, Ok(module_item))),
+      );
     }
 
-    if errors.is_empty() {
-      final_result.extend(fast_check_modules);
-    } else {
+    if !errors.is_empty() {
       // If there are errors, insert a copy into each entrypoint.
       //
       // If one entrypoint can't be analyzed then we consider all
@@ -451,4 +539,53 @@ pub fn build_fast_check_type_graph<'a>(
   }
 
   final_result
+}
+
+#[cfg(feature = "fast_check")]
+fn transform_package(
+  package_module_ranges: indexmap::IndexMap<
+    ModuleSpecifier,
+    self::range_finder::ModulePublicRanges,
+  >,
+  root_symbol: &crate::symbols::RootSymbol<'_>,
+  graph: &crate::ModuleGraph,
+  options: &TransformOptions<'_>,
+  errors: &mut Vec<FastCheckDiagnostic>,
+  fast_check_modules: &mut Vec<(
+    url::Url,
+    Result<FastCheckModule, Vec<FastCheckDiagnostic>>,
+  )>,
+) {
+  for (specifier, mut ranges) in package_module_ranges {
+    let module_info = root_symbol.module_from_specifier(&specifier).unwrap();
+    if let Some(module_info) = module_info.esm() {
+      let diagnostics = ranges.take_diagnostics();
+      let transform_result = if diagnostics.is_empty() {
+        transform::transform(
+          graph,
+          &specifier,
+          &ranges,
+          module_info.source(),
+          options,
+        )
+      } else {
+        Err(diagnostics)
+      };
+      match transform_result {
+        Ok(modules) => {
+          if errors.is_empty() {
+            fast_check_modules.push((specifier.clone(), Ok(modules)));
+          }
+        }
+        Err(d) => {
+          // don't clear the fast_check_modules here because we still
+          // use that to construct the package's cache items
+          errors.extend(d);
+          if options.should_error_on_first_diagnostic {
+            return; // no need to continue analyzing the package
+          }
+        }
+      }
+    }
+  }
 }

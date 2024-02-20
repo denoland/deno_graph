@@ -106,7 +106,7 @@ impl CacheSetting {
   }
 }
 
-pub static DEFAULT_DENO_REGISTRY_URL: Lazy<Url> =
+pub static DEFAULT_JSR_URL: Lazy<Url> =
   Lazy::new(|| Url::parse("https://jsr.io").unwrap());
 
 #[derive(Debug, Error)]
@@ -175,18 +175,6 @@ pub struct LoadOptions {
 /// graph in a thread safe way as well as a way to provide additional meta data
 /// about any cached resources.
 pub trait Loader {
-  fn registry_url(&self) -> &Url {
-    &DEFAULT_DENO_REGISTRY_URL
-  }
-
-  fn registry_package_url(&self, nv: &PackageNv) -> Url {
-    recommended_registry_package_url(self.registry_url(), nv)
-  }
-
-  fn registry_package_url_to_nv(&self, url: &Url) -> Option<PackageNv> {
-    recommended_registry_package_url_to_nv(self.registry_url(), url)
-  }
-
   /// An optional method which returns cache info for a module specifier.
   fn get_cache_info(&self, _specifier: &ModuleSpecifier) -> Option<CacheInfo> {
     None
@@ -210,6 +198,25 @@ pub trait Loader {
   ) {
   }
 }
+
+pub trait JsrUrlProvider {
+  fn url(&self) -> &Url {
+    &DEFAULT_JSR_URL
+  }
+
+  fn package_url(&self, nv: &PackageNv) -> Url {
+    recommended_registry_package_url(self.url(), nv)
+  }
+
+  fn package_url_to_nv(&self, url: &Url) -> Option<PackageNv> {
+    recommended_registry_package_url_to_nv(self.url(), url)
+  }
+}
+
+#[derive(Debug, Default, Copy, Clone)]
+pub struct DefaultJsrUrlProvider;
+
+impl JsrUrlProvider for DefaultJsrUrlProvider {}
 
 /// The recommended way for getting the registry URL for a package.
 ///
@@ -530,12 +537,12 @@ impl MemoryLoader {
     );
   }
 
-  pub fn add_deno_package_info(
+  pub fn add_jsr_package_info(
     &mut self,
     name: &str,
     package_info: &JsrPackageInfo,
   ) {
-    let specifier = DEFAULT_DENO_REGISTRY_URL
+    let specifier = DEFAULT_JSR_URL
       .join(&format!("{}/meta.json", name))
       .unwrap();
     let json_text = serde_json::to_string(package_info).unwrap();
@@ -547,7 +554,7 @@ impl MemoryLoader {
     nv: &PackageNv,
     version_info: &JsrPackageVersionInfo,
   ) {
-    let specifier = DEFAULT_DENO_REGISTRY_URL
+    let specifier = DEFAULT_JSR_URL
       .join(&format!("{}/{}_meta.json", nv.name, nv.version))
       .unwrap();
     let json_text = serde_json::to_string(version_info).unwrap();

@@ -9,7 +9,7 @@ mod test_builder;
 use deno_graph::source::recommended_registry_package_url;
 use deno_graph::source::recommended_registry_package_url_to_nv;
 use deno_graph::source::LoaderChecksum;
-use deno_graph::source::DEFAULT_DENO_REGISTRY_URL;
+use deno_graph::source::DEFAULT_JSR_URL;
 use deno_graph::WorkspaceMember;
 use deno_semver::package::PackageNv;
 use indexmap::IndexMap;
@@ -22,7 +22,16 @@ use url::Url;
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SpecOptions {
+  #[serde(default)]
+  #[serde(skip_serializing_if = "is_false")]
   pub workspace_fast_check: bool,
+  #[serde(default)]
+  #[serde(skip_serializing_if = "is_false")]
+  pub fast_check_cache: bool,
+}
+
+fn is_false(v: &bool) -> bool {
+  !v
 }
 
 pub struct Spec {
@@ -70,7 +79,7 @@ impl Spec {
   pub fn fill_jsr_meta_files_with_checksums(&mut self) {
     for (nv, checksums_by_files) in self.get_jsr_checksums() {
       let base_specifier =
-        recommended_registry_package_url(&DEFAULT_DENO_REGISTRY_URL, &nv);
+        recommended_registry_package_url(&DEFAULT_JSR_URL, &nv);
       let meta_file = base_specifier
         .join(&format!("../{}_meta.json", nv.version))
         .unwrap();
@@ -109,12 +118,11 @@ impl Spec {
       HashMap<String, serde_json::Value>,
     > = Default::default();
     for file in &self.files {
-      if let Some(nv) = recommended_registry_package_url_to_nv(
-        &DEFAULT_DENO_REGISTRY_URL,
-        &file.url(),
-      ) {
+      if let Some(nv) =
+        recommended_registry_package_url_to_nv(&DEFAULT_JSR_URL, &file.url())
+      {
         let base_specifier =
-          recommended_registry_package_url(&DEFAULT_DENO_REGISTRY_URL, &nv);
+          recommended_registry_package_url(&DEFAULT_JSR_URL, &nv);
         let relative_url = file
           .url()
           .to_string()

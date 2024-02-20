@@ -83,11 +83,12 @@ pub struct FastCheckDtsModule {
   pub diagnostics: Vec<FastCheckDtsDiagnostic>,
 }
 
+#[derive(Debug)]
 pub struct FastCheckModule {
-  pub module_info: ModuleInfo,
-  pub text: String,
+  pub module_info: Arc<ModuleInfo>,
+  pub text: Arc<str>,
+  pub source_map: Arc<[u8]>,
   pub dts: Option<FastCheckDtsModule>,
-  pub source_map: Vec<u8>,
 }
 
 pub struct TransformOptions<'a> {
@@ -158,10 +159,10 @@ pub fn transform(
   };
 
   Ok(FastCheckModule {
-    module_info,
-    text,
+    module_info: module_info.into(),
+    text: text.into(),
     dts,
-    source_map,
+    source_map: source_map.into(),
   })
 }
 

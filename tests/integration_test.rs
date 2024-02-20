@@ -21,6 +21,7 @@ use deno_graph::source::NpmResolver;
 use deno_graph::source::Source;
 use deno_graph::source::UnknownBuiltInNodeModuleError;
 use deno_graph::BuildOptions;
+use deno_graph::FastCheckCacheModuleItem;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 use deno_graph::NpmPackageReqResolution;
@@ -42,11 +43,6 @@ async fn test_graph_specs() {
   for (test_file_path, spec) in
     get_specs_in_dir(&PathBuf::from("./tests/specs/graph"))
   {
-    if !cfg!(feature = "fast_check")
-      && spec.output_file.text.contains("Fast check ")
-    {
-      continue;
-    }
     eprintln!("Running {}", test_file_path.display());
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
@@ -67,6 +63,7 @@ async fn test_graph_specs() {
 
     if let Some(options) = &spec.options {
       builder.workspace_fast_check(options.workspace_fast_check);
+      builder.fast_check_cache(options.fast_check_cache);
     }
 
     let result = builder.build().await;
@@ -78,10 +75,11 @@ async fn test_graph_specs() {
       .packages
       .packages_with_checksum_and_deps()
       .map(|(k, _checksum, deps)| {
-        (
-          k.to_string(),
-          deps.map(|d| d.to_string()).collect::<Vec<_>>(),
-        )
+        (k.to_string(), {
+          let mut deps = deps.map(|d| d.to_string()).collect::<Vec<_>>();
+          deps.sort();
+          deps
+        })
       })
       .filter(|(_, v)| !v.is_empty())
       .collect::<BTreeMap<_, _>>();
@@ -153,6 +151,30 @@ async fn test_graph_specs() {
             .join("\n");
           output_text.push_str(&indent(&message));
         }
+      }
+    }
+    if let Some(fast_check_cache) = result.fast_check_cache.as_ref() {
+      output_text.push_str("\n== fast check cache ==\n");
+      for (key, item) in fast_check_cache.inner.borrow().iter() {
+        output_text.push_str(&format!(
+          "{:?}:\n    Deps - {}\n    Modules: {}\n",
+          key,
+          serde_json::to_string(&item.dependencies).unwrap(),
+          serde_json::to_string(
+            &item
+              .modules
+              .iter()
+              .map(|(url, module_item)| (
+                url.as_str(),
+                match module_item {
+                  FastCheckCacheModuleItem::Info(_) => "info",
+                  FastCheckCacheModuleItem::Diagnostic(_) => "diagnostic",
+                }
+              ))
+              .collect::<Vec<_>>()
+          )
+          .unwrap()
+        ));
       }
     }
     if !output_text.ends_with('\n') {
@@ -332,14 +354,14 @@ export class MyClass {
 
 #[cfg(feature = "symbols")]
 #[tokio::test]
-async fn test_symbols_re_export_external() {
+async fn test_symbols_re_export_external_and_npm() {
   let result = TestBuilder::new()
     .with_loader(|loader| {
       loader.remote.add_source_with_text(
         "file:///mod.ts",
-        r#"export * from 'npm:example';"#,
+        r#"export * from 'npm:example@1.0.0'; export * from 'external:other"#,
       );
-      loader.remote.add_external_source("npm:example");
+      loader.remote.add_external_source("external:other");
     })
     .build()
     .await;
@@ -355,7 +377,7 @@ async fn test_symbols_re_export_external() {
       .into_iter()
       .map(|s| s.specifier)
       .collect::<Vec<_>>(),
-    vec!["npm:example"]
+    vec!["npm:example@1.0.0", "external:other"]
   );
 }
 
