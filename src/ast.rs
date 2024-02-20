@@ -372,7 +372,6 @@ fn analyze_dependencies(
             .into_iter()
             .map(|c| Comment::from_dep_comment(c, text_info))
             .collect(),
-          range: PositionRange::from_source_range(d.range, text_info),
           specifier: d.specifier.to_string(),
           specifier_range: PositionRange::from_source_range(
             d.specifier_range,
@@ -388,7 +387,6 @@ fn analyze_dependencies(
             .into_iter()
             .map(|c| Comment::from_dep_comment(c, text_info))
             .collect(),
-          range: PositionRange::from_source_range(d.range, text_info),
           argument: match d.argument {
             deno_ast::dep::DynamicArgument::String(text) => {
               DynamicArgument::String(text.to_string())
