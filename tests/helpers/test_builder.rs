@@ -10,12 +10,16 @@ use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadOptions;
 use deno_graph::source::Loader;
 use deno_graph::source::MemoryLoader;
+use deno_graph::source::NpmResolver;
 use deno_graph::BuildDiagnostic;
 use deno_graph::FastCheckCache;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
+use deno_graph::NpmPackageReqResolution;
 use deno_graph::WorkspaceFastCheckOption;
 use deno_graph::WorkspaceMember;
+use deno_semver::package::PackageNv;
+use deno_semver::Version;
 use futures::FutureExt;
 
 #[derive(Default)]
@@ -77,6 +81,50 @@ impl BuildResult {
   pub fn root_symbol(&self) -> deno_graph::symbols::RootSymbol {
     self.graph.valid().unwrap(); // assert valid
     deno_graph::symbols::RootSymbol::new(&self.graph, &self.analyzer)
+  }
+}
+
+#[derive(Debug)]
+struct TestNpmResolver;
+
+impl NpmResolver for TestNpmResolver {
+  fn resolve_builtin_node_module(
+    &self,
+    _specifier: &ModuleSpecifier,
+  ) -> Result<Option<String>, deno_graph::source::UnknownBuiltInNodeModuleError>
+  {
+    Ok(None)
+  }
+
+  fn on_resolve_bare_builtin_node_module(
+    &self,
+    _module_name: &str,
+    _range: &deno_graph::Range,
+  ) {
+  }
+
+  fn load_and_cache_npm_package_info(
+    &self,
+    _package_name: &str,
+  ) -> futures::prelude::future::LocalBoxFuture<
+    'static,
+    Result<(), anyhow::Error>,
+  > {
+    async { Ok(()) }.boxed_local()
+  }
+
+  fn resolve_npm(
+    &self,
+    package_req: &deno_semver::package::PackageReq,
+  ) -> NpmPackageReqResolution {
+    // for now, this requires version reqs that are resolved
+    match Version::parse_from_npm(&package_req.version_req.to_string()) {
+      Ok(version) => NpmPackageReqResolution::Ok(PackageNv {
+        name: package_req.name.clone(),
+        version,
+      }),
+      Err(err) => NpmPackageReqResolution::Err(err.into()),
+    }
   }
 }
 
@@ -177,6 +225,7 @@ impl TestBuilder {
           workspace_members: &self.workspace_members,
           module_analyzer: Some(&capturing_analyzer),
           module_parser: Some(&capturing_analyzer),
+          npm_resolver: Some(&TestNpmResolver),
           ..Default::default()
         },
       )

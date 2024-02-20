@@ -354,14 +354,14 @@ export class MyClass {
 
 #[cfg(feature = "symbols")]
 #[tokio::test]
-async fn test_symbols_re_export_external() {
+async fn test_symbols_re_export_external_and_npm() {
   let result = TestBuilder::new()
     .with_loader(|loader| {
       loader.remote.add_source_with_text(
         "file:///mod.ts",
-        r#"export * from 'npm:example';"#,
+        r#"export * from 'npm:example@1.0.0'; export * from 'external:other"#,
       );
-      loader.remote.add_external_source("npm:example");
+      loader.remote.add_external_source("external:other");
     })
     .build()
     .await;
@@ -377,7 +377,7 @@ async fn test_symbols_re_export_external() {
       .into_iter()
       .map(|s| s.specifier)
       .collect::<Vec<_>>(),
-    vec!["npm:example"]
+    vec!["npm:example@1.0.0", "external:other"]
   );
 }
 
