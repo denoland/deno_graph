@@ -41,6 +41,8 @@ use deno_semver::npm::NpmPackageReqReference;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageNvReference;
 use deno_semver::package::PackageReq;
+use deno_semver::package::PackageReqReferenceParseError;
+use deno_semver::RangeSetOrTag;
 use deno_semver::Version;
 use futures::future::LocalBoxFuture;
 use futures::future::Shared;
@@ -64,6 +66,7 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::fmt;
 use std::sync::Arc;
+use thiserror::Error;
 use url::Url;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
@@ -3518,7 +3521,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_range: Option<Range>,
     is_dynamic: bool,
   ) {
-    match JsrPackageReqReference::from_specifier(&specifier) {
+    match validate_jsr_specifier(&specifier) {
       Ok(package_ref) => {
         if let Some(range) = &maybe_range {
           if let Some(nv) =
@@ -4132,6 +4135,25 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   }
 }
 
+#[derive(Error, Debug, Clone)]
+pub enum JsrPackageFormatError {
+  #[error(transparent)]
+  JsrPackageParseError(PackageReqReferenceParseError),
+  #[error("Version tag not supported in jsr specifiers.")]
+  VersionTagNotSupported,
+}
+
+fn validate_jsr_specifier(
+  specifier: &Url,
+) -> Result<JsrPackageReqReference, JsrPackageFormatError> {
+  let package_ref = JsrPackageReqReference::from_specifier(specifier)
+    .map_err(JsrPackageFormatError::JsrPackageParseError)?;
+  match package_ref.req().version_req.inner() {
+    RangeSetOrTag::Tag(_) => Err(JsrPackageFormatError::VersionTagNotSupported),
+    RangeSetOrTag::RangeSet(_) => Ok(package_ref),
+  }
+}
+
 fn normalize_export_name(sub_path: Option<&str>) -> Cow<str> {
   let Some(sub_path) = sub_path else {
     return Cow::Borrowed(".");
@@ -4493,6 +4515,28 @@ mod tests {
       line: 2,
       character: 25
     }));
+  }
+
+  #[test]
+  fn test_jsr_import_format() {
+    assert!(
+      validate_jsr_specifier(&Url::parse("jsr:@scope/mod@tag").unwrap())
+        .is_err(),
+      "jsr import specifier with tag should be an error"
+    );
+
+    assert!(
+      validate_jsr_specifier(&Url::parse("jsr:@scope/mod@").unwrap()).is_err()
+    );
+
+    assert!(validate_jsr_specifier(
+      &Url::parse("jsr:@scope/mod@1.2.3").unwrap()
+    )
+    .is_ok());
+
+    assert!(
+      validate_jsr_specifier(&Url::parse("jsr:@scope/mod").unwrap()).is_ok()
+    );
   }
 
   #[test]
