@@ -1,0 +1,47 @@
+# https://jsr.io/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.0": {}
+  }
+}
+
+# mod.ts
+import 'jsr:@scope/a@tag';
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a@tag",
+          "code": {
+            "specifier": "jsr:@scope/a@tag",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 25
+              }
+            }
+          }
+        }
+      ],
+      "size": 27,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "jsr:@scope/a@tag",
+      "error": "Version tag not supported in jsr specifiers."
+    }
+  ],
+  "redirects": {}
+}
