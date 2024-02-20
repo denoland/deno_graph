@@ -370,6 +370,7 @@ fn analyze_dependencies(
           leading_comments: d
             .leading_comments
             .into_iter()
+            .filter(filter_dep_comment)
             .map(|c| Comment::from_dep_comment(c, text_info))
             .collect(),
           range: PositionRange::from_source_range(d.range, text_info),
@@ -386,6 +387,7 @@ fn analyze_dependencies(
           leading_comments: d
             .leading_comments
             .into_iter()
+            .filter(filter_dep_comment)
             .map(|c| Comment::from_dep_comment(c, text_info))
             .collect(),
           range: PositionRange::from_source_range(d.range, text_info),
@@ -421,6 +423,10 @@ fn analyze_dependencies(
       }
     })
     .collect()
+}
+
+fn filter_dep_comment(c: &deno_ast::dep::DependencyComment) -> bool {
+  c.text.contains("@deno-types")
 }
 
 fn analyze_ts_references(
