@@ -7,6 +7,7 @@ mod analyzer;
 mod ast;
 mod graph;
 mod module_specifier;
+mod rt;
 
 #[cfg(feature = "symbols")]
 pub mod symbols;
@@ -85,6 +86,7 @@ pub use graph::WorkspaceMember;
 pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
+pub use rt::Executor;
 pub use source::NpmPackageReqResolution;
 
 pub use deno_ast::dep::DependencyKind;

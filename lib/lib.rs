@@ -195,6 +195,22 @@ impl Resolver for JsResolver {
   }
 }
 
+struct WasmExecutor;
+
+impl deno_graph::Executor for WasmExecutor {
+  fn execute(
+    &self,
+    future: futures::future::LocalBoxFuture<'static, ()>,
+  ) -> futures::future::LocalBoxFuture<'static, ()> {
+    // TODO(littledivy): bug in wasm_bindgen where Shared futures panic on spawn.
+    // https://github.com/rustwasm/wasm-bindgen/issues/2562
+    //
+    // Box::pin(async move { wasm_bindgen_futures::spawn_local(future) })
+
+    future
+  }
+}
+
 #[wasm_bindgen(js_name = createGraph)]
 #[allow(clippy::too_many_arguments)]
 pub async fn js_create_graph(
@@ -271,6 +287,7 @@ pub async fn js_create_graph(
         imports,
         reporter: None,
         workspace_members: &[],
+        executor: &WasmExecutor,
       },
     )
     .await;
