@@ -5,16 +5,12 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-// this will fail because Symbol is local
-function Symbol() {}
+export const symbols = {
+  writable: function() {},
+  readable: 1234,
+};
 
-const key = Symbol("#keys");
-const key2 = Symbol.for("#keys");
-
-export class MyClass {
-  [key] = 5;
-  [key2] = "";
-}
+export type Status = typeof symbols.writable;
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -51,7 +47,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 181,
+      "size": 120,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -65,5 +61,15 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  missing explicit type in the public API
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@70
+  {}
+  export const symbols = {
+    writable: function(): void {},
+    readable: 1234
+  };
+  export type Status = typeof symbols.writable;
+  --- DTS ---
+  export declare const symbols: {
+    readonly writable: () => void;
+    readonly readable: number;
+  };
+  export type Status = typeof symbols.writable;
