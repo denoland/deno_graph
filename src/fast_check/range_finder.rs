@@ -7,6 +7,7 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Arc;
 
+use deno_ast::swc::ast::Expr;
 use deno_ast::MediaType;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
@@ -14,9 +15,7 @@ use deno_semver::package::PackageNv;
 use indexmap::IndexMap;
 use url::Url;
 
-use crate::fast_check::swc_helpers::is_expr_leavable;
 use crate::source::JsrUrlProvider;
-use crate::symbols::ExportDeclRef;
 use crate::symbols::FileDepName;
 use crate::symbols::ModuleInfoRef;
 use crate::symbols::ResolveDepsMode;
@@ -1078,27 +1077,35 @@ impl<'a> PublicRangeFinder<'a> {
                     }
                   }
                   None => {
-                    // if the init expression of the variable is leavable, just ignore it
-                    let ignore =
-                      symbol.decls().iter().filter_map(|d| d.maybe_node()).all(
-                        |n| match n {
-                          SymbolNodeRef::ExportDecl(
-                            _,
-                            ExportDeclRef::Var(_, v, _),
-                          )
-                          | SymbolNodeRef::Var(_, v, _) => match &v.init {
-                            Some(init) => is_expr_leavable(init),
-                            None => false,
-                          },
-                          SymbolNodeRef::ExportDecl(
-                            _,
-                            ExportDeclRef::TsEnum(_),
-                          )
-                          | SymbolNodeRef::TsEnum(_) => true,
-                          _ => false,
+                    // 1. For classes, we want to ensure the type is not referencing
+                    // a private typescript member (ex. private myMethod() {})
+                    // because those get removed from the output.
+                    // 2. For namespaces, we could opt to include the entire namespace
+                    // but that might cause more diagnostics and confusion down the line.
+                    // This should never happen for namespaces, but if it does then someone
+                    // could report a bug to us and we could look into how we can solve it.
+                    let symbol_has_class_or_namespace_decl =
+                      symbol.decls().iter().filter_map(|d| d.maybe_node()).any(
+                        |n| {
+                          if n.is_class() || n.is_ts_namespace() {
+                            true
+                          } else if let SymbolNodeRef::ExportDefaultExpr(
+                            default_expr,
+                          ) = n
+                          {
+                            matches!(&*default_expr.expr, Expr::Class(_))
+                          } else {
+                            false
+                          }
                         },
                       );
-                    if !ignore {
+                    if !symbol_has_class_or_namespace_decl {
+                      // If we can't resolve the symbol member and it's not a namespace
+                      // or a class (ex. if it's a variable with a type) then just add
+                      // the symbol at this point because we'll want to include the entire
+                      // type being referenced rather than just the member.
+                      pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
+                    } else {
                       diagnostics.push(
                         FastCheckDiagnostic::NotFoundReference {
                           range: FastCheckDiagnosticRange {

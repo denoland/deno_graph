@@ -733,6 +733,8 @@ impl<'a> SymbolNodeRef<'a> {
     }
   }
 
+  // todo(dsherret): rename to is_class_decl
+
   /// If the node is a class.
   pub fn is_class(&self) -> bool {
     matches!(
@@ -769,6 +771,14 @@ impl<'a> SymbolNodeRef<'a> {
           decl: DefaultDecl::TsInterfaceDecl(_),
           ..
         })
+    )
+  }
+
+  /// If the node is a typescript namespace.
+  pub fn is_ts_namespace(&self) -> bool {
+    matches!(
+      self,
+      Self::TsNamespace(_) | Self::ExportDecl(_, ExportDeclRef::TsModule(_))
     )
   }
 
