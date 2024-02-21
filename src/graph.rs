@@ -24,7 +24,7 @@ use crate::packages::resolve_version;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
 use crate::packages::PackageSpecifiers;
-use crate::rt::BoxedFuture;
+use crate::rt::spawn;
 use crate::rt::Executor;
 use crate::rt::JoinHandle;
 use crate::source::*;
@@ -2883,26 +2883,6 @@ impl std::fmt::Display for BuildDiagnosticKind {
   }
 }
 
-impl<'a> Default for &'a dyn Executor {
-  fn default() -> &'a dyn Executor {
-    #[cfg(not(feature = "tokio_executor"))]
-    unimplemented!("deno_graph Builder requires an executor to be provided");
-
-    #[cfg(feature = "tokio_executor")]
-    {
-      struct SpawnExecutor;
-
-      impl Executor for SpawnExecutor {
-        fn execute(&self, future: BoxedFuture) -> BoxedFuture {
-          Box::pin(async { deno_unsync::spawn(future).await.unwrap() })
-        }
-      }
-
-      &SpawnExecutor
-    }
-  }
-}
-
 struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
   file_system: &'a dyn FileSystem,
@@ -3891,7 +3871,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         maybe_checksum: None,
       },
     );
-    let fut = crate::rt::spawn(
+    let fut = spawn(
       self.executor,
       async move {
         let data = fut.await.map_err(Arc::new)?;
@@ -3906,11 +3886,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
       .boxed_local(),
     );
-    // Spawn the future.
-    //
-    // self
-    //  .executor
-    //  .execute(fut);
     self
       .state
       .jsr
@@ -3951,7 +3926,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         maybe_checksum: maybe_expected_checksum.clone(),
       },
     );
-    let fut = crate::rt::spawn(
+    let fut = spawn(
       self.executor,
       async move {
         let data = fut.await.map_err(Arc::new)?;

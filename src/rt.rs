@@ -1,3 +1,5 @@
+// Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
+
 use futures::channel::oneshot;
 use std::future::Future;
 use std::pin::Pin;
@@ -13,6 +15,26 @@ pub type BoxedFuture = Pin<Box<dyn Future<Output = ()> + 'static>>;
 pub trait Executor {
   /// Spawns a future to run on this executor.
   fn execute(&self, fut: BoxedFuture) -> BoxedFuture;
+}
+
+impl<'a> Default for &'a dyn Executor {
+  fn default() -> &'a dyn Executor {
+    #[cfg(not(feature = "tokio_executor"))]
+    unimplemented!("deno_graph Builder requires an executor to be provided");
+
+    #[cfg(feature = "tokio_executor")]
+    {
+      struct SpawnExecutor;
+
+      impl Executor for SpawnExecutor {
+        fn execute(&self, future: BoxedFuture) -> BoxedFuture {
+          Box::pin(async { deno_unsync::spawn(future).await.unwrap() })
+        }
+      }
+
+      &SpawnExecutor
+    }
+  }
 }
 
 pub(crate) struct JoinHandle<T> {
