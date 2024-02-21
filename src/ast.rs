@@ -370,6 +370,7 @@ fn analyze_dependencies(
           leading_comments: d
             .leading_comments
             .into_iter()
+            .filter(filter_dep_comment)
             .map(|c| Comment::from_dep_comment(c, text_info))
             .collect(),
           specifier: d.specifier.to_string(),
@@ -385,6 +386,7 @@ fn analyze_dependencies(
           leading_comments: d
             .leading_comments
             .into_iter()
+            .filter(filter_dep_comment)
             .map(|c| Comment::from_dep_comment(c, text_info))
             .collect(),
           argument: match d.argument {
@@ -419,6 +421,10 @@ fn analyze_dependencies(
       }
     })
     .collect()
+}
+
+fn filter_dep_comment(c: &deno_ast::dep::DependencyComment) -> bool {
+  c.text.contains("@deno-types")
 }
 
 fn analyze_ts_references(
@@ -583,6 +589,7 @@ mod tests {
     import type { Component } from "https://esm.sh/preact";
     import { h, Fragment } from "https://esm.sh/preact";
 
+    // other
     // @deno-types="https://deno.land/x/types/react/index.d.ts";
     import React from "https://cdn.skypack.dev/react";
 
@@ -635,6 +642,10 @@ mod tests {
     assert_eq!(
       text_info.range_text(&dep_deno_types.range.as_source_range(text_info)),
       r#""https://deno.land/x/types/react/index.d.ts""#
+    );
+    assert_eq!(
+      dependencies[4].as_static().unwrap().leading_comments.len(),
+      1
     );
 
     let jsx_import_source = module_info.jsx_import_source.unwrap();
