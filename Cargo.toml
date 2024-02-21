@@ -23,6 +23,7 @@ default = ["fast_check", "tokio_executor"]
 fast_check = ["symbols", "deno_ast/transpiling", "twox-hash"]
 symbols = ["deno_ast/transforms", "deno_ast/visit", "deno_ast/utils"]
 tokio_executor = ["deno_unsync"]
+wasm_executor = []
 
 [dependencies]
 anyhow = "1.0.43"

@@ -19,20 +19,20 @@ pub trait Executor {
 
 impl<'a> Default for &'a dyn Executor {
   fn default() -> &'a dyn Executor {
-    #[cfg(not(feature = "tokio_executor"))]
-    unimplemented!("deno_graph Builder requires an executor to be provided");
-
-    #[cfg(feature = "tokio_executor")]
     {
-      struct SpawnExecutor;
+      struct DefaultExecutor;
 
-      impl Executor for SpawnExecutor {
+      impl Executor for DefaultExecutor {
         fn execute(&self, future: BoxedFuture) -> BoxedFuture {
+          #[cfg(not(feature = "tokio_executor"))]
+          return future;
+
+          #[cfg(feature = "tokio_executor")]
           Box::pin(async { deno_unsync::spawn(future).await.unwrap() })
         }
       }
 
-      &SpawnExecutor
+      &DefaultExecutor
     }
   }
 }
