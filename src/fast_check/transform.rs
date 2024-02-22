@@ -18,9 +18,9 @@ use deno_ast::ParsedSource;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 
-use crate::DefaultModuleAnalyzer;
 use crate::ModuleGraph;
 use crate::ModuleInfo;
+use crate::ParserModuleAnalyzer;
 use crate::WorkspaceMember;
 
 use super::range_finder::ModulePublicRanges;
@@ -115,7 +115,7 @@ pub fn transform(
   if !transformer.diagnostics.is_empty() {
     return Err(transformer.diagnostics);
   }
-  let module_info = DefaultModuleAnalyzer::module_info_from_swc(
+  let module_info = ParserModuleAnalyzer::module_info_from_swc(
     parsed_source.media_type(),
     &module,
     parsed_source.text_info(),

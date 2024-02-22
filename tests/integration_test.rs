@@ -616,7 +616,7 @@ async fn test_dynamic_imports_with_template_arg() {
         vec![Url::parse("file:///dev/main.ts").unwrap()],
         &mut loader,
         BuildOptions {
-          file_system: Some(&file_system),
+          file_system: &file_system,
           ..Default::default()
         },
       )

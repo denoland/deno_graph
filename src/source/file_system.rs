@@ -24,6 +24,19 @@ pub trait FileSystem {
   fn read_dir(&self, dir_path: &ModuleSpecifier) -> Vec<DirEntry>;
 }
 
+impl<'a> Default for &'a dyn FileSystem {
+  fn default() -> &'a dyn FileSystem {
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+      &RealFileSystem
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+      &NullFileSystem
+    }
+  }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct NullFileSystem;
 

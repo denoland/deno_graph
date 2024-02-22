@@ -1016,15 +1016,14 @@ pub struct BuildOptions<'a> {
   /// be extra modules such as TypeScript's "types" option or JSX
   /// runtime types.
   pub imports: Vec<ReferrerImports>,
-  pub file_system: Option<&'a dyn FileSystem>,
-  pub jsr_url_provider: Option<&'a dyn JsrUrlProvider>,
-  pub resolver: Option<&'a dyn Resolver>,
-  pub npm_resolver: Option<&'a dyn NpmResolver>,
-  pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
-  pub module_parser: Option<&'a dyn ModuleParser>,
-  pub reporter: Option<&'a dyn Reporter>,
-  pub workspace_members: &'a [WorkspaceMember],
   pub executor: &'a dyn Executor,
+  pub file_system: &'a dyn FileSystem,
+  pub jsr_url_provider: &'a dyn JsrUrlProvider,
+  pub module_analyzer: &'a dyn ModuleAnalyzer,
+  pub npm_resolver: Option<&'a dyn NpmResolver>,
+  pub reporter: Option<&'a dyn Reporter>,
+  pub resolver: Option<&'a dyn Resolver>,
+  pub workspace_members: &'a [WorkspaceMember],
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -1444,25 +1443,17 @@ impl ModuleGraph {
     loader: &mut dyn Loader,
     options: BuildOptions<'a>,
   ) -> Vec<BuildDiagnostic> {
-    let default_jsr_url_provider = DefaultJsrUrlProvider;
-    let default_module_parser = CapturingModuleAnalyzer::default();
-    #[cfg(not(target_arch = "wasm32"))]
-    let file_system = RealFileSystem;
-    #[cfg(target_arch = "wasm32")]
-    let file_system = NullFileSystem;
     Builder::build(
       self,
       roots,
       options.imports,
       options.is_dynamic,
-      options.file_system.unwrap_or(&file_system),
-      options
-        .jsr_url_provider
-        .unwrap_or(&default_jsr_url_provider),
+      options.file_system,
+      options.jsr_url_provider,
       options.resolver,
       options.npm_resolver,
       loader,
-      options.module_analyzer.unwrap_or(&default_module_parser),
+      options.module_analyzer,
       options.reporter,
       options.workspace_members,
       options.executor,
@@ -4522,7 +4513,7 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::DefaultModuleAnalyzer;
+  use crate::ParserModuleAnalyzer;
   use deno_ast::dep::ImportAttribute;
   use pretty_assertions::assert_eq;
 
@@ -4589,7 +4580,7 @@ mod tests {
   #[test]
   fn test_module_dependency_includes() {
     let specifier = ModuleSpecifier::parse("file:///a.ts").unwrap();
-    let module_analyzer = DefaultModuleAnalyzer::default();
+    let module_analyzer = ParserModuleAnalyzer::default();
     let content: Arc<[u8]> = Arc::from(
       b"import * as b from \"./b.ts\";\nimport * as c from \"./b.ts\"".to_vec(),
     );
