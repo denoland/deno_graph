@@ -3436,27 +3436,35 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     } else {
       package_info.versions.keys().collect::<Vec<_>>()
     };
-    let unyanked_versions = versions.clone().into_iter().filter(|v| {
+    let is_yanked = |v| {
       package_info
         .versions
         .get(v)
-        .map(|i| !i.yanked)
-        .unwrap_or(true)
-    });
+        .map(|i| i.yanked)
+        .unwrap_or(false)
+    };
+    let mut resolved_yanked_version = None;
+    if let Some(version) =
+      resolve_version(&package_req.version_req, versions.iter().copied())
+    {
+      if !is_yanked(version) {
+        return Some(version.clone());
+      }
+      resolved_yanked_version = Some(version.clone());
+    }
+    let unyanked_versions = versions.iter().copied().filter(|v| !is_yanked(v));
     if let Some(version) =
       resolve_version(&package_req.version_req, unyanked_versions)
     {
       return Some(version.clone());
     }
-    if let Some(version) =
-      resolve_version(&package_req.version_req, versions.into_iter()).cloned()
-    {
+    if let Some(version) = resolved_yanked_version {
       self.graph.packages.add_used_yanked_package(PackageNv {
         name: package_req.name.clone(),
         version: version.clone(),
       });
       return Some(version);
-    }
+    };
     None
   }
 
