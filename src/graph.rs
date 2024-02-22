@@ -4541,9 +4541,11 @@ where
 
 #[cfg(test)]
 mod tests {
+  use crate::packages::JsrPackageInfoVersion;
   use crate::DefaultModuleAnalyzer;
   use deno_ast::dep::ImportAttribute;
   use pretty_assertions::assert_eq;
+  use serde_json::json;
 
   use super::*;
   use url::Url;
@@ -5294,10 +5296,7 @@ mod tests {
     let workspace_members = vec![WorkspaceMember {
       base: Url::parse("file:///").unwrap(),
       exports: exports.clone(),
-      nv: PackageNv {
-        name: "foo".to_string(),
-        version: Version::parse_standard("1.0.0").unwrap(),
-      },
+      nv: PackageNv::from_str("@foo/bar@1.0.0").unwrap(),
     }];
     let mut test_loader = MemoryLoader::default();
     test_loader.add_source_with_text(
@@ -5341,5 +5340,80 @@ mod tests {
       "export function add(a: number, b: number): number;"
     );
     assert!(dts.diagnostics.is_empty());
+  }
+
+  #[tokio::test]
+  async fn fast_check_external() {
+    let mut exports = IndexMap::new();
+    exports.insert(".".to_string(), "./foo.ts".to_string());
+
+    let workspace_members = vec![WorkspaceMember {
+      base: Url::parse("file:///").unwrap(),
+      exports: exports.clone(),
+      nv: PackageNv::from_str("@foo/bar@1.0.0").unwrap(),
+    }];
+    let mut test_loader = MemoryLoader::default();
+    test_loader.add_source_with_text(
+      "file:///foo.ts",
+      "export * from 'jsr:@package/foo';",
+    );
+    test_loader.add_jsr_package_info(
+      "@package/foo",
+      &JsrPackageInfo {
+        versions: HashMap::from([(
+          Version::parse_standard("1.0.0").unwrap(),
+          JsrPackageInfoVersion::default(),
+        )]),
+      },
+    );
+    test_loader.add_jsr_version_info(
+      "@package/foo",
+      "1.0.0",
+      &JsrPackageVersionInfo {
+        exports: json!({ ".": "./mod.ts" }),
+        module_graph: None,
+        manifest: Default::default(),
+      },
+    );
+    test_loader.add_external_source("https://jsr.io/@package/foo/1.0.0/mod.ts");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.ts").unwrap()],
+        &mut test_loader,
+        BuildOptions {
+          workspace_members: &workspace_members,
+          ..Default::default()
+        },
+      )
+      .await;
+    graph.build_fast_check_type_graph(BuildFastCheckTypeGraphOptions {
+      fast_check_cache: None,
+      fast_check_dts: true,
+      workspace_fast_check: WorkspaceFastCheckOption::Enabled(
+        &workspace_members,
+      ),
+      ..Default::default()
+    });
+    graph.valid().unwrap();
+    {
+      let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
+      let FastCheckTypeModuleSlot::Module(fsm) =
+        module.js().unwrap().fast_check.clone().unwrap()
+      else {
+        unreachable!();
+      };
+      let dts = fsm.dts.unwrap();
+      assert_eq!(
+        dts.text.to_string().trim(),
+        "export * from 'jsr:@package/foo';"
+      );
+      assert!(dts.diagnostics.is_empty());
+    }
+
+    let module = graph
+      .get(&Url::parse("https://jsr.io/@package/foo/1.0.0/mod.ts").unwrap())
+      .unwrap();
+    assert!(module.external().is_some());
   }
 }

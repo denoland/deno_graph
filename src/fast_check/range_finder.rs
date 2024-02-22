@@ -343,7 +343,6 @@ pub struct PackagePublicRanges {
   pub module_ranges: IndexMap<ModuleSpecifier, ModulePublicRanges>,
   pub sources: Vec<(ModuleSpecifier, FastCheckModule)>,
   pub dependencies: BTreeSet<PackageNv>,
-  pub errors: Vec<FastCheckDiagnostic>,
 }
 
 struct PublicRangeFinder<'a> {
@@ -400,18 +399,31 @@ impl<'a> PublicRangeFinder<'a> {
         public_ranges.entrypoints = entrypoints;
         self.public_ranges.insert(nv, public_ranges);
       } else {
-        let mut errors = Vec::new();
+        let mut had_diagnostic = false;
         for specifier in &entrypoints {
-          if self.is_typed_specifier(specifier) {
+          if !self.is_typed_specifier(specifier) {
+            self
+              .public_ranges
+              .entry(nv.clone())
+              .or_default()
+              .module_ranges
+              .entry(specifier.clone())
+              .or_default()
+              .diagnostics
+              .push(FastCheckDiagnostic::UnsupportedJavaScriptEntrypoint {
+                specifier: specifier.clone(),
+              });
+            had_diagnostic = true;
+          }
+        }
+
+        if !had_diagnostic {
+          for specifier in &entrypoints {
             self.add_pending_trace(
               &nv,
               specifier,
               ImportedExports::star_with_default(),
             );
-          } else {
-            errors.push(FastCheckDiagnostic::UnsupportedJavaScriptEntrypoint {
-              specifier: specifier.clone(),
-            });
           }
         }
 
@@ -421,7 +433,6 @@ impl<'a> PublicRangeFinder<'a> {
 
         let public_ranges = self.public_ranges.entry(nv).or_default();
         public_ranges.entrypoints = entrypoints;
-        public_ranges.errors.extend(errors);
       }
     }
 
@@ -467,7 +478,10 @@ impl<'a> PublicRangeFinder<'a> {
         }
         super::cache::FastCheckCacheModuleItem::Diagnostic(_) => {
           package
-            .errors
+            .module_ranges
+            .entry(url.clone())
+            .or_default()
+            .diagnostics
             .push(FastCheckDiagnostic::Cached { specifier: url });
         }
       }
@@ -555,8 +569,16 @@ impl<'a> PublicRangeFinder<'a> {
     {
       self.analyze_module_info(trace, module_info);
     } else {
-      // should never happen except when the graph is not valid, so ignore
-      log::debug!("Tracing did not find: {}", trace.specifier);
+      let ranges = self
+        .public_ranges
+        .entry(trace.package_nv.clone())
+        .or_default()
+        .module_ranges
+        .entry(trace.specifier.clone())
+        .or_default();
+      ranges.diagnostics.push(FastCheckDiagnostic::External {
+        specifier: trace.specifier.clone(),
+      });
     }
   }
 
