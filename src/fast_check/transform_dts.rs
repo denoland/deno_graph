@@ -927,7 +927,7 @@ mod tests {
   use crate::source::Source;
   use crate::symbols::RootSymbol;
   use crate::BuildOptions;
-  use crate::DefaultModuleParser;
+  use crate::CapturingModuleAnalyzer;
   use crate::GraphKind;
   use crate::ModuleGraph;
   use url::Url;
@@ -946,20 +946,20 @@ mod tests {
       )],
       vec![],
     );
-    let parser = DefaultModuleParser {};
+    let analyzer = CapturingModuleAnalyzer::default();
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![specifier.clone()],
         &mut loader,
         BuildOptions {
-          module_parser: Some(&parser),
+          module_analyzer: Some(&analyzer),
           ..Default::default()
         },
       )
       .await;
 
-    let root_sym = RootSymbol::new(&graph, &parser);
+    let root_sym = RootSymbol::new(&graph, &analyzer);
 
     let module_info = root_sym
       .module_from_specifier(&specifier)

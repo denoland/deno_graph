@@ -1018,7 +1018,6 @@ pub struct BuildOptions<'a> {
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
-  pub module_parser: Option<&'a dyn ModuleParser>,
   pub reporter: Option<&'a dyn Reporter>,
   pub workspace_members: &'a [WorkspaceMember],
 }
@@ -1441,7 +1440,7 @@ impl ModuleGraph {
     options: BuildOptions<'a>,
   ) -> Vec<BuildDiagnostic> {
     let default_jsr_url_provider = DefaultJsrUrlProvider;
-    let default_module_parser = CapturingModuleAnalyzer::default();
+    let default_module_analyzer = CapturingModuleAnalyzer::default();
     #[cfg(not(target_arch = "wasm32"))]
     let file_system = RealFileSystem;
     #[cfg(target_arch = "wasm32")]
@@ -1458,7 +1457,7 @@ impl ModuleGraph {
       options.resolver,
       options.npm_resolver,
       loader,
-      options.module_analyzer.unwrap_or(&default_module_parser),
+      options.module_analyzer.unwrap_or(&default_module_analyzer),
       options.reporter,
       options.workspace_members,
     )
