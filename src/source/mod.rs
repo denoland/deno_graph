@@ -549,13 +549,14 @@ impl MemoryLoader {
     self.add_source_with_text(specifier, json_text);
   }
 
-  pub fn add_deno_version_info(
+  pub fn add_jsr_version_info(
     &mut self,
-    nv: &PackageNv,
+    name: &str,
+    version: &str,
     version_info: &JsrPackageVersionInfo,
   ) {
     let specifier = DEFAULT_JSR_URL
-      .join(&format!("{}/{}_meta.json", nv.name, nv.version))
+      .join(&format!("{}/{}_meta.json", name, version))
       .unwrap();
     let json_text = serde_json::to_string(version_info).unwrap();
     self.add_source_with_text(specifier, json_text);
