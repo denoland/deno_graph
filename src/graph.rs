@@ -3426,19 +3426,38 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     package_req: &PackageReq,
   ) -> Option<Version> {
     // try to find in the list of existing versions first
-    if let Some(existing_versions) =
+    let versions = if let Some(existing_versions) =
       self.graph.packages.versions_by_name(&package_req.name)
     {
-      if let Some(version) = resolve_version(
-        &package_req.version_req,
-        existing_versions.iter().map(|nv| &nv.version),
-      ) {
-        return Some(version.clone());
-      }
+      existing_versions
+        .iter()
+        .map(|nv| &nv.version)
+        .collect::<Vec<_>>()
+    } else {
+      package_info.versions.keys().collect::<Vec<_>>()
+    };
+    let unyanked_versions = versions.clone().into_iter().filter(|v| {
+      package_info
+        .versions
+        .get(v)
+        .map(|i| !i.yanked)
+        .unwrap_or(true)
+    });
+    if let Some(version) =
+      resolve_version(&package_req.version_req, unyanked_versions)
+    {
+      return Some(version.clone());
     }
-    // now try in the package info
-    resolve_version(&package_req.version_req, package_info.versions.keys())
-      .cloned()
+    if let Some(version) =
+      resolve_version(&package_req.version_req, versions.into_iter()).cloned()
+    {
+      self.graph.packages.add_used_yanked_package(PackageNv {
+        name: package_req.name.clone(),
+        version: version.clone(),
+      });
+      return Some(version);
+    }
+    None
   }
 
   /// Checks if the specifier is redirected or not and updates any redirects in
