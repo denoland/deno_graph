@@ -223,7 +223,7 @@ impl TestBuilder {
         &mut self.loader,
         deno_graph::BuildOptions {
           workspace_members: &self.workspace_members,
-          module_analyzer: Some(&capturing_analyzer),
+          module_analyzer: &capturing_analyzer,
           npm_resolver: Some(&TestNpmResolver),
           ..Default::default()
         },

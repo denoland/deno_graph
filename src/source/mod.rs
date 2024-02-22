@@ -213,6 +213,12 @@ pub trait JsrUrlProvider {
   }
 }
 
+impl<'a> Default for &'a dyn JsrUrlProvider {
+  fn default() -> &'a dyn JsrUrlProvider {
+    &DefaultJsrUrlProvider
+  }
+}
+
 #[derive(Debug, Default, Copy, Clone)]
 pub struct DefaultJsrUrlProvider;
 

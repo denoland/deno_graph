@@ -18,6 +18,7 @@ use serde::Serialize;
 use serde::Serializer;
 
 use crate::graph::Position;
+use crate::DefaultModuleAnalyzer;
 
 /// Matches the `@deno-types` pragma.
 static DENO_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
@@ -312,6 +313,12 @@ pub trait ModuleAnalyzer {
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ModuleInfo, ParseDiagnostic>;
+}
+
+impl<'a> Default for &'a dyn ModuleAnalyzer {
+  fn default() -> &'a dyn ModuleAnalyzer {
+    &DefaultModuleAnalyzer
+  }
 }
 
 #[cfg(test)]

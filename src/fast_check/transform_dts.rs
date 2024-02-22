@@ -953,7 +953,7 @@ mod tests {
         vec![specifier.clone()],
         &mut loader,
         BuildOptions {
-          module_analyzer: Some(&analyzer),
+          module_analyzer: &analyzer,
           ..Default::default()
         },
       )

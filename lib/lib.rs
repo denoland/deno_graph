@@ -263,11 +263,10 @@ pub async fn js_create_graph(
       BuildOptions {
         is_dynamic: false,
         resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-        file_system: Some(&NullFileSystem),
-        jsr_url_provider: None,
+        file_system: &NullFileSystem,
+        jsr_url_provider: Default::default(),
         npm_resolver: None,
         module_analyzer: None,
-        module_parser: None,
         imports,
         reporter: None,
         workspace_members: &[],
@@ -318,7 +317,7 @@ pub fn js_parse_module(
     content: content.into(),
     file_system: &NullFileSystem,
     maybe_resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-    maybe_module_analyzer: None,
+    module_analyzer: None,
     maybe_npm_resolver: None,
   }) {
     Ok(module) => {
