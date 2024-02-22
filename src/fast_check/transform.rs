@@ -1236,7 +1236,6 @@ impl<'a> FastCheckTransformer<'a> {
     }
   }
 
-  // KEEP IN SYNC with is_expr_leavable
   fn maybe_transform_expr_if_leavable(
     &mut self,
     expr: &mut Expr,

@@ -24,6 +24,9 @@ use crate::packages::resolve_version;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
 use crate::packages::PackageSpecifiers;
+use crate::rt::spawn;
+use crate::rt::Executor;
+use crate::rt::JoinHandle;
 use crate::source::*;
 
 use anyhow::anyhow;
@@ -1020,6 +1023,7 @@ pub struct BuildOptions<'a> {
   pub module_analyzer: Option<&'a dyn ModuleAnalyzer>,
   pub reporter: Option<&'a dyn Reporter>,
   pub workspace_members: &'a [WorkspaceMember],
+  pub executor: &'a dyn Executor,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -1460,6 +1464,7 @@ impl ModuleGraph {
       options.module_analyzer.unwrap_or(&default_module_analyzer),
       options.reporter,
       options.workspace_members,
+      options.executor,
     )
     .await
   }
@@ -2784,8 +2789,7 @@ struct PendingJsrPackageVersionInfoLoadItem {
   info: Arc<JsrPackageVersionInfo>,
 }
 
-type PendingResult<T> =
-  Shared<LocalBoxFuture<'static, Result<T, Arc<anyhow::Error>>>>;
+type PendingResult<T> = Shared<JoinHandle<Result<T, Arc<anyhow::Error>>>>;
 
 #[derive(Default)]
 struct PendingJsrState {
@@ -2892,6 +2896,7 @@ struct Builder<'a, 'graph> {
   fill_pass_mode: FillPassMode,
   workspace_members: &'a [WorkspaceMember],
   diagnostics: Vec<BuildDiagnostic>,
+  executor: &'a dyn Executor,
 }
 
 impl<'a, 'graph> Builder<'a, 'graph> {
@@ -2909,6 +2914,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     module_analyzer: &'a dyn ModuleAnalyzer,
     reporter: Option<&'a dyn Reporter>,
     workspace_members: &'a [WorkspaceMember],
+    executor: &'a dyn Executor,
   ) -> Vec<BuildDiagnostic> {
     let fill_pass_mode = match graph.roots.is_empty() {
       true => FillPassMode::AllowRestart,
@@ -2928,6 +2934,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       fill_pass_mode,
       workspace_members,
       diagnostics: Vec::new(),
+      executor,
     };
     builder.fill(roots, imports).await;
     builder.diagnostics
@@ -3863,18 +3870,21 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         maybe_checksum: None,
       },
     );
-    let fut = async move {
-      let data = fut.await.map_err(Arc::new)?;
-      match data {
-        Some(LoadResponse::Module { content, .. }) => {
-          let package_info: JsrPackageInfo =
-            serde_json::from_slice(&content).map_err(|e| Arc::new(e.into()))?;
-          Ok(Some(Arc::new(package_info)))
+    let fut = spawn(
+      self.executor,
+      async move {
+        let data = fut.await.map_err(Arc::new)?;
+        match data {
+          Some(LoadResponse::Module { content, .. }) => {
+            let package_info: JsrPackageInfo = serde_json::from_slice(&content)
+              .map_err(|e| Arc::new(e.into()))?;
+            Ok(Some(Arc::new(package_info)))
+          }
+          _ => Ok(None),
         }
-        _ => Ok(None),
       }
-    }
-    .boxed_local();
+      .boxed_local(),
+    );
     self
       .state
       .jsr
@@ -3915,25 +3925,29 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         maybe_checksum: maybe_expected_checksum.clone(),
       },
     );
-    let fut = async move {
-      let data = fut.await.map_err(Arc::new)?;
-      match data {
-        Some(LoadResponse::Module { content, .. }) => {
-          // if we have the expected checksum, then we can re-use that here
-          let checksum = maybe_expected_checksum
-            .map(|c| c.into_string())
-            .unwrap_or_else(|| LoaderChecksum::gen(&content));
-          let version_info: JsrPackageVersionInfo =
-            serde_json::from_slice(&content).map_err(|e| Arc::new(e.into()))?;
-          Ok(PendingJsrPackageVersionInfoLoadItem {
-            checksum,
-            info: Arc::new(version_info),
-          })
+    let fut = spawn(
+      self.executor,
+      async move {
+        let data = fut.await.map_err(Arc::new)?;
+        match data {
+          Some(LoadResponse::Module { content, .. }) => {
+            // if we have the expected checksum, then we can re-use that here
+            let checksum = maybe_expected_checksum
+              .map(|c| c.into_string())
+              .unwrap_or_else(|| LoaderChecksum::gen(&content));
+            let version_info: JsrPackageVersionInfo =
+              serde_json::from_slice(&content)
+                .map_err(|e| Arc::new(e.into()))?;
+            Ok(PendingJsrPackageVersionInfoLoadItem {
+              checksum,
+              info: Arc::new(version_info),
+            })
+          }
+          _ => Err(Arc::new(anyhow!("Not found: {}", specifier))),
         }
-        _ => Err(Arc::new(anyhow!("Not found: {}", specifier))),
       }
-    }
-    .boxed_local();
+      .boxed_local(),
+    );
     self
       .state
       .jsr

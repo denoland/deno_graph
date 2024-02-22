@@ -557,7 +557,9 @@ fn transform_package(
   )>,
 ) {
   for (specifier, mut ranges) in package_module_ranges {
-    let module_info = root_symbol.module_from_specifier(&specifier).unwrap();
+    let module_info = root_symbol
+      .module_from_specifier(&specifier)
+      .unwrap_or_else(|| panic!("module not found: {}", specifier));
     if let Some(module_info) = module_info.esm() {
       let diagnostics = ranges.take_diagnostics();
       let transform_result = if diagnostics.is_empty() {
