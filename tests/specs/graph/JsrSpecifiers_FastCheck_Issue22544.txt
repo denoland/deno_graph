@@ -1,0 +1,90 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+const rawString1: Symbol = Symbol();
+const rawString2: Symbol = Symbol();
+const rawString3: Symbol = Symbol();
+const rawString4: Symbol = Symbol();
+
+export interface RawString {
+  [rawString1]: string;
+  [rawString2](): void;
+  get [rawString3](): string;
+  set [rawString4](value: string);
+}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 293,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {}
+  const rawString1: Symbol = {} as any;
+  const rawString2: Symbol = {} as any;
+  const rawString3: Symbol = {} as any;
+  const rawString4: Symbol = {} as any;
+  export interface RawString {
+    [rawString1]: string;
+    [rawString2](): void;
+    get rawString3(): string;
+    set rawString4(value: string);
+  }
+  --- DTS ---
+  declare const rawString1: Symbol;
+  declare const rawString2: Symbol;
+  declare const rawString3: Symbol;
+  declare const rawString4: Symbol;
+  export interface RawString {
+    [rawString1]: string;
+    [rawString2](): void;
+    get rawString3(): string;
+    set rawString4(value: string);
+  }
