@@ -19,11 +19,6 @@
 # https://jsr.io/@scope/a/1.0.1/mod.ts
 console.log("Hello, world!");
 
-# lockfile_jsr_packages
-{
-  "@scope/a@^1.0": "@scope/a@1.0.1"
-}
-
 # mod.ts
 import "jsr:@scope/a@^1.0";
 
@@ -75,3 +70,8 @@ import "jsr:@scope/a@^1.0";
 Fast check https://jsr.io/@scope/a/1.0.1/mod.ts:
   {}
   <empty>
+
+# lockfile_jsr_packages
+{
+  "@scope/a@^1.0": "@scope/a@1.0.1"
+}

@@ -3425,46 +3425,63 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     package_info: &JsrPackageInfo,
     package_req: &PackageReq,
   ) -> Option<Version> {
-    // try to find in the list of existing versions first
-    let versions = if let Some(existing_versions) =
+    // 1. try to resolve with the list of existing versions
+    if let Some(existing_versions) =
       self.graph.packages.versions_by_name(&package_req.name)
     {
-      existing_versions
-        .iter()
-        .map(|nv| &nv.version)
-        .collect::<Vec<_>>()
-    } else {
-      package_info.versions.keys().collect::<Vec<_>>()
-    };
-    let is_yanked = |v| {
-      package_info
-        .versions
-        .get(v)
-        .map(|i| i.yanked)
-        .unwrap_or(false)
-    };
-    let mut resolved_yanked_version = None;
-    if let Some(version) =
-      resolve_version(&package_req.version_req, versions.iter().copied())
-    {
-      if !is_yanked(version) {
-        return Some(version.clone());
+      if let Some(version) = resolve_version(
+        &package_req.version_req,
+        existing_versions.iter().map(|nv| &nv.version),
+      ) {
+        let is_yanked = package_info
+          .versions
+          .get(version)
+          .map(|i| i.yanked)
+          .unwrap_or(false);
+        let version = version.clone();
+        if is_yanked {
+          self.graph.packages.add_used_yanked_package(PackageNv {
+            name: package_req.name.clone(),
+            version: version.clone(),
+          });
+        }
+        return Some(version);
       }
-      resolved_yanked_version = Some(version.clone());
     }
-    let unyanked_versions = versions.iter().copied().filter(|v| !is_yanked(v));
+
+    // 2. attempt to resolve with the unyanked versions
+    let unyanked_versions =
+      package_info.versions.iter().filter_map(|(v, i)| {
+        if !i.yanked {
+          Some(v)
+        } else {
+          None
+        }
+      });
     if let Some(version) =
       resolve_version(&package_req.version_req, unyanked_versions)
     {
       return Some(version.clone());
     }
-    if let Some(version) = resolved_yanked_version {
+
+    // 3. attempt to resolve with the the yanked versions
+    let yanked_versions = package_info.versions.iter().filter_map(|(v, i)| {
+      if i.yanked {
+        Some(v)
+      } else {
+        None
+      }
+    });
+    if let Some(version) =
+      resolve_version(&package_req.version_req, yanked_versions)
+    {
       self.graph.packages.add_used_yanked_package(PackageNv {
         name: package_req.name.clone(),
         version: version.clone(),
       });
-      return Some(version);
-    };
+      return Some(version.clone());
+    }
+
     None
   }
 
