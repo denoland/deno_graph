@@ -68,3 +68,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   class Public1 {
     prop!: string;
   }
+  --- DTS ---
+  export declare class Export {
+    prop: typeof Public1.prototype.prop;
+  }
+  declare class Public1 {
+    prop: string;
+  }

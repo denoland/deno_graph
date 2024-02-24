@@ -135,7 +135,22 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     Private: Public,
     C: Test.A
   };
-
+  --- DTS ---
+  declare class BaseHandler {
+  }
+  declare class Public {
+  }
+  declare module Test {
+    export declare class A {
+    }
+  }
+  export declare const handlers: {
+    readonly Private;
+    readonly C;
+  };
+  --- DTS Diagnostics ---
+  unable to infer type from object property, skipping
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@176
 Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
   {}
   class BaseHandler {
@@ -145,3 +160,16 @@ Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
     }
   }
   export function test(a = BaseHandler, C = Test.A): void {}
+  --- DTS ---
+  declare class BaseHandler {
+  }
+  declare module Test {
+    export declare class A {
+    }
+  }
+  export function test(a?: any, C?: any): void;
+  --- DTS Diagnostics ---
+  unable to infer type, falling back to any type
+      at https://jsr.io/@scope/b/1.0.0/mod.ts@140
+  unable to infer type, falling back to any type
+      at https://jsr.io/@scope/b/1.0.0/mod.ts@159

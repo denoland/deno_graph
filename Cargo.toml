@@ -1,6 +1,6 @@
 [package]
 name = "deno_graph"
-version = "0.63.6"
+version = "0.69.4"
 edition = "2021"
 description = "Module graph analysis for deno"
 homepage = "https://deno.land/"
@@ -19,18 +19,22 @@ name = "deno_graph"
 all-features = true
 
 [features]
-default = ["fast_check"]
-fast_check = ["symbols", "deno_ast/transpiling"]
+default = ["fast_check", "tokio_executor"]
+fast_check = ["symbols", "deno_ast/transpiling", "twox-hash"]
 symbols = ["deno_ast/transforms", "deno_ast/visit", "deno_ast/utils"]
+tokio_executor = ["deno_unsync"]
+wasm_executor = []
 
 [dependencies]
 anyhow = "1.0.43"
 async-trait = "0.1.68"
 data-url = "0.3.0"
-deno_ast = { version = "0.32.0", features = ["dep_analysis", "module_specifier"] }
+deno_ast = { version = "0.34.0", features = ["dep_analysis"] }
 deno_semver = "0.5.4"
+deno_unsync = { version = "0.3.2", optional = true }
+encoding_rs = "0.8.33"
 futures = "0.3.26"
-import_map = "0.18.0"
+import_map = "0.19.0"
 indexmap = { version = "2", features = ["serde"] }
 log = "0.4.20"
 monch = "0.5.0"
@@ -39,12 +43,15 @@ parking_lot = "0.12.0"
 regex = "1.10.2"
 serde = { version = "1.0.130", features = ["derive", "rc"] }
 serde_json = { version = "1.0.67", features = ["preserve_order"] }
+sha2 = "^0.10.0"
 thiserror = "1.0.24"
+twox-hash = { version = "1.6.3", optional = true }
 url = { version = "2.2.2", features = ["serde"] }
 
 [dev-dependencies]
-tempfile = "3.4.0"
+bincode = "1.3.3"
 pretty_assertions = "1.0.0"
+tempfile = "3.4.0"
 tokio = { version = "1.10.1", features = ["macros", "rt-multi-thread"] }
 
 [profile.release]

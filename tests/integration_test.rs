@@ -13,6 +13,7 @@ use anyhow::anyhow;
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
+use deno_graph::source::LoadOptions;
 use deno_graph::source::LoadResponse;
 use deno_graph::source::MemoryFileSystem;
 use deno_graph::source::MemoryLoader;
@@ -20,6 +21,7 @@ use deno_graph::source::NpmResolver;
 use deno_graph::source::Source;
 use deno_graph::source::UnknownBuiltInNodeModuleError;
 use deno_graph::BuildOptions;
+use deno_graph::FastCheckCacheModuleItem;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 use deno_graph::NpmPackageReqResolution;
@@ -41,11 +43,6 @@ async fn test_graph_specs() {
   for (test_file_path, spec) in
     get_specs_in_dir(&PathBuf::from("./tests/specs/graph"))
   {
-    if !cfg!(feature = "fast_check")
-      && spec.output_file.text.contains("Fast check ")
-    {
-      continue;
-    }
     eprintln!("Running {}", test_file_path.display());
     let mut builder = TestBuilder::new();
     builder.with_loader(|loader| {
@@ -63,22 +60,27 @@ async fn test_graph_specs() {
       }
     });
     builder.workspace_members(spec.workspace_members.clone());
+    builder.lockfile_jsr_packages(spec.lockfile_jsr_packages.clone());
 
     if let Some(options) = &spec.options {
       builder.workspace_fast_check(options.workspace_fast_check);
+      builder.fast_check_cache(options.fast_check_cache);
     }
 
     let result = builder.build().await;
-    let update_var = std::env::var("UPDATE");
     let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
     output_text.push('\n');
     // include the list of jsr dependencies
     let jsr_deps = result
       .graph
       .packages
-      .package_deps()
-      .map(|(k, v)| {
-        (k.to_string(), v.map(|v| v.to_string()).collect::<Vec<_>>())
+      .packages_with_checksum_and_deps()
+      .map(|(k, _checksum, deps)| {
+        (k.to_string(), {
+          let mut deps = deps.map(|d| d.to_string()).collect::<Vec<_>>();
+          deps.sort();
+          deps
+        })
       })
       .filter(|(_, v)| !v.is_empty())
       .collect::<BTreeMap<_, _>>();
@@ -89,7 +91,7 @@ async fn test_graph_specs() {
     }
     // now the fast check modules
     let fast_check_modules = result.graph.modules().filter_map(|module| {
-      let module = module.esm()?;
+      let module = module.js()?;
       let fast_check = module.fast_check.as_ref()?;
       Some((module, fast_check))
     });
@@ -108,11 +110,72 @@ async fn test_graph_specs() {
               indent(&fast_check.source)
             },
           ));
+
+          if let Some(dts) = &fast_check.dts {
+            if !dts.text.is_empty() {
+              output_text.push_str(&indent("--- DTS ---\n"));
+              output_text.push_str(&indent(&dts.text));
+            }
+            if !dts.diagnostics.is_empty() {
+              output_text.push_str(&indent("--- DTS Diagnostics ---\n"));
+              let message = dts
+                .diagnostics
+                .iter()
+                .map(|d| match d.range() {
+                  Some(range) => {
+                    format!(
+                      "{}\n    at {}@{}",
+                      d, range.specifier, range.range.start
+                    )
+                  }
+                  None => format!("{}\n    at {}", d, d.specifier()),
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+              output_text.push_str(&indent(&message));
+            }
+          }
         }
-        deno_graph::FastCheckTypeModuleSlot::Error(diagnostic) => {
-          output_text
-            .push_str(&indent(&diagnostic.message_with_range_for_test()));
+        deno_graph::FastCheckTypeModuleSlot::Error(diagnostics) => {
+          let message = diagnostics
+            .iter()
+            .map(|d| match d.range() {
+              Some(range) => {
+                format!(
+                  "{}\n    at {}@{}",
+                  d, range.specifier, range.range.start
+                )
+              }
+              None => format!("{}\n    at {}", d, d.specifier()),
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+          output_text.push_str(&indent(&message));
         }
+      }
+    }
+    if let Some(fast_check_cache) = result.fast_check_cache.as_ref() {
+      output_text.push_str("\n== fast check cache ==\n");
+      for (key, item) in fast_check_cache.inner.borrow().iter() {
+        output_text.push_str(&format!(
+          "{:?}:\n    Deps - {}\n    Modules: {}\n",
+          key,
+          serde_json::to_string(&item.dependencies).unwrap(),
+          serde_json::to_string(
+            &item
+              .modules
+              .iter()
+              .map(|(url, module_item)| (
+                url.as_str(),
+                match module_item {
+                  FastCheckCacheModuleItem::Info(_) => "info",
+                  FastCheckCacheModuleItem::Diagnostic(_) => "diagnostic",
+                }
+              ))
+              .collect::<Vec<_>>()
+          )
+          .unwrap()
+        ));
       }
     }
     if !output_text.ends_with('\n') {
@@ -123,7 +186,9 @@ async fn test_graph_specs() {
       .iter()
       .map(|d| serde_json::to_value(d.to_string()).unwrap())
       .collect::<Vec<_>>();
-    let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
+    let update =
+      std::env::var("UPDATE").as_ref().map(|v| v.as_str()) == Ok("1");
+    let spec = if update {
       let mut spec = spec;
       spec.output_file.text = output_text.clone();
       spec.diagnostics = diagnostics.clone();
@@ -290,14 +355,14 @@ export class MyClass {
 
 #[cfg(feature = "symbols")]
 #[tokio::test]
-async fn test_symbols_re_export_external() {
+async fn test_symbols_re_export_external_and_npm() {
   let result = TestBuilder::new()
     .with_loader(|loader| {
       loader.remote.add_source_with_text(
         "file:///mod.ts",
-        r#"export * from 'npm:example';"#,
+        r#"export * from 'npm:example@1.0.0'; export * from 'external:other"#,
       );
-      loader.remote.add_external_source("npm:example");
+      loader.remote.add_external_source("external:other");
     })
     .build()
     .await;
@@ -313,7 +378,7 @@ async fn test_symbols_re_export_external() {
       .into_iter()
       .map(|s| s.specifier)
       .collect::<Vec<_>>(),
-    vec!["npm:example"]
+    vec!["npm:example@1.0.0", "external:other"]
   );
 }
 
@@ -435,18 +500,19 @@ async fn test_jsr_version_not_found_then_found() {
     fn load(
       &mut self,
       specifier: &ModuleSpecifier,
-      is_dynamic: bool,
-      cache_setting: CacheSetting,
+      options: LoadOptions,
     ) -> LoadFuture {
-      assert!(!is_dynamic);
-      self.requests.push((specifier.to_string(), cache_setting));
+      assert!(!options.is_dynamic);
+      self
+        .requests
+        .push((specifier.to_string(), options.cache_setting));
       let specifier = specifier.clone();
       match specifier.as_str() {
         "file:///main.ts" => Box::pin(async move {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
-            content: "import 'jsr:@scope/a@1.2".into(),
+            content: b"import 'jsr:@scope/a@1.2".to_vec().into(),
           }))
         }),
         "https://jsr.io/@scope/a/meta.json" => {
@@ -454,14 +520,14 @@ async fn test_jsr_version_not_found_then_found() {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
-              content: match cache_setting {
+              content: match options.cache_setting {
                 CacheSetting::Only | CacheSetting::Use => {
                   // first time it won't have the version
-                  r#"{ "versions": { "1.0.0": {} } }"#.into()
+                  br#"{ "versions": { "1.0.0": {} } }"#.to_vec().into()
                 }
                 CacheSetting::Reload => {
                   // then on reload it will
-                  r#"{ "versions": { "1.0.0": {}, "1.2.0": {} } }"#.into()
+                  br#"{ "versions": { "1.0.0": {}, "1.2.0": {} } }"#.to_vec().into()
                 }
               },
             }))
@@ -471,14 +537,24 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
-            content: r#"{ "exports": { ".": "./mod.ts" } }"#.into(),
+            content: br#"{
+                "exports": { ".": "./mod.ts" },
+                "manifest": {
+                  "/mod.ts": {
+                    "size": 123,
+                    "checksum": "sha256-b8059cfb1ea623e79efbf432db31595df213c99c6534c58bec9d5f5e069344df"
+                  }
+                }
+              }"#
+              .to_vec()
+              .into(),
           }))
         }),
         "https://jsr.io/@scope/a/1.2.0/mod.ts" => Box::pin(async move {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
-            content: "console.log('Hello, world!')".into(),
+            content: b"console.log('Hello, world!')".to_vec().into(),
           }))
         }),
         _ => unreachable!(),

@@ -75,3 +75,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     /** RFC 8297 **/ EarlyHints: 103
   };
   export type Status = typeof STATUS_CODE.Continue;
+  --- DTS ---
+  export declare const STATUS_CODE: {
+    readonly Continue: number;
+    readonly SwitchingProtocols: number;
+    readonly Processing: number;
+    readonly EarlyHints: number;
+  };
+  export type Status = typeof STATUS_CODE.Continue;

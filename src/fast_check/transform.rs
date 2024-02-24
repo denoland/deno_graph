@@ -4,102 +4,40 @@
 #![allow(clippy::disallowed_methods)]
 #![allow(clippy::disallowed_types)]
 
-use std::rc::Rc;
 use std::sync::Arc;
 
-use deno_ast::swc::ast::Accessibility;
-use deno_ast::swc::ast::ArrayLit;
-use deno_ast::swc::ast::ArrowExpr;
-use deno_ast::swc::ast::BindingIdent;
-use deno_ast::swc::ast::BlockStmt;
-use deno_ast::swc::ast::BlockStmtOrExpr;
-use deno_ast::swc::ast::CallExpr;
-use deno_ast::swc::ast::Callee;
-use deno_ast::swc::ast::Class;
-use deno_ast::swc::ast::ClassMember;
-use deno_ast::swc::ast::ClassProp;
-use deno_ast::swc::ast::Decl;
-use deno_ast::swc::ast::DefaultDecl;
-use deno_ast::swc::ast::Expr;
-use deno_ast::swc::ast::Function;
-use deno_ast::swc::ast::Ident;
-use deno_ast::swc::ast::Lit;
-use deno_ast::swc::ast::MemberProp;
-use deno_ast::swc::ast::MethodKind;
-use deno_ast::swc::ast::ModuleDecl;
-use deno_ast::swc::ast::ModuleItem;
-use deno_ast::swc::ast::ObjectLit;
-use deno_ast::swc::ast::ObjectPatProp;
-use deno_ast::swc::ast::Param;
-use deno_ast::swc::ast::ParamOrTsParamProp;
-use deno_ast::swc::ast::ParenExpr;
-use deno_ast::swc::ast::Pat;
-use deno_ast::swc::ast::PrivateName;
-use deno_ast::swc::ast::PrivateProp;
-use deno_ast::swc::ast::Prop;
-use deno_ast::swc::ast::PropName;
-use deno_ast::swc::ast::PropOrSpread;
-use deno_ast::swc::ast::ReturnStmt;
-use deno_ast::swc::ast::Stmt;
-use deno_ast::swc::ast::Str;
-use deno_ast::swc::ast::TsArrayType;
-use deno_ast::swc::ast::TsAsExpr;
-use deno_ast::swc::ast::TsEntityName;
-use deno_ast::swc::ast::TsIntersectionType;
-use deno_ast::swc::ast::TsKeywordType;
-use deno_ast::swc::ast::TsKeywordTypeKind;
-use deno_ast::swc::ast::TsLit;
-use deno_ast::swc::ast::TsModuleDecl;
-use deno_ast::swc::ast::TsModuleName;
-use deno_ast::swc::ast::TsModuleRef;
-use deno_ast::swc::ast::TsNamespaceBody;
-use deno_ast::swc::ast::TsOptionalType;
-use deno_ast::swc::ast::TsParamPropParam;
-use deno_ast::swc::ast::TsParenthesizedType;
-use deno_ast::swc::ast::TsRestType;
-use deno_ast::swc::ast::TsTupleElement;
-use deno_ast::swc::ast::TsTupleType;
-use deno_ast::swc::ast::TsType;
-use deno_ast::swc::ast::TsTypeAnn;
-use deno_ast::swc::ast::TsTypeOperator;
-use deno_ast::swc::ast::TsTypeOperatorOp;
-use deno_ast::swc::ast::TsTypeParamInstantiation;
-use deno_ast::swc::ast::TsTypeRef;
-use deno_ast::swc::ast::TsUnionOrIntersectionType;
-use deno_ast::swc::ast::TsUnionType;
-use deno_ast::swc::ast::VarDecl;
-use deno_ast::swc::codegen::text_writer::JsWriter;
-use deno_ast::swc::codegen::Node;
+use deno_ast::swc::ast::*;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::common::comments::SingleThreadedComments;
 use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
-use deno_ast::swc::common::FileName;
-use deno_ast::swc::common::SourceMap;
 use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::DUMMY_SP;
-use deno_ast::swc_codegen_config;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
 use deno_ast::ParsedSource;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
-use deno_ast::SourceTextInfo;
 
 use crate::DefaultModuleAnalyzer;
-use crate::DiagnosticRange;
 use crate::ModuleGraph;
 use crate::ModuleInfo;
 use crate::WorkspaceMember;
 
 use super::range_finder::ModulePublicRanges;
+use super::swc_helpers::any_type_ann;
+use super::swc_helpers::emit;
 use super::swc_helpers::get_return_stmts_with_arg_from_function_body;
 use super::swc_helpers::ident;
 use super::swc_helpers::is_never_type;
 use super::swc_helpers::is_void_type;
+use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::ts_keyword_type;
+use super::transform_dts::FastCheckDtsDiagnostic;
+use super::transform_dts::FastCheckDtsTransformer;
 use super::FastCheckDiagnostic;
+use super::FastCheckDiagnosticRange;
 
-struct CommentsMut {
+pub struct CommentsMut {
   leading: SingleThreadedCommentsMapInner,
   trailing: SingleThreadedCommentsMapInner,
 }
@@ -110,8 +48,8 @@ impl CommentsMut {
       comments.retain(|_key, value| {
         value.retain(|c| {
           match c.kind {
-            // only keep js docs and @deno-types comments
-            CommentKind::Line => c.text.starts_with("@deno-types"),
+            // only keep js docs and @ts-* comments
+            CommentKind::Line => c.text.trim_start().starts_with("@ts-"),
             CommentKind::Block => c.text.starts_with('*'),
           }
         });
@@ -139,15 +77,24 @@ impl CommentsMut {
   }
 }
 
-pub struct FastCheckModule {
-  pub module_info: ModuleInfo,
+#[derive(Debug, Clone)]
+pub struct FastCheckDtsModule {
   pub text: String,
-  pub source_map: Vec<u8>,
+  pub diagnostics: Vec<FastCheckDtsDiagnostic>,
+}
+
+#[derive(Debug)]
+pub struct FastCheckModule {
+  pub module_info: Arc<ModuleInfo>,
+  pub text: Arc<str>,
+  pub source_map: Arc<[u8]>,
+  pub dts: Option<FastCheckDtsModule>,
 }
 
 pub struct TransformOptions<'a> {
   pub workspace_members: &'a [WorkspaceMember],
   pub should_error_on_first_diagnostic: bool,
+  pub dts: bool,
 }
 
 pub fn transform(
@@ -156,7 +103,7 @@ pub fn transform(
   public_ranges: &ModulePublicRanges,
   parsed_source: &ParsedSource,
   options: &TransformOptions,
-) -> Result<FastCheckModule, Box<FastCheckDiagnostic>> {
+) -> Result<FastCheckModule, Vec<FastCheckDiagnostic>> {
   let mut transformer = FastCheckTransformer::new(
     graph,
     specifier,
@@ -166,9 +113,7 @@ pub fn transform(
   );
   let (module, comments) = transformer.transform()?;
   if !transformer.diagnostics.is_empty() {
-    return Err(Box::new(FastCheckDiagnostic::Multiple(
-      transformer.diagnostics,
-    )));
+    return Err(transformer.diagnostics);
   }
   let module_info = DefaultModuleAnalyzer::module_info_from_swc(
     parsed_source.media_type(),
@@ -177,20 +122,47 @@ pub fn transform(
     &comments,
   );
 
-  // now emit
   let comments = comments.into_single_threaded();
+
+  // now emit
   let (text, source_map) =
     emit(specifier, &comments, parsed_source.text_info(), &module).map_err(
-      |e| FastCheckDiagnostic::Emit {
-        specifier: specifier.clone(),
-        inner: Arc::new(e),
+      |e| {
+        vec![FastCheckDiagnostic::Emit {
+          specifier: specifier.clone(),
+          inner: Arc::new(e),
+        }]
       },
     )?;
 
+  let dts = if options.dts {
+    let mut dts_transformer =
+      FastCheckDtsTransformer::new(parsed_source, specifier);
+
+    let module = dts_transformer.transform(module)?;
+    let (text, _source_map) =
+      emit(specifier, &comments, parsed_source.text_info(), &module).map_err(
+        |e| {
+          vec![FastCheckDiagnostic::Emit {
+            specifier: specifier.clone(),
+            inner: Arc::new(e),
+          }]
+        },
+      )?;
+
+    Some(FastCheckDtsModule {
+      text,
+      diagnostics: dts_transformer.diagnostics,
+    })
+  } else {
+    None
+  };
+
   Ok(FastCheckModule {
-    module_info,
-    text,
-    source_map,
+    module_info: module_info.into(),
+    text: text.into(),
+    dts,
+    source_map: source_map.into(),
   })
 }
 
@@ -201,6 +173,7 @@ struct FastCheckTransformer<'a> {
   parsed_source: &'a ParsedSource,
   should_error_on_first_diagnostic: bool,
   diagnostics: Vec<FastCheckDiagnostic>,
+  is_decl_file: bool,
 }
 
 impl<'a> FastCheckTransformer<'a> {
@@ -212,6 +185,7 @@ impl<'a> FastCheckTransformer<'a> {
     should_error_on_first_diagnostic: bool,
   ) -> Self {
     Self {
+      is_decl_file: parsed_source.media_type().is_declaration(),
       graph,
       specifier,
       public_ranges,
@@ -225,7 +199,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
   ) -> Result<
     (deno_ast::swc::ast::Module, MultiThreadedComments),
-    Box<FastCheckDiagnostic>,
+    Vec<FastCheckDiagnostic>,
   > {
     let mut module = self.parsed_source.module().clone();
     let mut comments =
@@ -239,7 +213,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     body: Vec<ModuleItem>,
     comments: &mut CommentsMut,
-  ) -> Result<Vec<ModuleItem>, Box<FastCheckDiagnostic>> {
+  ) -> Result<Vec<ModuleItem>, Vec<FastCheckDiagnostic>> {
     let mut final_body = Vec::with_capacity(body.len());
     for mut item in body {
       let retain = self.transform_item(&mut item, comments)?;
@@ -278,7 +252,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     item: &mut ModuleItem,
     comments: &mut CommentsMut,
-  ) -> Result<bool, Box<FastCheckDiagnostic>> {
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     match item {
       ModuleItem::ModuleDecl(decl) => match decl {
         ModuleDecl::Import(n) => {
@@ -399,7 +373,7 @@ impl<'a> FastCheckTransformer<'a> {
     default_decl: &mut DefaultDecl,
     comments: &mut CommentsMut,
     parent_range: SourceRange,
-  ) -> Result<(), Box<FastCheckDiagnostic>> {
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
     match default_decl {
       DefaultDecl::Class(n) => self.transform_class(&mut n.class, comments),
       DefaultDecl::Fn(n) => self.transform_fn(
@@ -417,7 +391,7 @@ impl<'a> FastCheckTransformer<'a> {
     decl: &mut Decl,
     comments: &mut CommentsMut,
     parent_range: Option<SourceRange>,
-  ) -> Result<bool, Box<FastCheckDiagnostic>> {
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     let public_range = parent_range.unwrap_or_else(|| decl.range());
     match decl {
       Decl::Class(n) => {
@@ -471,7 +445,11 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     n: &mut Class,
     comments: &mut CommentsMut,
-  ) -> Result<(), Box<FastCheckDiagnostic>> {
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
+    if self.is_decl_file {
+      return Ok(()); // no need to do anything
+    }
+
     let mut members = Vec::with_capacity(n.body.len());
     let mut had_private = false;
     if let Some(super_class) = &n.super_class {
@@ -536,7 +514,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     member: &mut ClassMember,
     insert_members: &mut Vec<ClassMember>,
-  ) -> Result<bool, Box<FastCheckDiagnostic>> {
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     match member {
       ClassMember::Constructor(n) => {
         if let Some(body) = &mut n.body {
@@ -816,7 +794,10 @@ impl<'a> FastCheckTransformer<'a> {
     parent_id_range: Option<SourceRange>,
     is_overload: bool,
     is_set_accessor: bool,
-  ) -> Result<(), Box<FastCheckDiagnostic>> {
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
+    if self.is_decl_file {
+      return Ok(()); // no need to do anything
+    }
     if is_overload {
       for (i, param) in n.params.iter_mut().enumerate() {
         *param = Param {
@@ -901,7 +882,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     n: &mut ArrowExpr,
     parent_id_range: Option<SourceRange>,
-  ) -> Result<(), Box<FastCheckDiagnostic>> {
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
     let range = parent_id_range.unwrap_or_else(|| n.range());
 
     if n.return_type.is_none() {
@@ -978,7 +959,7 @@ impl<'a> FastCheckTransformer<'a> {
   fn handle_param_pat(
     &mut self,
     pat: &mut Pat,
-  ) -> Result<(), Box<FastCheckDiagnostic>> {
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
     match pat {
       Pat::Ident(ident) => {
         if ident.type_ann.is_none() {
@@ -1096,62 +1077,74 @@ impl<'a> FastCheckTransformer<'a> {
   fn transform_var(
     &mut self,
     n: &mut VarDecl,
-  ) -> Result<bool, Box<FastCheckDiagnostic>> {
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     n.decls.retain(|n| self.public_ranges.contains(&n.range()));
 
-    for decl in &mut n.decls {
-      match &mut decl.name {
-        Pat::Ident(ident) => {
-          if ident.type_ann.is_none() {
-            let inferred_type = decl
-              .init
-              .as_ref()
-              .and_then(|e| self.maybe_infer_type_from_expr(e));
-            match inferred_type {
-              Some(t) => {
-                ident.type_ann = Some(Box::new(TsTypeAnn {
-                  span: DUMMY_SP,
-                  type_ann: Box::new(t),
-                }));
-                decl.init = Some(obj_as_any_expr());
-              }
-              None => {
-                let is_init_leavable = match decl.init.as_mut() {
-                  Some(init) => self.maybe_transform_expr_if_leavable(
-                    init,
-                    Some(ident.id.range()),
-                  )?,
-                  None => false,
-                };
-                if !is_init_leavable {
-                  self.mark_diagnostic(
-                    FastCheckDiagnostic::MissingExplicitType {
-                      range: self.source_range_to_range(ident.range()),
-                    },
-                  )?;
-                }
-              }
-            }
-          } else {
-            decl.init = Some(obj_as_any_expr());
-          }
-        }
-        Pat::Array(_)
-        | Pat::Rest(_)
-        | Pat::Object(_)
-        | Pat::Assign(_)
-        | Pat::Invalid(_)
-        | Pat::Expr(_) => {
-          self.mark_diagnostic(
-            FastCheckDiagnostic::UnsupportedDestructuring {
-              range: self.source_range_to_range(decl.name.range()),
-            },
-          )?;
-        }
+    // don't need to do anything for these in a declaration file
+    if !self.is_decl_file {
+      for decl in &mut n.decls {
+        self.transform_var_declarator(decl)?;
       }
     }
 
     Ok(!n.decls.is_empty())
+  }
+
+  fn transform_var_declarator(
+    &mut self,
+    n: &mut VarDeclarator,
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
+    match &mut n.name {
+      Pat::Ident(ident) => {
+        if ident.type_ann.is_none() {
+          let inferred_type = n
+            .init
+            .as_ref()
+            .and_then(|e| self.maybe_infer_type_from_expr(e));
+          match inferred_type {
+            Some(t) => {
+              ident.type_ann = Some(Box::new(TsTypeAnn {
+                span: DUMMY_SP,
+                type_ann: Box::new(t),
+              }));
+              n.init = Some(obj_as_any_expr());
+            }
+            None => {
+              let is_init_leavable = match n.init.as_mut() {
+                Some(init) => self.maybe_transform_expr_if_leavable(
+                  init,
+                  Some(ident.id.range()),
+                )?,
+                None => false,
+              };
+              if !is_init_leavable {
+                self.mark_diagnostic(
+                  FastCheckDiagnostic::MissingExplicitType {
+                    range: self.source_range_to_range(ident.range()),
+                  },
+                )?;
+              }
+            }
+          }
+        } else {
+          n.init = Some(obj_as_any_expr());
+        }
+      }
+      Pat::Array(_)
+      | Pat::Rest(_)
+      | Pat::Object(_)
+      | Pat::Assign(_)
+      | Pat::Invalid(_)
+      | Pat::Expr(_) => {
+        self.mark_diagnostic(
+          FastCheckDiagnostic::UnsupportedDestructuring {
+            range: self.source_range_to_range(n.name.range()),
+          },
+        )?;
+      }
+    }
+
+    Ok(())
   }
 
   fn transform_ts_module(
@@ -1159,7 +1152,7 @@ impl<'a> FastCheckTransformer<'a> {
     n: &mut TsModuleDecl,
     public_range: &SourceRange,
     comments: &mut CommentsMut,
-  ) -> Result<bool, Box<FastCheckDiagnostic>> {
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     if n.global {
       self.mark_diagnostic(FastCheckDiagnostic::UnsupportedGlobalModule {
         range: self.source_range_to_range(n.range()),
@@ -1223,25 +1216,31 @@ impl<'a> FastCheckTransformer<'a> {
   fn mark_diagnostic(
     &mut self,
     diagnostic: FastCheckDiagnostic,
-  ) -> Result<(), Box<FastCheckDiagnostic>> {
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
     if self.should_error_on_first_diagnostic {
-      Err(Box::new(diagnostic))
+      Err(vec![diagnostic])
     } else {
       self.diagnostics.push(diagnostic);
       Ok(())
     }
   }
 
-  fn source_range_to_range(&self, range: SourceRange) -> DiagnosticRange {
-    DiagnosticRange::new(self.specifier.clone(), range)
+  fn source_range_to_range(
+    &self,
+    range: SourceRange,
+  ) -> FastCheckDiagnosticRange {
+    FastCheckDiagnosticRange {
+      specifier: self.specifier.clone(),
+      text_info: self.parsed_source.text_info().clone(),
+      range,
+    }
   }
 
-  // KEEP IN SYNC with is_expr_leavable
   fn maybe_transform_expr_if_leavable(
     &mut self,
     expr: &mut Expr,
     parent_id_range: Option<SourceRange>,
-  ) -> Result<bool, Box<FastCheckDiagnostic>> {
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     let mut recurse =
       |expr: &mut Expr| self.maybe_transform_expr_if_leavable(expr, None);
 
@@ -1354,27 +1353,7 @@ impl<'a> FastCheckTransformer<'a> {
     match expr {
       Expr::TsTypeAssertion(n) => infer_simple_type_from_type(&n.type_ann),
       Expr::TsAs(n) => infer_simple_type_from_type(&n.type_ann),
-      Expr::Lit(lit) => match lit {
-        Lit::Str(_) => {
-          Some(ts_keyword_type(TsKeywordTypeKind::TsStringKeyword))
-        }
-        Lit::Bool(_) => {
-          Some(ts_keyword_type(TsKeywordTypeKind::TsBooleanKeyword))
-        }
-        Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
-        Lit::Num(_) => {
-          Some(ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword))
-        }
-        Lit::BigInt(_) => {
-          Some(ts_keyword_type(TsKeywordTypeKind::TsBigIntKeyword))
-        }
-        Lit::Regex(_) => Some(TsType::TsTypeRef(TsTypeRef {
-          span: DUMMY_SP,
-          type_name: TsEntityName::Ident(Ident::new("RegExp".into(), DUMMY_SP)),
-          type_params: None,
-        })),
-        Lit::JSXText(_) => None,
-      },
+      Expr::Lit(lit) => maybe_lit_to_ts_type(lit),
       Expr::Call(call_expr) => {
         if self.is_call_expr_symbol_create(call_expr) {
           Some(TsType::TsTypeOperator(TsTypeOperator {
@@ -1490,7 +1469,7 @@ fn void_or_promise_void(is_async: bool) -> Box<TsType> {
   if is_async {
     Box::new(TsType::TsTypeRef(TsTypeRef {
       span: DUMMY_SP,
-      type_name: TsEntityName::Ident(ident("Promise".into())),
+      type_name: TsEntityName::Ident(Ident::new("Promise".into(), DUMMY_SP)),
       type_params: Some(Box::new(TsTypeParamInstantiation {
         span: DUMMY_SP,
         params: vec![void_type],
@@ -1552,47 +1531,6 @@ fn prefix_idents_in_pat(pat: &mut Pat, prefix: &str) {
       // ignore
     }
   }
-}
-
-fn emit(
-  specifier: &ModuleSpecifier,
-  comments: &SingleThreadedComments,
-  text_info: &SourceTextInfo,
-  module: &deno_ast::swc::ast::Module,
-) -> Result<(String, Vec<u8>), anyhow::Error> {
-  let source_map = Rc::new(SourceMap::default());
-  let file_name = FileName::Url(specifier.clone());
-  source_map.new_source_file(file_name, text_info.text_str().to_string());
-
-  let mut src_map_buf = vec![];
-  let mut buf = vec![];
-  {
-    let mut writer = Box::new(JsWriter::new(
-      source_map.clone(),
-      "\n",
-      &mut buf,
-      Some(&mut src_map_buf),
-    ));
-    writer.set_indent_str("  "); // two spaces
-
-    let mut emitter = deno_ast::swc::codegen::Emitter {
-      cfg: swc_codegen_config(),
-      comments: Some(comments),
-      cm: source_map.clone(),
-      wr: writer,
-    };
-    module.emit_with(&mut emitter)?;
-  }
-  let src = String::from_utf8(buf)?;
-  let map = {
-    let mut buf = Vec::new();
-    source_map
-      .build_source_map_from(&src_map_buf, None)
-      .to_writer(&mut buf)?;
-    buf
-  };
-
-  Ok((src, map))
 }
 
 fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
@@ -1776,13 +1714,6 @@ fn paren_expr(expr: Box<Expr>) -> Expr {
   Expr::Paren(ParenExpr {
     span: DUMMY_SP,
     expr,
-  })
-}
-
-fn any_type_ann() -> Box<TsTypeAnn> {
-  Box::new(TsTypeAnn {
-    span: DUMMY_SP,
-    type_ann: Box::new(ts_keyword_type(TsKeywordTypeKind::TsAnyKeyword)),
   })
 }
 

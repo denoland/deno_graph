@@ -1,6 +1,7 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
 use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
@@ -9,29 +10,39 @@ use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
 use deno_semver::VersionReq;
-use indexmap::IndexMap;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::ModuleInfo;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JsrPackageInfo {
   pub versions: HashMap<Version, JsrPackageInfoVersion>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Default)]
-pub struct JsrPackageInfoVersion {
-  // no fields yet
+fn is_false(v: &bool) -> bool {
+  !v
 }
 
-#[derive(Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct JsrPackageInfoVersion {
+  #[serde(default, skip_serializing_if = "is_false")]
+  pub yanked: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct JsrPackageVersionManifestEntry {
+  pub checksum: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct JsrPackageVersionInfo {
   // ensure the fields on here are resilient to change
   #[serde(default)]
   pub exports: serde_json::Value,
   #[serde(rename = "moduleGraph1")]
   pub module_graph: Option<serde_json::Value>,
+  pub manifest: HashMap<String, JsrPackageVersionManifestEntry>,
 }
 
 impl JsrPackageVersionInfo {
@@ -80,11 +91,19 @@ impl JsrPackageVersionInfo {
   }
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 struct PackageNvInfo {
+  manifest_checksum: String,
   /// Collection of exports used.
-  exports: IndexMap<String, String>,
+  exports: BTreeMap<String, String>,
   found_dependencies: HashSet<JsrDepPackageReq>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PackageManifestIntegrityError {
+  pub nv: PackageNv,
+  pub actual: String,
+  pub expected: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
@@ -95,6 +114,11 @@ pub struct PackageSpecifiers {
   packages_by_name: HashMap<String, Vec<PackageNv>>,
   #[serde(skip_serializing)]
   packages: BTreeMap<PackageNv, PackageNvInfo>,
+  /// Cache for packages that have a referrer outside JSR.
+  #[serde(skip_serializing)]
+  top_level_packages: BTreeSet<PackageNv>,
+  #[serde(skip_serializing)]
+  used_yanked_packages: BTreeSet<PackageNv>,
 }
 
 impl PackageSpecifiers {
@@ -110,46 +134,115 @@ impl PackageSpecifiers {
     if !nvs.contains(&nv) {
       nvs.push(nv.clone());
     }
-    self.package_reqs.insert(package_req, nv);
+    self.package_reqs.insert(package_req, nv.clone());
+  }
+
+  pub(crate) fn ensure_package(
+    &mut self,
+    nv: PackageNv,
+    manifest_checksum: String,
+  ) {
+    self.packages.entry(nv).or_insert_with(|| PackageNvInfo {
+      manifest_checksum,
+      exports: Default::default(),
+      found_dependencies: Default::default(),
+    });
+  }
+
+  pub(crate) fn get_manifest_checksum(
+    &self,
+    nv: &PackageNv,
+  ) -> Option<&String> {
+    self.packages.get(nv).map(|p| &p.manifest_checksum)
+  }
+
+  pub fn add_manifest_checksum(
+    &mut self,
+    nv: PackageNv,
+    checksum: String,
+  ) -> Result<(), Box<PackageManifestIntegrityError>> {
+    let package = self.packages.get(&nv);
+    if let Some(package) = package {
+      if package.manifest_checksum != checksum {
+        Err(Box::new(PackageManifestIntegrityError {
+          nv,
+          actual: checksum,
+          expected: package.manifest_checksum.clone(),
+        }))
+      } else {
+        Ok(())
+      }
+    } else {
+      self.packages.insert(
+        nv,
+        PackageNvInfo {
+          manifest_checksum: checksum,
+          exports: Default::default(),
+          found_dependencies: Default::default(),
+        },
+      );
+      Ok(())
+    }
   }
 
   /// Gets the dependencies (package constraints) of JSR packages found in the graph.
-  pub fn package_deps(
+  pub fn packages_with_checksum_and_deps(
     &self,
-  ) -> impl Iterator<Item = (&PackageNv, impl Iterator<Item = &JsrDepPackageReq>)>
-  {
+  ) -> impl Iterator<
+    Item = (&PackageNv, &String, impl Iterator<Item = &JsrDepPackageReq>),
+  > {
     self.packages.iter().map(|(nv, info)| {
       let deps = info.found_dependencies.iter();
-      (nv, deps)
+      (nv, &info.manifest_checksum, deps)
     })
   }
 
   pub(crate) fn add_dependency(
     &mut self,
-    nv: PackageNv,
+    nv: &PackageNv,
     dep: JsrDepPackageReq,
   ) {
     self
       .packages
-      .entry(nv.clone())
-      .or_default()
+      .get_mut(nv)
+      .unwrap()
       .found_dependencies
       .insert(dep);
   }
 
-  pub(crate) fn add_export(&mut self, nv: PackageNv, export: (String, String)) {
+  pub(crate) fn add_export(
+    &mut self,
+    nv: &PackageNv,
+    export: (String, String),
+  ) {
     self
       .packages
-      .entry(nv.clone())
-      .or_default()
+      .get_mut(nv)
+      .unwrap()
       .exports
       .insert(export.0, export.1);
+  }
+
+  pub(crate) fn add_top_level_package(&mut self, nv: PackageNv) {
+    self.top_level_packages.insert(nv);
+  }
+
+  pub(crate) fn top_level_packages(&self) -> &BTreeSet<PackageNv> {
+    &self.top_level_packages
+  }
+
+  pub(crate) fn add_used_yanked_package(&mut self, nv: PackageNv) {
+    self.used_yanked_packages.insert(nv);
+  }
+
+  pub fn used_yanked_packages(&mut self) -> impl Iterator<Item = &PackageNv> {
+    self.used_yanked_packages.iter()
   }
 
   pub fn package_exports(
     &self,
     nv: &PackageNv,
-  ) -> Option<&IndexMap<String, String>> {
+  ) -> Option<&BTreeMap<String, String>> {
     self.packages.get(nv).map(|p| &p.exports)
   }
 

@@ -15,7 +15,6 @@
       "dependencies": [{
           "type": "static",
           "kind": "import",
-          "range": [[1, 2], [3, 4]],
           "specifier": "jsr:@scope/b@1",
           "specifierRange": [[5, 6], [7, 8]]
       }]
@@ -158,4 +157,8 @@ Fast check https://jsr.io/@scope/b/1.1.0/mod.ts:
   {}
   export class Test {
     method(value: string): void {}
+  }
+  --- DTS ---
+  export declare class Test {
+    method(value: string): void;
   }

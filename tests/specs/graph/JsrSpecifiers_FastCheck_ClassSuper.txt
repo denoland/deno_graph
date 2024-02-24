@@ -90,3 +90,16 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       super(...({} as any));
     }
   }
+  --- DTS ---
+  declare class Base {
+    constructor(a: number, b: number);
+  }
+  export declare class Child extends Base {
+    constructor();
+  }
+  declare class SpreadBase {
+    constructor(...params: string[]);
+  }
+  export declare class SpreadChild extends SpreadBase {
+    constructor();
+  }

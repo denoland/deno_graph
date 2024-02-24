@@ -77,7 +77,11 @@ Deno.test({
   name: "createGraph() - root module missing",
   async fn() {
     const graph = await createGraph("file:///a/test.ts", {
-      load() {
+      load(specifier, isDynamic, cacheSetting, checksum) {
+        assert(specifier != null);
+        assert(isDynamic != null);
+        assert(cacheSetting != null);
+        assert(checksum === undefined); // in this case
         return Promise.resolve(undefined);
       },
     });
@@ -538,13 +542,13 @@ Deno.test({
     await init();
     const module = parseModule(
       "file:///a/test01.js",
-      `
+      new TextEncoder().encode(`
         /// <reference types="./test01.d.ts" />
         import { a } from "./a.ts";
         import * as b from "./b.ts";
         export { c } from "./c.ts";
         const d = await import("./d.ts");
-      `,
+      `),
     );
     assertEquals(module, {
       "specifier": "file:///a/test01.js",
@@ -609,9 +613,9 @@ Deno.test({
     await init();
     const module = parseModule(
       `https://example.com/a`,
-      `declare interface A {
+      new TextEncoder().encode(`declare interface A {
       a: string;
-    }`,
+    }`),
       {
         headers: {
           "content-type": "application/typescript; charset=utf-8",
@@ -628,10 +632,10 @@ Deno.test({
     await init();
     const module = parseModule(
       `file:///a/test01.tsx`,
-      `/* @jsxImportSource http://example.com/preact */
+      new TextEncoder().encode(`/* @jsxImportSource http://example.com/preact */
     export function A() {
       <div>Hello Deno</div>
-    }`,
+    }`),
       {
         jsxImportSourceModule: "jsx-dev-runtime",
       },
@@ -651,10 +655,10 @@ Deno.test({
     await init();
     const module = parseModule(
       `file:///a/test01.tsx`,
-      `
+      new TextEncoder().encode(`
     export function A() {
       <div>Hello Deno</div>
-    }`,
+    }`),
       {
         defaultJsxImportSource: "http://example.com/preact",
       },
@@ -673,7 +677,10 @@ Deno.test({
     await init();
     assertThrows(
       () => {
-        parseModule("./bad.ts", `console.log("hello");`);
+        parseModule(
+          "./bad.ts",
+          new TextEncoder().encode(`console.log("hello");`),
+        );
       },
       Error,
       "relative URL without a base",
@@ -687,7 +694,10 @@ Deno.test({
     await init();
     assertThrows(
       () => {
-        parseModule("file:///a/test.md", `# Some Markdown\n\n**bold**`);
+        parseModule(
+          "file:///a/test.md",
+          new TextEncoder().encode(`# Some Markdown\n\n**bold**`),
+        );
       },
       Error,
       "The module's source code could not be parsed",
@@ -701,10 +711,10 @@ Deno.test({
     await init();
     const module = parseModule(
       "file:///a/test01.js",
-      `
+      new TextEncoder().encode(`
         import a from "./a.json" with { type: "json" };
         await import("./b.json", { with: { type: "json" } });
-      `,
+      `),
     );
     assertEquals(module, {
       "dependencies": [
@@ -758,10 +768,10 @@ Deno.test({
     await init();
     const module = parseModule(
       "file:///a/foo.ts",
-      `
+      new TextEncoder().encode(`
         /// <reference path="./a.d.ts" />
         /// <reference types="./b.d.ts" />
-      `,
+      `),
     );
     assertEquals(module, {
       "dependencies": [
@@ -802,6 +812,107 @@ Deno.test({
       "mediaType": MediaType.TypeScript,
       "size": 92,
       "specifier": "file:///a/foo.ts",
+    });
+  },
+});
+
+Deno.test({
+  name: "createGraph() - jsr specifiers",
+  async fn() {
+    const fixtures: Record<string, LoadResponse> = {
+      "file:///a/mod.js": {
+        kind: "module",
+        specifier: "file:///a/mod.js",
+        content: `import "jsr:@denotest/a";`,
+      },
+      "https://jsr.io/@denotest/a/meta.json": {
+        kind: "module",
+        specifier: "https://jsr.io/@denotest/a/meta.json",
+        content: JSON.stringify({
+          scope: "@denotest",
+          name: "a",
+          versions: {
+            "1.0.0": {},
+          },
+        }),
+      },
+      "https://jsr.io/@denotest/a/1.0.0_meta.json": {
+        kind: "module",
+        specifier: "https://jsr.io/@denotest/a/1.0.0_meta.json",
+        content: JSON.stringify({
+          exports: {
+            ".": "./mod.js",
+          },
+          manifest: {
+            "/mod.js": {
+              "size": 123,
+              "checksum": "sha256-bad",
+            },
+          },
+        }),
+      },
+      "https://jsr.io/@denotest/a/1.0.0/mod.js": {
+        kind: "module",
+        specifier: "https://jsr.io/@denotest/a/1.0.0/mod.js",
+        content: "console.log(5);",
+      },
+    };
+    let resolveCount = 0;
+    let foundChecksum: string | undefined = undefined;
+    const graph = await createGraph("file:///a/mod.js", {
+      resolve(specifier, referrer) {
+        resolveCount++;
+        return new URL(specifier, referrer).toString();
+      },
+      load(specifier, _isDynamic, _cacheSetting, checksum) {
+        if (checksum != null) {
+          foundChecksum = checksum;
+        }
+        return Promise.resolve(fixtures[specifier]);
+      },
+    });
+    assertEquals(foundChecksum, "bad"); // found
+    assertEquals(resolveCount, 2);
+    assertEquals(graph as unknown, {
+      "roots": [
+        "file:///a/mod.js",
+      ],
+      "redirects": {
+        "jsr:@denotest/a": "https://jsr.io/@denotest/a/1.0.0/mod.js",
+      },
+      "packages": {
+        "@denotest/a": "@denotest/a@1.0.0",
+      },
+      "modules": [
+        {
+          "kind": "esm",
+          "size": 25,
+          "mediaType": MediaType.JavaScript,
+          "specifier": "file:///a/mod.js",
+          "dependencies": [{
+            "specifier": "jsr:@denotest/a",
+            "code": {
+              "specifier": "jsr:@denotest/a",
+              "span": {
+                "start": {
+                  "character": 7,
+                  "line": 0,
+                },
+                "end": {
+                  "character": 24,
+                  "line": 0,
+                },
+              },
+            },
+          }],
+        },
+        {
+          "kind": "esm",
+          "mediaType": "JavaScript",
+          "size": 15,
+          "specifier": "https://jsr.io/@denotest/a/1.0.0/mod.js",
+        },
+      ],
     });
   },
 });

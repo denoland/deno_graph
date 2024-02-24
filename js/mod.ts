@@ -40,6 +40,8 @@ export type {
   TypesDependency,
 } from "./types.ts";
 
+const encoder = new TextEncoder();
+
 // note: keep this in line with deno_cache
 export type CacheSetting = "only" | "use" | "reload";
 
@@ -59,6 +61,7 @@ export interface CreateGraphOptions {
     specifier: string,
     isDynamic: boolean,
     cacheSetting: CacheSetting,
+    checksum: string | undefined,
   ): Promise<LoadResponse | undefined>;
   /** The type of graph to build. `"all"` includes all dependencies of the
    * roots. `"typesOnly"` skips any code only dependencies that do not impact
@@ -139,7 +142,30 @@ export async function createGraph(
   const { createGraph } = await wasm.instantiate();
   return await createGraph(
     rootSpecifiers,
-    load,
+    async (
+      specifier: string,
+      options: {
+        isDynamic: boolean;
+        cacheSetting: CacheSetting;
+        checksum: string | undefined;
+      },
+    ) => {
+      const result = await load(
+        specifier,
+        options.isDynamic,
+        options.cacheSetting,
+        options.checksum,
+      );
+      if (result?.kind === "module") {
+        if (typeof result.content === "string") {
+          result.content = encoder.encode(result.content);
+        }
+        // need to convert to an array for serde_wasm_bindgen to work
+        // deno-lint-ignore no-explicit-any
+        (result as any).content = Array.from(result.content);
+      }
+      return result;
+    },
     defaultJsxImportSource,
     jsxImportSourceModule,
     cacheInfo,
@@ -192,7 +218,7 @@ export async function init(opts?: wasm.InstantiateOptions) {
  */
 export function parseModule(
   specifier: string,
-  content: string,
+  content: Uint8Array,
   options: ParseModuleOptions = {},
 ): ModuleJson {
   const {

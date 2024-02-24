@@ -107,7 +107,7 @@ impl FileSystem for RealFileSystem {
       // consider this as not analyzable
       Err(()) => return vec![],
     };
-    let dir = match std::fs::read_dir(&dir_path) {
+    let dir = match std::fs::read_dir(dir_path) {
       Ok(dir) => dir,
       Err(err)
         if matches!(

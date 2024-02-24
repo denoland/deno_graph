@@ -1,15 +1,27 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
+use std::cell::RefCell;
+use std::collections::BTreeMap;
+
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheInfo;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
+use deno_graph::source::LoadOptions;
 use deno_graph::source::Loader;
 use deno_graph::source::MemoryLoader;
+use deno_graph::source::NpmResolver;
 use deno_graph::BuildDiagnostic;
+use deno_graph::FastCheckCache;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
+use deno_graph::NpmPackageReqResolution;
+use deno_graph::WorkspaceFastCheckOption;
 use deno_graph::WorkspaceMember;
+use deno_semver::package::PackageNv;
+use deno_semver::package::PackageReq;
+use deno_semver::Version;
+use futures::FutureExt;
 
 #[derive(Default)]
 pub struct TestLoader {
@@ -25,22 +37,29 @@ impl Loader for TestLoader {
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
-    is_dynamic: bool,
-    cache_setting: CacheSetting,
+    options: LoadOptions,
   ) -> LoadFuture {
-    match cache_setting {
+    let checksum = options.maybe_checksum.clone();
+    let future = match options.cache_setting {
       // todo(dsherret): in the future, actually make this use the cache
-      CacheSetting::Use => {
-        self.remote.load(specifier, is_dynamic, cache_setting)
-      }
+      CacheSetting::Use => self.remote.load(specifier, options),
       // todo(dsherret): in the future, make this update the cache
-      CacheSetting::Reload => {
-        self.remote.load(specifier, is_dynamic, cache_setting)
+      CacheSetting::Reload => self.remote.load(specifier, options),
+      CacheSetting::Only => self.cache.load(specifier, options),
+    };
+    async move {
+      let response = future.await?;
+      if let Some(deno_graph::source::LoadResponse::Module {
+        content, ..
+      }) = &response
+      {
+        if let Some(checksum) = checksum {
+          checksum.check_source(content)?;
+        }
       }
-      CacheSetting::Only => {
-        self.cache.load(specifier, is_dynamic, cache_setting)
-      }
+      Ok(response)
     }
+    .boxed_local()
   }
 }
 
@@ -55,6 +74,7 @@ pub struct BuildResult {
   pub graph: ModuleGraph,
   pub diagnostics: Vec<BuildDiagnostic>,
   pub analyzer: deno_graph::CapturingModuleAnalyzer,
+  pub fast_check_cache: Option<TestFastCheckCache>,
 }
 
 #[cfg(feature = "symbols")]
@@ -65,12 +85,83 @@ impl BuildResult {
   }
 }
 
+#[derive(Debug)]
+struct TestNpmResolver;
+
+impl NpmResolver for TestNpmResolver {
+  fn resolve_builtin_node_module(
+    &self,
+    _specifier: &ModuleSpecifier,
+  ) -> Result<Option<String>, deno_graph::source::UnknownBuiltInNodeModuleError>
+  {
+    Ok(None)
+  }
+
+  fn on_resolve_bare_builtin_node_module(
+    &self,
+    _module_name: &str,
+    _range: &deno_graph::Range,
+  ) {
+  }
+
+  fn load_and_cache_npm_package_info(
+    &self,
+    _package_name: &str,
+  ) -> futures::prelude::future::LocalBoxFuture<
+    'static,
+    Result<(), anyhow::Error>,
+  > {
+    async { Ok(()) }.boxed_local()
+  }
+
+  fn resolve_npm(
+    &self,
+    package_req: &deno_semver::package::PackageReq,
+  ) -> NpmPackageReqResolution {
+    // for now, this requires version reqs that are resolved
+    match Version::parse_from_npm(&package_req.version_req.to_string()) {
+      Ok(version) => NpmPackageReqResolution::Ok(PackageNv {
+        name: package_req.name.clone(),
+        version,
+      }),
+      Err(err) => NpmPackageReqResolution::Err(err.into()),
+    }
+  }
+}
+
+#[derive(Default)]
+pub struct TestFastCheckCache {
+  // BTreeMap because the cache items are inserted non-deterministically
+  pub inner: RefCell<
+    BTreeMap<deno_graph::FastCheckCacheKey, deno_graph::FastCheckCacheItem>,
+  >,
+}
+
+impl FastCheckCache for TestFastCheckCache {
+  fn get(
+    &self,
+    key: deno_graph::FastCheckCacheKey,
+  ) -> Option<deno_graph::FastCheckCacheItem> {
+    self.inner.borrow().get(&key).cloned()
+  }
+
+  fn set(
+    &self,
+    key: deno_graph::FastCheckCacheKey,
+    value: deno_graph::FastCheckCacheItem,
+  ) {
+    self.inner.borrow_mut().insert(key, value);
+  }
+}
+
 pub struct TestBuilder {
   loader: TestLoader,
   entry_point: String,
   entry_point_types: String,
+  fast_check_cache: bool,
   workspace_members: Vec<WorkspaceMember>,
   workspace_fast_check: bool,
+  lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
 }
 
 impl TestBuilder {
@@ -79,8 +170,10 @@ impl TestBuilder {
       loader: Default::default(),
       entry_point: "file:///mod.ts".to_string(),
       entry_point_types: "file:///mod.ts".to_string(),
+      fast_check_cache: false,
       workspace_members: Default::default(),
       workspace_fast_check: false,
+      lockfile_jsr_packages: Default::default(),
     }
   }
 
@@ -117,8 +210,24 @@ impl TestBuilder {
     self
   }
 
+  pub fn lockfile_jsr_packages(
+    &mut self,
+    lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
+  ) -> &mut Self {
+    self.lockfile_jsr_packages = lockfile_jsr_packages;
+    self
+  }
+
+  pub fn fast_check_cache(&mut self, value: bool) -> &mut Self {
+    self.fast_check_cache = value;
+    self
+  }
+
   pub async fn build(&mut self) -> BuildResult {
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
+    for (req, nv) in &self.lockfile_jsr_packages {
+      graph.packages.add_nv(req.clone(), nv.clone());
+    }
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
     let roots = vec![entry_point_url.clone()];
     let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::default();
@@ -127,18 +236,39 @@ impl TestBuilder {
         roots.clone(),
         &mut self.loader,
         deno_graph::BuildOptions {
-          workspace_members: self.workspace_members.clone(),
+          workspace_members: &self.workspace_members,
           module_analyzer: Some(&capturing_analyzer),
           module_parser: Some(&capturing_analyzer),
-          workspace_fast_check: self.workspace_fast_check,
+          npm_resolver: Some(&TestNpmResolver),
           ..Default::default()
         },
       )
       .await;
+    let fast_check_cache = if self.fast_check_cache {
+      Some(TestFastCheckCache::default())
+    } else {
+      None
+    };
+    graph.build_fast_check_type_graph(
+      deno_graph::BuildFastCheckTypeGraphOptions {
+        fast_check_cache: fast_check_cache.as_ref().map(|c| c as _),
+        fast_check_dts: !self.fast_check_cache,
+        jsr_url_provider: None,
+        module_parser: Some(&capturing_analyzer),
+        resolver: None,
+        npm_resolver: None,
+        workspace_fast_check: if self.workspace_fast_check {
+          WorkspaceFastCheckOption::Enabled(&self.workspace_members)
+        } else {
+          WorkspaceFastCheckOption::Disabled
+        },
+      },
+    );
     BuildResult {
       graph,
       diagnostics,
       analyzer: capturing_analyzer,
+      fast_check_cache,
     }
   }
 

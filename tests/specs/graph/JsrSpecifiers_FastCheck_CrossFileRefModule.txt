@@ -143,6 +143,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/a.ts:
     member!: string;
     member2!: string;
   }
+  --- DTS ---
+  export declare class A {
+    member: string;
+    member2: string;
+  }
 
 Fast check https://jsr.io/@scope/a/1.0.0/b.ts:
   {
@@ -162,6 +167,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/b.ts:
       }
     }
   }
+  export { A as B } from "./a.ts";
+  --- DTS ---
   export { A as B } from "./a.ts";
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
@@ -186,4 +193,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export class Export {
     prop!: typeof mod.B.prototype.member;
     prop2!: typeof mod.B.prototype.member2;
+  }
+  --- DTS ---
+  import * as mod from "./b.ts";
+  export declare class Export {
+    prop: typeof mod.B.prototype.member;
+    prop2: typeof mod.B.prototype.member2;
   }

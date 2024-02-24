@@ -189,11 +189,23 @@ Fast check https://jsr.io/@scope/a/1.0.0/a.d.ts:
   }
   export class A3 {
   }
+  --- DTS ---
+  export declare class A1 {
+    method(): string;
+  }
+  export declare class A2 {
+  }
+  export declare class A3 {
+  }
 
 Fast check https://jsr.io/@scope/a/1.0.0/b.d.ts:
   {}
   export class B1 {
-    prop!: string;
+    prop: string;
+  }
+  --- DTS ---
+  export declare class B1 {
+    prop: string;
   }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
@@ -229,6 +241,15 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       }
     }
   }
+  export * from "./a.d.ts";
+  export { A1 as A4 } from "./a.d.ts";
+  import { A3 } from "./a.d.ts";
+  export { A3 as A5 };
+  export * from "./b.d.ts";
+  export { B1 as B2 } from "./b.d.ts";
+  import { B1 as B3 } from "./b.d.ts";
+  export { B3 };
+  --- DTS ---
   export * from "./a.d.ts";
   export { A1 as A4 } from "./a.d.ts";
   import { A3 } from "./a.d.ts";

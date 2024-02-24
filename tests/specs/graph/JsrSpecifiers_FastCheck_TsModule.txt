@@ -71,3 +71,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   class Public1 {
   }
+  --- DTS ---
+  export declare module Test {
+    export declare class MyClass extends Public1 {
+      prop: string;
+    }
+  }
+  declare class Public1 {
+  }

@@ -15,13 +15,15 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = "1.0.43"
-deno_graph = { path = "../" }
+console_error_panic_hook = "0.1.7"
+deno_graph = { path = "../", default-features = false, features = ["wasm_executor"] }
+getrandom = { version = "*", features = ["js"] }
 futures = "0.3.17"
 js-sys = "0.3.63"
 serde = { version = "1.0.130", features = ["derive", "rc"] }
 serde_json = { version = "1.0.67", features = ["preserve_order"] }
 serde-wasm-bindgen = "0.5.0"
-wasm-bindgen = { version = "=0.2.87", features = ["serde-serialize"] }
+wasm-bindgen = { version = "=0.2.87" }
 wasm-bindgen-futures = { version = "=0.4.37" }
 
 [dev-dependencies]

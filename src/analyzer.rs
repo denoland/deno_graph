@@ -4,9 +4,9 @@ use std::sync::Arc;
 
 use deno_ast::dep::DependencyKind;
 use deno_ast::dep::ImportAttributes;
-use deno_ast::Diagnostic;
 use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
+use deno_ast::ParseDiagnostic;
 use deno_ast::SourceRange;
 use deno_ast::SourceTextInfo;
 use once_cell::sync::Lazy;
@@ -193,13 +193,6 @@ impl DependencyDescriptor {
       DependencyDescriptor::Dynamic(d) => &d.import_attributes,
     }
   }
-
-  pub fn range(&self) -> &PositionRange {
-    match self {
-      DependencyDescriptor::Static(d) => &d.range,
-      DependencyDescriptor::Dynamic(d) => &d.range,
-    }
-  }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -210,8 +203,6 @@ pub struct StaticDependencyDescriptor {
   /// further processing of supported pragma that impact the dependency.
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub leading_comments: Vec<Comment>,
-  /// The range of the import/export statement.
-  pub range: PositionRange,
   /// The text specifier associated with the import/export statement.
   pub specifier: String,
   /// The range of the specifier.
@@ -260,8 +251,6 @@ pub struct DynamicDependencyDescriptor {
   /// further processing of supported pragma that impact the dependency.
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub leading_comments: Vec<Comment>,
-  /// The range of the dynamic import.
-  pub range: PositionRange,
   /// The argument associated with the dynamic import.
   #[serde(skip_serializing_if = "DynamicArgument::is_expr", default)]
   pub argument: DynamicArgument,
@@ -322,7 +311,7 @@ pub trait ModuleAnalyzer {
     specifier: &ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, Diagnostic>;
+  ) -> Result<ModuleInfo, ParseDiagnostic>;
 }
 
 #[cfg(test)]
@@ -368,16 +357,6 @@ mod test {
               },
             },
           }],
-          range: PositionRange {
-            start: Position {
-              line: 4,
-              character: 3,
-            },
-            end: Position {
-              line: 2,
-              character: 1,
-            },
-          },
           specifier: "./test".to_string(),
           specifier_range: PositionRange {
             start: Position {
@@ -394,10 +373,6 @@ mod test {
         .into(),
         DynamicDependencyDescriptor {
           leading_comments: vec![],
-          range: PositionRange {
-            start: Position::zeroed(),
-            end: Position::zeroed(),
-          },
           argument: DynamicArgument::String("./test2".to_string()),
           argument_range: PositionRange {
             start: Position::zeroed(),
@@ -428,12 +403,10 @@ mod test {
             "text": "a",
             "range": [[9, 7], [5, 3]],
           }],
-          "range": [[4, 3], [2, 1]],
           "specifier": "./test",
           "specifierRange": [[1, 2], [3, 4]],
         }, {
           "type": "dynamic",
-          "range": [[0, 0], [0, 0]],
           "argument": "./test2",
           "argumentRange": [[0, 0], [0, 0]],
           "importAttributes": {
@@ -549,10 +522,6 @@ mod test {
           end: Position::zeroed(),
         },
       }]),
-      range: PositionRange {
-        start: Position::zeroed(),
-        end: Position::zeroed(),
-      },
       specifier: "./test".to_string(),
       specifier_range: PositionRange {
         start: Position::zeroed(),
@@ -569,7 +538,6 @@ mod test {
           "text": "a",
           "range": [[0, 0], [0, 0]],
         }],
-        "range": [[0, 0], [0, 0]],
         "specifier": "./test",
         "specifierRange": [[0, 0], [0, 0]],
         "importAttributes": "unknown",
@@ -588,10 +556,6 @@ mod test {
             end: Position::zeroed(),
           },
         }]),
-        range: PositionRange {
-          start: Position::zeroed(),
-          end: Position::zeroed(),
-        },
         argument: DynamicArgument::Expr,
         argument_range: PositionRange {
           start: Position::zeroed(),
@@ -605,7 +569,6 @@ mod test {
           "text": "a",
           "range": [[0, 0], [0, 0]],
         }],
-        "range": [[0, 0], [0, 0]],
         "argumentRange": [[0, 0], [0, 0]],
         "importAttributes": "unknown",
       }),
@@ -620,10 +583,6 @@ mod test {
             end: Position::zeroed(),
           },
         }]),
-        range: PositionRange {
-          start: Position::zeroed(),
-          end: Position::zeroed(),
-        },
         argument: DynamicArgument::String("test".to_string()),
         argument_range: PositionRange {
           start: Position::zeroed(),
@@ -637,7 +596,6 @@ mod test {
           "text": "a",
           "range": [[0, 0], [0, 0]],
         }],
-        "range": [[0, 0], [0, 0]],
         "argument": "test",
         "argumentRange": [[0, 0], [0, 0]],
         "importAttributes": "unknown",

@@ -65,5 +65,5 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  could not resolve 'Symbol.for' referenced from 'key2'
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@42
+  missing explicit type in the public API
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@70

@@ -10,8 +10,8 @@ use std::collections::HashMap;
 use deno_graph::resolve_import;
 use deno_graph::source::load_data_url;
 use deno_graph::source::CacheInfo;
-use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
+use deno_graph::source::LoadOptions;
 use deno_graph::source::Loader;
 use deno_graph::source::NullFileSystem;
 use deno_graph::source::ResolutionMode;
@@ -65,18 +65,29 @@ impl Loader for JsLoader {
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
-    is_dynamic: bool,
-    cache_setting: CacheSetting,
+    options: LoadOptions,
   ) -> LoadFuture {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct JsLoadOptions {
+      is_dynamic: bool,
+      cache_setting: &'static str,
+      checksum: Option<String>,
+    }
+
     if specifier.scheme() == "data" {
       Box::pin(future::ready(load_data_url(specifier)))
     } else {
       let specifier = specifier.clone();
       let context = JsValue::null();
       let arg1 = JsValue::from(specifier.to_string());
-      let arg2 = JsValue::from(is_dynamic);
-      let arg3 = JsValue::from(cache_setting.as_js_str());
-      let result = self.load.call3(&context, &arg1, &arg2, &arg3);
+      let arg2 = serde_wasm_bindgen::to_value(&JsLoadOptions {
+        is_dynamic: options.is_dynamic,
+        cache_setting: options.cache_setting.as_js_str(),
+        checksum: options.maybe_checksum.map(|c| c.into_string()),
+      })
+      .unwrap();
+      let result = self.load.call2(&context, &arg1, &arg2);
       let f = async move {
         let response = match result {
           Ok(result) => {
@@ -197,6 +208,7 @@ pub async fn js_create_graph(
   maybe_graph_kind: Option<String>,
   maybe_imports: JsValue,
 ) -> Result<JsValue, JsValue> {
+  console_error_panic_hook::set_once();
   let roots_vec: Vec<String> = serde_wasm_bindgen::from_value(roots)
     .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
   let maybe_imports_map: Option<HashMap<String, Vec<String>>> =
@@ -252,13 +264,14 @@ pub async fn js_create_graph(
         is_dynamic: false,
         resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         file_system: Some(&NullFileSystem),
+        jsr_url_provider: None,
         npm_resolver: None,
         module_analyzer: None,
         module_parser: None,
         imports,
         reporter: None,
-        workspace_fast_check: false,
-        workspace_members: Vec::new(),
+        workspace_members: &[],
+        executor: Default::default(),
       },
     )
     .await;
@@ -274,10 +287,11 @@ pub fn js_parse_module(
   maybe_headers: JsValue,
   maybe_default_jsx_import_source: Option<String>,
   maybe_jsx_import_source_module: Option<String>,
-  content: String,
+  content: Vec<u8>,
   maybe_resolve: Option<js_sys::Function>,
   maybe_resolve_types: Option<js_sys::Function>,
 ) -> Result<JsValue, JsValue> {
+  console_error_panic_hook::set_once();
   let maybe_headers: Option<HashMap<String, String>> =
     serde_wasm_bindgen::from_value(maybe_headers)
       .map_err(|err| js_sys::Error::new(&err.to_string()))?;

@@ -1,9 +1,13 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
+#![deny(clippy::print_stderr)]
+#![deny(clippy::print_stdout)]
+
 mod analyzer;
 mod ast;
 mod graph;
 mod module_specifier;
+mod rt;
 
 #[cfg(feature = "symbols")]
 pub mod symbols;
@@ -18,7 +22,6 @@ use source::NpmResolver;
 use source::Resolver;
 
 use std::collections::HashMap;
-
 use std::sync::Arc;
 
 pub use analyzer::analyze_deno_types;
@@ -42,20 +45,27 @@ pub use ast::ModuleParser;
 pub use ast::ParseOptions;
 pub use ast::ParsedSourceStore;
 pub use deno_ast::MediaType;
-#[cfg(feature = "fast_check")]
+pub use fast_check::FastCheckCache;
+pub use fast_check::FastCheckCacheItem;
+pub use fast_check::FastCheckCacheKey;
+pub use fast_check::FastCheckCacheModuleItem;
+pub use fast_check::FastCheckCacheModuleItemDiagnostic;
+pub use fast_check::FastCheckCacheModuleItemInfo;
 pub use fast_check::FastCheckDiagnostic;
+pub use fast_check::FastCheckDiagnosticRange;
 #[cfg(feature = "fast_check")]
 pub use fast_check::FastCheckModule;
 pub use graph::BuildDiagnostic;
+#[cfg(feature = "fast_check")]
+pub use graph::BuildFastCheckTypeGraphOptions;
 pub use graph::BuildOptions;
 pub use graph::Dependency;
-pub use graph::DiagnosticRange;
-pub use graph::EsModule;
 pub use graph::ExternalModule;
 pub use graph::FastCheckTypeModule;
 pub use graph::FastCheckTypeModuleSlot;
 pub use graph::GraphImport;
 pub use graph::GraphKind;
+pub use graph::JsModule;
 pub use graph::JsonModule;
 pub use graph::Module;
 pub use graph::ModuleEntryRef;
@@ -70,10 +80,13 @@ pub use graph::ResolutionError;
 pub use graph::ResolutionResolved;
 pub use graph::TypesDependency;
 pub use graph::WalkOptions;
+#[cfg(feature = "fast_check")]
+pub use graph::WorkspaceFastCheckOption;
 pub use graph::WorkspaceMember;
 pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
+pub use rt::Executor;
 pub use source::NpmPackageReqResolution;
 
 pub use deno_ast::dep::DependencyKind;
@@ -92,7 +105,7 @@ pub struct ParseModuleOptions<'a> {
   pub graph_kind: GraphKind,
   pub specifier: &'a ModuleSpecifier,
   pub maybe_headers: Option<&'a HashMap<String, String>>,
-  pub content: Arc<str>,
+  pub content: Arc<[u8]>,
   pub file_system: &'a dyn FileSystem,
   pub maybe_resolver: Option<&'a dyn Resolver>,
   pub maybe_module_analyzer: Option<&'a dyn ModuleAnalyzer>,
@@ -136,8 +149,8 @@ pub struct ParseModuleFromAstOptions<'a> {
 }
 
 /// Parse an individual module from an AST, returning the module.
-pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> EsModule {
-  graph::parse_es_module_from_module_info(
+pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
+  graph::parse_js_module_from_module_info(
     options.graph_kind,
     options.specifier,
     options.parsed_source.media_type(),
@@ -220,7 +233,7 @@ mod tests {
       .unwrap()
       .module()
       .unwrap()
-      .esm()
+      .js()
       .unwrap();
     assert_eq!(module.dependencies.len(), 1);
     let maybe_dependency = module.dependencies.get("./test02.ts");
@@ -1007,7 +1020,7 @@ console.log(a);
       .unwrap()
       .module()
       .unwrap()
-      .esm()
+      .js()
       .unwrap();
     assert_eq!(module.media_type, MediaType::TypeScript);
   }
@@ -1769,9 +1782,11 @@ export function a(a) {
       .await;
     assert_eq!(graph.module_slots.len(), 3);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
-    let module = graph.get(&data_specifier).unwrap().esm().unwrap();
-    let source: &str = &module.source;
-    assert_eq!(source, r#"export * from "https://example.com/c.ts";"#,);
+    let module = graph.get(&data_specifier).unwrap().js().unwrap();
+    assert_eq!(
+      module.source.as_ref(),
+      r#"export * from "https://example.com/c.ts";"#,
+    );
   }
 
   #[tokio::test]
@@ -1814,7 +1829,7 @@ export function a(a) {
         },
       )
       .await;
-    let module = graph.get(&graph.roots[0]).unwrap().esm().unwrap();
+    let module = graph.get(&graph.roots[0]).unwrap().js().unwrap();
     let maybe_dep = module.dependencies.get("b");
     assert!(maybe_dep.is_some());
     let dep = maybe_dep.unwrap();
@@ -1874,7 +1889,7 @@ export function a(a) {
         },
       )
       .await;
-    let module = graph.get(&graph.roots[0]).unwrap().esm().unwrap();
+    let module = graph.get(&graph.roots[0]).unwrap().js().unwrap();
     let types_dep = module.maybe_types_dependency.as_ref().unwrap();
     assert_eq!(types_dep.specifier, "file:///a.js");
     assert_eq!(
@@ -3007,7 +3022,7 @@ export function a(a) {
   #[test]
   fn test_parse_module() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
-    let code = r#"
+    let code = br#"
     /// <reference types="./a.d.ts" />
     import { a } from "./a.ts";
     import * as b from "./b.ts";
@@ -3020,14 +3035,14 @@ export function a(a) {
       graph_kind: GraphKind::All,
       specifier: &specifier,
       maybe_headers: None,
-      content: code.into(),
+      content: code.to_vec().into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
       maybe_module_analyzer: None,
       maybe_npm_resolver: None,
     })
     .unwrap();
-    let actual = actual.esm().unwrap();
+    let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 7);
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::TypeScript);
@@ -3037,14 +3052,14 @@ export function a(a) {
       graph_kind: GraphKind::CodeOnly,
       specifier: &specifier,
       maybe_headers: None,
-      content: code.into(),
+      content: code.to_vec().into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
       maybe_module_analyzer: None,
       maybe_npm_resolver: None,
     })
     .unwrap();
-    let actual = actual.esm().unwrap();
+    let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 4);
   }
 
@@ -3055,10 +3070,11 @@ export function a(a) {
       graph_kind: GraphKind::All,
       specifier: &specifier,
       maybe_headers: None,
-      content: r#"
+      content: br#"
     import a from "./a.json" assert { type: "json" };
     await import("./b.json", { assert: { type: "json" } });
     "#
+      .to_vec()
       .into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
@@ -3121,13 +3137,14 @@ export function a(a) {
       graph_kind: GraphKind::All,
       specifier: &specifier,
       maybe_headers: None,
-      content: r#"
+      content: br#"
     /** @jsxImportSource https://example.com/preact */
 
     export function A() {
       return <div>Hello Deno</div>;
     }
     "#
+      .to_vec()
       .into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
@@ -3135,7 +3152,7 @@ export function a(a) {
       maybe_npm_resolver: None,
     })
     .unwrap();
-    let actual = actual.esm().unwrap();
+    let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
     let dep = actual
       .dependencies
@@ -3165,11 +3182,12 @@ export function a(a) {
       graph_kind: GraphKind::All,
       specifier: &specifier,
       maybe_headers: None,
-      content: r#"
+      content: br#"
     export function A() {
       return <div>Hello Deno</div>;
     }
     "#
+      .to_vec()
       .into(),
       file_system: &NullFileSystem,
       maybe_resolver: Some(&R),
@@ -3177,7 +3195,7 @@ export function a(a) {
       maybe_npm_resolver: None,
     })
     .unwrap();
-    let actual = actual.esm().unwrap();
+    let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
     let dep = actual
       .dependencies
@@ -3205,9 +3223,10 @@ export function a(a) {
       graph_kind: GraphKind::All,
       specifier: &specifier,
       maybe_headers,
-      content: r#"declare interface A {
+      content: br#"declare interface A {
   a: string;
 }"#
+        .to_vec()
         .into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
@@ -3220,7 +3239,7 @@ export function a(a) {
   #[test]
   fn test_parse_module_with_jsdoc_imports() {
     let specifier = ModuleSpecifier::parse("file:///a/test.js").unwrap();
-    let code = r#"
+    let code = br#"
 /**
  * Some js doc
  *
@@ -3235,7 +3254,7 @@ export function a(a) {
       graph_kind: GraphKind::All,
       specifier: &specifier,
       maybe_headers: None,
-      content: code.into(),
+      content: code.to_vec().into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
       maybe_module_analyzer: None,
@@ -3291,7 +3310,7 @@ export function a(a) {
       graph_kind: GraphKind::CodeOnly,
       specifier: &specifier,
       maybe_headers: None,
-      content: code.into(),
+      content: code.to_vec().into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
       maybe_module_analyzer: None,
@@ -3316,7 +3335,7 @@ export function a(a) {
       graph_kind: GraphKind::All,
       specifier: &specifier,
       maybe_headers: None,
-      content: r#"
+      content: br#"
 /**
  * Some js doc
  *
@@ -3327,6 +3346,7 @@ export function a(a: A): B {
   return;
 }
 "#
+      .to_vec()
       .into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,

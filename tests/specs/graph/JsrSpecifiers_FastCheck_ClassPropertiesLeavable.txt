@@ -94,6 +94,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/b.ts:
   {}
   export type Foo = string;
   export type Bar = string;
+  --- DTS ---
+  export type Foo = string;
+  export type Bar = string;
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {
@@ -119,4 +122,12 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     foo = (): Foo =>({} as any);
     bar = (b: Bar): number =>({} as any);
     bax = function(b: Bax): void {};
+  }
+  --- DTS ---
+  import type { Foo, Bar } from "./b.ts";
+  export declare class Foo {
+    fizz: (a: string) => string;
+    foo: () => Foo;
+    bar: (b: Bar) => number;
+    bax: (b: Bax) => void;
   }
