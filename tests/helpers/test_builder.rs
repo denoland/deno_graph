@@ -19,6 +19,7 @@ use deno_graph::NpmPackageReqResolution;
 use deno_graph::WorkspaceFastCheckOption;
 use deno_graph::WorkspaceMember;
 use deno_semver::package::PackageNv;
+use deno_semver::package::PackageReq;
 use deno_semver::Version;
 use futures::FutureExt;
 
@@ -160,6 +161,7 @@ pub struct TestBuilder {
   fast_check_cache: bool,
   workspace_members: Vec<WorkspaceMember>,
   workspace_fast_check: bool,
+  lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
 }
 
 impl TestBuilder {
@@ -171,6 +173,7 @@ impl TestBuilder {
       fast_check_cache: false,
       workspace_members: Default::default(),
       workspace_fast_check: false,
+      lockfile_jsr_packages: Default::default(),
     }
   }
 
@@ -207,6 +210,14 @@ impl TestBuilder {
     self
   }
 
+  pub fn lockfile_jsr_packages(
+    &mut self,
+    lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
+  ) -> &mut Self {
+    self.lockfile_jsr_packages = lockfile_jsr_packages;
+    self
+  }
+
   pub fn fast_check_cache(&mut self, value: bool) -> &mut Self {
     self.fast_check_cache = value;
     self
@@ -214,6 +225,9 @@ impl TestBuilder {
 
   pub async fn build(&mut self) -> BuildResult {
     let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
+    for (req, nv) in &self.lockfile_jsr_packages {
+      graph.packages.add_nv(req.clone(), nv.clone());
+    }
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
     let roots = vec![entry_point_url.clone()];
     let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::default();
