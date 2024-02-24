@@ -341,7 +341,7 @@ pub struct PackagePublicRanges {
   // uses an IndexMap to maintain order so that when transforming
   // it goes over the modules in the exact same deterministic order
   pub module_ranges: IndexMap<ModuleSpecifier, ModulePublicRanges>,
-  /// Sources that were loaded from the cache.
+  /// Items loaded from the cache. If set, these should be used over module_ranges.
   pub cache_items: Vec<(
     ModuleSpecifier,
     Result<FastCheckModule, Vec<FastCheckDiagnostic>>,

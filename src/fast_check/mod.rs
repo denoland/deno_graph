@@ -530,7 +530,7 @@ pub fn build_fast_check_type_graph<'a>(
         final_result.extend(fast_check_modules);
       }
     } else {
-      // these were sources in the cache, so use those
+      // use the items from the cache
       final_result.extend(package.cache_items);
     }
 
