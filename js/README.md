@@ -58,11 +58,15 @@ const path = resolve("./entrypoint.ts");
 const importMap = Deno.readTextFileSync(
   new URL("./deno.json", import.meta.url),
 );
+// resolves the import map and provides a function we can use to resolve specifiers
 const resolvedImportMap = await parseFromJson(
   toFileUrl(resolve("deno.json")),
   importMap,
 );
 const graph = await createGraph(toFileUrl(path).href, {
+  /** use the callback in order to resolve specifiers like this:
+  * dependencies: [ { specifier: "@/someFiles/d.ts", code: [Object] } ],
+  * this allows for the entire module graph to be explored */
   resolve: resolvedImportMap.resolve.bind(resolvedImportMap),
 });
 console.log(graph);
