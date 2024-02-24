@@ -341,7 +341,11 @@ pub struct PackagePublicRanges {
   // uses an IndexMap to maintain order so that when transforming
   // it goes over the modules in the exact same deterministic order
   pub module_ranges: IndexMap<ModuleSpecifier, ModulePublicRanges>,
-  pub sources: Vec<(ModuleSpecifier, FastCheckModule)>,
+  /// Sources that were loaded from the cache.
+  pub cache_items: Vec<(
+    ModuleSpecifier,
+    Result<FastCheckModule, Vec<FastCheckDiagnostic>>,
+  )>,
   pub dependencies: BTreeSet<PackageNv>,
 }
 
@@ -466,23 +470,21 @@ impl<'a> PublicRangeFinder<'a> {
           let Ok(module_info) = serde_json::from_str(&info.module_info) else {
             return None;
           };
-          package.sources.push((
+          package.cache_items.push((
             url,
-            FastCheckModule {
+            Ok(FastCheckModule {
               module_info: Arc::new(module_info),
               text: info.text,
               source_map: info.source_map,
               dts: None,
-            },
+            }),
           ));
         }
         super::cache::FastCheckCacheModuleItem::Diagnostic(_) => {
-          package
-            .module_ranges
-            .entry(url.clone())
-            .or_default()
-            .diagnostics
-            .push(FastCheckDiagnostic::Cached { specifier: url });
+          package.cache_items.push((
+            url.clone(),
+            Err(vec![FastCheckDiagnostic::Cached { specifier: url }]),
+          ));
         }
       }
     }
