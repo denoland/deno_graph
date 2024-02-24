@@ -461,7 +461,7 @@ pub fn build_fast_check_type_graph<'a>(
 
     let mut fast_check_modules =
       Vec::with_capacity(package.module_ranges.len());
-    if package.sources.is_empty() {
+    if package.cache_items.is_empty() {
       transform_package(
         package.module_ranges,
         root_symbol,
@@ -530,13 +530,8 @@ pub fn build_fast_check_type_graph<'a>(
         final_result.extend(fast_check_modules);
       }
     } else {
-      // these were sources in the cache, so use those
-      final_result.extend(
-        package
-          .sources
-          .into_iter()
-          .map(|(url, module_item)| (url, Ok(module_item))),
-      );
+      // use the items from the cache
+      final_result.extend(package.cache_items);
     }
 
     if !errors.is_empty() {
