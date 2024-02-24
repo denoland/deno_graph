@@ -28,7 +28,6 @@ fn is_false(v: &bool) -> bool {
 pub struct JsrPackageInfoVersion {
   #[serde(default, skip_serializing_if = "is_false")]
   pub yanked: bool,
-  // no used fields yet
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
