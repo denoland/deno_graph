@@ -65,8 +65,8 @@ const resolvedImportMap = await parseFromJson(
 );
 const graph = await createGraph(toFileUrl(path).href, {
   /** use the callback in order to resolve specifiers like this:
-  * dependencies: [ { specifier: "@/someFiles/d.ts", code: [Object] } ],
-  * this allows for the entire module graph to be explored */
+   * dependencies: [ { specifier: "@/someFiles/d.ts", code: [Object] } ],
+   * this allows for the entire module graph to be explored */
   resolve: resolvedImportMap.resolve.bind(resolvedImportMap),
 });
 console.log(graph);
