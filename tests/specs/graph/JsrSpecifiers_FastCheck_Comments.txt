@@ -63,4 +63,5 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   // @ts-ignore broken line
   export const value1: number = {} as any;
   --- DTS ---
+  // @ts-ignore broken line
   export declare const value1: number;
