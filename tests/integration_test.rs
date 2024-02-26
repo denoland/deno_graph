@@ -60,6 +60,7 @@ async fn test_graph_specs() {
       }
     });
     builder.workspace_members(spec.workspace_members.clone());
+    builder.lockfile_jsr_packages(spec.lockfile_jsr_packages.clone());
 
     if let Some(options) = &spec.options {
       builder.workspace_fast_check(options.workspace_fast_check);

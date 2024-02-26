@@ -3425,7 +3425,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     package_info: &JsrPackageInfo,
     package_req: &PackageReq,
   ) -> Option<Version> {
-    // try to find in the list of existing versions first
+    // 1. try to resolve with the list of existing versions
     if let Some(existing_versions) =
       self.graph.packages.versions_by_name(&package_req.name)
     {
@@ -3433,12 +3433,56 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         &package_req.version_req,
         existing_versions.iter().map(|nv| &nv.version),
       ) {
-        return Some(version.clone());
+        let is_yanked = package_info
+          .versions
+          .get(version)
+          .map(|i| i.yanked)
+          .unwrap_or(false);
+        let version = version.clone();
+        if is_yanked {
+          self.graph.packages.add_used_yanked_package(PackageNv {
+            name: package_req.name.clone(),
+            version: version.clone(),
+          });
+        }
+        return Some(version);
       }
     }
-    // now try in the package info
-    resolve_version(&package_req.version_req, package_info.versions.keys())
-      .cloned()
+
+    // 2. attempt to resolve with the unyanked versions
+    let unyanked_versions =
+      package_info.versions.iter().filter_map(|(v, i)| {
+        if !i.yanked {
+          Some(v)
+        } else {
+          None
+        }
+      });
+    if let Some(version) =
+      resolve_version(&package_req.version_req, unyanked_versions)
+    {
+      return Some(version.clone());
+    }
+
+    // 3. attempt to resolve with the the yanked versions
+    let yanked_versions = package_info.versions.iter().filter_map(|(v, i)| {
+      if i.yanked {
+        Some(v)
+      } else {
+        None
+      }
+    });
+    if let Some(version) =
+      resolve_version(&package_req.version_req, yanked_versions)
+    {
+      self.graph.packages.add_used_yanked_package(PackageNv {
+        name: package_req.name.clone(),
+        version: version.clone(),
+      });
+      return Some(version.clone());
+    }
+
+    None
   }
 
   /// Checks if the specifier is redirected or not and updates any redirects in

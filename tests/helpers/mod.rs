@@ -1,5 +1,6 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 
+use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
@@ -12,6 +13,7 @@ use deno_graph::source::LoaderChecksum;
 use deno_graph::source::DEFAULT_JSR_URL;
 use deno_graph::WorkspaceMember;
 use deno_semver::package::PackageNv;
+use deno_semver::package::PackageReq;
 use indexmap::IndexMap;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -40,6 +42,7 @@ pub struct Spec {
   pub output_file: SpecFile,
   pub diagnostics: Vec<serde_json::Value>,
   pub workspace_members: Vec<WorkspaceMember>,
+  pub lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
 }
 
 impl Spec {
@@ -69,6 +72,13 @@ impl Spec {
     if !self.diagnostics.is_empty() {
       text.push_str("\n# diagnostics\n");
       text.push_str(&serde_json::to_string_pretty(&self.diagnostics).unwrap());
+      text.push('\n');
+    }
+    if !self.lockfile_jsr_packages.is_empty() {
+      text.push_str("\n# lockfile_jsr_packages\n");
+      text.push_str(
+        &serde_json::to_string_pretty(&self.lockfile_jsr_packages).unwrap(),
+      );
       text.push('\n');
     }
     text
@@ -246,26 +256,28 @@ fn parse_spec(text: String) -> Spec {
   files.push(current_file.unwrap());
   let output_file =
     files.remove(files.iter().position(|f| f.specifier == "output").unwrap());
-  let diagnostics = take_vec_file(&mut files, "diagnostics");
-  let workspace_members = take_vec_file(&mut files, "workspace_members");
+  let diagnostics = take_file(&mut files, "diagnostics");
+  let workspace_members = take_file(&mut files, "workspace_members");
+  let lockfile_jsr_packages = take_file(&mut files, "lockfile_jsr_packages");
   Spec {
     options,
     files,
     output_file,
     diagnostics,
     workspace_members,
+    lockfile_jsr_packages,
   }
 }
 
-fn take_vec_file<T: DeserializeOwned>(
+fn take_file<T: Default + DeserializeOwned>(
   files: &mut Vec<SpecFile>,
   name: &str,
-) -> Vec<T> {
+) -> T {
   if let Some(index) = files.iter().position(|f| f.specifier == name) {
     let file = files.remove(index);
     serde_json::from_str(&file.text).unwrap()
   } else {
-    Vec::new()
+    Default::default()
   }
 }
 
