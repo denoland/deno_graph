@@ -257,7 +257,7 @@ pub enum ResolveError {
 }
 
 /// The kind of resolution currently being done by deno_graph.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResolutionMode {
   /// Resolving for code that will be executed.
   Execution,
