@@ -9,6 +9,7 @@ export function test1() {}
 export function test2(): number {
   return 2;
 }
+/** Some Doc **/
 export function test3(param: number): number {
 }
 export function test4(param = 2): number {
@@ -105,7 +106,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1499,
+      "size": 1516,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -124,7 +125,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export function test2(): number {
     return {} as any;
   }
-  export function test3(param: number): number {
+  /** Some Doc **/ export function test3(param: number): number {
     return {} as any;
   }
   export function test4(param?: number): number {
@@ -175,7 +176,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   --- DTS ---
   export function test1(): void;
   export function test2(): number;
-  export function test3(param: number): number;
+  /** Some Doc **/ export function test3(param: number): number;
   export function test4(param?: number): number;
   export function test5<T extends PublicOther>(param?: number): T;
   export function test6<T = PublicOther>(param?: number): T;
