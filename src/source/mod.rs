@@ -267,7 +267,7 @@ pub enum ResolutionMode {
 
 impl ResolutionMode {
   pub fn is_types(&self) -> bool {
-    self == ResolutionMode::Types
+    *self == ResolutionMode::Types
   }
 }
 
