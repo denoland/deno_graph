@@ -265,6 +265,12 @@ pub enum ResolutionMode {
   Types,
 }
 
+impl ResolutionMode {
+  pub fn is_types(&self) -> bool {
+    self == ResolutionMode::Types
+  }
+}
+
 /// A trait which allows the module graph to resolve specifiers and type only
 /// dependencies. This can be use to provide import maps and override other
 /// default resolution logic used by `deno_graph`.
