@@ -29,7 +29,7 @@ wasm_executor = []
 anyhow = "1.0.43"
 async-trait = "0.1.68"
 data-url = "0.3.0"
-deno_ast = { version = "0.34.0", features = ["dep_analysis"] }
+deno_ast = { version = "0.34.1", features = ["dep_analysis"] }
 deno_semver = "0.5.4"
 deno_unsync = { version = "0.3.2", optional = true }
 encoding_rs = "0.8.33"
