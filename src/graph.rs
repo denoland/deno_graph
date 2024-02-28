@@ -2805,7 +2805,7 @@ struct PendingJsrState {
 
 struct PendingDynamicBranch {
   range: Range,
-  maybe_assert_type: Option<AttributeTypeWithRange>,
+  maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
 }
 
@@ -3007,13 +3007,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 ))),
               );
             } else {
-              let assert_types =
+              let attribute_types =
                 self.state.pending_specifiers.remove(&specifier).unwrap();
-              for maybe_assert_type in assert_types {
+              for maybe_attribute_type in attribute_types {
                 self.visit(
                   &specifier,
                   &response,
-                  maybe_assert_type,
+                  maybe_attribute_type,
                   maybe_range.clone(),
                   maybe_version_info.as_ref(),
                 )
@@ -3279,7 +3279,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             &specifier,
             Some(&dynamic_branch.range),
             true,
-            dynamic_branch.maybe_assert_type,
+            dynamic_branch.maybe_attribute_type,
             dynamic_branch.maybe_version_info.as_ref(),
           );
         }
@@ -3524,7 +3524,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     specifier: &ModuleSpecifier,
     maybe_range: Option<&Range>,
     is_dynamic: bool,
-    maybe_assert_type: Option<AttributeTypeWithRange>,
+    maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
@@ -3533,7 +3533,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .pending_specifiers
       .entry(specifier.clone())
       .or_default()
-      .insert(maybe_assert_type);
+      .insert(maybe_attribute_type);
     if self.graph.module_slots.contains_key(specifier) {
       return;
     }
@@ -4024,7 +4024,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     &mut self,
     requested_specifier: &ModuleSpecifier,
     response: &PendingInfoResponse,
-    maybe_assert_type: Option<AttributeTypeWithRange>,
+    maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_referrer: Option<Range>,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
@@ -4049,7 +4049,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             specifier,
             maybe_headers.as_ref(),
             content_or_module_info.clone(),
-            maybe_assert_type,
+            maybe_attribute_type,
             maybe_referrer,
             maybe_version_info,
           ),
@@ -4068,7 +4068,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     specifier: &ModuleSpecifier,
     maybe_headers: Option<&HashMap<String, String>>,
     content_or_module_info: ContentOrModuleInfo,
-    maybe_assert_type: Option<AttributeTypeWithRange>,
+    maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_referrer: Option<Range>,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) -> ModuleSlot {
@@ -4126,7 +4126,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       specifier,
       maybe_headers,
       content,
-      maybe_assert_type,
+      maybe_attribute_type,
       maybe_referrer,
       self.file_system,
       self.resolver,
@@ -4155,7 +4155,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             if let Resolution::Ok(resolved) = &dep.maybe_code {
               let specifier = &resolved.specifier;
               let range = &resolved.range;
-              let maybe_assert_type =
+              let maybe_attribute_type =
                 dep.maybe_attribute_type.as_ref().map(|assert_type| {
                   AttributeTypeWithRange {
                     range: range.clone(),
@@ -4167,7 +4167,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   specifier.clone(),
                   PendingDynamicBranch {
                     range: range.clone(),
-                    maybe_assert_type,
+                    maybe_attribute_type,
                     maybe_version_info: maybe_version_info
                       .map(ToOwned::to_owned),
                   },
@@ -4177,7 +4177,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   specifier,
                   Some(range),
                   self.in_dynamic_branch,
-                  maybe_assert_type,
+                  maybe_attribute_type,
                   maybe_version_info,
                 );
               }
@@ -4190,7 +4190,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             if let Resolution::Ok(resolved) = &dep.maybe_type {
               let specifier = &resolved.specifier;
               let range = &resolved.range;
-              let maybe_assert_type =
+              let maybe_attribute_type =
                 dep.maybe_attribute_type.as_ref().map(|assert_type| {
                   AttributeTypeWithRange {
                     range: range.clone(),
@@ -4202,7 +4202,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   specifier.clone(),
                   PendingDynamicBranch {
                     range: range.clone(),
-                    maybe_assert_type,
+                    maybe_attribute_type,
                     maybe_version_info: maybe_version_info
                       .map(ToOwned::to_owned),
                   },
@@ -4212,7 +4212,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   specifier,
                   Some(range),
                   self.in_dynamic_branch,
-                  maybe_assert_type,
+                  maybe_attribute_type,
                   maybe_version_info,
                 );
               }
