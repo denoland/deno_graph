@@ -3,12 +3,6 @@
 
 # https://jsr.io/@scope/a/1.0.0_meta.json
 {
-  "checksums": {
-    "mod.ts": {
-      "size": 21,
-      "checksum": "151a3a3f4587a29c7b3449a3635fed35c4e88a3a773b3bf296804f1a4e1ab86d"
-    }
-  },
   "exports": {
     ".": "./mod.ts"
   },

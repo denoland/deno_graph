@@ -249,21 +249,23 @@ impl TestBuilder {
     } else {
       None
     };
-    graph.build_fast_check_type_graph(
-      deno_graph::BuildFastCheckTypeGraphOptions {
-        fast_check_cache: fast_check_cache.as_ref().map(|c| c as _),
-        fast_check_dts: !self.fast_check_cache,
-        jsr_url_provider: None,
-        module_parser: Some(&capturing_analyzer),
-        resolver: None,
-        npm_resolver: None,
-        workspace_fast_check: if self.workspace_fast_check {
-          WorkspaceFastCheckOption::Enabled(&self.workspace_members)
-        } else {
-          WorkspaceFastCheckOption::Disabled
+    if graph.module_errors().next().is_none() {
+      graph.build_fast_check_type_graph(
+        deno_graph::BuildFastCheckTypeGraphOptions {
+          fast_check_cache: fast_check_cache.as_ref().map(|c| c as _),
+          fast_check_dts: !self.fast_check_cache,
+          jsr_url_provider: None,
+          module_parser: Some(&capturing_analyzer),
+          resolver: None,
+          npm_resolver: None,
+          workspace_fast_check: if self.workspace_fast_check {
+            WorkspaceFastCheckOption::Enabled(&self.workspace_members)
+          } else {
+            WorkspaceFastCheckOption::Disabled
+          },
         },
-      },
-    );
+      );
+    }
     BuildResult {
       graph,
       diagnostics,
