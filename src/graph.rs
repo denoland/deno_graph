@@ -2803,6 +2803,12 @@ struct PendingJsrState {
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
 }
 
+struct PendingDynamicBranch {
+  range: Range,
+  maybe_assert_type: Option<AttributeTypeWithRange>,
+  maybe_version_info: Option<JsrPackageVersionInfoExt>,
+}
+
 #[derive(Default)]
 struct PendingState {
   pending: FuturesOrdered<PendingInfoFuture>,
@@ -2810,8 +2816,7 @@ struct PendingState {
   npm: PendingNpmState,
   pending_specifiers:
     HashMap<ModuleSpecifier, HashSet<Option<AttributeTypeWithRange>>>,
-  dynamic_branches:
-    HashMap<ModuleSpecifier, (Range, Option<AttributeTypeWithRange>)>,
+  dynamic_branches: HashMap<ModuleSpecifier, PendingDynamicBranch>,
 }
 
 #[derive(Clone)]
@@ -3266,11 +3271,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     //   visiting a dynamic branch.
     if !self.in_dynamic_branch {
       self.in_dynamic_branch = true;
-      for (specifier, (range, maybe_assert_type)) in
+      for (specifier, dynamic_branch) in
         std::mem::take(&mut self.state.dynamic_branches)
       {
         if !self.graph.module_slots.contains_key(&specifier) {
-          self.load(&specifier, Some(&range), true, maybe_assert_type, None);
+          self.load(
+            &specifier,
+            Some(&dynamic_branch.range),
+            true,
+            dynamic_branch.maybe_assert_type,
+            dynamic_branch.maybe_version_info.as_ref(),
+          );
         }
       }
     }
@@ -4144,24 +4155,29 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             if let Resolution::Ok(resolved) = &dep.maybe_code {
               let specifier = &resolved.specifier;
               let range = &resolved.range;
-              let maybe_assert_type_with_range = dep
-                .maybe_attribute_type
-                .as_ref()
-                .map(|assert_type| AttributeTypeWithRange {
-                  range: range.clone(),
-                  kind: assert_type.clone(),
+              let maybe_assert_type =
+                dep.maybe_attribute_type.as_ref().map(|assert_type| {
+                  AttributeTypeWithRange {
+                    range: range.clone(),
+                    kind: assert_type.clone(),
+                  }
                 });
               if dep.is_dynamic && !self.in_dynamic_branch {
                 self.state.dynamic_branches.insert(
                   specifier.clone(),
-                  (range.clone(), maybe_assert_type_with_range),
+                  PendingDynamicBranch {
+                    range: range.clone(),
+                    maybe_assert_type,
+                    maybe_version_info: maybe_version_info
+                      .map(ToOwned::to_owned),
+                  },
                 );
               } else {
                 self.load(
                   specifier,
                   Some(range),
                   self.in_dynamic_branch,
-                  maybe_assert_type_with_range,
+                  maybe_assert_type,
                   maybe_version_info,
                 );
               }
@@ -4174,24 +4190,29 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             if let Resolution::Ok(resolved) = &dep.maybe_type {
               let specifier = &resolved.specifier;
               let range = &resolved.range;
-              let maybe_assert_type_with_range = dep
-                .maybe_attribute_type
-                .as_ref()
-                .map(|assert_type| AttributeTypeWithRange {
-                  range: range.clone(),
-                  kind: assert_type.clone(),
+              let maybe_assert_type =
+                dep.maybe_attribute_type.as_ref().map(|assert_type| {
+                  AttributeTypeWithRange {
+                    range: range.clone(),
+                    kind: assert_type.clone(),
+                  }
                 });
               if dep.is_dynamic && !self.in_dynamic_branch {
                 self.state.dynamic_branches.insert(
                   specifier.clone(),
-                  (range.clone(), maybe_assert_type_with_range),
+                  PendingDynamicBranch {
+                    range: range.clone(),
+                    maybe_assert_type,
+                    maybe_version_info: maybe_version_info
+                      .map(ToOwned::to_owned),
+                  },
                 );
               } else {
                 self.load(
                   specifier,
                   Some(range),
                   self.in_dynamic_branch,
-                  maybe_assert_type_with_range,
+                  maybe_assert_type,
                   maybe_version_info,
                 );
               }
