@@ -74,8 +74,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export interface RawString {
     [rawString1]: string;
     [rawString2](): void;
-    get rawString3(): string;
-    set rawString4(value: string);
+    get [rawString3](): string;
+    set [rawString4](value: string);
   }
   --- DTS ---
   declare const rawString1: Symbol;
@@ -85,6 +85,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export interface RawString {
     [rawString1]: string;
     [rawString2](): void;
-    get rawString3(): string;
-    set rawString4(value: string);
+    get [rawString3](): string;
+    set [rawString4](value: string);
   }
