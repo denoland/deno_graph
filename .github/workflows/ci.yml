@@ -83,6 +83,5 @@ jobs:
       - name: Publish JSR
         if: contains(matrix.os, 'ubuntu') && startsWith(github.ref, 'refs/tags/')
         run: |
-          rm .gitignore
           deno run -A ./scripts/update_deno_json_version.ts ${{steps.get_tag_version.outputs.TAG_VERSION}}
           cd js && deno publish
