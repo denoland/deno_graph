@@ -8,7 +8,7 @@
  * To build and output a graph as a JSON structure to the console:
  *
  * ```ts
- * import { createGraph } from "https://deno.land/x/deno_graph@{VERSION}/mod.ts";
+ * import { createGraph } from "jsr:@deno/graph/@{VERSION}";
  *
  * const graph = await createGraph("https://deno.land/x/std/testing/asserts.ts");
  *
