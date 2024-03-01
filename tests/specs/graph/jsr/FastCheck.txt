@@ -270,7 +270,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   --- DTS ---
   import { A1, A3 as RenamedA3, A4, A6 } from "./a.ts";
   export declare class Test {
-    noReturnTypeVoid(param?: number, param2?: string): void;
+    /** Testing */ noReturnTypeVoid(param?: number, param2?: string): void;
     noReturnTypeAsync(): Promise<void>;
     returnTypeGenerator(): Generator<unknown, any, any>;
     hasReturnType(): A1 & RenamedA3 | A4 | A6;

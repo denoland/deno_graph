@@ -5,18 +5,11 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-export const STATUS_CODE = {
-  /** RFC 7231, 6.2.1 */
-  Continue: 100,
-  /** RFC 7231, 6.2.2 */
-  SwitchingProtocols: 101,
-  /** RFC 2518, 10.1 */
-  Processing: 102,
-  /** RFC 8297 **/
-  EarlyHints: 103,
-}
+import test = require("./other.ts");
 
-export type Status = typeof STATUS_CODE.Continue;
+console.log(test);
+
+# https://jsr.io/@scope/a/1.0.0/other.ts
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -53,9 +46,33 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 257,
+      "dependencies": [
+        {
+          "specifier": "./other.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/other.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 22
+              },
+              "end": {
+                "line": 0,
+                "character": 34
+              }
+            }
+          }
+        }
+      ],
+      "size": 57,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 0,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/other.ts"
     }
   ],
   "redirects": {
@@ -67,19 +84,5 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  {}
-  export const STATUS_CODE = {
-    /** RFC 7231, 6.2.1 */ Continue: 100,
-    /** RFC 7231, 6.2.2 */ SwitchingProtocols: 101,
-    /** RFC 2518, 10.1 */ Processing: 102,
-    /** RFC 8297 **/ EarlyHints: 103
-  };
-  export type Status = typeof STATUS_CODE.Continue;
-  --- DTS ---
-  export declare const STATUS_CODE: {
-    readonly Continue: number;
-    readonly SwitchingProtocols: number;
-    readonly Processing: number;
-    readonly EarlyHints: number;
-  };
-  export type Status = typeof STATUS_CODE.Continue;
+  require statements are a CommonJS feature, which are not supported in ES modules
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@0

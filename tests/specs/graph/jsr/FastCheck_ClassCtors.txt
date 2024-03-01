@@ -5,7 +5,9 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
+/** A */
 export class ClassBasic {
+  /** B */
   constructor(prop: string, other = 5) {
   }
 }
@@ -95,7 +97,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1259,
+      "size": 1279,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -110,8 +112,8 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  export class ClassBasic {
-    constructor(prop: string, other?: number){}
+  /** A */ export class ClassBasic {
+    /** B */ constructor(prop: string, other?: number){}
   }
   export class ClassPrivateCtor {
     private constructor(){}
@@ -160,8 +162,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   class Public5 {
   }
   --- DTS ---
-  export declare class ClassBasic {
-    constructor(prop: string, other?: number);
+  /** A */ export declare class ClassBasic {
+    /** B */ constructor(prop: string, other?: number);
   }
   export declare class ClassPrivateCtor {
     private constructor();

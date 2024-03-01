@@ -5,10 +5,18 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-// this comment gets stripped out
-// @deno-types="./example.d.ts"
-// @ts-ignore broken line
-export const value1: number = "string";
+export const STATUS_CODE = {
+  /** RFC 7231, 6.2.1 */
+  Continue: 100,
+  /** RFC 7231, 6.2.2 */
+  SwitchingProtocols: 101,
+  /** RFC 2518, 10.1 */
+  Processing: 102,
+  /** RFC 8297 **/
+  EarlyHints: 103,
+}
+
+export type Status = typeof STATUS_CODE.Continue;
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -45,7 +53,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 132,
+      "size": 257,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -60,7 +68,18 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  // @ts-ignore broken line
-  export const value1: number = {} as any;
+  export const STATUS_CODE = {
+    /** RFC 7231, 6.2.1 */ Continue: 100,
+    /** RFC 7231, 6.2.2 */ SwitchingProtocols: 101,
+    /** RFC 2518, 10.1 */ Processing: 102,
+    /** RFC 8297 **/ EarlyHints: 103
+  };
+  export type Status = typeof STATUS_CODE.Continue;
   --- DTS ---
-  export declare const value1: number;
+  export declare const STATUS_CODE: {
+    readonly /** RFC 7231, 6.2.1 */ Continue: number;
+    readonly /** RFC 7231, 6.2.2 */ SwitchingProtocols: number;
+    readonly /** RFC 2518, 10.1 */ Processing: number;
+    readonly /** RFC 8297 **/ EarlyHints: number;
+  };
+  export type Status = typeof STATUS_CODE.Continue;

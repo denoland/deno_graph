@@ -2,15 +2,25 @@
 {"versions": { "1.0.0": {} } }
 
 # https://jsr.io/@scope/a/1.0.0_meta.json
-{ "exports": { ".": "./mod.ts" } }
-
+{
+  "exports": {
+    ".": "./mod.ts"
+  },
+  "manifest": {
+    "/a.ts": {
+      "checksum": "sha256-invalid"
+    }
+  }
+}
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-import test = require("./other.ts");
+const test = await import("./a.ts");
+export { test };
 
-console.log(test);
+# https://jsr.io/@scope/a/1.0.0/a.ts
+export class Test {}
 
 # mod.ts
-import 'jsr:@scope/a'
+import "jsr:@scope/a";
 
 # output
 {
@@ -38,37 +48,38 @@ import 'jsr:@scope/a'
           }
         }
       ],
-      "size": 22,
+      "size": 23,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
+      "error": "Integrity check failed.\n\nActual: 151a3a3f4587a29c7b3449a3635fed35c4e88a3a773b3bf296804f1a4e1ab86d\nExpected: invalid"
     },
     {
       "kind": "esm",
       "dependencies": [
         {
-          "specifier": "./other.ts",
+          "specifier": "./a.ts",
           "code": {
-            "specifier": "https://jsr.io/@scope/a/1.0.0/other.ts",
+            "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
             "span": {
               "start": {
                 "line": 0,
-                "character": 22
+                "character": 26
               },
               "end": {
                 "line": 0,
                 "character": 34
               }
             }
-          }
+          },
+          "isDynamic": true
         }
       ],
-      "size": 57,
+      "size": 54,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
-    },
-    {
-      "specifier": "https://jsr.io/@scope/a/1.0.0/other.ts",
-      "error": "Module not found \"https://jsr.io/@scope/a/1.0.0/other.ts\"."
     }
   ],
   "redirects": {
@@ -78,7 +89,3 @@ import 'jsr:@scope/a'
     "@scope/a": "@scope/a@1.0.0"
   }
 }
-
-Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  require statements are a CommonJS feature, which are not supported in ES modules
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@0

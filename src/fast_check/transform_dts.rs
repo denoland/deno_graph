@@ -1,9 +1,9 @@
 use deno_ast::swc::ast::*;
 use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::ModuleSpecifier;
-use deno_ast::ParsedSource;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
+use deno_ast::SourceTextInfo;
 
 use crate::FastCheckDiagnostic;
 use crate::FastCheckDiagnosticRange;
@@ -65,19 +65,19 @@ impl FastCheckDtsDiagnostic {
 
 pub struct FastCheckDtsTransformer<'a> {
   id_counter: usize,
-  parsed_source: &'a ParsedSource,
+  text_info: &'a SourceTextInfo,
   pub diagnostics: Vec<FastCheckDtsDiagnostic>,
   specifier: &'a ModuleSpecifier,
 }
 
 impl<'a> FastCheckDtsTransformer<'a> {
   pub fn new(
-    parsed_source: &'a ParsedSource,
+    text_info: &'a SourceTextInfo,
     specifier: &'a ModuleSpecifier,
   ) -> Self {
     Self {
       id_counter: 0,
-      parsed_source,
+      text_info,
       specifier,
       diagnostics: vec![],
     }
@@ -98,7 +98,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
   ) -> FastCheckDiagnosticRange {
     FastCheckDiagnosticRange {
       specifier: self.specifier.clone(),
-      text_info: self.parsed_source.text_info().clone(),
+      text_info: self.text_info.clone(),
       range,
     }
   }
@@ -971,7 +971,7 @@ mod tests {
     let module = parsed_source.module().to_owned();
 
     let mut transformer =
-      FastCheckDtsTransformer::new(parsed_source, &specifier);
+      FastCheckDtsTransformer::new(parsed_source.text_info(), &specifier);
     let module = transformer.transform(module).unwrap();
 
     let comments = parsed_source.comments().as_single_threaded();

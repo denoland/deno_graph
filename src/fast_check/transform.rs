@@ -1,4 +1,4 @@
-// Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2024 the Deno authors. MIT license.
 
 // for span methods, which actually make sense to use here in the transforms
 #![allow(clippy::disallowed_methods)]
@@ -122,33 +122,45 @@ pub fn transform(
     &comments,
   );
 
-  let comments = comments.into_single_threaded();
+  // swc will modify the comment collection internally when emitting,
+  // so if we're emitting with dts, make a copy of the comments for
+  // each emit
+  let (fast_check_comments, dts_comments) = if options.dts {
+    (
+      comments.as_single_threaded(),
+      Some(comments.into_single_threaded()),
+    )
+  } else {
+    (comments.into_single_threaded(), None)
+  };
 
   // now emit
-  let (text, source_map) =
-    emit(specifier, &comments, parsed_source.text_info(), &module).map_err(
-      |e| {
-        vec![FastCheckDiagnostic::Emit {
-          specifier: specifier.clone(),
-          inner: Arc::new(e),
-        }]
-      },
-    )?;
+  let (text, source_map) = emit(
+    specifier,
+    &fast_check_comments,
+    parsed_source.text_info(),
+    &module,
+  )
+  .map_err(|e| {
+    vec![FastCheckDiagnostic::Emit {
+      specifier: specifier.clone(),
+      inner: Arc::new(e),
+    }]
+  })?;
 
-  let dts = if options.dts {
+  let dts = if let Some(dts_comments) = dts_comments {
     let mut dts_transformer =
-      FastCheckDtsTransformer::new(parsed_source, specifier);
+      FastCheckDtsTransformer::new(parsed_source.text_info(), specifier);
 
     let module = dts_transformer.transform(module)?;
     let (text, _source_map) =
-      emit(specifier, &comments, parsed_source.text_info(), &module).map_err(
-        |e| {
+      emit(specifier, &dts_comments, parsed_source.text_info(), &module)
+        .map_err(|e| {
           vec![FastCheckDiagnostic::Emit {
             specifier: specifier.clone(),
             inner: Arc::new(e),
           }]
-        },
-      )?;
+        })?;
 
     Some(FastCheckDtsModule {
       text,
