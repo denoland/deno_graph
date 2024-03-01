@@ -1,4 +1,8 @@
+// Copyright 2018-2024 the Deno authors. MIT license.
+
 import * as path from "@std/path";
+
+// temporary until https://github.com/denoland/deno/issues/22663 is implemented
 
 const version = Deno.args[0];
 if (version == null || version.length === 0) {

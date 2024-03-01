@@ -80,7 +80,9 @@ jobs:
 
       - name: Publish deno.land/x
         if: contains(matrix.os, 'ubuntu') && startsWith(github.ref, 'refs/tags/')
-        run: deno publish
+        run: |
+          deno run -A ./scripts/update_deno_json_version.ts ${{steps.get_tag_version.outputs.TAG_VERSION}}
+          deno publish
 
       # todo(dsherret): re-enable in the future
       #   # NPM Distribution
