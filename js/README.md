@@ -1,13 +1,17 @@
 # deno_graph
 
-[![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https://deno.land/x/deno_graph/mod.ts)
+[![jsr](https://jsr.io/badges/@deno/graph)](https://jsr.io/@deno/graph)
 
 This repository includes a compiled version of the Rust crate as Web Assembly
 and exposes an interface which is available via the `mod.ts` in this repository
 and can be imported like:
 
+```shell
+deno add @deno/graph
+```
+
 ```js
-import * as denoGraph from "https://deno.land/x/deno_graph@{VERSION}/mod.ts";
+import * as denoGraph from "@deno/graph";
 ```
 
 Where `{VERSION}` should be substituted with the specific version you want to
@@ -50,8 +54,8 @@ You can use [`import_map`](https://deno.land/x/import_map) in combination with
 `deno_graph` in order to fully resolve the specifiers in your graph.
 
 ```ts
-import { createGraph } from "https://deno.land/x/deno_graph@0.63.6/mod.ts";
-import { resolve, toFileUrl } from "https://deno.land/std@0.212.0/path/mod.ts";
+import { createGraph } from "@deno/graph";
+import { resolve, toFileUrl } from "@std/path";
 import { parseFromJson } from "https://deno.land/x/import_map@v0.18.3/mod.ts";
 
 const path = resolve("./entrypoint.ts");
