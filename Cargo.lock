@@ -271,7 +271,7 @@ dependencies = [
 
 [[package]]
 name = "deno_graph"
-version = "0.69.6"
+version = "0.69.7"
 dependencies = [
  "anyhow",
  "async-trait",
