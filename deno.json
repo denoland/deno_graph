@@ -6,8 +6,7 @@
   },
   "exclude": [
     "npm",
-    "target",
-    "temp"
+    "target"
   ],
   "workspaces": [
     "./js"
