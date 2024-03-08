@@ -84,4 +84,4 @@ jobs:
         if: contains(matrix.os, 'ubuntu') && startsWith(github.ref, 'refs/tags/')
         run: |
           deno run -A ./scripts/update_deno_json_version.ts ${{steps.get_tag_version.outputs.TAG_VERSION}}
-          cd js && deno publish
+          cd js && deno publish --allow-dirty
