@@ -36,7 +36,6 @@ use crate::WorkspaceMember;
 use super::cache::fast_insecure_hash;
 use super::FastCheckDiagnostic;
 
-// todo(THIS PR): unit test
 #[derive(Default, Debug, Clone)]
 struct NamedSubset(IndexMap<String, Exports>);
 
