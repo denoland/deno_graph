@@ -4,6 +4,7 @@
 #![allow(clippy::disallowed_methods)]
 #![allow(clippy::disallowed_types)]
 
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use deno_ast::swc::ast::*;
@@ -474,6 +475,8 @@ impl<'a> FastCheckTransformer<'a> {
       }
     }
     let mut insert_members = Vec::new();
+    let mut had_private_constructor = false;
+    let mut seen_ts_private_methods = HashSet::new();
     for mut member in std::mem::take(&mut n.body) {
       had_private = had_private
         || matches!(
@@ -481,8 +484,48 @@ impl<'a> FastCheckTransformer<'a> {
           ClassMember::PrivateMethod(_) | ClassMember::PrivateProp(_)
         );
 
-      let retain =
-        self.transform_class_member(&mut member, &mut insert_members)?;
+      let mut retain = true;
+      // do some extra checks to see whether it should be removed
+      if let ClassMember::Constructor(ctor) = &member {
+        if ctor.accessibility == Some(Accessibility::Private) {
+          if had_private_constructor {
+            retain = false;
+          } else {
+            had_private_constructor = true;
+          }
+        }
+      } else if let ClassMember::Method(method) = &member {
+        if method.accessibility == Some(Accessibility::Private) {
+          let key = match &method.key {
+            PropName::Ident(i) => Some(i.sym.to_string()),
+            PropName::Str(s) => Some(s.value.to_string()),
+            PropName::Num(n) => Some(
+              n.raw
+                .as_ref()
+                .map(|r| r.to_string())
+                .unwrap_or_else(|| n.value.to_string()),
+            ),
+
+            PropName::Computed(_) => None,
+            PropName::BigInt(n) => Some(
+              n.raw
+                .as_ref()
+                .map(|r| r.to_string())
+                .unwrap_or_else(|| n.value.to_string()),
+            ),
+          };
+          retain = match key {
+            Some(key) => seen_ts_private_methods.insert(key),
+            None => false,
+          };
+        }
+      }
+
+      if retain {
+        retain =
+          self.transform_class_member(&mut member, &mut insert_members)?;
+      }
+
       if retain {
         members.push(member);
       } else {
@@ -638,9 +681,6 @@ impl<'a> FastCheckTransformer<'a> {
         }
 
         if n.accessibility == Some(Accessibility::Private) {
-          if n.body.is_none() {
-            return Ok(false);
-          }
           n.params.clear();
           return Ok(true);
         }

@@ -1,0 +1,152 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+const getEntity = Symbol();
+
+export class PrivateMethodOverloadable {
+  private constructor();
+  private constructor() {
+  }
+
+  private [getEntity](): Promise<string>;
+  private async [getEntity]() {
+  }
+
+  private method(): string {
+
+  }
+
+  private methodWithOverload(): string;
+  private methodWithOverload(): string {
+
+  }
+
+  private [123](): string;
+  private [123](): string {
+
+  }
+
+  private [9876n](): string;
+  private [9876n](): string {
+
+  }
+
+  private "stringAndIdent"(): string;
+  private stringAndIdent(): string {
+  }
+
+  private "stringOnly"(): string;
+  private "stringOnly"(): string {
+  }
+}
+
+class Private {}
+
+export class AmbientPrivateMethodOverloadable {
+  private constructor(value: string);
+  private constructor(private: Private);
+
+  private [getEntity](value: string): Promise<string>;
+  private async [getEntity]();
+
+  private method(value: string): string;
+
+  private methodWithOverload(value: string): string;
+  private methodWithOverload(): string;
+
+  private [123](value: string): string;
+  private [123](): string;
+
+  private [9876n](value: string): string;
+  private [9876n](): string;
+
+  private "stringAndIdent"(value: string): string;
+  private stringAndIdent(): string;
+
+  private "stringOnly"(value: string): string;
+  private "stringOnly"(): string;
+}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 1289,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {}
+  export class PrivateMethodOverloadable {
+    private constructor();
+    private method!: unknown;
+    private methodWithOverload!: unknown;
+    private "stringAndIdent"!: unknown;
+    private "stringOnly"!: unknown;
+  }
+  export class AmbientPrivateMethodOverloadable {
+    private constructor();
+    private method!: unknown;
+    private methodWithOverload!: unknown;
+    private "stringAndIdent"!: unknown;
+    private "stringOnly"!: unknown;
+  }
+  --- DTS ---
+  export declare class PrivateMethodOverloadable {
+    private constructor();
+    private method: unknown;
+    private methodWithOverload: unknown;
+    private "stringAndIdent": unknown;
+    private "stringOnly": unknown;
+  }
+  export declare class AmbientPrivateMethodOverloadable {
+    private constructor();
+    private method: unknown;
+    private methodWithOverload: unknown;
+    private "stringAndIdent": unknown;
+    private "stringOnly": unknown;
+  }
