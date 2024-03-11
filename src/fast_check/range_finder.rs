@@ -36,7 +36,7 @@ use crate::WorkspaceMember;
 use super::cache::fast_insecure_hash;
 use super::FastCheckDiagnostic;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 struct NamedSubset(IndexMap<String, Exports>);
 
 impl NamedSubset {
@@ -100,7 +100,7 @@ impl NamedSubset {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum Exports {
   All,
   Subset(NamedSubset),
@@ -130,7 +130,12 @@ impl Exports {
         Some(Exports::All)
       }
       Exports::Subset(new_subset) => {
-        Some(Exports::Subset(current_subset.extend(new_subset)))
+        let difference = current_subset.extend(new_subset);
+        if difference.0.is_empty() {
+          None
+        } else {
+          Some(Exports::Subset(difference))
+        }
       }
     }
   }
@@ -1231,5 +1236,62 @@ fn is_typed_media_type(media_type: MediaType) -> bool {
     | MediaType::Tsx
     | MediaType::Json
     | MediaType::Wasm => true,
+  }
+}
+
+#[cfg(test)]
+mod test {
+  use super::*;
+
+  #[test]
+  fn named_subset_adding_qualified_already_all() {
+    let mut subset = NamedSubset::default();
+    subset.add("a".to_string());
+    subset.add_qualified("a".to_string(), &["b".to_string()]);
+    assert_eq!(subset, NamedSubset::from_parts(&["a".to_string()]));
+  }
+
+  #[test]
+  fn named_subset_adding_all_to_qualified() {
+    let mut subset = NamedSubset::default();
+    subset.add_qualified("a".to_string(), &["b".to_string()]);
+    subset.add("a".to_string());
+    assert_eq!(subset, NamedSubset::from_parts(&["a".to_string()]));
+  }
+
+  #[test]
+  fn named_subset_extend() {
+    let mut a = NamedSubset::default();
+    a.add("a".to_string());
+    a.add_qualified("b".to_string(), &["b1".to_string()]);
+
+    {
+      let mut b = NamedSubset::default();
+      b.add_qualified("a".to_string(), &["a1".to_string()]);
+      b.add("c".to_string());
+      b.add_qualified("b".to_string(), &["b1".to_string()]);
+      b.add_qualified("b".to_string(), &["b2".to_string()]);
+      let difference = a.extend(b);
+      assert_eq!(difference, {
+        let mut expected = NamedSubset::default();
+        expected.add("c".to_string());
+        expected.add_qualified("b".to_string(), &["b2".to_string()]);
+        expected
+      });
+      assert_eq!(a, {
+        let mut expected = NamedSubset::default();
+        expected.add("a".to_string());
+        expected.add("c".to_string());
+        expected.add_qualified("b".to_string(), &["b1".to_string()]);
+        expected.add_qualified("b".to_string(), &["b2".to_string()]);
+        expected
+      });
+    }
+
+    // now try adding an existing sub entry
+    let mut c = NamedSubset::default();
+    c.add_qualified("b".to_string(), &["b2".to_string()]);
+    let difference = a.extend(c);
+    assert_eq!(difference, NamedSubset::default());
   }
 }
