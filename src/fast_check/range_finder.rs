@@ -36,36 +36,70 @@ use crate::WorkspaceMember;
 use super::cache::fast_insecure_hash;
 use super::FastCheckDiagnostic;
 
+// todo(THIS PR): unit test
 #[derive(Default, Debug, Clone)]
-struct NamedExports(IndexMap<String, NamedExports>);
+struct NamedSubset(IndexMap<String, NamedExports>);
 
-impl NamedExports {
-  pub fn retain_default_or_non_top_level(&mut self) {
-    // retain non-top level and the default export
-    self.0.retain(|k, v| k == "default" || !v.is_empty());
+impl NamedSubset {
+  pub fn from_parts(parts: &[String]) -> Self {
+    let mut exports = Self::default();
+    if !parts.is_empty() {
+      exports.add_qualified(parts[0].to_string(), &parts[1..]);
+    }
+    exports
+  }
+
+  pub fn from_many_parts(many_parts: &[Vec<String>]) -> Self {
+    let mut exports = NamedSubset::default();
+    for parts in many_parts {
+      if !parts.is_empty() {
+        exports.add_qualified(parts[0].to_string(), &parts[1..]);
+      }
+    }
+    exports
   }
 
   pub fn add(&mut self, export: String) {
-    self.0.entry(export).or_default();
+    match self.0.entry(export) {
+      indexmap::map::Entry::Occupied(mut entry) => {
+        *entry.get_mut() = NamedExports::All;
+      }
+      indexmap::map::Entry::Vacant(entry) => {
+        entry.insert(NamedExports::All);
+      }
+    }
   }
 
-  pub fn add_qualified(&mut self, export: &str, qualified: &[String]) {
-    let entry = self.0.entry(export.to_string()).or_default();
-    if !qualified.is_empty() {
+  pub fn add_qualified(&mut self, export_name: String, qualified: &[String]) {
+    if qualified.is_empty() {
+      self.add(export_name);
+    } else {
+      let entry = self.0.entry(export_name).or_insert_with(|| NamedExports::subset());
+      if matches!(entry, NamedExports::All) {
+        return;
+      }
       entry.add_qualified(&qualified[0], &qualified[1..]);
     }
   }
 
-  pub fn contains(&self, arg: &str) -> bool {
-    self.0.contains_key(arg)
+  pub fn add_named(&mut self, export: String, exports: NamedExports) {
+    match self.0.entry(export) {
+      indexmap::map::Entry::Occupied(mut entry) => {
+        let entry = entry.get_mut();
+        entry.extend(exports);
+      }
+      indexmap::map::Entry::Vacant(entry) => {
+        entry.insert(exports);
+      }
+    }
   }
 
-  pub fn extend(&mut self, new_named: NamedExports) -> NamedExports {
-    let mut difference = NamedExports::default();
-    for (key, exports) in new_named.0 {
+  pub fn extend(&mut self, new_subset: NamedSubset) -> NamedSubset {
+    let mut difference = NamedSubset::default();
+    for (key, exports) in new_subset.0 {
       if let Some(entry) = self.0.get_mut(&key) {
         let sub_diff = entry.extend(exports);
-        if !sub_diff.is_empty() {
+        if let Some(sub_diff) = sub_diff {
           difference.add_named(key.clone(), sub_diff);
         }
       } else {
@@ -75,94 +109,95 @@ impl NamedExports {
     }
     difference
   }
+}
 
-  pub fn from_parts(parts: &[String]) -> NamedExports {
-    let mut exports = NamedExports::default();
-    if !parts.is_empty() {
-      exports.add_qualified(&parts[0], &parts[1..]);
+#[derive(Debug, Clone)]
+enum NamedExports {
+  All,
+  Subset(NamedSubset),
+}
+
+impl NamedExports {
+  pub fn subset() -> Self {
+    Self::Subset(Default::default())
+  }
+
+  pub fn add(&mut self, export_name: String) {
+    let NamedExports::Subset(inner) = self else {
+      return;
+    };
+    inner.add(export_name)
+  }
+
+  pub fn add_qualified(&mut self, export_name: &str, qualified: &[String]) {
+    let NamedExports::Subset(inner) = self else {
+      return;
+    };
+    inner.add_qualified(export_name.to_string(), qualified)
+  }
+
+  pub fn add_named(&mut self, export_name: String, exports: NamedExports) {
+    let NamedExports::Subset(inner) = self else {
+      return;
+    };
+    inner.add_named(export_name, exports)
+  }
+
+  pub fn contains(&self, arg: &str) -> bool {
+    match self {
+      NamedExports::All => true,
+      NamedExports::Subset(inner) => inner.0.contains_key(arg),
     }
-    exports
   }
 
-  pub fn from_many_parts(many_parts: &[Vec<String>]) -> NamedExports {
-    let mut exports = NamedExports::default();
-    for parts in many_parts {
-      if !parts.is_empty() {
-        exports.add_qualified(&parts[0], &parts[1..]);
-      }
+  pub fn extend(&mut self, new_named: NamedExports) -> Option<NamedExports> {
+    let current_subset = &mut match self {
+      NamedExports::All => return None,
+      NamedExports::Subset(inner) => inner,
+    };
+
+    match new_named {
+      NamedExports::All => {
+        *self = NamedExports::All;
+        Some(NamedExports::All)
+      },
+      NamedExports::Subset(new_subset) => {
+        Some(NamedExports::Subset(current_subset.extend(new_subset)))
+      },
     }
-    exports
-  }
-
-  pub fn is_empty(&self) -> bool {
-    self.0.is_empty()
-  }
-
-  pub fn into_separate_parts(self) -> Vec<Vec<String>> {
-    let mut parts = Vec::new();
-    for (key, exports) in self.0 {
-      if exports.is_empty() {
-        parts.push(vec![key]);
-      } else {
-        let mut sub_parts = exports.into_separate_parts();
-        for sub_part in &mut sub_parts {
-          sub_part.insert(0, key.clone());
-        }
-        parts.extend(sub_parts);
-      }
-    }
-    parts
-  }
-
-  pub fn add_named(&mut self, key: String, exports: NamedExports) {
-    self.0.entry(key).or_default().extend(exports);
   }
 }
 
 #[derive(Debug, Clone)]
-struct ImportedExports {
-  star: bool,
-  named: NamedExports,
+enum ImportedExports {
+  Star,
+  StarWithDefault,
+  Subset(NamedSubset),
 }
 
 impl ImportedExports {
   pub(crate) fn from_file_dep_name(dep_name: &FileDepName) -> Self {
     match dep_name {
-      FileDepName::Star => ImportedExports {
-        star: true,
-        named: Default::default(),
-      },
+      FileDepName::Star => ImportedExports::Star,
       FileDepName::Name(value) => {
-        let mut named_exports = NamedExports::default();
+
+        let mut named_exports = NamedSubset::default();
         named_exports.add(value.clone());
-        ImportedExports {
-          star: false,
-          named: named_exports,
-        }
+        ImportedExports::Subset(named_exports)
       }
     }
   }
 
   pub fn star_with_default() -> ImportedExports {
-    Self {
-      star: true,
-      named: {
-        let mut named_exports = NamedExports::default();
-        named_exports.add("default".to_string());
-        named_exports
-      },
-    }
+    ImportedExports::StarWithDefault
   }
 
   pub fn star() -> ImportedExports {
-    ImportedExports {
-      star: true,
-      named: Default::default(),
-    }
+    ImportedExports::Star
   }
 
-  pub fn named(named: NamedExports) -> ImportedExports {
-    ImportedExports { star: false, named }
+  pub fn subset(named: NamedSubset) -> ImportedExports {
+    ImportedExports::Subset(named)
   }
 
   /// Adds the incoming exports to the existing exports and
@@ -172,36 +207,63 @@ impl ImportedExports {
     &mut self,
     mut exports_to_trace: ImportedExports,
   ) -> Option<ImportedExports> {
-    let difference = if self.star {
-      // retain named exports in the incoming that are not top level
-      exports_to_trace.named.retain_default_or_non_top_level();
-      let named_difference = self.named.extend(exports_to_trace.named);
-      ImportedExports {
-        star: false,
-        named: named_difference,
-      }
-    } else if exports_to_trace.star {
-      // retain named exports in the existing that are not top level
-      self.named.retain_default_or_non_top_level();
-      let named_difference = self.named.extend(exports_to_trace.named);
-      self.star = true;
-      ImportedExports {
-        star: true,
-        named: named_difference,
-      }
-    } else {
-      let named_difference = self.named.extend(exports_to_trace.named);
-      ImportedExports {
-        star: false,
-        named: named_difference,
-      }
-    };
-
-    if difference.star || !difference.named.is_empty() {
-      Some(difference)
-    } else {
-      None
+    match self {
+        ImportedExports::Star => match exports_to_trace {
+          ImportedExports::Star => None,
+          ImportedExports::StarWithDefault => {
+            *self = ImportedExports::StarWithDefault;
+            let mut named_exports = NamedSubset::default();
+            named_exports.add("default".to_string());
+            Some(ImportedExports::Subset(named_exports))
+          },
+          ImportedExports::Subset(_) => None,
+        },
+        ImportedExports::StarWithDefault => None,
+        ImportedExports::Subset(current_subset) => match exports_to_trace {
+            ImportedExports::Star => {
+              *self = ImportedExports::Star;
+              Some(ImportedExports::Star)
+            },
+            ImportedExports::StarWithDefault => {
+              *self = ImportedExports::StarWithDefault;
+              Some(ImportedExports::StarWithDefault)
+            },
+            ImportedExports::Subset(new_subset) => {
+              Some(ImportedExports::Subset(current_subset.extend(new_subset)))
+            },
+        },
     }
+    // let difference = if self.star {
+    //   // retain named exports in the incoming that are not top level
+    //   exports_to_trace.named.retain_default_or_non_top_level();
+    //   let named_difference = self.named.extend(exports_to_trace.named);
+    //   ImportedExports {
+    //     star: false,
+    //     named: named_difference,
+    //   }
+    // } else if exports_to_trace.star {
+    //   // retain named exports in the existing that are not top level
+    //   self.named.retain_default_or_non_top_level();
+    //   let named_difference = self.named.extend(exports_to_trace.named);
+    //   self.star = true;
+    //   ImportedExports {
+    //     star: true,
+    //     named: named_difference,
+    //   }
+    // } else {
+    //   let named_difference = self.named.extend(exports_to_trace.named);
+    //   ImportedExports {
+    //     star: false,
+    //     named: named_difference,
+    //   }
+    // };
+    // eprintln!("DIFFERENCE: {:?}", difference);
+
+    // if difference.star || !difference.named.is_empty() {
+    //   Some(difference)
+    // } else {
+    //   None
+    // }
   }
 }
 
@@ -597,7 +659,7 @@ impl<'a> PublicRangeFinder<'a> {
       },
       QualifiedId {
         symbol_id: SymbolId,
-        parts: NamedExports,
+        parts: NamedSubset,
         referrer_id: SymbolId,
       },
     }
@@ -631,131 +693,137 @@ impl<'a> PublicRangeFinder<'a> {
     let mut pending_traces = PendingTraces::default();
     let module_symbol = module_info.module_symbol();
 
-    if trace.exports_to_trace.star {
-      for (name, export_symbol_id) in module_info.module_symbol().exports() {
-        if name == "default"
-          && !trace.exports_to_trace.named.contains("default")
-        {
-          continue;
-        }
-
-        pending_traces
-          .maybe_add_id_trace(*export_symbol_id, module_symbol.symbol_id());
-      }
-
-      // add all the specifiers to the list of pending specifiers
-      if let Some(re_export_all_nodes) = module_info.re_export_all_nodes() {
-        for re_export_all_node in re_export_all_nodes {
-          found_ranges.insert(re_export_all_node.span.range());
-          let specifier_text = re_export_all_node.src.value.as_str();
-          if let Some(dep_specifier) = self.graph.resolve_dependency(
-            specifier_text,
-            module_info.specifier(),
-            /* prefer types */ true,
-          ) {
-            // only analyze registry specifiers
-            if let Some(dep_nv) = self
-              .url_converter
-              .registry_package_url_to_nv(&dep_specifier)
+    let include_default = matches!(trace.exports_to_trace, ImportedExports::StarWithDefault);
+    match &trace.exports_to_trace {
+        ImportedExports::Star |
+        ImportedExports::StarWithDefault => {
+          for (name, export_symbol_id) in module_info.module_symbol().exports() {
+            if name == "default"
+              && !include_default
             {
-              self.add_pending_nv(&dep_nv, pkg_nv);
-
-              self.add_pending_trace(
-                &dep_nv,
-                &dep_specifier,
-                ImportedExports::star(),
-              );
+              continue;
             }
-          }
-        }
-      }
 
-      found = true;
-    }
-
-    if !trace.exports_to_trace.named.is_empty() {
-      let mut named_exports = trace.exports_to_trace.named.0.clone();
-      let module_exports = module_info.module_symbol().exports();
-      for i in (0..named_exports.len()).rev() {
-        let (export_name, _) = named_exports.get_index(i).unwrap();
-        if let Some(export_symbol_id) = module_exports.get(export_name) {
-          let export_name = export_name.clone();
-          let named_exports = named_exports.swap_remove(&export_name).unwrap();
-          if named_exports.is_empty() {
             pending_traces
               .maybe_add_id_trace(*export_symbol_id, module_symbol.symbol_id());
-          } else {
-            pending_traces
-              .traces
-              .push_back(PendingIdTrace::QualifiedId {
-                symbol_id: *export_symbol_id,
-                parts: named_exports,
-                referrer_id: module_symbol.symbol_id(),
-              });
           }
-        }
-      }
 
-      if !named_exports.is_empty() {
-        if let Some(re_export_all_nodes) = module_info.re_export_all_nodes() {
-          for re_export_all_node in re_export_all_nodes {
-            if named_exports.is_empty() {
-              break; // all done
-            }
-            let specifier_text = re_export_all_node.src.value.as_str();
-            if let Some(dep_specifier) = self.graph.resolve_dependency(
-              specifier_text,
-              module_info.specifier(),
-              /* prefer types */ true,
-            ) {
-              if let Some(module_info) =
-                self.root_symbol.module_from_specifier(&dep_specifier)
-              {
-                let module_exports = module_info.exports(self.root_symbol);
+          // add all the specifiers to the list of pending specifiers
+          if let Some(re_export_all_nodes) = module_info.re_export_all_nodes() {
+            for re_export_all_node in re_export_all_nodes {
+              found_ranges.insert(re_export_all_node.span.range());
+              let specifier_text = re_export_all_node.src.value.as_str();
+              if let Some(dep_specifier) = self.graph.resolve_dependency(
+                specifier_text,
+                module_info.specifier(),
+                /* prefer types */ true,
+              ) {
+                // only analyze registry specifiers
+                if let Some(dep_nv) = self
+                  .url_converter
+                  .registry_package_url_to_nv(&dep_specifier)
+                {
+                  self.add_pending_nv(&dep_nv, pkg_nv);
 
-                for i in (0..named_exports.len()).rev() {
-                  let (export_name, _) = named_exports.get_index(i).unwrap();
-                  if let Some(export_path) =
-                    module_exports.resolved.get(export_name)
-                  {
-                    found_ranges.insert(re_export_all_node.span.range());
-                    let export_name = export_name.clone();
-                    let named_exports =
-                      named_exports.swap_remove(&export_name).unwrap();
-                    let module = match export_path {
-                            crate::symbols::ResolvedExportOrReExportAllPath::Export(e) => e.module,
-                            crate::symbols::ResolvedExportOrReExportAllPath::ReExportAllPath(p) => p.referrer_module,
-                        };
-                    if let Some(nv) = self
-                      .url_converter
-                      .registry_package_url_to_nv(module.specifier())
-                    {
-                      let mut new_named_exports = NamedExports::default();
-                      new_named_exports.0.insert(export_name, named_exports);
-                      self.add_pending_trace(
-                        &nv,
-                        module.specifier(),
-                        ImportedExports::named(new_named_exports),
-                      );
-                    }
-                  }
+                  self.add_pending_trace(
+                    &dep_nv,
+                    &dep_specifier,
+                    ImportedExports::star(),
+                  );
                 }
               }
             }
           }
 
-          if !named_exports.is_empty() {
-            // in this case, include all re_export all ranges because
-            // we couldn't determine a named export
-            if let Some(re_export_all_nodes) = module_info.re_export_all_nodes()
-            {
-              for re_export_all_node in re_export_all_nodes {
-                found_ranges.insert(re_export_all_node.span.range());
+          found = true;
+        },
+        ImportedExports::Subset(named_exports) => {
+          let mut named_exports = named_exports.0.clone();
+          let module_exports = module_info.module_symbol().exports();
+          for i in (0..named_exports.len()).rev() {
+            let (export_name, _) = named_exports.get_index(i).unwrap();
+            if let Some(export_symbol_id) = module_exports.get(export_name) {
+              let export_name = export_name.clone();
+              let named_exports = named_exports.swap_remove(&export_name).unwrap();
+              match named_exports {
+                NamedExports::All => {
+                  pending_traces
+                    .maybe_add_id_trace(*export_symbol_id, module_symbol.symbol_id());
+                },
+                NamedExports::Subset(subset) => {
+                  pending_traces
+                    .traces
+                    .push_back(PendingIdTrace::QualifiedId {
+                      symbol_id: *export_symbol_id,
+                      parts: subset,
+                      referrer_id: module_symbol.symbol_id(),
+                    });
+                },
               }
             }
           }
-        }
-      }
+
+          if !named_exports.is_empty() {
+            if let Some(re_export_all_nodes) = module_info.re_export_all_nodes() {
+              for re_export_all_node in re_export_all_nodes {
+                if named_exports.is_empty() {
+                  break; // all done
+                }
+                let specifier_text = re_export_all_node.src.value.as_str();
+                if let Some(dep_specifier) = self.graph.resolve_dependency(
+                  specifier_text,
+                  module_info.specifier(),
+                  /* prefer types */ true,
+                ) {
+                  if let Some(module_info) =
+                    self.root_symbol.module_from_specifier(&dep_specifier)
+                  {
+                    let module_exports = module_info.exports(self.root_symbol);
+
+                    for i in (0..named_exports.len()).rev() {
+                      let (export_name, _) = named_exports.get_index(i).unwrap();
+                      if let Some(export_path) =
+                        module_exports.resolved.get(export_name)
+                      {
+                        found_ranges.insert(re_export_all_node.span.range());
+                        let export_name = export_name.clone();
+                        let named_exports =
+                          named_exports.swap_remove(&export_name).unwrap();
+                        let module = match export_path {
+                                crate::symbols::ResolvedExportOrReExportAllPath::Export(e) => e.module,
+                                crate::symbols::ResolvedExportOrReExportAllPath::ReExportAllPath(p) => p.referrer_module,
+                            };
+                        if let Some(nv) = self
+                          .url_converter
+                          .registry_package_url_to_nv(module.specifier())
+                        {
+                          let mut new_named_exports = NamedSubset::default();
+                          new_named_exports.0.insert(export_name, named_exports);
+                          self.add_pending_trace(
+                            &nv,
+                            module.specifier(),
+                            ImportedExports::subset(new_named_exports),
+                          );
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+
+              if !named_exports.is_empty() {
+                // in this case, include all re_export all ranges because
+                // we couldn't determine a named export
+                if let Some(re_export_all_nodes) = module_info.re_export_all_nodes()
+                {
+                  for re_export_all_node in re_export_all_nodes {
+                    found_ranges.insert(re_export_all_node.span.range());
+                  }
+                }
+              }
+            }
+          }
+        },
     }
 
     while let Some(trace) = pending_traces.traces.pop_front() {
@@ -814,7 +882,7 @@ impl<'a> PublicRangeFinder<'a> {
                   pending_traces.traces.push_back(
                     PendingIdTrace::QualifiedId {
                       symbol_id,
-                      parts: NamedExports::from_parts(parts),
+                      parts: NamedSubset::from_parts(parts),
                       referrer_id,
                     },
                   );
@@ -831,6 +899,7 @@ impl<'a> PublicRangeFinder<'a> {
                   {
                     if dep_nv == *pkg_nv {
                       // just add this specifier
+                      eprintln!("HERE: {:?}", file_dep.name);
                       self.add_pending_trace(
                         &dep_nv,
                         &specifier,
@@ -864,7 +933,7 @@ impl<'a> PublicRangeFinder<'a> {
                           pending_traces.traces.push_back(
                             PendingIdTrace::QualifiedId {
                               symbol_id,
-                              parts: NamedExports::from_parts(&parts),
+                              parts: NamedSubset::from_parts(&parts),
                               referrer_id,
                             },
                           );
@@ -888,8 +957,8 @@ impl<'a> PublicRangeFinder<'a> {
                                 if parts.is_empty() {
                                   ImportedExports::star_with_default()
                                 } else {
-                                  ImportedExports::named(
-                                    NamedExports::from_parts(&parts),
+                                  ImportedExports::subset(
+                                    NamedSubset::from_parts(&parts),
                                   )
                                 },
                               );
@@ -957,14 +1026,9 @@ impl<'a> PublicRangeFinder<'a> {
                   .esm()
                   .and_then(|m| m.symbol_id_from_swc(id))
                   .unwrap();
-                let mut new_parts = NamedExports::default();
-                for parts in parts.clone().into_separate_parts() {
-                  let combined_vec = target_parts
-                    .iter()
-                    .cloned()
-                    .chain(parts.into_iter())
-                    .collect::<Vec<_>>();
-                  new_parts.add_qualified(&combined_vec[0], &combined_vec[1..]);
+                let mut new_parts = parts.clone();
+                for part in target_parts {
+                  new_parts.add(part.clone());
                 }
                 pending_traces
                   .traces
@@ -986,21 +1050,24 @@ impl<'a> PublicRangeFinder<'a> {
                   {
                     if dep_nv == *pkg_nv {
                       let named_exports = match &file_dep.name {
-                        FileDepName::Star => parts.clone(),
+                        FileDepName::Star => {
+                          // pass along the names as-is
+                          ImportedExports::Subset(parts.clone())
+                        },
                         FileDepName::Name(first_part) => {
-                          let mut separate_parts =
-                            parts.clone().into_separate_parts();
-                          for parts in &mut separate_parts {
-                            parts.insert(0, first_part.clone());
-                          }
-                          NamedExports::from_many_parts(&separate_parts)
+                          // todo(THIS PR): is this correct? Try changing this code to see if we have a test
+                          // add this name to the parts
+                          let mut new_subset = NamedSubset::default();
+                          new_subset.add_named(first_part.clone(), NamedExports::Subset(parts.clone()));
+                          ImportedExports::Subset(new_subset)
                         }
                       };
+                      eprintln!("NAMED EXPORTS ADDING: {:?}", named_exports);
                       // just add this specifier
                       self.add_pending_trace(
                         &dep_nv,
                         &specifier,
-                        ImportedExports::named(named_exports),
+                        named_exports,
                       );
                     } else {
                       // need to analyze the whole package
@@ -1014,90 +1081,104 @@ impl<'a> PublicRangeFinder<'a> {
           }
 
           if !handled {
-            for parts in parts.into_separate_parts() {
-              if parts[0] == "prototype"
+            for (first_part, next_parts) in parts.0 {
+              if first_part == "prototype"
                 && symbol.decls().iter().any(|d| d.is_class())
               {
-                if parts.len() > 1 {
-                  let mut member_symbols = symbol
-                    .members()
-                    .iter()
-                    .filter_map(|id| module_info.symbol(*id));
-                  let member_symbol = member_symbols.find(|s| {
-                    let maybe_name = s.maybe_name();
-                    maybe_name.as_deref() == Some(parts[1].as_str())
-                  });
-                  match member_symbol {
-                    Some(member) => {
-                      if parts.len() > 2 {
-                        diagnostics.push(
-                          FastCheckDiagnostic::UnsupportedComplexReference {
-                            range: FastCheckDiagnosticRange {
-                              specifier: module_info.specifier().clone(),
-                              range: symbol.decls()[0].range,
-                              text_info: module_info.text_info().clone(),
+                match next_parts {
+                  NamedExports::All => {
+                    pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
+                  },
+                  NamedExports::Subset(next_parts) => {
+                    let mut member_symbols = symbol
+                      .members()
+                      .iter()
+                      .filter_map(|id| module_info.symbol(*id));
+                    for (second_part, next_parts) in next_parts.0 {
+                      let member_symbol = member_symbols.find(|s| {
+                        let maybe_name = s.maybe_name();
+                        maybe_name.as_deref() == Some(second_part.as_str())
+                      });
+                      match member_symbol {
+                        Some(member) => {
+                          match next_parts {
+                            NamedExports::All => {
+                              pending_traces
+                              .maybe_add_id_trace(member.symbol_id(), referrer_id);
                             },
-                            name: format!(
-                              "{}.prototype.{}",
-                              module_info
-                                .fully_qualified_symbol_name(symbol)
+                            NamedExports::Subset(next_parts) => {
+                              for third_part in next_parts.0.keys() {
+                                diagnostics.push(
+                                  FastCheckDiagnostic::UnsupportedComplexReference {
+                                    range: FastCheckDiagnosticRange {
+                                      specifier: module_info.specifier().clone(),
+                                      range: symbol.decls()[0].range,
+                                      text_info: module_info.text_info().clone(),
+                                    },
+                                    name: format!(
+                                      "{}.prototype.{}.{}",
+                                      module_info
+                                        .fully_qualified_symbol_name(symbol)
+                                        .unwrap_or_else(|| "<unknown>".to_string()),
+                                      second_part,
+                                      third_part,
+                                    ),
+                                    referrer: module_info
+                                      .symbol(referrer_id)
+                                      .and_then(|symbol| {
+                                        module_info.fully_qualified_symbol_name(symbol)
+                                      })
+                                      .unwrap_or_else(|| "<unknown>".to_string()),
+                                  },
+                                );
+                              }
+                            },
+                          }
+                        }
+                        None => {
+                          diagnostics.push(
+                            FastCheckDiagnostic::NotFoundReference {
+                              range: FastCheckDiagnosticRange {
+                                specifier: module_info.specifier().clone(),
+                                range: symbol.decls()[0].range,
+                                text_info: module_info.text_info().clone(),
+                              },
+                              name: format!(
+                                "{}.prototype.{}",
+                                module_info
+                                  .fully_qualified_symbol_name(symbol)
+                                  .unwrap_or_else(|| "<unknown>".to_string()),
+                                second_part,
+                              ),
+                              referrer: module_info
+                                .symbol(referrer_id)
+                                .and_then(|symbol| {
+                                  module_info.fully_qualified_symbol_name(symbol)
+                                })
                                 .unwrap_or_else(|| "<unknown>".to_string()),
-                              parts[1..].join("."),
-                            ),
-                            referrer: module_info
-                              .symbol(referrer_id)
-                              .and_then(|symbol| {
-                                module_info.fully_qualified_symbol_name(symbol)
-                              })
-                              .unwrap_or_else(|| "<unknown>".to_string()),
-                          },
-                        );
-                      } else {
-                        pending_traces
-                          .maybe_add_id_trace(member.symbol_id(), referrer_id);
+                            },
+                          );
+                        }
                       }
                     }
-                    None => {
-                      diagnostics.push(
-                        FastCheckDiagnostic::NotFoundReference {
-                          range: FastCheckDiagnosticRange {
-                            specifier: module_info.specifier().clone(),
-                            range: symbol.decls()[0].range,
-                            text_info: module_info.text_info().clone(),
-                          },
-                          name: format!(
-                            "{}.prototype.{}",
-                            module_info
-                              .fully_qualified_symbol_name(symbol)
-                              .unwrap_or_else(|| "<unknown>".to_string()),
-                            parts[1],
-                          ),
-                          referrer: module_info
-                            .symbol(referrer_id)
-                            .and_then(|symbol| {
-                              module_info.fully_qualified_symbol_name(symbol)
-                            })
-                            .unwrap_or_else(|| "<unknown>".to_string()),
-                        },
-                      );
-                    }
-                  }
-                } else {
-                  pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
+                  },
                 }
               } else {
-                match symbol.export(&parts[0]) {
+                match symbol.export(&first_part) {
                   Some(symbol_id) => {
-                    if parts.len() > 1 {
-                      pending_traces.traces.push_back(
-                        PendingIdTrace::QualifiedId {
-                          symbol_id,
-                          parts: NamedExports::from_parts(&parts[1..]),
-                          referrer_id,
-                        },
-                      );
-                    } else {
-                      pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
+                    match next_parts {
+                      NamedExports::All => {
+                        pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
+                      },
+                      NamedExports::Subset(subset) => {
+                        pending_traces.traces.push_back(
+                          PendingIdTrace::QualifiedId {
+                            symbol_id,
+                            parts: subset,
+                            referrer_id,
+                          },
+                        );
+                      },
                     }
                   }
                   None => {
@@ -1142,7 +1223,7 @@ impl<'a> PublicRangeFinder<'a> {
                             module_info
                               .fully_qualified_symbol_name(symbol)
                               .unwrap_or_else(|| "<unknown>".to_string()),
-                            parts[0],
+                            first_part,
                           ),
                           referrer: module_info
                             .symbol(referrer_id)
