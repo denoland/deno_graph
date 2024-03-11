@@ -20,6 +20,9 @@ export class ClassPrivateCtorWithOverloads {
   private constructor(prop: string, other: Private1) {
   }
 }
+export declare class ClassDeclarePrivateCtor {
+  private constructor(prop: string, other: Private1);
+}
 export class ClassProtectedCtor {
   protected constructor(prop: string, other = 5) {
   }
@@ -97,7 +100,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1279,
+      "size": 1382,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -119,7 +122,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private constructor(){}
   }
   export class ClassPrivateCtorWithOverloads {
-    private constructor(){}
+    private constructor();
+  }
+  export declare class ClassDeclarePrivateCtor {
+    private constructor();
   }
   export class ClassProtectedCtor {
     protected constructor(prop: string, other?: number){}
@@ -169,6 +175,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private constructor();
   }
   export declare class ClassPrivateCtorWithOverloads {
+    private constructor();
+  }
+  export declare class ClassDeclarePrivateCtor {
     private constructor();
   }
   export declare class ClassProtectedCtor {
