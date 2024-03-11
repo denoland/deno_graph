@@ -17,7 +17,6 @@ export { A as B } from "./a.ts";
 export class Public1 {}
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-export * from "./b.ts";
 import * as mod from "./b.ts";
 import { Private2 } from "./a.ts";
 
@@ -98,11 +97,11 @@ import 'jsr:@scope/a'
             "span": {
               "start": {
                 "line": 0,
-                "character": 14
+                "character": 21
               },
               "end": {
                 "line": 0,
-                "character": 22
+                "character": 29
               }
             }
           }
@@ -113,18 +112,18 @@ import 'jsr:@scope/a'
             "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
             "span": {
               "start": {
-                "line": 2,
+                "line": 1,
                 "character": 25
               },
               "end": {
-                "line": 2,
+                "line": 1,
                 "character": 33
               }
             }
           }
         }
       ],
-      "size": 159,
+      "size": 135,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
