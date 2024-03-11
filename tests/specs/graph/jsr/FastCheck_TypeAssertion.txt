@@ -9,6 +9,8 @@ export class Application<S> {
   prop: S;
 }
 
+export const str = "foo" as "foo" & { __brand: "foo" }
+
 export function createMockApp<
   S extends Record<string | number | symbol, any> = Record<string, any>,
 >(
@@ -71,7 +73,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 580,
+      "size": 636,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -89,6 +91,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export class Application<S> {
     prop!: S;
   }
+  export const str: "foo" & {
+    __brand: "foo";
+  } = {} as any;
   export function createMockApp<S extends Record<string | number | symbol, any> = Record<string, any>>(state?: S): Application<S> {
     return {} as any;
   }
@@ -115,6 +120,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export declare class Application<S> {
     prop: S;
   }
+  export declare const str: "foo" & {
+    __brand: "foo";
+  };
   export function createMockApp<S extends Record<string | number | symbol, any> = Record<string, any>>(state?: S): Application<S>;
   export declare class A {
     prop: Public1;
