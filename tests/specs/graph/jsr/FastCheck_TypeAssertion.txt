@@ -38,6 +38,9 @@ interface Public4 {}
 interface Public5 {}
 interface Public6 {}
 
+class Public7 {}
+export const str2 = "foo" as "foo" & { data: Public7 };
+
 # mod.ts
 import 'jsr:@scope/a'
 
@@ -73,7 +76,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 636,
+      "size": 710,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -116,6 +119,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   interface Public6 {
   }
+  class Public7 {
+  }
+  export const str2: "foo" & {
+    data: Public7;
+  } = {} as any;
   --- DTS ---
   export declare class Application<S> {
     prop: S;
@@ -143,3 +151,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   interface Public6 {
   }
+  declare class Public7 {
+  }
+  export declare const str2: "foo" & {
+    data: Public7;
+  };
