@@ -2,6 +2,7 @@
 
 #![deny(clippy::print_stderr)]
 #![deny(clippy::print_stdout)]
+#![deny(clippy::unused_async)]
 
 mod analyzer;
 mod ast;
