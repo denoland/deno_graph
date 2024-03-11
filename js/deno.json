@@ -5,5 +5,10 @@
     ".": "./mod.ts",
     "./loader": "./loader.ts",
     "./types": "./types.ts"
+  },
+  "publish": {
+    "exclude": [
+      "!**"
+    ]
   }
 }
