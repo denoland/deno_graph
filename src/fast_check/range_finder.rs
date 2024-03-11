@@ -997,8 +997,6 @@ impl<'a> PublicRangeFinder<'a> {
                           ImportedExports::Subset(parts.clone())
                         }
                         FileDepName::Name(first_part) => {
-                          // todo(THIS PR): is this correct? Try changing this code to see if we have a test
-                          // add this name to the parts
                           let mut new_subset = NamedSubset::default();
                           new_subset.add_named(
                             first_part.clone(),
