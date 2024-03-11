@@ -63,10 +63,7 @@ impl NamedSubset {
     if qualified.is_empty() {
       self.add(export_name);
     } else {
-      let entry = self
-        .0
-        .entry(export_name)
-        .or_insert_with(|| Exports::subset());
+      let entry = self.0.entry(export_name).or_insert_with(Exports::subset);
       if matches!(entry, Exports::All) {
         return;
       }
