@@ -9,6 +9,8 @@ export class Application<S> {
   prop: S;
 }
 
+export const str = "foo" as "foo" & { __brand: "foo" }
+
 export function createMockApp<
   S extends Record<string | number | symbol, any> = Record<string, any>,
 >(
@@ -35,6 +37,9 @@ interface Public3 {}
 interface Public4 {}
 interface Public5 {}
 interface Public6 {}
+
+class Public7 {}
+export const str2 = "foo" as "foo" & { data: Public7 };
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -71,7 +76,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 580,
+      "size": 710,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -89,6 +94,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export class Application<S> {
     prop!: S;
   }
+  export const str: "foo" & {
+    __brand: "foo";
+  } = {} as any;
   export function createMockApp<S extends Record<string | number | symbol, any> = Record<string, any>>(state?: S): Application<S> {
     return {} as any;
   }
@@ -111,10 +119,18 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   interface Public6 {
   }
+  class Public7 {
+  }
+  export const str2: "foo" & {
+    data: Public7;
+  } = {} as any;
   --- DTS ---
   export declare class Application<S> {
     prop: S;
   }
+  export declare const str: "foo" & {
+    __brand: "foo";
+  };
   export function createMockApp<S extends Record<string | number | symbol, any> = Record<string, any>>(state?: S): Application<S>;
   export declare class A {
     prop: Public1;
@@ -135,3 +151,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   interface Public6 {
   }
+  declare class Public7 {
+  }
+  export declare const str2: "foo" & {
+    data: Public7;
+  };

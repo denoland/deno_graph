@@ -1568,7 +1568,7 @@ fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
       },
     })),
     TsType::TsTypeQuery(_) => None,
-    TsType::TsTypeLit(_) => None,
+    TsType::TsTypeLit(t) => Some(TsType::TsTypeLit(t.clone())),
     TsType::TsTupleType(t) => {
       let mut elems = Vec::with_capacity(t.elem_types.len());
       for elem_type in &t.elem_types {
