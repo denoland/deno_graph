@@ -38,7 +38,7 @@ use super::FastCheckDiagnostic;
 
 // todo(THIS PR): unit test
 #[derive(Default, Debug, Clone)]
-struct NamedSubset(IndexMap<String, NamedExports>);
+struct NamedSubset(IndexMap<String, Exports>);
 
 impl NamedSubset {
   pub fn from_parts(parts: &[String]) -> Self {
@@ -49,23 +49,13 @@ impl NamedSubset {
     exports
   }
 
-  pub fn from_many_parts(many_parts: &[Vec<String>]) -> Self {
-    let mut exports = NamedSubset::default();
-    for parts in many_parts {
-      if !parts.is_empty() {
-        exports.add_qualified(parts[0].to_string(), &parts[1..]);
-      }
-    }
-    exports
-  }
-
   pub fn add(&mut self, export: String) {
     match self.0.entry(export) {
       indexmap::map::Entry::Occupied(mut entry) => {
-        *entry.get_mut() = NamedExports::All;
+        *entry.get_mut() = Exports::All;
       }
       indexmap::map::Entry::Vacant(entry) => {
-        entry.insert(NamedExports::All);
+        entry.insert(Exports::All);
       }
     }
   }
@@ -77,15 +67,15 @@ impl NamedSubset {
       let entry = self
         .0
         .entry(export_name)
-        .or_insert_with(|| NamedExports::subset());
-      if matches!(entry, NamedExports::All) {
+        .or_insert_with(|| Exports::subset());
+      if matches!(entry, Exports::All) {
         return;
       }
       entry.add_qualified(&qualified[0], &qualified[1..]);
     }
   }
 
-  pub fn add_named(&mut self, export: String, exports: NamedExports) {
+  pub fn add_named(&mut self, export: String, exports: Exports) {
     match self.0.entry(export) {
       indexmap::map::Entry::Occupied(mut entry) => {
         let entry = entry.get_mut();
@@ -115,36 +105,36 @@ impl NamedSubset {
 }
 
 #[derive(Debug, Clone)]
-enum NamedExports {
+enum Exports {
   All,
   Subset(NamedSubset),
 }
 
-impl NamedExports {
+impl Exports {
   pub fn subset() -> Self {
     Self::Subset(Default::default())
   }
 
   pub fn add_qualified(&mut self, export_name: &str, qualified: &[String]) {
-    let NamedExports::Subset(inner) = self else {
+    let Exports::Subset(inner) = self else {
       return;
     };
     inner.add_qualified(export_name.to_string(), qualified)
   }
 
-  pub fn extend(&mut self, new_named: NamedExports) -> Option<NamedExports> {
+  pub fn extend(&mut self, new_named: Exports) -> Option<Exports> {
     let current_subset = &mut match self {
-      NamedExports::All => return None,
-      NamedExports::Subset(inner) => inner,
+      Exports::All => return None,
+      Exports::Subset(inner) => inner,
     };
 
     match new_named {
-      NamedExports::All => {
-        *self = NamedExports::All;
-        Some(NamedExports::All)
+      Exports::All => {
+        *self = Exports::All;
+        Some(Exports::All)
       }
-      NamedExports::Subset(new_subset) => {
-        Some(NamedExports::Subset(current_subset.extend(new_subset)))
+      Exports::Subset(new_subset) => {
+        Some(Exports::Subset(current_subset.extend(new_subset)))
       }
     }
   }
@@ -186,7 +176,7 @@ impl ImportedExports {
   /// been added.
   pub(crate) fn add(
     &mut self,
-    mut exports_to_trace: ImportedExports,
+    exports_to_trace: ImportedExports,
   ) -> Option<ImportedExports> {
     match self {
       ImportedExports::Star => match exports_to_trace {
@@ -695,13 +685,13 @@ impl<'a> PublicRangeFinder<'a> {
             let named_exports =
               named_exports.swap_remove(&export_name).unwrap();
             match named_exports {
-              NamedExports::All => {
+              Exports::All => {
                 pending_traces.maybe_add_id_trace(
                   *export_symbol_id,
                   module_symbol.symbol_id(),
                 );
               }
-              NamedExports::Subset(subset) => {
+              Exports::Subset(subset) => {
                 pending_traces
                   .traces
                   .push_back(PendingIdTrace::QualifiedId {
@@ -851,7 +841,6 @@ impl<'a> PublicRangeFinder<'a> {
                   {
                     if dep_nv == *pkg_nv {
                       // just add this specifier
-                      eprintln!("HERE: {:?}", file_dep.name);
                       self.add_pending_trace(
                         &dep_nv,
                         &specifier,
@@ -1012,12 +1001,11 @@ impl<'a> PublicRangeFinder<'a> {
                           let mut new_subset = NamedSubset::default();
                           new_subset.add_named(
                             first_part.clone(),
-                            NamedExports::Subset(parts.clone()),
+                            Exports::Subset(parts.clone()),
                           );
                           ImportedExports::Subset(new_subset)
                         }
                       };
-                      eprintln!("NAMED EXPORTS ADDING: {:?}", named_exports);
                       // just add this specifier
                       self.add_pending_trace(
                         &dep_nv,
@@ -1041,10 +1029,10 @@ impl<'a> PublicRangeFinder<'a> {
                 && symbol.decls().iter().any(|d| d.is_class())
               {
                 match next_parts {
-                  NamedExports::All => {
+                  Exports::All => {
                     pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
                   }
-                  NamedExports::Subset(next_parts) => {
+                  Exports::Subset(next_parts) => {
                     let mut member_symbols = symbol
                       .members()
                       .iter()
@@ -1056,13 +1044,13 @@ impl<'a> PublicRangeFinder<'a> {
                       });
                       match member_symbol {
                         Some(member) => match next_parts {
-                          NamedExports::All => {
+                          Exports::All => {
                             pending_traces.maybe_add_id_trace(
                               member.symbol_id(),
                               referrer_id,
                             );
                           }
-                          NamedExports::Subset(next_parts) => {
+                          Exports::Subset(next_parts) => {
                             for third_part in next_parts.0.keys() {
                               diagnostics.push(
                                   FastCheckDiagnostic::UnsupportedComplexReference {
@@ -1122,10 +1110,10 @@ impl<'a> PublicRangeFinder<'a> {
               } else {
                 match symbol.export(&first_part) {
                   Some(symbol_id) => match next_parts {
-                    NamedExports::All => {
+                    Exports::All => {
                       pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
                     }
-                    NamedExports::Subset(subset) => {
+                    Exports::Subset(subset) => {
                       pending_traces.traces.push_back(
                         PendingIdTrace::QualifiedId {
                           symbol_id,
