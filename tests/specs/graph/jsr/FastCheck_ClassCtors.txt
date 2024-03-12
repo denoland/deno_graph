@@ -144,13 +144,13 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export class ClassPrivateCtorPublicParamProp {
     declare param1: Public2;
-    declare private param2: unknown;
+    declare private param2: any;
     private constructor(){}
   }
   export class ClassCtorPublicParamProp {
     declare param1: Public3;
-    declare private param2: unknown;
-    declare private param3: unknown;
+    declare private param2: any;
+    declare private param3: any;
     constructor(param1: Public3, param2: Public4, param3?: Public5){}
   }
   export class ClassCtorPublicParamPropInit {
@@ -199,13 +199,13 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export declare class ClassPrivateCtorPublicParamProp {
     param1: Public2;
-    private param2: unknown;
+    private param2: any;
     private constructor();
   }
   export declare class ClassCtorPublicParamProp {
     param1: Public3;
-    private param2: unknown;
-    private param3: unknown;
+    private param2: any;
+    private param3: any;
     constructor(param1: Public3, param2: Public4, param3?: Public5);
   }
   export declare class ClassCtorPublicParamPropInit {

@@ -684,7 +684,7 @@ impl<'a> FastCheckTransformer<'a> {
                 value: None,
                 type_ann: if prop.accessibility == Some(Accessibility::Private)
                 {
-                  Some(unknown_type_ann())
+                  Some(any_type_ann())
                 } else {
                   match &prop.param {
                     TsParamPropParam::Ident(ident) => ident.type_ann.clone(),
@@ -777,7 +777,7 @@ impl<'a> FastCheckTransformer<'a> {
             span: DUMMY_SP,
             key: n.key.clone(),
             value: None,
-            type_ann: Some(unknown_type_ann()),
+            type_ann: Some(any_type_ann()),
             is_static: n.is_static,
             decorators: Vec::new(),
             accessibility: Some(Accessibility::Private),
@@ -803,9 +803,8 @@ impl<'a> FastCheckTransformer<'a> {
       }
       ClassMember::ClassProp(n) => {
         if n.accessibility == Some(Accessibility::Private) {
-          n.type_ann = Some(unknown_type_ann());
-          n.is_override = false;
-          n.declare = true;
+          n.type_ann = Some(any_type_ann());
+          n.declare = !n.is_override;
           n.value = None;
           return Ok(true);
         }
@@ -850,7 +849,7 @@ impl<'a> FastCheckTransformer<'a> {
       ClassMember::AutoAccessor(_n) => {
         // waiting on https://github.com/swc-project/swc/pull/8436
         // if n.accessibility == Some(Accessibility::Private) {
-        //   n.type_ann = Some(unknown_type_ann());
+        //   n.type_ann = Some(any_type_ann());
         //   n.definite = true;
         //   return Ok(true);
         // }
@@ -1822,12 +1821,5 @@ fn paren_expr(expr: Box<Expr>) -> Expr {
   Expr::Paren(ParenExpr {
     span: DUMMY_SP,
     expr,
-  })
-}
-
-fn unknown_type_ann() -> Box<TsTypeAnn> {
-  Box::new(TsTypeAnn {
-    span: DUMMY_SP,
-    type_ann: Box::new(ts_keyword_type(TsKeywordTypeKind::TsUnknownKeyword)),
   })
 }

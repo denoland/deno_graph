@@ -282,7 +282,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     hasReturnType(): A1 & RenamedA3 | A4 | A6 {
       return {} as any;
     }
-    declare private inner: unknown;
+    declare private inner: any;
   }
 
 == fast check cache ==
