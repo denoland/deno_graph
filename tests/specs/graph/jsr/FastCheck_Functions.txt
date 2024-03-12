@@ -71,6 +71,11 @@ class PublicOther2 {
 
 class PrivateOther {}
 
+class PublicDeclareFunc {}
+export declare function declareFunc(param: number): number;
+export declare function declareFunc(param: string): string;
+export declare function declareFunc(param: PublicDeclareFunc): string;
+
 # mod.ts
 import 'jsr:@scope/a'
 
@@ -106,7 +111,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1516,
+      "size": 1735,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -173,6 +178,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   class PublicOther2 {
   }
+  class PublicDeclareFunc {
+  }
+  export declare function declareFunc(param: number): number;
+  export declare function declareFunc(param: string): string;
+  export declare function declareFunc(param: PublicDeclareFunc): string;
   --- DTS ---
   export function test1(): void;
   export function test2(): number;
@@ -202,3 +212,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   declare class PublicOther2 {
   }
+  declare class PublicDeclareFunc {
+  }
+  export declare function declareFunc(param: number): number;
+  export declare function declareFunc(param: string): string;
+  export declare function declareFunc(param: PublicDeclareFunc): string;

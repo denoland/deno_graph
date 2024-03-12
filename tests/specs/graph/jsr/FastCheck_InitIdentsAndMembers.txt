@@ -141,7 +141,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   declare class Public {
   }
   declare module Test {
-    export declare class A {
+    export class A {
     }
   }
   export declare const handlers: {
@@ -164,7 +164,7 @@ Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
   declare class BaseHandler {
   }
   declare module Test {
-    export declare class A {
+    export class A {
     }
   }
   export function test(a?: any, C?: any): void;

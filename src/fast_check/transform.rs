@@ -186,7 +186,6 @@ struct FastCheckTransformer<'a> {
   parsed_source: &'a ParsedSource,
   should_error_on_first_diagnostic: bool,
   diagnostics: Vec<FastCheckDiagnostic>,
-  is_decl_file: bool,
 }
 
 impl<'a> FastCheckTransformer<'a> {
@@ -198,7 +197,6 @@ impl<'a> FastCheckTransformer<'a> {
     should_error_on_first_diagnostic: bool,
   ) -> Self {
     Self {
-      is_decl_file: parsed_source.media_type().is_declaration(),
       graph,
       specifier,
       public_ranges,
@@ -214,11 +212,15 @@ impl<'a> FastCheckTransformer<'a> {
     (deno_ast::swc::ast::Module, MultiThreadedComments),
     Vec<FastCheckDiagnostic>,
   > {
+    let is_ambient = self.parsed_source.media_type().is_declaration();
     let mut module = self.parsed_source.module().clone();
     let mut comments =
       CommentsMut::new(self.parsed_source.comments().as_single_threaded());
-    module.body = self
-      .transform_module_body(std::mem::take(&mut module.body), &mut comments)?;
+    module.body = self.transform_module_body(
+      std::mem::take(&mut module.body),
+      &mut comments,
+      is_ambient,
+    )?;
     Ok((module, comments.into_multi_threaded()))
   }
 
@@ -226,10 +228,11 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     body: Vec<ModuleItem>,
     comments: &mut CommentsMut,
+    is_ambient: bool,
   ) -> Result<Vec<ModuleItem>, Vec<FastCheckDiagnostic>> {
     let mut final_body = Vec::with_capacity(body.len());
     for mut item in body {
-      let retain = self.transform_item(&mut item, comments)?;
+      let retain = self.transform_item(&mut item, comments, is_ambient)?;
       if retain {
         final_body.push(item);
       } else {
@@ -265,6 +268,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     item: &mut ModuleItem,
     comments: &mut CommentsMut,
+    is_ambient: bool,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     match item {
       ModuleItem::ModuleDecl(decl) => match decl {
@@ -322,12 +326,22 @@ impl<'a> FastCheckTransformer<'a> {
           }
 
           let node_range = n.range();
-          self.transform_default_decl(&mut n.decl, comments, node_range)?;
+          self.transform_default_decl(
+            &mut n.decl,
+            comments,
+            node_range,
+            is_ambient,
+          )?;
           Ok(true)
         }
         ModuleDecl::ExportDecl(n) => {
           let export_decl_range = n.range();
-          self.transform_decl(&mut n.decl, comments, Some(export_decl_range))
+          self.transform_decl(
+            &mut n.decl,
+            comments,
+            Some(export_decl_range),
+            is_ambient,
+          )
         }
         ModuleDecl::TsImportEquals(n) => match &n.module_ref {
           TsModuleRef::TsEntityName(n) => {
@@ -376,7 +390,7 @@ impl<'a> FastCheckTransformer<'a> {
         | Stmt::ForIn(_)
         | Stmt::ForOf(_)
         | Stmt::Expr(_) => Ok(false),
-        Stmt::Decl(n) => self.transform_decl(n, comments, None),
+        Stmt::Decl(n) => self.transform_decl(n, comments, None, is_ambient),
       },
     }
   }
@@ -386,14 +400,20 @@ impl<'a> FastCheckTransformer<'a> {
     default_decl: &mut DefaultDecl,
     comments: &mut CommentsMut,
     parent_range: SourceRange,
+    is_ambient: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
     match default_decl {
-      DefaultDecl::Class(n) => self.transform_class(&mut n.class, comments),
+      DefaultDecl::Class(n) => self.transform_class(
+        &mut n.class,
+        comments,
+        /* has declare keyword */ false,
+      ),
       DefaultDecl::Fn(n) => self.transform_fn(
         &mut n.function,
         n.ident.as_ref().map(|i| i.range()),
         self.public_ranges.is_impl_with_overloads(&parent_range),
         /* is setter */ false,
+        is_ambient,
       ),
       DefaultDecl::TsInterfaceDecl(_) => Ok(()),
     }
@@ -404,6 +424,7 @@ impl<'a> FastCheckTransformer<'a> {
     decl: &mut Decl,
     comments: &mut CommentsMut,
     parent_range: Option<SourceRange>,
+    is_ambient: bool,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     let public_range = parent_range.unwrap_or_else(|| decl.range());
     match decl {
@@ -411,7 +432,11 @@ impl<'a> FastCheckTransformer<'a> {
         if !self.public_ranges.contains(&public_range) {
           return Ok(false);
         }
-        self.transform_class(&mut n.class, comments)?;
+        self.transform_class(
+          &mut n.class,
+          comments,
+          is_ambient || n.declare,
+        )?;
         Ok(true)
       }
       Decl::Fn(n) => {
@@ -425,14 +450,20 @@ impl<'a> FastCheckTransformer<'a> {
           Some(n.ident.range()),
           is_overload,
           /* is setter */ false,
+          is_ambient,
         )?;
         Ok(true)
       }
-      Decl::Var(n) => self.transform_var(n),
+      Decl::Var(n) => self.transform_var(n, is_ambient),
       Decl::TsInterface(_) => Ok(self.public_ranges.contains(&public_range)),
       Decl::TsTypeAlias(_) => Ok(self.public_ranges.contains(&public_range)),
       Decl::TsEnum(_) => Ok(self.public_ranges.contains(&public_range)),
-      Decl::TsModule(m) => self.transform_ts_module(m, &public_range, comments),
+      Decl::TsModule(m) => self.transform_ts_module(
+        m,
+        &public_range,
+        comments,
+        is_ambient || m.declare || m.global,
+      ),
       Decl::Using(n) => {
         if self.public_ranges.contains(&public_range)
           || n
@@ -458,9 +489,27 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     n: &mut Class,
     comments: &mut CommentsMut,
+    is_ambient: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
-    if self.is_decl_file {
-      return Ok(()); // no need to do anything
+    if is_ambient {
+      n.body.retain(|m| match m {
+        ClassMember::Method(m) => {
+          if m.accessibility == Some(Accessibility::Private) {
+            match m.key {
+              PropName::Ident(_)
+              | PropName::Str(_)
+              | PropName::Num(_)
+              | PropName::BigInt(_) => true,
+              // ignore private computed properties
+              PropName::Computed(_) => false,
+            }
+          } else {
+            true
+          }
+        }
+        _ => true,
+      });
+      return Ok(());
     }
 
     let mut members = Vec::with_capacity(n.body.len());
@@ -522,8 +571,11 @@ impl<'a> FastCheckTransformer<'a> {
       }
 
       if retain {
-        retain =
-          self.transform_class_member(&mut member, &mut insert_members)?;
+        retain = self.transform_class_member(
+          &mut member,
+          &mut insert_members,
+          is_ambient,
+        )?;
       }
 
       if retain {
@@ -569,6 +621,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     member: &mut ClassMember,
     insert_members: &mut Vec<ClassMember>,
+    is_ambient: bool,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     match member {
       ClassMember::Constructor(n) => {
@@ -741,7 +794,8 @@ impl<'a> FastCheckTransformer<'a> {
           &mut n.function,
           Some(n.key.range()),
           is_overload,
-          n.kind == MethodKind::Setter,
+          /* is setter */ n.kind == MethodKind::Setter,
+          is_ambient,
         )?;
         Ok(true)
       }
@@ -846,8 +900,9 @@ impl<'a> FastCheckTransformer<'a> {
     parent_id_range: Option<SourceRange>,
     is_overload: bool,
     is_set_accessor: bool,
+    is_ambient: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
-    if self.is_decl_file {
+    if is_ambient {
       return Ok(()); // no need to do anything
     }
     if is_overload {
@@ -1129,11 +1184,12 @@ impl<'a> FastCheckTransformer<'a> {
   fn transform_var(
     &mut self,
     n: &mut VarDecl,
+    is_ambient: bool,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     n.decls.retain(|n| self.public_ranges.contains(&n.range()));
 
     // don't need to do anything for these in a declaration file
-    if !self.is_decl_file {
+    if !is_ambient {
       for decl in &mut n.decls {
         self.transform_var_declarator(decl)?;
       }
@@ -1204,6 +1260,7 @@ impl<'a> FastCheckTransformer<'a> {
     n: &mut TsModuleDecl,
     public_range: &SourceRange,
     comments: &mut CommentsMut,
+    is_ambient: bool,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     if n.global {
       self.mark_diagnostic(FastCheckDiagnostic::UnsupportedGlobalModule {
@@ -1260,7 +1317,8 @@ impl<'a> FastCheckTransformer<'a> {
     }
 
     let body = std::mem::take(&mut ts_module_block.body);
-    ts_module_block.body = self.transform_module_body(body, comments)?;
+    ts_module_block.body =
+      self.transform_module_body(body, comments, is_ambient)?;
 
     Ok(true)
   }
@@ -1374,7 +1432,7 @@ impl<'a> FastCheckTransformer<'a> {
       Expr::TsConstAssertion(n) => recurse(&mut n.expr)?,
       Expr::TsNonNull(n) => recurse(&mut n.expr)?,
       Expr::Fn(n) => {
-        self.transform_fn(&mut n.function, parent_id_range, false, false)?;
+        self.transform_fn(&mut n.function, parent_id_range, /* is overload */ false, /* is setter */ false, /* is ambient */ false)?;
         true
       }
       Expr::Arrow(n) => {

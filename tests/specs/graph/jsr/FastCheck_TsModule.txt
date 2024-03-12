@@ -11,6 +11,11 @@ export namespace Test.Test {
   }
 }
 
+export namespace Test.Test {
+  export class MyClass2 extends Public1 {
+  }
+}
+
 class Public1 {
 }
 
@@ -49,7 +54,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 113,
+      "size": 191,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -65,16 +70,18 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export module Test.Test {
-    export class MyClass extends Public1 {
-      prop!: string;
+  }
+  export module Test.Test {
+    export class MyClass2 extends Public1 {
     }
   }
   class Public1 {
   }
   --- DTS ---
   export declare module Test {
-    export declare class MyClass extends Public1 {
-      prop: string;
+  }
+  export declare module Test {
+    export class MyClass2 extends Public1 {
     }
   }
   declare class Public1 {
