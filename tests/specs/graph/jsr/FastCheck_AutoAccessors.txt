@@ -16,6 +16,10 @@ export class AutoAccessor {
   private static private_static_unanalyzable = unanalyzable();
 }
 
+export class PrivateAccessor {
+  accessor #private = 4;
+}
+
 # mod.ts
 import 'jsr:@scope/a'
 
@@ -51,7 +55,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 327,
+      "size": 386,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -73,6 +77,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     declare private static private_static: any;
     declare private static private_static_unanalyzable: any;
   }
+  export class PrivateAccessor {
+    #private!: unknown;
+  }
   --- DTS ---
   export declare class AutoAccessor {
     /** Some comment */ public_accessor: string;
@@ -80,4 +87,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     static static_accessor: number;
     private static private_static: any;
     private static private_static_unanalyzable: any;
+  }
+  export declare class PrivateAccessor {
   }
