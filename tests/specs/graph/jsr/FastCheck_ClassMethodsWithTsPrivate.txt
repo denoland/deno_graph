@@ -82,6 +82,13 @@ export declare module Test {
   }
 }
 
+class Base {}
+export class TsPrivateMethodWithOverrideKeyword extends Base {
+  private override test(): string {
+    return "";
+  }
+}
+
 # mod.ts
 import 'jsr:@scope/a'
 
@@ -117,7 +124,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1563,
+      "size": 1698,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -156,6 +163,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       private constructor(private: Private);
     }
   }
+  class Base {
+  }
+  export class TsPrivateMethodWithOverrideKeyword extends Base {
+    private override test!: unknown;
+  }
   --- DTS ---
   export declare class PrivateMethodOverloadable {
     private constructor();
@@ -180,4 +192,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       private constructor(value: string);
       private constructor(private: Private);
     }
+  }
+  declare class Base {
+  }
+  export declare class TsPrivateMethodWithOverrideKeyword extends Base {
+    private override test: unknown;
   }
