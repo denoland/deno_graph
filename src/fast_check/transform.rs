@@ -853,7 +853,7 @@ impl<'a> FastCheckTransformer<'a> {
           let inferred_type = n
             .value
             .as_ref()
-            .and_then(|e| self.maybe_infer_type_from_expr(&*e));
+            .and_then(|e| self.maybe_infer_type_from_expr(e));
           match inferred_type {
             Some(t) => Box::new(TsTypeAnn {
               span: DUMMY_SP,
@@ -1592,7 +1592,7 @@ fn is_ts_private_computed_class_member(m: &ClassMember) -> bool {
       if m.accessibility == Some(Accessibility::Private) {
         match &m.key {
           Key::Private(_) => false,
-          Key::Public(k) => is_computed_prop_name(&k),
+          Key::Public(k) => is_computed_prop_name(k),
         }
       } else {
         false
