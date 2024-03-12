@@ -492,23 +492,8 @@ impl<'a> FastCheckTransformer<'a> {
     is_ambient: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
     if is_ambient {
-      n.body.retain(|m| match m {
-        ClassMember::Method(m) => {
-          if m.accessibility == Some(Accessibility::Private) {
-            match m.key {
-              PropName::Ident(_)
-              | PropName::Str(_)
-              | PropName::Num(_)
-              | PropName::BigInt(_) => true,
-              // ignore private computed properties
-              PropName::Computed(_) => false,
-            }
-          } else {
-            true
-          }
-        }
-        _ => true,
-      });
+      // ignore private computed members
+      n.body.retain(|m| !is_ts_private_computed_class_member(m));
       return Ok(());
     }
 
@@ -530,43 +515,50 @@ impl<'a> FastCheckTransformer<'a> {
       had_private = had_private
         || matches!(
           member,
-          ClassMember::PrivateMethod(_) | ClassMember::PrivateProp(_)
+          ClassMember::PrivateMethod(_)
+            | ClassMember::PrivateProp(_)
+            | ClassMember::AutoAccessor(AutoAccessor {
+              key: Key::Private(_),
+              ..
+            })
         );
 
-      let mut retain = true;
-      // do some extra checks to see whether it should be removed
-      if let ClassMember::Constructor(ctor) = &member {
-        if ctor.accessibility == Some(Accessibility::Private) {
-          if had_private_constructor {
-            retain = false;
-          } else {
-            had_private_constructor = true;
+      let mut retain = !is_ts_private_computed_class_member(&member);
+      if retain {
+        // do some extra checks to see whether it should be removed
+        if let ClassMember::Constructor(ctor) = &member {
+          if ctor.accessibility == Some(Accessibility::Private) {
+            if had_private_constructor {
+              retain = false;
+            } else {
+              had_private_constructor = true;
+            }
           }
-        }
-      } else if let ClassMember::Method(method) = &member {
-        if method.accessibility == Some(Accessibility::Private) {
-          let key = match &method.key {
-            PropName::Ident(i) => Some(i.sym.to_string()),
-            PropName::Str(s) => Some(s.value.to_string()),
-            PropName::Num(n) => Some(
-              n.raw
-                .as_ref()
-                .map(|r| r.to_string())
-                .unwrap_or_else(|| n.value.to_string()),
-            ),
+        } else if let ClassMember::Method(method) = &member {
+          if method.accessibility == Some(Accessibility::Private) {
+            let key = match &method.key {
+              PropName::Ident(i) => Some(i.sym.to_string()),
+              PropName::Str(s) => Some(s.value.to_string()),
+              PropName::Num(n) => Some(
+                n.raw
+                  .as_ref()
+                  .map(|r| r.to_string())
+                  .unwrap_or_else(|| n.value.to_string()),
+              ),
 
-            PropName::Computed(_) => None,
-            PropName::BigInt(n) => Some(
-              n.raw
-                .as_ref()
-                .map(|r| r.to_string())
-                .unwrap_or_else(|| n.value.to_string()),
-            ),
-          };
-          retain = match key {
-            Some(key) => seen_ts_private_methods.insert(key),
-            None => false,
-          };
+              PropName::Computed(_) => None,
+              PropName::BigInt(n) => Some(
+                n.raw
+                  .as_ref()
+                  .map(|r| r.to_string())
+                  .unwrap_or_else(|| n.value.to_string()),
+              ),
+            };
+            retain = match key {
+              Some(key) => seen_ts_private_methods.insert(key),
+              None => false,
+            };
+          }
         }
       }
 
@@ -846,39 +838,55 @@ impl<'a> FastCheckTransformer<'a> {
         n.decorators.clear();
         Ok(true)
       }
-      ClassMember::AutoAccessor(_n) => {
-        // waiting on https://github.com/swc-project/swc/pull/8436
-        // if n.accessibility == Some(Accessibility::Private) {
-        //   n.type_ann = Some(any_type_ann());
-        //   n.definite = true;
-        //   return Ok(true);
-        // }
-        // if n.type_ann.is_none() {
-        //   let inferred_type = n
-        //     .value
-        //     .as_ref()
-        //     .and_then(|e| self.maybe_infer_type_from_expr(&*e));
-        //   match inferred_type {
-        //     Some(t) => {
-        //       n.type_ann = Some(Box::new(TsTypeAnn {
-        //         span: DUMMY_SP,
-        //         type_ann: Box::new(t),
-        //       }));
-        //     }
-        //     None => {
-        //       self.mark_diagnostic(
-        //         FastCheckTransformDiagnostic::MissingExplicitType {
-        //           range: self.source_range_to_range(n.key.range()),
-        //         },
-        //       )?;
-        //     }
-        //   }
-        // }
-        // n.definite = true;
-        // n.decorators.clear();
-        // n.value = None;
-        // Ok(true)
-        todo!("Remove auto-accessor for now. Waiting on https://github.com/swc-project/swc/pull/8436")
+      ClassMember::AutoAccessor(n) => {
+        let key = match &n.key {
+          Key::Private(_) => {
+            return Ok(false);
+          }
+          Key::Public(key) => key,
+        };
+        let type_ann = if n.accessibility == Some(Accessibility::Private) {
+          any_type_ann()
+        } else if let Some(type_ann) = n.type_ann.clone() {
+          type_ann
+        } else {
+          let inferred_type = n
+            .value
+            .as_ref()
+            .and_then(|e| self.maybe_infer_type_from_expr(&*e));
+          match inferred_type {
+            Some(t) => Box::new(TsTypeAnn {
+              span: DUMMY_SP,
+              type_ann: Box::new(t),
+            }),
+            None => {
+              self.mark_diagnostic(
+                FastCheckDiagnostic::MissingExplicitType {
+                  range: self.source_range_to_range(n.key.range()),
+                },
+              )?;
+              any_type_ann()
+            }
+          }
+        };
+        *member = ClassMember::ClassProp(ClassProp {
+          span: n.span,
+          key: key.clone(),
+          value: None,
+          type_ann: Some(type_ann),
+          is_static: n.is_static,
+          decorators: Vec::new(),
+          accessibility: n.accessibility,
+          // todo(dsherret): ensure abstract auto-accessors work
+          // once this pr lands: https://github.com/swc-project/swc/pull/8736
+          is_abstract: false,
+          is_optional: false,
+          is_override: n.is_override,
+          readonly: false,
+          declare: !n.is_override,
+          definite: n.is_override,
+        });
+        Ok(true)
       }
       ClassMember::TsIndexSignature(_) => {
         // ok, as-is
@@ -1568,6 +1576,46 @@ impl<'a> FastCheckTransformer<'a> {
         })),
       })),
     }
+  }
+}
+
+fn is_ts_private_computed_class_member(m: &ClassMember) -> bool {
+  match m {
+    ClassMember::Method(m) => {
+      if m.accessibility == Some(Accessibility::Private) {
+        is_computed_prop_name(&m.key)
+      } else {
+        false
+      }
+    }
+    ClassMember::AutoAccessor(m) => {
+      if m.accessibility == Some(Accessibility::Private) {
+        match &m.key {
+          Key::Private(_) => false,
+          Key::Public(k) => is_computed_prop_name(&k),
+        }
+      } else {
+        false
+      }
+    }
+    ClassMember::ClassProp(p) => {
+      if p.accessibility == Some(Accessibility::Private) {
+        is_computed_prop_name(&p.key)
+      } else {
+        false
+      }
+    }
+    _ => false,
+  }
+}
+
+fn is_computed_prop_name(prop_name: &PropName) -> bool {
+  match prop_name {
+    PropName::Ident(_)
+    | PropName::Str(_)
+    | PropName::Num(_)
+    | PropName::BigInt(_) => false,
+    PropName::Computed(_) => true,
   }
 }
 

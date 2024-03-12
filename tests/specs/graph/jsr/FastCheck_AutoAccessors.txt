@@ -5,13 +5,15 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-class Base {}
-class Private {}
-const symbol1 = Symbol();
-export class WithTsPrivate extends Base {
-  private regular: string;
-  private override withOverride: Private;
-  private [symbol1]: Private;
+const symbol = Symbol();
+export class AutoAccessor {
+  /** Some comment */
+  accessor public_accessor: string;
+  private accessor private_accessor: string;
+  private accessor [symbol1]: string;
+  static static_accessor = 2;
+  private static private_static = '';
+  private static private_static_unanalyzable = unanalyzable();
 }
 
 # mod.ts
@@ -49,7 +51,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 200,
+      "size": 327,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -64,16 +66,18 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  class Base {
-  }
-  export class WithTsPrivate extends Base {
-    declare private regular: any;
-    private override withOverride: any;
+  export class AutoAccessor {
+    /** Some comment */ declare public_accessor: string;
+    declare private private_accessor: any;
+    declare static static_accessor: number;
+    declare private static private_static: any;
+    declare private static private_static_unanalyzable: any;
   }
   --- DTS ---
-  declare class Base {
-  }
-  export declare class WithTsPrivate extends Base {
-    private regular: any;
-    private override withOverride: any;
+  export declare class AutoAccessor {
+    /** Some comment */ public_accessor: string;
+    private private_accessor: any;
+    static static_accessor: number;
+    private static private_static: any;
+    private static private_static_unanalyzable: any;
   }
