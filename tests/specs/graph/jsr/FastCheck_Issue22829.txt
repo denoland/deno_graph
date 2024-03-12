@@ -103,7 +103,7 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/functions.ts:
   {}
   abstract class Internal<T> {
-    prop!: T;
+    declare prop: T;
   }
   function func(): void {}
   export function other_func(): void {}

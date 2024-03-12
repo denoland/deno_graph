@@ -63,10 +63,10 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export class Export {
-    prop!: typeof Public1.prototype.prop;
+    declare prop: typeof Public1.prototype.prop;
   }
   class Public1 {
-    prop!: string;
+    declare prop: string;
   }
   --- DTS ---
   export declare class Export {

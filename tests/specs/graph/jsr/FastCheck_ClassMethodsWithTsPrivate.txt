@@ -82,6 +82,13 @@ export declare module Test {
   }
 }
 
+class Base {}
+export class TsPrivateMethodWithOverrideKeyword extends Base {
+  private override test(): string {
+    return "";
+  }
+}
+
 # mod.ts
 import 'jsr:@scope/a'
 
@@ -117,7 +124,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1563,
+      "size": 1698,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -134,10 +141,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export class PrivateMethodOverloadable {
     private constructor();
-    private method!: unknown;
-    private methodWithOverload!: unknown;
-    private "stringAndIdent"!: unknown;
-    private "stringOnly"!: unknown;
+    declare private method: any;
+    declare private methodWithOverload: any;
+    declare private "stringAndIdent": any;
+    declare private "stringOnly": any;
   }
   export declare class AmbientPrivateMethodOverloadable {
     private constructor(value: string);
@@ -155,14 +162,19 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       private constructor(value: string);
       private constructor(private: Private);
     }
+  }
+  class Base {
+  }
+  export class TsPrivateMethodWithOverrideKeyword extends Base {
+    private override test!: any;
   }
   --- DTS ---
   export declare class PrivateMethodOverloadable {
     private constructor();
-    private method: unknown;
-    private methodWithOverload: unknown;
-    private "stringAndIdent": unknown;
-    private "stringOnly": unknown;
+    private method: any;
+    private methodWithOverload: any;
+    private "stringAndIdent": any;
+    private "stringOnly": any;
   }
   export declare class AmbientPrivateMethodOverloadable {
     private constructor(value: string);
@@ -180,4 +192,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       private constructor(value: string);
       private constructor(private: Private);
     }
+  }
+  declare class Base {
+  }
+  export declare class TsPrivateMethodWithOverrideKeyword extends Base {
+    private override test: any;
   }

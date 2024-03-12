@@ -134,7 +134,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     #private!: unknown;
     public method1(): void {}
     protected method2(): void {}
-    private tsPrivateMethod!: unknown;
+    declare private tsPrivateMethod: any;
   }
   class PublicOther {
   }
@@ -156,7 +156,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export declare class Test2 {
     public method1(): void;
     protected method2(): void;
-    private tsPrivateMethod: unknown;
+    private tsPrivateMethod: any;
   }
   declare class PublicOther {
   }

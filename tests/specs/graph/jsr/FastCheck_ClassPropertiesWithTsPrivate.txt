@@ -5,23 +5,12 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-export class Test {
-  prop1: PublicOther;
-  protected prop2?: PublicOther2;
-  private prop3: PrivateOther;
-  prop4 = 5;
-  #prop5;
-  #prop6: PrivateOther2;
-  static myMember: string;
+class Base {}
+class Private {}
+export class WithTsPrivate extends Base {
+  private regular: string;
+  private override withOverride: Private;
 }
-
-class PublicOther {
-}
-class PublicOther2 {
-}
-
-class PrivateOther {}
-class PrivateOther2 {}
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -58,7 +47,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 276,
+      "size": 144,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -73,27 +62,16 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  export class Test {
-    #private!: unknown;
-    declare prop1: PublicOther;
-    declare protected prop2?: PublicOther2;
-    declare private prop3: any;
-    declare prop4: number;
-    declare static myMember: string;
+  class Base {
   }
-  class PublicOther {
-  }
-  class PublicOther2 {
+  export class WithTsPrivate extends Base {
+    declare private regular: any;
+    private override withOverride: any;
   }
   --- DTS ---
-  export declare class Test {
-    prop1: PublicOther;
-    protected prop2?: PublicOther2;
-    private prop3: any;
-    prop4: number;
-    static myMember: string;
+  declare class Base {
   }
-  declare class PublicOther {
-  }
-  declare class PublicOther2 {
+  export declare class WithTsPrivate extends Base {
+    private regular: any;
+    private override withOverride: any;
   }

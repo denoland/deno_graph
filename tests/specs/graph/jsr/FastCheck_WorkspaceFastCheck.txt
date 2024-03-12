@@ -125,8 +125,8 @@ Fast check file:///mod.ts:
   }
   import { C } from "jsr:@scope/c";
   export class MyClass {
-    prop!: Public1;
-    c!: C;
+    declare prop: Public1;
+    declare c: C;
   }
   class Public1 {
   }

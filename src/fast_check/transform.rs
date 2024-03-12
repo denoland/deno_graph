@@ -648,19 +648,19 @@ impl<'a> FastCheckTransformer<'a> {
         }
 
         for param in &mut n.params {
-          let mut is_optional = false;
           match param {
             ParamOrTsParamProp::Param(_) => {
               // ignore
             }
             ParamOrTsParamProp::TsParamProp(prop) => {
+              let is_optional = match &prop.param {
+                TsParamPropParam::Ident(ident) => ident.optional,
+                TsParamPropParam::Assign(_) => false,
+              };
               insert_members.push(ClassMember::ClassProp(ClassProp {
                 span: DUMMY_SP,
                 key: match &prop.param {
                   TsParamPropParam::Ident(ident) => {
-                    if ident.optional {
-                      is_optional = true;
-                    }
                     PropName::Ident(ident.id.clone())
                   }
                   TsParamPropParam::Assign(assign) => match &*assign.left {
@@ -684,7 +684,7 @@ impl<'a> FastCheckTransformer<'a> {
                 value: None,
                 type_ann: if prop.accessibility == Some(Accessibility::Private)
                 {
-                  Some(unknown_type_ann())
+                  Some(any_type_ann())
                 } else {
                   match &prop.param {
                     TsParamPropParam::Ident(ident) => ident.type_ann.clone(),
@@ -715,11 +715,12 @@ impl<'a> FastCheckTransformer<'a> {
                   Some(accessibility) => Some(accessibility),
                 },
                 is_abstract: false,
-                is_optional: false,
+                is_optional,
                 is_override: prop.is_override,
                 readonly: prop.readonly,
-                declare: false,
-                definite: !is_optional,
+                // delcare is not valid with override
+                declare: !prop.is_override,
+                definite: prop.is_override,
               }));
               *param = ParamOrTsParamProp::Param(Param {
                 span: prop.span,
@@ -776,7 +777,7 @@ impl<'a> FastCheckTransformer<'a> {
             span: DUMMY_SP,
             key: n.key.clone(),
             value: None,
-            type_ann: Some(unknown_type_ann()),
+            type_ann: Some(any_type_ann()),
             is_static: n.is_static,
             decorators: Vec::new(),
             accessibility: Some(Accessibility::Private),
@@ -784,8 +785,9 @@ impl<'a> FastCheckTransformer<'a> {
             is_optional: n.is_optional,
             is_override: n.is_override,
             readonly: false,
-            declare: false,
-            definite: !n.is_optional && !n.is_static,
+            // delcare is not valid with override
+            declare: !n.is_override,
+            definite: n.is_override,
           });
           return Ok(true);
         }
@@ -801,10 +803,8 @@ impl<'a> FastCheckTransformer<'a> {
       }
       ClassMember::ClassProp(n) => {
         if n.accessibility == Some(Accessibility::Private) {
-          n.type_ann = Some(unknown_type_ann());
-          if !n.is_optional && !n.is_static {
-            n.definite = true;
-          }
+          n.type_ann = Some(any_type_ann());
+          n.declare = !n.is_override;
           n.value = None;
           return Ok(true);
         }
@@ -841,18 +841,15 @@ impl<'a> FastCheckTransformer<'a> {
         } else {
           n.value = None;
         }
-        n.definite = !n.is_optional
-          && !n.is_static
-          && !n.declare
-          && !n.is_abstract
-          && n.value.is_none();
+        n.declare = n.value.is_none() && !n.is_override;
+        n.definite = n.value.is_none() && n.is_override;
         n.decorators.clear();
         Ok(true)
       }
       ClassMember::AutoAccessor(_n) => {
         // waiting on https://github.com/swc-project/swc/pull/8436
         // if n.accessibility == Some(Accessibility::Private) {
-        //   n.type_ann = Some(unknown_type_ann());
+        //   n.type_ann = Some(any_type_ann());
         //   n.definite = true;
         //   return Ok(true);
         // }
@@ -1824,12 +1821,5 @@ fn paren_expr(expr: Box<Expr>) -> Expr {
   Expr::Paren(ParenExpr {
     span: DUMMY_SP,
     expr,
-  })
-}
-
-fn unknown_type_ann() -> Box<TsTypeAnn> {
-  Box::new(TsTypeAnn {
-    span: DUMMY_SP,
-    type_ann: Box::new(ts_keyword_type(TsKeywordTypeKind::TsUnknownKeyword)),
   })
 }
