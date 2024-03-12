@@ -140,8 +140,8 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/a.ts:
   {}
   export class A {
-    member!: string;
-    member2!: string;
+    declare member: string;
+    declare member2: string;
   }
   --- DTS ---
   export declare class A {
@@ -191,8 +191,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   import * as mod from "./b.ts";
   export class Export {
-    prop!: typeof mod.B.prototype.member;
-    prop2!: typeof mod.B.prototype.member2;
+    declare prop: typeof mod.B.prototype.member;
+    declare prop2: typeof mod.B.prototype.member2;
   }
   --- DTS ---
   import * as mod from "./b.ts";

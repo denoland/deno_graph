@@ -134,7 +134,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     #private!: unknown;
     public method1(): void {}
     protected method2(): void {}
-    private tsPrivateMethod!: unknown;
+    declare private tsPrivateMethod: unknown;
   }
   class PublicOther {
   }

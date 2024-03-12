@@ -265,7 +265,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     hasReturnType(): A1 & RenamedA3 | A4 | A6 {
       return {} as any;
     }
-    private inner!: unknown;
+    declare private inner: unknown;
   }
   --- DTS ---
   import { A1, A3 as RenamedA3, A4, A6 } from "./a.ts";

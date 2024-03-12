@@ -648,19 +648,19 @@ impl<'a> FastCheckTransformer<'a> {
         }
 
         for param in &mut n.params {
-          let mut is_optional = false;
           match param {
             ParamOrTsParamProp::Param(_) => {
               // ignore
             }
             ParamOrTsParamProp::TsParamProp(prop) => {
+              let is_optional = match &prop.param {
+                TsParamPropParam::Ident(ident) => ident.optional,
+                TsParamPropParam::Assign(_) => false,
+              };
               insert_members.push(ClassMember::ClassProp(ClassProp {
                 span: DUMMY_SP,
                 key: match &prop.param {
                   TsParamPropParam::Ident(ident) => {
-                    if ident.optional {
-                      is_optional = true;
-                    }
                     PropName::Ident(ident.id.clone())
                   }
                   TsParamPropParam::Assign(assign) => match &*assign.left {
@@ -715,11 +715,11 @@ impl<'a> FastCheckTransformer<'a> {
                   Some(accessibility) => Some(accessibility),
                 },
                 is_abstract: false,
-                is_optional: false,
+                is_optional: is_optional,
                 is_override: prop.is_override,
                 readonly: prop.readonly,
-                declare: false,
-                definite: !is_optional,
+                declare: true,
+                definite: false,
               }));
               *param = ParamOrTsParamProp::Param(Param {
                 span: prop.span,
@@ -784,8 +784,8 @@ impl<'a> FastCheckTransformer<'a> {
             is_optional: n.is_optional,
             is_override: n.is_override,
             readonly: false,
-            declare: false,
-            definite: !n.is_optional && !n.is_static,
+            declare: true,
+            definite: false, // !n.is_optional && !n.is_static,
           });
           return Ok(true);
         }
@@ -802,9 +802,7 @@ impl<'a> FastCheckTransformer<'a> {
       ClassMember::ClassProp(n) => {
         if n.accessibility == Some(Accessibility::Private) {
           n.type_ann = Some(unknown_type_ann());
-          if !n.is_optional && !n.is_static {
-            n.definite = true;
-          }
+          n.declare = true;
           n.value = None;
           return Ok(true);
         }
@@ -841,11 +839,8 @@ impl<'a> FastCheckTransformer<'a> {
         } else {
           n.value = None;
         }
-        n.definite = !n.is_optional
-          && !n.is_static
-          && !n.declare
-          && !n.is_abstract
-          && n.value.is_none();
+        n.declare = n.value.is_none();
+        n.definite = false;
         n.decorators.clear();
         Ok(true)
       }

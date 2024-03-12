@@ -143,22 +143,22 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     constructor(param0?: any){}
   }
   export class ClassPrivateCtorPublicParamProp {
-    param1!: Public2;
-    private param2!: unknown;
+    declare param1: Public2;
+    declare private param2: unknown;
     private constructor(){}
   }
   export class ClassCtorPublicParamProp {
-    param1!: Public3;
-    private param2!: unknown;
-    private param3!: unknown;
+    declare param1: Public3;
+    declare private param2: unknown;
+    declare private param3: unknown;
     constructor(param1: Public3, param2: Public4, param3?: Public5){}
   }
   export class ClassCtorPublicParamPropInit {
-    param1!: Public3;
+    declare param1: Public3;
     constructor(param1?: Public3){}
   }
   export class ClassCtorPublicParamPropOptional {
-    param1?: string;
+    declare param1?: string;
     constructor(param1?: string){}
   }
   export declare class AmbientClassCtor {

@@ -66,8 +66,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   const key: unique symbol = {} as any;
   const key2: unique symbol = {} as any;
   export class MyClass {
-    [key]!: number;
-    [key2]!: string;
+    declare [key]: number;
+    declare [key2]: string;
   }
   --- DTS ---
   declare const key: unique symbol;

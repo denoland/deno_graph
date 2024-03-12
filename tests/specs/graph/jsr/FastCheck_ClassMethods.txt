@@ -134,10 +134,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export class PrivateMethodOverloadable {
     private constructor();
-    private method!: unknown;
-    private methodWithOverload!: unknown;
-    private "stringAndIdent"!: unknown;
-    private "stringOnly"!: unknown;
+    declare private method: unknown;
+    declare private methodWithOverload: unknown;
+    declare private "stringAndIdent": unknown;
+    declare private "stringOnly": unknown;
   }
   export declare class AmbientPrivateMethodOverloadable {
     private constructor(value: string);

@@ -138,7 +138,7 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/a.ts:
   {}
   export class A {
-    member!: string;
+    declare member: string;
   }
   --- DTS ---
   export declare class A {
@@ -187,7 +187,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   import { B } from "./b.ts";
   export class Export {
-    prop!: typeof B.prototype.member;
+    declare prop: typeof B.prototype.member;
   }
   --- DTS ---
   import { B } from "./b.ts";

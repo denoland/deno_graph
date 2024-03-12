@@ -94,7 +94,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     declare parent: RedBlackNode<T> | null;
     declare left: RedBlackNode<T> | null;
     declare right: RedBlackNode<T> | null;
-    red!: boolean;
+    declare red: boolean;
     constructor(parent: RedBlackNode<T> | null, value: T){
       super({} as any, {} as any);
     }
@@ -105,14 +105,14 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   const isSecure: Symbol = {} as any;
   const public2: Symbol = {} as any;
   export class CookieMapBase {
-    [isSecure]!: boolean;
+    declare [isSecure]: boolean;
     [public2](): number {
       return {} as any;
     }
   }
   export class Bar {
-    abstract foo: string;
-    bar!: number;
+    declare abstract foo: string;
+    declare bar: number;
   }
   --- DTS ---
   export declare class RedBlackNode<T> extends BinarySearchNode<T> {
