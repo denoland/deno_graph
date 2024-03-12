@@ -40,6 +40,10 @@ export class Bar {
   bar: number;
 }
 
+export class Baz extends Bar {
+  override foo = "";
+}
+
 # mod.ts
 import 'jsr:@scope/a'
 
@@ -75,7 +79,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 803,
+      "size": 858,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -114,6 +118,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     declare abstract foo: string;
     declare bar: number;
   }
+  export class Baz extends Bar {
+    override foo!: string;
+  }
   --- DTS ---
   export declare class RedBlackNode<T> extends BinarySearchNode<T> {
     parent: RedBlackNode<T> | null;
@@ -132,4 +139,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export declare class Bar {
     abstract foo: string;
     bar: number;
+  }
+  export declare class Baz extends Bar {
+    override foo: string;
   }

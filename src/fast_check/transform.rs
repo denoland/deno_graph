@@ -718,8 +718,9 @@ impl<'a> FastCheckTransformer<'a> {
                 is_optional,
                 is_override: prop.is_override,
                 readonly: prop.readonly,
-                declare: true,
-                definite: false,
+                // delcare is not valid with override
+                declare: !prop.is_override,
+                definite: prop.is_override,
               }));
               *param = ParamOrTsParamProp::Param(Param {
                 span: prop.span,
@@ -784,8 +785,9 @@ impl<'a> FastCheckTransformer<'a> {
             is_optional: n.is_optional,
             is_override: n.is_override,
             readonly: false,
-            declare: true,
-            definite: false, // !n.is_optional && !n.is_static,
+            // delcare is not valid with override
+            declare: !n.is_override,
+            definite: n.is_override,
           });
           return Ok(true);
         }
@@ -802,6 +804,7 @@ impl<'a> FastCheckTransformer<'a> {
       ClassMember::ClassProp(n) => {
         if n.accessibility == Some(Accessibility::Private) {
           n.type_ann = Some(unknown_type_ann());
+          n.is_override = false;
           n.declare = true;
           n.value = None;
           return Ok(true);
@@ -839,8 +842,8 @@ impl<'a> FastCheckTransformer<'a> {
         } else {
           n.value = None;
         }
-        n.declare = n.value.is_none();
-        n.definite = false;
+        n.declare = n.value.is_none() && !n.is_override;
+        n.definite = n.value.is_none() && n.is_override;
         n.decorators.clear();
         Ok(true)
       }
