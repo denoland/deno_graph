@@ -715,7 +715,7 @@ impl<'a> FastCheckTransformer<'a> {
                   Some(accessibility) => Some(accessibility),
                 },
                 is_abstract: false,
-                is_optional: is_optional,
+                is_optional,
                 is_override: prop.is_override,
                 readonly: prop.readonly,
                 declare: true,
