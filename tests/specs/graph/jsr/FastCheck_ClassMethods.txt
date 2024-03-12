@@ -46,12 +46,13 @@ export class PrivateMethodOverloadable {
 
 class Private {}
 
-export class AmbientPrivateMethodOverloadable {
+const symbol1 = Symbol();
+export declare class AmbientPrivateMethodOverloadable {
   private constructor(value: string);
   private constructor(private: Private);
 
-  private [getEntity](value: string): Promise<string>;
-  private async [getEntity]();
+  private [symbol1](value: string): Promise<string>;
+  private async [symbol1]();
 
   private method(value: string): string;
 
@@ -69,6 +70,16 @@ export class AmbientPrivateMethodOverloadable {
 
   private "stringOnly"(value: string): string;
   private "stringOnly"(): string;
+}
+
+export declare module Test {
+  export class AmbientClassInModule {
+    private constructor(value: string);
+    private constructor(private: Private);
+
+    private [symbol1](value: string): Promise<string>;
+    private async [symbol1]();
+  }
 }
 
 # mod.ts
@@ -106,7 +117,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1289,
+      "size": 1563,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -128,12 +139,22 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private "stringAndIdent"!: unknown;
     private "stringOnly"!: unknown;
   }
-  export class AmbientPrivateMethodOverloadable {
-    private constructor();
-    private method!: unknown;
-    private methodWithOverload!: unknown;
-    private "stringAndIdent"!: unknown;
-    private "stringOnly"!: unknown;
+  export declare class AmbientPrivateMethodOverloadable {
+    private constructor(value: string);
+    private constructor(private: Private);
+    private method(value: string): string;
+    private methodWithOverload(value: string): string;
+    private methodWithOverload(): string;
+    private "stringAndIdent"(value: string): string;
+    private stringAndIdent(): string;
+    private "stringOnly"(value: string): string;
+    private "stringOnly"(): string;
+  }
+  export declare module Test {
+    export class AmbientClassInModule {
+      private constructor(value: string);
+      private constructor(private: Private);
+    }
   }
   --- DTS ---
   export declare class PrivateMethodOverloadable {
@@ -144,9 +165,19 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private "stringOnly": unknown;
   }
   export declare class AmbientPrivateMethodOverloadable {
-    private constructor();
-    private method: unknown;
-    private methodWithOverload: unknown;
-    private "stringAndIdent": unknown;
-    private "stringOnly": unknown;
+    private constructor(value: string);
+    private constructor(private: Private);
+    private method(value: string): string;
+    private methodWithOverload(value: string): string;
+    private methodWithOverload(): string;
+    private "stringAndIdent"(value: string): string;
+    private stringAndIdent(): string;
+    private "stringOnly"(value: string): string;
+    private "stringOnly"(): string;
+  }
+  export declare module Test {
+    export class AmbientClassInModule {
+      private constructor(value: string);
+      private constructor(private: Private);
+    }
   }

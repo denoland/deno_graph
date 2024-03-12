@@ -68,6 +68,7 @@ pub struct FastCheckDtsTransformer<'a> {
   text_info: &'a SourceTextInfo,
   pub diagnostics: Vec<FastCheckDtsDiagnostic>,
   specifier: &'a ModuleSpecifier,
+  is_top_level: bool,
 }
 
 impl<'a> FastCheckDtsTransformer<'a> {
@@ -80,6 +81,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
       text_info,
       specifier,
       diagnostics: vec![],
+      is_top_level: true,
     }
   }
 
@@ -125,6 +127,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
     &mut self,
     mut module: Module,
   ) -> Result<Module, Vec<FastCheckDiagnostic>> {
+    self.is_top_level = true;
     let body = module.body;
 
     module.body = self.transform_module_items(body);
@@ -498,7 +501,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
     match decl {
       Decl::Class(mut class_decl) => {
         class_decl.class.body = self.class_body_to_type(class_decl.class.body);
-        class_decl.declare = true;
+        class_decl.declare = self.is_top_level;
         Some(Decl::Class(class_decl))
       }
       Decl::Fn(mut fn_decl) => {
@@ -567,7 +570,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
         Some(Decl::Fn(fn_decl))
       }
       Decl::Var(mut var_decl) => {
-        var_decl.declare = true;
+        var_decl.declare = self.is_top_level;
 
         for decl in &mut var_decl.decls {
           if let Pat::Ident(ident) = &mut decl.name {
@@ -599,7 +602,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
         Some(Decl::Var(var_decl))
       }
       Decl::TsEnum(mut ts_enum) => {
-        ts_enum.declare = true;
+        ts_enum.declare = self.is_top_level;
 
         for member in &mut ts_enum.members {
           if let Some(init) = &member.init {
@@ -616,7 +619,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
         Some(Decl::TsEnum(ts_enum))
       }
       Decl::TsModule(mut ts_module) => {
-        ts_module.declare = true;
+        ts_module.declare = self.is_top_level;
 
         if let Some(body) = ts_module.body.clone() {
           ts_module.body = Some(self.transform_ts_ns_body(body));
@@ -637,7 +640,9 @@ impl<'a> FastCheckDtsTransformer<'a> {
   }
 
   fn transform_ts_ns_body(&mut self, ns: TsNamespaceBody) -> TsNamespaceBody {
-    match ns {
+    let original_is_top_level = self.is_top_level;
+    self.is_top_level = false;
+    let body = match ns {
       TsNamespaceBody::TsModuleBlock(mut ts_module_block) => {
         ts_module_block.body =
           self.transform_module_items(ts_module_block.body);
@@ -646,7 +651,9 @@ impl<'a> FastCheckDtsTransformer<'a> {
       TsNamespaceBody::TsNamespaceDecl(ts_ns) => {
         self.transform_ts_ns_body(*ts_ns.body)
       }
-    }
+    };
+    self.is_top_level = original_is_top_level;
+    body
   }
 
   // Support for expressions is limited in enums,

@@ -57,6 +57,10 @@ export class ClassCtorPublicParamPropOptional {
   constructor(public param1?: string) {
   }
 }
+export declare class AmbientClassCtor {
+  constructor(public param: string, private value: number);
+  constructor(public param: string);
+}
 
 class Public1 {}
 class Public2 {}
@@ -100,7 +104,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1382,
+      "size": 1521,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -125,7 +129,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private constructor();
   }
   export declare class ClassDeclarePrivateCtor {
-    private constructor();
+    private constructor(prop: string, other: Private1);
   }
   export class ClassProtectedCtor {
     protected constructor(prop: string, other?: number){}
@@ -157,6 +161,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     param1?: string;
     constructor(param1?: string){}
   }
+  export declare class AmbientClassCtor {
+    constructor(public param: string, private value: number);
+    constructor(public param: string);
+  }
   class Public1 {
   }
   class Public2 {
@@ -178,7 +186,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private constructor();
   }
   export declare class ClassDeclarePrivateCtor {
-    private constructor();
+    private constructor(prop: string, other: Private1);
   }
   export declare class ClassProtectedCtor {
     protected constructor(prop: string, other?: number);
@@ -207,6 +215,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export declare class ClassCtorPublicParamPropOptional {
     param1?: string;
     constructor(param1?: string);
+  }
+  export declare class AmbientClassCtor {
+    constructor(public param: string, private value: number);
+    constructor(public param: string);
   }
   declare class Public1 {
   }
