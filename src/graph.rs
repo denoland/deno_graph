@@ -1308,7 +1308,7 @@ pub struct ModuleGraphErrorIterator<'a> {
 
 impl<'a> ModuleGraphErrorIterator<'a> {
   pub fn new(iterator: ModuleEntryIterator<'a>) -> Self {
-    let next_errors = if iterator.follow_type_only {
+    let mut next_errors = if iterator.follow_type_only {
       iterator
         .graph
         .import_types
@@ -1323,6 +1323,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
     } else {
       vec![]
     };
+    next_errors.reverse();
     Self {
       iterator,
       next_errors,

@@ -3995,6 +3995,8 @@ export function a(a: A): B {
             import express from "npm:express";
             import test02 from "./test02.js";
             import test03 from "./test03.js";
+            // @deno-types="./test04.d.ts"
+            import test04 from "./test04.js";
           "#,
         },
       )],
@@ -4014,7 +4016,8 @@ export function a(a: A): B {
               ("npm:express".to_string(), "npm:@types/express".to_string()),
               ("./test02.js".to_string(), "./test02.d.ts".to_string()),
               ("./test03.js".to_string(), "bad_value".to_string()),
-              ("bad_key".to_string(), "bad_value2".to_string()),
+              ("./test04.js".to_string(), "bad_value2".to_string()),
+              ("bad_key".to_string(), "bad_value3".to_string()),
             ]
             .into_iter()
             .collect(),
@@ -4064,6 +4067,29 @@ export function a(a: A): B {
       Some(&ModuleSpecifier::parse("file:///a/test03.js").unwrap())
     );
     assert_eq!(dep3.maybe_type, Resolution::None);
+    let dep4 = module.dependencies.get("./test04.js").unwrap();
+    assert_eq!(
+      dep4.maybe_code.maybe_specifier(),
+      Some(&ModuleSpecifier::parse("file:///a/test04.js").unwrap())
+    );
+    assert_eq!(
+      dep4.maybe_type.maybe_specifier(),
+      Some(&ModuleSpecifier::parse("file:///a/test04.d.ts").unwrap())
+    );
+    assert_eq!(
+      dep4.maybe_type.maybe_range(),
+      Some(&Range {
+        specifier: ModuleSpecifier::parse("file:///a/test01.ts").unwrap(),
+        start: Position {
+          line: 4,
+          character: 27
+        },
+        end: Position {
+          line: 4,
+          character: 42
+        },
+      })
+    );
     let errors = graph
       .walk(
         &graph.roots,
@@ -4078,9 +4104,10 @@ export function a(a: A): B {
         !matches!(e, ModuleGraphError::ModuleError(ModuleError::Missing(..)))
       })
       .collect::<Vec<_>>();
-    assert_eq!(errors.len(), 2);
-    assert_eq!(errors[0].to_string_with_range(), "Relative import path \"bad_value\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
-    assert_eq!(errors[1].to_string_with_range(), "Relative import path \"bad_key\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
+    assert_eq!(errors.len(), 3);
+    assert_eq!(errors[0].to_string_with_range(), "Relative import path \"bad_key\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
+    assert_eq!(errors[1].to_string_with_range(), "Relative import path \"bad_value\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
+    assert_eq!(errors[2].to_string_with_range(), "Relative import path \"bad_value2\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
     let errors_non_type_only = graph
       .walk(
         &graph.roots,
