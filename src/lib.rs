@@ -18,6 +18,7 @@ pub mod packages;
 pub mod source;
 mod text_encoding;
 
+use indexmap::IndexMap;
 use source::FileSystem;
 use source::NpmResolver;
 use source::Resolver;
@@ -102,6 +103,17 @@ pub struct ReferrerImports {
   pub imports: Vec<String>,
 }
 
+#[derive(Debug, Clone)]
+pub struct ImportTypes {
+  /// The scope of referrers that these mappings should apply to. Should be
+  /// a directory URL.
+  pub scope: ModuleSpecifier,
+  /// The referrer to resolve the imports and types from.
+  pub referrer: ModuleSpecifier,
+  /// Map of imports to types. Both will be resolved from [`Self::referrer`].
+  pub types_by_import: IndexMap<String, String>,
+}
+
 pub struct ParseModuleOptions<'a> {
   pub graph_kind: GraphKind,
   pub specifier: &'a ModuleSpecifier,
@@ -130,6 +142,7 @@ pub fn parse_module(
     options.content,
     None,
     None,
+    &Default::default(),
     options.file_system,
     options.maybe_resolver,
     module_analyzer,
@@ -158,6 +171,7 @@ pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
     options.maybe_headers,
     DefaultModuleAnalyzer::module_info(options.parsed_source),
     options.parsed_source.text_info().text(),
+    &Default::default(),
     options.file_system,
     options.maybe_resolver,
     options.maybe_npm_resolver,
@@ -3967,6 +3981,121 @@ export function a(a: A): B {
         })
       );
     }
+  }
+
+  #[tokio::test]
+  async fn test_import_types() {
+    let mut loader = setup(
+      vec![(
+        "file:///a/test01.ts",
+        Source::Module {
+          specifier: "file:///a/test01.ts",
+          maybe_headers: None,
+          content: r#"
+            import express from "npm:express";
+            import test02 from "./test02.js";
+            import test03 from "./test03.js";
+          "#,
+        },
+      )],
+      vec![],
+    );
+    let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &mut loader,
+        BuildOptions {
+          import_types: Some(ImportTypes {
+            scope: ModuleSpecifier::parse("file:///a/").unwrap(),
+            referrer: ModuleSpecifier::parse("file:///a/deno.json").unwrap(),
+            types_by_import: [
+              ("npm:express".to_string(), "npm:@types/express".to_string()),
+              ("./test02.js".to_string(), "./test02.d.ts".to_string()),
+              ("./test03.js".to_string(), "bad_value".to_string()),
+              ("bad_key".to_string(), "bad_value2".to_string()),
+            ]
+            .into_iter()
+            .collect(),
+          }),
+          ..Default::default()
+        },
+      )
+      .await;
+    let module = graph.get(&root_specifier).unwrap().js().unwrap();
+    let dep1 = module.dependencies.get("npm:express").unwrap();
+    assert_eq!(
+      dep1.maybe_code.maybe_specifier(),
+      Some(&ModuleSpecifier::parse("npm:express").unwrap())
+    );
+    assert_eq!(
+      dep1.maybe_type.maybe_specifier(),
+      Some(&ModuleSpecifier::parse("npm:@types/express").unwrap())
+    );
+    assert_eq!(
+      dep1.maybe_type.maybe_range(),
+      Some(&Range {
+        specifier: ModuleSpecifier::parse("file:///a/deno.json").unwrap(),
+        start: Position::zeroed(),
+        end: Position::zeroed(),
+      })
+    );
+    let dep2 = module.dependencies.get("./test02.js").unwrap();
+    assert_eq!(
+      dep2.maybe_code.maybe_specifier(),
+      Some(&ModuleSpecifier::parse("file:///a/test02.js").unwrap())
+    );
+    assert_eq!(
+      dep2.maybe_type.maybe_specifier(),
+      Some(&ModuleSpecifier::parse("file:///a/test02.d.ts").unwrap())
+    );
+    assert_eq!(
+      dep2.maybe_type.maybe_range(),
+      Some(&Range {
+        specifier: ModuleSpecifier::parse("file:///a/deno.json").unwrap(),
+        start: Position::zeroed(),
+        end: Position::zeroed(),
+      })
+    );
+    let dep3 = module.dependencies.get("./test03.js").unwrap();
+    assert_eq!(
+      dep3.maybe_code.maybe_specifier(),
+      Some(&ModuleSpecifier::parse("file:///a/test03.js").unwrap())
+    );
+    assert_eq!(dep3.maybe_type, Resolution::None);
+    let errors = graph
+      .walk(
+        &graph.roots,
+        WalkOptions {
+          check_js: true,
+          follow_type_only: true,
+          follow_dynamic: false,
+        },
+      )
+      .errors()
+      .filter(|e| {
+        !matches!(e, ModuleGraphError::ModuleError(ModuleError::Missing(..)))
+      })
+      .collect::<Vec<_>>();
+    assert_eq!(errors.len(), 2);
+    assert_eq!(errors[0].to_string_with_range(), "Relative import path \"bad_value\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
+    assert_eq!(errors[1].to_string_with_range(), "Relative import path \"bad_key\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
+    let errors_non_type_only = graph
+      .walk(
+        &graph.roots,
+        WalkOptions {
+          check_js: true,
+          follow_type_only: false,
+          follow_dynamic: false,
+        },
+      )
+      .errors()
+      .filter(|e| {
+        !matches!(e, ModuleGraphError::ModuleError(ModuleError::Missing(..)))
+      })
+      .collect::<Vec<_>>();
+    assert_eq!(errors_non_type_only.len(), 0);
   }
 
   #[tokio::test]

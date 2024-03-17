@@ -12,6 +12,7 @@ use crate::analyzer::TypeScriptReference;
 #[cfg(feature = "fast_check")]
 use crate::fast_check::FastCheckDtsModule;
 use crate::CapturingModuleAnalyzer;
+use crate::ImportTypes;
 use crate::ModuleParser;
 use crate::ReferrerImports;
 
@@ -987,6 +988,78 @@ impl GraphImport {
   }
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct ImportTypesResolution {
+  pub scope: Option<ModuleSpecifier>,
+  pub types_by_import: IndexMap<ModuleSpecifier, Resolution>,
+  pub import_resolution_errors: Vec<ResolutionError>,
+}
+
+impl ImportTypesResolution {
+  fn resolve_from(
+    import_types: &ImportTypes,
+    resolver: Option<&dyn Resolver>,
+    npm_resolver: Option<&dyn NpmResolver>,
+  ) -> Self {
+    let mut result = Self {
+      scope: Some(import_types.scope.clone()),
+      ..Default::default()
+    };
+    let referrer_range = Range {
+      specifier: import_types.referrer.clone(),
+      start: Position::zeroed(),
+      end: Position::zeroed(),
+    };
+    for (import, types) in &import_types.types_by_import {
+      let resolved_import = match resolve(
+        import,
+        referrer_range.clone(),
+        ResolutionMode::Execution,
+        resolver,
+        npm_resolver,
+      ) {
+        Resolution::Ok(r) => r,
+        Resolution::Err(err) => {
+          result.import_resolution_errors.push(*err);
+          continue;
+        }
+        Resolution::None => continue,
+      };
+      result.types_by_import.insert(
+        resolved_import.specifier,
+        resolve(
+          types,
+          referrer_range.clone(),
+          ResolutionMode::Types,
+          resolver,
+          npm_resolver,
+        ),
+      );
+    }
+    result
+  }
+
+  fn types_resolution(&self, maybe_code: &Resolution) -> Option<&Resolution> {
+    let referrer = &maybe_code.maybe_range()?.specifier;
+    if !referrer.as_str().starts_with(self.scope.as_ref()?.as_str()) {
+      return None;
+    }
+    let import = maybe_code.maybe_specifier()?;
+    let resolution = self.types_by_import.get(import)?;
+    if resolution.err().is_some() {
+      return Some(&Resolution::None);
+    }
+    Some(resolution)
+  }
+
+  fn errors(&self) -> impl Iterator<Item = &ResolutionError> {
+    self
+      .import_resolution_errors
+      .iter()
+      .chain(self.types_by_import.values().filter_map(|r| r.err()))
+  }
+}
+
 #[cfg(feature = "fast_check")]
 #[derive(Debug, Default)]
 pub enum WorkspaceFastCheckOption<'a> {
@@ -1016,6 +1089,7 @@ pub struct BuildOptions<'a> {
   /// be extra modules such as TypeScript's "types" option or JSX
   /// runtime types.
   pub imports: Vec<ReferrerImports>,
+  pub import_types: Option<ImportTypes>,
   pub file_system: Option<&'a dyn FileSystem>,
   pub jsr_url_provider: Option<&'a dyn JsrUrlProvider>,
   pub resolver: Option<&'a dyn Resolver>,
@@ -1234,9 +1308,24 @@ pub struct ModuleGraphErrorIterator<'a> {
 
 impl<'a> ModuleGraphErrorIterator<'a> {
   pub fn new(iterator: ModuleEntryIterator<'a>) -> Self {
+    let next_errors = if iterator.follow_type_only {
+      iterator
+        .graph
+        .import_types
+        .errors()
+        .map(|e| {
+          ModuleGraphError::for_resolution_mode(
+            ResolutionMode::Types,
+            e.clone(),
+          )
+        })
+        .collect()
+    } else {
+      vec![]
+    };
     Self {
       iterator,
-      next_errors: Default::default(),
+      next_errors,
     }
   }
 
@@ -1410,6 +1499,8 @@ pub struct ModuleGraph {
   #[serde(skip_serializing_if = "IndexMap::is_empty")]
   #[serde(serialize_with = "serialize_graph_imports")]
   pub imports: IndexMap<ModuleSpecifier, GraphImport>,
+  #[serde(skip_serializing)]
+  pub import_types: ImportTypesResolution,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
   #[serde(skip_serializing)]
   pub npm_packages: Vec<PackageNv>,
@@ -1427,6 +1518,7 @@ impl ModuleGraph {
       roots: Default::default(),
       module_slots: Default::default(),
       imports: Default::default(),
+      import_types: Default::default(),
       redirects: Default::default(),
       npm_packages: Default::default(),
       has_node_specifier: false,
@@ -1454,6 +1546,7 @@ impl ModuleGraph {
       self,
       roots,
       options.imports,
+      options.import_types,
       options.is_dynamic,
       options.file_system.unwrap_or(&file_system),
       options
@@ -1542,6 +1635,7 @@ impl ModuleGraph {
             },
             &module.specifier,
             &mut dependencies,
+            &Default::default(),
             // no need to resolve dynamic imports
             &NullFileSystem,
             options.resolver,
@@ -1951,6 +2045,7 @@ pub(crate) fn parse_module(
   content: Arc<[u8]>,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_referrer: Option<Range>,
+  import_types: &ImportTypesResolution,
   file_system: &dyn FileSystem,
   maybe_resolver: Option<&dyn Resolver>,
   module_analyzer: &dyn ModuleAnalyzer,
@@ -2025,6 +2120,7 @@ pub(crate) fn parse_module(
             maybe_headers,
             module_info,
             source,
+            import_types,
             file_system,
             maybe_resolver,
             maybe_npm_resolver,
@@ -2052,6 +2148,7 @@ pub(crate) fn parse_module(
             maybe_headers,
             module_info,
             source,
+            import_types,
             file_system,
             maybe_resolver,
             maybe_npm_resolver,
@@ -2082,6 +2179,7 @@ pub(crate) fn parse_js_module_from_module_info(
   maybe_headers: Option<&HashMap<String, String>>,
   module_info: ModuleInfo,
   source: Arc<str>,
+  import_types: &ImportTypesResolution,
   file_system: &dyn FileSystem,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
@@ -2310,6 +2408,7 @@ pub(crate) fn parse_js_module_from_module_info(
     module_info.dependencies,
     &module.specifier,
     &mut module.dependencies,
+    import_types,
     file_system,
     maybe_resolver,
     maybe_npm_resolver,
@@ -2319,11 +2418,13 @@ pub(crate) fn parse_js_module_from_module_info(
   module
 }
 
+#[allow(clippy::too_many_arguments)]
 fn fill_module_dependencies(
   graph_kind: GraphKind,
   dependencies: Vec<DependencyDescriptor>,
   module_specifier: &ModuleSpecifier,
   module_dependencies: &mut IndexMap<String, Dependency>,
+  import_types: &ImportTypesResolution,
   file_system: &dyn FileSystem,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
@@ -2449,6 +2550,10 @@ fn fill_module_dependencies(
               maybe_resolver,
               maybe_npm_resolver,
             )
+          } else if let Some(types_resolution) =
+            import_types.types_resolution(&dep.maybe_code)
+          {
+            types_resolution.clone()
           } else {
             let range = import.range.clone();
             // only check if the code resolution is for the same range
@@ -2911,6 +3016,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     graph: &'graph mut ModuleGraph,
     roots: Vec<ModuleSpecifier>,
     imports: Vec<ReferrerImports>,
+    import_types: Option<ImportTypes>,
     is_dynamic: bool,
     file_system: &'a dyn FileSystem,
     jsr_url_provider: &'a dyn JsrUrlProvider,
@@ -2925,6 +3031,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let fill_pass_mode = match graph.roots.is_empty() {
       true => FillPassMode::AllowRestart,
       false => FillPassMode::NoRestart,
+    };
+    graph.import_types = match import_types {
+      Some(import_types) if graph.graph_kind.include_types() => {
+        ImportTypesResolution::resolve_from(
+          &import_types,
+          resolver,
+          npm_resolver,
+        )
+      }
+      _ => ImportTypesResolution::default(),
     };
     let mut builder = Self {
       in_dynamic_branch: is_dynamic,
@@ -4128,6 +4244,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       content,
       maybe_attribute_type,
       maybe_referrer,
+      &self.graph.import_types,
       self.file_system,
       self.resolver,
       maybe_module_analyzer
@@ -4667,6 +4784,7 @@ mod tests {
       content,
       None,
       None,
+      &Default::default(),
       &NullFileSystem,
       None,
       &module_analyzer,
