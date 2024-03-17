@@ -992,7 +992,7 @@ impl GraphImport {
 pub struct ImportTypesResolution {
   pub scope: Option<ModuleSpecifier>,
   pub types_by_import: IndexMap<ModuleSpecifier, Resolution>,
-  pub import_resolution_errors: Vec<ResolutionError>,
+  pub other_resolution_errors: Vec<ResolutionError>,
 }
 
 impl ImportTypesResolution {
@@ -1011,30 +1011,31 @@ impl ImportTypesResolution {
       end: Position::zeroed(),
     };
     for (import, types) in &import_types.types_by_import {
-      let resolved_import = match resolve(
+      let import_resolution = resolve(
         import,
         referrer_range.clone(),
         ResolutionMode::Execution,
         resolver,
         npm_resolver,
-      ) {
-        Resolution::Ok(r) => r,
-        Resolution::Err(err) => {
-          result.import_resolution_errors.push(*err);
-          continue;
-        }
-        Resolution::None => continue,
-      };
-      result.types_by_import.insert(
-        resolved_import.specifier,
-        resolve(
-          types,
-          referrer_range.clone(),
-          ResolutionMode::Types,
-          resolver,
-          npm_resolver,
-        ),
       );
+      let types_resolution = resolve(
+        types,
+        referrer_range.clone(),
+        ResolutionMode::Types,
+        resolver,
+        npm_resolver,
+      );
+      if let Some(import_specifier) = import_resolution.maybe_specifier() {
+        result
+          .types_by_import
+          .insert(import_specifier.clone(), types_resolution);
+      } else {
+        for resolution in [import_resolution, types_resolution] {
+          if let Resolution::Err(err) = resolution {
+            result.other_resolution_errors.push(*err);
+          }
+        }
+      }
     }
     result
   }
@@ -1054,9 +1055,10 @@ impl ImportTypesResolution {
 
   fn errors(&self) -> impl Iterator<Item = &ResolutionError> {
     self
-      .import_resolution_errors
-      .iter()
-      .chain(self.types_by_import.values().filter_map(|r| r.err()))
+      .types_by_import
+      .values()
+      .filter_map(|r| r.err())
+      .chain(&self.other_resolution_errors)
   }
 }
 

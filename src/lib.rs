@@ -4104,10 +4104,11 @@ export function a(a: A): B {
         !matches!(e, ModuleGraphError::ModuleError(ModuleError::Missing(..)))
       })
       .collect::<Vec<_>>();
-    assert_eq!(errors.len(), 3);
-    assert_eq!(errors[0].to_string_with_range(), "Relative import path \"bad_key\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
-    assert_eq!(errors[1].to_string_with_range(), "Relative import path \"bad_value\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
-    assert_eq!(errors[2].to_string_with_range(), "Relative import path \"bad_value2\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
+    assert_eq!(errors.len(), 4);
+    assert_eq!(errors[0].to_string_with_range(), "Relative import path \"bad_value\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
+    assert_eq!(errors[1].to_string_with_range(), "Relative import path \"bad_value2\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
+    assert_eq!(errors[2].to_string_with_range(), "Relative import path \"bad_key\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
+    assert_eq!(errors[3].to_string_with_range(), "Relative import path \"bad_value3\" not prefixed with / or ./ or ../\n    at file:///a/deno.json:1:1");
     let errors_non_type_only = graph
       .walk(
         &graph.roots,
