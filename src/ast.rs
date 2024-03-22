@@ -243,12 +243,20 @@ impl<'a> DefaultModuleAnalyzer<'a> {
     text_info: &SourceTextInfo,
     comments: &MultiThreadedComments,
   ) -> ModuleInfo {
-    let start_pos = module.start();
+    let leading_comments = match module.body.first() {
+      Some(item) => comments.get_leading(item.start()),
+      None => match module.shebang {
+        Some(_) => comments.get_trailing(module.end()),
+        None => comments.get_leading(module.start()),
+      },
+    };
     ModuleInfo {
       dependencies: analyze_dependencies(module, text_info, comments),
-      ts_references: analyze_ts_references(start_pos, text_info, comments),
+      ts_references: analyze_ts_references(text_info, leading_comments),
       jsx_import_source: analyze_jsx_import_source(
-        media_type, start_pos, text_info, comments,
+        media_type,
+        text_info,
+        leading_comments,
       ),
       jsdoc_imports: analyze_jsdoc_imports(media_type, text_info, comments),
     }
@@ -428,14 +436,15 @@ fn filter_dep_comment(c: &deno_ast::dep::DependencyComment) -> bool {
 }
 
 fn analyze_ts_references(
-  start_pos: SourcePos,
   text_info: &SourceTextInfo,
-  comments: &MultiThreadedComments,
+  leading_comments: Option<&Vec<deno_ast::swc::common::comments::Comment>>,
 ) -> Vec<TypeScriptReference> {
   let mut references = Vec::new();
-  if let Some(leading_comments) = comments.get_leading(start_pos) {
-    for comment in leading_comments {
-      if TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text) {
+  if let Some(c) = leading_comments {
+    for comment in c {
+      if comment.kind == CommentKind::Line
+        && TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text)
+      {
         let comment_start = comment.start();
         if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
           let m = captures.get(1).unwrap();
@@ -470,33 +479,26 @@ fn analyze_ts_references(
 
 fn analyze_jsx_import_source(
   media_type: MediaType,
-  start_pos: SourcePos,
   text_info: &SourceTextInfo,
-  comments: &MultiThreadedComments,
+  leading_comments: Option<&Vec<deno_ast::swc::common::comments::Comment>>,
 ) -> Option<SpecifierWithRange> {
-  match media_type {
-    MediaType::Jsx | MediaType::Tsx => {
-      comments.get_leading(start_pos).and_then(|c| {
-        c.iter().find_map(|c| {
-          if c.kind != CommentKind::Block {
-            return None; // invalid
-          }
-          let captures = JSX_IMPORT_SOURCE_RE.captures(&c.text)?;
-          let m = captures.get(1)?;
-          Some(SpecifierWithRange {
-            text: m.as_str().to_string(),
-            range: comment_source_to_position_range(
-              c.start(),
-              &m,
-              text_info,
-              true,
-            ),
-          })
-        })
-      })
-    }
-    _ => None,
+  if !matches!(media_type, MediaType::Jsx | MediaType::Tsx) {
+    return None;
   }
+
+  leading_comments.and_then(|c| {
+    c.iter().find_map(|c| {
+      if c.kind != CommentKind::Block {
+        return None; // invalid
+      }
+      let captures = JSX_IMPORT_SOURCE_RE.captures(&c.text)?;
+      let m = captures.get(1)?;
+      Some(SpecifierWithRange {
+        text: m.as_str().to_string(),
+        range: comment_source_to_position_range(c.start(), &m, text_info, true),
+      })
+    })
+  })
 }
 
 fn analyze_jsdoc_imports(
@@ -827,6 +829,53 @@ const f = new Set();
           }
         },
       ]
+    );
+  }
+
+  #[test]
+  fn test_analyze_ts_references_and_jsx_import_source_with_shebang() {
+    let specifier = ModuleSpecifier::parse("file:///a/test.tsx").unwrap();
+    let source = r#"#!/usr/bin/env -S deno run
+/// <reference path="./ref.d.ts" />
+/* @jsxImportSource preact */
+export {};
+"#;
+    let analyzer = DefaultModuleAnalyzer::new(&DefaultModuleParser);
+    let module_info = analyzer
+      .analyze(&specifier, source.into(), MediaType::Tsx)
+      .unwrap();
+    assert_eq!(
+      module_info,
+      ModuleInfo {
+        dependencies: vec![],
+        ts_references: vec![TypeScriptReference::Path(SpecifierWithRange {
+          text: "./ref.d.ts".to_owned(),
+          range: PositionRange {
+            start: Position {
+              line: 1,
+              character: 20,
+            },
+            end: Position {
+              line: 1,
+              character: 32,
+            },
+          },
+        })],
+        jsx_import_source: Some(SpecifierWithRange {
+          text: "preact".to_owned(),
+          range: PositionRange {
+            start: Position {
+              line: 2,
+              character: 20,
+            },
+            end: Position {
+              line: 2,
+              character: 26,
+            },
+          },
+        }),
+        jsdoc_imports: vec![],
+      },
     );
   }
 }
