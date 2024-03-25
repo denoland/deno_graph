@@ -1485,6 +1485,22 @@ impl<'a> FastCheckTransformer<'a> {
         }
       }
       Expr::Paren(n) => self.maybe_infer_type_from_expr(&n.expr),
+      Expr::New(new_expr) => match &*new_expr.callee {
+        Expr::Ident(ident) => {
+          if ident.sym == "Map" || ident.sym == "Set" {
+            if let Some(type_args) = &new_expr.type_args {
+              return Some(TsType::TsTypeRef(TsTypeRef {
+                span: DUMMY_SP,
+                type_name: TsEntityName::Ident(ident.clone()),
+                type_params: Some(Box::new(*type_args.clone())),
+              }));
+            }
+          }
+
+          None
+        }
+        _ => None,
+      },
       Expr::This(_)
       | Expr::Array(_)
       | Expr::Object(_)
@@ -1496,7 +1512,6 @@ impl<'a> FastCheckTransformer<'a> {
       | Expr::Member(_)
       | Expr::SuperProp(_)
       | Expr::Cond(_)
-      | Expr::New(_)
       | Expr::Seq(_)
       | Expr::Ident(_)
       | Expr::Tpl(_)
