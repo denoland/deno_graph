@@ -997,7 +997,7 @@ mod tests {
       r#"export function foo(a: number): number {
   return {};
 }"#,
-      "export function foo(a: number): number;",
+      "export declare function foo(a: number): number;",
     )
     .await;
     transform_dts_test(
@@ -1005,35 +1005,35 @@ mod tests {
 export function foo(a: any): number {
   return {};
 }"#,
-      r#"export function foo(a: string): number;"#,
+      r#"export declare function foo(a: string): number;"#,
     )
     .await;
     transform_dts_test(
       r#"export function foo(a = 2): number {
   return 2;
 }"#,
-      r#"export function foo(a?: number): number;"#,
+      r#"export declare function foo(a?: number): number;"#,
     )
     .await;
     transform_dts_test(
       r#"export function foo(a: string = 2): number {
   return 2;
 }"#,
-      r#"export function foo(a?: string): number;"#,
+      r#"export declare function foo(a?: string): number;"#,
     )
     .await;
     transform_dts_test(
       r#"export function foo([a, b] = [1, 2]): number {
   return 2;
 }"#,
-      r#"export function foo([a, b]?: [number, number]): number;"#,
+      r#"export declare function foo([a, b]?: [number, number]): number;"#,
     )
     .await;
     transform_dts_test(
       r#"export function foo({a, b} = { a: 1, b: 2 }): number {
   return 2;
 }"#,
-      r#"export function foo({ a, b }?: {
+      r#"export declare function foo({ a, b }?: {
   a: number;
   b: number;
 }): number;"#,

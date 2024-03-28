@@ -87,4 +87,4 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.d.ts:
   {}
   export function getRandom(): number;
   --- DTS ---
-  export function getRandom(): number;
+  export declare function getRandom(): number;
