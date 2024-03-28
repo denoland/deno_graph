@@ -29,7 +29,6 @@ use super::swc_helpers::any_type_ann;
 use super::swc_helpers::emit;
 use super::swc_helpers::get_return_stmts_with_arg_from_function_body;
 use super::swc_helpers::ident;
-use super::swc_helpers::is_never_type;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::ts_keyword_type;
@@ -626,9 +625,9 @@ impl<'a> FastCheckTransformer<'a> {
                 }
                 for arg in c.args.iter_mut() {
                   arg.expr = if arg.spread.is_some() {
-                    Box::new(paren_expr(obj_as_any_expr()))
+                    Box::new(paren_expr(obj_as_never_expr()))
                   } else {
-                    obj_as_any_expr()
+                    obj_as_never_expr()
                   };
                 }
                 true
@@ -1124,7 +1123,7 @@ impl<'a> FastCheckTransformer<'a> {
               )?;
             }
           } else {
-            assign.right = array_as_any_expr();
+            assign.right = array_as_never_expr();
           }
           p.elems.clear();
         }
@@ -1140,7 +1139,7 @@ impl<'a> FastCheckTransformer<'a> {
               )?;
             }
           } else {
-            assign.right = obj_as_any_expr();
+            assign.right = obj_as_never_expr();
           }
           p.props.clear();
         }
@@ -1220,7 +1219,7 @@ impl<'a> FastCheckTransformer<'a> {
                 span: DUMMY_SP,
                 type_ann: Box::new(t),
               }));
-              n.init = Some(obj_as_any_expr());
+              n.init = Some(obj_as_never_expr());
             }
             None => {
               let is_init_leavable = match n.init.as_mut() {
@@ -1240,7 +1239,7 @@ impl<'a> FastCheckTransformer<'a> {
             }
           }
         } else {
-          n.init = Some(obj_as_any_expr());
+          n.init = Some(obj_as_never_expr());
         }
       }
       Pat::Array(_)
@@ -1638,10 +1637,8 @@ fn void_or_promise_void(is_async: bool) -> Box<TsType> {
 fn replacement_return_value(ty: &TsType) -> Option<Box<Expr>> {
   if is_void_type(ty) {
     None
-  } else if is_never_type(ty) {
-    Some(obj_as_never_expr())
   } else {
-    Some(obj_as_any_expr())
+    Some(obj_as_never_expr())
   }
 }
 
@@ -1824,23 +1821,13 @@ fn is_expr_ident_or_member_idents(expr: &Expr) -> bool {
   }
 }
 
-fn array_as_any_expr() -> Box<Expr> {
+fn array_as_never_expr() -> Box<Expr> {
   expr_as_keyword_expr(
     Expr::Array(ArrayLit {
       span: DUMMY_SP,
       elems: Default::default(),
     }),
-    TsKeywordTypeKind::TsAnyKeyword,
-  )
-}
-
-fn obj_as_any_expr() -> Box<Expr> {
-  expr_as_keyword_expr(
-    Expr::Object(ObjectLit {
-      span: DUMMY_SP,
-      props: Default::default(),
-    }),
-    TsKeywordTypeKind::TsAnyKeyword,
+    TsKeywordTypeKind::TsNeverKeyword,
   )
 }
 

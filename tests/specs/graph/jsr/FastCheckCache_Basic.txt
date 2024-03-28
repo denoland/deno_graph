@@ -274,13 +274,13 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export class Test {
     /** Testing */ noReturnTypeVoid(param?: number, param2?: string): void {}
     noReturnTypeAsync(): Promise<void> {
-      return {} as any;
+      return {} as never;
     }
     returnTypeGenerator(): Generator<unknown, any, any> {
-      return {} as any;
+      return {} as never;
     }
     hasReturnType(): A1 & RenamedA3 | A4 | A6 {
-      return {} as any;
+      return {} as never;
     }
     declare private inner: any;
   }

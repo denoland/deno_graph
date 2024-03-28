@@ -100,18 +100,18 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     declare right: RedBlackNode<T> | null;
     declare red: boolean;
     constructor(parent: RedBlackNode<T> | null, value: T){
-      super({} as any, {} as any);
+      super({} as never, {} as never);
     }
     static override from<T>(node: RedBlackNode<T>): RedBlackNode<T> {
-      return {} as any;
+      return {} as never;
     }
   }
-  const isSecure: Symbol = {} as any;
-  const public2: Symbol = {} as any;
+  const isSecure: Symbol = {} as never;
+  const public2: Symbol = {} as never;
   export class CookieMapBase {
     declare [isSecure]: boolean;
     [public2](): number {
-      return {} as any;
+      return {} as never;
     }
   }
   export class Bar {

@@ -67,7 +67,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   interface Symbols {
     readable: unique symbol;
   }
-  export const symbols: Symbols = {} as any;
+  export const symbols: Symbols = {} as never;
   export type Status = typeof symbols.readable;
   --- DTS ---
   interface Symbols {

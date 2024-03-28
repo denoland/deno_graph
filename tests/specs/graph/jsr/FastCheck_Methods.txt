@@ -105,29 +105,29 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export class Test {
     test1(): void {}
     test2(): number {
-      return {} as any;
+      return {} as never;
     }
     test3(param: number): number {
-      return {} as any;
+      return {} as never;
     }
     test4(param?: number): number {
-      return {} as any;
+      return {} as never;
     }
     test5<T extends PublicOther>(param?: number): T {
-      return {} as any;
+      return {} as never;
     }
     test6<T = PublicOther>(param?: number): T {
-      return {} as any;
+      return {} as never;
     }
     test7(param?: number): number;
     test7(param?: number, param2?: PublicOther2): number;
     test7(param0?: any, param1?: any): any {
-      return {} as any;
+      return {} as never;
     }
     test8(param: number): number;
     test8(param: string): string;
     test8(param0?: any): any {
-      return {} as any;
+      return {} as never;
     }
   }
   export class Test2 {

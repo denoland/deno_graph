@@ -126,7 +126,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       }
     }
   }
-  const test: typeof import('./a.ts') = {} as any;
+  const test: typeof import('./a.ts') = {} as never;
   export { test };
   --- DTS ---
   declare const test: typeof import('./a.ts');

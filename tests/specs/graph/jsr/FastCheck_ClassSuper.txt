@@ -79,7 +79,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export class Child extends Base {
     constructor(){
-      super({} as any, {} as any);
+      super({} as never, {} as never);
     }
   }
   class SpreadBase {
@@ -87,7 +87,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export class SpreadChild extends SpreadBase {
     constructor(){
-      super(...({} as any));
+      super(...({} as never));
     }
   }
   --- DTS ---

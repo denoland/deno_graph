@@ -67,7 +67,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export class MyClass {
     get value(): string {
-      return {} as any;
+      return {} as never;
     }
     set value(_value: string) {}
   }
