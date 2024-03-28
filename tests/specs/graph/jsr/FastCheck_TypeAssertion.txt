@@ -131,7 +131,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export declare const str: "foo" & {
     __brand: "foo";
   };
-  export function createMockApp<S extends Record<string | number | symbol, any> = Record<string, any>>(state?: S): Application<S>;
+  export declare function createMockApp<S extends Record<string | number | symbol, any> = Record<string, any>>(state?: S): Application<S>;
   export declare class A {
     prop: Public1;
     constructor(prop?: Public1);

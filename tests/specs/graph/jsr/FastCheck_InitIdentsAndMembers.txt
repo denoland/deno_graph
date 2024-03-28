@@ -167,7 +167,7 @@ Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
     export class A {
     }
   }
-  export function test(a?: any, C?: any): void;
+  export declare function test(a?: any, C?: any): void;
   --- DTS Diagnostics ---
   unable to infer type, falling back to any type
       at https://jsr.io/@scope/b/1.0.0/mod.ts@140
