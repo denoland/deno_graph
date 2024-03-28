@@ -141,7 +141,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/a.ts:
     declare member: string;
   }
   --- DTS ---
-  export declare class A {
+  export class A {
     member: string;
   }
 
@@ -191,6 +191,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   --- DTS ---
   import { B } from "./b.ts";
-  export declare class Export {
+  export class Export {
     prop: typeof B.prototype.member;
   }

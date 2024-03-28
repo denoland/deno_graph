@@ -141,7 +141,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   class PublicOther2 {
   }
   --- DTS ---
-  export declare class Test {
+  export class Test {
     test1(): void;
     test2(): number;
     test3(param: number): number;
@@ -153,7 +153,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     test8(param: number): number;
     test8(param: string): string;
   }
-  export declare class Test2 {
+  export class Test2 {
     public method1(): void;
     protected method2(): void;
     private tsPrivateMethod: any;

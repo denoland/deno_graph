@@ -72,7 +72,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   --- DTS ---
   declare const key: unique symbol;
   declare const key2: unique symbol;
-  export declare class MyClass {
+  export class MyClass {
     [key]: number;
     [key2]: string;
   }

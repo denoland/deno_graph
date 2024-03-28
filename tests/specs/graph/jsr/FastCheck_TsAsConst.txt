@@ -91,16 +91,16 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     ...obj
   } as const;
   --- DTS ---
-  export declare const foo: readonly [1, 2];
-  export declare const bar: readonly [1, any, 2];
-  export declare const obj: {
+  export const foo: readonly [1, 2];
+  export const bar: readonly [1, any, 2];
+  export const obj: {
     readonly str: "bar";
     readonly bool: true;
     readonly bool2: false;
     readonly num: 42;
     readonly nullish: null;
   };
-  export declare const spread: {
+  export const spread: {
     readonly foo: 1;
   };
   --- DTS Diagnostics ---

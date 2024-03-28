@@ -134,5 +134,5 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   --- DTS ---
   export * from "./a.js";
-  export declare class Other {
+  export class Other {
   }

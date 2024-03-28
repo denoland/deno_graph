@@ -73,5 +73,5 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   interface Symbols {
     readable: unique symbol;
   }
-  export declare const symbols: Symbols;
+  export const symbols: Symbols;
   export type Status = typeof symbols.readable;

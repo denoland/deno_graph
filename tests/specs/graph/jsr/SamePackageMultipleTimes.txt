@@ -159,6 +159,6 @@ Fast check https://jsr.io/@scope/b/1.1.0/mod.ts:
     method(value: string): void {}
   }
   --- DTS ---
-  export declare class Test {
+  export class Test {
     method(value: string): void;
   }

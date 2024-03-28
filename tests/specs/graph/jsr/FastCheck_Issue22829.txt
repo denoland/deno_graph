@@ -118,12 +118,12 @@ Fast check https://jsr.io/@scope/a/1.0.0/functions.ts:
   declare abstract class Internal<T> {
     prop: T;
   }
-  function func(): void;
+  declare function func(): void;
   export function other_func(): void;
-  export declare const functions: {
+  export const functions: {
     readonly other;
   };
-  export declare module functions {
+  export module functions {
     type Function<T> = Internal<T>;
   }
   --- DTS Diagnostics ---

@@ -169,14 +169,14 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private override test!: any;
   }
   --- DTS ---
-  export declare class PrivateMethodOverloadable {
+  export class PrivateMethodOverloadable {
     private constructor();
     private method: any;
     private methodWithOverload: any;
     private "stringAndIdent": any;
     private "stringOnly": any;
   }
-  export declare class AmbientPrivateMethodOverloadable {
+  export class AmbientPrivateMethodOverloadable {
     private constructor(value: string);
     private constructor(private: Private);
     private method(value: string): string;
@@ -187,7 +187,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private "stringOnly"(value: string): string;
     private "stringOnly"(): string;
   }
-  export declare module Test {
+  export module Test {
     export class AmbientClassInModule {
       private constructor(value: string);
       private constructor(private: Private);
@@ -195,6 +195,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   declare class Base {
   }
-  export declare class TsPrivateMethodWithOverrideKeyword extends Base {
+  export class TsPrivateMethodWithOverrideKeyword extends Base {
     private override test: any;
   }

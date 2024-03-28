@@ -73,7 +73,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   --- DTS ---
   declare class Base {
   }
-  export declare class WithTsPrivate extends Base {
+  export class WithTsPrivate extends Base {
     private regular: any;
     private override withOverride: any;
   }

@@ -92,7 +92,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/a.ts:
   --- DTS ---
   export default class Test {
   }
-  export declare class A {
+  export class A {
   }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:

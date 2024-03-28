@@ -129,7 +129,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.d.ts:
   declare function random(): number;
   declare var public: number;
   --- DTS ---
-  export declare class Test {
+  export class Test {
     prop: typeof random;
     method(): typeof public;
     static prop: number;

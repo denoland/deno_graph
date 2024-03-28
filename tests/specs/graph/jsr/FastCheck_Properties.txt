@@ -86,7 +86,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   class PublicOther2 {
   }
   --- DTS ---
-  export declare class Test {
+  export class Test {
     prop1: PublicOther;
     protected prop2?: PublicOther2;
     private prop3: any;

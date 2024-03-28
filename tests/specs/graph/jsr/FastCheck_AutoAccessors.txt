@@ -81,12 +81,12 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     #private!: unknown;
   }
   --- DTS ---
-  export declare class AutoAccessor {
+  export class AutoAccessor {
     /** Some comment */ public_accessor: string;
     private private_accessor: any;
     static static_accessor: number;
     private static private_static: any;
     private static private_static_unanalyzable: any;
   }
-  export declare class PrivateAccessor {
+  export class PrivateAccessor {
   }

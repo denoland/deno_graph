@@ -122,7 +122,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     override foo!: string;
   }
   --- DTS ---
-  export declare class RedBlackNode<T> extends BinarySearchNode<T> {
+  export class RedBlackNode<T> extends BinarySearchNode<T> {
     parent: RedBlackNode<T> | null;
     left: RedBlackNode<T> | null;
     right: RedBlackNode<T> | null;
@@ -132,14 +132,14 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   declare const isSecure: Symbol;
   declare const public2: Symbol;
-  export declare class CookieMapBase {
+  export class CookieMapBase {
     [isSecure]: boolean;
     [public2](): number;
   }
-  export declare class Bar {
+  export class Bar {
     abstract foo: string;
     bar: number;
   }
-  export declare class Baz extends Bar {
+  export class Baz extends Bar {
     override foo: string;
   }
