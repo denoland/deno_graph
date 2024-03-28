@@ -144,7 +144,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     export class A {
     }
   }
-  export const handlers: {
+  export declare const handlers: {
     readonly Private;
     readonly C;
   };

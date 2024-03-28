@@ -68,7 +68,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   };
   export type Status = typeof symbols.writable;
   --- DTS ---
-  export const symbols: {
+  export declare const symbols: {
     readonly writable: () => void;
     readonly readable: number;
   };

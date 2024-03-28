@@ -190,12 +190,12 @@ Fast check https://jsr.io/@scope/a/1.0.0/a.d.ts:
   export class A3 {
   }
   --- DTS ---
-  export class A1 {
+  export declare class A1 {
     method(): string;
   }
-  export class A2 {
+  export declare class A2 {
   }
-  export class A3 {
+  export declare class A3 {
   }
 
 Fast check https://jsr.io/@scope/a/1.0.0/b.d.ts:
@@ -204,7 +204,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/b.d.ts:
     prop: string;
   }
   --- DTS ---
-  export class B1 {
+  export declare class B1 {
     prop: string;
   }
 

@@ -176,47 +176,47 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   class Public5 {
   }
   --- DTS ---
-  /** A */ export class ClassBasic {
+  /** A */ export declare class ClassBasic {
     /** B */ constructor(prop: string, other?: number);
   }
-  export class ClassPrivateCtor {
+  export declare class ClassPrivateCtor {
     private constructor();
   }
-  export class ClassPrivateCtorWithOverloads {
+  export declare class ClassPrivateCtorWithOverloads {
     private constructor();
   }
-  export class ClassDeclarePrivateCtor {
+  export declare class ClassDeclarePrivateCtor {
     private constructor(prop: string, other: Private1);
   }
-  export class ClassProtectedCtor {
+  export declare class ClassProtectedCtor {
     protected constructor(prop: string, other?: number);
   }
-  export class ClassProtectedCtorWithOverloads {
+  export declare class ClassProtectedCtorWithOverloads {
     protected constructor(prop: Public1);
   }
-  export class ClassCtorWithOverloads {
+  export declare class ClassCtorWithOverloads {
     constructor(prop: Public1);
   }
-  export class ClassPrivateCtorPublicParamProp {
+  export declare class ClassPrivateCtorPublicParamProp {
     param1: Public2;
     private param2: any;
     private constructor();
   }
-  export class ClassCtorPublicParamProp {
+  export declare class ClassCtorPublicParamProp {
     param1: Public3;
     private param2: any;
     private param3: any;
     constructor(param1: Public3, param2: Public4, param3?: Public5);
   }
-  export class ClassCtorPublicParamPropInit {
+  export declare class ClassCtorPublicParamPropInit {
     param1: Public3;
     constructor(param1?: Public3);
   }
-  export class ClassCtorPublicParamPropOptional {
+  export declare class ClassCtorPublicParamPropOptional {
     param1?: string;
     constructor(param1?: string);
   }
-  export class AmbientClassCtor {
+  export declare class AmbientClassCtor {
     constructor(public param: string, private value: number);
     constructor(public param: string);
   }

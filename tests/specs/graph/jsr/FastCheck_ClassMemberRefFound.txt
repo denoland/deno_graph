@@ -69,7 +69,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     declare prop: string;
   }
   --- DTS ---
-  export class Export {
+  export declare class Export {
     prop: typeof Public1.prototype.prop;
   }
   declare class Public1 {

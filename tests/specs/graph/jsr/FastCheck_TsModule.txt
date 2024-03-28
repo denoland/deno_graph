@@ -78,9 +78,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   class Public1 {
   }
   --- DTS ---
-  export module Test {
+  export declare module Test {
   }
-  export module Test {
+  export declare module Test {
     export class MyClass2 extends Public1 {
     }
   }

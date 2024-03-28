@@ -192,9 +192,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export function test6<T = PublicOther>(param?: number): T;
   export function test7(param?: number): number;
   export function test7(param?: number, param2?: PublicOther2): number;
-  declare function test8(param: number): number;
-  declare function test8(param: string): string;
-  declare function test8(param0?: any): any;
+  function test8(param: number): number;
+  function test8(param: string): string;
+  function test8(param0?: any): any;
   export { test8 };
   export default function test9(param: number): number;
   export default function test9(param: string): string;
@@ -214,6 +214,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   declare class PublicDeclareFunc {
   }
-  export function declareFunc(param: number): number;
-  export function declareFunc(param: string): string;
-  export function declareFunc(param: PublicDeclareFunc): string;
+  export declare function declareFunc(param: number): number;
+  export declare function declareFunc(param: string): string;
+  export declare function declareFunc(param: PublicDeclareFunc): string;

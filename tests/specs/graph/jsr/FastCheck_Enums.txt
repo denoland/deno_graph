@@ -132,20 +132,20 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     I = 1 + NUM
   }
   --- DTS ---
-  export enum EnumWithNoInits {
+  export declare enum EnumWithNoInits {
     Value1,
     Value2
   }
-  export enum EnumWithNumInits {
+  export declare enum EnumWithNumInits {
     Value1 = 1,
     Value2 = 2
   }
-  export enum EnumWithStringInits {
+  export declare enum EnumWithStringInits {
     Value1 = "a",
     Value2 = "b"
   }
   declare const value: number;
-  export enum EnumWithNonConstInits {
+  export declare enum EnumWithNonConstInits {
     Value1,
     Value2
   }
@@ -157,7 +157,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     Value
   }
   declare const NUM: any;
-  export enum Foo1 {
+  export declare enum Foo1 {
     A = 1,
     B = "2",
     C = 1 << 2,

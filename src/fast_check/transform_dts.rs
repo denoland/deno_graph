@@ -161,10 +161,8 @@ impl<'a> FastCheckDtsTransformer<'a> {
               continue;
             }
 
-            if let Some(decl) = self.decl_to_type_decl(
-              /* is_export_decl */ true,
-              export_decl.decl.clone(),
-            ) {
+            if let Some(decl) = self.decl_to_type_decl(export_decl.decl.clone())
+            {
               new_items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
                 ExportDecl {
                   decl,
@@ -282,10 +280,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
               | Decl::Fn(_)
               | Decl::Var(_)
               | Decl::TsModule(_) => {
-                if let Some(decl) = self.decl_to_type_decl(
-                  /* is_export_decl */ false,
-                  decl.clone(),
-                ) {
+                if let Some(decl) = self.decl_to_type_decl(decl.clone()) {
                   new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
                 } else {
                   self.mark_diagnostic_unable_to_infer(decl.range())
@@ -502,12 +497,8 @@ impl<'a> FastCheckDtsTransformer<'a> {
     }
   }
 
-  fn decl_to_type_decl(
-    &mut self,
-    is_export_decl: bool,
-    decl: Decl,
-  ) -> Option<Decl> {
-    let is_declare = self.is_top_level && !is_export_decl;
+  fn decl_to_type_decl(&mut self, decl: Decl) -> Option<Decl> {
+    let is_declare = self.is_top_level;
     match decl {
       Decl::Class(mut class_decl) => {
         class_decl.class.body = self.class_body_to_type(class_decl.class.body);
@@ -1077,7 +1068,7 @@ export function foo(a: any): number {
 
   }
 }"#,
-      r#"export class Foo {
+      r#"export declare class Foo {
   a: number;
   static b: number;
   constructor(value: string);
@@ -1095,7 +1086,7 @@ export function foo(a: any): number {
       r#"export class Foo {
   constructor(...args: string[]) {}
 }"#,
-      r#"export class Foo {
+      r#"export declare class Foo {
   constructor(...args: string[]);
 }"#,
     )
@@ -1110,7 +1101,7 @@ export function foo(a: any): number {
   constructor(arg: number);
   constructor(arg: any) {}
 }"#,
-      r#"export class Foo {
+      r#"export declare class Foo {
   constructor(arg: string);
   constructor(arg: number);
 }"#,
@@ -1123,7 +1114,7 @@ export function foo(a: any): number {
   foo(arg: number);
   foo(arg: any) {}
 }"#,
-      r#"export class Foo {
+      r#"export declare class Foo {
   foo(arg: string);
   foo(arg: number);
 }"#,
@@ -1144,7 +1135,7 @@ export function foo(a: any): number {
   foo(arg: number);
   foo(arg: any) {}
 }"#,
-      r#"export class Foo {
+      r#"export declare class Foo {
   constructor(arg: string);
   constructor(arg: number);
   bar(arg: number): number;
@@ -1159,7 +1150,7 @@ export function foo(a: any): number {
   async fn dts_class_decl_prop_test() {
     transform_dts_test(
       r#"export class Foo { private a!: string }"#,
-      r#"export class Foo {
+      r#"export declare class Foo {
   private a: string;
 }"#,
     )
@@ -1167,7 +1158,7 @@ export function foo(a: any): number {
 
     transform_dts_test(
       r#"export class Foo { declare a: string }"#,
-      r#"export class Foo {
+      r#"export declare class Foo {
   a: string;
 }"#,
     )
@@ -1178,14 +1169,14 @@ export function foo(a: any): number {
   async fn dts_class_decl_prop_infer_test() {
     transform_dts_test(
       r#"export class Foo { foo = (a: string): string => ({} as any) }"#,
-      r#"export class Foo {
+      r#"export declare class Foo {
   foo: (a: string) => string;
 }"#,
     )
     .await;
     transform_dts_test(
       r#"export class Foo { foo = function(a: string): void {} }"#,
-      r#"export class Foo {
+      r#"export declare class Foo {
   foo: (a: string) => void;
 }"#,
     )
@@ -1196,29 +1187,30 @@ export function foo(a: any): number {
   async fn dts_var_decl_test() {
     transform_dts_test(
       r#"export const foo: number = 42;"#,
-      "export const foo: number;",
+      "export declare const foo: number;",
     )
     .await;
 
     transform_dts_test(
       r#"export var foo: number = 42;"#,
-      "export var foo: number;",
+      "export declare var foo: number;",
     )
     .await;
 
     transform_dts_test(
       r#"export let foo: number = 42;"#,
-      "export let foo: number;",
+      "export declare let foo: number;",
     )
     .await;
 
     // Default to any if it cannot be determined
     transform_dts_test(
       r#"export const foo = adsf.b;"#,
-      "export const foo: any;",
+      "export declare const foo: any;",
     )
     .await;
-    transform_dts_test(r#"export let foo;"#, "export let foo: any;").await;
+    transform_dts_test(r#"export let foo;"#, "export declare let foo: any;")
+      .await;
   }
 
   #[tokio::test]
@@ -1242,7 +1234,7 @@ export function foo(a: any): number {
   async fn dts_inference() {
     transform_dts_test(
       r#"export const foo = null as string as number;"#,
-      "export const foo: number;",
+      "export declare const foo: number;",
     )
     .await;
   }
@@ -1251,18 +1243,18 @@ export function foo(a: any): number {
   async fn dts_as_const() {
     transform_dts_test(
       r#"export const foo = [1, 2] as const;"#,
-      "export const foo: readonly [1, 2];",
+      "export declare const foo: readonly [1, 2];",
     )
     .await;
     transform_dts_test(
       r#"export const foo = [1, ,2] as const;"#,
-      "export const foo: readonly [1, any, 2];",
+      "export declare const foo: readonly [1, any, 2];",
     )
     .await;
 
     transform_dts_test(
       r#"export const foo = { str: "bar", bool: true, bool2: false, num: 42,   nullish: null } as const;"#,
-      r#"export const foo: {
+      r#"export declare const foo: {
   readonly str: "bar";
   readonly bool: true;
   readonly bool2: false;
@@ -1273,7 +1265,7 @@ export function foo(a: any): number {
 
     transform_dts_test(
       r#"export const foo = { str: [1, 2] as const } as const;"#,
-      r#"export const foo: {
+      r#"export declare const foo: {
   readonly str: readonly [1, 2];
 };"#,
     )
@@ -1282,7 +1274,7 @@ export function foo(a: any): number {
     // TODO: Requires type resolving
     transform_dts_test(
       r#"export const foo = { bar } as const;"#,
-      r#"export const foo: {
+      r#"export declare const foo: {
 };"#,
     )
     .await;
@@ -1292,17 +1284,17 @@ export function foo(a: any): number {
   async fn dts_literal_inference_ann() {
     transform_dts_test(
       r#"export const foo: number = "abc";"#,
-      "export const foo: number;",
+      "export declare const foo: number;",
     )
     .await;
     transform_dts_test(
       r#"export let foo: number = "abc";"#,
-      "export let foo: number;",
+      "export declare let foo: number;",
     )
     .await;
     transform_dts_test(
       r#"export var foo: number = "abc";"#,
-      "export var foo: number;",
+      "export declare var foo: number;",
     )
     .await;
   }
@@ -1311,38 +1303,44 @@ export function foo(a: any): number {
   async fn dts_literal_inference() {
     transform_dts_test(
       r#"export const foo = 42;"#,
-      "export const foo: number;",
+      "export declare const foo: number;",
     )
     .await;
     transform_dts_test(
       r#"export const foo = "foo";"#,
-      "export const foo: string;",
+      "export declare const foo: string;",
     )
     .await;
     transform_dts_test(
       r#"export const foo = true;"#,
-      "export const foo: boolean;",
+      "export declare const foo: boolean;",
     )
     .await;
     transform_dts_test(
       r#"export const foo = false;"#,
-      "export const foo: boolean;",
+      "export declare const foo: boolean;",
     )
     .await;
     transform_dts_test(
       r#"export const foo = null;"#,
-      "export const foo: null;",
+      "export declare const foo: null;",
     )
     .await;
     transform_dts_test(
       r#"export let foo = undefined;"#,
-      "export let foo: any;",
+      "export declare let foo: any;",
     )
     .await;
-    transform_dts_test(r#"export let foo = 10n;"#, "export let foo: bigint;")
-      .await;
-    transform_dts_test(r#"export let foo = /foo/;"#, "export let foo: RegExp;")
-      .await;
+    transform_dts_test(
+      r#"export let foo = 10n;"#,
+      "export declare let foo: bigint;",
+    )
+    .await;
+    transform_dts_test(
+      r#"export let foo = /foo/;"#,
+      "export declare let foo: RegExp;",
+    )
+    .await;
   }
 
   #[tokio::test]
@@ -1351,27 +1349,27 @@ export function foo(a: any): number {
       r#"export let foo = function add(a: number, b: number): number {
   return a + b;
 }"#,
-      "export let foo: (a: number, b: number) => number;",
+      "export declare let foo: (a: number, b: number) => number;",
     )
     .await;
     transform_dts_test(
       r#"export let foo = function add<T>([a, b]: T): void {}"#,
-      "export let foo: <T>([a, b]: T) => void;",
+      "export declare let foo: <T>([a, b]: T) => void;",
     )
     .await;
     transform_dts_test(
       r#"export let foo = function add<T>({a, b}: T): void {}"#,
-      "export let foo: <T>({ a, b }: T) => void;",
+      "export declare let foo: <T>({ a, b }: T) => void;",
     )
     .await;
     transform_dts_test(
       r#"export let foo = function add(a = 2): void {}"#,
-      "export let foo: (a: number) => void;",
+      "export declare let foo: (a: number) => void;",
     )
     .await;
     transform_dts_test(
       r#"export let foo = function add(...params: any[]): void {}"#,
-      "export let foo: (...params: any[]) => void;",
+      "export declare let foo: (...params: any[]) => void;",
     )
     .await;
   }
@@ -1382,28 +1380,28 @@ export function foo(a: any): number {
       r#"export let foo = (a: number, b: number): number => {
   return a + b;
 }"#,
-      "export let foo: (a: number, b: number) => number;",
+      "export declare let foo: (a: number, b: number) => number;",
     )
     .await;
     transform_dts_test(
       r#"export let foo = <T>([a, b]: T): void => {}"#,
-      "export let foo: <T>([a, b]: T) => void;",
+      "export declare let foo: <T>([a, b]: T) => void;",
     )
     .await;
     transform_dts_test(
       r#"export let foo = <T>({a, b}: T): void => {}"#,
-      "export let foo: <T>({ a, b }: T) => void;",
+      "export declare let foo: <T>({ a, b }: T) => void;",
     )
     .await;
     transform_dts_test(
       r#"export let foo = (a = 2): void => {}"#,
-      "export let foo: (a: number) => void;",
+      "export declare let foo: (a: number) => void;",
     )
     .await;
 
     transform_dts_test(
       r#"export let foo = (...params: any[]): void => {}"#,
-      "export let foo: (...params: any[]) => void;",
+      "export declare let foo: (...params: any[]) => void;",
     )
     .await;
   }
@@ -1429,18 +1427,18 @@ export function foo(a: any): number {
   async fn dts_enum_export() {
     transform_dts_test(
       r#"export enum Foo { A, B }"#,
-      "export enum Foo {\n  A,\n  B\n}",
+      "export declare enum Foo {\n  A,\n  B\n}",
     )
     .await;
     transform_dts_test(
       r#"export const enum Foo { A, B }"#,
-      "export const enum Foo {\n  A,\n  B\n}",
+      "export declare const enum Foo {\n  A,\n  B\n}",
     )
     .await;
 
     transform_dts_test(
       r#"export enum Foo { A = "foo", B = "bar" }"#,
-      r#"export enum Foo {
+      r#"export declare enum Foo {
   A = "foo",
   B = "bar"
 }"#,
@@ -1510,7 +1508,7 @@ export default _dts_1;"#,
     transform_dts_test(
       r#"import { foo } from "bar";export const foobar = foo;"#,
       r#"import { foo } from "bar";
-export const foobar: any;"#,
+export declare const foobar: any;"#,
     )
     .await;
   }

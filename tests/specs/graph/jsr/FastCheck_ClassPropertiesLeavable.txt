@@ -125,7 +125,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   --- DTS ---
   import type { Foo, Bar } from "./b.ts";
-  export class Foo {
+  export declare class Foo {
     fizz: (a: string) => string;
     foo: () => Foo;
     bar: (b: Bar) => number;

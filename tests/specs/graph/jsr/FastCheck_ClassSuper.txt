@@ -94,12 +94,12 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   declare class Base {
     constructor(a: number, b: number);
   }
-  export class Child extends Base {
+  export declare class Child extends Base {
     constructor();
   }
   declare class SpreadBase {
     constructor(...params: string[]);
   }
-  export class SpreadChild extends SpreadBase {
+  export declare class SpreadChild extends SpreadBase {
     constructor();
   }
