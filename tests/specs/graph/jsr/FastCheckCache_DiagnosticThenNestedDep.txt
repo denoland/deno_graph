@@ -179,7 +179,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
 Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
   {}
   export function add(a: number, b: number): number {
-    return {} as any;
+    return {} as never;
   }
 
 == fast check cache ==

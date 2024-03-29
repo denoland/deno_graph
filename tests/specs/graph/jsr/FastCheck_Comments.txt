@@ -61,7 +61,7 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   // @ts-ignore broken line
-  export const value1: number = {} as any;
+  export const value1: number = {} as never;
   --- DTS ---
   // @ts-ignore broken line
   export declare const value1: number;

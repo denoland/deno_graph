@@ -67,10 +67,10 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  const rawString1: Symbol = {} as any;
-  const rawString2: Symbol = {} as any;
-  const rawString3: Symbol = {} as any;
-  const rawString4: Symbol = {} as any;
+  const rawString1: Symbol = {} as never;
+  const rawString2: Symbol = {} as never;
+  const rawString3: Symbol = {} as never;
+  const rawString4: Symbol = {} as never;
   export interface RawString {
     [rawString1]: string;
     [rawString2](): void;

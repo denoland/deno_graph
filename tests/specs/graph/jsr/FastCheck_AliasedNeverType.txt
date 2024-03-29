@@ -5,14 +5,13 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-export interface $Type {
-  prop: boolean;
+export type NeverType = never;
+/**
+ * This should have `return {} as never` instead of `as any`, which will error when type checking.
+ */
+export function myFunction(): NeverType {
+  Deno.exit(1);
 }
-
-export const $: $Type = build$FromState(buildInitial$State({
-  isGlobal: true,
-}));
-export default $;
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -49,7 +48,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 147,
+      "size": 198,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -64,14 +63,14 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  export interface $Type {
-    prop: boolean;
+  export type NeverType = never;
+  /**
+   * This should have `return {} as never` instead of `as any`, which will error when type checking.
+   */ export function myFunction(): NeverType {
+    return {} as never;
   }
-  export const $: $Type = {} as never;
-  export default $;
   --- DTS ---
-  export interface $Type {
-    prop: boolean;
-  }
-  export declare const $: $Type;
-  export default $;
+  export type NeverType = never;
+  /**
+   * This should have `return {} as never` instead of `as any`, which will error when type checking.
+   */ export declare function myFunction(): NeverType;

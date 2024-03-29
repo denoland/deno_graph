@@ -96,9 +96,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export const str: "foo" & {
     __brand: "foo";
-  } = {} as any;
+  } = {} as never;
   export function createMockApp<S extends Record<string | number | symbol, any> = Record<string, any>>(state?: S): Application<S> {
-    return {} as any;
+    return {} as never;
   }
   export class A {
     declare prop: Public1;
@@ -106,7 +106,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     declare handler: Public2<Public3>;
     declare secondProp: Public4;
   }
-  export const var1: Public5<Public6> = {} as any;
+  export const var1: Public5<Public6> = {} as never;
   interface Public1<T> {
   }
   interface Public2 {
@@ -123,7 +123,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export const str2: "foo" & {
     data: Public7;
-  } = {} as any;
+  } = {} as never;
   --- DTS ---
   export declare class Application<S> {
     prop: S;
