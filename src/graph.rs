@@ -4578,9 +4578,8 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::ParserModuleAnalyzer;
   use crate::packages::JsrPackageInfoVersion;
-  use crate::DefaultModuleAnalyzer;
+  use crate::ParserModuleAnalyzer;
   use deno_ast::dep::ImportAttribute;
   use pretty_assertions::assert_eq;
   use serde_json::json;

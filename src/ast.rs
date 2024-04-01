@@ -857,7 +857,7 @@ const f = new Set();
 /* @jsxImportSource preact */
 export {};
 "#;
-    let analyzer = DefaultModuleAnalyzer::new(&DefaultModuleParser);
+    let analyzer = DefaultModuleAnalyzer::default();
     let module_info = analyzer
       .analyze(&specifier, source.into(), MediaType::Tsx)
       .unwrap();
