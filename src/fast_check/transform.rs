@@ -1,9 +1,10 @@
-// Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2024 the Deno authors. MIT license.
 
 // for span methods, which actually make sense to use here in the transforms
 #![allow(clippy::disallowed_methods)]
 #![allow(clippy::disallowed_types)]
 
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use deno_ast::swc::ast::*;
@@ -28,7 +29,6 @@ use super::swc_helpers::any_type_ann;
 use super::swc_helpers::emit;
 use super::swc_helpers::get_return_stmts_with_arg_from_function_body;
 use super::swc_helpers::ident;
-use super::swc_helpers::is_never_type;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::ts_keyword_type;
@@ -122,33 +122,45 @@ pub fn transform(
     &comments,
   );
 
-  let comments = comments.into_single_threaded();
+  // swc will modify the comment collection internally when emitting,
+  // so if we're emitting with dts, make a copy of the comments for
+  // each emit
+  let (fast_check_comments, dts_comments) = if options.dts {
+    (
+      comments.as_single_threaded(),
+      Some(comments.into_single_threaded()),
+    )
+  } else {
+    (comments.into_single_threaded(), None)
+  };
 
   // now emit
-  let (text, source_map) =
-    emit(specifier, &comments, parsed_source.text_info(), &module).map_err(
-      |e| {
-        vec![FastCheckDiagnostic::Emit {
-          specifier: specifier.clone(),
-          inner: Arc::new(e),
-        }]
-      },
-    )?;
+  let (text, source_map) = emit(
+    specifier,
+    &fast_check_comments,
+    parsed_source.text_info(),
+    &module,
+  )
+  .map_err(|e| {
+    vec![FastCheckDiagnostic::Emit {
+      specifier: specifier.clone(),
+      inner: Arc::new(e),
+    }]
+  })?;
 
-  let dts = if options.dts {
+  let dts = if let Some(dts_comments) = dts_comments {
     let mut dts_transformer =
-      FastCheckDtsTransformer::new(parsed_source, specifier);
+      FastCheckDtsTransformer::new(parsed_source.text_info(), specifier);
 
     let module = dts_transformer.transform(module)?;
     let (text, _source_map) =
-      emit(specifier, &comments, parsed_source.text_info(), &module).map_err(
-        |e| {
+      emit(specifier, &dts_comments, parsed_source.text_info(), &module)
+        .map_err(|e| {
           vec![FastCheckDiagnostic::Emit {
             specifier: specifier.clone(),
             inner: Arc::new(e),
           }]
-        },
-      )?;
+        })?;
 
     Some(FastCheckDtsModule {
       text,
@@ -173,7 +185,6 @@ struct FastCheckTransformer<'a> {
   parsed_source: &'a ParsedSource,
   should_error_on_first_diagnostic: bool,
   diagnostics: Vec<FastCheckDiagnostic>,
-  is_decl_file: bool,
 }
 
 impl<'a> FastCheckTransformer<'a> {
@@ -185,7 +196,6 @@ impl<'a> FastCheckTransformer<'a> {
     should_error_on_first_diagnostic: bool,
   ) -> Self {
     Self {
-      is_decl_file: parsed_source.media_type().is_declaration(),
       graph,
       specifier,
       public_ranges,
@@ -201,11 +211,15 @@ impl<'a> FastCheckTransformer<'a> {
     (deno_ast::swc::ast::Module, MultiThreadedComments),
     Vec<FastCheckDiagnostic>,
   > {
+    let is_ambient = self.parsed_source.media_type().is_declaration();
     let mut module = self.parsed_source.module().clone();
     let mut comments =
       CommentsMut::new(self.parsed_source.comments().as_single_threaded());
-    module.body = self
-      .transform_module_body(std::mem::take(&mut module.body), &mut comments)?;
+    module.body = self.transform_module_body(
+      std::mem::take(&mut module.body),
+      &mut comments,
+      is_ambient,
+    )?;
     Ok((module, comments.into_multi_threaded()))
   }
 
@@ -213,10 +227,11 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     body: Vec<ModuleItem>,
     comments: &mut CommentsMut,
+    is_ambient: bool,
   ) -> Result<Vec<ModuleItem>, Vec<FastCheckDiagnostic>> {
     let mut final_body = Vec::with_capacity(body.len());
     for mut item in body {
-      let retain = self.transform_item(&mut item, comments)?;
+      let retain = self.transform_item(&mut item, comments, is_ambient)?;
       if retain {
         final_body.push(item);
       } else {
@@ -252,6 +267,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     item: &mut ModuleItem,
     comments: &mut CommentsMut,
+    is_ambient: bool,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     match item {
       ModuleItem::ModuleDecl(decl) => match decl {
@@ -309,12 +325,22 @@ impl<'a> FastCheckTransformer<'a> {
           }
 
           let node_range = n.range();
-          self.transform_default_decl(&mut n.decl, comments, node_range)?;
+          self.transform_default_decl(
+            &mut n.decl,
+            comments,
+            node_range,
+            is_ambient,
+          )?;
           Ok(true)
         }
         ModuleDecl::ExportDecl(n) => {
           let export_decl_range = n.range();
-          self.transform_decl(&mut n.decl, comments, Some(export_decl_range))
+          self.transform_decl(
+            &mut n.decl,
+            comments,
+            Some(export_decl_range),
+            is_ambient,
+          )
         }
         ModuleDecl::TsImportEquals(n) => match &n.module_ref {
           TsModuleRef::TsEntityName(n) => {
@@ -363,7 +389,7 @@ impl<'a> FastCheckTransformer<'a> {
         | Stmt::ForIn(_)
         | Stmt::ForOf(_)
         | Stmt::Expr(_) => Ok(false),
-        Stmt::Decl(n) => self.transform_decl(n, comments, None),
+        Stmt::Decl(n) => self.transform_decl(n, comments, None, is_ambient),
       },
     }
   }
@@ -373,14 +399,20 @@ impl<'a> FastCheckTransformer<'a> {
     default_decl: &mut DefaultDecl,
     comments: &mut CommentsMut,
     parent_range: SourceRange,
+    is_ambient: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
     match default_decl {
-      DefaultDecl::Class(n) => self.transform_class(&mut n.class, comments),
+      DefaultDecl::Class(n) => self.transform_class(
+        &mut n.class,
+        comments,
+        /* has declare keyword */ false,
+      ),
       DefaultDecl::Fn(n) => self.transform_fn(
         &mut n.function,
         n.ident.as_ref().map(|i| i.range()),
         self.public_ranges.is_impl_with_overloads(&parent_range),
         /* is setter */ false,
+        is_ambient,
       ),
       DefaultDecl::TsInterfaceDecl(_) => Ok(()),
     }
@@ -391,6 +423,7 @@ impl<'a> FastCheckTransformer<'a> {
     decl: &mut Decl,
     comments: &mut CommentsMut,
     parent_range: Option<SourceRange>,
+    is_ambient: bool,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     let public_range = parent_range.unwrap_or_else(|| decl.range());
     match decl {
@@ -398,7 +431,11 @@ impl<'a> FastCheckTransformer<'a> {
         if !self.public_ranges.contains(&public_range) {
           return Ok(false);
         }
-        self.transform_class(&mut n.class, comments)?;
+        self.transform_class(
+          &mut n.class,
+          comments,
+          is_ambient || n.declare,
+        )?;
         Ok(true)
       }
       Decl::Fn(n) => {
@@ -412,14 +449,20 @@ impl<'a> FastCheckTransformer<'a> {
           Some(n.ident.range()),
           is_overload,
           /* is setter */ false,
+          is_ambient,
         )?;
         Ok(true)
       }
-      Decl::Var(n) => self.transform_var(n),
+      Decl::Var(n) => self.transform_var(n, is_ambient),
       Decl::TsInterface(_) => Ok(self.public_ranges.contains(&public_range)),
       Decl::TsTypeAlias(_) => Ok(self.public_ranges.contains(&public_range)),
       Decl::TsEnum(_) => Ok(self.public_ranges.contains(&public_range)),
-      Decl::TsModule(m) => self.transform_ts_module(m, &public_range, comments),
+      Decl::TsModule(m) => self.transform_ts_module(
+        m,
+        &public_range,
+        comments,
+        is_ambient || m.declare || m.global,
+      ),
       Decl::Using(n) => {
         if self.public_ranges.contains(&public_range)
           || n
@@ -445,9 +488,12 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     n: &mut Class,
     comments: &mut CommentsMut,
+    is_ambient: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
-    if self.is_decl_file {
-      return Ok(()); // no need to do anything
+    if is_ambient {
+      // ignore private computed members
+      n.body.retain(|m| !is_ts_private_computed_class_member(m));
+      return Ok(());
     }
 
     let mut members = Vec::with_capacity(n.body.len());
@@ -462,15 +508,67 @@ impl<'a> FastCheckTransformer<'a> {
       }
     }
     let mut insert_members = Vec::new();
+    let mut had_private_constructor = false;
+    let mut seen_ts_private_methods = HashSet::new();
     for mut member in std::mem::take(&mut n.body) {
       had_private = had_private
         || matches!(
           member,
-          ClassMember::PrivateMethod(_) | ClassMember::PrivateProp(_)
+          ClassMember::PrivateMethod(_)
+            | ClassMember::PrivateProp(_)
+            | ClassMember::AutoAccessor(AutoAccessor {
+              key: Key::Private(_),
+              ..
+            })
         );
 
-      let retain =
-        self.transform_class_member(&mut member, &mut insert_members)?;
+      let mut retain = !is_ts_private_computed_class_member(&member);
+      if retain {
+        // do some extra checks to see whether it should be removed
+        if let ClassMember::Constructor(ctor) = &member {
+          if ctor.accessibility == Some(Accessibility::Private) {
+            if had_private_constructor {
+              retain = false;
+            } else {
+              had_private_constructor = true;
+            }
+          }
+        } else if let ClassMember::Method(method) = &member {
+          if method.accessibility == Some(Accessibility::Private) {
+            let key = match &method.key {
+              PropName::Ident(i) => Some(i.sym.to_string()),
+              PropName::Str(s) => Some(s.value.to_string()),
+              PropName::Num(n) => Some(
+                n.raw
+                  .as_ref()
+                  .map(|r| r.to_string())
+                  .unwrap_or_else(|| n.value.to_string()),
+              ),
+
+              PropName::Computed(_) => None,
+              PropName::BigInt(n) => Some(
+                n.raw
+                  .as_ref()
+                  .map(|r| r.to_string())
+                  .unwrap_or_else(|| n.value.to_string()),
+              ),
+            };
+            retain = match key {
+              Some(key) => seen_ts_private_methods.insert(key),
+              None => false,
+            };
+          }
+        }
+      }
+
+      if retain {
+        retain = self.transform_class_member(
+          &mut member,
+          &mut insert_members,
+          is_ambient,
+        )?;
+      }
+
       if retain {
         members.push(member);
       } else {
@@ -514,6 +612,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     member: &mut ClassMember,
     insert_members: &mut Vec<ClassMember>,
+    is_ambient: bool,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     match member {
       ClassMember::Constructor(n) => {
@@ -526,9 +625,9 @@ impl<'a> FastCheckTransformer<'a> {
                 }
                 for arg in c.args.iter_mut() {
                   arg.expr = if arg.spread.is_some() {
-                    Box::new(paren_expr(obj_as_any_expr()))
+                    Box::new(paren_expr(obj_as_never_expr()))
                   } else {
-                    obj_as_any_expr()
+                    obj_as_never_expr()
                   };
                 }
                 true
@@ -540,19 +639,19 @@ impl<'a> FastCheckTransformer<'a> {
         }
 
         for param in &mut n.params {
-          let mut is_optional = false;
           match param {
             ParamOrTsParamProp::Param(_) => {
               // ignore
             }
             ParamOrTsParamProp::TsParamProp(prop) => {
+              let is_optional = match &prop.param {
+                TsParamPropParam::Ident(ident) => ident.optional,
+                TsParamPropParam::Assign(_) => false,
+              };
               insert_members.push(ClassMember::ClassProp(ClassProp {
                 span: DUMMY_SP,
                 key: match &prop.param {
                   TsParamPropParam::Ident(ident) => {
-                    if ident.optional {
-                      is_optional = true;
-                    }
                     PropName::Ident(ident.id.clone())
                   }
                   TsParamPropParam::Assign(assign) => match &*assign.left {
@@ -576,7 +675,7 @@ impl<'a> FastCheckTransformer<'a> {
                 value: None,
                 type_ann: if prop.accessibility == Some(Accessibility::Private)
                 {
-                  Some(unknown_type_ann())
+                  Some(any_type_ann())
                 } else {
                   match &prop.param {
                     TsParamPropParam::Ident(ident) => ident.type_ann.clone(),
@@ -607,11 +706,12 @@ impl<'a> FastCheckTransformer<'a> {
                   Some(accessibility) => Some(accessibility),
                 },
                 is_abstract: false,
-                is_optional: false,
+                is_optional,
                 is_override: prop.is_override,
                 readonly: prop.readonly,
-                declare: false,
-                definite: !is_optional,
+                // delcare is not valid with override
+                declare: !prop.is_override,
+                definite: prop.is_override,
               }));
               *param = ParamOrTsParamProp::Param(Param {
                 span: prop.span,
@@ -626,9 +726,6 @@ impl<'a> FastCheckTransformer<'a> {
         }
 
         if n.accessibility == Some(Accessibility::Private) {
-          if n.body.is_none() {
-            return Ok(false);
-          }
           n.params.clear();
           return Ok(true);
         }
@@ -671,7 +768,7 @@ impl<'a> FastCheckTransformer<'a> {
             span: DUMMY_SP,
             key: n.key.clone(),
             value: None,
-            type_ann: Some(unknown_type_ann()),
+            type_ann: Some(any_type_ann()),
             is_static: n.is_static,
             decorators: Vec::new(),
             accessibility: Some(Accessibility::Private),
@@ -679,8 +776,9 @@ impl<'a> FastCheckTransformer<'a> {
             is_optional: n.is_optional,
             is_override: n.is_override,
             readonly: false,
-            declare: false,
-            definite: !n.is_optional && !n.is_static,
+            // delcare is not valid with override
+            declare: !n.is_override,
+            definite: n.is_override,
           });
           return Ok(true);
         }
@@ -689,16 +787,15 @@ impl<'a> FastCheckTransformer<'a> {
           &mut n.function,
           Some(n.key.range()),
           is_overload,
-          n.kind == MethodKind::Setter,
+          /* is setter */ n.kind == MethodKind::Setter,
+          is_ambient,
         )?;
         Ok(true)
       }
       ClassMember::ClassProp(n) => {
         if n.accessibility == Some(Accessibility::Private) {
-          n.type_ann = Some(unknown_type_ann());
-          if !n.is_optional && !n.is_static {
-            n.definite = true;
-          }
+          n.type_ann = Some(any_type_ann());
+          n.declare = !n.is_override;
           n.value = None;
           return Ok(true);
         }
@@ -735,47 +832,60 @@ impl<'a> FastCheckTransformer<'a> {
         } else {
           n.value = None;
         }
-        n.definite = !n.is_optional
-          && !n.is_static
-          && !n.declare
-          && !n.is_abstract
-          && n.value.is_none();
+        n.declare = n.value.is_none() && !n.is_override;
+        n.definite = n.value.is_none() && n.is_override;
         n.decorators.clear();
         Ok(true)
       }
-      ClassMember::AutoAccessor(_n) => {
-        // waiting on https://github.com/swc-project/swc/pull/8436
-        // if n.accessibility == Some(Accessibility::Private) {
-        //   n.type_ann = Some(unknown_type_ann());
-        //   n.definite = true;
-        //   return Ok(true);
-        // }
-        // if n.type_ann.is_none() {
-        //   let inferred_type = n
-        //     .value
-        //     .as_ref()
-        //     .and_then(|e| self.maybe_infer_type_from_expr(&*e));
-        //   match inferred_type {
-        //     Some(t) => {
-        //       n.type_ann = Some(Box::new(TsTypeAnn {
-        //         span: DUMMY_SP,
-        //         type_ann: Box::new(t),
-        //       }));
-        //     }
-        //     None => {
-        //       self.mark_diagnostic(
-        //         FastCheckTransformDiagnostic::MissingExplicitType {
-        //           range: self.source_range_to_range(n.key.range()),
-        //         },
-        //       )?;
-        //     }
-        //   }
-        // }
-        // n.definite = true;
-        // n.decorators.clear();
-        // n.value = None;
-        // Ok(true)
-        todo!("Remove auto-accessor for now. Waiting on https://github.com/swc-project/swc/pull/8436")
+      ClassMember::AutoAccessor(n) => {
+        let key = match &n.key {
+          Key::Private(_) => {
+            return Ok(false);
+          }
+          Key::Public(key) => key,
+        };
+        let type_ann = if n.accessibility == Some(Accessibility::Private) {
+          any_type_ann()
+        } else if let Some(type_ann) = n.type_ann.clone() {
+          type_ann
+        } else {
+          let inferred_type = n
+            .value
+            .as_ref()
+            .and_then(|e| self.maybe_infer_type_from_expr(e));
+          match inferred_type {
+            Some(t) => Box::new(TsTypeAnn {
+              span: DUMMY_SP,
+              type_ann: Box::new(t),
+            }),
+            None => {
+              self.mark_diagnostic(
+                FastCheckDiagnostic::MissingExplicitType {
+                  range: self.source_range_to_range(n.key.range()),
+                },
+              )?;
+              any_type_ann()
+            }
+          }
+        };
+        *member = ClassMember::ClassProp(ClassProp {
+          span: n.span,
+          key: key.clone(),
+          value: None,
+          type_ann: Some(type_ann),
+          is_static: n.is_static,
+          decorators: Vec::new(),
+          accessibility: n.accessibility,
+          // todo(dsherret): ensure abstract auto-accessors work
+          // once this pr lands: https://github.com/swc-project/swc/pull/8736
+          is_abstract: false,
+          is_optional: false,
+          is_override: n.is_override,
+          readonly: false,
+          declare: !n.is_override,
+          definite: n.is_override,
+        });
+        Ok(true)
       }
       ClassMember::TsIndexSignature(_) => {
         // ok, as-is
@@ -794,8 +904,9 @@ impl<'a> FastCheckTransformer<'a> {
     parent_id_range: Option<SourceRange>,
     is_overload: bool,
     is_set_accessor: bool,
+    is_ambient: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
-    if self.is_decl_file {
+    if is_ambient {
       return Ok(()); // no need to do anything
     }
     if is_overload {
@@ -1012,7 +1123,7 @@ impl<'a> FastCheckTransformer<'a> {
               )?;
             }
           } else {
-            assign.right = array_as_any_expr();
+            assign.right = array_as_never_expr();
           }
           p.elems.clear();
         }
@@ -1028,7 +1139,7 @@ impl<'a> FastCheckTransformer<'a> {
               )?;
             }
           } else {
-            assign.right = obj_as_any_expr();
+            assign.right = obj_as_never_expr();
           }
           p.props.clear();
         }
@@ -1077,11 +1188,12 @@ impl<'a> FastCheckTransformer<'a> {
   fn transform_var(
     &mut self,
     n: &mut VarDecl,
+    is_ambient: bool,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     n.decls.retain(|n| self.public_ranges.contains(&n.range()));
 
     // don't need to do anything for these in a declaration file
-    if !self.is_decl_file {
+    if !is_ambient {
       for decl in &mut n.decls {
         self.transform_var_declarator(decl)?;
       }
@@ -1107,7 +1219,7 @@ impl<'a> FastCheckTransformer<'a> {
                 span: DUMMY_SP,
                 type_ann: Box::new(t),
               }));
-              n.init = Some(obj_as_any_expr());
+              n.init = Some(obj_as_never_expr());
             }
             None => {
               let is_init_leavable = match n.init.as_mut() {
@@ -1127,7 +1239,7 @@ impl<'a> FastCheckTransformer<'a> {
             }
           }
         } else {
-          n.init = Some(obj_as_any_expr());
+          n.init = Some(obj_as_never_expr());
         }
       }
       Pat::Array(_)
@@ -1152,6 +1264,7 @@ impl<'a> FastCheckTransformer<'a> {
     n: &mut TsModuleDecl,
     public_range: &SourceRange,
     comments: &mut CommentsMut,
+    is_ambient: bool,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     if n.global {
       self.mark_diagnostic(FastCheckDiagnostic::UnsupportedGlobalModule {
@@ -1208,7 +1321,8 @@ impl<'a> FastCheckTransformer<'a> {
     }
 
     let body = std::mem::take(&mut ts_module_block.body);
-    ts_module_block.body = self.transform_module_body(body, comments)?;
+    ts_module_block.body =
+      self.transform_module_body(body, comments, is_ambient)?;
 
     Ok(true)
   }
@@ -1322,7 +1436,7 @@ impl<'a> FastCheckTransformer<'a> {
       Expr::TsConstAssertion(n) => recurse(&mut n.expr)?,
       Expr::TsNonNull(n) => recurse(&mut n.expr)?,
       Expr::Fn(n) => {
-        self.transform_fn(&mut n.function, parent_id_range, false, false)?;
+        self.transform_fn(&mut n.function, parent_id_range, /* is overload */ false, /* is setter */ false, /* is ambient */ false)?;
         true
       }
       Expr::Arrow(n) => {
@@ -1464,6 +1578,46 @@ impl<'a> FastCheckTransformer<'a> {
   }
 }
 
+fn is_ts_private_computed_class_member(m: &ClassMember) -> bool {
+  match m {
+    ClassMember::Method(m) => {
+      if m.accessibility == Some(Accessibility::Private) {
+        is_computed_prop_name(&m.key)
+      } else {
+        false
+      }
+    }
+    ClassMember::AutoAccessor(m) => {
+      if m.accessibility == Some(Accessibility::Private) {
+        match &m.key {
+          Key::Private(_) => false,
+          Key::Public(k) => is_computed_prop_name(k),
+        }
+      } else {
+        false
+      }
+    }
+    ClassMember::ClassProp(p) => {
+      if p.accessibility == Some(Accessibility::Private) {
+        is_computed_prop_name(&p.key)
+      } else {
+        false
+      }
+    }
+    _ => false,
+  }
+}
+
+fn is_computed_prop_name(prop_name: &PropName) -> bool {
+  match prop_name {
+    PropName::Ident(_)
+    | PropName::Str(_)
+    | PropName::Num(_)
+    | PropName::BigInt(_) => false,
+    PropName::Computed(_) => true,
+  }
+}
+
 fn void_or_promise_void(is_async: bool) -> Box<TsType> {
   let void_type = Box::new(ts_keyword_type(TsKeywordTypeKind::TsVoidKeyword));
   if is_async {
@@ -1483,10 +1637,8 @@ fn void_or_promise_void(is_async: bool) -> Box<TsType> {
 fn replacement_return_value(ty: &TsType) -> Option<Box<Expr>> {
   if is_void_type(ty) {
     None
-  } else if is_never_type(ty) {
-    Some(obj_as_never_expr())
   } else {
-    Some(obj_as_any_expr())
+    Some(obj_as_never_expr())
   }
 }
 
@@ -1556,7 +1708,7 @@ fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
       },
     })),
     TsType::TsTypeQuery(_) => None,
-    TsType::TsTypeLit(_) => None,
+    TsType::TsTypeLit(t) => Some(TsType::TsTypeLit(t.clone())),
     TsType::TsTupleType(t) => {
       let mut elems = Vec::with_capacity(t.elem_types.len());
       for elem_type in &t.elem_types {
@@ -1669,23 +1821,13 @@ fn is_expr_ident_or_member_idents(expr: &Expr) -> bool {
   }
 }
 
-fn array_as_any_expr() -> Box<Expr> {
+fn array_as_never_expr() -> Box<Expr> {
   expr_as_keyword_expr(
     Expr::Array(ArrayLit {
       span: DUMMY_SP,
       elems: Default::default(),
     }),
-    TsKeywordTypeKind::TsAnyKeyword,
-  )
-}
-
-fn obj_as_any_expr() -> Box<Expr> {
-  expr_as_keyword_expr(
-    Expr::Object(ObjectLit {
-      span: DUMMY_SP,
-      props: Default::default(),
-    }),
-    TsKeywordTypeKind::TsAnyKeyword,
+    TsKeywordTypeKind::TsNeverKeyword,
   )
 }
 
@@ -1714,12 +1856,5 @@ fn paren_expr(expr: Box<Expr>) -> Expr {
   Expr::Paren(ParenExpr {
     span: DUMMY_SP,
     expr,
-  })
-}
-
-fn unknown_type_ann() -> Box<TsTypeAnn> {
-  Box::new(TsTypeAnn {
-    span: DUMMY_SP,
-    type_ann: Box::new(ts_keyword_type(TsKeywordTypeKind::TsUnknownKeyword)),
   })
 }

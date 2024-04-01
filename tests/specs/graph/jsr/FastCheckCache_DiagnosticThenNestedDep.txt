@@ -1,0 +1,191 @@
+~~ {"fastCheckCache":true} ~~
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+export function add(a: number, b: number) {
+  return Math.random();
+}
+
+export * from "./a.ts";
+
+# https://jsr.io/@scope/a/1.0.0/a.ts
+// should still grab this as a dep for this module for fast check
+export * from "jsr:@scope/b@1";
+
+// even though this is private, it should still grab this as a
+// dependency because we couldn't fast check this current package
+// todo(#391): fix this
+import { Private } from "jsr:@scope/c@1";
+console.log(Private);
+
+# https://jsr.io/@scope/b/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/b/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/b/1.0.0/mod.ts
+export function add(a: number, b: number): number {
+  return a + b;
+}
+
+# https://jsr.io/@scope/c/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/c/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/c/1.0.0/mod.ts
+export function add(a: number, b: number): number {
+  return a + b;
+}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/b@1",
+          "code": {
+            "specifier": "jsr:@scope/b@1",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 14
+              },
+              "end": {
+                "line": 1,
+                "character": 30
+              }
+            }
+          }
+        },
+        {
+          "specifier": "jsr:@scope/c@1",
+          "code": {
+            "specifier": "jsr:@scope/c@1",
+            "span": {
+              "start": {
+                "line": 6,
+                "character": 24
+              },
+              "end": {
+                "line": 6,
+                "character": 40
+              }
+            }
+          }
+        }
+      ],
+      "size": 316,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
+            "span": {
+              "start": {
+                "line": 4,
+                "character": 14
+              },
+              "end": {
+                "line": 4,
+                "character": 22
+              }
+            }
+          }
+        }
+      ],
+      "size": 95,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 70,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/b/1.0.0/mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 70,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/c/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts",
+    "jsr:@scope/b@1": "https://jsr.io/@scope/b/1.0.0/mod.ts",
+    "jsr:@scope/c@1": "https://jsr.io/@scope/c/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0",
+    "@scope/b@1": "@scope/b@1.0.0",
+    "@scope/c@1": "@scope/c@1.0.0"
+  }
+}
+
+jsr deps: {
+    "@scope/a@1.0.0": [
+        "jsr:@scope/b@1",
+        "jsr:@scope/c@1",
+    ],
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  missing explicit return type in the public API
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@16
+Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
+  {}
+  export function add(a: number, b: number): number {
+    return {} as never;
+  }
+
+== fast check cache ==
+FastCheckCacheKey(4741815020074927300):
+    Deps - ["@scope/b@1.0.0"]
+    Modules: [["https://jsr.io/@scope/a/1.0.0/mod.ts","diagnostic"]]
+FastCheckCacheKey(15065614787034843742):
+    Deps - []
+    Modules: [["https://jsr.io/@scope/b/1.0.0/mod.ts","info"]]

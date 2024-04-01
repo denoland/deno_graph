@@ -1,0 +1,92 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+const symbol = Symbol();
+export class AutoAccessor {
+  /** Some comment */
+  accessor public_accessor: string;
+  private accessor private_accessor: string;
+  private accessor [symbol1]: string;
+  static static_accessor = 2;
+  private static private_static = '';
+  private static private_static_unanalyzable = unanalyzable();
+}
+
+export class PrivateAccessor {
+  accessor #private = 4;
+}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 386,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {}
+  export class AutoAccessor {
+    /** Some comment */ declare public_accessor: string;
+    declare private private_accessor: any;
+    declare static static_accessor: number;
+    declare private static private_static: any;
+    declare private static private_static_unanalyzable: any;
+  }
+  export class PrivateAccessor {
+    #private!: unknown;
+  }
+  --- DTS ---
+  export declare class AutoAccessor {
+    /** Some comment */ public_accessor: string;
+    private private_accessor: any;
+    static static_accessor: number;
+    private static private_static: any;
+    private static private_static_unanalyzable: any;
+  }
+  export declare class PrivateAccessor {
+  }

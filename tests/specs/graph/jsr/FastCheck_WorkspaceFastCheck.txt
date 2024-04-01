@@ -1,0 +1,148 @@
+~~ {"workspaceFastCheck":true} ~~
+# workspace_members
+[
+  {
+    "base": "file:///",
+    "nv": "@scope/b@1.0.1",
+    "exports": {
+      ".": "./mod.ts"
+    }
+  }
+]
+
+# https://jsr.io/@scope/b/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/b/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/b/1.0.0/mod.ts
+export class B {}
+
+# https://jsr.io/@scope/c/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/c/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/c/1.0.0/mod.ts
+export class C {}
+
+# mod.ts
+import { B } from 'jsr:@scope/b'
+import { C } from "jsr:@scope/c";
+
+export class MyClass {
+  prop: Public1;
+  c: C;
+}
+
+class Public1 {}
+
+class Private {
+  b: B;
+}
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/b",
+          "code": {
+            "specifier": "jsr:@scope/b",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 18
+              },
+              "end": {
+                "line": 0,
+                "character": 32
+              }
+            }
+          }
+        },
+        {
+          "specifier": "jsr:@scope/c",
+          "code": {
+            "specifier": "jsr:@scope/c",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 18
+              },
+              "end": {
+                "line": 1,
+                "character": 32
+              }
+            }
+          }
+        }
+      ],
+      "size": 163,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 18,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/c/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/b": "file:///mod.ts",
+    "jsr:@scope/c": "https://jsr.io/@scope/c/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/c": "@scope/c@1.0.0"
+  }
+}
+
+Fast check file:///mod.ts:
+  {
+    "jsr:@scope/c": {
+      "code": {
+        "specifier": "jsr:@scope/c",
+        "span": {
+          "start": {
+            "line": 1,
+            "character": 18
+          },
+          "end": {
+            "line": 1,
+            "character": 32
+          }
+        }
+      }
+    }
+  }
+  import { C } from "jsr:@scope/c";
+  export class MyClass {
+    declare prop: Public1;
+    declare c: C;
+  }
+  class Public1 {
+  }
+  --- DTS ---
+  import { C } from "jsr:@scope/c";
+  export declare class MyClass {
+    prop: Public1;
+    c: C;
+  }
+  declare class Public1 {
+  }
+
+Fast check https://jsr.io/@scope/c/1.0.0/mod.ts:
+  {}
+  export class C {
+  }
+  --- DTS ---
+  export declare class C {
+  }

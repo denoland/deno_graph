@@ -1,9 +1,9 @@
 use deno_ast::swc::ast::*;
 use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::ModuleSpecifier;
-use deno_ast::ParsedSource;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
+use deno_ast::SourceTextInfo;
 
 use crate::FastCheckDiagnostic;
 use crate::FastCheckDiagnosticRange;
@@ -65,21 +65,23 @@ impl FastCheckDtsDiagnostic {
 
 pub struct FastCheckDtsTransformer<'a> {
   id_counter: usize,
-  parsed_source: &'a ParsedSource,
+  text_info: &'a SourceTextInfo,
   pub diagnostics: Vec<FastCheckDtsDiagnostic>,
   specifier: &'a ModuleSpecifier,
+  is_top_level: bool,
 }
 
 impl<'a> FastCheckDtsTransformer<'a> {
   pub fn new(
-    parsed_source: &'a ParsedSource,
+    text_info: &'a SourceTextInfo,
     specifier: &'a ModuleSpecifier,
   ) -> Self {
     Self {
       id_counter: 0,
-      parsed_source,
+      text_info,
       specifier,
       diagnostics: vec![],
+      is_top_level: true,
     }
   }
 
@@ -98,7 +100,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
   ) -> FastCheckDiagnosticRange {
     FastCheckDiagnosticRange {
       specifier: self.specifier.clone(),
-      text_info: self.parsed_source.text_info().clone(),
+      text_info: self.text_info.clone(),
       range,
     }
   }
@@ -125,6 +127,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
     &mut self,
     mut module: Module,
   ) -> Result<Module, Vec<FastCheckDiagnostic>> {
+    self.is_top_level = true;
     let body = module.body;
 
     module.body = self.transform_module_items(body);
@@ -495,14 +498,16 @@ impl<'a> FastCheckDtsTransformer<'a> {
   }
 
   fn decl_to_type_decl(&mut self, decl: Decl) -> Option<Decl> {
+    let is_declare = self.is_top_level;
     match decl {
       Decl::Class(mut class_decl) => {
         class_decl.class.body = self.class_body_to_type(class_decl.class.body);
-        class_decl.declare = true;
+        class_decl.declare = is_declare;
         Some(Decl::Class(class_decl))
       }
       Decl::Fn(mut fn_decl) => {
         fn_decl.function.body = None;
+        fn_decl.declare = is_declare;
 
         for param in &mut fn_decl.function.params {
           match &mut param.pat {
@@ -567,7 +572,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
         Some(Decl::Fn(fn_decl))
       }
       Decl::Var(mut var_decl) => {
-        var_decl.declare = true;
+        var_decl.declare = is_declare;
 
         for decl in &mut var_decl.decls {
           if let Pat::Ident(ident) = &mut decl.name {
@@ -599,7 +604,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
         Some(Decl::Var(var_decl))
       }
       Decl::TsEnum(mut ts_enum) => {
-        ts_enum.declare = true;
+        ts_enum.declare = is_declare;
 
         for member in &mut ts_enum.members {
           if let Some(init) = &member.init {
@@ -616,7 +621,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
         Some(Decl::TsEnum(ts_enum))
       }
       Decl::TsModule(mut ts_module) => {
-        ts_module.declare = true;
+        ts_module.declare = is_declare;
 
         if let Some(body) = ts_module.body.clone() {
           ts_module.body = Some(self.transform_ts_ns_body(body));
@@ -637,7 +642,9 @@ impl<'a> FastCheckDtsTransformer<'a> {
   }
 
   fn transform_ts_ns_body(&mut self, ns: TsNamespaceBody) -> TsNamespaceBody {
-    match ns {
+    let original_is_top_level = self.is_top_level;
+    self.is_top_level = false;
+    let body = match ns {
       TsNamespaceBody::TsModuleBlock(mut ts_module_block) => {
         ts_module_block.body =
           self.transform_module_items(ts_module_block.body);
@@ -646,7 +653,9 @@ impl<'a> FastCheckDtsTransformer<'a> {
       TsNamespaceBody::TsNamespaceDecl(ts_ns) => {
         self.transform_ts_ns_body(*ts_ns.body)
       }
-    }
+    };
+    self.is_top_level = original_is_top_level;
+    body
   }
 
   // Support for expressions is limited in enums,
@@ -971,7 +980,7 @@ mod tests {
     let module = parsed_source.module().to_owned();
 
     let mut transformer =
-      FastCheckDtsTransformer::new(parsed_source, &specifier);
+      FastCheckDtsTransformer::new(parsed_source.text_info(), &specifier);
     let module = transformer.transform(module).unwrap();
 
     let comments = parsed_source.comments().as_single_threaded();
@@ -988,7 +997,7 @@ mod tests {
       r#"export function foo(a: number): number {
   return {};
 }"#,
-      "export function foo(a: number): number;",
+      "export declare function foo(a: number): number;",
     )
     .await;
     transform_dts_test(
@@ -996,35 +1005,35 @@ mod tests {
 export function foo(a: any): number {
   return {};
 }"#,
-      r#"export function foo(a: string): number;"#,
+      r#"export declare function foo(a: string): number;"#,
     )
     .await;
     transform_dts_test(
       r#"export function foo(a = 2): number {
   return 2;
 }"#,
-      r#"export function foo(a?: number): number;"#,
+      r#"export declare function foo(a?: number): number;"#,
     )
     .await;
     transform_dts_test(
       r#"export function foo(a: string = 2): number {
   return 2;
 }"#,
-      r#"export function foo(a?: string): number;"#,
+      r#"export declare function foo(a?: string): number;"#,
     )
     .await;
     transform_dts_test(
       r#"export function foo([a, b] = [1, 2]): number {
   return 2;
 }"#,
-      r#"export function foo([a, b]?: [number, number]): number;"#,
+      r#"export declare function foo([a, b]?: [number, number]): number;"#,
     )
     .await;
     transform_dts_test(
       r#"export function foo({a, b} = { a: 1, b: 2 }): number {
   return 2;
 }"#,
-      r#"export function foo({ a, b }?: {
+      r#"export declare function foo({ a, b }?: {
   a: number;
   b: number;
 }): number;"#,

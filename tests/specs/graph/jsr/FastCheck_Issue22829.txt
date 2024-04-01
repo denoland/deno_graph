@@ -1,0 +1,156 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/functions.ts
+abstract class Internal<T> {
+  prop: T;
+}
+function func() {
+}
+export function other_func() {
+}
+
+export const functions = {
+  func,
+  other: other_func,
+};
+export declare module functions {
+  type Function<T> = Internal<T>;
+}
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+import { functions } from "./functions.ts";
+
+export type Test = functions.Function;
+
+export { functions } from "./functions.ts";
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 225,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/functions.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./functions.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/functions.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 26
+              },
+              "end": {
+                "line": 0,
+                "character": 42
+              }
+            }
+          }
+        }
+      ],
+      "size": 129,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/functions.ts:
+  {}
+  abstract class Internal<T> {
+    declare prop: T;
+  }
+  function func(): void {}
+  export function other_func(): void {}
+  export const functions = {
+    func,
+    other: other_func
+  };
+  export declare module functions {
+    type Function<T> = Internal<T>;
+  }
+  --- DTS ---
+  declare abstract class Internal<T> {
+    prop: T;
+  }
+  declare function func(): void;
+  export declare function other_func(): void;
+  export declare const functions: {
+    readonly other;
+  };
+  export declare module functions {
+    type Function<T> = Internal<T>;
+  }
+  --- DTS Diagnostics ---
+  unable to infer type from object property, skipping
+      at https://jsr.io/@scope/a/1.0.0/functions.ts@125
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {
+    "./functions.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/functions.ts",
+        "span": {
+          "start": {
+            "line": 0,
+            "character": 26
+          },
+          "end": {
+            "line": 0,
+            "character": 42
+          }
+        }
+      }
+    }
+  }
+  import { functions } from "./functions.ts";
+  export type Test = functions.Function;
+  export { functions } from "./functions.ts";
+  --- DTS ---
+  import { functions } from "./functions.ts";
+  export type Test = functions.Function;
+  export { functions } from "./functions.ts";

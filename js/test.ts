@@ -1,11 +1,6 @@
-// Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2024 the Deno authors. MIT license.
 
-import {
-  assert,
-  assertEquals,
-  assertRejects,
-  assertThrows,
-} from "https://deno.land/std@0.181.0/testing/asserts.ts";
+import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { LoadResponseModule } from "./types.ts";
 import {
   createGraph,

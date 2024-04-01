@@ -1,0 +1,169 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+export enum EnumWithNoInits {
+  Value1,
+  Value2,
+}
+
+export enum EnumWithNumInits {
+  Value1 = 1,
+  Value2 = 2,
+}
+
+export enum EnumWithStringInits {
+  Value1 = "a",
+  Value2 = "b",
+}
+
+const value = 10;
+
+export enum EnumWithNonConstInits {
+  Value1 = new Public1().test,
+  Value2 = new Public2().asdf * value + NonExportedEnum.Value,
+}
+
+class Public1 {}
+class Public2 {}
+class Private1 {}
+enum NonExportedEnum {
+  Value
+}
+
+const NUM = 1 as any;
+export enum Foo1 {
+  A = 1,
+  B = "2",
+  C = 1 << 2,
+  D = 1 + 2,
+  F = Foo1.A | Foo1.C,
+  G = Foo1.A + Foo1.C,
+  H = new Public1().test + 1,
+  I = 1 + NUM,
+}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 603,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {}
+  export enum EnumWithNoInits {
+    Value1,
+    Value2
+  }
+  export enum EnumWithNumInits {
+    Value1 = 1,
+    Value2 = 2
+  }
+  export enum EnumWithStringInits {
+    Value1 = "a",
+    Value2 = "b"
+  }
+  const value: number = {} as never;
+  export enum EnumWithNonConstInits {
+    Value1 = new Public1().test,
+    Value2 = new Public2().asdf * value + NonExportedEnum.Value
+  }
+  class Public1 {
+  }
+  class Public2 {
+  }
+  enum NonExportedEnum {
+    Value
+  }
+  const NUM: any = {} as never;
+  export enum Foo1 {
+    A = 1,
+    B = "2",
+    C = 1 << 2,
+    D = 1 + 2,
+    F = Foo1.A | Foo1.C,
+    G = Foo1.A + Foo1.C,
+    H = new Public1().test + 1,
+    I = 1 + NUM
+  }
+  --- DTS ---
+  export declare enum EnumWithNoInits {
+    Value1,
+    Value2
+  }
+  export declare enum EnumWithNumInits {
+    Value1 = 1,
+    Value2 = 2
+  }
+  export declare enum EnumWithStringInits {
+    Value1 = "a",
+    Value2 = "b"
+  }
+  declare const value: number;
+  export declare enum EnumWithNonConstInits {
+    Value1,
+    Value2
+  }
+  declare class Public1 {
+  }
+  declare class Public2 {
+  }
+  declare enum NonExportedEnum {
+    Value
+  }
+  declare const NUM: any;
+  export declare enum Foo1 {
+    A = 1,
+    B = "2",
+    C = 1 << 2,
+    D = 1 + 2,
+    F = Foo1.A | Foo1.C,
+    G = Foo1.A + Foo1.C,
+    H,
+    I = 1 + NUM
+  }

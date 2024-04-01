@@ -1,4 +1,4 @@
-// Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2024 the Deno authors. MIT license.
 
 use crate::analyzer::analyze_deno_types;
 use crate::analyzer::DependencyDescriptor;
@@ -2794,6 +2794,12 @@ struct PendingJsrState {
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
 }
 
+struct PendingDynamicBranch {
+  range: Range,
+  maybe_attribute_type: Option<AttributeTypeWithRange>,
+  maybe_version_info: Option<JsrPackageVersionInfoExt>,
+}
+
 #[derive(Default)]
 struct PendingState {
   pending: FuturesOrdered<PendingInfoFuture>,
@@ -2801,8 +2807,7 @@ struct PendingState {
   npm: PendingNpmState,
   pending_specifiers:
     HashMap<ModuleSpecifier, HashSet<Option<AttributeTypeWithRange>>>,
-  dynamic_branches:
-    HashMap<ModuleSpecifier, (Range, Option<AttributeTypeWithRange>)>,
+  dynamic_branches: HashMap<ModuleSpecifier, PendingDynamicBranch>,
 }
 
 #[derive(Clone)]
@@ -2993,13 +2998,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 ))),
               );
             } else {
-              let assert_types =
+              let attribute_types =
                 self.state.pending_specifiers.remove(&specifier).unwrap();
-              for maybe_assert_type in assert_types {
+              for maybe_attribute_type in attribute_types {
                 self.visit(
                   &specifier,
                   &response,
-                  maybe_assert_type,
+                  maybe_attribute_type,
                   maybe_range.clone(),
                   maybe_version_info.as_ref(),
                 )
@@ -3257,11 +3262,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     //   visiting a dynamic branch.
     if !self.in_dynamic_branch {
       self.in_dynamic_branch = true;
-      for (specifier, (range, maybe_assert_type)) in
+      for (specifier, dynamic_branch) in
         std::mem::take(&mut self.state.dynamic_branches)
       {
         if !self.graph.module_slots.contains_key(&specifier) {
-          self.load(&specifier, Some(&range), true, maybe_assert_type, None);
+          self.load(
+            &specifier,
+            Some(&dynamic_branch.range),
+            true,
+            dynamic_branch.maybe_attribute_type,
+            dynamic_branch.maybe_version_info.as_ref(),
+          );
         }
       }
     }
@@ -3416,7 +3427,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     package_info: &JsrPackageInfo,
     package_req: &PackageReq,
   ) -> Option<Version> {
-    // try to find in the list of existing versions first
+    // 1. try to resolve with the list of existing versions
     if let Some(existing_versions) =
       self.graph.packages.versions_by_name(&package_req.name)
     {
@@ -3424,12 +3435,56 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         &package_req.version_req,
         existing_versions.iter().map(|nv| &nv.version),
       ) {
-        return Some(version.clone());
+        let is_yanked = package_info
+          .versions
+          .get(version)
+          .map(|i| i.yanked)
+          .unwrap_or(false);
+        let version = version.clone();
+        if is_yanked {
+          self.graph.packages.add_used_yanked_package(PackageNv {
+            name: package_req.name.clone(),
+            version: version.clone(),
+          });
+        }
+        return Some(version);
       }
     }
-    // now try in the package info
-    resolve_version(&package_req.version_req, package_info.versions.keys())
-      .cloned()
+
+    // 2. attempt to resolve with the unyanked versions
+    let unyanked_versions =
+      package_info.versions.iter().filter_map(|(v, i)| {
+        if !i.yanked {
+          Some(v)
+        } else {
+          None
+        }
+      });
+    if let Some(version) =
+      resolve_version(&package_req.version_req, unyanked_versions)
+    {
+      return Some(version.clone());
+    }
+
+    // 3. attempt to resolve with the the yanked versions
+    let yanked_versions = package_info.versions.iter().filter_map(|(v, i)| {
+      if i.yanked {
+        Some(v)
+      } else {
+        None
+      }
+    });
+    if let Some(version) =
+      resolve_version(&package_req.version_req, yanked_versions)
+    {
+      self.graph.packages.add_used_yanked_package(PackageNv {
+        name: package_req.name.clone(),
+        version: version.clone(),
+      });
+      return Some(version.clone());
+    }
+
+    None
   }
 
   /// Checks if the specifier is redirected or not and updates any redirects in
@@ -3460,7 +3515,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     specifier: &ModuleSpecifier,
     maybe_range: Option<&Range>,
     is_dynamic: bool,
-    maybe_assert_type: Option<AttributeTypeWithRange>,
+    maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
@@ -3469,7 +3524,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .pending_specifiers
       .entry(specifier.clone())
       .or_default()
-      .insert(maybe_assert_type);
+      .insert(maybe_attribute_type);
     if self.graph.module_slots.contains_key(specifier) {
       return;
     }
@@ -3960,7 +4015,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     &mut self,
     requested_specifier: &ModuleSpecifier,
     response: &PendingInfoResponse,
-    maybe_assert_type: Option<AttributeTypeWithRange>,
+    maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_referrer: Option<Range>,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
@@ -3985,7 +4040,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             specifier,
             maybe_headers.as_ref(),
             content_or_module_info.clone(),
-            maybe_assert_type,
+            maybe_attribute_type,
             maybe_referrer,
             maybe_version_info,
           ),
@@ -4004,7 +4059,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     specifier: &ModuleSpecifier,
     maybe_headers: Option<&HashMap<String, String>>,
     content_or_module_info: ContentOrModuleInfo,
-    maybe_assert_type: Option<AttributeTypeWithRange>,
+    maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_referrer: Option<Range>,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) -> ModuleSlot {
@@ -4062,7 +4117,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       specifier,
       maybe_headers,
       content,
-      maybe_assert_type,
+      maybe_attribute_type,
       maybe_referrer,
       self.file_system,
       self.resolver,
@@ -4091,24 +4146,29 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             if let Resolution::Ok(resolved) = &dep.maybe_code {
               let specifier = &resolved.specifier;
               let range = &resolved.range;
-              let maybe_assert_type_with_range = dep
-                .maybe_attribute_type
-                .as_ref()
-                .map(|assert_type| AttributeTypeWithRange {
-                  range: range.clone(),
-                  kind: assert_type.clone(),
+              let maybe_attribute_type =
+                dep.maybe_attribute_type.as_ref().map(|assert_type| {
+                  AttributeTypeWithRange {
+                    range: range.clone(),
+                    kind: assert_type.clone(),
+                  }
                 });
               if dep.is_dynamic && !self.in_dynamic_branch {
                 self.state.dynamic_branches.insert(
                   specifier.clone(),
-                  (range.clone(), maybe_assert_type_with_range),
+                  PendingDynamicBranch {
+                    range: range.clone(),
+                    maybe_attribute_type,
+                    maybe_version_info: maybe_version_info
+                      .map(ToOwned::to_owned),
+                  },
                 );
               } else {
                 self.load(
                   specifier,
                   Some(range),
                   self.in_dynamic_branch,
-                  maybe_assert_type_with_range,
+                  maybe_attribute_type,
                   maybe_version_info,
                 );
               }
@@ -4121,24 +4181,29 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             if let Resolution::Ok(resolved) = &dep.maybe_type {
               let specifier = &resolved.specifier;
               let range = &resolved.range;
-              let maybe_assert_type_with_range = dep
-                .maybe_attribute_type
-                .as_ref()
-                .map(|assert_type| AttributeTypeWithRange {
-                  range: range.clone(),
-                  kind: assert_type.clone(),
+              let maybe_attribute_type =
+                dep.maybe_attribute_type.as_ref().map(|assert_type| {
+                  AttributeTypeWithRange {
+                    range: range.clone(),
+                    kind: assert_type.clone(),
+                  }
                 });
               if dep.is_dynamic && !self.in_dynamic_branch {
                 self.state.dynamic_branches.insert(
                   specifier.clone(),
-                  (range.clone(), maybe_assert_type_with_range),
+                  PendingDynamicBranch {
+                    range: range.clone(),
+                    maybe_attribute_type,
+                    maybe_version_info: maybe_version_info
+                      .map(ToOwned::to_owned),
+                  },
                 );
               } else {
                 self.load(
                   specifier,
                   Some(range),
                   self.in_dynamic_branch,
-                  maybe_assert_type_with_range,
+                  maybe_attribute_type,
                   maybe_version_info,
                 );
               }
@@ -4514,8 +4579,11 @@ where
 #[cfg(test)]
 mod tests {
   use crate::ParserModuleAnalyzer;
+  use crate::packages::JsrPackageInfoVersion;
+  use crate::DefaultModuleAnalyzer;
   use deno_ast::dep::ImportAttribute;
   use pretty_assertions::assert_eq;
+  use serde_json::json;
 
   use super::*;
   use url::Url;
@@ -5266,10 +5334,7 @@ mod tests {
     let workspace_members = vec![WorkspaceMember {
       base: Url::parse("file:///").unwrap(),
       exports: exports.clone(),
-      nv: PackageNv {
-        name: "foo".to_string(),
-        version: Version::parse_standard("1.0.0").unwrap(),
-      },
+      nv: PackageNv::from_str("@foo/bar@1.0.0").unwrap(),
     }];
     let mut test_loader = MemoryLoader::default();
     test_loader.add_source_with_text(
@@ -5310,8 +5375,83 @@ mod tests {
     let dts = fsm.dts.unwrap();
     assert_eq!(
       dts.text.to_string().trim(),
-      "export function add(a: number, b: number): number;"
+      "export declare function add(a: number, b: number): number;"
     );
     assert!(dts.diagnostics.is_empty());
+  }
+
+  #[tokio::test]
+  async fn fast_check_external() {
+    let mut exports = IndexMap::new();
+    exports.insert(".".to_string(), "./foo.ts".to_string());
+
+    let workspace_members = vec![WorkspaceMember {
+      base: Url::parse("file:///").unwrap(),
+      exports: exports.clone(),
+      nv: PackageNv::from_str("@foo/bar@1.0.0").unwrap(),
+    }];
+    let mut test_loader = MemoryLoader::default();
+    test_loader.add_source_with_text(
+      "file:///foo.ts",
+      "export * from 'jsr:@package/foo';",
+    );
+    test_loader.add_jsr_package_info(
+      "@package/foo",
+      &JsrPackageInfo {
+        versions: HashMap::from([(
+          Version::parse_standard("1.0.0").unwrap(),
+          JsrPackageInfoVersion::default(),
+        )]),
+      },
+    );
+    test_loader.add_jsr_version_info(
+      "@package/foo",
+      "1.0.0",
+      &JsrPackageVersionInfo {
+        exports: json!({ ".": "./mod.ts" }),
+        module_graph: None,
+        manifest: Default::default(),
+      },
+    );
+    test_loader.add_external_source("https://jsr.io/@package/foo/1.0.0/mod.ts");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.ts").unwrap()],
+        &mut test_loader,
+        BuildOptions {
+          workspace_members: &workspace_members,
+          ..Default::default()
+        },
+      )
+      .await;
+    graph.build_fast_check_type_graph(BuildFastCheckTypeGraphOptions {
+      fast_check_cache: None,
+      fast_check_dts: true,
+      workspace_fast_check: WorkspaceFastCheckOption::Enabled(
+        &workspace_members,
+      ),
+      ..Default::default()
+    });
+    graph.valid().unwrap();
+    {
+      let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
+      let FastCheckTypeModuleSlot::Module(fsm) =
+        module.js().unwrap().fast_check.clone().unwrap()
+      else {
+        unreachable!();
+      };
+      let dts = fsm.dts.unwrap();
+      assert_eq!(
+        dts.text.to_string().trim(),
+        "export * from 'jsr:@package/foo';"
+      );
+      assert!(dts.diagnostics.is_empty());
+    }
+
+    let module = graph
+      .get(&Url::parse("https://jsr.io/@package/foo/1.0.0/mod.ts").unwrap())
+      .unwrap();
+    assert!(module.external().is_some());
   }
 }

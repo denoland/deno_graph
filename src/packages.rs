@@ -1,4 +1,4 @@
-// Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2024 the Deno authors. MIT license.
 
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
@@ -20,9 +20,14 @@ pub struct JsrPackageInfo {
   pub versions: HashMap<Version, JsrPackageInfoVersion>,
 }
 
+fn is_false(v: &bool) -> bool {
+  !v
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct JsrPackageInfoVersion {
-  // no used fields yet
+  #[serde(default, skip_serializing_if = "is_false")]
+  pub yanked: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -112,6 +117,8 @@ pub struct PackageSpecifiers {
   /// Cache for packages that have a referrer outside JSR.
   #[serde(skip_serializing)]
   top_level_packages: BTreeSet<PackageNv>,
+  #[serde(skip_serializing)]
+  used_yanked_packages: BTreeSet<PackageNv>,
 }
 
 impl PackageSpecifiers {
@@ -222,6 +229,14 @@ impl PackageSpecifiers {
 
   pub(crate) fn top_level_packages(&self) -> &BTreeSet<PackageNv> {
     &self.top_level_packages
+  }
+
+  pub(crate) fn add_used_yanked_package(&mut self, nv: PackageNv) {
+    self.used_yanked_packages.insert(nv);
+  }
+
+  pub fn used_yanked_packages(&mut self) -> impl Iterator<Item = &PackageNv> {
+    self.used_yanked_packages.iter()
   }
 
   pub fn package_exports(

@@ -1,4 +1,4 @@
-// Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2024 the Deno authors. MIT license.
 
 // remove this after https://github.com/rustwasm/wasm-bindgen/issues/2774 is released
 #![allow(clippy::unused_unit)]

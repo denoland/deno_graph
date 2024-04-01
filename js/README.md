@@ -1,13 +1,17 @@
 # deno_graph
 
-[![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https://deno.land/x/deno_graph/mod.ts)
+[![jsr](https://jsr.io/badges/@deno/graph)](https://jsr.io/@deno/graph)
 
 This repository includes a compiled version of the Rust crate as Web Assembly
 and exposes an interface which is available via the `mod.ts` in this repository
 and can be imported like:
 
+```shell
+deno add @deno/graph
+```
+
 ```js
-import * as denoGraph from "https://deno.land/x/deno_graph@{VERSION}/mod.ts";
+import * as denoGraph from "@deno/graph";
 ```
 
 Where `{VERSION}` should be substituted with the specific version you want to
@@ -43,3 +47,31 @@ There are several options that can be passed the function in the optional
   detected. This is intended to enrich the module graph with external types that
   are resolved in some other fashion, like from a `package.json` or via
   detecting an `@types` typings package is available.
+
+## Usage with `import_map`
+
+You can use [`import_map`](https://deno.land/x/import_map) in combination with
+`deno_graph` in order to fully resolve the specifiers in your graph.
+
+```ts
+import { createGraph } from "@deno/graph";
+import { resolve, toFileUrl } from "@std/path";
+import { parseFromJson } from "https://deno.land/x/import_map@v0.18.3/mod.ts";
+
+const path = resolve("./entrypoint.ts");
+const importMap = Deno.readTextFileSync(
+  new URL("./deno.json", import.meta.url),
+);
+// resolves the import map and provides a function we can use to resolve specifiers
+const resolvedImportMap = await parseFromJson(
+  toFileUrl(resolve("deno.json")),
+  importMap,
+);
+const graph = await createGraph(toFileUrl(path).href, {
+  /** use the callback in order to resolve specifiers like this:
+   * dependencies: [ { specifier: "@/someFiles/d.ts", code: [Object] } ],
+   * this allows for the entire module graph to be explored */
+  resolve: resolvedImportMap.resolve.bind(resolvedImportMap),
+});
+console.log(graph);
+```

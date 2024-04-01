@@ -1,4 +1,4 @@
-// Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2024 the Deno authors. MIT license.
 
 use deno_ast::swc::ast::BindingIdent;
 use deno_ast::swc::ast::Class;
@@ -254,6 +254,9 @@ impl Visit for DepsFiller {
   }
 
   fn visit_ts_property_signature(&mut self, n: &TsPropertySignature) {
+    if n.computed {
+      self.visit_expr(&n.key);
+    }
     if let Some(init) = &n.init {
       self.visit_expr(init);
     }
@@ -269,16 +272,25 @@ impl Visit for DepsFiller {
   }
 
   fn visit_ts_getter_signature(&mut self, n: &TsGetterSignature) {
+    if n.computed {
+      self.visit_expr(&n.key);
+    }
     if let Some(type_ann) = &n.type_ann {
       self.visit_ts_type_ann(type_ann)
     }
   }
 
   fn visit_ts_setter_signature(&mut self, n: &TsSetterSignature) {
+    if n.computed {
+      self.visit_expr(&n.key);
+    }
     self.visit_ts_fn_param(&n.param);
   }
 
   fn visit_ts_method_signature(&mut self, n: &TsMethodSignature) {
+    if n.computed {
+      self.visit_expr(&n.key);
+    }
     if let Some(type_params) = &n.type_params {
       self.visit_ts_type_param_decl(type_params);
     }

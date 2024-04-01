@@ -1,4 +1,4 @@
-// Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2024 the Deno authors. MIT license.
 
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
@@ -263,12 +263,18 @@ pub enum ResolveError {
 }
 
 /// The kind of resolution currently being done by deno_graph.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResolutionMode {
   /// Resolving for code that will be executed.
   Execution,
   /// Resolving for code that will be used for type information.
   Types,
+}
+
+impl ResolutionMode {
+  pub fn is_types(&self) -> bool {
+    *self == ResolutionMode::Types
+  }
 }
 
 /// A trait which allows the module graph to resolve specifiers and type only
@@ -555,13 +561,14 @@ impl MemoryLoader {
     self.add_source_with_text(specifier, json_text);
   }
 
-  pub fn add_deno_version_info(
+  pub fn add_jsr_version_info(
     &mut self,
-    nv: &PackageNv,
+    name: &str,
+    version: &str,
     version_info: &JsrPackageVersionInfo,
   ) {
     let specifier = DEFAULT_JSR_URL
-      .join(&format!("{}/{}_meta.json", nv.name, nv.version))
+      .join(&format!("{}/{}_meta.json", name, version))
       .unwrap();
     let json_text = serde_json::to_string(version_info).unwrap();
     self.add_source_with_text(specifier, json_text);

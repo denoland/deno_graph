@@ -1,4 +1,4 @@
-// Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2024 the Deno authors. MIT license.
 
 use std::rc::Rc;
 
@@ -90,10 +90,6 @@ fn get_return_stmts_with_arg_from_stmt(stmt: &Stmt) -> Vec<&ReturnStmt> {
 
 pub fn is_void_type(return_type: &TsType) -> bool {
   is_keyword_type(return_type, TsKeywordTypeKind::TsVoidKeyword)
-}
-
-pub fn is_never_type(return_type: &TsType) -> bool {
-  is_keyword_type(return_type, TsKeywordTypeKind::TsNeverKeyword)
 }
 
 fn is_keyword_type(return_type: &TsType, kind: TsKeywordTypeKind) -> bool {

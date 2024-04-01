@@ -1,4 +1,4 @@
-// Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
+// Copyright 2018-2024 the Deno authors. MIT license.
 
 // todo(dsherret): move the integration-like tests to this file because it
 // helps ensure we're testing the public API and ensures we export types
@@ -60,6 +60,7 @@ async fn test_graph_specs() {
       }
     });
     builder.workspace_members(spec.workspace_members.clone());
+    builder.lockfile_jsr_packages(spec.lockfile_jsr_packages.clone());
 
     if let Some(options) = &spec.options {
       builder.workspace_fast_check(options.workspace_fast_check);
