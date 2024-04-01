@@ -11,8 +11,6 @@ use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
 #[cfg(feature = "fast_check")]
 use crate::fast_check::FastCheckDtsModule;
-use crate::CapturingModuleAnalyzer;
-use crate::ModuleParser;
 use crate::ReferrerImports;
 
 use crate::fast_check::FastCheckDiagnostic;
@@ -1001,7 +999,7 @@ pub struct BuildFastCheckTypeGraphOptions<'a> {
   pub fast_check_cache: Option<&'a dyn crate::fast_check::FastCheckCache>,
   pub fast_check_dts: bool,
   pub jsr_url_provider: Option<&'a dyn JsrUrlProvider>,
-  pub module_parser: Option<&'a dyn ModuleParser>,
+  pub module_parser: Option<&'a dyn crate::ModuleParser>,
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   /// Whether to fill workspace members with fast check TypeScript data.
@@ -1485,7 +1483,7 @@ impl ModuleGraph {
       return;
     }
 
-    let default_module_parser = CapturingModuleAnalyzer::default();
+    let default_module_parser = crate::CapturingModuleAnalyzer::default();
     let root_symbol = crate::symbols::RootSymbol::new(
       self,
       options.module_parser.unwrap_or(&default_module_parser),
