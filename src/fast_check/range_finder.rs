@@ -408,7 +408,22 @@ impl<'a> PublicRangeFinder<'a> {
       } else {
         let mut had_diagnostic = false;
         for specifier in &entrypoints {
-          if !self.is_typed_specifier(specifier) {
+          // check for untyped or non-existent entrypoints
+          let diagnostic = if let Some(module) = self.graph.get(specifier) {
+            if is_module_typed(module) {
+              None
+            } else {
+              Some(FastCheckDiagnostic::UnsupportedJavaScriptEntrypoint {
+                specifier: specifier.clone(),
+              })
+            }
+          } else {
+            // should never happen
+            Some(FastCheckDiagnostic::ExportNotFound {
+              specifier: specifier.clone(),
+            })
+          };
+          if let Some(diagnostic) = diagnostic {
             self
               .public_ranges
               .entry(nv.clone())
@@ -417,9 +432,7 @@ impl<'a> PublicRangeFinder<'a> {
               .entry(specifier.clone())
               .or_default()
               .diagnostics
-              .push(FastCheckDiagnostic::UnsupportedJavaScriptEntrypoint {
-                specifier: specifier.clone(),
-              });
+              .push(diagnostic);
             had_diagnostic = true;
           }
         }
@@ -551,7 +564,17 @@ impl<'a> PublicRangeFinder<'a> {
   }
 
   fn analyze_trace(&mut self, trace: &PendingTrace) {
-    if !self.is_typed_specifier(&trace.specifier) {
+    let Some(module) = self.graph.get(&trace.specifier) else {
+      return;
+    };
+
+    if is_module_typed(module) {
+      if let Some(module_info) =
+        self.root_symbol.module_from_specifier(&trace.specifier)
+      {
+        self.analyze_module_info(trace, module_info);
+      }
+    } else if !is_module_external(module) {
       let ranges = self
         .public_ranges
         .entry(trace.package_nv.clone())
@@ -569,21 +592,6 @@ impl<'a> PublicRangeFinder<'a> {
           },
         );
       }
-    } else if let Some(module_info) =
-      self.root_symbol.module_from_specifier(&trace.specifier)
-    {
-      self.analyze_module_info(trace, module_info);
-    } else {
-      let ranges = self
-        .public_ranges
-        .entry(trace.package_nv.clone())
-        .or_default()
-        .module_ranges
-        .entry(trace.specifier.clone())
-        .or_default();
-      ranges.diagnostics.push(FastCheckDiagnostic::External {
-        specifier: trace.specifier.clone(),
-      });
     }
   }
 
@@ -1199,20 +1207,26 @@ impl<'a> PublicRangeFinder<'a> {
 
     found
   }
+}
 
-  fn is_typed_specifier(&mut self, specifier: &ModuleSpecifier) -> bool {
-    let Some(module) = self.graph.get(specifier) else {
-      return true; // just analyze it
-    };
-    match module {
-      crate::Module::Js(m) => {
-        is_typed_media_type(m.media_type) || m.maybe_types_dependency.is_some()
-      }
-      crate::Module::Json(_) => true,
-      crate::Module::Npm(_)
-      | crate::Module::Node(_)
-      | crate::Module::External(_) => false,
+fn is_module_typed(module: &crate::Module) -> bool {
+  match module {
+    crate::Module::Js(m) => {
+      is_typed_media_type(m.media_type) || m.maybe_types_dependency.is_some()
     }
+    crate::Module::Json(_) => true,
+    crate::Module::Npm(_)
+    | crate::Module::Node(_)
+    | crate::Module::External(_) => false,
+  }
+}
+
+fn is_module_external(module: &crate::Module) -> bool {
+  match module {
+    crate::Module::Js(_) | crate::Module::Json(_) => false,
+    crate::Module::External(_)
+    | crate::Module::Node(_)
+    | crate::Module::Npm(_) => true,
   }
 }
 

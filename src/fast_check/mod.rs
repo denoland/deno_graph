@@ -112,9 +112,8 @@ pub enum FastCheckDiagnostic {
     specifier: ModuleSpecifier,
     inner: Arc<anyhow::Error>,
   },
-  /// This may happen on JSR.
-  #[error("module was external to the graph")]
-  External { specifier: ModuleSpecifier },
+  #[error("export not found: {}", .specifier)]
+  ExportNotFound { specifier: ModuleSpecifier },
   /// This is a special diagnostic that appears when a module is loaded from the
   /// fast check cache that had a diagnostic. When we load a diagnostic from the
   /// cache, we're only really interested in if there was a fast check diagnostic
@@ -159,7 +158,7 @@ impl FastCheckDiagnostic {
       UnsupportedNestedJavaScript { .. } => None,
       UnsupportedJavaScriptEntrypoint { .. } => None,
       Emit { .. } => None,
-      External { .. } => None,
+      ExportNotFound { .. } => None,
       Cached { .. } => None,
     }
   }
@@ -186,7 +185,7 @@ impl FastCheckDiagnostic {
       UnsupportedJavaScriptEntrypoint { specifier } => specifier,
       UnsupportedNestedJavaScript { specifier } => specifier,
       Emit { specifier, .. } => specifier,
-      External { specifier, .. } => specifier,
+      ExportNotFound { specifier, .. } => specifier,
       Cached { specifier, .. } => specifier,
     }
   }
@@ -211,7 +210,7 @@ impl FastCheckDiagnostic {
       UnsupportedJavaScriptEntrypoint { .. } => None,
       UnsupportedNestedJavaScript { .. } => None,
       Emit { .. } => None,
-      External { .. } => None,
+      ExportNotFound { .. } => None,
       Cached { .. } => None,
     }
   }
@@ -237,7 +236,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       | UnsupportedUsing { .. }
       | UnsupportedNestedJavaScript { .. }
       | Emit { .. }
-      | External { .. }
+      | ExportNotFound { .. }
       | Cached { .. } => DiagnosticLevel::Error,
       UnsupportedJavaScriptEntrypoint { .. } => DiagnosticLevel::Warning,
     }
@@ -270,7 +269,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
         "unsupported-javascript-entrypoint"
       }
       Emit { .. } => "emit",
-      External { .. } => "external",
+      ExportNotFound { .. } => "export-not-found",
       Cached { .. } => "cached",
     })
   }
@@ -337,7 +336,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       UnsupportedJavaScriptEntrypoint { .. } => "add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript",
       Emit { .. } => "this error may be the result of a bug in Deno - if you think this is the case, please open an issue",
       // only a bug if the user sees these
-      External { .. } => "this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist",
+      ExportNotFound { .. } => "this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist",
       Cached { .. } => "this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist",
     }))
   }
@@ -407,7 +406,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
         Cow::Borrowed("this error may be the result of a bug in Deno - if you think this is the case, please open an issue")
       ]),
       // only a bug if the user sees these
-      External {  .. } => Cow::Borrowed(&[
+      ExportNotFound {  .. } => Cow::Borrowed(&[
         Cow::Borrowed("this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist")
       ]),
       Cached {  .. } => Cow::Borrowed(&[
