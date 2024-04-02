@@ -38,13 +38,13 @@ pub use analyzer::SpecifierWithRange;
 pub use analyzer::StaticDependencyDescriptor;
 pub use analyzer::TypeScriptReference;
 pub use ast::CapturingModuleAnalyzer;
-pub use ast::CapturingModuleParser;
 pub use ast::DefaultModuleAnalyzer;
 pub use ast::DefaultModuleParser;
 pub use ast::DefaultParsedSourceStore;
 pub use ast::ModuleParser;
 pub use ast::ParseOptions;
 pub use ast::ParsedSourceStore;
+pub use ast::ParserModuleAnalyzer;
 pub use deno_ast::MediaType;
 pub use fast_check::FastCheckCache;
 pub use fast_check::FastCheckCacheItem;
@@ -109,8 +109,8 @@ pub struct ParseModuleOptions<'a> {
   pub content: Arc<[u8]>,
   pub file_system: &'a dyn FileSystem,
   pub maybe_resolver: Option<&'a dyn Resolver>,
-  pub maybe_module_analyzer: Option<&'a dyn ModuleAnalyzer>,
   pub maybe_npm_resolver: Option<&'a dyn NpmResolver>,
+  pub module_analyzer: &'a dyn ModuleAnalyzer,
 }
 
 /// Parse an individual module, returning the module as a result, otherwise
@@ -119,10 +119,6 @@ pub struct ParseModuleOptions<'a> {
 pub fn parse_module(
   options: ParseModuleOptions,
 ) -> Result<Module, ModuleError> {
-  let default_module_analyzer = ast::DefaultModuleAnalyzer::default();
-  let module_analyzer = options
-    .maybe_module_analyzer
-    .unwrap_or(&default_module_analyzer);
   graph::parse_module(
     options.graph_kind,
     options.specifier,
@@ -132,7 +128,7 @@ pub fn parse_module(
     None,
     options.file_system,
     options.maybe_resolver,
-    module_analyzer,
+    options.module_analyzer,
     true,
     false,
     options.maybe_npm_resolver,
@@ -156,7 +152,7 @@ pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
     options.specifier,
     options.parsed_source.media_type(),
     options.maybe_headers,
-    DefaultModuleAnalyzer::module_info(options.parsed_source),
+    ParserModuleAnalyzer::module_info(options.parsed_source),
     options.parsed_source.text_info().text(),
     options.file_system,
     options.maybe_resolver,
@@ -3039,8 +3035,8 @@ export function a(a) {
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
-      maybe_module_analyzer: None,
       maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
     })
     .unwrap();
     let actual = actual.js().unwrap();
@@ -3056,8 +3052,8 @@ export function a(a) {
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
-      maybe_module_analyzer: None,
       maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
     })
     .unwrap();
     let actual = actual.js().unwrap();
@@ -3079,8 +3075,8 @@ export function a(a) {
       .into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
-      maybe_module_analyzer: None,
       maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
     })
     .unwrap();
     assert_eq!(
@@ -3149,8 +3145,8 @@ export function a(a) {
       .into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
-      maybe_module_analyzer: None,
       maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
     })
     .unwrap();
     let actual = actual.js().unwrap();
@@ -3192,8 +3188,8 @@ export function a(a) {
       .into(),
       file_system: &NullFileSystem,
       maybe_resolver: Some(&R),
-      maybe_module_analyzer: None,
       maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
     })
     .unwrap();
     let actual = actual.js().unwrap();
@@ -3231,8 +3227,8 @@ export function a(a) {
         .into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
-      maybe_module_analyzer: None,
       maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
     });
     assert!(result.is_ok());
   }
@@ -3258,8 +3254,8 @@ export function a(a) {
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
-      maybe_module_analyzer: None,
       maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
     })
     .unwrap();
     assert_eq!(
@@ -3314,8 +3310,8 @@ export function a(a) {
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
-      maybe_module_analyzer: None,
       maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
     })
     .unwrap();
     assert_eq!(
@@ -3351,8 +3347,8 @@ export function a(a: A): B {
       .into(),
       file_system: &NullFileSystem,
       maybe_resolver: None,
-      maybe_module_analyzer: None,
       maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
     })
     .unwrap();
     assert_eq!(

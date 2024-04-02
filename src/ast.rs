@@ -209,18 +209,29 @@ impl<'a> ModuleParser for CapturingModuleParser<'a> {
   }
 }
 
-/// Default module analyzer that analyzes based on a deno_ast::ParsedSource.
 #[derive(Default)]
-pub struct DefaultModuleAnalyzer<'a> {
-  parser: Option<&'a dyn ModuleParser>,
+pub struct DefaultModuleAnalyzer;
+
+impl ModuleAnalyzer for DefaultModuleAnalyzer {
+  fn analyze(
+    &self,
+    specifier: &deno_ast::ModuleSpecifier,
+    source: Arc<str>,
+    media_type: MediaType,
+  ) -> Result<ModuleInfo, ParseDiagnostic> {
+    ParserModuleAnalyzer::default().analyze(specifier, source, media_type)
+  }
 }
 
-impl<'a> DefaultModuleAnalyzer<'a> {
+/// Default module analyzer that analyzes based on a deno_ast::ParsedSource.
+pub struct ParserModuleAnalyzer<'a> {
+  parser: &'a dyn ModuleParser,
+}
+
+impl<'a> ParserModuleAnalyzer<'a> {
   /// Creates a new module analyzer.
   pub fn new(parser: &'a dyn ModuleParser) -> Self {
-    Self {
-      parser: Some(parser),
-    }
+    Self { parser }
   }
 
   /// Gets the module info from a parsed source.
@@ -263,23 +274,29 @@ impl<'a> DefaultModuleAnalyzer<'a> {
   }
 }
 
-impl<'a> ModuleAnalyzer for DefaultModuleAnalyzer<'a> {
+impl<'a> Default for ParserModuleAnalyzer<'a> {
+  fn default() -> Self {
+    Self {
+      parser: &DefaultModuleParser,
+    }
+  }
+}
+
+impl<'a> ModuleAnalyzer for ParserModuleAnalyzer<'a> {
   fn analyze(
     &self,
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ModuleInfo, ParseDiagnostic> {
-    let default_parser = DefaultModuleParser;
-    let parser = self.parser.unwrap_or(&default_parser);
-    let parsed_source = parser.parse_module(ParseOptions {
+    let parsed_source = self.parser.parse_module(ParseOptions {
       specifier,
       source,
       media_type,
       // scope analysis is not necessary for module parsing
       scope_analysis: false,
     })?;
-    Ok(DefaultModuleAnalyzer::module_info(&parsed_source))
+    Ok(ParserModuleAnalyzer::module_info(&parsed_source))
   }
 }
 
@@ -323,7 +340,7 @@ impl ModuleAnalyzer for CapturingModuleAnalyzer {
     media_type: MediaType,
   ) -> Result<ModuleInfo, ParseDiagnostic> {
     let capturing_parser = self.as_capturing_parser();
-    let module_analyzer = DefaultModuleAnalyzer::new(&capturing_parser);
+    let module_analyzer = ParserModuleAnalyzer::new(&capturing_parser);
     module_analyzer.analyze(specifier, source, media_type)
   }
 }
@@ -606,7 +623,7 @@ mod tests {
       })
       .unwrap();
     let text_info = parsed_source.text_info();
-    let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
+    let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
     let dependencies = module_info.dependencies;
     assert_eq!(dependencies.len(), 6);
 
@@ -683,7 +700,7 @@ mod tests {
         scope_analysis: false,
       })
       .unwrap();
-    let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
+    let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
     let text_info = parsed_source.text_info();
     let dependencies = module_info.dependencies;
     assert_eq!(dependencies.len(), 10);
@@ -720,7 +737,7 @@ mod tests {
           scope_analysis: false,
         })
         .unwrap();
-      let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
+      let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
       let dependencies = module_info.dependencies;
       assert_eq!(dependencies.len(), 2);
       let dep = dependencies[0].as_static().unwrap();
@@ -771,7 +788,7 @@ const f = new Set();
         scope_analysis: false,
       })
       .unwrap();
-    let module_info = DefaultModuleAnalyzer::module_info(&parsed_source);
+    let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
     let dependencies = module_info.jsdoc_imports;
     assert_eq!(
       dependencies,
@@ -840,8 +857,7 @@ const f = new Set();
 /* @jsxImportSource preact */
 export {};
 "#;
-    let analyzer = DefaultModuleAnalyzer::new(&DefaultModuleParser);
-    let module_info = analyzer
+    let module_info = DefaultModuleAnalyzer
       .analyze(&specifier, source.into(), MediaType::Tsx)
       .unwrap();
     assert_eq!(
