@@ -38,6 +38,7 @@ pub use analyzer::SpecifierWithRange;
 pub use analyzer::StaticDependencyDescriptor;
 pub use analyzer::TypeScriptReference;
 pub use ast::CapturingModuleAnalyzer;
+pub use ast::CapturingModuleParser;
 pub use ast::DefaultModuleAnalyzer;
 pub use ast::DefaultModuleParser;
 pub use ast::DefaultParsedSourceStore;
