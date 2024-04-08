@@ -1417,10 +1417,10 @@ impl<'a> FastCheckTransformer<'a> {
     match &n.left {
       AssignTarget::Simple(simple) => match simple {
         SimpleAssignTarget::Member(mem_expr) => {
-          if let Some(public_ident) = self.maybe_public_member(&mem_expr) {
+          if let Some(public_ident) = self.maybe_public_member(mem_expr) {
             match &mem_expr.prop {
               MemberProp::Ident(mem_ident) => {
-                let maybe_type_ann = self.maybe_infer_type_from_expr(&*n.right);
+                let maybe_type_ann = self.maybe_infer_type_from_expr(&n.right);
                 if let Some(type_ann) = maybe_type_ann {
                   if let Some(items) =
                     self.public_inferred_namespaces.get_mut(&public_ident)
@@ -1498,7 +1498,7 @@ impl<'a> FastCheckTransformer<'a> {
 
   fn maybe_public_member(&mut self, expr: &MemberExpr) -> Option<String> {
     match &*expr.obj {
-      Expr::Member(mem) => self.maybe_public_member(&mem),
+      Expr::Member(mem) => self.maybe_public_member(mem),
       Expr::Ident(ident) => {
         if self
           .public_inferred_namespaces
@@ -1758,7 +1758,7 @@ impl<'a> FastCheckTransformer<'a> {
               Ident::new(format!("_arg{}", idx).into(), DUMMY_SP)
             }
           };
-          if let Ok(ts_type) = self.infer_type_from_pat(&pat) {
+          if let Ok(ts_type) = self.infer_type_from_pat(pat) {
             params.push(TsFnParam::Ident(BindingIdent {
               id: name,
               type_ann: Some(Box::new(TsTypeAnn {
@@ -1787,7 +1787,6 @@ impl<'a> FastCheckTransformer<'a> {
                 let ts_type = if !has_return {
                   ts_void_type()
                 } else {
-                  eprint!("expr {:#?}", block_stmt);
                   any_fallback_type()
                 };
 
@@ -2257,12 +2256,11 @@ fn is_expr_ident_or_member_idents(expr: &Expr) -> bool {
 
 fn contains_return_stmt(stmts: &Vec<Stmt>) -> bool {
   for stmt in stmts {
-    match stmt {
-      Stmt::Return(_) => return true,
-      _ => {}
+    if let Stmt::Return(_) = stmt {
+      return true;
     }
   }
-  return false;
+  false
 }
 
 fn array_as_never_expr() -> Box<Expr> {
