@@ -1817,19 +1817,10 @@ impl<'a> FastCheckTransformer<'a> {
               }
             }
             BlockStmtOrExpr::Expr(expr) => {
-              let return_type = if let Ok(ts_type) =
+              let return_type = if let Ok(Some(ts_type)) =
                 self.maybe_infer_type_from_expr(expr, report_diagnostics)
               {
-                if let Some(actual_type) = ts_type {
-                  actual_type
-                } else {
-                  self.mark_diagnostic(
-                    FastCheckDiagnostic::MissingExplicitReturnType {
-                      range: self.source_range_to_range(arrow_expr.range()),
-                    },
-                  )?;
-                  ts_any_type()
-                }
+                ts_type
               } else {
                 self.mark_diagnostic(
                   FastCheckDiagnostic::MissingExplicitReturnType {
@@ -1918,7 +1909,7 @@ impl<'a> FastCheckTransformer<'a> {
           Lit::Str(lit_str) => {
             TsLit::Str(lit_str.value.to_string().clone().into())
           }
-          Lit::Bool(lit_bool) => TsLit::Bool(lit_bool.clone()),
+          Lit::Bool(lit_bool) => TsLit::Bool(*lit_bool),
           Lit::Num(lit_num) => TsLit::Number(lit_num.clone()),
           // Invalid
           Lit::BigInt(_) | Lit::Regex(_) | Lit::JSXText(_) | Lit::Null(_) => {
