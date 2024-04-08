@@ -5,7 +5,12 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-export const test4 = function () { return "test" };
+export const a = "foo" as const
+export const b = 2 as const
+export const c = true as const
+export const d = false as const
+export const g = [1, 2] as const
+export const h = { a: 1, b: 2 } as const
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -42,7 +47,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 52,
+      "size": 197,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -56,5 +61,26 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  missing explicit return type in the public API
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@21
+  {}
+  export const a: "foo" = {} as never;
+  export const b: 2 = {} as never;
+  export const c: true = {} as never;
+  export const d: false = {} as never;
+  export const g = [
+    1,
+    2
+  ] as const;
+  export const h = {
+    a: 1,
+    b: 2
+  } as const;
+  --- DTS ---
+  export declare const a: "foo";
+  export declare const b: 2;
+  export declare const c: true;
+  export declare const d: false;
+  export declare const g: readonly [1, 2];
+  export declare const h: {
+    readonly a: 1;
+    readonly b: 2;
+  };

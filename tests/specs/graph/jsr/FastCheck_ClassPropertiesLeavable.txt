@@ -118,10 +118,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   import type { Foo, Bar } from "./b.ts";
   export class Foo {
-    fizz = (a: string): string =>({} as never);
-    foo = (): Foo =>({} as never);
-    bar = (b: Bar): number =>({} as never);
-    bax = function(b: Bax): void {};
+    declare fizz: (a: string) => string;
+    declare foo: () => Foo;
+    declare bar: (b: Bar) => number;
+    declare bax: (b: Bax) => void;
   }
   --- DTS ---
   import type { Foo, Bar } from "./b.ts";

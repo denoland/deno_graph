@@ -148,16 +148,14 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       ]
     ]
   };
-  export const func1 = function(): string {
-    return {} as never;
-  };
-  export const func2 = (): string =>({} as never);
-  export const func3 = (): string =>({} as never);
-  export const func4 = ()=>"test" as const;
-  export const func5 = (): Promise<string> =>({} as never);
-  export const func6 = (): Promise<1> =>({} as never);
-  export const func7 = (): Promise<1> =>({} as never);
-  export const func8 = async ()=>"test" as const;
+  export const func1: () => string = {} as never;
+  export const func2: () => string = {} as never;
+  export const func3: () => string = {} as never;
+  export const func4: () => "test" = {} as never;
+  export const func5: () => Promise<string> = {} as never;
+  export const func6: () => Promise<1> = {} as never;
+  export const func7: () => Promise<1> = {} as never;
+  export const func8: () => Promise<"test"> = {} as never;
   export const inferred1: 1 = {} as never;
   export const inferred2: string = {} as never;
   export const inferred3: true = {} as never;
@@ -197,11 +195,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export declare const func1: () => string;
   export declare const func2: () => string;
   export declare const func3: () => string;
-  export declare const func4: () => any;
+  export declare const func4: () => "test";
   export declare const func5: () => Promise<string>;
   export declare const func6: () => Promise<1>;
   export declare const func7: () => Promise<1>;
-  export declare const func8: () => any;
+  export declare const func8: () => Promise<"test">;
   export declare const inferred1: 1;
   export declare const inferred2: string;
   export declare const inferred3: true;
