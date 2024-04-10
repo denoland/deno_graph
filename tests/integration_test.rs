@@ -10,6 +10,9 @@ use std::path::PathBuf;
 use std::rc::Rc;
 
 use anyhow::anyhow;
+use deno_ast::EmitOptions;
+use deno_ast::EmittedSource;
+use deno_ast::Emitter;
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
@@ -112,9 +115,20 @@ async fn test_graph_specs() {
           ));
 
           if let Some(dts) = &fast_check.dts {
-            if !dts.text.is_empty() {
+            let emitter = Emitter::new(
+              module.specifier.as_str(),
+              module.source.to_string(),
+              EmitOptions {
+                keep_comments: true,
+                source_map: deno_ast::SourceMapOption::None,
+                ..Default::default()
+              },
+            );
+            let EmittedSource { text, .. } =
+              emitter.emit(&dts.program, dts.comments.clone()).unwrap();
+            if !text.is_empty() {
               output_text.push_str(&indent("--- DTS ---\n"));
-              output_text.push_str(&indent(&dts.text));
+              output_text.push_str(&indent(&text));
             }
             if !dts.diagnostics.is_empty() {
               output_text.push_str(&indent("--- DTS Diagnostics ---\n"));

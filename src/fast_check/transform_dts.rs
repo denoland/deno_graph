@@ -930,7 +930,6 @@ impl<'a> FastCheckDtsTransformer<'a> {
 
 #[cfg(test)]
 mod tests {
-  use crate::fast_check::swc_helpers::emit;
   use crate::fast_check::transform_dts::FastCheckDtsTransformer;
   use crate::source::MemoryLoader;
   use crate::source::Source;
@@ -939,6 +938,9 @@ mod tests {
   use crate::CapturingModuleAnalyzer;
   use crate::GraphKind;
   use crate::ModuleGraph;
+  use deno_ast::EmitOptions;
+  use deno_ast::EmittedSource;
+  use deno_ast::Emitter;
   use url::Url;
 
   async fn transform_dts_test(source: &str, expected: &str) {
@@ -985,8 +987,19 @@ mod tests {
 
     let comments = parsed_source.comments().as_single_threaded();
 
-    let (actual, _) =
-      emit(&specifier, &comments, parsed_source.text_info(), &module).unwrap();
+    let emitter = Emitter::new(
+      specifier.as_str(),
+      parsed_source.text_info().text_str().to_owned(),
+      EmitOptions {
+        keep_comments: true,
+        source_map: deno_ast::SourceMapOption::None,
+        inline_sources: false,
+      },
+    );
+
+    let EmittedSource { text: actual, .. } = emitter
+      .emit(&deno_ast::swc::ast::Program::Module(module), comments)
+      .unwrap();
 
     assert_eq!(actual.trim(), expected.trim());
   }
