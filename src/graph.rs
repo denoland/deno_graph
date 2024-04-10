@@ -2723,7 +2723,7 @@ impl From<LoadResponse> for PendingInfoResponse {
   }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct JsrPackageVersionInfoExt {
   base_url: Url,
   inner: Arc<JsrPackageVersionInfo>,
@@ -2738,7 +2738,7 @@ struct PendingInfo {
 
 type PendingInfoFuture = LocalBoxFuture<'static, PendingInfo>;
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub(crate) struct AttributeTypeWithRange {
   range: Range,
   /// The kind of attribute (ex. "json").
@@ -2753,19 +2753,21 @@ struct PendingNpmRegistryInfoLoad {
 type PendingNpmRegistryInfoLoadFutures =
   FuturesUnordered<LocalBoxFuture<'static, PendingNpmRegistryInfoLoad>>;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct PendingNpmState {
   requested_registry_info_loads: HashSet<String>,
   pending_registry_info_loads: PendingNpmRegistryInfoLoadFutures,
   pending_resolutions: Vec<PendingNpmResolutionItem>,
 }
 
+#[derive(Debug)]
 struct PendingJsrResolutionItem {
   specifier: ModuleSpecifier,
   package_ref: JsrPackageReqReference,
   maybe_range: Option<Range>,
 }
 
+#[derive(Debug)]
 struct PendingContentLoadItem {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
@@ -2781,7 +2783,7 @@ struct PendingJsrPackageVersionInfoLoadItem {
 
 type PendingResult<T> = Shared<JoinHandle<Result<T, Arc<anyhow::Error>>>>;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct PendingJsrState {
   pending_package_info_loads:
     HashMap<String, PendingResult<Option<Arc<JsrPackageInfo>>>>,
@@ -2792,13 +2794,14 @@ struct PendingJsrState {
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
 }
 
+#[derive(Debug)]
 struct PendingDynamicBranch {
   range: Range,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct PendingState {
   pending: FuturesOrdered<PendingInfoFuture>,
   jsr: PendingJsrState,
@@ -2962,7 +2965,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     // process any imports that are being added to the graph.
     self.handle_provided_imports(imports);
 
-    loop {
+    while !(self.state.pending.is_empty()
+      && self.state.jsr.pending_resolutions.is_empty()
+      && self.state.dynamic_branches.is_empty())
+    {
       let specifier = match self.state.pending.next().await {
         Some(PendingInfo {
           specifier,
@@ -3048,12 +3054,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           return;
         }
 
+        // resolving jsr specifiers will load more specifiers
         if self.state.pending.is_empty() {
           self.resolve_dynamic_branches();
-
-          if self.state.pending.is_empty() {
-            break;
-          }
         }
       }
     }
@@ -4301,6 +4304,7 @@ impl NpmSpecifierBuildPendingInfo {
   }
 }
 
+#[derive(Debug)]
 struct PendingNpmResolutionItem {
   specifier: ModuleSpecifier,
   package_ref: NpmPackageReqReference,
