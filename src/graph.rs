@@ -1036,6 +1036,7 @@ pub struct WalkOptions {
   pub follow_dynamic: bool,
   pub follow_type_only: bool,
   pub check_js: bool,
+  pub follow_fast_check_modules: bool,
 }
 
 impl Default for WalkOptions {
@@ -1044,6 +1045,7 @@ impl Default for WalkOptions {
       follow_dynamic: false,
       follow_type_only: true,
       check_js: true,
+      follow_fast_check_modules: true,
     }
   }
 }
@@ -1055,6 +1057,7 @@ pub struct ModuleEntryIterator<'a> {
   follow_dynamic: bool,
   follow_type_only: bool,
   check_js: bool,
+  follow_fast_check_modules: bool,
   previous_module: Option<ModuleEntryRef<'a>>,
 }
 
@@ -1095,6 +1098,7 @@ impl<'a> ModuleEntryIterator<'a> {
       follow_dynamic: options.follow_dynamic,
       follow_type_only: options.follow_type_only,
       check_js: options.check_js,
+      follow_fast_check_modules: options.follow_fast_check_modules,
       previous_module: None,
     }
   }
@@ -1155,7 +1159,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
               }
             }
           }
-          let module_deps = if check_types {
+          let module_deps = if check_types && self.follow_fast_check_modules {
             module.dependencies_prefer_fast_check()
           } else {
             &module.dependencies
@@ -1562,6 +1566,7 @@ impl ModuleGraph {
         follow_dynamic: true,
         follow_type_only: true,
         check_js: true,
+        follow_fast_check_modules: true,
       },
     );
 
@@ -1824,6 +1829,7 @@ impl ModuleGraph {
           check_js: true,
           follow_type_only: false,
           follow_dynamic: false,
+          follow_fast_check_modules: true,
         },
       )
       .validate()
@@ -4864,6 +4870,7 @@ mod tests {
           follow_dynamic: false,
           follow_type_only: true,
           check_js: true,
+          follow_fast_check_modules: true,
         },
       )
       .errors()
@@ -4878,6 +4885,7 @@ mod tests {
           follow_dynamic: true,
           follow_type_only: true,
           check_js: true,
+          follow_fast_check_modules: true,
         },
       )
       .errors()
