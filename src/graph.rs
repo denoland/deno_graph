@@ -4578,10 +4578,11 @@ where
 mod tests {
   use crate::packages::JsrPackageInfoVersion;
   use crate::ParserModuleAnalyzer;
+  use deno_ast::create_single_file_source_map;
   use deno_ast::dep::ImportAttribute;
+  use deno_ast::emit;
   use deno_ast::EmitOptions;
   use deno_ast::EmittedSource;
-  use deno_ast::Emitter;
   use pretty_assertions::assert_eq;
   use serde_json::json;
 
@@ -5373,17 +5374,21 @@ mod tests {
       unreachable!();
     };
     let dts = fsm.dts.unwrap();
-    let emitter = Emitter::new(
+    let source_map = create_single_file_source_map(
       module.specifier.as_str(),
       module.source.to_string(),
+    );
+    let EmittedSource { text, .. } = emit(
+      &dts.program,
+      dts.comments.clone(),
+      source_map,
       EmitOptions {
         keep_comments: true,
         source_map: deno_ast::SourceMapOption::None,
         ..Default::default()
       },
-    );
-    let EmittedSource { text, .. } =
-      emitter.emit(&dts.program, dts.comments.clone()).unwrap();
+    )
+    .unwrap();
     assert_eq!(
       text.trim(),
       "export declare function add(a: number, b: number): number;"
@@ -5453,17 +5458,21 @@ mod tests {
         unreachable!();
       };
       let dts = fsm.dts.unwrap();
-      let emitter = Emitter::new(
+      let source_map = create_single_file_source_map(
         module.specifier().as_str(),
         module.source().unwrap().to_string(),
+      );
+      let EmittedSource { text, .. } = emit(
+        &dts.program,
+        dts.comments.clone(),
+        source_map,
         EmitOptions {
           keep_comments: true,
           source_map: deno_ast::SourceMapOption::None,
           ..Default::default()
         },
-      );
-      let EmittedSource { text, .. } =
-        emitter.emit(&dts.program, dts.comments.clone()).unwrap();
+      )
+      .unwrap();
       assert_eq!(text.trim(), "export * from 'jsr:@package/foo';");
       assert!(dts.diagnostics.is_empty());
     }

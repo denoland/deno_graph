@@ -938,9 +938,10 @@ mod tests {
   use crate::CapturingModuleAnalyzer;
   use crate::GraphKind;
   use crate::ModuleGraph;
+  use deno_ast::create_single_file_source_map;
+  use deno_ast::emit;
   use deno_ast::EmitOptions;
   use deno_ast::EmittedSource;
-  use deno_ast::Emitter;
   use url::Url;
 
   async fn transform_dts_test(source: &str, expected: &str) {
@@ -987,19 +988,22 @@ mod tests {
 
     let comments = parsed_source.comments().as_single_threaded();
 
-    let emitter = Emitter::new(
+    let source_map = create_single_file_source_map(
       specifier.as_str(),
       parsed_source.text_info().text_str().to_owned(),
+    );
+
+    let EmittedSource { text: actual, .. } = emit(
+      &deno_ast::swc::ast::Program::Module(module),
+      comments,
+      source_map,
       EmitOptions {
         keep_comments: true,
         source_map: deno_ast::SourceMapOption::None,
         inline_sources: false,
       },
-    );
-
-    let EmittedSource { text: actual, .. } = emitter
-      .emit(&deno_ast::swc::ast::Program::Module(module), comments)
-      .unwrap();
+    )
+    .unwrap();
 
     assert_eq!(actual.trim(), expected.trim());
   }

@@ -7,6 +7,8 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
+use deno_ast::create_single_file_source_map;
+use deno_ast::emit;
 use deno_ast::swc::ast::*;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::common::comments::SingleThreadedComments;
@@ -15,7 +17,6 @@ use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::EmitOptions;
 use deno_ast::EmittedSource;
-use deno_ast::Emitter;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
 use deno_ast::ParsedSource;
@@ -138,25 +139,27 @@ pub fn transform(
   };
 
   // now emit
-  let emitter = Emitter::new(
+  let source_map = create_single_file_source_map(
     specifier.as_str(),
     parsed_source.text_info().text_str().to_owned(),
+  );
+  let program = Program::Module(module);
+  let EmittedSource { text, source_map } = emit(
+    &program,
+    fast_check_comments,
+    source_map,
     EmitOptions {
       keep_comments: true,
       source_map: deno_ast::SourceMapOption::Separate,
       inline_sources: false,
     },
-  );
-
-  let program = Program::Module(module);
-
-  let EmittedSource { text, source_map } =
-    emitter.emit(&program, fast_check_comments).map_err(|e| {
-      vec![FastCheckDiagnostic::Emit {
-        specifier: specifier.clone(),
-        inner: Arc::new(e),
-      }]
-    })?;
+  )
+  .map_err(|e| {
+    vec![FastCheckDiagnostic::Emit {
+      specifier: specifier.clone(),
+      inner: Arc::new(e),
+    }]
+  })?;
 
   let dts = if let Some(dts_comments) = dts_comments {
     let mut dts_transformer =
