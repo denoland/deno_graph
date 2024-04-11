@@ -3600,6 +3600,7 @@ export function a(a: A): B {
         check_js: true,
         follow_dynamic: true,
         follow_type_only: true,
+        follow_fast_check_modules: true,
       },
     );
     assert_eq!(
@@ -3627,6 +3628,7 @@ export function a(a: A): B {
         check_js: false,
         follow_dynamic: false,
         follow_type_only: false,
+        follow_fast_check_modules: true,
       },
     );
     assert_eq!(
@@ -3649,6 +3651,7 @@ export function a(a: A): B {
         check_js: false,
         follow_dynamic: true,
         follow_type_only: false,
+        follow_fast_check_modules: true,
       },
     );
     assert_eq!(
@@ -3673,6 +3676,7 @@ export function a(a: A): B {
         check_js: true,
         follow_dynamic: false,
         follow_type_only: false,
+        follow_fast_check_modules: true,
       },
     );
     assert_eq!(
@@ -3696,6 +3700,7 @@ export function a(a: A): B {
         check_js: false,
         follow_dynamic: false,
         follow_type_only: true,
+        follow_fast_check_modules: true,
       },
     );
     assert_eq!(
@@ -3720,6 +3725,7 @@ export function a(a: A): B {
         check_js: true,
         follow_dynamic: false,
         follow_type_only: true,
+        follow_fast_check_modules: true,
       },
     );
     assert_eq!(
@@ -4034,6 +4040,7 @@ export function a(a: A): B {
           check_js: true,
           follow_type_only: true,
           follow_dynamic: false,
+          follow_fast_check_modules: true,
         },
       )
       .errors()
