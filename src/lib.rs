@@ -3600,7 +3600,7 @@ export function a(a: A): B {
         check_js: true,
         follow_dynamic: true,
         follow_type_only: true,
-        follow_fast_check_modules: true,
+        prefer_fast_check_graph: true,
       },
     );
     assert_eq!(
@@ -3628,7 +3628,7 @@ export function a(a: A): B {
         check_js: false,
         follow_dynamic: false,
         follow_type_only: false,
-        follow_fast_check_modules: true,
+        prefer_fast_check_graph: true,
       },
     );
     assert_eq!(
@@ -3651,7 +3651,7 @@ export function a(a: A): B {
         check_js: false,
         follow_dynamic: true,
         follow_type_only: false,
-        follow_fast_check_modules: true,
+        prefer_fast_check_graph: true,
       },
     );
     assert_eq!(
@@ -3676,7 +3676,7 @@ export function a(a: A): B {
         check_js: true,
         follow_dynamic: false,
         follow_type_only: false,
-        follow_fast_check_modules: true,
+        prefer_fast_check_graph: true,
       },
     );
     assert_eq!(
@@ -3700,7 +3700,7 @@ export function a(a: A): B {
         check_js: false,
         follow_dynamic: false,
         follow_type_only: true,
-        follow_fast_check_modules: true,
+        prefer_fast_check_graph: true,
       },
     );
     assert_eq!(
@@ -3725,7 +3725,7 @@ export function a(a: A): B {
         check_js: true,
         follow_dynamic: false,
         follow_type_only: true,
-        follow_fast_check_modules: true,
+        prefer_fast_check_graph: true,
       },
     );
     assert_eq!(
@@ -3747,7 +3747,15 @@ export function a(a: A): B {
 
     // try skip analyzing the dependencies after getting the first module
     {
-      let mut iterator = graph.walk(&roots, Default::default());
+      let mut iterator = graph.walk(
+        &roots,
+        WalkOptions {
+          check_js: true,
+          follow_dynamic: false,
+          follow_type_only: true,
+          prefer_fast_check_graph: false,
+        },
+      );
       assert_eq!(
         iterator.next().unwrap().0.as_str(),
         "https://example.com/jsx-runtime"
@@ -3763,7 +3771,15 @@ export function a(a: A): B {
 
     // try skipping after first remote
     {
-      let mut iterator = graph.walk(&roots, Default::default());
+      let mut iterator = graph.walk(
+        &roots,
+        WalkOptions {
+          check_js: true,
+          follow_dynamic: false,
+          follow_type_only: true,
+          prefer_fast_check_graph: false,
+        },
+      );
       assert_eq!(
         iterator.next().unwrap().0.as_str(),
         "https://example.com/jsx-runtime"
@@ -4040,7 +4056,7 @@ export function a(a: A): B {
           check_js: true,
           follow_type_only: true,
           follow_dynamic: false,
-          follow_fast_check_modules: true,
+          prefer_fast_check_graph: true,
         },
       )
       .errors()
