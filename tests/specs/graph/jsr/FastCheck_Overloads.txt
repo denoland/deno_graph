@@ -11,8 +11,8 @@ export class argsToArray {
   argsToArray(..._args: unknown[]): void {}
 }
 
-function overloadSpread(...args: string[]);
-function overloadSpread(...args: number[]);
+export function overloadSpread(...args: string[]);
+export function overloadSpread(...args: number[]);
 export function overloadSpread(...args: unknown[]) {
   return args;
 }
@@ -52,7 +52,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 314,
+      "size": 328,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -74,8 +74,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       return {} as never;
     }
   }
-  function overloadSpread(...args: string[]);
-  function overloadSpread(...args: number[]);
+  export function overloadSpread(...args: string[]);
+  export function overloadSpread(...args: number[]);
   export function overloadSpread(...param0?: any): any {
     return {} as never;
   }
@@ -84,6 +84,5 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     argsToArray(..._args: string[]): void;
     argsToArray(..._args: number[]): void;
   }
-  declare function overloadSpread(...args: string[]);
-  declare function overloadSpread(...args: number[]);
-  export declare function overloadSpread(...param0?: any): any;
+  export declare function overloadSpread(...args: string[]);
+  export declare function overloadSpread(...args: number[]);
