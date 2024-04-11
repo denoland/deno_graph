@@ -157,7 +157,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private "stringOnly"(value: string): string;
     private "stringOnly"(): string;
   }
-  export declare namespace Test {
+  export declare module Test {
     export class AmbientClassInModule {
       private constructor(value: string);
       private constructor(private: Private);
@@ -187,7 +187,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private "stringOnly"(value: string): string;
     private "stringOnly"(): string;
   }
-  export declare namespace Test {
+  export declare module Test {
     export class AmbientClassInModule {
       private constructor(value: string);
       private constructor(private: Private);

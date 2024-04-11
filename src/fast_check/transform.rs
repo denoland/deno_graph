@@ -7,15 +7,19 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
+use deno_ast::emit;
 use deno_ast::swc::ast::*;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::common::comments::SingleThreadedComments;
 use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
 use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::DUMMY_SP;
+use deno_ast::EmitOptions;
+use deno_ast::EmittedSource;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
 use deno_ast::ParsedSource;
+use deno_ast::SourceMap;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 
@@ -26,7 +30,6 @@ use crate::WorkspaceMember;
 
 use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::any_type_ann;
-use super::swc_helpers::emit;
 use super::swc_helpers::get_return_stmts_with_arg_from_function_body;
 use super::swc_helpers::ident;
 use super::swc_helpers::is_void_type;
@@ -79,7 +82,8 @@ impl CommentsMut {
 
 #[derive(Debug, Clone)]
 pub struct FastCheckDtsModule {
-  pub text: String,
+  pub program: Program,
+  pub comments: SingleThreadedComments,
   pub diagnostics: Vec<FastCheckDtsDiagnostic>,
 }
 
@@ -135,11 +139,20 @@ pub fn transform(
   };
 
   // now emit
-  let (text, source_map) = emit(
-    specifier,
+  let source_map = SourceMap::single(
+    specifier.clone(),
+    parsed_source.text_info().text_str().to_owned(),
+  );
+  let program = Program::Module(module);
+  let EmittedSource { text, source_map } = emit(
+    &program,
     &fast_check_comments,
-    parsed_source.text_info(),
-    &module,
+    &source_map,
+    &EmitOptions {
+      keep_comments: true,
+      source_map: deno_ast::SourceMapOption::Separate,
+      inline_sources: false,
+    },
   )
   .map_err(|e| {
     vec![FastCheckDiagnostic::Emit {
@@ -152,18 +165,11 @@ pub fn transform(
     let mut dts_transformer =
       FastCheckDtsTransformer::new(parsed_source.text_info(), specifier);
 
-    let module = dts_transformer.transform(module)?;
-    let (text, _source_map) =
-      emit(specifier, &dts_comments, parsed_source.text_info(), &module)
-        .map_err(|e| {
-          vec![FastCheckDiagnostic::Emit {
-            specifier: specifier.clone(),
-            inner: Arc::new(e),
-          }]
-        })?;
+    let module = dts_transformer.transform(program.expect_module())?;
 
     Some(FastCheckDtsModule {
-      text,
+      program: Program::Module(module),
+      comments: dts_comments,
       diagnostics: dts_transformer.diagnostics,
     })
   } else {
@@ -174,7 +180,7 @@ pub fn transform(
     module_info: module_info.into(),
     text: text.into(),
     dts,
-    source_map: source_map.into(),
+    source_map: source_map.unwrap().into_bytes().into(),
   })
 }
 
