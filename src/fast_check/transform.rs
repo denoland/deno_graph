@@ -7,7 +7,6 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use deno_ast::create_single_file_source_map;
 use deno_ast::emit;
 use deno_ast::swc::ast::*;
 use deno_ast::swc::common::comments::CommentKind;
@@ -20,6 +19,7 @@ use deno_ast::EmittedSource;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
 use deno_ast::ParsedSource;
+use deno_ast::SourceMap;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 
@@ -139,16 +139,16 @@ pub fn transform(
   };
 
   // now emit
-  let source_map = create_single_file_source_map(
-    specifier.as_str(),
+  let source_map = SourceMap::single(
+    specifier.clone(),
     parsed_source.text_info().text_str().to_owned(),
   );
   let program = Program::Module(module);
   let EmittedSource { text, source_map } = emit(
     &program,
-    fast_check_comments,
-    source_map,
-    EmitOptions {
+    &fast_check_comments,
+    &source_map,
+    &EmitOptions {
       keep_comments: true,
       source_map: deno_ast::SourceMapOption::Separate,
       inline_sources: false,

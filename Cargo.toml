@@ -29,7 +29,7 @@ wasm_executor = []
 anyhow = "1.0.43"
 async-trait = "0.1.68"
 data-url = "0.3.0"
-deno_ast = { version = "0.35.2", features = ["dep_analysis", "emit"] }
+deno_ast = { version = "0.36.0", features = ["dep_analysis", "emit"] }
 deno_semver = "0.5.4"
 deno_unsync = { version = "0.3.2", optional = true }
 encoding_rs = "0.8.33"
@@ -59,6 +59,3 @@ codegen-units = 1
 incremental = true
 lto = true
 opt-level = "z"
-
-[patch.crates-io]
-deno_ast = { path = "../deno_ast" }
