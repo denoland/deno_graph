@@ -180,7 +180,7 @@ pub fn transform(
     module_info: module_info.into(),
     text: text.into(),
     dts,
-    source_map: source_map.unwrap().as_bytes().into(),
+    source_map: source_map.unwrap().into_bytes().into(),
   })
 }
 
