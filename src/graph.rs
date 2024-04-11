@@ -5390,7 +5390,7 @@ mod tests {
       SourceMap::single(module.specifier.clone(), module.source.to_string());
     let EmittedSource { text, .. } = emit(
       &dts.program,
-      &dts.comments,
+      &dts.comments.as_single_threaded(),
       &source_map,
       &EmitOptions {
         keep_comments: true,
@@ -5474,7 +5474,7 @@ mod tests {
       );
       let EmittedSource { text, .. } = emit(
         &dts.program,
-        &dts.comments,
+        &dts.comments.as_single_threaded(),
         &source_map,
         &EmitOptions {
           keep_comments: true,

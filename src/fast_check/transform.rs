@@ -15,7 +15,6 @@ use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
 use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::EmitOptions;
-use deno_ast::EmittedSource;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
 use deno_ast::ParsedSource;
@@ -83,7 +82,7 @@ impl CommentsMut {
 #[derive(Debug, Clone)]
 pub struct FastCheckDtsModule {
   pub program: Program,
-  pub comments: SingleThreadedComments,
+  pub comments: MultiThreadedComments,
   pub diagnostics: Vec<FastCheckDtsDiagnostic>,
 }
 
@@ -130,10 +129,7 @@ pub fn transform(
   // so if we're emitting with dts, make a copy of the comments for
   // each emit
   let (fast_check_comments, dts_comments) = if options.dts {
-    (
-      comments.as_single_threaded(),
-      Some(comments.into_single_threaded()),
-    )
+    (comments.as_single_threaded(), Some(comments))
   } else {
     (comments.into_single_threaded(), None)
   };
@@ -144,7 +140,7 @@ pub fn transform(
     parsed_source.text_info().text_str().to_owned(),
   );
   let program = Program::Module(module);
-  let EmittedSource { text, source_map } = emit(
+  let emitted_source = emit(
     &program,
     &fast_check_comments,
     &source_map,
@@ -178,9 +174,9 @@ pub fn transform(
 
   Ok(FastCheckModule {
     module_info: module_info.into(),
-    text: text.into(),
+    text: emitted_source.text.into(),
     dts,
-    source_map: source_map.unwrap().into_bytes().into(),
+    source_map: emitted_source.source_map.unwrap().into_bytes().into(),
   })
 }
 
