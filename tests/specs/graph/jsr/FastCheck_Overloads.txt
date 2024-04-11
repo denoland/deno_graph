@@ -17,6 +17,12 @@ export function overloadSpread(...args: unknown[]) {
   return args;
 }
 
+export function overloadLast(value: string, ...args: string[]);
+export function overloadLast(value: number, ...args: number[]);
+export function overloadLast(value: string | number, ...args: unknown[]) {
+  return args;
+}
+
 # mod.ts
 import 'jsr:@scope/a'
 
@@ -52,7 +58,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 328,
+      "size": 549,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -79,6 +85,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export function overloadSpread(...param0?: any): any {
     return {} as never;
   }
+  export function overloadLast(value: string, ...args: string[]);
+  export function overloadLast(value: number, ...args: number[]);
+  export function overloadLast(param0?: any, ...param1?: any): any {
+    return {} as never;
+  }
   --- DTS ---
   export declare class argsToArray {
     argsToArray(..._args: string[]): void;
@@ -86,3 +97,5 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export declare function overloadSpread(...args: string[]);
   export declare function overloadSpread(...args: number[]);
+  export declare function overloadLast(value: string, ...args: string[]);
+  export declare function overloadLast(value: number, ...args: number[]);
