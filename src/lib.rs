@@ -3701,7 +3701,6 @@ export function a(a: A): B {
         follow_dynamic: false,
         follow_type_only: true,
         follow_fast_check_modules: true,
-        follow_fast_check_modules: true,
       },
     );
     assert_eq!(
