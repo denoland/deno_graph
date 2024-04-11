@@ -1036,6 +1036,7 @@ pub struct WalkOptions {
   pub follow_dynamic: bool,
   pub follow_type_only: bool,
   pub check_js: bool,
+  pub follow_fast_check_modules: bool,
 }
 
 impl Default for WalkOptions {
@@ -1044,6 +1045,7 @@ impl Default for WalkOptions {
       follow_dynamic: false,
       follow_type_only: true,
       check_js: true,
+      follow_fast_check_modules: true,
     }
   }
 }
@@ -1055,6 +1057,7 @@ pub struct ModuleEntryIterator<'a> {
   follow_dynamic: bool,
   follow_type_only: bool,
   check_js: bool,
+  follow_fast_check_modules: bool,
   previous_module: Option<ModuleEntryRef<'a>>,
 }
 
@@ -1095,6 +1098,7 @@ impl<'a> ModuleEntryIterator<'a> {
       follow_dynamic: options.follow_dynamic,
       follow_type_only: options.follow_type_only,
       check_js: options.check_js,
+      follow_fast_check_modules: options.follow_fast_check_modules,
       previous_module: None,
     }
   }
@@ -1155,7 +1159,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
               }
             }
           }
-          let module_deps = if check_types {
+          let module_deps = if check_types && self.follow_fast_check_modules {
             module.dependencies_prefer_fast_check()
           } else {
             &module.dependencies
@@ -1562,6 +1566,7 @@ impl ModuleGraph {
         follow_dynamic: true,
         follow_type_only: true,
         check_js: true,
+        follow_fast_check_modules: true,
       },
     );
 
@@ -1824,6 +1829,7 @@ impl ModuleGraph {
           check_js: true,
           follow_type_only: false,
           follow_dynamic: false,
+          follow_fast_check_modules: true,
         },
       )
       .validate()
@@ -2723,7 +2729,7 @@ impl From<LoadResponse> for PendingInfoResponse {
   }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct JsrPackageVersionInfoExt {
   base_url: Url,
   inner: Arc<JsrPackageVersionInfo>,
@@ -2738,7 +2744,7 @@ struct PendingInfo {
 
 type PendingInfoFuture = LocalBoxFuture<'static, PendingInfo>;
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub(crate) struct AttributeTypeWithRange {
   range: Range,
   /// The kind of attribute (ex. "json").
@@ -2753,19 +2759,21 @@ struct PendingNpmRegistryInfoLoad {
 type PendingNpmRegistryInfoLoadFutures =
   FuturesUnordered<LocalBoxFuture<'static, PendingNpmRegistryInfoLoad>>;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct PendingNpmState {
   requested_registry_info_loads: HashSet<String>,
   pending_registry_info_loads: PendingNpmRegistryInfoLoadFutures,
   pending_resolutions: Vec<PendingNpmResolutionItem>,
 }
 
+#[derive(Debug)]
 struct PendingJsrResolutionItem {
   specifier: ModuleSpecifier,
   package_ref: JsrPackageReqReference,
   maybe_range: Option<Range>,
 }
 
+#[derive(Debug)]
 struct PendingContentLoadItem {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
@@ -2781,7 +2789,7 @@ struct PendingJsrPackageVersionInfoLoadItem {
 
 type PendingResult<T> = Shared<JoinHandle<Result<T, Arc<anyhow::Error>>>>;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct PendingJsrState {
   pending_package_info_loads:
     HashMap<String, PendingResult<Option<Arc<JsrPackageInfo>>>>,
@@ -2792,13 +2800,14 @@ struct PendingJsrState {
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
 }
 
+#[derive(Debug)]
 struct PendingDynamicBranch {
   range: Range,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct PendingState {
   pending: FuturesOrdered<PendingInfoFuture>,
   jsr: PendingJsrState,
@@ -2962,7 +2971,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     // process any imports that are being added to the graph.
     self.handle_provided_imports(imports);
 
-    loop {
+    while !(self.state.pending.is_empty()
+      && self.state.jsr.pending_resolutions.is_empty()
+      && self.state.dynamic_branches.is_empty())
+    {
       let specifier = match self.state.pending.next().await {
         Some(PendingInfo {
           specifier,
@@ -3048,12 +3060,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           return;
         }
 
+        // resolving jsr specifiers will load more specifiers
         if self.state.pending.is_empty() {
           self.resolve_dynamic_branches();
-
-          if self.state.pending.is_empty() {
-            break;
-          }
         }
       }
     }
@@ -4301,6 +4310,7 @@ impl NpmSpecifierBuildPendingInfo {
   }
 }
 
+#[derive(Debug)]
 struct PendingNpmResolutionItem {
   specifier: ModuleSpecifier,
   package_ref: NpmPackageReqReference,
@@ -4864,6 +4874,7 @@ mod tests {
           follow_dynamic: false,
           follow_type_only: true,
           check_js: true,
+          follow_fast_check_modules: true,
         },
       )
       .errors()
@@ -4878,6 +4889,7 @@ mod tests {
           follow_dynamic: true,
           follow_type_only: true,
           check_js: true,
+          follow_fast_check_modules: true,
         },
       )
       .errors()

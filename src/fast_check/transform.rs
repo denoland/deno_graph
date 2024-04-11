@@ -917,18 +917,38 @@ impl<'a> FastCheckTransformer<'a> {
     }
     if is_overload {
       for (i, param) in n.params.iter_mut().enumerate() {
-        *param = Param {
-          span: DUMMY_SP,
-          decorators: Vec::new(),
-          pat: Pat::Ident(BindingIdent {
-            id: Ident {
+        if param.pat.is_rest() {
+          *param = Param {
+            span: DUMMY_SP,
+            decorators: Vec::new(),
+            pat: Pat::Rest(RestPat {
               span: DUMMY_SP,
-              sym: format!("param{}", i).into(),
-              optional: true,
-            },
-            type_ann: Some(any_type_ann()),
-          }),
-        };
+              dot3_token: DUMMY_SP,
+              type_ann: Some(any_type_ann()),
+              arg: Box::new(Pat::Ident(BindingIdent {
+                id: Ident {
+                  span: DUMMY_SP,
+                  sym: format!("param{}", i).into(),
+                  optional: true,
+                },
+                type_ann: None,
+              })),
+            }),
+          };
+        } else {
+          *param = Param {
+            span: DUMMY_SP,
+            decorators: Vec::new(),
+            pat: Pat::Ident(BindingIdent {
+              id: Ident {
+                span: DUMMY_SP,
+                sym: format!("param{}", i).into(),
+                optional: true,
+              },
+              type_ann: Some(any_type_ann()),
+            }),
+          };
+        }
       }
       n.return_type = Some(any_type_ann());
     }
