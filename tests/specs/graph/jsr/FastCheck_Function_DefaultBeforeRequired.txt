@@ -57,7 +57,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 246,
+      "size": 350,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -77,9 +77,19 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     constructor(value?: number[], value2: number){}
     method(value?: number[], value2: number): void {}
   }
+  export class TestParamProp {
+    declare value: number[];
+    declare value2: number;
+    constructor(value?: number[], value2: number){}
+  }
   --- DTS ---
   export declare function test(value?: number[], value2: number): void;
   export declare class Test {
     constructor(value?: number[], value2: number);
     method(value?: number[], value2: number): void;
+  }
+  export declare class TestParamProp {
+    value: number[];
+    value2: number;
+    constructor(value?: number[], value2: number);
   }
