@@ -25,6 +25,11 @@ symbols = ["deno_ast/transforms", "deno_ast/visit", "deno_ast/utils"]
 tokio_executor = ["deno_unsync"]
 wasm_executor = []
 
+[[test]]
+name = "specs"
+path = "tests/specs_test.rs"
+harness = false
+
 [dependencies]
 anyhow = "1.0.43"
 async-trait = "0.1.68"
@@ -33,6 +38,7 @@ deno_ast = { version = "0.36.1", features = ["dep_analysis", "emit"] }
 deno_semver = "0.5.4"
 deno_unsync = { version = "0.3.2", optional = true }
 encoding_rs = "0.8.33"
+file_test_runner = "0.2.0"
 futures = "0.3.26"
 import_map = "0.19.0"
 indexmap = { version = "2", features = ["serde"] }
