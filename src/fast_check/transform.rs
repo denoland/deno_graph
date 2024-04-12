@@ -711,7 +711,7 @@ impl<'a> FastCheckTransformer<'a> {
                 is_optional,
                 is_override: prop.is_override,
                 readonly: prop.readonly,
-                // delcare is not valid with override
+                // declare is not valid with override
                 declare: !prop.is_override,
                 definite: prop.is_override,
               }));
@@ -817,7 +817,10 @@ impl<'a> FastCheckTransformer<'a> {
       ClassMember::ClassProp(n) => {
         if n.accessibility == Some(Accessibility::Private) {
           n.type_ann = Some(any_type_ann());
+          // it doesn't make sense for a private property to have the override
+          // keyword, but might as well make this consistent with elsewhere
           n.declare = !n.is_override;
+          n.definite = n.is_override;
           n.value = None;
           return Ok(true);
         }
