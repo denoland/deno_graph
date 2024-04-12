@@ -25,6 +25,11 @@ symbols = ["deno_ast/transforms", "deno_ast/visit", "deno_ast/utils"]
 tokio_executor = ["deno_unsync"]
 wasm_executor = []
 
+[[test]]
+name = "specs"
+path = "tests/specs_test.rs"
+harness = false
+
 [dependencies]
 anyhow = "1.0.43"
 async-trait = "0.1.68"
@@ -50,6 +55,7 @@ url = { version = "2.2.2", features = ["serde"] }
 
 [dev-dependencies]
 bincode = "1.3.3"
+file_test_runner = "0.2.0"
 pretty_assertions = "1.0.0"
 tempfile = "3.4.0"
 tokio = { version = "1.10.1", features = ["macros", "rt-multi-thread"] }
