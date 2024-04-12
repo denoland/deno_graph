@@ -10,6 +10,8 @@ class Private {}
 const symbol1 = Symbol();
 export class WithTsPrivate extends Base {
   private regular: string;
+  private definiteShouldGoAway!: string;
+  // though private override doesn't make much sense
   private override withOverride: Private;
   private [symbol1]: Private;
 }
@@ -49,7 +51,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 200,
+      "size": 294,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -68,12 +70,14 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export class WithTsPrivate extends Base {
     declare private regular: any;
-    private override withOverride: any;
+    declare private definiteShouldGoAway: any;
+    private override withOverride!: any;
   }
   --- DTS ---
   declare class Base {
   }
   export declare class WithTsPrivate extends Base {
     private regular: any;
+    private definiteShouldGoAway: any;
     private override withOverride: any;
   }
