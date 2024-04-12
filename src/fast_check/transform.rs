@@ -1132,26 +1132,6 @@ impl<'a> FastCheckTransformer<'a> {
     pat: &mut Pat,
     is_optional: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
-    fn convert_optional_ident_to_nullable_type(ident: &mut BindingIdent) {
-      ident.optional = false;
-      if let Some(type_ann) = ident.type_ann.take() {
-        let mut types = Vec::with_capacity(2);
-        types.push(type_ann.type_ann);
-        types.push(Box::new(ts_keyword_type(
-          TsKeywordTypeKind::TsUndefinedKeyword,
-        )));
-        ident.type_ann = Some(Box::new(TsTypeAnn {
-          span: type_ann.span,
-          type_ann: Box::new(TsType::TsUnionOrIntersectionType(
-            TsUnionOrIntersectionType::TsUnionType(TsUnionType {
-              span: DUMMY_SP,
-              types,
-            }),
-          )),
-        }));
-      }
-    }
-
     match pat {
       Pat::Ident(ident) => {
         if ident.type_ann.is_none() {
@@ -1728,6 +1708,25 @@ fn replacement_return_value(ty: &TsType) -> Option<Box<Expr>> {
     None
   } else {
     Some(obj_as_never_expr())
+  }
+}
+
+// convert `ident?: string` to `ident: string | undefined`
+fn convert_optional_ident_to_nullable_type(ident: &mut BindingIdent) {
+  ident.optional = false;
+  if let Some(type_ann) = ident.type_ann.take() {
+    ident.type_ann = Some(Box::new(TsTypeAnn {
+      span: type_ann.span,
+      type_ann: Box::new(TsType::TsUnionOrIntersectionType(
+        TsUnionOrIntersectionType::TsUnionType(TsUnionType {
+          span: DUMMY_SP,
+          types: vec![
+            type_ann.type_ann,
+            Box::new(ts_keyword_type(TsKeywordTypeKind::TsUndefinedKeyword)),
+          ],
+        }),
+      )),
+    }));
   }
 }
 
