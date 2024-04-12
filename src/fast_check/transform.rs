@@ -734,18 +734,38 @@ impl<'a> FastCheckTransformer<'a> {
         let is_overload = self.public_ranges.is_impl_with_overloads(&n.range());
         if is_overload {
           for (i, param) in n.params.iter_mut().enumerate() {
-            *param = ParamOrTsParamProp::Param(Param {
-              span: DUMMY_SP,
-              decorators: Vec::new(),
-              pat: Pat::Ident(BindingIdent {
-                id: Ident {
+            if param.as_param().map(|p| p.pat.is_rest()).unwrap_or(false) {
+              *param = ParamOrTsParamProp::Param(Param {
+                span: DUMMY_SP,
+                decorators: Vec::new(),
+                pat: Pat::Rest(RestPat {
                   span: DUMMY_SP,
-                  sym: format!("param{}", i).into(),
-                  optional: true,
-                },
-                type_ann: Some(any_type_ann()),
-              }),
-            });
+                  dot3_token: DUMMY_SP,
+                  type_ann: Some(any_type_ann()),
+                  arg: Box::new(Pat::Ident(BindingIdent {
+                    id: Ident {
+                      span: DUMMY_SP,
+                      sym: format!("param{}", i).into(),
+                      optional: false,
+                    },
+                    type_ann: None,
+                  })),
+                }),
+              });
+            } else {
+              *param = ParamOrTsParamProp::Param(Param {
+                span: DUMMY_SP,
+                decorators: Vec::new(),
+                pat: Pat::Ident(BindingIdent {
+                  id: Ident {
+                    span: DUMMY_SP,
+                    sym: format!("param{}", i).into(),
+                    optional: true,
+                  },
+                  type_ann: Some(any_type_ann()),
+                }),
+              });
+            }
           }
         }
 
@@ -925,7 +945,7 @@ impl<'a> FastCheckTransformer<'a> {
                 id: Ident {
                   span: DUMMY_SP,
                   sym: format!("param{}", i).into(),
-                  optional: true,
+                  optional: false,
                 },
                 type_ann: None,
               })),
