@@ -153,7 +153,7 @@ pub fn transform(
   .map_err(|e| {
     vec![FastCheckDiagnostic::Emit {
       specifier: specifier.clone(),
-      inner: Arc::new(e),
+      inner: Arc::new(e.into()),
     }]
   })?;
 
