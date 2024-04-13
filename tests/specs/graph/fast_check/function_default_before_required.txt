@@ -1,0 +1,96 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+// this can be called like `test(undefined, 1)`
+export function test(value: number[] = [], value2: number) {
+}
+
+export class Test {
+  constructor(value: number[] = [], value2: number) {
+  }
+
+  method(value: number[] = [], value2: number) {
+  }
+}
+
+export class TestParamProp {
+  // the type of `value` property should be `number[]`
+  constructor(public value: number[] = [], public value2: number) {
+  }
+}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 405,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {}
+  export function test(value: number[] | undefined, value2: number): void {}
+  export class Test {
+    constructor(value: number[] | undefined, value2: number){}
+    method(value: number[] | undefined, value2: number): void {}
+  }
+  export class TestParamProp {
+    declare value: number[];
+    declare value2: number;
+    constructor(value: number[] | undefined, value2: number){}
+  }
+  --- DTS ---
+  export declare function test(value: number[] | undefined, value2: number): void;
+  export declare class Test {
+    constructor(value: number[] | undefined, value2: number);
+    method(value: number[] | undefined, value2: number): void;
+  }
+  export declare class TestParamProp {
+    value: number[];
+    value2: number;
+    constructor(value: number[] | undefined, value2: number);
+  }

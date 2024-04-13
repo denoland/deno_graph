@@ -769,10 +769,19 @@ impl<'a> FastCheckTransformer<'a> {
           }
         }
 
-        for param in &mut n.params {
+        let optional_start_index =
+          ParamsOptionalStartIndex::build(n.params.iter().map(|p| match p {
+            ParamOrTsParamProp::Param(p) => &p.pat,
+            // should have been converted to a param
+            ParamOrTsParamProp::TsParamProp(_) => unreachable!(),
+          }));
+        for (i, param) in n.params.iter_mut().enumerate() {
           match param {
             ParamOrTsParamProp::Param(param) => {
-              self.handle_param_pat(&mut param.pat)?;
+              self.handle_param_pat(
+                &mut param.pat,
+                optional_start_index.is_optional_at_index(i),
+              )?;
               param.decorators.clear();
             }
             ParamOrTsParamProp::TsParamProp(_) => {
@@ -1021,9 +1030,13 @@ impl<'a> FastCheckTransformer<'a> {
         }));
       }
     }
-
-    for param in &mut n.params {
-      self.handle_param_pat(&mut param.pat)?;
+    let optional_start_index =
+      ParamsOptionalStartIndex::build(n.params.iter().map(|p| &p.pat));
+    for (i, param) in n.params.iter_mut().enumerate() {
+      self.handle_param_pat(
+        &mut param.pat,
+        optional_start_index.is_optional_at_index(i),
+      )?;
       param.decorators.clear();
     }
 
@@ -1105,8 +1118,10 @@ impl<'a> FastCheckTransformer<'a> {
       n.is_async = false;
     }
 
-    for pat in &mut n.params {
-      self.handle_param_pat(pat)?;
+    let optional_start_index = ParamsOptionalStartIndex::build(n.params.iter());
+    for (i, pat) in n.params.iter_mut().enumerate() {
+      self
+        .handle_param_pat(pat, optional_start_index.is_optional_at_index(i))?;
     }
 
     Ok(())
@@ -1115,6 +1130,7 @@ impl<'a> FastCheckTransformer<'a> {
   fn handle_param_pat(
     &mut self,
     pat: &mut Pat,
+    is_optional: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
     match pat {
       Pat::Ident(ident) => {
@@ -1134,7 +1150,11 @@ impl<'a> FastCheckTransformer<'a> {
                   span: DUMMY_SP,
                   type_ann: Box::new(t),
                 }));
-                ident.id.optional = true;
+                if !is_optional {
+                  convert_optional_ident_to_nullable_type(ident);
+                } else {
+                  ident.id.optional = true;
+                }
                 *pat = Pat::Ident((*ident).clone());
               }
               None => {
@@ -1152,7 +1172,11 @@ impl<'a> FastCheckTransformer<'a> {
               }
             }
           } else {
-            ident.id.optional = true;
+            if !is_optional {
+              convert_optional_ident_to_nullable_type(ident);
+            } else {
+              ident.id.optional = true;
+            }
             *pat = Pat::Ident((*ident).clone());
           }
         }
@@ -1687,6 +1711,25 @@ fn replacement_return_value(ty: &TsType) -> Option<Box<Expr>> {
   }
 }
 
+// Converts `ident?: string` to `ident: string | undefined`
+fn convert_optional_ident_to_nullable_type(ident: &mut BindingIdent) {
+  ident.optional = false;
+  if let Some(type_ann) = ident.type_ann.take() {
+    ident.type_ann = Some(Box::new(TsTypeAnn {
+      span: type_ann.span,
+      type_ann: Box::new(TsType::TsUnionOrIntersectionType(
+        TsUnionOrIntersectionType::TsUnionType(TsUnionType {
+          span: DUMMY_SP,
+          types: vec![
+            type_ann.type_ann,
+            Box::new(ts_keyword_type(TsKeywordTypeKind::TsUndefinedKeyword)),
+          ],
+        }),
+      )),
+    }));
+  }
+}
+
 fn prefix_ident(ident: &mut Ident, prefix: &str) {
   ident.sym = format!("{}{}", prefix, ident.sym).into();
 }
@@ -1848,6 +1891,44 @@ fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
       TsLit::Tpl(_) => None,
     },
     TsType::TsTypePredicate(_) | TsType::TsImportType(_) => None,
+  }
+}
+
+/// Holds when the first optional parameter occurs.
+struct ParamsOptionalStartIndex(Option<usize>);
+
+impl ParamsOptionalStartIndex {
+  pub fn build<'a>(param_pats: impl Iterator<Item = &'a Pat>) -> Self {
+    fn is_param_pat_optional(pat: &Pat) -> bool {
+      match pat {
+        Pat::Ident(ident) => ident.optional,
+        Pat::Array(a) => a.optional,
+        Pat::Object(o) => o.optional,
+        Pat::Assign(_) | Pat::Rest(_) => true,
+        Pat::Invalid(_) | Pat::Expr(_) => false,
+      }
+    }
+
+    let mut optional_start_index = None;
+    for (i, pat) in param_pats.enumerate() {
+      if is_param_pat_optional(pat) {
+        if optional_start_index.is_none() {
+          optional_start_index = Some(i);
+        }
+      } else {
+        optional_start_index = None;
+      }
+    }
+
+    Self(optional_start_index)
+  }
+
+  pub fn is_optional_at_index(&self, index: usize) -> bool {
+    self
+      .0
+      .as_ref()
+      .map(|start_index| index >= *start_index)
+      .unwrap_or(false)
   }
 }
 
