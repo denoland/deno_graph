@@ -1711,7 +1711,7 @@ fn replacement_return_value(ty: &TsType) -> Option<Box<Expr>> {
   }
 }
 
-// convert `ident?: string` to `ident: string | undefined`
+// Converts `ident?: string` to `ident: string | undefined`
 fn convert_optional_ident_to_nullable_type(ident: &mut BindingIdent) {
   ident.optional = false;
   if let Some(type_ann) = ident.type_ann.take() {

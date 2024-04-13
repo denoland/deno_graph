@@ -58,7 +58,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 350,
+      "size": 405,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
