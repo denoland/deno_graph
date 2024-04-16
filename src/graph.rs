@@ -1,6 +1,5 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
-use crate::analyzer::analyze_deno_types;
 use crate::analyzer::DependencyDescriptor;
 use crate::analyzer::DynamicArgument;
 use crate::analyzer::DynamicTemplatePart;
@@ -2525,7 +2524,7 @@ fn fill_module_dependencies(
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) {
   for desc in dependencies {
-    let (imports, leading_comments) = match desc {
+    let (imports, types_specifier) = match desc {
       DependencyDescriptor::Static(desc) => {
         let is_import_or_export_type = matches!(
           desc.kind,
@@ -2550,7 +2549,7 @@ fn fill_module_dependencies(
             is_dynamic: false,
             attributes: desc.import_attributes,
           }],
-          desc.leading_comments,
+          desc.types_specifier,
         )
       }
       DependencyDescriptor::Dynamic(desc) => {
@@ -2591,7 +2590,7 @@ fn fill_module_dependencies(
               attributes: import_attributes.clone(),
             })
             .collect::<Vec<_>>(),
-          desc.leading_comments,
+          desc.types_specifier,
         )
       }
     };
@@ -2638,42 +2637,40 @@ fn fill_module_dependencies(
       }
       if graph_kind.include_types() && dep.maybe_type.is_none() {
         let specifier = module_specifier.clone();
-        let maybe_type =
-          if let Some(pragma) = analyze_deno_types(&leading_comments) {
-            dep.maybe_deno_types_specifier = Some(pragma.specifier.clone());
-            resolve(
-              &pragma.specifier,
-              Range::from_position_range(specifier, pragma.range),
+        let maybe_type = if let Some(types_specifier) = &types_specifier {
+          resolve(
+            &types_specifier.text,
+            Range::from_position_range(specifier, types_specifier.range),
+            ResolutionMode::Types,
+            jsr_url_provider,
+            maybe_resolver,
+            maybe_npm_resolver,
+          )
+        } else {
+          let range = import.range.clone();
+          // only check if the code resolution is for the same range
+          if Some(&range) == dep.maybe_code.maybe_range() {
+            let types_resolution = resolve(
+              &import.specifier,
+              range,
               ResolutionMode::Types,
               jsr_url_provider,
               maybe_resolver,
               maybe_npm_resolver,
-            )
-          } else {
-            let range = import.range.clone();
-            // only check if the code resolution is for the same range
-            if Some(&range) == dep.maybe_code.maybe_range() {
-              let types_resolution = resolve(
-                &import.specifier,
-                range,
-                ResolutionMode::Types,
-                jsr_url_provider,
-                maybe_resolver,
-                maybe_npm_resolver,
-              );
-              // only bother setting if the resolved specifier
-              // does not match the code specifier
-              if types_resolution.maybe_specifier()
-                != dep.maybe_code.maybe_specifier()
-              {
-                types_resolution
-              } else {
-                Resolution::None
-              }
+            );
+            // only bother setting if the resolved specifier
+            // does not match the code specifier
+            if types_resolution.maybe_specifier()
+              != dep.maybe_code.maybe_specifier()
+            {
+              types_resolution
             } else {
               Resolution::None
             }
-          };
+          } else {
+            Resolution::None
+          }
+        };
         dep.maybe_type = maybe_type;
       }
       dep.imports.push(import);
@@ -5779,7 +5776,8 @@ mod tests {
       "1.0.0",
       &JsrPackageVersionInfo {
         exports: json!({ ".": "./mod.ts" }),
-        module_graph: None,
+        module_graph_1: None,
+        module_graph_2: None,
         manifest: Default::default(),
       },
     );
