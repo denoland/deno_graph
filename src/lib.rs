@@ -1907,6 +1907,162 @@ export function a(a) {
   }
 
   #[tokio::test]
+  async fn test_build_graph_with_reference_types_in_js() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///test01.js",
+          Source::Module {
+            specifier: "file:///test01.js",
+            maybe_headers: None,
+            content: r#"/// <reference types="./test01.d.ts" />
+export const foo = 'bar';"#,
+          },
+        ),
+        (
+          "file:///test01.d.ts",
+          Source::Module {
+            specifier: "file:///test01.d.ts",
+            maybe_headers: None,
+            content: r#"export declare const foo: string;"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///test01.js").expect("bad url");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &mut loader,
+        Default::default(),
+      )
+      .await;
+    assert_eq!(graph.module_slots.len(), 2);
+    let module = graph.get(&root_specifier).unwrap().js().unwrap();
+    assert_eq!(module.dependencies.len(), 0);
+    let types_dep = module.maybe_types_dependency.as_ref().unwrap();
+    assert_eq!(types_dep.specifier, "./test01.d.ts");
+    assert_eq!(
+      *types_dep.dependency.ok().unwrap(),
+      ResolutionResolved {
+        specifier: ModuleSpecifier::parse("file:///test01.d.ts").unwrap(),
+        range: Range {
+          specifier: ModuleSpecifier::parse("file:///test01.js").unwrap(),
+          start: Position {
+            line: 0,
+            character: 21
+          },
+          end: Position {
+            line: 0,
+            character: 36
+          },
+        }
+      }
+    );
+  }
+
+  #[tokio::test]
+  async fn test_build_graph_with_self_types_in_js() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///test01.js",
+          Source::Module {
+            specifier: "file:///test01.js",
+            maybe_headers: None,
+            content: r#"// @ts-self-types="./test01.d.ts"
+export const foo = 'bar';"#,
+          },
+        ),
+        (
+          "file:///test01.d.ts",
+          Source::Module {
+            specifier: "file:///test01.d.ts",
+            maybe_headers: None,
+            content: r#"export declare const foo: string;"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///test01.js").expect("bad url");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &mut loader,
+        Default::default(),
+      )
+      .await;
+    assert_eq!(graph.module_slots.len(), 2);
+    let module = graph.get(&root_specifier).unwrap().js().unwrap();
+    assert_eq!(module.dependencies.len(), 0);
+    let types_dep = module.maybe_types_dependency.as_ref().unwrap();
+    assert_eq!(types_dep.specifier, "./test01.d.ts");
+    assert_eq!(
+      *types_dep.dependency.ok().unwrap(),
+      ResolutionResolved {
+        specifier: ModuleSpecifier::parse("file:///test01.d.ts").unwrap(),
+        range: Range {
+          specifier: ModuleSpecifier::parse("file:///test01.js").unwrap(),
+          start: Position {
+            line: 0,
+            character: 20
+          },
+          end: Position {
+            line: 0,
+            character: 35
+          },
+        }
+      }
+    );
+  }
+
+  #[tokio::test]
+  async fn test_build_graph_with_self_types_in_ts() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///test01.ts",
+          Source::Module {
+            specifier: "file:///test01.ts",
+            maybe_headers: None,
+            content: r#"// @ts-self-types="./test01.d.ts"
+export const foo = 'bar';"#,
+          },
+        ),
+        (
+          "file:///test01.d.ts",
+          Source::Module {
+            specifier: "file:///test01.d.ts",
+            maybe_headers: None,
+            content: r#"export declare const foo: string;"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///test01.ts").expect("bad url");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &mut loader,
+        Default::default(),
+      )
+      .await;
+    assert_eq!(graph.module_slots.len(), 1);
+    let module = graph.get(&root_specifier).unwrap().js().unwrap();
+    assert_eq!(module.dependencies.len(), 0);
+    assert!(module.maybe_types_dependency.is_none());
+  }
+
+  #[tokio::test]
   async fn test_build_graph_with_resolver() {
     let mut loader = setup(
       vec![

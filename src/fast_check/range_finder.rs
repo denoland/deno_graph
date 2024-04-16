@@ -8,7 +8,6 @@ use std::collections::VecDeque;
 use std::sync::Arc;
 
 use deno_ast::swc::ast::Expr;
-use deno_ast::MediaType;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_semver::package::PackageNv;
@@ -1212,7 +1211,7 @@ impl<'a> PublicRangeFinder<'a> {
 fn is_module_typed(module: &crate::Module) -> bool {
   match module {
     crate::Module::Js(m) => {
-      is_typed_media_type(m.media_type) || m.maybe_types_dependency.is_some()
+      m.media_type.is_typed() || m.maybe_types_dependency.is_some()
     }
     crate::Module::Json(_) => true,
     crate::Module::Npm(_)
@@ -1227,27 +1226,6 @@ fn is_module_external(module: &crate::Module) -> bool {
     crate::Module::External(_)
     | crate::Module::Node(_)
     | crate::Module::Npm(_) => true,
-  }
-}
-
-fn is_typed_media_type(media_type: MediaType) -> bool {
-  match media_type {
-    MediaType::JavaScript
-    | MediaType::Jsx
-    | MediaType::Mjs
-    | MediaType::Cjs
-    | MediaType::TsBuildInfo
-    | MediaType::SourceMap
-    | MediaType::Unknown => false,
-    MediaType::TypeScript
-    | MediaType::Mts
-    | MediaType::Cts
-    | MediaType::Dts
-    | MediaType::Dmts
-    | MediaType::Dcts
-    | MediaType::Tsx
-    | MediaType::Json
-    | MediaType::Wasm => true,
   }
 }
 

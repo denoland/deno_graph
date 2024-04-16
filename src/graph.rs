@@ -69,7 +69,7 @@ use std::sync::Arc;
 use thiserror::Error;
 use url::Url;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct Position {
   /// The 0-indexed line index.
   pub line: usize,
@@ -2157,8 +2157,23 @@ pub(crate) fn parse_js_module_from_module_info(
   let mut module = JsModule::new(specifier.clone(), source);
   module.media_type = media_type;
 
-  // Analyze the TypeScript triple-slash references
+  // Analyze the TypeScript triple-slash references and self types specifier
   if graph_kind.include_types() {
+    if let Some(specifier) = module_info.self_types_specifier.as_ref() {
+      let range =
+        Range::from_position_range(module.specifier.clone(), specifier.range);
+      module.maybe_types_dependency = Some(TypesDependency {
+        specifier: specifier.text.clone(),
+        dependency: resolve(
+          &specifier.text,
+          range.clone(),
+          ResolutionMode::Types,
+          maybe_resolver,
+          maybe_npm_resolver,
+        ),
+      });
+    }
+
     for reference in module_info.ts_references {
       match reference {
         TypeScriptReference::Path(specifier) => {
@@ -2188,6 +2203,10 @@ pub(crate) fn parse_js_module_from_module_info(
           });
         }
         TypeScriptReference::Types(specifier) => {
+          let is_untyped = !module.media_type.is_typed();
+          if is_untyped && module.maybe_types_dependency.is_some() {
+            continue; // early exit if we already have a types dependency
+          }
           let range = Range::from_position_range(
             module.specifier.clone(),
             specifier.range,
@@ -2199,7 +2218,7 @@ pub(crate) fn parse_js_module_from_module_info(
             maybe_resolver,
             maybe_npm_resolver,
           );
-          if is_untyped(&module.media_type) {
+          if is_untyped {
             module.maybe_types_dependency = Some(TypesDependency {
               specifier: specifier.text.clone(),
               dependency: dep_resolution,
@@ -2384,7 +2403,7 @@ pub(crate) fn parse_js_module_from_module_info(
     // the media type is untyped.
     if graph_kind.include_types()
       && module.maybe_types_dependency.is_none()
-      && is_untyped(&module.media_type)
+      && !module.media_type.is_typed()
     {
       module.maybe_types_dependency =
         match resolver.resolve_types(&module.specifier) {
@@ -2457,7 +2476,7 @@ fn fill_module_dependencies(
         }
         let range = Range::from_position_range(
           module_specifier.clone(),
-          desc.specifier_range.clone(),
+          desc.specifier_range,
         );
 
         (
@@ -2499,7 +2518,7 @@ fn fill_module_dependencies(
         };
         let range = Range::from_position_range(
           module_specifier.clone(),
-          desc.argument_range.clone(),
+          desc.argument_range,
         );
         (
           specifiers
@@ -2772,15 +2791,6 @@ fn analyze_dynamic_arg_template_parts(
   }
 
   specifiers
-}
-
-/// Determine if a media type is "untyped" and should be checked to see if there
-/// are types provided.
-fn is_untyped(media_type: &MediaType) -> bool {
-  matches!(
-    media_type,
-    MediaType::JavaScript | MediaType::Jsx | MediaType::Mjs | MediaType::Cjs
-  )
 }
 
 /// The kind of module graph.

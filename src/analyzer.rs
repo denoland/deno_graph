@@ -60,25 +60,19 @@ pub fn analyze_deno_types(
   if let Some(m) = captures.get(1) {
     Some(DenoTypesPragma {
       specifier: m.as_str().to_string(),
-      range: comment_position_to_position_range(
-        comment.range.start.clone(),
-        &m,
-      ),
+      range: comment_position_to_position_range(comment.range.start, &m),
     })
   } else if let Some(m) = captures.get(2) {
     Some(DenoTypesPragma {
       specifier: m.as_str().to_string(),
-      range: comment_position_to_position_range(
-        comment.range.start.clone(),
-        &m,
-      ),
+      range: comment_position_to_position_range(comment.range.start, &m),
     })
   } else {
     unreachable!("Unexpected captures from deno types regex")
   }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize)]
 pub struct PositionRange {
   pub start: Position,
   pub end: Position,
@@ -293,6 +287,9 @@ pub struct ModuleInfo {
   /// Triple slash references.
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub ts_references: Vec<TypeScriptReference>,
+  /// Comment with `@ts-self-types` pragma on JS/JSX media types
+  #[serde(skip_serializing_if = "Option::is_none", default)]
+  pub self_types_specifier: Option<SpecifierWithRange>,
   /// Comment with a `@jsxImportSource` pragma on JSX/TSX media types
   #[serde(skip_serializing_if = "Option::is_none", default)]
   pub jsx_import_source: Option<SpecifierWithRange>,
@@ -341,6 +338,7 @@ mod test {
     let module_info = ModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
+      self_types_specifier: None,
       jsx_import_source: None,
       jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
@@ -401,6 +399,7 @@ mod test {
         .into(),
       ]),
       ts_references: Vec::new(),
+      self_types_specifier: None,
       jsx_import_source: None,
       jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
@@ -453,6 +452,7 @@ mod test {
           },
         }),
       ]),
+      self_types_specifier: None,
       jsx_import_source: None,
       jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
@@ -474,10 +474,38 @@ mod test {
   }
 
   #[test]
+  fn module_info_serialization_self_types_specifier() {
+    let module_info = ModuleInfo {
+      dependencies: Vec::new(),
+      ts_references: Vec::new(),
+      self_types_specifier: Some(SpecifierWithRange {
+        text: "a".to_string(),
+        range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      }),
+      jsx_import_source: None,
+      jsx_import_source_types: None,
+      jsdoc_imports: Vec::new(),
+    };
+    run_serialization_test(
+      &module_info,
+      json!({
+        "selfTypesSpecifier": {
+          "text": "a",
+          "range": [[0, 0], [0, 0]],
+        }
+      }),
+    );
+  }
+
+  #[test]
   fn module_info_serialization_jsx_import_source() {
     let module_info = ModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
+      self_types_specifier: None,
       jsx_import_source: Some(SpecifierWithRange {
         text: "a".to_string(),
         range: PositionRange {
@@ -504,6 +532,7 @@ mod test {
     let module_info = ModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
+      self_types_specifier: None,
       jsx_import_source: None,
       jsx_import_source_types: Some(SpecifierWithRange {
         text: "a".to_string(),
@@ -530,6 +559,7 @@ mod test {
     let module_info = ModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
+      self_types_specifier: None,
       jsx_import_source: None,
       jsx_import_source_types: None,
       jsdoc_imports: Vec::from([SpecifierWithRange {
