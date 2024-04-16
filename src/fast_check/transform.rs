@@ -345,7 +345,7 @@ impl<'a> FastCheckTransformer<'a> {
           )
         }
         ModuleDecl::TsImportEquals(n) => match &n.module_ref {
-          TsModuleRef::TsEntityName(n) => {
+          TsModuleRef::TsEntityName(_) => {
             Ok(self.public_ranges.contains(&n.range()))
           }
           TsModuleRef::TsExternalModuleRef(_) => {
