@@ -3285,6 +3285,142 @@ export function a(a) {
   }
 
   #[test]
+  fn test_parse_module_jsx_import_source_types() {
+    let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: br#"
+    /** @jsxImportSource https://example.com/preact */
+    /** @jsxImportSourceTypes https://example.com/preact-types */
+
+    export function A() {
+      return <div>Hello Deno</div>;
+    }
+    "#
+      .to_vec()
+      .into(),
+      file_system: &NullFileSystem,
+      maybe_resolver: None,
+      maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
+    })
+    .unwrap();
+    let actual = actual.js().unwrap();
+    assert_eq!(actual.dependencies.len(), 1);
+    let dep = actual
+      .dependencies
+      .get("https://example.com/preact/jsx-runtime")
+      .unwrap();
+    assert_eq!(
+      dep.maybe_code.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
+    );
+    assert_eq!(
+      dep.maybe_type.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact-types/jsx-runtime")
+        .unwrap()
+    );
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::Tsx);
+  }
+
+  #[test]
+  fn test_parse_module_jsx_import_source_types_pragma() {
+    #[derive(Debug)]
+    struct R;
+    impl Resolver for R {
+      fn default_jsx_import_source(&self) -> Option<String> {
+        Some("https://example.com/preact".into())
+      }
+    }
+
+    let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: br#"
+    /** @jsxImportSourceTypes https://example.com/preact-types */
+
+    export function A() {
+      return <div>Hello Deno</div>;
+    }
+    "#
+      .to_vec()
+      .into(),
+      file_system: &NullFileSystem,
+      maybe_resolver: Some(&R),
+      maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
+    })
+    .unwrap();
+    let actual = actual.js().unwrap();
+    assert_eq!(actual.dependencies.len(), 1);
+    let dep = actual
+      .dependencies
+      .get("https://example.com/preact/jsx-runtime")
+      .unwrap();
+    assert_eq!(
+      dep.maybe_code.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
+    );
+    assert_eq!(
+      dep.maybe_type.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact-types/jsx-runtime")
+        .unwrap()
+    );
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::Tsx);
+  }
+
+  #[test]
+  fn test_parse_module_jsx_import_source_pragma() {
+    #[derive(Debug)]
+    struct R;
+    impl Resolver for R {
+      fn default_jsx_import_source_types(&self) -> Option<String> {
+        Some("https://example.com/preact-types".into())
+      }
+    }
+
+    let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: br#"
+    /** @jsxImportSource https://example.com/preact */
+
+    export function A() {
+      return <div>Hello Deno</div>;
+    }
+    "#
+      .to_vec()
+      .into(),
+      file_system: &NullFileSystem,
+      maybe_resolver: Some(&R),
+      maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
+    })
+    .unwrap();
+    let actual = actual.js().unwrap();
+    assert_eq!(actual.dependencies.len(), 1);
+    let dep = actual
+      .dependencies
+      .get("https://example.com/preact/jsx-runtime")
+      .unwrap();
+    assert_eq!(
+      dep.maybe_code.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
+    );
+    assert!(dep.maybe_type.is_none());
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::Tsx);
+  }
+
+  #[test]
   fn test_default_jsx_import_source() {
     #[derive(Debug)]
     struct R;

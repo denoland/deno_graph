@@ -2154,7 +2154,23 @@ pub(crate) fn parse_js_module_from_module_info(
   // 3. If the resolver has a default JSX import source, use that as the import
   //    source.
   // 4. If none of the above are true, do not inject a dependency.
+  //
+  // Additionally we may augment the JSX import source dependency with a type
+  // dependency. This happens as follows:
+  // 1. Check if a JSX import source dependency was injected and it is untyped.
+  // 2. If the file has a @jsxImportSourceTypes pragma, use that as the import
+  //    source types.
+  // 3. If the JSX import source was not set through the @jsxImportSource
+  //    pragma and the resolver has a default JSX import source types, use
+  //    that as the import source types.
+  // 4. If none of the above are true, do not inject a type dependency.
+  //
+  // This means that a default JSX import source types will not be used if the
+  // import source was set by the @jsxImportSource pragma. This is done to
+  // prevent a default import source types from being injected when the user
+  // has explicitly overridden the import source in the file.
   if matches!(media_type, MediaType::Jsx | MediaType::Tsx) {
+    let has_jsx_import_source_pragma = module_info.jsx_import_source.is_some();
     let res = module_info.jsx_import_source.or_else(|| {
       maybe_resolver.and_then(|r| {
         r.default_jsx_import_source()
@@ -2165,19 +2181,6 @@ pub(crate) fn parse_js_module_from_module_info(
               end: Position::zeroed(),
             },
           })
-      })
-    });
-    let types_res = module_info.jsx_import_source_types.or_else(|| {
-      maybe_resolver.and_then(|r| {
-        r.default_jsx_import_source_types().map(|import_source| {
-          SpecifierWithRange {
-            text: import_source,
-            range: PositionRange {
-              start: Position::zeroed(),
-              end: Position::zeroed(),
-            },
-          }
-        })
       })
     });
     if let Some(import_source) = res {
@@ -2204,6 +2207,20 @@ pub(crate) fn parse_js_module_from_module_info(
         );
       }
       if graph_kind.include_types() && dep.maybe_type.is_none() {
+        let mut types_res = module_info.jsx_import_source_types;
+        if types_res.is_none() && !has_jsx_import_source_pragma {
+          types_res = maybe_resolver.and_then(|r| {
+            r.default_jsx_import_source_types().map(|import_source| {
+              SpecifierWithRange {
+                text: import_source,
+                range: PositionRange {
+                  start: Position::zeroed(),
+                  end: Position::zeroed(),
+                },
+              }
+            })
+          });
+        }
         if let Some(import_source_types) = types_res {
           let specifier_text = format!(
             "{}/{}",
