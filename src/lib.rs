@@ -1141,7 +1141,8 @@ console.log(a);
         (
           "https://example.com/preact-types/jsx-runtime",
           Source::Module {
-            specifier: "https://example.com/preact-types/jsx-runtime/index.d.ts",
+            specifier:
+              "https://example.com/preact-types/jsx-runtime/index.d.ts",
             maybe_headers: Some(vec![(
               "content-type",
               "application/typescript",
