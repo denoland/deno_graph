@@ -2167,6 +2167,19 @@ pub(crate) fn parse_js_module_from_module_info(
           })
       })
     });
+    let types_res = module_info.jsx_import_source_types.or_else(|| {
+      maybe_resolver.and_then(|r| {
+        r.default_jsx_import_source_types().map(|import_source| {
+          SpecifierWithRange {
+            text: import_source,
+            range: PositionRange {
+              start: Position::zeroed(),
+              end: Position::zeroed(),
+            },
+          }
+        })
+      })
+    });
     if let Some(import_source) = res {
       let jsx_import_source_module = maybe_resolver
         .map(|r| r.jsx_import_source_module())
@@ -2189,6 +2202,25 @@ pub(crate) fn parse_js_module_from_module_info(
           maybe_resolver,
           maybe_npm_resolver,
         );
+      }
+      if graph_kind.include_types() && dep.maybe_type.is_none() {
+        if let Some(import_source_types) = types_res {
+          let specifier_text = format!(
+            "{}/{}",
+            import_source_types.text, jsx_import_source_module
+          );
+          let range = Range::from_position_range(
+            module.specifier.clone(),
+            import_source_types.range,
+          );
+          dep.maybe_type = resolve(
+            &specifier_text,
+            range,
+            ResolutionMode::Types,
+            maybe_resolver,
+            maybe_npm_resolver,
+          );
+        }
       }
       dep.imports.push(Import {
         specifier: specifier_text,

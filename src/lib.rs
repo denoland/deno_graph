@@ -1110,6 +1110,124 @@ console.log(a);
   }
 
   #[tokio::test]
+  async fn test_build_graph_jsx_import_source_types() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.tsx",
+          Source::Module {
+            specifier: "file:///a/test01.tsx",
+            maybe_headers: None,
+            content: r#"/* @jsxImportSource https://example.com/preact */
+            /* @jsxImportSourceTypes https://example.com/preact-types */
+
+            export function A() {
+              <div>Hello Deno</div>
+            }
+            "#,
+          },
+        ),
+        (
+          "https://example.com/preact/jsx-runtime",
+          Source::Module {
+            specifier: "https://example.com/preact/jsx-runtime/index.js",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/javascript",
+            )]),
+            content: r#"export function jsx() {}"#,
+          },
+        ),
+        (
+          "https://example.com/preact-types/jsx-runtime",
+          Source::Module {
+            specifier: "https://example.com/preact-types/jsx-runtime/index.d.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"export declare function jsx();"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.tsx").expect("bad url");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &mut loader,
+        Default::default(),
+      )
+      .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test01.tsx"
+        ],
+        "modules": [
+          {
+            "dependencies": [
+              {
+                "specifier": "https://example.com/preact/jsx-runtime",
+                "code": {
+                  "specifier": "https://example.com/preact/jsx-runtime",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 20
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 46
+                    }
+                  }
+                },
+                "type": {
+                  "specifier": "https://example.com/preact-types/jsx-runtime",
+                  "span": {
+                    "start": {
+                      "line": 1,
+                      "character": 37
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 69
+                    }
+                  }
+                }
+              }
+            ],
+            "kind": "esm",
+            "mediaType": "TSX",
+            "size": 220,
+            "specifier": "file:///a/test01.tsx"
+          },
+          {
+            "kind": "esm",
+            "mediaType": "Dts",
+            "size": 30,
+            "specifier": "https://example.com/preact-types/jsx-runtime/index.d.ts"
+          },
+          {
+            "kind": "esm",
+            "mediaType": "JavaScript",
+            "size": 24,
+            "specifier": "https://example.com/preact/jsx-runtime/index.js"
+          }
+        ],
+        "redirects": {
+          "https://example.com/preact-types/jsx-runtime": "https://example.com/preact-types/jsx-runtime/index.d.ts",
+          "https://example.com/preact/jsx-runtime": "https://example.com/preact/jsx-runtime/index.js"
+        }
+      })
+    );
+  }
+
+  #[tokio::test]
   async fn test_bare_specifier_error() {
     let mut loader = setup(
       vec![(
@@ -3204,6 +3322,57 @@ export function a(a) {
       ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
     );
     assert!(dep.maybe_type.is_none());
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::Tsx);
+  }
+
+  #[test]
+  fn test_default_jsx_import_source_types() {
+    #[derive(Debug)]
+    struct R;
+    impl Resolver for R {
+      fn default_jsx_import_source(&self) -> Option<String> {
+        Some("https://example.com/preact".into())
+      }
+
+      fn default_jsx_import_source_types(&self) -> Option<String> {
+        Some("https://example.com/preact-types".into())
+      }
+    }
+
+    let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: br#"
+    export function A() {
+      return <div>Hello Deno</div>;
+    }
+    "#
+      .to_vec()
+      .into(),
+      file_system: &NullFileSystem,
+      maybe_resolver: Some(&R),
+      maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
+    })
+    .unwrap();
+    let actual = actual.js().unwrap();
+    assert_eq!(actual.dependencies.len(), 1);
+    let dep = actual
+      .dependencies
+      .get("https://example.com/preact/jsx-runtime")
+      .unwrap();
+    assert_eq!(
+      dep.maybe_code.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
+    );
+    assert_eq!(
+      dep.maybe_type.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact-types/jsx-runtime")
+        .unwrap()
+    );
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
