@@ -2848,7 +2848,7 @@ struct PendingState {
 enum ContentOrModuleInfo {
   Content(Arc<[u8]>),
   ModuleInfo {
-    info: ModuleInfo,
+    info: Box<ModuleInfo>,
     /// The checksum to use when loading the content
     checksum: LoaderChecksum,
   },
@@ -3618,7 +3618,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   maybe_range,
                   result: Ok(Some(PendingInfoResponse::Module {
                     content_or_module_info: ContentOrModuleInfo::ModuleInfo {
-                      info: module_info,
+                      info: Box::new(module_info),
                       checksum,
                     },
                     specifier,
@@ -4116,6 +4116,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let (content, maybe_module_analyzer) = match content_or_module_info {
       ContentOrModuleInfo::Content(content) => (content, None),
       ContentOrModuleInfo::ModuleInfo { info, checksum } => {
+        let info = *info;
         self.state.jsr.pending_content_loads.push({
           let specifier = specifier.clone();
           let maybe_range = maybe_referrer.clone();
