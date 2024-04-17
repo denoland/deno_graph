@@ -4067,4 +4067,54 @@ export function a(a: A): B {
       ModuleGraphError::TypesResolutionError(_)
     ));
   }
+
+  #[tokio::test]
+  async fn test_passthrough_jsr_specifiers() {
+    let mut loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"import "jsr:@foo/bar@1";"#,
+          },
+        ),
+        ("jsr:@foo/bar@1", Source::External("jsr:@foo/bar@1")),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &mut loader,
+        BuildOptions {
+          passthrough_jsr_specifiers: true,
+          ..Default::default()
+        },
+      )
+      .await;
+    assert_eq!(graph.module_slots.len(), 2);
+    assert_eq!(graph.roots, vec![root_specifier.clone()]);
+    assert!(graph.contains(&root_specifier));
+    let module = graph
+      .module_slots
+      .get(&root_specifier)
+      .unwrap()
+      .module()
+      .unwrap()
+      .js()
+      .unwrap();
+    assert_eq!(module.dependencies.len(), 1);
+    let maybe_dependency = module.dependencies.get("jsr:@foo/bar@1");
+    assert!(maybe_dependency.is_some());
+    let dependency_specifier =
+      ModuleSpecifier::parse("jsr:@foo/bar@1").unwrap();
+    let maybe_dep_module_slot = graph.get(&dependency_specifier);
+    let dep_module_slot = maybe_dep_module_slot.unwrap();
+    assert!(dep_module_slot.external().is_some());
+  }
 }

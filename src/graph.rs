@@ -1017,6 +1017,10 @@ pub struct BuildOptions<'a> {
   pub executor: &'a dyn Executor,
   pub file_system: &'a dyn FileSystem,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
+  /// Whether to pass through JSR specifiers to the resolver instead of
+  /// resolving them. This is useful in cases where you want to mark JSR
+  /// specifiers as external.
+  pub passthrough_jsr_specifiers: bool,
   pub module_analyzer: &'a dyn ModuleAnalyzer,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub reporter: Option<&'a dyn Reporter>,
@@ -1447,6 +1451,7 @@ impl ModuleGraph {
       options.is_dynamic,
       options.file_system,
       options.jsr_url_provider,
+      options.passthrough_jsr_specifiers,
       options.resolver,
       options.npm_resolver,
       loader,
@@ -2885,6 +2890,7 @@ struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
   file_system: &'a dyn FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
+  passthrough_jsr_specifiers: bool,
   loader: &'a mut dyn Loader,
   resolver: Option<&'a dyn Resolver>,
   npm_resolver: Option<&'a dyn NpmResolver>,
@@ -2907,6 +2913,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     is_dynamic: bool,
     file_system: &'a dyn FileSystem,
     jsr_url_provider: &'a dyn JsrUrlProvider,
+    passthrough_jsr_specifiers: bool,
     resolver: Option<&'a dyn Resolver>,
     npm_resolver: Option<&'a dyn NpmResolver>,
     loader: &'a mut dyn Loader,
@@ -2923,6 +2930,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       in_dynamic_branch: is_dynamic,
       file_system,
       jsr_url_provider,
+      passthrough_jsr_specifiers,
       loader,
       resolver,
       npm_resolver,
@@ -3624,7 +3632,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     let maybe_range = maybe_range.map(ToOwned::to_owned);
-    if specifier.scheme() == "jsr" {
+    if !self.passthrough_jsr_specifiers && specifier.scheme() == "jsr" {
       self.load_jsr_specifier(specifier.clone(), maybe_range, is_dynamic);
       return;
     } else if let Some(npm_resolver) = self.npm_resolver {
