@@ -1,12 +1,12 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
-import { LoadResponseModule } from "./types.ts";
+import type { LoadResponseModule } from "./types.ts";
 import {
   createGraph,
   init,
   load,
-  LoadResponse,
+  type LoadResponse,
   MediaType,
   parseModule,
 } from "./mod.ts";
@@ -685,7 +685,7 @@ Deno.test({
     const dep = module.dependencies?.find((d) =>
       d.specifier === "http://example.com/preact/jsx-runtime"
     );
-    assert(dep);
+    assert(dep != null);
     assert(dep.type);
     assertEquals(
       dep.type.specifier,

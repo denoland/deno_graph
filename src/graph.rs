@@ -3106,23 +3106,23 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   .is_some()
               {
                 self.graph.module_slots.insert(
-                specifier.clone(),
-                ModuleSlot::Err(ModuleError::LoadingErr(
                   specifier.clone(),
-                  maybe_range,
-                  // Two tasks we need to do before removing this error message:
-                  // 1. If someone imports a package via an HTTPS URL then we should probably
-                  //    bail completely on fast check because it could expose additional types
-                  //    not found in fast check, which might cause strange behaviour.
-                  // 2. For HTTPS URLS imported from the registry, we should probably still
-                  //    compare it against the checksums found in the registry otherwise it might
-                  //    not end up in the lockfile causing a security issue.
-                  Arc::new(anyhow!(concat!(
-                    "Importing a JSR package via an HTTPS URL is not implemented. ",
-                    "Use a jsr: specifier instead for the time being."
-                  )),
-                ))),
-              );
+                  ModuleSlot::Err(ModuleError::LoadingErr(
+                    specifier.clone(),
+                    maybe_range,
+                    // Two tasks we need to do before removing this error message:
+                    // 1. If someone imports a package via an HTTPS URL then we should probably
+                    //    bail completely on fast check because it could expose additional types
+                    //    not found in fast check, which might cause strange behaviour.
+                    // 2. For HTTPS URLS imported from the registry, we should probably still
+                    //    compare it against the checksums found in the registry otherwise it might
+                    //    not end up in the lockfile causing a security issue.
+                    Arc::new(anyhow!(concat!(
+                      "Importing a JSR package via an HTTPS URL is not implemented. ",
+                      "Use a jsr: specifier instead for the time being."
+                    )),
+                  ))),
+                );
               } else {
                 let attribute_types =
                   self.state.pending_specifiers.remove(&specifier).unwrap();
@@ -4030,29 +4030,22 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let loader = self.loader;
     let fut = async move {
       let mut redirects = BTreeMap::new();
-      let mut requested_specifier = requested_specifier;
-      let mut result = loader.load(
-        &load_specifier,
-        LoadOptions {
-          is_dynamic,
-          cache_setting: CacheSetting::Use,
-          maybe_checksum,
-        },
-      );
-      while redirects.len() < loader.max_redirects() {
+      let mut load_specifier = load_specifier;
+      for _ in 0..=loader.max_redirects() {
+        let result = loader.load(
+          &load_specifier,
+          LoadOptions {
+            is_dynamic,
+            cache_setting: CacheSetting::Use,
+            // todo(dsherret): need to handle a redirect to a jsr url here
+            maybe_checksum: maybe_checksum.clone(),
+          },
+        );
         let result = match result.await {
           Ok(Some(response)) => match response {
             LoadResponse::Redirect { specifier } => {
-              redirects.insert(requested_specifier, specifier.clone());
-              result = loader.load(
-                &specifier,
-                LoadOptions {
-                  is_dynamic,
-                  cache_setting: CacheSetting::Use,
-                  maybe_checksum: None,
-                },
-              );
-              requested_specifier = specifier;
+              redirects.insert(load_specifier, specifier.clone());
+              load_specifier = specifier;
               continue;
             }
             LoadResponse::External { specifier } => {
@@ -4079,8 +4072,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           maybe_version_info,
         };
       }
+
       PendingInfo {
-        specifier: requested_specifier,
+        specifier: load_specifier,
         maybe_range,
         redirects,
         result: Err(anyhow!("Too many redirects.")),

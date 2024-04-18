@@ -1,6 +1,6 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
-import type { LoadResponse } from "./types.ts";
+import type { LoadResponse, LoadResponseRedirect } from "./types.ts";
 
 const hasPermissions = "permissions" in Deno;
 let readRequested = false;
@@ -20,6 +20,20 @@ async function requestNet(host: string): Promise<void> {
   }
   netRequested.add(host);
   await Deno.permissions.request({ name: "net", host });
+}
+
+export async function withResolvingRedirects(
+  specifier: string,
+  customLoad: (specifier: string) => Promise<LoadResponse | undefined> = load,
+): Promise<Exclude<LoadResponse, LoadResponseRedirect> | undefined> { 
+  for (let i = 0; i < 10; i++) {
+    const response = await customLoad(specifier);
+    if (response === undefined || response.kind !== "redirect") {
+      return response;
+    }
+    specifier = response.specifier;
+  }
+  throw new Error("Too many redirects.")
 }
 
 /** A Deno specific loader function that can be passed to the
