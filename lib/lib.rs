@@ -269,7 +269,7 @@ pub async fn js_create_graph(
   graph
     .build(
       roots,
-      &mut loader,
+      &loader,
       BuildOptions {
         is_dynamic: false,
         resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),

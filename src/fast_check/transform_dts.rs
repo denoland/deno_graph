@@ -963,7 +963,7 @@ mod tests {
     graph
       .build(
         vec![specifier.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           module_analyzer: &analyzer,
           ..Default::default()

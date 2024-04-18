@@ -206,7 +206,7 @@ async fn test_npm_version_not_found_then_found() {
     graph
       .build(
         vec![root.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           npm_resolver: Some(&npm_resolver),
           ..Default::default()
@@ -235,7 +235,7 @@ async fn test_npm_version_not_found_then_found() {
     graph
       .build(
         vec![root.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           npm_resolver: Some(&npm_resolver),
           ..Default::default()
@@ -328,7 +328,7 @@ async fn test_jsr_version_not_found_then_found() {
   graph
     .build(
       vec![Url::parse("file:///main.ts").unwrap()],
-      &mut loader,
+      &loader,
       Default::default(),
     )
     .await;
@@ -376,7 +376,7 @@ async fn test_dynamic_imports_with_template_arg() {
     graph
       .build(
         vec![Url::parse("file:///dev/main.ts").unwrap()],
-        &mut loader,
+        &loader,
         BuildOptions {
           file_system: &file_system,
           ..Default::default()

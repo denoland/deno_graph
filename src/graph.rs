@@ -5073,7 +5073,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.js").unwrap()],
-        &mut loader,
+        &loader,
         Default::default(),
       )
       .await;
@@ -5110,7 +5110,7 @@ mod tests {
     let mut graph = ModuleGraph::new(GraphKind::All);
     let roots = vec![Url::parse("file:///foo.js").unwrap()];
     graph
-      .build(roots.clone(), &mut loader, Default::default())
+      .build(roots.clone(), &loader, Default::default())
       .await;
     assert!(graph
       .try_get(&Url::parse("file:///foo.js").unwrap())
@@ -5205,7 +5205,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.js").unwrap()],
-        &mut loader,
+        &loader,
         Default::default(),
       )
       .await;
@@ -5287,7 +5287,7 @@ mod tests {
     let mut graph = ModuleGraph::new(GraphKind::All);
     let roots = vec![Url::parse("https://deno.land/foo.js").unwrap()];
     graph
-      .build(roots.clone(), &mut loader, Default::default())
+      .build(roots.clone(), &loader, Default::default())
       .await;
     assert_eq!(graph.specifiers_count(), 4);
     let errors = graph
@@ -5413,7 +5413,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.js").unwrap()],
-        &mut loader,
+        &loader,
         Default::default(),
       )
       .await;
