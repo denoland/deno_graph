@@ -421,7 +421,7 @@ fn add_spec_files_to_loader(
     let source = match file.headers.get("location") {
       Some(location) => {
         let location = if location.starts_with("./") {
-          file.url().join(&location).unwrap().to_string()
+          file.url().join(location).unwrap().to_string()
         } else {
           location.to_string()
         };

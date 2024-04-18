@@ -947,7 +947,7 @@ mod tests {
   async fn transform_dts_test(source: &str, expected: &str) {
     let specifier = Url::parse("file:///mod.ts").unwrap();
 
-    let mut loader = MemoryLoader::new(
+    let loader = MemoryLoader::new(
       vec![(
         specifier.to_string(),
         Source::Module {

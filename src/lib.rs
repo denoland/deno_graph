@@ -188,7 +188,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_build_graph() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -247,7 +247,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_build_graph_multiple_roots() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -308,7 +308,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_build_graph_multiple_times() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -396,7 +396,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_build_graph_json_module_root() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "file:///a/test.json",
         Source::Module {
@@ -440,7 +440,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_valid_type_missing() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -476,7 +476,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_valid_code_missing() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "file:///a/test01.ts",
         Source::Module {
@@ -504,7 +504,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_remote_import_data_url() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "https://deno.land/main.ts",
         Source::Module {
@@ -533,7 +533,7 @@ console.log(a);
       let root_specifier =
         ModuleSpecifier::parse(&format!("{scheme}://deno.land/main.ts"))
           .unwrap();
-      let mut loader = setup(
+      let loader = setup(
         vec![
           (
             root_specifier.as_str(),
@@ -575,7 +575,7 @@ console.log(a);
     for scheme in &["http", "https"] {
       let root_specifier_str = format!("{scheme}://deno.land/main.ts");
       let root_specifier = ModuleSpecifier::parse(&root_specifier_str).unwrap();
-      let mut loader = setup(
+      let loader = setup(
         vec![
           (
             root_specifier.as_str(),
@@ -624,7 +624,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_imports() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -743,7 +743,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_imports_imported() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -872,7 +872,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_imports_resolve_dependency() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -970,7 +970,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_with_headers() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "https://example.com/a",
         Source::Module {
@@ -1005,7 +1005,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_jsx_import_source() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.tsx",
@@ -1087,7 +1087,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_jsx_import_source_types() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.tsx",
@@ -1202,7 +1202,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_bare_specifier_error() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "file:///a/test.ts",
         Source::Module {
@@ -1366,7 +1366,7 @@ console.log(a);
     };
     let mock_import_map_resolver = MockImportMapResolver {};
 
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "file:///a/test.ts",
         Source::Module {
@@ -1431,7 +1431,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_unsupported_media_type() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test.ts",
@@ -1473,7 +1473,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_root_is_extensionless() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01",
@@ -1505,7 +1505,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_crate_graph_with_dynamic_imports() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a.ts",
@@ -1578,7 +1578,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_with_jsdoc_imports() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test.js",
@@ -1689,7 +1689,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_redirects() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "https://example.com/a",
@@ -1751,7 +1751,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_circular_redirects() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "https://example.com/a",
@@ -1814,7 +1814,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_data_url() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -1852,7 +1852,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_resolver() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -1902,7 +1902,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_resolve_types() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a.js",
@@ -1968,7 +1968,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_import_attributes() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2141,7 +2141,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_mixed_assertions() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2217,7 +2217,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_import_assertion_errors() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2430,7 +2430,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_reporter() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2534,7 +2534,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_types_only() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2757,7 +2757,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_code_only() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2968,7 +2968,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_builtin_external() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -3591,7 +3591,7 @@ export function a(a: A): B {
 
   #[tokio::test]
   async fn test_segment_graph() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -3715,7 +3715,7 @@ export function a(a: A): B {
 
   #[tokio::test]
   async fn test_walk() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -4047,7 +4047,7 @@ export function a(a: A): B {
       }
     }
 
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -4237,7 +4237,7 @@ export function a(a: A): B {
       }
     }
 
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -4296,7 +4296,7 @@ export function a(a: A): B {
 
   #[tokio::test]
   async fn test_passthrough_jsr_specifiers() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",

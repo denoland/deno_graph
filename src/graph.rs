@@ -5064,7 +5064,7 @@ mod tests {
       }
     }
 
-    let mut loader = TestLoader {
+    let loader = TestLoader {
       loaded_foo: RefCell::new(false),
       loaded_bar: RefCell::new(false),
       loaded_baz: RefCell::new(false),
@@ -5106,7 +5106,7 @@ mod tests {
         }
       }
     }
-    let mut loader = TestLoader;
+    let loader = TestLoader;
     let mut graph = ModuleGraph::new(GraphKind::All);
     let roots = vec![Url::parse("file:///foo.js").unwrap()];
     graph
@@ -5200,7 +5200,7 @@ mod tests {
         }
       }
     }
-    let mut loader = TestLoader;
+    let loader = TestLoader;
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
@@ -5283,7 +5283,7 @@ mod tests {
         }
       }
     }
-    let mut loader = TestLoader;
+    let loader = TestLoader;
     let mut graph = ModuleGraph::new(GraphKind::All);
     let roots = vec![Url::parse("https://deno.land/foo.js").unwrap()];
     graph
@@ -5406,7 +5406,7 @@ mod tests {
         }
       }
     }
-    let mut loader = TestLoader {
+    let loader = TestLoader {
       loaded_bar: RefCell::new(false),
     };
     let mut graph = ModuleGraph::new(GraphKind::All);
@@ -5478,7 +5478,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
-        &mut TestLoader,
+        &TestLoader,
         Default::default(),
       )
       .await;
@@ -5643,7 +5643,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
-        &mut test_loader,
+        &test_loader,
         BuildOptions {
           workspace_members: &workspace_members,
           ..Default::default()
@@ -5726,7 +5726,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
-        &mut test_loader,
+        &test_loader,
         BuildOptions {
           workspace_members: &workspace_members,
           ..Default::default()

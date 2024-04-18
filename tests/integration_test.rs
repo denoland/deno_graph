@@ -323,7 +323,7 @@ async fn test_jsr_version_not_found_then_found() {
     }
   }
 
-  let mut loader = TestLoader::default();
+  let loader = TestLoader::default();
   let mut graph = ModuleGraph::new(GraphKind::All);
   graph
     .build(
