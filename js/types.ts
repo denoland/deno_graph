@@ -37,15 +37,22 @@ export interface LoadResponseModule {
   content: string | Uint8Array;
 }
 
+export interface LoadResponseRedirect {
+  /** A redirect occurred */
+  kind: "redirect";
+  /** The redirected specifier. */
+  specifier: string;
+}
+
 export interface LoadResponseExternal {
   /** The loaded module is either _external_ or _built-in_ to the runtime. */
   kind: "external";
-  /** The strung URL of the resource. If there were redirects, the final
+  /** The string URL of the resource. If there were redirects, the final
    * specifier should be set here, otherwise the requested specifier. */
   specifier: string;
 }
 
-export type LoadResponse = LoadResponseModule | LoadResponseExternal;
+export type LoadResponse = LoadResponseModule | LoadResponseRedirect | LoadResponseExternal;
 
 export interface PositionJson {
   /** The line number of a position within a source file. The number is a zero
