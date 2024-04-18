@@ -222,7 +222,7 @@ pub async fn js_create_graph(
   let maybe_imports_map: Option<HashMap<String, Vec<String>>> =
     serde_wasm_bindgen::from_value(maybe_imports)
       .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-  let mut loader = JsLoader::new(load, maybe_cache_info);
+  let loader = JsLoader::new(load, maybe_cache_info);
   let maybe_resolver = if maybe_default_jsx_import_source.is_some()
     || maybe_default_jsx_import_source_types.is_some()
     || maybe_jsx_import_source_module.is_some()
