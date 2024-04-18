@@ -35,7 +35,7 @@ impl Loader for TestLoader {
   }
 
   fn load(
-    &mut self,
+    &self,
     specifier: &ModuleSpecifier,
     options: LoadOptions,
   ) -> LoadFuture {

@@ -1514,7 +1514,7 @@ impl ModuleGraph {
   pub async fn build<'a>(
     &mut self,
     roots: Vec<ModuleSpecifier>,
-    loader: &mut dyn Loader,
+    loader: &dyn Loader,
     options: BuildOptions<'a>,
   ) -> Vec<BuildDiagnostic> {
     Builder::build(
@@ -2786,23 +2786,6 @@ impl PendingInfoResponse {
   }
 }
 
-impl From<LoadResponse> for PendingInfoResponse {
-  fn from(load_response: LoadResponse) -> Self {
-    match load_response {
-      LoadResponse::External { specifier } => Self::External { specifier },
-      LoadResponse::Module {
-        content,
-        specifier,
-        maybe_headers,
-      } => Self::Module {
-        content_or_module_info: ContentOrModuleInfo::Content(content),
-        specifier,
-        maybe_headers,
-      },
-    }
-  }
-}
-
 #[derive(Debug, Clone)]
 struct JsrPackageVersionInfoExt {
   base_url: Url,
@@ -2812,11 +2795,12 @@ struct JsrPackageVersionInfoExt {
 struct PendingInfo {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
+  redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
   result: Result<Option<PendingInfoResponse>, anyhow::Error>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
 }
 
-type PendingInfoFuture = LocalBoxFuture<'static, PendingInfo>;
+type PendingInfoFuture<'a> = LocalBoxFuture<'a, PendingInfo>;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub(crate) struct AttributeTypeWithRange {
@@ -2882,8 +2866,8 @@ struct PendingDynamicBranch {
 }
 
 #[derive(Debug, Default)]
-struct PendingState {
-  pending: FuturesOrdered<PendingInfoFuture>,
+struct PendingState<'a> {
+  pending: FuturesOrdered<PendingInfoFuture<'a>>,
   jsr: PendingJsrState,
   npm: PendingNpmState,
   pending_specifiers:
@@ -2965,13 +2949,13 @@ struct Builder<'a, 'graph> {
   file_system: &'a dyn FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   passthrough_jsr_specifiers: bool,
-  loader: &'a mut dyn Loader,
+  loader: &'a dyn Loader,
   resolver: Option<&'a dyn Resolver>,
   npm_resolver: Option<&'a dyn NpmResolver>,
   module_analyzer: &'a dyn ModuleAnalyzer,
   reporter: Option<&'a dyn Reporter>,
   graph: &'graph mut ModuleGraph,
-  state: PendingState,
+  state: PendingState<'a>,
   fill_pass_mode: FillPassMode,
   workspace_members: &'a [WorkspaceMember],
   diagnostics: Vec<BuildDiagnostic>,
@@ -2990,7 +2974,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     passthrough_jsr_specifiers: bool,
     resolver: Option<&'a dyn Resolver>,
     npm_resolver: Option<&'a dyn NpmResolver>,
-    loader: &'a mut dyn Loader,
+    loader: &'a dyn Loader,
     module_analyzer: &'a dyn ModuleAnalyzer,
     reporter: Option<&'a dyn Reporter>,
     workspace_members: &'a [WorkspaceMember],
@@ -3057,16 +3041,22 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           specifier,
           maybe_range,
           result,
+          redirects,
           maybe_version_info,
-        }) => match result {
-          Ok(Some(response)) => {
-            if maybe_version_info.is_none()
-              && self
-                .jsr_url_provider
-                .package_url_to_nv(response.specifier())
-                .is_some()
-            {
-              self.graph.module_slots.insert(
+        }) => {
+          for (from, to) in redirects {
+            self.add_redirect(from, to);
+          }
+
+          match result {
+            Ok(Some(response)) => {
+              if maybe_version_info.is_none()
+                && self
+                  .jsr_url_provider
+                  .package_url_to_nv(response.specifier())
+                  .is_some()
+              {
+                self.graph.module_slots.insert(
                 specifier.clone(),
                 ModuleSlot::Err(ModuleError::LoadingErr(
                   specifier.clone(),
@@ -3084,43 +3074,44 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   )),
                 ))),
               );
-            } else {
-              let attribute_types =
-                self.state.pending_specifiers.remove(&specifier).unwrap();
-              for maybe_attribute_type in attribute_types {
-                self.visit(
-                  &specifier,
-                  &response,
-                  maybe_attribute_type,
-                  maybe_range.clone(),
-                  maybe_version_info.as_ref(),
-                )
+              } else {
+                let attribute_types =
+                  self.state.pending_specifiers.remove(&specifier).unwrap();
+                for maybe_attribute_type in attribute_types {
+                  self.visit(
+                    &specifier,
+                    &response,
+                    maybe_attribute_type,
+                    maybe_range.clone(),
+                    maybe_version_info.as_ref(),
+                  )
+                }
               }
+              Some(specifier)
             }
-            Some(specifier)
-          }
-          Ok(None) => {
-            self.graph.module_slots.insert(
-              specifier.clone(),
-              ModuleSlot::Err(ModuleError::Missing(
+            Ok(None) => {
+              self.graph.module_slots.insert(
                 specifier.clone(),
-                maybe_range,
-              )),
-            );
-            Some(specifier)
-          }
-          Err(err) => {
-            self.graph.module_slots.insert(
-              specifier.clone(),
-              ModuleSlot::Err(ModuleError::LoadingErr(
+                ModuleSlot::Err(ModuleError::Missing(
+                  specifier.clone(),
+                  maybe_range,
+                )),
+              );
+              Some(specifier)
+            }
+            Err(err) => {
+              self.graph.module_slots.insert(
                 specifier.clone(),
-                maybe_range,
-                Arc::new(err),
-              )),
-            );
-            Some(specifier)
+                ModuleSlot::Err(ModuleError::LoadingErr(
+                  specifier.clone(),
+                  maybe_range,
+                  Arc::new(err),
+                )),
+              );
+              Some(specifier)
+            }
           }
-        },
+        }
         None => None,
       };
 
@@ -3385,69 +3376,68 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               content,
               specifier,
               maybe_headers: _maybe_headers,
-            } => {
-              if specifier == item.specifier {
-                self.loader.cache_module_info(
-                  &specifier,
-                  &content,
-                  &item.module_info,
-                );
-                // fill the existing module slot with the loaded source
-                let slot = self.graph.module_slots.get_mut(&specifier).unwrap();
-                match slot {
-                  ModuleSlot::Module(module) => {
-                    match module {
-                      Module::Js(module) => {
-                        match new_source_with_text(
-                          &module.specifier,
-                          content,
-                          None, // no charset for JSR
-                        ) {
-                          Ok(source) => {
-                            module.source = source;
-                          }
-                          Err(err) => *slot = ModuleSlot::Err(*err),
+            } if specifier == item.specifier => {
+              self.loader.cache_module_info(
+                &specifier,
+                &content,
+                &item.module_info,
+              );
+              // fill the existing module slot with the loaded source
+              let slot = self.graph.module_slots.get_mut(&specifier).unwrap();
+              match slot {
+                ModuleSlot::Module(module) => {
+                  match module {
+                    Module::Js(module) => {
+                      match new_source_with_text(
+                        &module.specifier,
+                        content,
+                        None, // no charset for JSR
+                      ) {
+                        Ok(source) => {
+                          module.source = source;
                         }
-                      }
-                      Module::Json(module) => {
-                        match new_source_with_text(
-                          &module.specifier,
-                          content,
-                          None, // no charset for JSR
-                        ) {
-                          Ok(source) => {
-                            module.source = source;
-                          }
-                          Err(err) => *slot = ModuleSlot::Err(*err),
-                        }
-                      }
-                      Module::Npm(_)
-                      | Module::Node(_)
-                      | Module::External(_) => {
-                        unreachable!(); // should not happen by design
+                        Err(err) => *slot = ModuleSlot::Err(*err),
                       }
                     }
-                  }
-                  ModuleSlot::Err(_) => {
-                    // the module errored some other way, so ignore
-                  }
-                  ModuleSlot::Pending => {
-                    unreachable!(); // should not happen by design
+                    Module::Json(module) => {
+                      match new_source_with_text(
+                        &module.specifier,
+                        content,
+                        None, // no charset for JSR
+                      ) {
+                        Ok(source) => {
+                          module.source = source;
+                        }
+                        Err(err) => *slot = ModuleSlot::Err(*err),
+                      }
+                    }
+                    Module::Npm(_) | Module::Node(_) | Module::External(_) => {
+                      unreachable!(); // should not happen by design
+                    }
                   }
                 }
-              } else {
-                // redirects are not supported
-                self.graph.module_slots.insert(
-                  item.specifier.clone(),
-                  ModuleSlot::Err(ModuleError::LoadingErr(
-                    item.specifier,
-                    item.maybe_range,
-                    Arc::new(anyhow!(
-                      "Redirects are not supported for the Deno registry."
-                    )),
-                  )),
-                );
+                ModuleSlot::Err(_) => {
+                  // the module errored some other way, so ignore
+                }
+                ModuleSlot::Pending => {
+                  unreachable!(); // should not happen by design
+                }
               }
+            }
+            LoadResponse::Redirect { specifier }
+            | LoadResponse::Module { specifier, .. } => {
+              // redirects are not supported
+              self.graph.module_slots.insert(
+                item.specifier.clone(),
+                ModuleSlot::Err(ModuleError::LoadingErr(
+                  item.specifier,
+                  item.maybe_range,
+                  Arc::new(anyhow!(
+                    "Redirects in the JSR registry are not supported (redirected to '{}')",
+                    specifier
+                  )),
+                )),
+              );
             }
           }
         }
@@ -3580,17 +3570,23 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   ) {
     // If the response was redirected, then we add the module to the redirects
     if requested_specifier != specifier {
-      // remove a potentially pending redirect that will never resolve
-      if let Some(slot) = self.graph.module_slots.get(requested_specifier) {
-        if matches!(slot, ModuleSlot::Pending) {
-          self.graph.module_slots.remove(requested_specifier);
-        }
-      }
-      self
-        .graph
-        .redirects
-        .insert(requested_specifier.clone(), specifier.clone());
+      self.add_redirect(requested_specifier.clone(), specifier.clone());
     }
+  }
+
+  fn add_redirect(
+    &mut self,
+    requested_specifier: ModuleSpecifier,
+    specifier: ModuleSpecifier,
+  ) {
+    debug_assert_ne!(requested_specifier, specifier);
+    // remove a potentially pending redirect that will never resolve
+    if let Some(slot) = self.graph.module_slots.get(&requested_specifier) {
+      if matches!(slot, ModuleSlot::Pending) {
+        self.graph.module_slots.remove(&requested_specifier);
+      }
+    }
+    self.graph.redirects.insert(requested_specifier, specifier);
   }
 
   /// Enqueue a request to load the specifier via the loader.
@@ -3674,12 +3670,36 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     specifier,
                     maybe_headers: None,
                   })),
+                  redirects: BTreeMap::new(),
                   maybe_version_info: Some(version_info),
                 },
                 response => PendingInfo {
                   specifier,
                   maybe_range,
-                  result: response.map(|r| r.map(Into::into)),
+                  redirects: BTreeMap::new(),
+                  result: match response {
+                    Ok(Some(response)) => match response {
+                      LoadResponse::External { specifier } => {
+                        Ok(Some(PendingInfoResponse::External { specifier }))
+                      }
+                      LoadResponse::Redirect { specifier } => Err(anyhow!(
+                        "Redirects in the JSR registry are not supported (redirected to '{}')", specifier
+                      )),
+                      LoadResponse::Module {
+                        content,
+                        specifier,
+                        maybe_headers,
+                      } => Ok(Some(PendingInfoResponse::Module {
+                        content_or_module_info: ContentOrModuleInfo::Content(
+                          content,
+                        ),
+                        specifier,
+                        maybe_headers,
+                      })),
+                    },
+                    Ok(None) => Ok(None),
+                    Err(err) => Err(err),
+                  },
                   maybe_version_info: Some(version_info),
                 },
               }
@@ -3958,23 +3978,68 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .graph
       .module_slots
       .insert(requested_specifier.clone(), ModuleSlot::Pending);
-    let fut = self
-      .loader
-      .load(
+    let loader = self.loader;
+    let fut = async move {
+      let mut redirects = BTreeMap::new();
+      let mut requested_specifier = requested_specifier;
+      let mut result = loader.load(
         &load_specifier,
         LoadOptions {
           is_dynamic,
           cache_setting: CacheSetting::Use,
           maybe_checksum,
         },
-      )
-      .map(move |result| PendingInfo {
+      );
+      while redirects.len() < loader.max_redirects() {
+        let result = match result.await {
+          Ok(Some(response)) => match response {
+            LoadResponse::Redirect { specifier } => {
+              redirects.insert(requested_specifier, specifier.clone());
+              result = loader.load(
+                &specifier,
+                LoadOptions {
+                  is_dynamic,
+                  cache_setting: CacheSetting::Use,
+                  maybe_checksum: None,
+                },
+              );
+              requested_specifier = specifier;
+              continue;
+            }
+            LoadResponse::External { specifier } => {
+              Ok(Some(PendingInfoResponse::External { specifier }))
+            }
+            LoadResponse::Module {
+              content,
+              specifier,
+              maybe_headers,
+            } => Ok(Some(PendingInfoResponse::Module {
+              content_or_module_info: ContentOrModuleInfo::Content(content),
+              specifier,
+              maybe_headers,
+            })),
+          },
+          Ok(None) => Ok(None),
+          Err(err) => Err(err),
+        };
+        return PendingInfo {
+          specifier: requested_specifier,
+          maybe_range,
+          redirects,
+          result,
+          maybe_version_info,
+        };
+      }
+      PendingInfo {
         specifier: requested_specifier,
         maybe_range,
-        result: result.map(|r| r.map(Into::into)),
+        redirects,
+        result: Err(anyhow!("Too many redirects.")),
         maybe_version_info,
-      });
-    self.state.pending.push_back(Box::pin(fut));
+      }
+    }
+    .boxed_local();
+    self.state.pending.push_back(fut);
   }
 
   fn queue_load_package_info(&mut self, package_name: &str) {
@@ -4901,13 +4966,13 @@ mod tests {
   #[tokio::test]
   async fn static_dep_of_dynamic_dep_is_dynamic() {
     struct TestLoader {
-      loaded_foo: bool,
-      loaded_bar: bool,
-      loaded_baz: bool,
+      loaded_foo: RefCell<bool>,
+      loaded_bar: RefCell<bool>,
+      loaded_baz: RefCell<bool>,
     }
     impl Loader for TestLoader {
       fn load(
-        &mut self,
+        &self,
         specifier: &ModuleSpecifier,
         options: LoadOptions,
       ) -> LoadFuture {
@@ -4915,7 +4980,7 @@ mod tests {
         match specifier.as_str() {
           "file:///foo.js" => {
             assert!(!options.is_dynamic);
-            self.loaded_foo = true;
+            *self.loaded_foo.borrow_mut() = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -4926,7 +4991,7 @@ mod tests {
           }
           "file:///bar.js" => {
             assert!(options.is_dynamic);
-            self.loaded_bar = true;
+            *self.loaded_bar.borrow_mut() = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -4937,7 +5002,7 @@ mod tests {
           }
           "file:///baz.js" => {
             assert!(options.is_dynamic);
-            self.loaded_baz = true;
+            *self.loaded_baz.borrow_mut() = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -4952,9 +5017,9 @@ mod tests {
     }
 
     let mut loader = TestLoader {
-      loaded_foo: false,
-      loaded_bar: false,
-      loaded_baz: false,
+      loaded_foo: RefCell::new(false),
+      loaded_bar: RefCell::new(false),
+      loaded_baz: RefCell::new(false),
     };
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
@@ -4964,9 +5029,9 @@ mod tests {
         Default::default(),
       )
       .await;
-    assert!(loader.loaded_foo);
-    assert!(loader.loaded_bar);
-    assert!(loader.loaded_baz);
+    assert!(*loader.loaded_foo.borrow());
+    assert!(*loader.loaded_bar.borrow());
+    assert!(*loader.loaded_baz.borrow());
     assert_eq!(graph.specifiers_count(), 3);
   }
 
@@ -4975,7 +5040,7 @@ mod tests {
     struct TestLoader;
     impl Loader for TestLoader {
       fn load(
-        &mut self,
+        &self,
         specifier: &ModuleSpecifier,
         _options: LoadOptions,
       ) -> LoadFuture {
@@ -5063,7 +5128,7 @@ mod tests {
     struct TestLoader;
     impl Loader for TestLoader {
       fn load(
-        &mut self,
+        &self,
         specifier: &ModuleSpecifier,
         _options: LoadOptions,
       ) -> LoadFuture {
@@ -5130,7 +5195,7 @@ mod tests {
     struct TestLoader;
     impl Loader for TestLoader {
       fn load(
-        &mut self,
+        &self,
         specifier: &ModuleSpecifier,
         _options: LoadOptions,
       ) -> LoadFuture {
@@ -5258,11 +5323,11 @@ mod tests {
   #[tokio::test]
   async fn static_and_dynamic_dep_is_static() {
     struct TestLoader {
-      loaded_bar: bool,
+      loaded_bar: RefCell<bool>,
     }
     impl Loader for TestLoader {
       fn load(
-        &mut self,
+        &self,
         specifier: &ModuleSpecifier,
         options: LoadOptions,
       ) -> LoadFuture {
@@ -5280,7 +5345,7 @@ mod tests {
           }),
           "file:///bar.js" => {
             assert!(!options.is_dynamic);
-            self.loaded_bar = true;
+            *self.loaded_bar.borrow_mut() = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -5293,7 +5358,9 @@ mod tests {
         }
       }
     }
-    let mut loader = TestLoader { loaded_bar: false };
+    let mut loader = TestLoader {
+      loaded_bar: RefCell::new(false),
+    };
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
@@ -5302,7 +5369,7 @@ mod tests {
         Default::default(),
       )
       .await;
-    assert!(loader.loaded_bar);
+    assert!(*loader.loaded_bar.borrow());
   }
 
   #[tokio::test]
@@ -5310,7 +5377,7 @@ mod tests {
     struct TestLoader;
     impl Loader for TestLoader {
       fn load(
-        &mut self,
+        &self,
         specifier: &ModuleSpecifier,
         options: LoadOptions,
       ) -> LoadFuture {

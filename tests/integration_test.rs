@@ -253,18 +253,19 @@ async fn test_npm_version_not_found_then_found() {
 async fn test_jsr_version_not_found_then_found() {
   #[derive(Default)]
   struct TestLoader {
-    requests: Vec<(String, CacheSetting)>,
+    requests: RefCell<Vec<(String, CacheSetting)>>,
   }
 
   impl deno_graph::source::Loader for TestLoader {
     fn load(
-      &mut self,
+      &self,
       specifier: &ModuleSpecifier,
       options: LoadOptions,
     ) -> LoadFuture {
       assert!(!options.is_dynamic);
       self
         .requests
+        .borrow_mut()
         .push((specifier.to_string(), options.cache_setting));
       let specifier = specifier.clone();
       match specifier.as_str() {
@@ -333,7 +334,7 @@ async fn test_jsr_version_not_found_then_found() {
     .await;
   graph.valid().unwrap();
   assert_eq!(
-    loader.requests,
+    *loader.requests.borrow(),
     vec![
       ("file:///main.ts".to_string(), CacheSetting::Use),
       (

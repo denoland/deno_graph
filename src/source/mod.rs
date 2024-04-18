@@ -60,6 +60,16 @@ pub enum LoadResponse {
   /// will be available at runtime. The module will be marked as
   /// `ModuleKind::External` and no dependency analysis will be performed.
   External { specifier: ModuleSpecifier },
+  /// Specifier redirected to another specifier.
+  ///
+  /// It's important to return the redirects to deno_graph so it
+  /// can track them and also tell whether a checksum should be
+  /// sent with the load request for JSR dependencies loaded over
+  /// HTTPS via a redirect.
+  Redirect {
+    /// The final specifier of the module.
+    specifier: ModuleSpecifier,
+  },
   /// A loaded module.
   Module {
     /// The content of the remote module.
@@ -175,6 +185,11 @@ pub struct LoadOptions {
 /// graph in a thread safe way as well as a way to provide additional meta data
 /// about any cached resources.
 pub trait Loader {
+  /// The maximum number of redirects allowed.
+  fn max_redirects(&self) -> usize {
+    10
+  }
+
   /// An optional method which returns cache info for a module specifier.
   fn get_cache_info(&self, _specifier: &ModuleSpecifier) -> Option<CacheInfo> {
     None
@@ -183,7 +198,7 @@ pub trait Loader {
   /// A method that given a specifier that asynchronously returns the
   /// source of the file.
   fn load(
-    &mut self,
+    &self,
     specifier: &ModuleSpecifier,
     options: LoadOptions,
   ) -> LoadFuture;
@@ -191,7 +206,7 @@ pub trait Loader {
   /// Cache the module info for the provided specifier if the loader
   /// supports caching this information.
   fn cache_module_info(
-    &mut self,
+    &self,
     _specifier: &ModuleSpecifier,
     _source: &Arc<[u8]>,
     _module_info: &ModuleInfo,
@@ -581,7 +596,7 @@ impl Loader for MemoryLoader {
   }
 
   fn load(
-    &mut self,
+    &self,
     specifier: &ModuleSpecifier,
     _options: LoadOptions,
   ) -> LoadFuture {

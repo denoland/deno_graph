@@ -63,7 +63,7 @@ impl Loader for JsLoader {
   }
 
   fn load(
-    &mut self,
+    &self,
     specifier: &ModuleSpecifier,
     options: LoadOptions,
   ) -> LoadFuture {
