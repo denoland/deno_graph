@@ -52,7 +52,10 @@ export interface LoadResponseExternal {
   specifier: string;
 }
 
-export type LoadResponse = LoadResponseModule | LoadResponseRedirect | LoadResponseExternal;
+export type LoadResponse =
+  | LoadResponseModule
+  | LoadResponseRedirect
+  | LoadResponseExternal;
 
 export interface PositionJson {
   /** The line number of a position within a source file. The number is a zero

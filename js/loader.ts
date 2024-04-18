@@ -25,7 +25,7 @@ async function requestNet(host: string): Promise<void> {
 export async function withResolvingRedirects(
   specifier: string,
   customLoad: (specifier: string) => Promise<LoadResponse | undefined> = load,
-): Promise<Exclude<LoadResponse, LoadResponseRedirect> | undefined> { 
+): Promise<Exclude<LoadResponse, LoadResponseRedirect> | undefined> {
   for (let i = 0; i < 10; i++) {
     const response = await customLoad(specifier);
     if (response === undefined || response.kind !== "redirect") {
@@ -33,7 +33,7 @@ export async function withResolvingRedirects(
     }
     specifier = response.specifier;
   }
-  throw new Error("Too many redirects.")
+  throw new Error("Too many redirects.");
 }
 
 /** A Deno specific loader function that can be passed to the
