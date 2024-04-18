@@ -628,12 +628,15 @@ pub struct Import {
 }
 
 #[derive(Debug, Default, Clone, Serialize)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 #[serde(rename_all = "camelCase")]
 pub struct Dependency {
   #[serde(rename = "code", skip_serializing_if = "Resolution::is_none")]
   pub maybe_code: Resolution,
   #[serde(rename = "type", skip_serializing_if = "Resolution::is_none")]
   pub maybe_type: Resolution,
+  #[serde(skip_serializing)]
+  pub maybe_deno_types_specifier: Option<String>,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
   // todo(dsherret): rename to attributeType in 2.0
@@ -673,13 +676,85 @@ impl Dependency {
     }
     None
   }
+
+  pub fn with_new_resolver(
+    &self,
+    specifier: &str,
+    maybe_resolver: Option<&dyn Resolver>,
+    maybe_npm_resolver: Option<&dyn NpmResolver>,
+  ) -> Self {
+    let maybe_code = self
+      .maybe_code
+      .maybe_range()
+      .map(|r| {
+        resolve(
+          specifier,
+          r.clone(),
+          ResolutionMode::Execution,
+          maybe_resolver,
+          maybe_npm_resolver,
+        )
+      })
+      .unwrap_or_default();
+    let maybe_type = self
+      .maybe_type
+      .maybe_range()
+      .map(|r| {
+        resolve(
+          self
+            .maybe_deno_types_specifier
+            .as_deref()
+            .unwrap_or(specifier),
+          r.clone(),
+          ResolutionMode::Types,
+          maybe_resolver,
+          maybe_npm_resolver,
+        )
+      })
+      .unwrap_or_default();
+    Self {
+      maybe_code,
+      maybe_type,
+      maybe_deno_types_specifier: self.maybe_deno_types_specifier.clone(),
+      is_dynamic: self.is_dynamic,
+      maybe_attribute_type: self.maybe_attribute_type.clone(),
+      imports: self.imports.clone(),
+    }
+  }
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 #[serde(rename_all = "camelCase")]
 pub struct TypesDependency {
   pub specifier: String,
   pub dependency: Resolution,
+}
+
+impl TypesDependency {
+  pub fn with_new_resolver(
+    &self,
+    maybe_resolver: Option<&dyn Resolver>,
+    maybe_npm_resolver: Option<&dyn NpmResolver>,
+  ) -> Self {
+    let dependency = self
+      .dependency
+      .maybe_range()
+      .map(|r| {
+        resolve(
+          &self.specifier,
+          r.clone(),
+          ResolutionMode::Types,
+          maybe_resolver,
+          maybe_npm_resolver,
+        )
+      })
+      .unwrap_or_default();
+    Self {
+      specifier: self.specifier.clone(),
+      dependency,
+    }
+  }
 }
 
 fn is_media_type_unknown(media_type: &MediaType) -> bool {
@@ -975,6 +1050,7 @@ impl GraphImport {
             is_dynamic: false,
             maybe_code: Resolution::None,
             maybe_type,
+            maybe_deno_types_specifier: None,
             maybe_attribute_type: None,
             imports: vec![],
           },
@@ -2437,6 +2513,7 @@ fn fill_module_dependencies(
         let specifier = module_specifier.clone();
         let maybe_type =
           if let Some(pragma) = analyze_deno_types(&leading_comments) {
+            dep.maybe_deno_types_specifier = Some(pragma.specifier.clone());
             resolve(
               &pragma.specifier,
               Range::from_position_range(specifier, pragma.range),
@@ -4741,6 +4818,86 @@ mod tests {
         character: 18,
       }),
       None,
+    );
+  }
+
+  #[test]
+  fn dependency_with_new_resolver() {
+    let referrer = ModuleSpecifier::parse("file:///a/main.ts").unwrap();
+    let dependency = Dependency {
+      maybe_code: Resolution::Ok(Box::new(ResolutionResolved {
+        specifier: ModuleSpecifier::parse("file:///wrong.ts").unwrap(),
+        range: Range {
+          specifier: referrer.clone(),
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      })),
+      maybe_type: Resolution::Ok(Box::new(ResolutionResolved {
+        specifier: ModuleSpecifier::parse("file:///wrong.ts").unwrap(),
+        range: Range {
+          specifier: referrer.clone(),
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      })),
+      maybe_deno_types_specifier: Some("./b.d.ts".to_string()),
+      ..Default::default()
+    };
+    let new_dependency = dependency.with_new_resolver("./b.ts", None, None);
+    assert_eq!(
+      new_dependency,
+      Dependency {
+        maybe_code: Resolution::Ok(Box::new(ResolutionResolved {
+          specifier: ModuleSpecifier::parse("file:///a/b.ts").unwrap(),
+          range: Range {
+            specifier: referrer.clone(),
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+        })),
+        maybe_type: Resolution::Ok(Box::new(ResolutionResolved {
+          specifier: ModuleSpecifier::parse("file:///a/b.d.ts").unwrap(),
+          range: Range {
+            specifier: referrer.clone(),
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+        })),
+        maybe_deno_types_specifier: Some("./b.d.ts".to_string()),
+        ..Default::default()
+      }
+    );
+  }
+
+  #[test]
+  fn types_dependency_with_new_resolver() {
+    let referrer = ModuleSpecifier::parse("file:///a/main.ts").unwrap();
+    let types_dependency = TypesDependency {
+      specifier: "./main.d.ts".to_string(),
+      dependency: Resolution::Ok(Box::new(ResolutionResolved {
+        specifier: ModuleSpecifier::parse("file:///wrong.ts").unwrap(),
+        range: Range {
+          specifier: referrer.clone(),
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      })),
+    };
+    let new_types_dependency = types_dependency.with_new_resolver(None, None);
+    assert_eq!(
+      new_types_dependency,
+      TypesDependency {
+        specifier: "./main.d.ts".to_string(),
+        dependency: Resolution::Ok(Box::new(ResolutionResolved {
+          specifier: ModuleSpecifier::parse("file:///a/main.d.ts").unwrap(),
+          range: Range {
+            specifier: referrer.clone(),
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+        })),
+      }
     );
   }
 
