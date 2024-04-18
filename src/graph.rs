@@ -1,5 +1,49 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+// Code for the future:
+// let maybe_nv_when_no_version_info = if maybe_version_info.is_none()
+//             {
+//               self
+//                 .jsr_url_provider
+//                 .package_url_to_nv(response.specifier())
+//             } else {
+//               None
+//             };
+//             if let Some(package_nv) = maybe_nv_when_no_version_info {
+//               self.queue_load_package_version_info(&package_nv);
+//               let version_load_fut = self
+//                 .state
+//                 .jsr
+//                 .pending_package_version_info_loads
+//                 .get(&package_nv)
+//                 .unwrap()
+//                 .clone();
+//               let base_url = self.jsr_url_provider.package_url(&package_nv);
+//               self.state.pending.push_front({
+//                 let specifier = specifier.clone();
+//                 async move {
+//                   let version_info = version_load_fut.await;
+//                   match version_info {
+//                     Ok(version_info) => PendingInfo {
+//                       specifier,
+//                       maybe_range,
+//                       result: Ok(Some(response)),
+//                       maybe_version_info: Some(JsrPackageVersionInfoExt {
+//                         base_url,
+//                         inner: version_info.info.clone(),
+//                       }),
+//                     },
+//                     Err(err) => PendingInfo {
+//                       specifier,
+//                       maybe_range,
+//                       result: Err(err),
+//                       maybe_version_info: None,
+//                     },
+//                   }
+//                 }
+//                 .boxed_local()
+//               });
+
 use crate::analyzer::analyze_deno_types;
 use crate::analyzer::DependencyDescriptor;
 use crate::analyzer::DynamicArgument;
@@ -36,6 +80,7 @@ use deno_ast::ParseDiagnostic;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
 use deno_semver::jsr::JsrDepPackageReq;
+use deno_semver::jsr::JsrPackageNvReference;
 use deno_semver::jsr::JsrPackageReqReference;
 use deno_semver::npm::NpmPackageNvReference;
 use deno_semver::npm::NpmPackageReqReference;
@@ -2738,7 +2783,7 @@ struct JsrPackageVersionInfoExt {
 struct PendingInfo {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
-  result: Result<Option<PendingInfoResponse>, anyhow::Error>,
+  result: Result<Option<PendingInfoResponse>, Arc<anyhow::Error>>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
 }
 
@@ -2767,9 +2812,16 @@ struct PendingNpmState {
 }
 
 #[derive(Debug)]
-struct PendingJsrResolutionItem {
+struct PendingJsrReqResolutionItem {
   specifier: ModuleSpecifier,
   package_ref: JsrPackageReqReference,
+  maybe_range: Option<Range>,
+}
+
+#[derive(Debug)]
+struct PendingJsrNvResolutionItem {
+  specifier: ModuleSpecifier,
+  nv_ref: JsrPackageNvReference,
   maybe_range: Option<Range>,
 }
 
@@ -2795,7 +2847,7 @@ struct PendingJsrState {
     HashMap<String, PendingResult<Option<Arc<JsrPackageInfo>>>>,
   pending_package_version_info_loads:
     HashMap<PackageNv, PendingResult<PendingJsrPackageVersionInfoLoadItem>>,
-  pending_resolutions: Vec<PendingJsrResolutionItem>,
+  pending_resolutions: Vec<PendingJsrReqResolutionItem>,
   pending_content_loads:
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
 }
@@ -2997,13 +3049,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 ModuleSlot::Err(ModuleError::LoadingErr(
                   specifier.clone(),
                   maybe_range,
-                  // Two tasks we need to do before removing this error message:
-                  // 1. If someone imports a package via an HTTPS URL then we should probably
-                  //    bail completely on fast check because it could expose additional types
-                  //    not found in fast check, which might cause strange behaviour.
-                  // 2. For HTTPS URLS imported from the registry, we should probably still
-                  //    compare it against the checksums found in the registry otherwise it might
-                  //    not end up in the lockfile causing a security issue.
+                  /// Since redirects are handled internally in the loader, a redirect
+                  /// to an HTTPS URL for a JSR package
                   Arc::new(anyhow!(concat!(
                     "Importing a JSR package via an HTTPS URL is not implemented. ",
                     "Use a jsr: specifier instead for the time being."
@@ -3041,7 +3088,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               ModuleSlot::Err(ModuleError::LoadingErr(
                 specifier.clone(),
                 maybe_range,
-                Arc::new(err),
+                err,
               )),
             );
             Some(specifier)
@@ -3136,8 +3183,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 .add_nv(package_req.clone(), package_nv.clone());
 
               self.queue_load_package_version_info(&package_nv);
-              pending_version_resolutions
-                .push((package_nv, pending_resolution));
+              pending_version_resolutions.push(PendingJsrNvResolutionItem {
+                specifier: pending_resolution.specifier,
+                nv_ref: JsrPackageNvReference::new(PackageNvReference {
+                  nv: package_nv,
+                  sub_path: pending_resolution
+                    .package_ref
+                    .into_inner()
+                    .sub_path,
+                }),
+                maybe_range: pending_resolution.maybe_range,
+              });
             }
             None => {
               if self.fill_pass_mode == FillPassMode::AllowRestart {
@@ -3179,31 +3235,32 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     // now resolve the version information
-    for (nv, resolution_item) in pending_version_resolutions {
+    for resolution_item in pending_version_resolutions {
+      let nv = resolution_item.nv_ref.nv();
       let version_info_result = self
         .state
         .jsr
         .pending_package_version_info_loads
-        .get_mut(&nv)
+        .get(nv)
         .unwrap()
         .clone()
-        .await
-        .map(|info| (info, resolution_item.package_ref.sub_path()));
+        .await;
       match version_info_result {
-        Ok((version_info_load_item, sub_path)) => {
+        Ok(version_info_load_item) => {
           let version_info = version_info_load_item.info;
           self
             .graph
             .packages
             .ensure_package(nv.clone(), version_info_load_item.checksum);
-          let base_url = self.jsr_url_provider.package_url(&nv);
-          let export_name = normalize_export_name(sub_path);
+          let base_url = self.jsr_url_provider.package_url(nv);
+          let export_name =
+            normalize_export_name(resolution_item.nv_ref.sub_path());
           match version_info.export(&export_name) {
             Some(export_value) => {
               self.graph.packages.add_export(
-                &nv,
+                nv,
                 (
-                  normalize_export_name(resolution_item.package_ref.sub_path())
+                  normalize_export_name(resolution_item.nv_ref.sub_path())
                     .to_string(),
                   export_value.to_string(),
                 ),
@@ -3235,8 +3292,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 ModuleSlot::Err(ModuleError::UnknownExport {
                   specifier: resolution_item.specifier,
                   maybe_range: resolution_item.maybe_range,
-                  nv,
                   export_name: export_name.to_string(),
+                  nv: resolution_item.nv_ref.into_inner().nv,
                   exports: version_info
                     .exports()
                     .map(|(k, _)| k.to_string())
@@ -3605,7 +3662,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 response => PendingInfo {
                   specifier,
                   maybe_range,
-                  result: response.map(|r| r.map(Into::into)),
+                  result: response.map(|r| r.map(Into::into)).map_err(Arc::new),
                   maybe_version_info: Some(version_info),
                 },
               }
@@ -3750,7 +3807,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           .state
           .jsr
           .pending_resolutions
-          .push(PendingJsrResolutionItem {
+          .push(PendingJsrReqResolutionItem {
             specifier,
             package_ref,
             maybe_range,
@@ -3897,7 +3954,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .map(move |result| PendingInfo {
         specifier: requested_specifier,
         maybe_range,
-        result: result.map(|r| r.map(Into::into)),
+        result: result.map(|r| r.map(Into::into)).map_err(Arc::new),
         maybe_version_info,
       });
     self.state.pending.push_back(Box::pin(fut));
