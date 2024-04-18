@@ -28,7 +28,7 @@ import type {
   TypesDependency,
 } from "./types.ts";
 
-export { load } from "./loader.ts";
+export { load, withResolvingRedirects } from "./loader.ts";
 export { MediaType } from "./media_type.ts";
 export type {
   CacheInfo,

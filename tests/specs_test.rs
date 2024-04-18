@@ -20,11 +20,12 @@ use deno_graph::WorkspaceMember;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use file_test_runner::collect_and_run_tests;
-use file_test_runner::CollectOptions;
-use file_test_runner::CollectedTest;
-use file_test_runner::FileCollectionStrategy;
+use file_test_runner::collection::strategies::TestPerFileCollectionStrategy;
+use file_test_runner::collection::CollectOptions;
+use file_test_runner::collection::CollectedTest;
 use file_test_runner::RunOptions;
 use file_test_runner::TestResult;
+use helpers::TestLoader;
 use indexmap::IndexMap;
 use pretty_assertions::assert_eq;
 use serde::de::DeserializeOwned;
@@ -40,8 +41,7 @@ fn main() {
   collect_and_run_tests(
     CollectOptions {
       base: "tests/specs".into(),
-      strategy: FileCollectionStrategy::TestPerFile { file_pattern: None },
-      root_category_name: "specs".to_string(),
+      strategy: Box::new(TestPerFileCollectionStrategy { file_pattern: None }),
       filter_override: None,
     },
     RunOptions { parallel: true },
@@ -70,18 +70,7 @@ fn run_graph_test(test: &CollectedTest) {
 
   let mut builder = TestBuilder::new();
   builder.with_loader(|loader| {
-    for file in &spec.files {
-      let source = Source::Module {
-        specifier: file.url().to_string(),
-        maybe_headers: Some(file.headers.clone().into_iter().collect()),
-        content: file.text.clone(),
-      };
-      if file.is_cache() {
-        loader.cache.add_source(file.url(), source);
-      } else {
-        loader.remote.add_source(file.url(), source);
-      }
-    }
+    add_spec_files_to_loader(&spec.files, loader);
   });
   builder.workspace_members(spec.workspace_members.clone());
   builder.lockfile_jsr_packages(spec.lockfile_jsr_packages.clone());
@@ -267,18 +256,7 @@ fn run_symbol_test(test: &CollectedTest) {
   }
 
   builder.with_loader(|loader| {
-    for file in &spec.files {
-      let source = Source::Module {
-        specifier: file.url().to_string(),
-        maybe_headers: Some(file.headers.clone().into_iter().collect()),
-        content: file.text.clone(),
-      };
-      if file.is_cache() {
-        loader.cache.add_source(file.url(), source);
-      } else {
-        loader.remote.add_source(file.url(), source);
-      }
-    }
+    add_spec_files_to_loader(&spec.files, loader);
   });
 
   let rt = tokio::runtime::Builder::new_current_thread()
@@ -431,6 +409,34 @@ impl Spec {
       }
     }
     checksums_by_package
+  }
+}
+
+fn add_spec_files_to_loader(
+  files: &[crate::SpecFile],
+  loader: &mut TestLoader,
+) {
+  for file in files {
+    let source = match file.headers.get("location") {
+      Some(location) => {
+        let location = if location.starts_with("./") {
+          file.url().join(location).unwrap().to_string()
+        } else {
+          location.to_string()
+        };
+        Source::Redirect(location)
+      }
+      None => Source::Module {
+        specifier: file.url().to_string(),
+        maybe_headers: Some(file.headers.clone().into_iter().collect()),
+        content: file.text.clone(),
+      },
+    };
+    if file.is_cache() {
+      loader.cache.add_source(file.url(), source);
+    } else {
+      loader.remote.add_source(file.url(), source);
+    }
   }
 }
 

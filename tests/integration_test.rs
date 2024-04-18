@@ -206,7 +206,7 @@ async fn test_npm_version_not_found_then_found() {
     graph
       .build(
         vec![root.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           npm_resolver: Some(&npm_resolver),
           ..Default::default()
@@ -235,7 +235,7 @@ async fn test_npm_version_not_found_then_found() {
     graph
       .build(
         vec![root.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           npm_resolver: Some(&npm_resolver),
           ..Default::default()
@@ -253,18 +253,19 @@ async fn test_npm_version_not_found_then_found() {
 async fn test_jsr_version_not_found_then_found() {
   #[derive(Default)]
   struct TestLoader {
-    requests: Vec<(String, CacheSetting)>,
+    requests: RefCell<Vec<(String, CacheSetting)>>,
   }
 
   impl deno_graph::source::Loader for TestLoader {
     fn load(
-      &mut self,
+      &self,
       specifier: &ModuleSpecifier,
       options: LoadOptions,
     ) -> LoadFuture {
       assert!(!options.is_dynamic);
       self
         .requests
+        .borrow_mut()
         .push((specifier.to_string(), options.cache_setting));
       let specifier = specifier.clone();
       match specifier.as_str() {
@@ -322,18 +323,18 @@ async fn test_jsr_version_not_found_then_found() {
     }
   }
 
-  let mut loader = TestLoader::default();
+  let loader = TestLoader::default();
   let mut graph = ModuleGraph::new(GraphKind::All);
   graph
     .build(
       vec![Url::parse("file:///main.ts").unwrap()],
-      &mut loader,
+      &loader,
       Default::default(),
     )
     .await;
   graph.valid().unwrap();
   assert_eq!(
-    loader.requests,
+    *loader.requests.borrow(),
     vec![
       ("file:///main.ts".to_string(), CacheSetting::Use),
       (
@@ -375,7 +376,7 @@ async fn test_dynamic_imports_with_template_arg() {
     graph
       .build(
         vec![Url::parse("file:///dev/main.ts").unwrap()],
-        &mut loader,
+        &loader,
         BuildOptions {
           file_system: &file_system,
           ..Default::default()

@@ -188,7 +188,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_build_graph() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -213,11 +213,7 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 2);
     assert_eq!(graph.roots, vec![root_specifier.clone()]);
@@ -251,7 +247,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_build_graph_multiple_roots() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -294,7 +290,7 @@ mod tests {
     ];
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(roots.clone(), &mut loader, Default::default())
+      .build(roots.clone(), &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 4);
     assert_eq!(graph.roots, roots);
@@ -312,7 +308,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_build_graph_multiple_times() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -364,14 +360,14 @@ mod tests {
       ModuleSpecifier::parse("https://example.com/d.ts").unwrap();
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(vec![first_root.clone()], &mut loader, Default::default())
+      .build(vec![first_root.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 4);
     assert_eq!(graph.roots, vec![first_root.clone()]);
 
     // now build with the second root
     graph
-      .build(vec![second_root.clone()], &mut loader, Default::default())
+      .build(vec![second_root.clone()], &loader, Default::default())
       .await;
     let mut roots = vec![first_root, second_root];
     assert_eq!(graph.module_slots.len(), 5);
@@ -391,7 +387,7 @@ mod tests {
 
     // now try making one of the already existing modules a root
     graph
-      .build(vec![third_root.clone()], &mut loader, Default::default())
+      .build(vec![third_root.clone()], &loader, Default::default())
       .await;
     roots.push(third_root);
     assert_eq!(graph.module_slots.len(), 5);
@@ -400,7 +396,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_build_graph_json_module_root() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "file:///a/test.json",
         Source::Module {
@@ -416,7 +412,7 @@ mod tests {
     graph
       .build(
         roots.clone(),
-        &mut loader,
+        &loader,
         BuildOptions {
           is_dynamic: true,
           ..Default::default()
@@ -444,7 +440,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_valid_type_missing() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -473,18 +469,14 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert!(graph.valid().is_ok());
   }
 
   #[tokio::test]
   async fn test_valid_code_missing() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "file:///a/test01.ts",
         Source::Module {
@@ -501,11 +493,7 @@ console.log(a);
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert!(graph.valid().is_err());
     assert_eq!(
@@ -516,7 +504,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_remote_import_data_url() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "https://deno.land/main.ts",
         Source::Module {
@@ -534,11 +522,7 @@ console.log(a);
       ModuleSpecifier::parse("https://deno.land/main.ts").unwrap();
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert!(graph.valid().is_ok());
   }
@@ -549,7 +533,7 @@ console.log(a);
       let root_specifier =
         ModuleSpecifier::parse(&format!("{scheme}://deno.land/main.ts"))
           .unwrap();
-      let mut loader = setup(
+      let loader = setup(
         vec![
           (
             root_specifier.as_str(),
@@ -575,7 +559,7 @@ console.log(a);
       );
       let mut graph = ModuleGraph::new(GraphKind::All);
       graph
-        .build(vec![root_specifier], &mut loader, Default::default())
+        .build(vec![root_specifier], &loader, Default::default())
         .await;
       assert!(matches!(
         graph.valid().err().unwrap(),
@@ -591,7 +575,7 @@ console.log(a);
     for scheme in &["http", "https"] {
       let root_specifier_str = format!("{scheme}://deno.land/main.ts");
       let root_specifier = ModuleSpecifier::parse(&root_specifier_str).unwrap();
-      let mut loader = setup(
+      let loader = setup(
         vec![
           (
             root_specifier.as_str(),
@@ -627,7 +611,7 @@ console.log(a);
       graph
         .build(
           vec![root_specifier.clone()],
-          &mut loader,
+          &loader,
           BuildOptions {
             resolver: maybe_resolver,
             ..Default::default()
@@ -640,7 +624,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_imports() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -680,7 +664,7 @@ console.log(a);
     graph
       .build(
         vec![root_specifier],
-        &mut loader,
+        &loader,
         BuildOptions {
           imports,
           ..Default::default()
@@ -759,7 +743,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_imports_imported() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -808,7 +792,7 @@ console.log(a);
     graph
       .build(
         vec![root_specifier],
-        &mut loader,
+        &loader,
         BuildOptions {
           imports,
           ..Default::default()
@@ -888,7 +872,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_imports_resolve_dependency() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -934,7 +918,7 @@ console.log(a);
     graph
       .build(
         vec![root_specifier],
-        &mut loader,
+        &loader,
         BuildOptions {
           imports,
           ..Default::default()
@@ -986,7 +970,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_with_headers() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "https://example.com/a",
         Source::Module {
@@ -1004,11 +988,7 @@ console.log(a);
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 1);
     assert_eq!(graph.roots, vec![root_specifier.clone()]);
@@ -1025,7 +1005,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_jsx_import_source() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.tsx",
@@ -1058,11 +1038,7 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test01.tsx").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -1111,7 +1087,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_jsx_import_source_types() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.tsx",
@@ -1157,11 +1133,7 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test01.tsx").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -1230,7 +1202,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_bare_specifier_error() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "file:///a/test.ts",
         Source::Module {
@@ -1245,11 +1217,7 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     let result = graph.valid();
     assert!(result.is_err());
@@ -1398,7 +1366,7 @@ console.log(a);
     };
     let mock_import_map_resolver = MockImportMapResolver {};
 
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "file:///a/test.ts",
         Source::Module {
@@ -1415,7 +1383,7 @@ console.log(a);
     graph
       .build(
         vec![root_specifier.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           npm_resolver: Some(&mock_npm_resolver),
           ..Default::default()
@@ -1428,7 +1396,7 @@ console.log(a);
     graph
       .build(
         vec![root_specifier.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           resolver: Some(&mock_import_map_resolver),
           npm_resolver: Some(&mock_npm_resolver),
@@ -1446,7 +1414,7 @@ console.log(a);
     graph
       .build(
         vec![root_specifier.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           npm_resolver: Some(&mock_npm_resolver),
           ..Default::default()
@@ -1463,7 +1431,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_unsupported_media_type() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test.ts",
@@ -1488,11 +1456,7 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     let result = graph.valid();
     assert!(result.is_err());
@@ -1509,7 +1473,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_root_is_extensionless() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01",
@@ -1534,18 +1498,14 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test01").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert!(graph.valid().is_ok());
   }
 
   #[tokio::test]
   async fn test_crate_graph_with_dynamic_imports() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a.ts",
@@ -1570,11 +1530,7 @@ console.log(a);
       ModuleSpecifier::parse("file:///a.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -1622,7 +1578,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_with_jsdoc_imports() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test.js",
@@ -1664,7 +1620,7 @@ export function a(a) {
     let root = ModuleSpecifier::parse("file:///a/test.js").unwrap();
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(vec![root.clone()], &mut loader, Default::default())
+      .build(vec![root.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -1733,7 +1689,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_redirects() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "https://example.com/a",
@@ -1764,11 +1720,7 @@ export function a(a) {
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       graph.roots,
@@ -1799,7 +1751,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_circular_redirects() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "https://example.com/a",
@@ -1831,11 +1783,7 @@ export function a(a) {
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       graph.roots,
@@ -1866,7 +1814,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_data_url() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -1891,11 +1839,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 3);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
@@ -1908,7 +1852,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_resolver() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -1939,7 +1883,7 @@ export function a(a) {
     graph
       .build(
         vec![root_specifier],
-        &mut loader,
+        &loader,
         BuildOptions {
           resolver: maybe_resolver,
           ..Default::default()
@@ -1958,7 +1902,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_resolve_types() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a.js",
@@ -1999,7 +1943,7 @@ export function a(a) {
     graph
       .build(
         vec![root_specifier],
-        &mut loader,
+        &loader,
         BuildOptions {
           resolver: maybe_resolver,
           ..Default::default()
@@ -2024,7 +1968,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_import_attributes() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2079,11 +2023,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -2201,7 +2141,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_mixed_assertions() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2229,11 +2169,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -2281,7 +2217,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_import_assertion_errors() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2344,11 +2280,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -2498,7 +2430,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_reporter() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2554,7 +2486,7 @@ export function a(a) {
     graph
       .build(
         vec![root_specifier.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           reporter: Some(&reporter),
           ..Default::default()
@@ -2602,7 +2534,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_types_only() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2690,11 +2622,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::TypesOnly);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -2829,7 +2757,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_code_only() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2925,11 +2853,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::CodeOnly);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -3044,7 +2968,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_builtin_external() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -3069,11 +2993,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -3671,7 +3591,7 @@ export function a(a: A): B {
 
   #[tokio::test]
   async fn test_segment_graph() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -3741,7 +3661,7 @@ export function a(a: A): B {
     graph
       .build(
         roots.clone(),
-        &mut loader,
+        &loader,
         BuildOptions {
           imports: imports.clone(),
           ..Default::default()
@@ -3795,7 +3715,7 @@ export function a(a: A): B {
 
   #[tokio::test]
   async fn test_walk() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -3889,7 +3809,7 @@ export function a(a: A): B {
     graph
       .build(
         vec![root.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           imports: imports.clone(),
           ..Default::default()
@@ -4127,7 +4047,7 @@ export function a(a: A): B {
       }
     }
 
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -4168,7 +4088,7 @@ export function a(a: A): B {
       graph
         .build(
           vec![root_specifier.clone()],
-          &mut loader,
+          &loader,
           BuildOptions {
             resolver: Some(&resolver),
             ..Default::default()
@@ -4243,7 +4163,7 @@ export function a(a: A): B {
       graph
         .build(
           vec![root_specifier.clone()],
-          &mut loader,
+          &loader,
           BuildOptions {
             resolver: Some(&resolver),
             ..Default::default()
@@ -4317,7 +4237,7 @@ export function a(a: A): B {
       }
     }
 
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -4348,7 +4268,7 @@ export function a(a: A): B {
     graph
       .build(
         vec![root_specifier.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           resolver: Some(&resolver),
           ..Default::default()
@@ -4376,7 +4296,7 @@ export function a(a: A): B {
 
   #[tokio::test]
   async fn test_passthrough_jsr_specifiers() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -4396,7 +4316,7 @@ export function a(a: A): B {
     graph
       .build(
         vec![root_specifier.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           passthrough_jsr_specifiers: true,
           ..Default::default()
