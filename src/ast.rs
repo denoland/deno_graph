@@ -37,6 +37,10 @@ static JSDOC_IMPORT_RE: Lazy<Regex> = Lazy::new(|| {
 /// Matches the `@jsxImportSource` pragma.
 static JSX_IMPORT_SOURCE_RE: Lazy<Regex> =
   Lazy::new(|| Regex::new(r"(?i)^[\s*]*@jsxImportSource\s+(\S+)").unwrap());
+/// Matches the `@jsxImportSourceTypes` pragma.
+static JSX_IMPORT_SOURCE_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+  Regex::new(r"(?i)^[\s*]*@jsxImportSourceTypes\s+(\S+)").unwrap()
+});
 /// Matches a `/// <reference ... />` comment reference.
 static TRIPLE_SLASH_REFERENCE_RE: Lazy<Regex> =
   Lazy::new(|| Regex::new(r"(?i)^/\s*<reference\s.*?/>").unwrap());
@@ -279,6 +283,11 @@ impl<'a> ParserModuleAnalyzer<'a> {
       dependencies: analyze_dependencies(module, text_info, comments),
       ts_references: analyze_ts_references(text_info, leading_comments),
       jsx_import_source: analyze_jsx_import_source(
+        media_type,
+        text_info,
+        leading_comments,
+      ),
+      jsx_import_source_types: analyze_jsx_import_source_types(
         media_type,
         text_info,
         leading_comments,
@@ -539,6 +548,30 @@ fn analyze_jsx_import_source(
   })
 }
 
+fn analyze_jsx_import_source_types(
+  media_type: MediaType,
+  text_info: &SourceTextInfo,
+  leading_comments: Option<&Vec<deno_ast::swc::common::comments::Comment>>,
+) -> Option<SpecifierWithRange> {
+  if !matches!(media_type, MediaType::Jsx | MediaType::Tsx) {
+    return None;
+  }
+
+  leading_comments.and_then(|c| {
+    c.iter().find_map(|c| {
+      if c.kind != CommentKind::Block {
+        return None; // invalid
+      }
+      let captures = JSX_IMPORT_SOURCE_TYPES_RE.captures(&c.text)?;
+      let m = captures.get(1)?;
+      Some(SpecifierWithRange {
+        text: m.as_str().to_string(),
+        range: comment_source_to_position_range(c.start(), &m, text_info, true),
+      })
+    })
+  })
+}
+
 fn analyze_jsdoc_imports(
   media_type: MediaType,
   text_info: &SourceTextInfo,
@@ -617,6 +650,8 @@ mod tests {
     /// <reference types="./types.d.ts" />
     // @jsxImportSource http://example.com/invalid
     /* @jsxImportSource http://example.com/preact */
+    // @jsxImportSourceTypes http://example.com/invalidTypes
+    /* @jsxImportSourceTypes http://example.com/preactTypes */
     import {
       A,
       B,
@@ -693,6 +728,17 @@ mod tests {
     assert_eq!(
       text_info.range_text(&jsx_import_source.range.as_source_range(text_info)),
       "http://example.com/preact"
+    );
+
+    let jsx_import_source_types = module_info.jsx_import_source_types.unwrap();
+    assert_eq!(
+      jsx_import_source_types.text,
+      "http://example.com/preactTypes"
+    );
+    assert_eq!(
+      text_info
+        .range_text(&jsx_import_source_types.range.as_source_range(text_info)),
+      "http://example.com/preactTypes"
     );
   }
 
@@ -911,6 +957,7 @@ export {};
             },
           },
         }),
+        jsx_import_source_types: None,
         jsdoc_imports: vec![],
       },
     );
