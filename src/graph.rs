@@ -611,8 +611,7 @@ impl ImportKind {
   }
 }
 
-#[derive(Clone, Debug, Serialize)]
-#[cfg_attr(test, derive(Eq, PartialEq))]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Import {
   pub specifier: String,
@@ -627,8 +626,7 @@ pub struct Import {
   pub attributes: ImportAttributes,
 }
 
-#[derive(Debug, Default, Clone, Serialize)]
-#[cfg_attr(test, derive(Eq, PartialEq))]
+#[derive(Debug, Default, Clone, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Dependency {
   #[serde(rename = "code", skip_serializing_if = "Resolution::is_none")]
@@ -723,8 +721,7 @@ impl Dependency {
   }
 }
 
-#[derive(Debug, Clone, Serialize)]
-#[cfg_attr(test, derive(Eq, PartialEq))]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TypesDependency {
   pub specifier: String,
