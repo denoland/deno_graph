@@ -296,6 +296,9 @@ pub struct ModuleInfo {
   /// Comment with a `@jsxImportSource` pragma on JSX/TSX media types
   #[serde(skip_serializing_if = "Option::is_none", default)]
   pub jsx_import_source: Option<SpecifierWithRange>,
+  /// Comment with a `@jsxImportSourceTypes` pragma on JSX/TSX media types
+  #[serde(skip_serializing_if = "Option::is_none", default)]
+  pub jsx_import_source_types: Option<SpecifierWithRange>,
   /// Type imports in JSDoc comment blocks (e.g. `{import("./types.d.ts").Type}`).
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub jsdoc_imports: Vec<SpecifierWithRange>,
@@ -339,6 +342,7 @@ mod test {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       jsx_import_source: None,
+      jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
     };
     run_serialization_test(&module_info, json!({}));
@@ -398,6 +402,7 @@ mod test {
       ]),
       ts_references: Vec::new(),
       jsx_import_source: None,
+      jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
     };
     run_serialization_test(
@@ -449,6 +454,7 @@ mod test {
         }),
       ]),
       jsx_import_source: None,
+      jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
     };
     run_serialization_test(
@@ -479,6 +485,7 @@ mod test {
           end: Position::zeroed(),
         },
       }),
+      jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
     };
     run_serialization_test(
@@ -493,11 +500,38 @@ mod test {
   }
 
   #[test]
+  fn module_info_serialization_jsx_import_source_types() {
+    let module_info = ModuleInfo {
+      dependencies: Vec::new(),
+      ts_references: Vec::new(),
+      jsx_import_source: None,
+      jsx_import_source_types: Some(SpecifierWithRange {
+        text: "a".to_string(),
+        range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      }),
+      jsdoc_imports: Vec::new(),
+    };
+    run_serialization_test(
+      &module_info,
+      json!({
+        "jsxImportSourceTypes": {
+          "text": "a",
+          "range": [[0, 0], [0, 0]],
+        }
+      }),
+    );
+  }
+
+  #[test]
   fn module_info_jsdoc_imports() {
     let module_info = ModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       jsx_import_source: None,
+      jsx_import_source_types: None,
       jsdoc_imports: Vec::from([SpecifierWithRange {
         text: "a".to_string(),
         range: PositionRange {
