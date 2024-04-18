@@ -3635,7 +3635,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         self.graph.module_slots.remove(&requested_specifier);
       }
     }
-    self.graph.redirects.insert(requested_specifier, specifier);
+    self
+      .graph
+      .redirects
+      .entry(requested_specifier)
+      .or_insert(specifier);
   }
 
   /// Enqueue a request to load the specifier via the loader.

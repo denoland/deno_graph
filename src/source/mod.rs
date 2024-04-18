@@ -488,6 +488,7 @@ pub enum Source<S> {
     maybe_headers: Option<Vec<(S, S)>>,
     content: S,
   },
+  Redirect(S),
   External(S),
   Err(Error),
 }
@@ -507,6 +508,9 @@ impl<S: AsRef<str>> Source<S> {
             .collect()
         }),
         content: Arc::from(content.as_ref().to_string().into_bytes()),
+      }),
+      Source::Redirect(specifier) => Ok(LoadResponse::Redirect {
+        specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
       }),
       Source::External(specifier) => Ok(LoadResponse::External {
         specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
