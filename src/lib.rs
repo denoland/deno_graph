@@ -1852,7 +1852,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_reference_types_in_js() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///test01.js",
@@ -1878,11 +1878,7 @@ export const foo = 'bar';"#,
       ModuleSpecifier::parse("file:///test01.js").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 2);
     let module = graph.get(&root_specifier).unwrap().js().unwrap();
@@ -1910,7 +1906,7 @@ export const foo = 'bar';"#,
 
   #[tokio::test]
   async fn test_build_graph_with_self_types_in_js() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///test01.js",
@@ -1936,11 +1932,7 @@ export const foo = 'bar';"#,
       ModuleSpecifier::parse("file:///test01.js").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 2);
     let module = graph.get(&root_specifier).unwrap().js().unwrap();
@@ -1968,7 +1960,7 @@ export const foo = 'bar';"#,
 
   #[tokio::test]
   async fn test_build_graph_with_self_types_in_ts() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///test01.ts",
@@ -1994,11 +1986,7 @@ export const foo = 'bar';"#,
       ModuleSpecifier::parse("file:///test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 1);
     let module = graph.get(&root_specifier).unwrap().js().unwrap();
