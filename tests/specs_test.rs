@@ -20,9 +20,9 @@ use deno_graph::WorkspaceMember;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use file_test_runner::collect_and_run_tests;
-use file_test_runner::CollectOptions;
-use file_test_runner::CollectedTest;
-use file_test_runner::FileCollectionStrategy;
+use file_test_runner::collection::strategies::TestPerFileCollectionStrategy;
+use file_test_runner::collection::CollectOptions;
+use file_test_runner::collection::CollectedTest;
 use file_test_runner::RunOptions;
 use file_test_runner::TestResult;
 use helpers::TestLoader;
@@ -41,8 +41,7 @@ fn main() {
   collect_and_run_tests(
     CollectOptions {
       base: "tests/specs".into(),
-      strategy: FileCollectionStrategy::TestPerFile { file_pattern: None },
-      root_category_name: "specs".to_string(),
+      strategy: Box::new(TestPerFileCollectionStrategy { file_pattern: None }),
       filter_override: None,
     },
     RunOptions { parallel: true },
