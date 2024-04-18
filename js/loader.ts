@@ -26,7 +26,7 @@ export async function withResolvingRedirects(
   specifier: string,
   customLoad: (specifier: string) => Promise<LoadResponse | undefined> = load,
 ): Promise<Exclude<LoadResponse, LoadResponseRedirect> | undefined> {
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i <= 10; i++) {
     const response = await customLoad(specifier);
     if (response === undefined || response.kind !== "redirect") {
       return response;
