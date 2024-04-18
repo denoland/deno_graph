@@ -91,7 +91,7 @@ import 'jsr:@scope/a/foo'
     },
     {
       "kind": "esm",
-      "size": 54,
+      "size": 52,
       "typesDependency": {
         "specifier": "./foo.d.ts",
         "dependency": {
@@ -99,11 +99,11 @@ import 'jsr:@scope/a/foo'
           "span": {
             "start": {
               "line": 0,
-              "character": 20
+              "character": 18
             },
             "end": {
               "line": 0,
-              "character": 32
+              "character": 30
             }
           }
         }

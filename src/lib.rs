@@ -2011,11 +2011,11 @@ export const foo = 'bar';"#,
           specifier: ModuleSpecifier::parse("file:///test01.js").unwrap(),
           start: Position {
             line: 0,
-            character: 20
+            character: 18
           },
           end: Position {
             line: 0,
-            character: 35
+            character: 33
           },
         }
       }
