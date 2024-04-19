@@ -149,11 +149,8 @@ impl PackageSpecifiers {
     });
   }
 
-  pub(crate) fn get_manifest_checksum(
-    &self,
-    nv: &PackageNv,
-  ) -> Option<&String> {
-    self.packages.get(nv).map(|p| &p.manifest_checksum)
+  pub(crate) fn get_manifest_checksum(&self, nv: &PackageNv) -> Option<&str> {
+    self.packages.get(nv).map(|p| p.manifest_checksum.as_str())
   }
 
   pub fn add_manifest_checksum(

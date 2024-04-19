@@ -113,7 +113,7 @@ impl JsrMetadataStore {
     &mut self,
     package_nv: &PackageNv,
     cache_setting: CacheSetting,
-    maybe_expected_checksum: Option<LoaderChecksum>,
+    maybe_expected_checksum: Option<&str>,
     services: JsrMetadataStoreServices,
   ) {
     if self
@@ -131,6 +131,7 @@ impl JsrMetadataStore {
         package_nv.name, package_nv.version
       ))
       .unwrap();
+    let maybe_expected_checksum = maybe_expected_checksum.map(|c| LoaderChecksum::new(c.to_string()));
     let fut = services.loader.load(
       &specifier,
       LoadOptions {

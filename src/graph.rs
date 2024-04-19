@@ -68,7 +68,6 @@ use crate::packages::resolve_version;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
 use crate::packages::PackageSpecifiers;
-use crate::rt::spawn;
 use crate::rt::Executor;
 
 use crate::source::*;
@@ -4162,15 +4161,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   }
 
   fn queue_load_package_version_info(&mut self, package_nv: &PackageNv) {
-    let maybe_expected_checksum = self
-      .graph
-      .packages
-      .get_manifest_checksum(package_nv)
-      .map(|checksum| LoaderChecksum::new(checksum.clone()));
     self.state.jsr.metadata.queue_load_package_version_info(
       package_nv,
       self.fill_pass_mode.to_cache_setting(),
-      maybe_expected_checksum,
+      self.graph.packages.get_manifest_checksum(package_nv),
       JsrMetadataStoreServices {
         executor: self.executor,
         jsr_url_provider: self.jsr_url_provider,
