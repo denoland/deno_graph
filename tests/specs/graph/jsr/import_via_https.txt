@@ -51,8 +51,10 @@ console.log(Test);
       "specifier": "file:///mod.ts"
     },
     {
-      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
-      "error": "Importing a JSR package via an HTTPS URL is not implemented. Use a jsr: specifier instead for the time being."
+      "kind": "esm",
+      "size": 21,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
   ],
   "redirects": {}

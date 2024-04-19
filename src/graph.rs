@@ -3150,42 +3150,25 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
           match result {
             Ok(Some(response)) => {
-              if maybe_version_info.is_none()
-                && self
+              // this should have been handled by now
+              debug_assert_eq!(
+                maybe_version_info.is_none(),
+                self
                   .jsr_url_provider
                   .package_url_to_nv(response.specifier())
-                  .is_some()
-              {
-                self.graph.module_slots.insert(
-                  specifier.clone(),
-                  ModuleSlot::Err(ModuleError::LoadingErr(
-                    specifier.clone(),
-                    maybe_range,
-                    // Two tasks we need to do before removing this error message:
-                    // 1. If someone imports a package via an HTTPS URL then we should probably
-                    //    bail completely on fast check because it could expose additional types
-                    //    not found in fast check, which might cause strange behaviour.
-                    // 2. For HTTPS URLS imported from the registry, we should probably still
-                    //    compare it against the checksums found in the registry otherwise it might
-                    //    not end up in the lockfile causing a security issue.
-                    Arc::new(anyhow!(concat!(
-                      "Importing a JSR package via an HTTPS URL is not implemented. ",
-                      "Use a jsr: specifier instead for the time being."
-                    )),
-                  ))),
-                );
-              } else {
-                let attribute_types =
-                  self.state.pending_specifiers.remove(&specifier).unwrap();
-                for maybe_attribute_type in attribute_types {
-                  self.visit(
-                    &specifier,
-                    &response,
-                    maybe_attribute_type,
-                    maybe_range.clone(),
-                    maybe_version_info.as_ref(),
-                  )
-                }
+                  .is_none()
+              );
+
+              let attribute_types =
+                self.state.pending_specifiers.remove(&specifier).unwrap();
+              for maybe_attribute_type in attribute_types {
+                self.visit(
+                  &specifier,
+                  &response,
+                  maybe_attribute_type,
+                  maybe_range.clone(),
+                  maybe_version_info.as_ref(),
+                )
               }
               Some(specifier)
             }
@@ -4091,6 +4074,52 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .module_slots
       .insert(requested_specifier.clone(), ModuleSlot::Pending);
     let loader = self.loader;
+    let jsr_url_provider = self.jsr_url_provider;
+    let maybe_nv_when_no_version_info = if maybe_version_info.is_none() {
+      self
+        .jsr_url_provider
+        .package_url_to_nv(&requested_specifier)
+    } else {
+      None
+    };
+    let maybe_version_load_fut =
+      maybe_nv_when_no_version_info.map(|package_nv| {
+        self.queue_load_package_version_info(&package_nv);
+        self
+          .state
+          .jsr
+          .metadata
+          .get_package_version_metadata(&package_nv)
+          .unwrap()
+      });
+    // if let Some(package_nv) = maybe_nv_when_no_version_info {
+    //   let base_url = self.jsr_url_provider.package_url(&package_nv);
+    //   self.state.pending.push_front({
+    //     let specifier = specifier.clone();
+    //     async move {
+    //       let version_info = version_load_fut.await;
+    //       match version_info {
+    //         Ok(version_info) => PendingInfo {
+    //           specifier,
+    //           maybe_range,
+    //           redirects: Default::default(),
+    //           result: Ok(Some(response)),
+    //           maybe_version_info: Some(JsrPackageVersionInfoExt {
+    //             base_url,
+    //             inner: version_info.info.clone(),
+    //           }),
+    //         },
+    //         Err(err) => PendingInfo {
+    //           specifier,
+    //           maybe_range,
+    //           redirects: Default::default(),
+    //           result: Err(err),
+    //           maybe_version_info: None,
+    //         },
+    //       }
+    //     }
+    //     .boxed_local()
+    //   });
     let fut = async move {
       let mut redirects = BTreeMap::new();
       let mut load_specifier = load_specifier;
@@ -4100,16 +4129,31 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           LoadOptions {
             is_dynamic,
             cache_setting: CacheSetting::Use,
-            // todo(dsherret): need to handle a redirect to a jsr url here
             maybe_checksum: maybe_checksum.clone(),
           },
         );
         let result = match result.await {
           Ok(Some(response)) => match response {
             LoadResponse::Redirect { specifier } => {
-              redirects.insert(load_specifier, specifier.clone());
-              load_specifier = specifier;
-              continue;
+              if jsr_url_provider.package_url_to_nv(&specifier).is_some() {
+                // Redirecting to a JSR package HTTPS URL is not supported. If this was implemented
+                // we'd need to:
+                // 1. Get the current state's checksum for this package nv.
+                // 2. Get the version manifest using the current state's checksum.
+                // 3. Get the URL from the loader, using the checksum from the version's manifest.
+                // It's important to request from the loader with the checksum so that the loader
+                // in the CLI doesn't populate the "vendor" folder with data that hasn't been
+                // verified, because once it ends up in the vendor folder then it's checksum is
+                // never compared against again in order to allow local modifications.
+                Err(Arc::new(anyhow!(
+                  "Redirecting to a JSR package HTTPS URL is not supported (redirected to '{}')",
+                  specifier
+                )))
+              } else {
+                redirects.insert(load_specifier, specifier.clone());
+                load_specifier = specifier;
+                continue;
+              }
             }
             LoadResponse::External { specifier } => {
               Ok(Some(PendingInfoResponse::External { specifier }))
