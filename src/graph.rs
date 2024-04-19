@@ -55,6 +55,8 @@ use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
 #[cfg(feature = "fast_check")]
 use crate::fast_check::FastCheckDtsModule;
+use crate::jsr::JsrMetadataStore;
+use crate::jsr::JsrMetadataStoreServices;
 use crate::ReferrerImports;
 
 use crate::fast_check::FastCheckDiagnostic;
@@ -68,7 +70,7 @@ use crate::packages::JsrPackageVersionInfo;
 use crate::packages::PackageSpecifiers;
 use crate::rt::spawn;
 use crate::rt::Executor;
-use crate::rt::JoinHandle;
+
 use crate::source::*;
 
 use anyhow::anyhow;
@@ -91,7 +93,6 @@ use deno_semver::package::PackageReqReferenceParseError;
 use deno_semver::RangeSetOrTag;
 use deno_semver::Version;
 use futures::future::LocalBoxFuture;
-use futures::future::Shared;
 use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
@@ -2950,23 +2951,12 @@ struct PendingContentLoadItem {
   module_info: ModuleInfo,
 }
 
-#[derive(Clone)]
-struct PendingJsrPackageVersionInfoLoadItem {
-  checksum: String,
-  info: Arc<JsrPackageVersionInfo>,
-}
-
-type PendingResult<T> = Shared<JoinHandle<Result<T, Arc<anyhow::Error>>>>;
-
 #[derive(Debug, Default)]
 struct PendingJsrState {
-  pending_package_info_loads:
-    HashMap<String, PendingResult<Option<Arc<JsrPackageInfo>>>>,
-  pending_package_version_info_loads:
-    HashMap<PackageNv, PendingResult<PendingJsrPackageVersionInfoLoadItem>>,
   pending_resolutions: Vec<PendingJsrReqResolutionItem>,
   pending_content_loads:
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
+  metadata: JsrMetadataStore,
 }
 
 #[derive(Debug)]
@@ -3291,10 +3281,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let fut = self
         .state
         .jsr
-        .pending_package_info_loads
-        .get(package_name)
-        .unwrap()
-        .clone();
+        .metadata
+        .get_package_metadata(package_name)
+        .unwrap();
       match fut.await {
         Ok(Some(info)) => {
           // resolve the best version out of the existing versions first
@@ -3369,10 +3358,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let version_info_result = self
         .state
         .jsr
-        .pending_package_version_info_loads
-        .get(nv)
+        .metadata
+        .get_package_version_metadata(nv)
         .unwrap()
-        .clone()
         .await;
       match version_info_result {
         Ok(version_info_load_item) => {
@@ -4162,112 +4150,33 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   }
 
   fn queue_load_package_info(&mut self, package_name: &str) {
-    if self
-      .state
-      .jsr
-      .pending_package_info_loads
-      .contains_key(package_name)
-    {
-      return; // already queued
-    }
-
-    // request to load
-    let specifier = self
-      .jsr_url_provider
-      .url()
-      .join(&format!("{}/meta.json", package_name))
-      .unwrap();
-    let fut = self.loader.load(
-      &specifier,
-      LoadOptions {
-        is_dynamic: false,
-        cache_setting: self.fill_pass_mode.to_cache_setting(),
-        maybe_checksum: None,
+    self.state.jsr.metadata.queue_load_package_info(
+      package_name,
+      self.fill_pass_mode.to_cache_setting(),
+      JsrMetadataStoreServices {
+        executor: self.executor,
+        jsr_url_provider: self.jsr_url_provider,
+        loader: self.loader,
       },
     );
-    let fut = spawn(
-      self.executor,
-      async move {
-        let data = fut.await.map_err(Arc::new)?;
-        match data {
-          Some(LoadResponse::Module { content, .. }) => {
-            let package_info: JsrPackageInfo = serde_json::from_slice(&content)
-              .map_err(|e| Arc::new(e.into()))?;
-            Ok(Some(Arc::new(package_info)))
-          }
-          _ => Ok(None),
-        }
-      }
-      .boxed_local(),
-    );
-    self
-      .state
-      .jsr
-      .pending_package_info_loads
-      .insert(package_name.to_string(), fut.shared());
   }
 
   fn queue_load_package_version_info(&mut self, package_nv: &PackageNv) {
-    if self
-      .state
-      .jsr
-      .pending_package_version_info_loads
-      .contains_key(package_nv)
-    {
-      return; // already queued
-    }
-
-    let specifier = self
-      .jsr_url_provider
-      .url()
-      .join(&format!(
-        "{}/{}_meta.json",
-        package_nv.name, package_nv.version
-      ))
-      .unwrap();
     let maybe_expected_checksum = self
       .graph
       .packages
       .get_manifest_checksum(package_nv)
       .map(|checksum| LoaderChecksum::new(checksum.clone()));
-    let fut = self.loader.load(
-      &specifier,
-      LoadOptions {
-        is_dynamic: false,
-        cache_setting: self.fill_pass_mode.to_cache_setting(),
-        // we won't have a checksum when loading this the
-        // first time or when not using a lockfile
-        maybe_checksum: maybe_expected_checksum.clone(),
+    self.state.jsr.metadata.queue_load_package_version_info(
+      package_nv,
+      self.fill_pass_mode.to_cache_setting(),
+      maybe_expected_checksum,
+      JsrMetadataStoreServices {
+        executor: self.executor,
+        jsr_url_provider: self.jsr_url_provider,
+        loader: self.loader,
       },
     );
-    let fut = spawn(
-      self.executor,
-      async move {
-        let data = fut.await.map_err(Arc::new)?;
-        match data {
-          Some(LoadResponse::Module { content, .. }) => {
-            // if we have the expected checksum, then we can re-use that here
-            let checksum = maybe_expected_checksum
-              .map(|c| c.into_string())
-              .unwrap_or_else(|| LoaderChecksum::gen(&content));
-            let version_info: JsrPackageVersionInfo =
-              serde_json::from_slice(&content)
-                .map_err(|e| Arc::new(e.into()))?;
-            Ok(PendingJsrPackageVersionInfoLoadItem {
-              checksum,
-              info: Arc::new(version_info),
-            })
-          }
-          _ => Err(Arc::new(anyhow!("Not found: {}", specifier))),
-        }
-      }
-      .boxed_local(),
-    );
-    self
-      .state
-      .jsr
-      .pending_package_version_info_loads
-      .insert(package_nv.clone(), fut.shared());
   }
 
   fn roots_contain(&self, specifier: &ModuleSpecifier) -> bool {
