@@ -51,10 +51,8 @@ console.log(Test);
       "specifier": "file:///mod.ts"
     },
     {
-      "kind": "esm",
-      "size": 21,
-      "mediaType": "TypeScript",
-      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
+      "error": "Integrity check failed.\n\nActual: 151a3a3f4587a29c7b3449a3635fed35c4e88a3a773b3bf296804f1a4e1ab86d\nExpected: invalid"
     }
   ],
   "redirects": {}

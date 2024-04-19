@@ -57,6 +57,8 @@ use crate::analyzer::TypeScriptReference;
 use crate::fast_check::FastCheckDtsModule;
 use crate::jsr::JsrMetadataStore;
 use crate::jsr::JsrMetadataStoreServices;
+use crate::jsr::PendingJsrPackageVersionInfoLoadItem;
+use crate::jsr::PendingResult;
 use crate::ReferrerImports;
 
 use crate::fast_check::FastCheckDiagnostic;
@@ -2896,6 +2898,33 @@ struct JsrPackageVersionInfoExt {
   inner: Arc<JsrPackageVersionInfo>,
 }
 
+impl JsrPackageVersionInfoExt {
+  pub fn get_subpath<'a>(&self, specifier: &'a Url) -> Option<&'a str> {
+    let base_url = self.base_url.as_str();
+    let base_url = base_url.strip_suffix('/').unwrap_or(base_url);
+    specifier.as_str().strip_prefix(base_url)
+  }
+
+  pub fn get_checksum(&self, sub_path: &str) -> Result<&str, anyhow::Error> {
+    match self.inner.manifest.get(sub_path) {
+      Some(manifest_entry) => {
+        match manifest_entry.checksum.strip_prefix("sha256-") {
+          Some(checksum) => Ok(checksum),
+          None => {
+            Err(anyhow!("Unsupported checksum in package manifest. Maybe try upgrading deno?"))
+          }
+        }
+      }
+      // If the checksum is missing then leave it up to the loader to error
+      // by providing this special checksum value. For example, someone may
+      // be making modifications to their vendor folder in which case this
+      // checksum will be ignored and if not, then a loading error will
+      // occur about an incorrect checksum.
+      None => Ok("package-manifest-missing-checksum"),
+    }
+  }
+}
+
 struct PendingInfo {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
@@ -3157,6 +3186,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   .jsr_url_provider
                   .package_url_to_nv(response.specifier())
                   .is_none()
+                ,
+                "{}",
+                response.specifier()
               );
 
               let attribute_types =
@@ -3705,36 +3737,22 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     if let Some(version_info) = maybe_version_info {
-      let base_url = version_info.base_url.as_str();
-      let base_url = base_url.strip_suffix('/').unwrap_or(base_url);
-      if let Some(sub_path) = specifier.as_str().strip_prefix(base_url) {
-        let checksum = match version_info.inner.manifest.get(sub_path) {
-          Some(manifest_entry) => {
-            match manifest_entry.checksum.strip_prefix("sha256-") {
-              Some(checksum) => checksum.to_string(),
-              None => {
-                self.graph.module_slots.insert(
-                  specifier.clone(),
-                  ModuleSlot::Err(ModuleError::LoadingErr(
-                    specifier.clone(),
-                    maybe_range.cloned(),
-                    Arc::new(anyhow!(
-                      "Unsupported checksum in package manifest. Maybe try upgrading deno?",
-                    )),
-                  )),
-                );
-                return;
-              }
-            }
+      if let Some(sub_path) = version_info.get_subpath(specifier) {
+        let checksum = match version_info.get_checksum(sub_path) {
+          Ok(checksum) => checksum,
+          Err(err) => {
+            self.graph.module_slots.insert(
+              specifier.clone(),
+              ModuleSlot::Err(ModuleError::LoadingErr(
+                specifier.clone(),
+                maybe_range.cloned(),
+                Arc::new(err),
+              )),
+            );
+            return;
           }
-          // If the checksum is missing then leave it up to the loader to error
-          // by providing this special checksum value. For example, someone may
-          // be making modifications to their vendor folder in which case this
-          // checksum will be ignored and if not, then a loading error will
-          // occur about an incorrect checksum.
-          None => "package-manifest-missing-checksum".to_string(),
         };
-        let checksum = LoaderChecksum::new(checksum.clone());
+        let checksum = LoaderChecksum::new(checksum.to_string());
         if let Some(module_info) = version_info.inner.module_info(sub_path) {
           // Check if this specifier is in the cache. If it is, then
           // don't use the module information as it may be out of date
@@ -4067,7 +4085,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     load_specifier: Url,
     is_dynamic: bool,
     maybe_checksum: Option<LoaderChecksum>,
-    maybe_version_info: Option<JsrPackageVersionInfoExt>,
+    mut maybe_version_info: Option<JsrPackageVersionInfoExt>,
   ) {
     self
       .graph
@@ -4085,106 +4103,106 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let maybe_version_load_fut =
       maybe_nv_when_no_version_info.map(|package_nv| {
         self.queue_load_package_version_info(&package_nv);
-        self
+        let fut = self
           .state
           .jsr
           .metadata
           .get_package_version_metadata(&package_nv)
-          .unwrap()
+          .unwrap();
+        (package_nv, fut)
       });
-    // if let Some(package_nv) = maybe_nv_when_no_version_info {
-    //   let base_url = self.jsr_url_provider.package_url(&package_nv);
-    //   self.state.pending.push_front({
-    //     let specifier = specifier.clone();
-    //     async move {
-    //       let version_info = version_load_fut.await;
-    //       match version_info {
-    //         Ok(version_info) => PendingInfo {
-    //           specifier,
-    //           maybe_range,
-    //           redirects: Default::default(),
-    //           result: Ok(Some(response)),
-    //           maybe_version_info: Some(JsrPackageVersionInfoExt {
-    //             base_url,
-    //             inner: version_info.info.clone(),
-    //           }),
-    //         },
-    //         Err(err) => PendingInfo {
-    //           specifier,
-    //           maybe_range,
-    //           redirects: Default::default(),
-    //           result: Err(err),
-    //           maybe_version_info: None,
-    //         },
-    //       }
-    //     }
-    //     .boxed_local()
-    //   });
     let fut = async move {
-      let mut redirects = BTreeMap::new();
-      let mut load_specifier = load_specifier;
-      for _ in 0..=loader.max_redirects() {
-        let result = loader.load(
-          &load_specifier,
-          LoadOptions {
-            is_dynamic,
-            cache_setting: CacheSetting::Use,
-            maybe_checksum: maybe_checksum.clone(),
-          },
-        );
-        let result = match result.await {
-          Ok(Some(response)) => match response {
-            LoadResponse::Redirect { specifier } => {
-              if jsr_url_provider.package_url_to_nv(&specifier).is_some() {
-                // Redirecting to a JSR package HTTPS URL is not supported. If this was implemented
-                // we'd need to:
-                // 1. Get the current state's checksum for this package nv.
-                // 2. Get the version manifest using the current state's checksum.
-                // 3. Get the URL from the loader, using the checksum from the version's manifest.
-                // It's important to request from the loader with the checksum so that the loader
-                // in the CLI doesn't populate the "vendor" folder with data that hasn't been
-                // verified, because once it ends up in the vendor folder then it's checksum is
-                // never compared against again in order to allow local modifications.
-                Err(Arc::new(anyhow!(
-                  "Redirecting to a JSR package HTTPS URL is not supported (redirected to '{}')",
-                  specifier
-                )))
-              } else {
-                redirects.insert(load_specifier, specifier.clone());
-                load_specifier = specifier;
-                continue;
+      async fn try_load_with_redirects(
+        load_specifier: ModuleSpecifier,
+        mut maybe_checksum: Option<LoaderChecksum>,
+        maybe_version_info: &mut Option<JsrPackageVersionInfoExt>,
+        redirects: &mut BTreeMap<ModuleSpecifier, ModuleSpecifier>,
+        maybe_version_load_fut: Option<(PackageNv, PendingResult<PendingJsrPackageVersionInfoLoadItem>)>,
+        is_dynamic: bool,
+        loader: &dyn Loader,
+        jsr_url_provider: &dyn JsrUrlProvider,
+      ) -> Result<Option<PendingInfoResponse>, Arc<anyhow::Error>> {
+        if let Some((package_nv, fut)) = maybe_version_load_fut {
+          let info = JsrPackageVersionInfoExt {
+            base_url: jsr_url_provider.package_url(&package_nv),
+            inner: fut.await?.info,
+          };
+          if let Some(sub_path) = info.get_subpath(&load_specifier) {
+            maybe_checksum = Some(LoaderChecksum::new(info.get_checksum(sub_path)?.to_string()));
+          }
+          maybe_version_info.replace(info);
+        }
+        let mut load_specifier = load_specifier;
+        for _ in 0..=loader.max_redirects() {
+          let result = loader.load(
+            &load_specifier,
+            LoadOptions {
+              is_dynamic,
+              cache_setting: CacheSetting::Use,
+              maybe_checksum: maybe_checksum.clone(),
+            },
+          );
+          match result.await {
+            Ok(Some(response)) => match response {
+              LoadResponse::Redirect { specifier } => {
+                if jsr_url_provider.package_url_to_nv(&specifier).is_some() {
+                  // Redirecting to a JSR package HTTPS URL is not supported. If this was implemented
+                  // we'd need to:
+                  // 1. Get the current state's checksum for this package nv.
+                  // 2. Get the version manifest using the current state's checksum.
+                  // 3. Get the URL from the loader, using the checksum from the version's manifest.
+                  // It's important to request from the loader with the checksum so that the loader
+                  // in the CLI doesn't populate the "vendor" folder with data that hasn't been
+                  // verified, because once it ends up in the vendor folder then it's checksum is
+                  // never compared against again in order to allow local modifications.
+                  return Err(Arc::new(anyhow!(
+                    "Redirecting to a JSR package HTTPS URL is not supported (redirected to '{}')",
+                    specifier
+                  )));
+                } else {
+                  redirects.insert(load_specifier, specifier.clone());
+                  load_specifier = specifier;
+                }
               }
-            }
-            LoadResponse::External { specifier } => {
-              Ok(Some(PendingInfoResponse::External { specifier }))
-            }
-            LoadResponse::Module {
-              content,
-              specifier,
-              maybe_headers,
-            } => Ok(Some(PendingInfoResponse::Module {
-              content_or_module_info: ContentOrModuleInfo::Content(content),
-              specifier,
-              maybe_headers,
-            })),
-          },
-          Ok(None) => Ok(None),
-          Err(err) => Err(Arc::new(err)),
-        };
-        return PendingInfo {
-          specifier: requested_specifier,
-          maybe_range,
-          redirects,
-          result,
-          maybe_version_info,
-        };
+              LoadResponse::External { specifier } => {
+                return Ok(Some(PendingInfoResponse::External { specifier }))
+              }
+              LoadResponse::Module {
+                content,
+                specifier,
+                maybe_headers,
+              } => {return Ok(Some(PendingInfoResponse::Module {
+                content_or_module_info: ContentOrModuleInfo::Content(content),
+                specifier,
+                maybe_headers,
+              }))},
+            },
+            Ok(None) => return Ok(None),
+            Err(err) => return Err(Arc::new(err)),
+          }
+        }
+
+        Err(Arc::new(anyhow!("Too many redirects.")))
       }
 
+      let mut redirects = BTreeMap::new();
+      
+      let result = try_load_with_redirects(
+        load_specifier,
+        maybe_checksum,
+        &mut maybe_version_info,
+        &mut redirects,
+        maybe_version_load_fut,
+        is_dynamic,
+        loader,
+        jsr_url_provider,
+      ).await;
+
       PendingInfo {
-        specifier: load_specifier,
+        specifier: requested_specifier,
         maybe_range,
         redirects,
-        result: Err(Arc::new(anyhow!("Too many redirects."))),
+        result,
         maybe_version_info,
       }
     }

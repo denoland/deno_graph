@@ -25,7 +25,7 @@ pub struct PendingJsrPackageVersionInfoLoadItem {
   pub info: Arc<JsrPackageVersionInfo>,
 }
 
-type PendingResult<T> = Shared<JoinHandle<Result<T, Arc<anyhow::Error>>>>;
+pub type PendingResult<T> = Shared<JoinHandle<Result<T, Arc<anyhow::Error>>>>;
 
 #[derive(Clone, Copy)]
 pub struct JsrMetadataStoreServices<'a> {
