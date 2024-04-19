@@ -257,7 +257,7 @@ impl TestBuilder {
         deno_graph::BuildFastCheckTypeGraphOptions {
           fast_check_cache: fast_check_cache.as_ref().map(|c| c as _),
           fast_check_dts: !self.fast_check_cache,
-          jsr_url_provider: None,
+          jsr_url_provider: Default::default(),
           module_parser: Some(&capturing_analyzer),
           resolver: None,
           npm_resolver: None,

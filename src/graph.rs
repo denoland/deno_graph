@@ -725,6 +725,7 @@ impl Dependency {
   pub fn with_new_resolver(
     &self,
     specifier: &str,
+    jsr_url_provider: &dyn JsrUrlProvider,
     maybe_resolver: Option<&dyn Resolver>,
     maybe_npm_resolver: Option<&dyn NpmResolver>,
   ) -> Self {
@@ -736,6 +737,7 @@ impl Dependency {
           specifier,
           r.clone(),
           ResolutionMode::Execution,
+          jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
         )
@@ -752,6 +754,7 @@ impl Dependency {
             .unwrap_or(specifier),
           r.clone(),
           ResolutionMode::Types,
+          jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
         )
@@ -778,6 +781,7 @@ pub struct TypesDependency {
 impl TypesDependency {
   pub fn with_new_resolver(
     &self,
+    jsr_url_provider: &dyn JsrUrlProvider,
     maybe_resolver: Option<&dyn Resolver>,
     maybe_npm_resolver: Option<&dyn NpmResolver>,
   ) -> Self {
@@ -789,6 +793,7 @@ impl TypesDependency {
           &self.specifier,
           r.clone(),
           ResolutionMode::Types,
+          jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
         )
@@ -1070,6 +1075,7 @@ impl GraphImport {
   pub fn new(
     referrer: &ModuleSpecifier,
     imports: Vec<String>,
+    jsr_url_provider: &dyn JsrUrlProvider,
     maybe_resolver: Option<&dyn Resolver>,
     maybe_npm_resolver: Option<&dyn NpmResolver>,
   ) -> Self {
@@ -1085,6 +1091,7 @@ impl GraphImport {
           &import,
           referrer_range,
           ResolutionMode::Types,
+          jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
         );
@@ -1118,7 +1125,7 @@ pub enum WorkspaceFastCheckOption<'a> {
 pub struct BuildFastCheckTypeGraphOptions<'a> {
   pub fast_check_cache: Option<&'a dyn crate::fast_check::FastCheckCache>,
   pub fast_check_dts: bool,
-  pub jsr_url_provider: Option<&'a dyn JsrUrlProvider>,
+  pub jsr_url_provider: &'a dyn JsrUrlProvider,
   pub module_parser: Option<&'a dyn crate::ModuleParser>,
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
@@ -1613,12 +1620,10 @@ impl ModuleGraph {
       options.module_parser.unwrap_or(&default_module_parser),
     );
 
-    let default_jsr_url_provider = DefaultJsrUrlProvider;
     let modules = crate::fast_check::build_fast_check_type_graph(
       options.fast_check_cache,
       options
-        .jsr_url_provider
-        .unwrap_or(&default_jsr_url_provider),
+        .jsr_url_provider,
       self,
       &root_symbol,
       pending_nvs,
@@ -1657,6 +1662,7 @@ impl ModuleGraph {
             &mut dependencies,
             // no need to resolve dynamic imports
             &NullFileSystem,
+            options.jsr_url_provider,
             options.resolver,
             options.npm_resolver,
           );
@@ -1970,6 +1976,7 @@ fn resolve(
   specifier_text: &str,
   referrer_range: Range,
   mode: ResolutionMode,
+  jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Resolution {
@@ -2005,6 +2012,9 @@ fn resolve(
         }
       }
     }
+  }
+  if let Ok(resolved) = &response {
+
   }
   Resolution::from_resolve_result(response, specifier_text, referrer_range)
 }
@@ -2067,6 +2077,7 @@ pub(crate) fn parse_module(
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_referrer: Option<Range>,
   file_system: &dyn FileSystem,
+  jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
   module_analyzer: &dyn ModuleAnalyzer,
   is_root: bool,
@@ -2141,6 +2152,7 @@ pub(crate) fn parse_module(
             module_info,
             source,
             file_system,
+            jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
           )))
@@ -2168,6 +2180,7 @@ pub(crate) fn parse_module(
             module_info,
             source,
             file_system,
+            jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
           )))
@@ -2198,6 +2211,7 @@ pub(crate) fn parse_js_module_from_module_info(
   module_info: ModuleInfo,
   source: Arc<str>,
   file_system: &dyn FileSystem,
+  jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> JsModule {
@@ -2215,6 +2229,7 @@ pub(crate) fn parse_js_module_from_module_info(
           &specifier.text,
           range.clone(),
           ResolutionMode::Types,
+          jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
         ),
@@ -2237,6 +2252,7 @@ pub(crate) fn parse_js_module_from_module_info(
               &specifier.text,
               range.clone(),
               ResolutionMode::Types,
+              jsr_url_provider,
               maybe_resolver,
               maybe_npm_resolver,
             );
@@ -2262,6 +2278,7 @@ pub(crate) fn parse_js_module_from_module_info(
             &specifier.text,
             range.clone(),
             ResolutionMode::Types,
+            jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
           );
@@ -2346,6 +2363,7 @@ pub(crate) fn parse_js_module_from_module_info(
           &specifier_text,
           range.clone(),
           ResolutionMode::Execution,
+          jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
         );
@@ -2378,6 +2396,7 @@ pub(crate) fn parse_js_module_from_module_info(
             &specifier_text,
             range,
             ResolutionMode::Types,
+            jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
           );
@@ -2407,6 +2426,7 @@ pub(crate) fn parse_js_module_from_module_info(
           &specifier.text,
           range.clone(),
           ResolutionMode::Types,
+          jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
         );
@@ -2436,6 +2456,7 @@ pub(crate) fn parse_js_module_from_module_info(
             types_header,
             range,
             ResolutionMode::Types,
+            jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
           ),
@@ -2494,6 +2515,7 @@ pub(crate) fn parse_js_module_from_module_info(
     &module.specifier,
     &mut module.dependencies,
     file_system,
+    jsr_url_provider,
     maybe_resolver,
     maybe_npm_resolver,
   );
@@ -2508,6 +2530,7 @@ fn fill_module_dependencies(
   module_specifier: &ModuleSpecifier,
   module_dependencies: &mut IndexMap<String, Dependency>,
   file_system: &dyn FileSystem,
+  jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) {
@@ -2599,6 +2622,7 @@ fn fill_module_dependencies(
             &import.specifier,
             import.range.clone(),
             ResolutionMode::Types,
+            jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
           );
@@ -2610,6 +2634,7 @@ fn fill_module_dependencies(
           &import.specifier,
           import.range.clone(),
           ResolutionMode::Execution,
+          jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
         );
@@ -2630,6 +2655,7 @@ fn fill_module_dependencies(
               &pragma.specifier,
               Range::from_position_range(specifier, pragma.range),
               ResolutionMode::Types,
+              jsr_url_provider,
               maybe_resolver,
               maybe_npm_resolver,
             )
@@ -2641,6 +2667,7 @@ fn fill_module_dependencies(
                 &import.specifier,
                 range,
                 ResolutionMode::Types,
+                jsr_url_provider,
                 maybe_resolver,
                 maybe_npm_resolver,
               );
@@ -3265,7 +3292,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let referrer = referrer_imports.referrer;
       let imports = referrer_imports.imports;
       let graph_import =
-        GraphImport::new(&referrer, imports, self.resolver, self.npm_resolver);
+        GraphImport::new(&referrer, imports, self.jsr_url_provider, self.resolver, self.npm_resolver);
       for dep in graph_import.dependencies.values() {
         if let Resolution::Ok(resolved) = &dep.maybe_type {
           self.load(
@@ -4354,6 +4381,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       maybe_attribute_type,
       maybe_referrer,
       self.file_system,
+      self.jsr_url_provider,
       self.resolver,
       maybe_module_analyzer
         .as_ref()
@@ -4898,6 +4926,7 @@ mod tests {
       None,
       None,
       &NullFileSystem,
+      Default::default(),
       None,
       &module_analyzer,
       true,
@@ -4991,7 +5020,7 @@ mod tests {
       maybe_deno_types_specifier: Some("./b.d.ts".to_string()),
       ..Default::default()
     };
-    let new_dependency = dependency.with_new_resolver("./b.ts", None, None);
+    let new_dependency = dependency.with_new_resolver("./b.ts", Default::default(), None, None);
     assert_eq!(
       new_dependency,
       Dependency {
@@ -5031,7 +5060,7 @@ mod tests {
         },
       })),
     };
-    let new_types_dependency = types_dependency.with_new_resolver(None, None);
+    let new_types_dependency = types_dependency.with_new_resolver(Default::default(), None, None);
     assert_eq!(
       new_types_dependency,
       TypesDependency {
