@@ -246,9 +246,9 @@ dependencies = [
 
 [[package]]
 name = "deno_ast"
-version = "0.37.0"
+version = "0.37.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67f9b18b22c707b59cf1ee9cb6f0afbfcf0d03a59b9244ddadacf6a4dc7cfeba"
+checksum = "b2be70f80fee64edfbbc4a61c50f18b4a0fbff0b2657d26f6f0443e1db279af9"
 dependencies = [
  "anyhow",
  "base64",
@@ -287,7 +287,7 @@ dependencies = [
 
 [[package]]
 name = "deno_graph"
-version = "0.72.0"
+version = "0.73.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -337,9 +337,9 @@ dependencies = [
 
 [[package]]
 name = "deno_media_type"
-version = "0.1.2"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a798670c20308e5770cc0775de821424ff9e85665b602928509c8c70430b3ee0"
+checksum = "a8978229b82552bf8457a0125aa20863f023619cfc21ebb007b1e571d68fd85b"
 dependencies = [
  "data-url",
  "serde",
@@ -448,10 +448,11 @@ checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
 
 [[package]]
 name = "file_test_runner"
-version = "0.2.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e13bacb20a988be248a13adc6011bce718648f78d4684d4dd0444d05256f4a7b"
+checksum = "b66e9ef00f9f6b82b030b7a9d659030f73498921d4c021b0772e75dfd7090d80"
 dependencies = [
+ "anyhow",
  "crossbeam-channel",
  "deno_terminal",
  "parking_lot",

@@ -63,7 +63,7 @@ impl Loader for JsLoader {
   }
 
   fn load(
-    &mut self,
+    &self,
     specifier: &ModuleSpecifier,
     options: LoadOptions,
   ) -> LoadFuture {
@@ -110,6 +110,7 @@ impl Loader for JsLoader {
 #[derive(Debug)]
 pub struct JsResolver {
   maybe_default_jsx_import_source: Option<String>,
+  maybe_default_jsx_import_source_types: Option<String>,
   maybe_jsx_import_source_module: Option<String>,
   maybe_resolve: Option<js_sys::Function>,
   maybe_resolve_types: Option<js_sys::Function>,
@@ -118,12 +119,14 @@ pub struct JsResolver {
 impl JsResolver {
   pub fn new(
     maybe_default_jsx_import_source: Option<String>,
+    maybe_default_jsx_import_source_types: Option<String>,
     maybe_jsx_import_source_module: Option<String>,
     maybe_resolve: Option<js_sys::Function>,
     maybe_resolve_types: Option<js_sys::Function>,
   ) -> Self {
     Self {
       maybe_default_jsx_import_source,
+      maybe_default_jsx_import_source_types,
       maybe_jsx_import_source_module,
       maybe_resolve,
       maybe_resolve_types,
@@ -140,6 +143,10 @@ struct JsResolveTypesResponse {
 impl Resolver for JsResolver {
   fn default_jsx_import_source(&self) -> Option<String> {
     self.maybe_default_jsx_import_source.clone()
+  }
+
+  fn default_jsx_import_source_types(&self) -> Option<String> {
+    self.maybe_default_jsx_import_source_types.clone()
   }
 
   fn jsx_import_source_module(&self) -> &str {
@@ -201,6 +208,7 @@ pub async fn js_create_graph(
   roots: JsValue,
   load: js_sys::Function,
   maybe_default_jsx_import_source: Option<String>,
+  maybe_default_jsx_import_source_types: Option<String>,
   maybe_jsx_import_source_module: Option<String>,
   maybe_cache_info: Option<js_sys::Function>,
   maybe_resolve: Option<js_sys::Function>,
@@ -214,14 +222,16 @@ pub async fn js_create_graph(
   let maybe_imports_map: Option<HashMap<String, Vec<String>>> =
     serde_wasm_bindgen::from_value(maybe_imports)
       .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-  let mut loader = JsLoader::new(load, maybe_cache_info);
+  let loader = JsLoader::new(load, maybe_cache_info);
   let maybe_resolver = if maybe_default_jsx_import_source.is_some()
+    || maybe_default_jsx_import_source_types.is_some()
     || maybe_jsx_import_source_module.is_some()
     || maybe_resolve.is_some()
     || maybe_resolve_types.is_some()
   {
     Some(JsResolver::new(
       maybe_default_jsx_import_source,
+      maybe_default_jsx_import_source_types,
       maybe_jsx_import_source_module,
       maybe_resolve,
       maybe_resolve_types,
@@ -259,7 +269,7 @@ pub async fn js_create_graph(
   graph
     .build(
       roots,
-      &mut loader,
+      &loader,
       BuildOptions {
         is_dynamic: false,
         resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
@@ -286,6 +296,7 @@ pub fn js_parse_module(
   specifier: String,
   maybe_headers: JsValue,
   maybe_default_jsx_import_source: Option<String>,
+  maybe_default_jsx_import_types_source: Option<String>,
   maybe_jsx_import_source_module: Option<String>,
   content: Vec<u8>,
   maybe_resolve: Option<js_sys::Function>,
@@ -298,12 +309,14 @@ pub fn js_parse_module(
   let specifier = ModuleSpecifier::parse(&specifier)
     .map_err(|err| js_sys::Error::new(&err.to_string()))?;
   let maybe_resolver = if maybe_default_jsx_import_source.is_some()
+    || maybe_default_jsx_import_types_source.is_some()
     || maybe_jsx_import_source_module.is_some()
     || maybe_resolve.is_some()
     || maybe_resolve_types.is_some()
   {
     Some(JsResolver::new(
       maybe_default_jsx_import_source,
+      maybe_default_jsx_import_types_source,
       maybe_jsx_import_source_module,
       maybe_resolve,
       maybe_resolve_types,

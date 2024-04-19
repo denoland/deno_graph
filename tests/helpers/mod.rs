@@ -35,7 +35,7 @@ impl Loader for TestLoader {
   }
 
   fn load(
-    &mut self,
+    &self,
     specifier: &ModuleSpecifier,
     options: LoadOptions,
   ) -> LoadFuture {
@@ -238,7 +238,7 @@ impl TestBuilder {
     let diagnostics = graph
       .build(
         roots.clone(),
-        &mut self.loader,
+        &self.loader,
         deno_graph::BuildOptions {
           workspace_members: &self.workspace_members,
           module_analyzer: &capturing_analyzer,

@@ -2,7 +2,7 @@
 {"versions": { "1.0.0": {} } }
 
 # https://jsr.io/@scope/a/1.0.0_meta.json
-{ "exports": { ".": "./mod.js" } }
+{ "exports": { ".": "./mod.js", "./foo": "./foo.js" } }
 
 # https://jsr.io/@scope/a/1.0.0/other.d.ts
 export class Other {}
@@ -25,8 +25,17 @@ declare var public: number;
 /// <reference types="./mod.d.ts" />
 export class Test {}
 
+# https://jsr.io/@scope/a/1.0.0/foo.d.ts
+export class Test {
+}
+
+# https://jsr.io/@scope/a/1.0.0/foo.js
+// @ts-self-types="./foo.d.ts"
+export class Test {}
+
 # mod.ts
 import 'jsr:@scope/a'
+import 'jsr:@scope/a/foo'
 
 # output
 {
@@ -52,11 +61,55 @@ import 'jsr:@scope/a'
               }
             }
           }
+        },
+        {
+          "specifier": "jsr:@scope/a/foo",
+          "code": {
+            "specifier": "jsr:@scope/a/foo",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 7
+              },
+              "end": {
+                "line": 1,
+                "character": 25
+              }
+            }
+          }
         }
       ],
-      "size": 22,
+      "size": 48,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 22,
+      "mediaType": "Dts",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/foo.d.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 52,
+      "typesDependency": {
+        "specifier": "./foo.d.ts",
+        "dependency": {
+          "specifier": "https://jsr.io/@scope/a/1.0.0/foo.d.ts",
+          "span": {
+            "start": {
+              "line": 0,
+              "character": 18
+            },
+            "end": {
+              "line": 0,
+              "character": 30
+            }
+          }
+        }
+      },
+      "mediaType": "JavaScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/foo.js"
     },
     {
       "kind": "esm",
@@ -112,12 +165,21 @@ import 'jsr:@scope/a'
     }
   ],
   "redirects": {
-    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.js"
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.js",
+    "jsr:@scope/a/foo": "https://jsr.io/@scope/a/1.0.0/foo.js"
   },
   "packages": {
     "@scope/a": "@scope/a@1.0.0"
   }
 }
+
+Fast check https://jsr.io/@scope/a/1.0.0/foo.d.ts:
+  {}
+  export class Test {
+  }
+  --- DTS ---
+  export declare class Test {
+  }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.d.ts:
   {}

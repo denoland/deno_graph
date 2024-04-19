@@ -1,6 +1,6 @@
 [package]
 name = "deno_graph"
-version = "0.72.0"
+version = "0.73.1"
 edition = "2021"
 description = "Module graph analysis for deno"
 homepage = "https://deno.land/"
@@ -34,7 +34,7 @@ harness = false
 anyhow = "1.0.43"
 async-trait = "0.1.68"
 data-url = "0.3.0"
-deno_ast = { version = "0.37.0", features = ["dep_analysis", "emit"] }
+deno_ast = { version = "0.37.1", features = ["dep_analysis", "emit"] }
 deno_semver = "0.5.4"
 deno_unsync = { version = "0.3.2", optional = true }
 encoding_rs = "0.8.33"
@@ -55,7 +55,7 @@ url = { version = "2.2.2", features = ["serde"] }
 
 [dev-dependencies]
 bincode = "1.3.3"
-file_test_runner = "0.2.0"
+file_test_runner = "0.4.0"
 pretty_assertions = "1.0.0"
 tempfile = "3.4.0"
 tokio = { version = "1.10.1", features = ["macros", "rt-multi-thread"] }

@@ -114,7 +114,7 @@ use std::sync::Arc;
 use thiserror::Error;
 use url::Url;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct Position {
   /// The 0-indexed line index.
   pub line: usize,
@@ -656,8 +656,7 @@ impl ImportKind {
   }
 }
 
-#[derive(Clone, Debug, Serialize)]
-#[cfg_attr(test, derive(Eq, PartialEq))]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Import {
   pub specifier: String,
@@ -672,13 +671,15 @@ pub struct Import {
   pub attributes: ImportAttributes,
 }
 
-#[derive(Debug, Default, Clone, Serialize)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Dependency {
   #[serde(rename = "code", skip_serializing_if = "Resolution::is_none")]
   pub maybe_code: Resolution,
   #[serde(rename = "type", skip_serializing_if = "Resolution::is_none")]
   pub maybe_type: Resolution,
+  #[serde(skip_serializing)]
+  pub maybe_deno_types_specifier: Option<String>,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
   // todo(dsherret): rename to attributeType in 2.0
@@ -718,13 +719,84 @@ impl Dependency {
     }
     None
   }
+
+  pub fn with_new_resolver(
+    &self,
+    specifier: &str,
+    maybe_resolver: Option<&dyn Resolver>,
+    maybe_npm_resolver: Option<&dyn NpmResolver>,
+  ) -> Self {
+    let maybe_code = self
+      .maybe_code
+      .maybe_range()
+      .map(|r| {
+        resolve(
+          specifier,
+          r.clone(),
+          ResolutionMode::Execution,
+          maybe_resolver,
+          maybe_npm_resolver,
+        )
+      })
+      .unwrap_or_default();
+    let maybe_type = self
+      .maybe_type
+      .maybe_range()
+      .map(|r| {
+        resolve(
+          self
+            .maybe_deno_types_specifier
+            .as_deref()
+            .unwrap_or(specifier),
+          r.clone(),
+          ResolutionMode::Types,
+          maybe_resolver,
+          maybe_npm_resolver,
+        )
+      })
+      .unwrap_or_default();
+    Self {
+      maybe_code,
+      maybe_type,
+      maybe_deno_types_specifier: self.maybe_deno_types_specifier.clone(),
+      is_dynamic: self.is_dynamic,
+      maybe_attribute_type: self.maybe_attribute_type.clone(),
+      imports: self.imports.clone(),
+    }
+  }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TypesDependency {
   pub specifier: String,
   pub dependency: Resolution,
+}
+
+impl TypesDependency {
+  pub fn with_new_resolver(
+    &self,
+    maybe_resolver: Option<&dyn Resolver>,
+    maybe_npm_resolver: Option<&dyn NpmResolver>,
+  ) -> Self {
+    let dependency = self
+      .dependency
+      .maybe_range()
+      .map(|r| {
+        resolve(
+          &self.specifier,
+          r.clone(),
+          ResolutionMode::Types,
+          maybe_resolver,
+          maybe_npm_resolver,
+        )
+      })
+      .unwrap_or_default();
+    Self {
+      specifier: self.specifier.clone(),
+      dependency,
+    }
+  }
 }
 
 fn is_media_type_unknown(media_type: &MediaType) -> bool {
@@ -1020,6 +1092,7 @@ impl GraphImport {
             is_dynamic: false,
             maybe_code: Resolution::None,
             maybe_type,
+            maybe_deno_types_specifier: None,
             maybe_attribute_type: None,
             imports: vec![],
           },
@@ -1486,7 +1559,7 @@ impl ModuleGraph {
   pub async fn build<'a>(
     &mut self,
     roots: Vec<ModuleSpecifier>,
-    loader: &mut dyn Loader,
+    loader: &dyn Loader,
     options: BuildOptions<'a>,
   ) -> Vec<BuildDiagnostic> {
     Builder::build(
@@ -2129,8 +2202,23 @@ pub(crate) fn parse_js_module_from_module_info(
   let mut module = JsModule::new(specifier.clone(), source);
   module.media_type = media_type;
 
-  // Analyze the TypeScript triple-slash references
+  // Analyze the TypeScript triple-slash references and self types specifier
   if graph_kind.include_types() {
+    if let Some(specifier) = module_info.self_types_specifier.as_ref() {
+      let range =
+        Range::from_position_range(module.specifier.clone(), specifier.range);
+      module.maybe_types_dependency = Some(TypesDependency {
+        specifier: specifier.text.clone(),
+        dependency: resolve(
+          &specifier.text,
+          range.clone(),
+          ResolutionMode::Types,
+          maybe_resolver,
+          maybe_npm_resolver,
+        ),
+      });
+    }
+
     for reference in module_info.ts_references {
       match reference {
         TypeScriptReference::Path(specifier) => {
@@ -2160,6 +2248,10 @@ pub(crate) fn parse_js_module_from_module_info(
           });
         }
         TypeScriptReference::Types(specifier) => {
+          let is_untyped = !module.media_type.is_typed();
+          if is_untyped && module.maybe_types_dependency.is_some() {
+            continue; // early exit if we already have a types dependency
+          }
           let range = Range::from_position_range(
             module.specifier.clone(),
             specifier.range,
@@ -2171,7 +2263,7 @@ pub(crate) fn parse_js_module_from_module_info(
             maybe_resolver,
             maybe_npm_resolver,
           );
-          if is_untyped(&module.media_type) {
+          if is_untyped {
             module.maybe_types_dependency = Some(TypesDependency {
               specifier: specifier.text.clone(),
               dependency: dep_resolution,
@@ -2204,7 +2296,23 @@ pub(crate) fn parse_js_module_from_module_info(
   // 3. If the resolver has a default JSX import source, use that as the import
   //    source.
   // 4. If none of the above are true, do not inject a dependency.
+  //
+  // Additionally we may augment the JSX import source dependency with a type
+  // dependency. This happens as follows:
+  // 1. Check if a JSX import source dependency was injected and it is untyped.
+  // 2. If the file has a @jsxImportSourceTypes pragma, use that as the import
+  //    source types.
+  // 3. If the JSX import source was not set through the @jsxImportSource
+  //    pragma and the resolver has a default JSX import source types, use
+  //    that as the import source types.
+  // 4. If none of the above are true, do not inject a type dependency.
+  //
+  // This means that a default JSX import source types will not be used if the
+  // import source was set by the @jsxImportSource pragma. This is done to
+  // prevent a default import source types from being injected when the user
+  // has explicitly overridden the import source in the file.
   if matches!(media_type, MediaType::Jsx | MediaType::Tsx) {
+    let has_jsx_import_source_pragma = module_info.jsx_import_source.is_some();
     let res = module_info.jsx_import_source.or_else(|| {
       maybe_resolver.and_then(|r| {
         r.default_jsx_import_source()
@@ -2239,6 +2347,39 @@ pub(crate) fn parse_js_module_from_module_info(
           maybe_resolver,
           maybe_npm_resolver,
         );
+      }
+      if graph_kind.include_types() && dep.maybe_type.is_none() {
+        let mut types_res = module_info.jsx_import_source_types;
+        if types_res.is_none() && !has_jsx_import_source_pragma {
+          types_res = maybe_resolver.and_then(|r| {
+            r.default_jsx_import_source_types().map(|import_source| {
+              SpecifierWithRange {
+                text: import_source,
+                range: PositionRange {
+                  start: Position::zeroed(),
+                  end: Position::zeroed(),
+                },
+              }
+            })
+          });
+        }
+        if let Some(import_source_types) = types_res {
+          let specifier_text = format!(
+            "{}/{}",
+            import_source_types.text, jsx_import_source_module
+          );
+          let range = Range::from_position_range(
+            module.specifier.clone(),
+            import_source_types.range,
+          );
+          dep.maybe_type = resolve(
+            &specifier_text,
+            range,
+            ResolutionMode::Types,
+            maybe_resolver,
+            maybe_npm_resolver,
+          );
+        }
       }
       dep.imports.push(Import {
         specifier: specifier_text,
@@ -2307,7 +2448,7 @@ pub(crate) fn parse_js_module_from_module_info(
     // the media type is untyped.
     if graph_kind.include_types()
       && module.maybe_types_dependency.is_none()
-      && is_untyped(&module.media_type)
+      && !module.media_type.is_typed()
     {
       module.maybe_types_dependency =
         match resolver.resolve_types(&module.specifier) {
@@ -2380,7 +2521,7 @@ fn fill_module_dependencies(
         }
         let range = Range::from_position_range(
           module_specifier.clone(),
-          desc.specifier_range.clone(),
+          desc.specifier_range,
         );
 
         (
@@ -2422,7 +2563,7 @@ fn fill_module_dependencies(
         };
         let range = Range::from_position_range(
           module_specifier.clone(),
-          desc.argument_range.clone(),
+          desc.argument_range,
         );
         (
           specifiers
@@ -2482,6 +2623,7 @@ fn fill_module_dependencies(
         let specifier = module_specifier.clone();
         let maybe_type =
           if let Some(pragma) = analyze_deno_types(&leading_comments) {
+            dep.maybe_deno_types_specifier = Some(pragma.specifier.clone());
             resolve(
               &pragma.specifier,
               Range::from_position_range(specifier, pragma.range),
@@ -2696,15 +2838,6 @@ fn analyze_dynamic_arg_template_parts(
   specifiers
 }
 
-/// Determine if a media type is "untyped" and should be checked to see if there
-/// are types provided.
-fn is_untyped(media_type: &MediaType) -> bool {
-  matches!(
-    media_type,
-    MediaType::JavaScript | MediaType::Jsx | MediaType::Mjs | MediaType::Cjs
-  )
-}
-
 /// The kind of module graph.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GraphKind {
@@ -2757,23 +2890,6 @@ impl PendingInfoResponse {
   }
 }
 
-impl From<LoadResponse> for PendingInfoResponse {
-  fn from(load_response: LoadResponse) -> Self {
-    match load_response {
-      LoadResponse::External { specifier } => Self::External { specifier },
-      LoadResponse::Module {
-        content,
-        specifier,
-        maybe_headers,
-      } => Self::Module {
-        content_or_module_info: ContentOrModuleInfo::Content(content),
-        specifier,
-        maybe_headers,
-      },
-    }
-  }
-}
-
 #[derive(Debug, Clone)]
 struct JsrPackageVersionInfoExt {
   base_url: Url,
@@ -2783,11 +2899,12 @@ struct JsrPackageVersionInfoExt {
 struct PendingInfo {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
+  redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
   result: Result<Option<PendingInfoResponse>, Arc<anyhow::Error>>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
 }
 
-type PendingInfoFuture = LocalBoxFuture<'static, PendingInfo>;
+type PendingInfoFuture<'a> = LocalBoxFuture<'a, PendingInfo>;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub(crate) struct AttributeTypeWithRange {
@@ -2860,8 +2977,8 @@ struct PendingDynamicBranch {
 }
 
 #[derive(Debug, Default)]
-struct PendingState {
-  pending: FuturesOrdered<PendingInfoFuture>,
+struct PendingState<'a> {
+  pending: FuturesOrdered<PendingInfoFuture<'a>>,
   jsr: PendingJsrState,
   npm: PendingNpmState,
   pending_specifiers:
@@ -2873,7 +2990,7 @@ struct PendingState {
 enum ContentOrModuleInfo {
   Content(Arc<[u8]>),
   ModuleInfo {
-    info: ModuleInfo,
+    info: Box<ModuleInfo>,
     /// The checksum to use when loading the content
     checksum: LoaderChecksum,
   },
@@ -2943,13 +3060,13 @@ struct Builder<'a, 'graph> {
   file_system: &'a dyn FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   passthrough_jsr_specifiers: bool,
-  loader: &'a mut dyn Loader,
+  loader: &'a dyn Loader,
   resolver: Option<&'a dyn Resolver>,
   npm_resolver: Option<&'a dyn NpmResolver>,
   module_analyzer: &'a dyn ModuleAnalyzer,
   reporter: Option<&'a dyn Reporter>,
   graph: &'graph mut ModuleGraph,
-  state: PendingState,
+  state: PendingState<'a>,
   fill_pass_mode: FillPassMode,
   workspace_members: &'a [WorkspaceMember],
   diagnostics: Vec<BuildDiagnostic>,
@@ -2968,7 +3085,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     passthrough_jsr_specifiers: bool,
     resolver: Option<&'a dyn Resolver>,
     npm_resolver: Option<&'a dyn NpmResolver>,
-    loader: &'a mut dyn Loader,
+    loader: &'a dyn Loader,
     module_analyzer: &'a dyn ModuleAnalyzer,
     reporter: Option<&'a dyn Reporter>,
     workspace_members: &'a [WorkspaceMember],
@@ -3035,65 +3152,77 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           specifier,
           maybe_range,
           result,
+          redirects,
           maybe_version_info,
-        }) => match result {
-          Ok(Some(response)) => {
-            if maybe_version_info.is_none()
-              && self
-                .jsr_url_provider
-                .package_url_to_nv(response.specifier())
-                .is_some()
-            {
+        }) => {
+          for (from, to) in redirects {
+            self.add_redirect(from, to);
+          }
+
+          match result {
+            Ok(Some(response)) => {
+              if maybe_version_info.is_none()
+                && self
+                  .jsr_url_provider
+                  .package_url_to_nv(response.specifier())
+                  .is_some()
+              {
+                self.graph.module_slots.insert(
+                  specifier.clone(),
+                  ModuleSlot::Err(ModuleError::LoadingErr(
+                    specifier.clone(),
+                    maybe_range,
+                    // Two tasks we need to do before removing this error message:
+                    // 1. If someone imports a package via an HTTPS URL then we should probably
+                    //    bail completely on fast check because it could expose additional types
+                    //    not found in fast check, which might cause strange behaviour.
+                    // 2. For HTTPS URLS imported from the registry, we should probably still
+                    //    compare it against the checksums found in the registry otherwise it might
+                    //    not end up in the lockfile causing a security issue.
+                    Arc::new(anyhow!(concat!(
+                      "Importing a JSR package via an HTTPS URL is not implemented. ",
+                      "Use a jsr: specifier instead for the time being."
+                    )),
+                  ))),
+                );
+              } else {
+                let attribute_types =
+                  self.state.pending_specifiers.remove(&specifier).unwrap();
+                for maybe_attribute_type in attribute_types {
+                  self.visit(
+                    &specifier,
+                    &response,
+                    maybe_attribute_type,
+                    maybe_range.clone(),
+                    maybe_version_info.as_ref(),
+                  )
+                }
+              }
+              Some(specifier)
+            }
+            Ok(None) => {
+              self.graph.module_slots.insert(
+                specifier.clone(),
+                ModuleSlot::Err(ModuleError::Missing(
+                  specifier.clone(),
+                  maybe_range,
+                )),
+              );
+              Some(specifier)
+            }
+            Err(err) => {
               self.graph.module_slots.insert(
                 specifier.clone(),
                 ModuleSlot::Err(ModuleError::LoadingErr(
                   specifier.clone(),
                   maybe_range,
-                  /// Since redirects are handled internally in the loader, a redirect
-                  /// to an HTTPS URL for a JSR package
-                  Arc::new(anyhow!(concat!(
-                    "Importing a JSR package via an HTTPS URL is not implemented. ",
-                    "Use a jsr: specifier instead for the time being."
-                  )),
-                ))),
+                  Arc::new(err),
+                )),
               );
-            } else {
-              let attribute_types =
-                self.state.pending_specifiers.remove(&specifier).unwrap();
-              for maybe_attribute_type in attribute_types {
-                self.visit(
-                  &specifier,
-                  &response,
-                  maybe_attribute_type,
-                  maybe_range.clone(),
-                  maybe_version_info.as_ref(),
-                )
-              }
+              Some(specifier)
             }
-            Some(specifier)
           }
-          Ok(None) => {
-            self.graph.module_slots.insert(
-              specifier.clone(),
-              ModuleSlot::Err(ModuleError::Missing(
-                specifier.clone(),
-                maybe_range,
-              )),
-            );
-            Some(specifier)
-          }
-          Err(err) => {
-            self.graph.module_slots.insert(
-              specifier.clone(),
-              ModuleSlot::Err(ModuleError::LoadingErr(
-                specifier.clone(),
-                maybe_range,
-                err,
-              )),
-            );
-            Some(specifier)
-          }
-        },
+        }
         None => None,
       };
 
@@ -3368,69 +3497,68 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               content,
               specifier,
               maybe_headers: _maybe_headers,
-            } => {
-              if specifier == item.specifier {
-                self.loader.cache_module_info(
-                  &specifier,
-                  &content,
-                  &item.module_info,
-                );
-                // fill the existing module slot with the loaded source
-                let slot = self.graph.module_slots.get_mut(&specifier).unwrap();
-                match slot {
-                  ModuleSlot::Module(module) => {
-                    match module {
-                      Module::Js(module) => {
-                        match new_source_with_text(
-                          &module.specifier,
-                          content,
-                          None, // no charset for JSR
-                        ) {
-                          Ok(source) => {
-                            module.source = source;
-                          }
-                          Err(err) => *slot = ModuleSlot::Err(*err),
+            } if specifier == item.specifier => {
+              self.loader.cache_module_info(
+                &specifier,
+                &content,
+                &item.module_info,
+              );
+              // fill the existing module slot with the loaded source
+              let slot = self.graph.module_slots.get_mut(&specifier).unwrap();
+              match slot {
+                ModuleSlot::Module(module) => {
+                  match module {
+                    Module::Js(module) => {
+                      match new_source_with_text(
+                        &module.specifier,
+                        content,
+                        None, // no charset for JSR
+                      ) {
+                        Ok(source) => {
+                          module.source = source;
                         }
-                      }
-                      Module::Json(module) => {
-                        match new_source_with_text(
-                          &module.specifier,
-                          content,
-                          None, // no charset for JSR
-                        ) {
-                          Ok(source) => {
-                            module.source = source;
-                          }
-                          Err(err) => *slot = ModuleSlot::Err(*err),
-                        }
-                      }
-                      Module::Npm(_)
-                      | Module::Node(_)
-                      | Module::External(_) => {
-                        unreachable!(); // should not happen by design
+                        Err(err) => *slot = ModuleSlot::Err(*err),
                       }
                     }
-                  }
-                  ModuleSlot::Err(_) => {
-                    // the module errored some other way, so ignore
-                  }
-                  ModuleSlot::Pending => {
-                    unreachable!(); // should not happen by design
+                    Module::Json(module) => {
+                      match new_source_with_text(
+                        &module.specifier,
+                        content,
+                        None, // no charset for JSR
+                      ) {
+                        Ok(source) => {
+                          module.source = source;
+                        }
+                        Err(err) => *slot = ModuleSlot::Err(*err),
+                      }
+                    }
+                    Module::Npm(_) | Module::Node(_) | Module::External(_) => {
+                      unreachable!(); // should not happen by design
+                    }
                   }
                 }
-              } else {
-                // redirects are not supported
-                self.graph.module_slots.insert(
-                  item.specifier.clone(),
-                  ModuleSlot::Err(ModuleError::LoadingErr(
-                    item.specifier,
-                    item.maybe_range,
-                    Arc::new(anyhow!(
-                      "Redirects are not supported for the Deno registry."
-                    )),
-                  )),
-                );
+                ModuleSlot::Err(_) => {
+                  // the module errored some other way, so ignore
+                }
+                ModuleSlot::Pending => {
+                  unreachable!(); // should not happen by design
+                }
               }
+            }
+            LoadResponse::Redirect { specifier }
+            | LoadResponse::Module { specifier, .. } => {
+              // redirects are not supported
+              self.graph.module_slots.insert(
+                item.specifier.clone(),
+                ModuleSlot::Err(ModuleError::LoadingErr(
+                  item.specifier,
+                  item.maybe_range,
+                  Arc::new(anyhow!(
+                    "Redirects in the JSR registry are not supported (redirected to '{}')",
+                    specifier
+                  )),
+                )),
+              );
             }
           }
         }
@@ -3563,17 +3691,27 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   ) {
     // If the response was redirected, then we add the module to the redirects
     if requested_specifier != specifier {
-      // remove a potentially pending redirect that will never resolve
-      if let Some(slot) = self.graph.module_slots.get(requested_specifier) {
-        if matches!(slot, ModuleSlot::Pending) {
-          self.graph.module_slots.remove(requested_specifier);
-        }
-      }
-      self
-        .graph
-        .redirects
-        .insert(requested_specifier.clone(), specifier.clone());
+      self.add_redirect(requested_specifier.clone(), specifier.clone());
     }
+  }
+
+  fn add_redirect(
+    &mut self,
+    requested_specifier: ModuleSpecifier,
+    specifier: ModuleSpecifier,
+  ) {
+    debug_assert_ne!(requested_specifier, specifier);
+    // remove a potentially pending redirect that will never resolve
+    if let Some(slot) = self.graph.module_slots.get(&requested_specifier) {
+      if matches!(slot, ModuleSlot::Pending) {
+        self.graph.module_slots.remove(&requested_specifier);
+      }
+    }
+    self
+      .graph
+      .redirects
+      .entry(requested_specifier)
+      .or_insert(specifier);
   }
 
   /// Enqueue a request to load the specifier via the loader.
@@ -3651,18 +3789,42 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   maybe_range,
                   result: Ok(Some(PendingInfoResponse::Module {
                     content_or_module_info: ContentOrModuleInfo::ModuleInfo {
-                      info: module_info,
+                      info: Box::new(module_info),
                       checksum,
                     },
                     specifier,
                     maybe_headers: None,
                   })),
+                  redirects: BTreeMap::new(),
                   maybe_version_info: Some(version_info),
                 },
                 response => PendingInfo {
                   specifier,
                   maybe_range,
-                  result: response.map(|r| r.map(Into::into)).map_err(Arc::new),
+                  redirects: BTreeMap::new(),
+                  result: match response {
+                    Ok(Some(response)) => match response {
+                      LoadResponse::External { specifier } => {
+                        Ok(Some(PendingInfoResponse::External { specifier }))
+                      }
+                      LoadResponse::Redirect { specifier } => Err(anyhow!(
+                        "Redirects in the JSR registry are not supported (redirected to '{}')", specifier
+                      )),
+                      LoadResponse::Module {
+                        content,
+                        specifier,
+                        maybe_headers,
+                      } => Ok(Some(PendingInfoResponse::Module {
+                        content_or_module_info: ContentOrModuleInfo::Content(
+                          content,
+                        ),
+                        specifier,
+                        maybe_headers,
+                      })),
+                    },
+                    Ok(None) => Ok(None),
+                    Err(err) => Err(err),
+                  },
                   maybe_version_info: Some(version_info),
                 },
               }
@@ -3941,23 +4103,62 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .graph
       .module_slots
       .insert(requested_specifier.clone(), ModuleSlot::Pending);
-    let fut = self
-      .loader
-      .load(
-        &load_specifier,
-        LoadOptions {
-          is_dynamic,
-          cache_setting: CacheSetting::Use,
-          maybe_checksum,
-        },
-      )
-      .map(move |result| PendingInfo {
-        specifier: requested_specifier,
+    let loader = self.loader;
+    let fut = async move {
+      let mut redirects = BTreeMap::new();
+      let mut load_specifier = load_specifier;
+      for _ in 0..=loader.max_redirects() {
+        let result = loader.load(
+          &load_specifier,
+          LoadOptions {
+            is_dynamic,
+            cache_setting: CacheSetting::Use,
+            // todo(dsherret): need to handle a redirect to a jsr url here
+            maybe_checksum: maybe_checksum.clone(),
+          },
+        );
+        let result = match result.await {
+          Ok(Some(response)) => match response {
+            LoadResponse::Redirect { specifier } => {
+              redirects.insert(load_specifier, specifier.clone());
+              load_specifier = specifier;
+              continue;
+            }
+            LoadResponse::External { specifier } => {
+              Ok(Some(PendingInfoResponse::External { specifier }))
+            }
+            LoadResponse::Module {
+              content,
+              specifier,
+              maybe_headers,
+            } => Ok(Some(PendingInfoResponse::Module {
+              content_or_module_info: ContentOrModuleInfo::Content(content),
+              specifier,
+              maybe_headers,
+            })),
+          },
+          Ok(None) => Ok(None),
+          Err(err) => Err(err),
+        };
+        return PendingInfo {
+          specifier: requested_specifier,
+          maybe_range,
+          redirects,
+          result,
+          maybe_version_info,
+        };
+      }
+
+      PendingInfo {
+        specifier: load_specifier,
         maybe_range,
-        result: result.map(|r| r.map(Into::into)).map_err(Arc::new),
+        redirects,
+        result: Err(anyhow!("Too many redirects.")),
         maybe_version_info,
-      });
-    self.state.pending.push_back(Box::pin(fut));
+      }
+    }
+    .boxed_local();
+    self.state.pending.push_back(fut);
   }
 
   fn queue_load_package_info(&mut self, package_name: &str) {
@@ -4149,6 +4350,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let (content, maybe_module_analyzer) = match content_or_module_info {
       ContentOrModuleInfo::Content(content) => (content, None),
       ContentOrModuleInfo::ModuleInfo { info, checksum } => {
+        let info = *info;
         self.state.jsr.pending_content_loads.push({
           let specifier = specifier.clone();
           let maybe_range = maybe_referrer.clone();
@@ -4801,16 +5003,96 @@ mod tests {
     );
   }
 
+  #[test]
+  fn dependency_with_new_resolver() {
+    let referrer = ModuleSpecifier::parse("file:///a/main.ts").unwrap();
+    let dependency = Dependency {
+      maybe_code: Resolution::Ok(Box::new(ResolutionResolved {
+        specifier: ModuleSpecifier::parse("file:///wrong.ts").unwrap(),
+        range: Range {
+          specifier: referrer.clone(),
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      })),
+      maybe_type: Resolution::Ok(Box::new(ResolutionResolved {
+        specifier: ModuleSpecifier::parse("file:///wrong.ts").unwrap(),
+        range: Range {
+          specifier: referrer.clone(),
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      })),
+      maybe_deno_types_specifier: Some("./b.d.ts".to_string()),
+      ..Default::default()
+    };
+    let new_dependency = dependency.with_new_resolver("./b.ts", None, None);
+    assert_eq!(
+      new_dependency,
+      Dependency {
+        maybe_code: Resolution::Ok(Box::new(ResolutionResolved {
+          specifier: ModuleSpecifier::parse("file:///a/b.ts").unwrap(),
+          range: Range {
+            specifier: referrer.clone(),
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+        })),
+        maybe_type: Resolution::Ok(Box::new(ResolutionResolved {
+          specifier: ModuleSpecifier::parse("file:///a/b.d.ts").unwrap(),
+          range: Range {
+            specifier: referrer.clone(),
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+        })),
+        maybe_deno_types_specifier: Some("./b.d.ts".to_string()),
+        ..Default::default()
+      }
+    );
+  }
+
+  #[test]
+  fn types_dependency_with_new_resolver() {
+    let referrer = ModuleSpecifier::parse("file:///a/main.ts").unwrap();
+    let types_dependency = TypesDependency {
+      specifier: "./main.d.ts".to_string(),
+      dependency: Resolution::Ok(Box::new(ResolutionResolved {
+        specifier: ModuleSpecifier::parse("file:///wrong.ts").unwrap(),
+        range: Range {
+          specifier: referrer.clone(),
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      })),
+    };
+    let new_types_dependency = types_dependency.with_new_resolver(None, None);
+    assert_eq!(
+      new_types_dependency,
+      TypesDependency {
+        specifier: "./main.d.ts".to_string(),
+        dependency: Resolution::Ok(Box::new(ResolutionResolved {
+          specifier: ModuleSpecifier::parse("file:///a/main.d.ts").unwrap(),
+          range: Range {
+            specifier: referrer.clone(),
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+        })),
+      }
+    );
+  }
+
   #[tokio::test]
   async fn static_dep_of_dynamic_dep_is_dynamic() {
     struct TestLoader {
-      loaded_foo: bool,
-      loaded_bar: bool,
-      loaded_baz: bool,
+      loaded_foo: RefCell<bool>,
+      loaded_bar: RefCell<bool>,
+      loaded_baz: RefCell<bool>,
     }
     impl Loader for TestLoader {
       fn load(
-        &mut self,
+        &self,
         specifier: &ModuleSpecifier,
         options: LoadOptions,
       ) -> LoadFuture {
@@ -4818,7 +5100,7 @@ mod tests {
         match specifier.as_str() {
           "file:///foo.js" => {
             assert!(!options.is_dynamic);
-            self.loaded_foo = true;
+            *self.loaded_foo.borrow_mut() = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -4829,7 +5111,7 @@ mod tests {
           }
           "file:///bar.js" => {
             assert!(options.is_dynamic);
-            self.loaded_bar = true;
+            *self.loaded_bar.borrow_mut() = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -4840,7 +5122,7 @@ mod tests {
           }
           "file:///baz.js" => {
             assert!(options.is_dynamic);
-            self.loaded_baz = true;
+            *self.loaded_baz.borrow_mut() = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -4854,22 +5136,22 @@ mod tests {
       }
     }
 
-    let mut loader = TestLoader {
-      loaded_foo: false,
-      loaded_bar: false,
-      loaded_baz: false,
+    let loader = TestLoader {
+      loaded_foo: RefCell::new(false),
+      loaded_bar: RefCell::new(false),
+      loaded_baz: RefCell::new(false),
     };
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![Url::parse("file:///foo.js").unwrap()],
-        &mut loader,
+        &loader,
         Default::default(),
       )
       .await;
-    assert!(loader.loaded_foo);
-    assert!(loader.loaded_bar);
-    assert!(loader.loaded_baz);
+    assert!(*loader.loaded_foo.borrow());
+    assert!(*loader.loaded_bar.borrow());
+    assert!(*loader.loaded_baz.borrow());
     assert_eq!(graph.specifiers_count(), 3);
   }
 
@@ -4878,7 +5160,7 @@ mod tests {
     struct TestLoader;
     impl Loader for TestLoader {
       fn load(
-        &mut self,
+        &self,
         specifier: &ModuleSpecifier,
         _options: LoadOptions,
       ) -> LoadFuture {
@@ -4896,11 +5178,11 @@ mod tests {
         }
       }
     }
-    let mut loader = TestLoader;
+    let loader = TestLoader;
     let mut graph = ModuleGraph::new(GraphKind::All);
     let roots = vec![Url::parse("file:///foo.js").unwrap()];
     graph
-      .build(roots.clone(), &mut loader, Default::default())
+      .build(roots.clone(), &loader, Default::default())
       .await;
     assert!(graph
       .try_get(&Url::parse("file:///foo.js").unwrap())
@@ -4966,7 +5248,7 @@ mod tests {
     struct TestLoader;
     impl Loader for TestLoader {
       fn load(
-        &mut self,
+        &self,
         specifier: &ModuleSpecifier,
         _options: LoadOptions,
       ) -> LoadFuture {
@@ -4990,12 +5272,12 @@ mod tests {
         }
       }
     }
-    let mut loader = TestLoader;
+    let loader = TestLoader;
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![Url::parse("file:///foo.js").unwrap()],
-        &mut loader,
+        &loader,
         Default::default(),
       )
       .await;
@@ -5033,7 +5315,7 @@ mod tests {
     struct TestLoader;
     impl Loader for TestLoader {
       fn load(
-        &mut self,
+        &self,
         specifier: &ModuleSpecifier,
         _options: LoadOptions,
       ) -> LoadFuture {
@@ -5073,11 +5355,11 @@ mod tests {
         }
       }
     }
-    let mut loader = TestLoader;
+    let loader = TestLoader;
     let mut graph = ModuleGraph::new(GraphKind::All);
     let roots = vec![Url::parse("https://deno.land/foo.js").unwrap()];
     graph
-      .build(roots.clone(), &mut loader, Default::default())
+      .build(roots.clone(), &loader, Default::default())
       .await;
     assert_eq!(graph.specifiers_count(), 4);
     let errors = graph
@@ -5161,11 +5443,11 @@ mod tests {
   #[tokio::test]
   async fn static_and_dynamic_dep_is_static() {
     struct TestLoader {
-      loaded_bar: bool,
+      loaded_bar: RefCell<bool>,
     }
     impl Loader for TestLoader {
       fn load(
-        &mut self,
+        &self,
         specifier: &ModuleSpecifier,
         options: LoadOptions,
       ) -> LoadFuture {
@@ -5183,7 +5465,7 @@ mod tests {
           }),
           "file:///bar.js" => {
             assert!(!options.is_dynamic);
-            self.loaded_bar = true;
+            *self.loaded_bar.borrow_mut() = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -5196,16 +5478,18 @@ mod tests {
         }
       }
     }
-    let mut loader = TestLoader { loaded_bar: false };
+    let loader = TestLoader {
+      loaded_bar: RefCell::new(false),
+    };
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
         vec![Url::parse("file:///foo.js").unwrap()],
-        &mut loader,
+        &loader,
         Default::default(),
       )
       .await;
-    assert!(loader.loaded_bar);
+    assert!(*loader.loaded_bar.borrow());
   }
 
   #[tokio::test]
@@ -5213,7 +5497,7 @@ mod tests {
     struct TestLoader;
     impl Loader for TestLoader {
       fn load(
-        &mut self,
+        &self,
         specifier: &ModuleSpecifier,
         options: LoadOptions,
       ) -> LoadFuture {
@@ -5266,7 +5550,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
-        &mut TestLoader,
+        &TestLoader,
         Default::default(),
       )
       .await;
@@ -5431,7 +5715,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
-        &mut test_loader,
+        &test_loader,
         BuildOptions {
           workspace_members: &workspace_members,
           ..Default::default()
@@ -5514,7 +5798,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
-        &mut test_loader,
+        &test_loader,
         BuildOptions {
           workspace_members: &workspace_members,
           ..Default::default()
