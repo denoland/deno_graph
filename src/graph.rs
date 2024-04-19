@@ -1,49 +1,5 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
-// Code for the future:
-// let maybe_nv_when_no_version_info = if maybe_version_info.is_none()
-//             {
-//               self
-//                 .jsr_url_provider
-//                 .package_url_to_nv(response.specifier())
-//             } else {
-//               None
-//             };
-//             if let Some(package_nv) = maybe_nv_when_no_version_info {
-//               self.queue_load_package_version_info(&package_nv);
-//               let version_load_fut = self
-//                 .state
-//                 .jsr
-//                 .pending_package_version_info_loads
-//                 .get(&package_nv)
-//                 .unwrap()
-//                 .clone();
-//               let base_url = self.jsr_url_provider.package_url(&package_nv);
-//               self.state.pending.push_front({
-//                 let specifier = specifier.clone();
-//                 async move {
-//                   let version_info = version_load_fut.await;
-//                   match version_info {
-//                     Ok(version_info) => PendingInfo {
-//                       specifier,
-//                       maybe_range,
-//                       result: Ok(Some(response)),
-//                       maybe_version_info: Some(JsrPackageVersionInfoExt {
-//                         base_url,
-//                         inner: version_info.info.clone(),
-//                       }),
-//                     },
-//                     Err(err) => PendingInfo {
-//                       specifier,
-//                       maybe_range,
-//                       result: Err(err),
-//                       maybe_version_info: None,
-//                     },
-//                   }
-//                 }
-//                 .boxed_local()
-//               });
-
 use crate::analyzer::analyze_deno_types;
 use crate::analyzer::DependencyDescriptor;
 use crate::analyzer::DynamicArgument;
