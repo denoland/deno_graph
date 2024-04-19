@@ -3216,7 +3216,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 ModuleSlot::Err(ModuleError::LoadingErr(
                   specifier.clone(),
                   maybe_range,
-                  Arc::new(err),
+                  err,
                 )),
               );
               Some(specifier)
@@ -3807,9 +3807,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       LoadResponse::External { specifier } => {
                         Ok(Some(PendingInfoResponse::External { specifier }))
                       }
-                      LoadResponse::Redirect { specifier } => Err(anyhow!(
+                      LoadResponse::Redirect { specifier } => Err(Arc::new(anyhow!(
                         "Redirects in the JSR registry are not supported (redirected to '{}')", specifier
-                      )),
+                      ))),
                       LoadResponse::Module {
                         content,
                         specifier,
@@ -3823,7 +3823,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       })),
                     },
                     Ok(None) => Ok(None),
-                    Err(err) => Err(err),
+                    Err(err) => Err(Arc::new(err)),
                   },
                   maybe_version_info: Some(version_info),
                 },
@@ -4138,7 +4138,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             })),
           },
           Ok(None) => Ok(None),
-          Err(err) => Err(err),
+          Err(err) => Err(Arc::new(err)),
         };
         return PendingInfo {
           specifier: requested_specifier,
@@ -4153,7 +4153,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         specifier: load_specifier,
         maybe_range,
         redirects,
-        result: Err(anyhow!("Too many redirects.")),
+        result: Err(Arc::new(anyhow!("Too many redirects."))),
         maybe_version_info,
       }
     }
