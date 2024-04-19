@@ -410,6 +410,10 @@ pub enum ResolutionError {
     specifier: ModuleSpecifier,
     range: Range,
   },
+  InvalidJsrTypesImport {
+    specifier: ModuleSpecifier,
+    range: Range,
+  },
   InvalidLocalImport {
     specifier: ModuleSpecifier,
     range: Range,
@@ -430,6 +434,7 @@ impl ResolutionError {
   pub fn range(&self) -> &Range {
     match self {
       Self::InvalidDowngrade { range, .. }
+      | Self::InvalidJsrTypesImport { range, .. }
       | Self::InvalidLocalImport { range, .. }
       | Self::InvalidSpecifier { range, .. }
       | Self::ResolverError { range, .. } => range,
@@ -445,7 +450,7 @@ impl ResolutionError {
 impl std::error::Error for ResolutionError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
-      Self::InvalidDowngrade { .. } | Self::InvalidLocalImport { .. } => None,
+      Self::InvalidDowngrade { .. } | Self::InvalidJsrTypesImport { .. } | Self::InvalidLocalImport { .. } => None,
       Self::InvalidSpecifier { ref error, .. } => Some(error),
       Self::ResolverError { error, .. } => Some(error.as_ref()),
     }
@@ -474,6 +479,18 @@ impl PartialEq for ResolutionError {
           ..
         },
         Self::InvalidDowngrade {
+          specifier: b,
+          range: b_range,
+          ..
+        },
+      )
+      | (
+        Self::InvalidJsrTypesImport {
+          specifier: a,
+          range: a_range,
+          ..
+        },
+        Self::InvalidJsrTypesImport {
           specifier: b,
           range: b_range,
           ..
@@ -514,6 +531,7 @@ impl fmt::Display for ResolutionError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::InvalidDowngrade { specifier, .. } => write!(f, "Modules imported via https are not allowed to import http modules.\n  Importing: {specifier}"),
+      Self::InvalidJsrTypesImport { specifier, .. } => write!(f, "Importing JSR packages via HTTPS specifiers for type checking is not supported for performance reasons. If you would like types, import via a `jsr:` specifier instead or else use a non-statically analyzable dynamic import.\n  Importing: {specifier}"),
       Self::InvalidLocalImport { specifier, .. } => write!(f, "Remote modules are not allowed to import local modules. Consider using a dynamic import instead.\n  Importing: {specifier}"),
       Self::ResolverError { error, .. } => error.fmt(f),
       Self::InvalidSpecifier { error, .. } => error.fmt(f),
@@ -1986,6 +2004,15 @@ fn resolve(
     resolve_import(specifier_text, &referrer_range.specifier)
       .map_err(|err| err.into())
   };
+  if mode.is_types() {
+    if let Ok(resolved_url) = &response {
+      if let Some(package_nv) = jsr_url_provider.package_url_to_nv(resolved_url) {
+        if Some(package_nv) != jsr_url_provider.package_url_to_nv(&referrer_range.specifier) {
+          return Resolution::Err(Box::new(ResolutionError::InvalidJsrTypesImport { specifier: resolved_url.clone(), range: referrer_range.clone() }));
+        }
+      }
+    }
+  }
   if let Some(npm_resolver) = maybe_npm_resolver {
     if npm_resolver.enables_bare_builtin_node_module() {
       use import_map::ImportMapError;
@@ -2012,9 +2039,6 @@ fn resolve(
         }
       }
     }
-  }
-  if let Ok(resolved) = &response {
-
   }
   Resolution::from_resolve_result(response, specifier_text, referrer_range)
 }
