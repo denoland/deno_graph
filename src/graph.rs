@@ -450,7 +450,9 @@ impl ResolutionError {
 impl std::error::Error for ResolutionError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
-      Self::InvalidDowngrade { .. } | Self::InvalidJsrTypesImport { .. } | Self::InvalidLocalImport { .. } => None,
+      Self::InvalidDowngrade { .. }
+      | Self::InvalidJsrTypesImport { .. }
+      | Self::InvalidLocalImport { .. } => None,
       Self::InvalidSpecifier { ref error, .. } => Some(error),
       Self::ResolverError { error, .. } => Some(error.as_ref()),
     }
@@ -1640,8 +1642,7 @@ impl ModuleGraph {
 
     let modules = crate::fast_check::build_fast_check_type_graph(
       options.fast_check_cache,
-      options
-        .jsr_url_provider,
+      options.jsr_url_provider,
       self,
       &root_symbol,
       pending_nvs,
@@ -2006,9 +2007,17 @@ fn resolve(
   };
   if mode.is_types() {
     if let Ok(resolved_url) = &response {
-      if let Some(package_nv) = jsr_url_provider.package_url_to_nv(resolved_url) {
-        if Some(package_nv) != jsr_url_provider.package_url_to_nv(&referrer_range.specifier) {
-          return Resolution::Err(Box::new(ResolutionError::InvalidJsrTypesImport { specifier: resolved_url.clone(), range: referrer_range.clone() }));
+      if let Some(package_nv) = jsr_url_provider.package_url_to_nv(resolved_url)
+      {
+        if Some(package_nv)
+          != jsr_url_provider.package_url_to_nv(&referrer_range.specifier)
+        {
+          return Resolution::Err(Box::new(
+            ResolutionError::InvalidJsrTypesImport {
+              specifier: resolved_url.clone(),
+              range: referrer_range.clone(),
+            },
+          ));
         }
       }
     }
@@ -2548,6 +2557,7 @@ pub(crate) fn parse_js_module_from_module_info(
   module
 }
 
+#[allow(clippy::too_many_arguments)]
 fn fill_module_dependencies(
   graph_kind: GraphKind,
   dependencies: Vec<DependencyDescriptor>,
@@ -3236,8 +3246,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 self
                   .jsr_url_provider
                   .package_url_to_nv(response.specifier())
-                  .is_none()
-                ,
+                  .is_none(),
                 "{}",
                 response.specifier()
               );
@@ -3315,8 +3324,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     for referrer_imports in imports {
       let referrer = referrer_imports.referrer;
       let imports = referrer_imports.imports;
-      let graph_import =
-        GraphImport::new(&referrer, imports, self.jsr_url_provider, self.resolver, self.npm_resolver);
+      let graph_import = GraphImport::new(
+        &referrer,
+        imports,
+        self.jsr_url_provider,
+        self.resolver,
+        self.npm_resolver,
+      );
       for dep in graph_import.dependencies.values() {
         if let Resolution::Ok(resolved) = &dep.maybe_type {
           self.load(
@@ -4163,6 +4177,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         (package_nv, fut)
       });
     let fut = async move {
+      #[allow(clippy::too_many_arguments)]
       async fn try_load_with_redirects(
         load_specifier: ModuleSpecifier,
         mut maybe_checksum: Option<LoaderChecksum>,
@@ -4237,7 +4252,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
 
       let mut redirects = BTreeMap::new();
-      
       let result = try_load_with_redirects(
         load_specifier,
         maybe_checksum,
@@ -5044,7 +5058,8 @@ mod tests {
       maybe_deno_types_specifier: Some("./b.d.ts".to_string()),
       ..Default::default()
     };
-    let new_dependency = dependency.with_new_resolver("./b.ts", Default::default(), None, None);
+    let new_dependency =
+      dependency.with_new_resolver("./b.ts", Default::default(), None, None);
     assert_eq!(
       new_dependency,
       Dependency {
@@ -5084,7 +5099,8 @@ mod tests {
         },
       })),
     };
-    let new_types_dependency = types_dependency.with_new_resolver(Default::default(), None, None);
+    let new_types_dependency =
+      types_dependency.with_new_resolver(Default::default(), None, None);
     assert_eq!(
       new_types_dependency,
       TypesDependency {

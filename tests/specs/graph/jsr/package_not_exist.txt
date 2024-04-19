@@ -33,7 +33,7 @@ import 'jsr:@scope/a/mod.ts';
     },
     {
       "specifier": "jsr:@scope/a/mod.ts",
-      "error": "Unknown package: @scope/a\n  Specifier: jsr:@scope/a/mod.ts"
+      "error": "Not found: https://jsr.io/@scope/a/meta.json"
     }
   ],
   "redirects": {}

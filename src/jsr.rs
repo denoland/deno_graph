@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use deno_ast::ModuleSpecifier;
 use deno_semver::package::PackageNv;
 use futures::future::Shared;
 use futures::FutureExt;
@@ -43,18 +44,18 @@ pub struct JsrMetadataStore {
 }
 
 impl JsrMetadataStore {
-  pub fn get_package_metadata(&self, package_name: &str) -> Option<PendingResult<Option<Arc<JsrPackageInfo>>>> {
-    self
-      .pending_package_info_loads
-      .get(package_name)
-      .cloned()
+  pub fn get_package_metadata(
+    &self,
+    package_name: &str,
+  ) -> Option<PendingResult<Option<Arc<JsrPackageInfo>>>> {
+    self.pending_package_info_loads.get(package_name).cloned()
   }
 
-  pub fn get_package_version_metadata(&self, nv: &PackageNv) -> Option<PendingResult<PendingJsrPackageVersionInfoLoadItem>> {
-    self
-      .pending_package_version_info_loads
-      .get(nv)
-      .cloned()
+  pub fn get_package_version_metadata(
+    &self,
+    nv: &PackageNv,
+  ) -> Option<PendingResult<PendingJsrPackageVersionInfoLoadItem>> {
+    self.pending_package_version_info_loads.get(nv).cloned()
   }
 
   pub fn queue_load_package_info(
@@ -73,40 +74,19 @@ impl JsrMetadataStore {
       .url()
       .join(&format!("{}/meta.json", package_name))
       .unwrap();
-    let fut = services.loader.load(
-      &specifier,
-      LoadOptions {
-        is_dynamic: false,
-        cache_setting,
-        maybe_checksum: None,
+    let fut = self.load_data(
+      specifier,
+      services,
+      cache_setting,
+      /* checksum */ None,
+      |content| {
+        let package_info: JsrPackageInfo = serde_json::from_slice(content)?;
+        Ok(Some(Arc::new(package_info)))
       },
-    );
-    // todo(THIS PR): consolidate with below
-    let fut = spawn(
-      services.executor,
-      async move {
-        let data = fut.await.map_err(Arc::new)?;
-        match data {
-          Some(LoadResponse::Module { content, .. }) => {
-            let package_info: JsrPackageInfo = serde_json::from_slice(&content)
-              .map_err(|e| Arc::new(e.into()))?;
-            Ok(Some(Arc::new(package_info)))
-          }
-          Some(LoadResponse::Redirect { specifier }) => {
-            Err(Arc::new(anyhow::anyhow!(
-              "Redirects in the JSR registry are not supported (redirected to '{}')",
-              specifier
-            )))
-          }
-          _ => Ok(None),
-        }
-      }
-      
-      .boxed_local(),
     );
     self
       .pending_package_info_loads
-      .insert(package_name.to_string(), fut.shared());
+      .insert(package_name.to_string(), fut);
   }
 
   pub fn queue_load_package_version_info(
@@ -131,15 +111,47 @@ impl JsrMetadataStore {
         package_nv.name, package_nv.version
       ))
       .unwrap();
-    let maybe_expected_checksum = maybe_expected_checksum.map(|c| LoaderChecksum::new(c.to_string()));
+    let maybe_expected_checksum =
+      maybe_expected_checksum.map(|c| LoaderChecksum::new(c.to_string()));
+    let fut = self.load_data(
+      specifier,
+      services,
+      cache_setting,
+      // we won't have a checksum when loading this the
+      // first time or when not using a lockfile
+      maybe_expected_checksum.clone(),
+      |content| {
+        // if we have the expected checksum, then we can re-use that here
+        let checksum = maybe_expected_checksum
+          .map(|c| c.into_string())
+          .unwrap_or_else(|| LoaderChecksum::gen(content));
+        let version_info: JsrPackageVersionInfo =
+          serde_json::from_slice(content)?;
+        Ok(PendingJsrPackageVersionInfoLoadItem {
+          checksum,
+          info: Arc::new(version_info),
+        })
+      },
+    );
+    self
+      .pending_package_version_info_loads
+      .insert(package_nv.clone(), fut);
+  }
+
+  fn load_data<T: Clone + 'static>(
+    &self,
+    specifier: ModuleSpecifier,
+    services: JsrMetadataStoreServices,
+    cache_setting: CacheSetting,
+    maybe_expected_checksum: Option<LoaderChecksum>,
+    handle_content: impl FnOnce(&[u8]) -> Result<T, anyhow::Error> + 'static,
+  ) -> PendingResult<T> {
     let fut = services.loader.load(
       &specifier,
       LoadOptions {
         is_dynamic: false,
         cache_setting,
-        // we won't have a checksum when loading this the
-        // first time or when not using a lockfile
-        maybe_checksum: maybe_expected_checksum.clone(),
+        maybe_checksum: maybe_expected_checksum,
       },
     );
     let fut = spawn(
@@ -148,17 +160,7 @@ impl JsrMetadataStore {
         let data = fut.await.map_err(Arc::new)?;
         match data {
           Some(LoadResponse::Module { content, .. }) => {
-            // if we have the expected checksum, then we can re-use that here
-            let checksum = maybe_expected_checksum
-              .map(|c| c.into_string())
-              .unwrap_or_else(|| LoaderChecksum::gen(&content));
-            let version_info: JsrPackageVersionInfo =
-              serde_json::from_slice(&content)
-                .map_err(|e| Arc::new(e.into()))?;
-            Ok(PendingJsrPackageVersionInfoLoadItem {
-              checksum,
-              info: Arc::new(version_info),
-            })
+            handle_content(&content).map_err(Arc::new)
           }
           Some(LoadResponse::Redirect { specifier }) => {
             Err(Arc::new(anyhow::anyhow!(
@@ -171,8 +173,6 @@ impl JsrMetadataStore {
       }
       .boxed_local(),
     );
-    self
-      .pending_package_version_info_loads
-      .insert(package_nv.clone(), fut.shared());
+    fut.shared()
   }
 }

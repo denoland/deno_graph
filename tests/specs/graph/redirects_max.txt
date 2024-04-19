@@ -1,0 +1,88 @@
+# mod.ts
+import "https://localhost/redirect.ts";
+
+# https://localhost/redirect.ts
+HEADERS: {"location":"./redirect1.ts"}
+
+# https://localhost/redirect1.ts
+HEADERS: {"location":"./redirect2.ts"}
+
+# https://localhost/redirect2.ts
+HEADERS: {"location":"./redirect3.ts"}
+
+# https://localhost/redirect3.ts
+HEADERS: {"location":"./redirect4.ts"}
+
+# https://localhost/redirect4.ts
+HEADERS: {"location":"./redirect5.ts"}
+
+# https://localhost/redirect5.ts
+HEADERS: {"location":"./redirect6.ts"}
+
+# https://localhost/redirect6.ts
+HEADERS: {"location":"./redirect7.ts"}
+
+# https://localhost/redirect7.ts
+HEADERS: {"location":"./redirect8.ts"}
+
+# https://localhost/redirect8.ts
+HEADERS: {"location":"./redirect9.ts"}
+
+# https://localhost/redirect9.ts
+HEADERS: {"location":"./redirect10.ts"}
+
+# https://localhost/redirect10.ts
+HEADERS: {"location":"./value.ts"}
+
+# https://localhost/value.ts
+console.log('hi');
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "https://localhost/redirect.ts",
+          "code": {
+            "specifier": "https://localhost/redirect.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 38
+              }
+            }
+          }
+        }
+      ],
+      "size": 40,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "https://localhost/redirect.ts",
+      "error": "Too many redirects."
+    }
+  ],
+  "redirects": {
+    "https://localhost/redirect.ts": "https://localhost/redirect1.ts",
+    "https://localhost/redirect1.ts": "https://localhost/redirect2.ts",
+    "https://localhost/redirect10.ts": "https://localhost/value.ts",
+    "https://localhost/redirect2.ts": "https://localhost/redirect3.ts",
+    "https://localhost/redirect3.ts": "https://localhost/redirect4.ts",
+    "https://localhost/redirect4.ts": "https://localhost/redirect5.ts",
+    "https://localhost/redirect5.ts": "https://localhost/redirect6.ts",
+    "https://localhost/redirect6.ts": "https://localhost/redirect7.ts",
+    "https://localhost/redirect7.ts": "https://localhost/redirect8.ts",
+    "https://localhost/redirect8.ts": "https://localhost/redirect9.ts",
+    "https://localhost/redirect9.ts": "https://localhost/redirect10.ts"
+  }
+}
