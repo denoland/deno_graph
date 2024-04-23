@@ -330,6 +330,7 @@ pub fn js_parse_module(
     maybe_headers: maybe_headers.as_ref(),
     content: content.into(),
     file_system: &NullFileSystem,
+    jsr_url_provider: Default::default(),
     maybe_resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
     module_analyzer: Default::default(),
     maybe_npm_resolver: None,

@@ -7,6 +7,7 @@
 mod analyzer;
 mod ast;
 mod graph;
+mod jsr;
 mod module_specifier;
 mod rt;
 
@@ -19,6 +20,7 @@ pub mod source;
 mod text_encoding;
 
 use source::FileSystem;
+use source::JsrUrlProvider;
 use source::NpmResolver;
 use source::Resolver;
 
@@ -109,6 +111,7 @@ pub struct ParseModuleOptions<'a> {
   pub maybe_headers: Option<&'a HashMap<String, String>>,
   pub content: Arc<[u8]>,
   pub file_system: &'a dyn FileSystem,
+  pub jsr_url_provider: &'a dyn JsrUrlProvider,
   pub maybe_resolver: Option<&'a dyn Resolver>,
   pub maybe_npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: &'a dyn ModuleAnalyzer,
@@ -128,6 +131,7 @@ pub fn parse_module(
     None,
     None,
     options.file_system,
+    options.jsr_url_provider,
     options.maybe_resolver,
     options.module_analyzer,
     true,
@@ -142,6 +146,7 @@ pub struct ParseModuleFromAstOptions<'a> {
   pub maybe_headers: Option<&'a HashMap<String, String>>,
   pub parsed_source: &'a deno_ast::ParsedSource,
   pub file_system: &'a dyn FileSystem,
+  pub jsr_url_provider: &'a dyn JsrUrlProvider,
   pub maybe_resolver: Option<&'a dyn Resolver>,
   pub maybe_npm_resolver: Option<&'a dyn NpmResolver>,
 }
@@ -156,6 +161,7 @@ pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
     ParserModuleAnalyzer::module_info(options.parsed_source),
     options.parsed_source.text_info().text(),
     options.file_system,
+    options.jsr_url_provider,
     options.maybe_resolver,
     options.maybe_npm_resolver,
   )
@@ -3218,6 +3224,7 @@ export const foo = 'bar';"#,
       maybe_headers: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3235,6 +3242,7 @@ export const foo = 'bar';"#,
       maybe_headers: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3258,6 +3266,7 @@ export const foo = 'bar';"#,
       .to_vec()
       .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3328,6 +3337,7 @@ export const foo = 'bar';"#,
       .to_vec()
       .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3366,6 +3376,7 @@ export const foo = 'bar';"#,
       .to_vec()
       .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3415,6 +3426,7 @@ export const foo = 'bar';"#,
       .to_vec()
       .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: Some(&R),
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3464,6 +3476,7 @@ export const foo = 'bar';"#,
       .to_vec()
       .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: Some(&R),
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3507,6 +3520,7 @@ export const foo = 'bar';"#,
       .to_vec()
       .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: Some(&R),
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3554,6 +3568,7 @@ export const foo = 'bar';"#,
       .to_vec()
       .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: Some(&R),
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3597,6 +3612,7 @@ export const foo = 'bar';"#,
         .to_vec()
         .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3624,6 +3640,7 @@ export function a(a) {
       maybe_headers: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3680,6 +3697,7 @@ export function a(a) {
       maybe_headers: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3717,6 +3735,7 @@ export function a(a: A): B {
       .to_vec()
       .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
