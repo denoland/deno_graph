@@ -111,7 +111,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/functions.ts:
     func,
     other: other_func
   };
-  export declare module functions {
+  export declare namespace functions {
     type Function<T> = Internal<T>;
   }
   --- DTS ---
@@ -123,7 +123,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/functions.ts:
   export declare const functions: {
     readonly other;
   };
-  export declare module functions {
+  export declare namespace functions {
     type Function<T> = Internal<T>;
   }
   --- DTS Diagnostics ---

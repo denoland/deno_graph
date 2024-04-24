@@ -69,18 +69,18 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  export module Test.Test {
+  export namespace Test.Test {
   }
-  export module Test.Test {
+  export namespace Test.Test {
     export class MyClass2 extends Public1 {
     }
   }
   class Public1 {
   }
   --- DTS ---
-  export declare module Test {
+  export declare namespace Test {
   }
-  export declare module Test {
+  export declare namespace Test {
     export class MyClass2 extends Public1 {
     }
   }

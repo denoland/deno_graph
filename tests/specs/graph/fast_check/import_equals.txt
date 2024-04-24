@@ -118,22 +118,22 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   import * as inner from "./inner.ts";
   import foo = inner.foo;
-  export module Test2 {
+  export namespace Test2 {
     function test(): void {}
     export { test };
   }
-  export module Test {
+  export namespace Test {
     export import Asdf = Test2.test;
   }
   export { foo };
   --- DTS ---
   import * as inner from "./inner.ts";
   import foo = inner.foo;
-  export declare module Test2 {
+  export declare namespace Test2 {
     function test(): void;
     export { test };
   }
-  export declare module Test {
+  export declare namespace Test {
     export import Asdf = Test2.test;
   }
   export { foo };
