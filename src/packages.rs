@@ -96,7 +96,7 @@ impl JsrPackageVersionInfo {
       let module_graph = module_graph.as_object()?;
       let mut module_info = module_graph.get(specifier)?.clone();
       module_graph_1_to_2(&mut module_info);
-      serde_json::from_value(module_info.clone()).ok()
+      serde_json::from_value(module_info).ok()
     } else {
       None
     }

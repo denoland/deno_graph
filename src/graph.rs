@@ -2647,12 +2647,11 @@ fn fill_module_dependencies(
             maybe_npm_resolver,
           )
         } else {
-          let range = import.range.clone();
           // only check if the code resolution is for the same range
-          if Some(&range) == dep.maybe_code.maybe_range() {
+          if Some(&import.range) == dep.maybe_code.maybe_range() {
             let types_resolution = resolve(
               &import.specifier,
-              range,
+              import.range.clone(),
               ResolutionMode::Types,
               jsr_url_provider,
               maybe_resolver,
