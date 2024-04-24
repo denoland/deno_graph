@@ -126,7 +126,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   class Public {
   }
-  module Test {
+  namespace Test {
     export class A {
     }
   }
@@ -140,7 +140,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   declare class Public {
   }
-  declare module Test {
+  declare namespace Test {
     export class A {
     }
   }
@@ -155,7 +155,7 @@ Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
   {}
   class BaseHandler {
   }
-  module Test {
+  namespace Test {
     export class A {
     }
   }
@@ -163,7 +163,7 @@ Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
   --- DTS ---
   declare class BaseHandler {
   }
-  declare module Test {
+  declare namespace Test {
     export class A {
     }
   }
