@@ -147,6 +147,7 @@ pub fn transform(
     &EmitOptions {
       keep_comments: true,
       source_map: deno_ast::SourceMapOption::Separate,
+      source_map_file: None,
       inline_sources: false,
     },
   )

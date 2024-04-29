@@ -1000,6 +1000,7 @@ mod tests {
       &EmitOptions {
         keep_comments: true,
         source_map: deno_ast::SourceMapOption::None,
+        source_map_file: None,
         inline_sources: false,
       },
     )
