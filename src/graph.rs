@@ -5678,6 +5678,57 @@ mod tests {
     );
   }
 
+  #[tokio::test]
+  async fn dependency_jsx_import_source_types() {
+    let mut mem_loader = MemoryLoader::default();
+    mem_loader.add_source_with_text(
+      "file:///foo.tsx",
+      "
+/* @jsxImportSource http://localhost */
+/* @jsxImportSourceTypes http://localhost/types */
+",
+    );
+    mem_loader.add_source(
+      "http://localhost/jsx-runtime",
+      Source::Module {
+        specifier: "http://localhost/jsx-runtime",
+        maybe_headers: Some(vec![("content-type", "application/javascript")]),
+        content: "",
+      },
+    );
+    mem_loader.add_source(
+      "http://localhost/types/jsx-runtime",
+      Source::Module {
+        specifier: "http://localhost/types/jsx-runtime",
+        maybe_headers: Some(vec![("content-type", "application/typescript")]),
+        content: "",
+      },
+    );
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.tsx").unwrap()],
+        &mem_loader,
+        Default::default(),
+      )
+      .await;
+    graph.valid().unwrap();
+    let module = graph.get(&Url::parse("file:///foo.tsx").unwrap()).unwrap();
+    let module = module.js().unwrap();
+    let dependency_a = module
+      .dependencies
+      .get("http://localhost/jsx-runtime")
+      .unwrap();
+    assert_eq!(
+      dependency_a.maybe_type.maybe_specifier().unwrap().as_str(),
+      "http://localhost/types/jsx-runtime"
+    );
+    assert_eq!(
+      dependency_a.maybe_deno_types_specifier.as_ref().unwrap(),
+      "http://localhost/types/jsx-runtime"
+    );
+  }
+
   #[cfg(feature = "fast_check")]
   #[tokio::test]
   async fn fast_check_dts() {
