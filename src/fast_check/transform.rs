@@ -1263,7 +1263,7 @@ impl<'a> FastCheckTransformer<'a> {
     n.decls.retain(|n| self.public_ranges.contains(&n.range()));
 
     // don't need to do anything for these in a declaration file
-    if !is_ambient {
+    if !is_ambient && !n.declare {
       for decl in &mut n.decls {
         self.transform_var_declarator(decl)?;
       }
