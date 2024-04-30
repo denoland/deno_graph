@@ -2388,6 +2388,7 @@ pub(crate) fn parse_js_module_from_module_info(
             maybe_resolver,
             maybe_npm_resolver,
           );
+          dep.maybe_deno_types_specifier = Some(specifier_text);
         }
       }
       dep.imports.push(Import {
