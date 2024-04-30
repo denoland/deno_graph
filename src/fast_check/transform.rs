@@ -456,7 +456,7 @@ impl<'a> FastCheckTransformer<'a> {
         )?;
         Ok(true)
       }
-      Decl::Var(n) => self.transform_var(n, is_ambient),
+      Decl::Var(n) => self.transform_var(n, is_ambient || n.declare),
       Decl::TsInterface(_) => Ok(self.public_ranges.contains(&public_range)),
       Decl::TsTypeAlias(_) => Ok(self.public_ranges.contains(&public_range)),
       Decl::TsEnum(_) => Ok(self.public_ranges.contains(&public_range)),
@@ -1262,8 +1262,8 @@ impl<'a> FastCheckTransformer<'a> {
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     n.decls.retain(|n| self.public_ranges.contains(&n.range()));
 
-    // don't need to do anything for these in a declaration file
-    if !is_ambient && !n.declare {
+    // don't need to do anything for ambient decls
+    if !is_ambient {
       for decl in &mut n.decls {
         self.transform_var_declarator(decl)?;
       }
