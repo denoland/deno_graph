@@ -780,11 +780,11 @@ impl<'a> PublicRangeFinder<'a> {
       match trace {
         PendingIdTrace::Id {
           symbol_id,
-          referrer_id,
+          referrer_id: trace_referrer_id,
         } => {
           let symbol = module_info.symbol(symbol_id).unwrap();
           if symbol.is_private_member() {
-            if Some(referrer_id) != symbol.parent_id() {
+            if Some(trace_referrer_id) != symbol.parent_id() {
               diagnostics.push(
                 FastCheckDiagnostic::UnsupportedPrivateMemberReference {
                   range: FastCheckDiagnosticRange {
@@ -796,7 +796,7 @@ impl<'a> PublicRangeFinder<'a> {
                     .fully_qualified_symbol_name(symbol)
                     .unwrap_or_else(|| "<unknown>".to_string()),
                   referrer: module_info
-                    .symbol(referrer_id)
+                    .symbol(trace_referrer_id)
                     .and_then(|symbol| {
                       module_info.fully_qualified_symbol_name(symbol)
                     })
@@ -814,7 +814,6 @@ impl<'a> PublicRangeFinder<'a> {
               impl_with_overload_ranges.insert(decl.range);
               continue;
             }
-            let original_referrer_id = referrer_id;
             let referrer_id = symbol_id;
             match &decl.kind {
               SymbolDeclKind::Target(id) => {
