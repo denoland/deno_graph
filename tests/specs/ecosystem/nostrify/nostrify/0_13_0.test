@@ -1,0 +1,21 @@
+nostrify/nostrify/0.13.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/mod.ts
+Check file://<tmpdir>/src/policies/mod.ts
+error: TS2416 [ERROR]: Property 'forEach' in type 'NSet' is not assignable to the same property in base type 'Set<NostrEvent>'.
+  Type '(callbackfn: (event: NostrEvent, key: NostrEvent, set: this) => void, thisArg?: any) => void' is not assignable to type '(callbackfn: (value: NostrEvent, value2: NostrEvent, set: Set<NostrEvent>) => void, thisArg?: any) => void'.
+    Types of parameters 'callbackfn' and 'callbackfn' are incompatible.
+      Types of parameters 'set' and 'set' are incompatible.
+        Type 'this' is not assignable to type 'Set<NostrEvent>'.
+          Type 'NSet' is missing the following properties from type 'Set<NostrEvent>': union, intersection, difference, symmetricDifference, and 3 more.
+  forEach(callbackfn: (event: NostrEvent, key: NostrEvent, set: typeof this) => void, thisArg?: any): void {}
+  ~~~~~~~
+    at file://<tmpdir>/src/NSet.ts:43:3
+

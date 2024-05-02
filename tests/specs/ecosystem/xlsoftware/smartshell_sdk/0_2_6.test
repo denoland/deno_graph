@@ -1,0 +1,26 @@
+xlsoftware/smartshell-sdk/0.2.6
+===
+
+== FAST CHECK EMIT FAILED ==
+error[unsupported-default-export-expr]: default export expression was too complex
+  --> /src/graphql/query/userClubs.ts:39:1
+   | 
+39 | export default module<QueryInput,QueryResponse>
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable
+
+  info: fast check was unable to infer the type of the default export expression
+  docs: https://jsr.io/go/slow-type-unsupported-default-export-expr
+
+
+error[unsupported-default-export-expr]: default export expression was too complex
+  --> /src/graphql/mutation/login.ts:31:1
+   | 
+31 | export default module<QueryInput,QueryResponse>
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable
+
+  info: fast check was unable to infer the type of the default export expression
+  docs: https://jsr.io/go/slow-type-unsupported-default-export-expr
+
+

@@ -1,0 +1,15 @@
+radix-ui-fork/react-popper/0.0.8
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS2304 [ERROR]: Cannot find name 'Element'.
+type Boundary = Element | null;
+                ~~~~~~~
+    at file://<tmpdir>/src/Popper.tsx:32:17
+

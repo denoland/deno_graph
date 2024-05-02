@@ -1,0 +1,12 @@
+rehype-pretty/transformers/0.1.1
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Module not found "file://<tmpdir>/src/shiki".
+    at file://<tmpdir>/src/copy-button.ts:1:39
+

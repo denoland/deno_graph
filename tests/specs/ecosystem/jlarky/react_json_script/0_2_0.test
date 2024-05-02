@@ -1,0 +1,15 @@
+jlarky/react-json-script/0.2.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/index.ts
+error: TS2503 [ERROR]: Cannot find namespace 'JSX'.
+ */ export function JsonScript(props: JsonScriptProps): JSX.Element {
+                                                        ~~~
+    at file://<tmpdir>/index.ts:23:57
+

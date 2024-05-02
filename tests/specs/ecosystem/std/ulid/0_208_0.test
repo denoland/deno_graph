@@ -1,0 +1,15 @@
+std/ulid/0.208.0
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /mod.ts:66:14
+   | 
+66 | export const monotonicUlid = monotonicFactory();
+   |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

@@ -1,0 +1,22 @@
+geacko/resp3-parser/1.1.2
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/mod.ts
+error: TS2488 [ERROR]: Type 'never' must have a '[Symbol.iterator]()' method that returns an iterator.
+    super(...({} as never));
+             ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:13:14
+
+TS2488 [ERROR]: Type 'never' must have a '[Symbol.iterator]()' method that returns an iterator.
+    super(...({} as never));
+             ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:21:14
+
+Found 2 errors.
+

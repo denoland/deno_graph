@@ -1,0 +1,22 @@
+teapot/insomnia-plugin-aws/0.1.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/app.ts
+error: TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
+  platform: NodeJS.Platform;
+            ~~~~~~
+    at file://<tmpdir>/src/types/app.ts:18:13
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+        getBodyBuffer: (response: Response, fallback?: any) => Promise<Buffer | null>;
+                                                                       ~~~~~~
+    at file://<tmpdir>/src/types/template.ts:60:72
+
+Found 2 errors.
+

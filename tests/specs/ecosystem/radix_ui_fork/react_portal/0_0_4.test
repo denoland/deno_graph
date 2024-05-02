@@ -1,0 +1,15 @@
+radix-ui-fork/react-portal/0.0.4
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+   */ container?: HTMLElement | null;
+                  ~~~~~~~~~~~
+    at file://<tmpdir>/src/Portal.tsx:9:19
+

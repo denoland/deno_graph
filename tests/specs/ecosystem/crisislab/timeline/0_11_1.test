@@ -1,0 +1,32 @@
+crisislab/timeline/0.11.1
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+  container: HTMLElement;
+             ~~~~~~~~~~~
+    at file://<tmpdir>/src/TimeLine.ts:9:14
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+  declare container: HTMLElement;
+                     ~~~~~~~~~~~
+    at file://<tmpdir>/src/TimeLine.ts:31:22
+
+TS2304 [ERROR]: Cannot find name 'HTMLCanvasElement'.
+  declare canvas: HTMLCanvasElement;
+                  ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/TimeLine.ts:32:19
+
+TS2304 [ERROR]: Cannot find name 'CanvasRenderingContext2D'.
+  declare ctx: CanvasRenderingContext2D;
+               ~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/TimeLine.ts:33:16
+
+Found 4 errors.
+

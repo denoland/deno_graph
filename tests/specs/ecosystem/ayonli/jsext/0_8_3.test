@@ -1,0 +1,43 @@
+ayonli/jsext/0.8.3
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/index.ts
+Check file://<tmpdir>/chan.ts
+Check file://<tmpdir>/class.ts
+Check file://<tmpdir>/debounce.ts
+Check file://<tmpdir>/deprecate.ts
+Check file://<tmpdir>/example.ts
+Check file://<tmpdir>/func.ts
+Check file://<tmpdir>/lock.ts
+Check file://<tmpdir>/parallel.ts
+Check file://<tmpdir>/queue.ts
+Check file://<tmpdir>/read.ts
+Check file://<tmpdir>/run.ts
+Check file://<tmpdir>/throttle.ts
+Check file://<tmpdir>/try.ts
+Check file://<tmpdir>/wrap.ts
+Check file://<tmpdir>/array/index.ts
+Check file://<tmpdir>/bytes/index.ts
+Check file://<tmpdir>/collections/index.ts
+Check file://<tmpdir>/dialog/index.ts
+Check file://<tmpdir>/error/index.ts
+Check file://<tmpdir>/json/index.ts
+Check file://<tmpdir>/math/index.ts
+Check file://<tmpdir>/number/index.ts
+Check file://<tmpdir>/object/index.ts
+Check file://<tmpdir>/path/index.ts
+Check file://<tmpdir>/promise/index.ts
+Check file://<tmpdir>/string/index.ts
+Check file://<tmpdir>/uint8array/index.ts
+Check file://<tmpdir>/worker.ts
+error: TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
+ */ export default function read<T>(target: NodeJS.EventEmitter, eventMap?: {
+                                            ~~~~~~
+    at file://<tmpdir>/read.ts:78:45
+

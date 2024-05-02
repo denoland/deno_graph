@@ -1,0 +1,15 @@
+geacko/deno-redis/1.1.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/mod.ts
+error: TS2305 [ERROR]: Module '"https://jsr.io/@geacko/resp3-parser/1.2.0/mod.ts"' has no exported member 'Reply'.
+import { Reply } from 'jsr:@geacko/resp3-parser@^1.0.2';
+         ~~~~~
+    at file://<tmpdir>/src/client.ts:1:10
+

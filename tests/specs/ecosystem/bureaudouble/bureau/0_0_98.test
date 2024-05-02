@@ -1,0 +1,139 @@
+bureaudouble/bureau/0.0.98
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/mod.ts
+Check file://<tmpdir>/src/components/ui/switch.tsx
+Check file://<tmpdir>/src/components/ui/switch.tsx
+Check file://<tmpdir>/src/components/ui/sonner.tsx
+Check file://<tmpdir>/src/components/ui/sonner.tsx
+Check file://<tmpdir>/src/components/CustomInput.tsx
+Check file://<tmpdir>/src/components/CustomInput.tsx
+Check file://<tmpdir>/src/components/Media.tsx
+Check file://<tmpdir>/src/components/Media.tsx
+Check file://<tmpdir>/src/components/ui/dialog.tsx
+Check file://<tmpdir>/src/components/ui/dialog.tsx
+Check file://<tmpdir>/src/components/ui/dropdown-menu.tsx
+Check file://<tmpdir>/src/components/ui/dropdown-menu.tsx
+Check file://<tmpdir>/src/components/bureau-ui/integer-switch.tsx
+Check file://<tmpdir>/src/components/bureau-ui/integer-switch.tsx
+Check file://<tmpdir>/src/components/bureau-ui/combobox.tsx
+Check file://<tmpdir>/src/components/bureau-ui/combobox.tsx
+Check file://<tmpdir>/src/components/ui/checkbox.tsx
+Check file://<tmpdir>/src/components/ui/checkbox.tsx
+Check file://<tmpdir>/src/components/ui/alert-dialog.tsx
+Check file://<tmpdir>/src/components/ui/alert-dialog.tsx
+Check file://<tmpdir>/src/components/SqlInput.tsx
+Check file://<tmpdir>/src/components/SqlInput.tsx
+Check file://<tmpdir>/src/components/ui/tabs.tsx
+Check file://<tmpdir>/src/components/ui/tabs.tsx
+Check file://<tmpdir>/src/components/Dummy.tsx
+Check file://<tmpdir>/src/components/Dummy.tsx
+Check file://<tmpdir>/src/components/editor/Editor.tsx
+Check file://<tmpdir>/src/components/editor/Editor.tsx
+Check file://<tmpdir>/src/components/DataTable.tsx
+Check file://<tmpdir>/src/components/DataTable.tsx
+Check file://<tmpdir>/src/components/DeleteDialog.tsx
+Check file://<tmpdir>/src/components/DeleteDialog.tsx
+error: TS2503 [ERROR]: Cannot find namespace 'JSX'.
+export const CustomInput = ({}: CustomInputProps): JSX.Element =>({} as never);
+                                                   ~~~
+    at file://<tmpdir>/src/components/CustomInput.tsx:23:52
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+export default <TData = Record<string, unknown>>({}: DataTableProps<TData>): JSX.Element =>({} as never);
+                                                                             ~~~
+    at file://<tmpdir>/src/components/DataTable.tsx:46:78
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/DeleteDialog.tsx:10:5
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/DisplayValue.tsx:17:5
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/Dummy.tsx:18:5
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/Media.tsx:21:5
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/Media.tsx:29:5
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/SqlInput.tsx:14:5
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+ */ export function flexRender<TProps extends object>(Comp: Renderable<TProps>, props: TProps): React.ReactNode | JSX.Element {
+                                                                                                                  ~~~
+    at file://<tmpdir>/src/components/bureau-primitives/react-table.tsx:7:115
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element {
+    ~~~
+    at file://<tmpdir>/src/components/bureau-ui/combobox.tsx:16:5
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+export const HeaderName = ({}: HeaderNameProps): JSX.Element =>({} as never);
+                                                 ~~~
+    at file://<tmpdir>/src/components/bureau-ui/header-name.tsx:10:50
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+export function Editor({}: EditorProps): JSX.Element {
+                                         ~~~
+    at file://<tmpdir>/src/components/editor/Editor.tsx:8:42
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) : JSX.Element;
+                                                                    ~~~
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:18:69
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) : JSX.Element;
+                                                                    ~~~
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:22:69
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+function Badge({}: BadgeProps): JSX.Element {
+                                ~~~
+    at file://<tmpdir>/src/components/ui/badge.tsx:21:33
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) : JSX.Element;
+                                                                     ~~~
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:27:70
+
+TS2503 [ERROR]: Cannot find namespace 'React'.
+type ToasterProps = React.ComponentProps<typeof Sonner>;
+                    ~~~~~
+    at file://<tmpdir>/src/components/ui/sonner.tsx:6:21
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+const Toaster = ({}: ToasterProps): JSX.Element =>({} as never);
+                                    ~~~
+    at file://<tmpdir>/src/components/ui/sonner.tsx:7:37
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/ui/sonner.tsx:10:5
+
+Found 19 errors.
+

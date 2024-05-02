@@ -1,0 +1,72 @@
+xeaone/tool/3.6.10
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/index.ts
+error: TS1192 [ERROR]: Module '"file://<tmpdir>/access/mod.ts"' has no default export.
+import access from "./access/mod.ts";
+       ~~~~~~
+    at file://<tmpdir>/index.ts:13:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/connect/mod.ts"' has no default export.
+import connect from "./connect/mod.ts";
+       ~~~~~~~
+    at file://<tmpdir>/index.ts:14:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/decrypt/mod.ts"' has no default export.
+import decrypt from "./decrypt/mod.ts";
+       ~~~~~~~
+    at file://<tmpdir>/index.ts:15:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/encrypt/mod.ts"' has no default export.
+import encrypt from "./encrypt/mod.ts";
+       ~~~~~~~
+    at file://<tmpdir>/index.ts:16:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/hash/mod.ts"' has no default export.
+import hash from "./hash/mod.ts";
+       ~~~~
+    at file://<tmpdir>/index.ts:17:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/identifier/mod.ts"' has no default export.
+import identifier from "./identifier/mod.ts";
+       ~~~~~~~~~~
+    at file://<tmpdir>/index.ts:18:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/jwt/mod.ts"' has no default export.
+import jwt from "./jwt/mod.ts";
+       ~~~
+    at file://<tmpdir>/index.ts:19:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/password/mod.ts"' has no default export.
+import password from "./password/mod.ts";
+       ~~~~~~~~
+    at file://<tmpdir>/index.ts:20:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/post/mod.ts"' has no default export.
+import post from "./post/mod.ts";
+       ~~~~
+    at file://<tmpdir>/index.ts:21:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/random/mod.ts"' has no default export.
+import random from "./random/mod.ts";
+       ~~~~~~
+    at file://<tmpdir>/index.ts:22:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/secret/mod.ts"' has no default export.
+import secret from "./secret/mod.ts";
+       ~~~~~~
+    at file://<tmpdir>/index.ts:23:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/username/mod.ts"' has no default export.
+import username from "./username/mod.ts";
+       ~~~~~~~~
+    at file://<tmpdir>/index.ts:24:8
+
+Found 12 errors.
+

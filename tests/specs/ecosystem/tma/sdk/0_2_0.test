@@ -1,0 +1,224 @@
+tma/sdk/0.2.0
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/viewport/Viewport.ts:167:3
+    | 
+167 |   on = this.ee.on.bind(this.ee);
+    |   ^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/viewport/Viewport.ts:172:3
+    | 
+172 |   off = this.ee.off.bind(this.ee);
+    |   ^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/theme-params/themeParamsParser.ts:9:14
+  | 
+9 | export const themeParamsParser = createValueParserGenerator<ThemeParamsParsed>(
+  |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/theme-params/ThemeParams.ts:86:3
+   | 
+86 |   on = this.ee.on.bind(this.ee);
+   |   ^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/theme-params/ThemeParams.ts:91:3
+   | 
+91 |   off = this.ee.off.bind(this.ee);
+   |   ^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/qr-scanner/QRScanner.ts:83:3
+   | 
+83 |   on = this.ee.on.bind(this.ee);
+   |   ^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/qr-scanner/QRScanner.ts:88:3
+   | 
+88 |   off = this.ee.off.bind(this.ee);
+   |   ^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/popup/Popup.ts:47:3
+   | 
+47 |   on = this.ee.on.bind(this.ee);
+   |   ^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/popup/Popup.ts:52:3
+   | 
+52 |   off = this.ee.off.bind(this.ee);
+   |   ^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/parsing/parsers/string.ts:7:14
+  | 
+7 | export const string = createValueParserGenerator<string>((value) => {
+  |              ^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/parsing/parsers/rgb.ts:9:14
+  | 
+9 | export const rgb = createValueParserGenerator<RGB>((value) => toRGB(string().parse(value)), 'rgb');
+  |              ^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/parsing/parsers/number.ts:7:14
+  | 
+7 | export const number = createValueParserGenerator<number>((value) => {
+  |              ^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/parsing/parsers/date.ts:7:14
+  | 
+7 | export const date = createValueParserGenerator<Date>((value) => (
+  |              ^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/parsing/parsers/boolean.ts:7:14
+  | 
+7 | export const boolean = createValueParserGenerator<boolean>((value) => {
+  |              ^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/navigation/HashNavigator/HashNavigator.ts:213:3
+    | 
+213 |   on = this.ee.on.bind(this.ee);
+    |   ^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/navigation/HashNavigator/HashNavigator.ts:218:3
+    | 
+218 |   off = this.ee.off.bind(this.ee);
+    |   ^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/mini-app/MiniApp.ts:157:3
+    | 
+157 |   on = this.ee.on.bind(this.ee);
+    |   ^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/mini-app/MiniApp.ts:162:3
+    | 
+162 |   off = this.ee.off.bind(this.ee);
+    |   ^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/invoice/Invoice.ts:68:3
+   | 
+68 |   on = this.ee.on.bind(this.ee);
+   |   ^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/invoice/Invoice.ts:73:3
+   | 
+73 |   off = this.ee.off.bind(this.ee);
+   |   ^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

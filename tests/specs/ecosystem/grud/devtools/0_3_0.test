@@ -1,0 +1,1116 @@
+grud/devtools/0.3.0
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/types/common.ts:15:14
+   | 
+15 | export const ISODateString = (date: string) => {
+   |              ^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/grud-intl.ts:272:14
+    | 
+272 | export const getLanguage = (locale: Locale | Language) =>
+    |              ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/grud-intl.ts:274:14
+    | 
+274 | export const getCountry = (locale: Locale) => splitLocale(locale)[1];
+    |              ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/getDisplayValue.ts:90:5
+    | 
+ 90 |     (
+    |     ^
+ 91 |       userLang?: Langtag // Numbers and dates are formatted for this langtag
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 92 |       // If undefined, numbers and dates are formatted per langtag
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 93 |     ) => {
+    | ^^^^^^^^^^
+ 94 |       // cache fns
+    | ^^^^^^^^^^^^^^^^^^
+ 95 |       const getNestedValues = (columns: Column[], values: CellValue[]) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 96 |         return joinMultilangValues(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 97 |           langs,
+    | ^^^^^^^^^^^^^^^^
+ 98 |           (map((col, val) => go(col, val), columns, values)).flat()
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 99 |         );
+    | ^^^^^^^^^^
+100 |       };
+    | ^^^^^^^^
+101 | 
+    | 
+102 |       const getConcatValue: getValueT<ConcatColumn> = (column, values) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+103 |         getNestedValues(column.concats, values as any);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+104 |       const getGroupValue: getValueT<GroupColumn> = (column, values) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+105 |         getNestedValues(column.groups, values as any);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+106 | 
+    | 
+107 |       const getAttachmentValues: getValueT<AttachmentColumn> = (_, value) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+108 |         (value as unknown as AttachmentCellValue["value"]).map(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+109 |           attachmentToMultilang(langs)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+110 |         );
+    | ^^^^^^^^^^
+111 | 
+    | 
+112 |       const getBooleanValue: getValueT<BooleanColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+113 |         const formatBooleanVal = (lt: Langtag, val: boolean) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+114 |           val ? column.displayName[lt] ?? column.name : "";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+115 |         return mkDisplayMap(langs, column, value, formatBooleanVal);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+116 |       };
+    | ^^^^^^^^
+117 |       const getCurrencyValue: getValueT<CurrencyColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+118 |         const formatCurrency = (lt: Langtag, val: number) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+119 |           i.formatCurrency(userLang ?? lt, i.getCurrency(lt), val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+120 |         return mkDisplayMap(langs, column, value, formatCurrency);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+121 |       };
+    | ^^^^^^^^
+122 |       const getNumberValue: getValueT<NumberColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+123 |         const formatNumber = (lt: Langtag, val: number) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+124 |           i.formatNumber(userLang ?? lt, val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+125 |         return mkDisplayMap(langs, column, value, formatNumber);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+126 |       };
+    | ^^^^^^^^
+127 |       const getPlainValue: getValueT<Column> = (column, value) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+128 |         mkDisplayMap(langs, column, value);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+129 | 
+    | 
+130 |       const getDateValue: getValueT<DateColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+131 |         const formatDate = (lt: Langtag, val: string) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+132 |           i.formatDate(userLang ?? lt, val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+133 |         return mkDisplayMap(langs, column, value, formatDate);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+134 |       };
+    | ^^^^^^^^
+135 |       const getDateTimeValue: getValueT<DateTimeColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+136 |         const formatDateTime = (lt: Langtag, val: string) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+137 |           i.formatDateTime(userLang ?? lt, val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+138 |         return mkDisplayMap(langs, column, value, formatDateTime);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+139 |       };
+    | ^^^^^^^^
+140 |       const getLinkValue: getValueT<LinkColumn> = (column, value) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+141 |         value.map((v) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+142 |           getDisplayValue(langs)(userLang)(column.toColumn as any, v)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+143 |         );
+    | ^^^^^^^^^^
+144 |       const getStatusValue: getValueT<StatusColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+145 |         const statusValues = column.rules
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+146 |           .filter((_, idx) => !!value[idx])
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+147 |           .map((v) => v["displayName"]) as MultilangValue<string>[];
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+148 |         return joinMultilangValues(langs, statusValues);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+149 |       };
+    | ^^^^^^^^
+150 | 
+    | 
+151 |       // Optionally curried  Column -> CellValue -> MultilangValue<string>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+152 |       // or uncurried        (Column, CellValue) -> MultilangValue<string>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+153 |       function go<T extends Column>(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+154 |         column: T,
+    | ^^^^^^^^^^^^^^^^^^
+155 |         cellValue: CellValueForColumn<T>["value"] | CellValueForColumn<T>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+156 |       ): DisplayValueForColumn<T>;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+157 |       function go<T extends Column>(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+158 |         _: T
+    | ^^^^^^^^^^^^
+159 |       ): (
+    | ^^^^^^^^^^
+160 |         _: CellValueForColumn<T>["value"] | CellValueForColumn<T>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+161 |       ) => DisplayValueForColumn<T>;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+162 |       function go<T extends Column>(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+163 |         column: T,
+    | ^^^^^^^^^^^^^^^^^^
+164 |         cellValue?: CellValueForColumn<T>["value"] | CellValueForColumn<T>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+165 |       ) {
+    | ^^^^^^^^^
+166 |         if (arguments.length < 2)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+167 |           return (value: CellValueForColumn<T>["value"]) => go(column, value);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+168 |         try {
+    | ^^^^^^^^^^^^^
+169 |           const fn = condSelect<Column, getValueT<any>>([
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+170 |             [isAttachmentColumn, getAttachmentValues],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+171 |             [isBooleanColumn, getBooleanValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+172 |             [isConcatColumn, getConcatValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+173 |             [isCurrencyColumn, getCurrencyValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+174 |             [isDateColumn, getDateValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+175 |             [isDateTimeColumn, getDateTimeValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+176 |             [isGroupColumn, getGroupValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+177 |             [isLinkColumn, getLinkValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+178 |             [isNumberColumn, getNumberValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+179 |             [isRichtextColumn, getPlainValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+180 |             [isShorttextColumn, getPlainValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+181 |             [isStatusColumn, getStatusValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+182 |             [isTextColumn, getPlainValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+183 |           ])(column);
+    | ^^^^^^^^^^^^^^^^^^^^^
+184 | 
+    | 
+185 |           return cellValue !== undefined && cellValue !== null
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+186 |             ? fn(column, (cellValue as CellValue).value ?? cellValue)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+187 |             : ({} as any);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+188 |         } catch (err) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+189 |           if (/Non exhaustive/.test((err as Error).message))
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+190 |             console.error("Column kind not found:", column.kind);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+191 |           throw err;
+    | ^^^^^^^^^^^^^^^^^^^^
+192 |         }
+    | ^^^^^^^^^
+193 |       }
+    | ^^^^^^^
+194 | 
+    | 
+195 |       return go;
+    | ^^^^^^^^^^^^^^^^
+196 |     };
+    | ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/tools.ts:18:14
+   | 
+18 | export const map = <Fn extends (..._: any[]) => any>(
+   |              ^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/tools.ts:29:14
+   | 
+29 | export const joinMultilangValues = (
+   |              ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/types/common.ts:15:14
+   | 
+15 | export const ISODateString = (date: string) => {
+   |              ^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/grud-intl.ts:272:14
+    | 
+272 | export const getLanguage = (locale: Locale | Language) =>
+    |              ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/grud-intl.ts:274:14
+    | 
+274 | export const getCountry = (locale: Locale) => splitLocale(locale)[1];
+    |              ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/getDisplayValue.ts:90:5
+    | 
+ 90 |     (
+    |     ^
+ 91 |       userLang?: Langtag // Numbers and dates are formatted for this langtag
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 92 |       // If undefined, numbers and dates are formatted per langtag
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 93 |     ) => {
+    | ^^^^^^^^^^
+ 94 |       // cache fns
+    | ^^^^^^^^^^^^^^^^^^
+ 95 |       const getNestedValues = (columns: Column[], values: CellValue[]) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 96 |         return joinMultilangValues(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 97 |           langs,
+    | ^^^^^^^^^^^^^^^^
+ 98 |           (map((col, val) => go(col, val), columns, values)).flat()
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 99 |         );
+    | ^^^^^^^^^^
+100 |       };
+    | ^^^^^^^^
+101 | 
+    | 
+102 |       const getConcatValue: getValueT<ConcatColumn> = (column, values) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+103 |         getNestedValues(column.concats, values as any);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+104 |       const getGroupValue: getValueT<GroupColumn> = (column, values) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+105 |         getNestedValues(column.groups, values as any);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+106 | 
+    | 
+107 |       const getAttachmentValues: getValueT<AttachmentColumn> = (_, value) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+108 |         (value as unknown as AttachmentCellValue["value"]).map(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+109 |           attachmentToMultilang(langs)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+110 |         );
+    | ^^^^^^^^^^
+111 | 
+    | 
+112 |       const getBooleanValue: getValueT<BooleanColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+113 |         const formatBooleanVal = (lt: Langtag, val: boolean) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+114 |           val ? column.displayName[lt] ?? column.name : "";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+115 |         return mkDisplayMap(langs, column, value, formatBooleanVal);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+116 |       };
+    | ^^^^^^^^
+117 |       const getCurrencyValue: getValueT<CurrencyColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+118 |         const formatCurrency = (lt: Langtag, val: number) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+119 |           i.formatCurrency(userLang ?? lt, i.getCurrency(lt), val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+120 |         return mkDisplayMap(langs, column, value, formatCurrency);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+121 |       };
+    | ^^^^^^^^
+122 |       const getNumberValue: getValueT<NumberColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+123 |         const formatNumber = (lt: Langtag, val: number) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+124 |           i.formatNumber(userLang ?? lt, val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+125 |         return mkDisplayMap(langs, column, value, formatNumber);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+126 |       };
+    | ^^^^^^^^
+127 |       const getPlainValue: getValueT<Column> = (column, value) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+128 |         mkDisplayMap(langs, column, value);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+129 | 
+    | 
+130 |       const getDateValue: getValueT<DateColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+131 |         const formatDate = (lt: Langtag, val: string) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+132 |           i.formatDate(userLang ?? lt, val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+133 |         return mkDisplayMap(langs, column, value, formatDate);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+134 |       };
+    | ^^^^^^^^
+135 |       const getDateTimeValue: getValueT<DateTimeColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+136 |         const formatDateTime = (lt: Langtag, val: string) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+137 |           i.formatDateTime(userLang ?? lt, val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+138 |         return mkDisplayMap(langs, column, value, formatDateTime);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+139 |       };
+    | ^^^^^^^^
+140 |       const getLinkValue: getValueT<LinkColumn> = (column, value) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+141 |         value.map((v) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+142 |           getDisplayValue(langs)(userLang)(column.toColumn as any, v)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+143 |         );
+    | ^^^^^^^^^^
+144 |       const getStatusValue: getValueT<StatusColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+145 |         const statusValues = column.rules
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+146 |           .filter((_, idx) => !!value[idx])
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+147 |           .map((v) => v["displayName"]) as MultilangValue<string>[];
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+148 |         return joinMultilangValues(langs, statusValues);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+149 |       };
+    | ^^^^^^^^
+150 | 
+    | 
+151 |       // Optionally curried  Column -> CellValue -> MultilangValue<string>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+152 |       // or uncurried        (Column, CellValue) -> MultilangValue<string>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+153 |       function go<T extends Column>(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+154 |         column: T,
+    | ^^^^^^^^^^^^^^^^^^
+155 |         cellValue: CellValueForColumn<T>["value"] | CellValueForColumn<T>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+156 |       ): DisplayValueForColumn<T>;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+157 |       function go<T extends Column>(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+158 |         _: T
+    | ^^^^^^^^^^^^
+159 |       ): (
+    | ^^^^^^^^^^
+160 |         _: CellValueForColumn<T>["value"] | CellValueForColumn<T>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+161 |       ) => DisplayValueForColumn<T>;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+162 |       function go<T extends Column>(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+163 |         column: T,
+    | ^^^^^^^^^^^^^^^^^^
+164 |         cellValue?: CellValueForColumn<T>["value"] | CellValueForColumn<T>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+165 |       ) {
+    | ^^^^^^^^^
+166 |         if (arguments.length < 2)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+167 |           return (value: CellValueForColumn<T>["value"]) => go(column, value);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+168 |         try {
+    | ^^^^^^^^^^^^^
+169 |           const fn = condSelect<Column, getValueT<any>>([
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+170 |             [isAttachmentColumn, getAttachmentValues],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+171 |             [isBooleanColumn, getBooleanValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+172 |             [isConcatColumn, getConcatValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+173 |             [isCurrencyColumn, getCurrencyValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+174 |             [isDateColumn, getDateValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+175 |             [isDateTimeColumn, getDateTimeValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+176 |             [isGroupColumn, getGroupValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+177 |             [isLinkColumn, getLinkValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+178 |             [isNumberColumn, getNumberValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+179 |             [isRichtextColumn, getPlainValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+180 |             [isShorttextColumn, getPlainValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+181 |             [isStatusColumn, getStatusValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+182 |             [isTextColumn, getPlainValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+183 |           ])(column);
+    | ^^^^^^^^^^^^^^^^^^^^^
+184 | 
+    | 
+185 |           return cellValue !== undefined && cellValue !== null
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+186 |             ? fn(column, (cellValue as CellValue).value ?? cellValue)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+187 |             : ({} as any);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+188 |         } catch (err) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+189 |           if (/Non exhaustive/.test((err as Error).message))
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+190 |             console.error("Column kind not found:", column.kind);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+191 |           throw err;
+    | ^^^^^^^^^^^^^^^^^^^^
+192 |         }
+    | ^^^^^^^^^
+193 |       }
+    | ^^^^^^^
+194 | 
+    | 
+195 |       return go;
+    | ^^^^^^^^^^^^^^^^
+196 |     };
+    | ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/tools.ts:18:14
+   | 
+18 | export const map = <Fn extends (..._: any[]) => any>(
+   |              ^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/tools.ts:29:14
+   | 
+29 | export const joinMultilangValues = (
+   |              ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/types/common.ts:15:14
+   | 
+15 | export const ISODateString = (date: string) => {
+   |              ^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/grud-intl.ts:272:14
+    | 
+272 | export const getLanguage = (locale: Locale | Language) =>
+    |              ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/grud-intl.ts:274:14
+    | 
+274 | export const getCountry = (locale: Locale) => splitLocale(locale)[1];
+    |              ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/getDisplayValue.ts:90:5
+    | 
+ 90 |     (
+    |     ^
+ 91 |       userLang?: Langtag // Numbers and dates are formatted for this langtag
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 92 |       // If undefined, numbers and dates are formatted per langtag
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 93 |     ) => {
+    | ^^^^^^^^^^
+ 94 |       // cache fns
+    | ^^^^^^^^^^^^^^^^^^
+ 95 |       const getNestedValues = (columns: Column[], values: CellValue[]) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 96 |         return joinMultilangValues(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 97 |           langs,
+    | ^^^^^^^^^^^^^^^^
+ 98 |           (map((col, val) => go(col, val), columns, values)).flat()
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 99 |         );
+    | ^^^^^^^^^^
+100 |       };
+    | ^^^^^^^^
+101 | 
+    | 
+102 |       const getConcatValue: getValueT<ConcatColumn> = (column, values) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+103 |         getNestedValues(column.concats, values as any);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+104 |       const getGroupValue: getValueT<GroupColumn> = (column, values) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+105 |         getNestedValues(column.groups, values as any);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+106 | 
+    | 
+107 |       const getAttachmentValues: getValueT<AttachmentColumn> = (_, value) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+108 |         (value as unknown as AttachmentCellValue["value"]).map(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+109 |           attachmentToMultilang(langs)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+110 |         );
+    | ^^^^^^^^^^
+111 | 
+    | 
+112 |       const getBooleanValue: getValueT<BooleanColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+113 |         const formatBooleanVal = (lt: Langtag, val: boolean) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+114 |           val ? column.displayName[lt] ?? column.name : "";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+115 |         return mkDisplayMap(langs, column, value, formatBooleanVal);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+116 |       };
+    | ^^^^^^^^
+117 |       const getCurrencyValue: getValueT<CurrencyColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+118 |         const formatCurrency = (lt: Langtag, val: number) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+119 |           i.formatCurrency(userLang ?? lt, i.getCurrency(lt), val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+120 |         return mkDisplayMap(langs, column, value, formatCurrency);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+121 |       };
+    | ^^^^^^^^
+122 |       const getNumberValue: getValueT<NumberColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+123 |         const formatNumber = (lt: Langtag, val: number) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+124 |           i.formatNumber(userLang ?? lt, val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+125 |         return mkDisplayMap(langs, column, value, formatNumber);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+126 |       };
+    | ^^^^^^^^
+127 |       const getPlainValue: getValueT<Column> = (column, value) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+128 |         mkDisplayMap(langs, column, value);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+129 | 
+    | 
+130 |       const getDateValue: getValueT<DateColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+131 |         const formatDate = (lt: Langtag, val: string) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+132 |           i.formatDate(userLang ?? lt, val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+133 |         return mkDisplayMap(langs, column, value, formatDate);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+134 |       };
+    | ^^^^^^^^
+135 |       const getDateTimeValue: getValueT<DateTimeColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+136 |         const formatDateTime = (lt: Langtag, val: string) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+137 |           i.formatDateTime(userLang ?? lt, val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+138 |         return mkDisplayMap(langs, column, value, formatDateTime);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+139 |       };
+    | ^^^^^^^^
+140 |       const getLinkValue: getValueT<LinkColumn> = (column, value) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+141 |         value.map((v) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+142 |           getDisplayValue(langs)(userLang)(column.toColumn as any, v)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+143 |         );
+    | ^^^^^^^^^^
+144 |       const getStatusValue: getValueT<StatusColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+145 |         const statusValues = column.rules
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+146 |           .filter((_, idx) => !!value[idx])
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+147 |           .map((v) => v["displayName"]) as MultilangValue<string>[];
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+148 |         return joinMultilangValues(langs, statusValues);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+149 |       };
+    | ^^^^^^^^
+150 | 
+    | 
+151 |       // Optionally curried  Column -> CellValue -> MultilangValue<string>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+152 |       // or uncurried        (Column, CellValue) -> MultilangValue<string>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+153 |       function go<T extends Column>(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+154 |         column: T,
+    | ^^^^^^^^^^^^^^^^^^
+155 |         cellValue: CellValueForColumn<T>["value"] | CellValueForColumn<T>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+156 |       ): DisplayValueForColumn<T>;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+157 |       function go<T extends Column>(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+158 |         _: T
+    | ^^^^^^^^^^^^
+159 |       ): (
+    | ^^^^^^^^^^
+160 |         _: CellValueForColumn<T>["value"] | CellValueForColumn<T>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+161 |       ) => DisplayValueForColumn<T>;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+162 |       function go<T extends Column>(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+163 |         column: T,
+    | ^^^^^^^^^^^^^^^^^^
+164 |         cellValue?: CellValueForColumn<T>["value"] | CellValueForColumn<T>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+165 |       ) {
+    | ^^^^^^^^^
+166 |         if (arguments.length < 2)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+167 |           return (value: CellValueForColumn<T>["value"]) => go(column, value);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+168 |         try {
+    | ^^^^^^^^^^^^^
+169 |           const fn = condSelect<Column, getValueT<any>>([
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+170 |             [isAttachmentColumn, getAttachmentValues],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+171 |             [isBooleanColumn, getBooleanValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+172 |             [isConcatColumn, getConcatValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+173 |             [isCurrencyColumn, getCurrencyValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+174 |             [isDateColumn, getDateValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+175 |             [isDateTimeColumn, getDateTimeValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+176 |             [isGroupColumn, getGroupValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+177 |             [isLinkColumn, getLinkValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+178 |             [isNumberColumn, getNumberValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+179 |             [isRichtextColumn, getPlainValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+180 |             [isShorttextColumn, getPlainValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+181 |             [isStatusColumn, getStatusValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+182 |             [isTextColumn, getPlainValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+183 |           ])(column);
+    | ^^^^^^^^^^^^^^^^^^^^^
+184 | 
+    | 
+185 |           return cellValue !== undefined && cellValue !== null
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+186 |             ? fn(column, (cellValue as CellValue).value ?? cellValue)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+187 |             : ({} as any);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+188 |         } catch (err) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+189 |           if (/Non exhaustive/.test((err as Error).message))
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+190 |             console.error("Column kind not found:", column.kind);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+191 |           throw err;
+    | ^^^^^^^^^^^^^^^^^^^^
+192 |         }
+    | ^^^^^^^^^
+193 |       }
+    | ^^^^^^^
+194 | 
+    | 
+195 |       return go;
+    | ^^^^^^^^^^^^^^^^
+196 |     };
+    | ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/tools.ts:18:14
+   | 
+18 | export const map = <Fn extends (..._: any[]) => any>(
+   |              ^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/tools.ts:29:14
+   | 
+29 | export const joinMultilangValues = (
+   |              ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/types/common.ts:15:14
+   | 
+15 | export const ISODateString = (date: string) => {
+   |              ^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/grud-intl.ts:272:14
+    | 
+272 | export const getLanguage = (locale: Locale | Language) =>
+    |              ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/grud-intl.ts:274:14
+    | 
+274 | export const getCountry = (locale: Locale) => splitLocale(locale)[1];
+    |              ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/getDisplayValue.ts:90:5
+    | 
+ 90 |     (
+    |     ^
+ 91 |       userLang?: Langtag // Numbers and dates are formatted for this langtag
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 92 |       // If undefined, numbers and dates are formatted per langtag
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 93 |     ) => {
+    | ^^^^^^^^^^
+ 94 |       // cache fns
+    | ^^^^^^^^^^^^^^^^^^
+ 95 |       const getNestedValues = (columns: Column[], values: CellValue[]) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 96 |         return joinMultilangValues(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 97 |           langs,
+    | ^^^^^^^^^^^^^^^^
+ 98 |           (map((col, val) => go(col, val), columns, values)).flat()
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 99 |         );
+    | ^^^^^^^^^^
+100 |       };
+    | ^^^^^^^^
+101 | 
+    | 
+102 |       const getConcatValue: getValueT<ConcatColumn> = (column, values) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+103 |         getNestedValues(column.concats, values as any);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+104 |       const getGroupValue: getValueT<GroupColumn> = (column, values) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+105 |         getNestedValues(column.groups, values as any);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+106 | 
+    | 
+107 |       const getAttachmentValues: getValueT<AttachmentColumn> = (_, value) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+108 |         (value as unknown as AttachmentCellValue["value"]).map(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+109 |           attachmentToMultilang(langs)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+110 |         );
+    | ^^^^^^^^^^
+111 | 
+    | 
+112 |       const getBooleanValue: getValueT<BooleanColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+113 |         const formatBooleanVal = (lt: Langtag, val: boolean) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+114 |           val ? column.displayName[lt] ?? column.name : "";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+115 |         return mkDisplayMap(langs, column, value, formatBooleanVal);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+116 |       };
+    | ^^^^^^^^
+117 |       const getCurrencyValue: getValueT<CurrencyColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+118 |         const formatCurrency = (lt: Langtag, val: number) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+119 |           i.formatCurrency(userLang ?? lt, i.getCurrency(lt), val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+120 |         return mkDisplayMap(langs, column, value, formatCurrency);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+121 |       };
+    | ^^^^^^^^
+122 |       const getNumberValue: getValueT<NumberColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+123 |         const formatNumber = (lt: Langtag, val: number) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+124 |           i.formatNumber(userLang ?? lt, val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+125 |         return mkDisplayMap(langs, column, value, formatNumber);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+126 |       };
+    | ^^^^^^^^
+127 |       const getPlainValue: getValueT<Column> = (column, value) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+128 |         mkDisplayMap(langs, column, value);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+129 | 
+    | 
+130 |       const getDateValue: getValueT<DateColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+131 |         const formatDate = (lt: Langtag, val: string) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+132 |           i.formatDate(userLang ?? lt, val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+133 |         return mkDisplayMap(langs, column, value, formatDate);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+134 |       };
+    | ^^^^^^^^
+135 |       const getDateTimeValue: getValueT<DateTimeColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+136 |         const formatDateTime = (lt: Langtag, val: string) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+137 |           i.formatDateTime(userLang ?? lt, val);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+138 |         return mkDisplayMap(langs, column, value, formatDateTime);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+139 |       };
+    | ^^^^^^^^
+140 |       const getLinkValue: getValueT<LinkColumn> = (column, value) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+141 |         value.map((v) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+142 |           getDisplayValue(langs)(userLang)(column.toColumn as any, v)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+143 |         );
+    | ^^^^^^^^^^
+144 |       const getStatusValue: getValueT<StatusColumn> = (column, value) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+145 |         const statusValues = column.rules
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+146 |           .filter((_, idx) => !!value[idx])
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+147 |           .map((v) => v["displayName"]) as MultilangValue<string>[];
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+148 |         return joinMultilangValues(langs, statusValues);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+149 |       };
+    | ^^^^^^^^
+150 | 
+    | 
+151 |       // Optionally curried  Column -> CellValue -> MultilangValue<string>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+152 |       // or uncurried        (Column, CellValue) -> MultilangValue<string>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+153 |       function go<T extends Column>(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+154 |         column: T,
+    | ^^^^^^^^^^^^^^^^^^
+155 |         cellValue: CellValueForColumn<T>["value"] | CellValueForColumn<T>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+156 |       ): DisplayValueForColumn<T>;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+157 |       function go<T extends Column>(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+158 |         _: T
+    | ^^^^^^^^^^^^
+159 |       ): (
+    | ^^^^^^^^^^
+160 |         _: CellValueForColumn<T>["value"] | CellValueForColumn<T>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+161 |       ) => DisplayValueForColumn<T>;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+162 |       function go<T extends Column>(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+163 |         column: T,
+    | ^^^^^^^^^^^^^^^^^^
+164 |         cellValue?: CellValueForColumn<T>["value"] | CellValueForColumn<T>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+165 |       ) {
+    | ^^^^^^^^^
+166 |         if (arguments.length < 2)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+167 |           return (value: CellValueForColumn<T>["value"]) => go(column, value);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+168 |         try {
+    | ^^^^^^^^^^^^^
+169 |           const fn = condSelect<Column, getValueT<any>>([
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+170 |             [isAttachmentColumn, getAttachmentValues],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+171 |             [isBooleanColumn, getBooleanValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+172 |             [isConcatColumn, getConcatValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+173 |             [isCurrencyColumn, getCurrencyValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+174 |             [isDateColumn, getDateValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+175 |             [isDateTimeColumn, getDateTimeValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+176 |             [isGroupColumn, getGroupValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+177 |             [isLinkColumn, getLinkValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+178 |             [isNumberColumn, getNumberValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+179 |             [isRichtextColumn, getPlainValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+180 |             [isShorttextColumn, getPlainValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+181 |             [isStatusColumn, getStatusValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+182 |             [isTextColumn, getPlainValue],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+183 |           ])(column);
+    | ^^^^^^^^^^^^^^^^^^^^^
+184 | 
+    | 
+185 |           return cellValue !== undefined && cellValue !== null
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+186 |             ? fn(column, (cellValue as CellValue).value ?? cellValue)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+187 |             : ({} as any);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+188 |         } catch (err) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+189 |           if (/Non exhaustive/.test((err as Error).message))
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+190 |             console.error("Column kind not found:", column.kind);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+191 |           throw err;
+    | ^^^^^^^^^^^^^^^^^^^^
+192 |         }
+    | ^^^^^^^^^
+193 |       }
+    | ^^^^^^^
+194 | 
+    | 
+195 |       return go;
+    | ^^^^^^^^^^^^^^^^
+196 |     };
+    | ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/tools.ts:18:14
+   | 
+18 | export const map = <Fn extends (..._: any[]) => any>(
+   |              ^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/tools.ts:29:14
+   | 
+29 | export const joinMultilangValues = (
+   |              ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

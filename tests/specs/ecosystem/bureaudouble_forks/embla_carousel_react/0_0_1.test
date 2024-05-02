@@ -1,0 +1,15 @@
+bureaudouble-forks/embla-carousel-react/0.0.1
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/index.ts
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+type EmblaViewportRefType = <ViewportElement extends HTMLElement>(instance: ViewportElement | null) => void;
+                                                     ~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:2:54
+

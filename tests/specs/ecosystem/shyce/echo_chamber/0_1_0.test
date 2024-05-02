@@ -1,0 +1,22 @@
+shyce/echo-chamber/0.1.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/EchoChamber.ts
+error: TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
+  public get _internalPingInterval(): NodeJS.Timeout | null {
+                                      ~~~~~~
+    at file://<tmpdir>/src/EchoChamber.ts:50:39
+
+TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
+  public set _internalPingInterval(_pingInterval: NodeJS.Timeout | null) {}
+                                                  ~~~~~~
+    at file://<tmpdir>/src/EchoChamber.ts:53:51
+
+Found 2 errors.
+

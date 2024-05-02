@@ -1,0 +1,18 @@
+sxzz/ast-kit/0.12.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS2694 [ERROR]: Namespace '"file://<tmpdir>/node_modules/.deno/@babel+types@7.24.5/node_modules/@babel/types/lib/index-legacy.d.ts"' has no exported member 'ParentMaps'.
+    at file://<tmpdir>/src/walk.ts:16:124
+
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/node_modules/.deno/@babel+types@7.24.5/node_modules/@babel/types/lib/index-legacy.d.ts"' has no exported member 'ParentMaps'.
+    at file://<tmpdir>/src/walk.ts:16:139
+
+Found 2 errors.
+

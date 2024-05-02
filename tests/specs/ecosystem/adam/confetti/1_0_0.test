@@ -1,0 +1,15 @@
+adam/confetti/1.0.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/confetti/confetti.ts
+error: TS2304 [ERROR]: Cannot find name 'CSSStyleDeclaration'.
+  customStyles?: CSSStyleDeclaration;
+                 ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/confetti/confetti.ts:9:18
+

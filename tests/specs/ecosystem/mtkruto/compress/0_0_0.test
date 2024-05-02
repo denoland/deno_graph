@@ -1,0 +1,59 @@
+mtkruto/compress/0.0.0
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /zlib/inflate.ts:180:17
+    | 
+180 | export function inflate(input: Uint8Array, options: InflateOptions = {}) {
+    |                 ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /zlib/inflate.ts:188:17
+    | 
+188 | export function inflateRaw(input: Uint8Array, options: InflateOptions = {}) {
+    |                 ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /zlib/deflate.ts:138:17
+    | 
+138 | export function deflate(input: Uint8Array, options: DeflateOptions = {}) {
+    |                 ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /zlib/deflate.ts:146:17
+    | 
+146 | export function deflateRaw(input: Uint8Array, options: DeflateOptions = {}) {
+    |                 ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /zlib/deflate.ts:151:17
+    | 
+151 | export function gzip(input: Uint8Array, options: DeflateOptions = {}) {
+    |                 ^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

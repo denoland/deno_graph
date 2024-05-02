@@ -1,0 +1,20 @@
+sisou/nimiq-ts/0.1.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/lib.ts
+error: TS2578 [ERROR]: Unused '@ts-expect-error' directive.
+    at file://<tmpdir>/src/MultiSigWallet.ts:57:1
+
+TS2416 [ERROR]: Property 'signTransaction' in type 'MultiSigWallet' is not assignable to the same property in base type 'Wallet'.
+  Type '(transaction: Transaction, aggregatedPublicKey: PublicKey, aggregatedCommitment: Commitment, signatures: PartialSignature[]) => SignatureProof' is not assignable to type '(transaction: Transaction) => SignatureProof'.
+    Target signature provides too few arguments. Expected 4 or more, but got 1.
+    at file://<tmpdir>/src/MultiSigWallet.ts:57:82
+
+Found 2 errors.
+

@@ -1,0 +1,27 @@
+radix-ui-fork/react-scroll-area/0.0.7
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+  content: HTMLDivElement | null;
+           ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/ScrollArea.tsx:24:12
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+  onContentChange(content: HTMLDivElement): void;
+                           ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/ScrollArea.tsx:25:28
+
+TS2304 [ERROR]: Cannot find name 'WheelEvent'.
+  onWheelScroll(event: WheelEvent, maxScrollPos: number): void;
+                       ~~~~~~~~~~
+    at file://<tmpdir>/src/ScrollArea.tsx:92:24
+
+Found 3 errors.
+

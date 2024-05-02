@@ -1,0 +1,13 @@
+stump/adapter-filesystem/0.0.1
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Download https:<global_npm_dir>/@jsr/stump__core
+error: npm package '@jsr/stump__core' does not exist.
+    at file://<tmpdir>/src/drivers/bun/index.ts:1:36
+

@@ -1,0 +1,174 @@
+sunney/requests/1.0.0
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:148:14
+    | 
+148 |   public get baseUrl() {
+    |              ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:156:10
+    | 
+156 |   public create(opts?: RequestlyOptions | string) {
+    |          ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:160:14
+    | 
+160 |   public get params() {
+    |              ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:172:10
+    | 
+172 |     get: (key: string) => {
+    |          ^^^^^^^^^^^^^^^^^^
+173 |       return this._headers[key];
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+174 |     },
+    | ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:175:13
+    | 
+175 |     getAll: () => {
+    |             ^^^^^^^
+176 |       return this._headers;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+177 |     },
+    | ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:193:10
+    | 
+193 |     get: (key: string) => {
+    |          ^^^^^^^^^^^^^^^^^^
+194 |       return this._cookies[key];
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+195 |     },
+    | ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:196:13
+    | 
+196 |     getAll: () => {
+    |             ^^^^^^^
+197 |       return this._cookies;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+198 |     },
+    | ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:208:15
+    | 
+208 |     toString: () => utils.stringifyCookies(this.cookies.getAll()),
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:211:10
+    | 
+211 |   public get<T>(url: string, options?: Omit<RequestOptions, "body">) {
+    |          ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:215:10
+    | 
+215 |   public post<T>(url: string, options?: RequestOptions) {
+    |          ^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:219:10
+    | 
+219 |   public put<T>(url: string, options?: RequestOptions) {
+    |          ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:223:10
+    | 
+223 |   public delete<T>(url: string, options?: RequestOptions) {
+    |          ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:227:10
+    | 
+227 |   public patch<T>(url: string, options?: RequestOptions) {
+    |          ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/index.ts:242:14
+    | 
+242 | export const requestly = new Requestly();
+    |              ^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

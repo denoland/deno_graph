@@ -1,0 +1,32 @@
+bureaudouble/vaul/0.0.3
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.tsx
+error: TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+  onDrag?: (event: React.PointerEvent<HTMLDivElement>, percentageDragged: number) => void;
+                                      ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.tsx:22:39
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+  onRelease?: (event: React.PointerEvent<HTMLDivElement>, open: boolean) => void;
+                                         ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.tsx:23:42
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+const Overlay: React.ForwardRefExoticComponent<Omit<typeof DialogPrimitive.Overlay, "ref"> & React.RefAttributes<HTMLDivElement>> = {} as never;
+                                                                                                                 ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.tsx:34:114
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+const Content: React.ForwardRefExoticComponent<Omit<ContentProps, "ref"> & React.RefAttributes<HTMLDivElement>> = {} as never;
+                                                                                               ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.tsx:38:96
+
+Found 4 errors.
+

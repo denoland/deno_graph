@@ -1,0 +1,15 @@
+radix-ui-fork/react-use-size/0.0.7
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function useSize(element: HTMLElement | null): {
+                          ~~~~~~~~~~~
+    at file://<tmpdir>/src/useSize.tsx:1:27
+

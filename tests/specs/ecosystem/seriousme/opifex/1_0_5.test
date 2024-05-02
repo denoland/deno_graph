@@ -1,0 +1,63 @@
+seriousme/opifex/1.0.5
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/server/mod.ts
+Check file://<tmpdir>/client/mod.ts
+error: TS2729 [ERROR]: Property 'defaultError' is used before its initialization.
+  error = this.defaultError;
+               ~~~~~~~~~~~~
+    at file://<tmpdir>/utils/utils.ts:15:16
+
+    'defaultError' is declared here.
+      declare private defaultError: any;
+                      ~~~~~~~~~~~~
+        at file://<tmpdir>/utils/utils.ts:9:19
+
+TS2729 [ERROR]: Property 'defaultWarn' is used before its initialization.
+  warn = this.defaultWarn;
+              ~~~~~~~~~~~
+    at file://<tmpdir>/utils/utils.ts:16:15
+
+    'defaultWarn' is declared here.
+      declare private defaultWarn: any;
+                      ~~~~~~~~~~~
+        at file://<tmpdir>/utils/utils.ts:10:19
+
+TS2729 [ERROR]: Property 'defaultInfo' is used before its initialization.
+  info = this.defaultInfo;
+              ~~~~~~~~~~~
+    at file://<tmpdir>/utils/utils.ts:17:15
+
+    'defaultInfo' is declared here.
+      declare private defaultInfo: any;
+                      ~~~~~~~~~~~
+        at file://<tmpdir>/utils/utils.ts:11:19
+
+TS2729 [ERROR]: Property 'noop' is used before its initialization.
+  verbose = this.noop;
+                 ~~~~
+    at file://<tmpdir>/utils/utils.ts:18:18
+
+    'noop' is declared here.
+      declare private noop: any;
+                      ~~~~
+        at file://<tmpdir>/utils/utils.ts:14:19
+
+TS2729 [ERROR]: Property 'noop' is used before its initialization.
+  debug = this.noop;
+               ~~~~
+    at file://<tmpdir>/utils/utils.ts:19:16
+
+    'noop' is declared here.
+      declare private noop: any;
+                      ~~~~
+        at file://<tmpdir>/utils/utils.ts:14:19
+
+Found 5 errors.
+

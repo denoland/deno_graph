@@ -1,0 +1,15 @@
+vento/test/0.0.1
+===
+
+== FAST CHECK EMIT FAILED ==
+error[unsupported-destructuring]: found destructuring, which is not supported in the public API
+ --> /main.ts:3:7
+  | 
+3 | const { stringToDocument } = await import(url);
+  |       ^^^^^^^^^^^^^^^^^^^^
+  = hint: separate each destructured symbol into its own export statement
+
+  info: destructuring can not be inferred by fast check
+  docs: https://jsr.io/go/slow-type-unsupported-destructuring
+
+

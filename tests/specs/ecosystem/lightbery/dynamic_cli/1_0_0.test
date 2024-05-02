@@ -1,0 +1,15 @@
+lightbery/dynamic-cli/1.0.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/DynamicCLI.ts
+error: TS2580 [ERROR]: Cannot find name 'Buffer'.
+  public simulateInput(data: Buffer): void {}
+                             ~~~~~~
+    at file://<tmpdir>/DynamicCLI.ts:45:30
+

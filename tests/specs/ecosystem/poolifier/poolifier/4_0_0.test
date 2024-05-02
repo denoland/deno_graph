@@ -1,0 +1,22 @@
+poolifier/poolifier/4.0.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS2305 [ERROR]: Module '"node:events"' has no exported member 'EventEmitterAsyncResource'.
+import { EventEmitterAsyncResource } from 'node:events';
+         ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/pools/abstract-pool.ts:1:10
+
+TS2305 [ERROR]: Module '"node:events"' has no exported member 'EventEmitterAsyncResource'.
+import type { EventEmitterAsyncResource } from 'node:events';
+              ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/pools/pool.ts:2:15
+
+Found 2 errors.
+

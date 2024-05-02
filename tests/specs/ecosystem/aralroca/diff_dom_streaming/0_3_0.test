@@ -1,0 +1,33 @@
+aralroca/diff-dom-streaming/0.3.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+Check file://<tmpdir>/index.d.ts
+error: TS2304 [ERROR]: Cannot find name 'Node'.
+export default function diff(oldNode: Node, reader: ReadableStreamDefaultReader, options?: Options): Promise<void>;
+                                      ~~~~
+    at file://<tmpdir>/index.d.ts:1:39
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+type NextNodeCallback = (node: Node) => void;
+                               ~~~~
+    at file://<tmpdir>/index.d.ts:2:32
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+type NextNodeCallback = (node: Node) => void;
+                               ~~~~
+    at file://<tmpdir>/src/index.ts:1:32
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+export default function diff(oldNode: Node, reader: ReadableStreamDefaultReader, options?: Options): Promise<void> {
+                                      ~~~~
+    at file://<tmpdir>/src/index.ts:6:39
+
+Found 4 errors.
+

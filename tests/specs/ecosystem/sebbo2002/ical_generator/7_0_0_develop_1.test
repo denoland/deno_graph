@@ -1,0 +1,124 @@
+sebbo2002/ical-generator/7.0.0-develop.1
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:38:32
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:38:47
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:38:66
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:38:105
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:38:126
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:38:148
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:38:175
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:38:218
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:38:238
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:39:35
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:39:109
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { default as ICalCalendar, ICalCalendarData, ICalCalendarProdIdData, ICalCalendarMethod, ICalCalendarJSONData } from "./calendar.ts";
+                                  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:40:35
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { default as ICalCalendar, ICalCalendarData, ICalCalendarProdIdData, ICalCalendarMethod, ICalCalendarJSONData } from "./calendar.ts";
+                                                    ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:40:53
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { default as ICalCalendar, ICalCalendarData, ICalCalendarProdIdData, ICalCalendarMethod, ICalCalendarJSONData } from "./calendar.ts";
+                                                                                                ~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:40:97
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { default as ICalCategory, ICalCategoryData, ICalCategoryJSONData } from "./category.ts";
+                                  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:41:35
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { default as ICalCategory, ICalCategoryData, ICalCategoryJSONData } from "./category.ts";
+                                                    ~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:41:53
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:42:93
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:42:108
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:42:127
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:10
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:29
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:51
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:65
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:88
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:114
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:123
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:138
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:192
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:206
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:222
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:246
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:270
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:293
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    at file://<tmpdir>/src/index.ts:43:308
+
+Found 34 errors.
+

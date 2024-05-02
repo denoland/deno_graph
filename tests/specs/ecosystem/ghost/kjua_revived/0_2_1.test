@@ -1,0 +1,38 @@
+ghost/kjua-revived/0.2.1
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/package.json
+Check file://<tmpdir>/src/kjua.ts
+error: TS2304 [ERROR]: Cannot find name 'SVGElement'.
+}): SVGElement;
+    ~~~~~~~~~~
+    at file://<tmpdir>/src/kjua.ts:4:5
+
+TS2304 [ERROR]: Cannot find name 'HTMLCanvasElement'.
+}): HTMLCanvasElement;
+    ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/kjua.ts:7:5
+
+TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
+}): HTMLImageElement;
+    ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/kjua.ts:10:5
+
+TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
+	 */ image?: string | HTMLImageElement;
+	                     ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/lib/options.ts:7:23
+
+TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
+	 */ image?: HTMLImageElement;
+	            ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/lib/options.ts:84:14
+
+Found 5 errors.
+

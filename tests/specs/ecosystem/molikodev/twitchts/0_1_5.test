@@ -1,0 +1,12 @@
+molikodev/twitchts/0.1.5
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Module not found "file://<tmpdir>/src/util/session".
+    at file://<tmpdir>/src/helix/EventSub/EventSub.ts:1:30
+

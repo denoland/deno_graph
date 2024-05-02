@@ -1,0 +1,29 @@
+pengzhanbo/utils/1.1.1
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+Check file://<tmpdir>/src/array.ts
+Check file://<tmpdir>/src/clone.ts
+Check file://<tmpdir>/src/common.ts
+Check file://<tmpdir>/src/equal.ts
+Check file://<tmpdir>/src/event.ts
+Check file://<tmpdir>/src/function.ts
+Check file://<tmpdir>/src/is.ts
+Check file://<tmpdir>/src/math.ts
+Check file://<tmpdir>/src/object.ts
+Check file://<tmpdir>/src/promise.ts
+Check file://<tmpdir>/src/string.ts
+Check file://<tmpdir>/src/time.ts
+Check file://<tmpdir>/src/types.ts
+Check file://<tmpdir>/src/url.ts
+error: TS2578 [ERROR]: Unused '@ts-expect-error' directive.
+ */ // @ts-expect-error 跳过环境检查
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/is.ts:56:5
+

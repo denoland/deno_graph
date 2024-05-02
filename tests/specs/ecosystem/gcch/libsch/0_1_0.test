@@ -1,0 +1,12 @@
+gcch/libsch/0.1.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Module not found "file://<tmpdir>/types/arrays".
+    at file://<tmpdir>/src/predicates/arrays.ts:1:91
+

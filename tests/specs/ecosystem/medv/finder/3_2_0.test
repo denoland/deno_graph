@@ -1,0 +1,22 @@
+medv/finder/3.2.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/finder.ts
+error: TS2304 [ERROR]: Cannot find name 'Element'.
+  root: Element;
+        ~~~~~~~
+    at file://<tmpdir>/finder.ts:2:9
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+export function finder(input: Element, options?: Partial<Options>): string {
+                              ~~~~~~~
+    at file://<tmpdir>/finder.ts:13:31
+
+Found 2 errors.
+

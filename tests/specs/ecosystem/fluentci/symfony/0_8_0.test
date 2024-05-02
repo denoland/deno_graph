@@ -1,0 +1,92 @@
+fluentci/symfony/0.8.0
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /sdk/client.gen.ts:45:7
+   | 
+45 |   get queryTree() {
+   |       ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /sdk/client.gen.ts:2555:3
+     | 
+2555 |   with = (arg: (param: Container) => Container) => {
+     |   ^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /sdk/client.gen.ts:3061:3
+     | 
+3061 |   with = (arg: (param: Directory) => Directory) => {
+     |   ^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /sdk/client.gen.ts:3441:3
+     | 
+3441 |   with = (arg: (param: File) => File) => {
+     |   ^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /sdk/client.gen.ts:3634:3
+     | 
+3634 |   with = (arg: (param: Function_) => Function_) => {
+     |   ^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /sdk/client.gen.ts:5607:3
+     | 
+5607 |   with = (arg: (param: Module_) => Module_) => {
+     |   ^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /sdk/client.gen.ts:5925:3
+     | 
+5925 |   with = (arg: (param: ModuleSource) => ModuleSource) => {
+     |   ^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /sdk/client.gen.ts:7909:3
+     | 
+7909 |   with = (arg: (param: TypeDef) => TypeDef) => {
+     |   ^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

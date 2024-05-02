@@ -1,0 +1,22 @@
+radix-ui-fork/react-collection/0.0.4
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS2552 [ERROR]: Cannot find name 'HTMLElement'. Did you mean 'ItemElement'?
+function createCollection<ItemElement extends HTMLElement, ItemData = {
+                                              ~~~~~~~~~~~
+    at file://<tmpdir>/src/Collection.tsx:8:47
+
+TS2552 [ERROR]: Cannot find name 'HTMLElement'. Did you mean 'ItemElement'?
+    readonly Slot: React.ForwardRefExoticComponent<CollectionProps & React.RefAttributes<HTMLElement>>;
+                                                                                         ~~~~~~~~~~~
+    at file://<tmpdir>/src/Collection.tsx:14:90
+
+Found 2 errors.
+

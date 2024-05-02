@@ -1,0 +1,26 @@
+sxzz/magic-string-ast/0.5.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS2430 [ERROR]: Interface 'MagicStringAST' incorrectly extends interface 'MagicString'.
+  The types returned by 'clone()' are incompatible between these types.
+    Type 'MagicStringAST' is not assignable to type 'this'.
+      'MagicStringAST' is assignable to the constraint of type 'this', but 'this' could be instantiated with a different subtype of constraint 'MagicStringAST'.
+export interface MagicStringAST extends MagicString {
+                 ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:5:18
+
+TS2416 [ERROR]: Property 'clone' in type 'MagicStringAST' is not assignable to the same property in base type 'MagicString'.
+  Type '() => MagicStringAST' is not assignable to type '() => this'.
+  clone(): MagicStringAST {
+  ~~~~~
+    at file://<tmpdir>/src/index.ts:39:3
+
+Found 2 errors.
+

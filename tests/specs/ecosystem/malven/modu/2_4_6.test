@@ -1,0 +1,112 @@
+malven/modu/2.4.6
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/index.ts
+error: TS2304 [ERROR]: Cannot find name 'Element'.
+  el: Element;
+      ~~~~~~~
+    at file://<tmpdir>/index.ts:12:7
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+  el: Element;
+      ~~~~~~~
+    at file://<tmpdir>/index.ts:39:7
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+  declare el: Element;
+              ~~~~~~~
+    at file://<tmpdir>/index.ts:49:15
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+   */ get(name: string): Element | null {
+                         ~~~~~~~
+    at file://<tmpdir>/index.ts:60:26
+
+TS2304 [ERROR]: Cannot find name 'NodeListOf'.
+   */ getAll(name: string): NodeListOf<Element> {
+                            ~~~~~~~~~~
+    at file://<tmpdir>/index.ts:67:29
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+   */ getAll(name: string): NodeListOf<Element> {
+                                       ~~~~~~~
+    at file://<tmpdir>/index.ts:67:40
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+   */ getData(name: string, el?: Element | null): string | number | boolean | null {
+                                 ~~~~~~~
+    at file://<tmpdir>/index.ts:75:34
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+   */ init(containerEl?: Element | Document | null): void {}
+                         ~~~~~~~
+    at file://<tmpdir>/index.ts:128:26
+
+TS2304 [ERROR]: Cannot find name 'Document'.
+   */ init(containerEl?: Element | Document | null): void {}
+                                   ~~~~~~~~
+    at file://<tmpdir>/index.ts:128:36
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+   */ destroyModules(containerEl?: Element | Document | null): void {}
+                                   ~~~~~~~
+    at file://<tmpdir>/index.ts:135:36
+
+TS2304 [ERROR]: Cannot find name 'Document'.
+   */ destroyModules(containerEl?: Element | Document | null): void {}
+                                             ~~~~~~~~
+    at file://<tmpdir>/index.ts:135:46
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+  /** @ignore */ getModuleElements(containerEl?: Element | Document): Element[] {
+                                                 ~~~~~~~
+    at file://<tmpdir>/index.ts:136:50
+
+TS2304 [ERROR]: Cannot find name 'Document'.
+  /** @ignore */ getModuleElements(containerEl?: Element | Document): Element[] {
+                                                           ~~~~~~~~
+    at file://<tmpdir>/index.ts:136:60
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+  /** @ignore */ getModuleElements(containerEl?: Element | Document): Element[] {
+                                                                      ~~~~~~~
+    at file://<tmpdir>/index.ts:136:71
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+  /** @ignore */ initModulesForElements(elements: Element[]): void {}
+                                                  ~~~~~~~
+    at file://<tmpdir>/index.ts:139:51
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+  /** @ignore */ destroyModulesForElements(elements: Element[]): void {}
+                                                     ~~~~~~~
+    at file://<tmpdir>/index.ts:140:54
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+  /** @ignore */ initModules(element: Element): Promise<(void | Modu)[]> {
+                                      ~~~~~~~
+    at file://<tmpdir>/index.ts:141:39
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+    element: Element;
+             ~~~~~~~
+    at file://<tmpdir>/index.ts:145:14
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+  /** @ignore */ getModuleNamesFromElement(element: Element): ModuleNames {
+                                                    ~~~~~~~
+    at file://<tmpdir>/index.ts:151:53
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+  /** @ignore */ getModulesForElement(element: Element, name?: string): StoredModu[] {
+                                               ~~~~~~~
+    at file://<tmpdir>/index.ts:154:48
+
+Found 20 errors.
+

@@ -1,0 +1,15 @@
+vxern/dexonline-scraper/0.2.1
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { DictionaryFlags, MatchingMode, Synthesis, Inflection, Links, Expressions, Selectors, copyrightedDictionaries };
+                          ~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:42:27
+

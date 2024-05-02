@@ -1,0 +1,27 @@
+developer3/safe-keys/0.1.5
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/dom.ts
+error: TS2304 [ERROR]: Cannot find name 'IDBFactory'.
+  indexedDB: IDBFactory;
+             ~~~~~~~~~~
+    at file://<tmpdir>/dom.ts:11:14
+
+TS2304 [ERROR]: Cannot find name 'IDBFactory'.
+  public callDB(indexedDB: IDBFactory, call: (store: IDBObjectStore) => Promise<any>): Promise<true> {
+                           ~~~~~~~~~~
+    at file://<tmpdir>/dom.ts:26:28
+
+TS2304 [ERROR]: Cannot find name 'IDBObjectStore'.
+  public callDB(indexedDB: IDBFactory, call: (store: IDBObjectStore) => Promise<any>): Promise<true> {
+                                                     ~~~~~~~~~~~~~~
+    at file://<tmpdir>/dom.ts:26:54
+
+Found 3 errors.
+

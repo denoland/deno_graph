@@ -1,0 +1,57 @@
+fireproof/encrypted-blockstore/0.17.6
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { EncryptedBlockstore, CompactionFetcher, BlockFetcher, CarTransaction, TransactionMeta } from "./transaction.ts";
+                                                 ~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:1:50
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { EncryptedBlockstore, CompactionFetcher, BlockFetcher, CarTransaction, TransactionMeta } from "./transaction.ts";
+                                                                               ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:1:80
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { RemoteWAL, WALState } from "./remote-wal.ts";
+                    ~~~~~~~~
+    at file://<tmpdir>/src/index.ts:4:21
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { DbMeta, AnyBlock, AnyLink, CryptoOpts, StoreOpts, CommitOpts } from "./types.ts";
+         ~~~~~~
+    at file://<tmpdir>/src/index.ts:5:10
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { DbMeta, AnyBlock, AnyLink, CryptoOpts, StoreOpts, CommitOpts } from "./types.ts";
+                 ~~~~~~~~
+    at file://<tmpdir>/src/index.ts:5:18
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { DbMeta, AnyBlock, AnyLink, CryptoOpts, StoreOpts, CommitOpts } from "./types.ts";
+                           ~~~~~~~
+    at file://<tmpdir>/src/index.ts:5:28
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { DbMeta, AnyBlock, AnyLink, CryptoOpts, StoreOpts, CommitOpts } from "./types.ts";
+                                    ~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:5:37
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { DbMeta, AnyBlock, AnyLink, CryptoOpts, StoreOpts, CommitOpts } from "./types.ts";
+                                                ~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:5:49
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { DbMeta, AnyBlock, AnyLink, CryptoOpts, StoreOpts, CommitOpts } from "./types.ts";
+                                                           ~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:5:60
+
+Found 9 errors.
+

@@ -1,0 +1,22 @@
+zone-x/zone-x/0.5.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS2304 [ERROR]: Cannot find name 'TimeZone'.
+/** Gets users timezone from system settings */ export function getCurrentTimeZone(): TimeZone {
+                                                                                      ~~~~~~~~
+    at file://<tmpdir>/src/index.ts:1:87
+
+TS2304 [ERROR]: Cannot find name 'TimeZone'.
+/** Returns a Date string set to custom timezone */ export function getCustomTimeZoneDateString(timeZone: TimeZone): string {
+                                                                                                          ~~~~~~~~
+    at file://<tmpdir>/src/index.ts:4:107
+
+Found 2 errors.
+

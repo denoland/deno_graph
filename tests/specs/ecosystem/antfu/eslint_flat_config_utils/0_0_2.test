@@ -1,0 +1,92 @@
+antfu/eslint-flat-config-utils/0.0.2
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/pipe.ts:51:17
+   | 
+51 | export function pipe(...configs: Awaitable<FlatConfigItem | FlatConfigItem[]>[]) {
+   |                 ^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/pipe.ts:74:10
+   | 
+74 |   public renamePlugins(renames: Record<string, string>) {
+   |          ^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/pipe.ts:120:10
+    | 
+120 |   public insertAfter(nameOrIndex: string | number, ...items: Awaitable<T | T[]>[]) {
+    |          ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/pipe.ts:136:10
+    | 
+136 |   public override(nameOrIndex: string | number, config: T | ((config: T) => Awaitable<T>)) {
+    |          ^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/pipe.ts:153:10
+    | 
+153 |   public overrides(overrides: Record<string | number, T | ((config: T) => Awaitable<T>)>) {
+    |          ^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/pipe.ts:175:3
+    | 
+175 |   then(onFulfilled: (value: T[]) => any, onRejected?: (reason: any) => any) {
+    |   ^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/pipe.ts:180:3
+    | 
+180 |   catch(onRejected: (reason: any) => any) {
+    |   ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/pipe.ts:184:3
+    | 
+184 |   finally(onFinally: () => any) {
+    |   ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

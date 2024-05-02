@@ -1,0 +1,15 @@
+brc-dd/iron/1.0.1
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/index.ts:62:14
+   | 
+62 | export const macPrefix = `Fe26.${macFormatVersion}`
+   |              ^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

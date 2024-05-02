@@ -1,0 +1,32 @@
+bureaudouble/sonner/0.0.2
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.tsx
+error: TS2503 [ERROR]: Cannot find namespace 'JSX'.
+export const getAsset = (type: ToastTypes): JSX.Element | null =>({} as never);
+                                            ~~~
+    at file://<tmpdir>/src/assets.tsx:3:45
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+  onClick: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+                                    ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:38:37
+
+TS2552 [ERROR]: Cannot find name 'MouseEvent'. Did you mean 'CloseEvent'?
+  onClick: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+                                                       ~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:38:56
+
+    'CloseEvent' is declared here.
+    declare var CloseEvent: {
+                ~~~~~~~~~~
+        at asset:///lib.deno.websocket.d.ts:32:13
+
+Found 3 errors.
+

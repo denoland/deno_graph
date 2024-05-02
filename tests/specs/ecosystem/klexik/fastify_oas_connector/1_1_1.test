@@ -1,0 +1,12 @@
+klexik/fastify-oas-connector/1.1.1
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Module not found "file://<tmpdir>/src/fastify".
+    at file://<tmpdir>/src/types.ts:1:96
+

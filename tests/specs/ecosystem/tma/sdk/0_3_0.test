@@ -1,0 +1,107 @@
+tma/sdk/0.3.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS2300 [ERROR]: Duplicate identifier 'isVisible'.
+  declare private isVisible: any;
+                  ~~~~~~~~~
+    at file://<tmpdir>/src/back-button/BackButton.ts:16:19
+
+TS2300 [ERROR]: Duplicate identifier 'isVisible'.
+   */ get isVisible(): boolean {
+          ~~~~~~~~~
+    at file://<tmpdir>/src/back-button/BackButton.ts:19:11
+
+TS2300 [ERROR]: Duplicate identifier 'isConfirmationNeeded'.
+  declare private isConfirmationNeeded: any;
+                  ~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/closing-behavior/ClosingBehavior.ts:13:19
+
+TS2300 [ERROR]: Duplicate identifier 'isConfirmationNeeded'.
+   */ get isConfirmationNeeded(): boolean {
+          ~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/closing-behavior/ClosingBehavior.ts:17:11
+
+TS2304 [ERROR]: Cannot find name 'defaultPostEvent'.
+  constructor(version: Version, createRequestId: CreateRequestIdFunc, postEvent = defaultPostEvent){}
+                                                                                  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/cloud-storage/CloudStorage.ts:7:83
+
+TS2300 [ERROR]: Duplicate identifier 'isOpened'.
+  declare private isOpened: any;
+                  ~~~~~~~~
+    at file://<tmpdir>/src/invoice/Invoice.ts:14:19
+
+TS2300 [ERROR]: Duplicate identifier 'isOpened'.
+   */ get isOpened(): boolean {
+          ~~~~~~~~
+    at file://<tmpdir>/src/invoice/Invoice.ts:17:11
+
+TS2300 [ERROR]: Duplicate identifier 'isEnabled'.
+  declare private isEnabled: any;
+                  ~~~~~~~~~
+    at file://<tmpdir>/src/main-button/MainButton.ts:14:19
+
+TS2300 [ERROR]: Duplicate identifier 'isEnabled'.
+   */ get isEnabled(): boolean {
+          ~~~~~~~~~
+    at file://<tmpdir>/src/main-button/MainButton.ts:17:11
+
+TS2300 [ERROR]: Duplicate identifier 'isLoaderVisible'.
+  declare private isLoaderVisible: any;
+                  ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/main-button/MainButton.ts:20:19
+
+TS2300 [ERROR]: Duplicate identifier 'isLoaderVisible'.
+   */ get isLoaderVisible(): boolean {
+          ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/main-button/MainButton.ts:23:11
+
+TS2300 [ERROR]: Duplicate identifier 'isVisible'.
+  declare private isVisible: any;
+                  ~~~~~~~~~
+    at file://<tmpdir>/src/main-button/MainButton.ts:26:19
+
+TS2300 [ERROR]: Duplicate identifier 'isVisible'.
+   */ get isVisible(): boolean {
+          ~~~~~~~~~
+    at file://<tmpdir>/src/main-button/MainButton.ts:29:11
+
+TS2300 [ERROR]: Duplicate identifier 'isOpened'.
+  declare private isOpened: any;
+                  ~~~~~~~~
+    at file://<tmpdir>/src/popup/Popup.ts:15:19
+
+TS2300 [ERROR]: Duplicate identifier 'isOpened'.
+   */ get isOpened(): boolean {
+          ~~~~~~~~
+    at file://<tmpdir>/src/popup/Popup.ts:18:11
+
+TS2300 [ERROR]: Duplicate identifier 'isOpened'.
+  declare private isOpened: any;
+                  ~~~~~~~~
+    at file://<tmpdir>/src/qr-scanner/QRScanner.ts:17:19
+
+TS2300 [ERROR]: Duplicate identifier 'isOpened'.
+   */ get isOpened(): boolean {
+          ~~~~~~~~
+    at file://<tmpdir>/src/qr-scanner/QRScanner.ts:20:11
+
+TS2300 [ERROR]: Duplicate identifier 'isVisible'.
+  declare private isVisible: any;
+                  ~~~~~~~~~
+    at file://<tmpdir>/src/settings-button/SettingsButton.ts:12:19
+
+TS2300 [ERROR]: Duplicate identifier 'isVisible'.
+   */ get isVisible(): boolean {
+          ~~~~~~~~~
+    at file://<tmpdir>/src/settings-button/SettingsButton.ts:15:11
+
+Found 19 errors.
+

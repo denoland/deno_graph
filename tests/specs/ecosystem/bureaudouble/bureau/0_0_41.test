@@ -1,0 +1,46 @@
+bureaudouble/bureau/0.0.41
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/mod.ts
+Check file://<tmpdir>/src/components/ui/switch.tsx
+Check file://<tmpdir>/src/components/ui/switch.tsx
+Check file://<tmpdir>/src/components/ui/sonner.tsx
+Check file://<tmpdir>/src/components/ui/sonner.tsx
+Check file://<tmpdir>/src/components/CustomInput.tsx
+Check file://<tmpdir>/src/components/CustomInput.tsx
+Check file://<tmpdir>/src/components/Media.tsx
+Check file://<tmpdir>/src/components/Media.tsx
+Check file://<tmpdir>/src/components/ui/dropdown-menu.tsx
+Check file://<tmpdir>/src/components/ui/dropdown-menu.tsx
+Check file://<tmpdir>/src/components/bureau-ui/integer-switch.tsx
+Check file://<tmpdir>/src/components/bureau-ui/integer-switch.tsx
+Check file://<tmpdir>/src/components/bureau-ui/combobox.tsx
+Check file://<tmpdir>/src/components/bureau-ui/combobox.tsx
+Check file://<tmpdir>/src/components/ui/checkbox.tsx
+Check file://<tmpdir>/src/components/ui/checkbox.tsx
+Check file://<tmpdir>/src/components/ui/alert-dialog.tsx
+Check file://<tmpdir>/src/components/ui/alert-dialog.tsx
+Check file://<tmpdir>/src/components/SqlInput.tsx
+Check file://<tmpdir>/src/components/SqlInput.tsx
+Check file://<tmpdir>/src/components/ui/tabs.tsx
+Check file://<tmpdir>/src/components/ui/tabs.tsx
+Check file://<tmpdir>/src/components/DataTable.tsx
+Check file://<tmpdir>/src/components/DataTable.tsx
+error: Uncaught Error: Failed resolving package subpath './client' for '<global_npm_dir>/react-dom/18.2.0/package.json': [ERR_PACKAGE_PATH_NOT_EXPORTED] Package subpath './client' is not defined for types by "exports" in '<global_npm_dir>/react-dom/18.2.0/package.json' imported from '<tmpdir>/src/lib/useClient.ts'
+    at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:756:28)
+    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120758:144)
+    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:121155:22)
+    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:121250:16)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:122813:120)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122544:9)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:122408:22)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:122839:13)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122544:9)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:122408:22)
+

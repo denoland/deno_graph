@@ -1,0 +1,30 @@
+radix-ui-fork/react-form/0.0.6
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Download https://jsr.io/@radix-ui-fork/react-label/0.0.6_meta.json
+Download https://jsr.io/@radix-ui-fork/react-label/0.0.6/src/index.ts
+Download https://jsr.io/@radix-ui-fork/react-label/0.0.6/src/Label.tsx
+Check file://<tmpdir>/src/index.ts
+error: TS2749 [ERROR]: 'ValidityState' refers to a value, but is being used as a type here. Did you mean 'typeof ValidityState'?
+  getFieldValidity(fieldName: string): ValidityState | undefined;
+                                       ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Form.tsx:14:40
+
+TS2749 [ERROR]: 'ValidityState' refers to a value, but is being used as a type here. Did you mean 'typeof ValidityState'?
+  onFieldValidityChange(fieldName: string, validity: ValidityState): void;
+                                                     ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Form.tsx:15:54
+
+TS2749 [ERROR]: 'ValidityState' refers to a value, but is being used as a type here. Did you mean 'typeof ValidityState'?
+  children(validity: ValidityState | undefined): React.ReactNode;
+                     ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Form.tsx:82:22
+
+Found 3 errors.
+

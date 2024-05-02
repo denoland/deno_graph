@@ -1,0 +1,282 @@
+vxern/dexonline-scraper/0.2.0
+===
+
+== FAST CHECK EMIT FAILED ==
+error[unsupported-default-export-expr]: default export expression was too complex
+  --> /src/constants/copyright.ts:8:1
+   | 
+ 8 | export default Object.freeze([
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 9 |   "Petro-Sedim",
+   | ^^^^^^^^^^^^^^^^
+10 |   "Legislație",
+   | ^^^^^^^^^^^^^^^
+11 |   "DLR",
+   | ^^^^^^^^
+12 |   "DEX-școlar",
+   | ^^^^^^^^^^^^^^^
+13 |   "DRAM 2021",
+   | ^^^^^^^^^^^^^^
+14 |   "DIN",
+   | ^^^^^^^^
+15 |   "CADE",
+   | ^^^^^^^^^
+16 |   "DGL",
+   | ^^^^^^^^
+17 |   "DLRLC",
+   | ^^^^^^^^^^
+18 |   "Onomastic",
+   | ^^^^^^^^^^^^^^
+19 |   "GER",
+   | ^^^^^^^^
+20 |   "Sinonime82",
+   | ^^^^^^^^^^^^^^^
+21 |   "GAER",
+   | ^^^^^^^^^
+22 |   "Etnobotanic",
+   | ^^^^^^^^^^^^^^^^
+23 |   "DELLR",
+   | ^^^^^^^^^^
+24 |   "psi",
+   | ^^^^^^^^
+25 |   "Enigmistică",
+   | ^^^^^^^^^^^^^^^^
+26 |   "DELRIE",
+   | ^^^^^^^^^^^
+27 |   "DTLALL",
+   | ^^^^^^^^^^^
+28 |   "DEI",
+   | ^^^^^^^^
+29 |   "DFL",
+   | ^^^^^^^^
+30 |   "DTM",
+   | ^^^^^^^^
+31 |   "DE",
+   | ^^^^^^^
+32 |   "DA",
+   | ^^^^^^^
+33 |   "MEO",
+   | ^^^^^^^^
+34 |   "DMG",
+   | ^^^^^^^^
+35 |   "DRAM 2015",
+   | ^^^^^^^^^^^^^^
+36 |   "D.Religios",
+   | ^^^^^^^^^^^^^^^
+37 |   "DEXI",
+   | ^^^^^^^^^
+38 |   "MDTL",
+   | ^^^^^^^^^
+39 |   "Ortografic '01",
+   | ^^^^^^^^^^^^^^^^^^^
+40 |   "Antonime",
+   | ^^^^^^^^^^^^^
+41 |   "NODEX",
+   | ^^^^^^^^^^
+42 |   "DOR",
+   | ^^^^^^^^
+43 |   "Sinonime",
+   | ^^^^^^^^^^^^^
+44 |   "DCR2",
+   | ^^^^^^^^^
+45 |   "GTA",
+   | ^^^^^^^^
+46 |   "DSL",
+   | ^^^^^^^^
+47 |   "DS5",
+   | ^^^^^^^^
+48 |   "DFLR",
+   | ^^^^^^^^^
+49 |   "DAR",
+   | ^^^^^^^^
+50 |   "DGSSL",
+   | ^^^^^^^^^^
+51 |   "DELR",
+   | ^^^^^^^^^
+52 |   "CECC",
+   | ^^^^^^^^^
+53 |   "DFS",
+   | ^^^^^^^^
+54 |   "DifSem",
+   | ^^^^^^^^^^^
+55 |   "DAS",
+   | ^^^^^^^^
+56 |   "DS",
+   | ^^^^^^^
+57 |   "DETS",
+   | ^^^^^^^^^
+58 |   "DTL",
+   | ^^^^^^^^
+59 |   "MDA",
+   | ^^^^^^^^
+60 |   "MDA2",
+   | ^^^^^^^^^
+61 |   "DOOM 3",
+   | ^^^^^^^^^^^
+62 |   "Epitete",
+   | ^^^^^^^^^^^^
+63 |   "DGS",
+   | ^^^^^^^^
+64 |   "DEXLRA",
+   | ^^^^^^^^^^^
+65 |   "DAN",
+   | ^^^^^^^^
+66 |   "Șăineanu, ed. I",
+   | ^^^^^^^^^^^^^^^^^^^^
+67 |   "DASLR",
+   | ^^^^^^^^^^
+68 | ] satisfies string[]);
+   | ^^^^^^^^^^^^^^^^^^^^^^
+   = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable
+
+  info: fast check was unable to infer the type of the default export expression
+  docs: https://jsr.io/go/slow-type-unsupported-default-export-expr
+
+
+error[unsupported-default-export-expr]: default export expression was too complex
+  --> /src/constants/selectors.ts:3:1
+   | 
+ 3 | export default Object.freeze({
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 4 |   contentTab: (tab: ContentTabs): string => `#tab_${tab}`,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 5 |   contentTabs: {
+   | ^^^^^^^^^^^^^^^^
+ 6 |     synthesis: {
+   | ^^^^^^^^^^^^^^^^
+ 7 |       header: {
+   | ^^^^^^^^^^^^^^^
+ 8 |         element: "h3[class=tree-heading]",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 9 |         container: "div",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^
+10 |         type: "span[class=tree-pos-info]",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 |       },
+   | ^^^^^^^^
+12 |       body: {
+   | ^^^^^^^^^^^^^
+13 |         element: "div[class=tree-body]",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+14 |         row: {
+   | ^^^^^^^^^^^^^^
+15 |           element: "div[class=meaningContainer]",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |           contents: {
+   | ^^^^^^^^^^^^^^^^^^^^^
+17 |             element: "div[class=meaning-row]",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 |             tags: 'span[class="tag-group meaning-tags"]',
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |             text: 'span[class="def html"]',
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |             sources: 'span[class="meaning-sources tag-group"]',
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |           },
+   | ^^^^^^^^^^^^
+22 |           relations: {
+   | ^^^^^^^^^^^^^^^^^^^^^^
+23 |             element: "div[class=meaning-relations]",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |           },
+   | ^^^^^^^^^^^^
+25 |         },
+   | ^^^^^^^^^^
+26 |         tree: {
+   | ^^^^^^^^^^^^^^^
+27 |           element: "ul[class=meaningTree]",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 |         },
+   | ^^^^^^^^^^
+29 |         etymology: {
+   | ^^^^^^^^^^^^^^^^^^^^
+30 |           element: "div[class=etymology]",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 |           tree: "ul[class=meaningTree]",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 |         },
+   | ^^^^^^^^^^
+33 |       },
+   | ^^^^^^^^
+34 |     },
+   | ^^^^^^
+35 |     inflection: {
+   | ^^^^^^^^^^^^^^^^^
+36 |       entry: {
+   | ^^^^^^^^^^^^^^
+37 |         element: "div[class=card-body]",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+38 |         table: {
+   | ^^^^^^^^^^^^^^^^
+39 |           element: "div[class=paraLexeme]",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+40 |           header: {
+   | ^^^^^^^^^^^^^^^^^^^
+41 |             element: "div",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+42 |             lemma: "span[class=lexemeName]",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+43 |             // There is indeed a trailing whitespace here.
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+44 |             // Do not ask me why for I do not know.
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+45 |             tag: 'span[class="tag "]',
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+46 |           },
+   | ^^^^^^^^^^^^
+47 |           body: {
+   | ^^^^^^^^^^^^^^^^^
+48 |             element: "table[class=lexeme]",
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+49 |           },
+   | ^^^^^^^^^^^^
+50 |         },
+   | ^^^^^^^^^^
+51 |       },
+   | ^^^^^^^^
+52 |     },
+   | ^^^^^^
+53 |   },
+   | ^^^^
+54 | } as const);
+   | ^^^^^^^^^^^^
+   = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable
+
+  info: fast check was unable to infer the type of the default export expression
+  docs: https://jsr.io/go/slow-type-unsupported-default-export-expr
+
+
+error[unsupported-default-export-expr]: default export expression was too complex
+ --> /src/constants/expressions.ts:1:1
+  | 
+1 | export default Object.freeze({
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2 |   treeType: /^type-(\w+)$/,
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+3 |   relationType: /^me-(\d+)$/,
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |   tableLemmaWithIndex: /((?:[a-zA-ZăĂâÂîÎșȘțȚ-]+))(<sup>(\d+)<\/sup>)?/,
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+5 | } as const satisfies Record<string, RegExp>);
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable
+
+  info: fast check was unable to infer the type of the default export expression
+  docs: https://jsr.io/go/slow-type-unsupported-default-export-expr
+
+
+error[unsupported-default-export-expr]: default export expression was too complex
+ --> /src/constants/links.ts:1:1
+  | 
+1 | export default Object.freeze({
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2 |   definition: (word: string): string => `https://dexonline.ro/definitie/${word}`,
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+3 | } as const satisfies Record<string, unknown>);
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable
+
+  info: fast check was unable to infer the type of the default export expression
+  docs: https://jsr.io/go/slow-type-unsupported-default-export-expr
+
+

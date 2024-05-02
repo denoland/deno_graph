@@ -1,0 +1,15 @@
+lightbery/virtual-file-tree/1.0.0
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/Virtual-File-Tree.ts
+error: TS2580 [ERROR]: Cannot find name 'Buffer'.
+  public writeFile(virtualPath: string, data: Buffer, options?: {
+                                              ~~~~~~
+    at file://<tmpdir>/Virtual-File-Tree.ts:10:47
+

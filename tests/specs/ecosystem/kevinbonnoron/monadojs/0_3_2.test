@@ -1,0 +1,32 @@
+kevinbonnoron/monadojs/0.3.2
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/mod.ts
+error: TS18048 [ERROR]: 'amount' is possibly 'undefined'.
+  divide: (amount?: number)=>(source: number)=>source / amount,
+                                                        ~~~~~~
+    at file://<tmpdir>/src/wrappers/number/number.ts:2:57
+
+TS18048 [ERROR]: 'amount' is possibly 'undefined'.
+  minus: (amount?: number)=>(source: number)=>source - amount,
+                                                       ~~~~~~
+    at file://<tmpdir>/src/wrappers/number/number.ts:3:56
+
+TS18048 [ERROR]: 'amount' is possibly 'undefined'.
+  modulo: (amount?: number)=>(source: number)=>source % amount,
+                                                        ~~~~~~
+    at file://<tmpdir>/src/wrappers/number/number.ts:4:57
+
+TS18048 [ERROR]: 'amount' is possibly 'undefined'.
+  plus: (amount?: number)=>(source: number)=>source + amount,
+                                                      ~~~~~~
+    at file://<tmpdir>/src/wrappers/number/number.ts:5:55
+
+Found 4 errors.
+

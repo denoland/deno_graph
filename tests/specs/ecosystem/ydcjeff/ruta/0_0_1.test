@@ -1,0 +1,62 @@
+ydcjeff/ruta/0.0.1
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/ruta_core.ts
+Check file://<tmpdir>/src/ruta_vue.ts
+error: TS2578 [ERROR]: Unused '@ts-expect-error' directive.
+  /** Type only, no runtime equivalent. */ // @ts-expect-error Type only
+                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/ruta_core.ts:4:44
+
+TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
+  [KEY_PAGES]: RouteOptions['page'][];
+  ~~~~~~~~~~~
+    at file://<tmpdir>/src/ruta_core.ts:84:3
+
+TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
+  [KEY_ERRORS]: [parent?: RouteOptions['error'], own?: RouteOptions['error']];
+  ~~~~~~~~~~~~
+    at file://<tmpdir>/src/ruta_core.ts:85:3
+
+TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
+  [KEY_LOAD_FNS]: RouteOptions['load'][];
+  ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/ruta_core.ts:86:3
+
+TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
+  [KEY_PARAMS_FNS]: RouteOptions['parse_params'][];
+  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/ruta_core.ts:87:3
+
+TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
+  [KEY_SEARCH_FNS]: RouteOptions['parse_search'][];
+  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/ruta_core.ts:88:3
+
+TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
+  [KEY_URL_PATTERN]?: URLPattern;
+  ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/ruta_core.ts:89:3
+
+TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
+  [KEY_PAGES_RESOLVED]: boolean;
+  ~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/ruta_core.ts:90:3
+
+TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
+  [KEY_HAS_LAYOUT]: boolean;
+  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/ruta_core.ts:91:3
+
+TS2322 [ERROR]: Type 'TChildren[number]' is not assignable to type 'string | number | symbol'.
+  Type 'RouteOptions<string, Record<string, never>, Record<string, never>, {}>' is not assignable to type 'string | number | symbol'.
+    at file://<tmpdir>/src/ruta_core.ts:128:11
+
+Found 10 errors.
+

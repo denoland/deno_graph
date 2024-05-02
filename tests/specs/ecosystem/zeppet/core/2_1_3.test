@@ -1,0 +1,62 @@
+zeppet/core/2.1.3
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+ */ export const compose = <T extends HTMLElement>(...actions: Action<T>[]): Action<T> =>({} as never);
+                                      ~~~~~~~~~~~
+    at file://<tmpdir>/src/core/actions/compose.ts:24:39
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+ */ export const use = <T extends HTMLElement>(element: T, ...actions: Action<T>[]): T =>({} as never);
+                                  ~~~~~~~~~~~
+    at file://<tmpdir>/src/core/actions/use.ts:14:35
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+const __nodeListToArray = <T extends HTMLElement>(nodeList: NodeListOf<T>): Array<T> =>({} as never);
+                                     ~~~~~~~~~~~
+    at file://<tmpdir>/src/core/helpers/index.ts:1:38
+
+TS2304 [ERROR]: Cannot find name 'NodeListOf'.
+const __nodeListToArray = <T extends HTMLElement>(nodeList: NodeListOf<T>): Array<T> =>({} as never);
+                                                            ~~~~~~~~~~
+    at file://<tmpdir>/src/core/helpers/index.ts:1:61
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export const __queryOne = (selector: string): HTMLElement | null =>({} as never);
+                                              ~~~~~~~~~~~
+    at file://<tmpdir>/src/core/helpers/index.ts:2:47
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export const __queryAll = <T extends HTMLElement>(selector: string): Array<T> =>({} as never);
+                                     ~~~~~~~~~~~
+    at file://<tmpdir>/src/core/helpers/index.ts:3:38
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+  */ export const select = (selector: string): Array<HTMLElement> =>({} as never);
+                                                     ~~~~~~~~~~~
+    at file://<tmpdir>/src/core/select/select.ts:8:54
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export const selectOne = <T extends HTMLElement>(selector: string): T | undefined =>({} as never);
+                                    ~~~~~~~~~~~
+    at file://<tmpdir>/src/core/select/select.ts:9:37
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export type Action<T extends HTMLElement> = (element: T) => T;
+                             ~~~~~~~~~~~
+    at file://<tmpdir>/src/types/action.types.ts:1:30
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export type ActionFn = <T extends HTMLElement>(element: T) => T;
+                                  ~~~~~~~~~~~
+    at file://<tmpdir>/src/types/action.types.ts:2:35
+
+Found 10 errors.
+

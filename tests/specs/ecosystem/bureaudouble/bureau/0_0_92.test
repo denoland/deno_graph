@@ -1,0 +1,12 @@
+bureaudouble/bureau/0.0.92
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Could not find dist-tag 'beta' for npm package '@types/react'.
+    at file://<tmpdir>/deno.json:1:1
+

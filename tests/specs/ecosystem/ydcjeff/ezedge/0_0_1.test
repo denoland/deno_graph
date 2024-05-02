@@ -1,0 +1,16 @@
+ydcjeff/ezedge/0.0.1
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/runtime/mod.ts
+Check file://<tmpdir>/vite/mod.ts
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+ */ export function start_client(fn: (el: HTMLElement, hydratable: boolean, data: unknown | null) => void): void {}
+                                          ~~~~~~~~~~~
+    at file://<tmpdir>/runtime/mod.ts:5:43
+

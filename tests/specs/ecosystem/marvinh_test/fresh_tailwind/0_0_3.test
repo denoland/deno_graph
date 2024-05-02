@@ -1,0 +1,15 @@
+marvinh-test/fresh-tailwind/0.0.3
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/mod.ts
+error: TS2305 [ERROR]: Module '"https://jsr.io/@marvinh-test/fresh/2.0.0-prealpha.17/src/dev/mod.ts"' has no exported member 'DevApp'.
+import type { DevApp } from "jsr:/@marvinh-test/fresh@^2.0.0-prealpha.11/dev";
+              ~~~~~~
+    at file://<tmpdir>/src/mod.ts:2:15
+

@@ -1,0 +1,27 @@
+bureaudouble-forks/react-style-singleton/0.0.1
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS2304 [ERROR]: Cannot find name 'HTMLStyleElement'.
+type NullableStyle = HTMLStyleElement | null;
+                     ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/singleton.ts:1:22
+
+TS2304 [ERROR]: Cannot find name 'HTMLStyleElement'.
+function injectStyles(tag: HTMLStyleElement, css: string): void {}
+                           ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/singleton.ts:5:28
+
+TS2304 [ERROR]: Cannot find name 'HTMLStyleElement'.
+function insertStyleTag(tag: HTMLStyleElement): void {}
+                             ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/singleton.ts:6:30
+
+Found 3 errors.
+

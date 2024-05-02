@@ -1,0 +1,32 @@
+geacko/redis-client/2.1.0-beta
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/mod.ts
+error: TS6133 [ERROR]: '#private' is declared but its value is never read.
+  #private!: unknown;
+  ~~~~~~~~
+    at file://<tmpdir>/src/client.ts:6:3
+
+TS6133 [ERROR]: 'connection' is declared but its value is never read.
+     */ constructor(connection: Connection){}
+                    ~~~~~~~~~~
+    at file://<tmpdir>/src/client.ts:51:21
+
+TS6133 [ERROR]: 'cmd' is declared but its value is never read.
+     */ send(cmd: Command | CommandBatch): this {
+             ~~~
+    at file://<tmpdir>/src/client.ts:84:14
+
+TS6133 [ERROR]: 'count' is declared but its value is never read.
+     */ readall<T extends Resp3Reply[]>(count?: number): Promise<T> {
+                                        ~~~~~
+    at file://<tmpdir>/src/client.ts:130:41
+
+Found 4 errors.
+

@@ -1,0 +1,62 @@
+etherpad/live-plugin-manager/0.18.5
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/index.ts
+error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { IPluginInfo } from "./src/PluginInfo.ts";
+         ~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:2:10
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { PackageInfo, PackageJsonInfo } from "./src/PackageInfo.ts";
+         ~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:3:10
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { PackageInfo, PackageJsonInfo } from "./src/PackageInfo.ts";
+                      ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:3:23
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { NpmRegistryConfig, NpmRegistryAuthBasic, NpmRegistryAuthToken } from "./src/NpmRegistryClient.ts";
+         ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:4:10
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { NpmRegistryConfig, NpmRegistryAuthBasic, NpmRegistryAuthToken } from "./src/NpmRegistryClient.ts";
+                            ~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:4:29
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { NpmRegistryConfig, NpmRegistryAuthBasic, NpmRegistryAuthToken } from "./src/NpmRegistryClient.ts";
+                                                  ~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:4:51
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { GithubAuth } from "./src/GithubRegistryClient.ts";
+         ~~~~~~~~~~
+    at file://<tmpdir>/index.ts:5:10
+
+TS2304 [ERROR]: Cannot find name 'global'.
+type NodeJSGlobal = typeof global;
+                           ~~~~~~
+    at file://<tmpdir>/src/PluginManager.ts:7:28
+
+TS2304 [ERROR]: Cannot find name 'NodeRequire'.
+  hostRequire?: NodeRequire;
+                ~~~~~~~~~~~
+    at file://<tmpdir>/src/PluginManager.ts:16:17
+
+TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
+  env?: NodeJS.ProcessEnv;
+        ~~~~~~
+    at file://<tmpdir>/src/PluginManager.ts:27:9
+
+Found 10 errors.
+

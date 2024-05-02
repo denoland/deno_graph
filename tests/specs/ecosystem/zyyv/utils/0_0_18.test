@@ -1,0 +1,72 @@
+zyyv/utils/0.0.18
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Check file://<tmpdir>/src/index.ts
+error: TS1192 [ERROR]: Module '"file://<tmpdir>/src/array/base.ts"' has no default export.
+import base from "./base.ts";
+       ~~~~
+    at file://<tmpdir>/src/array/index.ts:1:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/array/tree.ts"' has no default export.
+import tree from "./tree.ts";
+       ~~~~
+    at file://<tmpdir>/src/array/index.ts:2:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/date/base.ts"' has no default export.
+import base from "./base.ts";
+       ~~~~
+    at file://<tmpdir>/src/date/index.ts:1:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/function/base.ts"' has no default export.
+import base from "./base.ts";
+       ~~~~
+    at file://<tmpdir>/src/function/index.ts:1:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/function/events.ts"' has no default export.
+import events from "./events.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/function/index.ts:2:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/is/env.ts"' has no default export.
+import env from "./env.ts";
+       ~~~
+    at file://<tmpdir>/src/is/index.ts:1:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/is/is.ts"' has no default export.
+import is from "./is.ts";
+       ~~
+    at file://<tmpdir>/src/is/index.ts:2:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/number/base.ts"' has no default export.
+import base from "./base.ts";
+       ~~~~
+    at file://<tmpdir>/src/number/index.ts:1:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/object/base.ts"' has no default export.
+import base from "./base.ts";
+       ~~~~
+    at file://<tmpdir>/src/object/index.ts:1:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/promise/base.ts"' has no default export.
+import base from "./base.ts";
+       ~~~~
+    at file://<tmpdir>/src/promise/index.ts:1:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/shared/base.ts"' has no default export.
+import base from "./base.ts";
+       ~~~~
+    at file://<tmpdir>/src/shared/index.ts:1:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/string/base.ts"' has no default export.
+import base from "./base.ts";
+       ~~~~
+    at file://<tmpdir>/src/string/index.ts:1:8
+
+Found 12 errors.
+
