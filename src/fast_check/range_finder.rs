@@ -867,7 +867,7 @@ impl<'a> PublicRangeFinder<'a> {
                   if node.is_member() {
                     if let Some(parent_id) = symbol.parent_id() {
                       // don't add the parent if we analyzed this node from the parent
-                      if original_referrer_id != parent_id {
+                      if trace_referrer_id != parent_id {
                         pending_traces
                           .maybe_add_id_trace(parent_id, referrer_id);
                       }
