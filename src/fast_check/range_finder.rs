@@ -780,11 +780,11 @@ impl<'a> PublicRangeFinder<'a> {
       match trace {
         PendingIdTrace::Id {
           symbol_id,
-          referrer_id,
+          referrer_id: trace_referrer_id,
         } => {
           let symbol = module_info.symbol(symbol_id).unwrap();
           if symbol.is_private_member() {
-            if Some(referrer_id) != symbol.parent_id() {
+            if Some(trace_referrer_id) != symbol.parent_id() {
               diagnostics.push(
                 FastCheckDiagnostic::UnsupportedPrivateMemberReference {
                   range: FastCheckDiagnosticRange {
@@ -796,7 +796,7 @@ impl<'a> PublicRangeFinder<'a> {
                     .fully_qualified_symbol_name(symbol)
                     .unwrap_or_else(|| "<unknown>".to_string()),
                   referrer: module_info
-                    .symbol(referrer_id)
+                    .symbol(trace_referrer_id)
                     .and_then(|symbol| {
                       module_info.fully_qualified_symbol_name(symbol)
                     })
@@ -863,6 +863,17 @@ impl<'a> PublicRangeFinder<'a> {
               }
               SymbolDeclKind::Definition(node) => {
                 if let Some(node) = node.maybe_ref() {
+                  // if the node is a class or interface member, ensure its parent is traced
+                  if node.is_member() {
+                    if let Some(parent_id) = symbol.parent_id() {
+                      // don't add the parent if we analyzed this node from the parent
+                      if trace_referrer_id != parent_id {
+                        pending_traces
+                          .maybe_add_id_trace(parent_id, referrer_id);
+                      }
+                    }
+                  }
+
                   for dep in node.deps(ResolveDepsMode::TypesAndExpressions) {
                     match dep {
                       SymbolNodeDep::Id(id) => {
