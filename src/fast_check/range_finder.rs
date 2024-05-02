@@ -814,6 +814,7 @@ impl<'a> PublicRangeFinder<'a> {
               impl_with_overload_ranges.insert(decl.range);
               continue;
             }
+            let original_referrer_id = referrer_id;
             let referrer_id = symbol_id;
             match &decl.kind {
               SymbolDeclKind::Target(id) => {
@@ -863,6 +864,17 @@ impl<'a> PublicRangeFinder<'a> {
               }
               SymbolDeclKind::Definition(node) => {
                 if let Some(node) = node.maybe_ref() {
+                  // if the node is a class or interface member, ensure its parent is traced
+                  if node.is_member() {
+                    if let Some(parent_id) = symbol.parent_id() {
+                      // don't add the parent if we analyzed this node from the parent
+                      if original_referrer_id != parent_id {
+                        pending_traces
+                          .maybe_add_id_trace(parent_id, referrer_id);
+                      }
+                    }
+                  }
+
                   for dep in node.deps(ResolveDepsMode::TypesAndExpressions) {
                     match dep {
                       SymbolNodeDep::Id(id) => {
