@@ -90,13 +90,39 @@ import 'jsr:@scope/a'
   }
 }
 
-Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+Fast check https://jsr.io/@scope/a/1.0.0/base.ts:
   {}
+  export class Base {
+  }
+  --- DTS ---
+  export declare class Base {
+  }
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {
+    "./base.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/base.ts",
+        "span": {
+          "start": {
+            "line": 0,
+            "character": 30
+          },
+          "end": {
+            "line": 0,
+            "character": 41
+          }
+        }
+      }
+    }
+  }
+  import * as adapter_base from "./base.ts";
   class ServerAdapter extends adapter_base.Base {
     static adapt(): void {}
   }
   export const adapt = ServerAdapter.adapt;
   --- DTS ---
+  import * as adapter_base from "./base.ts";
   declare class ServerAdapter extends adapter_base.Base {
     static adapt(): void;
   }

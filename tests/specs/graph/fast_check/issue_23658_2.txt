@@ -8,10 +8,15 @@
 export class Base {
 }
 
+# https://jsr.io/@scope/a/1.0.0/interface.ts
+export class IInterface {
+}
+
 # https://jsr.io/@scope/a/1.0.0/mod.ts
 import { Base } from './base.ts'
+import type { IInterface } from './interface.ts';
 
-class ServerAdapter extends Base {
+class ServerAdapter extends Base implements IInterface {
   static adapt() {
   }
 }
@@ -59,6 +64,12 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
+      "size": 28,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/interface.ts"
+    },
+    {
+      "kind": "esm",
       "dependencies": [
         {
           "specifier": "./base.ts",
@@ -75,9 +86,25 @@ import 'jsr:@scope/a'
               }
             }
           }
+        },
+        {
+          "specifier": "./interface.ts",
+          "type": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/interface.ts",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 32
+              },
+              "end": {
+                "line": 1,
+                "character": 48
+              }
+            }
+          }
         }
       ],
-      "size": 137,
+      "size": 209,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -90,17 +117,68 @@ import 'jsr:@scope/a'
   }
 }
 
-Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+Fast check https://jsr.io/@scope/a/1.0.0/base.ts:
   {}
-  class ServerAdapter extends Base {
+  export class Base {
+  }
+  --- DTS ---
+  export declare class Base {
+  }
+
+Fast check https://jsr.io/@scope/a/1.0.0/interface.ts:
+  {}
+  export class IInterface {
+  }
+  --- DTS ---
+  export declare class IInterface {
+  }
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {
+    "./base.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/base.ts",
+        "span": {
+          "start": {
+            "line": 0,
+            "character": 21
+          },
+          "end": {
+            "line": 0,
+            "character": 32
+          }
+        }
+      }
+    },
+    "./interface.ts": {
+      "type": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/interface.ts",
+        "span": {
+          "start": {
+            "line": 1,
+            "character": 32
+          },
+          "end": {
+            "line": 1,
+            "character": 48
+          }
+        }
+      }
+    }
+  }
+  import { Base } from "./base.ts";
+  import type { IInterface } from "./interface.ts";
+  class ServerAdapter extends Base implements IInterface {
     static adapt(): void {}
   }
   export const adapt = ServerAdapter.adapt;
   --- DTS ---
-  declare class ServerAdapter extends Base {
+  import { Base } from "./base.ts";
+  import type { IInterface } from "./interface.ts";
+  declare class ServerAdapter extends Base implements IInterface {
     static adapt(): void;
   }
   export declare const adapt: any;
   --- DTS Diagnostics ---
   unable to infer type, falling back to any type
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@108
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@180
