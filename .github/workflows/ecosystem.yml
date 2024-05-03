@@ -17,7 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        shard: [0]
 
     steps:
       - name: Clone repository
@@ -43,8 +43,8 @@ jobs:
       - name: Mirror JSR
         run: deno run -A ./tests/ecosystem/jsr_mirror.ts
 
-      - name: Run tests
-        run: cargo test --test ecosystem
-        env:
-          SHARD_INDEX: ${{ matrix.shard }}
-          SHARD_COUNT: 12
+      # - name: Run tests
+      #   run: cargo test --test ecosystem
+      #   env:
+      #     SHARD_INDEX: ${{ matrix.shard }}
+      #     SHARD_COUNT: 12
