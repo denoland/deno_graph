@@ -1,6 +1,6 @@
-import * as path from "jsr:@std/path";
-import { pooledMap, retry } from "jsr:@std/async";
-import { format } from "jsr:@std/fmt/bytes";
+import * as path from "jsr:@std/path@^0.224.0";
+import { pooledMap, retry } from "jsr:@std/async@^0.224.0";
+import { format } from "jsr:@std/fmt@^0.224.0/bytes";
 
 const ROOT_DIR = path.dirname(path.fromFileUrl(import.meta.url));
 
