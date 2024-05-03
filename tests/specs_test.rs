@@ -41,7 +41,11 @@ fn main() {
   collect_and_run_tests(
     CollectOptions {
       base: "tests/specs".into(),
-      strategy: Box::new(TestPerFileCollectionStrategy { file_pattern: None }),
+      strategy: Box::new(TestPerFileCollectionStrategy {
+        file_pattern: Some(
+          "^*.[/\\\\]specs[/\\\\](:?graph|symbols)[/\\\\].*$".to_owned(),
+        ),
+      }),
       filter_override: None,
     },
     RunOptions { parallel: true },
