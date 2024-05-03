@@ -25,6 +25,8 @@ let packagesDone = 0;
 let filesDone = 0;
 let sizeTotal = 0;
 
+let downloadFailures = 0;
+
 const start = performance.now();
 
 const CI = Deno.env.get("CI") !== undefined;
@@ -63,7 +65,14 @@ clearInterval(interval);
 async function* tasks() {
   const manifests = pooledMap(128, VERSIONS, async (row) => {
     const { scope, name, version } = row;
-    const manifest = await retry(() => fetchManifest(scope, name, version));
+    const manifest = await retry(async () => {
+      try {
+        return await fetchManifest(scope, name, version);
+      } catch (err) {
+        downloadFailures++;
+        throw err;
+      }
+    });
     return { scope, name, version, manifest };
   });
 
@@ -120,16 +129,21 @@ async function* downloadPackageVersion(
 
   for (const [file, { size, checksum }] of files) {
     yield {
-      promise: retry(() => {
-        downloadFile(
-          scope,
-          name,
-          version,
-          versionDir,
-          file,
-          size,
-          checksum,
-        );
+      promise: retry(async () => {
+        try {
+          await downloadFile(
+            scope,
+            name,
+            version,
+            versionDir,
+            file,
+            size,
+            checksum,
+          );
+        } catch (err) {
+          downloadFailures++;
+          throw err;
+        }
       }),
     };
   }
