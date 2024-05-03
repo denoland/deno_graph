@@ -28,7 +28,7 @@ jobs:
         uses: denoland/setup-deno@v1
 
       - name: Mirror JSR
-        run: deno run -A tests/ecosystem/mirror_jsr.ts
+        run: deno run -A ./tests/ecosystem/jsr_mirror.ts
 
       - name: Run tests
         run: cargo test --test ecosystem
