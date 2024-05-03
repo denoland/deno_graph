@@ -210,8 +210,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -591,8 +590,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -972,8 +970,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1353,8 +1350,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1734,8 +1730,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2115,8 +2110,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2496,8 +2490,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2877,8 +2870,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -3258,8 +3250,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -3639,8 +3630,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -4020,8 +4010,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -4401,8 +4390,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -4782,8 +4770,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -5163,8 +5150,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -5544,8 +5530,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -5925,8 +5910,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -6306,8 +6290,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -6687,8 +6670,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -7068,8 +7050,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -7449,8 +7430,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -7830,8 +7810,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -8211,8 +8190,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -8592,8 +8570,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -8973,8 +8950,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -9354,8 +9330,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -9735,8 +9710,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -10116,8 +10090,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -10497,8 +10470,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -10878,8 +10850,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -11259,8 +11230,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -11640,8 +11610,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -12021,8 +11990,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -12402,8 +12370,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -12783,8 +12750,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfig
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+50 | export const OpenapiMergerConfig   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

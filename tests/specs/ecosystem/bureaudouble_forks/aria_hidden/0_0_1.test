@@ -7,7 +7,6 @@ bureaudouble-forks/aria-hidden/0.0.1
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'Element'.
 const getDefaultParent = (originalTarget: Element | Element[]): HTMLElement | null =>({} as never);
                                           ~~~~~~~

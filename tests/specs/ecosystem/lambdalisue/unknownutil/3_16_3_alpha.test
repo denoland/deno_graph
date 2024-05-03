@@ -7,7 +7,6 @@ lambdalisue/unknownutil/3.16.3-alpha
 -- stdout --
 
 -- stderr --
-
 error: TS1192 [ERROR]: Module '"file://<tmpdir>/is.ts"' has no default export.
 import is from "./is.ts";
        ~~

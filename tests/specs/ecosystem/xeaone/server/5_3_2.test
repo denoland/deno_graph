@@ -7,7 +7,6 @@ xeaone/server/5.3.2
 -- stdout --
 
 -- stderr --
-
 error: TS1192 [ERROR]: Module '"file://<tmpdir>/src/plugin.ts"' has no default export.
 import Plugin from "./plugin.ts";
        ~~~~~~

@@ -7,7 +7,6 @@ hampus/itsdangerous/1.1.2
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'BufferEncoding'.
  */ export function wantBuffer(string: StringBuffer, encoding?: BufferEncoding): Buffer {
                                                                 ~~~~~~~~~~~~~~

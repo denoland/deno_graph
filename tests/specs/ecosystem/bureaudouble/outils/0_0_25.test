@@ -7,29 +7,6 @@ bureaudouble/outils/0.0.25
 -- stdout --
 
 -- stderr --
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 error: TS2536 [ERROR]: Type '0' cannot be used to index type 'InferResult<T>'.
 export type QueryFunction<V> = <T extends CompiledQuery<unknown>>(fn: (qb: Kysely<V>) => T) => Promise<InferResult<T>[0][]>;
                                                                                                        ~~~~~~~~~~~~~~~~~

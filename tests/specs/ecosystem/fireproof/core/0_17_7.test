@@ -7,7 +7,6 @@ fireproof/core/0.17.7
 -- stdout --
 
 -- stderr --
-
 error: Uncaught Error: Failed resolving package subpath './db-index' for '<tmpdir>/node_modules/.deno/prolly-trees@1.0.4/node_modules/prolly-trees/package.json': [ERR_INVALID_PACKAGE_TARGET] Invalid "exports" target {"browser":"./esm/src/db-index.js","require":"./cjs/src/db-index.js","import":"./esm/src/db-index.js"} defined for './db-index' in the package config <tmpdir>/node_modules/.deno/prolly-trees@1.0.4/node_modules/prolly-trees/package.json imported from file://<tmpdir>/src/indexer-helpers.ts; target must start with "./"
     at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:756:28)
     at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120758:144)

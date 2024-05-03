@@ -7,7 +7,6 @@ radix-ui-fork/rect/0.0.7
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'ClientRect'.
   getBoundingClientRect(): ClientRect;
                            ~~~~~~~~~~

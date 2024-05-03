@@ -7,8 +7,6 @@ ghost/kjua-revived/0.2.0
 -- stdout --
 
 -- stderr --
-
-
 error: TS2304 [ERROR]: Cannot find name 'SVGElement'.
 }): SVGElement;
     ~~~~~~~~~~

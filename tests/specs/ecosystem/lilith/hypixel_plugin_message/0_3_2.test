@@ -7,7 +7,6 @@ lilith/hypixel-plugin-message/0.3.2
 -- stdout --
 
 -- stderr --
-
 error: TS2580 [ERROR]: Cannot find name 'Buffer'.
   read(buffer: Buffer): T;
                ~~~~~~

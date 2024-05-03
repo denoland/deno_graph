@@ -7,40 +7,6 @@ ayonli/jsext/0.8.30
 -- stdout --
 
 -- stderr --
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 error: TS2411 [ERROR]: Property '"--"' of type 'string[] | undefined' is not assignable to 'string' index type 'string | number | boolean | (string | number | boolean)[]'.
   "--"?: string[];
   ~~~~

@@ -7,7 +7,6 @@ bureaudouble-forks/floating-ui-react-dom/0.0.1
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'Element'.
    */ element: React.MutableRefObject<Element | null> | Element | null;
                                       ~~~~~~~

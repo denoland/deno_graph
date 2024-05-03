@@ -7,7 +7,6 @@ zeppet/core/2.1.3
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
  */ export const compose = <T extends HTMLElement>(...actions: Action<T>[]): Action<T> =>({} as never);
                                       ~~~~~~~~~~~

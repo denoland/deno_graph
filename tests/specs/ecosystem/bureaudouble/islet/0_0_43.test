@@ -7,10 +7,6 @@ bureaudouble/islet/0.0.43
 -- stdout --
 
 -- stderr --
-
-
-
-
 error: Uncaught Error: Failed resolving package subpath './jsx-runtime' for '<global_npm_dir>/react/18.3.1/package.json': [ERR_PACKAGE_PATH_NOT_EXPORTED] Package subpath './jsx-runtime' is not defined for types by "exports" in '<global_npm_dir>/react/18.3.1/package.json' imported from '<tmpdir>/src/react/jsx-runtime.ts'
     at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:756:28)
     at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120758:144)

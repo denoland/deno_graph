@@ -7,7 +7,6 @@ lithen/fns/4.1.1
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
  */ export function createStyled(tagName: string, styles: LithenCSSString): HTMLElement {
                                                                             ~~~~~~~~~~~

@@ -7,8 +7,6 @@ aralroca/diff-dom-streaming/0.2.0
 -- stdout --
 
 -- stderr --
-
-
 error: TS2304 [ERROR]: Cannot find name 'Node'.
 type Callback = (node: Node) => void;
                        ~~~~

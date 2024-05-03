@@ -7,7 +7,6 @@ poolifier/poolifier/4.0.0
 -- stdout --
 
 -- stderr --
-
 error: TS2305 [ERROR]: Module '"node:events"' has no exported member 'EventEmitterAsyncResource'.
 import { EventEmitterAsyncResource } from 'node:events';
          ~~~~~~~~~~~~~~~~~~~~~~~~~

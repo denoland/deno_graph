@@ -7,7 +7,6 @@ bureaudouble-forks/react-style-singleton/0.0.2
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'HTMLStyleElement'.
 type NullableStyle = HTMLStyleElement | null;
                      ~~~~~~~~~~~~~~~~

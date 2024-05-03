@@ -7,7 +7,6 @@ radix-ui-fork/react-collapsible/0.0.4
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
 const Collapsible: React.ForwardRefExoticComponent<CollapsibleProps & React.RefAttributes<HTMLDivElement>> = {} as never;
                                                                                           ~~~~~~~~~~~~~~

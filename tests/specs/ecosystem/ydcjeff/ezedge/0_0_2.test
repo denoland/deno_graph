@@ -7,8 +7,6 @@ ydcjeff/ezedge/0.0.2
 -- stdout --
 
 -- stderr --
-
-
 error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
  */ export function start_client(fn: (el: HTMLElement, hydratable: boolean, data: unknown | null) => void): void {}
                                           ~~~~~~~~~~~

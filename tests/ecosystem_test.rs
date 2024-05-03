@@ -375,8 +375,6 @@ async fn test_version(
   } else {
     let expected = expected.trim_end();
     let output = output.trim_end();
-    if output != expected {
-      panic!("expected:\n{}\n\nactual:\n{}", expected, output);
-    }
+    pretty_assertions::assert_eq!(output, expected);
   }
 }

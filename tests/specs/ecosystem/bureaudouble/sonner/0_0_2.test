@@ -7,7 +7,6 @@ bureaudouble/sonner/0.0.2
 -- stdout --
 
 -- stderr --
-
 error: TS2503 [ERROR]: Cannot find namespace 'JSX'.
 export const getAsset = (type: ToastTypes): JSX.Element | null =>({} as never);
                                             ~~~

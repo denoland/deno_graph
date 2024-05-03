@@ -7,7 +7,6 @@ radix-ui-fork/react-popper/0.0.5
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'Element'.
 type Boundary = Element | null;
                 ~~~~~~~

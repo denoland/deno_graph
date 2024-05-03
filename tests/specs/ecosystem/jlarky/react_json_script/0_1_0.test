@@ -7,7 +7,6 @@ jlarky/react-json-script/0.1.0
 -- stdout --
 
 -- stderr --
-
 error: TS2503 [ERROR]: Cannot find namespace 'JSX'.
 export function JsonScript(props: JsonScriptProps): JSX.Element {
                                                     ~~~

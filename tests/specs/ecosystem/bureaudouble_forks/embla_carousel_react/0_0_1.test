@@ -7,7 +7,6 @@ bureaudouble-forks/embla-carousel-react/0.0.1
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 type EmblaViewportRefType = <ViewportElement extends HTMLElement>(instance: ViewportElement | null) => void;
                                                      ~~~~~~~~~~~

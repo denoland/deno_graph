@@ -7,7 +7,6 @@ xeaone/tool/3.6.9
 -- stdout --
 
 -- stderr --
-
 error: TS1192 [ERROR]: Module '"file://<tmpdir>/access/mod.ts"' has no default export.
 import access from "./access/mod.ts";
        ~~~~~~

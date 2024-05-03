@@ -7,7 +7,6 @@ lightbery/dynamic-cli/1.0.5
 -- stdout --
 
 -- stderr --
-
 error: TS2580 [ERROR]: Cannot find name 'Buffer'.
   public simulateInput(input: string, key: Buffer): void {}
                                            ~~~~~~

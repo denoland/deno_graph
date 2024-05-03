@@ -7,7 +7,6 @@ sebbo2002/ical-generator/7.0.0-develop.1
 -- stdout --
 
 -- stderr --
-
 error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
     at file://<tmpdir>/src/index.ts:38:32
 

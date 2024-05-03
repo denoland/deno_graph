@@ -7,9 +7,6 @@ ydcjeff/ezedge/0.0.8
 -- stdout --
 
 -- stderr --
-
-
-
 error: TS2318 [ERROR]: Cannot find global type 'Array'.
 
 TS2318 [ERROR]: Cannot find global type 'Boolean'.

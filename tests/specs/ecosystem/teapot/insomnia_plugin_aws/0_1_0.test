@@ -7,7 +7,6 @@ teapot/insomnia-plugin-aws/0.1.0
 -- stdout --
 
 -- stderr --
-
 error: TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
   platform: NodeJS.Platform;
             ~~~~~~

@@ -7,7 +7,6 @@ bureaudouble/checkout/0.0.2
 -- stdout --
 
 -- stderr --
-
 error: TS2503 [ERROR]: Cannot find namespace 'Stripe'.
      */ customer: string | Stripe.Customer | Stripe.DeletedCustomer | null;
                            ~~~~~~

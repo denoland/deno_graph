@@ -7,39 +7,6 @@ ayonli/jsext/0.8.20
 -- stdout --
 
 -- stderr --
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 error: TS2411 [ERROR]: Property '_' of type 'string | number | boolean | (string | number | boolean)[] | undefined' is not assignable to 'string' index type 'string | number | boolean | (string | number | boolean)[]'.
   _?: string | number | boolean | (string | number | boolean)[];
   ^

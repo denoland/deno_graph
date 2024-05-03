@@ -7,7 +7,6 @@ prazedotid/elastic-tiny-client/0.1.5
 -- stdout --
 
 -- stderr --
-
 error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { Authorization, ClientOptions, ElasticClient } from "./elastic-client.ts";
          ~~~~~~~~~~~~~

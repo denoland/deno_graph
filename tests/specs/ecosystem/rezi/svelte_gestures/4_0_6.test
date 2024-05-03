@@ -7,7 +7,6 @@ rezi/svelte-gestures/4.0.6
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'PointerEvent'.
 export type GestureCallback = (register: RegisterGestureType) => (activeEvents: PointerEvent[], event: PointerEvent) => boolean;
                                                                                 ~~~~~~~~~~~~

@@ -7,33 +7,6 @@ ayonli/jsext/0.7.10
 -- stdout --
 
 -- stderr --
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 error: TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
  */ export default function read<T>(target: NodeJS.EventEmitter, eventMap?: {
                                             ~~~~~~

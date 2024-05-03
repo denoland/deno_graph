@@ -7,7 +7,6 @@ kevinbonnoron/monadojs/0.2.0
 -- stdout --
 
 -- stderr --
-
 error: TS18048 [ERROR]: 'amount' is possibly 'undefined'.
   divide: (amount?: number)=>(source: number)=>source / amount,
                                                         ~~~~~~

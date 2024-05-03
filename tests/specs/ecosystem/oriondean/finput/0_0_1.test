@@ -7,7 +7,6 @@ oriondean/finput/0.0.1
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'HTMLInputElement'.
   constructor(element: HTMLInputElement, options: IOptions){}
                        ~~~~~~~~~~~~~~~~

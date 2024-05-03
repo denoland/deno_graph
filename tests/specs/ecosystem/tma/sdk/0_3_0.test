@@ -7,7 +7,6 @@ tma/sdk/0.3.0
 -- stdout --
 
 -- stderr --
-
 error: TS2300 [ERROR]: Duplicate identifier 'isVisible'.
   declare private isVisible: any;
                   ~~~~~~~~~

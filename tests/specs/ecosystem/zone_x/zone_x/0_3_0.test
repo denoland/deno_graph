@@ -7,7 +7,6 @@ zone-x/zone-x/0.3.0
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'TimeZone'.
 /** Gets users timezone from system settings */ export function getUsersTimeZone(): TimeZone {
                                                                                     ~~~~~~~~

@@ -7,7 +7,6 @@ codehz/mutable-element/0.2.2
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'ShadowRootInit'.
  */ export function shadow(init: ShadowRootInit, ...rest: MutateAction<ShadowRoot>[]): (el: Node) => void {
                                  ~~~~~~~~~~~~~~

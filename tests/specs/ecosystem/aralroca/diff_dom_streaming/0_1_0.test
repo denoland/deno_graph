@@ -7,7 +7,6 @@ aralroca/diff-dom-streaming/0.1.0
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'Node'.
 export default function diff(oldNode: Node, reader: ReadableStreamDefaultReader): Promise<void> {
                                       ~~~~

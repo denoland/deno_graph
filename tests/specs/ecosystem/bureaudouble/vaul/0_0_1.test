@@ -7,7 +7,6 @@ bureaudouble/vaul/0.0.1
 -- stdout --
 
 -- stderr --
-
 error: TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
   onDrag?: (event: React.PointerEvent<HTMLDivElement>, percentageDragged: number) => void;
                                       ~~~~~~~~~~~~~~

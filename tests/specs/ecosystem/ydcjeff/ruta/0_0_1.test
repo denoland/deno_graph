@@ -7,8 +7,6 @@ ydcjeff/ruta/0.0.1
 -- stdout --
 
 -- stderr --
-
-
 error: TS2578 [ERROR]: Unused '@ts-expect-error' directive.
   /** Type only, no runtime equivalent. */ // @ts-expect-error Type only
                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
