@@ -3,4 +3,12 @@ jesubohr/hotkeypad/0.1.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+  declare instance: HTMLElement;
+                    ~~~~~~~~~~~
+    at file://<tmpdir>/src/mod.ts:4:21
+

@@ -3,4 +3,12 @@ thesgj/nextjs-toploader/1.6.12
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2503 [ERROR]: Cannot find namespace 'JSX'.
+ */ const NextTopLoader = ({}: NextTopLoaderProps): JSX.Element =>({} as never);
+                                                    ~~~
+    at file://<tmpdir>/src/index.tsx:62:53
+
