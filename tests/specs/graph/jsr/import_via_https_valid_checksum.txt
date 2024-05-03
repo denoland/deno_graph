@@ -5,24 +5,16 @@
 {
   "exports": {
     ".": "./mod.ts"
+  },
+  "manifest": {
+    "/mod.ts": {
+      "size": 21,
+      "checksum": "sha256-151a3a3f4587a29c7b3449a3635fed35c4e88a3a773b3bf296804f1a4e1ab86d"
+    }
   }
 }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-import { Test as Other } from "jsr:@scope/b";
-export class Test {}
-
-# https://jsr.io/@scope/b/meta.json
-{"versions": { "1.0.0": {} } }
-
-# https://jsr.io/@scope/b/1.0.0_meta.json
-{
-  "exports": {
-    ".": "./mod.ts"
-  }
-}
-
-# https://jsr.io/@scope/b/1.0.0/mod.ts
 export class Test {}
 
 # mod.ts
