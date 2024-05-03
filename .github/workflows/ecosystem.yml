@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   rust:
-    name: ecosystem/${{ matrix.shard }})
+    name: shard ${{ matrix.shard }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
