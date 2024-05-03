@@ -48,7 +48,7 @@ fn main() {
         "./tests/specs/ecosystem/{}/{}/{}.test",
         version.scope.replace('-', "_"),
         version.name.replace('-', "_"),
-        version.version.replace(&['.', '-', '+'], "_")
+        version.version.replace(['.', '-', '+'], "_")
       ));
       std::fs::create_dir_all(path.parent().unwrap()).ok();
 
