@@ -35,7 +35,7 @@ jobs:
         uses: denoland/setup-deno@v1
 
       - name: Cache JSR mirror
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: tests/ecosystem/jsr_mirror/
           key: ecosystem-jsr-mirror-${{ hashFiles('tests/ecosystem/jsr_versions.json') }}
