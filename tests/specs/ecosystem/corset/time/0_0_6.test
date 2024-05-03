@@ -7,7 +7,6 @@ corset/time/0.0.6
 -- stdout --
 
 -- stderr --
-Download https:<global_npm_dir>/@corset/space
 error: Could not find npm package '@corset/space' matching '0.0.7'.
     at file://<tmpdir>/src/primitives.ts:1:80
 

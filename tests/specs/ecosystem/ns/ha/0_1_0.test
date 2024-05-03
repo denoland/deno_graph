@@ -3,4 +3,12 @@ ns/ha/0.1.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+   */ target?: HTMLElement;
+               ~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:10:16
+

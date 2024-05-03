@@ -3,4 +3,94 @@ cgg/emmaline/0.1.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLCanvasElement'.
+  canvas: HTMLCanvasElement;
+          ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/animation/gif.ts:5:11
+
+TS2304 [ERROR]: Cannot find name 'HTMLCanvasElement'.
+  declare canvas: HTMLCanvasElement;
+                  ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/animation/gif.ts:11:19
+
+TS2304 [ERROR]: Cannot find name 'CanvasRenderingContext2D'.
+  declare ctx: CanvasRenderingContext2D;
+               ~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/animation/gif.ts:12:16
+
+TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
+  declare image: HTMLImageElement;
+                 ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/animation/sprite.ts:11:18
+
+TS2304 [ERROR]: Cannot find name 'CanvasRenderingContext2D'.
+type layer = (ctx: CanvasRenderingContext2D, index: number, frameTime: number) => void;
+                   ~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/canvas.ts:3:20
+
+TS2304 [ERROR]: Cannot find name 'CanvasRenderingContext2D'.
+  declare protected ctx: CanvasRenderingContext2D;
+                         ~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/canvas.ts:5:26
+
+TS2304 [ERROR]: Cannot find name 'HTMLCanvasElement'.
+  declare protected _canvas: HTMLCanvasElement;
+                             ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/canvas.ts:6:30
+
+TS2304 [ERROR]: Cannot find name 'CanvasImageSource'.
+  drawImage(img: CanvasImageSource, at: Vector): void;
+                 ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/canvas.ts:44:18
+
+TS2304 [ERROR]: Cannot find name 'CanvasImageSource'.
+  drawImage(img: CanvasImageSource, at: Vector, w: number, h: number): void;
+                 ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/canvas.ts:45:18
+
+TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
+   */ drawImageWithOutline(img: HTMLImageElement, at: Vector, style?: IStyle): void;
+                                ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/canvas.ts:55:33
+
+TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
+  drawImageWithOutline(img: HTMLImageElement, at: Vector, w: number, h: number, style?: IStyle): void;
+                            ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/canvas.ts:56:29
+
+TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
+  drawSprite(img: HTMLImageElement, spritePos: Vector, sWidth: number, sHeight: number, at: Vector, width: number, height: number): void {}
+                  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/canvas.ts:60:19
+
+TS2304 [ERROR]: Cannot find name 'MouseEvent'.
+  onClick(e: MouseEvent): void {}
+             ~~~~~~~~~~
+    at file://<tmpdir>/canvas.ts:85:14
+
+TS2304 [ERROR]: Cannot find name 'MouseEvent'.
+  offClick(e: MouseEvent): void {}
+              ~~~~~~~~~~
+    at file://<tmpdir>/canvas.ts:86:15
+
+TS2304 [ERROR]: Cannot find name 'MouseEvent'.
+  onDrag(e: MouseEvent): void {}
+            ~~~~~~~~~~
+    at file://<tmpdir>/canvas.ts:87:13
+
+TS2304 [ERROR]: Cannot find name 'CanvasRenderingContext2D'.
+export type postInit = (ctx: CanvasRenderingContext2D) => void;
+                             ~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/init.ts:1:30
+
+TS2304 [ERROR]: Cannot find name 'HTMLCanvasElement'.
+  canvas?: HTMLCanvasElement;
+           ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/init.ts:8:12
+
+Found 17 errors.
+

@@ -3,4 +3,22 @@ clappcodes/transporter/0.2.6
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/readable/from-event.ts:11:41
+
+TS2552 [ERROR]: Cannot find name 'GenericTransformStream'. Did you mean 'TransformStream'?
+export const isTransformStream = (a: unknown): a is GenericTransformStream =>({} as never);
+                                                    ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/utils.ts:78:53
+
+    'TransformStream' is declared here.
+    declare var TransformStream: {
+                ~~~~~~~~~~~~~~~
+        at asset:///lib.deno.web.d.ts:914:13
+
+Found 2 errors.
+

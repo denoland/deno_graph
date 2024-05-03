@@ -3,4 +3,10 @@ clappcodes/transporter/0.2.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/readable/from-event.ts:11:41
+

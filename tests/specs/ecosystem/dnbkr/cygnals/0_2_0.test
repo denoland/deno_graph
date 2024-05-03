@@ -3,4 +3,18 @@ dnbkr/cygnals/0.2.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/src/dom.ts:12:41
+
+TS2304 [ERROR]: Cannot find name 'HTMLElementEventMap'.
+    at file://<tmpdir>/src/dom.ts:12:70
+
+TS2304 [ERROR]: Cannot find name 'HTMLElementEventMap'.
+    at file://<tmpdir>/src/dom.ts:12:123
+
+Found 3 errors.
+

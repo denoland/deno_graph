@@ -7,33 +7,8 @@ ydcjeff/ezedge/0.0.8
 -- stdout --
 
 -- stderr --
-error: TS2318 [ERROR]: Cannot find global type 'Array'.
-
-TS2318 [ERROR]: Cannot find global type 'Boolean'.
-
-TS2318 [ERROR]: Cannot find global type 'CallableFunction'.
-
-TS2318 [ERROR]: Cannot find global type 'Function'.
-
-TS2318 [ERROR]: Cannot find global type 'IArguments'.
-
-TS2318 [ERROR]: Cannot find global type 'NewableFunction'.
-
-TS2318 [ERROR]: Cannot find global type 'Number'.
-
-TS2318 [ERROR]: Cannot find global type 'Object'.
-
-TS2318 [ERROR]: Cannot find global type 'RegExp'.
-
-TS2318 [ERROR]: Cannot find global type 'String'.
-
-TS2583 [ERROR]: Cannot find name 'Promise'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2015' or later.
-type MaybePromise<T> = T | Promise<T>;
-                           ~~~~~~~
-    at file://<tmpdir>/src/runtime/entry_server.ts:1:28
-
-TS2304 [ERROR]: Cannot find name 'Record'.
-    at file://<tmpdir>/src/runtime/mod.ts:4:104
-
-Found 12 errors.
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+ */ export function start_client(import_meta_url: string, fn: (el: HTMLElement, hydratable: boolean, data: unknown | null) => void): void {}
+                                                                   ~~~~~~~~~~~
+    at file://<tmpdir>/src/runtime/mod.ts:9:68
 

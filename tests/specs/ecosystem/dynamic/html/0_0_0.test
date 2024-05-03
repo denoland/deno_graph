@@ -3,4 +3,28 @@ dynamic/html/0.0.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLElementTagNameMap'.
+ */ type CreateParams<T extends HTMLElementTagNameMap[keyof HTMLElementTagNameMap]> = {
+                                ~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:7:33
+
+TS2304 [ERROR]: Cannot find name 'HTMLElementTagNameMap'.
+ */ type CreateParams<T extends HTMLElementTagNameMap[keyof HTMLElementTagNameMap]> = {
+                                                            ~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:7:61
+
+TS2304 [ERROR]: Cannot find name 'HTMLElementTagNameMap'.
+    at file://<tmpdir>/mod.ts:10:47
+
+TS2304 [ERROR]: Cannot find name 'HTMLElementTagNameMap'.
+    at file://<tmpdir>/mod.ts:10:101
+
+TS2304 [ERROR]: Cannot find name 'HTMLElementTagNameMap'.
+    at file://<tmpdir>/mod.ts:10:129
+
+Found 5 errors.
+
