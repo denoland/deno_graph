@@ -110,6 +110,8 @@ async function* downloadPackageVersion(
 ): AsyncGenerator<{ promise: Promise<void> }, void, void> {
   const packageDir = path.join(MIRROR_DIR, scope, name);
   const versionDir = path.join(packageDir, version);
+  const manifestFile = path.join(packageDir, `${version}_meta.json`);
+
   try {
     await Deno.mkdir(versionDir, { recursive: true });
   } catch (err) {
@@ -120,8 +122,16 @@ async function* downloadPackageVersion(
     }
   }
 
-  const manifestFile = path.join(packageDir, `${version}_meta.json`);
-  await Deno.writeTextFile(manifestFile, JSON.stringify(manifest, null, 2));
+  try {
+    await Deno.stat(manifestFile);
+    return; // Already downloaded, skip package
+  } catch (err) {
+    if (err instanceof Deno.errors.NotFound) {
+      // Ignore
+    } else {
+      throw err;
+    }
+  }
 
   const files: [string, { size: number; checksum: string }][] = Object.entries(
     manifest.manifest,
@@ -147,6 +157,8 @@ async function* downloadPackageVersion(
       }),
     };
   }
+
+  await Deno.writeTextFile(manifestFile, JSON.stringify(manifest, null, 2));
 
   packagesDone++;
 }

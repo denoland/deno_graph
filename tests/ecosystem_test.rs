@@ -14,6 +14,7 @@ use deno_graph::WorkspaceFastCheckOption;
 use deno_graph::WorkspaceMember;
 use deno_semver::package::PackageNv;
 use file_test_runner::collection::strategies::TestPerFileCollectionStrategy;
+use file_test_runner::collection::CollectedCategoryOrTest;
 use file_test_runner::collection::CollectedTest;
 use file_test_runner::RunOptions;
 use file_test_runner::TestResult;
@@ -70,12 +71,48 @@ fn main() {
     }
   }
 
-  file_test_runner::collect_and_run_tests(
+  let mut category = file_test_runner::collection::collect_tests_or_exit(
     file_test_runner::collection::CollectOptions {
       base: PathBuf::from("./tests/specs/ecosystem"),
       strategy: Box::new(TestPerFileCollectionStrategy { file_pattern: None }),
       filter_override: None,
     },
+  );
+
+  let shard_index: Option<u8> = std::env::var("SHARD_INDEX")
+    .ok()
+    .map(|s| s.parse().unwrap());
+  let shard_count: Option<u8> = std::env::var("SHARD_COUNT")
+    .ok()
+    .map(|s| s.parse().unwrap());
+
+  if let (Some(shard_index), Some(shard_count)) = (shard_index, shard_count) {
+    let tests_per_shard = category.test_count() / shard_count as usize;
+    let mut current_shard_index = 0;
+    let mut tests_in_current_shard = 0;
+    category.children.retain_mut(|category| match category {
+      CollectedCategoryOrTest::Test(_) => todo!(),
+      CollectedCategoryOrTest::Category(category) => {
+        category.children.retain(|category| match category {
+          CollectedCategoryOrTest::Test(_) => todo!(),
+          CollectedCategoryOrTest::Category(category) => {
+            let test_count = category.test_count();
+            tests_in_current_shard += test_count;
+            let retain = current_shard_index == shard_index;
+            if tests_in_current_shard > tests_per_shard {
+              current_shard_index += 1;
+              tests_in_current_shard = 0;
+            }
+            retain
+          }
+        });
+        !category.children.is_empty()
+      }
+    });
+  };
+
+  file_test_runner::run_tests(
+    &category,
     RunOptions { parallel: true },
     Arc::new(run_test),
   )

@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   rust:
-    name: deno_graph-ecosystem
+    name: deno_graph-ecosystem (shard ${{ matrix.shard }})
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -12,6 +12,12 @@ jobs:
       CARGO_INCREMENTAL: 0
       RUST_BACKTRACE: full
       RUSTFLAGS: -D warnings
+
+    if: github.event_name == 'push' || !startsWith(github.event.pull_request.head.label, 'denoland:')
+
+    strategy:
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
     steps:
       - name: Clone repository
@@ -27,8 +33,18 @@ jobs:
       - name: Install up Deno
         uses: denoland/setup-deno@v1
 
+      - name: Cache JSR mirror
+        uses: actions/cache@v2
+        with:
+          path: tests/ecosystem/jsr_mirror/
+          key: ecosystem-jsr-mirror-${{ hashFiles('tests/ecosystem/jsr_versions.json') }}
+          restore-keys: ecosystem-jsr-mirror-
+
       - name: Mirror JSR
         run: deno run -A ./tests/ecosystem/jsr_mirror.ts
 
       - name: Run tests
         run: cargo test --test ecosystem
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_COUNT: 12
