@@ -3,4 +3,39 @@ mtkruto/mtkruto/0.1.705
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'IDBValidKey'.
+export function fixKey(key: readonly StorageKeyPart[]): IDBValidKey[] {
+                                                        ~~~~~~~~~~~
+    at file://<tmpdir>/storage/1_utilities.ts:17:57
+
+TS2304 [ERROR]: Cannot find name 'IDBKeyRange'.
+export function getPrefixKeyRange(prefix: any): IDBKeyRange {
+                                                ~~~~~~~~~~~
+    at file://<tmpdir>/storage/1_utilities.ts:23:49
+
+TS2304 [ERROR]: Cannot find name 'IDBDatabase'.
+  declare database: IDBDatabase | null;
+                    ~~~~~~~~~~~
+    at file://<tmpdir>/storage/2_storage_indexed_db.ts:25:21
+
+TS2304 [ERROR]: Cannot find name 'IDBTransaction'.
+  set(k: readonly StorageKeyPart[], v: unknown, tx_?: IDBTransaction): Promise<void> {
+                                                      ~~~~~~~~~~~~~~
+    at file://<tmpdir>/storage/2_storage_indexed_db.ts:42:55
+
+TS2304 [ERROR]: Cannot find name 'IDBTransaction'.
+  get<T>(k: readonly StorageKeyPart[], tx_?: IDBTransaction | null, fix?: boolean): Promise<T | null> {
+                                             ~~~~~~~~~~~~~~
+    at file://<tmpdir>/storage/2_storage_indexed_db.ts:45:46
+
+TS2304 [ERROR]: Cannot find name 'IDBTransaction'.
+  }, tx_?: IDBTransaction): AsyncGenerator<[readonly StorageKeyPart[], T]> {
+           ~~~~~~~~~~~~~~
+    at file://<tmpdir>/storage/2_storage_indexed_db.ts:51:12
+
+Found 6 errors.
+

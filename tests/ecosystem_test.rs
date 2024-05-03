@@ -113,7 +113,9 @@ fn main() {
 
   file_test_runner::run_tests(
     &category,
-    RunOptions { parallel: true },
+    RunOptions {
+      parallel: std::env::var("CI").is_err(),
+    },
     Arc::new(run_test),
   )
 }

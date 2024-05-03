@@ -7,6 +7,15 @@ bureaudouble/bureau/0.0.95
 -- stdout --
 
 -- stderr --
-error: Could not find dist-tag 'beta' for npm package '@types/react'.
-    at file://<tmpdir>/deno.json:1:1
+error: Uncaught Error: Failed resolving package subpath './client' for '<global_npm_dir>/react-dom/19.0.0-beta-73bcdfbae5-20240502/package.json': [ERR_INVALID_PACKAGE_TARGET] Invalid "exports" target {"react-server":"./client.react-server.js","default":"./client.js"} defined for './client' in the package config <global_npm_dir>/react-dom/19.0.0-beta-73bcdfbae5-20240502/package.json imported from file://<tmpdir>/src/lib/useClient.ts; target must start with "./"
+    at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:756:28)
+    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120758:144)
+    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:121155:22)
+    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:121250:16)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:122813:120)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122544:9)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:122408:22)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:122839:13)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122544:9)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:122408:22)
 
