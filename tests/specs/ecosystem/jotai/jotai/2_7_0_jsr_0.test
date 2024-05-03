@@ -7,11 +7,11 @@ jotai/jotai/2.7.0-jsr.0
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
-Check file://<tmpdir>/src/vanilla.ts
-Check file://<tmpdir>/src/vanilla/utils.ts
-Check file://<tmpdir>/src/react.ts
-Check file://<tmpdir>/src/react/utils.ts
+
+
+
+
+
 error: TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
   [Symbol.observable]?: () => ObservableLike<T> | undefined;
   ~~~~~~~~~~~~~~~~~~~

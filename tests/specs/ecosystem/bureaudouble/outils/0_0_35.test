@@ -7,32 +7,32 @@ bureaudouble/outils/0.0.35
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/cn.ts
-Check file://<tmpdir>/shadcn.ts
-Check file://<tmpdir>/unique.ts
-Check file://<tmpdir>/slugify.ts
-Check file://<tmpdir>/urlcat.ts
-Check file://<tmpdir>/convertToPlain.ts
-Check file://<tmpdir>/createVirtualNode.ts
-Check file://<tmpdir>/deserializeNestedJSON.ts
-Check file://<tmpdir>/toArray.ts
-Check file://<tmpdir>/fresh/types.ts
-Check file://<tmpdir>/fresh/createPartial.ts
-Check file://<tmpdir>/fresh/createHmrPlugin.ts
-Check file://<tmpdir>/fresh/createCorsPlugin.ts
-Check file://<tmpdir>/fresh/createStaticFilePlugin.ts
-Check file://<tmpdir>/fresh/createBasicAuthPlugin.ts
-Check file://<tmpdir>/fresh/createCachifiedPlugin.ts
-Check file://<tmpdir>/fresh/createRenderPipe.ts
-Check file://<tmpdir>/fresh/composeMiddlewares.ts
-Check file://<tmpdir>/fresh/composeRoutes.ts
-Check file://<tmpdir>/fresh/createTailwindPlugin.ts
-Check file://<tmpdir>/database/generateDatabaseTypes.ts
-Check file://<tmpdir>/database/sqlite/createSqliteFromS3.ts
-Check file://<tmpdir>/database/sqlite/createQueryFunction.ts
-Check file://<tmpdir>/database/sqlite/memorySync.ts
-Check file://<tmpdir>/database/sqlite/createSqlitePlugin.ts
-Check file://<tmpdir>/database/sqlite/generateTypes.ts
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 error: TS2536 [ERROR]: Type '0' cannot be used to index type 'InferResult<T>'.
 export type QueryFunction<V> = <T extends CompiledQuery<unknown>>(fn: (qb: Kysely<V>) => T) => Promise<InferResult<T>[0][]>;
                                                                                                        ~~~~~~~~~~~~~~~~~

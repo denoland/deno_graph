@@ -7,7 +7,7 @@ radix-ui-fork/react-visually-hidden/0.0.8
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: TS2304 [ERROR]: Cannot find name 'HTMLSpanElement'.
 const VisuallyHidden: React.ForwardRefExoticComponent<VisuallyHiddenProps & React.RefAttributes<HTMLSpanElement>> = {} as never;
                                                                                                 ~~~~~~~~~~~~~~~

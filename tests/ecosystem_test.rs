@@ -332,6 +332,8 @@ async fn test_version(
       .arg("--no-lock")
       .arg("--no-config")
       .env("DENO_NO_PACKAGE_JSON", "true")
+      .env("NO_COLOR", "true")
+      .env("RUST_LIB_BACKTRACE", "0")
       .args(roots.iter().map(|root| format!(".{}", root.path())))
       .current_dir(&tmpdir_path)
       .output()
@@ -341,7 +343,7 @@ async fn test_version(
     } else {
       writeln!(&mut output, "\n== TYPE CHECK FAILED ==").unwrap();
       let initialize_regexp =
-        regex::Regex::new(r"(:?Initialize|Download) [^\n]*\n").unwrap();
+        regex::Regex::new(r"(:?Initialize|Download|Check) [^\n]*\n").unwrap();
       let node_modules_dir_regexp =
         regex::Regex::new(r"\/[^\s\n]*/registry.npmjs.org").unwrap();
       let stdout = String::from_utf8_lossy(&deno_out.stdout)

@@ -7,7 +7,7 @@ hookdeck/sdk/0.1.0
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { AttemptListRequest } from "./AttemptListRequest.ts";
          ~~~~~~~~~~~~~~~~~~

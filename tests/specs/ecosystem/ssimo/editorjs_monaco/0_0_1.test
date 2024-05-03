@@ -7,7 +7,7 @@ ssimo/editorjs-monaco/0.0.1
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/main.ts
+
 error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
   render(): HTMLElement {
             ~~~~~~~~~~~

@@ -7,7 +7,7 @@ mrii/rocket-io/0.1.3
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: Uncaught Error: Failed resolving package subpath './build/esm/socket' for '<tmpdir>/node_modules/.deno/socket.io-client@4.7.5/node_modules/socket.io-client/package.json': [ERR_PACKAGE_PATH_NOT_EXPORTED] Package subpath './build/esm/socket' is not defined for types by "exports" in '<tmpdir>/node_modules/.deno/socket.io-client@4.7.5/node_modules/socket.io-client/package.json' imported from '<tmpdir>/src/types/socket-reserved-events.ts'
     at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:756:28)
     at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120758:144)

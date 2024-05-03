@@ -7,7 +7,7 @@ medv/finder/3.2.0
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/finder.ts
+
 error: TS2304 [ERROR]: Cannot find name 'Element'.
   root: Element;
         ~~~~~~~

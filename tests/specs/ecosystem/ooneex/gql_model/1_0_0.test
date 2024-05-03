@@ -87,7 +87,7 @@ Download https://jsr.io/@ooneex/helper/1.0.3/src/randomInt.ts
 Download https://jsr.io/@ooneex/helper/1.0.3/src/snakize.ts
 Download https://jsr.io/@ooneex/helper/1.0.3/src/trim.ts
 Download https://jsr.io/@ooneex/helper/1.0.3/src/ucFirst.ts
-Check file://<tmpdir>/index.ts
+
 error: TS2724 [ERROR]: '"https://jsr.io/@ooneex/validation/1.0.4/index.ts"' has no exported member named 'AssertBool'. Did you mean 'AssertBoolean'?
 import { AssertBool } from "jsr:@ooneex/validation@^1.0.0";
          ~~~~~~~~~~

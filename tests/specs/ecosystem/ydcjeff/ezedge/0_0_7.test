@@ -7,8 +7,8 @@ ydcjeff/ezedge/0.0.7
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/runtime/mod.ts
-Check file://<tmpdir>/vite/mod.ts
+
+
 error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
  */ export function start_client(import_meta_url: string, fn: (el: HTMLElement, hydratable: boolean, data: unknown | null) => void): void {}
                                                                    ~~~~~~~~~~~

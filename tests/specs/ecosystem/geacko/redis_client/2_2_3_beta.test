@@ -7,7 +7,7 @@ geacko/redis-client/2.2.3-beta
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/mod.ts
+
 error: TS6133 [ERROR]: '#private' is declared but its value is never read.
   #private!: unknown;
   ~~~~~~~~

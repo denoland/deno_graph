@@ -7,8 +7,8 @@ ydcjeff/ruta/0.0.1
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/ruta_core.ts
-Check file://<tmpdir>/src/ruta_vue.ts
+
+
 error: TS2578 [ERROR]: Unused '@ts-expect-error' directive.
   /** Type only, no runtime equivalent. */ // @ts-expect-error Type only
                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

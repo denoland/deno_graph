@@ -7,7 +7,7 @@ pedrokehl/caminho/1.3.3
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { from, From } from "./from.ts";
                ~~~~

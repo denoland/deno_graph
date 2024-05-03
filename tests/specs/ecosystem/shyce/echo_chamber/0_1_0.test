@@ -7,7 +7,7 @@ shyce/echo-chamber/0.1.0
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/EchoChamber.ts
+
 error: TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
   public get _internalPingInterval(): NodeJS.Timeout | null {
                                       ~~~~~~

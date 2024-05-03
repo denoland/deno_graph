@@ -7,7 +7,7 @@ olets/tailwindcss-fluid-font-size/1.4.0
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: TS2304 [ERROR]: Cannot find name 'PluginWithOptions'.
  */ const fluidFontSize: PluginWithOptions = {} as never;
                          ~~~~~~~~~~~~~~~~~

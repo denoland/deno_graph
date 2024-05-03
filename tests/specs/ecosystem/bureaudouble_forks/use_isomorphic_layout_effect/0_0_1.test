@@ -7,7 +7,7 @@ bureaudouble-forks/use-isomorphic-layout-effect/0.0.1
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
 export default typeof document !== 'undefined' ? useLayoutEffect : useEffect;
                       ~~~~~~~~

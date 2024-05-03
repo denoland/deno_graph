@@ -7,9 +7,9 @@ ydcjeff/ezedge/0.0.8
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/runtime/mod.ts
-Check file://<tmpdir>/src/vite/mod.ts
-Check file://<tmpdir>/src/runtime/entry_server.ts
+
+
+
 error: TS2318 [ERROR]: Cannot find global type 'Array'.
 
 TS2318 [ERROR]: Cannot find global type 'Boolean'.

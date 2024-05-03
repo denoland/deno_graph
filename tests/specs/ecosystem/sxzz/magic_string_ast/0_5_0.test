@@ -7,7 +7,7 @@ sxzz/magic-string-ast/0.5.0
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: TS2430 [ERROR]: Interface 'MagicStringAST' incorrectly extends interface 'MagicString'.
   The types returned by 'clone()' are incompatible between these types.
     Type 'MagicStringAST' is not assignable to type 'this'.

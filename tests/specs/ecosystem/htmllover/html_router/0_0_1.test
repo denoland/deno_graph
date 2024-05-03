@@ -7,7 +7,7 @@ htmllover/html-router/0.0.1
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/mod.ts
+
 error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 export class RouteLink extends HTMLElement {
                                ~~~~~~~~~~~

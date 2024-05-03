@@ -7,7 +7,7 @@ crisislab/timeline/0.11.1
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
   container: HTMLElement;
              ~~~~~~~~~~~

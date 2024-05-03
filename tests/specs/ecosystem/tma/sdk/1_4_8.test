@@ -7,7 +7,7 @@ tma/sdk/1.4.8
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: TS2300 [ERROR]: Duplicate identifier 'isVisible'.
   declare private isVisible: any;
                   ~~~~~~~~~

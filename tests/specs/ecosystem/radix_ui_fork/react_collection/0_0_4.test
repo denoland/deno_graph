@@ -7,7 +7,7 @@ radix-ui-fork/react-collection/0.0.4
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: TS2552 [ERROR]: Cannot find name 'HTMLElement'. Did you mean 'ItemElement'?
 function createCollection<ItemElement extends HTMLElement, ItemData = {
                                               ~~~~~~~~~~~

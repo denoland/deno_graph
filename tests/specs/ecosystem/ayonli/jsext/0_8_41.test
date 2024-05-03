@@ -7,42 +7,42 @@ ayonli/jsext/0.8.41
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/index.ts
-Check file://<tmpdir>/array.ts
-Check file://<tmpdir>/async.ts
-Check file://<tmpdir>/bytes.ts
-Check file://<tmpdir>/chan.ts
-Check file://<tmpdir>/class.ts
-Check file://<tmpdir>/cli.ts
-Check file://<tmpdir>/collections.ts
-Check file://<tmpdir>/debounce.ts
-Check file://<tmpdir>/deprecate.ts
-Check file://<tmpdir>/dialog.ts
-Check file://<tmpdir>/error.ts
-Check file://<tmpdir>/example.ts
-Check file://<tmpdir>/filetype.ts
-Check file://<tmpdir>/func.ts
-Check file://<tmpdir>/json.ts
-Check file://<tmpdir>/lock.ts
-Check file://<tmpdir>/math.ts
-Check file://<tmpdir>/mixin.ts
-Check file://<tmpdir>/module.ts
-Check file://<tmpdir>/number.ts
-Check file://<tmpdir>/object.ts
-Check file://<tmpdir>/parallel.ts
-Check file://<tmpdir>/path.ts
-Check file://<tmpdir>/pipe.ts
-Check file://<tmpdir>/queue.ts
-Check file://<tmpdir>/read.ts
-Check file://<tmpdir>/readAll.ts
-Check file://<tmpdir>/run.ts
-Check file://<tmpdir>/runtime.ts
-Check file://<tmpdir>/string.ts
-Check file://<tmpdir>/throttle.ts
-Check file://<tmpdir>/try.ts
-Check file://<tmpdir>/types.ts
-Check file://<tmpdir>/wrap.ts
-Check file://<tmpdir>/worker.ts
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 error: TS2411 [ERROR]: Property '"--"' of type 'string[] | undefined' is not assignable to 'string' index type 'string | number | boolean | (string | number | boolean)[]'.
   "--"?: string[];
   ~~~~

@@ -7,26 +7,26 @@ bureaudouble/outils/0.0.3
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/cn.ts
-Check file://<tmpdir>/shadcn.ts
-Check file://<tmpdir>/createRenderPipe.ts
-Check file://<tmpdir>/unique.ts
-Check file://<tmpdir>/slugify.ts
-Check file://<tmpdir>/urlcat.ts
-Check file://<tmpdir>/cors.ts
-Check file://<tmpdir>/convertToPlain.ts
-Check file://<tmpdir>/deserializeNestedJSON.ts
-Check file://<tmpdir>/createBasicAuth.ts
-Check file://<tmpdir>/hmr.ts
-Check file://<tmpdir>/staticFileRoute.ts
-Check file://<tmpdir>/toArray.ts
-Check file://<tmpdir>/fresh/middleware.ts
-Check file://<tmpdir>/fresh/adaptFreshPlugin.ts
-Check file://<tmpdir>/database/generateDatabaseTypes.ts
-Check file://<tmpdir>/database/sqlite/createQueryFunction.ts
-Check file://<tmpdir>/database/sqlite/memorySync.ts
-Check file://<tmpdir>/database/sqlite/createMiddleware.ts
-Check file://<tmpdir>/database/sqlite/generateTypes.ts
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 error: TS2536 [ERROR]: Type '0' cannot be used to index type 'InferResult<T>'.
 export type QueryFunction<V> = <T extends CompiledQuery<unknown>>(fn: (qb: Kysely<V>) => T) => Promise<InferResult<T>[0][]>;
                                                                                                        ~~~~~~~~~~~~~~~~~

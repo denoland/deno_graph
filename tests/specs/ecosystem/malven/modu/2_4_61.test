@@ -7,7 +7,7 @@ malven/modu/2.4.61
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/index.ts
+
 error: TS2304 [ERROR]: Cannot find name 'Element'.
   el: Element;
       ~~~~~~~

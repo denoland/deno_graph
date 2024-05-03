@@ -7,8 +7,8 @@ ghost/kjua-revived/0.2.1
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/package.json
-Check file://<tmpdir>/src/kjua.ts
+
+
 error: TS2304 [ERROR]: Cannot find name 'SVGElement'.
 }): SVGElement;
     ~~~~~~~~~~

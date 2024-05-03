@@ -7,7 +7,7 @@ zyyv/utils/0.0.18
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: TS1192 [ERROR]: Module '"file://<tmpdir>/src/array/base.ts"' has no default export.
 import base from "./base.ts";
        ~~~~

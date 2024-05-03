@@ -7,7 +7,7 @@ phlex/morphlex/0.0.10
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/morphlex.ts
+
 error: TS2304 [ERROR]: Cannot find name 'Node'.
     node: Node;
           ~~~~

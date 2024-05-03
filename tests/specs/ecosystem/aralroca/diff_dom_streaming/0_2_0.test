@@ -7,8 +7,8 @@ aralroca/diff-dom-streaming/0.2.0
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
-Check file://<tmpdir>/index.d.ts
+
+
 error: TS2304 [ERROR]: Cannot find name 'Node'.
 type Callback = (node: Node) => void;
                        ~~~~

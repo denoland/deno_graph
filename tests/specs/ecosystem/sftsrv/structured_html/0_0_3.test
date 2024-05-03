@@ -7,8 +7,8 @@ sftsrv/structured-html/0.0.3
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
-Check file://<tmpdir>/src/blocks.ts
+
+
 error: TS2344 [ERROR]: Type 'string | number | symbol' does not satisfy the constraint 'string'.
   Type 'number' is not assignable to type 'string'.
 type TagName = Uppercase<keyof HTMLElementTagNameMap>;

@@ -7,7 +7,7 @@ radix-ui-fork/react-form/0.0.8
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: TS2749 [ERROR]: 'ValidityState' refers to a value, but is being used as a type here. Did you mean 'typeof ValidityState'?
   getFieldValidity(fieldName: string): ValidityState | undefined;
                                        ~~~~~~~~~~~~~

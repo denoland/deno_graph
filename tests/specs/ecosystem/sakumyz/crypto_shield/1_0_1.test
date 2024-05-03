@@ -7,7 +7,7 @@ sakumyz/crypto-shield/1.0.1
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: TS2580 [ERROR]: Cannot find name 'Buffer'.
 const initVector: Buffer = {} as never;
                   ~~~~~~

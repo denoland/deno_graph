@@ -7,8 +7,8 @@ seriousme/opifex/1.0.5
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/server/mod.ts
-Check file://<tmpdir>/client/mod.ts
+
+
 error: TS2729 [ERROR]: Property 'defaultError' is used before its initialization.
   error = this.defaultError;
                ~~~~~~~~~~~~

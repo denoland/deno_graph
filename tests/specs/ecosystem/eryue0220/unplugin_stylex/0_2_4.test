@@ -7,12 +7,12 @@ eryue0220/unplugin-stylex/0.2.4
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
-Check file://<tmpdir>/src/esbuild.ts
-Check file://<tmpdir>/src/rollup.ts
-Check file://<tmpdir>/src/rspack.ts
-Check file://<tmpdir>/src/vite.ts
-Check file://<tmpdir>/src/webpack.ts
+
+
+
+
+
+
 error: TS2580 [ERROR]: Cannot find name 'process'.
 export const isDevelopment = (process.env.NODE_ENV !== 'production' || process.env.BABEL_ENV !== 'production');
                               ~~~~~~~

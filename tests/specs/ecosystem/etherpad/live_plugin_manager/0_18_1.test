@@ -7,7 +7,7 @@ etherpad/live-plugin-manager/0.18.1
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/index.ts
+
 error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { IPluginInfo } from "./src/PluginInfo.ts";
          ~~~~~~~~~~~

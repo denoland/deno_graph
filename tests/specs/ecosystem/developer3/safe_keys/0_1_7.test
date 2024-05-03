@@ -7,7 +7,7 @@ developer3/safe-keys/0.1.7
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/dom.ts
+
 error: TS2304 [ERROR]: Cannot find name 'IDBFactory'.
   indexedDB: IDBFactory;
              ~~~~~~~~~~

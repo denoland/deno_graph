@@ -7,7 +7,7 @@ geacko/resp3-parser/1.1.3
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/mod.ts
+
 error: TS2488 [ERROR]: Type 'never' must have a '[Symbol.iterator]()' method that returns an iterator.
     super(...({} as never));
              ~~~~~~~~~~~~~

@@ -7,12 +7,12 @@ nostrify/nostrify/0.16.0
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/mod.ts
-Check file://<tmpdir>/src/denokv/mod.ts
-Check file://<tmpdir>/src/ln/mod.ts
-Check file://<tmpdir>/src/policies/mod.ts
-Check file://<tmpdir>/src/test/mod.ts
-Check file://<tmpdir>/src/utils/mod.ts
+
+
+
+
+
+
 error: TS2416 [ERROR]: Property 'forEach' in type 'NSet' is not assignable to the same property in base type 'Set<NostrEvent>'.
   Type '(callbackfn: (event: NostrEvent, key: NostrEvent, set: this) => void, thisArg?: any) => void' is not assignable to type '(callbackfn: (value: NostrEvent, value2: NostrEvent, set: Set<NostrEvent>) => void, thisArg?: any) => void'.
     Types of parameters 'callbackfn' and 'callbackfn' are incompatible.

@@ -7,7 +7,7 @@ zone-x/zone-x/0.1.0
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/index.ts
+
 error: TS2304 [ERROR]: Cannot find name 'TimeZone'.
 export function getUsersTimeZone(): TimeZone {
                                     ~~~~~~~~

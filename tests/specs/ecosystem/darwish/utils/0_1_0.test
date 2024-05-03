@@ -7,7 +7,7 @@ darwish/utils/0.1.0
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/mod.ts
+
 error: TS2305 [ERROR]: Module '"file://<tmpdir>/add/index.ts"' has no exported member 'default'.
 export { default as add } from "./add/index.ts";
          ~~~~~~~

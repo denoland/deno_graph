@@ -7,7 +7,7 @@ marvinh-test/fresh-tailwind/0.0.1
 -- stdout --
 
 -- stderr --
-Check file://<tmpdir>/src/mod.ts
+
 error: TS2305 [ERROR]: Module '"https://jsr.io/@marvinh-test/fresh/2.0.0-prealpha.17/src/dev/mod.ts"' has no exported member 'DevApp'.
 import { DevApp } from "jsr:/@marvinh-test/fresh@^2.0.0-prealpha.0/dev";
          ~~~~~~

@@ -210,7 +210,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -591,7 +591,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -972,7 +972,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -1353,7 +1353,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -1734,7 +1734,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -2115,7 +2115,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -2496,7 +2496,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -2877,7 +2877,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -3258,7 +3258,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -3639,7 +3639,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -4020,7 +4020,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -4401,7 +4401,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -4782,7 +4782,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -5163,7 +5163,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -5544,7 +5544,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -5925,7 +5925,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -6306,7 +6306,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -6687,7 +6687,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -7068,7 +7068,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -7449,7 +7449,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -7830,7 +7830,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -8211,7 +8211,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -8592,7 +8592,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -8973,7 +8973,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -9354,7 +9354,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -9735,7 +9735,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -10116,7 +10116,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -10497,7 +10497,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -10878,7 +10878,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -11259,7 +11259,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -11640,7 +11640,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -12021,7 +12021,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -12402,7 +12402,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
@@ -12783,7 +12783,7 @@ error[missing-explicit-type]: missing explicit type in the public API
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/apps/openapi_merger/libs/schemas.ts:50:14
    | 
-50 | export const OpenapiMergerConfigCheck = TypeCompiler.Compile(OpenapiMergerConfigSchema);
+50 | export const OpenapiMergerConfig
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
    = hint: add an explicit type annotation to the symbol
 
