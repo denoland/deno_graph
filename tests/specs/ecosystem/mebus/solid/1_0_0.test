@@ -1,4 +1,62 @@
 mebus/solid/1.0.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:mebus@^1.0.2": "npm:mebus@1.0.6_fp-ts@2.16.5",
+      "npm:solid-js@^1.8.15": "npm:solid-js@1.8.17_seroval@1.0.5",
+      "npm:zod@^3.22.4": "npm:zod@3.23.5"
+    },
+    "npm": {
+      "csstype@3.1.3": {
+        "integrity": "sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==",
+        "dependencies": {}
+      },
+      "fp-ts@2.16.5": {
+        "integrity": "sha512-N8T8PwMSeTKKtkm9lkj/zSTAnPC/aJIIrQhnHxxkL0KLsRCNUPANksJOlMXxcKKCo7H1ORP3No9EMD+fP0tsdA==",
+        "dependencies": {}
+      },
+      "io-ts@2.2.21_fp-ts@2.16.5": {
+        "integrity": "sha512-zz2Z69v9ZIC3mMLYWIeoUcwWD6f+O7yP92FMVVaXEOSZH1jnVBmET/urd/uoarD1WGBY4rCj8TAyMPzsGNzMFQ==",
+        "dependencies": {
+          "fp-ts": "fp-ts@2.16.5"
+        }
+      },
+      "mebus@1.0.6_fp-ts@2.16.5": {
+        "integrity": "sha512-kneOPIwlPgvzYh7dZ2GM8vGuNbfZ98+vM3tHBRxuiX5n3QlCxhMPNMpMZdbpjeVwMQOvwHThi7zDuKjbz8nceA==",
+        "dependencies": {
+          "fp-ts": "fp-ts@2.16.5",
+          "io-ts": "io-ts@2.2.21_fp-ts@2.16.5"
+        }
+      },
+      "seroval-plugins@1.0.5_seroval@1.0.5": {
+        "integrity": "sha512-8+pDC1vOedPXjKG7oz8o+iiHrtF2WswaMQJ7CKFpccvSYfrzmvKY9zOJWCg+881722wIHfwkdnRmiiDm9ym+zQ==",
+        "dependencies": {
+          "seroval": "seroval@1.0.5"
+        }
+      },
+      "seroval@1.0.5": {
+        "integrity": "sha512-TM+Z11tHHvQVQKeNlOUonOWnsNM+2IBwZ4vwoi4j3zKzIpc5IDw8WPwCfcc8F17wy6cBcJGbZbFOR0UCuTZHQA==",
+        "dependencies": {}
+      },
+      "solid-js@1.8.17_seroval@1.0.5": {
+        "integrity": "sha512-E0FkUgv9sG/gEBWkHr/2XkBluHb1fkrHywUgA6o6XolPDCJ4g1HaLmQufcBBhiF36ee40q+HpG/vCZu7fLpI3Q==",
+        "dependencies": {
+          "csstype": "csstype@3.1.3",
+          "seroval": "seroval@1.0.5",
+          "seroval-plugins": "seroval-plugins@1.0.5_seroval@1.0.5"
+        }
+      },
+      "zod@3.23.5": {
+        "integrity": "sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

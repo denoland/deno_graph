@@ -1,4 +1,21 @@
 mozaiq/effect-deno/0.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:effect@^2.4.1": "npm:effect@2.4.19"
+    },
+    "npm": {
+      "effect@2.4.19": {
+        "integrity": "sha512-z/rn878Po3n522g/AYUDHD1SsZaZdvRxlTCLQ8xl8H6xA82nBwwooD1mdn/73Uywmp7d84oay3w3528r0Uyd0w==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

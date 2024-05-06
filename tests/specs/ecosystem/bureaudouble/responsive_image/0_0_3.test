@@ -1,4 +1,24 @@
 bureaudouble/responsive-image/0.0.3
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@bureaudouble/outils@0.0.62": "jsr:@bureaudouble/outils@0.0.62",
+      "jsr:@bureaudouble/scripted@0.0.2": "jsr:@bureaudouble/scripted@0.0.2"
+    },
+    "jsr": {
+      "@bureaudouble/outils@0.0.62": {
+        "integrity": "28a164bbdb0f19691d0a39c53dcd5ba803aca92b2ee864b984737d253f676f7e"
+      },
+      "@bureaudouble/scripted@0.0.2": {
+        "integrity": "6ba53621ed24438e28f9949301f39eb0241e8746433b1465479b91c29475b58b"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

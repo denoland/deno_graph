@@ -1,4 +1,32 @@
 fartlabs/jsonx/0.0.6
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.217.0": "jsr:@std/assert@0.217.0",
+      "jsr:@std/fs@0.217": "jsr:@std/fs@0.217.0",
+      "jsr:@std/path@^0.217.0": "jsr:@std/path@0.217.0"
+    },
+    "jsr": {
+      "@std/assert@0.217.0": {
+        "integrity": "c98e279362ca6982d5285c3b89517b757c1e3477ee9f14eb2fdf80a45aaa9642"
+      },
+      "@std/fs@0.217.0": {
+        "integrity": "0bfff5f3618d68c385b28b4ffbf3a15c98293a0f1186444458b62e0111ce77b2",
+        "dependencies": [
+          "jsr:@std/assert@^0.217.0",
+          "jsr:@std/path@^0.217.0"
+        ]
+      },
+      "@std/path@0.217.0": {
+        "integrity": "1217cc25534bca9a2f672d7fe7c6f356e4027df400c0e85c0ef3e4343bc67d11"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

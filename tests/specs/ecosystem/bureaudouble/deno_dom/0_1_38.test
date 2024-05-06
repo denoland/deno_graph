@@ -1,4 +1,10 @@
 bureaudouble/deno-dom/0.1.38
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

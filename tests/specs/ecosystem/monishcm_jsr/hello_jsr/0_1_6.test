@@ -1,4 +1,21 @@
 monishcm-jsr/hello-jsr/0.1.6
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:complex@latest": "npm:complex@3.0.1"
+    },
+    "npm": {
+      "complex@3.0.1": {
+        "integrity": "sha512-oInXNu3gaWt5NOW9/lpFyA8Sl0jpzNd3eWP5AI15v5m2QsdFsZqO2dn+uiqQHlub5vln5MD9C19dshbo8+amVg==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

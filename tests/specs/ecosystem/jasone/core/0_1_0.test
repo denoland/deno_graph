@@ -1,4 +1,20 @@
 jasone/core/0.1.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@jasone/types@0.1.0": "jsr:@jasone/types@0.1.0"
+    },
+    "jsr": {
+      "@jasone/types@0.1.0": {
+        "integrity": "0f4347dcac510a4d4b6c66e7dbb05067888d9b46514810a5cd5e1c480ceef285"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

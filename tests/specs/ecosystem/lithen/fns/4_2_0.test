@@ -1,4 +1,10 @@
 lithen/fns/4.2.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

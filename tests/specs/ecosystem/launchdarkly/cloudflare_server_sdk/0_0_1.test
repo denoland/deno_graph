@@ -1,4 +1,60 @@
 launchdarkly/cloudflare-server-sdk/0.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@cloudflare/workers-types@^4.20230321.0": "npm:@cloudflare/workers-types@4.20240423.0",
+      "npm:@launchdarkly/js-server-sdk-common-edge@2.2.1": "npm:@launchdarkly/js-server-sdk-common-edge@2.2.1"
+    },
+    "npm": {
+      "@cloudflare/workers-types@4.20240423.0": {
+        "integrity": "sha512-ssuccb3j+URp6mP2p0PcQE9vmS3YeKBQnALHF9P3yQfUAFozuhTsDTbqmL+zPrJvUcG7SL2xVQkNDF9QJeKDZw==",
+        "dependencies": {}
+      },
+      "@launchdarkly/js-sdk-common@2.3.0": {
+        "integrity": "sha512-oWrFZv2ljHy27bxyzYyHitlgh/C2IYViw41HyJ6x+mTjfwDsS5Rl4DK77JYzcojFg89flqSRl5eysZts32R9LQ==",
+        "dependencies": {}
+      },
+      "@launchdarkly/js-server-sdk-common-edge@2.2.1": {
+        "integrity": "sha512-7XG8/wym9xrPWcp1qR3y1KA3xcsJecxGFP9B64+nTUDD5gUHZJV/XV6/D2sM2OKMq+LkpY+KQxHXvq8vgNUTww==",
+        "dependencies": {
+          "@launchdarkly/js-server-sdk-common": "@launchdarkly/js-server-sdk-common@2.2.1",
+          "crypto-js": "crypto-js@4.2.0"
+        }
+      },
+      "@launchdarkly/js-server-sdk-common@2.2.1": {
+        "integrity": "sha512-2JEC36pBNmYtTFlcTrBVrWIFddoZNfbiiI9EjwVpO64x0r5P/ee96OMycaqzC0pI9am4WHGRLzKgnNdpS7wPHg==",
+        "dependencies": {
+          "@launchdarkly/js-sdk-common": "@launchdarkly/js-sdk-common@2.3.0",
+          "semver": "semver@7.5.4"
+        }
+      },
+      "crypto-js@4.2.0": {
+        "integrity": "sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==",
+        "dependencies": {}
+      },
+      "lru-cache@6.0.0": {
+        "integrity": "sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==",
+        "dependencies": {
+          "yallist": "yallist@4.0.0"
+        }
+      },
+      "semver@7.5.4": {
+        "integrity": "sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==",
+        "dependencies": {
+          "lru-cache": "lru-cache@6.0.0"
+        }
+      },
+      "yallist@4.0.0": {
+        "integrity": "sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,20 @@
 std/archive/0.203.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/internal@^0.203.0": "jsr:@std/internal@0.203.0"
+    },
+    "jsr": {
+      "@std/internal@0.203.0": {
+        "integrity": "e3c160f8b0693352e52a73f48071c24a5b76cc428de5624f353cbd2bb04a8a1b"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,21 @@
 isham/typed-home-assistant/0.2.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:home-assistant-js-websocket@^9.3.0": "npm:home-assistant-js-websocket@9.3.0"
+    },
+    "npm": {
+      "home-assistant-js-websocket@9.3.0": {
+        "integrity": "sha512-DB2jCo57+0OIOhF3zMjHcfZnRyzbWBdeT24LwTh4pO75vaIiXbdaWwZFEFukHOz3K8qTFmeUnLemHV3Fspib+A==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

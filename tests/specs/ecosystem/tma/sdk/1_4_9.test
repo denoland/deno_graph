@@ -1,4 +1,10 @@
 tma/sdk/1.4.9
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

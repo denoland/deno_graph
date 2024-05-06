@@ -1,4 +1,20 @@
 dynamic/html/0.0.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@dynamic/core@^0.0.0": "jsr:@dynamic/core@0.0.0"
+    },
+    "jsr": {
+      "@dynamic/core@0.0.0": {
+        "integrity": "30127ce58c58fb584eed0a655eafe1e3eeb66a46fa0d5f144eac4161c96d960d"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

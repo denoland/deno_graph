@@ -1,4 +1,10 @@
 bradenmacdonald/s3-lite-client/0.7.2
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

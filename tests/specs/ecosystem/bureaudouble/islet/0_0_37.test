@@ -1,4 +1,70 @@
 bureaudouble/islet/0.0.37
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@bureaudouble/outils@0.0.13": "jsr:@bureaudouble/outils@0.0.13",
+      "jsr:@bureaudouble/scripted@0.0.2": "jsr:@bureaudouble/scripted@0.0.2",
+      "jsr:@std/assert@^0.216.0": "jsr:@std/assert@0.216.0",
+      "jsr:@std/crypto@0.216": "jsr:@std/crypto@0.216.0",
+      "jsr:@std/encoding@0.216": "jsr:@std/encoding@0.216.0",
+      "jsr:@std/fs@0.216": "jsr:@std/fs@0.216.0",
+      "jsr:@std/path@0.216": "jsr:@std/path@0.216.0",
+      "jsr:@std/path@^0.216.0": "jsr:@std/path@0.216.0",
+      "npm:react@18.2": "npm:react@18.2.0"
+    },
+    "jsr": {
+      "@bureaudouble/outils@0.0.13": {
+        "integrity": "351999b11bbbc3696a84f2bf4f6d134a732e8e2dd4c3d51f9699d9906b875180"
+      },
+      "@bureaudouble/scripted@0.0.2": {
+        "integrity": "6ba53621ed24438e28f9949301f39eb0241e8746433b1465479b91c29475b58b"
+      },
+      "@std/assert@0.216.0": {
+        "integrity": "f65392edf3bec39e2d1028e51f1da549db81691034b244eaba83318a757c0c2e"
+      },
+      "@std/crypto@0.216.0": {
+        "integrity": "04efc82b5daef3ca07a4dfcb8b8d5ed6832f430976b928e9c2af71b2ea79c1d9"
+      },
+      "@std/encoding@0.216.0": {
+        "integrity": "607d82c978e91aa9db455e79fdd09a9bc2e9089de5c05c8807c19b8ea05ce226"
+      },
+      "@std/fs@0.216.0": {
+        "integrity": "5ed8d2b3aa820d42dd84ee612aed5e4e24f20046709d41d18024ae2ac7463ed6",
+        "dependencies": [
+          "jsr:@std/path@^0.216.0"
+        ]
+      },
+      "@std/path@0.216.0": {
+        "integrity": "85c121f1b43f7fb17e225567c4f151b3a67796ed8c619d37f9d61ea46116a2f0",
+        "dependencies": [
+          "jsr:@std/assert@^0.216.0"
+        ]
+      }
+    },
+    "npm": {
+      "js-tokens@4.0.0": {
+        "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==",
+        "dependencies": {}
+      },
+      "loose-envify@1.4.0": {
+        "integrity": "sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==",
+        "dependencies": {
+          "js-tokens": "js-tokens@4.0.0"
+        }
+      },
+      "react@18.2.0": {
+        "integrity": "sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==",
+        "dependencies": {
+          "loose-envify": "loose-envify@1.4.0"
+        }
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

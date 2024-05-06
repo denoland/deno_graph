@@ -1,4 +1,10 @@
 hongminhee/aitertools/0.6.0-dev.37+f9ce562
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

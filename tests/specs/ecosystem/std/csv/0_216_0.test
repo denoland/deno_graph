@@ -1,4 +1,10 @@
 std/csv/0.216.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

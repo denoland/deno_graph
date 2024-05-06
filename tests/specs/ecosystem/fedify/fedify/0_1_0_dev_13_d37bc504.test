@@ -1,4 +1,27 @@
 fedify/fedify/0.1.0-dev.13+d37bc504
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@phensley/language-tag@1.8.0": "npm:@phensley/language-tag@1.8.0"
+    },
+    "npm": {
+      "@phensley/language-tag@1.8.0": {
+        "integrity": "sha512-9zUKCZ2T4dtdaQs/hlcuDh5etH60ncUDBi5UlRuzzloXxmgLO/TNC3u6uYAzz4GBfDh787rVfOr/JnjNKAalyw==",
+        "dependencies": {
+          "tslib": "tslib@2.6.2"
+        }
+      },
+      "tslib@2.6.2": {
+        "integrity": "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

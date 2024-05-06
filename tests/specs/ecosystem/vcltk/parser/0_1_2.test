@@ -1,4 +1,24 @@
 vcltk/parser/0.1.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@vcltk/ast@0.1.2": "jsr:@vcltk/ast@0.1.2",
+      "jsr:@vcltk/token@0.2.0": "jsr:@vcltk/token@0.2.0"
+    },
+    "jsr": {
+      "@vcltk/ast@0.1.2": {
+        "integrity": "9d865241a630bf44d881db1648482c642ca1dad270059216d925c5bb3a21a6d9"
+      },
+      "@vcltk/token@0.2.0": {
+        "integrity": "f6622de1f22eb78daa50228362c2f40dcbbb0d8d6c3357b8314cd46fd606389b"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

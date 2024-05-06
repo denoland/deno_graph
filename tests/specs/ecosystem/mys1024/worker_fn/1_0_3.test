@@ -1,4 +1,10 @@
 mys1024/worker-fn/1.0.3
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

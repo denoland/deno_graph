@@ -1,4 +1,10 @@
 l3onh4rd/xor/0.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

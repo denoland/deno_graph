@@ -1,4 +1,10 @@
 mtkruto/mtkruto/0.1.702
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

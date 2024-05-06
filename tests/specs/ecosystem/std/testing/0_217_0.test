@@ -1,4 +1,20 @@
 std/testing/0.217.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/async@^0.217.0": "jsr:@std/async@0.217.0"
+    },
+    "jsr": {
+      "@std/async@0.217.0": {
+        "integrity": "14dac94f59595e39e519de379c47170d8bbedea253824c4b167108aa943ddb69"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

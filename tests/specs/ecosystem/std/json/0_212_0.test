@@ -1,4 +1,10 @@
 std/json/0.212.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

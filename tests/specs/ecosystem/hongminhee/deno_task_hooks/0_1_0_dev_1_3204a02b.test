@@ -1,4 +1,10 @@
 hongminhee/deno-task-hooks/0.1.0-dev.1+3204a02b
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

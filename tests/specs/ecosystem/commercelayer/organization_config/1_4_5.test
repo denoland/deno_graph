@@ -1,4 +1,10 @@
 commercelayer/organization-config/1.4.5
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

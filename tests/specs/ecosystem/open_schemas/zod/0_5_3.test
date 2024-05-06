@@ -1,4 +1,6 @@
 open-schemas/zod/0.5.3
+-- deno.lock --
+
 ===
 
 == FAST CHECK EMIT FAILED ==

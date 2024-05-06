@@ -1,4 +1,10 @@
 reda/remember-promise/1.10.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

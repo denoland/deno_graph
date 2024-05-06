@@ -1,4 +1,10 @@
 halvardm/sqlx/0.0.0-10
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

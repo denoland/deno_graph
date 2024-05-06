@@ -1,4 +1,10 @@
 zip-js/zip-js/2.7.38
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

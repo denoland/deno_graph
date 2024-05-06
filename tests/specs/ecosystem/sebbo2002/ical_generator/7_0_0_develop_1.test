@@ -1,4 +1,10 @@
 sebbo2002/ical-generator/7.0.0-develop.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

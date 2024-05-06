@@ -1,4 +1,84 @@
 treaty/httpclient/0.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@angular/common@^17.2.1": "npm:@angular/common@17.3.7_@angular+core@17.3.7__rxjs@7.8.1__zone.js@0.14.5_rxjs@7.8.1",
+      "npm:@angular/core@^17.2.1": "npm:@angular/core@17.3.7_rxjs@7.8.1_zone.js@0.14.5",
+      "npm:elysia@^0.8.17": "npm:elysia@0.8.17",
+      "npm:rxjs@~7.8.0": "npm:rxjs@7.8.1"
+    },
+    "npm": {
+      "@angular/common@17.3.7_@angular+core@17.3.7__rxjs@7.8.1__zone.js@0.14.5_rxjs@7.8.1": {
+        "integrity": "sha512-A7LRJu1vVCGGgrfZXjU+njz50SiU4weheKCar5PIUprcdIofS1IrHAJDqYh+kwXxkjXbZMOr/ijQY0+AESLEsw==",
+        "dependencies": {
+          "@angular/core": "@angular/core@17.3.7_rxjs@7.8.1_zone.js@0.14.5",
+          "rxjs": "rxjs@7.8.1",
+          "tslib": "tslib@2.6.2"
+        }
+      },
+      "@angular/core@17.3.7_rxjs@7.8.1_zone.js@0.14.5": {
+        "integrity": "sha512-HWcrbxqnvIMSxFuQdN0KPt08bc87hqr0LKm89yuRTUwx/2sNJlNQUobk6aJj4trswGBttcRDT+GOS4DQP2Nr4g==",
+        "dependencies": {
+          "rxjs": "rxjs@7.8.1",
+          "tslib": "tslib@2.6.2",
+          "zone.js": "zone.js@0.14.5"
+        }
+      },
+      "cookie@0.6.0": {
+        "integrity": "sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==",
+        "dependencies": {}
+      },
+      "elysia@0.8.17": {
+        "integrity": "sha512-hqKHKUxbvlDHnobudtna5nBoGiZ4oa0xdnhynLAJF3+6gTYHAcQ/8/IyxUx5Az5Uy0zTuNiv7m2bIFu7xeMiWg==",
+        "dependencies": {
+          "cookie": "cookie@0.6.0",
+          "eventemitter3": "eventemitter3@5.0.1",
+          "fast-decode-uri-component": "fast-decode-uri-component@1.0.1",
+          "fast-querystring": "fast-querystring@1.1.2",
+          "memoirist": "memoirist@0.1.10"
+        }
+      },
+      "eventemitter3@5.0.1": {
+        "integrity": "sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==",
+        "dependencies": {}
+      },
+      "fast-decode-uri-component@1.0.1": {
+        "integrity": "sha512-WKgKWg5eUxvRZGwW8FvfbaH7AXSh2cL+3j5fMGzUMCxWBJ3dV3a7Wz8y2f/uQ0e3B6WmodD3oS54jTQ9HVTIIg==",
+        "dependencies": {}
+      },
+      "fast-querystring@1.1.2": {
+        "integrity": "sha512-g6KuKWmFXc0fID8WWH0jit4g0AGBoJhCkJMb1RmbsSEUNvQ+ZC8D6CUZ+GtF8nMzSPXnhiePyyqqipzNNEnHjg==",
+        "dependencies": {
+          "fast-decode-uri-component": "fast-decode-uri-component@1.0.1"
+        }
+      },
+      "memoirist@0.1.10": {
+        "integrity": "sha512-k2ARHDrSzqeQAWrgvE2NgNj7p5c1LkeFI1VizklJWDXAOTgq7m8mtl0v6W1mVawFNe3DH0hb4BdA91y3vwbqvw==",
+        "dependencies": {}
+      },
+      "rxjs@7.8.1": {
+        "integrity": "sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==",
+        "dependencies": {
+          "tslib": "tslib@2.6.2"
+        }
+      },
+      "tslib@2.6.2": {
+        "integrity": "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
+        "dependencies": {}
+      },
+      "zone.js@0.14.5": {
+        "integrity": "sha512-9XYWZzY6PhHOSdkYryNcMm7L8EK7a4q+GbTvxbIA2a9lMdRUpGuyaYvLDcg8D6bdn+JomSsbPcilVKg6SmUx6w==",
+        "dependencies": {
+          "tslib": "tslib@2.6.2"
+        }
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

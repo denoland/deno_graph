@@ -1,4 +1,20 @@
 std/jsonc/0.200.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/json@^0.200.0": "jsr:@std/json@0.200.0"
+    },
+    "jsr": {
+      "@std/json@0.200.0": {
+        "integrity": "831770245d37febc2476e414df5f2cba9b07838308b074991465179fab622e77"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

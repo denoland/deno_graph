@@ -1,4 +1,27 @@
 phughesmcr/reflectr/0.0.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:happynodetokenizer@^7.1.0": "npm:happynodetokenizer@7.1.0"
+    },
+    "npm": {
+      "happynodetokenizer@7.1.0": {
+        "integrity": "sha512-0WxGjIYNF9zkoejDPvKpMG66fhFmXssr9a1bqJ+B+mKIJ398KJuDkhD9ugZLjhDWFEfHZIQaqCkBR0zcLuvWiQ==",
+        "dependencies": {
+          "he": "he@1.2.0"
+        }
+      },
+      "he@1.2.0": {
+        "integrity": "sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

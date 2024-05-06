@@ -1,4 +1,20 @@
 pup/telemetry/1.0.4
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@pup/common@^1.0.3": "jsr:@pup/common@1.0.3"
+    },
+    "jsr": {
+      "@pup/common@1.0.3": {
+        "integrity": "2685baf9aea043a5899b250aa85e441e398ca43506127142e4d0ec45e32d54e1"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

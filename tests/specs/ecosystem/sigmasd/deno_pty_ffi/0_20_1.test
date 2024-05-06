@@ -1,4 +1,10 @@
 sigmasd/deno-pty-ffi/0.20.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,20 @@
 std/encoding/0.205.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/internal@^0.205.0": "jsr:@std/internal@0.205.0"
+    },
+    "jsr": {
+      "@std/internal@0.205.0": {
+        "integrity": "87fef3f9885395f8ef459a0fa4ae6b14dc4ab9b5108b824a472ad5aa79e7d20b"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

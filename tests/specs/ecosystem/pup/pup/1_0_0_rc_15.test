@@ -1,4 +1,10 @@
 pup/pup/1.0.0-rc.15
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

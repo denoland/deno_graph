@@ -1,4 +1,6 @@
 fluentci/supabase/0.5.1
+-- deno.lock --
+
 ===
 
 == FAST CHECK EMIT FAILED ==

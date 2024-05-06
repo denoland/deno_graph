@@ -1,4 +1,10 @@
 geacko/serve-file/1.0.2
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

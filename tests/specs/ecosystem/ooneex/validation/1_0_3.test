@@ -1,4 +1,39 @@
 ooneex/validation/1.0.3
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@ooneex/exception@^1.0.2": "jsr:@ooneex/exception@1.0.3",
+      "jsr:@ooneex/helper@^1.0.2": "jsr:@ooneex/helper@1.0.3",
+      "npm:acorn@^8.11.3": "npm:acorn@8.11.3",
+      "npm:zod@^3.22.4": "npm:zod@3.23.5"
+    },
+    "jsr": {
+      "@ooneex/exception@1.0.3": {
+        "integrity": "5fc30e591cc916c9b0664c39eb169c9f1cf9f5644340e3d4c22258c0e32e71d8"
+      },
+      "@ooneex/helper@1.0.3": {
+        "integrity": "cf59cf79bbc557e9bdddb66b32a52697b94d57f2dc2e44bc149aacaf76ed8c2a",
+        "dependencies": [
+          "npm:acorn@^8.11.3"
+        ]
+      }
+    },
+    "npm": {
+      "acorn@8.11.3": {
+        "integrity": "sha512-Y9rRfJG5jcKOE0CLisYbojUjIrIEE7AGMzA/Sm4BslANhbS+cDMpgBdcPT91oJ7OuJ9hYJBx59RjbhxVnrF8Xg==",
+        "dependencies": {}
+      },
+      "zod@3.23.5": {
+        "integrity": "sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

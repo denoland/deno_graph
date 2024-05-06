@@ -1,4 +1,10 @@
 joshlong145/span/0.5.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,6 @@
 fmt/gofmt/0.4.9
+-- deno.lock --
+
 ===
 
 == FAST CHECK EMIT FAILED ==

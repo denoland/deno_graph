@@ -1,4 +1,10 @@
 jacoborus/estilo/2.0.0-beta.10
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

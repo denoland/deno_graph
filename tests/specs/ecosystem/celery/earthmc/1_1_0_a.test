@@ -1,4 +1,10 @@
 celery/earthmc/1.1.0-a
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

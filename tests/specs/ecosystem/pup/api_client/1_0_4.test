@@ -1,4 +1,24 @@
 pup/api-client/1.0.4
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@pup/api-definitions@^1.0.2": "jsr:@pup/api-definitions@1.0.2",
+      "jsr:@pup/common@^1.0.3": "jsr:@pup/common@1.0.3"
+    },
+    "jsr": {
+      "@pup/api-definitions@1.0.2": {
+        "integrity": "8da8418986348274d5eaaed3399212eb2651a9400bf40f5c5d29245c2824cfbf"
+      },
+      "@pup/common@1.0.3": {
+        "integrity": "2685baf9aea043a5899b250aa85e441e398ca43506127142e4d0ec45e32d54e1"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

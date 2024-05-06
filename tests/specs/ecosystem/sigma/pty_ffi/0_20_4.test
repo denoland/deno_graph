@@ -1,4 +1,10 @@
 sigma/pty-ffi/0.20.4
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

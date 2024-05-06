@@ -1,4 +1,10 @@
 deno/graph/0.71.3
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

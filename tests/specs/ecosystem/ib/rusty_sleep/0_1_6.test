@@ -1,4 +1,20 @@
 ib/rusty-sleep/0.1.6
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@ib/sleep@0.0": "jsr:@ib/sleep@0.0.3"
+    },
+    "jsr": {
+      "@ib/sleep@0.0.3": {
+        "integrity": "c24e54ea26f177be5c368cc82ac79d9b79b583c7fc1f1eeedad6f1f064215879"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,46 @@
 http/generate/0.9.0-beta.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@http/discovery@0.9.0-beta.2": "jsr:@http/discovery@0.9.0-beta.2",
+      "jsr:@http/handler@0.9.0-beta.2": "jsr:@http/handler@0.9.0-beta.2",
+      "jsr:@http/route@0.9.0-beta.2": "jsr:@http/route@0.9.0-beta.2",
+      "jsr:@std/assert@^0.222.1": "jsr:@std/assert@0.222.1",
+      "jsr:@std/path@^0.222.1": "jsr:@std/path@0.222.1"
+    },
+    "jsr": {
+      "@http/discovery@0.9.0-beta.2": {
+        "integrity": "382a1f45c55ba8d65676a372956b08593e2b56bee0ef8b63a3499bcdb0734149",
+        "dependencies": [
+          "jsr:@http/route@0.9.0-beta.2",
+          "jsr:@std/path@^0.222.1"
+        ]
+      },
+      "@http/handler@0.9.0-beta.2": {
+        "integrity": "5b0d2fe447c26d778f029da53090023516bda67a432e444177533cd9d722711f"
+      },
+      "@http/route@0.9.0-beta.2": {
+        "integrity": "1edfb52f9dfca015ef7416016667a40d7d8745b356c42ce340f33769637b9870",
+        "dependencies": [
+          "jsr:@http/handler@0.9.0-beta.2"
+        ]
+      },
+      "@std/assert@0.222.1": {
+        "integrity": "691637161ee584a9919d1f9950ddd1272feb8e0a19e83aa5b7563cedaf73d74c"
+      },
+      "@std/path@0.222.1": {
+        "integrity": "aad3e9463ca53b0adb25b4d5beb330025674aaa3278da24c1c261d9289a9e48b",
+        "dependencies": [
+          "jsr:@std/assert@^0.222.1"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

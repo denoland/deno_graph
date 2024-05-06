@@ -1,4 +1,10 @@
 std/ini/0.213.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

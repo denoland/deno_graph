@@ -1,4 +1,66 @@
 http/fns/0.6.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.217.0": "jsr:@std/assert@0.217.0",
+      "jsr:@std/cli@^0.217.0": "jsr:@std/cli@0.217.0",
+      "jsr:@std/encoding@^0.217.0": "jsr:@std/encoding@0.217.0",
+      "jsr:@std/fmt@^0.217.0": "jsr:@std/fmt@0.217.0",
+      "jsr:@std/http@0.217": "jsr:@std/http@0.217.0",
+      "jsr:@std/media-types@^0.217.0": "jsr:@std/media-types@0.217.0",
+      "jsr:@std/path@0.217": "jsr:@std/path@0.217.0",
+      "jsr:@std/path@^0.217.0": "jsr:@std/path@0.217.0",
+      "jsr:@std/streams@^0.217.0": "jsr:@std/streams@0.217.0"
+    },
+    "jsr": {
+      "@std/assert@0.217.0": {
+        "integrity": "c98e279362ca6982d5285c3b89517b757c1e3477ee9f14eb2fdf80a45aaa9642"
+      },
+      "@std/cli@0.217.0": {
+        "integrity": "5c25bd040cd0bbc11707ecaa7ce9c41314d02ce46f45709822bbd0f92c35fee8",
+        "dependencies": [
+          "jsr:@std/assert@^0.217.0"
+        ]
+      },
+      "@std/encoding@0.217.0": {
+        "integrity": "b03e8ff94c98d6b6a02c02c5cf8e5d203400155516248964fc4559abc04669dc"
+      },
+      "@std/fmt@0.217.0": {
+        "integrity": "cb99f82500b8da20202fedfa8bb94dd0222e81f0494ed9087de20ee3d8a39a8d"
+      },
+      "@std/http@0.217.0": {
+        "integrity": "c9c7ca4e90695f40abce0bd5b7158017de02b676ce077da3b0b82e2cf6c0afc4",
+        "dependencies": [
+          "jsr:@std/cli@^0.217.0",
+          "jsr:@std/encoding@^0.217.0",
+          "jsr:@std/fmt@^0.217.0",
+          "jsr:@std/media-types@^0.217.0",
+          "jsr:@std/path@^0.217.0",
+          "jsr:@std/streams@^0.217.0"
+        ]
+      },
+      "@std/media-types@0.217.0": {
+        "integrity": "a57f48d89a59ca8ab802525f762ade8277c623d067948ebb564859ee8eb2c724"
+      },
+      "@std/path@0.217.0": {
+        "integrity": "1217cc25534bca9a2f672d7fe7c6f356e4027df400c0e85c0ef3e4343bc67d11",
+        "dependencies": [
+          "jsr:@std/assert@^0.217.0"
+        ]
+      },
+      "@std/streams@0.217.0": {
+        "integrity": "b4a6de703d6aa59c4777f89fc002e82b8401dada44d1e6f7e916664c1e6cfd36",
+        "dependencies": [
+          "jsr:@std/assert@^0.217.0"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

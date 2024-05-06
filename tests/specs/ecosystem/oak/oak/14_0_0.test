@@ -1,4 +1,68 @@
 oak/oak/14.0.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@oak/commons@0.6": "jsr:@oak/commons@0.6.1",
+      "jsr:@std/assert@0.215": "jsr:@std/assert@0.215.0",
+      "jsr:@std/assert@^0.217.0": "jsr:@std/assert@0.217.0",
+      "jsr:@std/crypto@0.217": "jsr:@std/crypto@0.217.0",
+      "jsr:@std/encoding@0.215": "jsr:@std/encoding@0.215.0",
+      "jsr:@std/encoding@^0.217.0": "jsr:@std/encoding@0.217.0",
+      "jsr:@std/http@0.217": "jsr:@std/http@0.217.0",
+      "jsr:@std/media-types@0.215": "jsr:@std/media-types@0.215.0",
+      "npm:path-to-regexp@6.2.1": "npm:path-to-regexp@6.2.1"
+    },
+    "jsr": {
+      "@oak/commons@0.6.1": {
+        "integrity": "c5455d45966d61e11a7a241503ee9b770e0c527f1951edd2a565eff531b8070d",
+        "dependencies": [
+          "jsr:@std/assert@0.215",
+          "jsr:@std/encoding@0.215",
+          "jsr:@std/media-types@0.215"
+        ]
+      },
+      "@std/assert@0.215.0": {
+        "integrity": "4d80a5b5f1aef916131e3b5dcf8cfdad397affe87da7fa6398d8088e146d1e48"
+      },
+      "@std/assert@0.217.0": {
+        "integrity": "c98e279362ca6982d5285c3b89517b757c1e3477ee9f14eb2fdf80a45aaa9642"
+      },
+      "@std/crypto@0.217.0": {
+        "integrity": "03db05a5a10cf9bbecf0505213c267466fa5e6c9ee00fc8e2cdfca391ff15b89",
+        "dependencies": [
+          "jsr:@std/assert@^0.217.0",
+          "jsr:@std/encoding@^0.217.0"
+        ]
+      },
+      "@std/encoding@0.215.0": {
+        "integrity": "9b24c964b0f61ea849d1ea38de7dea2190d08c8ffed732d36595bfb1b5e4dbe5"
+      },
+      "@std/encoding@0.217.0": {
+        "integrity": "b03e8ff94c98d6b6a02c02c5cf8e5d203400155516248964fc4559abc04669dc"
+      },
+      "@std/http@0.217.0": {
+        "integrity": "c9c7ca4e90695f40abce0bd5b7158017de02b676ce077da3b0b82e2cf6c0afc4",
+        "dependencies": [
+          "jsr:@std/assert@^0.217.0",
+          "jsr:@std/encoding@^0.217.0"
+        ]
+      },
+      "@std/media-types@0.215.0": {
+        "integrity": "76f3259f65193e848795e634b2782e7d90c861364fb90bcd81775378688091f1"
+      }
+    },
+    "npm": {
+      "path-to-regexp@6.2.1": {
+        "integrity": "sha512-JLyh7xT1kizaEvcaXOQwOc2/Yhw6KZOvPf1S8401UyLk86CU79LN3vl7ztXGm/pZ+YjoyAJ4rxmHwbkBXJX+yw==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

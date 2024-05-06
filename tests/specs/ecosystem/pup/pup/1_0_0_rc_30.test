@@ -1,4 +1,79 @@
 pup/pup/1.0.0-rc.30
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@cross/deepmerge@^1.0.0": "jsr:@cross/deepmerge@1.0.0",
+      "jsr:@cross/dir@^1.1.0": "jsr:@cross/dir@1.1.0",
+      "jsr:@cross/env@^1.0.0": "jsr:@cross/env@1.0.2",
+      "jsr:@cross/fs@^0.0.9": "jsr:@cross/fs@0.0.9",
+      "jsr:@cross/runtime@^1.0.0": "jsr:@cross/runtime@1.0.0",
+      "jsr:@cross/utils@^0.10.0": "jsr:@cross/utils@0.10.0",
+      "jsr:@cross/utils@^0.7.0": "jsr:@cross/utils@0.7.1",
+      "jsr:@std/assert@^0.221.0": "jsr:@std/assert@0.221.0",
+      "jsr:@std/assert@^0.223.0": "jsr:@std/assert@0.223.0",
+      "jsr:@std/async@^0.223.0": "jsr:@std/async@0.223.0",
+      "jsr:@std/path@^0.221.0": "jsr:@std/path@0.221.0"
+    },
+    "jsr": {
+      "@cross/deepmerge@1.0.0": {
+        "integrity": "1e1318a74e31ba1959b9aa0acae8bd417b806f74ffd25ac07c90e12f83ad6b1d"
+      },
+      "@cross/dir@1.1.0": {
+        "integrity": "41eb779daf160f53bc33ef91f593f332fffc52ec9b81f87178db564718534e59",
+        "dependencies": [
+          "jsr:@cross/utils@^0.7.0"
+        ]
+      },
+      "@cross/env@1.0.2": {
+        "integrity": "28501ad1043c218a5b00fe5db27ec62c01ab16371bbe1b9d738496f0a7c5eeb8",
+        "dependencies": [
+          "jsr:@cross/deepmerge@^1.0.0"
+        ]
+      },
+      "@cross/fs@0.0.9": {
+        "integrity": "29d1c0999877c2a92d507e21d4eafb971d23c2e5d7d5393cc2db0eeeffeff3f6",
+        "dependencies": [
+          "jsr:@cross/dir@^1.1.0",
+          "jsr:@cross/env@^1.0.0",
+          "jsr:@cross/runtime@^1.0.0",
+          "jsr:@cross/utils@^0.10.0",
+          "jsr:@std/path@^0.221.0"
+        ]
+      },
+      "@cross/runtime@1.0.0": {
+        "integrity": "dddecdf99182df13d50279d1e473f715e83d41961c5c22edd7bb0c4c3cf8a76a"
+      },
+      "@cross/utils@0.10.0": {
+        "integrity": "476c980309a5df9a86bc205a118647612c614345cbd1373f3018fdbfa6474efd"
+      },
+      "@cross/utils@0.7.1": {
+        "integrity": "6cc50ad31b0904364188c43d10e3d4888d817a3d415528b014c27deb8a35564e"
+      },
+      "@std/assert@0.221.0": {
+        "integrity": "a5f1aa6e7909dbea271754fd4ab3f4e687aeff4873b4cef9a320af813adb489a"
+      },
+      "@std/assert@0.223.0": {
+        "integrity": "eb8d6d879d76e1cc431205bd346ed4d88dc051c6366365b1af47034b0670be24"
+      },
+      "@std/async@0.223.0": {
+        "integrity": "b42f635d89fb8f9e0e7dc258fbc8f33233e4977f61e0b20da08a8b51fd7b2c5d",
+        "dependencies": [
+          "jsr:@std/assert@^0.223.0"
+        ]
+      },
+      "@std/path@0.221.0": {
+        "integrity": "0a36f6b17314ef653a3a1649740cc8db51b25a133ecfe838f20b79a56ebe0095",
+        "dependencies": [
+          "jsr:@std/assert@^0.221.0"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

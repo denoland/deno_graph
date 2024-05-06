@@ -1,4 +1,10 @@
 marvinh-test/fresh-init/0.0.1-prealpha.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

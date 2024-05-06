@@ -1,4 +1,6 @@
 std/crypto/0.198.0
+-- deno.lock --
+
 ===
 
 == FAST CHECK EMIT FAILED ==

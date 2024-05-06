@@ -1,4 +1,10 @@
 poolifier/poolifier/3.1.30
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

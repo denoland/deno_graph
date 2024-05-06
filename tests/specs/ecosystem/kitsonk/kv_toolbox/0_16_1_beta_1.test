@@ -1,4 +1,10 @@
 kitsonk/kv-toolbox/0.16.1-beta.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

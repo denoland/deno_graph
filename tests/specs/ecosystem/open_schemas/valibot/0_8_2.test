@@ -1,4 +1,6 @@
 open-schemas/valibot/0.8.2
+-- deno.lock --
+
 ===
 
 == FAST CHECK EMIT FAILED ==

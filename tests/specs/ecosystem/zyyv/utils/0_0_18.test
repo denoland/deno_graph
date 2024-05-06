@@ -1,4 +1,10 @@
 zyyv/utils/0.0.18
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

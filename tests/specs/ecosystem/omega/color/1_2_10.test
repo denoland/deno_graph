@@ -1,4 +1,10 @@
 omega/color/1.2.10
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

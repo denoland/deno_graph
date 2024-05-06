@@ -1,4 +1,6 @@
 fluentci/bun/0.6.9
+-- deno.lock --
+
 ===
 
 == FAST CHECK EMIT FAILED ==

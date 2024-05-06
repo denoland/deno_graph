@@ -1,4 +1,21 @@
 denosaurs/log/0.0.10
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@types/fast-redact@3": "npm:@types/fast-redact@3.0.4"
+    },
+    "npm": {
+      "@types/fast-redact@3.0.4": {
+        "integrity": "sha512-tgGJaXucrCH4Yx2l/AI6e/JQksZhKGIQsVwBMTh+nxUhQDv5tXScTs5DHTw+qSKDXnHL2dTAh1e2rd5pcFQyNQ==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

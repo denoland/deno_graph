@@ -1,4 +1,20 @@
 sigmasd/deno-gtk-py/0.4.11
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@denosaurs/python@0.4.3": "jsr:@denosaurs/python@0.4.3"
+    },
+    "jsr": {
+      "@denosaurs/python@0.4.3": {
+        "integrity": "75ab100f29b66fa4abdd0f385e1176f6f530acca2cd0c518249419a4164606c2"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

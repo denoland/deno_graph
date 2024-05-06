@@ -1,4 +1,27 @@
 mebus/mebus/1.0.5
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:io-ts@^2.2.21": "npm:io-ts@2.2.21_fp-ts@2.16.5"
+    },
+    "npm": {
+      "fp-ts@2.16.5": {
+        "integrity": "sha512-N8T8PwMSeTKKtkm9lkj/zSTAnPC/aJIIrQhnHxxkL0KLsRCNUPANksJOlMXxcKKCo7H1ORP3No9EMD+fP0tsdA==",
+        "dependencies": {}
+      },
+      "io-ts@2.2.21_fp-ts@2.16.5": {
+        "integrity": "sha512-zz2Z69v9ZIC3mMLYWIeoUcwWD6f+O7yP92FMVVaXEOSZH1jnVBmET/urd/uoarD1WGBY4rCj8TAyMPzsGNzMFQ==",
+        "dependencies": {
+          "fp-ts": "fp-ts@2.16.5"
+        }
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

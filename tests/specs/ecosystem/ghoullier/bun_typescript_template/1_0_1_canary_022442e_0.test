@@ -1,4 +1,10 @@
 ghoullier/bun-typescript-template/1.0.1-canary.022442e.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

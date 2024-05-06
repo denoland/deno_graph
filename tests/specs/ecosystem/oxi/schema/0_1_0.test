@@ -1,4 +1,47 @@
 oxi/schema/0.1.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@oxi/core@^0.2.0": "jsr:@oxi/core@0.2.1",
+      "jsr:@oxi/core@^0.2.1": "jsr:@oxi/core@0.2.1",
+      "jsr:@oxi/list@^1.2.0": "jsr:@oxi/list@1.2.0",
+      "jsr:@oxi/option@^0.1.0": "jsr:@oxi/option@0.1.1",
+      "jsr:@oxi/option@^0.2.0": "jsr:@oxi/option@0.2.0",
+      "jsr:@oxi/result@^0.2.0": "jsr:@oxi/result@0.2.0"
+    },
+    "jsr": {
+      "@oxi/core@0.2.1": {
+        "integrity": "36e340fb6d9fd29013c23cfd867645390e39f7b9b253c28514c2b5cb97638b5e"
+      },
+      "@oxi/list@1.2.0": {
+        "integrity": "b3177f3c8b961f9315a3aba5dcd64ab8367bdc05233d5d47490832ab9d31bd35",
+        "dependencies": [
+          "jsr:@oxi/core@^0.2.0",
+          "jsr:@oxi/option@^0.1.0"
+        ]
+      },
+      "@oxi/option@0.1.1": {
+        "integrity": "4d41eeeb26d9e67bcaa44767cded88e79b327c34a7e142800f22b57d401f544b"
+      },
+      "@oxi/option@0.2.0": {
+        "integrity": "31eb26fe703146a827c446589784918633f6d2250a8b6a00cab10f37f1feeb69",
+        "dependencies": [
+          "jsr:@oxi/core@^0.2.1"
+        ]
+      },
+      "@oxi/result@0.2.0": {
+        "integrity": "b138677c11b7f2cbda8070d83b203b93168765e40f2cea61c76c4f8a8b64b305",
+        "dependencies": [
+          "jsr:@oxi/core@^0.2.1"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,10 @@
 maxim-mazurok/sax-ts/1.2.13
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

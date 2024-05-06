@@ -1,4 +1,10 @@
 codemonument/update-denoconfig/1.0.6
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

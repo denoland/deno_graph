@@ -1,4 +1,10 @@
 geacko/resp3-parser/5.1.4-beta
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,27 @@
 toea/tano/0.2.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.215.0": "jsr:@std/assert@0.215.0",
+      "jsr:@std/path@0.215.0": "jsr:@std/path@0.215.0"
+    },
+    "jsr": {
+      "@std/assert@0.215.0": {
+        "integrity": "4d80a5b5f1aef916131e3b5dcf8cfdad397affe87da7fa6398d8088e146d1e48"
+      },
+      "@std/path@0.215.0": {
+        "integrity": "b790874b1abfed43a6e559d436fe87786c1c26b4338c2afe9c76c81ae7b532bc",
+        "dependencies": [
+          "jsr:@std/assert@^0.215.0"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

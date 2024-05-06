@@ -1,4 +1,20 @@
 mdekstrand/hyperstatic/0.5.0-beta8
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@b-fuze/deno-dom@^0.1.43": "jsr:@b-fuze/deno-dom@0.1.43"
+    },
+    "jsr": {
+      "@b-fuze/deno-dom@0.1.43": {
+        "integrity": "6e99c4645ab897520fa04d60d0096aa1f49ff9a8950db7f258511419ab08d754"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

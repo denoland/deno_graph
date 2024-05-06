@@ -1,4 +1,21 @@
 cc/eslint-config/0.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:eslint-define-config@^1.24.1": "npm:eslint-define-config@1.24.1"
+    },
+    "npm": {
+      "eslint-define-config@1.24.1": {
+        "integrity": "sha512-o36vBhPSWyIQlHoMqGhhcGmOOm2A2ccBVIdLTG/AWdm9YmjpsLpf+5ntf9LlHR6dduLREgxtGwvwPwSt7vnXJg==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

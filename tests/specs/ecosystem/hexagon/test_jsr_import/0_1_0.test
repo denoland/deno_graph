@@ -1,4 +1,10 @@
 hexagon/test-jsr-import/0.1.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

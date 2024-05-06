@@ -1,4 +1,10 @@
 ghoullier/fp-nutshell/1.2.2-canary.b074bbc.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

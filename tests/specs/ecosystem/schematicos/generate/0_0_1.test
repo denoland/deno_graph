@@ -1,4 +1,32 @@
 schematicos/generate/0.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@schematicos/types@0.0.34": "npm:@schematicos/types@0.0.34",
+      "npm:prettier@3.2.5": "npm:prettier@3.2.5"
+    },
+    "npm": {
+      "@schematicos/types@0.0.34": {
+        "integrity": "sha512-KOb9sdaLoSsstN3/QdTALNCvXZ9NWNMxudMOyCRq7fzxCk555ERCCIG3LBUG7ovOXOn/56dkxIpCpvoj+2zQTQ==",
+        "dependencies": {
+          "zod": "zod@3.23.5"
+        }
+      },
+      "prettier@3.2.5": {
+        "integrity": "sha512-3/GWa9aOC0YeD7LUfvOG2NiDyhOWRvt1k+rcKhOuYnMY24iiCphgneUfJDyFXd6rZCAnuLBv6UeAULtrhT/F4A==",
+        "dependencies": {}
+      },
+      "zod@3.23.5": {
+        "integrity": "sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

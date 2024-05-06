@@ -1,4 +1,27 @@
 std/flags/0.209.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.209.0": "jsr:@std/assert@0.209.0",
+      "jsr:@std/cli@^0.209.0": "jsr:@std/cli@0.209.0"
+    },
+    "jsr": {
+      "@std/assert@0.209.0": {
+        "integrity": "7583f07eb531f41222d0871d1dc9511424185f4b2281a12d07b53fa85f1fcd9e"
+      },
+      "@std/cli@0.209.0": {
+        "integrity": "36cb4ead2d99f04998b73663b891f7f9b1019afc69fbe673364ce821f8abc019",
+        "dependencies": [
+          "jsr:@std/assert@^0.209.0"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

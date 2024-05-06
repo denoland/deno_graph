@@ -1,4 +1,65 @@
 http/fns/0.6.4
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.219.1": "jsr:@std/assert@0.219.1",
+      "jsr:@std/cli@^0.219.1": "jsr:@std/cli@0.219.1",
+      "jsr:@std/encoding@^0.219.1": "jsr:@std/encoding@0.219.1",
+      "jsr:@std/fmt@^0.219.1": "jsr:@std/fmt@0.219.1",
+      "jsr:@std/http@^0.219.1": "jsr:@std/http@0.219.1",
+      "jsr:@std/media-types@^0.219.1": "jsr:@std/media-types@0.219.1",
+      "jsr:@std/path@^0.219.1": "jsr:@std/path@0.219.1",
+      "jsr:@std/streams@^0.219.1": "jsr:@std/streams@0.219.1"
+    },
+    "jsr": {
+      "@std/assert@0.219.1": {
+        "integrity": "e76c2a1799a78f0f4db7de04bdc9b908a7a4b821bb65eda0285885297d4fb8af"
+      },
+      "@std/cli@0.219.1": {
+        "integrity": "715a9926b58b89ef8a3c91e91633ac5f8176e0f02f6b3a16f0a67309e41a2911",
+        "dependencies": [
+          "jsr:@std/assert@^0.219.1"
+        ]
+      },
+      "@std/encoding@0.219.1": {
+        "integrity": "77b30e481a596cfb2a8f2f38c3165e6035a4f76a7259bf89b6a622ceaf57d575"
+      },
+      "@std/fmt@0.219.1": {
+        "integrity": "2432152e927df249a207177aa048a6d9465956ea0047653ee6abd4f514db504f"
+      },
+      "@std/http@0.219.1": {
+        "integrity": "444b9e212747a4a163f5d9f5e468d1159e3ff9915cbc60a5bac6043f4771649a",
+        "dependencies": [
+          "jsr:@std/cli@^0.219.1",
+          "jsr:@std/encoding@^0.219.1",
+          "jsr:@std/fmt@^0.219.1",
+          "jsr:@std/media-types@^0.219.1",
+          "jsr:@std/path@^0.219.1",
+          "jsr:@std/streams@^0.219.1"
+        ]
+      },
+      "@std/media-types@0.219.1": {
+        "integrity": "557c8d4fd82aa6df51bca18d14e08e8df7134816c8defb61c90ac48bf71ad7c4"
+      },
+      "@std/path@0.219.1": {
+        "integrity": "e5c0ffef3a8ef2b48e9e3d88a1489320e8fb2cc7be767b17c91a1424ffb4c8ed",
+        "dependencies": [
+          "jsr:@std/assert@^0.219.1"
+        ]
+      },
+      "@std/streams@0.219.1": {
+        "integrity": "6f5dac5773a4fafdbe7ee612d0a0d5a2cbe465b9c9e2c85d371877dc8a52d1d3",
+        "dependencies": [
+          "jsr:@std/assert@^0.219.1"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

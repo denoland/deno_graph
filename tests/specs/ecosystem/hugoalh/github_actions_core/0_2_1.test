@@ -1,4 +1,27 @@
 hugoalh/github-actions-core/0.2.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@hugoalh/is-json@1.0.1": "jsr:@hugoalh/is-json@1.0.1",
+      "jsr:@hugoalh/is-object-plain@1.0.1": "jsr:@hugoalh/is-object-plain@1.0.1"
+    },
+    "jsr": {
+      "@hugoalh/is-json@1.0.1": {
+        "integrity": "b3617e60b5e72d3dd4f51fd6f4ba8a0d83f68ace2bcac24e60b3d73bd05cf4d3",
+        "dependencies": [
+          "jsr:@hugoalh/is-object-plain@1.0.1"
+        ]
+      },
+      "@hugoalh/is-object-plain@1.0.1": {
+        "integrity": "846a3a2227d57c0e72a3a400ab8d19d810f4a8cb277e5eae9cb9e5cf2a0c6b3e"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

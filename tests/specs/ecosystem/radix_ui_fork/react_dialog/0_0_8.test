@@ -1,4 +1,134 @@
 radix-ui-fork/react-dialog/0.0.8
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@radix-ui-fork/primitive@0.0.8": "jsr:@radix-ui-fork/primitive@0.0.8",
+      "jsr:@radix-ui-fork/react-compose-refs@0.0.8": "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
+      "jsr:@radix-ui-fork/react-context@0.0.8": "jsr:@radix-ui-fork/react-context@0.0.8",
+      "jsr:@radix-ui-fork/react-dismissable-layer@0.0.8": "jsr:@radix-ui-fork/react-dismissable-layer@0.0.8",
+      "jsr:@radix-ui-fork/react-focus-scope@0.0.8": "jsr:@radix-ui-fork/react-focus-scope@0.0.8",
+      "jsr:@radix-ui-fork/react-portal@0.0.8": "jsr:@radix-ui-fork/react-portal@0.0.8",
+      "jsr:@radix-ui-fork/react-primitive@0.0.8": "jsr:@radix-ui-fork/react-primitive@0.0.8",
+      "jsr:@radix-ui-fork/react-slot@0.0.8": "jsr:@radix-ui-fork/react-slot@0.0.8",
+      "jsr:@radix-ui-fork/react-use-callback-ref@0.0.8": "jsr:@radix-ui-fork/react-use-callback-ref@0.0.8",
+      "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.8": "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.8",
+      "npm:@types/react-dom@^18.2.0": "npm:@types/react-dom@18.3.0",
+      "npm:@types/react@^18.2.0": "npm:@types/react@18.3.1",
+      "npm:react@^18.2.0": "npm:react@18.3.1"
+    },
+    "jsr": {
+      "@radix-ui-fork/primitive@0.0.8": {
+        "integrity": "e8d3c9f74236a4b7188d65fa7d798ba9f2d987467873a704773b1fad08746d52"
+      },
+      "@radix-ui-fork/react-compose-refs@0.0.8": {
+        "integrity": "1383d4f2accaad3cdeaff3ee4f859b462eb26dce451973ee3fd168ad811da2c6",
+        "dependencies": [
+          "npm:@types/react@^18.2.0"
+        ]
+      },
+      "@radix-ui-fork/react-context@0.0.8": {
+        "integrity": "d8c479e28d55e6aa5a4fdc40d805c4b146fc38e670ddd6aae58da8c7e33d6edc",
+        "dependencies": [
+          "npm:@types/react@^18.2.0"
+        ]
+      },
+      "@radix-ui-fork/react-dismissable-layer@0.0.8": {
+        "integrity": "dfb7798ff99899a29694efd23f4ff5b5577b44c5d808355c9a334743bc16919d",
+        "dependencies": [
+          "jsr:@radix-ui-fork/primitive@0.0.8",
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.8",
+          "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.8",
+          "npm:@types/react@^18.2.0"
+        ]
+      },
+      "@radix-ui-fork/react-focus-scope@0.0.8": {
+        "integrity": "1b97674bab2d21db76181103ada3a0dbe1cab71090f98b03415b9377a9e3347a",
+        "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.8",
+          "npm:@types/react@^18.2.0"
+        ]
+      },
+      "@radix-ui-fork/react-portal@0.0.8": {
+        "integrity": "2dbfdc3e31aedd3a1a6ea080e8c708c06c7c4ce223c8c0def51bd0192041c52d",
+        "dependencies": [
+          "npm:@types/react-dom@^18.2.0",
+          "npm:@types/react@^18.2.0"
+        ]
+      },
+      "@radix-ui-fork/react-primitive@0.0.8": {
+        "integrity": "5d31c430a946d8a9d12618abb14c99363908a81af336663e4bb487139d3e7ecb",
+        "dependencies": [
+          "jsr:@radix-ui-fork/react-slot@0.0.8",
+          "npm:@types/react-dom@^18.2.0",
+          "npm:@types/react@^18.2.0"
+        ]
+      },
+      "@radix-ui-fork/react-slot@0.0.8": {
+        "integrity": "ab722b1cb0b4b2ed64402ada44def2352eb2b47ddd8af605f44c7768a4e48a78",
+        "dependencies": [
+          "npm:@types/react@^18.2.0"
+        ]
+      },
+      "@radix-ui-fork/react-use-callback-ref@0.0.8": {
+        "integrity": "b0dd0413657c45e9bdc6eaed9408b95abac6f43870fcf17d57d8ad777606c23f",
+        "dependencies": [
+          "npm:@types/react@^18.2.0"
+        ]
+      },
+      "@radix-ui-fork/react-use-escape-keydown@0.0.8": {
+        "integrity": "c7c9ba96c010063e11c45e27fac8ff07c3a0583184cf06518e0bc04e3daeb58d",
+        "dependencies": [
+          "npm:@types/react@^18.2.0"
+        ]
+      }
+    },
+    "npm": {
+      "@types/prop-types@15.7.12": {
+        "integrity": "sha512-5zvhXYtRNRluoE/jAp4GVsSduVUzNWKkOZrCDBWYtE7biZywwdC2AcEzg+cSMLFRfVgeAFqpfNabiPjxFddV1Q==",
+        "dependencies": {}
+      },
+      "@types/react-dom@18.3.0": {
+        "integrity": "sha512-EhwApuTmMBmXuFOikhQLIBUn6uFg81SwLMOAUgodJF14SOBOCMdU04gDoYi0WOJJHD144TL32z4yDqCW3dnkQg==",
+        "dependencies": {
+          "@types/react": "@types/react@18.3.1"
+        }
+      },
+      "@types/react@18.3.1": {
+        "integrity": "sha512-V0kuGBX3+prX+DQ/7r2qsv1NsdfnCLnTgnRJ1pYnxykBhGMz+qj+box5lq7XsO5mtZsBqpjwwTu/7wszPfMBcw==",
+        "dependencies": {
+          "@types/prop-types": "@types/prop-types@15.7.12",
+          "csstype": "csstype@3.1.3"
+        }
+      },
+      "csstype@3.1.3": {
+        "integrity": "sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==",
+        "dependencies": {}
+      },
+      "js-tokens@4.0.0": {
+        "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==",
+        "dependencies": {}
+      },
+      "loose-envify@1.4.0": {
+        "integrity": "sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==",
+        "dependencies": {
+          "js-tokens": "js-tokens@4.0.0"
+        }
+      },
+      "react@18.3.1": {
+        "integrity": "sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==",
+        "dependencies": {
+          "loose-envify": "loose-envify@1.4.0"
+        }
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,10 @@
 logtape/logtape/0.3.0-dev.27+42b10385
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

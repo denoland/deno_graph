@@ -1,4 +1,10 @@
 santima10/lazy/0.0.24
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

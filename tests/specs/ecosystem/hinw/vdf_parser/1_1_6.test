@@ -1,4 +1,10 @@
 hinw/vdf-parser/1.1.6
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

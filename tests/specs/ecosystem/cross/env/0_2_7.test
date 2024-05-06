@@ -1,4 +1,10 @@
 cross/env/0.2.7
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

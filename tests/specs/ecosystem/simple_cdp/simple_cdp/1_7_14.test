@@ -1,4 +1,10 @@
 simple-cdp/simple-cdp/1.7.14
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

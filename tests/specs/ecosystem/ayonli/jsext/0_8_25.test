@@ -1,4 +1,10 @@
 ayonli/jsext/0.8.25
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

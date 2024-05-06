@@ -1,4 +1,10 @@
 rikkit/greet/0.1.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,10 @@
 botao/test/0.0.1-alpha.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

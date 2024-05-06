@@ -1,4 +1,6 @@
 gizmo-ds/totp-wasm/0.1.2
+-- deno.lock --
+
 ===
 
 == FAST CHECK EMIT FAILED ==

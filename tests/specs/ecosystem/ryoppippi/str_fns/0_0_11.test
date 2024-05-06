@@ -1,4 +1,21 @@
 ryoppippi/str-fns/0.0.11
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:type-fest@4.15.0": "npm:type-fest@4.15.0"
+    },
+    "npm": {
+      "type-fest@4.15.0": {
+        "integrity": "sha512-tB9lu0pQpX5KJq54g+oHOLumOx+pMep4RaM6liXh2PKmVRFF+/vAtUP0ZaJ0kOySfVNjF6doBWPHhBhISKdlIA==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

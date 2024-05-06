@@ -1,4 +1,10 @@
 ry/one-true-date/0.1.9
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,10 @@
 denosaurs/netsaur/0.3.1-patch
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

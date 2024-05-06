@@ -1,4 +1,20 @@
 md/polyrepo/0.0.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@md/cli@^0.0.0": "jsr:@md/cli@0.0.0"
+    },
+    "jsr": {
+      "@md/cli@0.0.0": {
+        "integrity": "ba20fb951a88993ce8e0e0c791450eebb131d0649fc2eb85755ba063dfc00f77"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

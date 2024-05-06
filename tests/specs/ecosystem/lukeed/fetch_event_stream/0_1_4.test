@@ -1,4 +1,20 @@
 lukeed/fetch-event-stream/0.1.4
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/http@0.220.1": "jsr:@std/http@0.220.1"
+    },
+    "jsr": {
+      "@std/http@0.220.1": {
+        "integrity": "1672a8d31f3e0ccf1c55221907daba4a22f3760cf2d079afb26def2dcfd0513b"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

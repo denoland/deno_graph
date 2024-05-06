@@ -1,4 +1,10 @@
 friendsofshopware/app-server-express/0.0.51
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

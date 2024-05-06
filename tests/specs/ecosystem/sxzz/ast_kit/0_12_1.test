@@ -1,4 +1,42 @@
 sxzz/ast-kit/0.12.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@babel/parser@^7.23.9": "npm:@babel/parser@7.24.5",
+      "npm:@babel/types@^7.23.9": "npm:@babel/types@7.24.5"
+    },
+    "npm": {
+      "@babel/helper-string-parser@7.24.1": {
+        "integrity": "sha512-2ofRCjnnA9y+wk8b9IAREroeUP02KHp431N2mhKniy2yKIDKpbrHv9eXwm8cBeWQYcJmzv5qKCu65P47eCF7CQ==",
+        "dependencies": {}
+      },
+      "@babel/helper-validator-identifier@7.24.5": {
+        "integrity": "sha512-3q93SSKX2TWCG30M2G2kwaKeTYgEUp5Snjuj8qm729SObL6nbtUldAi37qbxkD5gg3xnBio+f9nqpSepGZMvxA==",
+        "dependencies": {}
+      },
+      "@babel/parser@7.24.5": {
+        "integrity": "sha512-EOv5IK8arwh3LI47dz1b0tKUb/1uhHAnHJOrjgtQMIpu1uXd9mlFrJg9IUgGUgZ41Ch0K8REPTYpO7B76b4vJg==",
+        "dependencies": {}
+      },
+      "@babel/types@7.24.5": {
+        "integrity": "sha512-6mQNsaLeXTw0nxYUYu+NSa4Hx4BlF1x1x8/PMFbiR+GBSr+2DkECc69b8hgy2frEodNcvPffeH8YfWd3LI6jhQ==",
+        "dependencies": {
+          "@babel/helper-string-parser": "@babel/helper-string-parser@7.24.1",
+          "@babel/helper-validator-identifier": "@babel/helper-validator-identifier@7.24.5",
+          "to-fast-properties": "to-fast-properties@2.0.0"
+        }
+      },
+      "to-fast-properties@2.0.0": {
+        "integrity": "sha512-/OaKK0xYrs3DmxRYqL/yDc+FxFUVYhDlXMhRmv3z915w2HF1tnN1omB354j8VUGO/hbRzyD6Y3sA7v7GS/ceog==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

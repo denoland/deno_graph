@@ -1,4 +1,20 @@
 fartlabs/rtx/0.0.3
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@fartlabs/rt@^0.0.2": "jsr:@fartlabs/rt@0.0.2"
+    },
+    "jsr": {
+      "@fartlabs/rt@0.0.2": {
+        "integrity": "bea3f3ce6e74a50aef54af43772c23adfb45af860daafc5490d494bc496ee5af"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

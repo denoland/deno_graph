@@ -1,4 +1,20 @@
 xeaone/server/5.3.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/http@0.216": "jsr:@std/http@0.216.0"
+    },
+    "jsr": {
+      "@std/http@0.216.0": {
+        "integrity": "fe1ff331f2b02dd4c96b799da5a156846c663457ab1bcb82f0428a4821726f42"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,10 @@
 ghoullier/number-safe-parse/1.0.5-canary.11e88e7.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

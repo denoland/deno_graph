@@ -1,4 +1,27 @@
 flashcard/adapters/0.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@flashcard/core@0.0.1": "jsr:@flashcard/core@0.0.1",
+      "jsr:@std/collections@0.216": "jsr:@std/collections@0.216.0"
+    },
+    "jsr": {
+      "@flashcard/core@0.0.1": {
+        "integrity": "131d075b5004245a87581f40f536d839f1571debc80eb822a41453912388f8c0",
+        "dependencies": [
+          "jsr:@std/collections@0.216"
+        ]
+      },
+      "@std/collections@0.216.0": {
+        "integrity": "6df98a5cb70fa92960298abb6afb927093ff16c5b7e03af1f0e3c7503839a02a"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

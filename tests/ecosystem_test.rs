@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+use std::fs::OpenOptions;
 use std::io::Write as _;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -23,6 +25,9 @@ use indexmap::IndexMap;
 use serde::Deserialize;
 use std::fmt::Write;
 use tempfile::tempdir;
+use tempfile::tempfile;
+use tempfile::NamedTempFile;
+use tempfile::TempPath;
 use url::Url;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -61,7 +66,7 @@ fn main() {
         file
           .write_all(
             format!(
-              "{}/{}/{}\n===\n\n",
+              "{}/{}/{}\n-- deno.lock --\n\n===\n\n",
               version.scope, version.name, version.version
             )
             .as_bytes(),
@@ -74,7 +79,9 @@ fn main() {
   let mut category = file_test_runner::collection::collect_tests_or_exit(
     file_test_runner::collection::CollectOptions {
       base: PathBuf::from("./tests/specs/ecosystem"),
-      strategy: Box::new(TestPerFileCollectionStrategy { file_pattern: None }),
+      strategy: Box::new(TestPerFileCollectionStrategy {
+        file_pattern: Some(".*\\.test$".to_owned()),
+      }),
       filter_override: None,
     },
   );
@@ -129,9 +136,13 @@ fn run_test(test: &CollectedTest) -> TestResult {
     let (scope, name_version) = scope_name_version.split_once('/').unwrap();
     let (name, version) = name_version.split_once('/').unwrap();
 
-    let expected = rest.strip_prefix("===\n\n").unwrap();
+    let (lockfile_with_prefix, expected) =
+      rest.split_once("\n===\n\n").unwrap();
+    let lockfile = lockfile_with_prefix
+      .strip_prefix("-- deno.lock --\n")
+      .unwrap();
 
-    test_version(scope, name, version, &test.path, expected)
+    test_version(scope, name, version, &test.path, lockfile, expected)
   })
 }
 
@@ -229,6 +240,7 @@ async fn test_version(
   name: &str,
   version: &str,
   spec_path: &Path,
+  lockfile: &str,
   expected: &str,
 ) {
   let version_meta_path =
@@ -309,9 +321,16 @@ async fn test_version(
     format!("== FAST CHECK EMIT FAILED ==\n{}", fast_check_diagnostics)
   };
 
+  let mut new_lockfile = "".to_owned();
+
   if fast_check_diagnostics.is_empty() {
     let tmpdir = tempdir().unwrap();
     let tmpdir_path = tmpdir.path().canonicalize().unwrap();
+
+    let mut lockfile_file = NamedTempFile::new().unwrap();
+    lockfile_file.write_all(lockfile.as_bytes()).unwrap();
+    let lockfile_path = lockfile_file.path().canonicalize().unwrap();
+
     let base_path =
       format!("./tests/ecosystem/jsr_mirror/{scope}/{name}/{version}");
     copy_dir_all(base_path, &tmpdir_path).unwrap();
@@ -329,15 +348,20 @@ async fn test_version(
       }
     }
 
-    let deno_out = std::process::Command::new("deno")
+    let mut cmd = std::process::Command::new("deno");
+    cmd
       .arg("check")
-      .arg("--no-lock")
+      .arg(format!("--lock={}", lockfile_path.display()))
       .arg("--no-config")
       .env("DENO_NO_PACKAGE_JSON", "true")
       .env("NO_COLOR", "true")
       .env("RUST_LIB_BACKTRACE", "0")
+      .current_dir(&tmpdir_path);
+    if std::env::var("UPDATE").is_ok() {
+      cmd.arg("--lock-write");
+    }
+    let deno_out = cmd
       .args(roots.iter().map(|root| format!(".{}", root.path())))
-      .current_dir(&tmpdir_path)
       .output()
       .unwrap();
     if deno_out.status.success() {
@@ -362,19 +386,29 @@ async fn test_version(
       writeln!(&mut output, "-- stderr --\n{}", stderr).unwrap();
     }
 
+    new_lockfile = std::fs::read_to_string(lockfile_path).unwrap();
+
     if std::env::var("DONT_CLEAN").is_ok() {
       println!("leaving tempdir: {}", tmpdir_path.display());
       Box::leak(Box::new(tmpdir));
+      Box::leak(Box::new(lockfile_file));
     }
   }
 
   if std::env::var("UPDATE").is_ok() {
     std::fs::write(
       spec_path,
-      format!("{scope}/{name}/{version}\n===\n\n{}", output),
+      format!(
+        "{scope}/{name}/{version}\n-- deno.lock --\n{}\n===\n\n{}",
+        new_lockfile, output
+      ),
     )
     .unwrap();
   } else {
+    let lockfile_expected = lockfile.trim_end();
+    let new_lockfile = new_lockfile.trim_end();
+    pretty_assertions::assert_eq!(new_lockfile, lockfile_expected, "lockfile did not match, run `UPDATE=1 cargo test --test ecosystem` to update");
+
     let expected = expected.trim_end();
     let output = output.trim_end();
     pretty_assertions::assert_eq!(output, expected);

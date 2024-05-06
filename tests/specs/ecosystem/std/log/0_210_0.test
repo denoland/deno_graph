@@ -1,4 +1,27 @@
 std/log/0.210.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/bytes@^0.210.0": "jsr:@std/bytes@0.210.0",
+      "jsr:@std/io@^0.210.0": "jsr:@std/io@0.210.0"
+    },
+    "jsr": {
+      "@std/bytes@0.210.0": {
+        "integrity": "5b2522c94106296a6880d7d3e0c0bedb1006bde21d5421f96d85bc1213505d67"
+      },
+      "@std/io@0.210.0": {
+        "integrity": "7361cd143e061b46c55d421e7bcddd642e37742845cb4c12ccda4e89c88cd348",
+        "dependencies": [
+          "jsr:@std/bytes@^0.210.0"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

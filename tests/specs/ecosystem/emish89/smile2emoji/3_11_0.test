@@ -1,4 +1,10 @@
 emish89/smile2emoji/3.11.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

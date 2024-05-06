@@ -1,4 +1,45 @@
 planetarium/lib9c/0.1.0-alpha.3
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@planetarium/account@^4.4.1": "npm:@planetarium/account@4.4.2",
+      "npm:@planetarium/bencodex@^0.2.2": "npm:@planetarium/bencodex@0.2.2",
+      "npm:@planetarium/tx@^4.4.1": "npm:@planetarium/tx@4.4.2_@planetarium+account@4.4.2"
+    },
+    "npm": {
+      "@noble/hashes@1.4.0": {
+        "integrity": "sha512-V1JJ1WTRUqHHrOSh597hURcMqVKVGL/ea3kv0gSnEdsEZ0/+VyPghM1lMNGc00z7CIQorSvbKpuJkxvuHbvdbg==",
+        "dependencies": {}
+      },
+      "@noble/secp256k1@1.7.1": {
+        "integrity": "sha512-hOUk6AyBFmqVrv7k5WAw/LpszxVbj9gGN4JRkIX52fdFAj1UA61KXmZDvqVEm+pOyec3+fIeZB02LYa/pWOArw==",
+        "dependencies": {}
+      },
+      "@planetarium/account@4.4.2": {
+        "integrity": "sha512-ToX+y9DYYrvAbatyV6L0iKsXusqOOrq4d8wJlnT/oKvxyilJCe6D8wZSn4YFpZI+B76CYYlDgGLBxEchb6yO8g==",
+        "dependencies": {
+          "@noble/hashes": "@noble/hashes@1.4.0",
+          "@noble/secp256k1": "@noble/secp256k1@1.7.1"
+        }
+      },
+      "@planetarium/bencodex@0.2.2": {
+        "integrity": "sha512-hXYmV0gzEUxbhpVDiMIe/b0XAUoXBIl8Fo84Fx8nE0U39sU5q7tCFTkceock8TYs5rS4ix793033b7QYAPVoLA==",
+        "dependencies": {}
+      },
+      "@planetarium/tx@4.4.2_@planetarium+account@4.4.2": {
+        "integrity": "sha512-EOdJuCwP9TWcQScLeJ7NacHigaVddKntH8YXQ6rYkO00+AbVy8tVRUEFayIwaazlqYRBIOO8j0xxVvbzgzNhxw==",
+        "dependencies": {
+          "@planetarium/account": "@planetarium/account@4.4.2",
+          "@planetarium/bencodex": "@planetarium/bencodex@0.2.2"
+        }
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

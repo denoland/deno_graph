@@ -1,4 +1,60 @@
 bureaudouble/checkout/0.0.8
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@bureaudouble/context-session@0.0.4": "jsr:@bureaudouble/context-session@0.0.4",
+      "jsr:@bureaudouble/outils@0.0.44": "jsr:@bureaudouble/outils@0.0.44",
+      "jsr:@bureaudouble/outils@0.0.58": "jsr:@bureaudouble/outils@0.0.58",
+      "jsr:@cross/deepmerge@^1.0.0": "jsr:@cross/deepmerge@1.0.0",
+      "jsr:@cross/jwt@0.2.0": "jsr:@cross/jwt@0.2.0",
+      "jsr:@std/assert@^0.221.0": "jsr:@std/assert@0.221.0",
+      "jsr:@std/encoding@^0.220.1": "jsr:@std/encoding@0.220.1",
+      "jsr:@std/http@0.221": "jsr:@std/http@0.221.0"
+    },
+    "jsr": {
+      "@bureaudouble/context-session@0.0.4": {
+        "integrity": "54cce2b1cbad2be226d62dffe2576cb28112b59fe5b55a7bb9ccff23a75afae5",
+        "dependencies": [
+          "jsr:@bureaudouble/outils@0.0.44",
+          "jsr:@cross/jwt@0.2.0",
+          "jsr:@std/http@0.221"
+        ]
+      },
+      "@bureaudouble/outils@0.0.44": {
+        "integrity": "cc27c6c255fa4c4846679573270258b7ffff5c74caa3b48872e1d27c151cf3a0"
+      },
+      "@bureaudouble/outils@0.0.58": {
+        "integrity": "d2aecf380b46ad4f6187fcfdcf73efcaf62826c8d266e73ddebf40d03cf22d20"
+      },
+      "@cross/deepmerge@1.0.0": {
+        "integrity": "1e1318a74e31ba1959b9aa0acae8bd417b806f74ffd25ac07c90e12f83ad6b1d"
+      },
+      "@cross/jwt@0.2.0": {
+        "integrity": "069dbe6bfff08a91b02669726bda4f34287a14ecc07e073f6dcc89197259b591",
+        "dependencies": [
+          "jsr:@cross/deepmerge@^1.0.0",
+          "jsr:@std/encoding@^0.220.1"
+        ]
+      },
+      "@std/assert@0.221.0": {
+        "integrity": "a5f1aa6e7909dbea271754fd4ab3f4e687aeff4873b4cef9a320af813adb489a"
+      },
+      "@std/encoding@0.220.1": {
+        "integrity": "8dc38dd72e36cd68857a5837e24eb09a64bb296b96c295239c75eec17d45d23f"
+      },
+      "@std/http@0.221.0": {
+        "integrity": "35fdcfed1501f2052338bf7ffba5d66f1455f2fffc01e9d7cf13eed548fffbaa",
+        "dependencies": [
+          "jsr:@std/assert@^0.221.0"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

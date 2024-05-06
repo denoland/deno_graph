@@ -1,4 +1,31 @@
 http/discovery/0.10.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@http/handler@0.10.0": "jsr:@http/handler@0.10.0",
+      "jsr:@http/route@0.10.0": "jsr:@http/route@0.10.0",
+      "jsr:@std/path@^0.223.0": "jsr:@std/path@0.223.0"
+    },
+    "jsr": {
+      "@http/handler@0.10.0": {
+        "integrity": "af550deb51e96a9b7ccdc92f2aecd566e78892bf5a71f1e8ad25a74fee3b8969"
+      },
+      "@http/route@0.10.0": {
+        "integrity": "36d7e7b0fcf7df63939bb8121d64ad5435fc438a89643d5b3010db087386cbb6",
+        "dependencies": [
+          "jsr:@http/handler@0.10.0"
+        ]
+      },
+      "@std/path@0.223.0": {
+        "integrity": "593963402d7e6597f5a6e620931661053572c982fc014000459edc1f93cc3989"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

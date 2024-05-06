@@ -1,4 +1,10 @@
 becojo/foo/0.3.5
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

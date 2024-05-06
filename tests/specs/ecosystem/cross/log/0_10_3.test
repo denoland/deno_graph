@@ -1,4 +1,10 @@
 cross/log/0.10.3
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

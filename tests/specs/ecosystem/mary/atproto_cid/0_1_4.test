@@ -1,4 +1,24 @@
 mary/atproto-cid/0.1.4
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@mary/base32@^0.1.0": "jsr:@mary/base32@0.1.0",
+      "jsr:@mary/varint@^0.1.0": "jsr:@mary/varint@0.1.0"
+    },
+    "jsr": {
+      "@mary/base32@0.1.0": {
+        "integrity": "e9b163a66ae858339906d951f408f539d2921233b33e2ba30358eca9caa2b6cd"
+      },
+      "@mary/varint@0.1.0": {
+        "integrity": "47b3fe3b2e7edf4847dbb7d95ca304861541ccfe8298d1468e4a7b6369519fea"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

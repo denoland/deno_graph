@@ -1,4 +1,21 @@
 jcs224/hono-sessions/0.3.6
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:hono@3.12.8": "npm:hono@3.12.8"
+    },
+    "npm": {
+      "hono@3.12.8": {
+        "integrity": "sha512-vnOEIRdqsp4uHE/dkOBr9EYmTsR86sD/FyG2xhfAQzR9udDRglN1nuO7SGc/7U3HfSorc6PSCNGN6upnVtCmfg==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

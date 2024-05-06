@@ -1,4 +1,31 @@
 ssr/dinossr/0.24.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@ssr/velocirouter@0.7.5": "jsr:@ssr/velocirouter@0.7.5",
+      "jsr:@std/assert@^0.219.1": "jsr:@std/assert@0.219.1",
+      "jsr:@std/http@0.219": "jsr:@std/http@0.219.1"
+    },
+    "jsr": {
+      "@ssr/velocirouter@0.7.5": {
+        "integrity": "9f4589e271eb30ccf24805aade09fa1ae4eadb57b6d2b5365b16c719b68b6227"
+      },
+      "@std/assert@0.219.1": {
+        "integrity": "e76c2a1799a78f0f4db7de04bdc9b908a7a4b821bb65eda0285885297d4fb8af"
+      },
+      "@std/http@0.219.1": {
+        "integrity": "444b9e212747a4a163f5d9f5e468d1159e3ff9915cbc60a5bac6043f4771649a",
+        "dependencies": [
+          "jsr:@std/assert@^0.219.1"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

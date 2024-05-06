@@ -1,4 +1,10 @@
 lambdalisue/unknownutil/3.16.3-alpha
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

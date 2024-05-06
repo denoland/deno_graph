@@ -1,6 +1,17 @@
 space-operator/deno-command-rpc/0.4.1
+-- deno.lock --
+
 ===
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Failed caching npm package '@solana/web3.js@1.91.7'.
+
+Caused by:
+    0: failed to unpack `package/src/programs/address-lookup-table/index.ts` into `<global_npm_dir>/@solana/web3.js/1.91.7/src/programs/address-lookup-table/index.ts`
+    1: File exists (os error 17)
+

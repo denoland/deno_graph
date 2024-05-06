@@ -1,4 +1,10 @@
 pinta365/blizzard-api/0.3.3
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

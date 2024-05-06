@@ -1,4 +1,10 @@
 indexsupply/shovel-config/0.0.11
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

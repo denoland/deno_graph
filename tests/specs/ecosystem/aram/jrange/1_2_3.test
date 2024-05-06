@@ -1,4 +1,10 @@
 aram/jrange/1.2.3
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

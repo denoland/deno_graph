@@ -1,4 +1,10 @@
 wr/flatted/3.2.13
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

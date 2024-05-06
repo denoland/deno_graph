@@ -1,4 +1,10 @@
 etherpad/live-plugin-manager/0.18.5
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

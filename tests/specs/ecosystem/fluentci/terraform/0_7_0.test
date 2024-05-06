@@ -1,4 +1,6 @@
 fluentci/terraform/0.7.0
+-- deno.lock --
+
 ===
 
 == FAST CHECK EMIT FAILED ==

@@ -1,4 +1,10 @@
 hexagon/webdiff/1.0.0-alpha.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

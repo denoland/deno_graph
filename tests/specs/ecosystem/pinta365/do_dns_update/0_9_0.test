@@ -1,4 +1,10 @@
 pinta365/do-dns-update/0.9.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,10 @@
 lunarweb/simple-2d-vectors/1.0.6
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,36 @@
 std/testing/0.197.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.197.0": "jsr:@std/assert@0.197.0",
+      "jsr:@std/async@^0.197.0": "jsr:@std/async@0.197.0",
+      "jsr:@std/fmt@^0.197.0": "jsr:@std/fmt@0.197.0",
+      "jsr:@std/internal@^0.197.0": "jsr:@std/internal@0.197.0"
+    },
+    "jsr": {
+      "@std/assert@0.197.0": {
+        "integrity": "f18e2cb7dddda6b44e532c5739fb8d05e8eff81b962e5dde82c08b55df93aed1",
+        "dependencies": [
+          "jsr:@std/fmt@^0.197.0",
+          "jsr:@std/internal@^0.197.0"
+        ]
+      },
+      "@std/async@0.197.0": {
+        "integrity": "318839c3b67ee3ba50df41561586e80e35323ad6b07500bd3c77a2cb23dff8e4"
+      },
+      "@std/fmt@0.197.0": {
+        "integrity": "d4a4177bdc241192a23b5aff34433e22e29182c38f16736bd553d01430e6bf64"
+      },
+      "@std/internal@0.197.0": {
+        "integrity": "1745fb4e26a7ef5088c23814c12629a45152f45615215507cbb1293818eafd6c"
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,21 @@
 discord-applications/app/0.0.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:discord-api-types@0.37.79": "npm:discord-api-types@0.37.79"
+    },
+    "npm": {
+      "discord-api-types@0.37.79": {
+        "integrity": "sha512-jblKMZL5f9t/pfUyhHNey8Lb9yVCcBVIPxz/JTY0raAmfj7CuFXdl9m5o/+iiB7E0vv1Kz9V7Ao5HtLRc2gH1Q==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

@@ -1,4 +1,27 @@
 std/fs/0.206.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.206.0": "jsr:@std/assert@0.206.0",
+      "jsr:@std/path@^0.206.0": "jsr:@std/path@0.206.0"
+    },
+    "jsr": {
+      "@std/assert@0.206.0": {
+        "integrity": "9e3e4e1ae03bd154d5732afe7da88897f3b6a1f2b919b5bbea579c905d1a7054"
+      },
+      "@std/path@0.206.0": {
+        "integrity": "402ca33fdde6846bfbe6cb15c616acfea248662e84104ac1a1e15a0d23875864",
+        "dependencies": [
+          "jsr:@std/assert@^0.206.0"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==

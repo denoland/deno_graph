@@ -1,4 +1,62 @@
 oak/oak/13.2.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@oak/commons@0.6": "jsr:@oak/commons@0.6.1",
+      "jsr:@std/assert@0.215": "jsr:@std/assert@0.215.0",
+      "jsr:@std/assert@^0.215.0": "jsr:@std/assert@0.215.0",
+      "jsr:@std/crypto@0.215": "jsr:@std/crypto@0.215.0",
+      "jsr:@std/encoding@0.215": "jsr:@std/encoding@0.215.0",
+      "jsr:@std/encoding@^0.215.0": "jsr:@std/encoding@0.215.0",
+      "jsr:@std/http@0.215": "jsr:@std/http@0.215.0",
+      "jsr:@std/media-types@0.215": "jsr:@std/media-types@0.215.0",
+      "npm:path-to-regexp@6.2.1": "npm:path-to-regexp@6.2.1"
+    },
+    "jsr": {
+      "@oak/commons@0.6.1": {
+        "integrity": "c5455d45966d61e11a7a241503ee9b770e0c527f1951edd2a565eff531b8070d",
+        "dependencies": [
+          "jsr:@std/assert@0.215",
+          "jsr:@std/encoding@0.215",
+          "jsr:@std/media-types@0.215"
+        ]
+      },
+      "@std/assert@0.215.0": {
+        "integrity": "4d80a5b5f1aef916131e3b5dcf8cfdad397affe87da7fa6398d8088e146d1e48"
+      },
+      "@std/crypto@0.215.0": {
+        "integrity": "9cc31bd9edf639130e100c1fb6b45b0506d050d3e18fdd08785a27e700980913",
+        "dependencies": [
+          "jsr:@std/assert@^0.215.0",
+          "jsr:@std/encoding@^0.215.0"
+        ]
+      },
+      "@std/encoding@0.215.0": {
+        "integrity": "9b24c964b0f61ea849d1ea38de7dea2190d08c8ffed732d36595bfb1b5e4dbe5"
+      },
+      "@std/http@0.215.0": {
+        "integrity": "697df4ba414b3a983459fd625d415978848c10136c5d8d1cd91e1b2c50d0f3af",
+        "dependencies": [
+          "jsr:@std/assert@^0.215.0",
+          "jsr:@std/encoding@^0.215.0"
+        ]
+      },
+      "@std/media-types@0.215.0": {
+        "integrity": "76f3259f65193e848795e634b2782e7d90c861364fb90bcd81775378688091f1"
+      }
+    },
+    "npm": {
+      "path-to-regexp@6.2.1": {
+        "integrity": "sha512-JLyh7xT1kizaEvcaXOQwOc2/Yhw6KZOvPf1S8401UyLk86CU79LN3vl7ztXGm/pZ+YjoyAJ4rxmHwbkBXJX+yw==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
 ===
 
 == FAST CHECK EMIT PASSED ==
