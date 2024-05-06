@@ -2945,6 +2945,12 @@ struct PendingInfo {
   redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
   result: Result<Option<PendingInfoResponse>, Arc<anyhow::Error>>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
+  loaded_package_via_https_url: Option<LoadedJsrPackageViaHttpsUrl>,
+}
+
+struct LoadedJsrPackageViaHttpsUrl {
+  nv: PackageNv,
+  manifest_checksum: String,
 }
 
 type PendingInfoFuture<'a> = LocalBoxFuture<'a, PendingInfo>;
@@ -3186,7 +3192,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           result,
           redirects,
           maybe_version_info,
+          loaded_package_via_https_url,
         }) => {
+          if let Some(pkg) = loaded_package_via_https_url {
+            self
+              .graph
+              .packages
+              .ensure_package(pkg.nv, pkg.manifest_checksum);
+          }
+
           for (from, to) in redirects {
             self.add_redirect(from, to);
           }
@@ -3803,6 +3817,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   })),
                   redirects: BTreeMap::new(),
                   maybe_version_info: Some(version_info),
+                  loaded_package_via_https_url: None,
                 },
                 response => PendingInfo {
                   specifier,
@@ -3832,6 +3847,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     Err(err) => Err(Arc::new(err)),
                   },
                   maybe_version_info: Some(version_info),
+                  loaded_package_via_https_url: None,
                 },
               }
             }
@@ -4135,6 +4151,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         load_specifier: ModuleSpecifier,
         mut maybe_checksum: Option<LoaderChecksum>,
         maybe_version_info: &mut Option<JsrPackageVersionInfoExt>,
+        loaded_package_via_https_url: &mut Option<LoadedJsrPackageViaHttpsUrl>,
         redirects: &mut BTreeMap<ModuleSpecifier, ModuleSpecifier>,
         maybe_version_load_fut: Option<(PackageNv, PendingResult<PendingJsrPackageVersionInfoLoadItem>)>,
         is_dynamic: bool,
@@ -4142,14 +4159,19 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         jsr_url_provider: &dyn JsrUrlProvider,
       ) -> Result<Option<PendingInfoResponse>, Arc<anyhow::Error>> {
         if let Some((package_nv, fut)) = maybe_version_load_fut {
+          let inner = fut.await?;
           let info = JsrPackageVersionInfoExt {
             base_url: jsr_url_provider.package_url(&package_nv),
-            inner: fut.await?.info,
+            inner: inner.info,
           };
           if let Some(sub_path) = info.get_subpath(&load_specifier) {
             maybe_checksum = Some(LoaderChecksum::new(info.get_checksum(sub_path)?.to_string()));
           }
           maybe_version_info.replace(info);
+          loaded_package_via_https_url.replace(LoadedJsrPackageViaHttpsUrl {
+            nv: package_nv,
+            manifest_checksum: inner.checksum,
+          });
         }
         let mut load_specifier = load_specifier;
         for _ in 0..=loader.max_redirects() {
@@ -4190,11 +4212,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 content,
                 specifier,
                 maybe_headers,
-              } => {return Ok(Some(PendingInfoResponse::Module {
-                content_or_module_info: ContentOrModuleInfo::Content(content),
-                specifier,
-                maybe_headers,
-              }))},
+              } => {
+                return Ok(Some(PendingInfoResponse::Module {
+                  content_or_module_info: ContentOrModuleInfo::Content(content),
+                  specifier,
+                  maybe_headers,
+                }))
+              },
             },
             Ok(None) => return Ok(None),
             Err(err) => return Err(Arc::new(err)),
@@ -4205,10 +4229,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
 
       let mut redirects = BTreeMap::new();
+      let mut loaded_package_via_https_url = None;
       let result = try_load_with_redirects(
         load_specifier,
         maybe_checksum,
         &mut maybe_version_info,
+        &mut loaded_package_via_https_url,
         &mut redirects,
         maybe_version_load_fut,
         is_dynamic,
@@ -4222,6 +4248,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         redirects,
         result,
         maybe_version_info,
+        loaded_package_via_https_url,
       }
     }
     .boxed_local();

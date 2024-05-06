@@ -74,10 +74,53 @@ console.log(Test);
     },
     {
       "kind": "esm",
-      "size": 21,
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/b",
+          "code": {
+            "specifier": "jsr:@scope/b",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 30
+              },
+              "end": {
+                "line": 0,
+                "character": 44
+              }
+            }
+          }
+        }
+      ],
+      "size": 67,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 21,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/b/1.0.0/mod.ts"
     }
   ],
-  "redirects": {}
+  "redirects": {
+    "jsr:@scope/b": "https://jsr.io/@scope/b/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/b": "@scope/b@1.0.0"
+  }
 }
+
+jsr deps: {
+    "@scope/a@1.0.0": [
+        "jsr:@scope/b",
+    ],
+}
+
+Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
+  {}
+  export class Test {
+  }
+  --- DTS ---
+  export declare class Test {
+  }
