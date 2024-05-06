@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-use std::fs::OpenOptions;
 use std::io::Write as _;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -25,9 +23,7 @@ use indexmap::IndexMap;
 use serde::Deserialize;
 use std::fmt::Write;
 use tempfile::tempdir;
-use tempfile::tempfile;
 use tempfile::NamedTempFile;
-use tempfile::TempPath;
 use url::Url;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -66,7 +62,7 @@ fn main() {
         file
           .write_all(
             format!(
-              "{}/{}/{}\n-- deno.lock --\n\n===\n\n",
+              "{}/{}/{}\n-- deno.lock --\n{{}}\n===\n\n",
               version.scope, version.name, version.version
             )
             .as_bytes(),
