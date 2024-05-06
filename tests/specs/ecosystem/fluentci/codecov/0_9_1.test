@@ -1,6 +1,6 @@
 fluentci/codecov/0.9.1
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

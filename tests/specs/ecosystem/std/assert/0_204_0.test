@@ -1,6 +1,6 @@
 std/assert/0.204.0
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

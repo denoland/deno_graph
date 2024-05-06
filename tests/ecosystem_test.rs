@@ -328,7 +328,8 @@ async fn test_version(
     let tmpdir_path = tmpdir.path().canonicalize().unwrap();
 
     let mut lockfile_file = NamedTempFile::new().unwrap();
-    lockfile_file.write_all(lockfile.as_bytes()).unwrap();
+    lockfile_file.write_all(lockfile.trim().as_bytes()).unwrap();
+    lockfile_file.flush().unwrap();
     let lockfile_path = lockfile_file.path().canonicalize().unwrap();
 
     let base_path =

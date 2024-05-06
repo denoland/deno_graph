@@ -1,6 +1,6 @@
 fluentci/sonar/0.5.0
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

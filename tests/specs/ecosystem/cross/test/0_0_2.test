@@ -1,6 +1,6 @@
 cross/test/0.0.2
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

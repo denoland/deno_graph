@@ -1,6 +1,6 @@
 netflix/x-test/1.0.0-rc.21
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

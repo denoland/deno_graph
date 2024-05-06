@@ -1,6 +1,6 @@
 fluentci/go/0.10.0
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

@@ -1,6 +1,6 @@
 fmt/ruff-fmt/0.5.8
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

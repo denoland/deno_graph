@@ -1,6 +1,6 @@
 std/io/0.209.0
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

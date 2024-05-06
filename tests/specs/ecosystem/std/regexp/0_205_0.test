@@ -1,6 +1,6 @@
 std/regexp/0.205.0
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

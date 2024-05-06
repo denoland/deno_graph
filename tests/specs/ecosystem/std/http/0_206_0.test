@@ -1,6 +1,6 @@
 std/http/0.206.0
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

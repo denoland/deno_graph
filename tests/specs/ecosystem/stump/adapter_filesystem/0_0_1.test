@@ -1,6 +1,6 @@
 stump/adapter-filesystem/0.0.1
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT PASSED ==

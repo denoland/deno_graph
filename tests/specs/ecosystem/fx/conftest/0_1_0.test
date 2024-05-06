@@ -1,6 +1,6 @@
 fx/conftest/0.1.0
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

@@ -1,6 +1,6 @@
 layered/dns-records/2.0.0-beta.10
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

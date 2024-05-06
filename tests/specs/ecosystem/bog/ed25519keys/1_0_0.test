@@ -1,6 +1,6 @@
 bog/ed25519keys/1.0.0
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

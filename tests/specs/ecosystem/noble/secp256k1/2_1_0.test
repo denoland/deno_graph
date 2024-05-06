@@ -1,6 +1,6 @@
 noble/secp256k1/2.1.0
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==

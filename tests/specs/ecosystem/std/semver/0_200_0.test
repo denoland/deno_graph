@@ -1,6 +1,6 @@
 std/semver/0.200.0
 -- deno.lock --
-
+{}
 ===
 
 == FAST CHECK EMIT FAILED ==
