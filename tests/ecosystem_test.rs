@@ -317,7 +317,7 @@ async fn test_version(
     format!("== FAST CHECK EMIT FAILED ==\n{}", fast_check_diagnostics)
   };
 
-  let mut new_lockfile = "".to_owned();
+  let mut new_lockfile = lockfile.to_string();
 
   if fast_check_diagnostics.is_empty() {
     let tmpdir = tempdir().unwrap();
