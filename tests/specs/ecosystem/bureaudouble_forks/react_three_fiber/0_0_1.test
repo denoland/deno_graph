@@ -1,0 +1,48 @@
+bureaudouble-forks/react-three-fiber/0.0.1
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /index.ts:67:10
+   | 
+67 | function createPointerEvents(store) {
+   |          ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /index.ts:67:30
+   | 
+67 | function createPointerEvents(store) {
+   |                              ^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /index.ts:309:7
+    | 
+309 | const Canvas = /*#__PURE__*/ React.forwardRef(
+    |       ^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[unsupported-nested-javascript]: referenced a JavaScript module without type declarations from a TypeScript module
+ --> /loop-bdf826ba.esm.js
+  = hint: add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript
+
+  info: JavaScript files with no corresponding declaration require type inference to be type checked
+  info: fast check avoids type inference, so referencing a JavaScript file with no type declarations is not supported
+  docs: https://jsr.io/go/slow-type-unsupported-nested-javascript
+
+

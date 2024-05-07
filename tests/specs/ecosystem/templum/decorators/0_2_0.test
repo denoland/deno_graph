@@ -1,0 +1,32 @@
+templum/decorators/0.2.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { Retry, RetryConfig, RetryStrategy } from "./execution/retry.ts";
+                ~~~~~~~~~~~
+    at file://<tmpdir>/lib/entry.ts:3:17
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { Kind, UnitOfTime, Metric } from "./util/types.ts";
+                           ~~~~~~
+    at file://<tmpdir>/lib/entry.ts:9:28
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { Cache, CacheKey, CacheConfig } from "./cache/cache.ts";
+                          ~~~~~~~~~~~
+    at file://<tmpdir>/lib/entry.ts:10:27
+
+Found 3 errors.
+

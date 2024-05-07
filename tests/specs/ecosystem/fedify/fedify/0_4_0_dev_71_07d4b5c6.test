@@ -1,0 +1,58 @@
+fedify/fedify/0.4.0-dev.71+07d4b5c6
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/json@^0.219.1": "jsr:@std/json@0.219.1",
+      "jsr:@std/semver@^0.219.1": "jsr:@std/semver@0.219.1",
+      "jsr:@std/streams@^0.219.1": "jsr:@std/streams@0.219.1",
+      "npm:@js-temporal/polyfill@^0.4.4": "npm:@js-temporal/polyfill@0.4.4",
+      "npm:@phensley/language-tag@^1.8.0": "npm:@phensley/language-tag@1.8.1"
+    },
+    "jsr": {
+      "@std/json@0.219.1": {
+        "integrity": "f997d8cfdff0e55fd2cdc797c6357e916494106830539b0e8ddb34408c0e49db",
+        "dependencies": [
+          "jsr:@std/streams@^0.219.1"
+        ]
+      },
+      "@std/semver@0.219.1": {
+        "integrity": "1640e3368144090857ded3e944aa8743806bea712d5122c9fee2e9eb23c81607"
+      },
+      "@std/streams@0.219.1": {
+        "integrity": "6f5dac5773a4fafdbe7ee612d0a0d5a2cbe465b9c9e2c85d371877dc8a52d1d3"
+      }
+    },
+    "npm": {
+      "@js-temporal/polyfill@0.4.4": {
+        "integrity": "sha512-2X6bvghJ/JAoZO52lbgyAPFj8uCflhTo2g7nkFzEQdXd/D8rEeD4HtmTEpmtGCva260fcd66YNXBOYdnmHqSOg==",
+        "dependencies": {
+          "jsbi": "jsbi@4.3.0",
+          "tslib": "tslib@2.6.2"
+        }
+      },
+      "@phensley/language-tag@1.8.1": {
+        "integrity": "sha512-Jz5P1/AgGQU4ttK8FXg0M7zyZdFHl8iIfi+PXJErrDu6NFalm6W4avbT0kJcvi7bp+j4DhKL4UfV34Vwl2dv7w==",
+        "dependencies": {
+          "tslib": "tslib@2.6.2"
+        }
+      },
+      "jsbi@4.3.0": {
+        "integrity": "sha512-SnZNcinB4RIcnEyZqFPdGPVgrg2AcnykiBy0sHVJQKHYeaLUvi3Exj+iaPpLnFVkDPZIV4U0yvgC9/R4uEAZ9g==",
+        "dependencies": {}
+      },
+      "tslib@2.6.2": {
+        "integrity": "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

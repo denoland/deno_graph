@@ -1,0 +1,37 @@
+geacko/deno-redis/1.0.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@geacko/composer@^0.0.1": "jsr:@geacko/composer@0.0.1",
+      "jsr:@geacko/resp3-parser@^1.0.2": "jsr:@geacko/resp3-parser@1.2.0"
+    },
+    "jsr": {
+      "@geacko/composer@0.0.1": {
+        "integrity": "8d1a6bce5edcfd764e85e27cac830371439b5b8240c8cfc484c9e4f57dccec93"
+      },
+      "@geacko/resp3-parser@1.2.0": {
+        "integrity": "b065c7c7059ac85047f8cd4ee6da75ed584400d6948cd64a7563e008fd95a77b",
+        "dependencies": [
+          "jsr:@geacko/composer@^0.0.1"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2305 [ERROR]: Module '"https://jsr.io/@geacko/resp3-parser/1.2.0/mod.ts"' has no exported member 'Reply'.
+import { Reply } from 'jsr:@geacko/resp3-parser@^1.0.2';
+         ~~~~~
+    at file://<tmpdir>/src/client.ts:1:10
+

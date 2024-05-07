@@ -1,0 +1,29 @@
+loro/loro/0.1.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:loro-crdt@0.14.2": "npm:loro-crdt@0.14.2"
+    },
+    "npm": {
+      "loro-crdt@0.14.2": {
+        "integrity": "sha512-4KXoCNQ/9brnFAGGuSy3Rk0+yQDwE4dxnWX0iTl7rAupvrmx/Msw63ekkjP6wF5AT3PkKduQ726si8+8v4IobQ==",
+        "dependencies": {
+          "loro-wasm": "loro-wasm@0.14.2"
+        }
+      },
+      "loro-wasm@0.14.2": {
+        "integrity": "sha512-bJkVHR2gLEO1qwgHbo4ReI8ImT1zrOQb/K++AycXjB6v/5E7XNwBaI8/s8kGaKN0j+UdSI+BVax/wn+Hjdp+AA==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

@@ -1,0 +1,12 @@
+lumnn/magento2-api/2.0.0-alpha
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

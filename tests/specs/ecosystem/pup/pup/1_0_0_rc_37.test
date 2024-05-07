@@ -1,0 +1,81 @@
+pup/pup/1.0.0-rc.37
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@cross/deepmerge@^1.0.0": "jsr:@cross/deepmerge@1.0.0",
+      "jsr:@cross/dir@^1.1.0": "jsr:@cross/dir@1.1.0",
+      "jsr:@cross/env@^1.0.0": "jsr:@cross/env@1.0.2",
+      "jsr:@cross/fs@^0.0.10": "jsr:@cross/fs@0.0.10",
+      "jsr:@cross/runtime@^1.0.0": "jsr:@cross/runtime@1.0.0",
+      "jsr:@cross/utils@^0.7.0": "jsr:@cross/utils@0.7.1",
+      "jsr:@pup/api-definitions@^1.0.1": "jsr:@pup/api-definitions@1.0.2",
+      "jsr:@pup/common@^1.0.2": "jsr:@pup/common@1.0.3",
+      "jsr:@pup/plugin@^1.0.1": "jsr:@pup/plugin@1.0.1",
+      "jsr:@std/assert@^0.223.0": "jsr:@std/assert@0.223.0",
+      "jsr:@std/async@^0.223.0": "jsr:@std/async@0.223.0",
+      "jsr:@std/path@^0.223.0": "jsr:@std/path@0.223.0"
+    },
+    "jsr": {
+      "@cross/deepmerge@1.0.0": {
+        "integrity": "1e1318a74e31ba1959b9aa0acae8bd417b806f74ffd25ac07c90e12f83ad6b1d"
+      },
+      "@cross/dir@1.1.0": {
+        "integrity": "41eb779daf160f53bc33ef91f593f332fffc52ec9b81f87178db564718534e59",
+        "dependencies": [
+          "jsr:@cross/utils@^0.7.0"
+        ]
+      },
+      "@cross/env@1.0.2": {
+        "integrity": "28501ad1043c218a5b00fe5db27ec62c01ab16371bbe1b9d738496f0a7c5eeb8",
+        "dependencies": [
+          "jsr:@cross/deepmerge@^1.0.0"
+        ]
+      },
+      "@cross/fs@0.0.10": {
+        "integrity": "6c6badf8c56c46e84adf6faa3b46284ae42475ab36437f6318201066c19e3636",
+        "dependencies": [
+          "jsr:@cross/dir@^1.1.0",
+          "jsr:@cross/env@^1.0.0",
+          "jsr:@cross/runtime@^1.0.0",
+          "jsr:@std/path@^0.223.0"
+        ]
+      },
+      "@cross/runtime@1.0.0": {
+        "integrity": "dddecdf99182df13d50279d1e473f715e83d41961c5c22edd7bb0c4c3cf8a76a"
+      },
+      "@cross/utils@0.7.1": {
+        "integrity": "6cc50ad31b0904364188c43d10e3d4888d817a3d415528b014c27deb8a35564e"
+      },
+      "@pup/api-definitions@1.0.2": {
+        "integrity": "8da8418986348274d5eaaed3399212eb2651a9400bf40f5c5d29245c2824cfbf"
+      },
+      "@pup/common@1.0.3": {
+        "integrity": "2685baf9aea043a5899b250aa85e441e398ca43506127142e4d0ec45e32d54e1"
+      },
+      "@pup/plugin@1.0.1": {
+        "integrity": "0ba5cfb8ea009c4b02736077bf60243e67604634b5aa4c6c23a51b67e3bed1f9"
+      },
+      "@std/assert@0.223.0": {
+        "integrity": "eb8d6d879d76e1cc431205bd346ed4d88dc051c6366365b1af47034b0670be24"
+      },
+      "@std/async@0.223.0": {
+        "integrity": "b42f635d89fb8f9e0e7dc258fbc8f33233e4977f61e0b20da08a8b51fd7b2c5d",
+        "dependencies": [
+          "jsr:@std/assert@^0.223.0"
+        ]
+      },
+      "@std/path@0.223.0": {
+        "integrity": "593963402d7e6597f5a6e620931661053572c982fc014000459edc1f93cc3989"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

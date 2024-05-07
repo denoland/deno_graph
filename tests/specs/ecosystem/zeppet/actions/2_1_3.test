@@ -1,0 +1,14 @@
+zeppet/actions/2.1.3
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: npm package '@jsr/zeppet__core' does not exist.
+    at file://<tmpdir>/src/index.ts:1:44
+

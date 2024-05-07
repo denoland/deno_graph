@@ -1,0 +1,22 @@
+flashcard/adapters/0.0.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@flashcard/core@0.0.2": "jsr:@flashcard/core@0.0.2"
+    },
+    "jsr": {
+      "@flashcard/core@0.0.2": {
+        "integrity": "ff313252b6c4d40b57ec6198668036b4098ae2f1a4bd349653882158219f0549"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

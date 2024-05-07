@@ -1,0 +1,90 @@
+krutoo/utils/0.0.5
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:react@^18": "npm:react@18.3.1"
+    },
+    "npm": {
+      "js-tokens@4.0.0": {
+        "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==",
+        "dependencies": {}
+      },
+      "loose-envify@1.4.0": {
+        "integrity": "sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==",
+        "dependencies": {
+          "js-tokens": "js-tokens@4.0.0"
+        }
+      },
+      "react@18.3.1": {
+        "integrity": "sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==",
+        "dependencies": {
+          "loose-envify": "loose-envify@1.4.0"
+        }
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+ */ export function findOffsetParent(element: HTMLElement): Element | null {
+                                              ~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/fing-offset-parent.ts:5:47
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+ */ export function findOffsetParent(element: HTMLElement): Element | null {
+                                                            ~~~~~~~
+    at file://<tmpdir>/src/dom/fing-offset-parent.ts:5:61
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+ */ export function getPositionedParentOffset(element: HTMLElement): Point2d {
+                                                       ~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/get-positioned-parent-offset.ts:6:56
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+ */ export function getScrollParent(element: Element | undefined | null): HTMLElement {
+                                             ~~~~~~~
+    at file://<tmpdir>/src/dom/get-scroll-parent.ts:5:46
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+ */ export function getScrollParent(element: Element | undefined | null): HTMLElement {
+                                                                          ~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/get-scroll-parent.ts:5:75
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+ */ export function isScrollable(element: Element | undefined | null): element is Element {
+                                          ~~~~~~~
+    at file://<tmpdir>/src/dom/is-scrollable.ts:5:43
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+ */ export function isScrollable(element: Element | undefined | null): element is Element {
+                                                                                  ~~~~~~~
+    at file://<tmpdir>/src/dom/is-scrollable.ts:5:83
+
+TS2304 [ERROR]: Cannot find name 'DOMRectReadOnly'.
+export interface DOMRectState extends Pick<DOMRectReadOnly, 'width' | 'height' | 'x' | 'y' | 'top' | 'left' | 'bottom' | 'right'> {
+                                           ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/react/use-bounding-client-rect.ts:2:44
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+ */ export function useBoundingClientRect<T extends Element>(ref: RefObject<T>, extraDeps?: DependencyList): DOMRectState {
+                                                    ~~~~~~~
+    at file://<tmpdir>/src/react/use-bounding-client-rect.ts:10:53
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+ */ export function useDragAndDrop(ref: RefObject<HTMLElement>, {}: UseDragAndDropOptions): UseDragAndDropReturn {
+                                                  ~~~~~~~~~~~
+    at file://<tmpdir>/src/react/use-drag-and-drop.ts:22:51
+
+Found 10 errors.
+

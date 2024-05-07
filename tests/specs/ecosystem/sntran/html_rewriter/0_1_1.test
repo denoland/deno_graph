@@ -1,0 +1,23 @@
+sntran/html-rewriter/0.1.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:html-rewriter-wasm@0.4.1": "npm:html-rewriter-wasm@0.4.1"
+    },
+    "npm": {
+      "html-rewriter-wasm@0.4.1": {
+        "integrity": "sha512-lNovG8CMCCmcVB1Q7xggMSf7tqPCijZXaH4gL6iE8BFghdQCbaY5Met9i1x2Ex8m/cZHDUtXK9H6/znKamRP8Q==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

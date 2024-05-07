@@ -1,0 +1,131 @@
+bureaudouble-forks/aria-hidden/0.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'Element'.
+const getDefaultParent = (originalTarget: Element | Element[]): HTMLElement | null =>({} as never);
+                                          ~~~~~~~
+    at file://<tmpdir>/src/index.ts:2:43
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+const getDefaultParent = (originalTarget: Element | Element[]): HTMLElement | null =>({} as never);
+                                                    ~~~~~~~
+    at file://<tmpdir>/src/index.ts:2:53
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+const getDefaultParent = (originalTarget: Element | Element[]): HTMLElement | null =>({} as never);
+                                                                ~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:2:65
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+let counterMap: WeakMap<Element, number> = {} as never;
+                        ~~~~~~~
+    at file://<tmpdir>/src/index.ts:3:25
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+let uncontrolledNodes: WeakMap<Element, boolean> = {} as never;
+                               ~~~~~~~
+    at file://<tmpdir>/src/index.ts:4:32
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+let markerMap: Record<string, WeakMap<Element, number>> = {} as never;
+                                      ~~~~~~~
+    at file://<tmpdir>/src/index.ts:5:39
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+const unwrapHost = (node: Element | ShadowRoot): Element | null =>({} as never);
+                          ~~~~~~~
+    at file://<tmpdir>/src/index.ts:7:27
+
+TS2304 [ERROR]: Cannot find name 'ShadowRoot'.
+const unwrapHost = (node: Element | ShadowRoot): Element | null =>({} as never);
+                                    ~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:7:37
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+const unwrapHost = (node: Element | ShadowRoot): Element | null =>({} as never);
+                                                 ~~~~~~~
+    at file://<tmpdir>/src/index.ts:7:50
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+const correctTargets = (parent: HTMLElement, targets: Element[]): Element[] =>({} as never);
+                                ~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:8:33
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+const correctTargets = (parent: HTMLElement, targets: Element[]): Element[] =>({} as never);
+                                                      ~~~~~~~
+    at file://<tmpdir>/src/index.ts:8:55
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+const correctTargets = (parent: HTMLElement, targets: Element[]): Element[] =>({} as never);
+                                                                  ~~~~~~~
+    at file://<tmpdir>/src/index.ts:8:67
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+    at file://<tmpdir>/src/index.ts:16:53
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+    at file://<tmpdir>/src/index.ts:16:63
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/src/index.ts:16:86
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+ */ export const hideOthers = (originalTarget: Element | Element[], parentNode?: HTMLElement, markerName?: string): Undo =>({} as never);
+                                               ~~~~~~~
+    at file://<tmpdir>/src/index.ts:23:48
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+ */ export const hideOthers = (originalTarget: Element | Element[], parentNode?: HTMLElement, markerName?: string): Undo =>({} as never);
+                                                         ~~~~~~~
+    at file://<tmpdir>/src/index.ts:23:58
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+ */ export const hideOthers = (originalTarget: Element | Element[], parentNode?: HTMLElement, markerName?: string): Undo =>({} as never);
+                                                                                 ~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:23:82
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+ */ export const inertOthers = (originalTarget: Element | Element[], parentNode?: HTMLElement, markerName?: string): Undo =>({} as never);
+                                                ~~~~~~~
+    at file://<tmpdir>/src/index.ts:30:49
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+ */ export const inertOthers = (originalTarget: Element | Element[], parentNode?: HTMLElement, markerName?: string): Undo =>({} as never);
+                                                          ~~~~~~~
+    at file://<tmpdir>/src/index.ts:30:59
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+ */ export const inertOthers = (originalTarget: Element | Element[], parentNode?: HTMLElement, markerName?: string): Undo =>({} as never);
+                                                                                  ~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:30:83
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+ */ export const suppressOthers = (originalTarget: Element | Element[], parentNode?: HTMLElement, markerName?: string): Undo =>({} as never);
+                                                   ~~~~~~~
+    at file://<tmpdir>/src/index.ts:40:52
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+ */ export const suppressOthers = (originalTarget: Element | Element[], parentNode?: HTMLElement, markerName?: string): Undo =>({} as never);
+                                                             ~~~~~~~
+    at file://<tmpdir>/src/index.ts:40:62
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+ */ export const suppressOthers = (originalTarget: Element | Element[], parentNode?: HTMLElement, markerName?: string): Undo =>({} as never);
+                                                                                     ~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:40:86
+
+Found 24 errors.
+

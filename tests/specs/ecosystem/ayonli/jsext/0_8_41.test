@@ -1,0 +1,42 @@
+ayonli/jsext/0.8.41
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2411 [ERROR]: Property '"--"' of type 'string[] | undefined' is not assignable to 'string' index type 'string | number | boolean | (string | number | boolean)[]'.
+  "--"?: string[];
+  ~~~~
+    at file://<tmpdir>/cli/common.ts:178:3
+
+TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
+ */ export function isMain(module: NodeJS.Module): boolean;
+                                   ~~~~~~
+    at file://<tmpdir>/module.ts:58:36
+
+TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
+ */ export default function read<T>(target: NodeJS.EventEmitter, eventMap?: {
+                                            ~~~~~~
+    at file://<tmpdir>/read.ts:79:45
+
+TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
+ */ export function refTimer(timer: NodeJS.Timeout | number): void {}
+                                    ~~~~~~
+    at file://<tmpdir>/runtime.ts:62:37
+
+TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
+ */ export function unrefTimer(timer: NodeJS.Timeout | number): void {}
+                                      ~~~~~~
+    at file://<tmpdir>/runtime.ts:68:39
+
+Found 5 errors.
+

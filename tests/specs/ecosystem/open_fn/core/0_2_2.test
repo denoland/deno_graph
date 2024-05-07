@@ -1,0 +1,600 @@
+open-fn/core/0.2.2
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/o11y/span.ts:70:3
+   | 
+70 |   hcJSON() {
+   |   ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:171:9
+    | 
+171 |   async sendToHoneycomb({ apiEndpoint, apiKey }: Omit<HCReqArg, "span">) {
+    |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:202:17
+    | 
+202 | export function honeycombRequest({ apiEndpoint, apiKey, span }: HCReqArg) {
+    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:176:13
+    | 
+176 |   protected getBucketName(options: undefined | { bucketName?: string }) {
+    |             ^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:471:3
+    | 
+471 |   presignedGetObject(
+    |   ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:717:13
+    | 
+717 |   protected calculatePartSize(size: number | undefined) {
+    |             ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/o11y/span.ts:70:3
+   | 
+70 |   hcJSON() {
+   |   ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:171:9
+    | 
+171 |   async sendToHoneycomb({ apiEndpoint, apiKey }: Omit<HCReqArg, "span">) {
+    |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:202:17
+    | 
+202 | export function honeycombRequest({ apiEndpoint, apiKey, span }: HCReqArg) {
+    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:176:13
+    | 
+176 |   protected getBucketName(options: undefined | { bucketName?: string }) {
+    |             ^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:471:3
+    | 
+471 |   presignedGetObject(
+    |   ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:717:13
+    | 
+717 |   protected calculatePartSize(size: number | undefined) {
+    |             ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/o11y/span.ts:70:3
+   | 
+70 |   hcJSON() {
+   |   ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:171:9
+    | 
+171 |   async sendToHoneycomb({ apiEndpoint, apiKey }: Omit<HCReqArg, "span">) {
+    |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:202:17
+    | 
+202 | export function honeycombRequest({ apiEndpoint, apiKey, span }: HCReqArg) {
+    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:176:13
+    | 
+176 |   protected getBucketName(options: undefined | { bucketName?: string }) {
+    |             ^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:471:3
+    | 
+471 |   presignedGetObject(
+    |   ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:717:13
+    | 
+717 |   protected calculatePartSize(size: number | undefined) {
+    |             ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/o11y/span.ts:70:3
+   | 
+70 |   hcJSON() {
+   |   ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:171:9
+    | 
+171 |   async sendToHoneycomb({ apiEndpoint, apiKey }: Omit<HCReqArg, "span">) {
+    |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:202:17
+    | 
+202 | export function honeycombRequest({ apiEndpoint, apiKey, span }: HCReqArg) {
+    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:176:13
+    | 
+176 |   protected getBucketName(options: undefined | { bucketName?: string }) {
+    |             ^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:471:3
+    | 
+471 |   presignedGetObject(
+    |   ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:717:13
+    | 
+717 |   protected calculatePartSize(size: number | undefined) {
+    |             ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/o11y/span.ts:70:3
+   | 
+70 |   hcJSON() {
+   |   ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:171:9
+    | 
+171 |   async sendToHoneycomb({ apiEndpoint, apiKey }: Omit<HCReqArg, "span">) {
+    |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:202:17
+    | 
+202 | export function honeycombRequest({ apiEndpoint, apiKey, span }: HCReqArg) {
+    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:176:13
+    | 
+176 |   protected getBucketName(options: undefined | { bucketName?: string }) {
+    |             ^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:471:3
+    | 
+471 |   presignedGetObject(
+    |   ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:717:13
+    | 
+717 |   protected calculatePartSize(size: number | undefined) {
+    |             ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/o11y/span.ts:70:3
+   | 
+70 |   hcJSON() {
+   |   ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:171:9
+    | 
+171 |   async sendToHoneycomb({ apiEndpoint, apiKey }: Omit<HCReqArg, "span">) {
+    |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:202:17
+    | 
+202 | export function honeycombRequest({ apiEndpoint, apiKey, span }: HCReqArg) {
+    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:176:13
+    | 
+176 |   protected getBucketName(options: undefined | { bucketName?: string }) {
+    |             ^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:471:3
+    | 
+471 |   presignedGetObject(
+    |   ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:717:13
+    | 
+717 |   protected calculatePartSize(size: number | undefined) {
+    |             ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/o11y/span.ts:70:3
+   | 
+70 |   hcJSON() {
+   |   ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:171:9
+    | 
+171 |   async sendToHoneycomb({ apiEndpoint, apiKey }: Omit<HCReqArg, "span">) {
+    |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:202:17
+    | 
+202 | export function honeycombRequest({ apiEndpoint, apiKey, span }: HCReqArg) {
+    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:176:13
+    | 
+176 |   protected getBucketName(options: undefined | { bucketName?: string }) {
+    |             ^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:471:3
+    | 
+471 |   presignedGetObject(
+    |   ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:717:13
+    | 
+717 |   protected calculatePartSize(size: number | undefined) {
+    |             ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/o11y/span.ts:70:3
+   | 
+70 |   hcJSON() {
+   |   ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:171:9
+    | 
+171 |   async sendToHoneycomb({ apiEndpoint, apiKey }: Omit<HCReqArg, "span">) {
+    |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:202:17
+    | 
+202 | export function honeycombRequest({ apiEndpoint, apiKey, span }: HCReqArg) {
+    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:176:13
+    | 
+176 |   protected getBucketName(options: undefined | { bucketName?: string }) {
+    |             ^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:471:3
+    | 
+471 |   presignedGetObject(
+    |   ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:717:13
+    | 
+717 |   protected calculatePartSize(size: number | undefined) {
+    |             ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/o11y/span.ts:70:3
+   | 
+70 |   hcJSON() {
+   |   ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:171:9
+    | 
+171 |   async sendToHoneycomb({ apiEndpoint, apiKey }: Omit<HCReqArg, "span">) {
+    |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/o11y/span.ts:202:17
+    | 
+202 | export function honeycombRequest({ apiEndpoint, apiKey, span }: HCReqArg) {
+    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:176:13
+    | 
+176 |   protected getBucketName(options: undefined | { bucketName?: string }) {
+    |             ^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:471:3
+    | 
+471 |   presignedGetObject(
+    |   ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /vendor/deno.land/x/s3_lite_client@0.7.0/client.ts:717:13
+    | 
+717 |   protected calculatePartSize(size: number | undefined) {
+    |             ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

@@ -1,0 +1,29 @@
+ruintd/configedit/1.0.6
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@json-editor/json-editor@^2.14.1": "npm:@json-editor/json-editor@2.15.0"
+    },
+    "npm": {
+      "@json-editor/json-editor@2.15.0": {
+        "integrity": "sha512-Q96u4xEVQnoexbxOT9DcepmB6pgAfWeaEt7HetyObuBKVSRZjrv5Onoz6kZIUis4oEujBMyIKO5m4wtBhW3EeQ==",
+        "dependencies": {
+          "core-js": "core-js@3.37.0"
+        }
+      },
+      "core-js@3.37.0": {
+        "integrity": "sha512-fu5vHevQ8ZG4og+LXug8ulUtVxjOcEYvifJr7L5Bfq9GOztVqsKd9/59hUk2ZSbCrS3BqUr3EpaYGIYzq7g3Ug==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

@@ -1,0 +1,14 @@
+bureaudouble/bureau/0.0.98
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Failed resolving types. Relative import path "@types/react" not prefixed with / or ./ or ../
+    at https://jsr.io/@bureaudouble/islet/0.0.43/src/react/use-client.ts:3:16
+

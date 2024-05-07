@@ -1,0 +1,215 @@
+cool/cool/0.7.17
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /standards/runtime.ts:14:14
+   | 
+14 | export const notImplemented = (name: string) => {
+   |              ^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /standards/runtime.ts:20:14
+   | 
+20 | export const notSupportedRuntime = (name: string) => {
+   |              ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /standards/runtime.ts:143:14
+    | 
+143 | export const current = createRuntime();
+    |              ^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /parsing/lexer/lexer.ts:22:4
+   | 
+22 |   *tokenizeFromString(input: string) {
+   |    ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /parsing/lexer/lexer.ts:29:10
+   | 
+29 |   async *tokenize(input: ReadableStream) {
+   |          ^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /parsing/lexer/lexer.ts:38:4
+   | 
+38 |   *_tokenizeChunk(input: string | null) {
+   |    ^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /functions/fn.ts:44:14
+   | 
+44 | export const fn = function <
+   |              ^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /fp/decorate.ts:5:14
+  | 
+5 | export const decorate = <T1, T2>(
+  |              ^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /fp/curry-functions.ts:5:14
+  | 
+5 | export const curryFunctions = <
+  |              ^^^^^^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /events/events.ts:6:14
+  | 
+6 | export const registry = new Registry();
+  |              ^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /events/events.ts:7:14
+  | 
+7 | export const dispatcher = registry.build();
+  |              ^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /events/events.ts:9:14
+  | 
+9 | export const events = factory(dispatcher);
+  |              ^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /events/fluent-api-factory.ts:5:14
+  | 
+5 | export const factory = (dispatcher: EventDispatcher) => {
+  |              ^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /di/decorators.ts:14:14
+   | 
+14 | export const injectable = (key?: ServiceKey) => {
+   |              ^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /di/decorators.ts:29:14
+   | 
+29 | export const inject = (_key: ServiceKey) => {
+   |              ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /di/services.ts:6:14
+  | 
+6 | export const registry = new Registry();
+  |              ^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /di/services.ts:7:14
+  | 
+7 | export const services = registry.build();
+  |              ^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /di/services.ts:9:14
+  | 
+9 | export const di = factory(services);
+  |              ^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /di/fluent-api-factory.ts:12:14
+   | 
+12 | export const factory = <K = ServiceKey, V = ServiceValue>(
+   |              ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

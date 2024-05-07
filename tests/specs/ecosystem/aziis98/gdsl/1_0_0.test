@@ -1,0 +1,67 @@
+aziis98/gdsl/1.0.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'CanvasRenderingContext2D'.
+type CRC2D = CanvasRenderingContext2D;
+             ~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:1:14
+
+TS2304 [ERROR]: Cannot find name 'CanvasDirection'.
+  direction?: CanvasDirection;
+              ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:8:15
+
+TS2304 [ERROR]: Cannot find name 'CanvasFontKerning'.
+  fontKerning?: CanvasFontKerning;
+                ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:10:17
+
+TS2304 [ERROR]: Cannot find name 'CanvasFontStretch'.
+  fontStretch?: CanvasFontStretch;
+                ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:11:17
+
+TS2304 [ERROR]: Cannot find name 'CanvasFontVariantCaps'.
+  fontVariantCaps?: CanvasFontVariantCaps;
+                    ~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:12:21
+
+TS2304 [ERROR]: Cannot find name 'CanvasTextAlign'.
+  textAlign?: CanvasTextAlign;
+              ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:14:15
+
+TS2304 [ERROR]: Cannot find name 'CanvasTextBaseline'.
+  textBaseline?: CanvasTextBaseline;
+                 ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:15:18
+
+TS2304 [ERROR]: Cannot find name 'CanvasTextRendering'.
+  textRendering?: CanvasTextRendering;
+                  ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:16:19
+
+TS2304 [ERROR]: Cannot find name 'CanvasLineCap'.
+  lineCap?: CanvasLineCap;
+            ~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:18:13
+
+TS2304 [ERROR]: Cannot find name 'CanvasLineJoin'.
+  lineJoin?: CanvasLineJoin;
+             ~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:19:14
+
+Found 10 errors.
+

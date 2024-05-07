@@ -1,0 +1,22 @@
+nic-test/depends-on-test-log/0.1.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@nic-test/test-log@^0.1.0": "jsr:@nic-test/test-log@0.1.1"
+    },
+    "jsr": {
+      "@nic-test/test-log@0.1.1": {
+        "integrity": "f7c2e00840b257ae49ac59831544f4155bc3315ed5711154ba32648496aa981d"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

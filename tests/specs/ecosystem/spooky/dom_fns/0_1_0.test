@@ -1,0 +1,178 @@
+spooky/dom-fns/0.1.0
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /src/main.ts:5:36
+  | 
+5 | export const el = (sel: string) => () => {
+  |                                    ^^^^^^^
+6 |   return document.querySelector(sel);
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7 | };
+  | ^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/main.ts:48:10
+   | 
+48 | function createDOMValueFn<Prop, Primitive, Tag>(defn: ValueDefn<Prop>) {
+   |          ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/main.ts:69:14
+   | 
+69 | export const text = domValue<never, string, 'Text'>({
+   |              ^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/main.ts:74:14
+   | 
+74 | export const attr = domValue<string, string, 'Attr'>({
+   |              ^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/main.ts:92:14
+   | 
+92 | export const prop = domValue<string, any, 'Prop'>({
+   |              ^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/main.ts:97:14
+   | 
+97 | export const className = domValue<string, boolean, 'Class'>({
+   |              ^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/main.ts:102:14
+    | 
+102 | export const data = domValue<string, any, 'Data'>({
+    |              ^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/main.ts:110:14
+    | 
+110 | export const number = (val: DOMValue) => (((...args: [] | [number]) => Number(val(...args))) as (value?: number) => number);
+    |              ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/main.ts:111:14
+    | 
+111 | export const boolean = (val: DOMValue) => (((...args: [] | [boolean]) => Boolean(val(...args as any))) as (value?: boolean) => boolean);
+    |              ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/main.ts:115:65
+    | 
+115 | let filterFn = (cond: FilterFn, fn: (...args: any[]) => any) => (...args: any[]) => cond(...args) && fn(...args);
+    |                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/main.ts:122:3
+    | 
+122 |   (init: any) => 
+    |   ^^^^^^^^^^^^^^^
+123 |   /** @ts-ignore */
+    | ^^^^^^^^^^^^^^^^^^^
+124 |   filterFn(cond, pipe(init, ...fns));
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/main.ts:126:12
+    | 
+126 | export let memo = (fn: (...args: any[]) => any) => {
+    |            ^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/main.ts:135:63
+    | 
+135 | export let combine = (...fns: ((...args: any[]) => any)[]) => (...args: any[]) => fns.forEach(fn => fn(...args));
+    |                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/main.ts:137:87
+    | 
+137 | export let action = (eventName: string, fn: (ev: Event) => any) => (el: ElementFn) => () => {
+    |                                                                                       ^^^^^^^
+138 |   let _el = el();
+    | ^^^^^^^^^^^^^^^^^
+139 |   let handler = (ev: Event) => fn(ev);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+140 |   _el.addEventListener(eventName, handler);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+141 |   return () => _el.removeEventListener(eventName, handler);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+142 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

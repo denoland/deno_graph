@@ -1,0 +1,29 @@
+mys/worker-fn/3.2.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@mys/m-rpc@^0.12.1": "jsr:@mys/m-rpc@0.12.1",
+      "jsr:@okikio/transferables@^1.0.2": "jsr:@okikio/transferables@1.0.2"
+    },
+    "jsr": {
+      "@mys/m-rpc@0.12.1": {
+        "integrity": "19a1f8e1fed7552d32bfd5be5d26f982e8cd65e4b0666d05e88fcbb1fb4be20a",
+        "dependencies": [
+          "jsr:@okikio/transferables@^1.0.2"
+        ]
+      },
+      "@okikio/transferables@1.0.2": {
+        "integrity": "46a80015a1c4672b0b246e38838b3ea1e2edc6c775a235184a2f8eb49a8314f7"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

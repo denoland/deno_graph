@@ -1,0 +1,23 @@
+ydcjeff/unocss-preset-one/0.1.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@unocss/core@0.58.5": "npm:@unocss/core@0.58.5"
+    },
+    "npm": {
+      "@unocss/core@0.58.5": {
+        "integrity": "sha512-qbPqL+46hf1/UelQOwUwpAuvm6buoss43DPYHOPdfNJ+NTWkSpATQMF0JKT04QE0QRQbHNSHdMe9ariG+IIlCw==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

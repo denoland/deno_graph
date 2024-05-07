@@ -1,0 +1,17 @@
+mtkruto/html-parser/0.0.0
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /DomHandler.ts:72:10
+   | 
+72 |   public root = new Document(this.dom);
+   |          ^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

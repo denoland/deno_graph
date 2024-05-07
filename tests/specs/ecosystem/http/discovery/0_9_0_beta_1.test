@@ -1,0 +1,33 @@
+http/discovery/0.9.0-beta.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@http/handler@0.9.0-beta.1": "jsr:@http/handler@0.9.0-beta.1",
+      "jsr:@http/route@0.9.0-beta.1": "jsr:@http/route@0.9.0-beta.1",
+      "jsr:@std/path@^0.221.0": "jsr:@std/path@0.221.0"
+    },
+    "jsr": {
+      "@http/handler@0.9.0-beta.1": {
+        "integrity": "bdc35d28794b3bd28e42c079be25107d2c231c1ba37bfadf28544b8e31047dbe"
+      },
+      "@http/route@0.9.0-beta.1": {
+        "integrity": "5f0e045e6b0b39472739ae08415c2a8110e0d067344bf0e23f92e0695a6e4f80",
+        "dependencies": [
+          "jsr:@http/handler@0.9.0-beta.1"
+        ]
+      },
+      "@std/path@0.221.0": {
+        "integrity": "0a36f6b17314ef653a3a1649740cc8db51b25a133ecfe838f20b79a56ebe0095"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

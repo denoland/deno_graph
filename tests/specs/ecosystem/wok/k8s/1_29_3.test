@@ -1,0 +1,22 @@
+wok/k8s/1.29.3
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@wok/openapi-client@~1.0.0": "jsr:@wok/openapi-client@1.0.1"
+    },
+    "jsr": {
+      "@wok/openapi-client@1.0.1": {
+        "integrity": "267fb8a139d1b6719b1ad0ffbefbd190df8e95d32d53bd010d78694d81a777ba"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

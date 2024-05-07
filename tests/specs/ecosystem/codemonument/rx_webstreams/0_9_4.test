@@ -1,0 +1,31 @@
+codemonument/rx-webstreams/0.9.4
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:zod@3.22.4": "npm:zod@3.22.4"
+    },
+    "npm": {
+      "zod@3.22.4": {
+        "integrity": "sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2552 [ERROR]: Cannot find name 'UnderlyingDefaultSource'. Did you mean 'UnderlyingSource'?
+ */ export class UnderlyingSourceWithController<R = unknown> implements UnderlyingDefaultSource<R> {
+                                                                        ~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/lib/utils/UnderlyingSourceWithController.ts:3:73
+

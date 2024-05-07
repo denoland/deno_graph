@@ -1,0 +1,26 @@
+http/host-deno-local/0.9.0-beta.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@http/handler@0.9.0-beta.2": "jsr:@http/handler@0.9.0-beta.2",
+      "jsr:@http/interceptor@0.9.0-beta.2": "jsr:@http/interceptor@0.9.0-beta.2"
+    },
+    "jsr": {
+      "@http/handler@0.9.0-beta.2": {
+        "integrity": "5b0d2fe447c26d778f029da53090023516bda67a432e444177533cd9d722711f"
+      },
+      "@http/interceptor@0.9.0-beta.2": {
+        "integrity": "4b787b6c2ffabe88ad3f7091d2cb2300c894817d33bcdce39d53e8aeee926afa"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

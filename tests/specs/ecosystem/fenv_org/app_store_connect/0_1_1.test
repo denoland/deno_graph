@@ -1,0 +1,39 @@
+fenv-org/app-store-connect/0.1.1
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+     --> /gen/api.ts:15477:13
+      | 
+15477 |   protected encodeQueryParam(key: string, value: any) {
+      |             ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+      = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+     --> /gen/api.ts:15482:13
+      | 
+15482 |   protected addQueryParam(query: QueryParamsType, key: string) {
+      |             ^^^^^^^^^^^^^ this function is missing an explicit return type
+      = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+     --> /gen/api.ts:15486:13
+      | 
+15486 |   protected addArrayQueryParam(query: QueryParamsType, key: string) {
+      |             ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+      = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

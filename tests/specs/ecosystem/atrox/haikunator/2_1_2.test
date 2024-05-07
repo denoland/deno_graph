@@ -1,0 +1,29 @@
+atrox/haikunator/2.1.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:random-seed@^0.3.0": "npm:random-seed@0.3.0"
+    },
+    "npm": {
+      "json-stringify-safe@5.0.1": {
+        "integrity": "sha512-ZClg6AaYvamvYEE82d3Iyd3vSSIjQ+odgjaTzRuO3s7toCdFKczob2i0zCh7JE8kWn17yvAWhUVxvqGwUalsRA==",
+        "dependencies": {}
+      },
+      "random-seed@0.3.0": {
+        "integrity": "sha512-y13xtn3kcTlLub3HKWXxJNeC2qK4mB59evwZ5EkeRlolx+Bp2ztF7LbcZmyCnOqlHQrLnfuNbi1sVmm9lPDlDA==",
+        "dependencies": {
+          "json-stringify-safe": "json-stringify-safe@5.0.1"
+        }
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

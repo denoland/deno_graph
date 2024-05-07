@@ -6,7 +6,8 @@
   },
   "exclude": [
     "npm",
-    "target"
+    "target",
+    "tests/ecosystem/jsr_mirror"
   ],
   "workspaces": [
     "./js"

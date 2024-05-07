@@ -1,0 +1,35 @@
+jok/transport/1.0.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:nats@2.22.0": "npm:nats@2.22.0"
+    },
+    "npm": {
+      "nats@2.22.0": {
+        "integrity": "sha512-UQsmoQBuCoyVmChP2ZsmZzkQUbTPYT2aMcEVlaZ/MUcxOBvZlGUcrtsV6x2TCkxbCNTiBF9kgXD1Sp32yeCsmw==",
+        "dependencies": {
+          "nkeys.js": "nkeys.js@1.1.0"
+        }
+      },
+      "nkeys.js@1.1.0": {
+        "integrity": "sha512-tB/a0shZL5UZWSwsoeyqfTszONTt4k2YS0tuQioMOD180+MbombYVgzDUYHlx+gejYK6rgf08n/2Df99WY0Sxg==",
+        "dependencies": {
+          "tweetnacl": "tweetnacl@1.0.3"
+        }
+      },
+      "tweetnacl@1.0.3": {
+        "integrity": "sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

@@ -1,0 +1,29 @@
+hugoalh/exfetch/0.5.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@hugoalh/http-header-link@1.0.1": "jsr:@hugoalh/http-header-link@1.0.1",
+      "jsr:@hugoalh/is-string-singleline@1.0.1": "jsr:@hugoalh/is-string-singleline@1.0.1"
+    },
+    "jsr": {
+      "@hugoalh/http-header-link@1.0.1": {
+        "integrity": "23b096954f5614324642a33d88c9ec1b7ebb67b28246707f7ce01d3d07fb5028",
+        "dependencies": [
+          "jsr:@hugoalh/is-string-singleline@1.0.1"
+        ]
+      },
+      "@hugoalh/is-string-singleline@1.0.1": {
+        "integrity": "eb2a9e45b8fa9058938d999c157a609f3864012d3fcb0691669a3c710fe482bd"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

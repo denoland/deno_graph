@@ -1,0 +1,47 @@
+kt3k/license-checker/3.2.11
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.218.0": "jsr:@std/assert@0.218.2",
+      "jsr:@std/async@0.218.0": "jsr:@std/async@0.218.0",
+      "jsr:@std/bytes@0.218.0": "jsr:@std/bytes@0.218.0",
+      "jsr:@std/fmt@0.218.0": "jsr:@std/fmt@0.218.0",
+      "jsr:@std/fs@0.218.0": "jsr:@std/fs@0.218.0",
+      "jsr:@std/path@0.218.0": "jsr:@std/path@0.218.0",
+      "jsr:@std/path@^0.218.0": "jsr:@std/path@0.218.0"
+    },
+    "jsr": {
+      "@std/assert@0.218.2": {
+        "integrity": "7f0a5a1a8cf86607cd6c2c030584096e1ffad27fc9271429a8cb48cfbdee5eaf"
+      },
+      "@std/async@0.218.0": {
+        "integrity": "2c610210ae6b36afd1c1053635ed955b5abaccbe56f47aa964583a6f0994d223"
+      },
+      "@std/bytes@0.218.0": {
+        "integrity": "89ab0ee24018ae51d836ca3ef625b2608877b0f673fd2e291d76cd8bf3170405"
+      },
+      "@std/fmt@0.218.0": {
+        "integrity": "6f37406fdc2ea550a62c1e69fa722e09ab605d934a86696bee7e86c84fb34faa"
+      },
+      "@std/fs@0.218.0": {
+        "integrity": "a9e1b7d55e84f6c5ed959b142a2534f5b000c6bbf5b132ab39970a5c5af3fd21",
+        "dependencies": [
+          "jsr:@std/assert@^0.218.0",
+          "jsr:@std/path@^0.218.0"
+        ]
+      },
+      "@std/path@0.218.0": {
+        "integrity": "dd555120179d3424e65468767b87322724c4a4d35215766d81ed3bccf700250c"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

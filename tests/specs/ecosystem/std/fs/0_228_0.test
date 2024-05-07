@@ -1,0 +1,22 @@
+std/fs/0.228.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/path@^0.225.0": "jsr:@std/path@0.225.0"
+    },
+    "jsr": {
+      "@std/path@0.225.0": {
+        "integrity": "044ed8d9ca76fa997ff1d30d48fc7756b4389bf6ce1ff9710633a2d174343bb3"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

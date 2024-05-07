@@ -1,0 +1,20 @@
+lightbery/dynamic-cli/1.0.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2580 [ERROR]: Cannot find name 'Buffer'.
+  public simulateInput(data: Buffer): void {}
+                             ~~~~~~
+    at file://<tmpdir>/DynamicCLI.ts:45:30
+

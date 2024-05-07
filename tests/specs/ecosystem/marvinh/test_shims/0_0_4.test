@@ -1,0 +1,22 @@
+marvinh/test-shims/0.0.4
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/testing@^0.221.0": "jsr:@std/testing@0.221.0"
+    },
+    "jsr": {
+      "@std/testing@0.221.0": {
+        "integrity": "d9b5ed7d5dc4e8d193734a594e7f80c04a5a6f34c2493e69c6713ae7fe6f880e"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

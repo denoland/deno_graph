@@ -1,0 +1,22 @@
+nexterias/twitter-api-fetch/3.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/encoding@^0.219.1": "jsr:@std/encoding@0.219.1"
+    },
+    "jsr": {
+      "@std/encoding@0.219.1": {
+        "integrity": "77b30e481a596cfb2a8f2f38c3165e6035a4f76a7259bf89b6a622ceaf57d575"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

@@ -1,0 +1,14 @@
+gcch/libsch/0.0.2
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Module not found "file://<tmpdir>/src/types/arrays".
+    at file://<tmpdir>/src/index.ts:3:20
+

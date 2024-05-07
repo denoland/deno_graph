@@ -1,0 +1,22 @@
+front-work/state-core/0.0.3
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@front-work/state-types@0.0.1": "jsr:@front-work/state-types@0.0.1"
+    },
+    "jsr": {
+      "@front-work/state-types@0.0.1": {
+        "integrity": "6905fe5df008ad9895cacdf38bf11e381c7918f9c86d87264c763d0a3525a09f"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

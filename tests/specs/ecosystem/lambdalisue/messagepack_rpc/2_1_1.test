@@ -1,0 +1,22 @@
+lambdalisue/messagepack-rpc/2.1.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@lambdalisue/indexer@^1.0.0": "jsr:@lambdalisue/indexer@1.0.0"
+    },
+    "jsr": {
+      "@lambdalisue/indexer@1.0.0": {
+        "integrity": "f1dbbca13a0cb3b8d87533f3ac807ba2881107e28a7eb7eb85ac1b1c5d6a5c42"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

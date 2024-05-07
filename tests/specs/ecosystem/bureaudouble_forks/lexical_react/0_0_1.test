@@ -1,0 +1,1766 @@
+bureaudouble-forks/lexical-react/0.0.1
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalTabIndentationPlugin.tsx:60:17
+   | 
+60 | export function registerTabIndentation(editor: LexicalEditor) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:40:7
+   | 
+40 | const randomEntry = entries[Math.floor(Math.random() * entries.length)];
+   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/LexicalCollaborationContext.ts:41:14
+   | 
+41 | export const CollaborationContext = createContext<CollaborationContextType>({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/LexicalAutoLinkPlugin.ts:45:17
+   | 
+45 | export function createLinkMatcherWithRegExp(
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

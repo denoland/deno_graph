@@ -1,0 +1,22 @@
+baosoy/nametag/0.0.5
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@valibot/valibot@^0.30.0": "jsr:@valibot/valibot@0.30.0"
+    },
+    "jsr": {
+      "@valibot/valibot@0.30.0": {
+        "integrity": "a0a8701bc789a7bf91bff22308c590c22ac7d6076617289b04125490954bebe2"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

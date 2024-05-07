@@ -1,0 +1,37 @@
+olets/css-fluid-length/1.2.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'PxableLength'.
+ */ function fluidLength(fromLength: PxableLength, toLength: PxableLength, options?: Config): string {
+                                     ~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:10:38
+
+TS2304 [ERROR]: Cannot find name 'PxableLength'.
+ */ function fluidLength(fromLength: PxableLength, toLength: PxableLength, options?: Config): string {
+                                                             ~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:10:62
+
+TS2304 [ERROR]: Cannot find name 'Config'.
+ */ function fluidLength(fromLength: PxableLength, toLength: PxableLength, options?: Config): string {
+                                                                                     ~~~~~~
+    at file://<tmpdir>/src/index.ts:10:86
+
+TS2304 [ERROR]: Cannot find name 'PxableLength'.
+ */ function pxNumber(length: PxableLength): number {
+                              ~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:19:31
+
+Found 4 errors.
+

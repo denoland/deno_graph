@@ -1,0 +1,12 @@
+bureaudouble-forks/esbuild-deno-loader/0.10.3+pr0.0.4
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

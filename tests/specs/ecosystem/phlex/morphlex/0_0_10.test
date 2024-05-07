@@ -1,0 +1,92 @@
+phlex/morphlex/0.0.10
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'Node'.
+    node: Node;
+          ~~~~
+    at file://<tmpdir>/src/morphlex.ts:6:11
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+    referenceNode: Node;
+                   ~~~~
+    at file://<tmpdir>/src/morphlex.ts:7:20
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+    node: Node;
+          ~~~~
+    at file://<tmpdir>/src/morphlex.ts:10:11
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+    referenceNode: Node;
+                   ~~~~
+    at file://<tmpdir>/src/morphlex.ts:11:20
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+    newNode: Node;
+             ~~~~
+    at file://<tmpdir>/src/morphlex.ts:14:14
+
+TS2304 [ERROR]: Cannot find name 'ParentNode'.
+    parentNode: ParentNode | null;
+                ~~~~~~~~~~
+    at file://<tmpdir>/src/morphlex.ts:15:17
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+    newNode: Node;
+             ~~~~
+    at file://<tmpdir>/src/morphlex.ts:18:14
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+    oldNode: Node;
+             ~~~~
+    at file://<tmpdir>/src/morphlex.ts:21:14
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+    oldNode: Node;
+             ~~~~
+    at file://<tmpdir>/src/morphlex.ts:24:14
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+    element: Element;
+             ~~~~~~~
+    at file://<tmpdir>/src/morphlex.ts:27:14
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+    element: Element;
+             ~~~~~~~
+    at file://<tmpdir>/src/morphlex.ts:32:14
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+    node: Node;
+          ~~~~
+    at file://<tmpdir>/src/morphlex.ts:37:11
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+    node: Node;
+          ~~~~
+    at file://<tmpdir>/src/morphlex.ts:42:11
+
+TS2304 [ERROR]: Cannot find name 'ChildNode'.
+export function morph(node: ChildNode, reference: ChildNode | string, options?: Options): void {}
+                            ~~~~~~~~~
+    at file://<tmpdir>/src/morphlex.ts:47:29
+
+TS2304 [ERROR]: Cannot find name 'ChildNode'.
+export function morph(node: ChildNode, reference: ChildNode | string, options?: Options): void {}
+                                                  ~~~~~~~~~
+    at file://<tmpdir>/src/morphlex.ts:47:51
+
+Found 15 errors.
+

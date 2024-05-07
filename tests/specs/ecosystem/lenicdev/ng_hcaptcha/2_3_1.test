@@ -1,0 +1,75 @@
+lenicdev/ng-hcaptcha/2.3.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@angular/core@^17.0.8": "npm:@angular/core@17.3.7_rxjs@6.5.5_zone.js@0.14.5",
+      "npm:@angular/forms@^17.0.8": "npm:@angular/forms@17.3.7_@angular+common@17.3.7__@angular+core@17.3.7___rxjs@6.5.5___zone.js@0.14.5__rxjs@6.5.5_@angular+core@17.3.7__rxjs@6.5.5__zone.js@0.14.5_@angular+platform-browser@17.3.7__@angular+common@17.3.7___@angular+core@17.3.7____rxjs@6.5.5____zone.js@0.14.5___rxjs@6.5.5__@angular+core@17.3.7___rxjs@6.5.5___zone.js@0.14.5__rxjs@6.5.5_rxjs@6.5.5",
+      "npm:rxjs@~6.5.5": "npm:rxjs@6.5.5"
+    },
+    "npm": {
+      "@angular/common@17.3.7_@angular+core@17.3.7__rxjs@6.5.5__zone.js@0.14.5_rxjs@6.5.5": {
+        "integrity": "sha512-A7LRJu1vVCGGgrfZXjU+njz50SiU4weheKCar5PIUprcdIofS1IrHAJDqYh+kwXxkjXbZMOr/ijQY0+AESLEsw==",
+        "dependencies": {
+          "@angular/core": "@angular/core@17.3.7_rxjs@6.5.5_zone.js@0.14.5",
+          "rxjs": "rxjs@6.5.5",
+          "tslib": "tslib@2.6.2"
+        }
+      },
+      "@angular/core@17.3.7_rxjs@6.5.5_zone.js@0.14.5": {
+        "integrity": "sha512-HWcrbxqnvIMSxFuQdN0KPt08bc87hqr0LKm89yuRTUwx/2sNJlNQUobk6aJj4trswGBttcRDT+GOS4DQP2Nr4g==",
+        "dependencies": {
+          "rxjs": "rxjs@6.5.5",
+          "tslib": "tslib@2.6.2",
+          "zone.js": "zone.js@0.14.5"
+        }
+      },
+      "@angular/forms@17.3.7_@angular+common@17.3.7__@angular+core@17.3.7___rxjs@6.5.5___zone.js@0.14.5__rxjs@6.5.5_@angular+core@17.3.7__rxjs@6.5.5__zone.js@0.14.5_@angular+platform-browser@17.3.7__@angular+common@17.3.7___@angular+core@17.3.7____rxjs@6.5.5____zone.js@0.14.5___rxjs@6.5.5__@angular+core@17.3.7___rxjs@6.5.5___zone.js@0.14.5__rxjs@6.5.5_rxjs@6.5.5": {
+        "integrity": "sha512-FEhXh/VmT++XCoO8i7bBtzxG7Am/cE1zrr9aF+fWW+4jpWvJvVN1IaSiJxgBB+iPsOJ9lTBRwfRW3onlcDkhrw==",
+        "dependencies": {
+          "@angular/common": "@angular/common@17.3.7_@angular+core@17.3.7__rxjs@6.5.5__zone.js@0.14.5_rxjs@6.5.5",
+          "@angular/core": "@angular/core@17.3.7_rxjs@6.5.5_zone.js@0.14.5",
+          "@angular/platform-browser": "@angular/platform-browser@17.3.7_@angular+common@17.3.7__@angular+core@17.3.7___rxjs@6.5.5___zone.js@0.14.5__rxjs@6.5.5_@angular+core@17.3.7__rxjs@6.5.5__zone.js@0.14.5_rxjs@6.5.5",
+          "rxjs": "rxjs@6.5.5",
+          "tslib": "tslib@2.6.2"
+        }
+      },
+      "@angular/platform-browser@17.3.7_@angular+common@17.3.7__@angular+core@17.3.7___rxjs@6.5.5___zone.js@0.14.5__rxjs@6.5.5_@angular+core@17.3.7__rxjs@6.5.5__zone.js@0.14.5_rxjs@6.5.5": {
+        "integrity": "sha512-Nn8ZMaftAvO9dEwribWdNv+QBHhYIBrRkv85G6et80AXfXoYAr/xcfnQECRFtZgPmANqHC5auv/xrmExQG+Yeg==",
+        "dependencies": {
+          "@angular/common": "@angular/common@17.3.7_@angular+core@17.3.7__rxjs@6.5.5__zone.js@0.14.5_rxjs@6.5.5",
+          "@angular/core": "@angular/core@17.3.7_rxjs@6.5.5_zone.js@0.14.5",
+          "tslib": "tslib@2.6.2"
+        }
+      },
+      "rxjs@6.5.5": {
+        "integrity": "sha512-WfQI+1gohdf0Dai/Bbmk5L5ItH5tYqm3ki2c5GdWhKjalzjg93N3avFjVStyZZz+A2Em+ZxKH5bNghw9UeylGQ==",
+        "dependencies": {
+          "tslib": "tslib@1.14.1"
+        }
+      },
+      "tslib@1.14.1": {
+        "integrity": "sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==",
+        "dependencies": {}
+      },
+      "tslib@2.6.2": {
+        "integrity": "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
+        "dependencies": {}
+      },
+      "zone.js@0.14.5": {
+        "integrity": "sha512-9XYWZzY6PhHOSdkYryNcMm7L8EK7a4q+GbTvxbIA2a9lMdRUpGuyaYvLDcg8D6bdn+JomSsbPcilVKg6SmUx6w==",
+        "dependencies": {
+          "tslib": "tslib@2.6.2"
+        }
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

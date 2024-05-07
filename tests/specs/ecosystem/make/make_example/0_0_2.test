@@ -1,0 +1,22 @@
+make/make-example/0.0.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@make/core@^0.0.2": "jsr:@make/core@0.0.2"
+    },
+    "jsr": {
+      "@make/core@0.0.2": {
+        "integrity": "31ccf39b7684aa2fa300449bd9cde1868fa3adfbb646c8c50780fd1302ea7887"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

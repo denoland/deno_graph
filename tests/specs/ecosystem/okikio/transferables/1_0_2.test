@@ -1,0 +1,49 @@
+okikio/transferables/1.0.2
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+ */ export const AudioData = globalThis.AudioData;
+                                        ~~~~~~~~~
+    at file://<tmpdir>/src/mod.ts:19:41
+
+TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+ */ export const VideoFrame = globalThis.VideoFrame;
+                                         ~~~~~~~~~~
+    at file://<tmpdir>/src/mod.ts:39:42
+
+TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+ */ export const OffscreenCanvas = globalThis.OffscreenCanvas;
+                                              ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/mod.ts:50:47
+
+TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+ */ export const RTCDataChannel = globalThis.RTCDataChannel;
+                                             ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/mod.ts:60:46
+
+TS2749 [ERROR]: 'AudioData' refers to a value, but is being used as a type here. Did you mean 'typeof AudioData'?
+    at file://<tmpdir>/src/mod.ts:136:134
+
+TS2749 [ERROR]: 'VideoFrame' refers to a value, but is being used as a type here. Did you mean 'typeof VideoFrame'?
+    at file://<tmpdir>/src/mod.ts:136:160
+
+TS2749 [ERROR]: 'OffscreenCanvas' refers to a value, but is being used as a type here. Did you mean 'typeof OffscreenCanvas'?
+    at file://<tmpdir>/src/mod.ts:136:173
+
+TS2749 [ERROR]: 'RTCDataChannel' refers to a value, but is being used as a type here. Did you mean 'typeof RTCDataChannel'?
+    at file://<tmpdir>/src/mod.ts:136:191
+
+Found 8 errors.
+

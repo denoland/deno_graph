@@ -1,0 +1,27 @@
+sakumyz/crypto-shield/1.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2580 [ERROR]: Cannot find name 'Buffer'.
+const initVector: Buffer = {} as never;
+                  ~~~~~~
+    at file://<tmpdir>/src/commands/cs.ts:3:19
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+const secretKey: Buffer = {} as never;
+                 ~~~~~~
+    at file://<tmpdir>/src/commands/cs.ts:4:18
+
+Found 2 errors.
+

@@ -1,0 +1,14 @@
+lou/types/2.0.0
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Module not found "file://<tmpdir>/src/@lou.codes/constants/empty.js".
+    at file://<tmpdir>/src/EmptyArray.ts:1:34
+

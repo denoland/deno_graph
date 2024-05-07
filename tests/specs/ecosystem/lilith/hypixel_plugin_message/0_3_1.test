@@ -1,0 +1,52 @@
+lilith/hypixel-plugin-message/0.3.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2580 [ERROR]: Cannot find name 'Buffer'.
+  read(buffer: Buffer): T;
+               ~~~~~~
+    at file://<tmpdir>/mod.ts:17:16
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  write(packet: T): Buffer;
+                    ~~~~~~
+    at file://<tmpdir>/mod.ts:18:21
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+ */ export function readClientboundPacket<T extends VersionedPacket>(name: string, buffer: Buffer): T | FailedPacket {
+                                                                                           ~~~~~~
+    at file://<tmpdir>/mod.ts:33:92
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+ */ export function writeClientboundPacket<T extends VersionedPacket>(name: string, packet: T): Buffer {
+                                                                                                ~~~~~~
+    at file://<tmpdir>/mod.ts:40:97
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+ */ export function writeClientboundError(error: PacketError | PacketErrorId): Buffer {
+                                                                               ~~~~~~
+    at file://<tmpdir>/mod.ts:47:80
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+ */ export function readServerboundPacket<T extends VersionedPacket>(name: string, buffer: Buffer): T {
+                                                                                           ~~~~~~
+    at file://<tmpdir>/mod.ts:55:92
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+ */ export function writeServerboundPacket<T extends VersionedPacket>(name: string, packet: T): Buffer {
+                                                                                                ~~~~~~
+    at file://<tmpdir>/mod.ts:63:97
+
+Found 7 errors.
+

@@ -1,0 +1,29 @@
+dx/dx/1.0.17
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.217.0": "jsr:@std/assert@0.217.0",
+      "jsr:@std/cli@0.217.0": "jsr:@std/cli@0.217.0"
+    },
+    "jsr": {
+      "@std/assert@0.217.0": {
+        "integrity": "c98e279362ca6982d5285c3b89517b757c1e3477ee9f14eb2fdf80a45aaa9642"
+      },
+      "@std/cli@0.217.0": {
+        "integrity": "5c25bd040cd0bbc11707ecaa7ce9c41314d02ce46f45709822bbd0f92c35fee8",
+        "dependencies": [
+          "jsr:@std/assert@^0.217.0"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

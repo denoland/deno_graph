@@ -1,0 +1,71 @@
+http/route-deno/0.9.0-beta.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@http/handler@0.9.0-beta.2": "jsr:@http/handler@0.9.0-beta.2",
+      "jsr:@std/assert@^0.222.1": "jsr:@std/assert@0.222.1",
+      "jsr:@std/cli@^0.222.1": "jsr:@std/cli@0.222.1",
+      "jsr:@std/encoding@^0.222.1": "jsr:@std/encoding@0.222.1",
+      "jsr:@std/fmt@^0.222.1": "jsr:@std/fmt@0.222.1",
+      "jsr:@std/http@^0.222.1": "jsr:@std/http@0.222.1",
+      "jsr:@std/media-types@^0.222.1": "jsr:@std/media-types@0.222.1",
+      "jsr:@std/path@^0.222.1": "jsr:@std/path@0.222.1",
+      "jsr:@std/streams@^0.222.1": "jsr:@std/streams@0.222.1"
+    },
+    "jsr": {
+      "@http/handler@0.9.0-beta.2": {
+        "integrity": "5b0d2fe447c26d778f029da53090023516bda67a432e444177533cd9d722711f"
+      },
+      "@std/assert@0.222.1": {
+        "integrity": "691637161ee584a9919d1f9950ddd1272feb8e0a19e83aa5b7563cedaf73d74c"
+      },
+      "@std/cli@0.222.1": {
+        "integrity": "18b3c15840d68dc588db53613e0e9b196e30e33ea2a2906624c991c008421ffa",
+        "dependencies": [
+          "jsr:@std/assert@^0.222.1"
+        ]
+      },
+      "@std/encoding@0.222.1": {
+        "integrity": "fb6c1d38722feebc8d4a5efa3eb2039ecec0d50d053186240484d0c4a4ce1006"
+      },
+      "@std/fmt@0.222.1": {
+        "integrity": "ec3382f9b0261c1ab1a5c804aa355d816515fa984cdd827ed32edfb187c0a722"
+      },
+      "@std/http@0.222.1": {
+        "integrity": "a3c731ec6040927aa37d8378b9e6b467e2e3068c1f97838a6e79ee3bdc103521",
+        "dependencies": [
+          "jsr:@std/cli@^0.222.1",
+          "jsr:@std/encoding@^0.222.1",
+          "jsr:@std/fmt@^0.222.1",
+          "jsr:@std/media-types@^0.222.1",
+          "jsr:@std/path@^0.222.1",
+          "jsr:@std/streams@^0.222.1"
+        ]
+      },
+      "@std/media-types@0.222.1": {
+        "integrity": "147cbd7f29fb4480625ccdad679637f945437f455534049eb7c95977b973a137"
+      },
+      "@std/path@0.222.1": {
+        "integrity": "aad3e9463ca53b0adb25b4d5beb330025674aaa3278da24c1c261d9289a9e48b",
+        "dependencies": [
+          "jsr:@std/assert@^0.222.1"
+        ]
+      },
+      "@std/streams@0.222.1": {
+        "integrity": "0bb4220c1dc5106e45a309179f76df95c786c9fff814d195d5ee2160931bfc7c",
+        "dependencies": [
+          "jsr:@std/assert@^0.222.1"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

@@ -1,0 +1,20 @@
+pengzhanbo/utils/1.1.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2578 [ERROR]: Unused '@ts-expect-error' directive.
+ */ // @ts-expect-error 跳过环境检查
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/is.ts:56:5
+

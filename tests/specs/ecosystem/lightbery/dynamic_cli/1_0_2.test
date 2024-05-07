@@ -1,0 +1,27 @@
+lightbery/dynamic-cli/1.0.2
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2580 [ERROR]: Cannot find name 'Buffer'.
+  public simulateInput(data: Buffer): void {}
+                             ~~~~~~
+    at file://<tmpdir>/DynamicCLI.ts:45:30
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { DynamicCLI, Component, TextColor, BackgroundColor };
+                     ~~~~~~~~~
+    at file://<tmpdir>/DynamicCLI.ts:79:22
+
+Found 2 errors.
+

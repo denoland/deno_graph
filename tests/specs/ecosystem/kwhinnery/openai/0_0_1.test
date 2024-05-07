@@ -1,0 +1,122 @@
+kwhinnery/openai/0.0.1
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[unsupported-destructuring]: found destructuring, which is not supported in the public API
+   --> /mod.ts:189:14
+    | 
+189 | export const {
+    |              ^
+190 |   OpenAIError,
+    | ^^^^^^^^^^^^^^
+191 |   APIError,
+    | ^^^^^^^^^^^
+192 |   APIConnectionError,
+    | ^^^^^^^^^^^^^^^^^^^^^
+193 |   APIConnectionTimeoutError,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+194 |   APIUserAbortError,
+    | ^^^^^^^^^^^^^^^^^^^^
+195 |   NotFoundError,
+    | ^^^^^^^^^^^^^^^^
+196 |   ConflictError,
+    | ^^^^^^^^^^^^^^^^
+197 |   RateLimitError,
+    | ^^^^^^^^^^^^^^^^^
+198 |   BadRequestError,
+    | ^^^^^^^^^^^^^^^^^^
+199 |   AuthenticationError,
+    | ^^^^^^^^^^^^^^^^^^^^^^
+200 |   InternalServerError,
+    | ^^^^^^^^^^^^^^^^^^^^^^
+201 |   PermissionDeniedError,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+202 |   UnprocessableEntityError,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+203 | } = Errors;
+    | ^
+    = hint: separate each destructured symbol into its own export statement
+
+  info: destructuring can not be inferred by fast check
+  docs: https://jsr.io/go/slow-type-unsupported-destructuring
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /streaming.ts:24:10
+   | 
+24 |   static fromSSEResponse<Item>(
+   |          ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /streaming.ts:112:10
+    | 
+112 |   static fromReadableStream<Item>(
+    |          ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /error.ts:58:10
+   | 
+58 |   static generate(
+   |          ^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /core.ts:431:13
+    | 
+431 |   protected makeStatusError(
+    |             ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /core.ts:763:10
+    | 
+763 |   async *iterPages() {
+    |          ^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /core.ts:773:10
+    | 
+773 |   async *[Symbol.asyncIterator]() {
+    |          ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /core.ts:821:10
+    | 
+821 |   async *[Symbol.asyncIterator]() {
+    |          ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

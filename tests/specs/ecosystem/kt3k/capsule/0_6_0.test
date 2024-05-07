@@ -1,0 +1,51 @@
+kt3k/capsule/0.6.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+  /** The element */ el: HTMLElement;
+                         ~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:19:26
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+  /** Queries elements by the given selector under the component dom */ query<T extends HTMLElement = HTMLElement>(selector: string): T | null;
+                                                                                        ~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:20:89
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+  /** Queries elements by the given selector under the component dom */ query<T extends HTMLElement = HTMLElement>(selector: string): T | null;
+                                                                                                      ~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:20:103
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/mod.ts:21:96
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/mod.ts:21:110
+
+TS2304 [ERROR]: Cannot find name 'NodeListOf'.
+    at file://<tmpdir>/mod.ts:21:142
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export function mount(name?: string | null, el?: HTMLElement): void {}
+                                                 ~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:29:50
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export function unmount(name: string, el: HTMLElement): void {}
+                                          ~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:30:43
+
+Found 8 errors.
+

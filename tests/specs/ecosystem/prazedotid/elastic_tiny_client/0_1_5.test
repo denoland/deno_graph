@@ -1,0 +1,27 @@
+prazedotid/elastic-tiny-client/0.1.5
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { Authorization, ClientOptions, ElasticClient } from "./elastic-client.ts";
+         ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:1:10
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { Authorization, ClientOptions, ElasticClient } from "./elastic-client.ts";
+                        ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:1:25
+
+Found 2 errors.
+

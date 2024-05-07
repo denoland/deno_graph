@@ -1,0 +1,22 @@
+nick/clsx/0.1.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@type/union@^0.1.0": "jsr:@type/union@0.1.0"
+    },
+    "jsr": {
+      "@type/union@0.1.0": {
+        "integrity": "8ee3229a8c5ec82c0d51f0ce53626ba23e03d8c18becde51c35b38426172b302"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

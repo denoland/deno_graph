@@ -1,0 +1,33 @@
+std/testing/0.206.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.206.0": "jsr:@std/assert@0.206.0",
+      "jsr:@std/async@^0.206.0": "jsr:@std/async@0.206.0",
+      "jsr:@std/fmt@^0.206.0": "jsr:@std/fmt@0.206.0"
+    },
+    "jsr": {
+      "@std/assert@0.206.0": {
+        "integrity": "9e3e4e1ae03bd154d5732afe7da88897f3b6a1f2b919b5bbea579c905d1a7054",
+        "dependencies": [
+          "jsr:@std/fmt@^0.206.0"
+        ]
+      },
+      "@std/async@0.206.0": {
+        "integrity": "0c6121778e2fcd112d84ebc0b877cb379535da6ba6f1b787c6fb290fcc4a4817"
+      },
+      "@std/fmt@0.206.0": {
+        "integrity": "e068d8327cf477f7d67f5a04d2ff8ef0fa314b4d06f98395b4e802963f18f436"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

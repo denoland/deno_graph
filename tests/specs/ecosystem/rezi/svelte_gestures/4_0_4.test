@@ -1,0 +1,84 @@
+rezi/svelte-gestures/4.0.4
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'PointerEvent'.
+export type GestureCallback = (register: RegisterGestureType) => (activeEvents: PointerEvent[], event: PointerEvent) => boolean;
+                                                                                ~~~~~~~~~~~~
+    at file://<tmpdir>/src/composedGesture.ts:2:81
+
+TS2304 [ERROR]: Cannot find name 'PointerEvent'.
+export type GestureCallback = (register: RegisterGestureType) => (activeEvents: PointerEvent[], event: PointerEvent) => boolean;
+                                                                                                       ~~~~~~~~~~~~
+    at file://<tmpdir>/src/composedGesture.ts:2:104
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export type RegisterGestureType = (gestureFn: (node: HTMLElement, params: BaseParams) => SubGestureFunctions, parameters: BaseParams) => void;
+                                                     ~~~~~~~~~~~
+    at file://<tmpdir>/src/composedGesture.ts:3:54
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export function composedGesture(node: HTMLElement, gestureCallback: GestureCallback): SvelteAction {
+                                      ~~~~~~~~~~~
+    at file://<tmpdir>/src/composedGesture.ts:4:39
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/src/pan.ts:5:82
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/src/pinch.ts:3:86
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/src/press.ts:7:86
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/src/rotate.ts:3:88
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/src/scroll.ts:5:88
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/src/shapeGesture.ts:7:100
+
+TS2304 [ERROR]: Cannot find name 'PointerEvent'.
+export type PointerEventCallback<T> = ((activeEvents: PointerEvent[], event: PointerEvent) => T) | null;
+                                                      ~~~~~~~~~~~~
+    at file://<tmpdir>/src/shared.ts:24:55
+
+TS2304 [ERROR]: Cannot find name 'PointerEvent'.
+export type PointerEventCallback<T> = ((activeEvents: PointerEvent[], event: PointerEvent) => T) | null;
+                                                                             ~~~~~~~~~~~~
+    at file://<tmpdir>/src/shared.ts:24:78
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export function getCenterOfTwoPoints(node: HTMLElement, activeEvents: PointerEvent[]): Coord {
+                                           ~~~~~~~~~~~
+    at file://<tmpdir>/src/shared.ts:30:44
+
+TS2304 [ERROR]: Cannot find name 'PointerEvent'.
+export function getCenterOfTwoPoints(node: HTMLElement, activeEvents: PointerEvent[]): Coord {
+                                                                      ~~~~~~~~~~~~
+    at file://<tmpdir>/src/shared.ts:30:71
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/src/shared.ts:33:63
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/src/swipe.ts:7:86
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/src/tap.ts:5:82
+
+Found 17 errors.
+

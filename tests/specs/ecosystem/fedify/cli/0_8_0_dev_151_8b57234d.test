@@ -1,0 +1,12 @@
+fedify/cli/0.8.0-dev.151+8b57234d
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

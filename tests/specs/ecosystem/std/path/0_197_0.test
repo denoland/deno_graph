@@ -1,0 +1,252 @@
+std/path/0.197.0
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[unsupported-destructuring]: found destructuring, which is not supported in the public API
+  --> /mod.ts:33:14
+   | 
+33 | export const {
+   |              ^
+34 |   basename,
+   | ^^^^^^^^^^^
+35 |   delimiter,
+   | ^^^^^^^^^^^^
+36 |   dirname,
+   | ^^^^^^^^^^
+37 |   extname,
+   | ^^^^^^^^^^
+38 |   format,
+   | ^^^^^^^^^
+39 |   fromFileUrl,
+   | ^^^^^^^^^^^^^^
+40 |   isAbsolute,
+   | ^^^^^^^^^^^^^
+41 |   join,
+   | ^^^^^^^
+42 |   normalize,
+   | ^^^^^^^^^^^^
+43 |   parse,
+   | ^^^^^^^^
+44 |   relative,
+   | ^^^^^^^^^^^
+45 |   resolve,
+   | ^^^^^^^^^^
+46 |   toFileUrl,
+   | ^^^^^^^^^^^^
+47 |   toNamespacedPath,
+   | ^^^^^^^^^^^^^^^^^^^
+48 | } = path;
+   | ^
+   = hint: separate each destructured symbol into its own export statement
+
+  info: destructuring can not be inferred by fast check
+  docs: https://jsr.io/go/slow-type-unsupported-destructuring
+
+
+error[unsupported-destructuring]: found destructuring, which is not supported in the public API
+  --> /mod.ts:33:14
+   | 
+33 | export const {
+   |              ^
+34 |   basename,
+   | ^^^^^^^^^^^
+35 |   delimiter,
+   | ^^^^^^^^^^^^
+36 |   dirname,
+   | ^^^^^^^^^^
+37 |   extname,
+   | ^^^^^^^^^^
+38 |   format,
+   | ^^^^^^^^^
+39 |   fromFileUrl,
+   | ^^^^^^^^^^^^^^
+40 |   isAbsolute,
+   | ^^^^^^^^^^^^^
+41 |   join,
+   | ^^^^^^^
+42 |   normalize,
+   | ^^^^^^^^^^^^
+43 |   parse,
+   | ^^^^^^^^
+44 |   relative,
+   | ^^^^^^^^^^^
+45 |   resolve,
+   | ^^^^^^^^^^
+46 |   toFileUrl,
+   | ^^^^^^^^^^^^
+47 |   toNamespacedPath,
+   | ^^^^^^^^^^^^^^^^^^^
+48 | } = path;
+   | ^
+   = hint: separate each destructured symbol into its own export statement
+
+  info: destructuring can not be inferred by fast check
+  docs: https://jsr.io/go/slow-type-unsupported-destructuring
+
+
+error[unsupported-destructuring]: found destructuring, which is not supported in the public API
+  --> /mod.ts:33:14
+   | 
+33 | export const {
+   |              ^
+34 |   basename,
+   | ^^^^^^^^^^^
+35 |   delimiter,
+   | ^^^^^^^^^^^^
+36 |   dirname,
+   | ^^^^^^^^^^
+37 |   extname,
+   | ^^^^^^^^^^
+38 |   format,
+   | ^^^^^^^^^
+39 |   fromFileUrl,
+   | ^^^^^^^^^^^^^^
+40 |   isAbsolute,
+   | ^^^^^^^^^^^^^
+41 |   join,
+   | ^^^^^^^
+42 |   normalize,
+   | ^^^^^^^^^^^^
+43 |   parse,
+   | ^^^^^^^^
+44 |   relative,
+   | ^^^^^^^^^^^
+45 |   resolve,
+   | ^^^^^^^^^^
+46 |   toFileUrl,
+   | ^^^^^^^^^^^^
+47 |   toNamespacedPath,
+   | ^^^^^^^^^^^^^^^^^^^
+48 | } = path;
+   | ^
+   = hint: separate each destructured symbol into its own export statement
+
+  info: destructuring can not be inferred by fast check
+  docs: https://jsr.io/go/slow-type-unsupported-destructuring
+
+
+error[unsupported-destructuring]: found destructuring, which is not supported in the public API
+  --> /mod.ts:33:14
+   | 
+33 | export const {
+   |              ^
+34 |   basename,
+   | ^^^^^^^^^^^
+35 |   delimiter,
+   | ^^^^^^^^^^^^
+36 |   dirname,
+   | ^^^^^^^^^^
+37 |   extname,
+   | ^^^^^^^^^^
+38 |   format,
+   | ^^^^^^^^^
+39 |   fromFileUrl,
+   | ^^^^^^^^^^^^^^
+40 |   isAbsolute,
+   | ^^^^^^^^^^^^^
+41 |   join,
+   | ^^^^^^^
+42 |   normalize,
+   | ^^^^^^^^^^^^
+43 |   parse,
+   | ^^^^^^^^
+44 |   relative,
+   | ^^^^^^^^^^^
+45 |   resolve,
+   | ^^^^^^^^^^
+46 |   toFileUrl,
+   | ^^^^^^^^^^^^
+47 |   toNamespacedPath,
+   | ^^^^^^^^^^^^^^^^^^^
+48 | } = path;
+   | ^
+   = hint: separate each destructured symbol into its own export statement
+
+  info: destructuring can not be inferred by fast check
+  docs: https://jsr.io/go/slow-type-unsupported-destructuring
+
+
+error[unsupported-destructuring]: found destructuring, which is not supported in the public API
+  --> /mod.ts:33:14
+   | 
+33 | export const {
+   |              ^
+34 |   basename,
+   | ^^^^^^^^^^^
+35 |   delimiter,
+   | ^^^^^^^^^^^^
+36 |   dirname,
+   | ^^^^^^^^^^
+37 |   extname,
+   | ^^^^^^^^^^
+38 |   format,
+   | ^^^^^^^^^
+39 |   fromFileUrl,
+   | ^^^^^^^^^^^^^^
+40 |   isAbsolute,
+   | ^^^^^^^^^^^^^
+41 |   join,
+   | ^^^^^^^
+42 |   normalize,
+   | ^^^^^^^^^^^^
+43 |   parse,
+   | ^^^^^^^^
+44 |   relative,
+   | ^^^^^^^^^^^
+45 |   resolve,
+   | ^^^^^^^^^^
+46 |   toFileUrl,
+   | ^^^^^^^^^^^^
+47 |   toNamespacedPath,
+   | ^^^^^^^^^^^^^^^^^^^
+48 | } = path;
+   | ^
+   = hint: separate each destructured symbol into its own export statement
+
+  info: destructuring can not be inferred by fast check
+  docs: https://jsr.io/go/slow-type-unsupported-destructuring
+
+
+error[unsupported-destructuring]: found destructuring, which is not supported in the public API
+  --> /mod.ts:33:14
+   | 
+33 | export const {
+   |              ^
+34 |   basename,
+   | ^^^^^^^^^^^
+35 |   delimiter,
+   | ^^^^^^^^^^^^
+36 |   dirname,
+   | ^^^^^^^^^^
+37 |   extname,
+   | ^^^^^^^^^^
+38 |   format,
+   | ^^^^^^^^^
+39 |   fromFileUrl,
+   | ^^^^^^^^^^^^^^
+40 |   isAbsolute,
+   | ^^^^^^^^^^^^^
+41 |   join,
+   | ^^^^^^^
+42 |   normalize,
+   | ^^^^^^^^^^^^
+43 |   parse,
+   | ^^^^^^^^
+44 |   relative,
+   | ^^^^^^^^^^^
+45 |   resolve,
+   | ^^^^^^^^^^
+46 |   toFileUrl,
+   | ^^^^^^^^^^^^
+47 |   toNamespacedPath,
+   | ^^^^^^^^^^^^^^^^^^^
+48 | } = path;
+   | ^
+   = hint: separate each destructured symbol into its own export statement
+
+  info: destructuring can not be inferred by fast check
+  docs: https://jsr.io/go/slow-type-unsupported-destructuring
+
+

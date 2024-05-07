@@ -1,0 +1,12 @@
+dx3mod/rpm-parser/0.1.13
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

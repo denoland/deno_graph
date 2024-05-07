@@ -1,0 +1,26 @@
+http/interceptor/0.9.0-beta.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@http/handler@0.9.0-beta.2": "jsr:@http/handler@0.9.0-beta.2",
+      "jsr:@http/route@0.9.0-beta.2": "jsr:@http/route@0.9.0-beta.2"
+    },
+    "jsr": {
+      "@http/handler@0.9.0-beta.2": {
+        "integrity": "5b0d2fe447c26d778f029da53090023516bda67a432e444177533cd9d722711f"
+      },
+      "@http/route@0.9.0-beta.2": {
+        "integrity": "1edfb52f9dfca015ef7416016667a40d7d8745b356c42ce340f33769637b9870"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

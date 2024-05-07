@@ -1,0 +1,22 @@
+bureaudouble/class-variance-authority/0.0.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@bureaudouble/clsx@0.0.2": "jsr:@bureaudouble/clsx@0.0.2"
+    },
+    "jsr": {
+      "@bureaudouble/clsx@0.0.2": {
+        "integrity": "122d54f8458a69d03818ed8f1c97428ad43ef706bd2b2f37b76e865e0a7736e5"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

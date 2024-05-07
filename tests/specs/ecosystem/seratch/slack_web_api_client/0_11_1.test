@@ -1,0 +1,292 @@
+seratch/slack-web-api-client/0.11.1
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /client/api-client.ts:840:19
+    | 
+840 |   public readonly admin = {
+    |                   ^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1269:19
+     | 
+1269 |   public readonly api = {
+     |                   ^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1276:19
+     | 
+1276 |   public readonly apps = {
+     |                   ^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1341:19
+     | 
+1341 |   public readonly auth = {
+     |                   ^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1358:19
+     | 
+1358 |   public readonly bots = {
+     |                   ^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1365:19
+     | 
+1365 |   public readonly bookmarks = {
+     |                   ^^^^^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1384:19
+     | 
+1384 |   public readonly chat = {
+     |                   ^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1429:19
+     | 
+1429 |   public readonly conversations = {
+     |                   ^^^^^^^^^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1524:19
+     | 
+1524 |   public readonly dnd = {
+     |                   ^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1544:19
+     | 
+1544 |   public readonly emoji = {
+     |                   ^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1551:19
+     | 
+1551 |   public readonly files = {
+     |                   ^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1616:19
+     | 
+1616 |   public readonly functions = {
+     |                   ^^^^^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1627:19
+     | 
+1627 |   public readonly migration = {
+     |                   ^^^^^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1634:19
+     | 
+1634 |   public readonly oauth = {
+     |                   ^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1647:19
+     | 
+1647 |   public readonly openid = {
+     |                   ^^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1660:19
+     | 
+1660 |   public readonly pins = {
+     |                   ^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1672:19
+     | 
+1672 |   public readonly reactions = {
+     |                   ^^^^^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1691:19
+     | 
+1691 |   public readonly reminders = {
+     |                   ^^^^^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1714:19
+     | 
+1714 |   public readonly search = {
+     |                   ^^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1729:19
+     | 
+1729 |   public readonly stars = {
+     |                   ^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1744:19
+     | 
+1744 |   public readonly team = {
+     |                   ^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1781:19
+     | 
+1781 |   public readonly tooling = {
+     |                   ^^^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1790:19
+     | 
+1790 |   public readonly usergroups = {
+     |                   ^^^^^^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1823:19
+     | 
+1823 |   public readonly users = {
+     |                   ^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1872:19
+     | 
+1872 |   public readonly views = {
+     |                   ^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+    --> /client/api-client.ts:1891:19
+     | 
+1891 |   public readonly workflows = {
+     |                   ^^^^^^^^^ this symbol is missing an explicit type
+     = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

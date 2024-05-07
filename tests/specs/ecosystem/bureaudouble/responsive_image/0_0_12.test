@@ -1,0 +1,44 @@
+bureaudouble/responsive-image/0.0.12
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@bureaudouble/outils@0.0.62": "jsr:@bureaudouble/outils@0.0.62",
+      "jsr:@bureaudouble/scripted@0.0.2": "jsr:@bureaudouble/scripted@0.0.2",
+      "jsr:@dbushell/carriageway@0.12.0": "jsr:@dbushell/carriageway@0.12.0",
+      "jsr:@std/assert@^0.219.1": "jsr:@std/assert@0.219.1",
+      "jsr:@std/async@0.219": "jsr:@std/async@0.219.1"
+    },
+    "jsr": {
+      "@bureaudouble/outils@0.0.62": {
+        "integrity": "28a164bbdb0f19691d0a39c53dcd5ba803aca92b2ee864b984737d253f676f7e"
+      },
+      "@bureaudouble/scripted@0.0.2": {
+        "integrity": "6ba53621ed24438e28f9949301f39eb0241e8746433b1465479b91c29475b58b"
+      },
+      "@dbushell/carriageway@0.12.0": {
+        "integrity": "cccb89d65bebbf101678e05cacdd189c0cf0a876bc99b14ea2c66286202668e9",
+        "dependencies": [
+          "jsr:@std/async@0.219"
+        ]
+      },
+      "@std/assert@0.219.1": {
+        "integrity": "e76c2a1799a78f0f4db7de04bdc9b908a7a4b821bb65eda0285885297d4fb8af"
+      },
+      "@std/async@0.219.1": {
+        "integrity": "9401a6aa5a3292d639b71beceb19fb53c2148238c4d36b3ddf8c30980baa10e0",
+        "dependencies": [
+          "jsr:@std/assert@^0.219.1"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

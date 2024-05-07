@@ -1,0 +1,22 @@
+http/route/0.10.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@http/handler@0.10.0": "jsr:@http/handler@0.10.0"
+    },
+    "jsr": {
+      "@http/handler@0.10.0": {
+        "integrity": "af550deb51e96a9b7ccdc92f2aecd566e78892bf5a71f1e8ad25a74fee3b8969"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

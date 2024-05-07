@@ -1,0 +1,22 @@
+vwkd/income-tax-de/0.0.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@vwkd/inflation@^0.0.3": "jsr:@vwkd/inflation@0.0.3"
+    },
+    "jsr": {
+      "@vwkd/inflation@0.0.3": {
+        "integrity": "9083f6a6d541f476ff521d62696a3a71ea3b038b3117178de7077377fa9c9c72"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

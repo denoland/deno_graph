@@ -1,0 +1,20 @@
+ayonli/jsext/0.8.5
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
+ */ export default function read<T>(target: NodeJS.EventEmitter, eventMap?: {
+                                            ~~~~~~
+    at file://<tmpdir>/read.ts:78:45
+
