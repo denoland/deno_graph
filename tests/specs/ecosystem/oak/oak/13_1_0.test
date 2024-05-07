@@ -43,7 +43,7 @@ oak/oak/13.1.0
         "integrity": "9b24c964b0f61ea849d1ea38de7dea2190d08c8ffed732d36595bfb1b5e4dbe5"
       },
       "@std/http@0.213.1": {
-        "integrity": "fa360c35d9ba22988c9580991ac83d040411f969a735b0cf31f5942facee1f07",
+        "integrity": "edad5fd31983c2d71877aeb949d571545b174aa556e5ab0d614650976a7326fb",
         "dependencies": [
           "jsr:@std/assert@^0.213.1",
           "jsr:@std/encoding@^0.213.1"
