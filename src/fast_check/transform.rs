@@ -262,7 +262,7 @@ impl<'a> FastCheckTransformer<'a> {
             span: DUMMY_SP,
             declare: false,
             global: false,
-            id: TsModuleName::Ident(Ident::new(key.into(), DUMMY_SP)),
+            id: TsModuleName::Ident(Ident::new(key, DUMMY_SP)),
             body: Some(TsNamespaceBody::TsModuleBlock(TsModuleBlock {
               span: DUMMY_SP,
               body: value,
@@ -767,18 +767,16 @@ impl<'a> FastCheckTransformer<'a> {
                         }
                         _ => None,
                       };
-                      if let Some(type_ann) = explicit_type_ann {
-                        Some(type_ann)
-                      } else {
-                        self
-                          .maybe_infer_type_from_expr(&assign.right, false)?
-                          .map(|type_ann| {
+                      explicit_type_ann.or_else(|| {
+                        self.maybe_infer_type_from_expr(&assign.right).map(
+                          |type_ann| {
                             Box::new(TsTypeAnn {
                               span: DUMMY_SP,
                               type_ann: Box::new(type_ann),
                             })
-                          })
-                      }
+                          },
+                        )
+                      })
                     }
                   }
                 },
@@ -915,11 +913,10 @@ impl<'a> FastCheckTransformer<'a> {
           return Ok(true);
         }
         if n.type_ann.is_none() {
-          let inferred_type = if let Some(tmp_type) = n.value.as_ref() {
-            self.maybe_infer_type_from_expr(tmp_type, false)?
-          } else {
-            None
-          };
+          let inferred_type = n
+            .value
+            .as_ref()
+            .and_then(|e| self.maybe_infer_type_from_expr(e));
           match inferred_type {
             Some(t) => {
               n.type_ann = Some(Box::new(TsTypeAnn {
@@ -965,11 +962,10 @@ impl<'a> FastCheckTransformer<'a> {
         } else if let Some(type_ann) = n.type_ann.clone() {
           type_ann
         } else {
-          let inferred_type = if let Some(tmp_type) = n.value.as_ref() {
-            self.maybe_infer_type_from_expr(tmp_type, false)?
-          } else {
-            None
-          };
+          let inferred_type = n
+            .value
+            .as_ref()
+            .and_then(|e| self.maybe_infer_type_from_expr(e));
           match inferred_type {
             Some(t) => Box::new(TsTypeAnn {
               span: DUMMY_SP,
@@ -1157,7 +1153,7 @@ impl<'a> FastCheckTransformer<'a> {
           }
         }
         BlockStmtOrExpr::Expr(expr) => {
-          let inferred_type = self.maybe_infer_type_from_expr(expr, false)?;
+          let inferred_type = self.maybe_infer_type_from_expr(expr);
           match inferred_type {
             Some(t) => {
               let mut return_type = Box::new(t);
@@ -1226,8 +1222,7 @@ impl<'a> FastCheckTransformer<'a> {
       Pat::Assign(assign) => match &mut *assign.left {
         Pat::Ident(ident) => {
           if ident.type_ann.is_none() {
-            let inferred_type =
-              self.maybe_infer_type_from_expr(&assign.right, false)?;
+            let inferred_type = self.maybe_infer_type_from_expr(&assign.right);
             match inferred_type {
               Some(t) => {
                 ident.type_ann = Some(Box::new(TsTypeAnn {
@@ -1362,11 +1357,10 @@ impl<'a> FastCheckTransformer<'a> {
     match &mut n.name {
       Pat::Ident(ident) => {
         if ident.type_ann.is_none() {
-          let inferred_type = if let Some(tmp_type) = n.init.as_ref() {
-            self.maybe_infer_type_from_expr(tmp_type, false)?
-          } else {
-            None
-          };
+          let inferred_type = n
+            .init
+            .as_ref()
+            .and_then(|e| self.maybe_infer_type_from_expr(e));
           match inferred_type {
             Some(t) => {
               ident.type_ann = Some(Box::new(TsTypeAnn {
@@ -1481,13 +1475,13 @@ impl<'a> FastCheckTransformer<'a> {
     Ok(true)
   }
 
-  // Keep member expressions when they are
-  // part of a namespace. Example:
+  // Keep expando properties. Example:
   //
   //   export function it() {}
-  //   it.skip = () => {}
+  //   it.skip = () => {};
+  //   it.prop = "value";
   //
-  // Otherwise TS will error when calling `it.skip()
+  // Otherwise TS will error when calling `it.skip()`
   fn transform_assign_expr(
     &mut self,
     n: &mut AssignExpr,
@@ -1499,45 +1493,49 @@ impl<'a> FastCheckTransformer<'a> {
     match &n.left {
       AssignTarget::Simple(simple) => match simple {
         SimpleAssignTarget::Member(mem_expr) => {
-          if let Some(public_ident) = self.maybe_public_member(mem_expr) {
-            match &mem_expr.prop {
-              MemberProp::Ident(mem_ident) => {
-                let maybe_type_ann =
-                  self.maybe_infer_type_from_expr(&n.right, false)?;
-                if let Some(type_ann) = maybe_type_ann {
-                  if let Some(items) =
-                    self.public_inferred_namespaces.get_mut(public_ident)
-                  {
-                    items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(
-                      Box::new(VarDecl {
-                        span: DUMMY_SP,
-                        kind: VarDeclKind::Var,
-                        declare: false,
-                        decls: vec![VarDeclarator {
-                          span: DUMMY_SP,
-                          name: Pat::Ident(BindingIdent {
-                            id: mem_ident.clone(),
-                            type_ann: Some(Box::new(TsTypeAnn {
-                              span: DUMMY_SP,
-                              type_ann: Box::new(type_ann),
-                            })),
-                          }),
-                          init: None,
-                          definite: false,
-                        }],
-                      }),
-                    ))));
-                  }
-                } else {
-                  self.mark_diagnostic(
-                    FastCheckDiagnostic::MissingExplicitType {
-                      range: self.source_range_to_range(n.right.range()),
-                    },
-                  )?;
-                }
+          let (obj_ident, prop_ident) = match &mem_expr.prop {
+            MemberProp::Ident(prop_ident) => match &*mem_expr.obj {
+              Expr::Ident(obj_ident)
+                if self
+                  .public_inferred_namespaces
+                  .contains_key(&obj_ident.sym) =>
+              {
+                (obj_ident, prop_ident)
               }
-              MemberProp::PrivateName(_) | MemberProp::Computed(_) => {}
+              _ => return Ok(false),
+            },
+            _ => return Ok(false),
+          };
+
+          let maybe_type_ann = self.maybe_infer_type_from_expr(&n.right);
+          if let Some(type_ann) = maybe_type_ann {
+            if let Some(items) =
+              self.public_inferred_namespaces.get_mut(&obj_ident.sym)
+            {
+              items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(
+                VarDecl {
+                  span: DUMMY_SP,
+                  kind: VarDeclKind::Var,
+                  declare: false,
+                  decls: vec![VarDeclarator {
+                    span: DUMMY_SP,
+                    name: Pat::Ident(BindingIdent {
+                      id: prop_ident.clone(),
+                      type_ann: Some(Box::new(TsTypeAnn {
+                        span: DUMMY_SP,
+                        type_ann: Box::new(type_ann),
+                      })),
+                    }),
+                    init: None,
+                    definite: false,
+                  }],
+                },
+              )))));
             }
+          } else {
+            self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+              range: self.source_range_to_range(n.right.range()),
+            })?;
           }
           Ok(false)
         }
@@ -1576,58 +1574,6 @@ impl<'a> FastCheckTransformer<'a> {
       specifier: self.specifier.clone(),
       text_info: self.parsed_source.text_info().clone(),
       range,
-    }
-  }
-
-  fn maybe_public_member<'expr>(
-    &self,
-    expr: &'expr MemberExpr,
-  ) -> Option<&'expr Atom> {
-    match &*expr.obj {
-      Expr::Member(mem) => self.maybe_public_member(mem),
-      Expr::Ident(ident) => {
-        if self.public_inferred_namespaces.contains_key(&ident.sym) {
-          Some(&ident.sym)
-        } else {
-          None
-        }
-      }
-      Expr::This(_)
-      | Expr::Array(_)
-      | Expr::Object(_)
-      | Expr::Fn(_)
-      | Expr::Unary(_)
-      | Expr::Update(_)
-      | Expr::Bin(_)
-      | Expr::Assign(_)
-      | Expr::SuperProp(_)
-      | Expr::Cond(_)
-      | Expr::Call(_)
-      | Expr::New(_)
-      | Expr::Seq(_)
-      | Expr::Lit(_)
-      | Expr::Tpl(_)
-      | Expr::TaggedTpl(_)
-      | Expr::Arrow(_)
-      | Expr::Class(_)
-      | Expr::Yield(_)
-      | Expr::MetaProp(_)
-      | Expr::Await(_)
-      | Expr::Paren(_)
-      | Expr::JSXMember(_)
-      | Expr::JSXNamespacedName(_)
-      | Expr::JSXEmpty(_)
-      | Expr::JSXElement(_)
-      | Expr::JSXFragment(_)
-      | Expr::TsTypeAssertion(_)
-      | Expr::TsConstAssertion(_)
-      | Expr::TsNonNull(_)
-      | Expr::TsAs(_)
-      | Expr::TsInstantiation(_)
-      | Expr::TsSatisfies(_)
-      | Expr::PrivateName(_)
-      | Expr::OptChain(_)
-      | Expr::Invalid(_) => None,
     }
   }
 
@@ -1744,18 +1690,14 @@ impl<'a> FastCheckTransformer<'a> {
     Ok(is_leavable)
   }
 
-  fn maybe_infer_type_from_expr(
-    &mut self,
-    expr: &Expr,
-    report_diagnostics: bool,
-  ) -> Result<Option<TsType>, Vec<FastCheckDiagnostic>> {
+  fn maybe_infer_type_from_expr(&self, expr: &Expr) -> Option<TsType> {
     match expr {
-      Expr::TsTypeAssertion(n) => Ok(infer_simple_type_from_type(&n.type_ann)),
-      Expr::TsAs(n) => Ok(infer_simple_type_from_type(&n.type_ann)),
-      Expr::Lit(lit) => Ok(maybe_lit_to_ts_type(lit)),
+      Expr::TsTypeAssertion(n) => infer_simple_type_from_type(&n.type_ann),
+      Expr::TsAs(n) => infer_simple_type_from_type(&n.type_ann),
+      Expr::Lit(lit) => maybe_lit_to_ts_type(lit),
       Expr::Call(call_expr) => {
         if self.is_call_expr_symbol_create(call_expr) {
-          Ok(Some(TsType::TsTypeOperator(TsTypeOperator {
+          Some(TsType::TsTypeOperator(TsTypeOperator {
             span: DUMMY_SP,
             op: TsTypeOperatorOp::Unique,
             type_ann: Box::new(TsType::TsTypeRef(TsTypeRef {
@@ -1763,241 +1705,12 @@ impl<'a> FastCheckTransformer<'a> {
               type_name: TsEntityName::Ident(ident("symbol".to_string())),
               type_params: None,
             })),
-          })))
+          }))
         } else {
-          Ok(None)
+          None
         }
       }
-      Expr::Fn(fn_expr) => {
-        let mut params: Vec<TsFnParam> = vec![];
-        let mut idx = 0;
-        for param in &fn_expr.function.params {
-          let name = match &param.pat {
-            Pat::Ident(ident) => ident.id.clone(),
-            Pat::Array(_)
-            | Pat::Rest(_)
-            | Pat::Object(_)
-            | Pat::Assign(_)
-            | Pat::Invalid(_)
-            | Pat::Expr(_) => {
-              idx += 1;
-              Ident::new(format!("_arg{}", idx).into(), DUMMY_SP)
-            }
-          };
-          if let Ok(ts_type) = self.infer_type_from_pat(&param.pat) {
-            params.push(TsFnParam::Ident(BindingIdent {
-              id: name,
-              type_ann: Some(Box::new(TsTypeAnn {
-                span: DUMMY_SP,
-                type_ann: Box::new(ts_type),
-              })),
-            }))
-          }
-        }
-
-        let return_type = if let Some(type_ann) = &fn_expr.function.return_type
-        {
-          type_ann.type_ann.clone()
-        } else {
-          let ts_type = if let Some(block) = &fn_expr.function.body {
-            if contains_return_stmt(&block.stmts) {
-              self.mark_diagnostic(
-                FastCheckDiagnostic::MissingExplicitReturnType {
-                  range: self.source_range_to_range(fn_expr.function.range()),
-                },
-              )?;
-              ts_any_type()
-            } else {
-              ts_void_type()
-            }
-          } else {
-            ts_void_type()
-          };
-
-          if fn_expr.function.is_async {
-            self.promise_wrap_type(Box::new(ts_type))
-          } else {
-            Box::new(ts_type)
-          }
-        };
-
-        Ok(Some(TsType::TsFnOrConstructorType(
-          TsFnOrConstructorType::TsFnType(TsFnType {
-            span: DUMMY_SP,
-            params,
-            type_params: None,
-            type_ann: Box::new(TsTypeAnn {
-              span: DUMMY_SP,
-              type_ann: return_type,
-            }),
-          }),
-        )))
-      }
-      Expr::Arrow(arrow_expr) => {
-        let mut params: Vec<TsFnParam> = vec![];
-        let mut idx = 0;
-        for pat in &arrow_expr.params {
-          let name = match &pat {
-            Pat::Ident(ident) => ident.id.clone(),
-            Pat::Array(_)
-            | Pat::Rest(_)
-            | Pat::Object(_)
-            | Pat::Assign(_)
-            | Pat::Invalid(_)
-            | Pat::Expr(_) => {
-              idx += 1;
-              Ident::new(format!("_arg{}", idx).into(), DUMMY_SP)
-            }
-          };
-          if let Ok(ts_type) = self.infer_type_from_pat(pat) {
-            params.push(TsFnParam::Ident(BindingIdent {
-              id: name,
-              type_ann: Some(Box::new(TsTypeAnn {
-                span: DUMMY_SP,
-                type_ann: Box::new(ts_type),
-              })),
-            }))
-          }
-        }
-
-        let return_type = if let Some(type_ann) = &arrow_expr.return_type {
-          type_ann.clone()
-        } else {
-          let ts_type = match &*arrow_expr.body {
-            BlockStmtOrExpr::BlockStmt(block_stmt) => {
-              if block_stmt.stmts.is_empty() {
-                let ts_type = ts_void_type();
-                if arrow_expr.is_async {
-                  *self.promise_wrap_type(Box::new(ts_type))
-                } else {
-                  ts_type
-                }
-              } else {
-                let has_return = contains_return_stmt(&block_stmt.stmts);
-                let ts_type = if !has_return {
-                  ts_void_type()
-                } else {
-                  self.mark_diagnostic(
-                    FastCheckDiagnostic::MissingExplicitReturnType {
-                      range: self.source_range_to_range(arrow_expr.range()),
-                    },
-                  )?;
-                  ts_any_type()
-                };
-
-                if arrow_expr.is_async {
-                  *self.promise_wrap_type(Box::new(ts_type))
-                } else {
-                  ts_type
-                }
-              }
-            }
-            BlockStmtOrExpr::Expr(expr) => {
-              let return_type = if let Ok(Some(ts_type)) =
-                self.maybe_infer_type_from_expr(expr, report_diagnostics)
-              {
-                ts_type
-              } else {
-                self.mark_diagnostic(
-                  FastCheckDiagnostic::MissingExplicitReturnType {
-                    range: self.source_range_to_range(arrow_expr.range()),
-                  },
-                )?;
-                ts_any_type()
-              };
-
-              if arrow_expr.is_async {
-                *self.promise_wrap_type(Box::new(return_type))
-              } else {
-                return_type
-              }
-            }
-          };
-          Box::new(TsTypeAnn {
-            span: DUMMY_SP,
-            type_ann: Box::new(ts_type),
-          })
-        };
-
-        Ok(Some(TsType::TsFnOrConstructorType(
-          TsFnOrConstructorType::TsFnType(TsFnType {
-            span: DUMMY_SP,
-            params,
-            type_params: None,
-            type_ann: return_type,
-          }),
-        )))
-      }
-      Expr::Paren(n) => {
-        self.maybe_infer_type_from_expr(&n.expr, report_diagnostics)
-      }
-      Expr::TsConstAssertion(ts_const) => {
-        let ts_type = self.infer_from_const_expr(&ts_const.expr)?;
-
-        if report_diagnostics && ts_type.is_none() {
-          self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-            range: self.source_range_to_range(expr.range()),
-          })?
-        }
-
-        Ok(ts_type)
-      }
-      Expr::This(_)
-      | Expr::Array(_)
-      | Expr::Object(_)
-      | Expr::Unary(_)
-      | Expr::Update(_)
-      | Expr::Bin(_)
-      | Expr::Assign(_)
-      | Expr::Member(_)
-      | Expr::SuperProp(_)
-      | Expr::Cond(_)
-      | Expr::New(_)
-      | Expr::Seq(_)
-      | Expr::Ident(_)
-      | Expr::Tpl(_)
-      | Expr::TaggedTpl(_)
-      | Expr::Class(_)
-      | Expr::Yield(_)
-      | Expr::MetaProp(_)
-      | Expr::Await(_)
-      | Expr::JSXMember(_)
-      | Expr::JSXNamespacedName(_)
-      | Expr::JSXEmpty(_)
-      | Expr::JSXElement(_)
-      | Expr::JSXFragment(_)
-      | Expr::TsNonNull(_)
-      | Expr::TsInstantiation(_)
-      | Expr::TsSatisfies(_)
-      | Expr::PrivateName(_)
-      | Expr::OptChain(_)
-      | Expr::Invalid(_) => Ok(None),
-    }
-  }
-
-  fn infer_from_const_expr(
-    &mut self,
-    expr: &Expr,
-  ) -> Result<Option<TsType>, Vec<FastCheckDiagnostic>> {
-    match expr {
-      Expr::Lit(lit) => {
-        let lit_type = match lit {
-          Lit::Str(lit_str) => {
-            TsLit::Str(lit_str.value.to_string().clone().into())
-          }
-          Lit::Bool(lit_bool) => TsLit::Bool(*lit_bool),
-          Lit::Num(lit_num) => TsLit::Number(lit_num.clone()),
-          // Invalid
-          Lit::BigInt(_) | Lit::Regex(_) | Lit::JSXText(_) | Lit::Null(_) => {
-            return Ok(None)
-          }
-        };
-
-        Ok(Some(TsType::TsLitType(TsLitType {
-          span: lit.span(),
-          lit: lit_type,
-        })))
-      }
+      Expr::Paren(n) => self.maybe_infer_type_from_expr(&n.expr),
       Expr::This(_)
       | Expr::Array(_)
       | Expr::Object(_)
@@ -2009,7 +1722,6 @@ impl<'a> FastCheckTransformer<'a> {
       | Expr::Member(_)
       | Expr::SuperProp(_)
       | Expr::Cond(_)
-      | Expr::Call(_)
       | Expr::New(_)
       | Expr::Seq(_)
       | Expr::Ident(_)
@@ -2020,126 +1732,18 @@ impl<'a> FastCheckTransformer<'a> {
       | Expr::Yield(_)
       | Expr::MetaProp(_)
       | Expr::Await(_)
-      | Expr::Paren(_)
       | Expr::JSXMember(_)
       | Expr::JSXNamespacedName(_)
       | Expr::JSXEmpty(_)
       | Expr::JSXElement(_)
       | Expr::JSXFragment(_)
-      | Expr::TsTypeAssertion(_)
       | Expr::TsConstAssertion(_)
       | Expr::TsNonNull(_)
-      | Expr::TsAs(_)
       | Expr::TsInstantiation(_)
       | Expr::TsSatisfies(_)
       | Expr::PrivateName(_)
       | Expr::OptChain(_)
-      | Expr::Invalid(_) => Ok(None),
-    }
-  }
-
-  fn infer_type_from_pat(
-    &mut self,
-    pat: &Pat,
-  ) -> Result<TsType, Vec<FastCheckDiagnostic>> {
-    match pat {
-      Pat::Ident(ident) => {
-        if let Some(type_ann) = ident.type_ann.clone() {
-          return Ok(*type_ann.type_ann);
-        }
-
-        self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-          range: self.source_range_to_range(pat.range()),
-        })?;
-        Ok(ts_any_type())
-      }
-      Pat::Assign(assign) => match &*assign.left {
-        Pat::Ident(ident) => {
-          if let Some(type_ann) = ident.type_ann.clone() {
-            return Ok(*type_ann.type_ann);
-          }
-
-          let inferred_type =
-            self.maybe_infer_type_from_expr(&assign.right, true)?;
-          match inferred_type {
-            Some(t) => Ok(t.clone()),
-            None => {
-              self.mark_diagnostic(
-                FastCheckDiagnostic::MissingExplicitType {
-                  range: self.source_range_to_range(ident.range()),
-                },
-              )?;
-              Ok(ts_any_type())
-            }
-          }
-        }
-        Pat::Array(p) => {
-          if let Some(type_ann) = p.type_ann.clone() {
-            return Ok(*type_ann.type_ann);
-          }
-
-          self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-            range: self.source_range_to_range(p.range()),
-          })?;
-          Ok(ts_any_type())
-        }
-        Pat::Object(p) => {
-          if let Some(type_ann) = p.type_ann.clone() {
-            return Ok(*type_ann.type_ann);
-          }
-
-          self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-            range: self.source_range_to_range(p.range()),
-          })?;
-          Ok(ts_any_type())
-        }
-        Pat::Assign(_) | Pat::Invalid(_) | Pat::Rest(_) | Pat::Expr(_) => {
-          self.mark_diagnostic(
-            FastCheckDiagnostic::UnsupportedDestructuring {
-              range: self.source_range_to_range(pat.range()),
-            },
-          )?;
-          Ok(ts_any_type())
-        }
-      },
-      Pat::Rest(p) => {
-        if let Some(type_ann) = p.type_ann.clone() {
-          return Ok(*type_ann.type_ann);
-        }
-
-        self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-          range: self.source_range_to_range(p.range()),
-        })?;
-        Ok(ts_any_type())
-      }
-      Pat::Array(p) => {
-        if let Some(type_ann) = p.type_ann.clone() {
-          return Ok(*type_ann.type_ann);
-        }
-
-        self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-          range: self.source_range_to_range(p.range()),
-        })?;
-        Ok(ts_any_type())
-      }
-      Pat::Object(p) => {
-        if let Some(type_ann) = p.type_ann.clone() {
-          return Ok(*type_ann.type_ann);
-        }
-
-        self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-          range: self.source_range_to_range(p.range()),
-        })?;
-        Ok(ts_any_type())
-      }
-      Pat::Invalid(_) | Pat::Expr(_) => {
-        self.mark_diagnostic(
-          FastCheckDiagnostic::UnsupportedDestructuring {
-            range: self.source_range_to_range(pat.range()),
-          },
-        )?;
-        Ok(ts_any_type())
-      }
+      | Expr::Invalid(_) => None,
     }
   }
 
@@ -2501,15 +2105,6 @@ fn is_expr_ident_or_member_idents(expr: &Expr) -> bool {
   }
 }
 
-fn contains_return_stmt(stmts: &Vec<Stmt>) -> bool {
-  for stmt in stmts {
-    if let Stmt::Return(_) = stmt {
-      return true;
-    }
-  }
-  false
-}
-
 fn array_as_never_expr() -> Box<Expr> {
   expr_as_keyword_expr(
     Expr::Array(ArrayLit {
@@ -2545,19 +2140,5 @@ fn paren_expr(expr: Box<Expr>) -> Expr {
   Expr::Paren(ParenExpr {
     span: DUMMY_SP,
     expr,
-  })
-}
-
-fn ts_any_type() -> TsType {
-  TsType::TsKeywordType(TsKeywordType {
-    span: DUMMY_SP,
-    kind: TsKeywordTypeKind::TsAnyKeyword,
-  })
-}
-
-fn ts_void_type() -> TsType {
-  TsType::TsKeywordType(TsKeywordType {
-    kind: TsKeywordTypeKind::TsVoidKeyword,
-    span: DUMMY_SP,
   })
 }
