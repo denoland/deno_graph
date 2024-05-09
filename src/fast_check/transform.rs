@@ -1493,6 +1493,7 @@ impl<'a> FastCheckTransformer<'a> {
     match &n.left {
       AssignTarget::Simple(simple) => match simple {
         SimpleAssignTarget::Member(mem_expr) => {
+          // only support obj.prop for now
           let (obj_ident, prop_ident) = match &mem_expr.prop {
             MemberProp::Ident(prop_ident) => match &*mem_expr.obj {
               Expr::Ident(obj_ident)
@@ -1507,35 +1508,35 @@ impl<'a> FastCheckTransformer<'a> {
             _ => return Ok(false),
           };
 
-          let maybe_type_ann = self.maybe_infer_type_from_expr(&n.right);
-          if let Some(type_ann) = maybe_type_ann {
-            if let Some(items) =
-              self.public_inferred_namespaces.get_mut(&obj_ident.sym)
-            {
-              items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(
-                VarDecl {
-                  span: DUMMY_SP,
-                  kind: VarDeclKind::Var,
-                  declare: false,
-                  decls: vec![VarDeclarator {
-                    span: DUMMY_SP,
-                    name: Pat::Ident(BindingIdent {
-                      id: prop_ident.clone(),
-                      type_ann: Some(Box::new(TsTypeAnn {
-                        span: DUMMY_SP,
-                        type_ann: Box::new(type_ann),
-                      })),
-                    }),
-                    init: None,
-                    definite: false,
-                  }],
-                },
-              )))));
-            }
-          } else {
+          let is_init_leavable = self.maybe_transform_expr_if_leavable(
+            &mut n.right,
+            Some(mem_expr.range()),
+          )?;
+          if !is_init_leavable {
             self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-              range: self.source_range_to_range(n.right.range()),
+              range: self.source_range_to_range(mem_expr.range()),
             })?;
+          } else {
+            let items = self
+              .public_inferred_namespaces
+              .get_mut(&obj_ident.sym)
+              .unwrap();
+            items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(
+              VarDecl {
+                span: DUMMY_SP,
+                kind: VarDeclKind::Var,
+                declare: false,
+                decls: vec![VarDeclarator {
+                  span: DUMMY_SP,
+                  name: Pat::Ident(BindingIdent {
+                    id: prop_ident.clone(),
+                    type_ann: None,
+                  }),
+                  init: Some(n.right.clone()),
+                  definite: false,
+                }],
+              },
+            )))));
           }
           Ok(false)
         }

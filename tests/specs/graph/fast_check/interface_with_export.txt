@@ -81,42 +81,44 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export function it(): void {}
   export namespace it {
-    var skip: (really: boolean) => void;
-    var ignore: (really: boolean) => void;
-    var restArrFn: (_arg1: any[]) => void;
-    var arrayArrFn: (_arg1: [1, 2]) => void;
-    var asyncArrFn: () => Promise<void>;
-    var objArrFn: (_arg1: {
+    var skip = (really: boolean): void =>{};
+    var ignore = function(really: boolean): void {};
+    var restArrFn = (...really: any[]): void =>{};
+    var arrayArrFn = ([]: [1, 2]): void =>{};
+    var asyncArrFn = (): Promise<void> =>({} as never);
+    var objArrFn = ({}: {
       a: number;
       b: number;
-    }) => void;
-    var restFn: (_arg1: any[]) => void;
-    var arrayFn: (_arg1: [1, 2]) => void;
-    var asyncFn: () => Promise<void>;
-    var objFn: (_arg1: {
+    }): void =>{};
+    var restFn = function(...really: any[]): void {};
+    var arrayFn = function([]: [1, 2]): void {};
+    var asyncFn = function(): Promise<void> {
+      return {} as never;
+    };
+    var objFn = function({}: {
       a: number;
       b: number;
-    }) => void;
-    var num: number;
-    var str: string;
-    var bool: boolean;
+    }): void {};
+    var num = 2;
+    var str = "a";
+    var bool = true;
   }
   --- DTS ---
   export declare function it(): void;
   export declare namespace it {
     var skip: (really: boolean) => void;
     var ignore: (really: boolean) => void;
-    var restArrFn: (_arg1: any[]) => void;
-    var arrayArrFn: (_arg1: [1, 2]) => void;
+    var restArrFn: (...really: any[]) => void;
+    var arrayArrFn: ([]: [1, 2]) => void;
     var asyncArrFn: () => Promise<void>;
-    var objArrFn: (_arg1: {
+    var objArrFn: ({}: {
       a: number;
       b: number;
     }) => void;
-    var restFn: (_arg1: any[]) => void;
-    var arrayFn: (_arg1: [1, 2]) => void;
+    var restFn: (...really: any[]) => void;
+    var arrayFn: ([]: [1, 2]) => void;
     var asyncFn: () => Promise<void>;
-    var objFn: (_arg1: {
+    var objFn: ({}: {
       a: number;
       b: number;
     }) => void;

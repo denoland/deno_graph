@@ -70,11 +70,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export namespace nested {
     export function other(): void {}
     export namespace other {
-      var func: () => void;
+      var func = (): void =>{};
     }
   }
   export namespace test {
-    var skip: () => void;
+    var skip = (): void =>{};
   }
   --- DTS ---
   export declare function test(): void;
