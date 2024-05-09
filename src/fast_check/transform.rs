@@ -9,7 +9,6 @@ use std::sync::Arc;
 
 use deno_ast::emit;
 use deno_ast::swc::ast::*;
-use deno_ast::swc::atoms::Atom;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::common::comments::SingleThreadedComments;
 use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
@@ -24,6 +23,7 @@ use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use indexmap::IndexMap;
 
+use crate::symbols::EsModuleInfo;
 use crate::symbols::ExpandoPropertyRef;
 use crate::ModuleGraph;
 use crate::ModuleInfo;
@@ -105,22 +105,22 @@ pub struct TransformOptions<'a> {
 
 pub fn transform(
   graph: &ModuleGraph,
-  specifier: &ModuleSpecifier,
+  es_module_info: &EsModuleInfo,
   public_ranges: &ModulePublicRanges,
-  parsed_source: &ParsedSource,
   options: &TransformOptions,
 ) -> Result<FastCheckModule, Vec<FastCheckDiagnostic>> {
   let mut transformer = FastCheckTransformer::new(
     graph,
-    specifier,
+    es_module_info,
     public_ranges,
-    parsed_source,
     options.should_error_on_first_diagnostic,
   );
   let (module, comments) = transformer.transform()?;
   if !transformer.diagnostics.is_empty() {
     return Err(transformer.diagnostics);
   }
+  let parsed_source = es_module_info.source();
+  let specifier = es_module_info.specifier();
   let module_info = ParserModuleAnalyzer::module_info_from_swc(
     parsed_source.media_type(),
     &module,
@@ -187,26 +187,27 @@ pub fn transform(
 struct FastCheckTransformer<'a> {
   graph: &'a ModuleGraph,
   specifier: &'a ModuleSpecifier,
+  es_module_info: &'a EsModuleInfo,
   public_ranges: &'a ModulePublicRanges,
   parsed_source: &'a ParsedSource,
   should_error_on_first_diagnostic: bool,
   diagnostics: Vec<FastCheckDiagnostic>,
-  expando_namespaces: IndexMap<Atom, Vec<ModuleItem>>,
+  expando_namespaces: IndexMap<Id, Vec<ModuleItem>>,
 }
 
 impl<'a> FastCheckTransformer<'a> {
   pub fn new(
     graph: &'a ModuleGraph,
-    specifier: &'a ModuleSpecifier,
+    es_module_info: &'a EsModuleInfo,
     public_ranges: &'a ModulePublicRanges,
-    parsed_source: &'a ParsedSource,
     should_error_on_first_diagnostic: bool,
   ) -> Self {
     Self {
       graph,
-      specifier,
+      specifier: es_module_info.specifier(),
+      es_module_info,
       public_ranges,
-      parsed_source,
+      parsed_source: es_module_info.source(),
       should_error_on_first_diagnostic,
       diagnostics: Default::default(),
       expando_namespaces: Default::default(),
@@ -251,22 +252,35 @@ impl<'a> FastCheckTransformer<'a> {
 
     // Add accumulated namespaces
     final_body.reserve(self.expando_namespaces.len());
-    for (key, value) in self.expando_namespaces.drain(..) {
-      final_body.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
-        ExportDecl {
+    for (swc_id, value) in self.expando_namespaces.drain(..) {
+      // typescript requires the export keyword to match the other
+      // declarations so only add an export keyword if the other
+      // decls have one and also we don't want to export something
+      // that's not exported
+      let symbol = self.es_module_info.symbol_from_swc(&swc_id).unwrap();
+      let has_export_keyword = symbol.decls().iter().any(|d| {
+        d.maybe_node()
+          .map(|n| n.has_export_keyword())
+          .unwrap_or(false)
+      });
+      let module_decl = Decl::TsModule(Box::new(TsModuleDecl {
+        span: DUMMY_SP,
+        declare: false,
+        global: false,
+        id: TsModuleName::Ident(Ident::new(swc_id.0, DUMMY_SP)),
+        body: Some(TsNamespaceBody::TsModuleBlock(TsModuleBlock {
           span: DUMMY_SP,
-          decl: Decl::TsModule(Box::new(TsModuleDecl {
-            span: DUMMY_SP,
-            declare: false,
-            global: false,
-            id: TsModuleName::Ident(Ident::new(key, DUMMY_SP)),
-            body: Some(TsNamespaceBody::TsModuleBlock(TsModuleBlock {
-              span: DUMMY_SP,
-              body: value,
-            })),
-          })),
-        },
-      )));
+          body: value,
+        })),
+      }));
+      final_body.push(if has_export_keyword {
+        ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(ExportDecl {
+          span: DUMMY_SP,
+          decl: module_decl,
+        }))
+      } else {
+        ModuleItem::Stmt(Stmt::Decl(module_decl))
+      });
     }
 
     self.expando_namespaces = parent_expando_namespaces;
@@ -1499,7 +1513,7 @@ impl<'a> FastCheckTransformer<'a> {
     } else {
       let items = self
         .expando_namespaces
-        .entry(expando_prop.obj_ident().sym.clone())
+        .entry(expando_prop.obj_ident().to_id())
         .or_default();
       items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(ExportDecl {
         span: DUMMY_SP,

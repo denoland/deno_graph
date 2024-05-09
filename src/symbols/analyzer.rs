@@ -798,7 +798,7 @@ impl<'a> SymbolNodeRef<'a> {
   pub fn is_var(&self) -> bool {
     matches!(
       self,
-      Self::Var(_, _, _) | Self::ExportDecl(_, ExportDeclRef::Var(_, _, _))
+      Self::Var(..) | Self::ExportDecl(_, ExportDeclRef::Var(..))
     )
   }
 
@@ -851,6 +851,36 @@ impl<'a> SymbolNodeRef<'a> {
   /// If the node is a declaration that can be found in a module.
   pub fn is_module(&self) -> bool {
     matches!(self, SymbolNodeRef::Module(_))
+  }
+
+  pub fn has_export_keyword(&self) -> bool {
+    match self {
+      SymbolNodeRef::ExportDecl(..)
+      | SymbolNodeRef::ExportDefaultDecl(_)
+      | SymbolNodeRef::ExportDefaultExpr(_) => true,
+      SymbolNodeRef::Module(_)
+      | SymbolNodeRef::ClassDecl(_)
+      | SymbolNodeRef::FnDecl(_)
+      | SymbolNodeRef::TsEnum(_)
+      | SymbolNodeRef::TsInterface(_)
+      | SymbolNodeRef::TsNamespace(_)
+      | SymbolNodeRef::TsTypeAlias(_)
+      | SymbolNodeRef::Var(..)
+      | SymbolNodeRef::UsingVar(..)
+      | SymbolNodeRef::AutoAccessor(_)
+      | SymbolNodeRef::ClassMethod(_)
+      | SymbolNodeRef::ClassProp(_)
+      | SymbolNodeRef::ClassParamProp(_)
+      | SymbolNodeRef::Constructor(_)
+      | SymbolNodeRef::ExpandoProperty(_)
+      | SymbolNodeRef::TsIndexSignature(_)
+      | SymbolNodeRef::TsCallSignatureDecl(_)
+      | SymbolNodeRef::TsConstructSignatureDecl(_)
+      | SymbolNodeRef::TsPropertySignature(_)
+      | SymbolNodeRef::TsGetterSignature(_)
+      | SymbolNodeRef::TsSetterSignature(_)
+      | SymbolNodeRef::TsMethodSignature(_) => false,
+    }
   }
 
   /// If the node is a declaration that can be found in a module.
@@ -2842,7 +2872,7 @@ impl<'a> SymbolFiller<'a> {
       ),
       SymbolNodeRef::Module(_)
       | SymbolNodeRef::ClassDecl(_)
-      | SymbolNodeRef::ExportDecl(_, _)
+      | SymbolNodeRef::ExportDecl(..)
       | SymbolNodeRef::ExportDefaultDecl(_)
       | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::FnDecl(_)
@@ -2850,8 +2880,8 @@ impl<'a> SymbolFiller<'a> {
       | SymbolNodeRef::TsInterface(_)
       | SymbolNodeRef::TsNamespace(_)
       | SymbolNodeRef::TsTypeAlias(_)
-      | SymbolNodeRef::Var(_, _, _)
-      | SymbolNodeRef::UsingVar(_, _, _) => unreachable!(),
+      | SymbolNodeRef::Var(..)
+      | SymbolNodeRef::UsingVar(..) => unreachable!(),
     };
 
     let decl = SymbolDecl::new(

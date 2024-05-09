@@ -1,0 +1,216 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+function test() {
+}
+
+test.skip = () => {};
+
+namespace test {
+  export class Other {}
+}
+
+export { test };
+export { b } from "./b.ts";
+export { c } from "./c.ts";
+
+# https://jsr.io/@scope/a/1.0.0/b.ts
+function b() {
+}
+
+b.skip = () => {};
+
+export { b };
+
+# https://jsr.io/@scope/a/1.0.0/c.ts
+export function c(value: typeof NotExported) {
+}
+
+function NotExported() {
+}
+NotExported.skip = true;
+
+export { b };
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 52,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 117,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/c.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./b.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts",
+            "span": {
+              "start": {
+                "line": 10,
+                "character": 18
+              },
+              "end": {
+                "line": 10,
+                "character": 26
+              }
+            }
+          }
+        },
+        {
+          "specifier": "./c.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/c.ts",
+            "span": {
+              "start": {
+                "line": 11,
+                "character": 18
+              },
+              "end": {
+                "line": 11,
+                "character": 26
+              }
+            }
+          }
+        }
+      ],
+      "size": 161,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/b.ts:
+  {}
+  function b(): void {}
+  export { b };
+  namespace b {
+    export var skip = (): void =>{};
+  }
+  --- DTS ---
+  declare function b(): void;
+  export { b };
+  declare namespace b {
+    export var skip: () => void;
+  }
+
+Fast check https://jsr.io/@scope/a/1.0.0/c.ts:
+  {}
+  export function c(value: typeof NotExported): void {}
+  function NotExported(): void {}
+  namespace NotExported {
+    export var skip = true;
+  }
+  --- DTS ---
+  export declare function c(value: typeof NotExported): void;
+  declare function NotExported(): void;
+  declare namespace NotExported {
+    export var skip: boolean;
+  }
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {
+    "./b.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts",
+        "span": {
+          "start": {
+            "line": 10,
+            "character": 18
+          },
+          "end": {
+            "line": 10,
+            "character": 26
+          }
+        }
+      }
+    },
+    "./c.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/c.ts",
+        "span": {
+          "start": {
+            "line": 11,
+            "character": 18
+          },
+          "end": {
+            "line": 11,
+            "character": 26
+          }
+        }
+      }
+    }
+  }
+  function test(): void {}
+  namespace test {
+    export class Other {
+    }
+  }
+  export { test };
+  export { b } from "./b.ts";
+  export { c } from "./c.ts";
+  namespace test {
+    export var skip = (): void =>{};
+  }
+  --- DTS ---
+  declare function test(): void;
+  declare namespace test {
+    export class Other {
+    }
+  }
+  export { test };
+  export { b } from "./b.ts";
+  export { c } from "./c.ts";
+  declare namespace test {
+    export var skip: () => void;
+  }
