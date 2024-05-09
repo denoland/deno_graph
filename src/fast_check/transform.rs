@@ -10,6 +10,7 @@ use std::sync::Arc;
 
 use deno_ast::emit;
 use deno_ast::swc::ast::*;
+use deno_ast::swc::atoms::Atom;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::common::comments::SingleThreadedComments;
 use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
@@ -189,7 +190,7 @@ struct FastCheckTransformer<'a> {
   parsed_source: &'a ParsedSource,
   should_error_on_first_diagnostic: bool,
   diagnostics: Vec<FastCheckDiagnostic>,
-  public_inferred_namespaces: HashMap<String, Vec<ModuleItem>>,
+  public_inferred_namespaces: HashMap<Atom, Vec<ModuleItem>>,
 }
 
 impl<'a> FastCheckTransformer<'a> {
@@ -515,7 +516,7 @@ impl<'a> FastCheckTransformer<'a> {
 
         self
           .public_inferred_namespaces
-          .insert(n.ident.sym.to_string(), vec![]);
+          .insert(n.ident.sym.clone(), vec![]);
 
         let is_overload =
           self.public_ranges.is_impl_with_overloads(&public_range);
@@ -1500,7 +1501,7 @@ impl<'a> FastCheckTransformer<'a> {
                   self.maybe_infer_type_from_expr(&n.right, false)?;
                 if let Some(type_ann) = maybe_type_ann {
                   if let Some(items) =
-                    self.public_inferred_namespaces.get_mut(&public_ident)
+                    self.public_inferred_namespaces.get_mut(public_ident)
                   {
                     items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(
                       Box::new(VarDecl {
@@ -1573,15 +1574,15 @@ impl<'a> FastCheckTransformer<'a> {
     }
   }
 
-  fn maybe_public_member(&mut self, expr: &MemberExpr) -> Option<String> {
+  fn maybe_public_member<'expr>(
+    &self,
+    expr: &'expr MemberExpr,
+  ) -> Option<&'expr Atom> {
     match &*expr.obj {
       Expr::Member(mem) => self.maybe_public_member(mem),
       Expr::Ident(ident) => {
-        if self
-          .public_inferred_namespaces
-          .contains_key(ident.sym.as_str())
-        {
-          Some(ident.sym.to_string())
+        if self.public_inferred_namespaces.contains_key(&ident.sym) {
+          Some(&ident.sym)
         } else {
           None
         }
