@@ -238,7 +238,7 @@ impl<'a> FastCheckTransformer<'a> {
   ) -> Result<Vec<ModuleItem>, Vec<FastCheckDiagnostic>> {
     let parent_public_inferred_namespaces =
       std::mem::take(&mut self.public_inferred_namespaces);
-    let mut final_body = vec![];
+    let mut final_body = Vec::with_capacity(body.len());
     for mut item in body {
       let retain = self.transform_item(&mut item, comments, is_ambient)?;
       if retain {
@@ -249,6 +249,7 @@ impl<'a> FastCheckTransformer<'a> {
     }
 
     // Add accumulated namespaces
+    final_body.reserve(self.public_inferred_namespaces.len());
     for (key, value) in self.public_inferred_namespaces.drain() {
       if value.is_empty() {
         continue;
