@@ -63,13 +63,15 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export function test(): void {}
+  class NonExported {
+  }
   export namespace test {
     var skip = (nonExported: NonExported): void =>{};
   }
-  class NonExported {}
   --- DTS ---
   export declare function test(): void;
+  declare class NonExported {
+  }
   export declare namespace test {
     var skip: (nonExported: NonExported) => void;
   }
-  class NonExported {}

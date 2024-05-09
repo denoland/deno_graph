@@ -24,6 +24,7 @@ use deno_ast::SourceMap;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 
+use crate::symbols::ExpandoPropertyRef;
 use crate::ModuleGraph;
 use crate::ModuleInfo;
 use crate::ParserModuleAnalyzer;
@@ -518,10 +519,6 @@ impl<'a> FastCheckTransformer<'a> {
         if !self.public_ranges.contains(&public_range) {
           return Ok(false);
         }
-
-        self
-          .public_inferred_namespaces
-          .insert(n.ident.sym.clone(), vec![]);
 
         let is_overload =
           self.public_ranges.is_impl_with_overloads(&public_range);
@@ -1486,73 +1483,45 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     n: &mut AssignExpr,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
-    if n.op != AssignOp::Assign {
+    if !self.public_ranges.contains(&n.range()) {
       return Ok(false);
     }
 
-    match &n.left {
-      AssignTarget::Simple(simple) => match simple {
-        SimpleAssignTarget::Member(mem_expr) => {
-          // only support obj.prop for now
-          let (obj_ident, prop_ident) = match &mem_expr.prop {
-            MemberProp::Ident(prop_ident) => match &*mem_expr.obj {
-              Expr::Ident(obj_ident)
-                if self
-                  .public_inferred_namespaces
-                  .contains_key(&obj_ident.sym) =>
-              {
-                (obj_ident, prop_ident)
-              }
-              _ => return Ok(false),
-            },
-            _ => return Ok(false),
-          };
-
-          let is_init_leavable = self.maybe_transform_expr_if_leavable(
-            &mut n.right,
-            Some(mem_expr.range()),
-          )?;
-          if !is_init_leavable {
-            self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-              range: self.source_range_to_range(mem_expr.range()),
-            })?;
-          } else {
-            let items = self
-              .public_inferred_namespaces
-              .get_mut(&obj_ident.sym)
-              .unwrap();
-            items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(
-              VarDecl {
-                span: DUMMY_SP,
-                kind: VarDeclKind::Var,
-                declare: false,
-                decls: vec![VarDeclarator {
-                  span: DUMMY_SP,
-                  name: Pat::Ident(BindingIdent {
-                    id: prop_ident.clone(),
-                    type_ann: None,
-                  }),
-                  init: Some(n.right.clone()),
-                  definite: false,
-                }],
-              },
-            )))));
-          }
-          Ok(false)
-        }
-        SimpleAssignTarget::Ident(_)
-        | SimpleAssignTarget::SuperProp(_)
-        | SimpleAssignTarget::Paren(_)
-        | SimpleAssignTarget::OptChain(_)
-        | SimpleAssignTarget::TsAs(_)
-        | SimpleAssignTarget::TsSatisfies(_)
-        | SimpleAssignTarget::TsNonNull(_)
-        | SimpleAssignTarget::TsTypeAssertion(_)
-        | SimpleAssignTarget::TsInstantiation(_)
-        | SimpleAssignTarget::Invalid(_) => Ok(false),
-      },
-      AssignTarget::Pat(_) => Ok(false),
+    // it will be an expando property at this point, but we still need n.right
+    // to be mutable, so transform before getting the expando property
+    let right_range = n.right.range();
+    let is_init_leavable =
+      self.maybe_transform_expr_if_leavable(&mut n.right, Some(right_range))?;
+    let Some(expando_prop) = ExpandoPropertyRef::maybe_new(n) else {
+      return Ok(false);
+    };
+    let mem_expr = expando_prop.member_expr();
+    if !is_init_leavable {
+      self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+        range: self.source_range_to_range(mem_expr.range()),
+      })?;
+    } else {
+      let items = self
+        .public_inferred_namespaces
+        .entry(expando_prop.obj_ident().sym.clone())
+        .or_default();
+      items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(VarDecl {
+        span: DUMMY_SP,
+        kind: VarDeclKind::Var,
+        declare: false,
+        decls: vec![VarDeclarator {
+          span: DUMMY_SP,
+          name: Pat::Ident(BindingIdent {
+            // this property name is guaranteed to be a valid identifier
+            id: Ident::new(expando_prop.prop_name().clone(), DUMMY_SP),
+            type_ann: None,
+          }),
+          init: Some(n.right.clone()),
+          definite: false,
+        }],
+      })))));
     }
+    Ok(false)
   }
 
   fn mark_diagnostic(
