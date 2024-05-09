@@ -1,6 +1,8 @@
 # mod.ts
 function myFunc() {}
 
+myFunc["str"] = true;
+myFunc["invalid-name"] = "not expando";
 myFunc.skip = () => {};
 myFunc.prop = "";
 
@@ -26,11 +28,11 @@ file:///mod.ts: EsModuleInfo {
         (
             "myNamespace",
             #2,
-        ): 4,
+        ): 5,
         (
             "myClass",
             #2,
-        ): 5,
+        ): 6,
     },
     symbols: {
         0: Symbol {
@@ -43,7 +45,7 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "function myFunc() {}\n\nmyFunc.skip = () => {};\nmyFunc.prop = \"\";\n\nexport namespace myNamespace {}\nmyNamespace.value = \"\"; // not expando\nexport class myClass {}\nmyClass.value = \"\"; // not expando\n\nexport { myFunc };",
+                            "function myFunc() {}\n\nmyFunc[\"str\"] = true;\nmyFunc[\"invalid-name\"] = \"not expando\";\nmyFunc.skip = () => {};\nmyFunc.prop = \"\";\n\nexport namespace myNamespace {}\nmyNamespace.value = \"\"; // not expando\nexport class myClass {}\nmyClass.value = \"\"; // not expando\n\nexport { myFunc };",
                         ),
                     ),
                     range: SourceRange {
@@ -51,7 +53,7 @@ file:///mod.ts: EsModuleInfo {
                             0,
                         ),
                         end: SourcePos(
-                            214,
+                            276,
                         ),
                     },
                     flags: 0,
@@ -59,13 +61,13 @@ file:///mod.ts: EsModuleInfo {
             ],
             child_ids: {
                 1,
-                4,
                 5,
+                6,
             },
             exports: {
-                "myNamespace": 4,
-                "myClass": 5,
-                "myFunc": 6,
+                "myNamespace": 5,
+                "myClass": 6,
+                "myFunc": 7,
             },
             members: {},
         },
@@ -98,10 +100,12 @@ file:///mod.ts: EsModuleInfo {
             child_ids: {
                 2,
                 3,
+                4,
             },
             exports: {
-                "skip": 2,
-                "prop": 3,
+                "str": 2,
+                "skip": 3,
+                "prop": 4,
             },
             members: {},
         },
@@ -117,7 +121,7 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "myFunc.skip = () => {}",
+                            "myFunc[\"str\"] = true",
                         ),
                     ),
                     range: SourceRange {
@@ -125,7 +129,7 @@ file:///mod.ts: EsModuleInfo {
                             22,
                         ),
                         end: SourcePos(
-                            44,
+                            42,
                         ),
                     },
                     flags: 0,
@@ -147,15 +151,15 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "myFunc.prop = \"\"",
+                            "myFunc.skip = () => {}",
                         ),
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            46,
+                            84,
                         ),
                         end: SourcePos(
-                            62,
+                            106,
                         ),
                     },
                     flags: 0,
@@ -171,21 +175,21 @@ file:///mod.ts: EsModuleInfo {
             ),
             symbol_id: 4,
             parent_id: Some(
-                0,
+                1,
             ),
             decls: [
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export namespace myNamespace {}",
+                            "myFunc.prop = \"\"",
                         ),
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            65,
+                            108,
                         ),
                         end: SourcePos(
-                            96,
+                            124,
                         ),
                     },
                     flags: 0,
@@ -207,15 +211,15 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class myClass {}",
+                            "export namespace myNamespace {}",
                         ),
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            136,
+                            127,
                         ),
                         end: SourcePos(
-                            159,
+                            158,
                         ),
                     },
                     flags: 0,
@@ -235,6 +239,36 @@ file:///mod.ts: EsModuleInfo {
             ),
             decls: [
                 SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "export class myClass {}",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            198,
+                        ),
+                        end: SourcePos(
+                            221,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        7: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 7,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
                     kind: Target(
                         (
                             "myFunc",
@@ -243,10 +277,10 @@ file:///mod.ts: EsModuleInfo {
                     ),
                     range: SourceRange {
                         start: SourcePos(
-                            205,
+                            267,
                         ),
                         end: SourcePos(
-                            211,
+                            273,
                         ),
                     },
                     flags: 0,
@@ -259,9 +293,9 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == export definitions ==
-[myNamespace]: file:///mod.ts:65..96
+[myNamespace]: file:///mod.ts:127..158
   export namespace myNamespace {}
-[myClass]: file:///mod.ts:136..159
+[myClass]: file:///mod.ts:198..221
   export class myClass {}
 [myFunc]: file:///mod.ts:0..20
   function myFunc() {}
