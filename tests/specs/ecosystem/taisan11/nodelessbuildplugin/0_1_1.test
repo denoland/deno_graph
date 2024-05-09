@@ -1,0 +1,17 @@
+taisan11/nodelessbuildplugin/0.1.1
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /nodelessBuildPlugin.ts:4:14
+  | 
+4 | export const nodelessPlugin = {
+  |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

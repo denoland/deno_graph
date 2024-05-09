@@ -1,0 +1,126 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{
+  "exports": {
+    ".": "./mod.ts"
+  }
+}
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+import { Test as Other } from "jsr:@scope/b";
+export class Test {}
+
+# https://jsr.io/@scope/b/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/b/1.0.0_meta.json
+{
+  "exports": {
+    ".": "./mod.ts"
+  }
+}
+
+# https://jsr.io/@scope/b/1.0.0/mod.ts
+export class Test {}
+
+# mod.ts
+import { Test } from "https://jsr.io/@scope/a/1.0.0/mod.ts";
+console.log(Test);
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 21
+              },
+              "end": {
+                "line": 0,
+                "character": 59
+              }
+            }
+          },
+          "type": {
+            "error": "Importing JSR packages via HTTPS specifiers for type checking is not supported for performance reasons. If you would like types, import via a `jsr:` specifier instead or else use a non-statically analyzable dynamic import.\n  Importing: https://jsr.io/@scope/a/1.0.0/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 21
+              },
+              "end": {
+                "line": 0,
+                "character": 59
+              }
+            }
+          }
+        }
+      ],
+      "size": 80,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/b",
+          "code": {
+            "specifier": "jsr:@scope/b",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 30
+              },
+              "end": {
+                "line": 0,
+                "character": 44
+              }
+            }
+          }
+        }
+      ],
+      "size": 67,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 21,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/b/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/b": "https://jsr.io/@scope/b/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/b": "@scope/b@1.0.0"
+  }
+}
+
+jsr deps: {
+    "@scope/a@1.0.0": [
+        "jsr:@scope/b",
+    ],
+}
+
+Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
+  {}
+  export class Test {
+  }
+  --- DTS ---
+  export declare class Test {
+  }

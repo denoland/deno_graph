@@ -5,8 +5,6 @@
 // out of deno_graph that should be public
 
 use std::cell::RefCell;
-use std::collections::BTreeMap;
-use std::path::PathBuf;
 use std::rc::Rc;
 
 use anyhow::anyhow;
@@ -18,10 +16,8 @@ use deno_graph::source::LoadResponse;
 use deno_graph::source::MemoryFileSystem;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
-use deno_graph::source::Source;
 use deno_graph::source::UnknownBuiltInNodeModuleError;
 use deno_graph::BuildOptions;
-use deno_graph::FastCheckCacheModuleItem;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 use deno_graph::NpmPackageReqResolution;
@@ -33,245 +29,9 @@ use futures::future::LocalBoxFuture;
 use pretty_assertions::assert_eq;
 use url::Url;
 
-use crate::helpers::get_specs_in_dir;
 use crate::helpers::TestBuilder;
 
 mod helpers;
-
-#[tokio::test]
-async fn test_graph_specs() {
-  for (test_file_path, spec) in
-    get_specs_in_dir(&PathBuf::from("./tests/specs/graph"))
-  {
-    eprintln!("Running {}", test_file_path.display());
-    let mut builder = TestBuilder::new();
-    builder.with_loader(|loader| {
-      for file in &spec.files {
-        let source = Source::Module {
-          specifier: file.url().to_string(),
-          maybe_headers: Some(file.headers.clone().into_iter().collect()),
-          content: file.text.clone(),
-        };
-        if file.is_cache() {
-          loader.cache.add_source(file.url(), source);
-        } else {
-          loader.remote.add_source(file.url(), source);
-        }
-      }
-    });
-    builder.workspace_members(spec.workspace_members.clone());
-    builder.lockfile_jsr_packages(spec.lockfile_jsr_packages.clone());
-
-    if let Some(options) = &spec.options {
-      builder.workspace_fast_check(options.workspace_fast_check);
-      builder.fast_check_cache(options.fast_check_cache);
-    }
-
-    let result = builder.build().await;
-    let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
-    output_text.push('\n');
-    // include the list of jsr dependencies
-    let jsr_deps = result
-      .graph
-      .packages
-      .packages_with_checksum_and_deps()
-      .map(|(k, _checksum, deps)| {
-        (k.to_string(), {
-          let mut deps = deps.map(|d| d.to_string()).collect::<Vec<_>>();
-          deps.sort();
-          deps
-        })
-      })
-      .filter(|(_, v)| !v.is_empty())
-      .collect::<BTreeMap<_, _>>();
-    if !jsr_deps.is_empty() {
-      output_text.push_str("\njsr deps: ");
-      output_text.push_str(&format!("{:#?}", jsr_deps));
-      output_text.push('\n');
-    }
-    // now the fast check modules
-    let fast_check_modules = result.graph.modules().filter_map(|module| {
-      let module = module.js()?;
-      let fast_check = module.fast_check.as_ref()?;
-      Some((module, fast_check))
-    });
-    for (module, fast_check) in fast_check_modules {
-      output_text.push_str(&format!("\nFast check {}:\n", module.specifier));
-      match fast_check {
-        deno_graph::FastCheckTypeModuleSlot::Module(fast_check) => {
-          output_text.push_str(&format!(
-            "{}\n{}",
-            indent(
-              &serde_json::to_string_pretty(&fast_check.dependencies).unwrap()
-            ),
-            if fast_check.source.is_empty() {
-              "  <empty>".to_string()
-            } else {
-              indent(&fast_check.source)
-            },
-          ));
-
-          if let Some(dts) = &fast_check.dts {
-            if !dts.text.is_empty() {
-              output_text.push_str(&indent("--- DTS ---\n"));
-              output_text.push_str(&indent(&dts.text));
-            }
-            if !dts.diagnostics.is_empty() {
-              output_text.push_str(&indent("--- DTS Diagnostics ---\n"));
-              let message = dts
-                .diagnostics
-                .iter()
-                .map(|d| match d.range() {
-                  Some(range) => {
-                    format!(
-                      "{}\n    at {}@{}",
-                      d, range.specifier, range.range.start
-                    )
-                  }
-                  None => format!("{}\n    at {}", d, d.specifier()),
-                })
-                .collect::<Vec<_>>()
-                .join("\n");
-              output_text.push_str(&indent(&message));
-            }
-          }
-        }
-        deno_graph::FastCheckTypeModuleSlot::Error(diagnostics) => {
-          let message = diagnostics
-            .iter()
-            .map(|d| match d.range() {
-              Some(range) => {
-                format!(
-                  "{}\n    at {}@{}",
-                  d, range.specifier, range.range.start
-                )
-              }
-              None => format!("{}\n    at {}", d, d.specifier()),
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
-          output_text.push_str(&indent(&message));
-        }
-      }
-    }
-    if let Some(fast_check_cache) = result.fast_check_cache.as_ref() {
-      output_text.push_str("\n== fast check cache ==\n");
-      for (key, item) in fast_check_cache.inner.borrow().iter() {
-        output_text.push_str(&format!(
-          "{:?}:\n    Deps - {}\n    Modules: {}\n",
-          key,
-          serde_json::to_string(&item.dependencies).unwrap(),
-          serde_json::to_string(
-            &item
-              .modules
-              .iter()
-              .map(|(url, module_item)| (
-                url.as_str(),
-                match module_item {
-                  FastCheckCacheModuleItem::Info(_) => "info",
-                  FastCheckCacheModuleItem::Diagnostic(_) => "diagnostic",
-                }
-              ))
-              .collect::<Vec<_>>()
-          )
-          .unwrap()
-        ));
-      }
-    }
-    if !output_text.ends_with('\n') {
-      output_text.push('\n');
-    }
-    let diagnostics = result
-      .diagnostics
-      .iter()
-      .map(|d| serde_json::to_value(d.to_string()).unwrap())
-      .collect::<Vec<_>>();
-    let update =
-      std::env::var("UPDATE").as_ref().map(|v| v.as_str()) == Ok("1");
-    let spec = if update {
-      let mut spec = spec;
-      spec.output_file.text = output_text.clone();
-      spec.diagnostics = diagnostics.clone();
-      std::fs::write(&test_file_path, spec.emit()).unwrap();
-      spec
-    } else {
-      spec
-    };
-    assert_eq!(
-      output_text,
-      spec.output_file.text,
-      "Should be same for {}",
-      test_file_path.display()
-    );
-    assert_eq!(
-      diagnostics,
-      spec.diagnostics,
-      "Should be same for {}",
-      test_file_path.display()
-    );
-  }
-}
-
-fn indent(text: &str) -> String {
-  text
-    .split('\n')
-    .map(|l| format!("  {}", l).trim_end().to_string())
-    .collect::<Vec<_>>()
-    .join("\n")
-}
-
-#[cfg(feature = "symbols")]
-#[tokio::test]
-async fn test_symbols_specs() {
-  for (test_file_path, spec) in
-    get_specs_in_dir(&PathBuf::from("./tests/specs/symbols"))
-  {
-    eprintln!("Running {}", test_file_path.display());
-    let mut builder = TestBuilder::new();
-
-    if spec.files.iter().any(|f| f.specifier == "mod.js") {
-      // this is for the TypesEntrypoint test
-      builder.entry_point("file:///mod.js");
-      builder.entry_point_types("file:///mod.d.ts");
-    }
-
-    if let Some(options) = &spec.options {
-      builder.workspace_fast_check(options.workspace_fast_check);
-    }
-
-    builder.with_loader(|loader| {
-      for file in &spec.files {
-        let source = Source::Module {
-          specifier: file.url().to_string(),
-          maybe_headers: Some(file.headers.clone().into_iter().collect()),
-          content: file.text.clone(),
-        };
-        if file.is_cache() {
-          loader.cache.add_source(file.url(), source);
-        } else {
-          loader.remote.add_source(file.url(), source);
-        }
-      }
-    });
-
-    let result = builder.symbols().await.unwrap();
-    let update_var = std::env::var("UPDATE");
-    let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
-      let mut spec = spec;
-      spec.output_file.text = result.output.clone();
-      std::fs::write(&test_file_path, spec.emit()).unwrap();
-      spec
-    } else {
-      spec
-    };
-    assert_eq!(
-      result.output,
-      spec.output_file.text,
-      "Should be same for {}",
-      test_file_path.display()
-    );
-  }
-}
 
 #[cfg(feature = "symbols")]
 #[tokio::test]
@@ -446,7 +206,7 @@ async fn test_npm_version_not_found_then_found() {
     graph
       .build(
         vec![root.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           npm_resolver: Some(&npm_resolver),
           ..Default::default()
@@ -475,7 +235,7 @@ async fn test_npm_version_not_found_then_found() {
     graph
       .build(
         vec![root.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           npm_resolver: Some(&npm_resolver),
           ..Default::default()
@@ -493,18 +253,19 @@ async fn test_npm_version_not_found_then_found() {
 async fn test_jsr_version_not_found_then_found() {
   #[derive(Default)]
   struct TestLoader {
-    requests: Vec<(String, CacheSetting)>,
+    requests: RefCell<Vec<(String, CacheSetting)>>,
   }
 
   impl deno_graph::source::Loader for TestLoader {
     fn load(
-      &mut self,
+      &self,
       specifier: &ModuleSpecifier,
       options: LoadOptions,
     ) -> LoadFuture {
       assert!(!options.is_dynamic);
       self
         .requests
+        .borrow_mut()
         .push((specifier.to_string(), options.cache_setting));
       let specifier = specifier.clone();
       match specifier.as_str() {
@@ -562,18 +323,18 @@ async fn test_jsr_version_not_found_then_found() {
     }
   }
 
-  let mut loader = TestLoader::default();
+  let loader = TestLoader::default();
   let mut graph = ModuleGraph::new(GraphKind::All);
   graph
     .build(
       vec![Url::parse("file:///main.ts").unwrap()],
-      &mut loader,
+      &loader,
       Default::default(),
     )
     .await;
   graph.valid().unwrap();
   assert_eq!(
-    loader.requests,
+    *loader.requests.borrow(),
     vec![
       ("file:///main.ts".to_string(), CacheSetting::Use),
       (
@@ -615,7 +376,7 @@ async fn test_dynamic_imports_with_template_arg() {
     graph
       .build(
         vec![Url::parse("file:///dev/main.ts").unwrap()],
-        &mut loader,
+        &loader,
         BuildOptions {
           file_system: &file_system,
           ..Default::default()

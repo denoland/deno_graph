@@ -1,0 +1,22 @@
+tui/nice/0.1.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@tui/strings@^0.0.5": "jsr:@tui/strings@0.0.5"
+    },
+    "jsr": {
+      "@tui/strings@0.0.5": {
+        "integrity": "064e0deae56c2857e4fd5eec385007a5342d60825c115b92ec25a9cc63464b1e"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

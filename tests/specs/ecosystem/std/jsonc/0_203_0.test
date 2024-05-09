@@ -1,0 +1,22 @@
+std/jsonc/0.203.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/json@^0.203.0": "jsr:@std/json@0.203.0"
+    },
+    "jsr": {
+      "@std/json@0.203.0": {
+        "integrity": "86065d093070eed73dc513f690d7a00c4591aa3c4a15e299c0cf6db5dfe34cf7"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

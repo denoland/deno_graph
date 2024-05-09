@@ -1,0 +1,31 @@
+bureaudouble-forks/embla-carousel-react/0.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:embla-carousel@^8.0.2": "npm:embla-carousel@8.0.2"
+    },
+    "npm": {
+      "embla-carousel@8.0.2": {
+        "integrity": "sha512-bogsDO8xosuh/l3PxIvA5AMl3+BnRVAse9sDW/60amzj4MbGS5re4WH5eVEXiuH8G1/3G7QUAX2QNr3Yx8z5rA==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+type EmblaViewportRefType = <ViewportElement extends HTMLElement>(instance: ViewportElement | null) => void;
+                                                     ~~~~~~~~~~~
+    at file://<tmpdir>/index.ts:2:54
+

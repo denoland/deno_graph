@@ -1,0 +1,12 @@
+zone-x/zone-x/0.11.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

@@ -1,0 +1,37 @@
+oriondean/finput/0.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLInputElement'.
+  constructor(element: HTMLInputElement, options: IOptions){}
+                       ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/finput.ts:8:24
+
+TS2304 [ERROR]: Cannot find name 'HTMLInputElement'.
+export default (element: HTMLInputElement, options: IOptions): Finput =>({} as never);
+                         ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/finput.ts:26:26
+
+TS2304 [ERROR]: Cannot find name 'KeyboardEvent'.
+  onInvalidKey: (event: KeyboardEvent) => void;
+                        ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:11:25
+
+TS2304 [ERROR]: Cannot find name 'FocusEvent'.
+  onFocus: (event: FocusEvent) => ISelection | void;
+                   ~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:12:20
+
+Found 4 errors.
+

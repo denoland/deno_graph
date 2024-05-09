@@ -1,0 +1,34 @@
+clappcodes/transporter/0.1.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@lukeed/fetch-event-stream@^0.1.5": "jsr:@lukeed/fetch-event-stream@0.1.5",
+      "jsr:@std/http@^0.221.0": "jsr:@std/http@0.221.0",
+      "jsr:@std/streams@^0.221.0": "jsr:@std/streams@0.221.0"
+    },
+    "jsr": {
+      "@lukeed/fetch-event-stream@0.1.5": {
+        "integrity": "50fe145b95e6ead49584c4f00dbb266c34a572e2ac97a924463f567887cd99ce",
+        "dependencies": [
+          "jsr:@std/http@^0.221.0",
+          "jsr:@std/streams@^0.221.0"
+        ]
+      },
+      "@std/http@0.221.0": {
+        "integrity": "35fdcfed1501f2052338bf7ffba5d66f1455f2fffc01e9d7cf13eed548fffbaa"
+      },
+      "@std/streams@0.221.0": {
+        "integrity": "47f2f74634b47449277c0ee79fe878da4424b66bd8975c032e3afdca88986e61"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

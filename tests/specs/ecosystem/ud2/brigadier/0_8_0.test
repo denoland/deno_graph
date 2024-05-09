@@ -1,0 +1,23 @@
+ud2/brigadier/0.8.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@esfx/ref@1.0.0": "npm:@esfx/ref@1.0.0"
+    },
+    "npm": {
+      "@esfx/ref@1.0.0": {
+        "integrity": "sha512-JW6E03t8K3AA0E9fmydNWJT+7QA5psTHW9RC0Fp+9R2SqnwVUusjhBIRGycU4v88qaLhSFqekYhecSvdFQyymQ==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

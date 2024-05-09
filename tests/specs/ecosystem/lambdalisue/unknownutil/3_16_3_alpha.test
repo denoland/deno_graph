@@ -1,0 +1,20 @@
+lambdalisue/unknownutil/3.16.3-alpha
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS1192 [ERROR]: Module '"file://<tmpdir>/is.ts"' has no default export.
+import is from "./is.ts";
+       ~~
+    at file://<tmpdir>/mod.ts:243:8
+

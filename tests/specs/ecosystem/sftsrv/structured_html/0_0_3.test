@@ -1,0 +1,43 @@
+sftsrv/structured-html/0.0.3
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2344 [ERROR]: Type 'string | number | symbol' does not satisfy the constraint 'string'.
+  Type 'number' is not assignable to type 'string'.
+type TagName = Uppercase<keyof HTMLElementTagNameMap>;
+                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:2:26
+
+TS2304 [ERROR]: Cannot find name 'HTMLElementTagNameMap'.
+type TagName = Uppercase<keyof HTMLElementTagNameMap>;
+                               ~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:2:32
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+  element: Element;
+           ~~~~~~~
+    at file://<tmpdir>/src/index.ts:5:12
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+ */ const transform = (el: Element): TransformResult =>({} as never);
+                           ~~~~~~~
+    at file://<tmpdir>/src/index.ts:15:28
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+ */ export const convertHtmlToStructuredContent = (html: Element): EditorContent =>({} as never);
+                                                         ~~~~~~~
+    at file://<tmpdir>/src/index.ts:26:58
+
+Found 5 errors.
+

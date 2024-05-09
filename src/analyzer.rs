@@ -9,76 +9,17 @@ use deno_ast::ModuleSpecifier;
 use deno_ast::ParseDiagnostic;
 use deno_ast::SourceRange;
 use deno_ast::SourceTextInfo;
-use once_cell::sync::Lazy;
 use regex::Match;
-use regex::Regex;
 use serde::ser::SerializeTuple;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
 
+use crate::ast::DENO_TYPES_RE;
 use crate::graph::Position;
 use crate::DefaultModuleAnalyzer;
 
-/// Matches the `@deno-types` pragma.
-static DENO_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
-  Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#).unwrap()
-});
-
-/// A `@deno-types` pragma.
-pub struct DenoTypesPragma {
-  pub specifier: String,
-  pub range: PositionRange,
-}
-
-/// Searches comments for any `@deno-types` compiler hints.
-pub fn analyze_deno_types(
-  leading_comments: &[Comment],
-) -> Option<DenoTypesPragma> {
-  fn comment_position_to_position_range(
-    mut comment_start: Position,
-    m: &Match,
-  ) -> PositionRange {
-    // the comment text starts after the double slash or slash star, so add 2
-    comment_start.character += 2;
-    PositionRange {
-      // This will always be on the same line.
-      // Does -1 and +1 to include the quotes
-      start: Position {
-        line: comment_start.line,
-        character: comment_start.character + m.start() - 1,
-      },
-      end: Position {
-        line: comment_start.line,
-        character: comment_start.character + m.end() + 1,
-      },
-    }
-  }
-
-  let comment = leading_comments.last()?;
-  let captures = DENO_TYPES_RE.captures(&comment.text)?;
-  if let Some(m) = captures.get(1) {
-    Some(DenoTypesPragma {
-      specifier: m.as_str().to_string(),
-      range: comment_position_to_position_range(
-        comment.range.start.clone(),
-        &m,
-      ),
-    })
-  } else if let Some(m) = captures.get(2) {
-    Some(DenoTypesPragma {
-      specifier: m.as_str().to_string(),
-      range: comment_position_to_position_range(
-        comment.range.start.clone(),
-        &m,
-      ),
-    })
-  } else {
-    unreachable!("Unexpected captures from deno types regex")
-  }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize)]
 pub struct PositionRange {
   pub start: Position,
   pub end: Position,
@@ -140,26 +81,6 @@ impl Serialize for PositionRange {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Comment {
-  pub text: String,
-  pub range: PositionRange,
-}
-
-impl Comment {
-  pub fn from_dep_comment(
-    comment: deno_ast::dep::DependencyComment,
-    text_info: &SourceTextInfo,
-  ) -> Comment {
-    let range = PositionRange::from_source_range(comment.range, text_info);
-    Comment {
-      text: comment.text.to_string(),
-      range,
-    }
-  }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum DependencyDescriptor {
   Static(StaticDependencyDescriptor),
@@ -181,13 +102,6 @@ impl DependencyDescriptor {
     }
   }
 
-  pub fn leading_comments(&self) -> &Vec<Comment> {
-    match self {
-      DependencyDescriptor::Static(d) => &d.leading_comments,
-      DependencyDescriptor::Dynamic(d) => &d.leading_comments,
-    }
-  }
-
   pub fn import_attributes(&self) -> &ImportAttributes {
     match self {
       DependencyDescriptor::Static(d) => &d.import_attributes,
@@ -199,11 +113,12 @@ impl DependencyDescriptor {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StaticDependencyDescriptor {
+  /// The kind of dependency.
   pub kind: DependencyKind,
-  /// Any leading comments associated with the dependency.  This is used for
-  /// further processing of supported pragma that impact the dependency.
-  #[serde(skip_serializing_if = "Vec::is_empty", default)]
-  pub leading_comments: Vec<Comment>,
+  /// An optional specifier overriding the types associated with the
+  /// import/export statement, if any.
+  #[serde(skip_serializing_if = "Option::is_none", default)]
+  pub types_specifier: Option<SpecifierWithRange>,
   /// The text specifier associated with the import/export statement.
   pub specifier: String,
   /// The range of the specifier.
@@ -248,10 +163,10 @@ pub enum DynamicTemplatePart {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DynamicDependencyDescriptor {
-  /// Any leading comments associated with the dependency.  This is used for
-  /// further processing of supported pragma that impact the dependency.
-  #[serde(skip_serializing_if = "Vec::is_empty", default)]
-  pub leading_comments: Vec<Comment>,
+  /// An optional specifier overriding the types associated with the
+  /// import/export statement, if any.
+  #[serde(skip_serializing_if = "Option::is_none", default)]
+  pub types_specifier: Option<SpecifierWithRange>,
   /// The argument associated with the dynamic import.
   #[serde(skip_serializing_if = "DynamicArgument::is_expr", default)]
   pub argument: DynamicArgument,
@@ -293,12 +208,100 @@ pub struct ModuleInfo {
   /// Triple slash references.
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub ts_references: Vec<TypeScriptReference>,
+  /// Comment with `@ts-self-types` pragma.
+  #[serde(skip_serializing_if = "Option::is_none", default)]
+  pub self_types_specifier: Option<SpecifierWithRange>,
   /// Comment with a `@jsxImportSource` pragma on JSX/TSX media types
   #[serde(skip_serializing_if = "Option::is_none", default)]
   pub jsx_import_source: Option<SpecifierWithRange>,
+  /// Comment with a `@jsxImportSourceTypes` pragma on JSX/TSX media types
+  #[serde(skip_serializing_if = "Option::is_none", default)]
+  pub jsx_import_source_types: Option<SpecifierWithRange>,
   /// Type imports in JSDoc comment blocks (e.g. `{import("./types.d.ts").Type}`).
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub jsdoc_imports: Vec<SpecifierWithRange>,
+}
+
+pub fn module_graph_1_to_2(module_info: &mut serde_json::Value) {
+  #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+  #[serde(rename_all = "camelCase")]
+  struct Comment {
+    text: String,
+    range: PositionRange,
+  }
+
+  /// Searches comments for any `@deno-types` compiler hints.
+  fn analyze_deno_types(
+    leading_comments: &[Comment],
+  ) -> Option<SpecifierWithRange> {
+    fn comment_position_to_position_range(
+      mut comment_start: Position,
+      m: &Match,
+    ) -> PositionRange {
+      // the comment text starts after the double slash or slash star, so add 2
+      comment_start.character += 2;
+      PositionRange {
+        // This will always be on the same line.
+        // Does -1 and +1 to include the quotes
+        start: Position {
+          line: comment_start.line,
+          character: comment_start.character + m.start() - 1,
+        },
+        end: Position {
+          line: comment_start.line,
+          character: comment_start.character + m.end() + 1,
+        },
+      }
+    }
+
+    let comment = leading_comments.last()?;
+    let captures = DENO_TYPES_RE.captures(&comment.text)?;
+    if let Some(m) = captures.get(1) {
+      Some(SpecifierWithRange {
+        text: m.as_str().to_string(),
+        range: comment_position_to_position_range(comment.range.start, &m),
+      })
+    } else if let Some(m) = captures.get(2) {
+      Some(SpecifierWithRange {
+        text: m.as_str().to_string(),
+        range: comment_position_to_position_range(comment.range.start, &m),
+      })
+    } else {
+      unreachable!("Unexpected captures from deno types regex")
+    }
+  }
+
+  // To support older module graphs, we need to convert the module graph 1
+  // to the new format. To do this, we need to extract the types specifier
+  // from the leading comments and add it to the dependency object.
+  if let serde_json::Value::Object(module_info) = module_info {
+    if let Some(dependencies) = module_info
+      .get_mut("dependencies")
+      .and_then(|v| v.as_array_mut())
+    {
+      for dependency in dependencies {
+        if let Some(dependency) = dependency.as_object_mut() {
+          if let Some(leading_comments) = dependency
+            .get("leadingComments")
+            .and_then(|v| v.as_array())
+            .and_then(|v| {
+              v.iter()
+                .map(|v| serde_json::from_value(v.clone()).ok())
+                .collect::<Option<Vec<Comment>>>()
+            })
+          {
+            if let Some(deno_types) = analyze_deno_types(&leading_comments) {
+              dependency.insert(
+                "typesSpecifier".to_string(),
+                serde_json::to_value(deno_types).unwrap(),
+              );
+            }
+            dependency.remove("leadingComments");
+          }
+        }
+      }
+    }
+  };
 }
 
 /// Analyzes the provided module.
@@ -338,7 +341,9 @@ mod test {
     let module_info = ModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
+      self_types_specifier: None,
       jsx_import_source: None,
+      jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
     };
     run_serialization_test(&module_info, json!({}));
@@ -351,19 +356,13 @@ mod test {
       dependencies: Vec::from([
         StaticDependencyDescriptor {
           kind: DependencyKind::ImportEquals,
-          leading_comments: vec![Comment {
+          types_specifier: Some(SpecifierWithRange {
             text: "a".to_string(),
             range: PositionRange {
-              start: Position {
-                line: 9,
-                character: 7,
-              },
-              end: Position {
-                line: 5,
-                character: 3,
-              },
+              start: Position::zeroed(),
+              end: Position::zeroed(),
             },
-          }],
+          }),
           specifier: "./test".to_string(),
           specifier_range: PositionRange {
             start: Position {
@@ -379,7 +378,7 @@ mod test {
         }
         .into(),
         DynamicDependencyDescriptor {
-          leading_comments: vec![],
+          types_specifier: None,
           argument: DynamicArgument::String("./test2".to_string()),
           argument_range: PositionRange {
             start: Position::zeroed(),
@@ -397,7 +396,9 @@ mod test {
         .into(),
       ]),
       ts_references: Vec::new(),
+      self_types_specifier: None,
       jsx_import_source: None,
+      jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
     };
     run_serialization_test(
@@ -406,10 +407,10 @@ mod test {
         "dependencies": [{
           "type": "static",
           "kind": "importEquals",
-          "leadingComments": [{
+          "typesSpecifier": {
             "text": "a",
-            "range": [[9, 7], [5, 3]],
-          }],
+            "range": [[0, 0], [0, 0]],
+          },
           "specifier": "./test",
           "specifierRange": [[1, 2], [3, 4]],
         }, {
@@ -448,7 +449,9 @@ mod test {
           },
         }),
       ]),
+      self_types_specifier: None,
       jsx_import_source: None,
+      jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
     };
     run_serialization_test(
@@ -468,10 +471,38 @@ mod test {
   }
 
   #[test]
+  fn module_info_serialization_self_types_specifier() {
+    let module_info = ModuleInfo {
+      dependencies: Vec::new(),
+      ts_references: Vec::new(),
+      self_types_specifier: Some(SpecifierWithRange {
+        text: "a".to_string(),
+        range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      }),
+      jsx_import_source: None,
+      jsx_import_source_types: None,
+      jsdoc_imports: Vec::new(),
+    };
+    run_serialization_test(
+      &module_info,
+      json!({
+        "selfTypesSpecifier": {
+          "text": "a",
+          "range": [[0, 0], [0, 0]],
+        }
+      }),
+    );
+  }
+
+  #[test]
   fn module_info_serialization_jsx_import_source() {
     let module_info = ModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
+      self_types_specifier: None,
       jsx_import_source: Some(SpecifierWithRange {
         text: "a".to_string(),
         range: PositionRange {
@@ -479,6 +510,7 @@ mod test {
           end: Position::zeroed(),
         },
       }),
+      jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
     };
     run_serialization_test(
@@ -493,11 +525,40 @@ mod test {
   }
 
   #[test]
+  fn module_info_serialization_jsx_import_source_types() {
+    let module_info = ModuleInfo {
+      dependencies: Vec::new(),
+      ts_references: Vec::new(),
+      self_types_specifier: None,
+      jsx_import_source: None,
+      jsx_import_source_types: Some(SpecifierWithRange {
+        text: "a".to_string(),
+        range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      }),
+      jsdoc_imports: Vec::new(),
+    };
+    run_serialization_test(
+      &module_info,
+      json!({
+        "jsxImportSourceTypes": {
+          "text": "a",
+          "range": [[0, 0], [0, 0]],
+        }
+      }),
+    );
+  }
+
+  #[test]
   fn module_info_jsdoc_imports() {
     let module_info = ModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
+      self_types_specifier: None,
       jsx_import_source: None,
+      jsx_import_source_types: None,
       jsdoc_imports: Vec::from([SpecifierWithRange {
         text: "a".to_string(),
         range: PositionRange {
@@ -522,13 +583,13 @@ mod test {
     // with dependencies
     let descriptor = DependencyDescriptor::Static(StaticDependencyDescriptor {
       kind: DependencyKind::ExportEquals,
-      leading_comments: Vec::from([Comment {
+      types_specifier: Some(SpecifierWithRange {
         text: "a".to_string(),
         range: PositionRange {
           start: Position::zeroed(),
           end: Position::zeroed(),
         },
-      }]),
+      }),
       specifier: "./test".to_string(),
       specifier_range: PositionRange {
         start: Position::zeroed(),
@@ -541,10 +602,10 @@ mod test {
       json!({
         "type": "static",
         "kind": "exportEquals",
-        "leadingComments": [{
+        "typesSpecifier": {
           "text": "a",
           "range": [[0, 0], [0, 0]],
-        }],
+        },
         "specifier": "./test",
         "specifierRange": [[0, 0], [0, 0]],
         "importAttributes": "unknown",
@@ -556,13 +617,13 @@ mod test {
   fn dynamic_dependency_descriptor_serialization() {
     run_serialization_test(
       &DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
-        leading_comments: Vec::from([Comment {
+        types_specifier: Some(SpecifierWithRange {
           text: "a".to_string(),
           range: PositionRange {
             start: Position::zeroed(),
             end: Position::zeroed(),
           },
-        }]),
+        }),
         argument: DynamicArgument::Expr,
         argument_range: PositionRange {
           start: Position::zeroed(),
@@ -572,10 +633,10 @@ mod test {
       }),
       json!({
         "type": "dynamic",
-        "leadingComments": [{
+        "typesSpecifier": {
           "text": "a",
           "range": [[0, 0], [0, 0]],
-        }],
+        },
         "argumentRange": [[0, 0], [0, 0]],
         "importAttributes": "unknown",
       }),
@@ -583,13 +644,7 @@ mod test {
 
     run_serialization_test(
       &DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
-        leading_comments: Vec::from([Comment {
-          text: "a".to_string(),
-          range: PositionRange {
-            start: Position::zeroed(),
-            end: Position::zeroed(),
-          },
-        }]),
+        types_specifier: None,
         argument: DynamicArgument::String("test".to_string()),
         argument_range: PositionRange {
           start: Position::zeroed(),
@@ -599,10 +654,6 @@ mod test {
       }),
       json!({
         "type": "dynamic",
-        "leadingComments": [{
-          "text": "a",
-          "range": [[0, 0], [0, 0]],
-        }],
         "argument": "test",
         "argumentRange": [[0, 0], [0, 0]],
         "importAttributes": "unknown",
@@ -659,6 +710,98 @@ mod test {
     );
   }
 
+  #[test]
+  fn test_v1_to_v2_deserialization_with_leading_comment() {
+    let expected = ModuleInfo {
+      dependencies: vec![DependencyDescriptor::Static(
+        StaticDependencyDescriptor {
+          kind: DependencyKind::Import,
+          specifier: "./a.js".to_string(),
+          specifier_range: PositionRange {
+            start: Position {
+              line: 1,
+              character: 2,
+            },
+            end: Position {
+              line: 3,
+              character: 4,
+            },
+          },
+          types_specifier: Some(SpecifierWithRange {
+            text: "./a.d.ts".to_string(),
+            range: PositionRange {
+              start: Position {
+                line: 0,
+                character: 15,
+              },
+              end: Position {
+                line: 0,
+                character: 25,
+              },
+            },
+          }),
+          import_attributes: ImportAttributes::None,
+        },
+      )],
+      ts_references: Vec::new(),
+      self_types_specifier: None,
+      jsx_import_source: None,
+      jsx_import_source_types: None,
+      jsdoc_imports: Vec::new(),
+    };
+    let json = json!({
+      "dependencies": [{
+        "type": "static",
+        "kind": "import",
+        "specifier": "./a.js",
+        "specifierRange": [[1, 2], [3, 4]],
+        "leadingComments": [{
+          "text": " @deno-types=\"./a.d.ts\"",
+          "range": [[0, 0], [0, 25]],
+        }]
+      }]
+    });
+    run_v1_deserialization_test(json, &expected);
+  }
+
+  #[test]
+  fn test_v1_to_v2_deserialization_no_leading_comment() {
+    let expected = ModuleInfo {
+      dependencies: vec![DependencyDescriptor::Static(
+        StaticDependencyDescriptor {
+          kind: DependencyKind::Import,
+          specifier: "./a.js".to_string(),
+          specifier_range: PositionRange {
+            start: Position {
+              line: 1,
+              character: 2,
+            },
+            end: Position {
+              line: 3,
+              character: 4,
+            },
+          },
+          types_specifier: None,
+          import_attributes: ImportAttributes::None,
+        },
+      )],
+      ts_references: Vec::new(),
+      self_types_specifier: None,
+      jsx_import_source: None,
+      jsx_import_source_types: None,
+      jsdoc_imports: Vec::new(),
+    };
+    let json = json!({
+      "dependencies": [{
+        "type": "static",
+        "kind": "import",
+        "specifier": "./a.js",
+        "specifierRange": [[1, 2], [3, 4]]
+      }]
+    });
+    run_v1_deserialization_test(json, &expected);
+  }
+
   #[track_caller]
   fn run_serialization_test<
     T: DeserializeOwned + Serialize + std::fmt::Debug + PartialEq + Eq,
@@ -668,6 +811,18 @@ mod test {
   ) {
     let json = serde_json::to_value(value).unwrap();
     assert_eq!(json, expected_json);
+    let deserialized_value = serde_json::from_value::<T>(json).unwrap();
+    assert_eq!(deserialized_value, *value);
+  }
+
+  #[track_caller]
+  fn run_v1_deserialization_test<
+    T: DeserializeOwned + Serialize + std::fmt::Debug + PartialEq + Eq,
+  >(
+    mut json: serde_json::Value,
+    value: &T,
+  ) {
+    module_graph_1_to_2(&mut json);
     let deserialized_value = serde_json::from_value::<T>(json).unwrap();
     assert_eq!(deserialized_value, *value);
   }

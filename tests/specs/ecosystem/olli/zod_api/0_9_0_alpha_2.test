@@ -1,0 +1,28 @@
+olli/zod-api/0.9.0-alpha.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:hono@^4.1.0": "npm:hono@4.2.4",
+      "npm:zod@^3.22.4": "npm:zod@3.23.5"
+    },
+    "npm": {
+      "hono@4.2.4": {
+        "integrity": "sha512-2T5Ahxh8tT0ISKCrNeA+OIwfD5W4EZ00iIMYBBCuiIivr+sOrZYOphinARSG7wL3nFsY6zkFHMMZbcR9CzEzug==",
+        "dependencies": {}
+      },
+      "zod@3.23.5": {
+        "integrity": "sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

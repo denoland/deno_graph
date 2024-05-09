@@ -1,0 +1,72 @@
+tsirysndr/fluent-gh-actions/0.3.0
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/step_spec.ts:3:14
+  | 
+3 | export const StepSpecSchema = z.object({
+  |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/job_spec.ts:4:14
+  | 
+4 | export const JobSpecSchema = z.object({
+  |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/workflow.ts:41:3
+   | 
+41 |   toString() {
+   |   ^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/event.ts:3:14
+  | 
+3 | export const EventNameSchema = z.enum([
+  |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/event.ts:45:14
+   | 
+45 | export const EventConfigSchema = z.object({
+   |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/event.ts:59:14
+   | 
+59 | export const EventSpecSchema = z.union([
+   |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

@@ -1,0 +1,22 @@
+std/archive/0.213.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/io@^0.213.0": "jsr:@std/io@0.213.1"
+    },
+    "jsr": {
+      "@std/io@0.213.1": {
+        "integrity": "18ee1ab872d43077d9ced51ffae38093ad4e818d2b23c3b18a6683edf5f428ae"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

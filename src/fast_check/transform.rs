@@ -8,15 +8,18 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
 
+use deno_ast::emit;
 use deno_ast::swc::ast::*;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::common::comments::SingleThreadedComments;
 use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
 use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::DUMMY_SP;
+use deno_ast::EmitOptions;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
 use deno_ast::ParsedSource;
+use deno_ast::SourceMap;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 
@@ -27,7 +30,6 @@ use crate::WorkspaceMember;
 
 use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::any_type_ann;
-use super::swc_helpers::emit;
 use super::swc_helpers::get_return_stmts_with_arg_from_function_body;
 use super::swc_helpers::ident;
 use super::swc_helpers::is_void_type;
@@ -80,7 +82,8 @@ impl CommentsMut {
 
 #[derive(Debug, Clone)]
 pub struct FastCheckDtsModule {
-  pub text: String,
+  pub program: Program,
+  pub comments: MultiThreadedComments,
   pub diagnostics: Vec<FastCheckDtsDiagnostic>,
 }
 
@@ -127,20 +130,27 @@ pub fn transform(
   // so if we're emitting with dts, make a copy of the comments for
   // each emit
   let (fast_check_comments, dts_comments) = if options.dts {
-    (
-      comments.as_single_threaded(),
-      Some(comments.into_single_threaded()),
-    )
+    (comments.as_single_threaded(), Some(comments))
   } else {
     (comments.into_single_threaded(), None)
   };
 
   // now emit
-  let (text, source_map) = emit(
-    specifier,
+  let source_map = SourceMap::single(
+    specifier.clone(),
+    parsed_source.text_info().text_str().to_owned(),
+  );
+  let program = Program::Module(module);
+  let emitted_source = emit(
+    &program,
     &fast_check_comments,
-    parsed_source.text_info(),
-    &module,
+    &source_map,
+    &EmitOptions {
+      keep_comments: true,
+      source_map: deno_ast::SourceMapOption::Separate,
+      source_map_file: None,
+      inline_sources: false,
+    },
   )
   .map_err(|e| {
     vec![FastCheckDiagnostic::Emit {
@@ -153,18 +163,11 @@ pub fn transform(
     let mut dts_transformer =
       FastCheckDtsTransformer::new(parsed_source.text_info(), specifier);
 
-    let module = dts_transformer.transform(module)?;
-    let (text, _source_map) =
-      emit(specifier, &dts_comments, parsed_source.text_info(), &module)
-        .map_err(|e| {
-          vec![FastCheckDiagnostic::Emit {
-            specifier: specifier.clone(),
-            inner: Arc::new(e),
-          }]
-        })?;
+    let module = dts_transformer.transform(program.expect_module())?;
 
     Some(FastCheckDtsModule {
-      text,
+      program: Program::Module(module),
+      comments: dts_comments,
       diagnostics: dts_transformer.diagnostics,
     })
   } else {
@@ -173,9 +176,9 @@ pub fn transform(
 
   Ok(FastCheckModule {
     module_info: module_info.into(),
-    text: text.into(),
+    text: emitted_source.text.into(),
     dts,
-    source_map: source_map.into(),
+    source_map: emitted_source.source_map.unwrap().into_bytes().into(),
   })
 }
 
@@ -370,7 +373,7 @@ impl<'a> FastCheckTransformer<'a> {
           )
         }
         ModuleDecl::TsImportEquals(n) => match &n.module_ref {
-          TsModuleRef::TsEntityName(n) => {
+          TsModuleRef::TsEntityName(_) => {
             Ok(self.public_ranges.contains(&n.range()))
           }
           TsModuleRef::TsExternalModuleRef(_) => {
@@ -525,7 +528,7 @@ impl<'a> FastCheckTransformer<'a> {
         )?;
         Ok(true)
       }
-      Decl::Var(n) => self.transform_var(n, is_ambient),
+      Decl::Var(n) => self.transform_var(n, is_ambient || n.declare),
       Decl::TsInterface(_) => Ok(self.public_ranges.contains(&public_range)),
       Decl::TsTypeAlias(_) => Ok(self.public_ranges.contains(&public_range)),
       Decl::TsEnum(_) => Ok(self.public_ranges.contains(&public_range)),
@@ -783,7 +786,7 @@ impl<'a> FastCheckTransformer<'a> {
                 is_optional,
                 is_override: prop.is_override,
                 readonly: prop.readonly,
-                // delcare is not valid with override
+                // declare is not valid with override
                 declare: !prop.is_override,
                 definite: prop.is_override,
               }));
@@ -806,25 +809,54 @@ impl<'a> FastCheckTransformer<'a> {
         let is_overload = self.public_ranges.is_impl_with_overloads(&n.range());
         if is_overload {
           for (i, param) in n.params.iter_mut().enumerate() {
-            *param = ParamOrTsParamProp::Param(Param {
-              span: DUMMY_SP,
-              decorators: Vec::new(),
-              pat: Pat::Ident(BindingIdent {
-                id: Ident {
+            if param.as_param().map(|p| p.pat.is_rest()).unwrap_or(false) {
+              *param = ParamOrTsParamProp::Param(Param {
+                span: DUMMY_SP,
+                decorators: Vec::new(),
+                pat: Pat::Rest(RestPat {
                   span: DUMMY_SP,
-                  sym: format!("param{}", i).into(),
-                  optional: true,
-                },
-                type_ann: Some(any_type_ann()),
-              }),
-            });
+                  dot3_token: DUMMY_SP,
+                  type_ann: Some(any_type_ann()),
+                  arg: Box::new(Pat::Ident(BindingIdent {
+                    id: Ident {
+                      span: DUMMY_SP,
+                      sym: format!("param{}", i).into(),
+                      optional: false,
+                    },
+                    type_ann: None,
+                  })),
+                }),
+              });
+            } else {
+              *param = ParamOrTsParamProp::Param(Param {
+                span: DUMMY_SP,
+                decorators: Vec::new(),
+                pat: Pat::Ident(BindingIdent {
+                  id: Ident {
+                    span: DUMMY_SP,
+                    sym: format!("param{}", i).into(),
+                    optional: true,
+                  },
+                  type_ann: Some(any_type_ann()),
+                }),
+              });
+            }
           }
         }
 
-        for param in &mut n.params {
+        let optional_start_index =
+          ParamsOptionalStartIndex::build(n.params.iter().map(|p| match p {
+            ParamOrTsParamProp::Param(p) => &p.pat,
+            // should have been converted to a param
+            ParamOrTsParamProp::TsParamProp(_) => unreachable!(),
+          }));
+        for (i, param) in n.params.iter_mut().enumerate() {
           match param {
             ParamOrTsParamProp::Param(param) => {
-              self.handle_param_pat(&mut param.pat)?;
+              self.handle_param_pat(
+                &mut param.pat,
+                optional_start_index.is_optional_at_index(i),
+              )?;
               param.decorators.clear();
             }
             ParamOrTsParamProp::TsParamProp(_) => {
@@ -869,7 +901,10 @@ impl<'a> FastCheckTransformer<'a> {
       ClassMember::ClassProp(n) => {
         if n.accessibility == Some(Accessibility::Private) {
           n.type_ann = Some(any_type_ann());
+          // it doesn't make sense for a private property to have the override
+          // keyword, but might as well make this consistent with elsewhere
           n.declare = !n.is_override;
+          n.definite = n.is_override;
           n.value = None;
           return Ok(true);
         }
@@ -987,18 +1022,38 @@ impl<'a> FastCheckTransformer<'a> {
     }
     if is_overload {
       for (i, param) in n.params.iter_mut().enumerate() {
-        *param = Param {
-          span: DUMMY_SP,
-          decorators: Vec::new(),
-          pat: Pat::Ident(BindingIdent {
-            id: Ident {
+        if param.pat.is_rest() {
+          *param = Param {
+            span: DUMMY_SP,
+            decorators: Vec::new(),
+            pat: Pat::Rest(RestPat {
               span: DUMMY_SP,
-              sym: format!("param{}", i).into(),
-              optional: true,
-            },
-            type_ann: Some(any_type_ann()),
-          }),
-        };
+              dot3_token: DUMMY_SP,
+              type_ann: Some(any_type_ann()),
+              arg: Box::new(Pat::Ident(BindingIdent {
+                id: Ident {
+                  span: DUMMY_SP,
+                  sym: format!("param{}", i).into(),
+                  optional: false,
+                },
+                type_ann: None,
+              })),
+            }),
+          };
+        } else {
+          *param = Param {
+            span: DUMMY_SP,
+            decorators: Vec::new(),
+            pat: Pat::Ident(BindingIdent {
+              id: Ident {
+                span: DUMMY_SP,
+                sym: format!("param{}", i).into(),
+                optional: true,
+              },
+              type_ann: Some(any_type_ann()),
+            }),
+          };
+        }
       }
       n.return_type = Some(any_type_ann());
     }
@@ -1052,9 +1107,13 @@ impl<'a> FastCheckTransformer<'a> {
         }));
       }
     }
-
-    for param in &mut n.params {
-      self.handle_param_pat(&mut param.pat)?;
+    let optional_start_index =
+      ParamsOptionalStartIndex::build(n.params.iter().map(|p| &p.pat));
+    for (i, param) in n.params.iter_mut().enumerate() {
+      self.handle_param_pat(
+        &mut param.pat,
+        optional_start_index.is_optional_at_index(i),
+      )?;
       param.decorators.clear();
     }
 
@@ -1136,8 +1195,10 @@ impl<'a> FastCheckTransformer<'a> {
       n.is_async = false;
     }
 
-    for pat in &mut n.params {
-      self.handle_param_pat(pat)?;
+    let optional_start_index = ParamsOptionalStartIndex::build(n.params.iter());
+    for (i, pat) in n.params.iter_mut().enumerate() {
+      self
+        .handle_param_pat(pat, optional_start_index.is_optional_at_index(i))?;
     }
 
     Ok(())
@@ -1146,6 +1207,7 @@ impl<'a> FastCheckTransformer<'a> {
   fn handle_param_pat(
     &mut self,
     pat: &mut Pat,
+    is_optional: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
     match pat {
       Pat::Ident(ident) => {
@@ -1166,7 +1228,11 @@ impl<'a> FastCheckTransformer<'a> {
                   span: DUMMY_SP,
                   type_ann: Box::new(t),
                 }));
-                ident.id.optional = true;
+                if !is_optional {
+                  convert_optional_ident_to_nullable_type(ident);
+                } else {
+                  ident.id.optional = true;
+                }
                 *pat = Pat::Ident((*ident).clone());
               }
               None => {
@@ -1184,7 +1250,11 @@ impl<'a> FastCheckTransformer<'a> {
               }
             }
           } else {
-            ident.id.optional = true;
+            if !is_optional {
+              convert_optional_ident_to_nullable_type(ident);
+            } else {
+              ident.id.optional = true;
+            }
             *pat = Pat::Ident((*ident).clone());
           }
         }
@@ -1269,7 +1339,7 @@ impl<'a> FastCheckTransformer<'a> {
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     n.decls.retain(|n| self.public_ranges.contains(&n.range()));
 
-    // don't need to do anything for these in a declaration file
+    // don't need to do anything for ambient decls
     if !is_ambient {
       for decl in &mut n.decls {
         self.transform_var_declarator(decl)?;
@@ -2189,6 +2259,25 @@ fn replacement_return_value(ty: &TsType) -> Option<Box<Expr>> {
   }
 }
 
+// Converts `ident?: string` to `ident: string | undefined`
+fn convert_optional_ident_to_nullable_type(ident: &mut BindingIdent) {
+  ident.optional = false;
+  if let Some(type_ann) = ident.type_ann.take() {
+    ident.type_ann = Some(Box::new(TsTypeAnn {
+      span: type_ann.span,
+      type_ann: Box::new(TsType::TsUnionOrIntersectionType(
+        TsUnionOrIntersectionType::TsUnionType(TsUnionType {
+          span: DUMMY_SP,
+          types: vec![
+            type_ann.type_ann,
+            Box::new(ts_keyword_type(TsKeywordTypeKind::TsUndefinedKeyword)),
+          ],
+        }),
+      )),
+    }));
+  }
+}
+
 fn prefix_ident(ident: &mut Ident, prefix: &str) {
   ident.sym = format!("{}{}", prefix, ident.sym).into();
 }
@@ -2350,6 +2439,44 @@ fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
       TsLit::Tpl(_) => None,
     },
     TsType::TsTypePredicate(_) | TsType::TsImportType(_) => None,
+  }
+}
+
+/// Holds when the first optional parameter occurs.
+struct ParamsOptionalStartIndex(Option<usize>);
+
+impl ParamsOptionalStartIndex {
+  pub fn build<'a>(param_pats: impl Iterator<Item = &'a Pat>) -> Self {
+    fn is_param_pat_optional(pat: &Pat) -> bool {
+      match pat {
+        Pat::Ident(ident) => ident.optional,
+        Pat::Array(a) => a.optional,
+        Pat::Object(o) => o.optional,
+        Pat::Assign(_) | Pat::Rest(_) => true,
+        Pat::Invalid(_) | Pat::Expr(_) => false,
+      }
+    }
+
+    let mut optional_start_index = None;
+    for (i, pat) in param_pats.enumerate() {
+      if is_param_pat_optional(pat) {
+        if optional_start_index.is_none() {
+          optional_start_index = Some(i);
+        }
+      } else {
+        optional_start_index = None;
+      }
+    }
+
+    Self(optional_start_index)
+  }
+
+  pub fn is_optional_at_index(&self, index: usize) -> bool {
+    self
+      .0
+      .as_ref()
+      .map(|start_index| index >= *start_index)
+      .unwrap_or(false)
   }
 }
 

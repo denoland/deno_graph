@@ -1,0 +1,14 @@
+happy-js/happy-opfs/1.0.0
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: npm package '@jsr/happy-js__happy-rusty' does not exist.
+    at file://<tmpdir>/src/fs/opfs_core.ts:1:29
+

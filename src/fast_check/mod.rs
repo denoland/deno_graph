@@ -12,6 +12,7 @@ use deno_ast::diagnostics::DiagnosticSnippetHighlight;
 use deno_ast::diagnostics::DiagnosticSnippetHighlightStyle;
 use deno_ast::diagnostics::DiagnosticSourcePos;
 use deno_ast::diagnostics::DiagnosticSourceRange;
+use deno_ast::EmitError;
 use deno_ast::SourceRange;
 use deno_ast::SourceTextInfo;
 
@@ -110,7 +111,7 @@ pub enum FastCheckDiagnostic {
   #[error("failed to emit fast check module: {inner:#}")]
   Emit {
     specifier: ModuleSpecifier,
-    inner: Arc<anyhow::Error>,
+    inner: Arc<EmitError>,
   },
   #[error("export not found: {}", .specifier)]
   ExportNotFound { specifier: ModuleSpecifier },

@@ -1,0 +1,23 @@
+mdekstrand/hbsinterp/0.1.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@handlebars/parser@^2.1.0": "npm:@handlebars/parser@2.1.0"
+    },
+    "npm": {
+      "@handlebars/parser@2.1.0": {
+        "integrity": "sha512-R14NuNaSKZ6eE9y4t0fg/1f8iKd5ZJtSOTIseGFzXINTV17XffhLG2Y0CvdKOgyVQ7+UnXi89YGzRo/xsgwHIA==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

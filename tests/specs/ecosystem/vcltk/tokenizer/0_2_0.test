@@ -1,0 +1,22 @@
+vcltk/tokenizer/0.2.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@vcltk/token@^0.2.0": "jsr:@vcltk/token@0.2.0"
+    },
+    "jsr": {
+      "@vcltk/token@0.2.0": {
+        "integrity": "f6622de1f22eb78daa50228362c2f40dcbbb0d8d6c3357b8314cd46fd606389b"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

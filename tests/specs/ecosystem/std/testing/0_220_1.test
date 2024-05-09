@@ -1,0 +1,22 @@
+std/testing/0.220.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/async@^0.220.1": "jsr:@std/async@0.220.1"
+    },
+    "jsr": {
+      "@std/async@0.220.1": {
+        "integrity": "61f0e9c53bf81f516aa7f54843f307eb5f05c5cf9902575a636ead162b5dfafe"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

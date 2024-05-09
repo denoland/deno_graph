@@ -1,0 +1,36 @@
+kz/observe/0.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@kz/common-exceptions@^0.0.1": "jsr:@kz/common-exceptions@0.0.1",
+      "jsr:@kz/common-types@0.0.2": "jsr:@kz/common-types@0.0.2",
+      "jsr:@kz/dispose@^0.0.1": "jsr:@kz/dispose@0.0.1"
+    },
+    "jsr": {
+      "@kz/common-exceptions@0.0.1": {
+        "integrity": "5b0a63a33e0d1615436353c0f0ce2957654bc79a2503e0726979d4f6166e8813",
+        "dependencies": [
+          "jsr:@kz/common-types@0.0.2"
+        ]
+      },
+      "@kz/common-types@0.0.2": {
+        "integrity": "48beb5d32c359804b82081cd6ed999014137f69d31d87b264e3d4a9cb9433a34"
+      },
+      "@kz/dispose@0.0.1": {
+        "integrity": "ae21b5464c61664e16334aefceb9e8074a68eb492b1d00d38b30bbb20760de0a",
+        "dependencies": [
+          "jsr:@kz/common-exceptions@^0.0.1"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

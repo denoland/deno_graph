@@ -13,6 +13,7 @@ use deno_semver::VersionReq;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::analyzer::module_graph_1_to_2;
 use crate::ModuleInfo;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -41,7 +42,9 @@ pub struct JsrPackageVersionInfo {
   #[serde(default)]
   pub exports: serde_json::Value,
   #[serde(rename = "moduleGraph1")]
-  pub module_graph: Option<serde_json::Value>,
+  pub module_graph_1: Option<serde_json::Value>,
+  #[serde(rename = "moduleGraph2")]
+  pub module_graph_2: Option<serde_json::Value>,
   pub manifest: HashMap<String, JsrPackageVersionManifestEntry>,
 }
 
@@ -85,9 +88,18 @@ impl JsrPackageVersionInfo {
   }
 
   pub fn module_info(&self, specifier: &str) -> Option<ModuleInfo> {
-    let module_graph = self.module_graph.as_ref()?.as_object()?;
-    let module_info = module_graph.get(specifier)?;
-    serde_json::from_value(module_info.clone()).ok()
+    if let Some(module_graph) = self.module_graph_2.as_ref() {
+      let module_graph = module_graph.as_object()?;
+      let module_info = module_graph.get(specifier)?;
+      serde_json::from_value(module_info.clone()).ok()
+    } else if let Some(module_graph) = self.module_graph_1.as_ref() {
+      let module_graph = module_graph.as_object()?;
+      let mut module_info = module_graph.get(specifier)?.clone();
+      module_graph_1_to_2(&mut module_info);
+      serde_json::from_value(module_info).ok()
+    } else {
+      None
+    }
   }
 }
 
@@ -149,11 +161,8 @@ impl PackageSpecifiers {
     });
   }
 
-  pub(crate) fn get_manifest_checksum(
-    &self,
-    nv: &PackageNv,
-  ) -> Option<&String> {
-    self.packages.get(nv).map(|p| &p.manifest_checksum)
+  pub(crate) fn get_manifest_checksum(&self, nv: &PackageNv) -> Option<&str> {
+    self.packages.get(nv).map(|p| p.manifest_checksum.as_str())
   }
 
   pub fn add_manifest_checksum(

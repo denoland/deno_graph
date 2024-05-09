@@ -1,0 +1,56 @@
+dallmo/util/1.0.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@dallmo/util-array@^1.2.0": "jsr:@dallmo/util-array@1.2.0",
+      "jsr:@dallmo/util-math@^1.1.0": "jsr:@dallmo/util-math@1.1.0",
+      "jsr:@dallmo/util-string@^1.2.0": "jsr:@dallmo/util-string@1.2.0",
+      "jsr:@dallmo/util-yaml@^1.5.2": "jsr:@dallmo/util-yaml@1.5.2",
+      "jsr:@std/assert@^0.218.2": "jsr:@std/assert@0.218.2",
+      "jsr:@std/fmt@^0.218.2": "jsr:@std/fmt@0.218.2",
+      "jsr:@std/yaml@^0.218.2": "jsr:@std/yaml@0.218.2"
+    },
+    "jsr": {
+      "@dallmo/util-array@1.2.0": {
+        "integrity": "bb6cd4de4b7145b927fd808d93cf4bf759c9b93fcba6828cd12cef1fd4491a71",
+        "dependencies": [
+          "jsr:@std/assert@^0.218.2"
+        ]
+      },
+      "@dallmo/util-math@1.1.0": {
+        "integrity": "cff8e792cac000df3f93a74dbe7040f747b25c1f73c02dc77dbec858f4d8aa3e"
+      },
+      "@dallmo/util-string@1.2.0": {
+        "integrity": "354e99e8005a0fa6b35813615174a974dbdcc6656813d1ac68439c498e3821dc"
+      },
+      "@dallmo/util-yaml@1.5.2": {
+        "integrity": "4f13a52069e9c00dcfec1e49c3703ed476a59ae127a4ba8177269acad078478a",
+        "dependencies": [
+          "jsr:@std/assert@^0.218.2",
+          "jsr:@std/yaml@^0.218.2"
+        ]
+      },
+      "@std/assert@0.218.2": {
+        "integrity": "7f0a5a1a8cf86607cd6c2c030584096e1ffad27fc9271429a8cb48cfbdee5eaf",
+        "dependencies": [
+          "jsr:@std/fmt@^0.218.2"
+        ]
+      },
+      "@std/fmt@0.218.2": {
+        "integrity": "99526449d2505aa758b6cbef81e7dd471d8b28ec0dcb1491d122b284c548788a"
+      },
+      "@std/yaml@0.218.2": {
+        "integrity": "82278eb3ce7491e2c3280d926973a8c3f71d25dd3f187c133b33f5c83ea17a5a"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

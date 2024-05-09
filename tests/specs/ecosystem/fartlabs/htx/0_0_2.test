@@ -1,0 +1,22 @@
+fartlabs/htx/0.0.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@fartlabs/ht@^0.0.5": "jsr:@fartlabs/ht@0.0.5"
+    },
+    "jsr": {
+      "@fartlabs/ht@0.0.5": {
+        "integrity": "4a1b8e735c87b34f692bf5ed630c3bffd8f6800c02fe9e337b04e7c373b2ca56"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

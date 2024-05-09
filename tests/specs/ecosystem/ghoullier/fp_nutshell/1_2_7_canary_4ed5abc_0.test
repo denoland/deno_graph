@@ -1,0 +1,12 @@
+ghoullier/fp-nutshell/1.2.7-canary.4ed5abc.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

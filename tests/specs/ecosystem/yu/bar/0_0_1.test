@@ -1,0 +1,17 @@
+yu/bar/0.0.1
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /packages/bar/index.ts:11:14
+   | 
+11 | export const barObject =  {
+   |              ^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

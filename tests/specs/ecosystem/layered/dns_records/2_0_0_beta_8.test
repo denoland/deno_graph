@@ -1,0 +1,12 @@
+layered/dns-records/2.0.0-beta.8
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

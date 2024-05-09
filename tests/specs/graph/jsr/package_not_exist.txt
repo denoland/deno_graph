@@ -1,0 +1,40 @@
+# mod.ts
+import 'jsr:@scope/a/mod.ts';
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a/mod.ts",
+          "code": {
+            "specifier": "jsr:@scope/a/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 28
+              }
+            }
+          }
+        }
+      ],
+      "size": 30,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "jsr:@scope/a/mod.ts",
+      "error": "Not found: https://jsr.io/@scope/a/meta.json"
+    }
+  ],
+  "redirects": {}
+}

@@ -1,0 +1,12 @@
+m4rc3l05/sqlite-tag/0.1.7
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

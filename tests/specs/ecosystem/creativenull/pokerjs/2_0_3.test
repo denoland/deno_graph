@@ -1,0 +1,32 @@
+creativenull/pokerjs/2.0.3
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@creativenull/deckjs@2": "jsr:@creativenull/deckjs@2.2.0",
+      "npm:lodash.shuffle@4": "npm:lodash.shuffle@4.2.0"
+    },
+    "jsr": {
+      "@creativenull/deckjs@2.2.0": {
+        "integrity": "5eb0ff30d048fa2b51ac72d895141056e692ef5c49e4f755861ed9559932d706",
+        "dependencies": [
+          "npm:lodash.shuffle@4"
+        ]
+      }
+    },
+    "npm": {
+      "lodash.shuffle@4.2.0": {
+        "integrity": "sha512-V/rTAABKLFjoecTZjKSv+A1ZomG8hZg8hlgeG6wwQVD9AGv+10zqqSf6mFq2tVA703Zd5R0YhSuSlXA+E/Ei+Q==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

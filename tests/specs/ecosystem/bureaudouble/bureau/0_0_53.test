@@ -1,0 +1,14 @@
+bureaudouble/bureau/0.0.53
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Failed resolving types. Relative import path "@types/react" not prefixed with / or ./ or ../
+    at https://jsr.io/@bureaudouble/icons/0.0.2/radix/FileTextIcon.tsx:1:16
+

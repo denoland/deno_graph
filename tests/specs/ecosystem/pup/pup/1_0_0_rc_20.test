@@ -1,0 +1,29 @@
+pup/pup/1.0.0-rc.20
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.222.1": "jsr:@std/assert@0.222.1",
+      "jsr:@std/async@^0.222.1": "jsr:@std/async@0.222.1"
+    },
+    "jsr": {
+      "@std/assert@0.222.1": {
+        "integrity": "691637161ee584a9919d1f9950ddd1272feb8e0a19e83aa5b7563cedaf73d74c"
+      },
+      "@std/async@0.222.1": {
+        "integrity": "9584f4612f96e604a7e49dba3caf703c28d3921faa5be7147a78864a93831af6",
+        "dependencies": [
+          "jsr:@std/assert@^0.222.1"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

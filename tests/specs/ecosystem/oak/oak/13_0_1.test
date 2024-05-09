@@ -1,0 +1,65 @@
+oak/oak/13.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@oak/commons@0.5": "jsr:@oak/commons@0.5.2",
+      "jsr:@std/assert@0.213": "jsr:@std/assert@0.213.1",
+      "jsr:@std/assert@^0.212.0": "jsr:@std/assert@0.212.0",
+      "jsr:@std/crypto@0.212": "jsr:@std/crypto@0.212.0",
+      "jsr:@std/encoding@0.213": "jsr:@std/encoding@0.213.1",
+      "jsr:@std/encoding@^0.212.0": "jsr:@std/encoding@0.212.0",
+      "jsr:@std/http@0.212": "jsr:@std/http@0.212.0",
+      "npm:path-to-regexp@6.2.1": "npm:path-to-regexp@6.2.1"
+    },
+    "jsr": {
+      "@oak/commons@0.5.2": {
+        "integrity": "8fa63c722f37df43a2dc61ff271ac3219542e410749317188d40c08e6cc848c9",
+        "dependencies": [
+          "jsr:@std/assert@0.213",
+          "jsr:@std/encoding@0.213"
+        ]
+      },
+      "@std/assert@0.212.0": {
+        "integrity": "e94912912e52b151d3a24022131bc59e39c2364cd7c68108e1d48d3479b2ee4d"
+      },
+      "@std/assert@0.213.1": {
+        "integrity": "24c28178b30c8e0782c18e8e94ea72b16282207569cdd10ffb9d1d26f2edebfe"
+      },
+      "@std/crypto@0.212.0": {
+        "integrity": "48027171a4d708340be2a13c34ab06dc8db17fdc57b6fb5051065af393f8c87d",
+        "dependencies": [
+          "jsr:@std/assert@^0.212.0",
+          "jsr:@std/encoding@^0.212.0"
+        ]
+      },
+      "@std/encoding@0.212.0": {
+        "integrity": "f5249f297567eb68b91fec970499d535e58f991b4d956ae38cc2658f791f003f"
+      },
+      "@std/encoding@0.213.1": {
+        "integrity": "fcbb6928713dde941a18ca5db88ca1544d0755ec8fb20fe61e2dc8144b390c62"
+      },
+      "@std/http@0.212.0": {
+        "integrity": "e6d94d8786ea3109700787319a47b30e4a45572224a0ddad78a7d59d4335a83f",
+        "dependencies": [
+          "jsr:@std/assert@^0.212.0",
+          "jsr:@std/encoding@^0.212.0"
+        ]
+      }
+    },
+    "npm": {
+      "path-to-regexp@6.2.1": {
+        "integrity": "sha512-JLyh7xT1kizaEvcaXOQwOc2/Yhw6KZOvPf1S8401UyLk86CU79LN3vl7ztXGm/pZ+YjoyAJ4rxmHwbkBXJX+yw==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

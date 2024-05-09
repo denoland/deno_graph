@@ -1,0 +1,20 @@
+skyblazar/react-store/0.1.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'DEFAULT_STORE_OPTIONS'.
+  constructor(storeName: string, storeState: StoreState, storeActions: Actions, storeOptions = DEFAULT_STORE_OPTIONS){
+                                                                                               ~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/store.ts:17:96
+

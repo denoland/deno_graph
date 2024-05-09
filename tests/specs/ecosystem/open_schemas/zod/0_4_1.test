@@ -1,0 +1,1612 @@
+open-schemas/zod/0.4.1
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /openai/chat.ts:6:14
+  | 
+6 | export const ChatCompletionRequestSystemMessage = z.object({
+  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:15:14
+   | 
+15 | export const ChatCompletionRequestMessageTextContentPart = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:23:14
+   | 
+23 | export const ChatCompletionRequestMessageImageContentPart = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:36:14
+   | 
+36 | export const ChatCompletionRequestMessageContentPart = z.union([
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:44:14
+   | 
+44 | export const ChatCompletionRequestUserMessage = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:56:14
+   | 
+56 | export const ChatCompletionMessageToolCall = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:68:14
+   | 
+68 | export const ChatCompletionRequestAssistantMessage = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:78:14
+   | 
+78 | export const ChatCompletionRequestToolMessage = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:87:14
+   | 
+87 | export const ChatCompletionRequestMessage = z.union([
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:95:14
+   | 
+95 | export const ChatCompletionTool = z.object({
+   |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:107:14
+    | 
+107 | export const CreateChatCompletionRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:147:14
+    | 
+147 | export const ChatCompletionToolCall = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:157:14
+    | 
+157 | export const FinishReason = z.union([
+    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:165:14
+    | 
+165 | export const ChatCompletionLogprobs = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:185:14
+    | 
+185 | export const ChatCompletionChoiceContent = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:192:14
+    | 
+192 | export const ChatCompletionChoice = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:200:14
+    | 
+200 | export const ChatCompletionObject = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:217:14
+    | 
+217 | export const ChatCompletionChunkChoice = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:227:14
+    | 
+227 | export const ChatCompletionChunkObject = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /openai/assistants.ts:4:14
+  | 
+4 | export const Metadata = z.record(z.string());
+  |              ^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /openai/assistants.ts:7:14
+  | 
+7 | export const ObjectMeta = z.object({
+  |              ^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:13:14
+   | 
+13 | export const CodeInterpreterTool = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:18:14
+   | 
+18 | export const RetrievalTool = z.object({
+   |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:23:14
+   | 
+23 | export const FunctionTool = z.object({
+   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:33:14
+   | 
+33 | export const Tool = z.union([CodeInterpreterTool, RetrievalTool, FunctionTool]);
+   |              ^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:36:14
+   | 
+36 | export const AssistantObject = z.intersection(
+   |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:51:14
+   | 
+51 | export const AssistantFileObject = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:57:14
+   | 
+57 | export const ThreadObject = z.intersection(
+   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:66:14
+   | 
+66 | export const MessageImageFileContent = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:74:14
+   | 
+74 | export const FileCitationAnnotation = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:86:14
+   | 
+86 | export const FilePathAnnotation = z.object({
+   |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:97:14
+   | 
+97 | export const MessageTextContent = z.object({
+   |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:106:14
+    | 
+106 | export const MessageObject = z.intersection(
+    |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:129:14
+    | 
+129 | export const MessageFileObject = z.intersection(
+    |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:138:14
+    | 
+138 | export const CodeInterpreterLogOutput = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:144:14
+    | 
+144 | export const CodeInterpreterImageOutput = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:152:14
+    | 
+152 | export const CodeInterpreterOutput = z.union([
+    |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:158:14
+    | 
+158 | export const CodeInterpreterToolCall = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:168:14
+    | 
+168 | export const RetrievalToolCall = z.object({
+    |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:175:14
+    | 
+175 | export const FunctionToolCall = z.object({
+    |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:186:14
+    | 
+186 | export const ToolCall = z.union([CodeInterpreterToolCall, RetrievalToolCall, FunctionToolCall]);
+    |              ^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:189:14
+    | 
+189 | export const SubmitToolOutputsAction = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:197:14
+    | 
+197 | export const Usage = z.object({
+    |              ^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:204:14
+    | 
+204 | export const RunObject = z.intersection(
+    |              ^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:247:14
+    | 
+247 | export const MessageCreationDetail = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:255:14
+    | 
+255 | export const ToolCallsDetail = z.object({
+    |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:261:14
+    | 
+261 | export const StepObject = z.intersection(
+    |              ^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:293:14
+    | 
+293 | export const CreateAssistantRequest = z.intersection(
+    |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:307:14
+    | 
+307 | export const CreateAssistantFileRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:312:14
+    | 
+312 | export const ModifyAssistantRequest = z.intersection(
+    |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:326:14
+    | 
+326 | export const CreateMessageRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:333:14
+    | 
+333 | export const CreateThreadRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:339:14
+    | 
+339 | export const ModifyThreadRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:344:14
+    | 
+344 | export const CreateRunRequest = z.intersection(
+    |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:363:14
+    | 
+363 | export const CreateThreadAndRunRequest = z.intersection(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:371:14
+    | 
+371 | export const ModifyRunRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:376:14
+    | 
+376 | export const ToolOutpt = z.object({
+    |              ^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:382:14
+    | 
+382 | export const SubmitToolOutputsToRunRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /anthropic/messages.ts:4:14
+  | 
+4 | export const ImageContentSource = z.object({
+  |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:17:14
+   | 
+17 | export const ImageContent = z.object({
+   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:23:14
+   | 
+23 | export const TextContent = z.object({
+   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:29:14
+   | 
+29 | export const Content = z.union([TextContent, ImageContent]);
+   |              ^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:32:14
+   | 
+32 | export const Message = z.object({
+   |              ^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:38:14
+   | 
+38 | export const CreateMessageRequest = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:56:14
+   | 
+56 | export const StopReason = z.union([
+   |              ^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:63:14
+   | 
+63 | export const MessageUsage = z.object({
+   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:69:14
+   | 
+69 | export const CreateMessageResponse = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:81:14
+   | 
+81 | export const MessageStartEvent = z.object({
+   |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:93:14
+   | 
+93 | export const MessageDeltaEvent = z.object({
+   |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /anthropic/messages.ts:105:14
+    | 
+105 | export const MessageStopEvent = z.object({
+    |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /anthropic/messages.ts:110:14
+    | 
+110 | export const ContentBlockStartEvent = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /anthropic/messages.ts:120:14
+    | 
+120 | export const ContentBlockDeltaEvent = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /anthropic/messages.ts:130:14
+    | 
+130 | export const ContentBlockStopEvent = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /openai/chat.ts:6:14
+  | 
+6 | export const ChatCompletionRequestSystemMessage = z.object({
+  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:15:14
+   | 
+15 | export const ChatCompletionRequestMessageTextContentPart = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:23:14
+   | 
+23 | export const ChatCompletionRequestMessageImageContentPart = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:36:14
+   | 
+36 | export const ChatCompletionRequestMessageContentPart = z.union([
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:44:14
+   | 
+44 | export const ChatCompletionRequestUserMessage = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:56:14
+   | 
+56 | export const ChatCompletionMessageToolCall = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:68:14
+   | 
+68 | export const ChatCompletionRequestAssistantMessage = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:78:14
+   | 
+78 | export const ChatCompletionRequestToolMessage = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:87:14
+   | 
+87 | export const ChatCompletionRequestMessage = z.union([
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/chat.ts:95:14
+   | 
+95 | export const ChatCompletionTool = z.object({
+   |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:107:14
+    | 
+107 | export const CreateChatCompletionRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:147:14
+    | 
+147 | export const ChatCompletionToolCall = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:157:14
+    | 
+157 | export const FinishReason = z.union([
+    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:165:14
+    | 
+165 | export const ChatCompletionLogprobs = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:185:14
+    | 
+185 | export const ChatCompletionChoiceContent = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:192:14
+    | 
+192 | export const ChatCompletionChoice = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:200:14
+    | 
+200 | export const ChatCompletionObject = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:217:14
+    | 
+217 | export const ChatCompletionChunkChoice = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/chat.ts:227:14
+    | 
+227 | export const ChatCompletionChunkObject = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /openai/assistants.ts:4:14
+  | 
+4 | export const Metadata = z.record(z.string());
+  |              ^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /openai/assistants.ts:7:14
+  | 
+7 | export const ObjectMeta = z.object({
+  |              ^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:13:14
+   | 
+13 | export const CodeInterpreterTool = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:18:14
+   | 
+18 | export const RetrievalTool = z.object({
+   |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:23:14
+   | 
+23 | export const FunctionTool = z.object({
+   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:33:14
+   | 
+33 | export const Tool = z.union([CodeInterpreterTool, RetrievalTool, FunctionTool]);
+   |              ^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:36:14
+   | 
+36 | export const AssistantObject = z.intersection(
+   |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:51:14
+   | 
+51 | export const AssistantFileObject = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:57:14
+   | 
+57 | export const ThreadObject = z.intersection(
+   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:66:14
+   | 
+66 | export const MessageImageFileContent = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:74:14
+   | 
+74 | export const FileCitationAnnotation = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:86:14
+   | 
+86 | export const FilePathAnnotation = z.object({
+   |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /openai/assistants.ts:97:14
+   | 
+97 | export const MessageTextContent = z.object({
+   |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:106:14
+    | 
+106 | export const MessageObject = z.intersection(
+    |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:129:14
+    | 
+129 | export const MessageFileObject = z.intersection(
+    |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:138:14
+    | 
+138 | export const CodeInterpreterLogOutput = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:144:14
+    | 
+144 | export const CodeInterpreterImageOutput = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:152:14
+    | 
+152 | export const CodeInterpreterOutput = z.union([
+    |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:158:14
+    | 
+158 | export const CodeInterpreterToolCall = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:168:14
+    | 
+168 | export const RetrievalToolCall = z.object({
+    |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:175:14
+    | 
+175 | export const FunctionToolCall = z.object({
+    |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:186:14
+    | 
+186 | export const ToolCall = z.union([CodeInterpreterToolCall, RetrievalToolCall, FunctionToolCall]);
+    |              ^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:189:14
+    | 
+189 | export const SubmitToolOutputsAction = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:197:14
+    | 
+197 | export const Usage = z.object({
+    |              ^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:204:14
+    | 
+204 | export const RunObject = z.intersection(
+    |              ^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:247:14
+    | 
+247 | export const MessageCreationDetail = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:255:14
+    | 
+255 | export const ToolCallsDetail = z.object({
+    |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:261:14
+    | 
+261 | export const StepObject = z.intersection(
+    |              ^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:293:14
+    | 
+293 | export const CreateAssistantRequest = z.intersection(
+    |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:307:14
+    | 
+307 | export const CreateAssistantFileRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:312:14
+    | 
+312 | export const ModifyAssistantRequest = z.intersection(
+    |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:326:14
+    | 
+326 | export const CreateMessageRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:333:14
+    | 
+333 | export const CreateThreadRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:339:14
+    | 
+339 | export const ModifyThreadRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:344:14
+    | 
+344 | export const CreateRunRequest = z.intersection(
+    |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:363:14
+    | 
+363 | export const CreateThreadAndRunRequest = z.intersection(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:371:14
+    | 
+371 | export const ModifyRunRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:376:14
+    | 
+376 | export const ToolOutpt = z.object({
+    |              ^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /openai/assistants.ts:382:14
+    | 
+382 | export const SubmitToolOutputsToRunRequest = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /anthropic/messages.ts:4:14
+  | 
+4 | export const ImageContentSource = z.object({
+  |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:17:14
+   | 
+17 | export const ImageContent = z.object({
+   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:23:14
+   | 
+23 | export const TextContent = z.object({
+   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:29:14
+   | 
+29 | export const Content = z.union([TextContent, ImageContent]);
+   |              ^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:32:14
+   | 
+32 | export const Message = z.object({
+   |              ^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:38:14
+   | 
+38 | export const CreateMessageRequest = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:56:14
+   | 
+56 | export const StopReason = z.union([
+   |              ^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:63:14
+   | 
+63 | export const MessageUsage = z.object({
+   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:69:14
+   | 
+69 | export const CreateMessageResponse = z.object({
+   |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:81:14
+   | 
+81 | export const MessageStartEvent = z.object({
+   |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /anthropic/messages.ts:93:14
+   | 
+93 | export const MessageDeltaEvent = z.object({
+   |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /anthropic/messages.ts:105:14
+    | 
+105 | export const MessageStopEvent = z.object({
+    |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /anthropic/messages.ts:110:14
+    | 
+110 | export const ContentBlockStartEvent = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /anthropic/messages.ts:120:14
+    | 
+120 | export const ContentBlockDeltaEvent = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /anthropic/messages.ts:130:14
+    | 
+130 | export const ContentBlockStopEvent = z.object({
+    |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

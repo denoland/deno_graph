@@ -1,0 +1,57 @@
+oak/oak/15.0.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@oak/commons@0.9": "jsr:@oak/commons@0.9.1",
+      "jsr:@std/assert@0.222": "jsr:@std/assert@0.222.1",
+      "jsr:@std/assert@^0.222.1": "jsr:@std/assert@0.222.1",
+      "jsr:@std/crypto@0.222": "jsr:@std/crypto@0.222.1",
+      "jsr:@std/encoding@^0.222.1": "jsr:@std/encoding@0.222.1",
+      "jsr:@std/http@0.222": "jsr:@std/http@0.222.1",
+      "npm:path-to-regexp@6.2.1": "npm:path-to-regexp@6.2.1"
+    },
+    "jsr": {
+      "@oak/commons@0.9.1": {
+        "integrity": "c1d1046e46d56016786f8a9cb9166048f7eb6b912aa19b39fb02d79f8d71e512",
+        "dependencies": [
+          "jsr:@std/assert@0.222"
+        ]
+      },
+      "@std/assert@0.222.1": {
+        "integrity": "691637161ee584a9919d1f9950ddd1272feb8e0a19e83aa5b7563cedaf73d74c"
+      },
+      "@std/crypto@0.222.1": {
+        "integrity": "d5b9e6c704fadbcc384cd42c0b603ad4aea710ece0ff26426602681b64fd237c",
+        "dependencies": [
+          "jsr:@std/assert@^0.222.1",
+          "jsr:@std/encoding@^0.222.1"
+        ]
+      },
+      "@std/encoding@0.222.1": {
+        "integrity": "fb6c1d38722feebc8d4a5efa3eb2039ecec0d50d053186240484d0c4a4ce1006"
+      },
+      "@std/http@0.222.1": {
+        "integrity": "a3c731ec6040927aa37d8378b9e6b467e2e3068c1f97838a6e79ee3bdc103521",
+        "dependencies": [
+          "jsr:@std/assert@^0.222.1",
+          "jsr:@std/encoding@^0.222.1"
+        ]
+      }
+    },
+    "npm": {
+      "path-to-regexp@6.2.1": {
+        "integrity": "sha512-JLyh7xT1kizaEvcaXOQwOc2/Yhw6KZOvPf1S8401UyLk86CU79LN3vl7ztXGm/pZ+YjoyAJ4rxmHwbkBXJX+yw==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

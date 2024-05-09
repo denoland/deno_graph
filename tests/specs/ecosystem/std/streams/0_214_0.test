@@ -1,0 +1,22 @@
+std/streams/0.214.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/io@^0.214.0": "jsr:@std/io@0.214.0"
+    },
+    "jsr": {
+      "@std/io@0.214.0": {
+        "integrity": "81563289d48830f966a5c607841fb5b7048874e0368f873d6148776de0a1e890"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

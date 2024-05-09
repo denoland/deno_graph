@@ -1,0 +1,2197 @@
+oridune/validator/0.2.51
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators.ts:69:11
+   | 
+69 |   object: <Shape extends object>(
+   |           ^^^^^^^^^^^^^^^^^^^^^^^
+70 |     shape?: Shape,
+   | ^^^^^^^^^^^^^^^^^^
+71 |     options?: IObjectValidatorOptions,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+72 |   ) =>
+   | ^^^^^^
+73 |     new ObjectValidator<
+   | ^^^^^^^^^^^^^^^^^^^^^^^^
+74 |       ObjectValidatorShape,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+75 |       inferObjectInput<Shape>,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+76 |       inferObjectOutput<Shape>
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+77 |     >(shape || ({} as any), options),
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators.ts:85:11
+   | 
+85 |   record: <
+   |           ^
+86 |     Validator extends BaseValidator<any, any, any>,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+87 |     Index extends string | number | symbol = string,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+88 |   >(
+   | ^^^^
+89 |     validator?: Validator | (() => Validator),
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+90 |     options?: IRecordValidatorOptions | BaseValidator<any, any, any>,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+91 |   ) =>
+   | ^^^^^^
+92 |     new RecordValidator<
+   | ^^^^^^^^^^^^^^^^^^^^^^^^
+93 |       Validator,
+   | ^^^^^^^^^^^^^^^^
+94 |       Record<Index, inferInput<Validator>>,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+95 |       Record<Index, inferOutput<Validator>>
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+96 |     >(validator, options),
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:104:10
+    | 
+104 |   array: <Validator extends BaseValidator<any, any, any>>(
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+105 |     validator?: Validator | (() => Validator),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+106 |     options?: IArrayValidatorOptions,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+107 |   ) =>
+    | ^^^^^^
+108 |     new ArrayValidator<
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+109 |       Validator,
+    | ^^^^^^^^^^^^^^^^
+110 |       inferInput<Validator>[],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+111 |       inferOutput<Validator>[]
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+112 |     >(validator, options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:120:10
+    | 
+120 |   tuple: <
+    |          ^
+121 |     Validator extends Array<
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+122 |       BaseValidator<any, any, any> | (() => BaseValidator<any, any, any>)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+123 |     >,
+    | ^^^^^^
+124 |   >(
+    | ^^^^
+125 |     validators: [...Validator],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+126 |     options?: ITupleValidatorOptions,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+127 |   ) =>
+    | ^^^^^^
+128 |     new TupleValidator<
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+129 |       Validator,
+    | ^^^^^^^^^^^^^^^^
+130 |       inferEachInput<Validator>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+131 |       inferEachOutput<Validator>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+132 |     >(validators, options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:140:7
+    | 
+140 |   in: <T>(
+    |       ^^^^
+141 |     list: T[] | ((ctx: IValidatorContext) => T[] | Promise<T[]>),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+142 |     options: IEnumValidatorOptions = {},
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+143 |   ) => new EnumValidator<any, T, T>(list, options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:151:9
+    | 
+151 |   enum: <T extends string>(
+    |         ^^^^^^^^^^^^^^^^^^^
+152 |     list: T[] | ((ctx: IValidatorContext) => T[] | Promise<T[]>),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+153 |     options: IEnumValidatorOptions = {},
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+154 |   ) => new EnumValidator<any, T, T>(list, options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:161:14
+    | 
+161 |   undefined: <T extends undefined>(options?: IUndefinedValidatorOptions) =>
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+162 |     new UndefinedValidator<undefined, T, T>(options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:169:9
+    | 
+169 |   null: <T extends null>(options?: INullValidatorOptions) =>
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+170 |     new NullValidator<null, T, T>(options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:177:9
+    | 
+177 |   date: <T extends Date>(options?: IDateValidatorOptions) =>
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+178 |     new DateValidator<null, T, T>(options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:185:11
+    | 
+185 |   string: <T extends string>(options?: IStringValidatorOptions) =>
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+186 |     new StringValidator<StringConstructor, T, T>(options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:193:11
+    | 
+193 |   number: <T extends number>(options?: INumberValidatorOptions) =>
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+194 |     new NumberValidator<NumberConstructor, T, T>(options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:201:12
+    | 
+201 |   boolean: <T extends boolean>(options?: IBooleanValidatorOptions) =>
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+202 |     new BooleanValidator<BooleanConstructor, T, T>(options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:209:9
+    | 
+209 |   true: <T extends true>(
+    |         ^^^^^^^^^^^^^^^^^
+210 |     options: Omit<IBooleanValidatorOptions, "expected"> = {},
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+211 |   ) =>
+    | ^^^^^^
+212 |     new BooleanValidator<BooleanConstructor, T, T>({
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+213 |       ...options,
+    | ^^^^^^^^^^^^^^^^^
+214 |       expected: true,
+    | ^^^^^^^^^^^^^^^^^^^^^
+215 |     }),
+    | ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:222:10
+    | 
+222 |   false: <T extends false>(
+    |          ^^^^^^^^^^^^^^^^^^
+223 |     options: Omit<IBooleanValidatorOptions, "expected"> = {},
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+224 |   ) =>
+    | ^^^^^^
+225 |     new BooleanValidator<BooleanConstructor, T, T>({
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+226 |       ...options,
+    | ^^^^^^^^^^^^^^^^^
+227 |       expected: false,
+    | ^^^^^^^^^^^^^^^^^^^^^^
+228 |     }),
+    | ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:235:11
+    | 
+235 |   bigint: <T extends bigint>(options?: IBigIntValidatorOptions) =>
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+236 |     new BigIntValidator<BigIntConstructor, T, T>(options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:243:8
+    | 
+243 |   any: (options: IAnyValidatorOptions = {}) =>
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+244 |     new AnyValidator<any, any, any>(options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:265:13
+    | 
+265 |   optional: <
+    |             ^
+266 |     Validator extends
+    | ^^^^^^^^^^^^^^^^^^^^^
+267 |       | BaseValidator<any, any, any>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+268 |       | (() => BaseValidator<any, any, any>),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+269 |   >(
+    | ^^^^
+270 |     validator: Validator,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+271 |     options?: IOptionalValidatorOptions,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+272 |   ) =>
+    | ^^^^^^
+273 |     new OptionalValidator<
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+274 |       Validator,
+    | ^^^^^^^^^^^^^^^^
+275 |       inferInput<Validator> | undefined,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+276 |       inferOutput<Validator> | undefined
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+277 |     >(validator, options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:285:8
+    | 
+285 |   and: <
+    |        ^
+286 |     A extends
+    | ^^^^^^^^^^^^^
+287 |       | BaseValidator<any, any, any>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+288 |       | (() => BaseValidator<any, any, any>),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+289 |     B extends
+    | ^^^^^^^^^^^^^
+290 |       | BaseValidator<any, any, any>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+291 |       | (() => BaseValidator<any, any, any>),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+292 |   >(
+    | ^^^^
+293 |     a: A,
+    | ^^^^^^^^^
+294 |     b: B,
+    | ^^^^^^^^^
+295 |     options?: IAndValidatorOptions,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+296 |   ) =>
+    | ^^^^^^
+297 |     new AndValidator<
+    | ^^^^^^^^^^^^^^^^^^^^^
+298 |       A | B,
+    | ^^^^^^^^^^^^
+299 |       inferInput<A> & inferInput<B>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+300 |       inferOutput<A> & inferOutput<B>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+301 |     >([a, b], options),
+    | ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:309:7
+    | 
+309 |   or: <
+    |       ^
+310 |     Validator extends
+    | ^^^^^^^^^^^^^^^^^^^^^
+311 |       | BaseValidator<any, any, any>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+312 |       | (() => BaseValidator<any, any, any>),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+313 |   >(
+    | ^^^^
+314 |     validators: Validator[],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+315 |     options?: IOrValidatorOptions,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+316 |   ) =>
+    | ^^^^^^
+317 |     new OrValidator<Validator, inferInput<Validator>, inferOutput<Validator>>(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+318 |       validators,
+    | ^^^^^^^^^^^^^^^^^
+319 |       options,
+    | ^^^^^^^^^^^^^^
+320 |     ),
+    | ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:328:9
+    | 
+328 |   omit: <
+    |         ^
+329 |     Validator extends BaseValidator<ObjectValidatorShape, any, any>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+330 |     Keys extends string,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+331 |     T = Validator extends BaseValidator<infer R, any, any> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+332 |     I = Validator extends BaseValidator<any, infer R, any> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+333 |     O = Validator extends BaseValidator<any, any, infer R> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+334 |   >(
+    | ^^^^
+335 |     validator: Validator | (() => Validator),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+336 |     options: {
+    | ^^^^^^^^^^^^^^
+337 |       keys: Keys[];
+    | ^^^^^^^^^^^^^^^^^^^
+338 |       validatorOptions?: OverrideValidatorOptions;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+339 |     },
+    | ^^^^^^
+340 |   ) => {
+    | ^^^^^^^^
+341 |     const TargetValidator = BaseValidator.resolveValidator(validator);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+342 | 
+    | 
+343 |     if (!(TargetValidator instanceof ObjectValidator)) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+344 |       throw new Error("Invalid object validator instance has been provided!");
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+345 |     }
+    | ^^^^^
+346 | 
+    | 
+347 |     const ClonedValidator = TargetValidator.clone();
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+348 | 
+    | 
+349 |     ClonedValidator["Shape"] = Object.entries(ClonedValidator["Shape"]).reduce(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+350 |       (shape, [key, value]) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+351 |         options.keys.includes(key as Keys) ? shape : { ...shape, [key]: value },
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+352 |       {},
+    | ^^^^^^^^^
+353 |     );
+    | ^^^^^^
+354 | 
+    | 
+355 |     if (options?.validatorOptions) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+356 |       ClonedValidator["Options"] = {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+357 |         ...ClonedValidator["Options"],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+358 |         ...(typeof options.validatorOptions === "function"
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+359 |           ? options.validatorOptions(ClonedValidator)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+360 |           : options.validatorOptions),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+361 |       };
+    | ^^^^^^^^
+362 |     }
+    | ^^^^^
+363 | 
+    | 
+364 |     return ClonedValidator as ObjectValidator<
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+365 |       T extends ObjectValidatorShape ? T : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+366 |       OmitAdvance<I, Keys extends keyof I ? Keys : never>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+367 |       OmitAdvance<O, Keys extends keyof O ? Keys : never>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+368 |     >;
+    | ^^^^^^
+369 |   },
+    | ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:377:12
+    | 
+377 |   partial: <
+    |            ^
+378 |     Validator extends BaseValidator<ObjectValidatorShape, any, any>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+379 |     Ignore extends string,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+380 |     T = Validator extends BaseValidator<infer R, any, any> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+381 |     I = Validator extends BaseValidator<any, infer R, any> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+382 |     O = Validator extends BaseValidator<any, any, infer R> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+383 |   >(
+    | ^^^^
+384 |     validator: Validator | (() => Validator),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+385 |     options?: {
+    | ^^^^^^^^^^^^^^^
+386 |       ignore?: Ignore[];
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+387 | 
+    | 
+388 |       /**
+    | ^^^^^^^^^
+389 |        * By default the optional validators already defined are overridden. Set this property to `false` in order to keep the original optional validator settings.
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+390 |        */
+    | ^^^^^^^^^
+391 |       overrideOptionalValidator?: boolean;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+392 |       validatorOptions?: OverrideValidatorOptions;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+393 |     } & IOptionalValidatorOptions,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+394 |   ) => {
+    | ^^^^^^^^
+395 |     const TargetValidator = BaseValidator.resolveValidator(validator);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+396 | 
+    | 
+397 |     if (!(TargetValidator instanceof ObjectValidator)) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+398 |       throw new Error("Invalid object validator instance has been provided!");
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+399 |     }
+    | ^^^^^
+400 | 
+    | 
+401 |     const ClonedValidator = TargetValidator.clone();
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+402 | 
+    | 
+403 |     ClonedValidator["Shape"] = Object.entries(ClonedValidator["Shape"]).reduce(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+404 |       (shape, [key, value]) => ({
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+405 |         ...shape,
+    | ^^^^^^^^^^^^^^^^^
+406 |         [key]: options?.ignore?.includes(key as Ignore) ||
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+407 |             (options?.overrideOptionalValidator === false &&
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+408 |               value instanceof OptionalValidator)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+409 |           ? value
+    | ^^^^^^^^^^^^^^^^^
+410 |           : Validators.optional(value as any, options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+411 |       }),
+    | ^^^^^^^^^
+412 |       {},
+    | ^^^^^^^^^
+413 |     );
+    | ^^^^^^
+414 | 
+    | 
+415 |     if (options?.validatorOptions) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+416 |       ClonedValidator["Options"] = {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+417 |         ...ClonedValidator["Options"],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+418 |         ...(typeof options.validatorOptions === "function"
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+419 |           ? options.validatorOptions(ClonedValidator)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+420 |           : options.validatorOptions),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+421 |       };
+    | ^^^^^^^^
+422 |     }
+    | ^^^^^
+423 | 
+    | 
+424 |     return ClonedValidator as ObjectValidator<
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+425 |       T extends ObjectValidatorShape ? T : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+426 |       PartialAdvance<I, Ignore extends keyof I ? Ignore : never>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+427 |       PartialAdvance<O, Ignore extends keyof O ? Ignore : never>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+428 |     >;
+    | ^^^^^^
+429 |   },
+    | ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:437:16
+    | 
+437 |   deepPartial: <
+    |                ^
+438 |     Validator extends BaseValidator<ObjectValidatorShape, any, any>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+439 |     T = Validator extends BaseValidator<infer R, any, any> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+440 |     I = Validator extends BaseValidator<any, infer R, any> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+441 |     O = Validator extends BaseValidator<any, any, infer R> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+442 |   >(
+    | ^^^^
+443 |     validator: Validator | (() => Validator),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+444 |     options?: IOptionalValidatorOptions & {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+445 |       ignoreKeys?: string[];
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+446 | 
+    | 
+447 |       /**
+    | ^^^^^^^^^
+448 |        * By default the optional validators already defined are overridden. Set this property to `false` in order to keep the original optional validator settings.
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+449 |        */
+    | ^^^^^^^^^
+450 |       overrideOptionalValidator?: boolean;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+451 |       validatorOptions?: OverrideValidatorOptions;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+452 |       eachValidatorOptions?: OverrideValidatorOptions;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+453 |     },
+    | ^^^^^^
+454 |   ) => {
+    | ^^^^^^^^
+455 |     const IgnoreSet = new Set(options?.ignoreKeys);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+456 |     const TargetValidator = BaseValidator.resolveValidator(validator);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+457 | 
+    | 
+458 |     if (!(TargetValidator instanceof ObjectValidator)) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+459 |       throw new Error("Invalid object validator instance has been provided!");
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+460 |     }
+    | ^^^^^
+461 | 
+    | 
+462 |     const deepPartialValidator = (
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+463 |       validator: BaseValidator<any, any, any>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+464 |       keyPrefix?: string,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+465 |     ) => {
+    | ^^^^^^^^^^
+466 |       if (validator["DeepPartialed"]) return validator;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+467 | 
+    | 
+468 |       let Validator = validator;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+469 | 
+    | 
+470 |       if (
+    | ^^^^^^^^^^
+471 |         "Validator" in Validator &&
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+472 |         Validator["Validator"] instanceof BaseValidator
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+473 |       ) {
+    | ^^^^^^^^^
+474 |         Validator["Validator"] = deepPartialValidator(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+475 |           Validator["Validator"],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+476 |           keyPrefix,
+    | ^^^^^^^^^^^^^^^^^^^^
+477 |         );
+    | ^^^^^^^^^^
+478 |       }
+    | ^^^^^^^
+479 | 
+    | 
+480 |       if (
+    | ^^^^^^^^^^
+481 |         "RestValidator" in Validator &&
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+482 |         Validator["RestValidator"] instanceof BaseValidator
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+483 |       ) {
+    | ^^^^^^^^^
+484 |         Validator["RestValidator"] = deepPartialValidator(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+485 |           Validator["RestValidator"],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+486 |           keyPrefix,
+    | ^^^^^^^^^^^^^^^^^^^^
+487 |         );
+    | ^^^^^^^^^^
+488 |       }
+    | ^^^^^^^
+489 | 
+    | 
+490 |       if (
+    | ^^^^^^^^^^
+491 |         "Validators" in Validator && Validator["Validators"] instanceof Array
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+492 |       ) {
+    | ^^^^^^^^^
+493 |         Validator["Validators"] = Validator["Validators"].map((validator) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+494 |           deepPartialValidator(validator, keyPrefix)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+495 |         );
+    | ^^^^^^^^^^
+496 |       }
+    | ^^^^^^^
+497 | 
+    | 
+498 |       if (validator instanceof ObjectValidator) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+499 |         Validator = Validators.optional(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+500 |           deepPartialObjectValidator(validator, false, keyPrefix),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+501 |           options,
+    | ^^^^^^^^^^^^^^^^^^
+502 |         );
+    | ^^^^^^^^^^
+503 |       } else if (validator instanceof OptionalValidator) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+504 |         Validator = options?.overrideOptionalValidator === false
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+505 |           ? validator
+    | ^^^^^^^^^^^^^^^^^^^^^
+506 |           : Validators.optional(validator, options);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+507 |       } else Validator = Validators.optional(validator, options);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+508 | 
+    | 
+509 |       Validator["DeepPartialed"] = true;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+510 | 
+    | 
+511 |       if (options?.eachValidatorOptions) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+512 |         Validator["Options"] = {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+513 |           ...Validator["Options"],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+514 |           ...(typeof options.eachValidatorOptions === "function"
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+515 |             ? options.eachValidatorOptions(Validator)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+516 |             : options.eachValidatorOptions),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+517 |         };
+    | ^^^^^^^^^^
+518 |       }
+    | ^^^^^^^
+519 | 
+    | 
+520 |       return Validator;
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+521 |     };
+    | ^^^^^^
+522 | 
+    | 
+523 |     const deepPartialObjectValidator = (
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+524 |       validator: ObjectValidator<any, any, any>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+525 |       start = false,
+    | ^^^^^^^^^^^^^^^^^^^^
+526 |       keyPrefix?: string,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+527 |     ) => {
+    | ^^^^^^^^^^
+528 |       if (validator["DeepPartialed"]) return validator;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+529 | 
+    | 
+530 |       const Validator = validator.clone();
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+531 | 
+    | 
+532 |       const ValidatorShape = Validator["Shape"];
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+533 | 
+    | 
+534 |       for (const Key in ValidatorShape) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+535 |         const Index = [keyPrefix, Key].filter(Boolean).join(".");
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+536 | 
+    | 
+537 |         if (!IgnoreSet.has(Index)) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+538 |           ValidatorShape[Key] = deepPartialValidator(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+539 |             ValidatorShape[Key],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+540 |             Index,
+    | ^^^^^^^^^^^^^^^^^^
+541 |           );
+    | ^^^^^^^^^^^^
+542 |         }
+    | ^^^^^^^^^
+543 |       }
+    | ^^^^^^^
+544 | 
+    | 
+545 |       Validator["DeepPartialed"] = true;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+546 | 
+    | 
+547 |       if (start && options?.validatorOptions) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+548 |         Validator["Options"] = {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+549 |           ...Validator["Options"],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+550 |           ...(typeof options.validatorOptions === "function"
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+551 |             ? options.validatorOptions(Validator)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+552 |             : options.validatorOptions),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+553 |         };
+    | ^^^^^^^^^^
+554 |       }
+    | ^^^^^^^
+555 | 
+    | 
+556 |       return Validator;
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+557 |     };
+    | ^^^^^^
+558 | 
+    | 
+559 |     return deepPartialObjectValidator(TargetValidator, true) as ObjectValidator<
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+560 |       T extends ObjectValidatorShape ? T : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+561 |       DeepPartial<I>,
+    | ^^^^^^^^^^^^^^^^^^^^^
+562 |       DeepPartial<O>
+    | ^^^^^^^^^^^^^^^^^^^^
+563 |     >;
+    | ^^^^^^
+564 |   },
+    | ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:571:13
+    | 
+571 |   deepCast: <Validator extends BaseValidator<any, any, any>>(
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+572 |     validator: Validator | (() => Validator),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+573 |     options?: {
+    | ^^^^^^^^^^^^^^^
+574 |       validatorOptions?: OverrideValidatorOptions;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+575 |       eachValidatorOptions?: OverrideValidatorOptions;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+576 |     },
+    | ^^^^^^
+577 |   ) => {
+    | ^^^^^^^^
+578 |     const TargetValidator = BaseValidator.resolveValidator(validator);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+579 | 
+    | 
+580 |     const castValidator = (
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+581 |       validator: BaseValidator<any, any, any>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+582 |       start = false,
+    | ^^^^^^^^^^^^^^^^^^^^
+583 |     ) => {
+    | ^^^^^^^^^^
+584 |       if (validator["DeepCasted"]) return validator;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+585 | 
+    | 
+586 |       let Validator = validator;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+587 | 
+    | 
+588 |       if (
+    | ^^^^^^^^^^
+589 |         "Validator" in Validator &&
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+590 |         Validator["Validator"] instanceof BaseValidator
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+591 |       ) {
+    | ^^^^^^^^^
+592 |         Validator["Validator"] = castValidator(Validator["Validator"]);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+593 |       }
+    | ^^^^^^^
+594 | 
+    | 
+595 |       if (
+    | ^^^^^^^^^^
+596 |         "RestValidator" in Validator &&
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+597 |         Validator["RestValidator"] instanceof BaseValidator
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+598 |       ) {
+    | ^^^^^^^^^
+599 |         Validator["RestValidator"] = castValidator(Validator["RestValidator"]);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+600 |       }
+    | ^^^^^^^
+601 | 
+    | 
+602 |       if (
+    | ^^^^^^^^^^
+603 |         "Validators" in Validator && Validator["Validators"] instanceof Array
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+604 |       ) {
+    | ^^^^^^^^^
+605 |         Validator["Validators"] = Validator["Validators"].map((validator) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+606 |           castValidator(validator)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+607 |         );
+    | ^^^^^^^^^^
+608 |       }
+    | ^^^^^^^
+609 | 
+    | 
+610 |       if (Validator instanceof ObjectValidator) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+611 |         Validator = castObjectValidator(Validator);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+612 |       }
+    | ^^^^^^^
+613 | 
+    | 
+614 |       Validator["Options"] ??= {};
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+615 |       Validator["Options"].cast = true;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+616 | 
+    | 
+617 |       if (start && options?.validatorOptions) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+618 |         Validator["Options"] = {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+619 |           ...Validator["Options"],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+620 |           ...(typeof options.validatorOptions === "function"
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+621 |             ? options.validatorOptions(Validator)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+622 |             : options.validatorOptions),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+623 |         };
+    | ^^^^^^^^^^
+624 |       }
+    | ^^^^^^^
+625 | 
+    | 
+626 |       if (options?.eachValidatorOptions) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+627 |         Validator["Options"] = {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+628 |           ...Validator["Options"],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+629 |           ...(typeof options.eachValidatorOptions === "function"
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+630 |             ? options.eachValidatorOptions(Validator)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+631 |             : options.eachValidatorOptions),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+632 |         };
+    | ^^^^^^^^^^
+633 |       }
+    | ^^^^^^^
+634 | 
+    | 
+635 |       Validator["DeepCasted"] = true;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+636 | 
+    | 
+637 |       return Validator;
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+638 |     };
+    | ^^^^^^
+639 | 
+    | 
+640 |     const castObjectValidator = (validator: ObjectValidator<any, any, any>) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+641 |       const ValidatorShape = validator["Shape"];
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+642 | 
+    | 
+643 |       for (const Key in ValidatorShape) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+644 |         ValidatorShape[Key] = castValidator(ValidatorShape[Key]);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+645 |       }
+    | ^^^^^^^
+646 | 
+    | 
+647 |       return validator;
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+648 |     };
+    | ^^^^^^
+649 | 
+    | 
+650 |     return castValidator(TargetValidator, true) as Validator;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+651 |   },
+    | ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:659:13
+    | 
+659 |   required: <
+    |             ^
+660 |     Validator extends BaseValidator<ObjectValidatorShape, any, any>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+661 |     Ignore extends string,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+662 |     T = Validator extends BaseValidator<infer R, any, any> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+663 |     I = Validator extends BaseValidator<any, infer R, any> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+664 |     O = Validator extends BaseValidator<any, any, infer R> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+665 |   >(
+    | ^^^^
+666 |     validator: Validator | (() => Validator),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+667 |     options?: {
+    | ^^^^^^^^^^^^^^^
+668 |       ignore?: Ignore[];
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+669 |       validatorOptions?: OverrideValidatorOptions;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+670 |     },
+    | ^^^^^^
+671 |   ) => {
+    | ^^^^^^^^
+672 |     const TargetValidator = BaseValidator.resolveValidator(validator);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+673 | 
+    | 
+674 |     if (!(TargetValidator instanceof ObjectValidator)) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+675 |       throw new Error("Invalid object validator instance has been provided!");
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+676 |     }
+    | ^^^^^
+677 | 
+    | 
+678 |     const ClonedValidator = TargetValidator.clone();
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+679 | 
+    | 
+680 |     ClonedValidator["Shape"] = Object.entries(ClonedValidator["Shape"]).reduce(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+681 |       (shape, [key, value]) => ({
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+682 |         ...shape,
+    | ^^^^^^^^^^^^^^^^^
+683 |         [key]: options?.ignore?.includes(key as Ignore)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+684 |           ? value
+    | ^^^^^^^^^^^^^^^^^
+685 |           : value instanceof OptionalValidator
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+686 |           ? value["Validator"]
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+687 |           : value,
+    | ^^^^^^^^^^^^^^^^^^
+688 |       }),
+    | ^^^^^^^^^
+689 |       {},
+    | ^^^^^^^^^
+690 |     );
+    | ^^^^^^
+691 | 
+    | 
+692 |     if (options?.validatorOptions) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+693 |       ClonedValidator["Options"] = {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+694 |         ...ClonedValidator["Options"],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+695 |         ...(typeof options.validatorOptions === "function"
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+696 |           ? options.validatorOptions(ClonedValidator)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+697 |           : options.validatorOptions),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+698 |       };
+    | ^^^^^^^^
+699 |     }
+    | ^^^^^
+700 | 
+    | 
+701 |     return ClonedValidator as ObjectValidator<
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+702 |       T extends ObjectValidatorShape ? T : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+703 |       RequiredAdvance<I, Ignore extends keyof I ? Ignore : never>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+704 |       RequiredAdvance<O, Ignore extends keyof O ? Ignore : never>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+705 |     >;
+    | ^^^^^^
+706 |   },
+    | ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:714:9
+    | 
+714 |   pick: <
+    |         ^
+715 |     Validator extends BaseValidator<ObjectValidatorShape, any, any>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+716 |     Keys extends string,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+717 |     T = Validator extends BaseValidator<infer R, any, any> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+718 |     I = Validator extends BaseValidator<any, infer R, any> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+719 |     O = Validator extends BaseValidator<any, any, infer R> ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+720 |   >(
+    | ^^^^
+721 |     validator: Validator | (() => Validator),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+722 |     options?: {
+    | ^^^^^^^^^^^^^^^
+723 |       keys?: Keys[];
+    | ^^^^^^^^^^^^^^^^^^^^
+724 |       validatorOptions?: OverrideValidatorOptions;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+725 |     },
+    | ^^^^^^
+726 |   ) => {
+    | ^^^^^^^^
+727 |     const TargetValidator = BaseValidator.resolveValidator(validator);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+728 | 
+    | 
+729 |     if (!(TargetValidator instanceof ObjectValidator)) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+730 |       throw new Error("Invalid object validator instance has been provided!");
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+731 |     }
+    | ^^^^^
+732 | 
+    | 
+733 |     const ClonedValidator = TargetValidator.clone();
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+734 | 
+    | 
+735 |     ClonedValidator["Shape"] = Object.entries(ClonedValidator["Shape"]).reduce(
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+736 |       (shape, [key, value]) =>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+737 |         options?.keys?.includes(key as Keys)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+738 |           ? { ...shape, [key]: value }
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+739 |           : shape,
+    | ^^^^^^^^^^^^^^^^^^
+740 |       {},
+    | ^^^^^^^^^
+741 |     );
+    | ^^^^^^
+742 | 
+    | 
+743 |     if (options?.validatorOptions) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+744 |       ClonedValidator["Options"] = {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+745 |         ...ClonedValidator["Options"],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+746 |         ...(typeof options.validatorOptions === "function"
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+747 |           ? options.validatorOptions(ClonedValidator)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+748 |           : options.validatorOptions),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+749 |       };
+    | ^^^^^^^^
+750 |     }
+    | ^^^^^
+751 | 
+    | 
+752 |     return ClonedValidator as ObjectValidator<
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+753 |       T extends ObjectValidatorShape ? T : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+754 |       PickAdvance<I, Keys extends keyof I ? Keys : never>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+755 |       PickAdvance<O, Keys extends keyof O ? Keys : never>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+756 |     >;
+    | ^^^^^^
+757 |   },
+    | ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:765:7
+    | 
+765 |   if: <T = any>(
+    |       ^^^^^^^^^^
+766 |     predicate:
+    | ^^^^^^^^^^^^^^
+767 |       | boolean
+    | ^^^^^^^^^^^^^^^
+768 |       | ((value: T, ...arg: any[]) => boolean | Promise<boolean>),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+769 |     options?: IIfValidatorOptions,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+770 |   ) => new IfValidator<unknown, T, T>(predicate, options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:778:15
+    | 
+778 |   instanceOf: <
+    |               ^
+779 |     T extends new (...args: any[]) => any,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+780 |     AllowUndefined extends boolean = false,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+781 |     Proto = T extends { prototype: any } ? T["prototype"] : unknown,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+782 |     RawInput = ConstructorParameters<T>[0],
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+783 |     Input = AllowUndefined extends true ? RawInput | undefined
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+784 |       : Exclude<RawInput, undefined>,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+785 |     RestArgs = ConstructorParameters<T> extends [any, ...infer R] ? R : never,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+786 |   >(
+    | ^^^^
+787 |     constructor: T,
+    | ^^^^^^^^^^^^^^^^^^^
+788 |     options?: IInstanceOfValidatorOptions<
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+789 |       AllowUndefined,
+    | ^^^^^^^^^^^^^^^^^^^^^
+790 |       Input,
+    | ^^^^^^^^^^^^
+791 |       RestArgs extends Array<any> ? RestArgs : never
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+792 |     >,
+    | ^^^^^^
+793 |   ) => new InstanceOfValidator<T, Proto | Input, Proto>(constructor, options),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:800:8
+    | 
+800 |   url: <URLInstance extends boolean = false>(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+801 |     options?: IStringValidatorOptions & { returnURLInstance?: URLInstance },
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+802 |   ) => Validators.string(options).isURL(options?.returnURLInstance),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:835:8
+    | 
+835 |   try: async <T>(callback: () => T) => {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+836 |     try {
+    | ^^^^^^^^^
+837 |       const Results = await callback();
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+838 |       return Results;
+    | ^^^^^^^^^^^^^^^^^^^^^
+839 |     } catch (error) {
+    | ^^^^^^^^^^^^^^^^^^^^^
+840 |       throw Validators.error(error);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+841 |     }
+    | ^^^^^
+842 |   },
+    | ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:848:12
+    | 
+848 |   trySync: <T>(callback: () => T) => {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+849 |     try {
+    | ^^^^^^^^^
+850 |       const Results = callback();
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+851 |       return Results;
+    | ^^^^^^^^^^^^^^^^^^^^^
+852 |     } catch (error) {
+    | ^^^^^^^^^^^^^^^^^^^^^
+853 |       throw Validators.error(error);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+854 |     }
+    | ^^^^^
+855 |   },
+    | ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:863:7
+    | 
+863 |   is: (
+    |       ^
+864 |     validator:
+    | ^^^^^^^^^^^^^^
+865 |       | BaseValidator<any, any, any>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+866 |       | (() => BaseValidator<any, any, any>),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+867 |     value: unknown,
+    | ^^^^^^^^^^^^^^^^^^^
+868 |   ) => {
+    | ^^^^^^^^
+869 |     return BaseValidator.resolveValidator(validator)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+870 |       .validate(value)
+    | ^^^^^^^^^^^^^^^^^^^^^^
+871 |       .then(() => true)
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+872 |       .catch(() => false);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+873 |   },
+    | ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/exceptions.ts:18:10
+   | 
+18 |   public pushIssues(
+   |          ^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/exceptions.ts:35:10
+   | 
+35 |   public clone() {
+   |          ^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/exceptions.ts:46:10
+   | 
+46 |   public reset() {
+   |          ^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/base.ts:95:19
+   | 
+95 |   protected async _resolveErrorMessage(
+   |                   ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/base.ts:159:10
+    | 
+159 |   public throwsFatal() {
+    |          ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/base.ts:167:10
+    | 
+167 |   public checkpoint() {
+    |          ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/base.ts:217:16
+    | 
+217 |   public async try(input?: any, options?: IValidationOptions) {
+    |                ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/base.ts:231:16
+    | 
+231 |   public async test(input?: any, options?: IValidationOptions) {
+    |                ^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/base.ts:241:10
+    | 
+241 |   public toJSON(options?: IJSONSchemaOptions) {
+    |          ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/base.ts:252:10
+    | 
+252 |   public toSample(options?: ISampleDataOptions) {
+    |          ^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/base.ts:266:10
+    | 
+266 |   public describe(description: string) {
+    |          ^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/base.ts:276:10
+    | 
+276 |   public sample(sample: any) {
+    |          ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/utility/instanceOf.ts:47:13
+   | 
+47 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/utility/instanceOf.ts:54:13
+   | 
+54 |   protected _toSample(_options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/utility/if.ts:20:13
+   | 
+20 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/utility/if.ts:27:13
+   | 
+27 |   protected _toSample(_options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/utility/or.ts:27:13
+   | 
+27 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/utility/or.ts:37:13
+   | 
+37 |   protected _toSample(options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/utility/optional.ts:36:13
+   | 
+36 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/utility/optional.ts:40:13
+   | 
+40 |   protected _toSample(options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/utility/any.ts:19:13
+   | 
+19 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/utility/any.ts:26:13
+   | 
+26 |   protected _toSample(_options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/utility/and.ts:26:13
+   | 
+26 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/utility/and.ts:36:13
+   | 
+36 |   protected _toSample(options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/tuple.ts:36:13
+   | 
+36 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/tuple.ts:53:13
+   | 
+53 |   protected _toSample(options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/non-primitives/tuple.ts:154:10
+    | 
+154 |   public length(options: { min?: number; max?: number } | number) {
+    |          ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/non-primitives/tuple.ts:209:10
+    | 
+209 |   public min(length: number) {
+    |          ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/non-primitives/tuple.ts:213:10
+    | 
+213 |   public max(length: number) {
+    |          ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/record.ts:28:13
+   | 
+28 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/record.ts:39:13
+   | 
+39 |   protected _toSample(_options?: ISampleDataOptions | undefined) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/object.ts:35:13
+   | 
+35 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/object.ts:64:13
+   | 
+64 |   protected _toSample(_options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/non-primitives/object.ts:243:10
+    | 
+243 |   public clone() {
+    |          ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/enum.ts:25:13
+   | 
+25 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/enum.ts:48:13
+   | 
+48 |   protected _toSample(_options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/date.ts:24:13
+   | 
+24 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/date.ts:31:13
+   | 
+31 |   protected _toSample(_options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/date.ts:58:10
+   | 
+58 |   public between(options: { start?: Date | number; end?: Date | number }) {
+   |          ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/date.ts:84:10
+   | 
+84 |   public start(at: Date | number) {
+   |          ^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/date.ts:88:10
+   | 
+88 |   public end(at: Date | number) {
+   |          ^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/array.ts:50:13
+   | 
+50 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/non-primitives/array.ts:63:13
+   | 
+63 |   protected _toSample(options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/non-primitives/array.ts:172:10
+    | 
+172 |   public length(options: { min?: number; max?: number } | number) {
+    |          ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/non-primitives/array.ts:202:10
+    | 
+202 |   public min(length: number) {
+    |          ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/non-primitives/array.ts:206:10
+    | 
+206 |   public max(length: number) {
+    |          ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/undefined.ts:21:13
+   | 
+21 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/undefined.ts:28:13
+   | 
+28 |   protected _toSample(_options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/string.ts:38:13
+   | 
+38 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/string.ts:48:13
+   | 
+48 |   protected _toSample(_options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/string.ts:71:10
+   | 
+71 |   public length(options: { min?: number; max?: number } | number) {
+   |          ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/primitives/string.ts:101:10
+    | 
+101 |   public min(length: number) {
+    |          ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/primitives/string.ts:105:10
+    | 
+105 |   public max(length: number) {
+    |          ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/primitives/string.ts:109:10
+    | 
+109 |   public matches(options: { regex: RegExp | RegExp[] } | RegExp | RegExp[]) {
+    |          ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/primitives/string.ts:156:10
+    | 
+156 |   public isNaN() {
+    |          ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/primitives/string.ts:173:10
+    | 
+173 |   public isURL<URLInstance extends boolean = false>(
+    |          ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/number.ts:41:13
+   | 
+41 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/number.ts:54:13
+   | 
+54 |   protected _toSample(_options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/number.ts:93:10
+   | 
+93 |   public length(options: { min?: number; max?: number } | number) {
+   |          ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/primitives/number.ts:125:10
+    | 
+125 |   public amount(options: { min?: number; max?: number } | number) {
+    |          ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/primitives/number.ts:153:10
+    | 
+153 |   public min(amount: number) {
+    |          ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/primitives/number.ts:157:10
+    | 
+157 |   public max(amount: number) {
+    |          ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/primitives/number.ts:161:10
+    | 
+161 |   public int() {
+    |          ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators/primitives/number.ts:180:10
+    | 
+180 |   public float() {
+    |          ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/null.ts:21:13
+   | 
+21 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/null.ts:28:13
+   | 
+28 |   protected _toSample(_options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/boolean.ts:25:13
+   | 
+25 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/boolean.ts:33:13
+   | 
+33 |   protected _toSample(_options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/bigint.ts:21:13
+   | 
+21 |   protected _toJSON(_options?: IJSONSchemaOptions) {
+   |             ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/validators/primitives/bigint.ts:28:13
+   | 
+28 |   protected _toSample(_options?: ISampleDataOptions) {
+   |             ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

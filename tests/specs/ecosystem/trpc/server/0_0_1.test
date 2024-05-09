@@ -1,0 +1,105 @@
+trpc/server/0.0.1
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/unstable-core-do-not-import/transformer.ts:113:17
+    | 
+113 | export function transformTRPCResponse<
+    |                 ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/unstable-core-do-not-import/router.ts:223:17
+    | 
+223 | export function callProcedure(
+    |                 ^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/unstable-core-do-not-import/middleware.ts:122:17
+    | 
+122 | export function createMiddlewareFactory<
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/unstable-core-do-not-import/middleware.ts:163:14
+    | 
+163 | export const experimental_standaloneMiddleware = <
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/unstable-core-do-not-import/initTRPC.ts:50:3
+   | 
+50 |   context<TNewContext extends object | ((...args: unknown[]) => object)>() {
+   |   ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/unstable-core-do-not-import/initTRPC.ts:58:3
+   | 
+58 |   meta<TNewMeta extends object>() {
+   |   ^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/unstable-core-do-not-import/initTRPC.ts:66:3
+   | 
+66 |   create<TOptions extends RuntimeConfigOptions<TContext, TMeta>>(
+   |   ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/unstable-core-do-not-import/initTRPC.ts:148:14
+    | 
+148 | export const initTRPC = new TRPCBuilder();
+    |              ^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/unstable-core-do-not-import/error/TRPCError.ts:60:19
+   | 
+60 |   public readonly code;
+   |                   ^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

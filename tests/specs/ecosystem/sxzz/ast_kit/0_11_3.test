@@ -1,0 +1,17 @@
+sxzz/ast-kit/0.11.3
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/utils.ts:5:14
+  | 
+5 | export const TS_NODE_TYPES = [
+  |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

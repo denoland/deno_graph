@@ -1,0 +1,35 @@
+fedify/fedify/0.8.0-dev.149+da1ca0e2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/semver@^0.220.1": "jsr:@std/semver@0.220.1",
+      "npm:@phensley/language-tag@^1.8.0": "npm:@phensley/language-tag@1.8.1"
+    },
+    "jsr": {
+      "@std/semver@0.220.1": {
+        "integrity": "f3df4abc715ad723680011f19d2934cfd436b4c41c317e82bfc14ac586b3b724"
+      }
+    },
+    "npm": {
+      "@phensley/language-tag@1.8.1": {
+        "integrity": "sha512-Jz5P1/AgGQU4ttK8FXg0M7zyZdFHl8iIfi+PXJErrDu6NFalm6W4avbT0kJcvi7bp+j4DhKL4UfV34Vwl2dv7w==",
+        "dependencies": {
+          "tslib": "tslib@2.6.2"
+        }
+      },
+      "tslib@2.6.2": {
+        "integrity": "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

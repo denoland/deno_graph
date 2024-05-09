@@ -1,0 +1,83 @@
+tsirysndr/fluent-codepipeline/0.3.0
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/spec.ts:3:14
+  | 
+3 | export const EnvSchema = z
+  |              ^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/spec.ts:14:14
+   | 
+14 | export const PhaseSchema = z
+   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/spec.ts:24:14
+   | 
+24 | export const ReportsSchema = z
+   |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/spec.ts:33:14
+   | 
+33 | export const ArtifactsSchema = z
+   |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/spec.ts:58:14
+   | 
+58 | export const CacheSchema = z
+   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/spec.ts:64:14
+   | 
+64 | export const Schema = z.object({
+   |              ^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/buildspec.ts:57:3
+   | 
+57 |   toString() {
+   |   ^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

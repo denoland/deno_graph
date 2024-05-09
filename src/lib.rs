@@ -7,6 +7,7 @@
 mod analyzer;
 mod ast;
 mod graph;
+mod jsr;
 mod module_specifier;
 mod rt;
 
@@ -19,14 +20,13 @@ pub mod source;
 mod text_encoding;
 
 use source::FileSystem;
+use source::JsrUrlProvider;
 use source::NpmResolver;
 use source::Resolver;
 
 use std::collections::HashMap;
 use std::sync::Arc;
 
-pub use analyzer::analyze_deno_types;
-pub use analyzer::Comment;
 pub use analyzer::DependencyDescriptor;
 pub use analyzer::DynamicArgument;
 pub use analyzer::DynamicDependencyDescriptor;
@@ -109,6 +109,7 @@ pub struct ParseModuleOptions<'a> {
   pub maybe_headers: Option<&'a HashMap<String, String>>,
   pub content: Arc<[u8]>,
   pub file_system: &'a dyn FileSystem,
+  pub jsr_url_provider: &'a dyn JsrUrlProvider,
   pub maybe_resolver: Option<&'a dyn Resolver>,
   pub maybe_npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: &'a dyn ModuleAnalyzer,
@@ -128,6 +129,7 @@ pub fn parse_module(
     None,
     None,
     options.file_system,
+    options.jsr_url_provider,
     options.maybe_resolver,
     options.module_analyzer,
     true,
@@ -142,6 +144,7 @@ pub struct ParseModuleFromAstOptions<'a> {
   pub maybe_headers: Option<&'a HashMap<String, String>>,
   pub parsed_source: &'a deno_ast::ParsedSource,
   pub file_system: &'a dyn FileSystem,
+  pub jsr_url_provider: &'a dyn JsrUrlProvider,
   pub maybe_resolver: Option<&'a dyn Resolver>,
   pub maybe_npm_resolver: Option<&'a dyn NpmResolver>,
 }
@@ -156,6 +159,7 @@ pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
     ParserModuleAnalyzer::module_info(options.parsed_source),
     options.parsed_source.text_info().text(),
     options.file_system,
+    options.jsr_url_provider,
     options.maybe_resolver,
     options.maybe_npm_resolver,
   )
@@ -188,7 +192,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_build_graph() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -213,11 +217,7 @@ mod tests {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 2);
     assert_eq!(graph.roots, vec![root_specifier.clone()]);
@@ -251,7 +251,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_build_graph_multiple_roots() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -294,7 +294,7 @@ mod tests {
     ];
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(roots.clone(), &mut loader, Default::default())
+      .build(roots.clone(), &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 4);
     assert_eq!(graph.roots, roots);
@@ -312,7 +312,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_build_graph_multiple_times() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -364,14 +364,14 @@ mod tests {
       ModuleSpecifier::parse("https://example.com/d.ts").unwrap();
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(vec![first_root.clone()], &mut loader, Default::default())
+      .build(vec![first_root.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 4);
     assert_eq!(graph.roots, vec![first_root.clone()]);
 
     // now build with the second root
     graph
-      .build(vec![second_root.clone()], &mut loader, Default::default())
+      .build(vec![second_root.clone()], &loader, Default::default())
       .await;
     let mut roots = vec![first_root, second_root];
     assert_eq!(graph.module_slots.len(), 5);
@@ -391,7 +391,7 @@ mod tests {
 
     // now try making one of the already existing modules a root
     graph
-      .build(vec![third_root.clone()], &mut loader, Default::default())
+      .build(vec![third_root.clone()], &loader, Default::default())
       .await;
     roots.push(third_root);
     assert_eq!(graph.module_slots.len(), 5);
@@ -400,7 +400,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_build_graph_json_module_root() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "file:///a/test.json",
         Source::Module {
@@ -416,7 +416,7 @@ mod tests {
     graph
       .build(
         roots.clone(),
-        &mut loader,
+        &loader,
         BuildOptions {
           is_dynamic: true,
           ..Default::default()
@@ -444,7 +444,7 @@ mod tests {
 
   #[tokio::test]
   async fn test_valid_type_missing() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -473,18 +473,14 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert!(graph.valid().is_ok());
   }
 
   #[tokio::test]
   async fn test_valid_code_missing() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "file:///a/test01.ts",
         Source::Module {
@@ -501,11 +497,7 @@ console.log(a);
     let root_specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert!(graph.valid().is_err());
     assert_eq!(
@@ -516,7 +508,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_remote_import_data_url() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "https://deno.land/main.ts",
         Source::Module {
@@ -534,11 +526,7 @@ console.log(a);
       ModuleSpecifier::parse("https://deno.land/main.ts").unwrap();
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert!(graph.valid().is_ok());
   }
@@ -549,7 +537,7 @@ console.log(a);
       let root_specifier =
         ModuleSpecifier::parse(&format!("{scheme}://deno.land/main.ts"))
           .unwrap();
-      let mut loader = setup(
+      let loader = setup(
         vec![
           (
             root_specifier.as_str(),
@@ -575,7 +563,7 @@ console.log(a);
       );
       let mut graph = ModuleGraph::new(GraphKind::All);
       graph
-        .build(vec![root_specifier], &mut loader, Default::default())
+        .build(vec![root_specifier], &loader, Default::default())
         .await;
       assert!(matches!(
         graph.valid().err().unwrap(),
@@ -591,7 +579,7 @@ console.log(a);
     for scheme in &["http", "https"] {
       let root_specifier_str = format!("{scheme}://deno.land/main.ts");
       let root_specifier = ModuleSpecifier::parse(&root_specifier_str).unwrap();
-      let mut loader = setup(
+      let loader = setup(
         vec![
           (
             root_specifier.as_str(),
@@ -627,7 +615,7 @@ console.log(a);
       graph
         .build(
           vec![root_specifier.clone()],
-          &mut loader,
+          &loader,
           BuildOptions {
             resolver: maybe_resolver,
             ..Default::default()
@@ -640,7 +628,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_imports() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -680,7 +668,7 @@ console.log(a);
     graph
       .build(
         vec![root_specifier],
-        &mut loader,
+        &loader,
         BuildOptions {
           imports,
           ..Default::default()
@@ -759,7 +747,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_imports_imported() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -808,7 +796,7 @@ console.log(a);
     graph
       .build(
         vec![root_specifier],
-        &mut loader,
+        &loader,
         BuildOptions {
           imports,
           ..Default::default()
@@ -888,7 +876,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_imports_resolve_dependency() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -934,7 +922,7 @@ console.log(a);
     graph
       .build(
         vec![root_specifier],
-        &mut loader,
+        &loader,
         BuildOptions {
           imports,
           ..Default::default()
@@ -986,7 +974,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_with_headers() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "https://example.com/a",
         Source::Module {
@@ -1004,11 +992,7 @@ console.log(a);
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 1);
     assert_eq!(graph.roots, vec![root_specifier.clone()]);
@@ -1025,7 +1009,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_jsx_import_source() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.tsx",
@@ -1058,11 +1042,7 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test01.tsx").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -1110,8 +1090,123 @@ console.log(a);
   }
 
   #[tokio::test]
+  async fn test_build_graph_jsx_import_source_types() {
+    let loader = setup(
+      vec![
+        (
+          "file:///a/test01.tsx",
+          Source::Module {
+            specifier: "file:///a/test01.tsx",
+            maybe_headers: None,
+            content: r#"/* @jsxImportSource https://example.com/preact */
+            /* @jsxImportSourceTypes https://example.com/preact-types */
+
+            export function A() {
+              <div>Hello Deno</div>
+            }
+            "#,
+          },
+        ),
+        (
+          "https://example.com/preact/jsx-runtime",
+          Source::Module {
+            specifier: "https://example.com/preact/jsx-runtime/index.js",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/javascript",
+            )]),
+            content: r#"export function jsx() {}"#,
+          },
+        ),
+        (
+          "https://example.com/preact-types/jsx-runtime",
+          Source::Module {
+            specifier:
+              "https://example.com/preact-types/jsx-runtime/index.d.ts",
+            maybe_headers: Some(vec![(
+              "content-type",
+              "application/typescript",
+            )]),
+            content: r#"export declare function jsx();"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.tsx").expect("bad url");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(vec![root_specifier.clone()], &loader, Default::default())
+      .await;
+    assert_eq!(
+      json!(graph),
+      json!({
+        "roots": [
+          "file:///a/test01.tsx"
+        ],
+        "modules": [
+          {
+            "dependencies": [
+              {
+                "specifier": "https://example.com/preact/jsx-runtime",
+                "code": {
+                  "specifier": "https://example.com/preact/jsx-runtime",
+                  "span": {
+                    "start": {
+                      "line": 0,
+                      "character": 20
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 46
+                    }
+                  }
+                },
+                "type": {
+                  "specifier": "https://example.com/preact-types/jsx-runtime",
+                  "span": {
+                    "start": {
+                      "line": 1,
+                      "character": 37
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 69
+                    }
+                  }
+                }
+              }
+            ],
+            "kind": "esm",
+            "mediaType": "TSX",
+            "size": 220,
+            "specifier": "file:///a/test01.tsx"
+          },
+          {
+            "kind": "esm",
+            "mediaType": "Dts",
+            "size": 30,
+            "specifier": "https://example.com/preact-types/jsx-runtime/index.d.ts"
+          },
+          {
+            "kind": "esm",
+            "mediaType": "JavaScript",
+            "size": 24,
+            "specifier": "https://example.com/preact/jsx-runtime/index.js"
+          }
+        ],
+        "redirects": {
+          "https://example.com/preact-types/jsx-runtime": "https://example.com/preact-types/jsx-runtime/index.d.ts",
+          "https://example.com/preact/jsx-runtime": "https://example.com/preact/jsx-runtime/index.js"
+        }
+      })
+    );
+  }
+
+  #[tokio::test]
   async fn test_bare_specifier_error() {
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "file:///a/test.ts",
         Source::Module {
@@ -1126,11 +1221,7 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     let result = graph.valid();
     assert!(result.is_err());
@@ -1279,7 +1370,7 @@ console.log(a);
     };
     let mock_import_map_resolver = MockImportMapResolver {};
 
-    let mut loader = setup(
+    let loader = setup(
       vec![(
         "file:///a/test.ts",
         Source::Module {
@@ -1296,7 +1387,7 @@ console.log(a);
     graph
       .build(
         vec![root_specifier.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           npm_resolver: Some(&mock_npm_resolver),
           ..Default::default()
@@ -1309,7 +1400,7 @@ console.log(a);
     graph
       .build(
         vec![root_specifier.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           resolver: Some(&mock_import_map_resolver),
           npm_resolver: Some(&mock_npm_resolver),
@@ -1327,7 +1418,7 @@ console.log(a);
     graph
       .build(
         vec![root_specifier.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           npm_resolver: Some(&mock_npm_resolver),
           ..Default::default()
@@ -1344,7 +1435,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_unsupported_media_type() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test.ts",
@@ -1369,11 +1460,7 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     let result = graph.valid();
     assert!(result.is_err());
@@ -1390,7 +1477,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_root_is_extensionless() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01",
@@ -1415,18 +1502,14 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test01").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert!(graph.valid().is_ok());
   }
 
   #[tokio::test]
   async fn test_crate_graph_with_dynamic_imports() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a.ts",
@@ -1451,11 +1534,7 @@ console.log(a);
       ModuleSpecifier::parse("file:///a.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -1503,7 +1582,7 @@ console.log(a);
 
   #[tokio::test]
   async fn test_build_graph_with_jsdoc_imports() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test.js",
@@ -1545,7 +1624,7 @@ export function a(a) {
     let root = ModuleSpecifier::parse("file:///a/test.js").unwrap();
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(vec![root.clone()], &mut loader, Default::default())
+      .build(vec![root.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -1614,7 +1693,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_redirects() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "https://example.com/a",
@@ -1645,11 +1724,7 @@ export function a(a) {
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       graph.roots,
@@ -1680,7 +1755,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_circular_redirects() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "https://example.com/a",
@@ -1712,11 +1787,7 @@ export function a(a) {
       ModuleSpecifier::parse("https://example.com/a").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       graph.roots,
@@ -1747,7 +1818,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_data_url() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -1772,11 +1843,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 3);
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
@@ -1788,8 +1855,152 @@ export function a(a) {
   }
 
   #[tokio::test]
+  async fn test_build_graph_with_reference_types_in_js() {
+    let loader = setup(
+      vec![
+        (
+          "file:///test01.js",
+          Source::Module {
+            specifier: "file:///test01.js",
+            maybe_headers: None,
+            content: r#"/// <reference types="./test01.d.ts" />
+export const foo = 'bar';"#,
+          },
+        ),
+        (
+          "file:///test01.d.ts",
+          Source::Module {
+            specifier: "file:///test01.d.ts",
+            maybe_headers: None,
+            content: r#"export declare const foo: string;"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///test01.js").expect("bad url");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(vec![root_specifier.clone()], &loader, Default::default())
+      .await;
+    assert_eq!(graph.module_slots.len(), 2);
+    let module = graph.get(&root_specifier).unwrap().js().unwrap();
+    assert_eq!(module.dependencies.len(), 0);
+    let types_dep = module.maybe_types_dependency.as_ref().unwrap();
+    assert_eq!(types_dep.specifier, "./test01.d.ts");
+    assert_eq!(
+      *types_dep.dependency.ok().unwrap(),
+      ResolutionResolved {
+        specifier: ModuleSpecifier::parse("file:///test01.d.ts").unwrap(),
+        range: Range {
+          specifier: ModuleSpecifier::parse("file:///test01.js").unwrap(),
+          start: Position {
+            line: 0,
+            character: 21
+          },
+          end: Position {
+            line: 0,
+            character: 36
+          },
+        }
+      }
+    );
+  }
+
+  #[tokio::test]
+  async fn test_build_graph_with_self_types_in_js() {
+    let loader = setup(
+      vec![
+        (
+          "file:///test01.js",
+          Source::Module {
+            specifier: "file:///test01.js",
+            maybe_headers: None,
+            content: r#"// @ts-self-types="./test01.d.ts"
+export const foo = 'bar';"#,
+          },
+        ),
+        (
+          "file:///test01.d.ts",
+          Source::Module {
+            specifier: "file:///test01.d.ts",
+            maybe_headers: None,
+            content: r#"export declare const foo: string;"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///test01.js").expect("bad url");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(vec![root_specifier.clone()], &loader, Default::default())
+      .await;
+    assert_eq!(graph.module_slots.len(), 2);
+    let module = graph.get(&root_specifier).unwrap().js().unwrap();
+    assert_eq!(module.dependencies.len(), 0);
+    let types_dep = module.maybe_types_dependency.as_ref().unwrap();
+    assert_eq!(types_dep.specifier, "./test01.d.ts");
+    assert_eq!(
+      *types_dep.dependency.ok().unwrap(),
+      ResolutionResolved {
+        specifier: ModuleSpecifier::parse("file:///test01.d.ts").unwrap(),
+        range: Range {
+          specifier: ModuleSpecifier::parse("file:///test01.js").unwrap(),
+          start: Position {
+            line: 0,
+            character: 18
+          },
+          end: Position {
+            line: 0,
+            character: 33
+          },
+        }
+      }
+    );
+  }
+
+  #[tokio::test]
+  async fn test_build_graph_with_self_types_in_ts() {
+    let loader = setup(
+      vec![
+        (
+          "file:///test01.ts",
+          Source::Module {
+            specifier: "file:///test01.ts",
+            maybe_headers: None,
+            content: r#"// @ts-self-types="./test01.d.ts"
+export const foo = 'bar';"#,
+          },
+        ),
+        (
+          "file:///test01.d.ts",
+          Source::Module {
+            specifier: "file:///test01.d.ts",
+            maybe_headers: None,
+            content: r#"export declare const foo: string;"#,
+          },
+        ),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///test01.ts").expect("bad url");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(vec![root_specifier.clone()], &loader, Default::default())
+      .await;
+    assert_eq!(graph.module_slots.len(), 1);
+    let module = graph.get(&root_specifier).unwrap().js().unwrap();
+    assert_eq!(module.dependencies.len(), 0);
+    assert!(module.maybe_types_dependency.is_none());
+  }
+
+  #[tokio::test]
   async fn test_build_graph_with_resolver() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -1820,7 +2031,7 @@ export function a(a) {
     graph
       .build(
         vec![root_specifier],
-        &mut loader,
+        &loader,
         BuildOptions {
           resolver: maybe_resolver,
           ..Default::default()
@@ -1839,7 +2050,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_resolve_types() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a.js",
@@ -1880,7 +2091,7 @@ export function a(a) {
     graph
       .build(
         vec![root_specifier],
-        &mut loader,
+        &loader,
         BuildOptions {
           resolver: maybe_resolver,
           ..Default::default()
@@ -1905,7 +2116,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_import_attributes() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -1960,11 +2171,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -2082,7 +2289,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_mixed_assertions() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2110,11 +2317,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -2162,7 +2365,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_import_assertion_errors() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2225,11 +2428,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -2379,7 +2578,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_reporter() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2435,7 +2634,7 @@ export function a(a) {
     graph
       .build(
         vec![root_specifier.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           reporter: Some(&reporter),
           ..Default::default()
@@ -2483,7 +2682,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_types_only() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2571,11 +2770,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::TypesOnly);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -2710,7 +2905,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_code_only() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2806,11 +3001,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::CodeOnly);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -2925,7 +3116,7 @@ export function a(a) {
 
   #[tokio::test]
   async fn test_build_graph_with_builtin_external() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -2950,11 +3141,7 @@ export function a(a) {
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &mut loader,
-        Default::default(),
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(
       json!(graph),
@@ -3035,6 +3222,7 @@ export function a(a) {
       maybe_headers: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3052,6 +3240,7 @@ export function a(a) {
       maybe_headers: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3075,6 +3264,7 @@ export function a(a) {
       .to_vec()
       .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3145,7 +3335,147 @@ export function a(a) {
       .to_vec()
       .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
+      maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
+    })
+    .unwrap();
+    let actual = actual.js().unwrap();
+    assert_eq!(actual.dependencies.len(), 1);
+    let dep = actual
+      .dependencies
+      .get("https://example.com/preact/jsx-runtime")
+      .unwrap();
+    assert_eq!(
+      dep.maybe_code.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
+    );
+    assert!(dep.maybe_type.is_none());
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::Tsx);
+  }
+
+  #[test]
+  fn test_parse_module_jsx_import_source_types() {
+    let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: br#"
+    /** @jsxImportSource https://example.com/preact */
+    /** @jsxImportSourceTypes https://example.com/preact-types */
+
+    export function A() {
+      return <div>Hello Deno</div>;
+    }
+    "#
+      .to_vec()
+      .into(),
+      file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
+      maybe_resolver: None,
+      maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
+    })
+    .unwrap();
+    let actual = actual.js().unwrap();
+    assert_eq!(actual.dependencies.len(), 1);
+    let dep = actual
+      .dependencies
+      .get("https://example.com/preact/jsx-runtime")
+      .unwrap();
+    assert_eq!(
+      dep.maybe_code.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
+    );
+    assert_eq!(
+      dep.maybe_type.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact-types/jsx-runtime")
+        .unwrap()
+    );
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::Tsx);
+  }
+
+  #[test]
+  fn test_parse_module_jsx_import_source_types_pragma() {
+    #[derive(Debug)]
+    struct R;
+    impl Resolver for R {
+      fn default_jsx_import_source(&self) -> Option<String> {
+        Some("https://example.com/preact".into())
+      }
+    }
+
+    let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: br#"
+    /** @jsxImportSourceTypes https://example.com/preact-types */
+
+    export function A() {
+      return <div>Hello Deno</div>;
+    }
+    "#
+      .to_vec()
+      .into(),
+      file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
+      maybe_resolver: Some(&R),
+      maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
+    })
+    .unwrap();
+    let actual = actual.js().unwrap();
+    assert_eq!(actual.dependencies.len(), 1);
+    let dep = actual
+      .dependencies
+      .get("https://example.com/preact/jsx-runtime")
+      .unwrap();
+    assert_eq!(
+      dep.maybe_code.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
+    );
+    assert_eq!(
+      dep.maybe_type.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact-types/jsx-runtime")
+        .unwrap()
+    );
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::Tsx);
+  }
+
+  #[test]
+  fn test_parse_module_jsx_import_source_pragma() {
+    #[derive(Debug)]
+    struct R;
+    impl Resolver for R {
+      fn default_jsx_import_source_types(&self) -> Option<String> {
+        Some("https://example.com/preact-types".into())
+      }
+    }
+
+    let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: br#"
+    /** @jsxImportSource https://example.com/preact */
+
+    export function A() {
+      return <div>Hello Deno</div>;
+    }
+    "#
+      .to_vec()
+      .into(),
+      file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
+      maybe_resolver: Some(&R),
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
@@ -3188,6 +3518,7 @@ export function a(a) {
       .to_vec()
       .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: Some(&R),
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3204,6 +3535,58 @@ export function a(a) {
       ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
     );
     assert!(dep.maybe_type.is_none());
+    assert_eq!(actual.specifier, specifier);
+    assert_eq!(actual.media_type, MediaType::Tsx);
+  }
+
+  #[test]
+  fn test_default_jsx_import_source_types() {
+    #[derive(Debug)]
+    struct R;
+    impl Resolver for R {
+      fn default_jsx_import_source(&self) -> Option<String> {
+        Some("https://example.com/preact".into())
+      }
+
+      fn default_jsx_import_source_types(&self) -> Option<String> {
+        Some("https://example.com/preact-types".into())
+      }
+    }
+
+    let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: &specifier,
+      maybe_headers: None,
+      content: br#"
+    export function A() {
+      return <div>Hello Deno</div>;
+    }
+    "#
+      .to_vec()
+      .into(),
+      file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
+      maybe_resolver: Some(&R),
+      maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
+    })
+    .unwrap();
+    let actual = actual.js().unwrap();
+    assert_eq!(actual.dependencies.len(), 1);
+    let dep = actual
+      .dependencies
+      .get("https://example.com/preact/jsx-runtime")
+      .unwrap();
+    assert_eq!(
+      dep.maybe_code.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact/jsx-runtime").unwrap()
+    );
+    assert_eq!(
+      dep.maybe_type.ok().unwrap().specifier,
+      ModuleSpecifier::parse("https://example.com/preact-types/jsx-runtime")
+        .unwrap()
+    );
     assert_eq!(actual.specifier, specifier);
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
@@ -3227,6 +3610,7 @@ export function a(a) {
         .to_vec()
         .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3254,6 +3638,7 @@ export function a(a) {
       maybe_headers: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3310,6 +3695,7 @@ export function a(a) {
       maybe_headers: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3347,6 +3733,7 @@ export function a(a: A): B {
       .to_vec()
       .into(),
       file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
@@ -3365,7 +3752,7 @@ export function a(a: A): B {
 
   #[tokio::test]
   async fn test_segment_graph() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -3435,7 +3822,7 @@ export function a(a: A): B {
     graph
       .build(
         roots.clone(),
-        &mut loader,
+        &loader,
         BuildOptions {
           imports: imports.clone(),
           ..Default::default()
@@ -3489,7 +3876,7 @@ export function a(a: A): B {
 
   #[tokio::test]
   async fn test_walk() {
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -3583,7 +3970,7 @@ export function a(a: A): B {
     graph
       .build(
         vec![root.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           imports: imports.clone(),
           ..Default::default()
@@ -3600,6 +3987,7 @@ export function a(a: A): B {
         check_js: true,
         follow_dynamic: true,
         follow_type_only: true,
+        prefer_fast_check_graph: true,
       },
     );
     assert_eq!(
@@ -3627,6 +4015,7 @@ export function a(a: A): B {
         check_js: false,
         follow_dynamic: false,
         follow_type_only: false,
+        prefer_fast_check_graph: true,
       },
     );
     assert_eq!(
@@ -3649,6 +4038,7 @@ export function a(a: A): B {
         check_js: false,
         follow_dynamic: true,
         follow_type_only: false,
+        prefer_fast_check_graph: true,
       },
     );
     assert_eq!(
@@ -3673,6 +4063,7 @@ export function a(a: A): B {
         check_js: true,
         follow_dynamic: false,
         follow_type_only: false,
+        prefer_fast_check_graph: true,
       },
     );
     assert_eq!(
@@ -3696,6 +4087,7 @@ export function a(a: A): B {
         check_js: false,
         follow_dynamic: false,
         follow_type_only: true,
+        prefer_fast_check_graph: true,
       },
     );
     assert_eq!(
@@ -3720,6 +4112,7 @@ export function a(a: A): B {
         check_js: true,
         follow_dynamic: false,
         follow_type_only: true,
+        prefer_fast_check_graph: true,
       },
     );
     assert_eq!(
@@ -3741,7 +4134,15 @@ export function a(a: A): B {
 
     // try skip analyzing the dependencies after getting the first module
     {
-      let mut iterator = graph.walk(&roots, Default::default());
+      let mut iterator = graph.walk(
+        &roots,
+        WalkOptions {
+          check_js: true,
+          follow_dynamic: false,
+          follow_type_only: true,
+          prefer_fast_check_graph: false,
+        },
+      );
       assert_eq!(
         iterator.next().unwrap().0.as_str(),
         "https://example.com/jsx-runtime"
@@ -3757,7 +4158,15 @@ export function a(a: A): B {
 
     // try skipping after first remote
     {
-      let mut iterator = graph.walk(&roots, Default::default());
+      let mut iterator = graph.walk(
+        &roots,
+        WalkOptions {
+          check_js: true,
+          follow_dynamic: false,
+          follow_type_only: true,
+          prefer_fast_check_graph: false,
+        },
+      );
       assert_eq!(
         iterator.next().unwrap().0.as_str(),
         "https://example.com/jsx-runtime"
@@ -3799,7 +4208,7 @@ export function a(a: A): B {
       }
     }
 
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -3840,7 +4249,7 @@ export function a(a: A): B {
       graph
         .build(
           vec![root_specifier.clone()],
-          &mut loader,
+          &loader,
           BuildOptions {
             resolver: Some(&resolver),
             ..Default::default()
@@ -3915,7 +4324,7 @@ export function a(a: A): B {
       graph
         .build(
           vec![root_specifier.clone()],
-          &mut loader,
+          &loader,
           BuildOptions {
             resolver: Some(&resolver),
             ..Default::default()
@@ -3989,7 +4398,7 @@ export function a(a: A): B {
       }
     }
 
-    let mut loader = setup(
+    let loader = setup(
       vec![
         (
           "file:///a/test01.ts",
@@ -4020,7 +4429,7 @@ export function a(a: A): B {
     graph
       .build(
         vec![root_specifier.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           resolver: Some(&resolver),
           ..Default::default()
@@ -4034,6 +4443,7 @@ export function a(a: A): B {
           check_js: true,
           follow_type_only: true,
           follow_dynamic: false,
+          prefer_fast_check_graph: true,
         },
       )
       .errors()
@@ -4043,5 +4453,55 @@ export function a(a: A): B {
       &errors[0],
       ModuleGraphError::TypesResolutionError(_)
     ));
+  }
+
+  #[tokio::test]
+  async fn test_passthrough_jsr_specifiers() {
+    let loader = setup(
+      vec![
+        (
+          "file:///a/test01.ts",
+          Source::Module {
+            specifier: "file:///a/test01.ts",
+            maybe_headers: None,
+            content: r#"import "jsr:@foo/bar@1";"#,
+          },
+        ),
+        ("jsr:@foo/bar@1", Source::External("jsr:@foo/bar@1")),
+      ],
+      vec![],
+    );
+    let root_specifier =
+      ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![root_specifier.clone()],
+        &loader,
+        BuildOptions {
+          passthrough_jsr_specifiers: true,
+          ..Default::default()
+        },
+      )
+      .await;
+    assert_eq!(graph.module_slots.len(), 2);
+    assert_eq!(graph.roots, vec![root_specifier.clone()]);
+    assert!(graph.contains(&root_specifier));
+    let module = graph
+      .module_slots
+      .get(&root_specifier)
+      .unwrap()
+      .module()
+      .unwrap()
+      .js()
+      .unwrap();
+    assert_eq!(module.dependencies.len(), 1);
+    let maybe_dependency = module.dependencies.get("jsr:@foo/bar@1");
+    assert!(maybe_dependency.is_some());
+    let dependency_specifier =
+      ModuleSpecifier::parse("jsr:@foo/bar@1").unwrap();
+    let maybe_dep_module_slot = graph.get(&dependency_specifier);
+    let dep_module_slot = maybe_dep_module_slot.unwrap();
+    assert!(dep_module_slot.external().is_some());
   }
 }

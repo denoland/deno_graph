@@ -1,0 +1,92 @@
+xeaone/server/5.3.4
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/http@0.219.1": "jsr:@std/http@0.219.1"
+    },
+    "jsr": {
+      "@std/http@0.219.1": {
+        "integrity": "444b9e212747a4a163f5d9f5e468d1159e3ff9915cbc60a5bac6043f4771649a"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS1192 [ERROR]: Module '"file://<tmpdir>/src/plugin.ts"' has no default export.
+import Plugin from "./plugin.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/cache.ts:2:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/plugin.ts"' has no default export.
+import Plugin from "./plugin.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/cors.ts:2:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/plugin.ts"' has no default export.
+import Plugin from "./plugin.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/defenders.ts:2:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/plugin.ts"' has no default export.
+import Plugin from "./plugin.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/file.ts:2:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/plugin.ts"' has no default export.
+import Plugin from "./plugin.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/forwarded.ts:4:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/handle.ts"' has no default export.
+import Handle from "./handle.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/handler.ts:1:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/plugin.ts"' has no default export.
+import Plugin from "./plugin.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/handler.ts:2:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/plugin.ts"' has no default export.
+import Plugin from "./plugin.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/normalize.ts:2:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/plugin.ts"' has no default export.
+import Plugin from "./plugin.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/payload.ts:2:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/handle.ts"' has no default export.
+import Handle from "./handle.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/router.ts:2:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/plugin.ts"' has no default export.
+import Plugin from "./plugin.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/router.ts:3:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/plugin.ts"' has no default export.
+import Plugin from "./plugin.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/session.ts:2:8
+
+TS1192 [ERROR]: Module '"file://<tmpdir>/src/plugin.ts"' has no default export.
+import Plugin from "./plugin.ts";
+       ~~~~~~
+    at file://<tmpdir>/src/socket.ts:2:8
+
+Found 13 errors.
+

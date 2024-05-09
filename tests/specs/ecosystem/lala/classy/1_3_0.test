@@ -1,0 +1,22 @@
+lala/classy/1.3.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@lala/appraisal@0.7.5": "jsr:@lala/appraisal@0.7.5"
+    },
+    "jsr": {
+      "@lala/appraisal@0.7.5": {
+        "integrity": "5a95aa081487d8a6caa54faa93e02d36ab71e7f889da688038b1b2713ec03fdb"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

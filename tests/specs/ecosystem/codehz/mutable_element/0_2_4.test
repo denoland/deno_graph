@@ -1,0 +1,247 @@
+codehz/mutable-element/0.2.4
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:csstype@^3.1.3": "npm:csstype@3.1.3"
+    },
+    "npm": {
+      "csstype@3.1.3": {
+        "integrity": "sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'ShadowRootInit'.
+ */ export function shadow(init: ShadowRootInit, ...rest: MutateAction<ShadowRoot>[]): (el: Node) => void {
+                                 ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/actions.ts:8:34
+
+TS2304 [ERROR]: Cannot find name 'ShadowRoot'.
+ */ export function shadow(init: ShadowRootInit, ...rest: MutateAction<ShadowRoot>[]): (el: Node) => void {
+                                                                       ~~~~~~~~~~
+    at file://<tmpdir>/src/actions.ts:8:72
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+ */ export function shadow(init: ShadowRootInit, ...rest: MutateAction<ShadowRoot>[]): (el: Node) => void {
+                                                                                            ~~~~
+    at file://<tmpdir>/src/actions.ts:8:93
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+}, ...substitutions: any[]): (node: Node) => void {
+                                    ~~~~
+    at file://<tmpdir>/src/actions.ts:16:37
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+    at file://<tmpdir>/src/actions.ts:25:34
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+ */ export function style(input: StyleDeclarationInput): (el: Node) => void {
+                                                              ~~~~
+    at file://<tmpdir>/src/actions.ts:32:63
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+ */ export function classnames(...inputs: ClassNameInput[]): (el: Node) => void {
+                                                                  ~~~~
+    at file://<tmpdir>/src/actions.ts:42:67
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+ */ export function attr(input: Record<string, unknown>): (el: Node) => void {
+                                                               ~~~~
+    at file://<tmpdir>/src/actions.ts:49:64
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+ */ export function dataset(input: Record<string, unknown>): (el: Node) => void {
+                                                                  ~~~~
+    at file://<tmpdir>/src/actions.ts:58:67
+
+TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
+ */ export function prepend(...rest: MutateAction<DocumentFragment>[]): (el: Node | DynamicRange) => void {
+                                                  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/actions.ts:65:51
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+ */ export function prepend(...rest: MutateAction<DocumentFragment>[]): (el: Node | DynamicRange) => void {
+                                                                             ~~~~
+    at file://<tmpdir>/src/actions.ts:65:78
+
+TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
+ */ export function append(...rest: MutateAction<DocumentFragment>[]): (el: Node | DynamicRange) => void {
+                                                 ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/actions.ts:72:50
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+ */ export function append(...rest: MutateAction<DocumentFragment>[]): (el: Node | DynamicRange) => void {
+                                                                            ~~~~
+    at file://<tmpdir>/src/actions.ts:72:77
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+ */ export function empty(): (el: Node | DynamicRange) => void {
+                                  ~~~~
+    at file://<tmpdir>/src/actions.ts:77:35
+
+TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
+export function namedRange(name: string, ...rest: MutateAction<DynamicRange>[]): (() => DocumentFragment) & {
+                                                                                        ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/actions.ts:80:89
+
+TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
+export function range(...rest: MutateAction<DynamicRange>[]): (() => DocumentFragment) & {
+                                                                     ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/actions.ts:85:70
+
+TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
+}>(renderer: ListRenderer<T>, initial?: T[]): (() => DocumentFragment) & {
+                                                     ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/actions.ts:122:54
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+ */ export function mutate<T extends Node>(target: T, action: MutateAction<T>): Promise<void> {
+                                     ~~~~
+    at file://<tmpdir>/src/mutable.ts:13:38
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+ */ export function mount<T extends Node>(host: T, ...actions: MutateAction<T>[]): Promise<T> {
+                                    ~~~~
+    at file://<tmpdir>/src/mutable.ts:23:37
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+}, ...substitutions: any[]): (...rest: MutateAction<HTMLElement>[]) => HTMLElement {
+                                                    ~~~~~~~~~~~
+    at file://<tmpdir>/src/mutable.ts:35:53
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+}, ...substitutions: any[]): (...rest: MutateAction<HTMLElement>[]) => HTMLElement {
+                                                                       ~~~~~~~~~~~
+    at file://<tmpdir>/src/mutable.ts:35:72
+
+TS2304 [ERROR]: Cannot find name 'SVGElement'.
+}, ...substitutions: any[]): (...rest: MutateAction<SVGElement>[]) => SVGElement {
+                                                    ~~~~~~~~~~
+    at file://<tmpdir>/src/mutable.ts:42:53
+
+TS2304 [ERROR]: Cannot find name 'SVGElement'.
+}, ...substitutions: any[]): (...rest: MutateAction<SVGElement>[]) => SVGElement {
+                                                                      ~~~~~~~~~~
+    at file://<tmpdir>/src/mutable.ts:42:71
+
+TS2304 [ERROR]: Cannot find name 'MathMLElement'.
+}, ...substitutions: any[]): (...rest: MutateAction<MathMLElement>[]) => MathMLElement {
+                                                    ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/mutable.ts:49:53
+
+TS2304 [ERROR]: Cannot find name 'MathMLElement'.
+}, ...substitutions: any[]): (...rest: MutateAction<MathMLElement>[]) => MathMLElement {
+                                                                         ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/mutable.ts:49:74
+
+TS2304 [ERROR]: Cannot find name 'Text'.
+ */ export function text(...rest: MutateAction<Text>[]): Text {
+                                               ~~~~
+    at file://<tmpdir>/src/mutable.ts:56:48
+
+TS2304 [ERROR]: Cannot find name 'Text'.
+ */ export function text(...rest: MutateAction<Text>[]): Text {
+                                                         ~~~~
+    at file://<tmpdir>/src/mutable.ts:56:58
+
+TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
+ */ export function fragment(...rest: MutateAction<DocumentFragment>[]): DocumentFragment {
+                                                   ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/mutable.ts:63:52
+
+TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
+ */ export function fragment(...rest: MutateAction<DocumentFragment>[]): DocumentFragment {
+                                                                         ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/mutable.ts:63:74
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+  declare start: Node;
+                 ~~~~
+    at file://<tmpdir>/src/range.ts:2:18
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+  declare end: Node;
+               ~~~~
+    at file://<tmpdir>/src/range.ts:3:16
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+  constructor(start: Node, end: Node){}
+                     ~~~~
+    at file://<tmpdir>/src/range.ts:4:22
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+  constructor(start: Node, end: Node){}
+                                ~~~~
+    at file://<tmpdir>/src/range.ts:4:33
+
+TS2304 [ERROR]: Cannot find name 'Range'.
+  get static(): Range {
+                ~~~~~
+    at file://<tmpdir>/src/range.ts:5:17
+
+TS2304 [ERROR]: Cannot find name 'ParentNode'.
+  get parentNode(): ParentNode | null {
+                    ~~~~~~~~~~
+    at file://<tmpdir>/src/range.ts:8:21
+
+TS2304 [ERROR]: Cannot find name 'ChildNode'.
+  get firstChild(): ChildNode | null {
+                    ~~~~~~~~~
+    at file://<tmpdir>/src/range.ts:14:21
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+  get childNodes(): ReadonlyArray<Node> {
+                                  ~~~~
+    at file://<tmpdir>/src/range.ts:17:35
+
+TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
+  detach(): DocumentFragment {
+            ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/range.ts:20:13
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+  insertBefore(node: Node, child: Node | null): void {}
+                     ~~~~
+    at file://<tmpdir>/src/range.ts:23:22
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+  insertBefore(node: Node, child: Node | null): void {}
+                                  ~~~~
+    at file://<tmpdir>/src/range.ts:23:35
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+  appendChild(node: Node): void {}
+                    ~~~~
+    at file://<tmpdir>/src/range.ts:24:21
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+  replace(node: Node): void {}
+                ~~~~
+    at file://<tmpdir>/src/range.ts:25:17
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+    at file://<tmpdir>/src/types.ts:4:34
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+    at file://<tmpdir>/src/types.ts:4:68
+
+TS2304 [ERROR]: Cannot find name 'IdleDeadline'.
+export function idle(): Reactor<IdleDeadline> {
+                                ~~~~~~~~~~~~
+    at file://<tmpdir>/src/utils.ts:55:33
+
+Found 45 errors.
+

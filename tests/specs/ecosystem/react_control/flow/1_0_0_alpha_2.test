@@ -1,0 +1,39 @@
+react-control/flow/1.0.0-alpha.2
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/SwitchMap/SwitchMap.tsx:32:14
+   | 
+32 | export const SwitchMap = genericMemo(SwitchMapComponent)
+   |              ^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/Show/Show.tsx:23:14
+   | 
+23 | export const Show = genericMemo(ShowComponent)
+   |              ^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/For/For.tsx:42:14
+   | 
+42 | export const For = genericMemo(ForComponent)
+   |              ^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

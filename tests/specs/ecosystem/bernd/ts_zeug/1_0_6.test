@@ -1,0 +1,29 @@
+bernd/ts-zeug/1.0.6
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.220.1": "jsr:@std/assert@0.220.1",
+      "jsr:@std/async@^0.220.1": "jsr:@std/async@0.220.1"
+    },
+    "jsr": {
+      "@std/assert@0.220.1": {
+        "integrity": "88710d54f3afdd7a5761e7805abba1f56cd14e4b212feffeb3e73a9f77482425"
+      },
+      "@std/async@0.220.1": {
+        "integrity": "61f0e9c53bf81f516aa7f54843f307eb5f05c5cf9902575a636ead162b5dfafe",
+        "dependencies": [
+          "jsr:@std/assert@^0.220.1"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

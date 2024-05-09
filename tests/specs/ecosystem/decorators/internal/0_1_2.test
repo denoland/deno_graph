@@ -1,0 +1,22 @@
+decorators/internal/0.1.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@type/is@0.1.0": "jsr:@type/is@0.1.0"
+    },
+    "jsr": {
+      "@type/is@0.1.0": {
+        "integrity": "80b68503b98da572068b67588f6524049d56a0f4f3e17abce14f399e94ff5f4b"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

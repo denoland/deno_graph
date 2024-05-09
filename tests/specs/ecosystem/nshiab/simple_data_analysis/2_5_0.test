@@ -1,0 +1,314 @@
+nshiab/simple-data-analysis/2.5.0
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:1904:11
+     | 
+1904 |     async customQuery(
+     |           ^^^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:1973:11
+     | 
+1973 |     async getSchema(table: string) {
+     |           ^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:1997:11
+     | 
+1997 |     async getDescription(table: string) {
+     |           ^^^^^^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2008:11
+     | 
+2008 |     async getTables() {
+     |           ^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2021:11
+     | 
+2021 |     async hasTable(table: string) {
+     |           ^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2038:11
+     | 
+2038 |     async getColumns(table: string) {
+     |           ^^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2052:11
+     | 
+2052 |     async hasColumn(table: string, column: string) {
+     |           ^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2069:11
+     | 
+2069 |     async getWidth(table: string) {
+     |           ^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2086:11
+     | 
+2086 |     async getLength(table: string) {
+     |           ^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2099:11
+     | 
+2099 |     async getValuesCount(table: string) {
+     |           ^^^^^^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2117:11
+     | 
+2117 |     async getTypes(table: string) {
+     |           ^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2133:11
+     | 
+2133 |     async getValues(table: string, column: string) {
+     |           ^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2149:11
+     | 
+2149 |     async getMin(table: string, column: string) {
+     |           ^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2165:11
+     | 
+2165 |     async getMax(table: string, column: string) {
+     |           ^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2183:11
+     | 
+2183 |     async getMean(
+     |           ^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2207:11
+     | 
+2207 |     async getMedian(
+     |           ^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2229:11
+     | 
+2229 |     async getSum(table: string, column: string) {
+     |           ^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2247:11
+     | 
+2247 |     async getSkew(
+     |           ^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2271:11
+     | 
+2271 |     async getStdDev(
+     |           ^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2295:11
+     | 
+2295 |     async getVar(
+     |           ^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2320:11
+     | 
+2320 |     async getQuantile(
+     |           ^^^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2341:11
+     | 
+2341 |     async getUniques(table: string, column: string) {
+     |           ^^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2362:11
+     | 
+2362 |     async getFirstRow(
+     |           ^^^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2388:11
+     | 
+2388 |     async getLastRow(
+     |           ^^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2414:11
+     | 
+2414 |     async getTop(
+     |           ^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2446:11
+     | 
+2446 |     async getBottom(
+     |           ^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2474:11
+     | 
+2474 |     async getData(
+     |           ^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/class/SimpleDB.ts:2501:11
+     | 
+2501 |     async getExtensions() {
+     |           ^^^^^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

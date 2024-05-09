@@ -1,0 +1,22 @@
+std/collections/0.207.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/data-structures@^0.207.0": "jsr:@std/data-structures@0.207.0"
+    },
+    "jsr": {
+      "@std/data-structures@0.207.0": {
+        "integrity": "b5f056e4d8826f2a421e2d63493cb6756e5643b54d042e46de6bc639e6d9557e"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

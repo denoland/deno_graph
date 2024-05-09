@@ -1,0 +1,223 @@
+hampus/itsdangerous/1.1.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:ts-mixer@^6.0.4": "npm:ts-mixer@6.0.4"
+    },
+    "npm": {
+      "ts-mixer@6.0.4": {
+        "integrity": "sha512-ufKpbmrugz5Aou4wcr5Wc1UUFWOLhq+Fm6qa6P0w0K5Qw2yhaUoiWszhCVuNQyNwrlGiscHOmqYoAox1PtvgjA==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'BufferEncoding'.
+export function wantBuffer(string: StringBuffer, encoding?: BufferEncoding): Buffer {
+                                                            ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/encoding.ts:2:61
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+export function wantBuffer(string: StringBuffer, encoding?: BufferEncoding): Buffer {
+                                                                             ~~~~~~
+    at file://<tmpdir>/src/encoding.ts:2:78
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+export function base64Encode(string: StringBuffer): Buffer {
+                                                    ~~~~~~
+    at file://<tmpdir>/src/encoding.ts:5:53
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+export function base64Decode(string: StringBuffer): Buffer {
+                                                    ~~~~~~
+    at file://<tmpdir>/src/encoding.ts:8:53
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+export function intToBuffer(num: number | bigint): Buffer {
+                                                   ~~~~~~
+    at file://<tmpdir>/src/encoding.ts:11:52
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+export function bufferToInt(buf: Buffer): number | bigint {
+                                 ~~~~~~
+    at file://<tmpdir>/src/encoding.ts:14:34
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { DefaultSerializer, Serializer, SerializerOptions } from "./serializer.ts";
+         ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:3:10
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { DefaultSerializer, Serializer, SerializerOptions } from "./serializer.ts";
+                                        ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:3:41
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { HMACAlgorithm, KeyDerivation, NoneAlgorithm, Signer, SignerOptions, SigningAlgorithm } from "./signer.ts";
+                                                              ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:4:63
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+   */ declare secretKeys: Buffer[];
+                          ~~~~~~
+    at file://<tmpdir>/src/serializer.ts:52:27
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  declare salt: Buffer;
+                ~~~~~~
+    at file://<tmpdir>/src/serializer.ts:53:17
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+   */ parsePayload(payload: Buffer, serializer?: DefaultSerializer): any {
+                            ~~~~~~
+    at file://<tmpdir>/src/serializer.ts:64:29
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+   */ stringifyPayload(obj: any): Buffer {
+                                  ~~~~~~
+    at file://<tmpdir>/src/serializer.ts:70:35
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  getSignature(_key: Buffer, _value: Buffer): Buffer {
+                     ~~~~~~
+    at file://<tmpdir>/src/signer.ts:7:22
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  getSignature(_key: Buffer, _value: Buffer): Buffer {
+                                     ~~~~~~
+    at file://<tmpdir>/src/signer.ts:7:38
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  getSignature(_key: Buffer, _value: Buffer): Buffer {
+                                              ~~~~~~
+    at file://<tmpdir>/src/signer.ts:7:47
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  verifySignature(key: Buffer, value: Buffer, sig: Buffer): boolean {
+                       ~~~~~~
+    at file://<tmpdir>/src/signer.ts:10:24
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  verifySignature(key: Buffer, value: Buffer, sig: Buffer): boolean {
+                                      ~~~~~~
+    at file://<tmpdir>/src/signer.ts:10:39
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  verifySignature(key: Buffer, value: Buffer, sig: Buffer): boolean {
+                                                   ~~~~~~
+    at file://<tmpdir>/src/signer.ts:10:52
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  override getSignature(_key: Buffer, _value: Buffer): Buffer {
+                              ~~~~~~
+    at file://<tmpdir>/src/signer.ts:18:31
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  override getSignature(_key: Buffer, _value: Buffer): Buffer {
+                                              ~~~~~~
+    at file://<tmpdir>/src/signer.ts:18:47
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  override getSignature(_key: Buffer, _value: Buffer): Buffer {
+                                                       ~~~~~~
+    at file://<tmpdir>/src/signer.ts:18:56
+
+TS2612 [ERROR]: Property 'digestMethod' will overwrite the base property in 'SigningAlgorithm'. If this is intentional, add an initializer. Otherwise, add a 'declare' modifier or remove the redundant declaration.
+  override digestMethod!: string;
+           ~~~~~~~~~~~~
+    at file://<tmpdir>/src/signer.ts:25:12
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  override getSignature(key: Buffer, value: Buffer): Buffer {
+                             ~~~~~~
+    at file://<tmpdir>/src/signer.ts:33:30
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  override getSignature(key: Buffer, value: Buffer): Buffer {
+                                            ~~~~~~
+    at file://<tmpdir>/src/signer.ts:33:45
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  override getSignature(key: Buffer, value: Buffer): Buffer {
+                                                     ~~~~~~
+    at file://<tmpdir>/src/signer.ts:33:54
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+   */ declare secretKeys: Buffer[];
+                          ~~~~~~
+    at file://<tmpdir>/src/signer.ts:88:27
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  declare sep: Buffer;
+               ~~~~~~
+    at file://<tmpdir>/src/signer.ts:89:16
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  declare salt: Buffer;
+                ~~~~~~
+    at file://<tmpdir>/src/signer.ts:90:17
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+   */ deriveKey(secretKey?: StringBuffer): Buffer {
+                                           ~~~~~~
+    at file://<tmpdir>/src/signer.ts:103:44
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+   */ getSignature(value: StringBuffer): Buffer {
+                                         ~~~~~~
+    at file://<tmpdir>/src/signer.ts:108:42
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+   */ sign(value: StringBuffer): Buffer {
+                                 ~~~~~~
+    at file://<tmpdir>/src/signer.ts:113:34
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+   */ unsign(signedValue: StringBuffer): Buffer {
+                                         ~~~~~~
+    at file://<tmpdir>/src/signer.ts:123:42
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+   */ override sign(value: StringBuffer): Buffer {
+                                          ~~~~~~
+    at file://<tmpdir>/src/timed.ts:21:43
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+   */ override unsign(signedValue: StringBuffer, maxAge?: number, returnTimestamp?: false): Buffer;
+                                                                                            ~~~~~~
+    at file://<tmpdir>/src/timed.ts:29:93
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  override unsign(signedValue: StringBuffer, maxAge?: number, returnTimestamp?: true): [Buffer, Date];
+                                                                                        ~~~~~~
+    at file://<tmpdir>/src/timed.ts:30:89
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+export type StringBuffer = string | Buffer;
+                                    ~~~~~~
+    at file://<tmpdir>/src/types.ts:1:37
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  override parsePayload(payload: Buffer, serializer?: DefaultSerializer): any {
+                                 ~~~~~~
+    at file://<tmpdir>/src/url-safe.ts:9:34
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  override stringifyPayload(obj: any): Buffer {
+                                       ~~~~~~
+    at file://<tmpdir>/src/url-safe.ts:12:40
+
+Found 39 errors.
+

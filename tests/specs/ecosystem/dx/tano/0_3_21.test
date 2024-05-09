@@ -1,0 +1,29 @@
+dx/tano/0.3.21
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.223.0": "jsr:@std/assert@0.223.0",
+      "jsr:@std/path@0.223": "jsr:@std/path@0.223.0"
+    },
+    "jsr": {
+      "@std/assert@0.223.0": {
+        "integrity": "eb8d6d879d76e1cc431205bd346ed4d88dc051c6366365b1af47034b0670be24"
+      },
+      "@std/path@0.223.0": {
+        "integrity": "593963402d7e6597f5a6e620931661053572c982fc014000459edc1f93cc3989",
+        "dependencies": [
+          "jsr:@std/assert@^0.223.0"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

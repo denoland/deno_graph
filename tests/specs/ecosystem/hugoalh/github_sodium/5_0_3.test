@@ -1,0 +1,12 @@
+hugoalh/github-sodium/5.0.3
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

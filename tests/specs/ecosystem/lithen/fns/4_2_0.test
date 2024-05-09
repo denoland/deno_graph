@@ -1,0 +1,52 @@
+lithen/fns/4.2.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+ */ export function createStyled(tagName: string, styles: LithenCSSString): HTMLElement {
+                                                                            ~~~~~~~~~~~
+    at file://<tmpdir>/src/css/create-styled.ts:10:77
+
+TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
+ */ export function html(htmlTemplateStrings: HtmlStrings, ...values: unknown[]): DocumentFragment {
+                                                                                  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/html/html-tag-fn.ts:21:83
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+ */ export function el(htmlStrings: HtmlStrings, ...values: unknown[]): Node {
+                                                                        ~~~~
+    at file://<tmpdir>/src/html/html-tag-fn.ts:37:73
+
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+export { html, el, HtmlStrings } from "./html-tag-fn.ts";
+                   ~~~~~~~~~~~
+    at file://<tmpdir>/src/html/index.ts:1:20
+
+TS2304 [ERROR]: Cannot find name 'Node'.
+ */ export function shell(fn: ShellRenderCallback): Node[] {
+                                                    ~~~~
+    at file://<tmpdir>/src/html/shell/shell.ts:21:53
+
+TS1331 [ERROR]: A property of a class whose type is a 'unique symbol' type must be both 'static' and 'readonly'.
+  declare static REMOVE: unique symbol;
+                 ~~~~~~
+    at file://<tmpdir>/src/html/signals/data-signal.ts:12:18
+
+TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
+ */ export function raw(strings: RawTagFnStrings, ...values: unknown[]): DocumentFragment {
+                                                                         ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/raw-html/raw-html-tag-fn.ts:23:74
+
+Found 7 errors.
+

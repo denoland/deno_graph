@@ -1,0 +1,1062 @@
+oridune/mongo/0.0.61
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/utility.ts:61:14
+   | 
+61 | export const circularReplacer = () => {
+   |              ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/utility.ts:90:14
+   | 
+90 | export const dotNotationToDeepObject = (obj: Record<string, any>) => {
+   |              ^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/utility.ts:114:14
+    | 
+114 | export const assignDeepValues = (
+    |              ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/utility.ts:158:14
+    | 
+158 | export const pickProps = (
+    |              ^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/utility.ts:175:14
+    | 
+175 | export const omitProps = (
+    |              ^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/utility.ts:192:14
+    | 
+192 | export const performanceStats = async <T>(
+    |              ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/utility.ts:221:14
+    | 
+221 | export const mongodbModifiersToObject = (
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/mongo.ts:68:20
+   | 
+68 |   protected static setCache(key: string, value: TCacheValue, ttl?: number) {
+   |                    ^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/mongo.ts:76:20
+   | 
+76 |   protected static getCache(key: string) {
+   |                    ^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/mongo.ts:84:20
+   | 
+84 |   protected static deleteCache(key: string) {
+   |                    ^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/mongo.ts:92:10
+   | 
+92 |   static pre(
+   |          ^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/mongo.ts:111:10
+    | 
+111 |   static post(
+    |          ^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/mongo.ts:134:10
+    | 
+134 |   static isConnected() {
+    |          ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/mongo.ts:171:10
+    | 
+171 |   static model<T extends ObjectValidator<any, any, any>>(
+    |          ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/mongo.ts:185:16
+    | 
+185 |   static async transaction<T>(
+    |                ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/mongo.ts:239:16
+    | 
+239 |   static async useCaching<T extends TCacheValue>(
+    |                ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/model.ts:89:10
+   | 
+89 |   public getSchema(options?: Parameters<typeof e.deepCast>[1]) {
+   |          ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:101:10
+    | 
+101 |   public getUpdateSchema(options?: Parameters<typeof e.deepCast>[1]) {
+    |          ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:113:7
+    | 
+113 |   get database() {
+    |       ^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:127:7
+    | 
+127 |   get collection() {
+    |       ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:131:10
+    | 
+131 |   public createIndex(
+    |          ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:149:10
+    | 
+149 |   public dropIndex(indexNames: string[], options?: CommandOperationOptions) {
+    |          ^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:231:10
+    | 
+231 |   public find(
+    |          ^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:238:10
+    | 
+238 |   public search(
+    |          ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:261:10
+    | 
+261 |   public findOne(
+    |          ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:274:10
+    | 
+274 |   public findOneOrFail(
+    |          ^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:296:10
+    | 
+296 |   public count(
+    |          ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:313:16
+    | 
+313 |   public async exists(
+    |                ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:330:10
+    | 
+330 |   public watch(
+    |          ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:347:10
+    | 
+347 |   public updateOne<F = InputDocument<InputShape>>(
+    |          ^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:363:16
+    | 
+363 |   public async updateOneOrFail<F = InputDocument<InputShape>>(
+    |                ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:376:10
+    | 
+376 |   public updateAndFindOne<F = InputDocument<InputShape>>(
+    |          ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:392:10
+    | 
+392 |   public findAndUpdateOne<F = InputDocument<InputShape>>(
+    |          ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:408:10
+    | 
+408 |   public updateMany<F = InputDocument<InputShape>>(
+    |          ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:418:16
+    | 
+418 |   public async updateManyOrFail<F = InputDocument<InputShape>>(
+    |                ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:431:10
+    | 
+431 |   public updateAndFindMany<F = InputDocument<InputShape>>(
+    |          ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:441:10
+    | 
+441 |   public findAndUpdateMany<F = InputDocument<InputShape>>(
+    |          ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:451:10
+    | 
+451 |   public deleteOne(
+    |          ^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:464:16
+    | 
+464 |   public async deleteOneOrFail(
+    |                ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:476:10
+    | 
+476 |   public findAndDeleteOne(
+    |          ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:489:10
+    | 
+489 |   public deleteMany(
+    |          ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:496:16
+    | 
+496 |   public async deleteManyOrFail(
+    |                ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:508:10
+    | 
+508 |   public findAndDeleteMany(
+    |          ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:515:16
+    | 
+515 |   public async replaceOne(
+    |                ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:558:10
+    | 
+558 |   public populate<
+    |          ^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:582:10
+    | 
+582 |   public populateOne<
+    |          ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/hooks.ts:134:10
+    | 
+134 |   public pre<E extends THookEvent>(
+    |          ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/hooks.ts:142:10
+    | 
+142 |   public post<E extends THookEvent>(
+    |          ^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/utility.ts:61:14
+   | 
+61 | export const circularReplacer = () => {
+   |              ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/utility.ts:90:14
+   | 
+90 | export const dotNotationToDeepObject = (obj: Record<string, any>) => {
+   |              ^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/utility.ts:114:14
+    | 
+114 | export const assignDeepValues = (
+    |              ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/utility.ts:158:14
+    | 
+158 | export const pickProps = (
+    |              ^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/utility.ts:175:14
+    | 
+175 | export const omitProps = (
+    |              ^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/utility.ts:192:14
+    | 
+192 | export const performanceStats = async <T>(
+    |              ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/utility.ts:221:14
+    | 
+221 | export const mongodbModifiersToObject = (
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/mongo.ts:68:20
+   | 
+68 |   protected static setCache(key: string, value: TCacheValue, ttl?: number) {
+   |                    ^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/mongo.ts:76:20
+   | 
+76 |   protected static getCache(key: string) {
+   |                    ^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/mongo.ts:84:20
+   | 
+84 |   protected static deleteCache(key: string) {
+   |                    ^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/mongo.ts:92:10
+   | 
+92 |   static pre(
+   |          ^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/mongo.ts:111:10
+    | 
+111 |   static post(
+    |          ^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/mongo.ts:134:10
+    | 
+134 |   static isConnected() {
+    |          ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/mongo.ts:171:10
+    | 
+171 |   static model<T extends ObjectValidator<any, any, any>>(
+    |          ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/mongo.ts:185:16
+    | 
+185 |   static async transaction<T>(
+    |                ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/mongo.ts:239:16
+    | 
+239 |   static async useCaching<T extends TCacheValue>(
+    |                ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/model.ts:89:10
+   | 
+89 |   public getSchema(options?: Parameters<typeof e.deepCast>[1]) {
+   |          ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:101:10
+    | 
+101 |   public getUpdateSchema(options?: Parameters<typeof e.deepCast>[1]) {
+    |          ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:113:7
+    | 
+113 |   get database() {
+    |       ^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:127:7
+    | 
+127 |   get collection() {
+    |       ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:131:10
+    | 
+131 |   public createIndex(
+    |          ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:149:10
+    | 
+149 |   public dropIndex(indexNames: string[], options?: CommandOperationOptions) {
+    |          ^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:231:10
+    | 
+231 |   public find(
+    |          ^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:238:10
+    | 
+238 |   public search(
+    |          ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:261:10
+    | 
+261 |   public findOne(
+    |          ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:274:10
+    | 
+274 |   public findOneOrFail(
+    |          ^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:296:10
+    | 
+296 |   public count(
+    |          ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:313:16
+    | 
+313 |   public async exists(
+    |                ^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:330:10
+    | 
+330 |   public watch(
+    |          ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:347:10
+    | 
+347 |   public updateOne<F = InputDocument<InputShape>>(
+    |          ^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:363:16
+    | 
+363 |   public async updateOneOrFail<F = InputDocument<InputShape>>(
+    |                ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:376:10
+    | 
+376 |   public updateAndFindOne<F = InputDocument<InputShape>>(
+    |          ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:392:10
+    | 
+392 |   public findAndUpdateOne<F = InputDocument<InputShape>>(
+    |          ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:408:10
+    | 
+408 |   public updateMany<F = InputDocument<InputShape>>(
+    |          ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:418:16
+    | 
+418 |   public async updateManyOrFail<F = InputDocument<InputShape>>(
+    |                ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:431:10
+    | 
+431 |   public updateAndFindMany<F = InputDocument<InputShape>>(
+    |          ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:441:10
+    | 
+441 |   public findAndUpdateMany<F = InputDocument<InputShape>>(
+    |          ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:451:10
+    | 
+451 |   public deleteOne(
+    |          ^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:464:16
+    | 
+464 |   public async deleteOneOrFail(
+    |                ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:476:10
+    | 
+476 |   public findAndDeleteOne(
+    |          ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:489:10
+    | 
+489 |   public deleteMany(
+    |          ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:496:16
+    | 
+496 |   public async deleteManyOrFail(
+    |                ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:508:10
+    | 
+508 |   public findAndDeleteMany(
+    |          ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:515:16
+    | 
+515 |   public async replaceOne(
+    |                ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:558:10
+    | 
+558 |   public populate<
+    |          ^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/model.ts:582:10
+    | 
+582 |   public populateOne<
+    |          ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/hooks.ts:134:10
+    | 
+134 |   public pre<E extends THookEvent>(
+    |          ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/hooks.ts:142:10
+    | 
+142 |   public post<E extends THookEvent>(
+    |          ^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

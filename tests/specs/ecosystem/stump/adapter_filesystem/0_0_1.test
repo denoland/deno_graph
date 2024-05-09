@@ -1,0 +1,14 @@
+stump/adapter-filesystem/0.0.1
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: npm package '@jsr/stump__core' does not exist.
+    at file://<tmpdir>/src/drivers/bun/index.ts:1:36
+

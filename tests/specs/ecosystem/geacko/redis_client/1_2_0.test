@@ -1,0 +1,22 @@
+geacko/redis-client/1.2.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@geacko/resp3-parser@^2.2.0": "jsr:@geacko/resp3-parser@2.2.0"
+    },
+    "jsr": {
+      "@geacko/resp3-parser@2.2.0": {
+        "integrity": "fac8f742ae6ffd9e91dcda26251636daa0b7934f8141a7cdb1e9cc3885d9ccfe"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

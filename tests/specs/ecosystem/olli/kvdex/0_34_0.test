@@ -1,0 +1,29 @@
+olli/kvdex/0.34.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/collections@0.214.0": "jsr:@std/collections@0.214.0",
+      "npm:zod@3.22.4": "npm:zod@3.22.4"
+    },
+    "jsr": {
+      "@std/collections@0.214.0": {
+        "integrity": "0c92b903c7ed3f16c09d62c3d92aef99b87b6b04d73385706ac1b3e7af66aa81"
+      }
+    },
+    "npm": {
+      "zod@3.22.4": {
+        "integrity": "sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

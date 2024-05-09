@@ -1,6 +1,6 @@
 [package]
 name = "deno_graph"
-version = "0.70.0"
+version = "0.74.5"
 edition = "2021"
 description = "Module graph analysis for deno"
 homepage = "https://deno.land/"
@@ -25,11 +25,21 @@ symbols = ["deno_ast/transforms", "deno_ast/visit", "deno_ast/utils"]
 tokio_executor = ["deno_unsync"]
 wasm_executor = []
 
+[[test]]
+name = "specs"
+path = "tests/specs_test.rs"
+harness = false
+
+[[test]]
+name = "ecosystem"
+path = "tests/ecosystem_test.rs"
+harness = false
+
 [dependencies]
 anyhow = "1.0.43"
 async-trait = "0.1.68"
 data-url = "0.3.0"
-deno_ast = { version = "0.35.0", features = ["dep_analysis"] }
+deno_ast = { version = "0.38.1", features = ["dep_analysis", "emit"] }
 deno_semver = "0.5.4"
 deno_unsync = { version = "0.3.2", optional = true }
 encoding_rs = "0.8.33"
@@ -50,9 +60,12 @@ url = { version = "2.2.2", features = ["serde"] }
 
 [dev-dependencies]
 bincode = "1.3.3"
+file_test_runner = "0.4.0"
 pretty_assertions = "1.0.0"
+reqwest = { version = "0.12.4", default-features = false, features = ["http2", "charset", "rustls-tls-webpki-roots"] }
 tempfile = "3.4.0"
-tokio = { version = "1.10.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.10.1", features = ["macros", "rt-multi-thread", "sync"] }
+deno_terminal = "0.1.1"
 
 [profile.release]
 codegen-units = 1

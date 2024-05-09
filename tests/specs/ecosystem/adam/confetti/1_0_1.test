@@ -1,0 +1,20 @@
+adam/confetti/1.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'CSSStyleDeclaration'.
+  customStyles?: CSSStyleDeclaration;
+                 ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/confetti/confetti.ts:16:18
+

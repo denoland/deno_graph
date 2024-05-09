@@ -1,0 +1,64 @@
+jersey/lightning/0.6.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@db/mongo@^0.33.0": "jsr:@db/mongo@0.33.0",
+      "jsr:@denosaurs/event@^2.0.2": "jsr:@denosaurs/event@2.0.2",
+      "jsr:@iuioiua/r2d2@2.1.1": "jsr:@iuioiua/r2d2@2.1.1",
+      "jsr:@lucsoft/web-bson@^0.3.1": "jsr:@lucsoft/web-bson@0.3.1",
+      "jsr:@std/bytes@^0.220.1": "jsr:@std/bytes@0.220.1",
+      "jsr:@std/collections@^0.220.1": "jsr:@std/collections@0.220.1",
+      "jsr:@std/crypto@^0.220.1": "jsr:@std/crypto@0.220.1",
+      "jsr:@std/encoding@^0.220.1": "jsr:@std/encoding@0.220.1",
+      "jsr:@std/io@^0.220.1": "jsr:@std/io@0.220.1"
+    },
+    "jsr": {
+      "@db/mongo@0.33.0": {
+        "integrity": "89312b9db63ad733920901d60faf8c667aa3cb0a64b67f8c3e74601465273e3a",
+        "dependencies": [
+          "jsr:@lucsoft/web-bson@^0.3.1",
+          "jsr:@std/crypto@^0.220.1",
+          "jsr:@std/encoding@^0.220.1"
+        ]
+      },
+      "@denosaurs/event@2.0.2": {
+        "integrity": "3310ba1a9e94dd60ccb09c6084fc818cc1cd50e543c56ef0c6199f1b89073392"
+      },
+      "@iuioiua/r2d2@2.1.1": {
+        "integrity": "ef7ca7c892f5345b553efaf426b95021e7eb7374e885f521e00de5a6e5b98df9",
+        "dependencies": [
+          "jsr:@std/bytes@^0.220.1",
+          "jsr:@std/collections@^0.220.1",
+          "jsr:@std/io@^0.220.1"
+        ]
+      },
+      "@lucsoft/web-bson@0.3.1": {
+        "integrity": "dccad36fe5cc68286a4d3fe1993f7e7a81df0970c5946a5894dae9173adafe60"
+      },
+      "@std/bytes@0.220.1": {
+        "integrity": "e522cdc7c152cfc8a09bd618618cbc710dcf57003ab6fab3a6c37ff4c88aa3db"
+      },
+      "@std/collections@0.220.1": {
+        "integrity": "5820a8d7f69ef93af6807249dfa4be5b97ebf8654c587826612744cf7ae57ef2"
+      },
+      "@std/crypto@0.220.1": {
+        "integrity": "4cec173974f33398041a3f66cc2f9b2fcc4a5ceaddd0e60840887d3bb7289d23"
+      },
+      "@std/encoding@0.220.1": {
+        "integrity": "8dc38dd72e36cd68857a5837e24eb09a64bb296b96c295239c75eec17d45d23f"
+      },
+      "@std/io@0.220.1": {
+        "integrity": "c14c3237cfc73dd8086ac82673212939f8c49f0803d6da68eea32249caffdd67"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

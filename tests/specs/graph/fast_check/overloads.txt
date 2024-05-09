@@ -1,0 +1,110 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+export class argsToArray {
+  constructor(..._args: string[]);
+  constructor(..._args: number[]);
+  constructor(..._args: unknown[]) {}
+
+  argsToArray(..._args: string[]): void;
+  argsToArray(..._args: number[]): void;
+  argsToArray(..._args: unknown[]): void {}
+}
+
+export function overloadSpread(...args: string[]): void;
+export function overloadSpread(...args: number[]): void;
+export function overloadSpread(...args: unknown[]) {
+  return args;
+}
+
+export function overloadLast(value: string, ...args: string[]): void;
+export function overloadLast(value: number, ...args: number[]): void;
+export function overloadLast(value: string | number, ...args: unknown[]) {
+  return args;
+}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 682,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {}
+  export class argsToArray {
+    constructor(..._args: string[]);
+    constructor(..._args: number[]);
+    constructor(...param0: any){}
+    argsToArray(..._args: string[]): void;
+    argsToArray(..._args: number[]): void;
+    argsToArray(...param0: any): any {
+      return {} as never;
+    }
+  }
+  export function overloadSpread(...args: string[]): void;
+  export function overloadSpread(...args: number[]): void;
+  export function overloadSpread(...param0: any): any {
+    return {} as never;
+  }
+  export function overloadLast(value: string, ...args: string[]): void;
+  export function overloadLast(value: number, ...args: number[]): void;
+  export function overloadLast(param0?: any, ...param1: any): any {
+    return {} as never;
+  }
+  --- DTS ---
+  export declare class argsToArray {
+    constructor(..._args: string[]);
+    constructor(..._args: number[]);
+    argsToArray(..._args: string[]): void;
+    argsToArray(..._args: number[]): void;
+  }
+  export declare function overloadSpread(...args: string[]): void;
+  export declare function overloadSpread(...args: number[]): void;
+  export declare function overloadLast(value: string, ...args: string[]): void;
+  export declare function overloadLast(value: number, ...args: number[]): void;

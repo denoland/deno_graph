@@ -1,0 +1,72 @@
+denosaurs/typefetch/0.0.1
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /mod.ts:202:17
+    | 
+202 | export function createRequestBodyType(document: OpenAPI.Document, contentType: string, schema?: OpenAPI.SchemaObject | OpenAPI.ReferenceObject) {
+    |                 ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /mod.ts:226:17
+    | 
+226 | export function createResponseType(document: OpenAPI.Document, statusCode: number, response: OpenAPI.ResponseObject) {
+    |                 ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /mod.ts:261:17
+    | 
+261 | export function toTemplateString(document: OpenAPI.Document, pattern: string, parameters: ParameterObjectMap) {
+    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /mod.ts:202:17
+    | 
+202 | export function createRequestBodyType(document: OpenAPI.Document, contentType: string, schema?: OpenAPI.SchemaObject | OpenAPI.ReferenceObject) {
+    |                 ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /mod.ts:226:17
+    | 
+226 | export function createResponseType(document: OpenAPI.Document, statusCode: number, response: OpenAPI.ResponseObject) {
+    |                 ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /mod.ts:261:17
+    | 
+261 | export function toTemplateString(document: OpenAPI.Document, pattern: string, parameters: ParameterObjectMap) {
+    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

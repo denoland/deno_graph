@@ -1,0 +1,57 @@
+htmllover/html-router/0.0.5
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export class RouteLink extends HTMLElement {
+                               ~~~~~~~~~~~
+    at file://<tmpdir>/src/components/route-link.ts:2:32
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+ */ export class RouteManager<RouteConfigType extends RouteConfig = RouteConfig> extends HTMLElement {
+                                                                                         ~~~~~~~~~~~
+    at file://<tmpdir>/src/components/route-maneger.ts:21:90
+
+TS2304 [ERROR]: Cannot find name 'HTMLTemplateElement'.
+  set routeTemplate(_template: HTMLTemplateElement | null) {}
+                               ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/route-maneger.ts:99:32
+
+TS2304 [ERROR]: Cannot find name 'HTMLTemplateElement'.
+  get routeTemplate(): HTMLTemplateElement {
+                       ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/route-maneger.ts:100:24
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+  get outletElement(): HTMLDivElement {
+                       ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/route-maneger.ts:103:24
+
+TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
+  get clone(): DocumentFragment {
+               ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/route-maneger.ts:106:16
+
+TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
+  readonly templateContent: DocumentFragment;
+                            ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types/index.ts:37:29
+
+TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
+  readonly clone: DocumentFragment;
+                  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types/index.ts:38:19
+
+Found 8 errors.
+

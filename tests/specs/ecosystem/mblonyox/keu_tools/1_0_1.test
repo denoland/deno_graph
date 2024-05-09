@@ -1,0 +1,23 @@
+mblonyox/keu-tools/1.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:oauth4webapi@^2.10.3": "npm:oauth4webapi@2.10.4"
+    },
+    "npm": {
+      "oauth4webapi@2.10.4": {
+        "integrity": "sha512-DSoj8QoChzOCQlJkRmYxAJCIpnXFW32R0Uq7avyghIeB6iJq0XAblOD7pcq3mx4WEBDwMuKr0Y1qveCBleG2Xw==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

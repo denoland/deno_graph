@@ -1,0 +1,23 @@
+marvinh/foo/0.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:color-helpers@2.0.1": "npm:color-helpers@2.0.1"
+    },
+    "npm": {
+      "color-helpers@2.0.1": {
+        "integrity": "sha512-x4MZ3xBamOcsafvffiksrsDFvZsTFuWHvSuGPVhFvBwVqCKh6gpLexvRwEzVvlI83I+Uhza5O8dhMbj+FuPT3A==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

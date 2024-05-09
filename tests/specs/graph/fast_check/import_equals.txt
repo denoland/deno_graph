@@ -1,0 +1,139 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/inner.ts
+export function foo() {}
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+import * as inner from "./inner.ts";
+import foo = inner.foo;
+export namespace Test2 {
+  function test() {}
+  export { test };
+}
+export namespace Test {
+  export import Asdf = Test2.test;
+  import Other = Test2.test; // will remove
+}
+export { foo }
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 25,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/inner.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./inner.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/inner.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 23
+              },
+              "end": {
+                "line": 0,
+                "character": 35
+              }
+            }
+          }
+        }
+      ],
+      "size": 248,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/inner.ts:
+  {}
+  export function foo(): void {}
+  --- DTS ---
+  export declare function foo(): void;
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {
+    "./inner.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/inner.ts",
+        "span": {
+          "start": {
+            "line": 0,
+            "character": 23
+          },
+          "end": {
+            "line": 0,
+            "character": 35
+          }
+        }
+      }
+    }
+  }
+  import * as inner from "./inner.ts";
+  import foo = inner.foo;
+  export namespace Test2 {
+    function test(): void {}
+    export { test };
+  }
+  export namespace Test {
+    export import Asdf = Test2.test;
+  }
+  export { foo };
+  --- DTS ---
+  import * as inner from "./inner.ts";
+  import foo = inner.foo;
+  export declare namespace Test2 {
+    function test(): void;
+    export { test };
+  }
+  export declare namespace Test {
+    export import Asdf = Test2.test;
+  }
+  export { foo };

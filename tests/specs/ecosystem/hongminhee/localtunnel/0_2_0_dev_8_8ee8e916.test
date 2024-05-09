@@ -1,0 +1,12 @@
+hongminhee/localtunnel/0.2.0-dev.8+8ee8e916
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

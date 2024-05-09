@@ -1,0 +1,116 @@
+wok/jetski/1.8.4
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/types.ts:4:14
+  | 
+4 | export const Cidr = NonEmptyString({
+  |              ^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/types.ts:7:14
+  | 
+7 | export const Ipv4 = NonEmptyString({
+  |              ^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/types.ts:10:14
+   | 
+10 | export const Url = NonEmptyString({ format: "url" });
+   |              ^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/types.ts:12:14
+   | 
+12 | export const ServerInstanceConfigSchema = Type.Object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/types.ts:54:14
+   | 
+54 | export const AgentInstanceConfigSchema = Type.Object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/types.ts:76:14
+   | 
+76 | export const ClusterInstanceConfigSchema = Type.Object({
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/types.ts:81:14
+   | 
+81 | export const InstanceConfigSchema = Type.Union([
+   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/types.ts:86:14
+   | 
+86 | export const JoinMetadataSchema = Type.Object({
+   |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/types.ts:101:14
+    | 
+101 | export const MultipassInfo = FlexObject({
+    |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/types.ts:115:14
+    | 
+115 | export const InstanceConfigPathSchema = Type.String({
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

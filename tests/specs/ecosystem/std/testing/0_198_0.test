@@ -1,0 +1,38 @@
+std/testing/0.198.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.198.0": "jsr:@std/assert@0.198.0",
+      "jsr:@std/async@^0.198.0": "jsr:@std/async@0.198.0",
+      "jsr:@std/fmt@^0.198.0": "jsr:@std/fmt@0.198.0",
+      "jsr:@std/internal@^0.198.0": "jsr:@std/internal@0.198.0"
+    },
+    "jsr": {
+      "@std/assert@0.198.0": {
+        "integrity": "f22e1d02d64ef3924ae796a27cf59b948fa9a434a8579a89cce6941f4106f441",
+        "dependencies": [
+          "jsr:@std/fmt@^0.198.0",
+          "jsr:@std/internal@^0.198.0"
+        ]
+      },
+      "@std/async@0.198.0": {
+        "integrity": "6a7cbf514a13c31ddc1a8da087daf7e0b68ca9fbe92e350e8e8da3b262f30ae6"
+      },
+      "@std/fmt@0.198.0": {
+        "integrity": "a478e01f102a594d418edbfbf88b0a8ef0b8397d00b745294c89fe889244a9c5"
+      },
+      "@std/internal@0.198.0": {
+        "integrity": "779c633a54df83d9f341e7f495bb127b0fa205b03a5f630f6ad4111a0803498a"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

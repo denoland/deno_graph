@@ -1,6 +1,5 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
-use crate::analyzer::Comment;
 use crate::analyzer::DependencyDescriptor;
 use crate::analyzer::DynamicArgument;
 use crate::analyzer::DynamicDependencyDescriptor;
@@ -14,8 +13,10 @@ use crate::analyzer::TypeScriptReference;
 use crate::graph::Position;
 use crate::module_specifier::ModuleSpecifier;
 
+use deno_ast::dep::DependencyComment;
 use deno_ast::MultiThreadedComments;
 use deno_ast::SourcePos;
+use deno_ast::SourceRanged;
 use deno_ast::SourceRangedForSpanned;
 
 use deno_ast::swc::common::comments::CommentKind;
@@ -37,6 +38,10 @@ static JSDOC_IMPORT_RE: Lazy<Regex> = Lazy::new(|| {
 /// Matches the `@jsxImportSource` pragma.
 static JSX_IMPORT_SOURCE_RE: Lazy<Regex> =
   Lazy::new(|| Regex::new(r"(?i)^[\s*]*@jsxImportSource\s+(\S+)").unwrap());
+/// Matches the `@jsxImportSourceTypes` pragma.
+static JSX_IMPORT_SOURCE_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+  Regex::new(r"(?i)^[\s*]*@jsxImportSourceTypes\s+(\S+)").unwrap()
+});
 /// Matches a `/// <reference ... />` comment reference.
 static TRIPLE_SLASH_REFERENCE_RE: Lazy<Regex> =
   Lazy::new(|| Regex::new(r"(?i)^/\s*<reference\s.*?/>").unwrap());
@@ -48,9 +53,20 @@ static PATH_REFERENCE_RE: Lazy<Regex> =
 /// a dependency.
 static TYPES_REFERENCE_RE: Lazy<Regex> =
   Lazy::new(|| Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap());
+/// Matches the `@ts-self-types` pragma.
+static TS_SELF_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+  Regex::new(r#"(?i)^\s*@ts-self-types\s*=\s*["']([^"']+)["']"#).unwrap()
+});
+/// Matches the `@ts-types` pragma.
+static TS_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+  Regex::new(r#"(?i)^\s*@ts-types\s*=\s*["']([^"']+)["']"#).unwrap()
+});
+/// Matches the `@deno-types` pragma.
+pub static DENO_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+  Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#).unwrap()
+});
 
 pub struct ParseOptions<'a> {
-  // this is not cloned in lazy parsing scenarios (thus the reference)
   pub specifier: &'a ModuleSpecifier,
   pub source: Arc<str>,
   pub media_type: MediaType,
@@ -100,6 +116,13 @@ pub trait ParsedSourceStore {
     &self,
     specifier: &ModuleSpecifier,
   ) -> Option<ParsedSource>;
+  fn remove_parsed_source(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<ParsedSource> {
+    // todo(dsherret): remove this default implementation once a breaking change is done to deno_graph
+    self.get_parsed_source(specifier)
+  }
   /// Gets a `deno_ast::ParsedSource` from the store, upgrading it
   /// to have scope analysis if it doesn't already.
   fn get_scope_analysis_parsed_source(
@@ -128,6 +151,13 @@ impl ParsedSourceStore for DefaultParsedSourceStore {
     specifier: &ModuleSpecifier,
   ) -> Option<ParsedSource> {
     self.store.borrow().get(specifier).cloned()
+  }
+
+  fn remove_parsed_source(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<ParsedSource> {
+    self.store.borrow_mut().remove(specifier)
   }
 
   fn get_scope_analysis_parsed_source(
@@ -264,7 +294,17 @@ impl<'a> ParserModuleAnalyzer<'a> {
     ModuleInfo {
       dependencies: analyze_dependencies(module, text_info, comments),
       ts_references: analyze_ts_references(text_info, leading_comments),
+      self_types_specifier: analyze_ts_self_types(
+        media_type,
+        text_info,
+        leading_comments,
+      ),
       jsx_import_source: analyze_jsx_import_source(
+        media_type,
+        text_info,
+        leading_comments,
+      ),
+      jsx_import_source_types: analyze_jsx_import_source_types(
         media_type,
         text_info,
         leading_comments,
@@ -371,6 +411,13 @@ impl ParsedSourceStore for CapturingModuleAnalyzer {
     self.store.get_parsed_source(specifier)
   }
 
+  fn remove_parsed_source(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<ParsedSource> {
+    self.store.remove_parsed_source(specifier)
+  }
+
   fn get_scope_analysis_parsed_source(
     &self,
     specifier: &ModuleSpecifier,
@@ -392,12 +439,10 @@ fn analyze_dependencies(
       deno_ast::dep::DependencyDescriptor::Static(d) => {
         DependencyDescriptor::Static(StaticDependencyDescriptor {
           kind: d.kind,
-          leading_comments: d
-            .leading_comments
-            .into_iter()
-            .filter(filter_dep_comment)
-            .map(|c| Comment::from_dep_comment(c, text_info))
-            .collect(),
+          types_specifier: analyze_ts_or_deno_types(
+            text_info,
+            &d.leading_comments,
+          ),
           specifier: d.specifier.to_string(),
           specifier_range: PositionRange::from_source_range(
             d.specifier_range,
@@ -408,12 +453,10 @@ fn analyze_dependencies(
       }
       deno_ast::dep::DependencyDescriptor::Dynamic(d) => {
         DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
-          leading_comments: d
-            .leading_comments
-            .into_iter()
-            .filter(filter_dep_comment)
-            .map(|c| Comment::from_dep_comment(c, text_info))
-            .collect(),
+          types_specifier: analyze_ts_or_deno_types(
+            text_info,
+            &d.leading_comments,
+          ),
           argument: match d.argument {
             deno_ast::dep::DynamicArgument::String(text) => {
               DynamicArgument::String(text.to_string())
@@ -446,10 +489,6 @@ fn analyze_dependencies(
       }
     })
     .collect()
-}
-
-fn filter_dep_comment(c: &deno_ast::dep::DependencyComment) -> bool {
-  c.text.contains("@deno-types")
 }
 
 fn analyze_ts_references(
@@ -518,6 +557,102 @@ fn analyze_jsx_import_source(
   })
 }
 
+fn analyze_jsx_import_source_types(
+  media_type: MediaType,
+  text_info: &SourceTextInfo,
+  leading_comments: Option<&Vec<deno_ast::swc::common::comments::Comment>>,
+) -> Option<SpecifierWithRange> {
+  if !matches!(media_type, MediaType::Jsx | MediaType::Tsx) {
+    return None;
+  }
+
+  leading_comments.and_then(|c| {
+    c.iter().find_map(|c| {
+      if c.kind != CommentKind::Block {
+        return None; // invalid
+      }
+      let captures = JSX_IMPORT_SOURCE_TYPES_RE.captures(&c.text)?;
+      let m = captures.get(1)?;
+      Some(SpecifierWithRange {
+        text: m.as_str().to_string(),
+        range: comment_source_to_position_range(c.start(), &m, text_info, true),
+      })
+    })
+  })
+}
+
+fn analyze_ts_self_types(
+  media_type: MediaType,
+  text_info: &SourceTextInfo,
+  leading_comments: Option<&Vec<deno_ast::swc::common::comments::Comment>>,
+) -> Option<SpecifierWithRange> {
+  if media_type.is_typed() {
+    return None;
+  }
+
+  leading_comments.and_then(|c| {
+    c.iter().find_map(|c| {
+      let captures = TS_SELF_TYPES_RE.captures(&c.text)?;
+      let m = captures.get(1)?;
+      Some(SpecifierWithRange {
+        text: m.as_str().to_string(),
+        range: comment_source_to_position_range(
+          c.start(),
+          &m,
+          text_info,
+          false,
+        ),
+      })
+    })
+  })
+}
+
+/// Searches comments for any `@ts-types` or `@deno-types` compiler hints.
+pub fn analyze_ts_or_deno_types(
+  text_info: &SourceTextInfo,
+  leading_comments: &[DependencyComment],
+) -> Option<SpecifierWithRange> {
+  let comment = leading_comments.last()?;
+
+  if let Some(captures) = TS_TYPES_RE.captures(&comment.text) {
+    if let Some(m) = captures.get(1) {
+      return Some(SpecifierWithRange {
+        text: m.as_str().to_string(),
+        range: comment_source_to_position_range(
+          comment.range.start(),
+          &m,
+          text_info,
+          false,
+        ),
+      });
+    }
+  }
+  let captures = DENO_TYPES_RE.captures(&comment.text)?;
+  if let Some(m) = captures.get(1) {
+    Some(SpecifierWithRange {
+      text: m.as_str().to_string(),
+      range: comment_source_to_position_range(
+        comment.range.start(),
+        &m,
+        text_info,
+        false,
+      ),
+    })
+  } else if let Some(m) = captures.get(2) {
+    Some(SpecifierWithRange {
+      text: m.as_str().to_string(),
+      range: comment_source_to_position_range(
+        comment.range.start(),
+        &m,
+        text_info,
+        true,
+      ),
+    })
+  } else {
+    unreachable!("Unexpected captures from deno types regex")
+  }
+}
+
 fn analyze_jsdoc_imports(
   media_type: MediaType,
   text_info: &SourceTextInfo,
@@ -561,13 +696,12 @@ fn comment_source_to_position_range(
   comment_start: SourcePos,
   m: &Match,
   text_info: &SourceTextInfo,
-  is_jsx_import_source: bool,
+  is_specifier_quoteless: bool,
 ) -> PositionRange {
   // the comment text starts after the double slash or slash star, so add 2
   let comment_start = comment_start + 2;
-  // -1 and +1 to include the quotes, but not for jsx import sources because
-  // they don't have quotes
-  let padding = if is_jsx_import_source { 0 } else { 1 };
+  // -1 and +1 to include the quotes, but not for pragmas that don't have quotes
+  let padding = if is_specifier_quoteless { 0 } else { 1 };
   PositionRange {
     start: Position::from_source_pos(
       comment_start + m.start() - padding,
@@ -582,8 +716,6 @@ fn comment_source_to_position_range(
 
 #[cfg(test)]
 mod tests {
-  use crate::analyzer::analyze_deno_types;
-
   use super::*;
   use pretty_assertions::assert_eq;
 
@@ -596,6 +728,8 @@ mod tests {
     /// <reference types="./types.d.ts" />
     // @jsxImportSource http://example.com/invalid
     /* @jsxImportSource http://example.com/preact */
+    // @jsxImportSourceTypes http://example.com/invalidTypes
+    /* @jsxImportSourceTypes http://example.com/preactTypes */
     import {
       A,
       B,
@@ -609,10 +743,19 @@ mod tests {
     import { h, Fragment } from "https://esm.sh/preact";
 
     // other
-    // @deno-types="https://deno.land/x/types/react/index.d.ts";
+    // @deno-types="https://deno.land/x/types/react/index.d.ts"
     import React from "https://cdn.skypack.dev/react";
 
+    // @deno-types=https://deno.land/x/types/react/index.d.ts
+    import React2 from "https://cdn.skypack.dev/react";
+
+    // @deno-types="https://deno.land/x/types/react/index.d.ts"
+    // other comment first
+    import React3 from "https://cdn.skypack.dev/react";
+
     const a = await import("./a.ts");
+
+    const React4 = await /* @deno-types="https://deno.land/x/types/react/index.d.ts" */ import("https://cdn.skypack.dev/react");
     "#;
     let parsed_source = DefaultModuleParser
       .parse_module(ParseOptions {
@@ -625,7 +768,7 @@ mod tests {
     let text_info = parsed_source.text_info();
     let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
     let dependencies = module_info.dependencies;
-    assert_eq!(dependencies.len(), 6);
+    assert_eq!(dependencies.len(), 9);
 
     let ts_references = module_info.ts_references;
     assert_eq!(ts_references.len(), 2);
@@ -650,21 +793,55 @@ mod tests {
       }
     }
 
-    let dep_deno_types = analyze_deno_types(
-      &dependencies[4].as_static().unwrap().leading_comments,
-    )
-    .unwrap();
+    let dep_deno_types = &dependencies[4]
+      .as_static()
+      .unwrap()
+      .types_specifier
+      .as_ref()
+      .unwrap();
     assert_eq!(
-      dep_deno_types.specifier,
+      dep_deno_types.text,
       "https://deno.land/x/types/react/index.d.ts"
     );
     assert_eq!(
       text_info.range_text(&dep_deno_types.range.as_source_range(text_info)),
       r#""https://deno.land/x/types/react/index.d.ts""#
     );
+
+    let dep_deno_types = &dependencies[5]
+      .as_static()
+      .unwrap()
+      .types_specifier
+      .as_ref()
+      .unwrap();
     assert_eq!(
-      dependencies[4].as_static().unwrap().leading_comments.len(),
-      1
+      dep_deno_types.text,
+      "https://deno.land/x/types/react/index.d.ts"
+    );
+    assert_eq!(
+      text_info.range_text(&dep_deno_types.range.as_source_range(text_info)),
+      r#"https://deno.land/x/types/react/index.d.ts"#
+    );
+
+    assert!(dependencies[6]
+      .as_static()
+      .unwrap()
+      .types_specifier
+      .is_none());
+
+    let dep_deno_types = &dependencies[8]
+      .as_dynamic()
+      .unwrap()
+      .types_specifier
+      .as_ref()
+      .unwrap();
+    assert_eq!(
+      dep_deno_types.text,
+      "https://deno.land/x/types/react/index.d.ts"
+    );
+    assert_eq!(
+      text_info.range_text(&dep_deno_types.range.as_source_range(text_info)),
+      r#""https://deno.land/x/types/react/index.d.ts""#
     );
 
     let jsx_import_source = module_info.jsx_import_source.unwrap();
@@ -673,6 +850,19 @@ mod tests {
       text_info.range_text(&jsx_import_source.range.as_source_range(text_info)),
       "http://example.com/preact"
     );
+
+    let jsx_import_source_types = module_info.jsx_import_source_types.unwrap();
+    assert_eq!(
+      jsx_import_source_types.text,
+      "http://example.com/preactTypes"
+    );
+    assert_eq!(
+      text_info
+        .range_text(&jsx_import_source_types.range.as_source_range(text_info)),
+      "http://example.com/preactTypes"
+    );
+
+    assert!(module_info.self_types_specifier.is_none());
   }
 
   #[test]
@@ -715,6 +905,43 @@ mod tests {
     assert_eq!(
       text_info.range_text(&dep.specifier_range.as_source_range(text_info)),
       "\"./b.ts\""
+    );
+  }
+
+  #[test]
+  fn test_analyze_self_types() {
+    let specifier =
+      ModuleSpecifier::parse("file:///a/test.js").expect("bad specifier");
+    let source = r#"
+      // @ts-self-types="./self.d.ts"
+
+      import * as a from "./a.ts";
+    "#;
+    let parsed_source = DefaultModuleParser
+      .parse_module(ParseOptions {
+        specifier: &specifier,
+        source: source.into(),
+        media_type: MediaType::JavaScript,
+        scope_analysis: false,
+      })
+      .unwrap();
+    let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
+    let text_info = parsed_source.text_info();
+    let dependencies = module_info.dependencies;
+    assert_eq!(dependencies.len(), 1);
+    let dep = dependencies[0].as_static().unwrap();
+    assert_eq!(dep.specifier.to_string(), "./a.ts");
+    assert_eq!(
+      text_info.range_text(&dep.specifier_range.as_source_range(text_info)),
+      "\"./a.ts\""
+    );
+
+    let self_types_specifier = module_info.self_types_specifier.unwrap();
+    assert_eq!(self_types_specifier.text, "./self.d.ts");
+    assert_eq!(
+      text_info
+        .range_text(&self_types_specifier.range.as_source_range(text_info)),
+      "\"./self.d.ts\""
     );
   }
 
@@ -877,6 +1104,7 @@ export {};
             },
           },
         })],
+        self_types_specifier: None,
         jsx_import_source: Some(SpecifierWithRange {
           text: "preact".to_owned(),
           range: PositionRange {
@@ -890,6 +1118,7 @@ export {};
             },
           },
         }),
+        jsx_import_source_types: None,
         jsdoc_imports: vec![],
       },
     );

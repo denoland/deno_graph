@@ -1,0 +1,12 @@
+fresh/init/0.0.1-alpha.3
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

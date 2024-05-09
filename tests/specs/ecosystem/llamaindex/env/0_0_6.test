@@ -1,0 +1,27 @@
+llamaindex/env/0.0.6
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2580 [ERROR]: Cannot find name 'Buffer'.
+   */ readRawFile(path: string): Promise<Buffer>;
+                                         ~~~~~~
+    at file://<tmpdir>/src/type.ts:10:42
+
+TS2580 [ERROR]: Cannot find name 'Buffer'.
+  readRawFile(path: string): Promise<Buffer> {
+                                     ~~~~~~
+    at file://<tmpdir>/src/type.ts:47:38
+
+Found 2 errors.
+

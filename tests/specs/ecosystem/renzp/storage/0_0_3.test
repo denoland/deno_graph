@@ -1,0 +1,29 @@
+renzp/storage/0.0.3
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@renzp/utils@^0.0.7": "npm:@renzp/utils@0.0.7_typescript@5.4.5"
+    },
+    "npm": {
+      "@renzp/utils@0.0.7_typescript@5.4.5": {
+        "integrity": "sha512-h5VpbveRh4NzC1YT+EF3sqi8vdkJraEsSw57ytQGxzHQ5J7uxeulKy9G5f4sj1RyVt86711JIefmQ1nGaCdo5A==",
+        "dependencies": {
+          "typescript": "typescript@5.4.5"
+        }
+      },
+      "typescript@5.4.5": {
+        "integrity": "sha512-vcI4UpRgg81oIRUFwR0WSIHKt11nJ7SAVlYNIu+QpqeyXP+gpQJy/Z4+F0aGxSE4MqwjyXvW/TzgkLAx2AGHwQ==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

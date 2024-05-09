@@ -1,0 +1,54 @@
+david/dax/0.39.2
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@david/which@0.3": "jsr:@david/which@0.3.0",
+      "jsr:@std/assert@^0.213.0": "jsr:@std/assert@0.213.1",
+      "jsr:@std/assert@^0.213.1": "jsr:@std/assert@0.213.1",
+      "jsr:@std/bytes@^0.213.0": "jsr:@std/bytes@0.213.1",
+      "jsr:@std/fs@0.213.0": "jsr:@std/fs@0.213.0",
+      "jsr:@std/io@0.213.0": "jsr:@std/io@0.213.0",
+      "jsr:@std/path@^0.213.0": "jsr:@std/path@0.213.1"
+    },
+    "jsr": {
+      "@david/which@0.3.0": {
+        "integrity": "6bdb62c40ac90edcf328e854fa8103a8db21e7c326089cbe3c3a1cf7887d3204"
+      },
+      "@std/assert@0.213.1": {
+        "integrity": "24c28178b30c8e0782c18e8e94ea72b16282207569cdd10ffb9d1d26f2edebfe"
+      },
+      "@std/bytes@0.213.1": {
+        "integrity": "97f133c5bfb18b4522675e0822089de91e32618a4d8c2fcea8e175aca8f1f65c"
+      },
+      "@std/fs@0.213.0": {
+        "integrity": "607ed7611e61e33179e2a6a7c60c086d6fef3b79438c403c51a336d0ca4e162d",
+        "dependencies": [
+          "jsr:@std/assert@^0.213.0",
+          "jsr:@std/path@^0.213.0"
+        ]
+      },
+      "@std/io@0.213.0": {
+        "integrity": "e78db92000e718c4b37e3c5f8a854a7c8d66cf4f1ab81d2c5c834172e66191cb",
+        "dependencies": [
+          "jsr:@std/assert@^0.213.0",
+          "jsr:@std/bytes@^0.213.0"
+        ]
+      },
+      "@std/path@0.213.1": {
+        "integrity": "f187bf278a172752e02fcbacf6bd78a335ed320d080a7ed3a5a59c3e88abc673",
+        "dependencies": [
+          "jsr:@std/assert@^0.213.1"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

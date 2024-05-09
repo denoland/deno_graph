@@ -1,0 +1,12 @@
+iwanglang/observation-visual-acuity/0.0.4
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

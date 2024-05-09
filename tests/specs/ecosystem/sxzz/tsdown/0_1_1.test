@@ -1,0 +1,111 @@
+sxzz/tsdown/0.1.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:rolldown@nightly": "npm:rolldown@0.10.2-snapshot-aa944b2-20240502002459"
+    },
+    "npm": {
+      "@emnapi/core@1.1.1": {
+        "integrity": "sha512-eu4KjHfXg3I+UUR7vSuwZXpRo4c8h4Rtb5Lu2F7Z4JqJFl/eidquONEBiRs6viXKpWBC3BaJBy68xGJ2j56idw==",
+        "dependencies": {
+          "tslib": "tslib@2.6.2"
+        }
+      },
+      "@emnapi/runtime@1.1.1": {
+        "integrity": "sha512-3bfqkzuR1KLx57nZfjr2NLnFOobvyS0aTszaEGCGqmYMVDRaGvgIZbjGSV/MHSSmLgQ/b9JFHQ5xm5WRZYd+XQ==",
+        "dependencies": {
+          "tslib": "tslib@2.6.2"
+        }
+      },
+      "@napi-rs/wasm-runtime@0.2.3": {
+        "integrity": "sha512-e4qmGDzXu2MYjj/XiKSgJ7XS7Z83MYVRN1yYaYXeQNVEO56zmshqmzFaELfdb612sLq/GmiPfRIwSji+bIlyCw==",
+        "dependencies": {
+          "@emnapi/core": "@emnapi/core@1.1.1",
+          "@emnapi/runtime": "@emnapi/runtime@1.1.1",
+          "@tybys/wasm-util": "@tybys/wasm-util@0.8.3"
+        }
+      },
+      "@rolldown/binding-darwin-arm64@0.10.2-snapshot-aa944b2-20240502002459": {
+        "integrity": "sha512-+q4B2lQZyoAeEIzEu/VJS1EtONTz60PP0x3t0o9eXz+cI5b7nQW5umLaZhwBfczIhX5/LaxMDHCpNgw5t+3/3g==",
+        "dependencies": {}
+      },
+      "@rolldown/binding-darwin-x64@0.10.2-snapshot-aa944b2-20240502002459": {
+        "integrity": "sha512-VykXIf/GM7atcLwIlbRXiaoZvzbKXDLgv25oJsDhK+QVm+VV0VaStsceafV4f0QU9EZ/3IkuKxteQfuXg9+eCA==",
+        "dependencies": {}
+      },
+      "@rolldown/binding-linux-arm-gnueabihf@0.10.2-snapshot-aa944b2-20240502002459": {
+        "integrity": "sha512-uPqGl7+20X5Q5og7DCsl1FQkloiWS6Tl64na1+nqC9q8H+sGlg1DM5vkApDqYlj/URCDrxYEhqlbl5Yl2aogJg==",
+        "dependencies": {}
+      },
+      "@rolldown/binding-linux-arm64-gnu@0.10.2-snapshot-aa944b2-20240502002459": {
+        "integrity": "sha512-UXah+m+BcWABwIIiaRdjGfpodWEIJ4R/XIYGeg0Odo7+TFqoy+qpDk0SRo1SP6kQKz3RmGixZhg9q4pJ3c7unA==",
+        "dependencies": {}
+      },
+      "@rolldown/binding-linux-arm64-musl@0.10.2-snapshot-aa944b2-20240502002459": {
+        "integrity": "sha512-Osi6R2bK6hW7qYmiTihZzsz0LoajNFrsBErPJQFz7ToR2b0wKeP4hwr/60lsUUDvPD5vqudwoym1pQnm74UArQ==",
+        "dependencies": {}
+      },
+      "@rolldown/binding-linux-x64-gnu@0.10.2-snapshot-aa944b2-20240502002459": {
+        "integrity": "sha512-BAZetQ6AgMaN9tSvdbmfQnIug1ziJ3HMlOyV0+ommkCb5boPD5ZXPV6qf5MW2MvCokr7NzndG1u+9AgaO4mkvg==",
+        "dependencies": {}
+      },
+      "@rolldown/binding-linux-x64-musl@0.10.2-snapshot-aa944b2-20240502002459": {
+        "integrity": "sha512-fW75AGOuTrNHIXgTDG94pUbvFCWdQy6kZoHj2gYOg4bhTQ+UVnCuHj7r1qvB/1QJolzZt8olW/KI+DQd18td8g==",
+        "dependencies": {}
+      },
+      "@rolldown/binding-wasm32-wasi@0.10.2-snapshot-aa944b2-20240502002459": {
+        "integrity": "sha512-8MpljromIQi7IIINV8fZPuVLGvWtr08HhpZkPUNVJRa8hj+E2QrThx+09K1FXldZEZ+JuMtPSQcRgmB51jgYUw==",
+        "dependencies": {
+          "@napi-rs/wasm-runtime": "@napi-rs/wasm-runtime@0.2.3"
+        }
+      },
+      "@rolldown/binding-win32-arm64-msvc@0.10.2-snapshot-aa944b2-20240502002459": {
+        "integrity": "sha512-/pDAFAmLYsOnXKJrHlxhEkl6OJ/TjsIhuaY00DrgbyGyz7gj+03kTJ5XECNLb3+fa+VpuOpOi1MDjcMBX4omqg==",
+        "dependencies": {}
+      },
+      "@rolldown/binding-win32-ia32-msvc@0.10.2-snapshot-aa944b2-20240502002459": {
+        "integrity": "sha512-vh9YwIiQfVbXGmdjeRxuO9WP0WFm8RmhwwHA90kcQyO5BKkqz0nNdszdccWPh5zL9nl11/xi+n3cz6zjpS536w==",
+        "dependencies": {}
+      },
+      "@rolldown/binding-win32-x64-msvc@0.10.2-snapshot-aa944b2-20240502002459": {
+        "integrity": "sha512-uzIXioch0T4h9+Qno14DXF4u6Jk61xnxdeTeD00doNqY0jvKVBxbMayPQsLdZAqp1ayGxfFc3DWuDpVUiPBFQg==",
+        "dependencies": {}
+      },
+      "@tybys/wasm-util@0.8.3": {
+        "integrity": "sha512-Z96T/L6dUFFxgFJ+pQtkPpne9q7i6kIPYCFnQBHSgSPV9idTsKfIhCss0h5iM9irweZCatkrdeP8yi5uM1eX6Q==",
+        "dependencies": {
+          "tslib": "tslib@2.6.2"
+        }
+      },
+      "rolldown@0.10.2-snapshot-aa944b2-20240502002459": {
+        "integrity": "sha512-7O7wgVIpDHiZVzZf4dbv9xreby9O/gTLsFYsgAyX8usF5Xvf3JIJWhpHAvszAmdlkq3x7iUvaECyywkEAoQlTA==",
+        "dependencies": {
+          "@rolldown/binding-darwin-arm64": "@rolldown/binding-darwin-arm64@0.10.2-snapshot-aa944b2-20240502002459",
+          "@rolldown/binding-darwin-x64": "@rolldown/binding-darwin-x64@0.10.2-snapshot-aa944b2-20240502002459",
+          "@rolldown/binding-linux-arm-gnueabihf": "@rolldown/binding-linux-arm-gnueabihf@0.10.2-snapshot-aa944b2-20240502002459",
+          "@rolldown/binding-linux-arm64-gnu": "@rolldown/binding-linux-arm64-gnu@0.10.2-snapshot-aa944b2-20240502002459",
+          "@rolldown/binding-linux-arm64-musl": "@rolldown/binding-linux-arm64-musl@0.10.2-snapshot-aa944b2-20240502002459",
+          "@rolldown/binding-linux-x64-gnu": "@rolldown/binding-linux-x64-gnu@0.10.2-snapshot-aa944b2-20240502002459",
+          "@rolldown/binding-linux-x64-musl": "@rolldown/binding-linux-x64-musl@0.10.2-snapshot-aa944b2-20240502002459",
+          "@rolldown/binding-wasm32-wasi": "@rolldown/binding-wasm32-wasi@0.10.2-snapshot-aa944b2-20240502002459",
+          "@rolldown/binding-win32-arm64-msvc": "@rolldown/binding-win32-arm64-msvc@0.10.2-snapshot-aa944b2-20240502002459",
+          "@rolldown/binding-win32-ia32-msvc": "@rolldown/binding-win32-ia32-msvc@0.10.2-snapshot-aa944b2-20240502002459",
+          "@rolldown/binding-win32-x64-msvc": "@rolldown/binding-win32-x64-msvc@0.10.2-snapshot-aa944b2-20240502002459"
+        }
+      },
+      "tslib@2.6.2": {
+        "integrity": "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

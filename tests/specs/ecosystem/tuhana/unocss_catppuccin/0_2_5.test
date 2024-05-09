@@ -1,0 +1,28 @@
+tuhana/unocss-catppuccin/0.2.5
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@catppuccin/palette@^1.0.1": "npm:@catppuccin/palette@1.1.1",
+      "npm:@unocss/core@^0.58.2": "npm:@unocss/core@0.58.9"
+    },
+    "npm": {
+      "@catppuccin/palette@1.1.1": {
+        "integrity": "sha512-wgITbl3OEIUnv8WPTdG2BGjepSMZtJW9V4XpxNDJjCvel0Q5+BxRmKH3XYN0vVjohHR+APCyZCpzSnO+GdsTLg==",
+        "dependencies": {}
+      },
+      "@unocss/core@0.58.9": {
+        "integrity": "sha512-wYpPIPPsOIbIoMIDuH8ihehJk5pAZmyFKXIYO/Kro98GEOFhz6lJoLsy6/PZuitlgp2/TSlubUuWGjHWvp5osw==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

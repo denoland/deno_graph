@@ -1,12 +1,12 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
-import { LoadResponseModule } from "./types.ts";
+import type { LoadResponseModule } from "./types.ts";
 import {
   createGraph,
   init,
   load,
-  LoadResponse,
+  type LoadResponse,
   MediaType,
   parseModule,
 } from "./mod.ts";
@@ -662,6 +662,34 @@ Deno.test({
       module.dependencies?.find((d) =>
         d.specifier === "http://example.com/preact/jsx-runtime"
       ),
+    );
+  },
+});
+
+Deno.test({
+  name: "parseModule() - with defaultJsxImportSourceTypes",
+  async fn() {
+    await init();
+    const module = parseModule(
+      `file:///a/test01.tsx`,
+      new TextEncoder().encode(`
+    export function A() {
+      <div>Hello Deno</div>
+    }`),
+      {
+        defaultJsxImportSource: "http://example.com/preact",
+        defaultJsxImportSourceTypes: "http://example.com/preact-types",
+      },
+    );
+
+    const dep = module.dependencies?.find((d) =>
+      d.specifier === "http://example.com/preact/jsx-runtime"
+    );
+    assert(dep != null);
+    assert(dep.type);
+    assertEquals(
+      dep.type.specifier,
+      "http://example.com/preact-types/jsx-runtime",
     );
   },
 });

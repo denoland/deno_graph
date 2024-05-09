@@ -1,0 +1,12 @@
+sondr3/a11y-color-contrast/0.2.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

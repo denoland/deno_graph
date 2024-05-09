@@ -28,7 +28,7 @@ import type {
   TypesDependency,
 } from "./types.ts";
 
-export { load } from "./loader.ts";
+export { load, withResolvingRedirects } from "./loader.ts";
 export { MediaType } from "./media_type.ts";
 export type {
   CacheInfo,
@@ -73,6 +73,11 @@ export interface CreateGraphOptions {
    * `compilerOptions.jsxImportSource` value if `compilerOptions.jsx` is set to
    * `react-jsx` or `react-jsxdev`. */
   defaultJsxImportSource?: string;
+  /** The default jsxImportSourceTypes to use in JSX/TSX files when no
+   * `@jsxImportSourceTypes` pragma is specified. In Deno, this is set to the
+   * `compilerOptions.jsxImportSourceTypes` value if `compilerOptions.jsx` is
+   * set to `react-jsx` or `react-jsxdev`. */
+  defaultJsxImportSourceTypes?: string;
   /** When identifying a `@jsxImportSource` pragma, what module name will be
    * appended to the import source. This defaults to `jsx-runtime`. */
   jsxImportSourceModule?: string;
@@ -132,6 +137,7 @@ export async function createGraph(
   const {
     load = defaultLoad,
     defaultJsxImportSource,
+    defaultJsxImportSourceTypes,
     jsxImportSourceModule,
     cacheInfo,
     resolve,
@@ -167,6 +173,7 @@ export async function createGraph(
       return result;
     },
     defaultJsxImportSource,
+    defaultJsxImportSourceTypes,
     jsxImportSourceModule,
     cacheInfo,
     resolve,
@@ -185,6 +192,11 @@ export interface ParseModuleOptions {
    * `compilerOptions.jsxImportSource` value if `compilerOptions.jsx` is set to
    * `react-jsx` or `react-jsxdev`. */
   defaultJsxImportSource?: string;
+  /** The default jsxImportSourceTypes to use in JSX/TSX files when no
+   * `@jsxImportSourceTypes` pragma is specified. In Deno, this is set to the
+   * `compilerOptions.jsxImportSourceTypes` value if `compilerOptions.jsx` is
+   * set to `react-jsx` or `react-jsxdev`. */
+  defaultJsxImportSourceTypes?: string;
   /** When identifying a `@jsxImportSource` pragma, what module name will be
    * appended to the import source. This defaults to `jsx-runtime`. */
   jsxImportSourceModule?: string;
@@ -224,6 +236,7 @@ export function parseModule(
   const {
     headers,
     defaultJsxImportSource,
+    defaultJsxImportSourceTypes,
     jsxImportSourceModule,
     resolve,
     resolveTypes,
@@ -239,6 +252,7 @@ export function parseModule(
     specifier,
     headers,
     defaultJsxImportSource,
+    defaultJsxImportSourceTypes,
     jsxImportSourceModule,
     content,
     resolve,

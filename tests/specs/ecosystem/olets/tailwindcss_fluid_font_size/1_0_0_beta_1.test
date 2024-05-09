@@ -1,0 +1,17 @@
+olets/tailwindcss-fluid-font-size/1.0.0-beta.1
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/index.ts:168:7
+    | 
+168 | const fluidFontSize = plugin.withOptions(
+    |       ^^^^^^^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

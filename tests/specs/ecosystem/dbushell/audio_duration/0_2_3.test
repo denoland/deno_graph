@@ -1,0 +1,42 @@
+dbushell/audio-duration/0.2.3
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.216.0": "jsr:@std/assert@0.216.0",
+      "jsr:@std/bytes@0.216": "jsr:@std/bytes@0.216.0",
+      "jsr:@std/bytes@^0.216.0": "jsr:@std/bytes@0.216.0",
+      "jsr:@std/io@0.216": "jsr:@std/io@0.216.0",
+      "jsr:@std/path@0.216": "jsr:@std/path@0.216.0"
+    },
+    "jsr": {
+      "@std/assert@0.216.0": {
+        "integrity": "f65392edf3bec39e2d1028e51f1da549db81691034b244eaba83318a757c0c2e"
+      },
+      "@std/bytes@0.216.0": {
+        "integrity": "aa3c633dbfdaeb03333a0924ee839563cf615163d1945978792f2132acb452a5"
+      },
+      "@std/io@0.216.0": {
+        "integrity": "ea24055b4fbeb2a26efcab0179b2bf56306e0b7cedaa56c24072549803784f1f",
+        "dependencies": [
+          "jsr:@std/assert@^0.216.0",
+          "jsr:@std/bytes@^0.216.0"
+        ]
+      },
+      "@std/path@0.216.0": {
+        "integrity": "85c121f1b43f7fb17e225567c4f151b3a67796ed8c619d37f9d61ea46116a2f0",
+        "dependencies": [
+          "jsr:@std/assert@^0.216.0"
+        ]
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

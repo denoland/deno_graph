@@ -8,7 +8,6 @@ use std::collections::VecDeque;
 use std::sync::Arc;
 
 use deno_ast::swc::ast::Expr;
-use deno_ast::MediaType;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_semver::package::PackageNv;
@@ -781,11 +780,11 @@ impl<'a> PublicRangeFinder<'a> {
       match trace {
         PendingIdTrace::Id {
           symbol_id,
-          referrer_id,
+          referrer_id: trace_referrer_id,
         } => {
           let symbol = module_info.symbol(symbol_id).unwrap();
           if symbol.is_private_member() {
-            if Some(referrer_id) != symbol.parent_id() {
+            if Some(trace_referrer_id) != symbol.parent_id() {
               diagnostics.push(
                 FastCheckDiagnostic::UnsupportedPrivateMemberReference {
                   range: FastCheckDiagnosticRange {
@@ -797,7 +796,7 @@ impl<'a> PublicRangeFinder<'a> {
                     .fully_qualified_symbol_name(symbol)
                     .unwrap_or_else(|| "<unknown>".to_string()),
                   referrer: module_info
-                    .symbol(referrer_id)
+                    .symbol(trace_referrer_id)
                     .and_then(|symbol| {
                       module_info.fully_qualified_symbol_name(symbol)
                     })
@@ -864,6 +863,17 @@ impl<'a> PublicRangeFinder<'a> {
               }
               SymbolDeclKind::Definition(node) => {
                 if let Some(node) = node.maybe_ref() {
+                  // if the node is a class or interface member, ensure its parent is traced
+                  if node.is_member() {
+                    if let Some(parent_id) = symbol.parent_id() {
+                      // don't add the parent if we analyzed this node from the parent
+                      if trace_referrer_id != parent_id {
+                        pending_traces
+                          .maybe_add_id_trace(parent_id, referrer_id);
+                      }
+                    }
+                  }
+
                   for dep in node.deps(ResolveDepsMode::TypesAndExpressions) {
                     match dep {
                       SymbolNodeDep::Id(id) => {
@@ -1212,7 +1222,7 @@ impl<'a> PublicRangeFinder<'a> {
 fn is_module_typed(module: &crate::Module) -> bool {
   match module {
     crate::Module::Js(m) => {
-      is_typed_media_type(m.media_type) || m.maybe_types_dependency.is_some()
+      m.media_type.is_typed() || m.maybe_types_dependency.is_some()
     }
     crate::Module::Json(_) => true,
     crate::Module::Npm(_)
@@ -1227,27 +1237,6 @@ fn is_module_external(module: &crate::Module) -> bool {
     crate::Module::External(_)
     | crate::Module::Node(_)
     | crate::Module::Npm(_) => true,
-  }
-}
-
-fn is_typed_media_type(media_type: MediaType) -> bool {
-  match media_type {
-    MediaType::JavaScript
-    | MediaType::Jsx
-    | MediaType::Mjs
-    | MediaType::Cjs
-    | MediaType::TsBuildInfo
-    | MediaType::SourceMap
-    | MediaType::Unknown => false,
-    MediaType::TypeScript
-    | MediaType::Mts
-    | MediaType::Cts
-    | MediaType::Dts
-    | MediaType::Dmts
-    | MediaType::Dcts
-    | MediaType::Tsx
-    | MediaType::Json
-    | MediaType::Wasm => true,
   }
 }
 

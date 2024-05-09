@@ -1,0 +1,98 @@
+bureaudouble-forks/floating-ui-react-dom/0.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@floating-ui/dom@1.6.3": "npm:@floating-ui/dom@1.6.3",
+      "npm:react@^18.2": "npm:react@18.3.1"
+    },
+    "npm": {
+      "@floating-ui/core@1.6.1": {
+        "integrity": "sha512-42UH54oPZHPdRHdw6BgoBD6cg/eVTmVrFcgeRDM3jbO7uxSoipVcmcIGFcA5jmOHO5apcyvBhkSKES3fQJnu7A==",
+        "dependencies": {
+          "@floating-ui/utils": "@floating-ui/utils@0.2.2"
+        }
+      },
+      "@floating-ui/dom@1.6.3": {
+        "integrity": "sha512-RnDthu3mzPlQ31Ss/BTwQ1zjzIhr3lk1gZB1OC56h/1vEtaXkESrOqL5fQVMfXpwGtRwX+YsZBdyHtJMQnkArw==",
+        "dependencies": {
+          "@floating-ui/core": "@floating-ui/core@1.6.1",
+          "@floating-ui/utils": "@floating-ui/utils@0.2.2"
+        }
+      },
+      "@floating-ui/utils@0.2.2": {
+        "integrity": "sha512-J4yDIIthosAsRZ5CPYP/jQvUAQtlZTTD/4suA08/FEnlxqW3sKS9iAhgsa9VYLZ6vDHn/ixJgIqRQPotoBjxIw==",
+        "dependencies": {}
+      },
+      "js-tokens@4.0.0": {
+        "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==",
+        "dependencies": {}
+      },
+      "loose-envify@1.4.0": {
+        "integrity": "sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==",
+        "dependencies": {
+          "js-tokens": "js-tokens@4.0.0"
+        }
+      },
+      "react@18.3.1": {
+        "integrity": "sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==",
+        "dependencies": {
+          "loose-envify": "loose-envify@1.4.0"
+        }
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'Element'.
+   */ element: React.MutableRefObject<Element | null> | Element | null;
+                                      ~~~~~~~
+    at file://<tmpdir>/src/arrow.ts:7:39
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+   */ element: React.MutableRefObject<Element | null> | Element | null;
+                                                        ~~~~~~~
+    at file://<tmpdir>/src/arrow.ts:7:57
+
+TS2552 [ERROR]: Cannot find name 'Element'. Did you mean 'Elements'?
+export type ReferenceType = Element | VirtualElement;
+                            ~~~~~~~
+    at file://<tmpdir>/src/types.ts:15:29
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+         */ floating: React.MutableRefObject<HTMLElement | null>;
+                                             ~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:32:46
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+         */ setFloating: (node: HTMLElement | null) => void;
+                                ~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:38:33
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    floating: HTMLElement | null;
+              ~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:42:15
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+       */ whileElementsMounted?: (reference: RT, floating: HTMLElement, update: () => void) => () => void;
+                                                           ~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:50:60
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    floating?: HTMLElement | null;
+               ~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:53:16
+
+Found 8 errors.
+

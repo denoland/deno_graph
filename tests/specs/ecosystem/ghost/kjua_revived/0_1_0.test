@@ -1,0 +1,138 @@
+ghost/kjua-revived/0.1.0
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/create_canvas_qrcode.ts:75:7
+   | 
+75 | const create_canvas_qrcode = (
+   |       ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /src/lib/draw_rounded.ts:4:7
+  | 
+4 | const create_draw_ctx = (ctx: CanvasRenderingContext2D) => {
+  |       ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /src/lib/dom.ts:7:14
+  | 
+7 | export const get_attr = (el: HTMLElement | SVGElement, key: string) =>
+  |              ^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/dom.ts:10:14
+   | 
+10 | export const set_attrs = <T extends HTMLElement | SVGElement>(
+   |              ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/dom.ts:21:14
+   | 
+21 | export const create_el = <T extends keyof HTMLElementTagNameMap>(
+   |              ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/dom.ts:31:14
+   | 
+31 | export const create_canvas = (size: number, ratio: number) => {
+   |              ^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/dom.ts:41:14
+   | 
+41 | export const canvas_to_img = (canvas: HTMLCanvasElement) => {
+   |              ^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /src/lib/create_svg_qrcode.ts:5:7
+  | 
+5 | const create_draw_ctx = (ctx: { p: string; o: number }) => {
+  |       ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/lib/create_svg_qrcode.ts:168:7
+    | 
+168 | const create_path = (qr: QRCode, options: KjuaOptions) => {
+    |       ^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/lib/create_svg_qrcode.ts:256:7
+    | 
+256 | const create_svg_qrcode = (qr: QRCode, options: KjuaOptions) => {
+    |       ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /src/lib/qrcode.ts:6:7
+  | 
+6 | const min_qrcode = (text: string, level: ErrorCorrectionLevel, min_ver = 1) => {
+  |       ^^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/qrcode.ts:38:7
+   | 
+38 | const quiet_qrcode = (
+   |       ^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

@@ -1,0 +1,49 @@
+hugoalh/string-overflow/1.0.1
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@hugoalh/string-dissect@1.0.2": "jsr:@hugoalh/string-dissect@1.0.2",
+      "npm:ansi-regex@6.0.1": "npm:ansi-regex@6.0.1",
+      "npm:url-regex-safe@4.0.0": "npm:url-regex-safe@4.0.0"
+    },
+    "jsr": {
+      "@hugoalh/string-dissect@1.0.2": {
+        "integrity": "597d91e29d9d8722d76e66810f165954c53db78f29291216824d8d903d2077c6",
+        "dependencies": [
+          "npm:ansi-regex@6.0.1",
+          "npm:url-regex-safe@4.0.0"
+        ]
+      }
+    },
+    "npm": {
+      "ansi-regex@6.0.1": {
+        "integrity": "sha512-n5M855fKb2SsfMIiFFoVrABHJC8QtHwVx+mHWP3QcEqBHYienj5dHSgjbxtC0WEZXYt4wcD6zrQElDPhFuZgfA==",
+        "dependencies": {}
+      },
+      "ip-regex@4.3.0": {
+        "integrity": "sha512-B9ZWJxHHOHUhUjCPrMpLD4xEq35bUTClHM1S6CBU5ixQnkZmwipwgc96vAd7AAGM9TGHvJR+Uss+/Ak6UphK+Q==",
+        "dependencies": {}
+      },
+      "tlds@1.252.0": {
+        "integrity": "sha512-GA16+8HXvqtfEnw/DTcwB0UU354QE1n3+wh08oFjr6Znl7ZLAeUgYzCcK+/CCrOyE0vnHR8/pu3XXG3vDijXpQ==",
+        "dependencies": {}
+      },
+      "url-regex-safe@4.0.0": {
+        "integrity": "sha512-BrnFCWKNFrFnRzKD66NtJqQepfJrUHNPvPxE5y5NSAhXBb4OlobQjt7907Jm4ItPiXaeX+dDWMkcnOd4jR9N8A==",
+        "dependencies": {
+          "ip-regex": "ip-regex@4.3.0",
+          "tlds": "tlds@1.252.0"
+        }
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

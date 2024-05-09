@@ -1,0 +1,22 @@
+http/assert/0.10.0
+-- deno.lock --
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/http@^0.223.0": "jsr:@std/http@0.223.0"
+    },
+    "jsr": {
+      "@std/http@0.223.0": {
+        "integrity": "15ab8a0c5a7e9d5be017a15b01600f20f66602ceec48b378939fa24fcec522aa"
+      }
+    }
+  },
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

@@ -1,17 +1,7 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
-use std::rc::Rc;
-
 use deno_ast::swc::ast::*;
-use deno_ast::swc::codegen::text_writer::JsWriter;
-use deno_ast::swc::codegen::Node;
-use deno_ast::swc::common::comments::SingleThreadedComments;
-use deno_ast::swc::common::FileName;
-use deno_ast::swc::common::SourceMap;
 use deno_ast::swc::common::DUMMY_SP;
-use deno_ast::swc_codegen_config;
-use deno_ast::ModuleSpecifier;
-use deno_ast::SourceTextInfo;
 
 pub fn ident(name: String) -> Ident {
   Ident {
@@ -169,45 +159,4 @@ pub fn maybe_lit_to_ts_type(lit: &Lit) -> Option<TsType> {
     Lit::Regex(_) => Some(regex_type()),
     Lit::JSXText(_) => None,
   }
-}
-
-pub fn emit(
-  specifier: &ModuleSpecifier,
-  comments: &SingleThreadedComments,
-  text_info: &SourceTextInfo,
-  module: &deno_ast::swc::ast::Module,
-) -> Result<(String, Vec<u8>), anyhow::Error> {
-  let source_map = Rc::new(SourceMap::default());
-  let file_name = FileName::Url(specifier.clone());
-  source_map.new_source_file(file_name, text_info.text_str().to_string());
-
-  let mut src_map_buf = vec![];
-  let mut buf = vec![];
-  {
-    let mut writer = Box::new(JsWriter::new(
-      source_map.clone(),
-      "\n",
-      &mut buf,
-      Some(&mut src_map_buf),
-    ));
-    writer.set_indent_str("  "); // two spaces
-
-    let mut emitter = deno_ast::swc::codegen::Emitter {
-      cfg: swc_codegen_config(),
-      comments: Some(comments),
-      cm: source_map.clone(),
-      wr: writer,
-    };
-    module.emit_with(&mut emitter)?;
-  }
-  let src = String::from_utf8(buf)?;
-  let map = {
-    let mut buf = Vec::new();
-    source_map
-      .build_source_map_from(&src_map_buf, None)
-      .to_writer(&mut buf)?;
-    buf
-  };
-
-  Ok((src, map))
 }

@@ -930,7 +930,6 @@ impl<'a> FastCheckDtsTransformer<'a> {
 
 #[cfg(test)]
 mod tests {
-  use crate::fast_check::swc_helpers::emit;
   use crate::fast_check::transform_dts::FastCheckDtsTransformer;
   use crate::source::MemoryLoader;
   use crate::source::Source;
@@ -939,12 +938,16 @@ mod tests {
   use crate::CapturingModuleAnalyzer;
   use crate::GraphKind;
   use crate::ModuleGraph;
+  use deno_ast::emit;
+  use deno_ast::EmitOptions;
+  use deno_ast::EmittedSource;
+  use deno_ast::SourceMap;
   use url::Url;
 
   async fn transform_dts_test(source: &str, expected: &str) {
     let specifier = Url::parse("file:///mod.ts").unwrap();
 
-    let mut loader = MemoryLoader::new(
+    let loader = MemoryLoader::new(
       vec![(
         specifier.to_string(),
         Source::Module {
@@ -960,7 +963,7 @@ mod tests {
     graph
       .build(
         vec![specifier.clone()],
-        &mut loader,
+        &loader,
         BuildOptions {
           module_analyzer: &analyzer,
           ..Default::default()
@@ -985,8 +988,23 @@ mod tests {
 
     let comments = parsed_source.comments().as_single_threaded();
 
-    let (actual, _) =
-      emit(&specifier, &comments, parsed_source.text_info(), &module).unwrap();
+    let source_map = SourceMap::single(
+      specifier,
+      parsed_source.text_info().text_str().to_owned(),
+    );
+
+    let EmittedSource { text: actual, .. } = emit(
+      &deno_ast::swc::ast::Program::Module(module),
+      &comments,
+      &source_map,
+      &EmitOptions {
+        keep_comments: true,
+        source_map: deno_ast::SourceMapOption::None,
+        source_map_file: None,
+        inline_sources: false,
+      },
+    )
+    .unwrap();
 
     assert_eq!(actual.trim(), expected.trim());
   }

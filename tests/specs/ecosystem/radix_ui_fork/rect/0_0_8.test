@@ -1,0 +1,27 @@
+radix-ui-fork/rect/0.0.8
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'ClientRect'.
+  getBoundingClientRect(): ClientRect;
+                           ~~~~~~~~~~
+    at file://<tmpdir>/src/observeElementRect.ts:2:28
+
+TS2304 [ERROR]: Cannot find name 'ClientRect'.
+type CallbackFn = (rect: ClientRect) => void;
+                         ~~~~~~~~~~
+    at file://<tmpdir>/src/observeElementRect.ts:11:26
+
+Found 2 errors.
+

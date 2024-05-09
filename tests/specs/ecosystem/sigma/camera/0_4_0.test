@@ -1,0 +1,39 @@
+sigma/camera/0.4.0
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/ffi.ts:323:7
+    | 
+323 | const SYMBOLS = {
+    |       ^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/ffi.ts:323:7
+    | 
+323 | const SYMBOLS = {
+    |       ^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/ffi.ts:323:7
+    | 
+323 | const SYMBOLS = {
+    |       ^^^^^^^ this symbol is missing an explicit type
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+

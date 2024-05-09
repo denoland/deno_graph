@@ -1,0 +1,12 @@
+biliy-deno/danmaku2ass/0.1.0
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK PASSED ==

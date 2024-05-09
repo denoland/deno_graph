@@ -1,0 +1,42 @@
+flashcard/components/0.0.2
+-- deno.lock --
+{
+  "version": "3",
+  "remote": {}
+}
+
+===
+
+== FAST CHECK EMIT PASSED ==
+
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export default class Flashcard extends HTMLElement {
+                                       ~~~~~~~~~~~
+    at file://<tmpdir>/flashcard.ts:1:40
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+  declare cardEl: HTMLDivElement;
+                  ~~~~~~~~~~~~~~
+    at file://<tmpdir>/flashcard.ts:2:19
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+  declare cardContentEl: HTMLDivElement;
+                         ~~~~~~~~~~~~~~
+    at file://<tmpdir>/flashcard.ts:3:26
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+  declare answerEl: HTMLDivElement;
+                    ~~~~~~~~~~~~~~
+    at file://<tmpdir>/flashcard.ts:4:21
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+  declare questionEl: HTMLDivElement;
+                      ~~~~~~~~~~~~~~
+    at file://<tmpdir>/flashcard.ts:5:23
+
+Found 5 errors.
+

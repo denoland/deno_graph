@@ -1,0 +1,446 @@
+adwher/typecheck/0.0.2
+-- deno.lock --
+{}
+===
+
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /utils/createGuard.ts:7:17
+  | 
+7 | export function createGuard<T>(schema: Schema<T>) {
+  |                 ^^^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /schemas/unknown.ts:8:3
+  | 
+8 |   check(value: unknown) {
+  |   ^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/unknown.ts:14:17
+   | 
+14 | export function unknown() {
+   |                 ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/tuple.ts:20:3
+   | 
+20 |   check(value: unknown, context: Context) {
+   |   ^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/tuple.ts:75:17
+   | 
+75 | export function tuple<
+   |                 ^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/string.ts:16:17
+   | 
+16 | export function string() {
+   |                 ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/record.ts:71:17
+   | 
+71 | export function record<V extends Schema>(value: V) {
+   |                 ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/pipe.ts:30:3
+   | 
+30 |   check(value: unknown, context: Context) {
+   |   ^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/pipe.ts:64:17
+   | 
+64 | export function pipe<S extends Schema>(schema: S, ...pipes: Pipes<S>) {
+   |                 ^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /schemas/pick.ts:6:17
+  | 
+6 | export function pick<
+  |                 ^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/partial.ts:12:17
+   | 
+12 | export function partial<S extends SchemaShape>(schema: SchemaObject<S>) {
+   |                 ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /schemas/override.ts:8:17
+  | 
+8 | export function override<
+  |                 ^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /schemas/omit.ts:6:17
+  | 
+6 | export function omit<
+  |                 ^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/object.ts:27:3
+   | 
+27 |   check(value: unknown, context: Context) {
+   |   ^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/object.ts:75:17
+   | 
+75 | export function object<S extends SchemaShape>(shape: S) {
+   |                 ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/never.ts:16:17
+   | 
+16 | export function never() {
+   |                 ^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /schemas/merge.ts:8:17
+  | 
+8 | export function merge<
+  |                 ^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/literal.ts:31:17
+   | 
+31 | export function literal<L extends Literal>(literal: L) {
+   |                 ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/lazy.ts:39:17
+   | 
+39 | export function lazy<S extends Schema>(getter: SchemaGenerator<S>) {
+   |                 ^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/enumerated.ts:37:3
+   | 
+37 |   canUse(value: unknown) {
+   |   ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/enumerated.ts:45:17
+   | 
+45 | export function enumerated<E extends readonly Enumerable[]>(...options: E) {
+   |                 ^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/either.ts:68:17
+   | 
+68 | export function either<
+   |                 ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/custom.ts:43:17
+   | 
+43 | export function custom<T>(validation: SchemaValidation) {
+   |                 ^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/boolean.ts:16:17
+   | 
+16 | export function boolean() {
+   |                 ^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /schemas/array.ts:20:3
+   | 
+20 |   check(value: unknown, context: Context) {
+   |   ^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/toUpperCase.ts:4:17
+  | 
+4 | export function toUpperCase() {
+  |                 ^^^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/toTrimmed.ts:4:17
+  | 
+4 | export function toTrimmed() {
+  |                 ^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/toLowerCase.ts:4:17
+  | 
+4 | export function toLowerCase() {
+  |                 ^^^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/toCapitalize.ts:6:17
+  | 
+6 | export function toCapitalize() {
+  |                 ^^^^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/minValue.ts:6:17
+  | 
+6 | export function minValue(expected: number) {
+  |                 ^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/minLength.ts:6:17
+  | 
+6 | export function minLength<T extends string | unknown[]>(expected: number) {
+  |                 ^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/maxValue.ts:6:17
+  | 
+6 | export function maxValue(expected: number) {
+  |                 ^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/maxLength.ts:6:17
+  | 
+6 | export function maxLength<T extends string | unknown[]>(expected: number) {
+  |                 ^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/length.ts:6:17
+  | 
+6 | export function length<T extends string | unknown[]>(expected: number) {
+  |                 ^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/isURL.ts:6:17
+  | 
+6 | export function isURL() {
+  |                 ^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/isPositive.ts:6:17
+  | 
+6 | export function isPositive() {
+  |                 ^^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/isNegative.ts:6:17
+  | 
+6 | export function isNegative() {
+  |                 ^^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/isMatch.ts:6:17
+  | 
+6 | export function isMatch(regex: RegExp) {
+  |                 ^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/isInteger.ts:6:17
+  | 
+6 | export function isInteger() {
+  |                 ^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /pipes/isEmail.ts:8:17
+  | 
+8 | export function isEmail() {
+  |                 ^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

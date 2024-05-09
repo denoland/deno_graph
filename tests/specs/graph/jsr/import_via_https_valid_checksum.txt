@@ -1,0 +1,75 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{
+  "exports": {
+    ".": "./mod.ts"
+  },
+  "manifest": {
+    "/mod.ts": {
+      "size": 21,
+      "checksum": "sha256-151a3a3f4587a29c7b3449a3635fed35c4e88a3a773b3bf296804f1a4e1ab86d"
+    }
+  }
+}
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+export class Test {}
+
+# mod.ts
+import { Test } from "https://jsr.io/@scope/a/1.0.0/mod.ts";
+console.log(Test);
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 21
+              },
+              "end": {
+                "line": 0,
+                "character": 59
+              }
+            }
+          },
+          "type": {
+            "error": "Importing JSR packages via HTTPS specifiers for type checking is not supported for performance reasons. If you would like types, import via a `jsr:` specifier instead or else use a non-statically analyzable dynamic import.\n  Importing: https://jsr.io/@scope/a/1.0.0/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 21
+              },
+              "end": {
+                "line": 0,
+                "character": 59
+              }
+            }
+          }
+        }
+      ],
+      "size": 80,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 21,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {}
+}

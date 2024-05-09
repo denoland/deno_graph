@@ -1,306 +1,543 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+use std::cell::RefCell;
 use std::collections::BTreeMap;
-use std::collections::HashMap;
-use std::path::Path;
-use std::path::PathBuf;
 
-mod test_builder;
-
-use deno_graph::source::recommended_registry_package_url;
-use deno_graph::source::recommended_registry_package_url_to_nv;
-use deno_graph::source::LoaderChecksum;
-use deno_graph::source::DEFAULT_JSR_URL;
+use deno_ast::ModuleSpecifier;
+use deno_graph::source::CacheInfo;
+use deno_graph::source::CacheSetting;
+use deno_graph::source::LoadFuture;
+use deno_graph::source::LoadOptions;
+use deno_graph::source::Loader;
+use deno_graph::source::MemoryLoader;
+use deno_graph::source::NpmResolver;
+use deno_graph::BuildDiagnostic;
+use deno_graph::FastCheckCache;
+use deno_graph::GraphKind;
+use deno_graph::ModuleGraph;
+use deno_graph::NpmPackageReqResolution;
+use deno_graph::WorkspaceFastCheckOption;
 use deno_graph::WorkspaceMember;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
-use indexmap::IndexMap;
-use serde::de::DeserializeOwned;
-use serde::Deserialize;
-use serde::Serialize;
-pub use test_builder::*;
-use url::Url;
+use deno_semver::Version;
+use futures::FutureExt;
 
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SpecOptions {
-  #[serde(default)]
-  #[serde(skip_serializing_if = "is_false")]
-  pub workspace_fast_check: bool,
-  #[serde(default)]
-  #[serde(skip_serializing_if = "is_false")]
-  pub fast_check_cache: bool,
+#[derive(Default)]
+pub struct TestLoader {
+  pub cache: MemoryLoader,
+  pub remote: MemoryLoader,
 }
 
-fn is_false(v: &bool) -> bool {
-  !v
-}
-
-pub struct Spec {
-  pub options: Option<SpecOptions>,
-  pub files: Vec<SpecFile>,
-  pub output_file: SpecFile,
-  pub diagnostics: Vec<serde_json::Value>,
-  pub workspace_members: Vec<WorkspaceMember>,
-  pub lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
-}
-
-impl Spec {
-  pub fn emit(&self) -> String {
-    let mut text = String::new();
-    if let Some(options) = &self.options {
-      text.push_str("~~ ");
-      text.push_str(&serde_json::to_string(options).unwrap());
-      text.push_str(" ~~");
-      text.push('\n');
-    }
-    if !self.workspace_members.is_empty() {
-      text.push_str("# workspace_members\n");
-      text.push_str(
-        &serde_json::to_string_pretty(&self.workspace_members).unwrap(),
-      );
-      text.push_str("\n\n");
-    }
-    for file in &self.files {
-      text.push_str(&file.emit());
-      text.push('\n');
-    }
-    text.push_str(&self.output_file.emit());
-    if !text.ends_with('\n') {
-      text.push('\n');
-    }
-    if !self.diagnostics.is_empty() {
-      text.push_str("\n# diagnostics\n");
-      text.push_str(&serde_json::to_string_pretty(&self.diagnostics).unwrap());
-      text.push('\n');
-    }
-    if !self.lockfile_jsr_packages.is_empty() {
-      text.push_str("\n# lockfile_jsr_packages\n");
-      text.push_str(
-        &serde_json::to_string_pretty(&self.lockfile_jsr_packages).unwrap(),
-      );
-      text.push('\n');
-    }
-    text
+impl Loader for TestLoader {
+  fn get_cache_info(&self, specifier: &ModuleSpecifier) -> Option<CacheInfo> {
+    self.cache.get_cache_info(specifier)
   }
 
-  /// Fills the `manifest` field in the `_meta.json` files with the checksums
-  /// so that we don't need to bother having them in the tests.
-  pub fn fill_jsr_meta_files_with_checksums(&mut self) {
-    for (nv, checksums_by_files) in self.get_jsr_checksums() {
-      let base_specifier =
-        recommended_registry_package_url(&DEFAULT_JSR_URL, &nv);
-      let meta_file = base_specifier
-        .join(&format!("../{}_meta.json", nv.version))
-        .unwrap();
-
-      let meta_file = self
-        .files
-        .iter_mut()
-        .find(|f| f.url() == meta_file)
-        .unwrap_or_else(|| panic!("Could not find in specs: {}", meta_file));
-      let mut meta_value = serde_json::from_str::<
-        HashMap<String, serde_json::Value>,
-      >(&meta_file.text)
-      .unwrap();
-      let manifest = meta_value
-        .entry("manifest".to_string())
-        .or_insert_with(|| serde_json::Value::Object(Default::default()))
-        .as_object_mut()
-        .unwrap();
-      for (file, checksum) in checksums_by_files {
-        if !manifest.contains_key(&file) {
-          manifest.insert(file, checksum);
+  fn load(
+    &self,
+    specifier: &ModuleSpecifier,
+    options: LoadOptions,
+  ) -> LoadFuture {
+    let checksum = options.maybe_checksum.clone();
+    let future = match options.cache_setting {
+      // todo(dsherret): in the future, actually make this use the cache
+      CacheSetting::Use => self.remote.load(specifier, options),
+      // todo(dsherret): in the future, make this update the cache
+      CacheSetting::Reload => self.remote.load(specifier, options),
+      CacheSetting::Only => self.cache.load(specifier, options),
+    };
+    async move {
+      let response = future.await?;
+      if let Some(deno_graph::source::LoadResponse::Module {
+        content, ..
+      }) = &response
+      {
+        if let Some(checksum) = checksum {
+          checksum.check_source(content)?;
         }
       }
-      // use the original text as the emit text so we don't
-      // end up with these hashes in the output
-      meta_file.emit_text = Some(std::mem::take(&mut meta_file.text));
-      meta_file.text = serde_json::to_string_pretty(&meta_value).unwrap();
+      Ok(response)
     }
+    .boxed_local()
   }
+}
 
-  pub fn get_jsr_checksums(
-    &self,
-  ) -> HashMap<PackageNv, HashMap<String, serde_json::Value>> {
-    let mut checksums_by_package: HashMap<
-      PackageNv,
-      HashMap<String, serde_json::Value>,
-    > = Default::default();
-    for file in &self.files {
-      if let Some(nv) =
-        recommended_registry_package_url_to_nv(&DEFAULT_JSR_URL, &file.url())
-      {
-        let base_specifier =
-          recommended_registry_package_url(&DEFAULT_JSR_URL, &nv);
-        let relative_url = file
-          .url()
-          .to_string()
-          .strip_prefix(base_specifier.to_string().strip_suffix('/').unwrap())
-          .unwrap()
-          .to_string();
-        checksums_by_package.entry(nv.clone()).or_default().insert(
-          relative_url,
-          serde_json::json!({
-            "size": file.text.len(),
-            "checksum": format!("sha256-{}", LoaderChecksum::gen(file.text.as_bytes())),
-          }),
-        );
-      }
-    }
-    checksums_by_package
+#[cfg(feature = "symbols")]
+pub mod symbols {
+  pub struct SymbolsResult {
+    pub output: String,
+  }
+}
+
+pub struct BuildResult {
+  pub graph: ModuleGraph,
+  pub diagnostics: Vec<BuildDiagnostic>,
+  pub analyzer: deno_graph::CapturingModuleAnalyzer,
+  pub fast_check_cache: Option<TestFastCheckCache>,
+}
+
+#[cfg(feature = "symbols")]
+impl BuildResult {
+  pub fn root_symbol(&self) -> deno_graph::symbols::RootSymbol {
+    self.graph.valid().unwrap(); // assert valid
+    deno_graph::symbols::RootSymbol::new(&self.graph, &self.analyzer)
   }
 }
 
 #[derive(Debug)]
-pub struct SpecFile {
-  pub specifier: String,
-  pub text: String,
-  /// Text to use when emitting the spec file.
-  pub emit_text: Option<String>,
-  pub headers: IndexMap<String, String>,
-}
+struct TestNpmResolver;
 
-impl SpecFile {
-  pub fn emit(&self) -> String {
-    let mut text = format!("# {}\n", self.specifier);
-    if !self.headers.is_empty() {
-      text.push_str(&format!(
-        "HEADERS: {}\n",
-        serde_json::to_string(&self.headers).unwrap()
-      ));
-    }
-    text.push_str(self.emit_text.as_ref().unwrap_or(&self.text));
-    text
-  }
-
-  pub fn url(&self) -> Url {
-    let specifier = self
-      .specifier
-      .strip_prefix("cache:")
-      .unwrap_or(&self.specifier);
-    if !specifier.starts_with("http") && !specifier.starts_with("file") {
-      Url::parse(&format!("file:///{}", specifier)).unwrap()
-    } else {
-      Url::parse(specifier).unwrap()
-    }
-  }
-
-  pub fn is_cache(&self) -> bool {
-    self.specifier.starts_with("cache:")
-  }
-}
-
-pub fn get_specs_in_dir(path: &Path) -> Vec<(PathBuf, Spec)> {
-  let files = collect_files_in_dir_recursive(path);
-  let files: Vec<_> = if files
-    .iter()
-    .any(|file| file.path.to_string_lossy().to_lowercase().contains("_only"))
+impl NpmResolver for TestNpmResolver {
+  fn resolve_builtin_node_module(
+    &self,
+    _specifier: &ModuleSpecifier,
+  ) -> Result<Option<String>, deno_graph::source::UnknownBuiltInNodeModuleError>
   {
-    files
-      .into_iter()
-      .filter(|file| {
-        file.path.to_string_lossy().to_lowercase().contains("_only")
-      })
-      .collect()
-  } else {
-    files
-      .into_iter()
-      .filter(|file| {
-        !file.path.to_string_lossy().to_lowercase().contains("_skip")
-      })
-      .collect()
-  };
-  files
-    .into_iter()
-    .map(|file| {
-      let mut spec = parse_spec(file.text);
-      // always do this as we want this for the spec tests
-      spec.fill_jsr_meta_files_with_checksums();
-      (file.path, spec)
+    Ok(None)
+  }
+
+  fn on_resolve_bare_builtin_node_module(
+    &self,
+    _module_name: &str,
+    _range: &deno_graph::Range,
+  ) {
+  }
+
+  fn load_and_cache_npm_package_info(
+    &self,
+    _package_name: &str,
+  ) -> futures::prelude::future::LocalBoxFuture<
+    'static,
+    Result<(), anyhow::Error>,
+  > {
+    async { Ok(()) }.boxed_local()
+  }
+
+  fn resolve_npm(
+    &self,
+    package_req: &deno_semver::package::PackageReq,
+  ) -> NpmPackageReqResolution {
+    // for now, this requires version reqs that are resolved
+    match Version::parse_from_npm(&package_req.version_req.to_string()) {
+      Ok(version) => NpmPackageReqResolution::Ok(PackageNv {
+        name: package_req.name.clone(),
+        version,
+      }),
+      Err(err) => NpmPackageReqResolution::Err(err.into()),
+    }
+  }
+}
+
+#[derive(Default)]
+pub struct TestFastCheckCache {
+  // BTreeMap because the cache items are inserted non-deterministically
+  pub inner: RefCell<
+    BTreeMap<deno_graph::FastCheckCacheKey, deno_graph::FastCheckCacheItem>,
+  >,
+}
+
+impl FastCheckCache for TestFastCheckCache {
+  fn get(
+    &self,
+    key: deno_graph::FastCheckCacheKey,
+  ) -> Option<deno_graph::FastCheckCacheItem> {
+    self.inner.borrow().get(&key).cloned()
+  }
+
+  fn set(
+    &self,
+    key: deno_graph::FastCheckCacheKey,
+    value: deno_graph::FastCheckCacheItem,
+  ) {
+    self.inner.borrow_mut().insert(key, value);
+  }
+}
+
+pub struct TestBuilder {
+  loader: TestLoader,
+  entry_point: String,
+  entry_point_types: String,
+  fast_check_cache: bool,
+  workspace_members: Vec<WorkspaceMember>,
+  workspace_fast_check: bool,
+  lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
+}
+
+impl TestBuilder {
+  pub fn new() -> Self {
+    Self {
+      loader: Default::default(),
+      entry_point: "file:///mod.ts".to_string(),
+      entry_point_types: "file:///mod.ts".to_string(),
+      fast_check_cache: false,
+      workspace_members: Default::default(),
+      workspace_fast_check: false,
+      lockfile_jsr_packages: Default::default(),
+    }
+  }
+
+  pub fn with_loader(
+    &mut self,
+    mut action: impl FnMut(&mut TestLoader),
+  ) -> &mut Self {
+    action(&mut self.loader);
+    self
+  }
+
+  #[allow(unused)]
+  pub fn entry_point(&mut self, value: impl AsRef<str>) -> &mut Self {
+    self.entry_point = value.as_ref().to_string();
+    self
+  }
+
+  #[allow(unused)]
+  pub fn entry_point_types(&mut self, value: impl AsRef<str>) -> &mut Self {
+    self.entry_point_types = value.as_ref().to_string();
+    self
+  }
+
+  #[allow(unused)]
+  pub fn workspace_members(
+    &mut self,
+    members: Vec<WorkspaceMember>,
+  ) -> &mut Self {
+    self.workspace_members = members;
+    self
+  }
+
+  #[allow(unused)]
+  pub fn workspace_fast_check(&mut self, value: bool) -> &mut Self {
+    self.workspace_fast_check = value;
+    self
+  }
+
+  #[allow(unused)]
+  pub fn lockfile_jsr_packages(
+    &mut self,
+    lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
+  ) -> &mut Self {
+    self.lockfile_jsr_packages = lockfile_jsr_packages;
+    self
+  }
+
+  #[allow(unused)]
+  pub fn fast_check_cache(&mut self, value: bool) -> &mut Self {
+    self.fast_check_cache = value;
+    self
+  }
+
+  pub async fn build(&mut self) -> BuildResult {
+    let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
+    for (req, nv) in &self.lockfile_jsr_packages {
+      graph.packages.add_nv(req.clone(), nv.clone());
+    }
+    let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
+    let roots = vec![entry_point_url.clone()];
+    let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::default();
+    let diagnostics = graph
+      .build(
+        roots.clone(),
+        &self.loader,
+        deno_graph::BuildOptions {
+          workspace_members: &self.workspace_members,
+          module_analyzer: &capturing_analyzer,
+          npm_resolver: Some(&TestNpmResolver),
+          ..Default::default()
+        },
+      )
+      .await;
+    let fast_check_cache = if self.fast_check_cache {
+      Some(TestFastCheckCache::default())
+    } else {
+      None
+    };
+    if graph.module_errors().next().is_none() {
+      graph.build_fast_check_type_graph(
+        deno_graph::BuildFastCheckTypeGraphOptions {
+          fast_check_cache: fast_check_cache.as_ref().map(|c| c as _),
+          fast_check_dts: !self.fast_check_cache,
+          jsr_url_provider: Default::default(),
+          module_parser: Some(&capturing_analyzer),
+          resolver: None,
+          npm_resolver: None,
+          workspace_fast_check: if self.workspace_fast_check {
+            WorkspaceFastCheckOption::Enabled(&self.workspace_members)
+          } else {
+            WorkspaceFastCheckOption::Disabled
+          },
+        },
+      );
+    }
+    BuildResult {
+      graph,
+      diagnostics,
+      analyzer: capturing_analyzer,
+      fast_check_cache,
+    }
+  }
+
+  #[allow(unused)]
+  #[cfg(feature = "symbols")]
+  pub async fn symbols(&mut self) -> anyhow::Result<symbols::SymbolsResult> {
+    fn check_fatal_diagnostics(
+      module: deno_graph::symbols::ModuleInfoRef,
+    ) -> Vec<String> {
+      let mut results = Vec::new();
+      for symbol in module.symbols() {
+        // ensure all decls have the same name as their symbol
+        {
+          let maybe_name = symbol.maybe_name();
+          for decl in symbol.decls() {
+            if decl.maybe_name() != maybe_name {
+              results.push(format!(
+                "Symbol {:?} with name {:?} had a decl with a different name: {:?}",
+                symbol.symbol_id(),
+                maybe_name,
+                decl.maybe_name(),
+              ));
+            }
+          }
+        }
+
+        if let Some(parent_id) = symbol.parent_id() {
+          let parent_symbol = module.symbol(parent_id).unwrap();
+          let has_child =
+            parent_symbol.child_ids().any(|id| id == symbol.symbol_id());
+          let has_member = parent_symbol
+            .members()
+            .iter()
+            .any(|id| *id == symbol.symbol_id());
+          let is_definition_decl =
+            symbol.decls().iter().all(|d| d.kind.is_definition());
+          if is_definition_decl {
+            // ensure it's possible to go from a parent to its child
+            if !has_child && !has_member {
+              results.push(format!(
+                "Parent {:#?} does not have child {:#?}",
+                parent_symbol.symbol_id(),
+                symbol.symbol_id()
+              ));
+            }
+          } else if has_child || has_member {
+            results.push(format!(
+              "Parent {:#?} should not have the child or member {:#?}",
+              parent_symbol.symbol_id(),
+              symbol.symbol_id()
+            ));
+          }
+
+          if has_child && has_member {
+            results.push(format!(
+              "Parent {:?} should not have both a child and a member {:?}",
+              parent_symbol.symbol_id(),
+              symbol.symbol_id()
+            ));
+          }
+        }
+
+        // ensure it's possible to get the module symbol id
+        {
+          let mut parent = symbol;
+          let mut i = 0;
+          while let Some(parent_id) = parent.parent_id() {
+            parent = module.symbol(parent_id).unwrap();
+            if i == 1000 {
+              results.push(format!(
+                "Could not find root from symbol: {:?}",
+                symbol.symbol_id()
+              ));
+              break;
+            }
+            i += 1;
+          }
+        }
+      }
+
+      // from the root module, ensure everything is a tree
+      fn ensure_no_multiple_paths(
+        module: deno_graph::symbols::ModuleInfoRef,
+        symbol: &deno_graph::symbols::Symbol,
+        visited: &mut HashSet<deno_graph::symbols::SymbolId>,
+      ) -> Vec<String> {
+        let mut results = Vec::new();
+        if !visited.insert(symbol.symbol_id()) {
+          results.push(format!(
+            "Found symbol in multiple paths: {:?}",
+            symbol.symbol_id()
+          ));
+        } else {
+          for id in symbol.child_ids().chain(symbol.members().iter().copied()) {
+            let symbol = module.symbol(id).unwrap();
+            results.extend(ensure_no_multiple_paths(module, symbol, visited));
+          }
+        }
+        results
+      }
+
+      results.extend(ensure_no_multiple_paths(
+        module,
+        module.module_symbol(),
+        &mut HashSet::new(),
+      ));
+
+      results
+    }
+
+    use std::collections::HashSet;
+
+    use deno_graph::symbols::DefinitionOrUnresolved;
+    use deno_graph::symbols::ModuleInfoRef;
+    use deno_graph::symbols::ResolveDepsMode;
+
+    let build_result = self.build().await;
+    let graph = &build_result.graph;
+    let entry_point_types_url =
+      ModuleSpecifier::parse(&self.entry_point_types).unwrap();
+    let root_symbol = build_result.root_symbol();
+    Ok(symbols::SymbolsResult {
+      output: {
+        let entrypoint_symbol = root_symbol
+          .module_from_specifier(&entry_point_types_url)
+          .unwrap();
+        let mut output_text = String::new();
+        let mut specifiers =
+          graph.specifiers().map(|(s, _)| s).collect::<Vec<_>>();
+        specifiers.sort_unstable();
+        for specifier in specifiers {
+          let Some(module) = root_symbol.module_from_specifier(specifier)
+          else {
+            continue;
+          };
+          let module_output_text = format!(
+            "{}: {}\n",
+            specifier.as_str(),
+            match module {
+              ModuleInfoRef::Esm(m) => format!("{:#?}", m),
+              ModuleInfoRef::Json(m) => format!("{:#?}", m),
+            }
+          );
+          output_text.push_str(&module_output_text);
+
+          fn get_symbol_deps_text_for_mode(
+            module: ModuleInfoRef<'_>,
+            resolve_mode: ResolveDepsMode,
+          ) -> String {
+            let mut symbol_deps_text = String::new();
+            for symbol in module.symbols() {
+              for decl in symbol.decls() {
+                if let Some((node, source)) = decl.maybe_node_and_source() {
+                  let deps = node.deps(resolve_mode);
+                  if !deps.is_empty() {
+                    symbol_deps_text.push_str(&format!(
+                      "{:?}:{:?} {:?}\n",
+                      symbol.symbol_id(),
+                      decl
+                        .range
+                        .as_byte_range(source.text_info().range().start),
+                      deps
+                    ));
+                  }
+                }
+              }
+            }
+            symbol_deps_text
+          }
+
+          let symbol_deps_text = get_symbol_deps_text_for_mode(
+            module,
+            ResolveDepsMode::TypesAndExpressions,
+          );
+          if !symbol_deps_text.is_empty() {
+            output_text.push_str(&format!(
+              "== symbol deps (types and exprs) ==\n{}\n",
+              symbol_deps_text
+            ));
+          }
+          let symbol_deps_text =
+            get_symbol_deps_text_for_mode(module, ResolveDepsMode::TypesOnly);
+          if !symbol_deps_text.is_empty() {
+            output_text.push_str(&format!(
+              "== symbol deps (types only) ==\n{}\n",
+              symbol_deps_text
+            ));
+          }
+
+          // analyze the module graph for any problems
+          let diagnostics = check_fatal_diagnostics(module);
+          if !diagnostics.is_empty() {
+            eprintln!("== Output ==");
+            eprintln!("{}", module_output_text);
+            eprintln!("== Source ==");
+            eprintln!("{}", module.text());
+            eprintln!("== {} == \n\n{}", specifier, diagnostics.join("\n"));
+            panic!("FAILED");
+          }
+        }
+        let get_symbol_text =
+          |module_symbol: deno_graph::symbols::ModuleInfoRef,
+           symbol_id: deno_graph::symbols::SymbolId| {
+            let symbol = module_symbol.symbol(symbol_id).unwrap();
+            let items = root_symbol
+              .go_to_definitions_or_unresolveds(module_symbol, symbol)
+              .collect::<Vec<_>>();
+            if items.is_empty() {
+              "NONE".to_string()
+            } else {
+              let mut results = Vec::new();
+              for definition_or_unresolved in items {
+                match definition_or_unresolved {
+                  DefinitionOrUnresolved::Definition(definition) => {
+                    let decl_text = {
+                      let decl_text = definition.text();
+                      let lines = decl_text.split('\n').collect::<Vec<_>>();
+                      if lines.len() > 4 {
+                        lines[0..2]
+                          .iter()
+                          .chain(std::iter::once(&"..."))
+                          .chain(&lines[lines.len() - 2..])
+                          .cloned()
+                          .collect::<Vec<_>>()
+                      } else {
+                        lines
+                      }
+                      .into_iter()
+                      .map(|line| format!("  {}", line).trim_end().to_string())
+                      .collect::<Vec<_>>()
+                      .join("\n")
+                    };
+                    let range = definition.byte_range();
+                    results.push(format!(
+                      "{}:{}..{}\n{}",
+                      definition.module.specifier(),
+                      range.start,
+                      range.end,
+                      decl_text
+                    ));
+                  }
+                  DefinitionOrUnresolved::Unresolved(unresolved) => results
+                    .push(format!(
+                      "{}\n  Unresolved {:?} ({:?})",
+                      unresolved.module.specifier(),
+                      unresolved.kind,
+                      unresolved.parts,
+                    )),
+                }
+              }
+              results.join("\n")
+            }
+          };
+        let exports = entrypoint_symbol.exports(&root_symbol).resolved;
+        if !exports.is_empty() {
+          output_text.push_str("== export definitions ==\n");
+          for (name, resolved) in exports {
+            let resolved = resolved.as_resolved_export();
+            let position = get_symbol_text(resolved.module, resolved.symbol_id);
+            output_text.push_str(&format!("[{}]: {}\n", name, position));
+          }
+        }
+        output_text
+      },
     })
-    .collect()
-}
-
-fn parse_spec(text: String) -> Spec {
-  let mut files = Vec::new();
-  let mut current_file = None;
-  let mut options: Option<SpecOptions> = None;
-  for (i, line) in text.split('\n').enumerate() {
-    if i == 0 && line.starts_with("~~ ") {
-      let line = line.replace("~~", "").trim().to_string(); // not ideal, being lazy
-      options = Some(serde_json::from_str(&line).unwrap());
-      continue;
-    }
-    if let Some(specifier) = line.strip_prefix("# ") {
-      if let Some(file) = current_file.take() {
-        files.push(file);
-      }
-      current_file = Some(SpecFile {
-        specifier: specifier.to_string(),
-        text: String::new(),
-        emit_text: None,
-        headers: Default::default(),
-      });
-    } else if let Some(headers) = line.strip_prefix("HEADERS: ") {
-      current_file.as_mut().unwrap().headers =
-        serde_json::from_str(headers).unwrap();
-    } else {
-      let current_file = current_file.as_mut().unwrap();
-      if !current_file.text.is_empty() {
-        current_file.text.push('\n');
-      }
-      current_file.text.push_str(line);
-    }
   }
-  files.push(current_file.unwrap());
-  let output_file =
-    files.remove(files.iter().position(|f| f.specifier == "output").unwrap());
-  let diagnostics = take_file(&mut files, "diagnostics");
-  let workspace_members = take_file(&mut files, "workspace_members");
-  let lockfile_jsr_packages = take_file(&mut files, "lockfile_jsr_packages");
-  Spec {
-    options,
-    files,
-    output_file,
-    diagnostics,
-    workspace_members,
-    lockfile_jsr_packages,
-  }
-}
-
-fn take_file<T: Default + DeserializeOwned>(
-  files: &mut Vec<SpecFile>,
-  name: &str,
-) -> T {
-  if let Some(index) = files.iter().position(|f| f.specifier == name) {
-    let file = files.remove(index);
-    serde_json::from_str(&file.text).unwrap()
-  } else {
-    Default::default()
-  }
-}
-
-struct CollectedFile {
-  pub path: PathBuf,
-  pub text: String,
-}
-
-fn collect_files_in_dir_recursive(path: &Path) -> Vec<CollectedFile> {
-  let mut result = Vec::new();
-
-  for entry in path.read_dir().unwrap().flatten() {
-    let entry_path = entry.path();
-    if entry_path.is_file() {
-      let text = std::fs::read_to_string(&entry_path).unwrap();
-      result.push(CollectedFile {
-        path: entry_path,
-        text,
-      });
-    } else {
-      result.extend(collect_files_in_dir_recursive(&entry_path));
-    }
-  }
-
-  result
 }
