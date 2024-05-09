@@ -4,7 +4,6 @@
 #![allow(clippy::disallowed_methods)]
 #![allow(clippy::disallowed_types)]
 
-use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
 
@@ -23,6 +22,7 @@ use deno_ast::ParsedSource;
 use deno_ast::SourceMap;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
+use indexmap::IndexMap;
 
 use crate::symbols::ExpandoPropertyRef;
 use crate::ModuleGraph;
@@ -191,7 +191,7 @@ struct FastCheckTransformer<'a> {
   parsed_source: &'a ParsedSource,
   should_error_on_first_diagnostic: bool,
   diagnostics: Vec<FastCheckDiagnostic>,
-  public_inferred_namespaces: HashMap<Atom, Vec<ModuleItem>>,
+  expando_namespaces: IndexMap<Atom, Vec<ModuleItem>>,
 }
 
 impl<'a> FastCheckTransformer<'a> {
@@ -209,7 +209,7 @@ impl<'a> FastCheckTransformer<'a> {
       parsed_source,
       should_error_on_first_diagnostic,
       diagnostics: Default::default(),
-      public_inferred_namespaces: HashMap::new(),
+      expando_namespaces: Default::default(),
     }
   }
 
@@ -237,8 +237,8 @@ impl<'a> FastCheckTransformer<'a> {
     comments: &mut CommentsMut,
     is_ambient: bool,
   ) -> Result<Vec<ModuleItem>, Vec<FastCheckDiagnostic>> {
-    let parent_public_inferred_namespaces =
-      std::mem::take(&mut self.public_inferred_namespaces);
+    let parent_expando_namespaces =
+      std::mem::take(&mut self.expando_namespaces);
     let mut final_body = Vec::with_capacity(body.len());
     for mut item in body {
       let retain = self.transform_item(&mut item, comments, is_ambient)?;
@@ -250,12 +250,8 @@ impl<'a> FastCheckTransformer<'a> {
     }
 
     // Add accumulated namespaces
-    final_body.reserve(self.public_inferred_namespaces.len());
-    for (key, value) in self.public_inferred_namespaces.drain() {
-      if value.is_empty() {
-        continue;
-      }
-
+    final_body.reserve(self.expando_namespaces.len());
+    for (key, value) in self.expando_namespaces.drain(..) {
       final_body.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
         ExportDecl {
           span: DUMMY_SP,
@@ -273,7 +269,7 @@ impl<'a> FastCheckTransformer<'a> {
       )));
     }
 
-    self.public_inferred_namespaces = parent_public_inferred_namespaces;
+    self.expando_namespaces = parent_expando_namespaces;
 
     Ok(final_body)
   }
@@ -1502,24 +1498,27 @@ impl<'a> FastCheckTransformer<'a> {
       })?;
     } else {
       let items = self
-        .public_inferred_namespaces
+        .expando_namespaces
         .entry(expando_prop.obj_ident().sym.clone())
         .or_default();
-      items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(VarDecl {
+      items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(ExportDecl {
         span: DUMMY_SP,
-        kind: VarDeclKind::Var,
-        declare: false,
-        decls: vec![VarDeclarator {
+        decl: Decl::Var(Box::new(VarDecl {
           span: DUMMY_SP,
-          name: Pat::Ident(BindingIdent {
-            // this property name is guaranteed to be a valid identifier
-            id: Ident::new(expando_prop.prop_name().clone(), DUMMY_SP),
-            type_ann: None,
-          }),
-          init: Some(n.right.clone()),
-          definite: false,
-        }],
-      })))));
+          kind: VarDeclKind::Var,
+          declare: false,
+          decls: vec![VarDeclarator {
+            span: DUMMY_SP,
+            name: Pat::Ident(BindingIdent {
+              // this property name is guaranteed to be a valid identifier
+              id: Ident::new(expando_prop.prop_name().clone(), DUMMY_SP),
+              type_ann: None,
+            }),
+            init: Some(n.right.clone()),
+            definite: false,
+          }],
+        })),
+      })));
     }
     Ok(false)
   }

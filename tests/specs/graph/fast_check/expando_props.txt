@@ -8,9 +8,10 @@
 export function test() {
 }
 
-test.skip = (nonExported: NonExported) => {};
-
-class NonExported {}
+test.skip = "test";
+test["prop"] = "string-prop";
+test["invalid-ident-name"] = "will not be in output";
+test["str_func"] = () => false;
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -47,7 +48,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 96,
+      "size": 164,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -63,15 +64,15 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export function test(): void {}
-  class NonExported {
-  }
   export namespace test {
-    export var skip = (nonExported: NonExported): void =>{};
+    export var skip = "test";
+    export var prop = "string-prop";
+    export var str_func = (): boolean =>({} as never);
   }
   --- DTS ---
   export declare function test(): void;
-  declare class NonExported {
-  }
   export declare namespace test {
-    export var skip: (nonExported: NonExported) => void;
+    export var skip: string;
+    export var prop: string;
+    export var str_func: () => boolean;
   }

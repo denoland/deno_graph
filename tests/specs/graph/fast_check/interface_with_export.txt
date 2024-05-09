@@ -81,48 +81,48 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export function it(): void {}
   export namespace it {
-    var skip = (really: boolean): void =>{};
-    var ignore = function(really: boolean): void {};
-    var restArrFn = (...really: any[]): void =>{};
-    var arrayArrFn = ([]: [1, 2]): void =>{};
-    var asyncArrFn = (): Promise<void> =>({} as never);
-    var objArrFn = ({}: {
+    export var skip = (really: boolean): void =>{};
+    export var ignore = function(really: boolean): void {};
+    export var restArrFn = (...really: any[]): void =>{};
+    export var arrayArrFn = ([]: [1, 2]): void =>{};
+    export var asyncArrFn = (): Promise<void> =>({} as never);
+    export var objArrFn = ({}: {
       a: number;
       b: number;
     }): void =>{};
-    var restFn = function(...really: any[]): void {};
-    var arrayFn = function([]: [1, 2]): void {};
-    var asyncFn = function(): Promise<void> {
+    export var restFn = function(...really: any[]): void {};
+    export var arrayFn = function([]: [1, 2]): void {};
+    export var asyncFn = function(): Promise<void> {
       return {} as never;
     };
-    var objFn = function({}: {
+    export var objFn = function({}: {
       a: number;
       b: number;
     }): void {};
-    var num = 2;
-    var str = "a";
-    var bool = true;
+    export var num = 2;
+    export var str = "a";
+    export var bool = true;
   }
   --- DTS ---
   export declare function it(): void;
   export declare namespace it {
-    var skip: (really: boolean) => void;
-    var ignore: (really: boolean) => void;
-    var restArrFn: (...really: any[]) => void;
-    var arrayArrFn: ([]: [1, 2]) => void;
-    var asyncArrFn: () => Promise<void>;
-    var objArrFn: ({}: {
+    export var skip: (really: boolean) => void;
+    export var ignore: (really: boolean) => void;
+    export var restArrFn: (...really: any[]) => void;
+    export var arrayArrFn: ([]: [1, 2]) => void;
+    export var asyncArrFn: () => Promise<void>;
+    export var objArrFn: ({}: {
       a: number;
       b: number;
     }) => void;
-    var restFn: (...really: any[]) => void;
-    var arrayFn: ([]: [1, 2]) => void;
-    var asyncFn: () => Promise<void>;
-    var objFn: ({}: {
+    export var restFn: (...really: any[]) => void;
+    export var arrayFn: ([]: [1, 2]) => void;
+    export var asyncFn: () => Promise<void>;
+    export var objFn: ({}: {
       a: number;
       b: number;
     }) => void;
-    var num: number;
-    var str: string;
-    var bool: boolean;
+    export var num: number;
+    export var str: string;
+    export var bool: boolean;
   }

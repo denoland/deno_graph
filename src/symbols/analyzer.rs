@@ -729,7 +729,7 @@ impl<'a> SymbolNodeRef<'a> {
       Self::ClassMethod(n) => maybe_prop_name(&n.key),
       Self::ClassProp(n) => maybe_prop_name(&n.key),
       Self::ClassParamProp(n) => maybe_param_prop_name(&n.param),
-      Self::ExpandoProperty(n) => Some(Cow::Borrowed(&n.prop_name())),
+      Self::ExpandoProperty(n) => Some(Cow::Borrowed(n.prop_name())),
       Self::TsPropertySignature(n) => maybe_expr(&n.key),
       Self::TsGetterSignature(n) => maybe_expr(&n.key),
       Self::TsSetterSignature(n) => maybe_expr(&n.key),
@@ -991,7 +991,7 @@ impl<'a> ExpandoPropertyRef<'a> {
     expr.op == AssignOp::Assign
       && Self::maybe_obj_ident(expr).is_some()
       && match Self::maybe_prop_name(expr) {
-        Some(prop_name) => is_valid_ident(&prop_name),
+        Some(prop_name) => is_valid_ident(prop_name),
         None => false,
       }
   }

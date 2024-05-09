@@ -184,7 +184,7 @@ impl DepsFiller {
       }
       SymbolNodeRef::ExpandoProperty(n) => {
         if self.mode.visit_exprs() {
-          self.visit_expr(&n.assignment());
+          self.visit_expr(n.assignment());
         }
       }
       SymbolNodeRef::TsIndexSignature(n) => {
