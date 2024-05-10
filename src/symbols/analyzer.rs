@@ -1064,6 +1064,10 @@ impl<'a> ExpandoPropertyRef<'a> {
     Self::maybe_prop_name(self.0).unwrap()
   }
 
+  pub fn prop_name_range(&self) -> SourceRange {
+    Self::maybe_member_expr(self.0).unwrap().prop.range()
+  }
+
   pub fn assignment(&self) -> &'a Expr {
     &self.0.right
   }

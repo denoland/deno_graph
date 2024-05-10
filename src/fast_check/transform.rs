@@ -1525,7 +1525,10 @@ impl<'a> FastCheckTransformer<'a> {
             span: DUMMY_SP,
             name: Pat::Ident(BindingIdent {
               // this property name is guaranteed to be a valid identifier
-              id: Ident::new(expando_prop.prop_name().clone(), DUMMY_SP),
+              id: Ident::new(
+                expando_prop.prop_name().clone(),
+                expando_prop.prop_name_range().into(),
+              ),
               type_ann: None,
             }),
             init: Some(n.right.clone()),
