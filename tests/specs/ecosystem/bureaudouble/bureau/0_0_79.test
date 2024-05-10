@@ -513,8 +513,8 @@ bureaudouble/bureau/0.0.79
           "@floating-ui/utils": "@floating-ui/utils@0.2.2"
         }
       },
-      "@floating-ui/dom@1.6.4": {
-        "integrity": "sha512-0G8R+zOvQsAG1pg2Q99P21jiqxqGBW1iRe/iXHsBRBxnpXKFI8QwbB4x5KmYLggNO5m34IQgOIu9SCRfR/WWiQ==",
+      "@floating-ui/dom@1.6.5": {
+        "integrity": "sha512-Nsdud2X65Dz+1RHjAIP0t8z5e2ff/IRbei6BqFrl1urT8sDVzM1HMQ+R0XcU5ceRfyO3I6ayeqIfh+6Wb8LGTw==",
         "dependencies": {
           "@floating-ui/core": "@floating-ui/core@1.6.1",
           "@floating-ui/utils": "@floating-ui/utils@0.2.2"
@@ -523,7 +523,7 @@ bureaudouble/bureau/0.0.79
       "@floating-ui/react-dom@2.0.8_react@18.2.0_react-dom@18.2.0__react@18.2.0": {
         "integrity": "sha512-HOdqOt3R3OGeTKidaLvJKcgg75S6tibQ3Tif4eyd91QnIJWr0NLvoXFpJA/j8HqkFSL68GDca9AuyWEHlhyClw==",
         "dependencies": {
-          "@floating-ui/dom": "@floating-ui/dom@1.6.4",
+          "@floating-ui/dom": "@floating-ui/dom@1.6.5",
           "react": "react@18.2.0",
           "react-dom": "react-dom@18.2.0_react@18.2.0"
         }
@@ -742,13 +742,13 @@ bureaudouble/bureau/0.0.79
 -- stderr --
 error: Uncaught Error: Failed resolving package subpath './client' for '<global_npm_dir>/react-dom/18.2.0/package.json': [ERR_PACKAGE_PATH_NOT_EXPORTED] Package subpath './client' is not defined for types by "exports" in '<global_npm_dir>/react-dom/18.2.0/package.json' imported from '<tmpdir>/src/lib/useClient.ts'
     at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:756:28)
-    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120758:144)
-    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:121155:22)
-    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:121250:16)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:122813:120)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122544:9)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:122408:22)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:122839:13)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122544:9)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:122408:22)
+    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120792:144)
+    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:121189:22)
+    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:121284:16)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:122847:120)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:122873:13)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
 

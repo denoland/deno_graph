@@ -4,15 +4,15 @@ exome/exome/2.4.2-jsr.1
   "version": "3",
   "packages": {
     "specifiers": {
-      "npm:@angular/core@^17.3.0": "npm:@angular/core@17.3.7_rxjs@7.8.1_zone.js@0.14.5",
+      "npm:@angular/core@^17.3.0": "npm:@angular/core@17.3.8_rxjs@7.8.1_zone.js@0.14.5",
       "npm:lit@^3.1.2": "npm:lit@3.1.3",
       "npm:react@^18.2.0": "npm:react@18.3.1",
       "npm:rxjs@^7.8.1": "npm:rxjs@7.8.1",
       "npm:solid-js@^1.8.15": "npm:solid-js@1.8.17_seroval@1.0.5"
     },
     "npm": {
-      "@angular/core@17.3.7_rxjs@7.8.1_zone.js@0.14.5": {
-        "integrity": "sha512-HWcrbxqnvIMSxFuQdN0KPt08bc87hqr0LKm89yuRTUwx/2sNJlNQUobk6aJj4trswGBttcRDT+GOS4DQP2Nr4g==",
+      "@angular/core@17.3.8_rxjs@7.8.1_zone.js@0.14.5": {
+        "integrity": "sha512-+tUQ+B1yVvNbczzaWBCgJWWIgZ2z+GVJWu+UNOHHWzdqD8qpXjuIkDfnhyLNeGvvXgsqey4u6ApFf2SoFYLjuA==",
         "dependencies": {
           "rxjs": "rxjs@7.8.1",
           "tslib": "tslib@2.6.2",

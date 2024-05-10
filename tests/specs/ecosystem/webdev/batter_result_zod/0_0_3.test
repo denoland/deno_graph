@@ -4,11 +4,11 @@ webdev/batter-result-zod/0.0.3
   "version": "3",
   "packages": {
     "specifiers": {
-      "npm:zod@^3.22.5": "npm:zod@3.23.5"
+      "npm:zod@^3.22.5": "npm:zod@3.23.8"
     },
     "npm": {
-      "zod@3.23.5": {
-        "integrity": "sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==",
+      "zod@3.23.8": {
+        "integrity": "sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==",
         "dependencies": {}
       }
     }

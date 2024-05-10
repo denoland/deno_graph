@@ -17,7 +17,7 @@ schematicos/codegen/0.0.7
       "@schematicos/types@0.0.46": {
         "integrity": "sha512-SVbtdlpleitU8sXAb5ofkH1/XwL2o4URctl05QIFTTpJVuNoMNqCy0T3TWfTB/Gn4cX5pBY3MQSs//8WXLaMcQ==",
         "dependencies": {
-          "zod": "zod@3.23.5"
+          "zod": "zod@3.23.8"
         }
       },
       "lodash-es@4.17.21": {
@@ -28,8 +28,8 @@ schematicos/codegen/0.0.7
         "integrity": "sha512-N4YtSYJqghVu4iek2ZUvcN/0aqH1kRDuNqzcycDxhOUpg7GdvLa2F3DgS6yBNhInhv2r/6I0Flkn7CqL8+nIcw==",
         "dependencies": {}
       },
-      "zod@3.23.5": {
-        "integrity": "sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==",
+      "zod@3.23.8": {
+        "integrity": "sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==",
         "dependencies": {}
       }
     }

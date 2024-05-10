@@ -4,12 +4,12 @@ mys/worker-fn/3.2.0
   "version": "3",
   "packages": {
     "specifiers": {
-      "jsr:@mys/m-rpc@^0.12.1": "jsr:@mys/m-rpc@0.12.1",
+      "jsr:@mys/m-rpc@^0.12.1": "jsr:@mys/m-rpc@0.12.2",
       "jsr:@okikio/transferables@^1.0.2": "jsr:@okikio/transferables@1.0.2"
     },
     "jsr": {
-      "@mys/m-rpc@0.12.1": {
-        "integrity": "19a1f8e1fed7552d32bfd5be5d26f982e8cd65e4b0666d05e88fcbb1fb4be20a",
+      "@mys/m-rpc@0.12.2": {
+        "integrity": "36599d3d4708db9f5c0f7da35a17b7e7da1fafddb69de6cfcdc6afe94cd4f084",
         "dependencies": [
           "jsr:@okikio/transferables@^1.0.2"
         ]

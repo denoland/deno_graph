@@ -241,7 +241,7 @@ schematicos/zod/0.0.1
       "@schematicos/types@0.0.29": {
         "integrity": "sha512-cWGi9bQ4loMAgAzLAWmX5pfKgorTmM5J+W2MUdML5X5ClQQLusFwmKD64HRHPx59hBXbtvANS1CdRRHchichHw==",
         "dependencies": {
-          "zod": "zod@3.23.5"
+          "zod": "zod@3.23.8"
         }
       },
       "@types/estree@1.0.5": {
@@ -460,14 +460,14 @@ schematicos/zod/0.0.1
           "is-glob": "is-glob@4.0.3"
         }
       },
-      "glob@10.3.12": {
-        "integrity": "sha512-TCNv8vJ+xz4QiqTpfOJA7HvYv+tNIRHKfUWw/q+v2jdgN4ebz+KY9tGx5J4rHP0o84mNP+ApH66HRX8us3Khqg==",
+      "glob@10.3.14": {
+        "integrity": "sha512-4fkAqu93xe9Mk7le9v0y3VrPDqLKHarNi2s4Pv7f2yOvfhWfhc7hRPHC/JyqMqb8B/Dt/eGS4n7ykwf3fOsl8g==",
         "dependencies": {
           "foreground-child": "foreground-child@3.1.1",
           "jackspeak": "jackspeak@2.3.6",
           "minimatch": "minimatch@9.0.4",
-          "minipass": "minipass@7.0.4",
-          "path-scurry": "path-scurry@1.10.2"
+          "minipass": "minipass@7.1.1",
+          "path-scurry": "path-scurry@1.11.0"
         }
       },
       "globby@11.1.0": {
@@ -591,8 +591,8 @@ schematicos/zod/0.0.1
           "brace-expansion": "brace-expansion@2.0.1"
         }
       },
-      "minipass@7.0.4": {
-        "integrity": "sha512-jYofLM5Dam9279rdkWzqHozUo4ybjdZmCsDHePy5V/PbBcVMiSZR97gmAy45aqi8CK1lG2ECd356FU86avfwUQ==",
+      "minipass@7.1.1": {
+        "integrity": "sha512-UZ7eQ+h8ywIRAW1hIEl2AqdwzJucU/Kp59+8kkZeSvafXhZjul247BvIJjEVFVeON6d7lM46XX1HXCduKAS8VA==",
         "dependencies": {}
       },
       "ms@2.1.2": {
@@ -631,11 +631,11 @@ schematicos/zod/0.0.1
         "integrity": "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==",
         "dependencies": {}
       },
-      "path-scurry@1.10.2": {
-        "integrity": "sha512-7xTavNy5RQXnsjANvVvMkEjvloOinkAjv/Z6Ildz9v2RinZ4SBKTWFOVRbaF8p0vpHnyjV/UwNDdKuUv6M5qcA==",
+      "path-scurry@1.11.0": {
+        "integrity": "sha512-LNHTaVkzaYaLGlO+0u3rQTz7QrHTFOuKyba9JMTQutkmtNew8dw8wOD7mTU/5fCPZzCWpfW0XnQKzY61P0aTaw==",
         "dependencies": {
           "lru-cache": "lru-cache@10.2.2",
-          "minipass": "minipass@7.0.4"
+          "minipass": "minipass@7.1.1"
         }
       },
       "path-type@4.0.0": {
@@ -779,7 +779,7 @@ schematicos/zod/0.0.1
         "dependencies": {
           "@jridgewell/gen-mapping": "@jridgewell/gen-mapping@0.3.5",
           "commander": "commander@4.1.1",
-          "glob": "glob@10.3.12",
+          "glob": "glob@10.3.14",
           "lines-and-columns": "lines-and-columns@1.2.4",
           "mz": "mz@2.7.0",
           "pirates": "pirates@4.0.6",
@@ -883,8 +883,8 @@ schematicos/zod/0.0.1
         "integrity": "sha512-B3VqDZ+JAg1nZpaEmWtTXUlBneoGx6CPM9b0TENK6aoSu5t73dItudwdgmi6tHlIZZId4dZ9skcAQ2UbcyAeVA==",
         "dependencies": {}
       },
-      "zod@3.23.5": {
-        "integrity": "sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==",
+      "zod@3.23.8": {
+        "integrity": "sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==",
         "dependencies": {}
       }
     }

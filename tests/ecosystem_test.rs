@@ -2,6 +2,7 @@ use std::io::Write as _;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use anyhow::Context;
 use deno_ast::diagnostics::Diagnostic;
 use deno_graph::source::LoadResponse;
 use deno_graph::source::NullFileSystem;
@@ -44,7 +45,7 @@ fn main() {
   let versions_str = include_str!("./ecosystem/jsr_versions.json");
   let versions: Vec<Version> = serde_json::from_str(versions_str).unwrap();
 
-  if std::env::var("UPDATE").is_ok() {
+  if std::env::var("UPDATE").as_deref() == Ok("1") {
     for version in versions {
       let path = PathBuf::from(format!(
         "./tests/specs/ecosystem/{}/{}/{}.test",
@@ -322,6 +323,17 @@ async fn test_version(
   if fast_check_diagnostics.is_empty() {
     let tmpdir = tempdir().unwrap();
     let tmpdir_path = tmpdir.path().canonicalize().unwrap();
+    let tmpdir_path = if cfg!(windows) {
+      PathBuf::from(
+        tmpdir_path
+          .to_str()
+          .unwrap()
+          .strip_prefix("\\\\?\\")
+          .unwrap(),
+      )
+    } else {
+      tmpdir_path
+    };
 
     let mut lockfile_file = NamedTempFile::new().unwrap();
     lockfile_file.write_all(lockfile.trim().as_bytes()).unwrap();
@@ -340,11 +352,17 @@ async fn test_version(
         if let Some(fcm) = module.fast_check_module() {
           let path =
             format!("{}{}", tmpdir_path.display(), module.specifier.path());
-          std::fs::write(&path, fcm.source.as_bytes()).unwrap();
+          std::fs::write(&path, fcm.source.as_bytes())
+            .with_context(|| format!("failed writing {}", path))
+            .unwrap();
         }
       }
     }
 
+    let tmpdir_path_str = tmpdir_path.to_string_lossy().to_string();
+    let tmpdir_specifier = Url::from_directory_path(&tmpdir_path).unwrap();
+    let tmpdir_specifier_path =
+      tmpdir_specifier.path().strip_suffix('/').unwrap();
     let mut cmd = std::process::Command::new("deno");
     cmd
       .arg("check")
@@ -354,7 +372,7 @@ async fn test_version(
       .env("NO_COLOR", "true")
       .env("RUST_LIB_BACKTRACE", "0")
       .current_dir(&tmpdir_path);
-    if std::env::var("UPDATE").is_ok() {
+    if std::env::var("UPDATE").as_deref() == Ok("1") {
       cmd.arg("--lock-write");
     }
     let deno_out = cmd
@@ -368,14 +386,19 @@ async fn test_version(
       let initialize_regexp =
         regex::Regex::new(r"(:?Initialize|Download|Check) [^\n]*\n").unwrap();
       let node_modules_dir_regexp =
-        regex::Regex::new(r"\/[^\s\n]*/registry.npmjs.org").unwrap();
+        regex::Regex::new(r"([A-Z]:\/|\/)[^\s\n]*\/registry\.npmjs\.org")
+          .unwrap();
       let stdout = String::from_utf8_lossy(&deno_out.stdout)
-        .replace(tmpdir_path.to_str().unwrap(), "<tmpdir>");
+        .replace(tmpdir_specifier_path, "<tmpdir>")
+        .replace(&tmpdir_path_str, "<tmpdir>")
+        .replace('\\', "/");
       let stdout = initialize_regexp.replace_all(&stdout, "");
       let stdout =
         node_modules_dir_regexp.replace_all(&stdout, "<global_npm_dir>");
       let stderr = String::from_utf8_lossy(&deno_out.stderr)
-        .replace(tmpdir_path.to_str().unwrap(), "<tmpdir>");
+        .replace(tmpdir_specifier_path, "<tmpdir>")
+        .replace(&tmpdir_path_str, "<tmpdir>")
+        .replace('\\', "/");
       let stderr = initialize_regexp.replace_all(&stderr, "");
       let stderr =
         node_modules_dir_regexp.replace_all(&stderr, "<global_npm_dir>");
@@ -392,7 +415,7 @@ async fn test_version(
     }
   }
 
-  if std::env::var("UPDATE").is_ok() {
+  if std::env::var("UPDATE").as_deref() == Ok("1") {
     std::fs::write(
       spec_path,
       format!(
