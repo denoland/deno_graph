@@ -260,7 +260,7 @@ impl<'a> FastCheckTransformer<'a> {
     {
       let symbol = self.es_module_info.symbol_from_swc(&swc_id).unwrap();
       for decl in &var_decls {
-        self.check_expando_property_diagnostics(decl, &swc_id.0, symbol)?;
+        self.check_expando_property_diagnostics(decl, &swc_id, symbol)?;
       }
 
       // typescript requires the export keyword to match the other
@@ -310,22 +310,20 @@ impl<'a> FastCheckTransformer<'a> {
   fn check_expando_property_diagnostics(
     &mut self,
     decl: &VarDeclarator,
-    parent_name: &str,
+    parent_id: &Id,
     parent_symbol: &Symbol,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
     struct VisitExpandoPropInits<'a> {
       symbol: &'a Symbol,
-      unresolved_context: SyntaxContext,
+      parent_context: SyntaxContext,
       diagnostics: IndexMap<String, SourceRange>,
     }
 
     impl deno_ast::swc::visit::Visit for VisitExpandoPropInits<'_> {
       fn visit_ident(&mut self, ident: &Ident) {
         let (name, context) = ident.to_id();
-        if context == self.unresolved_context {
-          return;
-        }
-        if self.symbol.export(&name).is_some() {
+        if context == self.parent_context && self.symbol.export(&name).is_some()
+        {
           self.diagnostics.insert(name.to_string(), ident.range());
         }
       }
@@ -333,14 +331,14 @@ impl<'a> FastCheckTransformer<'a> {
 
     let mut inits = VisitExpandoPropInits {
       symbol: parent_symbol,
-      unresolved_context: self.parsed_source.unresolved_context(),
+      parent_context: parent_id.1,
       diagnostics: Default::default(),
     };
     decl.init.visit_with(&mut inits);
     for (reference_name, range) in inits.diagnostics {
       self.mark_diagnostic(
         FastCheckDiagnostic::UnsupportedExpandoProperty {
-          object_name: parent_name.to_string(),
+          object_name: parent_id.0.to_string(),
           reference_name,
           range: self.source_range_to_range(range),
         },
