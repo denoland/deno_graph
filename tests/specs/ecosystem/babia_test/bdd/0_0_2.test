@@ -54,25 +54,3 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'it.ignore'
-   --> /bdd.ts:203:14
-    | 
-203 | it.skip = it.ignore;
-    |              ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
-
-  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
-  docs: https://jsr.io/go/slow-type-unsupported-expando-property
-
-
-error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'describe.ignore'
-   --> /bdd.ts:434:26
-    | 
-434 | describe.skip = describe.ignore;
-    |                          ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
-
-  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
-  docs: https://jsr.io/go/slow-type-unsupported-expando-property
-
-
