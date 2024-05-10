@@ -8,10 +8,11 @@
 export function test() {
 }
 
-test.skip = "test";
-test["prop"] = "string-prop";
-test["invalid-ident-name"] = "will not be in output";
-test["str_func"] = () => false;
+// this should raise a diagnostic
+test.localDecl = localDecl;
+
+function localDecl(): string {
+}
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -48,7 +49,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 164,
+      "size": 124,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -62,17 +63,5 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  {}
-  export function test(): void {}
-  export namespace test {
-    export var skip = "test";
-    export var prop = "string-prop";
-    export var str_func = (): boolean =>({} as never);
-  }
-  --- DTS ---
-  export declare function test(): void;
-  export declare namespace test {
-    export var skip: string;
-    export var prop: string;
-    export var str_func: () => boolean;
-  }
+  expando property referencing 'localDecl' conflicts with 'test.localDecl'
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@79

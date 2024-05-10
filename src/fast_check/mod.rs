@@ -82,6 +82,14 @@ pub enum FastCheckDiagnostic {
   UnsupportedDefaultExportExpr { range: FastCheckDiagnosticRange },
   #[error("found destructuring, which is not supported in the public API")]
   UnsupportedDestructuring { range: FastCheckDiagnosticRange },
+  #[error(
+    "expando property referencing '{reference_name}' conflicts with '{object_name}.{reference_name}'"
+  )]
+  UnsupportedExpandoProperty {
+    object_name: String,
+    reference_name: String,
+    range: FastCheckDiagnosticRange,
+  },
   #[error("found global augmentations, which are not supported")]
   UnsupportedGlobalModule { range: FastCheckDiagnosticRange },
   #[error("require statements are a CommonJS feature, which are not supported in ES modules")]
@@ -147,6 +155,7 @@ impl FastCheckDiagnostic {
       UnsupportedComplexReference { .. } => Some("this is the reference"),
       UnsupportedDefaultExportExpr { .. } => None,
       UnsupportedDestructuring { .. } => None,
+      UnsupportedExpandoProperty { .. } => None,
       UnsupportedGlobalModule { .. } => None,
       UnsupportedRequire { .. } => None,
       UnsupportedPrivateMemberReference { .. } => Some("this is the reference"),
@@ -176,6 +185,7 @@ impl FastCheckDiagnostic {
       UnsupportedComplexReference { range, .. } => &range.specifier,
       UnsupportedDefaultExportExpr { range } => &range.specifier,
       UnsupportedDestructuring { range } => &range.specifier,
+      UnsupportedExpandoProperty { range, .. } => &range.specifier,
       UnsupportedGlobalModule { range } => &range.specifier,
       UnsupportedPrivateMemberReference { range, .. } => &range.specifier,
       UnsupportedRequire { range } => &range.specifier,
@@ -201,6 +211,7 @@ impl FastCheckDiagnostic {
       UnsupportedComplexReference { range, .. } => Some(range),
       UnsupportedDefaultExportExpr { range } => Some(range),
       UnsupportedDestructuring { range } => Some(range),
+      UnsupportedExpandoProperty { range, .. } => Some(range),
       UnsupportedGlobalModule { range } => Some(range),
       UnsupportedPrivateMemberReference { range, .. } => Some(range),
       UnsupportedRequire { range } => Some(range),
@@ -228,6 +239,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       | UnsupportedComplexReference { .. }
       | UnsupportedDefaultExportExpr { .. }
       | UnsupportedDestructuring { .. }
+      | UnsupportedExpandoProperty { .. }
       | UnsupportedGlobalModule { .. }
       | UnsupportedRequire { .. }
       | UnsupportedPrivateMemberReference { .. }
@@ -254,6 +266,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       UnsupportedComplexReference { .. } => "unsupported-complex-reference",
       UnsupportedDefaultExportExpr { .. } => "unsupported-default-export-expr",
       UnsupportedDestructuring { .. } => "unsupported-destructuring",
+      UnsupportedExpandoProperty { .. } => "unsupported-expando-property",
       UnsupportedGlobalModule { .. } => "unsupported-global-module",
       UnsupportedRequire { .. } => "unsupported-require",
       UnsupportedPrivateMemberReference { .. } => {
@@ -308,38 +321,39 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
 
   fn hint(&self) -> Option<Cow<'_, str>> {
     use FastCheckDiagnostic::*;
-    Some(Cow::Borrowed(match self {
+    Some(match self {
       NotFoundReference { .. } => {
-        "fix the reference to point to a symbol that exists"
+        Cow::Borrowed("fix the reference to point to a symbol that exists")
       }
       MissingExplicitType { .. } => {
-        "add an explicit type annotation to the symbol"
+        Cow::Borrowed("add an explicit type annotation to the symbol")
       }
       MissingExplicitReturnType { .. } => {
-        "add an explicit return type to the function"
+        Cow::Borrowed("add an explicit return type to the function")
       }
       UnsupportedAmbientModule { .. } => {
-        "remove the ambient module declaration"
+        Cow::Borrowed("remove the ambient module declaration")
       }
       UnsupportedComplexReference { .. } => {
-        "extract the shared type to a type alias and reference the type alias instead"
+        Cow::Borrowed("extract the shared type to a type alias and reference the type alias instead")
       }
-      UnsupportedDefaultExportExpr { .. } => "add an 'as' clause with an explicit type after the expression, or extract to a variable",
-      UnsupportedDestructuring { .. } => "separate each destructured symbol into its own export statement",
-      UnsupportedGlobalModule { .. } => "remove the 'global' augmentation",
-      UnsupportedRequire { .. } => "use an import statement instead",
-      UnsupportedPrivateMemberReference { .. } => "extract the type of the private member to a type alias and reference the type alias instead",
-      UnsupportedSuperClassExpr { .. } => "extract the superclass expression into a variable",
-      UnsupportedTsExportAssignment { .. } => "use an export statement instead",
-      UnsupportedTsNamespaceExport { .. } => "remove the namespace export",
-      UnsupportedUsing { .. } => "use 'const' instead of 'using'",
-      UnsupportedNestedJavaScript { .. } => "add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript",
-      UnsupportedJavaScriptEntrypoint { .. } => "add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript",
-      Emit { .. } => "this error may be the result of a bug in Deno - if you think this is the case, please open an issue",
+      UnsupportedDefaultExportExpr { .. } => Cow::Borrowed("add an 'as' clause with an explicit type after the expression, or extract to a variable"),
+      UnsupportedDestructuring { .. } => Cow::Borrowed("separate each destructured symbol into its own export statement"),
+      UnsupportedExpandoProperty { reference_name, .. } => Cow::Owned(format!("rename '{}' to something else to avoid conflicts or create a temporary variable to use in the expando property reference", reference_name)),
+      UnsupportedGlobalModule { .. } => Cow::Borrowed("remove the 'global' augmentation"),
+      UnsupportedRequire { .. } => Cow::Borrowed("use an import statement instead"),
+      UnsupportedPrivateMemberReference { .. } => Cow::Borrowed("extract the type of the private member to a type alias and reference the type alias instead"),
+      UnsupportedSuperClassExpr { .. } => Cow::Borrowed("extract the superclass expression into a variable"),
+      UnsupportedTsExportAssignment { .. } => Cow::Borrowed("use an export statement instead"),
+      UnsupportedTsNamespaceExport { .. } => Cow::Borrowed("remove the namespace export"),
+      UnsupportedUsing { .. } => Cow::Borrowed("use 'const' instead of 'using'"),
+      UnsupportedNestedJavaScript { .. } => Cow::Borrowed("add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript"),
+      UnsupportedJavaScriptEntrypoint { .. } => Cow::Borrowed("add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript"),
+      Emit { .. } => Cow::Borrowed("this error may be the result of a bug in Deno - if you think this is the case, please open an issue"),
       // only a bug if the user sees these
-      ExportNotFound { .. } => "this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist",
-      Cached { .. } => "this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist",
-    }))
+      ExportNotFound { .. } => Cow::Borrowed("this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist"),
+      Cached { .. } => Cow::Borrowed("this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist"),
+    })
   }
 
   fn snippet_fixed(
@@ -371,6 +385,9 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       ]),
       UnsupportedDestructuring { .. } => Cow::Borrowed(&[
         Cow::Borrowed("destructuring can not be inferred by fast check")
+      ]),
+      UnsupportedExpandoProperty { .. } => Cow::Borrowed(&[
+        Cow::Borrowed("expando properties get converted to a namespace and the reference conflicts with a namespace export")
       ]),
       UnsupportedGlobalModule { .. } => Cow::Borrowed(&[
         Cow::Borrowed("global augmentations are not supported because they can modify global types, which can affect other modules type checking")
