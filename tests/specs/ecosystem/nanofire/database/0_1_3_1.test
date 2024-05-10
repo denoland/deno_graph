@@ -386,7 +386,7 @@ nanofire/database/0.1.3-1
         "dependencies": {
           "lodash.camelcase": "lodash.camelcase@4.3.0",
           "long": "long@5.2.3",
-          "protobufjs": "protobufjs@7.2.6",
+          "protobufjs": "protobufjs@7.3.0",
           "yargs": "yargs@17.7.2"
         }
       },
@@ -540,8 +540,8 @@ nanofire/database/0.1.3-1
         "integrity": "sha512-Nii8O1XqmawqSCf9o2aWqVxhKRN01+iue9/VEd1TiJCr9VT5XxgPFbF1Edl1XN6pwJcZRsl8Ki+z01yb/T/C2g==",
         "dependencies": {}
       },
-      "protobufjs@7.2.6": {
-        "integrity": "sha512-dgJaEDDL6x8ASUZ1YqWciTRrdOuYNzoOf27oHNfdyvKqHr5i0FV7FSLU+aIeFjyFgVxrpTOtQUi0BLLBymZaBw==",
+      "protobufjs@7.3.0": {
+        "integrity": "sha512-YWD03n3shzV9ImZRX3ccbjqLxj7NokGN0V/ESiBV5xWqrommYHYiihuIyavq03pWSGqlyvYUFmfoMKd+1rPA/g==",
         "dependencies": {
           "@protobufjs/aspromise": "@protobufjs/aspromise@1.1.2",
           "@protobufjs/base64": "@protobufjs/base64@1.1.2",

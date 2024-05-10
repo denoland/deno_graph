@@ -28,6 +28,752 @@ std/testing/0.206.0
 
 ===
 
-== FAST CHECK EMIT PASSED ==
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:497:11
+    | 
+497 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+498 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+499 |   return it({
+    | ^^^^^^^^^^^^^
+500 |     ...options,
+    | ^^^^^^^^^^^^^^^
+501 |     only: true,
+    | ^^^^^^^^^^^^^^^
+502 |   });
+    | ^^^^^
+503 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
 
-== TYPE CHECK PASSED ==
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:505:13
+    | 
+505 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+506 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+507 |   return it({
+    | ^^^^^^^^^^^^^
+508 |     ...options,
+    | ^^^^^^^^^^^^^^^
+509 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+510 |   });
+    | ^^^^^
+511 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'it.ignore'
+   --> /bdd.ts:513:14
+    | 
+513 | it.skip = it.ignore;
+    |              ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'describe.ignore'
+   --> /bdd.ts:735:26
+    | 
+735 | describe.skip = describe.ignore;
+    |                          ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:497:11
+    | 
+497 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+498 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+499 |   return it({
+    | ^^^^^^^^^^^^^
+500 |     ...options,
+    | ^^^^^^^^^^^^^^^
+501 |     only: true,
+    | ^^^^^^^^^^^^^^^
+502 |   });
+    | ^^^^^
+503 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:505:13
+    | 
+505 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+506 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+507 |   return it({
+    | ^^^^^^^^^^^^^
+508 |     ...options,
+    | ^^^^^^^^^^^^^^^
+509 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+510 |   });
+    | ^^^^^
+511 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'it.ignore'
+   --> /bdd.ts:513:14
+    | 
+513 | it.skip = it.ignore;
+    |              ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'describe.ignore'
+   --> /bdd.ts:735:26
+    | 
+735 | describe.skip = describe.ignore;
+    |                          ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:497:11
+    | 
+497 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+498 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+499 |   return it({
+    | ^^^^^^^^^^^^^
+500 |     ...options,
+    | ^^^^^^^^^^^^^^^
+501 |     only: true,
+    | ^^^^^^^^^^^^^^^
+502 |   });
+    | ^^^^^
+503 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:505:13
+    | 
+505 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+506 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+507 |   return it({
+    | ^^^^^^^^^^^^^
+508 |     ...options,
+    | ^^^^^^^^^^^^^^^
+509 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+510 |   });
+    | ^^^^^
+511 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'it.ignore'
+   --> /bdd.ts:513:14
+    | 
+513 | it.skip = it.ignore;
+    |              ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'describe.ignore'
+   --> /bdd.ts:735:26
+    | 
+735 | describe.skip = describe.ignore;
+    |                          ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:497:11
+    | 
+497 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+498 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+499 |   return it({
+    | ^^^^^^^^^^^^^
+500 |     ...options,
+    | ^^^^^^^^^^^^^^^
+501 |     only: true,
+    | ^^^^^^^^^^^^^^^
+502 |   });
+    | ^^^^^
+503 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:505:13
+    | 
+505 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+506 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+507 |   return it({
+    | ^^^^^^^^^^^^^
+508 |     ...options,
+    | ^^^^^^^^^^^^^^^
+509 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+510 |   });
+    | ^^^^^
+511 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'it.ignore'
+   --> /bdd.ts:513:14
+    | 
+513 | it.skip = it.ignore;
+    |              ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'describe.ignore'
+   --> /bdd.ts:735:26
+    | 
+735 | describe.skip = describe.ignore;
+    |                          ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:497:11
+    | 
+497 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+498 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+499 |   return it({
+    | ^^^^^^^^^^^^^
+500 |     ...options,
+    | ^^^^^^^^^^^^^^^
+501 |     only: true,
+    | ^^^^^^^^^^^^^^^
+502 |   });
+    | ^^^^^
+503 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:505:13
+    | 
+505 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+506 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+507 |   return it({
+    | ^^^^^^^^^^^^^
+508 |     ...options,
+    | ^^^^^^^^^^^^^^^
+509 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+510 |   });
+    | ^^^^^
+511 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'it.ignore'
+   --> /bdd.ts:513:14
+    | 
+513 | it.skip = it.ignore;
+    |              ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'describe.ignore'
+   --> /bdd.ts:735:26
+    | 
+735 | describe.skip = describe.ignore;
+    |                          ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:497:11
+    | 
+497 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+498 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+499 |   return it({
+    | ^^^^^^^^^^^^^
+500 |     ...options,
+    | ^^^^^^^^^^^^^^^
+501 |     only: true,
+    | ^^^^^^^^^^^^^^^
+502 |   });
+    | ^^^^^
+503 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:505:13
+    | 
+505 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+506 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+507 |   return it({
+    | ^^^^^^^^^^^^^
+508 |     ...options,
+    | ^^^^^^^^^^^^^^^
+509 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+510 |   });
+    | ^^^^^
+511 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'it.ignore'
+   --> /bdd.ts:513:14
+    | 
+513 | it.skip = it.ignore;
+    |              ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'describe.ignore'
+   --> /bdd.ts:735:26
+    | 
+735 | describe.skip = describe.ignore;
+    |                          ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:497:11
+    | 
+497 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+498 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+499 |   return it({
+    | ^^^^^^^^^^^^^
+500 |     ...options,
+    | ^^^^^^^^^^^^^^^
+501 |     only: true,
+    | ^^^^^^^^^^^^^^^
+502 |   });
+    | ^^^^^
+503 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:505:13
+    | 
+505 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+506 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+507 |   return it({
+    | ^^^^^^^^^^^^^
+508 |     ...options,
+    | ^^^^^^^^^^^^^^^
+509 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+510 |   });
+    | ^^^^^
+511 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'it.ignore'
+   --> /bdd.ts:513:14
+    | 
+513 | it.skip = it.ignore;
+    |              ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'describe.ignore'
+   --> /bdd.ts:735:26
+    | 
+735 | describe.skip = describe.ignore;
+    |                          ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:497:11
+    | 
+497 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+498 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+499 |   return it({
+    | ^^^^^^^^^^^^^
+500 |     ...options,
+    | ^^^^^^^^^^^^^^^
+501 |     only: true,
+    | ^^^^^^^^^^^^^^^
+502 |   });
+    | ^^^^^
+503 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:505:13
+    | 
+505 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+506 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+507 |   return it({
+    | ^^^^^^^^^^^^^
+508 |     ...options,
+    | ^^^^^^^^^^^^^^^
+509 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+510 |   });
+    | ^^^^^
+511 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'it.ignore'
+   --> /bdd.ts:513:14
+    | 
+513 | it.skip = it.ignore;
+    |              ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'describe.ignore'
+   --> /bdd.ts:735:26
+    | 
+735 | describe.skip = describe.ignore;
+    |                          ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:497:11
+    | 
+497 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+498 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+499 |   return it({
+    | ^^^^^^^^^^^^^
+500 |     ...options,
+    | ^^^^^^^^^^^^^^^
+501 |     only: true,
+    | ^^^^^^^^^^^^^^^
+502 |   });
+    | ^^^^^
+503 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:505:13
+    | 
+505 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+506 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+507 |   return it({
+    | ^^^^^^^^^^^^^
+508 |     ...options,
+    | ^^^^^^^^^^^^^^^
+509 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+510 |   });
+    | ^^^^^
+511 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'it.ignore'
+   --> /bdd.ts:513:14
+    | 
+513 | it.skip = it.ignore;
+    |              ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'describe.ignore'
+   --> /bdd.ts:735:26
+    | 
+735 | describe.skip = describe.ignore;
+    |                          ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:497:11
+    | 
+497 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+498 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+499 |   return it({
+    | ^^^^^^^^^^^^^
+500 |     ...options,
+    | ^^^^^^^^^^^^^^^
+501 |     only: true,
+    | ^^^^^^^^^^^^^^^
+502 |   });
+    | ^^^^^
+503 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:505:13
+    | 
+505 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+506 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+507 |   return it({
+    | ^^^^^^^^^^^^^
+508 |     ...options,
+    | ^^^^^^^^^^^^^^^
+509 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+510 |   });
+    | ^^^^^
+511 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'it.ignore'
+   --> /bdd.ts:513:14
+    | 
+513 | it.skip = it.ignore;
+    |              ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'describe.ignore'
+   --> /bdd.ts:735:26
+    | 
+735 | describe.skip = describe.ignore;
+    |                          ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:497:11
+    | 
+497 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+498 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+499 |   return it({
+    | ^^^^^^^^^^^^^
+500 |     ...options,
+    | ^^^^^^^^^^^^^^^
+501 |     only: true,
+    | ^^^^^^^^^^^^^^^
+502 |   });
+    | ^^^^^
+503 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:505:13
+    | 
+505 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+506 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+507 |   return it({
+    | ^^^^^^^^^^^^^
+508 |     ...options,
+    | ^^^^^^^^^^^^^^^
+509 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+510 |   });
+    | ^^^^^
+511 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'it.ignore'
+   --> /bdd.ts:513:14
+    | 
+513 | it.skip = it.ignore;
+    |              ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'ignore' conflicts with 'describe.ignore'
+   --> /bdd.ts:735:26
+    | 
+735 | describe.skip = describe.ignore;
+    |                          ^^^^^^
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
