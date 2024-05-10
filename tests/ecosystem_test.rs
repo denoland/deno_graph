@@ -363,8 +363,7 @@ async fn test_version(
     let tmpdir_specifier = Url::from_directory_path(&tmpdir_path).unwrap();
     let tmpdir_specifier_path =
       tmpdir_specifier.path().strip_suffix('/').unwrap();
-    let mut cmd =
-      std::process::Command::new("V:\\deno\\target\\release\\deno.exe");
+    let mut cmd = std::process::Command::new("deno");
     cmd
       .arg("check")
       .arg(format!("--lock={}", lockfile_path.display()))
