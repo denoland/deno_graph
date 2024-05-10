@@ -1645,7 +1645,14 @@ impl<'a> FastCheckTransformer<'a> {
       },
       Expr::Await(n) => recurse(&mut n.arg)?,
       Expr::Paren(n) => recurse(&mut n.expr)?,
-      Expr::TsTypeAssertion(_) | Expr::TsAs(_) => false,
+      Expr::TsTypeAssertion(assertion) => {
+        assertion.expr = Box::new(paren_expr(obj_as_never_expr()));
+        true
+      }
+      Expr::TsAs(assertion) => {
+        assertion.expr = Box::new(paren_expr(obj_as_never_expr()));
+        true
+      }
       Expr::TsConstAssertion(n) => recurse(&mut n.expr)?,
       Expr::TsNonNull(n) => recurse(&mut n.expr)?,
       Expr::Fn(n) => {
