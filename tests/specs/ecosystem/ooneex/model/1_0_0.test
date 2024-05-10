@@ -9,7 +9,7 @@ ooneex/model/1.0.0
       "jsr:@ooneex/helper@^1.0.3": "jsr:@ooneex/helper@1.0.3",
       "jsr:@ooneex/validation@^1.0.0": "jsr:@ooneex/validation@1.0.4",
       "npm:acorn@^8.11.3": "npm:acorn@8.11.3",
-      "npm:zod@^3.22.4": "npm:zod@3.23.5"
+      "npm:zod@^3.22.4": "npm:zod@3.23.8"
     },
     "jsr": {
       "@ooneex/exception@1.0.3": {
@@ -35,8 +35,8 @@ ooneex/model/1.0.0
         "integrity": "sha512-Y9rRfJG5jcKOE0CLisYbojUjIrIEE7AGMzA/Sm4BslANhbS+cDMpgBdcPT91oJ7OuJ9hYJBx59RjbhxVnrF8Xg==",
         "dependencies": {}
       },
-      "zod@3.23.5": {
-        "integrity": "sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==",
+      "zod@3.23.8": {
+        "integrity": "sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==",
         "dependencies": {}
       }
     }

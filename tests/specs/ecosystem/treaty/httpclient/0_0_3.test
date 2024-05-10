@@ -4,22 +4,22 @@ treaty/httpclient/0.0.3
   "version": "3",
   "packages": {
     "specifiers": {
-      "npm:@angular/common@^17.2.1": "npm:@angular/common@17.3.7_@angular+core@17.3.7__rxjs@7.8.1__zone.js@0.14.5_rxjs@7.8.1",
-      "npm:@angular/core@^17.2.1": "npm:@angular/core@17.3.7_rxjs@7.8.1_zone.js@0.14.5",
+      "npm:@angular/common@^17.2.1": "npm:@angular/common@17.3.8_@angular+core@17.3.8__rxjs@7.8.1__zone.js@0.14.5_rxjs@7.8.1",
+      "npm:@angular/core@^17.2.1": "npm:@angular/core@17.3.8_rxjs@7.8.1_zone.js@0.14.5",
       "npm:elysia@^0.8.17": "npm:elysia@0.8.17",
       "npm:rxjs@~7.8.0": "npm:rxjs@7.8.1"
     },
     "npm": {
-      "@angular/common@17.3.7_@angular+core@17.3.7__rxjs@7.8.1__zone.js@0.14.5_rxjs@7.8.1": {
-        "integrity": "sha512-A7LRJu1vVCGGgrfZXjU+njz50SiU4weheKCar5PIUprcdIofS1IrHAJDqYh+kwXxkjXbZMOr/ijQY0+AESLEsw==",
+      "@angular/common@17.3.8_@angular+core@17.3.8__rxjs@7.8.1__zone.js@0.14.5_rxjs@7.8.1": {
+        "integrity": "sha512-HEhTibrsWmoKilyhvAFmqg4SH1hWBP3eV9Y689lmsxBQCTRAmRI2pMAoRKQ+dBcoYLE/FZhcmdHJUSl5jR7Isg==",
         "dependencies": {
-          "@angular/core": "@angular/core@17.3.7_rxjs@7.8.1_zone.js@0.14.5",
+          "@angular/core": "@angular/core@17.3.8_rxjs@7.8.1_zone.js@0.14.5",
           "rxjs": "rxjs@7.8.1",
           "tslib": "tslib@2.6.2"
         }
       },
-      "@angular/core@17.3.7_rxjs@7.8.1_zone.js@0.14.5": {
-        "integrity": "sha512-HWcrbxqnvIMSxFuQdN0KPt08bc87hqr0LKm89yuRTUwx/2sNJlNQUobk6aJj4trswGBttcRDT+GOS4DQP2Nr4g==",
+      "@angular/core@17.3.8_rxjs@7.8.1_zone.js@0.14.5": {
+        "integrity": "sha512-+tUQ+B1yVvNbczzaWBCgJWWIgZ2z+GVJWu+UNOHHWzdqD8qpXjuIkDfnhyLNeGvvXgsqey4u6ApFf2SoFYLjuA==",
         "dependencies": {
           "rxjs": "rxjs@7.8.1",
           "tslib": "tslib@2.6.2",

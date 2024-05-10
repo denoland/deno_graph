@@ -4,13 +4,13 @@ bergold/password-middleware/1.0.3
   "version": "3",
   "packages": {
     "specifiers": {
-      "jsr:@brc-dd/iron@1": "jsr:@brc-dd/iron@1.1.1",
+      "jsr:@brc-dd/iron@1": "jsr:@brc-dd/iron@1.2.1",
       "npm:@edge-runtime/cookies@4": "npm:@edge-runtime/cookies@4.1.1",
       "npm:next@14": "npm:next@14.2.3_react@18.3.1_react-dom@18.3.1__react@18.3.1"
     },
     "jsr": {
-      "@brc-dd/iron@1.1.1": {
-        "integrity": "a075f7be4f6f0eaa794596d65fa5ddd0e07f9e3277abfbe096dee16a83000b61"
+      "@brc-dd/iron@1.2.1": {
+        "integrity": "cd867bb6cde71dc7fe6796a3e747328f5227d1f11a272395abc305c4adbea9f1"
       }
     },
     "npm": {
@@ -75,8 +75,8 @@ bergold/password-middleware/1.0.3
           "streamsearch": "streamsearch@1.1.0"
         }
       },
-      "caniuse-lite@1.0.30001615": {
-        "integrity": "sha512-1IpazM5G3r38meiae0bHRnPhz+CBQ3ZLqbQMtrg+AsTPKAXgW38JNsXkyZ+v8waCsDmPq87lmfun5Q2AGysNEQ==",
+      "caniuse-lite@1.0.30001617": {
+        "integrity": "sha512-mLyjzNI9I+Pix8zwcrpxEbGlfqOkF9kM3ptzmKNw5tizSyYwMe+nGLTqMK9cO+0E+Bh6TsBxNAaHWEM8xwSsmA==",
         "dependencies": {}
       },
       "client-only@0.0.1": {
@@ -116,7 +116,7 @@ bergold/password-middleware/1.0.3
           "@next/swc-win32-x64-msvc": "@next/swc-win32-x64-msvc@14.2.3",
           "@swc/helpers": "@swc/helpers@0.5.5",
           "busboy": "busboy@1.6.0",
-          "caniuse-lite": "caniuse-lite@1.0.30001615",
+          "caniuse-lite": "caniuse-lite@1.0.30001617",
           "graceful-fs": "graceful-fs@4.2.11",
           "postcss": "postcss@8.4.31",
           "react": "react@18.3.1",

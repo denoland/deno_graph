@@ -10,7 +10,7 @@ mizchi/anthropic-helper/0.0.3
       "@anthropic-ai/sdk@0.20.7": {
         "integrity": "sha512-uyc+3WGLpe8ur6mSIKSab7P9JdBerTdmqb7popc/yROYLLCW/Ykyw4ZfjmN/cLmxjnAKnv5YUngzbPM0BJuGjg==",
         "dependencies": {
-          "@types/node": "@types/node@18.19.31",
+          "@types/node": "@types/node@18.19.33",
           "@types/node-fetch": "@types/node-fetch@2.6.11",
           "abort-controller": "abort-controller@3.0.0",
           "agentkeepalive": "agentkeepalive@4.5.0",
@@ -31,8 +31,8 @@ mizchi/anthropic-helper/0.0.3
         "integrity": "sha512-IXl7o+R9iti9eBW4Wg2hx1xQDig183jj7YLn8F7udNceyfkbn1ZxmzZXuak20gR40D7pIkIY1kYGx5VIGbaHKA==",
         "dependencies": {}
       },
-      "@types/node@18.19.31": {
-        "integrity": "sha512-ArgCD39YpyyrtFKIqMDvjz79jto5fcI/SVUs2HwB+f0dAzq68yqOdyaSivLiLugSziTpNXLQrVb7RZFmdZzbhA==",
+      "@types/node@18.19.33": {
+        "integrity": "sha512-NR9+KrpSajr2qBVp/Yt5TU/rp+b5Mayi3+OlMlcg2cVCfRmcG5PWZ7S4+MG9PZ5gWBoc9Pd0BKSRViuBCRPu0A==",
         "dependencies": {
           "undici-types": "undici-types@5.26.5"
         }

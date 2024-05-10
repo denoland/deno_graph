@@ -41,7 +41,7 @@ schematicos/codegen/0.0.5
       "@schematicos/types@0.0.46": {
         "integrity": "sha512-SVbtdlpleitU8sXAb5ofkH1/XwL2o4URctl05QIFTTpJVuNoMNqCy0T3TWfTB/Gn4cX5pBY3MQSs//8WXLaMcQ==",
         "dependencies": {
-          "zod": "zod@3.23.5"
+          "zod": "zod@3.23.8"
         }
       },
       "argparse@2.0.1": {
@@ -141,8 +141,8 @@ schematicos/codegen/0.0.5
         "integrity": "sha512-2PTINUwsRqSd+s8XxKaJWQlUuEMHJQyEuh2edBbW8KNJz0SJPwUSD2zRWqezFEdN7IzAgeuYHFUCF7o8zRdZ0A==",
         "dependencies": {}
       },
-      "zod@3.23.5": {
-        "integrity": "sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==",
+      "zod@3.23.8": {
+        "integrity": "sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==",
         "dependencies": {}
       }
     }

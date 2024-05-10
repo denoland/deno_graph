@@ -126,8 +126,8 @@ radix-ui-fork/react-hover-card/0.0.5
           "@floating-ui/utils": "@floating-ui/utils@0.2.2"
         }
       },
-      "@floating-ui/dom@1.6.4": {
-        "integrity": "sha512-0G8R+zOvQsAG1pg2Q99P21jiqxqGBW1iRe/iXHsBRBxnpXKFI8QwbB4x5KmYLggNO5m34IQgOIu9SCRfR/WWiQ==",
+      "@floating-ui/dom@1.6.5": {
+        "integrity": "sha512-Nsdud2X65Dz+1RHjAIP0t8z5e2ff/IRbei6BqFrl1urT8sDVzM1HMQ+R0XcU5ceRfyO3I6ayeqIfh+6Wb8LGTw==",
         "dependencies": {
           "@floating-ui/core": "@floating-ui/core@1.6.1",
           "@floating-ui/utils": "@floating-ui/utils@0.2.2"
@@ -136,7 +136,7 @@ radix-ui-fork/react-hover-card/0.0.5
       "@floating-ui/react-dom@2.0.8_react@18.3.1_react-dom@18.3.1__react@18.3.1": {
         "integrity": "sha512-HOdqOt3R3OGeTKidaLvJKcgg75S6tibQ3Tif4eyd91QnIJWr0NLvoXFpJA/j8HqkFSL68GDca9AuyWEHlhyClw==",
         "dependencies": {
-          "@floating-ui/dom": "@floating-ui/dom@1.6.4",
+          "@floating-ui/dom": "@floating-ui/dom@1.6.5",
           "react": "react@18.3.1",
           "react-dom": "react-dom@18.3.1_react@18.3.1"
         }

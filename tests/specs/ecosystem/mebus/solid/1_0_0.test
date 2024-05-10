@@ -6,7 +6,7 @@ mebus/solid/1.0.0
     "specifiers": {
       "npm:mebus@^1.0.2": "npm:mebus@1.0.6_fp-ts@2.16.5",
       "npm:solid-js@^1.8.15": "npm:solid-js@1.8.17_seroval@1.0.5",
-      "npm:zod@^3.22.4": "npm:zod@3.23.5"
+      "npm:zod@^3.22.4": "npm:zod@3.23.8"
     },
     "npm": {
       "csstype@3.1.3": {
@@ -48,8 +48,8 @@ mebus/solid/1.0.0
           "seroval-plugins": "seroval-plugins@1.0.5_seroval@1.0.5"
         }
       },
-      "zod@3.23.5": {
-        "integrity": "sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==",
+      "zod@3.23.8": {
+        "integrity": "sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==",
         "dependencies": {}
       }
     }

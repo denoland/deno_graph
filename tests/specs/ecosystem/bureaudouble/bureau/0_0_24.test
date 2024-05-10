@@ -316,8 +316,8 @@ bureaudouble/bureau/0.0.24
           "@floating-ui/utils": "@floating-ui/utils@0.2.2"
         }
       },
-      "@floating-ui/dom@1.6.4": {
-        "integrity": "sha512-0G8R+zOvQsAG1pg2Q99P21jiqxqGBW1iRe/iXHsBRBxnpXKFI8QwbB4x5KmYLggNO5m34IQgOIu9SCRfR/WWiQ==",
+      "@floating-ui/dom@1.6.5": {
+        "integrity": "sha512-Nsdud2X65Dz+1RHjAIP0t8z5e2ff/IRbei6BqFrl1urT8sDVzM1HMQ+R0XcU5ceRfyO3I6ayeqIfh+6Wb8LGTw==",
         "dependencies": {
           "@floating-ui/core": "@floating-ui/core@1.6.1",
           "@floating-ui/utils": "@floating-ui/utils@0.2.2"
@@ -326,7 +326,7 @@ bureaudouble/bureau/0.0.24
       "@floating-ui/react-dom@2.0.9_react@18.2.0_react-dom@18.2.0__react@18.2.0": {
         "integrity": "sha512-q0umO0+LQK4+p6aGyvzASqKbKOJcAHJ7ycE9CuUvfx3s9zTHWmGJTPOIlM/hmSBfUfg/XfY5YhLBLR/LHwShQQ==",
         "dependencies": {
-          "@floating-ui/dom": "@floating-ui/dom@1.6.4",
+          "@floating-ui/dom": "@floating-ui/dom@1.6.5",
           "react": "react@18.2.0",
           "react-dom": "react-dom@18.2.0_react@18.2.0"
         }
@@ -811,7 +811,7 @@ bureaudouble/bureau/0.0.24
         "integrity": "sha512-/cpVNRLSfhOtcGflT13P2794gVSgmPgTR+erw5ifnMLZb0UnSlkK4tquLmkd3BhA+nLo5tX8Cu0upUsGKvKbmg==",
         "dependencies": {
           "browserslist": "browserslist@4.23.0",
-          "caniuse-lite": "caniuse-lite@1.0.30001615",
+          "caniuse-lite": "caniuse-lite@1.0.30001617",
           "fraction.js": "fraction.js@4.3.7",
           "normalize-range": "normalize-range@0.1.2",
           "picocolors": "picocolors@1.0.0",
@@ -846,10 +846,10 @@ bureaudouble/bureau/0.0.24
       "browserslist@4.23.0": {
         "integrity": "sha512-QW8HiM1shhT2GuzkvklfjcKDiWFXHOeFCIA/huJPwHsslwcydgk7X+z2zXpEijP98UCY7HbubZt5J2Zgvf0CaQ==",
         "dependencies": {
-          "caniuse-lite": "caniuse-lite@1.0.30001615",
-          "electron-to-chromium": "electron-to-chromium@1.4.754",
+          "caniuse-lite": "caniuse-lite@1.0.30001617",
+          "electron-to-chromium": "electron-to-chromium@1.4.762",
           "node-releases": "node-releases@2.0.14",
-          "update-browserslist-db": "update-browserslist-db@1.0.14_browserslist@4.23.0"
+          "update-browserslist-db": "update-browserslist-db@1.0.15_browserslist@4.23.0"
         }
       },
       "camelcase-css@2.0.1": {
@@ -860,13 +860,13 @@ bureaudouble/bureau/0.0.24
         "integrity": "sha512-bsTwuIg/BZZK/vreVTYYbSWoe2F+71P7K5QGEX+pT250DZbfU1MQ5prOKpPR+LL6uWKK3KMwMCAS74QB3Um1uw==",
         "dependencies": {
           "browserslist": "browserslist@4.23.0",
-          "caniuse-lite": "caniuse-lite@1.0.30001615",
+          "caniuse-lite": "caniuse-lite@1.0.30001617",
           "lodash.memoize": "lodash.memoize@4.1.2",
           "lodash.uniq": "lodash.uniq@4.5.0"
         }
       },
-      "caniuse-lite@1.0.30001615": {
-        "integrity": "sha512-1IpazM5G3r38meiae0bHRnPhz+CBQ3ZLqbQMtrg+AsTPKAXgW38JNsXkyZ+v8waCsDmPq87lmfun5Q2AGysNEQ==",
+      "caniuse-lite@1.0.30001617": {
+        "integrity": "sha512-mLyjzNI9I+Pix8zwcrpxEbGlfqOkF9kM3ptzmKNw5tizSyYwMe+nGLTqMK9cO+0E+Bh6TsBxNAaHWEM8xwSsmA==",
         "dependencies": {}
       },
       "chokidar@3.6.0": {
@@ -1078,8 +1078,8 @@ bureaudouble/bureau/0.0.24
         "integrity": "sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==",
         "dependencies": {}
       },
-      "electron-to-chromium@1.4.754": {
-        "integrity": "sha512-7Kr5jUdns5rL/M9wFFmMZAgFDuL2YOnanFH4OI4iFzUqyh3XOL7nAGbSlSMZdzKMIyyTpNSbqZsWG9odwLeKvA==",
+      "electron-to-chromium@1.4.762": {
+        "integrity": "sha512-rrFvGweLxPwwSwJOjIopy3Vr+J3cIPtZzuc74bmlvmBIgQO3VYJDvVrlj94iKZ3ukXUH64Ex31hSfRTLqvjYJQ==",
         "dependencies": {}
       },
       "emoji-regex@8.0.0": {
@@ -1183,14 +1183,14 @@ bureaudouble/bureau/0.0.24
           "is-glob": "is-glob@4.0.3"
         }
       },
-      "glob@10.3.12": {
-        "integrity": "sha512-TCNv8vJ+xz4QiqTpfOJA7HvYv+tNIRHKfUWw/q+v2jdgN4ebz+KY9tGx5J4rHP0o84mNP+ApH66HRX8us3Khqg==",
+      "glob@10.3.14": {
+        "integrity": "sha512-4fkAqu93xe9Mk7le9v0y3VrPDqLKHarNi2s4Pv7f2yOvfhWfhc7hRPHC/JyqMqb8B/Dt/eGS4n7ykwf3fOsl8g==",
         "dependencies": {
           "foreground-child": "foreground-child@3.1.1",
           "jackspeak": "jackspeak@2.3.6",
           "minimatch": "minimatch@9.0.4",
-          "minipass": "minipass@7.0.4",
-          "path-scurry": "path-scurry@1.10.2"
+          "minipass": "minipass@7.1.1",
+          "path-scurry": "path-scurry@1.11.0"
         }
       },
       "hasown@2.0.2": {
@@ -1313,8 +1313,8 @@ bureaudouble/bureau/0.0.24
           "brace-expansion": "brace-expansion@2.0.1"
         }
       },
-      "minipass@7.0.4": {
-        "integrity": "sha512-jYofLM5Dam9279rdkWzqHozUo4ybjdZmCsDHePy5V/PbBcVMiSZR97gmAy45aqi8CK1lG2ECd356FU86avfwUQ==",
+      "minipass@7.1.1": {
+        "integrity": "sha512-UZ7eQ+h8ywIRAW1hIEl2AqdwzJucU/Kp59+8kkZeSvafXhZjul247BvIJjEVFVeON6d7lM46XX1HXCduKAS8VA==",
         "dependencies": {}
       },
       "mrmime@2.0.0": {
@@ -1367,11 +1367,11 @@ bureaudouble/bureau/0.0.24
         "integrity": "sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==",
         "dependencies": {}
       },
-      "path-scurry@1.10.2": {
-        "integrity": "sha512-7xTavNy5RQXnsjANvVvMkEjvloOinkAjv/Z6Ildz9v2RinZ4SBKTWFOVRbaF8p0vpHnyjV/UwNDdKuUv6M5qcA==",
+      "path-scurry@1.11.0": {
+        "integrity": "sha512-LNHTaVkzaYaLGlO+0u3rQTz7QrHTFOuKyba9JMTQutkmtNew8dw8wOD7mTU/5fCPZzCWpfW0XnQKzY61P0aTaw==",
         "dependencies": {
           "lru-cache": "lru-cache@10.2.2",
-          "minipass": "minipass@7.0.4"
+          "minipass": "minipass@7.1.1"
         }
       },
       "picocolors@1.0.0": {
@@ -1619,7 +1619,7 @@ bureaudouble/bureau/0.0.24
         "dependencies": {
           "postcss": "postcss@8.4.33",
           "postcss-value-parser": "postcss-value-parser@4.2.0",
-          "svgo": "svgo@3.2.0"
+          "svgo": "svgo@3.3.2"
         }
       },
       "postcss-unique-selectors@6.0.4_postcss@8.4.33": {
@@ -1797,7 +1797,7 @@ bureaudouble/bureau/0.0.24
         "dependencies": {
           "@jridgewell/gen-mapping": "@jridgewell/gen-mapping@0.3.5",
           "commander": "commander@4.1.1",
-          "glob": "glob@10.3.12",
+          "glob": "glob@10.3.14",
           "lines-and-columns": "lines-and-columns@1.2.4",
           "mz": "mz@2.7.0",
           "pirates": "pirates@4.0.6",
@@ -1808,8 +1808,8 @@ bureaudouble/bureau/0.0.24
         "integrity": "sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==",
         "dependencies": {}
       },
-      "svgo@3.2.0": {
-        "integrity": "sha512-4PP6CMW/V7l/GmKRKzsLR8xxjdHTV4IMvhTnpuHwwBazSIlw5W/5SmPjN8Dwyt7lKbSJrRDgp4t9ph0HgChFBQ==",
+      "svgo@3.3.2": {
+        "integrity": "sha512-OoohrmuUlBs8B8o6MB2Aevn+pRIH9zDALSR+6hhqVfa6fRwG/Qw9VUMSMW9VNg2CFc/MTIfabtdOVl9ODIJjpw==",
         "dependencies": {
           "@trysound/sax": "@trysound/sax@0.2.0",
           "commander": "commander@7.2.0",
@@ -1873,8 +1873,8 @@ bureaudouble/bureau/0.0.24
         "integrity": "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
         "dependencies": {}
       },
-      "update-browserslist-db@1.0.14_browserslist@4.23.0": {
-        "integrity": "sha512-JixKH8GR2pWYshIPUg/NujK3JO7JiqEEUiNArE86NQyrgUuZeTlZQN3xuS/yiV5Kb48ev9K6RqNkaJjXsdg7Jw==",
+      "update-browserslist-db@1.0.15_browserslist@4.23.0": {
+        "integrity": "sha512-K9HWH62x3/EalU1U6sjSZiylm9C8tgq2mSvshZpqc7QE69RaA2qjhkW2HlNA0tFpEbtyFz7HTqbSdN4MSwUodA==",
         "dependencies": {
           "browserslist": "browserslist@4.23.0",
           "escalade": "escalade@3.1.2",
@@ -1945,13 +1945,13 @@ bureaudouble/bureau/0.0.24
 -- stderr --
 error: Uncaught Error: Failed resolving package subpath './client' for '<global_npm_dir>/react-dom/18.2.0/package.json': [ERR_PACKAGE_PATH_NOT_EXPORTED] Package subpath './client' is not defined for types by "exports" in '<global_npm_dir>/react-dom/18.2.0/package.json' imported from '<tmpdir>/src/lib/useClient.ts'
     at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:756:28)
-    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120758:144)
-    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:121155:22)
-    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:121250:16)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:122813:120)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122544:9)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:122408:22)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:122839:13)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122544:9)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:122408:22)
+    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120792:144)
+    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:121189:22)
+    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:121284:16)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:122847:120)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:122873:13)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
 

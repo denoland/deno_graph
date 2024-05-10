@@ -4,11 +4,11 @@ roz/grammy-autoquote/2.0.1
   "version": "3",
   "packages": {
     "specifiers": {
-      "npm:grammy@1": "npm:grammy@1.22.4"
+      "npm:grammy@1": "npm:grammy@1.23.0"
     },
     "npm": {
-      "@grammyjs/types@3.6.2": {
-        "integrity": "sha512-7OswNRPN72qFUWhysNrY96+5LKBQXgxqw0iNbleYV7G8GB6ZPVdkwFMIZn1Fda2iRKMYT6S6Sxuel0465VGtHQ==",
+      "@grammyjs/types@3.7.0": {
+        "integrity": "sha512-/q8XVwSB7LrN1w1RSaUffO6gYyi5PHOBq1cbLHqDYiy994BxDKVD5N18viWac8Z014UGG2X+s9Fgs7cxsr0q8g==",
         "dependencies": {}
       },
       "abort-controller@3.0.0": {
@@ -27,10 +27,10 @@ roz/grammy-autoquote/2.0.1
         "integrity": "sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==",
         "dependencies": {}
       },
-      "grammy@1.22.4": {
-        "integrity": "sha512-7EIdixo4kV/lJWyKswyi5n3AJ2U/2731rPf8a3SKoXQ0tiHdCTvdgc2atdN2b10g8o6wJ2SXTf0xQX3Dqm1buA==",
+      "grammy@1.23.0": {
+        "integrity": "sha512-yCogmYpbSgtSBDb8rpsFmIWGWqAqtnkrkfJCiB7BSU0hIMYiVz5KsYMlte2UFc7l0izm4zbP8d9j6QpREy0JGw==",
         "dependencies": {
-          "@grammyjs/types": "@grammyjs/types@3.6.2",
+          "@grammyjs/types": "@grammyjs/types@3.7.0",
           "abort-controller": "abort-controller@3.0.0",
           "debug": "debug@4.3.4",
           "node-fetch": "node-fetch@2.7.0"

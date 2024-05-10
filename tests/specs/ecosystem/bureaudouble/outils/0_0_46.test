@@ -7,7 +7,7 @@ bureaudouble/outils/0.0.46
       "jsr:@bureaudouble/scripted@0.0.2": "jsr:@bureaudouble/scripted@0.0.2",
       "jsr:@std/assert@^0.221.0": "jsr:@std/assert@0.221.0",
       "jsr:@std/path@0.221": "jsr:@std/path@0.221.0",
-      "npm:@epic-web/cachified@^5.1.2": "npm:@epic-web/cachified@5.1.2",
+      "npm:@epic-web/cachified@^5.1.2": "npm:@epic-web/cachified@5.2.0",
       "npm:clsx@2.1.0": "npm:clsx@2.1.0",
       "npm:kysely@0.27.2": "npm:kysely@0.27.2",
       "npm:mrmime@2.0.0": "npm:mrmime@2.0.0",
@@ -34,8 +34,8 @@ bureaudouble/outils/0.0.46
           "regenerator-runtime": "regenerator-runtime@0.14.1"
         }
       },
-      "@epic-web/cachified@5.1.2": {
-        "integrity": "sha512-8Q1J/jF0bOKUN+XPTSUo+z34WJHMBLkuDv+HkPPS9ufs+cHvInWrLOLi3qIljhe03Xq777pwEDBKnMafetnPhA==",
+      "@epic-web/cachified@5.2.0": {
+        "integrity": "sha512-E/2LdIhS/wcn3ykV+u5xbTFahKtzReO0k4/cVtE7KBYiLCgR6bPRmlDUuyfWhbZX3zOmK+6OL7qdHkvgCWwSiA==",
         "dependencies": {}
       },
       "clsx@2.1.0": {

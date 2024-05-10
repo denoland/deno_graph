@@ -13,7 +13,7 @@ halvardm/js-helpers/0.2.0
       "jsr:@std/media-types@^0.218.2": "jsr:@std/media-types@0.218.2",
       "jsr:@std/path@^0.218.2": "jsr:@std/path@0.218.2",
       "jsr:@std/streams@^0.218.2": "jsr:@std/streams@0.218.2",
-      "npm:zod@^3.22.4": "npm:zod@3.23.5"
+      "npm:zod@^3.22.4": "npm:zod@3.23.8"
     },
     "jsr": {
       "@std/assert@0.218.2": {
@@ -55,8 +55,8 @@ halvardm/js-helpers/0.2.0
       }
     },
     "npm": {
-      "zod@3.23.5": {
-        "integrity": "sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==",
+      "zod@3.23.8": {
+        "integrity": "sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==",
         "dependencies": {}
       }
     }
