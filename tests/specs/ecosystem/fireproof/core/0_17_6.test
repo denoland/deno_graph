@@ -116,7 +116,7 @@ fireproof/core/0.17.6
           "@perma/map": "@perma/map@1.0.3",
           "actor": "actor@2.3.1",
           "multiformats": "multiformats@11.0.2",
-          "protobufjs": "protobufjs@7.2.6",
+          "protobufjs": "protobufjs@7.3.0",
           "rabin-rs": "rabin-rs@2.1.0"
         }
       },
@@ -1026,8 +1026,8 @@ fireproof/core/0.17.6
           "node-sql-parser": "node-sql-parser@3.9.4"
         }
       },
-      "protobufjs@7.2.6": {
-        "integrity": "sha512-dgJaEDDL6x8ASUZ1YqWciTRrdOuYNzoOf27oHNfdyvKqHr5i0FV7FSLU+aIeFjyFgVxrpTOtQUi0BLLBymZaBw==",
+      "protobufjs@7.3.0": {
+        "integrity": "sha512-YWD03n3shzV9ImZRX3ccbjqLxj7NokGN0V/ESiBV5xWqrommYHYiihuIyavq03pWSGqlyvYUFmfoMKd+1rPA/g==",
         "dependencies": {
           "@protobufjs/aspromise": "@protobufjs/aspromise@1.1.2",
           "@protobufjs/base64": "@protobufjs/base64@1.1.2",
