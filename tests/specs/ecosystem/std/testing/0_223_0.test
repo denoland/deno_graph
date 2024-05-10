@@ -69,7 +69,7 @@ error[unsupported-expando-property]: expando property referencing 'ignore' confl
     | 
 598 | it.skip = it.ignore;
     |              ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property
@@ -80,7 +80,7 @@ error[unsupported-expando-property]: expando property referencing 'ignore' confl
     | 
 829 | describe.skip = describe.ignore;
     |                          ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property
@@ -137,7 +137,7 @@ error[unsupported-expando-property]: expando property referencing 'ignore' confl
     | 
 598 | it.skip = it.ignore;
     |              ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property
@@ -148,7 +148,7 @@ error[unsupported-expando-property]: expando property referencing 'ignore' confl
     | 
 829 | describe.skip = describe.ignore;
     |                          ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property
@@ -205,7 +205,7 @@ error[unsupported-expando-property]: expando property referencing 'ignore' confl
     | 
 598 | it.skip = it.ignore;
     |              ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property
@@ -216,7 +216,7 @@ error[unsupported-expando-property]: expando property referencing 'ignore' confl
     | 
 829 | describe.skip = describe.ignore;
     |                          ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property
@@ -273,7 +273,7 @@ error[unsupported-expando-property]: expando property referencing 'ignore' confl
     | 
 598 | it.skip = it.ignore;
     |              ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property
@@ -284,7 +284,7 @@ error[unsupported-expando-property]: expando property referencing 'ignore' confl
     | 
 829 | describe.skip = describe.ignore;
     |                          ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property
@@ -341,7 +341,7 @@ error[unsupported-expando-property]: expando property referencing 'ignore' confl
     | 
 598 | it.skip = it.ignore;
     |              ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property
@@ -352,7 +352,7 @@ error[unsupported-expando-property]: expando property referencing 'ignore' confl
     | 
 829 | describe.skip = describe.ignore;
     |                          ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property
@@ -409,7 +409,7 @@ error[unsupported-expando-property]: expando property referencing 'ignore' confl
     | 
 598 | it.skip = it.ignore;
     |              ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property
@@ -420,7 +420,7 @@ error[unsupported-expando-property]: expando property referencing 'ignore' confl
     | 
 829 | describe.skip = describe.ignore;
     |                          ^^^^^^
-    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'ignore' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property

@@ -339,7 +339,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       }
       UnsupportedDefaultExportExpr { .. } => Cow::Borrowed("add an 'as' clause with an explicit type after the expression, or extract to a variable"),
       UnsupportedDestructuring { .. } => Cow::Borrowed("separate each destructured symbol into its own export statement"),
-      UnsupportedExpandoProperty { reference_name, .. } => Cow::Owned(format!("rename '{}' to something else to avoid conflicts or create a temporary variable to use in the expando property reference", reference_name)),
+      UnsupportedExpandoProperty { reference_name, .. } => Cow::Owned(format!("rename '{}' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference", reference_name)),
       UnsupportedGlobalModule { .. } => Cow::Borrowed("remove the 'global' augmentation"),
       UnsupportedRequire { .. } => Cow::Borrowed("use an import statement instead"),
       UnsupportedPrivateMemberReference { .. } => Cow::Borrowed("extract the type of the private member to a type alias and reference the type alias instead"),

@@ -64,7 +64,7 @@ error[unsupported-expando-property]: expando property referencing 'waitForBuffer
     | 
 173 |             await getLogger.waitForBuffer()
     |                             ^^^^^^^^^^^^^
-    = hint: rename 'waitForBuffer' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'waitForBuffer' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property
@@ -75,7 +75,7 @@ error[unsupported-expando-property]: expando property referencing 'setLevel' con
     | 
 179 | getLogger.setLevel = (name: string, level: log.LogLevelDesc) => loggers[name].setLevel(level)
     |                                                                               ^^^^^^^^
-    = hint: rename 'setLevel' to something else to avoid conflicts or create a temporary variable to use in the expando property reference
+    = hint: rename 'setLevel' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
   info: expando properties get converted to a namespace and the reference conflicts with a namespace export
   docs: https://jsr.io/go/slow-type-unsupported-expando-property
