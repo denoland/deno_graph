@@ -4,11 +4,11 @@ bureaudouble-forks/embla-carousel-react/0.0.1
   "version": "3",
   "packages": {
     "specifiers": {
-      "npm:embla-carousel@^8.0.2": "npm:embla-carousel@8.0.2"
+      "npm:embla-carousel@^8.0.2": "npm:embla-carousel@8.0.4"
     },
     "npm": {
-      "embla-carousel@8.0.2": {
-        "integrity": "sha512-bogsDO8xosuh/l3PxIvA5AMl3+BnRVAse9sDW/60amzj4MbGS5re4WH5eVEXiuH8G1/3G7QUAX2QNr3Yx8z5rA==",
+      "embla-carousel@8.0.4": {
+        "integrity": "sha512-INndmilrV9KY4Wnb4F2tI55DuQnFjf3GPOaPDT2LGYiKhIWVNUhv1nz/RI7CZ6WoIZ8MYHP4t6Qm/cqpcGHknA==",
         "dependencies": {}
       }
     }

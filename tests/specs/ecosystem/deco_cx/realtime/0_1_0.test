@@ -4,12 +4,12 @@ deco-cx/realtime/0.1.0
   "version": "3",
   "packages": {
     "specifiers": {
-      "npm:@cloudflare/workers-types@^4.20240208.0": "npm:@cloudflare/workers-types@4.20240423.0",
+      "npm:@cloudflare/workers-types@^4.20240208.0": "npm:@cloudflare/workers-types@4.20240502.0",
       "npm:fast-json-patch@^3.1.1": "npm:fast-json-patch@3.1.1"
     },
     "npm": {
-      "@cloudflare/workers-types@4.20240423.0": {
-        "integrity": "sha512-ssuccb3j+URp6mP2p0PcQE9vmS3YeKBQnALHF9P3yQfUAFozuhTsDTbqmL+zPrJvUcG7SL2xVQkNDF9QJeKDZw==",
+      "@cloudflare/workers-types@4.20240502.0": {
+        "integrity": "sha512-OB1jIyPOzyOcuZFHWhsQnkRLN6u8+jmU9X3T4KZlGgn3Ivw8pBiswhLOp+yFeChR3Y4/5+V0hPFRko5SReordg==",
         "dependencies": {}
       },
       "fast-json-patch@3.1.1": {

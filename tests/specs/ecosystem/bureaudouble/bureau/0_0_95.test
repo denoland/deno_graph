@@ -79,9 +79,9 @@ bureaudouble/bureau/0.0.95
       "npm:codemirror@6.0.1": "npm:codemirror@6.0.1_@codemirror+language@6.10.1_@codemirror+state@6.4.1_@codemirror+view@6.26.3",
       "npm:kysely@0.27.2": "npm:kysely@0.27.2",
       "npm:mrmime@2.0.0": "npm:mrmime@2.0.0",
-      "npm:react-dom@beta": "npm:react-dom@19.0.0-beta-73bcdfbae5-20240502_react@19.0.0-beta-73bcdfbae5-20240502",
+      "npm:react-dom@beta": "npm:react-dom@19.0.0-beta-04b058868c-20240508_react@19.0.0-beta-04b058868c-20240508",
       "npm:react@^18.2.0": "npm:react@18.3.1",
-      "npm:react@beta": "npm:react@19.0.0-beta-73bcdfbae5-20240502"
+      "npm:react@beta": "npm:react@19.0.0-beta-04b058868c-20240508"
     },
     "jsr": {
       "@bureaudouble-forks/aria-hidden@0.0.1": {
@@ -668,11 +668,11 @@ bureaudouble/bureau/0.0.95
         "integrity": "sha512-eu38+hdgojoyq63s+yTpN4XMBdt5l8HhMhc4VKLO9KM5caLIBvUm4thi7fFaxyTmCKeNnXZ5pAlBwCUnhA09uw==",
         "dependencies": {}
       },
-      "react-dom@19.0.0-beta-73bcdfbae5-20240502_react@19.0.0-beta-73bcdfbae5-20240502": {
-        "integrity": "sha512-9VJGpNiylMbNiYyT88vo3MHRthswqsjuHzOgYN+RqzZ7vSN6XoWAwIUWyp2Ina4PDDZiWox0NNgyuXLC3axHTQ==",
+      "react-dom@19.0.0-beta-04b058868c-20240508_react@19.0.0-beta-04b058868c-20240508": {
+        "integrity": "sha512-g8DrqbkLi8ok/0GyVVJky30d5b+WXpIi4baKD+ySsMRzQJlwQHywGh/V+osSMCYmnApq1OYSWPuvOBvrVmhz5Q==",
         "dependencies": {
-          "react": "react@19.0.0-beta-73bcdfbae5-20240502",
-          "scheduler": "scheduler@0.25.0-beta-73bcdfbae5-20240502"
+          "react": "react@19.0.0-beta-04b058868c-20240508",
+          "scheduler": "scheduler@0.25.0-beta-04b058868c-20240508"
         }
       },
       "react@18.3.1": {
@@ -681,12 +681,12 @@ bureaudouble/bureau/0.0.95
           "loose-envify": "loose-envify@1.4.0"
         }
       },
-      "react@19.0.0-beta-73bcdfbae5-20240502": {
-        "integrity": "sha512-OAZUcEZcXojt2qDPJcLdg7flwTNrPTu4QhpqXsM8rfi+JQt7yjtbVUR6fhkir5aqteamtvps82K8+2/HcjKgxg==",
+      "react@19.0.0-beta-04b058868c-20240508": {
+        "integrity": "sha512-Mch4EeDejk1ZgH/O3TIH6KtELBUzcJdTZujQGWFA6tz9Y9J+X7ZgY9WS2VhUCS/alOlEcIdCXAz0Cb/JET1QVg==",
         "dependencies": {}
       },
-      "scheduler@0.25.0-beta-73bcdfbae5-20240502": {
-        "integrity": "sha512-iKGFGP2oQk0lUIHT3+uA/4gy6LEmVUTj/cKPWjE+d9Rm2YNPVObESaaQ0jv26WeW4Mt4jmYdXdsz6OEGZuz2ng==",
+      "scheduler@0.25.0-beta-04b058868c-20240508": {
+        "integrity": "sha512-9BiO+0jJiftEqYhVXGIc7MQTxbDAd7mfRMIctKsH0DxvuN8vzzaOQbG5Jy720Pz6KUAjgAAJJ/2nZW35+XwuHg==",
         "dependencies": {}
       },
       "style-mod@4.1.2": {
@@ -710,15 +710,15 @@ bureaudouble/bureau/0.0.95
 -- stdout --
 
 -- stderr --
-error: Uncaught Error: Failed resolving package subpath './client' for '<global_npm_dir>/react-dom/19.0.0-beta-73bcdfbae5-20240502/package.json': [ERR_INVALID_PACKAGE_TARGET] Invalid "exports" target {"react-server":"./client.react-server.js","default":"./client.js"} defined for './client' in the package config <global_npm_dir>/react-dom/19.0.0-beta-73bcdfbae5-20240502/package.json imported from file://<tmpdir>/src/lib/useClient.ts; target must start with "./"
+error: Uncaught Error: Failed resolving package subpath './client' for '<global_npm_dir>/react-dom/19.0.0-beta-04b058868c-20240508/package.json': [ERR_INVALID_PACKAGE_TARGET] Invalid "exports" target {"react-server":"./client.react-server.js","default":"./client.js"} defined for './client' in the package config <global_npm_dir>/react-dom/19.0.0-beta-04b058868c-20240508/package.json imported from file://<tmpdir>/src/lib/useClient.ts; target must start with "./"
     at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:756:28)
-    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120758:144)
-    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:121155:22)
-    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:121250:16)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:122813:120)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122544:9)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:122408:22)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:122839:13)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122544:9)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:122408:22)
+    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120792:144)
+    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:121189:22)
+    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:121284:16)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:122847:120)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:122873:13)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
 

@@ -4,12 +4,12 @@ launchdarkly/cloudflare-server-sdk/2.4.2
   "version": "3",
   "packages": {
     "specifiers": {
-      "npm:@cloudflare/workers-types@^4.20230321.0": "npm:@cloudflare/workers-types@4.20240423.0",
+      "npm:@cloudflare/workers-types@^4.20230321.0": "npm:@cloudflare/workers-types@4.20240502.0",
       "npm:@launchdarkly/js-server-sdk-common-edge@2.2.2": "npm:@launchdarkly/js-server-sdk-common-edge@2.2.2"
     },
     "npm": {
-      "@cloudflare/workers-types@4.20240423.0": {
-        "integrity": "sha512-ssuccb3j+URp6mP2p0PcQE9vmS3YeKBQnALHF9P3yQfUAFozuhTsDTbqmL+zPrJvUcG7SL2xVQkNDF9QJeKDZw==",
+      "@cloudflare/workers-types@4.20240502.0": {
+        "integrity": "sha512-OB1jIyPOzyOcuZFHWhsQnkRLN6u8+jmU9X3T4KZlGgn3Ivw8pBiswhLOp+yFeChR3Y4/5+V0hPFRko5SReordg==",
         "dependencies": {}
       },
       "@launchdarkly/js-sdk-common@2.3.1": {

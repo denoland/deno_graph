@@ -219,7 +219,7 @@ fn run_graph_test(test: &CollectedTest) {
     .iter()
     .map(|d| serde_json::to_value(d.to_string()).unwrap())
     .collect::<Vec<_>>();
-  let update = std::env::var("UPDATE").as_ref().map(|v| v.as_str()) == Ok("1");
+  let update = std::env::var("UPDATE").as_deref() == Ok("1");
   let spec = if update {
     let mut spec = spec;
     spec.output_file.text = output_text.clone();
@@ -268,8 +268,7 @@ fn run_symbol_test(test: &CollectedTest) {
     .build()
     .unwrap();
   let result = rt.block_on(async { builder.symbols().await.unwrap() });
-  let update_var = std::env::var("UPDATE");
-  let spec = if update_var.as_ref().map(|v| v.as_str()) == Ok("1") {
+  let spec = if std::env::var("UPDATE").as_deref() == Ok("1") {
     let mut spec = spec;
     spec.output_file.text = result.output.clone();
     std::fs::write(&test.path, spec.emit()).unwrap();

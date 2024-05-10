@@ -6,7 +6,7 @@ unplugin/macros/0.13.0
     "specifiers": {
       "npm:@rollup/pluginutils@^5.1.0": "npm:@rollup/pluginutils@5.1.0",
       "npm:unplugin@^1.10.1": "npm:unplugin@1.10.1",
-      "npm:vite-node@^1.5.0": "npm:vite-node@1.5.3",
+      "npm:vite-node@^1.5.0": "npm:vite-node@1.6.0",
       "npm:vite@^5.2.9": "npm:vite@5.2.11"
     },
     "npm": {
@@ -370,8 +370,8 @@ unplugin/macros/0.13.0
           "webpack-virtual-modules": "webpack-virtual-modules@0.6.1"
         }
       },
-      "vite-node@1.5.3": {
-        "integrity": "sha512-axFo00qiCpU/JLd8N1gu9iEYL3xTbMbMrbe5nDp9GL0nb6gurIdZLkkFogZXWnE8Oyy5kfSLwNVIcVsnhE7lgQ==",
+      "vite-node@1.6.0": {
+        "integrity": "sha512-de6HJgzC+TFzOu0NTC4RAIsyf/DY/ibWDYQUcuEA84EMHhcefTUGkjFHKKEJhQN4A+6I0u++kr3l36ZF2d7XRw==",
         "dependencies": {
           "cac": "cac@6.7.14",
           "debug": "debug@4.3.4",

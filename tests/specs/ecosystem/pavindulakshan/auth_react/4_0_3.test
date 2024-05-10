@@ -4,7 +4,7 @@ pavindulakshan/auth-react/4.0.3
   "version": "3",
   "packages": {
     "specifiers": {
-      "npm:@asgardeo/auth-spa@^3.0.2": "npm:@asgardeo/auth-spa@3.0.2",
+      "npm:@asgardeo/auth-spa@^3.0.2": "npm:@asgardeo/auth-spa@3.0.3",
       "npm:react-router-dom@^6.3.0": "npm:react-router-dom@6.23.0_react@18.3.1_react-dom@18.3.1__react@18.3.1",
       "npm:react@^18.2.0": "npm:react@18.3.1"
     },
@@ -13,8 +13,8 @@ pavindulakshan/auth-react/4.0.3
         "integrity": "sha512-XTb/+jPPBAnNGlZYeHVz2Ut5hI8DeJiMmX5YcAijiAvtW4Ove82lT4aLXm+FL8XmCYc+61hFNG1QLf8q2nMfSQ==",
         "dependencies": {}
       },
-      "@asgardeo/auth-spa@3.0.2": {
-        "integrity": "sha512-z25jzo+vQAju0wIplsQmHfczd+SwWy/cFRt9Dlnv+3dhb7ofygTD5to4nuvDA9DtW775qHl7XHi5R2M5xChJaQ==",
+      "@asgardeo/auth-spa@3.0.3": {
+        "integrity": "sha512-2iRy6Si/xl68EsUV92IuMz0s9/8nFq/a+63Ui0Xr2Ysjc3YsWIO0zVmdpqevZ1J9yzGb9Fyy7uqlKE0QY7m8pA==",
         "dependencies": {
           "@asgardeo/auth-js": "@asgardeo/auth-js@5.0.1",
           "await-semaphore": "await-semaphore@0.1.3",
