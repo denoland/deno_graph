@@ -5,7 +5,7 @@ bureaudouble/bureau/0.0.97
   "packages": {
     "specifiers": {
       "jsr:@bureaudouble-forks/aria-hidden@0.0.1": "jsr:@bureaudouble-forks/aria-hidden@0.0.1",
-      "jsr:@bureaudouble-forks/esbuild-deno-loader@0.10.3+nestarz.quiet.0.0.3": "jsr:@bureaudouble-forks/esbuild-deno-loader@0.10.3+pr0.0.4",
+      "jsr:@bureaudouble-forks/esbuild-deno-loader@0.10.3+nestarz.quiet.0.0.3": "jsr:@bureaudouble-forks/esbuild-deno-loader@0.10.3+nestarz.quiet.0.0.3",
       "jsr:@bureaudouble-forks/floating-ui-react-dom@0.0.2": "jsr:@bureaudouble-forks/floating-ui-react-dom@0.0.2",
       "jsr:@bureaudouble-forks/react-remove-scroll-bar@0.0.3": "jsr:@bureaudouble-forks/react-remove-scroll-bar@0.0.3",
       "jsr:@bureaudouble-forks/react-remove-scroll@0.0.2": "jsr:@bureaudouble-forks/react-remove-scroll@0.0.2",
@@ -87,8 +87,8 @@ bureaudouble/bureau/0.0.97
       "@bureaudouble-forks/aria-hidden@0.0.1": {
         "integrity": "9f5900d6e362bc1000d1c2db284841140ab3633066a48b0949cd1c5270142908"
       },
-      "@bureaudouble-forks/esbuild-deno-loader@0.10.3+pr0.0.4": {
-        "integrity": "b4e6ee566f745c6b1ebe7b606535954b2c66b5ff440ca96ed58aa19e4b988fd8",
+      "@bureaudouble-forks/esbuild-deno-loader@0.10.3+nestarz.quiet.0.0.3": {
+        "integrity": "b02736d46fea2a76370dc547c946632dd990dce78824d420a351ba14baf418d6",
         "dependencies": [
           "jsr:@std/encoding@0.213",
           "jsr:@std/jsonc@0.213",
