@@ -60,23 +60,20 @@ fn analyze_return_stmts_from_stmt(
     Stmt::Block(n) => analyze_return_stmts_from_stmts(&n.stmts, analysis),
     Stmt::With(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
     Stmt::Return(n) => {
-      if n.arg.is_none() {
-        if matches!(analysis, ReturnStatementAnalysis::None) {
+      match (&n.arg, &*analysis) {
+        (None, ReturnStatementAnalysis::None) => {
           *analysis = ReturnStatementAnalysis::Void;
-        } else if matches!(analysis, ReturnStatementAnalysis::Single(_)) {
-          *analysis = ReturnStatementAnalysis::Multiple;
-          return ControlFlow::Break(());
         }
-      } else {
-        if matches!(
-          analysis,
-          ReturnStatementAnalysis::None | ReturnStatementAnalysis::Void
-        ) {
+        (None, ReturnStatementAnalysis::Void) => {}
+        (Some(_), ReturnStatementAnalysis::None)
+        | (Some(_), ReturnStatementAnalysis::Void) => {
           *analysis = ReturnStatementAnalysis::Single(n.clone());
-        } else {
+        }
+        (_, ReturnStatementAnalysis::Single(_)) => {
           *analysis = ReturnStatementAnalysis::Multiple;
           return ControlFlow::Break(());
         }
+        (_, ReturnStatementAnalysis::Multiple) => unreachable!(), // we break early when analysis is Multiple
       }
       ControlFlow::Continue(())
     }

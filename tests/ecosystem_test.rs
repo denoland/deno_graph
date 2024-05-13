@@ -322,7 +322,7 @@ async fn test_version(
   let mut output = if fast_check_diagnostics.is_empty() {
     "== FAST CHECK EMIT PASSED ==\n".to_owned()
   } else {
-    let mut output = format!("== FAST CHECK EMIT FAILED ==\n");
+    let mut output = "== FAST CHECK EMIT FAILED ==\n".to_owned();
     for diagnostic in &fast_check_diagnostics {
       writeln!(&mut output, "{}", diagnostic.display()).unwrap();
     }
