@@ -7,6 +7,30 @@ fenv-org/app-store-connect/0.1.3
 
 ===
 
-== FAST CHECK EMIT PASSED ==
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+     --> /gen/api.ts:15473:10
+      | 
+15473 |   public setSecurityData = (data: SecurityDataType | null) => {
+      |          ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+      = hint: add an explicit return type of 'void' or 'never' to the function
 
-== TYPE CHECK PASSED ==
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+     --> /gen/api.ts:15551:10
+      | 
+15551 |   public abortRequest = (cancelToken: CancelToken) => {
+      |          ^^^^^^^^^^^^ this function is missing an explicit return type
+      = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

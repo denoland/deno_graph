@@ -7,21 +7,17 @@ poolifier/poolifier-web-worker/0.3.16
 
 ===
 
-== FAST CHECK EMIT PASSED ==
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+    --> /src/pools/abstract-pool.ts:1698:22
+     | 
+1698 |   protected readonly workerMessageListener = (
+     |                      ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+     = hint: add an explicit return type of 'void' or 'never' to the function
 
-== TYPE CHECK FAILED ==
--- stdout --
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
--- stderr --
-error: TS2304 [ERROR]: Cannot find name 'WorkerGlobalScope'.
- */ export abstract class AbstractWorker<MainWorker extends WorkerGlobalScope & typeof globalThis, Data = unknown, Response = unknown> {
-                                                            ~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/worker/abstract-worker.ts:11:61
-
-TS2304 [ERROR]: Cannot find name 'WorkerGlobalScope'.
- */ export class ThreadWorker<Data = unknown, Response = unknown> extends AbstractWorker<WorkerGlobalScope & typeof globalThis, Data, Response> {
-                                                                                         ~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/worker/thread-worker.ts:18:90
-
-Found 2 errors.
 

@@ -19,9 +19,9 @@ error: TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
     at file://<tmpdir>/src/EchoChamber.ts:50:39
 
 TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
-  public set _internalPingInterval(_pingInterval: NodeJS.Timeout | null) {}
-                                                  ~~~~~~
-    at file://<tmpdir>/src/EchoChamber.ts:53:51
+  public set _internalPingInterval(pingInterval: NodeJS.Timeout | null) {}
+                                                 ~~~~~~
+    at file://<tmpdir>/src/EchoChamber.ts:53:50
 
 Found 2 errors.
 

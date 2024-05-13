@@ -42,7 +42,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 82 | export async function checkPassword(password_: string, ap: enums.account.Password) {
    |                       ^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -196,7 +196,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 1374 |   async getInputPeer(id: ID) {
      |         ^^^^^^^^^^^^ this function is missing an explicit return type
-     = hint: add an explicit return type to the function
+     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -207,7 +207,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 1389 |   async getInputChannel(id: ID) {
      |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
-     = hint: add an explicit return type to the function
+     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -218,7 +218,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 1397 |   async getInputUser(id: ID) {
      |         ^^^^^^^^^^^^ this function is missing an explicit return type
-     = hint: add an explicit return type to the function
+     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -273,7 +273,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 1709 |   async editInlineMessageReplyMarkup(inlineMessageId: string, params?: EditMessageReplyMarkupParams) {
      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-     = hint: add an explicit return type to the function
+     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -284,7 +284,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 1843 |   async upload(contents: Uint8Array, params?: UploadParams) { // TODO: return type
      |         ^^^^^^ this function is missing an explicit return type
-     = hint: add an explicit return type to the function
+     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -317,7 +317,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 53 |   async createAuthKey() {
    |         ^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -361,7 +361,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 745 | export async function constructMessage(
     |                       ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -372,7 +372,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 253 | export async function inlineQueryResultToTlObject(result_: InlineQueryResult, parseText: (text: string, params?: { parseMode?: ParseMode; entities?: MessageEntity[] }) => Promise<readonly [string, any[] | undefined]>, usernameResolver: UsernameResolver) {
     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -394,7 +394,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 160 | export async function replyMarkupToTlObject(replyMarkup: ReplyMarkup, usernameResolver: UsernameResolver) {
     |                       ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -405,7 +405,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 87 | export async function inlineKeyboardButtonToTlObject(button: InlineKeyboardButton, usernameResolver: UsernameResolver) {
    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -427,7 +427,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 51 | export async function storyPrivacyToTlObject(privacy: StoryPrivacy, getEntity: EntityGetter) {
    |                       ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -438,7 +438,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 105 | export async function storyInteractiveAreaToTlObject(area: StoryInteractiveArea, getEntity: EntityGetter) {
     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -460,7 +460,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 48 | export async function botCommandScopeToTlObject(scope: BotCommandScope, getInputPeer: InputPeerGetter) {
    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -493,7 +493,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 203 | export async function messageEntityToTlObject(entity: MessageEntity, getEntity: EntityGetter) {
     |                       ^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -41391,7 +41391,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 30 |   async receive() {
    |         ^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -41413,7 +41413,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 30 |   async receive() {
    |         ^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -41721,7 +41721,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 110 |   async *getMany<T>(filter: GetManyFilter, params?: { limit?: number; reverse?: boolean }, tx_?: IDBTransaction) {
     |          ^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42194,7 +42194,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 92 |   async getAuthKey() {
    |         ^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42216,7 +42216,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 107 |   async exportAuthString() {
     |         ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42227,7 +42227,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 128 |   async getChannelAccessHash(id: number) {
     |         ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42238,7 +42238,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 140 |   async getUserAccessHash(id: number) {
     |         ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42249,7 +42249,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 159 |   async getUsername(username: string) {
     |         ^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42260,7 +42260,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 172 |   async getTlObject(keyOrBuffer: TLObject | Uint8Array | readonly StorageKeyPart[]) {
     |         ^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42271,7 +42271,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 189 |   async getState() {
     |         ^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42293,7 +42293,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 212 |   async getMessage(chatId: number, messageId: number) {
     |         ^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42304,7 +42304,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 216 |   async getLastMessage(chatId: number) {
     |         ^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42326,7 +42326,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 235 |   async getEntity(key: number) {
     |         ^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42337,7 +42337,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 259 |   async getAccountType() {
     |         ^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42370,7 +42370,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 287 |   async getChats(listId: number) {
     |         ^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42381,7 +42381,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 310 |   async hasAllChats(listId: number) {
     |         ^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42392,7 +42392,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 319 |   async getPinnedChats(listId: number) {
     |         ^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42403,7 +42403,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 323 |   async getHistory(chatId: number, offsetId: number, limit: number) {
     |         ^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42414,7 +42414,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 339 |   async getFile(id: bigint) {
     |         ^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42425,7 +42425,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 346 |   async *iterFileParts(id: bigint, partCount: number, offset: number) {
     |          ^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42436,7 +42436,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 377 |   async getCustomEmojiDocument(id: bigint) {
     |         ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -42447,7 +42447,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 407 |   async getFirstUpdate(boxId: bigint) {
     |         ^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type

@@ -5,6 +5,45 @@ ghost/kjua-revived/0.1.0
 
 == FAST CHECK EMIT FAILED ==
 error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /src/lib/create_canvas_qrcode.ts:8:7
+  | 
+8 | const draw_background = (
+  |       ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/create_canvas_qrcode.ts:18:7
+   | 
+18 | const draw_module_default = (
+   |       ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/create_canvas_qrcode.ts:65:7
+   | 
+65 | const draw = (
+   |       ^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /src/lib/create_canvas_qrcode.ts:75:7
    | 
 75 | const create_canvas_qrcode = (
@@ -23,6 +62,84 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/draw_rounded.ts:23:7
+   | 
+23 | const draw_dark = (
+   |       ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/draw_rounded.ts:66:7
+   | 
+66 | const draw_light = (
+   |       ^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/lib/draw_rounded.ts:107:7
+    | 
+107 | const draw_module_rounded = (
+    |       ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /src/lib/draw_mode.ts:3:7
+  | 
+3 | const draw_label = (ctx: CanvasRenderingContext2D, settings: KjuaOptions) => {
+  |       ^^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/draw_mode.ts:25:7
+   | 
+25 | const draw_image = (ctx: CanvasRenderingContext2D, settings: KjuaOptions) => {
+   |       ^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/draw_mode.ts:41:7
+   | 
+41 | const draw_mode = (ctx: CanvasRenderingContext2D, settings: KjuaOptions) => {
+   |       ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
@@ -93,6 +210,45 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/create_svg_qrcode.ts:26:7
+   | 
+26 | const draw_dark = (
+   |       ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/lib/create_svg_qrcode.ts:69:7
+   | 
+69 | const draw_light = (
+   |       ^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/lib/create_svg_qrcode.ts:110:7
+    | 
+110 | const draw_mod = (
+    |       ^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
    --> /src/lib/create_svg_qrcode.ts:168:7
     | 
 168 | const create_path = (qr: QRCode, options: KjuaOptions) => {
@@ -100,6 +256,19 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/lib/create_svg_qrcode.ts:191:7
+    | 
+191 | const add_label = (el: SVGElement, options: KjuaOptions) => {
+    |       ^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 

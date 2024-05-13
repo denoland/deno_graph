@@ -24,9 +24,9 @@ export class RouteManager<RouteConfigType extends RouteConfig = RouteConfig> ext
     at file://<tmpdir>/src/components/route-maneger.ts:2:86
 
 TS2304 [ERROR]: Cannot find name 'HTMLTemplateElement'.
-  set routeTemplate(_template: HTMLTemplateElement | null) {}
-                               ~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/components/route-maneger.ts:34:32
+  set routeTemplate(template: HTMLTemplateElement | null) {}
+                              ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/route-maneger.ts:34:31
 
 TS2304 [ERROR]: Cannot find name 'HTMLTemplateElement'.
   get routeTemplate(): HTMLTemplateElement {

@@ -56,6 +56,36 @@ impl std::fmt::Debug for FastCheckDiagnosticRange {
   }
 }
 
+impl PartialEq for FastCheckDiagnosticRange {
+  fn eq(&self, other: &Self) -> bool {
+    let self_range_start =
+      self.text_info.line_and_column_index(self.range.start);
+    let self_range_end = self.text_info.line_and_column_index(self.range.end);
+    let other_range_start =
+      other.text_info.line_and_column_index(other.range.start);
+    let other_range_end =
+      other.text_info.line_and_column_index(other.range.end);
+    self.specifier == other.specifier
+      && self_range_start == other_range_start
+      && self_range_end == other_range_end
+  }
+}
+
+impl Eq for FastCheckDiagnosticRange {}
+
+impl std::hash::Hash for FastCheckDiagnosticRange {
+  fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+    let self_range_start =
+      self.text_info.line_and_column_index(self.range.start);
+    let self_range_end = self.text_info.line_and_column_index(self.range.end);
+    self.specifier.hash(state);
+    self_range_start.line_index.hash(state);
+    self_range_start.column_index.hash(state);
+    self_range_end.line_index.hash(state);
+    self_range_end.column_index.hash(state);
+  }
+}
+
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum FastCheckDiagnostic {
   #[error("could not resolve '{name}' referenced from '{referrer}'")]
@@ -67,7 +97,11 @@ pub enum FastCheckDiagnostic {
   #[error("missing explicit type in the public API")]
   MissingExplicitType { range: FastCheckDiagnosticRange },
   #[error("missing explicit return type in the public API")]
-  MissingExplicitReturnType { range: FastCheckDiagnosticRange },
+  MissingExplicitReturnType {
+    range: FastCheckDiagnosticRange,
+    is_definitely_void_or_never: bool,
+    is_async: bool,
+  },
   #[error(
     "found an ambient module, which is a global augmentation, which are not unsupported"
   )]
@@ -180,7 +214,7 @@ impl FastCheckDiagnostic {
     match self {
       NotFoundReference { range, .. } => &range.specifier,
       MissingExplicitType { range } => &range.specifier,
-      MissingExplicitReturnType { range } => &range.specifier,
+      MissingExplicitReturnType { range, .. } => &range.specifier,
       UnsupportedAmbientModule { range } => &range.specifier,
       UnsupportedComplexReference { range, .. } => &range.specifier,
       UnsupportedDefaultExportExpr { range } => &range.specifier,
@@ -206,7 +240,7 @@ impl FastCheckDiagnostic {
     match self {
       NotFoundReference { range, .. } => Some(range),
       MissingExplicitType { range } => Some(range),
-      MissingExplicitReturnType { range } => Some(range),
+      MissingExplicitReturnType { range, .. } => Some(range),
       UnsupportedAmbientModule { range } => Some(range),
       UnsupportedComplexReference { range, .. } => Some(range),
       UnsupportedDefaultExportExpr { range } => Some(range),
@@ -328,8 +362,14 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       MissingExplicitType { .. } => {
         Cow::Borrowed("add an explicit type annotation to the symbol")
       }
-      MissingExplicitReturnType { .. } => {
-        Cow::Borrowed("add an explicit return type to the function")
+      MissingExplicitReturnType { is_definitely_void_or_never, is_async, .. } => {
+        if *is_definitely_void_or_never {
+          Cow::Borrowed("add an explicit return type of 'void' or 'never' to the function")
+        } else if *is_async {
+          Cow::Borrowed("add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function")
+        } else {
+          Cow::Borrowed("add an explicit return type to the function")
+        }
       }
       UnsupportedAmbientModule { .. } => {
         Cow::Borrowed("remove the ambient module declaration")
@@ -371,9 +411,18 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       MissingExplicitType { .. } => Cow::Borrowed(&[
         Cow::Borrowed("all symbols in the public API must have an explicit type")
       ]),
-      MissingExplicitReturnType { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("all functions in the public API must have an explicit return type")
-      ]),
+      MissingExplicitReturnType { is_definitely_void_or_never, is_async, .. } => {
+        let mut lines = vec![Cow::Borrowed("all functions in the public API must have an explicit return type")];
+        if *is_definitely_void_or_never {
+          if *is_async {
+            lines.push(Cow::Borrowed("async functions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'"));
+          } else {
+            lines.push(Cow::Borrowed("functions without a return statement can have a return type of either 'void' or 'never'"));
+          }
+          lines.push(Cow::Borrowed("this function has no return statements, so a return type could not be inferred automatically"));
+        }
+        Cow::Owned(lines)
+      },
       UnsupportedAmbientModule { .. } => Cow::Borrowed(&[
         Cow::Borrowed("ambient modules are not supported because they can modify the types of a module from outside of that module")
       ]),

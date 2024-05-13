@@ -9,7 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 35 | export async function deleteSlashCommand(id: string,guildId: string) {
    |                       ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -20,7 +20,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 46 | export async function createSlashCommand(name: string, description: string,guildId: string) {
    |                       ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type

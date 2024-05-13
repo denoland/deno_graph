@@ -8,7 +8,7 @@
 function test() {
 }
 
-test.skip = () => {};
+test.skip = () => { return };
 
 namespace test {
   export class Other {}
@@ -22,7 +22,7 @@ export { c } from "./c.ts";
 function b() {
 }
 
-b.skip = () => {};
+b.skip = () => { return };
 
 export { b };
 
@@ -71,7 +71,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 52,
+      "size": 60,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts"
     },
@@ -117,7 +117,7 @@ import 'jsr:@scope/a'
           }
         }
       ],
-      "size": 161,
+      "size": 169,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }

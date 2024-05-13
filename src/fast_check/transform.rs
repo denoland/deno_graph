@@ -34,12 +34,13 @@ use crate::ParserModuleAnalyzer;
 use crate::WorkspaceMember;
 
 use super::range_finder::ModulePublicRanges;
+use super::swc_helpers::analyze_return_stmts_in_function_body;
 use super::swc_helpers::any_type_ann;
-use super::swc_helpers::get_return_stmts_with_arg_from_function_body;
 use super::swc_helpers::ident;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::ts_keyword_type;
+use super::swc_helpers::ReturnStatementAnalysis;
 use super::transform_dts::FastCheckDtsDiagnostic;
 use super::transform_dts::FastCheckDtsTransformer;
 use super::FastCheckDiagnostic;
@@ -187,6 +188,23 @@ pub fn transform(
   })
 }
 
+enum TransformItemResult {
+  /// Retain the item as is.
+  Retain,
+  /// Remove the item.
+  Remove,
+}
+
+impl TransformItemResult {
+  fn from_retain(retain: bool) -> Self {
+    if retain {
+      Self::Retain
+    } else {
+      Self::Remove
+    }
+  }
+}
+
 struct FastCheckTransformer<'a> {
   graph: &'a ModuleGraph,
   specifier: &'a ModuleSpecifier,
@@ -245,11 +263,12 @@ impl<'a> FastCheckTransformer<'a> {
       std::mem::take(&mut self.expando_namespaces);
     let mut final_body = Vec::with_capacity(body.len());
     for mut item in body {
-      let retain = self.transform_item(&mut item, comments, is_ambient)?;
-      if retain {
-        final_body.push(item);
-      } else {
-        comments.remove_leading(item.start());
+      let result = self.transform_item(&mut item, comments, is_ambient)?;
+      match result {
+        TransformItemResult::Retain => final_body.push(item),
+        TransformItemResult::Remove => {
+          comments.remove_leading(item.start());
+        }
       }
     }
 
@@ -374,7 +393,7 @@ impl<'a> FastCheckTransformer<'a> {
     item: &mut ModuleItem,
     comments: &mut CommentsMut,
     is_ambient: bool,
-  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
+  ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
     match item {
       ModuleItem::ModuleDecl(decl) => match decl {
         ModuleDecl::Import(n) => {
@@ -384,7 +403,7 @@ impl<'a> FastCheckTransformer<'a> {
           if retain {
             self.transform_module_specifier(&mut n.src);
           }
-          Ok(retain)
+          Ok(TransformItemResult::from_retain(retain))
         }
         ModuleDecl::ExportNamed(n) => {
           n.specifiers
@@ -395,39 +414,39 @@ impl<'a> FastCheckTransformer<'a> {
               self.transform_module_specifier(src);
             }
           }
-          Ok(retain)
+          Ok(TransformItemResult::from_retain(retain))
         }
         ModuleDecl::ExportAll(n) => {
           let retain = self.public_ranges.contains(&n.range());
           if retain {
             self.transform_module_specifier(&mut n.src);
           }
-          Ok(retain)
+          Ok(TransformItemResult::from_retain(retain))
         }
         ModuleDecl::ExportDefaultExpr(n) => {
           // todo: investigate why both these checks are needed
           if !self.public_ranges.contains(&n.range())
             && !self.public_ranges.contains(&n.expr.range())
           {
-            return Ok(false);
+            return Ok(TransformItemResult::Remove);
           }
 
           if self.maybe_transform_expr_if_leavable(&mut n.expr, None)?
             || is_expr_ident_or_member_idents(&n.expr)
           {
-            Ok(true)
+            Ok(TransformItemResult::Retain)
           } else {
             self.mark_diagnostic(
               FastCheckDiagnostic::UnsupportedDefaultExportExpr {
                 range: self.source_range_to_range(n.range()),
               },
             )?;
-            Ok(false)
+            Ok(TransformItemResult::Remove)
           }
         }
         ModuleDecl::ExportDefaultDecl(n) => {
           if !self.public_ranges.contains(&n.range()) {
-            return Ok(false);
+            return Ok(TransformItemResult::Remove);
           }
 
           let node_range = n.range();
@@ -436,8 +455,7 @@ impl<'a> FastCheckTransformer<'a> {
             comments,
             node_range,
             is_ambient,
-          )?;
-          Ok(true)
+          )
         }
         ModuleDecl::ExportDecl(n) => {
           let export_decl_range = n.range();
@@ -450,13 +468,14 @@ impl<'a> FastCheckTransformer<'a> {
         }
         ModuleDecl::TsImportEquals(n) => match &n.module_ref {
           TsModuleRef::TsEntityName(_) => {
-            Ok(self.public_ranges.contains(&n.range()))
+            let retain = self.public_ranges.contains(&n.range());
+            Ok(TransformItemResult::from_retain(retain))
           }
           TsModuleRef::TsExternalModuleRef(_) => {
             self.mark_diagnostic(FastCheckDiagnostic::UnsupportedRequire {
               range: self.source_range_to_range(n.range()),
             })?;
-            Ok(false)
+            Ok(TransformItemResult::Remove)
           }
         },
         ModuleDecl::TsExportAssignment(n) => {
@@ -465,7 +484,7 @@ impl<'a> FastCheckTransformer<'a> {
               range: self.source_range_to_range(n.range()),
             },
           )?;
-          Ok(false)
+          Ok(TransformItemResult::Remove)
         }
         ModuleDecl::TsNamespaceExport(n) => {
           self.mark_diagnostic(
@@ -473,14 +492,14 @@ impl<'a> FastCheckTransformer<'a> {
               range: self.source_range_to_range(n.range()),
             },
           )?;
-          Ok(false)
+          Ok(TransformItemResult::Remove)
         }
       },
       ModuleItem::Stmt(stmt) => match stmt {
         Stmt::Decl(n) => self.transform_decl(n, comments, None, is_ambient),
         Stmt::Expr(n) => match &mut *n.expr {
           Expr::Assign(assign_expr) => self.transform_assign_expr(assign_expr),
-          _ => Ok(false),
+          _ => Ok(TransformItemResult::Remove),
         },
         Stmt::Block(_)
         | Stmt::Empty(_)
@@ -498,7 +517,7 @@ impl<'a> FastCheckTransformer<'a> {
         | Stmt::DoWhile(_)
         | Stmt::For(_)
         | Stmt::ForIn(_)
-        | Stmt::ForOf(_) => Ok(false),
+        | Stmt::ForOf(_) => Ok(TransformItemResult::Remove),
       },
     }
   }
@@ -509,21 +528,27 @@ impl<'a> FastCheckTransformer<'a> {
     comments: &mut CommentsMut,
     parent_range: SourceRange,
     is_ambient: bool,
-  ) -> Result<(), Vec<FastCheckDiagnostic>> {
+  ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
     match default_decl {
-      DefaultDecl::Class(n) => self.transform_class(
-        &mut n.class,
-        comments,
-        /* has declare keyword */ false,
-      ),
-      DefaultDecl::Fn(n) => self.transform_fn(
-        &mut n.function,
-        n.ident.as_ref().map(|i| i.range()),
-        self.public_ranges.is_impl_with_overloads(&parent_range),
-        /* is setter */ false,
-        is_ambient,
-      ),
-      DefaultDecl::TsInterfaceDecl(_) => Ok(()),
+      DefaultDecl::Class(n) => {
+        (self.transform_class(
+          &mut n.class,
+          comments,
+          /* has declare keyword */ false,
+        )?);
+        Ok(TransformItemResult::Retain)
+      }
+      DefaultDecl::Fn(n) => {
+        self.transform_fn(
+          &mut n.function,
+          n.ident.as_ref().map(|i| i.range()),
+          FunctionKind::DeclarationLike,
+          self.public_ranges.is_impl_with_overloads(&parent_range),
+          is_ambient,
+        )?;
+        Ok(TransformItemResult::Retain)
+      }
+      DefaultDecl::TsInterfaceDecl(_) => Ok(TransformItemResult::Retain),
     }
   }
 
@@ -533,23 +558,23 @@ impl<'a> FastCheckTransformer<'a> {
     comments: &mut CommentsMut,
     parent_range: Option<SourceRange>,
     is_ambient: bool,
-  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
+  ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
     let public_range = parent_range.unwrap_or_else(|| decl.range());
     match decl {
       Decl::Class(n) => {
         if !self.public_ranges.contains(&public_range) {
-          return Ok(false);
+          return Ok(TransformItemResult::Remove);
         }
         self.transform_class(
           &mut n.class,
           comments,
           is_ambient || n.declare,
         )?;
-        Ok(true)
+        Ok(TransformItemResult::Retain)
       }
       Decl::Fn(n) => {
         if !self.public_ranges.contains(&public_range) {
-          return Ok(false);
+          return Ok(TransformItemResult::Remove);
         }
 
         let is_overload =
@@ -557,16 +582,22 @@ impl<'a> FastCheckTransformer<'a> {
         self.transform_fn(
           &mut n.function,
           Some(n.ident.range()),
+          FunctionKind::DeclarationLike,
           is_overload,
-          /* is setter */ false,
           is_ambient,
         )?;
-        Ok(true)
+        Ok(TransformItemResult::Retain)
       }
       Decl::Var(n) => self.transform_var(n, is_ambient || n.declare),
-      Decl::TsInterface(_) => Ok(self.public_ranges.contains(&public_range)),
-      Decl::TsTypeAlias(_) => Ok(self.public_ranges.contains(&public_range)),
-      Decl::TsEnum(_) => Ok(self.public_ranges.contains(&public_range)),
+      Decl::TsInterface(_) => Ok(TransformItemResult::from_retain(
+        self.public_ranges.contains(&public_range),
+      )),
+      Decl::TsTypeAlias(_) => Ok(TransformItemResult::from_retain(
+        self.public_ranges.contains(&public_range),
+      )),
+      Decl::TsEnum(_) => Ok(TransformItemResult::from_retain(
+        self.public_ranges.contains(&public_range),
+      )),
       Decl::TsModule(m) => self.transform_ts_module(
         m,
         &public_range,
@@ -589,7 +620,7 @@ impl<'a> FastCheckTransformer<'a> {
             ),
           })?;
         }
-        Ok(false)
+        Ok(TransformItemResult::Remove)
       }
     }
   }
@@ -925,8 +956,12 @@ impl<'a> FastCheckTransformer<'a> {
         self.transform_fn(
           &mut n.function,
           Some(n.key.range()),
+          match n.kind {
+            MethodKind::Method => FunctionKind::DeclarationLike,
+            MethodKind::Getter => FunctionKind::Getter,
+            MethodKind::Setter => FunctionKind::Setter,
+          },
           is_overload,
-          /* is setter */ n.kind == MethodKind::Setter,
           is_ambient,
         )?;
         Ok(true)
@@ -1044,8 +1079,8 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     n: &mut Function,
     parent_id_range: Option<SourceRange>,
+    function_kind: FunctionKind,
     is_overload: bool,
-    is_set_accessor: bool,
     is_ambient: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
     if is_ambient {
@@ -1088,37 +1123,37 @@ impl<'a> FastCheckTransformer<'a> {
       }
       n.return_type = Some(any_type_ann());
     }
-    if is_set_accessor {
-      // suppress any unused param errors
-      for param in n.params.iter_mut() {
-        prefix_idents_in_pat(&mut param.pat, "_");
-      }
-    }
 
-    if !is_set_accessor && n.return_type.is_none() {
+    let missing_return_type = match function_kind {
+      FunctionKind::DeclarationLike
+      | FunctionKind::ExpressionLike
+      | FunctionKind::Getter => n.return_type.is_none(),
+      FunctionKind::Setter => {
+        // Having a return type is actually invalid for a setter, but TypeScript
+        // already catches that so we don't have to emit a diagnostic for it
+        // here.
+        false
+      }
+    };
+
+    if missing_return_type {
       let range = parent_id_range.unwrap_or_else(|| n.range());
       if n.is_generator {
         self.mark_diagnostic(
           FastCheckDiagnostic::MissingExplicitReturnType {
             range: self.source_range_to_range(range),
+            is_definitely_void_or_never: false,
+            is_async: n.is_async,
           },
         )?;
-      }
-
-      if let Some(body) = &mut n.body {
-        let return_stmts = get_return_stmts_with_arg_from_function_body(body);
-        if return_stmts.is_empty() {
-          n.return_type = Some(Box::new(TsTypeAnn {
-            span: DUMMY_SP,
-            type_ann: void_or_promise_void(n.is_async),
-          }));
-        } else {
-          self.mark_diagnostic(
-            FastCheckDiagnostic::MissingExplicitReturnType {
-              range: self.source_range_to_range(range),
-            },
-          )?;
-        }
+      } else if let Some(body) = &mut n.body {
+        self.transform_function_body_block_stmt(
+          range,
+          &mut n.return_type,
+          body,
+          function_kind,
+          n.is_async,
+        )?;
       }
     }
 
@@ -1138,6 +1173,7 @@ impl<'a> FastCheckTransformer<'a> {
         }));
       }
     }
+
     let optional_start_index =
       ParamsOptionalStartIndex::build(n.params.iter().map(|p| &p.pat));
     for (i, param) in n.params.iter_mut().enumerate() {
@@ -1167,19 +1203,13 @@ impl<'a> FastCheckTransformer<'a> {
 
       match &mut *n.body {
         BlockStmtOrExpr::BlockStmt(body) => {
-          let return_stmts = get_return_stmts_with_arg_from_function_body(body);
-          if return_stmts.is_empty() {
-            n.return_type = Some(Box::new(TsTypeAnn {
-              span: DUMMY_SP,
-              type_ann: void_or_promise_void(n.is_async),
-            }));
-          } else {
-            self.mark_diagnostic(
-              FastCheckDiagnostic::MissingExplicitReturnType {
-                range: self.source_range_to_range(range),
-              },
-            )?;
-          }
+          self.transform_function_body_block_stmt(
+            range,
+            &mut n.return_type,
+            body,
+            FunctionKind::ExpressionLike,
+            n.is_async,
+          )?;
         }
         BlockStmtOrExpr::Expr(expr) => {
           let inferred_type = self.maybe_infer_type_from_expr(expr);
@@ -1201,6 +1231,8 @@ impl<'a> FastCheckTransformer<'a> {
                 self.mark_diagnostic(
                   FastCheckDiagnostic::MissingExplicitReturnType {
                     range: self.source_range_to_range(range),
+                    is_definitely_void_or_never: false,
+                    is_async: n.is_async,
                   },
                 )?;
               }
@@ -1230,6 +1262,60 @@ impl<'a> FastCheckTransformer<'a> {
     for (i, pat) in n.params.iter_mut().enumerate() {
       self
         .handle_param_pat(pat, optional_start_index.is_optional_at_index(i))?;
+    }
+
+    Ok(())
+  }
+
+  fn transform_function_body_block_stmt(
+    &mut self,
+    range: SourceRange,
+    return_type: &mut Option<Box<TsTypeAnn>>,
+    body: &mut BlockStmt,
+    function_kind: FunctionKind,
+    is_async: bool,
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
+    let analysis = analyze_return_stmts_in_function_body(body);
+    match (analysis, function_kind) {
+      (_, FunctionKind::Setter) => unreachable!(),
+      (ReturnStatementAnalysis::None, FunctionKind::DeclarationLike)
+      | (ReturnStatementAnalysis::Void, FunctionKind::DeclarationLike)
+      | (ReturnStatementAnalysis::Void, FunctionKind::ExpressionLike) => {
+        *return_type = Some(Box::new(TsTypeAnn {
+          span: DUMMY_SP,
+          type_ann: void_or_promise_void(is_async),
+        }));
+      }
+      (ReturnStatementAnalysis::None, FunctionKind::ExpressionLike) => {
+        self.mark_diagnostic(
+          FastCheckDiagnostic::MissingExplicitReturnType {
+            range: self.source_range_to_range(range),
+            is_definitely_void_or_never: true,
+            is_async,
+          },
+        )?;
+      }
+      (ReturnStatementAnalysis::Single(_), _) => {
+        // TODO: infer return type based on return type
+        self.mark_diagnostic(
+          FastCheckDiagnostic::MissingExplicitReturnType {
+            range: self.source_range_to_range(range),
+            is_definitely_void_or_never: false,
+            is_async,
+          },
+        )?;
+      }
+      (ReturnStatementAnalysis::None, FunctionKind::Getter)
+      | (ReturnStatementAnalysis::Void, FunctionKind::Getter)
+      | (ReturnStatementAnalysis::Multiple, _) => {
+        self.mark_diagnostic(
+          FastCheckDiagnostic::MissingExplicitReturnType {
+            range: self.source_range_to_range(range),
+            is_definitely_void_or_never: false,
+            is_async,
+          },
+        )?;
+      }
     }
 
     Ok(())
@@ -1366,7 +1452,7 @@ impl<'a> FastCheckTransformer<'a> {
     &mut self,
     n: &mut VarDecl,
     is_ambient: bool,
-  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
+  ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
     n.decls.retain(|n| self.public_ranges.contains(&n.range()));
 
     // don't need to do anything for ambient decls
@@ -1376,7 +1462,7 @@ impl<'a> FastCheckTransformer<'a> {
       }
     }
 
-    Ok(!n.decls.is_empty())
+    Ok(TransformItemResult::from_retain(!n.decls.is_empty()))
   }
 
   fn transform_var_declarator(
@@ -1442,12 +1528,12 @@ impl<'a> FastCheckTransformer<'a> {
     public_range: &SourceRange,
     comments: &mut CommentsMut,
     is_ambient: bool,
-  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
+  ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
     if n.global {
       self.mark_diagnostic(FastCheckDiagnostic::UnsupportedGlobalModule {
         range: self.source_range_to_range(n.range()),
       })?;
-      return Ok(false);
+      return Ok(TransformItemResult::Remove);
     }
 
     match &n.id {
@@ -1461,7 +1547,7 @@ impl<'a> FastCheckTransformer<'a> {
             range: self.source_range_to_range(n.id.range()),
           },
         )?;
-        return Ok(false);
+        return Ok(TransformItemResult::Remove);
       }
     }
 
@@ -1488,20 +1574,20 @@ impl<'a> FastCheckTransformer<'a> {
             range: self.source_range_to_range(n.id.range()),
           },
         )?;
-        return Ok(false);
+        return Ok(TransformItemResult::Remove);
       }
     };
 
     // allow the above diagnostics to error before checking for a public range
     if !self.public_ranges.contains(public_range) {
-      return Ok(false);
+      return Ok(TransformItemResult::Remove);
     }
 
     let body = std::mem::take(&mut ts_module_block.body);
     ts_module_block.body =
       self.transform_module_body(body, comments, is_ambient)?;
 
-    Ok(true)
+    Ok(TransformItemResult::Retain)
   }
 
   // Keep expando properties. Example:
@@ -1514,9 +1600,9 @@ impl<'a> FastCheckTransformer<'a> {
   fn transform_assign_expr(
     &mut self,
     n: &mut AssignExpr,
-  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
+  ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
     if !self.public_ranges.contains(&n.range()) {
-      return Ok(false);
+      return Ok(TransformItemResult::Remove);
     }
 
     // it will be an expando property at this point, but we still need n.right
@@ -1525,7 +1611,7 @@ impl<'a> FastCheckTransformer<'a> {
     let is_init_leavable =
       self.maybe_transform_expr_if_leavable(&mut n.right, Some(right_range))?;
     let Some(expando_prop) = ExpandoPropertyRef::maybe_new(n) else {
-      return Ok(false);
+      return Ok(TransformItemResult::Remove);
     };
     let mem_expr = expando_prop.member_expr();
     if !is_init_leavable {
@@ -1551,7 +1637,7 @@ impl<'a> FastCheckTransformer<'a> {
         definite: false,
       });
     }
-    Ok(false)
+    Ok(TransformItemResult::Remove)
   }
 
   fn mark_diagnostic(
@@ -1670,7 +1756,7 @@ impl<'a> FastCheckTransformer<'a> {
       Expr::TsConstAssertion(n) => recurse(&mut n.expr)?,
       Expr::TsNonNull(n) => recurse(&mut n.expr)?,
       Expr::Fn(n) => {
-        self.transform_fn(&mut n.function, parent_id_range, /* is overload */ false, /* is setter */ false, /* is ambient */ false)?;
+        self.transform_fn(&mut n.function, parent_id_range, FunctionKind::ExpressionLike, /* is overload */ false, /* is ambient */ false)?;
         true
       }
       Expr::Arrow(n) => {
@@ -1812,6 +1898,17 @@ impl<'a> FastCheckTransformer<'a> {
   }
 }
 
+enum FunctionKind {
+  /// function declarations, class method declarations (both class decl and class expr)
+  DeclarationLike,
+  /// function expressions, arrow functions, object method shorthand properties
+  ExpressionLike,
+  /// getters, both on classes and object literals
+  Getter,
+  /// setters, both on classes and object literals
+  Setter,
+}
+
 fn is_ts_private_computed_class_member(m: &ClassMember) -> bool {
   match m {
     ClassMember::Method(m) => {
@@ -1892,49 +1989,6 @@ fn convert_optional_ident_to_nullable_type(ident: &mut BindingIdent) {
         }),
       )),
     }));
-  }
-}
-
-fn prefix_ident(ident: &mut Ident, prefix: &str) {
-  ident.sym = format!("{}{}", prefix, ident.sym).into();
-}
-
-fn prefix_idents_in_pat(pat: &mut Pat, prefix: &str) {
-  match pat {
-    Pat::Ident(ident) => {
-      prefix_ident(&mut ident.id, prefix);
-    }
-    Pat::Array(array) => {
-      for pat in array.elems.iter_mut().flatten() {
-        prefix_idents_in_pat(pat, prefix);
-      }
-    }
-    Pat::Rest(rest) => {
-      prefix_idents_in_pat(&mut rest.arg, prefix);
-    }
-    Pat::Object(o) => {
-      for prop in &mut o.props {
-        match prop {
-          ObjectPatProp::KeyValue(n) => match &mut n.key {
-            PropName::Ident(ident) => {
-              prefix_ident(ident, prefix);
-            }
-            PropName::Str(str) => {
-              str.value = format!("{}{}", prefix, str.value).into();
-            }
-            PropName::Num(_) | PropName::Computed(_) | PropName::BigInt(_) => {
-              // ignore
-            }
-          },
-          ObjectPatProp::Assign(n) => prefix_ident(&mut n.key, prefix),
-          ObjectPatProp::Rest(n) => prefix_idents_in_pat(&mut n.arg, prefix),
-        }
-      }
-    }
-    Pat::Assign(a) => prefix_idents_in_pat(&mut a.left, prefix),
-    Pat::Expr(_) | Pat::Invalid(_) => {
-      // ignore
-    }
   }
 }
 

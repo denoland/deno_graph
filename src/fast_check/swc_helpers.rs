@@ -1,5 +1,7 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+use std::ops::ControlFlow;
+
 use deno_ast::swc::ast::*;
 use deno_ast::swc::common::DUMMY_SP;
 
@@ -18,63 +20,96 @@ pub fn ts_keyword_type(kind: TsKeywordTypeKind) -> TsType {
   })
 }
 
-pub fn get_return_stmts_with_arg_from_function_body(
+#[derive(Debug)]
+pub enum ReturnStatementAnalysis {
+  /// There are no return statements in the function body.
+  None,
+  /// There are only return statements without arguments in the function body.
+  Void,
+  /// There is only a single return statement in the function body, and it has
+  /// an argument.
+  Single(ReturnStmt),
+  /// There are multiple return statements in the function body, and at least
+  /// one of them has an argument.
+  Multiple,
+}
+
+pub fn analyze_return_stmts_in_function_body(
   body: &deno_ast::swc::ast::BlockStmt,
-) -> Vec<&ReturnStmt> {
-  let stmts = get_return_stmts_with_arg_from_stmts(&body.stmts);
-  debug_assert!(stmts.iter().all(|stmt| stmt.arg.is_some()));
-  stmts
+) -> ReturnStatementAnalysis {
+  let mut analysis = ReturnStatementAnalysis::None;
+  analyze_return_stmts_from_stmts(&body.stmts, &mut analysis);
+  analysis
 }
 
-fn get_return_stmts_with_arg_from_stmts(stmts: &[Stmt]) -> Vec<&ReturnStmt> {
-  let mut result = Vec::new();
+fn analyze_return_stmts_from_stmts(
+  stmts: &[Stmt],
+  analysis: &mut ReturnStatementAnalysis,
+) -> ControlFlow<(), ()> {
   for stmt in stmts {
-    result.extend(get_return_stmts_with_arg_from_stmt(stmt))
+    analyze_return_stmts_from_stmt(stmt, analysis)?;
   }
-  result
+  ControlFlow::Continue(())
 }
 
-fn get_return_stmts_with_arg_from_stmt(stmt: &Stmt) -> Vec<&ReturnStmt> {
+fn analyze_return_stmts_from_stmt(
+  stmt: &Stmt,
+  analysis: &mut ReturnStatementAnalysis,
+) -> ControlFlow<(), ()> {
   match stmt {
-    Stmt::Block(n) => get_return_stmts_with_arg_from_stmts(&n.stmts),
-    Stmt::With(n) => get_return_stmts_with_arg_from_stmt(&n.body),
+    Stmt::Block(n) => analyze_return_stmts_from_stmts(&n.stmts, analysis),
+    Stmt::With(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
     Stmt::Return(n) => {
       if n.arg.is_none() {
-        Vec::new()
+        if matches!(analysis, ReturnStatementAnalysis::None) {
+          *analysis = ReturnStatementAnalysis::Void;
+        } else if matches!(analysis, ReturnStatementAnalysis::Single(_)) {
+          *analysis = ReturnStatementAnalysis::Multiple;
+          return ControlFlow::Break(());
+        }
       } else {
-        vec![n]
+        if matches!(
+          analysis,
+          ReturnStatementAnalysis::None | ReturnStatementAnalysis::Void
+        ) {
+          *analysis = ReturnStatementAnalysis::Single(n.clone());
+        } else {
+          *analysis = ReturnStatementAnalysis::Multiple;
+          return ControlFlow::Break(());
+        }
       }
+      ControlFlow::Continue(())
     }
-    Stmt::Labeled(n) => get_return_stmts_with_arg_from_stmt(&n.body),
-    Stmt::If(n) => get_return_stmts_with_arg_from_stmt(&n.cons),
-    Stmt::Switch(n) => n
-      .cases
-      .iter()
-      .flat_map(|case| get_return_stmts_with_arg_from_stmts(&case.cons))
-      .collect(),
+    Stmt::Labeled(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
+    Stmt::If(n) => analyze_return_stmts_from_stmt(&n.cons, analysis),
+    Stmt::Switch(n) => {
+      for case in &n.cases {
+        analyze_return_stmts_from_stmts(&case.cons, analysis)?;
+      }
+      ControlFlow::Continue(())
+    }
     Stmt::Try(n) => {
-      let mut result = Vec::new();
-      result.extend(get_return_stmts_with_arg_from_stmts(&n.block.stmts));
+      analyze_return_stmts_from_stmts(&n.block.stmts, analysis)?;
       if let Some(n) = &n.handler {
-        result.extend(get_return_stmts_with_arg_from_stmts(&n.body.stmts))
+        analyze_return_stmts_from_stmts(&n.body.stmts, analysis)?;
       }
       if let Some(n) = &n.finalizer {
-        result.extend(get_return_stmts_with_arg_from_stmts(&n.stmts))
+        analyze_return_stmts_from_stmts(&n.stmts, analysis)?;
       }
-      result
+      ControlFlow::Continue(())
     }
-    Stmt::While(n) => get_return_stmts_with_arg_from_stmt(&n.body),
-    Stmt::DoWhile(n) => get_return_stmts_with_arg_from_stmt(&n.body),
-    Stmt::For(n) => get_return_stmts_with_arg_from_stmt(&n.body),
-    Stmt::ForIn(n) => get_return_stmts_with_arg_from_stmt(&n.body),
-    Stmt::ForOf(n) => get_return_stmts_with_arg_from_stmt(&n.body),
+    Stmt::While(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
+    Stmt::DoWhile(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
+    Stmt::For(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
+    Stmt::ForIn(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
+    Stmt::ForOf(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
     Stmt::Break(_)
     | Stmt::Continue(_)
     | Stmt::Throw(_)
     | Stmt::Debugger(_)
     | Stmt::Decl(_)
     | Stmt::Expr(_)
-    | Stmt::Empty(_) => Vec::new(),
+    | Stmt::Empty(_) => ControlFlow::Continue(()),
   }
 }
 

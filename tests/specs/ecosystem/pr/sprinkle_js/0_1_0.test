@@ -5,6 +5,45 @@ pr/sprinkle-js/0.1.0
 
 == FAST CHECK EMIT FAILED ==
 error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/index.ts:10:7
+   | 
+10 | const runEffects = (effects: Set<ICreateEffectRunning>) => {
+   |       ^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/index.ts:20:7
+   | 
+20 | const batch = (fn: Function) => {
+   |       ^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/index.ts:31:7
+   | 
+31 | const subscribe = (field: string | symbol, running: ICreateEffectRunning, subscriptionsMap: Map<string | symbol, ISubscription>) => {
+   |       ^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /src/index.ts:51:7
    | 
 51 | const defCreateVariable = <T extends object>(value: T, eq?: IEqualFunctionMap<T>) => {
@@ -181,6 +220,19 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:313:7
+    | 
+313 | const replaceFunctions = (element: ElementWithListeners, functions: Function[], components: IComponents) => {
+    |       ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
    --> /src/index.ts:364:7
     | 
 364 | const populateStringFunctionsAndComponents = (el: string, functions: Function[], components: IComponents, els: any) => {
@@ -199,6 +251,32 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:400:7
+    | 
+400 | const fixListeners = (toAdd: ElementWithListeners, toRemove: ElementWithListeners) => {
+    |       ^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/index.ts:415:7
+    | 
+415 | const callOnBind = (element: ElementWithListeners, recursively?: boolean) => {
+    |       ^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
@@ -222,6 +300,19 @@ error[missing-explicit-type]: missing explicit type in the public API
 
   info: all symbols in the public API must have an explicit type
   docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /src/utils.ts:5:7
+  | 
+5 | const updateDom = (domElement: any, properties: any, namespace: string[] = []) => {
+  |       ^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API

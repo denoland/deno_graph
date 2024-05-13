@@ -8,11 +8,11 @@
 export function test() {
 }
 
-test.skip = () => {};
+test.skip = () => { return };
 
 if (true) {
   function test() {}
-  test.shouldNotBeInOutput = () => {};
+  test.shouldNotBeInOutput = () => { return };
 }
 
 # mod.ts
@@ -50,7 +50,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 125,
+      "size": 141,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }

@@ -7,61 +7,89 @@ aziis98/gdsl/1.0.0
 
 ===
 
-== FAST CHECK EMIT PASSED ==
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /index.ts:44:14
+   | 
+44 | export const render2d = (g: CRC2D, dsl: DSL) => {
+   |              ^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
 
-== TYPE CHECK FAILED ==
--- stdout --
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
--- stderr --
-error: TS2304 [ERROR]: Cannot find name 'CanvasRenderingContext2D'.
-type CRC2D = CanvasRenderingContext2D;
-             ~~~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/index.ts:1:14
 
-TS2304 [ERROR]: Cannot find name 'CanvasDirection'.
-  direction?: CanvasDirection;
-              ~~~~~~~~~~~~~~~
-    at file://<tmpdir>/index.ts:8:15
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /index.ts:58:7
+   | 
+58 | const applyAttrs = (g: CRC2D, attrs: Attrs) => {
+   |       ^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
 
-TS2304 [ERROR]: Cannot find name 'CanvasFontKerning'.
-  fontKerning?: CanvasFontKerning;
-                ~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/index.ts:10:17
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
-TS2304 [ERROR]: Cannot find name 'CanvasFontStretch'.
-  fontStretch?: CanvasFontStretch;
-                ~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/index.ts:11:17
 
-TS2304 [ERROR]: Cannot find name 'CanvasFontVariantCaps'.
-  fontVariantCaps?: CanvasFontVariantCaps;
-                    ~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/index.ts:12:21
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /index.ts:73:37
+   | 
+73 | export const stroke = (dsl: DSL) => (g: CRC2D) => {
+   |                                     ^^^^^^^^^^^^^^^
+74 |     g.beginPath()
+   | ^^^^^^^^^^^^^^^^^
+75 |     render2d(g, dsl)
+   | ^^^^^^^^^^^^^^^^^^^^
+76 |     g.stroke()
+   | ^^^^^^^^^^^^^^
+77 | }
+   | ^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
 
-TS2304 [ERROR]: Cannot find name 'CanvasTextAlign'.
-  textAlign?: CanvasTextAlign;
-              ~~~~~~~~~~~~~~~
-    at file://<tmpdir>/index.ts:14:15
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
-TS2304 [ERROR]: Cannot find name 'CanvasTextBaseline'.
-  textBaseline?: CanvasTextBaseline;
-                 ~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/index.ts:15:18
 
-TS2304 [ERROR]: Cannot find name 'CanvasTextRendering'.
-  textRendering?: CanvasTextRendering;
-                  ~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/index.ts:16:19
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /index.ts:79:35
+   | 
+79 | export const fill = (dsl: DSL) => (g: CRC2D) => {
+   |                                   ^^^^^^^^^^^^^^^
+80 |     g.beginPath()
+   | ^^^^^^^^^^^^^^^^^
+81 |     render2d(g, dsl)
+   | ^^^^^^^^^^^^^^^^^^^^
+82 |     g.fill()
+   | ^^^^^^^^^^^^
+83 | }
+   | ^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
 
-TS2304 [ERROR]: Cannot find name 'CanvasLineCap'.
-  lineCap?: CanvasLineCap;
-            ~~~~~~~~~~~~~
-    at file://<tmpdir>/index.ts:18:13
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
-TS2304 [ERROR]: Cannot find name 'CanvasLineJoin'.
-  lineJoin?: CanvasLineJoin;
-             ~~~~~~~~~~~~~~
-    at file://<tmpdir>/index.ts:19:14
 
-Found 10 errors.
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /index.ts:132:65
+    | 
+132 | export const circle = (x: number, y: number, radius: number) => (g: CRC2D) => {
+    |                                                                 ^^^^^^^^^^^^^^^
+133 |     g.arc(x, y, radius, 0, Math.PI * 2)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+134 | }
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
 

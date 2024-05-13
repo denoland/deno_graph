@@ -218,7 +218,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 269 | const verifyAsync = async (s: Hex, m: Hex, p: Hex, opts = dvo) =>
     |       ^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type

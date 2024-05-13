@@ -9,19 +9,21 @@
     console.log("it")
   }
   it.skip = (really: boolean) => {
-    console.log("it.skip", really)
+    console.log("it.skip", really);
+    return
   }
   it.ignore = function(really: boolean) {
-    console.log("it.ignore", really)
+    console.log("it.ignore", really);
+    return
   }
-  it.restArrFn = (...really: any[]) => {}
-  it.arrayArrFn = ([a,b]: [1,2]) => {}
-  it.asyncArrFn = async () => {}
-  it.objArrFn = ({a,b}: {a: number, b: number}) => {}
-  it.restFn = function(...really: any[]) {}
-  it.arrayFn = function([a,b]: [1,2]) {}
-  it.asyncFn = async function() {}
-  it.objFn = function({a,b}: {a: number, b: number}) {}
+  it.restArrFn = (...really: any[]) => { return }
+  it.arrayArrFn = ([a,b]: [1,2]) => { return }
+  it.asyncArrFn = async () => { return }
+  it.objArrFn = ({a,b}: {a: number, b: number}) => { return }
+  it.restFn = function(...really: any[]) { return }
+  it.arrayFn = function([a,b]: [1,2]) { return }
+  it.asyncFn = async function() { return }
+  it.objFn = function({a,b}: {a: number, b: number}) { return }
   it.num = 2
   it.str = "a"
   it.bool = true;
@@ -64,7 +66,7 @@ it.ignore();
     },
     {
       "kind": "esm",
-      "size": 599,
+      "size": 687,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }

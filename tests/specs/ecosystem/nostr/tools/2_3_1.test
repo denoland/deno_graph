@@ -108,7 +108,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 18 | export async function makeNwcRequestEvent(pubkey: string, secretKey: Uint8Array, invoice: string) {
    |                       ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -174,7 +174,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 11 | export async function fetchRelayInformation(url: string) {
    |                       ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -218,7 +218,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 47 |   static async connect(url: string, opts: { verifyEvent: Nostr['verifyEvent'] }) {
    |                ^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -229,7 +229,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 231 |   public async auth(signAuthEvent: (evt: EventTemplate) => Promise<VerifiedEvent>) {
     |                ^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -240,7 +240,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 16 |   static async connect(url: string) {
    |                ^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type

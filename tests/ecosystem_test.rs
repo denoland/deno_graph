@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::io::Write as _;
 use std::path::PathBuf;
 
@@ -34,6 +35,10 @@ struct Version {
 }
 
 fn main() {
+  if cfg!(not(feature = "ecosystem_test")) {
+    return;
+  }
+
   if std::fs::metadata("./tests/ecosystem/jsr_mirror").is_err() {
     println!("skipping, ecosystem mirror not found. run `deno run -A ./tests/ecosystem/jsr_mirror.ts` to populate");
     return;
@@ -298,14 +303,17 @@ async fn test_version(
     workspace_fast_check: WorkspaceFastCheckOption::Enabled(&workspace_members),
   });
 
-  let mut fast_check_diagnostics = String::new();
+  let mut fast_check_diagnostic_ranges = HashSet::new();
+  let mut fast_check_diagnostics = vec![];
+
   for root in &roots {
     let module = graph.get(root).unwrap();
     if let Some(module) = module.js() {
       if let Some(diagnostics) = module.fast_check_diagnostics() {
         for diagnostic in diagnostics {
-          writeln!(&mut fast_check_diagnostics, "{}", diagnostic.display())
-            .unwrap();
+          if fast_check_diagnostic_ranges.insert(diagnostic.range()) {
+            fast_check_diagnostics.push(diagnostic.clone());
+          }
         }
       }
     }
@@ -314,7 +322,11 @@ async fn test_version(
   let mut output = if fast_check_diagnostics.is_empty() {
     "== FAST CHECK EMIT PASSED ==\n".to_owned()
   } else {
-    format!("== FAST CHECK EMIT FAILED ==\n{}", fast_check_diagnostics)
+    let mut output = format!("== FAST CHECK EMIT FAILED ==\n");
+    for diagnostic in &fast_check_diagnostics {
+      writeln!(&mut output, "{}", diagnostic.display()).unwrap();
+    }
+    output
   };
 
   let mut new_lockfile = lockfile.to_string();
@@ -371,7 +383,7 @@ async fn test_version(
       .env("NO_COLOR", "true")
       .env("RUST_LIB_BACKTRACE", "0")
       .current_dir(&tmpdir_path);
-    if std::env::var("UPDATE").as_deref() == Ok("1") {
+    if std::env::var("UPDATE_LOCKFILE").as_deref() == Ok("1") {
       cmd.arg("--lock-write");
     }
     let deno_out = cmd
@@ -406,6 +418,9 @@ async fn test_version(
     }
 
     new_lockfile = std::fs::read_to_string(lockfile_path).unwrap();
+    if !new_lockfile.ends_with('\n') {
+      new_lockfile.push('\n');
+    };
 
     if std::env::var("DONT_CLEAN").is_ok() {
       println!("leaving tempdir: {}", tmpdir_path.display());

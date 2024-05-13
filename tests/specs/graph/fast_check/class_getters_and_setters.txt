@@ -69,10 +69,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     get value(): string {
       return {} as never;
     }
-    set value(_value: string) {}
+    set value(value: string) {}
   }
   --- DTS ---
   export declare class MyClass {
     get value(): string;
-    set value(_value: string);
+    set value(value: string);
   }
