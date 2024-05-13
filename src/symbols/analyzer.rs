@@ -7,7 +7,9 @@ use std::cell::RefCell;
 use std::hash::Hash;
 
 use deno_ast::swc::ast::*;
+use deno_ast::swc::atoms::Atom;
 use deno_ast::swc::utils::find_pat_ids;
+use deno_ast::swc::utils::is_valid_ident;
 use deno_ast::ModuleSpecifier;
 use deno_ast::ParsedSource;
 use deno_ast::SourceRange;
@@ -409,6 +411,9 @@ impl std::fmt::Debug for SymbolNode {
         SymbolNodeInner::Constructor(d) => {
           d.value().text_fast(d.source.text_info()).to_string()
         }
+        SymbolNodeInner::ExpandoProperty(d) => {
+          d.value().text_fast(d.source.text_info()).to_string()
+        }
         SymbolNodeInner::TsIndexSignature(d) => {
           d.value().text_fast(d.source.text_info()).to_string()
         }
@@ -524,6 +529,10 @@ impl SymbolNode {
       SymbolNodeInner::Constructor(n) => {
         Some((SymbolNodeRef::Constructor(n.value()), n.source()))
       }
+      SymbolNodeInner::ExpandoProperty(n) => Some((
+        SymbolNodeRef::ExpandoProperty(ExpandoPropertyRef(n.value())),
+        n.source(),
+      )),
       SymbolNodeInner::TsIndexSignature(n) => {
         Some((SymbolNodeRef::TsIndexSignature(n.value()), n.source()))
       }
@@ -581,6 +590,7 @@ enum SymbolNodeInner {
   ClassProp(NodeRefBox<ClassProp>),
   ClassParamProp(NodeRefBox<TsParamProp>),
   Constructor(NodeRefBox<Constructor>),
+  ExpandoProperty(NodeRefBox<AssignExpr>),
   TsIndexSignature(NodeRefBox<TsIndexSignature>),
   TsCallSignatureDecl(NodeRefBox<TsCallSignatureDecl>),
   TsConstructSignatureDecl(NodeRefBox<TsConstructSignatureDecl>),
@@ -621,6 +631,7 @@ pub enum SymbolNodeRef<'a> {
   ClassProp(&'a ClassProp),
   ClassParamProp(&'a TsParamProp),
   Constructor(&'a Constructor),
+  ExpandoProperty(ExpandoPropertyRef<'a>),
   TsIndexSignature(&'a TsIndexSignature),
   TsCallSignatureDecl(&'a TsCallSignatureDecl),
   TsConstructSignatureDecl(&'a TsConstructSignatureDecl),
@@ -718,6 +729,7 @@ impl<'a> SymbolNodeRef<'a> {
       Self::ClassMethod(n) => maybe_prop_name(&n.key),
       Self::ClassProp(n) => maybe_prop_name(&n.key),
       Self::ClassParamProp(n) => maybe_param_prop_name(&n.param),
+      Self::ExpandoProperty(n) => Some(Cow::Borrowed(n.prop_name())),
       Self::TsPropertySignature(n) => maybe_expr(&n.key),
       Self::TsGetterSignature(n) => maybe_expr(&n.key),
       Self::TsSetterSignature(n) => maybe_expr(&n.key),
@@ -786,7 +798,7 @@ impl<'a> SymbolNodeRef<'a> {
   pub fn is_var(&self) -> bool {
     matches!(
       self,
-      Self::Var(_, _, _) | Self::ExportDecl(_, ExportDeclRef::Var(_, _, _))
+      Self::Var(..) | Self::ExportDecl(_, ExportDeclRef::Var(..))
     )
   }
 
@@ -813,7 +825,7 @@ impl<'a> SymbolNodeRef<'a> {
         ExportDeclRef::Class(_)
         | ExportDeclRef::TsEnum(_)
         | ExportDeclRef::TsInterface(_) => true,
-        ExportDeclRef::TsTypeAlias(_) | ExportDeclRef::Var(_, _, _) => false,
+        ExportDeclRef::TsTypeAlias(_) | ExportDeclRef::Var(..) => false,
       },
       SymbolNodeRef::Module(_)
       | SymbolNodeRef::ClassDecl(_)
@@ -821,10 +833,11 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::TsInterface(_) => true,
       SymbolNodeRef::TsTypeAlias(_)
       | SymbolNodeRef::ExportDefaultExpr(_)
-      | SymbolNodeRef::Var(_, _, _)
-      | SymbolNodeRef::UsingVar(_, _, _)
+      | SymbolNodeRef::Var(..)
+      | SymbolNodeRef::UsingVar(..)
       | SymbolNodeRef::ClassProp(_)
       | SymbolNodeRef::ClassParamProp(_)
+      | SymbolNodeRef::ExpandoProperty(..)
       | SymbolNodeRef::TsIndexSignature(_)
       | SymbolNodeRef::TsCallSignatureDecl(_)
       | SymbolNodeRef::TsConstructSignatureDecl(_)
@@ -840,12 +853,42 @@ impl<'a> SymbolNodeRef<'a> {
     matches!(self, SymbolNodeRef::Module(_))
   }
 
+  pub fn has_export_keyword(&self) -> bool {
+    match self {
+      SymbolNodeRef::ExportDecl(..)
+      | SymbolNodeRef::ExportDefaultDecl(_)
+      | SymbolNodeRef::ExportDefaultExpr(_) => true,
+      SymbolNodeRef::Module(_)
+      | SymbolNodeRef::ClassDecl(_)
+      | SymbolNodeRef::FnDecl(_)
+      | SymbolNodeRef::TsEnum(_)
+      | SymbolNodeRef::TsInterface(_)
+      | SymbolNodeRef::TsNamespace(_)
+      | SymbolNodeRef::TsTypeAlias(_)
+      | SymbolNodeRef::Var(..)
+      | SymbolNodeRef::UsingVar(..)
+      | SymbolNodeRef::AutoAccessor(_)
+      | SymbolNodeRef::ClassMethod(_)
+      | SymbolNodeRef::ClassProp(_)
+      | SymbolNodeRef::ClassParamProp(_)
+      | SymbolNodeRef::Constructor(_)
+      | SymbolNodeRef::ExpandoProperty(_)
+      | SymbolNodeRef::TsIndexSignature(_)
+      | SymbolNodeRef::TsCallSignatureDecl(_)
+      | SymbolNodeRef::TsConstructSignatureDecl(_)
+      | SymbolNodeRef::TsPropertySignature(_)
+      | SymbolNodeRef::TsGetterSignature(_)
+      | SymbolNodeRef::TsSetterSignature(_)
+      | SymbolNodeRef::TsMethodSignature(_) => false,
+    }
+  }
+
   /// If the node is a declaration that can be found in a module.
   pub fn is_decl(&self) -> bool {
     match self {
       SymbolNodeRef::Module(_) => false,
       SymbolNodeRef::ClassDecl(_)
-      | SymbolNodeRef::ExportDecl(_, _)
+      | SymbolNodeRef::ExportDecl(..)
       | SymbolNodeRef::ExportDefaultDecl(_)
       | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::FnDecl(_)
@@ -853,13 +896,14 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::TsInterface(_)
       | SymbolNodeRef::TsNamespace(_)
       | SymbolNodeRef::TsTypeAlias(_)
-      | SymbolNodeRef::Var(_, _, _)
-      | SymbolNodeRef::UsingVar(_, _, _) => true,
+      | SymbolNodeRef::Var(..)
+      | SymbolNodeRef::UsingVar(..) => true,
       SymbolNodeRef::AutoAccessor(_)
       | SymbolNodeRef::ClassMethod(_)
       | SymbolNodeRef::ClassProp(_)
       | SymbolNodeRef::ClassParamProp(_)
       | SymbolNodeRef::Constructor(_)
+      | SymbolNodeRef::ExpandoProperty(..)
       | SymbolNodeRef::TsIndexSignature(_)
       | SymbolNodeRef::TsCallSignatureDecl(_)
       | SymbolNodeRef::TsConstructSignatureDecl(_)
@@ -875,7 +919,7 @@ impl<'a> SymbolNodeRef<'a> {
     match self {
       SymbolNodeRef::Module(_)
       | SymbolNodeRef::ClassDecl(_)
-      | SymbolNodeRef::ExportDecl(_, _)
+      | SymbolNodeRef::ExportDecl(..)
       | SymbolNodeRef::ExportDefaultDecl(_)
       | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::FnDecl(_)
@@ -883,13 +927,14 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::TsInterface(_)
       | SymbolNodeRef::TsNamespace(_)
       | SymbolNodeRef::TsTypeAlias(_)
-      | SymbolNodeRef::Var(_, _, _)
-      | SymbolNodeRef::UsingVar(_, _, _) => false,
+      | SymbolNodeRef::Var(..)
+      | SymbolNodeRef::UsingVar(..) => false,
       SymbolNodeRef::AutoAccessor(_)
       | SymbolNodeRef::ClassMethod(_)
       | SymbolNodeRef::ClassProp(_)
       | SymbolNodeRef::ClassParamProp(_)
       | SymbolNodeRef::Constructor(_)
+      | SymbolNodeRef::ExpandoProperty(..)
       | SymbolNodeRef::TsIndexSignature(_)
       | SymbolNodeRef::TsCallSignatureDecl(_)
       | SymbolNodeRef::TsConstructSignatureDecl(_)
@@ -905,7 +950,7 @@ impl<'a> SymbolNodeRef<'a> {
     match self {
       SymbolNodeRef::Module(_)
       | SymbolNodeRef::ClassDecl(_)
-      | SymbolNodeRef::ExportDecl(_, _)
+      | SymbolNodeRef::ExportDecl(..)
       | SymbolNodeRef::ExportDefaultDecl(_)
       | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::FnDecl(_)
@@ -913,8 +958,8 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::TsInterface(_)
       | SymbolNodeRef::TsNamespace(_)
       | SymbolNodeRef::TsTypeAlias(_)
-      | SymbolNodeRef::Var(_, _, _)
-      | SymbolNodeRef::UsingVar(_, _, _) => false,
+      | SymbolNodeRef::Var(..)
+      | SymbolNodeRef::UsingVar(..) => false,
       SymbolNodeRef::AutoAccessor(n) => {
         n.accessibility == Some(Accessibility::Private)
           || match &n.key {
@@ -934,7 +979,8 @@ impl<'a> SymbolNodeRef<'a> {
       SymbolNodeRef::Constructor(n) => {
         n.accessibility == Some(Accessibility::Private)
       }
-      SymbolNodeRef::TsIndexSignature(_)
+      SymbolNodeRef::ExpandoProperty(..)
+      | SymbolNodeRef::TsIndexSignature(_)
       | SymbolNodeRef::TsCallSignatureDecl(_)
       | SymbolNodeRef::TsConstructSignatureDecl(_)
       | SymbolNodeRef::TsPropertySignature(_)
@@ -946,6 +992,84 @@ impl<'a> SymbolNodeRef<'a> {
 
   pub fn deps(&self, mode: ResolveDepsMode) -> Vec<SymbolNodeDep> {
     super::dep_analyzer::resolve_deps(*self, mode)
+  }
+}
+
+/// An "expando property" is a property that's assigned to a declaration
+/// in order to add properties.
+///
+/// ```ts
+/// function myFunction() {}
+/// myFunction.myProperty = 123;
+/// ```
+#[derive(Debug, Clone, Copy)]
+pub struct ExpandoPropertyRef<'a>(&'a AssignExpr);
+
+impl<'a> ExpandoPropertyRef<'a> {
+  /// Assignment expressions provided here must be in one of these forms:
+  /// * obj.prop = expr;
+  /// * obj["prop"] = expr;
+  pub fn maybe_new(expr: &'a AssignExpr) -> Option<Self> {
+    if Self::is_valid(expr) {
+      Some(Self(expr))
+    } else {
+      None
+    }
+  }
+
+  fn is_valid(expr: &AssignExpr) -> bool {
+    expr.op == AssignOp::Assign
+      && Self::maybe_obj_ident(expr).is_some()
+      && match Self::maybe_prop_name(expr) {
+        Some(prop_name) => is_valid_ident(prop_name),
+        None => false,
+      }
+  }
+
+  fn maybe_member_expr(expr: &AssignExpr) -> Option<&MemberExpr> {
+    match &expr.left {
+      AssignTarget::Simple(SimpleAssignTarget::Member(member)) => Some(member),
+      _ => None,
+    }
+  }
+
+  fn maybe_obj_ident(expr: &AssignExpr) -> Option<&Ident> {
+    match &*Self::maybe_member_expr(expr)?.obj {
+      Expr::Ident(ident) => Some(ident),
+      _ => None,
+    }
+  }
+
+  fn maybe_prop_name(expr: &AssignExpr) -> Option<&Atom> {
+    match &Self::maybe_member_expr(expr)?.prop {
+      MemberProp::Ident(ident) => Some(&ident.sym),
+      MemberProp::Computed(prop_name) => match &*prop_name.expr {
+        Expr::Lit(Lit::Str(str)) => Some(&str.value),
+        _ => None,
+      },
+      _ => None,
+    }
+  }
+
+  pub fn member_expr(&self) -> &'a MemberExpr {
+    // these were verified in the constructor, so we can unwrap here
+    Self::maybe_member_expr(self.0).unwrap()
+  }
+
+  pub fn obj_ident(&self) -> &'a Ident {
+    Self::maybe_obj_ident(self.0).unwrap()
+  }
+
+  pub fn prop_name(&self) -> &'a Atom {
+    Self::maybe_prop_name(self.0).unwrap()
+  }
+
+  pub fn prop_name_range(&self) -> SourceRange {
+    Self::maybe_member_expr(self.0).unwrap().prop.range()
+  }
+
+  pub fn assignment(&self) -> &'a Expr {
+    &self.0.right
   }
 }
 
@@ -2192,10 +2316,39 @@ impl<'a> SymbolFiller<'a> {
         | Stmt::DoWhile(_)
         | Stmt::For(_)
         | Stmt::ForIn(_)
-        | Stmt::ForOf(_)
-        | Stmt::Expr(_) => {
+        | Stmt::ForOf(_) => {
           // ignore
         }
+        Stmt::Expr(n) => match &*n.expr {
+          Expr::Assign(assign_expr) => {
+            if let Some(expando_ref) =
+              ExpandoPropertyRef::maybe_new(assign_expr)
+            {
+              if let Some(symbol_id) = self
+                .builder
+                .swc_id_to_symbol_id
+                .get(&expando_ref.obj_ident().to_id())
+              {
+                let symbol = self.builder.symbol_mut(symbol_id).unwrap();
+                // expando properties are only valid on a function
+                if symbol
+                  .borrow_inner()
+                  .decls()
+                  .iter()
+                  .any(|d| d.is_function())
+                {
+                  self.create_symbol_member_or_export(
+                    symbol,
+                    SymbolNodeRef::ExpandoProperty(expando_ref),
+                  );
+                }
+              }
+            }
+          }
+          _ => {
+            // ignore
+          }
+        },
         Stmt::Decl(n) => {
           match n {
             Decl::Class(n) => {
@@ -2637,31 +2790,34 @@ impl<'a> SymbolFiller<'a> {
         n.is_static,
         n.range(),
       ),
-
       SymbolNodeRef::ClassMethod(n) => (
         SymbolNodeInner::ClassMethod(NodeRefBox::unsafe_new(self.source, n)),
         n.is_static,
         n.range(),
       ),
-
       SymbolNodeRef::ClassProp(n) => (
         SymbolNodeInner::ClassProp(NodeRefBox::unsafe_new(self.source, n)),
         n.is_static,
         n.range(),
       ),
-
       SymbolNodeRef::ClassParamProp(n) => (
         SymbolNodeInner::ClassParamProp(NodeRefBox::unsafe_new(self.source, n)),
         /* is_static */ false,
         n.range(),
       ),
-
       SymbolNodeRef::Constructor(n) => (
         SymbolNodeInner::Constructor(NodeRefBox::unsafe_new(self.source, n)),
         true,
         n.range(),
       ),
-
+      SymbolNodeRef::ExpandoProperty(n) => (
+        SymbolNodeInner::ExpandoProperty(NodeRefBox::unsafe_new(
+          self.source,
+          n.0,
+        )),
+        true,
+        n.0.range(),
+      ),
       SymbolNodeRef::TsIndexSignature(n) => (
         SymbolNodeInner::TsIndexSignature(NodeRefBox::unsafe_new(
           self.source,
@@ -2670,7 +2826,6 @@ impl<'a> SymbolFiller<'a> {
         n.is_static,
         n.range(),
       ),
-
       SymbolNodeRef::TsCallSignatureDecl(n) => (
         SymbolNodeInner::TsCallSignatureDecl(NodeRefBox::unsafe_new(
           self.source,
@@ -2679,7 +2834,6 @@ impl<'a> SymbolFiller<'a> {
         false,
         n.range(),
       ),
-
       SymbolNodeRef::TsConstructSignatureDecl(n) => (
         SymbolNodeInner::TsConstructSignatureDecl(NodeRefBox::unsafe_new(
           self.source,
@@ -2688,7 +2842,6 @@ impl<'a> SymbolFiller<'a> {
         false,
         n.range(),
       ),
-
       SymbolNodeRef::TsPropertySignature(n) => (
         SymbolNodeInner::TsPropertySignature(NodeRefBox::unsafe_new(
           self.source,
@@ -2705,7 +2858,6 @@ impl<'a> SymbolFiller<'a> {
         false,
         n.range(),
       ),
-
       SymbolNodeRef::TsSetterSignature(n) => (
         SymbolNodeInner::TsSetterSignature(NodeRefBox::unsafe_new(
           self.source,
@@ -2714,7 +2866,6 @@ impl<'a> SymbolFiller<'a> {
         false,
         n.range(),
       ),
-
       SymbolNodeRef::TsMethodSignature(n) => (
         SymbolNodeInner::TsMethodSignature(NodeRefBox::unsafe_new(
           self.source,
@@ -2725,7 +2876,7 @@ impl<'a> SymbolFiller<'a> {
       ),
       SymbolNodeRef::Module(_)
       | SymbolNodeRef::ClassDecl(_)
-      | SymbolNodeRef::ExportDecl(_, _)
+      | SymbolNodeRef::ExportDecl(..)
       | SymbolNodeRef::ExportDefaultDecl(_)
       | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::FnDecl(_)
@@ -2733,8 +2884,8 @@ impl<'a> SymbolFiller<'a> {
       | SymbolNodeRef::TsInterface(_)
       | SymbolNodeRef::TsNamespace(_)
       | SymbolNodeRef::TsTypeAlias(_)
-      | SymbolNodeRef::Var(_, _, _)
-      | SymbolNodeRef::UsingVar(_, _, _) => unreachable!(),
+      | SymbolNodeRef::Var(..)
+      | SymbolNodeRef::UsingVar(..) => unreachable!(),
     };
 
     let decl = SymbolDecl::new(

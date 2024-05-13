@@ -86,28 +86,6 @@ error[missing-explicit-type]: missing explicit type in the public API
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-   --> /src/main.ts:110:14
-    | 
-110 | export const number = (val: DOMValue) => (((...args: [] | [number]) => Number(val(...args))) as (value?: number) => number);
-    |              ^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-   --> /src/main.ts:111:14
-    | 
-111 | export const boolean = (val: DOMValue) => (((...args: [] | [boolean]) => Boolean(val(...args as any))) as (value?: boolean) => boolean);
-    |              ^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
    --> /src/main.ts:115:65
     | 
 115 | let filterFn = (cond: FilterFn, fn: (...args: any[]) => any) => (...args: any[]) => cond(...args) && fn(...args);

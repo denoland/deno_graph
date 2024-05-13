@@ -874,6 +874,21 @@ impl<'a> PublicRangeFinder<'a> {
                     }
                   }
 
+                  // functions may contain expando property exports that are
+                  // outside the range of the function, so include those as
+                  // part of the found ranges
+                  if node.is_function() {
+                    for export_id in symbol.exports().values() {
+                      let export_symbol =
+                        module_info.symbol(*export_id).unwrap();
+                      for export_decl in export_symbol.decls() {
+                        if !decl.range.contains(&export_decl.range) {
+                          found_ranges.insert(export_decl.range);
+                        }
+                      }
+                    }
+                  }
+
                   for dep in node.deps(ResolveDepsMode::TypesAndExpressions) {
                     match dep {
                       SymbolNodeDep::Id(id) => {

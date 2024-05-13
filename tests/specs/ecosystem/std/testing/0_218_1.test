@@ -17,6 +17,280 @@ std/testing/0.218.1
 
 ===
 
-== FAST CHECK EMIT PASSED ==
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:582:11
+    | 
+582 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+583 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+584 |   return it({
+    | ^^^^^^^^^^^^^
+585 |     ...options,
+    | ^^^^^^^^^^^^^^^
+586 |     only: true,
+    | ^^^^^^^^^^^^^^^
+587 |   });
+    | ^^^^^
+588 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
 
-== TYPE CHECK PASSED ==
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:590:13
+    | 
+590 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+591 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+592 |   return it({
+    | ^^^^^^^^^^^^^
+593 |     ...options,
+    | ^^^^^^^^^^^^^^^
+594 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+595 |   });
+    | ^^^^^
+596 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:582:11
+    | 
+582 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+583 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+584 |   return it({
+    | ^^^^^^^^^^^^^
+585 |     ...options,
+    | ^^^^^^^^^^^^^^^
+586 |     only: true,
+    | ^^^^^^^^^^^^^^^
+587 |   });
+    | ^^^^^
+588 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:590:13
+    | 
+590 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+591 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+592 |   return it({
+    | ^^^^^^^^^^^^^
+593 |     ...options,
+    | ^^^^^^^^^^^^^^^
+594 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+595 |   });
+    | ^^^^^
+596 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:582:11
+    | 
+582 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+583 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+584 |   return it({
+    | ^^^^^^^^^^^^^
+585 |     ...options,
+    | ^^^^^^^^^^^^^^^
+586 |     only: true,
+    | ^^^^^^^^^^^^^^^
+587 |   });
+    | ^^^^^
+588 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:590:13
+    | 
+590 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+591 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+592 |   return it({
+    | ^^^^^^^^^^^^^
+593 |     ...options,
+    | ^^^^^^^^^^^^^^^
+594 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+595 |   });
+    | ^^^^^
+596 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:582:11
+    | 
+582 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+583 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+584 |   return it({
+    | ^^^^^^^^^^^^^
+585 |     ...options,
+    | ^^^^^^^^^^^^^^^
+586 |     only: true,
+    | ^^^^^^^^^^^^^^^
+587 |   });
+    | ^^^^^
+588 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:590:13
+    | 
+590 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+591 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+592 |   return it({
+    | ^^^^^^^^^^^^^
+593 |     ...options,
+    | ^^^^^^^^^^^^^^^
+594 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+595 |   });
+    | ^^^^^
+596 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:582:11
+    | 
+582 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+583 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+584 |   return it({
+    | ^^^^^^^^^^^^^
+585 |     ...options,
+    | ^^^^^^^^^^^^^^^
+586 |     only: true,
+    | ^^^^^^^^^^^^^^^
+587 |   });
+    | ^^^^^
+588 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:590:13
+    | 
+590 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+591 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+592 |   return it({
+    | ^^^^^^^^^^^^^
+593 |     ...options,
+    | ^^^^^^^^^^^^^^^
+594 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+595 |   });
+    | ^^^^^
+596 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:582:11
+    | 
+582 | it.only = function itOnly<T>(...args: ItArgs<T>) {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+583 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+584 |   return it({
+    | ^^^^^^^^^^^^^
+585 |     ...options,
+    | ^^^^^^^^^^^^^^^
+586 |     only: true,
+    | ^^^^^^^^^^^^^^^
+587 |   });
+    | ^^^^^
+588 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /bdd.ts:590:13
+    | 
+590 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+591 |   const options = itDefinition(...args);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+592 |   return it({
+    | ^^^^^^^^^^^^^
+593 |     ...options,
+    | ^^^^^^^^^^^^^^^
+594 |     ignore: true,
+    | ^^^^^^^^^^^^^^^^^
+595 |   });
+    | ^^^^^
+596 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

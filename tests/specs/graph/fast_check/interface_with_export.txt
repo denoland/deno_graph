@@ -1,0 +1,104 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+  export function it() {
+    console.log("it")
+  }
+  it.skip = (really: boolean) => {
+    console.log("it.skip", really)
+  }
+  it.ignore = function(really: boolean) {
+    console.log("it.ignore", really)
+  }
+  it.restArrFn = (...really: any[]) => {}
+  it.arrayArrFn = ([a,b]: [1,2]) => {}
+  it.asyncArrFn = async () => {}
+  it.objArrFn = ({a,b}: {a: number, b: number}) => {}
+  it.restFn = function(...really: any[]) {}
+  it.arrayFn = function([a,b]: [1,2]) {}
+  it.asyncFn = async function() {}
+  it.objFn = function({a,b}: {a: number, b: number}) {}
+  it.num = 2
+  it.str = "a"
+  it.bool = true;
+
+
+# mod.ts
+import { it } from 'jsr:@scope/a'
+it.skip();
+it.ignore();
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 19
+              },
+              "end": {
+                "line": 0,
+                "character": 33
+              }
+            }
+          }
+        }
+      ],
+      "size": 58,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 599,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {}
+  export function it(): void {}
+  export namespace it {
+    export var skip = (really: boolean): void =>{}, ignore = function(really: boolean): void {}, restArrFn = (...really: any[]): void =>{}, arrayArrFn = ([]: [1, 2]): void =>{}, asyncArrFn = (): Promise<void> =>({} as never), objArrFn = ({}: {
+      a: number;
+      b: number;
+    }): void =>{}, restFn = function(...really: any[]): void {}, arrayFn = function([]: [1, 2]): void {}, asyncFn = function(): Promise<void> {
+      return {} as never;
+    }, objFn = function({}: {
+      a: number;
+      b: number;
+    }): void {}, num = 2, str = "a", bool = true;
+  }
+  --- DTS ---
+  export declare function it(): void;
+  export declare namespace it {
+    export var skip: (really: boolean) => void, ignore: (really: boolean) => void, restArrFn: (...really: any[]) => void, arrayArrFn: ([]: [1, 2]) => void, asyncArrFn: () => Promise<void>, objArrFn: ({}: {
+      a: number;
+      b: number;
+    }) => void, restFn: (...really: any[]) => void, arrayFn: ([]: [1, 2]) => void, asyncFn: () => Promise<void>, objFn: ({}: {
+      a: number;
+      b: number;
+    }) => void, num: number, str: string, bool: boolean;
+  }

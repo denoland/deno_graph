@@ -7,6 +7,202 @@ std/expect/0.222.0
 
 ===
 
-== FAST CHECK EMIT PASSED ==
+== FAST CHECK EMIT FAILED ==
+error[unsupported-expando-property]: expando property referencing 'anything' conflicts with 'expect.anything'
+   --> /expect.ts:205:19
+    | 
+205 | expect.anything = anything;
+    |                   ^^^^^^^^
+    = hint: rename 'anything' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
 
-== TYPE CHECK PASSED ==
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'any' conflicts with 'expect.any'
+   --> /expect.ts:206:14
+    | 
+206 | expect.any = any;
+    |              ^^^
+    = hint: rename 'any' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'arrayContaining' conflicts with 'expect.arrayContaining'
+   --> /expect.ts:207:26
+    | 
+207 | expect.arrayContaining = arrayContaining;
+    |                          ^^^^^^^^^^^^^^^
+    = hint: rename 'arrayContaining' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'closeTo' conflicts with 'expect.closeTo'
+   --> /expect.ts:208:18
+    | 
+208 | expect.closeTo = closeTo;
+    |                  ^^^^^^^
+    = hint: rename 'closeTo' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'stringContaining' conflicts with 'expect.stringContaining'
+   --> /expect.ts:209:27
+    | 
+209 | expect.stringContaining = stringContaining;
+    |                           ^^^^^^^^^^^^^^^^
+    = hint: rename 'stringContaining' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'stringMatching' conflicts with 'expect.stringMatching'
+   --> /expect.ts:210:25
+    | 
+210 | expect.stringMatching = stringMatching;
+    |                         ^^^^^^^^^^^^^^
+    = hint: rename 'stringMatching' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'anything' conflicts with 'expect.anything'
+   --> /expect.ts:205:19
+    | 
+205 | expect.anything = anything;
+    |                   ^^^^^^^^
+    = hint: rename 'anything' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'any' conflicts with 'expect.any'
+   --> /expect.ts:206:14
+    | 
+206 | expect.any = any;
+    |              ^^^
+    = hint: rename 'any' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'arrayContaining' conflicts with 'expect.arrayContaining'
+   --> /expect.ts:207:26
+    | 
+207 | expect.arrayContaining = arrayContaining;
+    |                          ^^^^^^^^^^^^^^^
+    = hint: rename 'arrayContaining' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'closeTo' conflicts with 'expect.closeTo'
+   --> /expect.ts:208:18
+    | 
+208 | expect.closeTo = closeTo;
+    |                  ^^^^^^^
+    = hint: rename 'closeTo' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'stringContaining' conflicts with 'expect.stringContaining'
+   --> /expect.ts:209:27
+    | 
+209 | expect.stringContaining = stringContaining;
+    |                           ^^^^^^^^^^^^^^^^
+    = hint: rename 'stringContaining' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'stringMatching' conflicts with 'expect.stringMatching'
+   --> /expect.ts:210:25
+    | 
+210 | expect.stringMatching = stringMatching;
+    |                         ^^^^^^^^^^^^^^
+    = hint: rename 'stringMatching' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'anything' conflicts with 'expect.anything'
+   --> /expect.ts:205:19
+    | 
+205 | expect.anything = anything;
+    |                   ^^^^^^^^
+    = hint: rename 'anything' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'any' conflicts with 'expect.any'
+   --> /expect.ts:206:14
+    | 
+206 | expect.any = any;
+    |              ^^^
+    = hint: rename 'any' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'arrayContaining' conflicts with 'expect.arrayContaining'
+   --> /expect.ts:207:26
+    | 
+207 | expect.arrayContaining = arrayContaining;
+    |                          ^^^^^^^^^^^^^^^
+    = hint: rename 'arrayContaining' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'closeTo' conflicts with 'expect.closeTo'
+   --> /expect.ts:208:18
+    | 
+208 | expect.closeTo = closeTo;
+    |                  ^^^^^^^
+    = hint: rename 'closeTo' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'stringContaining' conflicts with 'expect.stringContaining'
+   --> /expect.ts:209:27
+    | 
+209 | expect.stringContaining = stringContaining;
+    |                           ^^^^^^^^^^^^^^^^
+    = hint: rename 'stringContaining' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+
+error[unsupported-expando-property]: expando property referencing 'stringMatching' conflicts with 'expect.stringMatching'
+   --> /expect.ts:210:25
+    | 
+210 | expect.stringMatching = stringMatching;
+    |                         ^^^^^^^^^^^^^^
+    = hint: rename 'stringMatching' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+  info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+  docs: https://jsr.io/go/slow-type-unsupported-expando-property
+
+

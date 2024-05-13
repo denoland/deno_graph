@@ -13,7 +13,9 @@ use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::common::comments::SingleThreadedComments;
 use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
 use deno_ast::swc::common::Spanned;
+use deno_ast::swc::common::SyntaxContext;
 use deno_ast::swc::common::DUMMY_SP;
+use deno_ast::swc::visit::VisitWith;
 use deno_ast::EmitOptions;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
@@ -21,7 +23,11 @@ use deno_ast::ParsedSource;
 use deno_ast::SourceMap;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
+use indexmap::IndexMap;
 
+use crate::symbols::EsModuleInfo;
+use crate::symbols::ExpandoPropertyRef;
+use crate::symbols::Symbol;
 use crate::ModuleGraph;
 use crate::ModuleInfo;
 use crate::ParserModuleAnalyzer;
@@ -102,22 +108,22 @@ pub struct TransformOptions<'a> {
 
 pub fn transform(
   graph: &ModuleGraph,
-  specifier: &ModuleSpecifier,
+  es_module_info: &EsModuleInfo,
   public_ranges: &ModulePublicRanges,
-  parsed_source: &ParsedSource,
   options: &TransformOptions,
 ) -> Result<FastCheckModule, Vec<FastCheckDiagnostic>> {
   let mut transformer = FastCheckTransformer::new(
     graph,
-    specifier,
+    es_module_info,
     public_ranges,
-    parsed_source,
     options.should_error_on_first_diagnostic,
   );
   let (module, comments) = transformer.transform()?;
   if !transformer.diagnostics.is_empty() {
     return Err(transformer.diagnostics);
   }
+  let parsed_source = es_module_info.source();
+  let specifier = es_module_info.specifier();
   let module_info = ParserModuleAnalyzer::module_info_from_swc(
     parsed_source.media_type(),
     &module,
@@ -184,27 +190,30 @@ pub fn transform(
 struct FastCheckTransformer<'a> {
   graph: &'a ModuleGraph,
   specifier: &'a ModuleSpecifier,
+  es_module_info: &'a EsModuleInfo,
   public_ranges: &'a ModulePublicRanges,
   parsed_source: &'a ParsedSource,
   should_error_on_first_diagnostic: bool,
   diagnostics: Vec<FastCheckDiagnostic>,
+  expando_namespaces: IndexMap<Id, Vec<VarDeclarator>>,
 }
 
 impl<'a> FastCheckTransformer<'a> {
   pub fn new(
     graph: &'a ModuleGraph,
-    specifier: &'a ModuleSpecifier,
+    es_module_info: &'a EsModuleInfo,
     public_ranges: &'a ModulePublicRanges,
-    parsed_source: &'a ParsedSource,
     should_error_on_first_diagnostic: bool,
   ) -> Self {
     Self {
       graph,
-      specifier,
+      specifier: es_module_info.specifier(),
+      es_module_info,
       public_ranges,
-      parsed_source,
+      parsed_source: es_module_info.source(),
       should_error_on_first_diagnostic,
       diagnostics: Default::default(),
+      expando_namespaces: Default::default(),
     }
   }
 
@@ -232,6 +241,8 @@ impl<'a> FastCheckTransformer<'a> {
     comments: &mut CommentsMut,
     is_ambient: bool,
   ) -> Result<Vec<ModuleItem>, Vec<FastCheckDiagnostic>> {
+    let parent_expando_namespaces =
+      std::mem::take(&mut self.expando_namespaces);
     let mut final_body = Vec::with_capacity(body.len());
     for mut item in body {
       let retain = self.transform_item(&mut item, comments, is_ambient)?;
@@ -241,7 +252,99 @@ impl<'a> FastCheckTransformer<'a> {
         comments.remove_leading(item.start());
       }
     }
+
+    // Add accumulated namespaces
+    final_body.reserve(self.expando_namespaces.len());
+    for (swc_id, var_decls) in
+      std::mem::take(&mut self.expando_namespaces).drain(..)
+    {
+      let symbol = self.es_module_info.symbol_from_swc(&swc_id).unwrap();
+      for decl in &var_decls {
+        self.check_expando_property_diagnostics(decl, &swc_id, symbol)?;
+      }
+
+      // typescript requires the export keyword to match the other
+      // declarations so only add an export keyword if the other
+      // decls have one and also we don't want to export something
+      // that's not exported
+      let has_export_keyword = symbol.decls().iter().any(|d| {
+        d.maybe_node()
+          .map(|n| n.has_export_keyword())
+          .unwrap_or(false)
+      });
+      let module_decl = Decl::TsModule(Box::new(TsModuleDecl {
+        span: DUMMY_SP,
+        declare: false,
+        global: false,
+        id: TsModuleName::Ident(Ident::new(swc_id.0, DUMMY_SP)),
+        body: Some(TsNamespaceBody::TsModuleBlock(TsModuleBlock {
+          span: DUMMY_SP,
+          body: vec![ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
+            ExportDecl {
+              span: DUMMY_SP,
+              decl: Decl::Var(Box::new(VarDecl {
+                span: DUMMY_SP,
+                kind: VarDeclKind::Var,
+                declare: false,
+                decls: var_decls,
+              })),
+            },
+          ))],
+        })),
+      }));
+      final_body.push(if has_export_keyword {
+        ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(ExportDecl {
+          span: DUMMY_SP,
+          decl: module_decl,
+        }))
+      } else {
+        ModuleItem::Stmt(Stmt::Decl(module_decl))
+      });
+    }
+
+    self.expando_namespaces = parent_expando_namespaces;
+
     Ok(final_body)
+  }
+
+  fn check_expando_property_diagnostics(
+    &mut self,
+    decl: &VarDeclarator,
+    parent_id: &Id,
+    parent_symbol: &Symbol,
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
+    struct VisitExpandoPropInits<'a> {
+      symbol: &'a Symbol,
+      parent_context: SyntaxContext,
+      diagnostics: IndexMap<String, SourceRange>,
+    }
+
+    impl deno_ast::swc::visit::Visit for VisitExpandoPropInits<'_> {
+      fn visit_ident(&mut self, ident: &Ident) {
+        let (name, context) = ident.to_id();
+        if context == self.parent_context && self.symbol.export(&name).is_some()
+        {
+          self.diagnostics.insert(name.to_string(), ident.range());
+        }
+      }
+    }
+
+    let mut inits = VisitExpandoPropInits {
+      symbol: parent_symbol,
+      parent_context: parent_id.1,
+      diagnostics: Default::default(),
+    };
+    decl.init.visit_with(&mut inits);
+    for (reference_name, range) in inits.diagnostics {
+      self.mark_diagnostic(
+        FastCheckDiagnostic::UnsupportedExpandoProperty {
+          object_name: parent_id.0.to_string(),
+          reference_name,
+          range: self.source_range_to_range(range),
+        },
+      )?;
+    }
+    Ok(())
   }
 
   fn transform_module_specifier(&mut self, src: &mut Str) {
@@ -374,6 +477,11 @@ impl<'a> FastCheckTransformer<'a> {
         }
       },
       ModuleItem::Stmt(stmt) => match stmt {
+        Stmt::Decl(n) => self.transform_decl(n, comments, None, is_ambient),
+        Stmt::Expr(n) => match &mut *n.expr {
+          Expr::Assign(assign_expr) => self.transform_assign_expr(assign_expr),
+          _ => Ok(false),
+        },
         Stmt::Block(_)
         | Stmt::Empty(_)
         | Stmt::Debugger(_)
@@ -390,9 +498,7 @@ impl<'a> FastCheckTransformer<'a> {
         | Stmt::DoWhile(_)
         | Stmt::For(_)
         | Stmt::ForIn(_)
-        | Stmt::ForOf(_)
-        | Stmt::Expr(_) => Ok(false),
-        Stmt::Decl(n) => self.transform_decl(n, comments, None, is_ambient),
+        | Stmt::ForOf(_) => Ok(false),
       },
     }
   }
@@ -445,6 +551,7 @@ impl<'a> FastCheckTransformer<'a> {
         if !self.public_ranges.contains(&public_range) {
           return Ok(false);
         }
+
         let is_overload =
           self.public_ranges.is_impl_with_overloads(&public_range);
         self.transform_fn(
@@ -1397,6 +1504,56 @@ impl<'a> FastCheckTransformer<'a> {
     Ok(true)
   }
 
+  // Keep expando properties. Example:
+  //
+  //   export function it() {}
+  //   it.skip = () => {};
+  //   it.prop = "value";
+  //
+  // Otherwise TS will error when calling `it.skip()`
+  fn transform_assign_expr(
+    &mut self,
+    n: &mut AssignExpr,
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
+    if !self.public_ranges.contains(&n.range()) {
+      return Ok(false);
+    }
+
+    // it will be an expando property at this point, but we still need n.right
+    // to be mutable, so transform before getting the expando property
+    let right_range = n.right.range();
+    let is_init_leavable =
+      self.maybe_transform_expr_if_leavable(&mut n.right, Some(right_range))?;
+    let Some(expando_prop) = ExpandoPropertyRef::maybe_new(n) else {
+      return Ok(false);
+    };
+    let mem_expr = expando_prop.member_expr();
+    if !is_init_leavable {
+      self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+        range: self.source_range_to_range(mem_expr.range()),
+      })?;
+    } else {
+      let var_decls = self
+        .expando_namespaces
+        .entry(expando_prop.obj_ident().to_id())
+        .or_default();
+      var_decls.push(VarDeclarator {
+        span: DUMMY_SP,
+        name: Pat::Ident(BindingIdent {
+          // this property name is guaranteed to be a valid identifier
+          id: Ident::new(
+            expando_prop.prop_name().clone(),
+            expando_prop.prop_name_range().into(),
+          ),
+          type_ann: None,
+        }),
+        init: Some(n.right.clone()),
+        definite: false,
+      });
+    }
+    Ok(false)
+  }
+
   fn mark_diagnostic(
     &mut self,
     diagnostic: FastCheckDiagnostic,
@@ -1502,7 +1659,14 @@ impl<'a> FastCheckTransformer<'a> {
       },
       Expr::Await(n) => recurse(&mut n.arg)?,
       Expr::Paren(n) => recurse(&mut n.expr)?,
-      Expr::TsTypeAssertion(_) | Expr::TsAs(_) => false,
+      Expr::TsTypeAssertion(assertion) => {
+        assertion.expr = Box::new(paren_expr(obj_as_never_expr()));
+        true
+      }
+      Expr::TsAs(assertion) => {
+        assertion.expr = Box::new(paren_expr(obj_as_never_expr()));
+        true
+      }
       Expr::TsConstAssertion(n) => recurse(&mut n.expr)?,
       Expr::TsNonNull(n) => recurse(&mut n.expr)?,
       Expr::Fn(n) => {

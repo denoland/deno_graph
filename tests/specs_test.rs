@@ -2,7 +2,6 @@
 
 use std::collections::BTreeMap;
 use std::panic::AssertUnwindSafe;
-use std::sync::Arc;
 
 use std::collections::HashMap;
 
@@ -49,7 +48,7 @@ fn main() {
       filter_override: None,
     },
     RunOptions { parallel: true },
-    Arc::new(|test| {
+    |test| {
       if test.name.starts_with("specs::graph") {
         TestResult::from_maybe_panic(AssertUnwindSafe(|| {
           run_graph_test(test);
@@ -63,7 +62,7 @@ fn main() {
           output: format!("Unknown test kind: {}", test.name).into_bytes(),
         }
       }
-    }),
+    },
   )
 }
 

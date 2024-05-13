@@ -182,6 +182,11 @@ impl DepsFiller {
           }
         }
       }
+      SymbolNodeRef::ExpandoProperty(n) => {
+        if self.mode.visit_exprs() {
+          self.visit_expr(n.assignment());
+        }
+      }
       SymbolNodeRef::TsIndexSignature(n) => {
         self.visit_ts_index_signature(n);
       }
