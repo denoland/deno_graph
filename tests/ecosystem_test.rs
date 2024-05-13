@@ -1,6 +1,5 @@
 use std::io::Write as _;
 use std::path::PathBuf;
-use std::sync::Arc;
 
 use anyhow::Context;
 use deno_ast::diagnostics::Diagnostic;
@@ -120,7 +119,7 @@ fn main() {
     RunOptions {
       parallel: std::env::var("CI").is_err(),
     },
-    Arc::new(run_test),
+    run_test,
   )
 }
 
