@@ -477,6 +477,11 @@ impl<'a> FastCheckTransformer<'a> {
         }
       },
       ModuleItem::Stmt(stmt) => match stmt {
+        Stmt::Decl(n) => self.transform_decl(n, comments, None, is_ambient),
+        Stmt::Expr(n) => match &mut *n.expr {
+          Expr::Assign(assign_expr) => self.transform_assign_expr(assign_expr),
+          _ => Ok(false),
+        },
         Stmt::Block(_)
         | Stmt::Empty(_)
         | Stmt::Debugger(_)
@@ -494,48 +499,6 @@ impl<'a> FastCheckTransformer<'a> {
         | Stmt::For(_)
         | Stmt::ForIn(_)
         | Stmt::ForOf(_) => Ok(false),
-        Stmt::Expr(n) => match &mut *n.expr {
-          Expr::Assign(assign_expr) => self.transform_assign_expr(assign_expr),
-
-          Expr::This(_)
-          | Expr::Array(_)
-          | Expr::Object(_)
-          | Expr::Fn(_)
-          | Expr::Unary(_)
-          | Expr::Update(_)
-          | Expr::Bin(_)
-          | Expr::Member(_)
-          | Expr::SuperProp(_)
-          | Expr::Cond(_)
-          | Expr::Call(_)
-          | Expr::New(_)
-          | Expr::Seq(_)
-          | Expr::Ident(_)
-          | Expr::Lit(_)
-          | Expr::Tpl(_)
-          | Expr::TaggedTpl(_)
-          | Expr::Arrow(_)
-          | Expr::Class(_)
-          | Expr::Yield(_)
-          | Expr::MetaProp(_)
-          | Expr::Await(_)
-          | Expr::Paren(_)
-          | Expr::JSXMember(_)
-          | Expr::JSXNamespacedName(_)
-          | Expr::JSXEmpty(_)
-          | Expr::JSXElement(_)
-          | Expr::JSXFragment(_)
-          | Expr::TsTypeAssertion(_)
-          | Expr::TsConstAssertion(_)
-          | Expr::TsNonNull(_)
-          | Expr::TsAs(_)
-          | Expr::TsInstantiation(_)
-          | Expr::TsSatisfies(_)
-          | Expr::PrivateName(_)
-          | Expr::OptChain(_)
-          | Expr::Invalid(_) => Ok(false),
-        },
-        Stmt::Decl(n) => self.transform_decl(n, comments, None, is_ambient),
       },
     }
   }
