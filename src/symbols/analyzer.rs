@@ -1051,6 +1051,11 @@ impl<'a> ExpandoPropertyRef<'a> {
     }
   }
 
+  /// The inner assignment expression.
+  pub fn inner(&self) -> &'a AssignExpr {
+    self.0
+  }
+
   pub fn member_expr(&self) -> &'a MemberExpr {
     // these were verified in the constructor, so we can unwrap here
     Self::maybe_member_expr(self.0).unwrap()
