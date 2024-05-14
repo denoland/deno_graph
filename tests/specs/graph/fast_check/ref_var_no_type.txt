@@ -6,7 +6,7 @@
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
 export const symbols = {
-  writable: function() {},
+  writable: function() { return; },
   readable: 1234,
 };
 
@@ -47,7 +47,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 120,
+      "size": 129,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }

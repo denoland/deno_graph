@@ -88,6 +88,135 @@ dklab/oak-routing-ctrl/0.1.0
 
 ===
 
-== FAST CHECK EMIT PASSED ==
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/Delete.ts:6:3
+   | 
+ 6 |   (target: Function, context: ClassMethodDecoratorContext) => {
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 7 |     debug(
+   | ^^^^^^^^^^
+ 8 |       `invoking Delete MethodDecorator for ${target.name} with pathPrefix ${path}`,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 9 |       context,
+   | ^^^^^^^^^^^^^^
+10 |     );
+   | ^^^^^^
+11 |     register("delete", path, target.name);
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+12 |   };
+   | ^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
 
-== TYPE CHECK PASSED ==
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/Put.ts:6:3
+   | 
+ 6 |   (target: Function, context: ClassMemberDecoratorContext) => {
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 7 |     debug(
+   | ^^^^^^^^^^
+ 8 |       `invoking Put MethodDecorator for ${target.name} with pathPrefix ${path}`,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 9 |       context,
+   | ^^^^^^^^^^^^^^
+10 |     );
+   | ^^^^^^
+11 |     register("put", path, target.name);
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+12 |   };
+   | ^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/Post.ts:6:3
+   | 
+ 6 |   (target: Function, context: ClassMethodDecoratorContext) => {
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 7 |     debug(
+   | ^^^^^^^^^^
+ 8 |       `invoking Post MethodDecorator for ${target.name} with pathPrefix ${path}`,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 9 |       context,
+   | ^^^^^^^^^^^^^^
+10 |       // target.constructor[Symbol.metadata],
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 |     );
+   | ^^^^^^
+12 |     register("post", path, target.name);
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+13 |   };
+   | ^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/Get.ts:6:3
+   | 
+ 6 |   (target: Function, context: ClassMethodDecoratorContext) => {
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 7 |     debug(
+   | ^^^^^^^^^^
+ 8 |       `invoking Get MethodDecorator for ${target.name} with pathPrefix ${path}`,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 9 |       context,
+   | ^^^^^^^^^^^^^^
+10 |     );
+   | ^^^^^^
+11 |     register("get", path, target.name);
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+12 |   };
+   | ^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/Controller.ts:13:3
+   | 
+13 |   (target: Controller, context: ClassDecoratorContext) => {
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+14 |     debug(`invoking ControllerDecorator for ${target.name}`, context);
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+15 |     const fnNames: string[] = Object.getOwnPropertyNames(target.prototype);
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |     for (const fnName of fnNames) {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+17 |       const pair = store.get(fnName);
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 |       if (!pair) continue;
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |       pair.forEach((path, verb, p) => p.set(verb, join(pathPrefix, path)));
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |     }
+   | ^^^^^
+21 |   };
+   | ^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

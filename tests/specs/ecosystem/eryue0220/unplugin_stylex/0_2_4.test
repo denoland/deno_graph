@@ -121,21 +121,46 @@ eryue0220/unplugin-stylex/0.2.4
 
 ===
 
-== FAST CHECK EMIT PASSED ==
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/webpack.ts:13:16
+   | 
+13 | export default (options?: UnpluginStylexOptions) => {
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+14 |   if (isDevelopment || options?.dev) {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+15 |     throw new Error('If you want to use this plugin through webpack, please use "@stylexjs/webpack-plugin" instead')
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |   }
+   | ^^^
+17 | }
+   | ^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
 
-== TYPE CHECK FAILED ==
--- stdout --
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
--- stderr --
-error: TS2580 [ERROR]: Cannot find name 'process'.
-export const isDevelopment = (process.env.NODE_ENV !== 'production' || process.env.BABEL_ENV !== 'production');
-                              ~~~~~~~
-    at file://<tmpdir>/src/core/constants.ts:1:31
 
-TS2580 [ERROR]: Cannot find name 'process'.
-export const isDevelopment = (process.env.NODE_ENV !== 'production' || process.env.BABEL_ENV !== 'production');
-                                                                       ~~~~~~~
-    at file://<tmpdir>/src/core/constants.ts:1:72
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/rollup.ts:13:16
+   | 
+13 | export default (options?: UnpluginStylexOptions) => {
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+14 |   if (isDevelopment || options?.dev) {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+15 |     throw new Error('If you want to use this plugin through rollup, please use "@stylexjs/rollup-plugin" instead')
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |   }
+   | ^^^
+17 | }
+   | ^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
 
-Found 2 errors.
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
 

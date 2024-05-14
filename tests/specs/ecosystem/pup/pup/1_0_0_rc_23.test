@@ -24,6 +24,147 @@ pup/pup/1.0.0-rc.23
 
 ===
 
-== FAST CHECK EMIT PASSED ==
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/core/process.ts:350:10
+    | 
+350 |   public restart = (reason: string) => {
+    |          ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
 
-== TYPE CHECK PASSED ==
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/core/process.ts:359:10
+    | 
+359 |   public block = (reason: string) => {
+    |          ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/core/process.ts:368:10
+    | 
+368 |   public unblock = (reason: string) => {
+    |          ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/core/pup.ts:103:10
+    | 
+103 |   public cleanup = async () => {
+    |          ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: async function expressions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/core/pup.ts:117:10
+    | 
+117 |   public init = async () => {
+    |          ^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: async function expressions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/core/cluster.ts:27:19
+   | 
+27 |   public override start = async (reason?: string, restart?: boolean) => {
+   |                   ^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: async function expressions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /lib/core/cluster.ts:37:10
+   | 
+37 |   public setInstances = (nInstances: number) => {
+   |          ^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/core/cluster.ts:127:19
+    | 
+127 |   public override restart = (reason: string) => {
+    |                   ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/core/cluster.ts:131:19
+    | 
+131 |   public override block = (reason: string) => {
+    |                   ^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/core/cluster.ts:135:19
+    | 
+135 |   public override unblock = (reason: string) => {
+    |                   ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/core/cluster.ts:177:10
+    | 
+177 |   public cleanup = () => {
+    |          ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+

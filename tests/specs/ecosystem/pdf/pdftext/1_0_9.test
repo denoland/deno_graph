@@ -4,6 +4,19 @@ pdf/pdftext/1.0.9
 ===
 
 == FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /test.ts:9:14
+  | 
+9 | export const test = async () => {
+  |              ^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: async function expressions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
 error[unsupported-nested-javascript]: referenced a JavaScript module without type declarations from a TypeScript module
  --> /src/pdf.mjs
   = hint: add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript

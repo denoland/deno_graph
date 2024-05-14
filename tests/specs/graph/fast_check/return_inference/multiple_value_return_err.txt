@@ -1,0 +1,76 @@
+~~ {"workspaceFastCheck":true} ~~
+# workspace_members
+[
+  {
+    "base": "file:///",
+    "nv": "@scope/a@1.0.0",
+    "exports": {
+      ".": "./mod.ts"
+    }
+  }
+]
+
+# mod.ts
+export const a = () => {
+  if (globalThis) return 1;
+  return 2;
+}
+
+export const b = function() {
+  if (globalThis) return 1;
+  return 2;
+}
+
+export function c() {
+  if (globalThis) return 1;
+  return 2;
+}
+
+export class D {
+  d() {
+    if (globalThis) return 1;
+    return 2;
+  }
+}
+
+// TODO: we don't support this at all
+// export const e = {
+//   e() {
+//     if (globalThis) return 1;
+//     return 2;
+//   }
+// };
+
+// TODO: we don't support this at all
+// export const f = class {
+//   f() {
+//     if (globalThis) return 1;
+//     return 2;
+//   }
+// };
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "size": 557,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
+
+Fast check file:///mod.ts:
+  missing explicit return type in the public API
+      at file:///mod.ts@13
+  missing explicit return type in the public API
+      at file:///mod.ts@81
+  missing explicit return type in the public API
+      at file:///mod.ts@157
+  missing explicit return type in the public API
+      at file:///mod.ts@225

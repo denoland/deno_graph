@@ -86,6 +86,19 @@ error[missing-explicit-type]: missing explicit type in the public API
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/main.ts:107:41
+    | 
+107 | export const empty = (el: ElementFn) => () => { el().replaceChildren(); };
+    |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
    --> /src/main.ts:115:65
     | 
 115 | let filterFn = (cond: FilterFn, fn: (...args: any[]) => any) => (...args: any[]) => cond(...args) && fn(...args);
@@ -93,6 +106,23 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/main.ts:117:29
+    | 
+117 | export const debug = () =>  (...args: any[]) => {
+    |                             ^^^^^^^^^^^^^^^^^^^^^
+118 |   debugger;
+    | ^^^^^^^^^^^
+119 | };
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 

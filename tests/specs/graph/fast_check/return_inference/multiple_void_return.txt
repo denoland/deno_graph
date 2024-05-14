@@ -1,0 +1,83 @@
+~~ {"workspaceFastCheck":true} ~~
+# workspace_members
+[
+  {
+    "base": "file:///",
+    "nv": "@scope/a@1.0.0",
+    "exports": {
+      ".": "./mod.ts"
+    }
+  }
+]
+
+# mod.ts
+export const a = () => {
+  if (globalThis) return;
+  return;
+}
+
+export const b = function() {
+  if (globalThis) return;
+  return;
+}
+
+export function c() {
+  if (globalThis) return;
+  return;
+}
+
+export class D {
+  d() {
+    if (globalThis) return;
+    return;
+  }
+}
+
+// TODO: these are not yet handled
+// export const e = {
+//   e() {
+//     if (globalThis) return;
+//     return;
+//   }
+// };
+
+// TODO: these are not yet handled
+// export const f = class {
+//   f() {
+//     if (globalThis) return;
+//     return;
+//   }
+// };
+
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "size": 528,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
+
+Fast check file:///mod.ts:
+  {}
+  export const a = (): void =>{};
+  export const b = function(): void {};
+  export function c(): void {}
+  export class D {
+    d(): void {}
+  }
+  --- DTS ---
+  export declare const a: () => void;
+  export declare const b: () => void;
+  export declare function c(): void;
+  export declare class D {
+    d(): void;
+  }

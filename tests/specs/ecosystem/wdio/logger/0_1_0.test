@@ -42,7 +42,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | ^^^^^^^^^^^^^
 178 | })
     | ^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -56,6 +56,104 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/node.ts:180:25
+    | 
+180 | getLogger.clearLogger = () => {
+    |                         ^^^^^^^
+181 |     if (logFile) {
+    | ^^^^^^^^^^^^^^^^^^
+182 |         logFile.end()
+    | ^^^^^^^^^^^^^^^^^^^^^
+183 |     }
+    | ^^^^^
+184 |     logFile = null
+    | ^^^^^^^^^^^^^^^^^^
+185 | }
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/node.ts:186:32
+    | 
+186 | getLogger.setLogLevelsConfig = (logLevels: Record<string, log.LogLevelDesc> = {}, wdioLogLevel: log.LogLevelDesc = DEFAULT_LEVEL) => {
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+187 |     /**
+    | ^^^^^^^
+188 |      * set log level
+    | ^^^^^^^^^^^^^^^^^^^^
+189 |      */
+    | ^^^^^^^
+190 |     if (process.env.WDIO_LOG_LEVEL === undefined) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+191 |         process.env.WDIO_LOG_LEVEL = wdioLogLevel as string
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+192 |     }
+    | ^^^^^
+193 | 
+    | 
+194 |     logLevelsConfig = {}
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+195 | 
+    | 
+196 |     /**
+    | ^^^^^^^
+197 |      * build logLevelsConfig object
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+198 |      */
+    | ^^^^^^^
+199 |     Object.entries(logLevels).forEach(([logName, logLevel]) => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+200 |         const logLevelName = getLogLevelName(logName)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+201 |         logLevelsConfig[logLevelName] = logLevel
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+202 |     })
+    | ^^^^^^
+203 | 
+    | 
+204 |     /**
+    | ^^^^^^^
+205 |      * set log level for each logger
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+206 |      */
+    | ^^^^^^^
+207 |     Object.keys(loggers).forEach(logName => {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+208 |         const logLevelName = getLogLevelName(logName)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+209 | 
+    | 
+210 |         /**
+    | ^^^^^^^^^^^
+211 |          * either apply log level from logLevels object or use global logLevel
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+212 |          */
+    | ^^^^^^^^^^^
+213 |         const logLevel = typeof logLevelsConfig[logLevelName] !== 'undefined' ? logLevelsConfig[logLevelName] : process.env.WDIO_LOG_LEVEL as log.LogLevelDesc
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+214 | 
+    | 
+215 |         loggers[logName].setLevel(logLevel)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+216 |     })
+    | ^^^^^^
+217 | }
+    | ^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 

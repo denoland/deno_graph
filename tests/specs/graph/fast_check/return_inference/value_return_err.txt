@@ -1,0 +1,70 @@
+~~ {"workspaceFastCheck":true} ~~
+# workspace_members
+[
+  {
+    "base": "file:///",
+    "nv": "@scope/a@1.0.0",
+    "exports": {
+      ".": "./mod.ts"
+    }
+  }
+]
+
+# mod.ts
+export const a = () => {
+  return 2;
+}
+
+export const b = function() {
+  return 2;
+}
+
+export function c() {
+  return 2;
+}
+
+export class D {
+  d() {
+    return 2;
+  }
+}
+
+// TODO: we don't support this at all
+// export const e = {
+//   e() {
+//     return 2;
+//   }
+// };
+
+// TODO: we don't support this at all
+// export const f = class {
+//   f() {
+//     return 2;
+//   }
+// };
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "size": 377,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
+
+Fast check file:///mod.ts:
+  missing explicit return type in the public API
+      at file:///mod.ts@13
+  missing explicit return type in the public API
+      at file:///mod.ts@53
+  missing explicit return type in the public API
+      at file:///mod.ts@101
+  missing explicit return type in the public API
+      at file:///mod.ts@141

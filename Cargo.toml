@@ -19,11 +19,12 @@ name = "deno_graph"
 all-features = true
 
 [features]
-default = ["fast_check", "tokio_executor"]
+default = ["fast_check", "tokio_executor", "ecosystem_test"]
 fast_check = ["symbols", "deno_ast/transpiling", "twox-hash"]
 symbols = ["deno_ast/transforms", "deno_ast/visit", "deno_ast/utils"]
 tokio_executor = ["deno_unsync"]
 wasm_executor = []
+ecosystem_test = []
 
 [[test]]
 name = "specs"

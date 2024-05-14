@@ -1,0 +1,53 @@
+~~ {"workspaceFastCheck":true} ~~
+# workspace_members
+[
+  {
+    "base": "file:///",
+    "nv": "@scope/a@1.0.0",
+    "exports": {
+      ".": "./mod.ts"
+    }
+  }
+]
+
+# mod.ts
+declare function exit(): never;
+
+export function c() {
+  exit();
+}
+
+export class D {
+  d() {
+    exit();
+  }
+}
+
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "size": 112,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
+
+Fast check file:///mod.ts:
+  {}
+  export function c(): void {}
+  export class D {
+    d(): void {}
+  }
+  --- DTS ---
+  export declare function c(): void;
+  export declare class D {
+    d(): void;
+  }

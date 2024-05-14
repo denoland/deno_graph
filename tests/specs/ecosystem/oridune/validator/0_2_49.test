@@ -1345,6 +1345,58 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:810:10
+    | 
+810 |   error: (
+    |          ^
+811 |     message: string | Error | ValidationException,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+812 |     location?: string,
+    | ^^^^^^^^^^^^^^^^^^^^^^
+813 |     input?: any,
+    | ^^^^^^^^^^^^^^^^
+814 |   ) => {
+    | ^^^^^^^^
+815 |     if (message instanceof ValidationException) throw message;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+816 |     throw new ValidationException("Validation Error!").pushIssues({
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+817 |       message: message instanceof Error ? message.message : message,
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+818 |       location,
+    | ^^^^^^^^^^^^^^^
+819 |       input,
+    | ^^^^^^^^^^^^
+820 |     });
+    | ^^^^^^^
+821 |   },
+    | ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /lib/validators.ts:827:11
+    | 
+827 |   errors: (issues: IValidationIssue[]) => {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+828 |     throw new ValidationException("Validation Error!").pushIssues(...issues);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+829 |   },
+    | ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
    --> /lib/validators.ts:835:8
     | 
 835 |   try: async <T>(callback: () => T) => {
@@ -1363,7 +1415,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | ^^^^^
 842 |   },
     | ^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -1463,7 +1515,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 95 |   protected async _resolveErrorMessage(
    |                   ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
+   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -1496,7 +1548,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 217 |   public async try(input?: any, options?: IValidationOptions) {
     |                ^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -1507,7 +1559,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 231 |   public async test(input?: any, options?: IValidationOptions) {
     |                ^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
+    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type

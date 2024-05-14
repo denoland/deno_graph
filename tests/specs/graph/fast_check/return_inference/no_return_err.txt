@@ -1,0 +1,63 @@
+~~ {"workspaceFastCheck":true} ~~
+# workspace_members
+[
+  {
+    "base": "file:///",
+    "nv": "@scope/a@1.0.0",
+    "exports": {
+      ".": "./mod.ts"
+    }
+  }
+]
+
+# mod.ts
+declare function exit(): never;
+
+export const a = () => {
+  exit();
+}
+
+export const b = function() {
+  exit();
+}
+
+// This can be inferred for function declarations.
+
+// This can be inferred for class declarations.
+
+// TODO: we don't support this at all
+// export const e = {
+//   e() {
+//     exit();
+//   }
+// };
+
+// TODO: we don't support this at all
+// export const f = class {
+//   f() {
+//     exit();
+//   }
+// };
+
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "size": 421,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
+
+Fast check file:///mod.ts:
+  missing explicit return type in the public API
+      at file:///mod.ts@46
+  missing explicit return type in the public API
+      at file:///mod.ts@84

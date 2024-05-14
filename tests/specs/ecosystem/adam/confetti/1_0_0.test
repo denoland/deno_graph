@@ -7,14 +7,17 @@ adam/confetti/1.0.0
 
 ===
 
-== FAST CHECK EMIT PASSED ==
+== FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/confetti/confetti.ts:111:14
+    | 
+111 | export const throwConfetti = function (settings?: ThrowConfettiSettings) {
+    |              ^^^^^^^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type of 'void' or 'never' to the function
 
-== TYPE CHECK FAILED ==
--- stdout --
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
--- stderr --
-error: TS2304 [ERROR]: Cannot find name 'CSSStyleDeclaration'.
-  customStyles?: CSSStyleDeclaration;
-                 ~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/confetti/confetti.ts:9:18
 
