@@ -8,12 +8,12 @@
 export function test() {
 }
 
-test.skip = () => { return };
+test.skip = () => { };
 
 export namespace nested {
 
   export function other() { }
-  other.func = () => { return };
+  other.func = () => { };
 }
 
 # mod.ts
@@ -51,7 +51,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 151,
+      "size": 137,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }

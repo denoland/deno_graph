@@ -24,7 +24,8 @@ pub fn ts_keyword_type(kind: TsKeywordTypeKind) -> TsType {
 pub enum ReturnStatementAnalysis {
   /// There are no return statements in the function body.
   None,
-  /// There are only return statements without arguments in the function body.
+  /// There are only return statements without arguments in the function body,
+  /// or if the function body is empty.
   Void,
   /// There is only a single return statement in the function body, and it has
   /// an argument.
@@ -37,9 +38,13 @@ pub enum ReturnStatementAnalysis {
 pub fn analyze_return_stmts_in_function_body(
   body: &deno_ast::swc::ast::BlockStmt,
 ) -> ReturnStatementAnalysis {
-  let mut analysis = ReturnStatementAnalysis::None;
-  analyze_return_stmts_from_stmts(&body.stmts, &mut analysis);
-  analysis
+  if body.stmts.is_empty() {
+    ReturnStatementAnalysis::Void
+  } else {
+    let mut analysis = ReturnStatementAnalysis::None;
+    analyze_return_stmts_from_stmts(&body.stmts, &mut analysis);
+    analysis
+  }
 }
 
 fn analyze_return_stmts_from_stmts(
