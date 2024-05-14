@@ -58,16 +58,9 @@ impl std::fmt::Debug for FastCheckDiagnosticRange {
 
 impl PartialEq for FastCheckDiagnosticRange {
   fn eq(&self, other: &Self) -> bool {
-    let self_range_start =
-      self.text_info.line_and_column_index(self.range.start);
-    let self_range_end = self.text_info.line_and_column_index(self.range.end);
-    let other_range_start =
-      other.text_info.line_and_column_index(other.range.start);
-    let other_range_end =
-      other.text_info.line_and_column_index(other.range.end);
     self.specifier == other.specifier
-      && self_range_start == other_range_start
-      && self_range_end == other_range_end
+      && self.range.start == other.range.start
+      && self.range.end == other.range.end
   }
 }
 
@@ -75,14 +68,9 @@ impl Eq for FastCheckDiagnosticRange {}
 
 impl std::hash::Hash for FastCheckDiagnosticRange {
   fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-    let self_range_start =
-      self.text_info.line_and_column_index(self.range.start);
-    let self_range_end = self.text_info.line_and_column_index(self.range.end);
     self.specifier.hash(state);
-    self_range_start.line_index.hash(state);
-    self_range_start.column_index.hash(state);
-    self_range_end.line_index.hash(state);
-    self_range_end.column_index.hash(state);
+    self.range.start.hash(state);
+    self.range.end.hash(state);
   }
 }
 
@@ -415,9 +403,9 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
         let mut lines = vec![Cow::Borrowed("all functions in the public API must have an explicit return type")];
         if *is_definitely_void_or_never {
           if *is_async {
-            lines.push(Cow::Borrowed("async functions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'"));
+            lines.push(Cow::Borrowed("async function expressions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'"));
           } else {
-            lines.push(Cow::Borrowed("functions without a return statement can have a return type of either 'void' or 'never'"));
+            lines.push(Cow::Borrowed("function expressions without a return statement can have a return type of either 'void' or 'never'"));
           }
           lines.push(Cow::Borrowed("this function has no return statements, so a return type could not be inferred automatically"));
         }

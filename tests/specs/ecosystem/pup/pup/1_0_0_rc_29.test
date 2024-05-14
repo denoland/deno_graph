@@ -85,7 +85,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
-  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
   info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
@@ -98,7 +98,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
-  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
   info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
@@ -111,7 +111,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
-  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
   info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
@@ -124,7 +124,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
-  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
   info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
@@ -137,7 +137,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
-  info: async functions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'
+  info: async function expressions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'
   info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
@@ -150,7 +150,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
-  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
   info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
@@ -163,7 +163,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
-  info: async functions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'
+  info: async function expressions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'
   info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
@@ -176,7 +176,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
-  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
   info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
@@ -189,7 +189,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
-  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
   info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
@@ -202,7 +202,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
-  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
   info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
@@ -215,7 +215,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
-  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
   info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
@@ -228,7 +228,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
-  info: functions without a return statement can have a return type of either 'void' or 'never'
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
   info: this function has no return statements, so a return type could not be inferred automatically
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
