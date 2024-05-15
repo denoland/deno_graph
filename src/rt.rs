@@ -28,7 +28,10 @@ impl<'a> Default for &'a dyn Executor {
           return future;
 
           #[cfg(feature = "tokio_executor")]
-          Box::pin(async { deno_unsync::spawn(future).await.unwrap() })
+          {
+            use futures::FutureExt;
+            deno_unsync::spawn(future).map(|v| v.unwrap()).boxed_local()
+          }
         }
       }
 
