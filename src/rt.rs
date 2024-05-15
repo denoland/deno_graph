@@ -1,7 +1,6 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
 use futures::channel::oneshot;
-use futures::FutureExt;
 use std::future::Future;
 use std::pin::Pin;
 use std::task::Context;
@@ -29,7 +28,10 @@ impl<'a> Default for &'a dyn Executor {
           return future;
 
           #[cfg(feature = "tokio_executor")]
-          deno_unsync::spawn(future).map(|v| v.unwrap()).boxed_local()
+          {
+            use futures::FutureExt;
+            deno_unsync::spawn(future).map(|v| v.unwrap()).boxed_local()
+          }
         }
       }
 
