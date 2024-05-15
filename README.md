@@ -1,6 +1,6 @@
 # deno_graph
 
-[![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https://deno.land/x/deno_graph/mod.ts)
+[![JSR](https://jsr.io/badges/@deno/graph)](https://jsr.io/@deno/graph)
 [![Build Status - Cirrus][]][Build status] [![Twitter handle][]][Twitter badge]
 [![Discord Chat](https://img.shields.io/discord/684898665143206084?logo=discord&style=social)](https://discord.gg/deno)
 
