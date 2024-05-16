@@ -2982,6 +2982,7 @@ struct PendingNpmState {
 struct PendingJsrReqResolutionItem {
   specifier: ModuleSpecifier,
   package_ref: JsrPackageReqReference,
+  maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
 }
 
@@ -2989,6 +2990,7 @@ struct PendingJsrReqResolutionItem {
 struct PendingJsrNvResolutionItem {
   specifier: ModuleSpecifier,
   nv_ref: JsrPackageNvReference,
+  maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
 }
 
@@ -3353,6 +3355,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     .into_inner()
                     .sub_path,
                 }),
+                maybe_attribute_type: pending_resolution.maybe_attribute_type,
                 maybe_range: pending_resolution.maybe_range,
               });
             }
@@ -3442,7 +3445,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 &specifier,
                 resolution_item.maybe_range.as_ref(),
                 self.in_dynamic_branch,
-                None,
+                resolution_item.maybe_attribute_type,
                 Some(&version_info),
               );
             }
@@ -3996,6 +3999,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           .push(PendingJsrReqResolutionItem {
             specifier,
             package_ref,
+            maybe_attribute_type,
             maybe_range,
           });
       }

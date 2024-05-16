@@ -1,0 +1,70 @@
+# https://jsr.io/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.0": {}
+  }
+}
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{
+  "manifest": {},
+  "exports": {
+    ".": "./data.json"
+  }
+}
+
+# https://jsr.io/@scope/a/1.0.0/data.json
+HEADERS: {"content-type":"application/json"}
+{
+  "data": 5
+}
+
+# mod.ts
+import test from 'jsr:@scope/a' with { "type": "json" };
+console.log(test);
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 17
+              },
+              "end": {
+                "line": 0,
+                "character": 31
+              }
+            }
+          },
+          "assertionType": "json"
+        }
+      ],
+      "size": 76,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "asserted",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/data.json",
+      "size": 16,
+      "mediaType": "Json"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/data.json"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
