@@ -121,14 +121,9 @@ pub struct ParseModuleOptions<'a> {
 pub fn parse_module(
   options: ParseModuleOptions,
 ) -> Result<Module, ModuleError> {
-  graph::parse_module(
-    options.file_system,
-    options.jsr_url_provider,
-    options.maybe_resolver,
+  let module_source_and_info = graph::parse_module_source_and_info(
     options.module_analyzer,
-    options.maybe_npm_resolver,
-    graph::ParseModuleOptions {
-      graph_kind: options.graph_kind,
+    graph::ParseModuleAndSourceInfoOptions {
       specifier: options.specifier,
       maybe_headers: options.maybe_headers,
       content: options.content,
@@ -136,6 +131,17 @@ pub fn parse_module(
       maybe_referrer: None,
       is_root: true,
       is_dynamic_branch: false,
+    },
+  )?;
+  graph::parse_module(
+    options.file_system,
+    options.jsr_url_provider,
+    options.maybe_resolver,
+    options.maybe_npm_resolver,
+    graph::ParseModuleOptions {
+      graph_kind: options.graph_kind,
+      module_source_and_info,
+      maybe_headers: options.maybe_headers,
     },
   )
 }
