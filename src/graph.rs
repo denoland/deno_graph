@@ -2066,7 +2066,6 @@ pub(crate) struct ParseModuleOptions<'a> {
 }
 
 /// With the provided information, parse a module and return its "module slot"
-#[allow(clippy::too_many_arguments)]
 #[allow(clippy::result_large_err)]
 pub(crate) fn parse_module(
   file_system: &dyn FileSystem,
