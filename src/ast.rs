@@ -315,6 +315,22 @@ impl<'a> ParserModuleAnalyzer<'a> {
       jsdoc_imports: analyze_jsdoc_imports(media_type, text_info, comments),
     }
   }
+
+  pub fn analyze_sync(
+    &self,
+    specifier: &deno_ast::ModuleSpecifier,
+    source: Arc<str>,
+    media_type: MediaType,
+  ) -> Result<ModuleInfo, ParseDiagnostic> {
+    let parsed_source = self.parser.parse_module(ParseOptions {
+      specifier,
+      source,
+      media_type,
+      // scope analysis is not necessary for module parsing
+      scope_analysis: false,
+    })?;
+    Ok(ParserModuleAnalyzer::module_info(&parsed_source))
+  }
 }
 
 impl<'a> Default for ParserModuleAnalyzer<'a> {
@@ -333,14 +349,7 @@ impl<'a> ModuleAnalyzer for ParserModuleAnalyzer<'a> {
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ModuleInfo, ParseDiagnostic> {
-    let parsed_source = self.parser.parse_module(ParseOptions {
-      specifier,
-      source,
-      media_type,
-      // scope analysis is not necessary for module parsing
-      scope_analysis: false,
-    })?;
-    Ok(ParserModuleAnalyzer::module_info(&parsed_source))
+    self.analyze_sync(specifier, source, media_type)
   }
 }
 
