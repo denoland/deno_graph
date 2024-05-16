@@ -308,9 +308,10 @@ pub fn module_graph_1_to_2(module_info: &mut serde_json::Value) {
 ///
 /// It can be assumed that the source has not changed since
 /// it was loaded by deno_graph.
+#[async_trait::async_trait(?Send)]
 pub trait ModuleAnalyzer {
   /// Analyzes the module.
-  fn analyze(
+  async fn analyze(
     &self,
     specifier: &ModuleSpecifier,
     source: Arc<str>,

@@ -242,14 +242,17 @@ impl<'a> ModuleParser for CapturingModuleParser<'a> {
 #[derive(Default)]
 pub struct DefaultModuleAnalyzer;
 
+#[async_trait::async_trait(?Send)]
 impl ModuleAnalyzer for DefaultModuleAnalyzer {
-  fn analyze(
+  async fn analyze(
     &self,
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ModuleInfo, ParseDiagnostic> {
-    ParserModuleAnalyzer::default().analyze(specifier, source, media_type)
+    ParserModuleAnalyzer::default()
+      .analyze(specifier, source, media_type)
+      .await
   }
 }
 
@@ -312,18 +315,8 @@ impl<'a> ParserModuleAnalyzer<'a> {
       jsdoc_imports: analyze_jsdoc_imports(media_type, text_info, comments),
     }
   }
-}
 
-impl<'a> Default for ParserModuleAnalyzer<'a> {
-  fn default() -> Self {
-    Self {
-      parser: &DefaultModuleParser,
-    }
-  }
-}
-
-impl<'a> ModuleAnalyzer for ParserModuleAnalyzer<'a> {
-  fn analyze(
+  pub fn analyze_sync(
     &self,
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
@@ -337,6 +330,26 @@ impl<'a> ModuleAnalyzer for ParserModuleAnalyzer<'a> {
       scope_analysis: false,
     })?;
     Ok(ParserModuleAnalyzer::module_info(&parsed_source))
+  }
+}
+
+impl<'a> Default for ParserModuleAnalyzer<'a> {
+  fn default() -> Self {
+    Self {
+      parser: &DefaultModuleParser,
+    }
+  }
+}
+
+#[async_trait::async_trait(?Send)]
+impl<'a> ModuleAnalyzer for ParserModuleAnalyzer<'a> {
+  async fn analyze(
+    &self,
+    specifier: &deno_ast::ModuleSpecifier,
+    source: Arc<str>,
+    media_type: MediaType,
+  ) -> Result<ModuleInfo, ParseDiagnostic> {
+    self.analyze_sync(specifier, source, media_type)
   }
 }
 
@@ -372,8 +385,9 @@ impl CapturingModuleAnalyzer {
   }
 }
 
+#[async_trait::async_trait(?Send)]
 impl ModuleAnalyzer for CapturingModuleAnalyzer {
-  fn analyze(
+  async fn analyze(
     &self,
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
@@ -381,7 +395,7 @@ impl ModuleAnalyzer for CapturingModuleAnalyzer {
   ) -> Result<ModuleInfo, ParseDiagnostic> {
     let capturing_parser = self.as_capturing_parser();
     let module_analyzer = ParserModuleAnalyzer::new(&capturing_parser);
-    module_analyzer.analyze(specifier, source, media_type)
+    module_analyzer.analyze(specifier, source, media_type).await
   }
 }
 
@@ -1076,8 +1090,8 @@ const f = new Set();
     );
   }
 
-  #[test]
-  fn test_analyze_ts_references_and_jsx_import_source_with_shebang() {
+  #[tokio::test]
+  async fn test_analyze_ts_references_and_jsx_import_source_with_shebang() {
     let specifier = ModuleSpecifier::parse("file:///a/test.tsx").unwrap();
     let source = r#"#!/usr/bin/env -S deno run
 /// <reference path="./ref.d.ts" />
@@ -1086,6 +1100,7 @@ export {};
 "#;
     let module_info = DefaultModuleAnalyzer
       .analyze(&specifier, source.into(), MediaType::Tsx)
+      .await
       .unwrap();
     assert_eq!(
       module_info,

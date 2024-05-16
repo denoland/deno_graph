@@ -232,7 +232,7 @@ export function parseModule(
   specifier: string,
   content: Uint8Array,
   options: ParseModuleOptions = {},
-): ModuleJson {
+): Promise<ModuleJson> {
   const {
     headers,
     defaultJsxImportSource,
@@ -257,5 +257,5 @@ export function parseModule(
     content,
     resolve,
     resolveTypes,
-  ) as ModuleJson;
+  ) as Promise<ModuleJson>;
 }
