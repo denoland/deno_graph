@@ -68,7 +68,7 @@ console.log('hi');
       "specifier": "file:///mod.ts"
     },
     {
-      "specifier": "https://localhost/redirect.ts",
+      "specifier": "https://localhost/value.ts",
       "error": "Too many redirects."
     }
   ],

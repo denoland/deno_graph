@@ -38,7 +38,7 @@ HEADERS: {"location":"./redirect.ts"}
       "specifier": "file:///mod.ts"
     },
     {
-      "specifier": "https://localhost/redirect.ts",
+      "specifier": "https://localhost/redirect2.ts",
       "error": "Too many redirects."
     }
   ],

@@ -106,7 +106,7 @@ pub struct ReferrerImports {
 pub struct ParseModuleOptions<'a> {
   pub graph_kind: GraphKind,
   pub specifier: ModuleSpecifier,
-  pub maybe_headers: Option<&'a HashMap<String, String>>,
+  pub maybe_headers: Option<HashMap<String, String>>,
   pub content: Arc<[u8]>,
   pub file_system: &'a dyn FileSystem,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
@@ -141,7 +141,6 @@ pub fn parse_module(
     graph::ParseModuleOptions {
       graph_kind: options.graph_kind,
       module_source_and_info,
-      maybe_headers: options.maybe_headers,
     },
   )
 }
@@ -3607,11 +3606,10 @@ export const foo = 'bar';"#,
       "content-type".to_string(),
       "application/typescript; charset=utf-8".to_string(),
     );
-    let maybe_headers = Some(&headers);
     let result = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
       specifier: specifier.clone(),
-      maybe_headers,
+      maybe_headers: Some(headers),
       content: br#"declare interface A {
   a: string;
 }"#
