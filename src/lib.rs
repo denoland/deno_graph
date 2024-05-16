@@ -118,8 +118,8 @@ pub struct ParseModuleOptions<'a> {
 /// Parse an individual module, returning the module as a result, otherwise
 /// erroring with a module graph error.
 #[allow(clippy::result_large_err)]
-pub fn parse_module(
-  options: ParseModuleOptions,
+pub async fn parse_module(
+  options: ParseModuleOptions<'_>,
 ) -> Result<Module, ModuleError> {
   let module_source_and_info = graph::parse_module_source_and_info(
     options.module_analyzer,
@@ -132,7 +132,8 @@ pub fn parse_module(
       is_root: true,
       is_dynamic_branch: false,
     },
-  )?;
+  )
+  .await?;
   graph::parse_module(
     options.file_system,
     options.jsr_url_provider,
@@ -3211,8 +3212,8 @@ export const foo = 'bar';"#,
     );
   }
 
-  #[test]
-  fn test_parse_module() {
+  #[tokio::test]
+  async fn test_parse_module() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let code = br#"
     /// <reference types="./a.d.ts" />
@@ -3234,6 +3235,7 @@ export const foo = 'bar';"#,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
+    .await
     .unwrap();
     let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 7);
@@ -3252,13 +3254,14 @@ export const foo = 'bar';"#,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
+    .await
     .unwrap();
     let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 4);
   }
 
-  #[test]
-  fn test_parse_module_import_assertions() {
+  #[tokio::test]
+  async fn test_parse_module_import_assertions() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
@@ -3276,6 +3279,7 @@ export const foo = 'bar';"#,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
+    .await
     .unwrap();
     assert_eq!(
       json!(actual),
@@ -3325,8 +3329,8 @@ export const foo = 'bar';"#,
     );
   }
 
-  #[test]
-  fn test_parse_module_jsx_import_source() {
+  #[tokio::test]
+  async fn test_parse_module_jsx_import_source() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
@@ -3347,6 +3351,7 @@ export const foo = 'bar';"#,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
+    .await
     .unwrap();
     let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
@@ -3363,8 +3368,8 @@ export const foo = 'bar';"#,
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
 
-  #[test]
-  fn test_parse_module_jsx_import_source_types() {
+  #[tokio::test]
+  async fn test_parse_module_jsx_import_source_types() {
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
@@ -3386,6 +3391,7 @@ export const foo = 'bar';"#,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
+    .await
     .unwrap();
     let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
@@ -3406,8 +3412,8 @@ export const foo = 'bar';"#,
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
 
-  #[test]
-  fn test_parse_module_jsx_import_source_types_pragma() {
+  #[tokio::test]
+  async fn test_parse_module_jsx_import_source_types_pragma() {
     #[derive(Debug)]
     struct R;
     impl Resolver for R {
@@ -3436,6 +3442,7 @@ export const foo = 'bar';"#,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
+    .await
     .unwrap();
     let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
@@ -3456,8 +3463,8 @@ export const foo = 'bar';"#,
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
 
-  #[test]
-  fn test_parse_module_jsx_import_source_pragma() {
+  #[tokio::test]
+  async fn test_parse_module_jsx_import_source_pragma() {
     #[derive(Debug)]
     struct R;
     impl Resolver for R {
@@ -3486,6 +3493,7 @@ export const foo = 'bar';"#,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
+    .await
     .unwrap();
     let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
@@ -3502,8 +3510,8 @@ export const foo = 'bar';"#,
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
 
-  #[test]
-  fn test_default_jsx_import_source() {
+  #[tokio::test]
+  async fn test_default_jsx_import_source() {
     #[derive(Debug)]
     struct R;
     impl Resolver for R {
@@ -3530,6 +3538,7 @@ export const foo = 'bar';"#,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
+    .await
     .unwrap();
     let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
@@ -3546,8 +3555,8 @@ export const foo = 'bar';"#,
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
 
-  #[test]
-  fn test_default_jsx_import_source_types() {
+  #[tokio::test]
+  async fn test_default_jsx_import_source_types() {
     #[derive(Debug)]
     struct R;
     impl Resolver for R {
@@ -3578,6 +3587,7 @@ export const foo = 'bar';"#,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
+    .await
     .unwrap();
     let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 1);
@@ -3598,8 +3608,8 @@ export const foo = 'bar';"#,
     assert_eq!(actual.media_type, MediaType::Tsx);
   }
 
-  #[test]
-  fn test_parse_module_with_headers() {
+  #[tokio::test]
+  async fn test_parse_module_with_headers() {
     let specifier = ModuleSpecifier::parse("https://localhost/file").unwrap();
     let mut headers = HashMap::new();
     headers.insert(
@@ -3620,12 +3630,13 @@ export const foo = 'bar';"#,
       maybe_resolver: None,
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
-    });
+    })
+    .await;
     assert!(result.is_ok());
   }
 
-  #[test]
-  fn test_parse_module_with_jsdoc_imports() {
+  #[tokio::test]
+  async fn test_parse_module_with_jsdoc_imports() {
     let specifier = ModuleSpecifier::parse("file:///a/test.js").unwrap();
     let code = br#"
 /**
@@ -3649,6 +3660,7 @@ export function a(a) {
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
+    .await
     .unwrap();
     assert_eq!(
       json!(actual),
@@ -3706,6 +3718,7 @@ export function a(a) {
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
+    .await
     .unwrap();
     assert_eq!(
       json!(actual),
@@ -3718,8 +3731,8 @@ export function a(a) {
     );
   }
 
-  #[test]
-  fn test_parse_ts_jsdoc_imports_ignored() {
+  #[tokio::test]
+  async fn test_parse_ts_jsdoc_imports_ignored() {
     let specifier = ModuleSpecifier::parse("file:///a/test.ts").unwrap();
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
@@ -3744,6 +3757,7 @@ export function a(a: A): B {
       maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
+    .await
     .unwrap();
     assert_eq!(
       json!(actual),

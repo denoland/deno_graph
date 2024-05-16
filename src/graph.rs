@@ -2091,7 +2091,7 @@ pub(crate) struct ParseModuleAndSourceInfoOptions<'a> {
 /// With the provided information, parse a module and return its "module slot"
 #[allow(clippy::too_many_arguments)]
 #[allow(clippy::result_large_err)]
-pub(crate) fn parse_module_source_and_info(
+pub(crate) async fn parse_module_source_and_info(
   module_analyzer: &dyn ModuleAnalyzer,
   opts: ParseModuleAndSourceInfoOptions<'_>,
 ) -> Result<ModuleSourceAndInfo, ModuleError> {
@@ -2166,7 +2166,9 @@ pub(crate) fn parse_module_source_and_info(
       let source =
         new_source_with_text(&opts.specifier, opts.content, maybe_charset)
           .map_err(|err| *err)?;
-      match module_analyzer.analyze(&opts.specifier, source.clone(), media_type)
+      match module_analyzer
+        .analyze(&opts.specifier, source.clone(), media_type)
+        .await
       {
         Ok(module_info) => {
           // Return the module as a valid module
@@ -3076,16 +3078,6 @@ struct PendingState<'a> {
   dynamic_branches: HashMap<ModuleSpecifier, PendingDynamicBranch>,
 }
 
-#[derive(Clone)]
-enum ContentOrModuleInfo {
-  Content(ModuleSourceAndInfo),
-  ModuleInfo {
-    info: Box<ModuleInfo>,
-    /// The checksum to use when loading the content
-    checksum: LoaderChecksum,
-  },
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum FillPassMode {
   AllowRestart,
@@ -3797,8 +3789,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   ) {
     struct ProvidedModuleAnalyzer(RefCell<Option<ModuleInfo>>);
 
+    #[async_trait::async_trait(?Send)]
     impl ModuleAnalyzer for ProvidedModuleAnalyzer {
-      fn analyze(
+      async fn analyze(
         &self,
         _specifier: &ModuleSpecifier,
         _source: Arc<str>,
@@ -3864,7 +3857,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       is_root,
                       is_dynamic_branch,
                     }
-                  ).map(|module_source_and_info| {
+                  ).await.map(|module_source_and_info| {
                     PendingInfoResponse::Module {
                       specifier: requested_specifier.clone(),
                       module_source_and_info,
@@ -3898,7 +3891,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                           is_root,
                           is_dynamic_branch,
                         }
-                      ).map(|module_source_and_info| {
+                      ).await.map(|module_source_and_info| {
                         PendingInfoResponse::Module {
                           specifier: specifier.clone(),
                           module_source_and_info,
@@ -4325,7 +4318,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     is_root,
                     is_dynamic_branch: is_dynamic,
                   }
-                ).map(|module_source_and_info| {
+                ).await.map(|module_source_and_info| {
                   PendingInfoResponse::Module {
                     specifier: specifier.clone(),
                     module_source_and_info,

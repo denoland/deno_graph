@@ -292,7 +292,7 @@ pub async fn js_create_graph(
 
 #[allow(clippy::too_many_arguments)]
 #[wasm_bindgen(js_name = parseModule)]
-pub fn js_parse_module(
+pub async fn js_parse_module(
   specifier: String,
   maybe_headers: JsValue,
   maybe_default_jsx_import_source: Option<String>,
@@ -327,14 +327,16 @@ pub fn js_parse_module(
   match deno_graph::parse_module(deno_graph::ParseModuleOptions {
     graph_kind: GraphKind::All,
     specifier,
-    maybe_headers: maybe_headers.as_ref(),
+    maybe_headers,
     content: content.into(),
     file_system: &NullFileSystem,
     jsr_url_provider: Default::default(),
     maybe_resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
     module_analyzer: Default::default(),
     maybe_npm_resolver: None,
-  }) {
+  })
+  .await
+  {
     Ok(module) => {
       let serializer =
         serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
