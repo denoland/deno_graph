@@ -2054,60 +2054,76 @@ where
   seq.end()
 }
 
+pub(crate) struct ParseModuleOptions<'a> {
+  pub graph_kind: GraphKind,
+  pub specifier: ModuleSpecifier,
+  pub maybe_headers: Option<&'a HashMap<String, String>>,
+  pub content: Arc<[u8]>,
+  pub maybe_attribute_type: Option<AttributeTypeWithRange>,
+  pub maybe_referrer: Option<Range>,
+  pub is_root: bool,
+  pub is_dynamic_branch: bool,
+}
+
 /// With the provided information, parse a module and return its "module slot"
 #[allow(clippy::too_many_arguments)]
 #[allow(clippy::result_large_err)]
 pub(crate) fn parse_module(
-  graph_kind: GraphKind,
-  specifier: &ModuleSpecifier,
-  maybe_headers: Option<&HashMap<String, String>>,
-  content: Arc<[u8]>,
-  maybe_attribute_type: Option<AttributeTypeWithRange>,
-  maybe_referrer: Option<Range>,
   file_system: &dyn FileSystem,
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
   module_analyzer: &dyn ModuleAnalyzer,
-  is_root: bool,
-  is_dynamic_branch: bool,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
+  options: ParseModuleOptions<'_>,
 ) -> Result<Module, ModuleError> {
-  let (media_type, maybe_charset) =
-    resolve_media_type_and_charset_from_headers(specifier, maybe_headers);
+  let (media_type, maybe_charset) = resolve_media_type_and_charset_from_headers(
+    &options.specifier,
+    options.maybe_headers,
+  );
 
   // here we check any media types that should have assertions made against them
   // if they aren't the root and add them to the graph, otherwise we continue
   if media_type == MediaType::Json
-    && (is_root
-      || is_dynamic_branch
+    && (options.is_root
+      || options.is_dynamic_branch
       || matches!(
-        maybe_attribute_type.as_ref().map(|t| t.kind.as_str()),
+        options
+          .maybe_attribute_type
+          .as_ref()
+          .map(|t| t.kind.as_str()),
         Some("json")
       ))
   {
-    let text = crate::source::decode_source(specifier, content, maybe_charset)
-      .map_err(|err| {
-        ModuleError::LoadingErr(specifier.clone(), None, Arc::new(err.into()))
-      })?;
-    return Ok(Module::Json(JsonModule {
-      maybe_cache_info: None,
-      source: text,
-      media_type: MediaType::Json,
-      specifier: specifier.clone(),
-    }));
+    return match crate::source::decode_source(
+      &options.specifier,
+      options.content,
+      maybe_charset,
+    ) {
+      Ok(text) => Ok(Module::Json(JsonModule {
+        maybe_cache_info: None,
+        source: text,
+        media_type: MediaType::Json,
+        specifier: options.specifier,
+      })),
+      Err(err) => Err(ModuleError::LoadingErr(
+        options.specifier,
+        None,
+        Arc::new(err.into()),
+      )),
+    };
   }
 
-  if let Some(attribute_type) = maybe_attribute_type {
+  if let Some(attribute_type) = options.maybe_attribute_type {
     if attribute_type.kind == "json" {
       return Err(ModuleError::InvalidTypeAssertion {
-        specifier: specifier.clone(),
+        specifier: options.specifier,
         range: attribute_type.range,
         actual_media_type: media_type,
         expected_media_type: MediaType::Json,
       });
     } else {
       return Err(ModuleError::UnsupportedImportAttributeType {
-        specifier: specifier.clone(),
+        specifier: options.specifier,
         range: attribute_type.range,
         kind: attribute_type.kind,
       });
@@ -2127,16 +2143,24 @@ pub(crate) fn parse_module(
     | MediaType::Dts
     | MediaType::Dmts
     | MediaType::Dcts => {
-      let source = new_source_with_text(specifier, content, maybe_charset)
-        .map_err(|err| *err)?;
-      match module_analyzer.analyze(specifier, source.clone(), media_type) {
+      let source = new_source_with_text(
+        &options.specifier,
+        options.content,
+        maybe_charset,
+      )
+      .map_err(|err| *err)?;
+      match module_analyzer.analyze(
+        &options.specifier,
+        source.clone(),
+        media_type,
+      ) {
         Ok(module_info) => {
           // Return the module as a valid module
           Ok(Module::Js(parse_js_module_from_module_info(
-            graph_kind,
-            specifier,
+            options.graph_kind,
+            options.specifier,
             media_type,
-            maybe_headers,
+            options.maybe_headers,
             module_info,
             source,
             file_system,
@@ -2146,25 +2170,29 @@ pub(crate) fn parse_module(
           )))
         }
         Err(diagnostic) => {
-          Err(ModuleError::ParseErr(specifier.clone(), diagnostic))
+          Err(ModuleError::ParseErr(options.specifier, diagnostic))
         }
       }
     }
-    MediaType::Unknown if is_root => {
-      let source = new_source_with_text(specifier, content, maybe_charset)
-        .map_err(|err| *err)?;
+    MediaType::Unknown if options.is_root => {
+      let source = new_source_with_text(
+        &options.specifier,
+        options.content,
+        maybe_charset,
+      )
+      .map_err(|err| *err)?;
       match module_analyzer.analyze(
-        specifier,
+        &options.specifier,
         source.clone(),
         MediaType::JavaScript,
       ) {
         Ok(module_info) => {
           // Return the module as a valid module
           Ok(Module::Js(parse_js_module_from_module_info(
-            graph_kind,
-            specifier,
+            options.graph_kind,
+            options.specifier,
             media_type,
-            maybe_headers,
+            options.maybe_headers,
             module_info,
             source,
             file_system,
@@ -2174,7 +2202,7 @@ pub(crate) fn parse_module(
           )))
         }
         Err(diagnostic) => {
-          Err(ModuleError::ParseErr(specifier.clone(), diagnostic))
+          Err(ModuleError::ParseErr(options.specifier, diagnostic))
         }
       }
     }
@@ -2183,9 +2211,9 @@ pub(crate) fn parse_module(
     | MediaType::TsBuildInfo
     | MediaType::SourceMap
     | MediaType::Unknown => Err(ModuleError::UnsupportedMediaType(
-      specifier.clone(),
+      options.specifier,
       media_type,
-      maybe_referrer,
+      options.maybe_referrer,
     )),
   }
 }
@@ -2193,7 +2221,7 @@ pub(crate) fn parse_module(
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn parse_js_module_from_module_info(
   graph_kind: GraphKind,
-  specifier: &ModuleSpecifier,
+  specifier: ModuleSpecifier,
   media_type: MediaType,
   maybe_headers: Option<&HashMap<String, String>>,
   module_info: ModuleInfo,
@@ -2203,7 +2231,7 @@ pub(crate) fn parse_js_module_from_module_info(
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> JsModule {
-  let mut module = JsModule::new(specifier.clone(), source);
+  let mut module = JsModule::new(specifier, source);
   module.media_type = media_type;
 
   // Analyze the TypeScript triple-slash references and self types specifier
@@ -4392,12 +4420,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     };
 
     let mut module_slot = match parse_module(
-      self.graph.graph_kind,
-      specifier,
-      maybe_headers,
-      content,
-      maybe_attribute_type,
-      maybe_referrer,
       self.file_system,
       self.jsr_url_provider,
       self.resolver,
@@ -4405,9 +4427,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         .as_ref()
         .map(|r| r as &dyn ModuleAnalyzer)
         .unwrap_or(self.module_analyzer),
-      is_root,
-      self.in_dynamic_branch,
       self.npm_resolver,
+      ParseModuleOptions {
+        graph_kind: self.graph.graph_kind,
+        specifier: specifier.clone(),
+        maybe_headers,
+        content,
+        maybe_attribute_type,
+        maybe_referrer,
+        is_root,
+        is_dynamic_branch: self.in_dynamic_branch,
+      },
     ) {
       Ok(module) => ModuleSlot::Module(module),
       Err(err) => ModuleSlot::Err(err),
@@ -4937,19 +4967,21 @@ mod tests {
       b"import * as b from \"./b.ts\";\nimport * as c from \"./b.ts\"".to_vec(),
     );
     let module = parse_module(
-      GraphKind::All,
-      &specifier,
-      None,
-      content,
-      None,
-      None,
       &NullFileSystem,
       Default::default(),
       None,
       &module_analyzer,
-      true,
-      false,
       None,
+      ParseModuleOptions {
+        graph_kind: GraphKind::All,
+        specifier: specifier.clone(),
+        maybe_headers: None,
+        content,
+        maybe_attribute_type: None,
+        maybe_referrer: None,
+        is_root: true,
+        is_dynamic_branch: false,
+      },
     )
     .unwrap();
     let module = module.js().unwrap();

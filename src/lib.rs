@@ -105,7 +105,7 @@ pub struct ReferrerImports {
 
 pub struct ParseModuleOptions<'a> {
   pub graph_kind: GraphKind,
-  pub specifier: &'a ModuleSpecifier,
+  pub specifier: ModuleSpecifier,
   pub maybe_headers: Option<&'a HashMap<String, String>>,
   pub content: Arc<[u8]>,
   pub file_system: &'a dyn FileSystem,
@@ -122,25 +122,27 @@ pub fn parse_module(
   options: ParseModuleOptions,
 ) -> Result<Module, ModuleError> {
   graph::parse_module(
-    options.graph_kind,
-    options.specifier,
-    options.maybe_headers,
-    options.content,
-    None,
-    None,
     options.file_system,
     options.jsr_url_provider,
     options.maybe_resolver,
     options.module_analyzer,
-    true,
-    false,
     options.maybe_npm_resolver,
+    graph::ParseModuleOptions {
+      graph_kind: options.graph_kind,
+      specifier: options.specifier,
+      maybe_headers: options.maybe_headers,
+      content: options.content,
+      maybe_attribute_type: None,
+      maybe_referrer: None,
+      is_root: true,
+      is_dynamic_branch: false,
+    },
   )
 }
 
 pub struct ParseModuleFromAstOptions<'a> {
   pub graph_kind: GraphKind,
-  pub specifier: &'a ModuleSpecifier,
+  pub specifier: ModuleSpecifier,
   pub maybe_headers: Option<&'a HashMap<String, String>>,
   pub parsed_source: &'a deno_ast::ParsedSource,
   pub file_system: &'a dyn FileSystem,
@@ -3218,7 +3220,7 @@ export const foo = 'bar';"#,
     "#;
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
-      specifier: &specifier,
+      specifier: specifier.clone(),
       maybe_headers: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
@@ -3236,7 +3238,7 @@ export const foo = 'bar';"#,
     // now try code only
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::CodeOnly,
-      specifier: &specifier,
+      specifier: specifier.clone(),
       maybe_headers: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
@@ -3255,7 +3257,7 @@ export const foo = 'bar';"#,
     let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
-      specifier: &specifier,
+      specifier,
       maybe_headers: None,
       content: br#"
     import a from "./a.json" assert { type: "json" };
@@ -3323,7 +3325,7 @@ export const foo = 'bar';"#,
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
-      specifier: &specifier,
+      specifier: specifier.clone(),
       maybe_headers: None,
       content: br#"
     /** @jsxImportSource https://example.com/preact */
@@ -3361,7 +3363,7 @@ export const foo = 'bar';"#,
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
-      specifier: &specifier,
+      specifier: specifier.clone(),
       maybe_headers: None,
       content: br#"
     /** @jsxImportSource https://example.com/preact */
@@ -3412,7 +3414,7 @@ export const foo = 'bar';"#,
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
-      specifier: &specifier,
+      specifier: specifier.clone(),
       maybe_headers: None,
       content: br#"
     /** @jsxImportSourceTypes https://example.com/preact-types */
@@ -3462,7 +3464,7 @@ export const foo = 'bar';"#,
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
-      specifier: &specifier,
+      specifier: specifier.clone(),
       maybe_headers: None,
       content: br#"
     /** @jsxImportSource https://example.com/preact */
@@ -3508,7 +3510,7 @@ export const foo = 'bar';"#,
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
-      specifier: &specifier,
+      specifier: specifier.clone(),
       maybe_headers: None,
       content: br#"
     export function A() {
@@ -3556,7 +3558,7 @@ export const foo = 'bar';"#,
     let specifier = ModuleSpecifier::parse("file:///a/test01.tsx").unwrap();
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
-      specifier: &specifier,
+      specifier: specifier.clone(),
       maybe_headers: None,
       content: br#"
     export function A() {
@@ -3602,7 +3604,7 @@ export const foo = 'bar';"#,
     let maybe_headers = Some(&headers);
     let result = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
-      specifier: &specifier,
+      specifier: specifier.clone(),
       maybe_headers,
       content: br#"declare interface A {
   a: string;
@@ -3634,7 +3636,7 @@ export function a(a) {
 "#;
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
-      specifier: &specifier,
+      specifier: specifier.clone(),
       maybe_headers: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
@@ -3691,7 +3693,7 @@ export function a(a) {
     // GraphKind::CodeOnly should not include them
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::CodeOnly,
-      specifier: &specifier,
+      specifier: specifier.clone(),
       maybe_headers: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
@@ -3717,7 +3719,7 @@ export function a(a) {
     let specifier = ModuleSpecifier::parse("file:///a/test.ts").unwrap();
     let actual = parse_module(ParseModuleOptions {
       graph_kind: GraphKind::All,
-      specifier: &specifier,
+      specifier: specifier.clone(),
       maybe_headers: None,
       content: br#"
 /**
