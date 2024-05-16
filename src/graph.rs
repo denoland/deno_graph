@@ -2969,6 +2969,7 @@ impl JsrPackageVersionInfoExt {
 
 struct PendingInfo {
   specifier: ModuleSpecifier,
+  maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
   redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
   result: Result<Option<PendingInfoResponse>, Arc<anyhow::Error>>,
@@ -2983,7 +2984,7 @@ struct LoadedJsrPackageViaHttpsUrl {
 
 type PendingInfoFuture<'a> = LocalBoxFuture<'a, PendingInfo>;
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct AttributeTypeWithRange {
   range: Range,
   /// The kind of attribute (ex. "json").
@@ -3009,6 +3010,7 @@ struct PendingNpmState {
 struct PendingJsrReqResolutionItem {
   specifier: ModuleSpecifier,
   package_ref: JsrPackageReqReference,
+  maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
 }
 
@@ -3016,6 +3018,7 @@ struct PendingJsrReqResolutionItem {
 struct PendingJsrNvResolutionItem {
   specifier: ModuleSpecifier,
   nv_ref: JsrPackageNvReference,
+  maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
 }
 
@@ -3047,8 +3050,6 @@ struct PendingState<'a> {
   pending: FuturesOrdered<PendingInfoFuture<'a>>,
   jsr: PendingJsrState,
   npm: PendingNpmState,
-  pending_specifiers:
-    HashMap<ModuleSpecifier, HashSet<Option<AttributeTypeWithRange>>>,
   dynamic_branches: HashMap<ModuleSpecifier, PendingDynamicBranch>,
 }
 
@@ -3216,6 +3217,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let specifier = match self.state.pending.next().await {
         Some(PendingInfo {
           specifier,
+          maybe_attribute_type,
           maybe_range,
           result,
           redirects,
@@ -3246,17 +3248,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 response.specifier()
               );
 
-              let attribute_types =
-                self.state.pending_specifiers.remove(&specifier).unwrap();
-              for maybe_attribute_type in attribute_types {
-                self.visit(
-                  &specifier,
-                  &response,
-                  maybe_attribute_type,
-                  maybe_range.clone(),
-                  maybe_version_info.as_ref(),
-                )
-              }
+              self.visit(
+                &specifier,
+                &response,
+                maybe_attribute_type,
+                maybe_range.clone(),
+                maybe_version_info.as_ref(),
+              );
+
               Some(specifier)
             }
             Ok(None) => {
@@ -3384,6 +3383,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     .into_inner()
                     .sub_path,
                 }),
+                maybe_attribute_type: pending_resolution.maybe_attribute_type,
                 maybe_range: pending_resolution.maybe_range,
               });
             }
@@ -3473,7 +3473,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 &specifier,
                 resolution_item.maybe_range.as_ref(),
                 self.in_dynamic_branch,
-                None,
+                resolution_item.maybe_attribute_type,
                 Some(&version_info),
               );
             }
@@ -3786,12 +3786,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
-    self
-      .state
-      .pending_specifiers
-      .entry(specifier.clone())
-      .or_default()
-      .insert(maybe_attribute_type);
     if self.graph.module_slots.contains_key(specifier) {
       return;
     }
@@ -3834,6 +3828,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               match response {
                 Ok(None) => PendingInfo {
                   specifier: specifier.clone(),
+                  maybe_attribute_type,
                   maybe_range,
                   result: Ok(Some(PendingInfoResponse::Module {
                     content_or_module_info: ContentOrModuleInfo::ModuleInfo {
@@ -3849,6 +3844,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 },
                 response => PendingInfo {
                   specifier,
+                  maybe_attribute_type,
                   maybe_range,
                   redirects: BTreeMap::new(),
                   result: match response {
@@ -3889,6 +3885,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         } else {
           self.load_pending_module(
             specifier.clone(),
+            maybe_attribute_type,
             maybe_range.map(ToOwned::to_owned),
             specifier.clone(),
             is_dynamic,
@@ -3902,7 +3899,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     let maybe_range = maybe_range.map(ToOwned::to_owned);
     if !self.passthrough_jsr_specifiers && specifier.scheme() == "jsr" {
-      self.load_jsr_specifier(specifier.clone(), maybe_range, is_dynamic);
+      self.load_jsr_specifier(
+        specifier.clone(),
+        maybe_attribute_type,
+        maybe_range,
+        is_dynamic,
+      );
       return;
     } else if let Some(npm_resolver) = self.npm_resolver {
       if specifier.scheme() == "npm" {
@@ -3941,6 +3943,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     self.load_pending_module(
       specifier.clone(),
+      maybe_attribute_type,
       maybe_range,
       specifier.clone(),
       is_dynamic,
@@ -3952,6 +3955,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   fn load_jsr_specifier(
     &mut self,
     specifier: Url,
+    maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_range: Option<Range>,
     is_dynamic: bool,
   ) {
@@ -3984,6 +3988,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 Ok(load_specifier) => {
                   self.load_pending_module(
                     specifier.clone(),
+                    maybe_attribute_type.clone(),
                     maybe_range.clone(),
                     load_specifier,
                     is_dynamic,
@@ -4022,6 +4027,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           .push(PendingJsrReqResolutionItem {
             specifier,
             package_ref,
+            maybe_attribute_type,
             maybe_range,
           });
       }
@@ -4140,9 +4146,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
   }
 
+  #[allow(clippy::too_many_arguments)]
   fn load_pending_module(
     &mut self,
     requested_specifier: Url,
+    maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_range: Option<Range>,
     load_specifier: Url,
     is_dynamic: bool,
@@ -4272,6 +4280,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
       PendingInfo {
         specifier: requested_specifier,
+        maybe_attribute_type,
         maybe_range,
         redirects,
         result,
@@ -4457,10 +4466,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               let specifier = &resolved.specifier;
               let range = &resolved.range;
               let maybe_attribute_type =
-                dep.maybe_attribute_type.as_ref().map(|assert_type| {
+                dep.maybe_attribute_type.as_ref().map(|attribute_type| {
                   AttributeTypeWithRange {
                     range: range.clone(),
-                    kind: assert_type.clone(),
+                    kind: attribute_type.clone(),
                   }
                 });
               if dep.is_dynamic && !self.in_dynamic_branch {
