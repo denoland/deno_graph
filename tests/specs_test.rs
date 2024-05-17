@@ -179,8 +179,7 @@ fn run_graph_test(test: &CollectedTest) {
       deno_graph::FastCheckTypeModuleSlot::Error(diagnostics) => {
         let mut printed_diagnostics = "".to_owned();
         for diagnostic in diagnostics {
-          write!(&mut printed_diagnostics, "{}", diagnostic.display())
-            .unwrap();
+          write!(&mut printed_diagnostics, "{}", diagnostic.display()).unwrap();
         }
         output_text.push_str(&indent(&printed_diagnostics));
       }
