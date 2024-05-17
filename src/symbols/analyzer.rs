@@ -31,7 +31,7 @@ use super::collections::AdditiveOnlyMapForCopyValues;
 use super::cross_module;
 use super::cross_module::Definition;
 use super::cross_module::DefinitionOrUnresolved;
-use super::cross_module::DefinitionPath;
+use super::cross_module::DefinitionPathNode;
 use super::cross_module::ModuleExports;
 use super::dep_analyzer::ResolveDepsMode;
 use super::swc_helpers::ts_entity_name_to_parts;
@@ -140,7 +140,7 @@ impl<'a> RootSymbol<'a> {
     &'b self,
     module: ModuleInfoRef<'b>,
     symbol: &'b Symbol,
-  ) -> Vec<DefinitionPath<'b>> {
+  ) -> Vec<DefinitionPathNode<'b>> {
     debug_assert_eq!(symbol.module_id(), module.module_id());
     super::cross_module::find_definition_paths(
       self.module_graph,
