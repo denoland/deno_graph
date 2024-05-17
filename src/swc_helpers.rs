@@ -2,6 +2,7 @@
 
 use std::ops::ControlFlow;
 
+use deno_ast::swc::ast::BlockStmt;
 use deno_ast::swc::ast::ReturnStmt;
 use deno_ast::swc::ast::Stmt;
 
@@ -32,7 +33,7 @@ pub enum ReturnStatementAnalysis {
 }
 
 pub fn analyze_return_stmts_in_function_body(
-  body: &deno_ast::swc::ast::BlockStmt,
+  body: &BlockStmt,
 ) -> ReturnStatementAnalysis {
   if body.stmts.is_empty() {
     ReturnStatementAnalysis::Void

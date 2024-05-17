@@ -100,57 +100,19 @@ import 'jsr:@scope/a'
   }
 }
 
-Fast check https://jsr.io/@scope/a/1.0.0/functions.ts:
-  {}
-  abstract class Internal<T> {
-    declare prop: T;
-  }
-  function func(): void {}
-  export function other_func(): void {}
-  export const functions = {
-    func,
-    other: other_func
-  };
-  export declare namespace functions {
-    type Function<T> = Internal<T>;
-  }
-  --- DTS ---
-  declare abstract class Internal<T> {
-    prop: T;
-  }
-  declare function func(): void;
-  export declare function other_func(): void;
-  export declare const functions: {
-    readonly other;
-  };
-  export declare namespace functions {
-    type Function<T> = Internal<T>;
-  }
-  --- DTS Diagnostics ---
-  unable to infer type from object property, skipping
-      at https://jsr.io/@scope/a/1.0.0/functions.ts@125
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  {
-    "./functions.ts": {
-      "code": {
-        "specifier": "https://jsr.io/@scope/a/1.0.0/functions.ts",
-        "span": {
-          "start": {
-            "line": 0,
-            "character": 26
-          },
-          "end": {
-            "line": 0,
-            "character": 42
-          }
-        }
-      }
-    }
-  }
-  import { functions } from "./functions.ts";
-  export type Test = functions.Function;
-  export { functions } from "./functions.ts";
-  --- DTS ---
-  import { functions } from "./functions.ts";
-  export type Test = functions.Function;
-  export { functions } from "./functions.ts";
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> https://jsr.io/@scope/a/1.0.0/functions.ts:9:14
+     |
+   9 | export const functions = {
+     |              ^^^^^^^^^ this variable's type could not be inferred because its initializer
+     |
+  10 |   func,
+     |   ---- contains this shorthand property, which can not be inferred
+     |
+     = hint: add an explicit type annotation to the variable declaration
+
+    info: all variables in the public API must have a known type
+    info: shorthand properties can not be inferred because the type of the value referred to by the shorthand property is not known without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+

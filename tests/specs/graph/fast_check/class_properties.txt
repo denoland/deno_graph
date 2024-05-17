@@ -106,8 +106,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       return {} as never;
     }
   }
-  const isSecure: Symbol = {} as never;
-  const public2: Symbol = {} as never;
+  declare const isSecure: Symbol;
+  declare const public2: Symbol;
   export class CookieMapBase {
     declare [isSecure]: boolean;
     [public2](): number {

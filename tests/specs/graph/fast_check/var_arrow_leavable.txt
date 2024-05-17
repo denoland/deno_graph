@@ -115,8 +115,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     }
   }
   import type { Foo, Bar } from "./b.ts";
-  export const foo = (foo: Foo): string =>({} as never);
-  export const bar = (): Bar =>({} as never);
+  export declare const foo: (foo: Foo) => string;
+  export declare const bar: () => Bar;
   --- DTS ---
   import type { Foo, Bar } from "./b.ts";
   export declare const foo: (foo: Foo) => string;

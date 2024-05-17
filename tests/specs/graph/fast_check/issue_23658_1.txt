@@ -90,43 +90,17 @@ import 'jsr:@scope/a'
   }
 }
 
-Fast check https://jsr.io/@scope/a/1.0.0/base.ts:
-  {}
-  export class Base {
-  }
-  --- DTS ---
-  export declare class Base {
-  }
-
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  {
-    "./base.ts": {
-      "code": {
-        "specifier": "https://jsr.io/@scope/a/1.0.0/base.ts",
-        "span": {
-          "start": {
-            "line": 0,
-            "character": 30
-          },
-          "end": {
-            "line": 0,
-            "character": 41
-          }
-        }
-      }
-    }
-  }
-  import * as adapter_base from "./base.ts";
-  class ServerAdapter extends adapter_base.Base {
-    static adapt(): void {}
-  }
-  export const adapt = ServerAdapter.adapt;
-  --- DTS ---
-  import * as adapter_base from "./base.ts";
-  declare class ServerAdapter extends adapter_base.Base {
-    static adapt(): void;
-  }
-  export declare const adapt: any;
-  --- DTS Diagnostics ---
-  unable to infer type, falling back to any type
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@130
+  error[unknown-var-type]: unknown type for variable in the public API
+   --> https://jsr.io/@scope/a/1.0.0/mod.ts:8:14
+    |
+  8 | export const adapt = ServerAdapter.adapt;
+    |              ^^^^^ this variable's type could not be inferred because its initializer
+    |                      ------------------- contains this expression, of which the type could not be inferred
+    |
+    = hint: add an explicit type annotation to the variable declaration
+
+    info: all variables in the public API must have a known type
+    info: the type of arbitrary expressions can not be inferred without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+

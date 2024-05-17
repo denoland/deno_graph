@@ -142,12 +142,16 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     |
   1 | export class A {
     | ^^^^^^^^^^^^^^^^
+    |
   2 |   member: string;
     | ^^^^^^^^^^^^^^^^^
+    |
   3 |   member2: string;
     | ^^^^^^^^^^^^^^^^^^
+    |
   4 | }
     | ^ this is the reference
+    |
     = hint: fix the reference to point to a symbol that exists
 
     info: this error may be the result of a bug in Deno - if you think this is the case, please open an issue

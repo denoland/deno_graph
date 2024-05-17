@@ -63,8 +63,8 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  const key: unique symbol = {} as never;
-  const key2: unique symbol = {} as never;
+  declare const key: unique symbol;
+  declare const key2: unique symbol;
   export class MyClass {
     declare [key]: number;
     declare [key2]: string;

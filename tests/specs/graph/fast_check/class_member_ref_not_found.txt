@@ -66,10 +66,13 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     |
   4 | class Public1 {
     | ^^^^^^^^^^^^^^^
+    |
   5 |   prop: string;
     | ^^^^^^^^^^^^^^^
+    |
   6 | }
     | ^ this is the reference
+    |
     = hint: fix the reference to point to a symbol that exists
 
     info: this error may be the result of a bug in Deno - if you think this is the case, please open an issue

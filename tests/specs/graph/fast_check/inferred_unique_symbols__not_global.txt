@@ -65,13 +65,16 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  error[missing-explicit-type]: missing explicit type in the public API
+  error[unknown-var-type]: unknown type for variable in the public API
    --> https://jsr.io/@scope/a/1.0.0/mod.ts:4:7
     |
   4 | const key = Symbol("#keys");
-    |       ^^^ this symbol is missing an explicit type
-    = hint: add an explicit type annotation to the symbol
+    |       ^^^ this variable's type could not be inferred because its initializer
+    |             --------------- contains this expression, of which the type could not be inferred
+    |
+    = hint: add an explicit type annotation to the variable declaration
 
-    info: all symbols in the public API must have an explicit type
-    docs: https://jsr.io/go/slow-type-missing-explicit-type
+    info: all variables in the public API must have a known type
+    info: the type of arbitrary expressions can not be inferred without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
 

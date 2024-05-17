@@ -25,12 +25,11 @@ export const b = function() {
 
 // This can be inferred for class declarations.
 
-// TODO: we don't support this at all
-// export const e = {
-//   e() {
-//     exit();
-//   }
-// };
+export const e = {
+  e() {
+    exit();
+  }
+};
 
 // TODO: we don't support this at all
 // export const f = class {
@@ -48,7 +47,7 @@ export const b = function() {
   "modules": [
     {
       "kind": "esm",
-      "size": 421,
+      "size": 368,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
     }
@@ -57,27 +56,47 @@ export const b = function() {
 }
 
 Fast check file:///mod.ts:
-  error[missing-explicit-return-type]: missing explicit return type in the public API
+  error[unknown-var-type]: unknown type for variable in the public API
    --> /mod.ts:3:14
     |
   3 | export const a = () => {
-    |              ^ this function is missing an explicit return type
-    = hint: add an explicit return type of 'void' or 'never' to the function
+    |              ^ this variable's type could not be inferred because its initializer
+    |              - contains this arrow expression, which is missing an explicit return type annotation
+    |
+    = hint: add an explicit return type annotation to the arrow expression in the variable declaration initializer
 
-    info: all functions in the public API must have an explicit return type
-    info: function expressions without a return statement can have a return type of either 'void' or 'never'
-    info: this function has no return statements, so a return type could not be inferred automatically
-    docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+    info: all variables in the public API must have a known type
+    info: the return type of an arrow expression can not be inferred if it has no return statements
+    info: this is because an arrow expressions without a return statement can either return 'void' or 'never', and the specific type can not be determined without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
 
-  error[missing-explicit-return-type]: missing explicit return type in the public API
+  error[unknown-var-type]: unknown type for variable in the public API
    --> /mod.ts:7:14
     |
   7 | export const b = function() {
-    |              ^ this function is missing an explicit return type
-    = hint: add an explicit return type of 'void' or 'never' to the function
+    |              ^ this variable's type could not be inferred because its initializer
+    |              - contains this function expression, which is missing an explicit return type annotation
+    |
+    = hint: add an explicit return type annotation to the function expression in the variable declaration initializer
 
-    info: all functions in the public API must have an explicit return type
-    info: function expressions without a return statement can have a return type of either 'void' or 'never'
-    info: this function has no return statements, so a return type could not be inferred automatically
-    docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+    info: all variables in the public API must have a known type
+    info: the return type of a function expression can not be inferred if it has no return statements
+    info: this is because a function expressions without a return statement can either return 'void' or 'never', and the specific type can not be determined without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:15:14
+     |
+  15 | export const e = {
+     |              ^ this variable's type could not be inferred because its initializer
+     |
+  16 |   e() {
+     |   - contains this object method, which is missing an explicit return type annotation
+     |
+     = hint: add an explicit return type annotation to the object method in the variable declaration initializer
+
+    info: all variables in the public API must have a known type
+    info: the return type of an object method can not be inferred if it has no return statements
+    info: this is because an object methods without a return statement can either return 'void' or 'never', and the specific type can not be determined without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
 

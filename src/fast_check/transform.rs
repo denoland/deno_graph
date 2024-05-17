@@ -25,9 +25,7 @@ use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use indexmap::IndexMap;
 
-use crate::swc_helpers::analyze_return_stmts_in_function_body;
 use crate::swc_helpers::FunctionKind;
-use crate::swc_helpers::ReturnStatementAnalysis;
 use crate::symbols::EsModuleInfo;
 use crate::symbols::ExpandoPropertyRef;
 use crate::symbols::Symbol;
@@ -40,10 +38,12 @@ use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::any_type_ann;
 use super::swc_helpers::ident;
 use super::swc_helpers::is_void_type;
-use super::swc_helpers::maybe_lit_to_ts_type;
+use super::swc_helpers::lit_to_ts_type;
 use super::swc_helpers::ts_keyword_type;
 use super::transform_dts::FastCheckDtsDiagnostic;
 use super::transform_dts::FastCheckDtsTransformer;
+use super::type_infer::ReturnTypeInferFailCause;
+use super::type_infer::TypeInferrer;
 use super::FastCheckDiagnostic;
 use super::FastCheckDiagnosticRange;
 
@@ -829,7 +829,7 @@ impl<'a> FastCheckTransformer<'a> {
                         _ => None,
                       };
                       explicit_type_ann.or_else(|| {
-                        self.maybe_infer_type_from_expr(&assign.right).map(
+                        self.maybe_infer_type_from_expr_old(&assign.right).map(
                           |type_ann| {
                             Box::new(TsTypeAnn {
                               span: DUMMY_SP,
@@ -981,7 +981,7 @@ impl<'a> FastCheckTransformer<'a> {
           let inferred_type = n
             .value
             .as_ref()
-            .and_then(|e| self.maybe_infer_type_from_expr(e));
+            .and_then(|e| self.maybe_infer_type_from_expr_old(e));
           match inferred_type {
             Some(t) => {
               n.type_ann = Some(Box::new(TsTypeAnn {
@@ -1030,7 +1030,7 @@ impl<'a> FastCheckTransformer<'a> {
           let inferred_type = n
             .value
             .as_ref()
-            .and_then(|e| self.maybe_infer_type_from_expr(e));
+            .and_then(|e| self.maybe_infer_type_from_expr_old(e));
           match inferred_type {
             Some(t) => Box::new(TsTypeAnn {
               span: DUMMY_SP,
@@ -1140,21 +1140,30 @@ impl<'a> FastCheckTransformer<'a> {
     if missing_return_type {
       let range = parent_id_range.unwrap_or_else(|| n.range());
       if n.is_generator {
-        self.mark_diagnostic(
-          FastCheckDiagnostic::MissingExplicitReturnType {
-            range: self.source_range_to_range(range),
-            is_definitely_void_or_never: false,
-            is_async: n.is_async,
-          },
-        )?;
+        self.mark_diagnostic(FastCheckDiagnostic::UnknownReturnType {
+          ident: self.source_range_to_range(range),
+          cause: Some(Box::new(ReturnTypeInferFailCause::IsGenerator)),
+        })?;
       } else if let Some(body) = &mut n.body {
-        self.transform_function_body_block_stmt(
-          range,
-          &mut n.return_type,
+        let res = self.infer().infer_function_body_block_stmt(
           body,
           function_kind,
           n.is_async,
-        )?;
+        );
+        match res {
+          Ok(type_ann) => {
+            n.return_type = Some(Box::new(TsTypeAnn {
+              span: DUMMY_SP,
+              type_ann,
+            }));
+          }
+          Err(cause) => {
+            self.mark_diagnostic(FastCheckDiagnostic::UnknownReturnType {
+              ident: self.source_range_to_range(range),
+              cause: Some(Box::new(cause)),
+            })?;
+          }
+        }
       }
     }
 
@@ -1204,19 +1213,30 @@ impl<'a> FastCheckTransformer<'a> {
 
       match &mut *n.body {
         BlockStmtOrExpr::BlockStmt(body) => {
-          self.transform_function_body_block_stmt(
-            range,
-            &mut n.return_type,
+          let res = self.infer().infer_function_body_block_stmt(
             body,
             FunctionKind::ExpressionLike,
             n.is_async,
-          )?;
+          );
+          match res {
+            Ok(type_ann) => {
+              n.return_type = Some(Box::new(TsTypeAnn {
+                span: DUMMY_SP,
+                type_ann,
+              }));
+            }
+            Err(cause) => {
+              self.mark_diagnostic(FastCheckDiagnostic::UnknownReturnType {
+                ident: self.source_range_to_range(range),
+                cause: Some(Box::new(cause)),
+              })?;
+            }
+          }
         }
         BlockStmtOrExpr::Expr(expr) => {
-          let inferred_type = self.maybe_infer_type_from_expr(expr);
-          match inferred_type {
-            Some(t) => {
-              let mut return_type = Box::new(t);
+          let res = self.infer().infer_expr(expr, false, None);
+          match res {
+            Ok(mut return_type) => {
               if n.is_async {
                 return_type = self.promise_wrap_type(return_type)
               }
@@ -1225,18 +1245,15 @@ impl<'a> FastCheckTransformer<'a> {
                 type_ann: return_type,
               }));
             }
-            None => {
-              let is_expr_leavable =
-                self.maybe_transform_expr_if_leavable(expr, None)?;
-              if !is_expr_leavable {
-                self.mark_diagnostic(
-                  FastCheckDiagnostic::MissingExplicitReturnType {
-                    range: self.source_range_to_range(range),
-                    is_definitely_void_or_never: false,
-                    is_async: n.is_async,
+            Err(cause) => {
+              self.mark_diagnostic(FastCheckDiagnostic::UnknownReturnType {
+                ident: self.source_range_to_range(range),
+                cause: Some(Box::new(
+                  ReturnTypeInferFailCause::ArrowExpressionValue {
+                    cause: Box::new(cause),
                   },
-                )?;
-              }
+                )),
+              })?;
             }
           }
         }
@@ -1268,60 +1285,6 @@ impl<'a> FastCheckTransformer<'a> {
     Ok(())
   }
 
-  fn transform_function_body_block_stmt(
-    &mut self,
-    range: SourceRange,
-    return_type: &mut Option<Box<TsTypeAnn>>,
-    body: &mut BlockStmt,
-    function_kind: FunctionKind,
-    is_async: bool,
-  ) -> Result<(), Vec<FastCheckDiagnostic>> {
-    let analysis = analyze_return_stmts_in_function_body(body);
-    match (analysis, function_kind) {
-      (_, FunctionKind::Setter) => unreachable!(),
-      (ReturnStatementAnalysis::None, FunctionKind::DeclarationLike)
-      | (ReturnStatementAnalysis::Void, FunctionKind::DeclarationLike)
-      | (ReturnStatementAnalysis::Void, FunctionKind::ExpressionLike) => {
-        *return_type = Some(Box::new(TsTypeAnn {
-          span: DUMMY_SP,
-          type_ann: void_or_promise_void(is_async),
-        }));
-      }
-      (ReturnStatementAnalysis::None, FunctionKind::ExpressionLike) => {
-        self.mark_diagnostic(
-          FastCheckDiagnostic::MissingExplicitReturnType {
-            range: self.source_range_to_range(range),
-            is_definitely_void_or_never: true,
-            is_async,
-          },
-        )?;
-      }
-      (ReturnStatementAnalysis::Single(_), _) => {
-        // TODO: infer return type based on return type
-        self.mark_diagnostic(
-          FastCheckDiagnostic::MissingExplicitReturnType {
-            range: self.source_range_to_range(range),
-            is_definitely_void_or_never: false,
-            is_async,
-          },
-        )?;
-      }
-      (ReturnStatementAnalysis::None, FunctionKind::Getter)
-      | (ReturnStatementAnalysis::Void, FunctionKind::Getter)
-      | (ReturnStatementAnalysis::Multiple, _) => {
-        self.mark_diagnostic(
-          FastCheckDiagnostic::MissingExplicitReturnType {
-            range: self.source_range_to_range(range),
-            is_definitely_void_or_never: false,
-            is_async,
-          },
-        )?;
-      }
-    }
-
-    Ok(())
-  }
-
   fn handle_param_pat(
     &mut self,
     pat: &mut Pat,
@@ -1338,7 +1301,8 @@ impl<'a> FastCheckTransformer<'a> {
       Pat::Assign(assign) => match &mut *assign.left {
         Pat::Ident(ident) => {
           if ident.type_ann.is_none() {
-            let inferred_type = self.maybe_infer_type_from_expr(&assign.right);
+            let inferred_type =
+              self.maybe_infer_type_from_expr_old(&assign.right);
             match inferred_type {
               Some(t) => {
                 ident.type_ann = Some(Box::new(TsTypeAnn {
@@ -1459,8 +1423,9 @@ impl<'a> FastCheckTransformer<'a> {
     // don't need to do anything for ambient decls
     if !is_ambient {
       for decl in &mut n.decls {
-        self.transform_var_declarator(decl)?;
+        self.transform_var_declarator(decl, n.kind)?;
       }
+      n.declare = true;
     }
 
     Ok(TransformItemResult::from_retain(!n.decls.is_empty()))
@@ -1469,41 +1434,43 @@ impl<'a> FastCheckTransformer<'a> {
   fn transform_var_declarator(
     &mut self,
     n: &mut VarDeclarator,
+    kind: VarDeclKind,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
     match &mut n.name {
       Pat::Ident(ident) => {
         if ident.type_ann.is_none() {
-          let inferred_type = n
-            .init
-            .as_ref()
-            .and_then(|e| self.maybe_infer_type_from_expr(e));
-          match inferred_type {
-            Some(t) => {
-              ident.type_ann = Some(Box::new(TsTypeAnn {
-                span: DUMMY_SP,
-                type_ann: Box::new(t),
-              }));
-              n.init = Some(obj_as_never_expr());
-            }
-            None => {
-              let is_init_leavable = match n.init.as_mut() {
-                Some(init) => self.maybe_transform_expr_if_leavable(
-                  init,
-                  Some(ident.id.range()),
-                )?,
-                None => false,
-              };
-              if !is_init_leavable {
-                self.mark_diagnostic(
-                  FastCheckDiagnostic::MissingExplicitType {
-                    range: self.source_range_to_range(ident.range()),
-                  },
-                )?;
+          if kind == VarDeclKind::Const {
+            self.transform_const_decl(
+              ident.range(),
+              &mut n.init,
+              &mut ident.type_ann,
+              ident.id.range(),
+            )?;
+          } else {
+            if let Some(expr) = n.init.as_mut() {
+              let res =
+                self.infer().infer_expr(expr, false, Some(ident.id.range()));
+              n.init = None;
+              match res {
+                Ok(type_ann) => {
+                  ident.type_ann = Some(Box::new(TsTypeAnn {
+                    span: DUMMY_SP,
+                    type_ann,
+                  }));
+                }
+                Err(cause) => {
+                  self.mark_diagnostic(
+                    FastCheckDiagnostic::UnknownVarType {
+                      ident: self.source_range_to_range(ident.range()),
+                      cause: Some(Box::new(cause)),
+                    },
+                  )?;
+                }
               }
             }
           }
         } else {
-          n.init = Some(obj_as_never_expr());
+          n.init = None;
         }
       }
       Pat::Array(_)
@@ -1518,6 +1485,62 @@ impl<'a> FastCheckTransformer<'a> {
           },
         )?;
       }
+    }
+
+    Ok(())
+  }
+
+  fn transform_const_decl(
+    &mut self,
+    range: SourceRange,
+    init_opt: &mut Option<Box<Expr>>,
+    type_ann: &mut Option<Box<TsTypeAnn>>,
+    ident_range: SourceRange,
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
+    let init = init_opt.as_mut().unwrap();
+
+    let res = self
+      .infer()
+      .infer_expr_in_const_pos(init, Some(ident_range));
+    let inferred_type = match res {
+      Ok(inferred_type) => inferred_type,
+      Err(cause) => {
+        self.mark_diagnostic(FastCheckDiagnostic::UnknownVarType {
+          ident: self.source_range_to_range(range),
+          cause: Some(Box::new(cause)),
+        })?;
+        return Ok(());
+      }
+    };
+
+    if let TsType::TsLitType(lit) = &*inferred_type {
+      match &lit.lit {
+        TsLit::Number(number) => {
+          **init = Expr::Lit(Lit::Num(number.clone()));
+        }
+        TsLit::Str(str) => {
+          **init = Expr::Lit(Lit::Str(str.clone()));
+        }
+        TsLit::Bool(bool) => {
+          **init = Expr::Lit(Lit::Bool(bool.clone()));
+        }
+        TsLit::BigInt(bigint) => {
+          **init = Expr::Lit(Lit::BigInt(bigint.clone()));
+        }
+        TsLit::Tpl(_) => {
+          *init_opt = None;
+          *type_ann = Some(Box::new(TsTypeAnn {
+            span: DUMMY_SP,
+            type_ann: inferred_type,
+          }));
+        }
+      }
+    } else {
+      *init_opt = None;
+      *type_ann = Some(Box::new(TsTypeAnn {
+        span: DUMMY_SP,
+        type_ann: inferred_type,
+      }));
     }
 
     Ok(())
@@ -1664,6 +1687,10 @@ impl<'a> FastCheckTransformer<'a> {
     }
   }
 
+  fn infer(&self) -> TypeInferrer<'_> {
+    TypeInferrer::new(self.specifier, self.parsed_source, self.es_module_info)
+  }
+
   fn maybe_transform_expr_if_leavable(
     &mut self,
     expr: &mut Expr,
@@ -1784,11 +1811,11 @@ impl<'a> FastCheckTransformer<'a> {
     Ok(is_leavable)
   }
 
-  fn maybe_infer_type_from_expr(&self, expr: &Expr) -> Option<TsType> {
+  fn maybe_infer_type_from_expr_old(&self, expr: &Expr) -> Option<TsType> {
     match expr {
       Expr::TsTypeAssertion(n) => infer_simple_type_from_type(&n.type_ann),
       Expr::TsAs(n) => infer_simple_type_from_type(&n.type_ann),
-      Expr::Lit(lit) => maybe_lit_to_ts_type(lit),
+      Expr::Lit(lit) => Some(lit_to_ts_type(lit)),
       Expr::Call(call_expr) => {
         if self.is_call_expr_symbol_create(call_expr) {
           Some(TsType::TsTypeOperator(TsTypeOperator {
@@ -1804,7 +1831,7 @@ impl<'a> FastCheckTransformer<'a> {
           None
         }
       }
-      Expr::Paren(n) => self.maybe_infer_type_from_expr(&n.expr),
+      Expr::Paren(n) => self.maybe_infer_type_from_expr_old(&n.expr),
       Expr::This(_)
       | Expr::Array(_)
       | Expr::Object(_)
@@ -1936,22 +1963,6 @@ fn is_computed_prop_name(prop_name: &PropName) -> bool {
     | PropName::Num(_)
     | PropName::BigInt(_) => false,
     PropName::Computed(_) => true,
-  }
-}
-
-fn void_or_promise_void(is_async: bool) -> Box<TsType> {
-  let void_type = Box::new(ts_keyword_type(TsKeywordTypeKind::TsVoidKeyword));
-  if is_async {
-    Box::new(TsType::TsTypeRef(TsTypeRef {
-      span: DUMMY_SP,
-      type_name: TsEntityName::Ident(Ident::new("Promise".into(), DUMMY_SP)),
-      type_params: Some(Box::new(TsTypeParamInstantiation {
-        span: DUMMY_SP,
-        params: vec![void_type],
-      })),
-    }))
-  } else {
-    void_type
   }
 }
 

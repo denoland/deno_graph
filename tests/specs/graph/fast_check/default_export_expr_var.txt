@@ -67,7 +67,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export interface $Type {
     prop: boolean;
   }
-  export const $: $Type = {} as never;
+  export declare const $: $Type;
   export default $;
   --- DTS ---
   export interface $Type {

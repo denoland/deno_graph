@@ -63,8 +63,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     |
   1 | global {
     | ^^^^^^^^
+    |
   2 |   declare var Test: 5;
     | ^^^^^^^^^^^^^^^^^^^^^^
+    |
   3 | }
     | ^
     = hint: remove the 'global' augmentation

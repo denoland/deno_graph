@@ -57,13 +57,15 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  error[missing-explicit-return-type]: missing explicit return type in the public API
+  error[unknown-return-type]: unknown return type for function in the public API
    --> https://jsr.io/@scope/a/1.0.0/mod.ts:1:18
     |
   1 | export function* missingReturnType() {
-    |                  ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    |                  ----------------- this function is missing an explicit return type annotation
+    |
     = hint: add an explicit return type to the function
 
-    info: all functions in the public API must have an explicit return type
-    docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+    info: all functions in the public API must have an known return type
+    info: a function declaration that is a generator must have an explicit return type annotation because the return type can not be inferred without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-return-type
 
