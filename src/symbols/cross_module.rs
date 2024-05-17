@@ -463,6 +463,70 @@ pub fn resolve_symbol_dep<'a>(
   }
 }
 
+pub fn resolve_symbol_dep_2<'a>(
+  module_graph: &'a ModuleGraph,
+  module: ModuleInfoRef<'a>,
+  dep: &SymbolNodeDep,
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
+) -> Vec<ResolvedSymbolDepEntry<'a>> {
+  match dep {
+    SymbolNodeDep::Id(id) => {
+      if let Some(dep_symbol) = module.esm().and_then(|m| m.symbol_from_swc(id))
+      {
+        find_definition_paths(
+          module_graph,
+          module,
+          dep_symbol,
+          specifier_to_module,
+        )
+        .into_iter()
+        .map(ResolvedSymbolDepEntry::Path)
+        .collect()
+      } else {
+        vec![]
+      }
+    }
+    SymbolNodeDep::QualifiedId(id, parts) => {
+      go_to_id_and_parts_definition_paths2(
+        module_graph,
+        module,
+        id,
+        parts,
+        specifier_to_module,
+      )
+      .into_iter()
+      .map(ResolvedSymbolDepEntry::Path)
+      .collect()
+    }
+    SymbolNodeDep::ImportType(import_specifier, parts) => {
+      let maybe_dep_specifier = module_graph.resolve_dependency(
+        import_specifier,
+        module.specifier(),
+        /* prefer types */ true,
+      );
+      let maybe_module =
+        maybe_dep_specifier.as_ref().and_then(specifier_to_module);
+      let Some(module) = maybe_module else {
+        return Vec::new();
+      };
+      if parts.is_empty() {
+        // an ImportType includes default exports
+        vec![ResolvedSymbolDepEntry::ImportType(module)]
+      } else {
+        resolve_qualified_export_name(
+          module_graph,
+          module,
+          parts,
+          specifier_to_module,
+        )
+        .into_iter()
+        .map(ResolvedSymbolDepEntry::Path)
+        .collect()
+      }
+    }
+  }
+}
+
 fn go_to_id_and_parts_definition_paths<'a>(
   module_graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
@@ -489,6 +553,28 @@ fn go_to_id_and_parts_definition_paths<'a>(
       kind: DefinitionUnresolvedKind::Id(target_id.clone()),
       parts: parts.to_vec(),
     })]
+  }
+}
+
+fn go_to_id_and_parts_definition_paths2<'a>(
+  module_graph: &'a ModuleGraph,
+  module: ModuleInfoRef<'a>,
+  target_id: &deno_ast::swc::ast::Id,
+  parts: &[String],
+  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
+) -> Vec<DefinitionPath<'a>> {
+  if let Some(symbol_id) =
+    module.esm().and_then(|m| m.symbol_id_from_swc(target_id))
+  {
+    resolve_qualified_name(
+      module_graph,
+      module,
+      module.symbol(symbol_id).unwrap(),
+      parts,
+      specifier_to_module,
+    )
+  } else {
+    Vec::new()
   }
 }
 
