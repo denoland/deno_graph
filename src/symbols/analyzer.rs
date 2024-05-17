@@ -153,13 +153,11 @@ impl<'a> RootSymbol<'a> {
   pub fn resolve_symbol_dep<'b>(
     &'b self,
     module: ModuleInfoRef<'b>,
-    symbol: &'b Symbol,
     dep: &SymbolNodeDep,
   ) -> Vec<ResolvedSymbolDepEntry<'b>> {
     super::cross_module::resolve_symbol_dep(
       self.module_graph,
       module,
-      symbol,
       dep,
       &|specifier| self.module_from_specifier(specifier),
     )

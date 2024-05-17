@@ -77,11 +77,8 @@ export class MyClass {
       })
       .collect::<Vec<_>>();
     assert_eq!(deps.len(), 1);
-    let mut resolved_deps = root_symbol.resolve_symbol_dep(
-      resolved_type.module,
-      type_symbol,
-      &deps[0],
-    );
+    let mut resolved_deps =
+      root_symbol.resolve_symbol_dep(resolved_type.module, &deps[0]);
     assert_eq!(resolved_deps.len(), 1);
     let resolved_dep = resolved_deps.remove(0);
     let path = match resolved_dep {

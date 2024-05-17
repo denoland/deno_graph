@@ -33,10 +33,10 @@ impl<'a> DefinitionOrUnresolved<'a> {
     }
   }
 
-  pub fn symbol(&self) -> &'a Symbol {
+  pub fn symbol(&self) -> Option<&'a Symbol> {
     match self {
-      DefinitionOrUnresolved::Definition(def) => def.symbol,
-      DefinitionOrUnresolved::Unresolved(unresolved) => unresolved.symbol,
+      DefinitionOrUnresolved::Definition(def) => Some(def.symbol),
+      DefinitionOrUnresolved::Unresolved(_) => None,
     }
   }
 }
@@ -85,7 +85,6 @@ pub enum DefinitionUnresolvedKind {
 #[derive(Debug, Clone)]
 pub struct DefinitionUnresolved<'a> {
   pub module: ModuleInfoRef<'a>,
-  pub symbol: &'a Symbol,
   pub kind: DefinitionUnresolvedKind,
   pub parts: Vec<String>,
 }
@@ -113,11 +112,11 @@ impl<'a> DefinitionPath<'a> {
     }
   }
 
-  pub fn symbol(&self) -> &'a Symbol {
+  pub fn symbol(&self) -> Option<&'a Symbol> {
     match self {
-      DefinitionPath::Path { symbol, .. } => symbol,
-      DefinitionPath::Definition(def) => def.symbol,
-      DefinitionPath::Unresolved(unresolved) => unresolved.symbol,
+      DefinitionPath::Path { symbol, .. } => Some(symbol),
+      DefinitionPath::Definition(def) => Some(def.symbol),
+      DefinitionPath::Unresolved(_) => None,
     }
   }
 
@@ -234,7 +233,6 @@ fn find_definition_paths_internal<'a>(
         let inner_paths = go_to_id_and_parts_definition_paths(
           module_graph,
           module,
-          symbol,
           target_id,
           parts,
           specifier_to_module,
@@ -302,7 +300,6 @@ fn go_to_file_export<'a>(
   let Some(dep_module) = maybe_dep_module else {
     return vec![DefinitionPath::Unresolved(DefinitionUnresolved {
       module: referrer_module,
-      symbol: referrer_module.module_symbol(),
       kind: DefinitionUnresolvedKind::Specifier(file_ref.specifier.clone()),
       parts: Vec::new(),
     })];
@@ -363,7 +360,6 @@ fn go_to_file_export<'a>(
       }
       vec![DefinitionPath::Unresolved(DefinitionUnresolved {
         module: dep_module,
-        symbol: dep_module.module_symbol(),
         kind: DefinitionUnresolvedKind::Part(export_name.to_string()),
         parts: Vec::new(),
       })]
@@ -385,11 +381,9 @@ pub enum ResolvedSymbolDepEntry<'a> {
 pub fn resolve_symbol_dep<'a>(
   module_graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
-  symbol: &'a Symbol,
   dep: &SymbolNodeDep,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<ResolvedSymbolDepEntry<'a>> {
-  debug_assert_eq!(symbol.module_id(), module.module_id());
   match dep {
     SymbolNodeDep::Id(id) => {
       if let Some(dep_symbol) = module.esm().and_then(|m| m.symbol_from_swc(id))
@@ -407,7 +401,6 @@ pub fn resolve_symbol_dep<'a>(
         vec![ResolvedSymbolDepEntry::Path(DefinitionPath::Unresolved(
           DefinitionUnresolved {
             module,
-            symbol,
             kind: DefinitionUnresolvedKind::Id(id.clone()),
             parts: Vec::new(),
           },
@@ -418,7 +411,6 @@ pub fn resolve_symbol_dep<'a>(
       go_to_id_and_parts_definition_paths(
         module_graph,
         module,
-        symbol,
         id,
         parts,
         specifier_to_module,
@@ -439,7 +431,6 @@ pub fn resolve_symbol_dep<'a>(
         return vec![ResolvedSymbolDepEntry::Path(DefinitionPath::Unresolved(
           DefinitionUnresolved {
             module,
-            symbol,
             kind: DefinitionUnresolvedKind::Specifier(import_specifier.clone()),
             parts: parts.clone(),
           },
@@ -463,79 +454,13 @@ pub fn resolve_symbol_dep<'a>(
   }
 }
 
-pub fn resolve_symbol_dep_2<'a>(
-  module_graph: &'a ModuleGraph,
-  module: ModuleInfoRef<'a>,
-  dep: &SymbolNodeDep,
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
-) -> Vec<ResolvedSymbolDepEntry<'a>> {
-  match dep {
-    SymbolNodeDep::Id(id) => {
-      if let Some(dep_symbol) = module.esm().and_then(|m| m.symbol_from_swc(id))
-      {
-        find_definition_paths(
-          module_graph,
-          module,
-          dep_symbol,
-          specifier_to_module,
-        )
-        .into_iter()
-        .map(ResolvedSymbolDepEntry::Path)
-        .collect()
-      } else {
-        vec![]
-      }
-    }
-    SymbolNodeDep::QualifiedId(id, parts) => {
-      go_to_id_and_parts_definition_paths2(
-        module_graph,
-        module,
-        id,
-        parts,
-        specifier_to_module,
-      )
-      .into_iter()
-      .map(ResolvedSymbolDepEntry::Path)
-      .collect()
-    }
-    SymbolNodeDep::ImportType(import_specifier, parts) => {
-      let maybe_dep_specifier = module_graph.resolve_dependency(
-        import_specifier,
-        module.specifier(),
-        /* prefer types */ true,
-      );
-      let maybe_module =
-        maybe_dep_specifier.as_ref().and_then(specifier_to_module);
-      let Some(module) = maybe_module else {
-        return Vec::new();
-      };
-      if parts.is_empty() {
-        // an ImportType includes default exports
-        vec![ResolvedSymbolDepEntry::ImportType(module)]
-      } else {
-        resolve_qualified_export_name(
-          module_graph,
-          module,
-          parts,
-          specifier_to_module,
-        )
-        .into_iter()
-        .map(ResolvedSymbolDepEntry::Path)
-        .collect()
-      }
-    }
-  }
-}
-
 fn go_to_id_and_parts_definition_paths<'a>(
   module_graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
-  symbol: &'a Symbol,
   target_id: &deno_ast::swc::ast::Id,
   parts: &[String],
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPath<'a>> {
-  debug_assert_eq!(symbol.module_id(), module.module_id());
   if let Some(symbol_id) =
     module.esm().and_then(|m| m.symbol_id_from_swc(target_id))
   {
@@ -549,32 +474,9 @@ fn go_to_id_and_parts_definition_paths<'a>(
   } else {
     vec![DefinitionPath::Unresolved(DefinitionUnresolved {
       module,
-      symbol,
       kind: DefinitionUnresolvedKind::Id(target_id.clone()),
       parts: parts.to_vec(),
     })]
-  }
-}
-
-fn go_to_id_and_parts_definition_paths2<'a>(
-  module_graph: &'a ModuleGraph,
-  module: ModuleInfoRef<'a>,
-  target_id: &deno_ast::swc::ast::Id,
-  parts: &[String],
-  specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
-) -> Vec<DefinitionPath<'a>> {
-  if let Some(symbol_id) =
-    module.esm().and_then(|m| m.symbol_id_from_swc(target_id))
-  {
-    resolve_qualified_name(
-      module_graph,
-      module,
-      module.symbol(symbol_id).unwrap(),
-      parts,
-      specifier_to_module,
-    )
-  } else {
-    Vec::new()
   }
 }
 
@@ -617,7 +519,6 @@ fn resolve_qualified_export_name_internal<'a>(
   } else {
     vec![DefinitionPath::Unresolved(DefinitionUnresolved {
       module,
-      symbol: module.module_symbol(),
       kind: DefinitionUnresolvedKind::Part(export_name.to_string()),
       parts: parts.to_vec(),
     })]
@@ -729,7 +630,6 @@ fn resolve_qualified_name_internal<'a>(
             } else {
               next.push(DefinitionPath::Unresolved(DefinitionUnresolved {
                 module: definition.module,
-                symbol: definition.symbol,
                 kind: DefinitionUnresolvedKind::Part(next_part.to_string()),
                 parts: parts.to_vec(),
               }))
@@ -754,7 +654,6 @@ fn resolve_qualified_name_internal<'a>(
             } else {
               next.push(DefinitionPath::Unresolved(DefinitionUnresolved {
                 module: definition.module,
-                symbol: definition.symbol,
                 kind: DefinitionUnresolvedKind::Specifier(
                   file_dep.specifier.to_string(),
                 ),
