@@ -61,5 +61,17 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  could not resolve 'Public1.nonExistent' referenced from 'Export.prototype.prop'
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@60
+  error[not-found-reference]: could not resolve 'Public1.nonExistent' referenced from 'Export.prototype.prop'
+   --> https://jsr.io/@scope/a/1.0.0/mod.ts:4:1
+    |
+  4 | class Public1 {
+    | ^^^^^^^^^^^^^^^
+  5 |   static prop: string;
+    | ^^^^^^^^^^^^^^^^^^^^^^
+  6 | }
+    | ^ this is the reference
+    = hint: fix the reference to point to a symbol that exists
+
+    info: this error may be the result of a bug in Deno - if you think this is the case, please open an issue
+    docs: https://jsr.io/go/slow-type-not-found-reference
+

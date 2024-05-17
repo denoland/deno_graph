@@ -59,5 +59,14 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  public API member (MyClass.prototype.prop) is referencing or transitively referencing a class private member (MyClass.prototype.myPrivateMember)
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@76
+  error[unsupported-private-member-reference]: public API member (MyClass.prototype.prop) is referencing or transitively referencing a class private member (MyClass.prototype.myPrivateMember)
+   --> https://jsr.io/@scope/a/1.0.0/mod.ts:3:3
+    |
+  3 |   private myPrivateMember!: string;
+    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this is the reference
+    = hint: extract the type of the private member to a type alias and reference the type alias instead
+
+    info: private members can not be referenced from public API members
+    info: this is because fast check removes private members from the types
+    docs: https://jsr.io/go/slow-type-unsupported-private-member-reference
+

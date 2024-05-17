@@ -62,5 +62,17 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  the reference 'MyClass.prototype.member.additional' from 'Export.prototype.prop' was too complex
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@70
+  error[unsupported-complex-reference]: the reference 'MyClass.prototype.member.additional' from 'Export.prototype.prop' was too complex
+   --> https://jsr.io/@scope/a/1.0.0/mod.ts:5:1
+    |
+  5 | class MyClass {
+    | ^^^^^^^^^^^^^^^
+  6 |   member: string;
+    | ^^^^^^^^^^^^^^^^^
+  7 | }
+    | ^ this is the reference
+    = hint: extract the shared type to a type alias and reference the type alias instead
+
+    info: the reference was too complex to be resolved by fast check
+    docs: https://jsr.io/go/slow-type-unsupported-complex-reference
+

@@ -67,5 +67,13 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  expando property referencing 'localDecl' conflicts with 'test.localDecl'
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@146
+  error[unsupported-expando-property]: expando property referencing 'localDecl' conflicts with 'test.localDecl'
+   --> https://jsr.io/@scope/a/1.0.0/mod.ts:9:13
+    |
+  9 | test.prop = localDecl;
+    |             ^^^^^^^^^
+    = hint: rename 'localDecl' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference
+
+    info: expando properties get converted to a namespace and the reference conflicts with a namespace export
+    docs: https://jsr.io/go/slow-type-unsupported-expando-property
+

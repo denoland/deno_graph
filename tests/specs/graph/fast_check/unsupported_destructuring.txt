@@ -61,5 +61,13 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  found destructuring, which is not supported in the public API
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@113
+  error[unsupported-destructuring]: found destructuring, which is not supported in the public API
+   --> https://jsr.io/@scope/a/1.0.0/mod.ts:6:14
+    |
+  6 | export const { a, b }: Other = other;
+    |              ^^^^^^^^
+    = hint: separate each destructured symbol into its own export statement
+
+    info: destructuring can not be inferred by fast check
+    docs: https://jsr.io/go/slow-type-unsupported-destructuring
+

@@ -56,5 +56,13 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  export assignments are a Common JS feature, which are not supported in ES modules
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@0
+  error[unsupported-ts-export-assignment]: export assignments are a Common JS feature, which are not supported in ES modules
+   --> https://jsr.io/@scope/a/1.0.0/mod.ts:1:1
+    |
+  1 | export = 5;
+    | ^^^^^^^^^^^
+    = hint: use an export statement instead
+
+    info: CommonJS features such as export assignments are not supported in ES modules
+    docs: https://jsr.io/go/slow-type-unsupported-ts-export-assignment
+

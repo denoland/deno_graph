@@ -58,5 +58,13 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  found an ambient module, which is a global augmentation, which are not unsupported
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@15
+  error[unsupported-ambient-module]: found an ambient module, which is a global augmentation, which are not unsupported
+   --> https://jsr.io/@scope/a/1.0.0/mod.ts:1:16
+    |
+  1 | declare module "test" {
+    |                ^^^^^^
+    = hint: remove the ambient module declaration
+
+    info: ambient modules are not supported because they can modify the types of a module from outside of that module
+    docs: https://jsr.io/go/slow-type-unsupported-ambient-module
+

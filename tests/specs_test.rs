@@ -4,7 +4,9 @@ use std::collections::BTreeMap;
 use std::panic::AssertUnwindSafe;
 
 use std::collections::HashMap;
+use std::fmt::Write;
 
+use deno_ast::diagnostics::Diagnostic;
 use deno_ast::emit;
 use deno_ast::EmitOptions;
 use deno_ast::EmittedSource;
@@ -37,6 +39,9 @@ use crate::helpers::TestBuilder;
 mod helpers;
 
 fn main() {
+  // Disable colors so that deno_ast diagnostics do not contain escape sequences.
+  std::env::set_var("NO_COLOR", "true");
+
   collect_and_run_tests(
     CollectOptions {
       base: "tests/specs".into(),
@@ -172,17 +177,11 @@ fn run_graph_test(test: &CollectedTest) {
         }
       }
       deno_graph::FastCheckTypeModuleSlot::Error(diagnostics) => {
-        let message = diagnostics
-          .iter()
-          .map(|d| match d.range() {
-            Some(range) => {
-              format!("{}\n    at {}@{}", d, range.specifier, range.range.start)
-            }
-            None => format!("{}\n    at {}", d, d.specifier()),
-          })
-          .collect::<Vec<_>>()
-          .join("\n");
-        output_text.push_str(&indent(&message));
+        let mut printed_diagnostics = "".to_owned();
+        for diagnostic in diagnostics {
+          write!(&mut printed_diagnostics, "{}", diagnostic.display()).unwrap();
+        }
+        output_text.push_str(&indent(&printed_diagnostics));
       }
     }
   }

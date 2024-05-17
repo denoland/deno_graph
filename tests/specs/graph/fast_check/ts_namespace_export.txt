@@ -58,5 +58,13 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  found namespace export, which is a global augmentation, which are not unsupported
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@17
+  error[unsupported-ts-namespace-export]: found namespace export, which is a global augmentation, which are not unsupported
+   --> https://jsr.io/@scope/a/1.0.0/mod.ts:3:1
+    |
+  3 | export as namespace test;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+    = hint: remove the namespace export
+
+    info: namespace exports are not supported because they can modify the types of a module from outside of that module
+    docs: https://jsr.io/go/slow-type-unsupported-ts-namespace-export
+
