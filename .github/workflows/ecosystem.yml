@@ -33,6 +33,8 @@ jobs:
 
       - name: Install up Deno
         uses: denoland/setup-deno@v1
+        with:
+          deno-version: canary
 
       - name: Cache JSR mirror
         uses: actions/cache@v4
