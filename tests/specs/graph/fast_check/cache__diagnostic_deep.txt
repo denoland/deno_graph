@@ -141,8 +141,17 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  missing explicit return type in the public API
-      at https://jsr.io/@scope/a/1.0.0/c.ts@16
+  error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> https://jsr.io/@scope/a/1.0.0/c.ts:1:17
+    |
+  1 | export function add(a: number, b: number) {
+    |                 ^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+    info: all functions in the public API must have an explicit return type
+    docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
 == fast check cache ==
 FastCheckCacheKey(4741815020074927300):
     Deps - []

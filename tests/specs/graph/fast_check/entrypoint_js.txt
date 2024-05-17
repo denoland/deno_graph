@@ -60,5 +60,11 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.js:
-  used a JavaScript module without type declarations as an entrypoint
-      at https://jsr.io/@scope/a/1.0.0/mod.js
+  warning[unsupported-javascript-entrypoint]: used a JavaScript module without type declarations as an entrypoint
+   --> https://jsr.io/@scope/a/1.0.0/mod.js
+    = hint: add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript
+
+    info: JavaScript files with no corresponding declaration require type inference to be type checked
+    info: fast check avoids type inference, so JavaScript entrypoints should be avoided
+    docs: https://jsr.io/go/slow-type-unsupported-javascript-entrypoint
+
