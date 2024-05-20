@@ -36,6 +36,8 @@ jobs:
 
       - name: Install up Deno
         uses: denoland/setup-deno@v1
+        with:
+          deno-version: canary
 
       - name: Format
         if: contains(matrix.os, 'ubuntu')
