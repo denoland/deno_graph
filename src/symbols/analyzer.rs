@@ -21,6 +21,7 @@ use indexmap::IndexMap;
 use indexmap::IndexSet;
 
 use crate::swc_helpers::analyze_return_stmts_in_function_body;
+use crate::swc_helpers::ts_entity_name_to_parts;
 use crate::swc_helpers::FunctionKind;
 use crate::swc_helpers::ReturnStatementAnalysis;
 use crate::JsModule;
@@ -39,7 +40,6 @@ use super::cross_module::DefinitionOrUnresolved;
 use super::cross_module::DefinitionPathNode;
 use super::cross_module::ModuleExports;
 use super::dep_analyzer::ResolveDepsMode;
-use super::swc_helpers::ts_entity_name_to_parts;
 use super::ResolvedSymbolDepEntry;
 use super::SymbolNodeDep;
 

@@ -43,9 +43,9 @@ use deno_ast::swc::visit::Visit;
 use deno_ast::swc::visit::VisitWith;
 
 use crate::swc_helpers::analyze_return_stmts_in_function_body;
+use crate::swc_helpers::ts_entity_name_to_parts;
+use crate::swc_helpers::ts_qualified_name_parts;
 
-use super::swc_helpers::ts_entity_name_to_parts;
-use super::swc_helpers::ts_qualified_name_parts;
 use super::ExportDeclRef;
 use super::SymbolNodeRef;
 

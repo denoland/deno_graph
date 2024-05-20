@@ -17,6 +17,7 @@ use deno_ast::swc::ast::Prop;
 use deno_ast::swc::ast::PropOrSpread;
 use deno_ast::swc::ast::Str;
 use deno_ast::swc::ast::Tpl;
+use deno_ast::swc::ast::TsEntityName;
 use deno_ast::swc::ast::TsFnOrConstructorType;
 use deno_ast::swc::ast::TsFnParam;
 use deno_ast::swc::ast::TsFnType;
@@ -45,8 +46,14 @@ use deno_ast::SourceRangedForSpanned;
 
 use crate::swc_helpers::analyze_return_stmts_in_function_body;
 use crate::swc_helpers::FunctionKind;
+use crate::swc_helpers::ts_entity_name_to_parts;
 use crate::swc_helpers::ReturnStatementAnalysis;
+use crate::symbols::DefinitionPathNode;
 use crate::symbols::EsModuleInfo;
+use crate::symbols::ModuleInfoRef;
+use crate::symbols::ResolvedSymbolDepEntry;
+use crate::symbols::RootSymbol;
+use crate::symbols::SymbolNodeDep;
 use crate::FastCheckDiagnosticRange;
 
 use super::swc_helpers::is_call_expr_symbol_create;
@@ -494,6 +501,7 @@ pub struct TypeInferrer<'a> {
   specifier: &'a ModuleSpecifier,
   parsed_source: &'a ParsedSource,
   module_info: &'a EsModuleInfo,
+  root_symbol: &'a RootSymbol<'a>,
 }
 
 impl<'a> TypeInferrer<'a> {
@@ -501,11 +509,13 @@ impl<'a> TypeInferrer<'a> {
     specifier: &'a ModuleSpecifier,
     parsed_source: &'a ParsedSource,
     module_info: &'a EsModuleInfo,
+    root_symbol: &'a RootSymbol<'a>,
   ) -> Self {
     Self {
       specifier,
       parsed_source,
       module_info,
+      root_symbol,
     }
   }
 
@@ -1125,20 +1135,38 @@ impl<'a> TypeInferrer<'a> {
     ty: &TsType,
   ) -> Result<(), ExprInferFailCause> {
     struct Visitor<'a> {
+      root_symbol: &'a RootSymbol<'a>,
       es_module_info: &'a EsModuleInfo,
       invalid_range: Option<SourceRange>,
     }
 
     impl Visit for Visitor<'_> {
-      fn visit_ident(&mut self, n: &Ident) {
-        if self.es_module_info.symbol_from_swc(&n.to_id()).is_none() {
-          self.invalid_range = Some(n.range());
+      fn visit_ts_entity_name(&mut self, n: &TsEntityName) {
+        let (id, parts) = ts_entity_name_to_parts(n);
+
+        let dep = SymbolNodeDep::QualifiedId(id, parts);
+
+        let entries = self
+          .root_symbol
+          .resolve_symbol_dep(ModuleInfoRef::Esm(self.es_module_info), &dep);
+
+        for entry in entries {
+          match entry {
+            ResolvedSymbolDepEntry::Path(DefinitionPathNode::Resolved(_))
+            | ResolvedSymbolDepEntry::ImportType(_) => {
+              // valid
+            }
+            ResolvedSymbolDepEntry::Path(DefinitionPathNode::Unresolved(_)) => {
+              self.invalid_range = Some(n.range());
+            }
+          }
         }
       }
     }
 
     let mut visitor = Visitor {
       es_module_info: self.module_info,
+      root_symbol: self.root_symbol,
       invalid_range: None,
     };
     ty.visit_with(&mut visitor);

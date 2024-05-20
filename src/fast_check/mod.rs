@@ -709,7 +709,8 @@ fn transform_package(
         .module_from_specifier(&specifier)
         .unwrap_or_else(|| panic!("module not found: {}", specifier));
       if let Some(module_info) = module_info.esm() {
-        transform::transform(graph, module_info, &ranges, options).map(Some)
+        transform::transform(graph, module_info, root_symbol, &ranges, options)
+          .map(Some)
       } else {
         Ok(None) // nothing to transform
       }

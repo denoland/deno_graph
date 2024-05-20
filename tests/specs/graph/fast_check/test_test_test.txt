@@ -16,9 +16,6 @@
 //   return {} as typeof x;
 // };
 
-export const a = (b: string, c = {} as typeof b) => {
-};
-
 # output
 {
   "roots": [
@@ -27,7 +24,7 @@ export const a = (b: string, c = {} as typeof b) => {
   "modules": [
     {
       "kind": "esm",
-      "size": 144,
+      "size": 179,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
     }
@@ -36,18 +33,15 @@ export const a = (b: string, c = {} as typeof b) => {
 }
 
 Fast check file:///mod.ts:
-  error[unknown-var-type]: unknown type for variable in the public API
-   --> /mod.ts:6:14
-    |
-  6 | export const a = (b: string, c = {} as typeof b): typeof b => {
-    |              ^ this variable's type could not be inferred because its initializer
-    |              - contains this arrow expression
-    |                              - which has this parameter, which is missing an explicit type annotation
-    |                                               - contains this reference to a local variable or type
-    |
-    = hint: add an explicit type annotation to the arrow expression parameter in the variable declaration initializer
-
-    info: all variables in the public API must have a known type
-    info: local variables or types can not be referenced in the public API because they are not visible at the top level of the module
-    docs: https://jsr.io/go/slow-type-unknown-var-type
-
+  {}
+  declare const Y: X;
+  interface X {
+    y: string;
+  }
+  export declare const a: (b: string, c?: typeof Y.z) => void;
+  --- DTS ---
+  declare const Y: X;
+  interface X {
+    y: string;
+  }
+  export declare const a: (b: string, c?: typeof Y.z) => void;

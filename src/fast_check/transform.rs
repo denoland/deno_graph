@@ -28,6 +28,7 @@ use indexmap::IndexMap;
 use crate::swc_helpers::FunctionKind;
 use crate::symbols::EsModuleInfo;
 use crate::symbols::ExpandoPropertyRef;
+use crate::symbols::RootSymbol;
 use crate::symbols::Symbol;
 use crate::ModuleGraph;
 use crate::ModuleInfo;
@@ -111,12 +112,14 @@ pub struct TransformOptions<'a> {
 pub fn transform(
   graph: &ModuleGraph,
   es_module_info: &EsModuleInfo,
+  root_symbol: &RootSymbol,
   public_ranges: &ModulePublicRanges,
   options: &TransformOptions,
 ) -> Result<FastCheckModule, Vec<FastCheckDiagnostic>> {
   let mut transformer = FastCheckTransformer::new(
     graph,
     es_module_info,
+    root_symbol,
     public_ranges,
     options.should_error_on_first_diagnostic,
   );
@@ -210,6 +213,7 @@ struct FastCheckTransformer<'a> {
   graph: &'a ModuleGraph,
   specifier: &'a ModuleSpecifier,
   es_module_info: &'a EsModuleInfo,
+  root_symbol: &'a RootSymbol<'a>,
   public_ranges: &'a ModulePublicRanges,
   parsed_source: &'a ParsedSource,
   should_error_on_first_diagnostic: bool,
@@ -221,6 +225,7 @@ impl<'a> FastCheckTransformer<'a> {
   pub fn new(
     graph: &'a ModuleGraph,
     es_module_info: &'a EsModuleInfo,
+    root_symbol: &'a RootSymbol<'a>,
     public_ranges: &'a ModulePublicRanges,
     should_error_on_first_diagnostic: bool,
   ) -> Self {
@@ -228,6 +233,7 @@ impl<'a> FastCheckTransformer<'a> {
       graph,
       specifier: es_module_info.specifier(),
       es_module_info,
+      root_symbol,
       public_ranges,
       parsed_source: es_module_info.source(),
       should_error_on_first_diagnostic,
@@ -1688,7 +1694,12 @@ impl<'a> FastCheckTransformer<'a> {
   }
 
   fn infer(&self) -> TypeInferrer<'_> {
-    TypeInferrer::new(self.specifier, self.parsed_source, self.es_module_info)
+    TypeInferrer::new(
+      self.specifier,
+      self.parsed_source,
+      self.es_module_info,
+      self.root_symbol,
+    )
   }
 
   fn maybe_transform_expr_if_leavable(
