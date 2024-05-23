@@ -31,9 +31,7 @@ pub fn convert_to_utf8<'a>(
   charset: &'_ str,
 ) -> Result<Cow<'a, str>, std::io::Error> {
   match encoding_rs::Encoding::for_label(charset.as_bytes()) {
-    Some(encoding) => encoding
-      .decode_without_bom_handling_and_without_replacement(bytes)
-      .ok_or_else(|| std::io::ErrorKind::InvalidData.into()),
+    Some(encoding) => Ok(encoding.decode_without_bom_handling(bytes).0),
     None => Err(std::io::Error::new(
       std::io::ErrorKind::InvalidInput,
       format!("Unsupported charset: {charset}"),
@@ -109,8 +107,6 @@ mod test {
   fn test_decoding_invalid_utf8() {
     let test_data = b"\xFE\xFE\xFF\xFF".to_vec();
     let result = convert_to_utf8(&test_data, "utf-8");
-    assert!(result.is_err());
-    let err = result.expect_err("Err expected");
-    assert!(err.kind() == ErrorKind::InvalidData);
+    assert!(result.is_ok());
   }
 }
