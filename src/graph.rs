@@ -4309,10 +4309,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         match result.await {
           Ok(Some(response)) => match response {
             LoadResponse::Redirect { specifier } => {
-              if jsr_url_provider
-                .package_url_to_nv(&load_specifier)
-                .is_some()
-              {
+              if maybe_version_info.is_some() {
                 // This should never happen on the JSR registry. If we ever
                 // supported this we'd need a way for the registry to express
                 // redirects in the manifest since we don't store checksums
