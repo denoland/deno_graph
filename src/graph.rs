@@ -4315,7 +4315,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 // redirects in the manifest since we don't store checksums
                 // or redirect information within the package.
                 Err(ModuleError::LoadingErr(
-                  specifier.clone(),
+                  load_specifier.clone(),
                   maybe_range.cloned(),
                   Arc::new(anyhow!(
                     "Redirects within a JSR package are not supported.",
@@ -4323,7 +4323,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 ))
               } else if redirect_count >= loader.max_redirects() {
                 Err(ModuleError::LoadingErr(
-                  specifier.clone(),
+                  load_specifier.clone(),
                   maybe_range.cloned(),
                   Arc::new(anyhow!("Too many redirects.")),
                 ))
