@@ -138,6 +138,10 @@ impl PackageSpecifiers {
     self.package_reqs.is_empty()
   }
 
+  pub fn packages_len(&self) -> usize {
+    self.packages.len()
+  }
+
   pub fn add_nv(&mut self, package_req: PackageReq, nv: PackageNv) {
     let nvs = self
       .packages_by_name
@@ -259,8 +263,8 @@ impl PackageSpecifiers {
     self.packages_by_name.get(name)
   }
 
-  pub fn mappings(&self) -> impl Iterator<Item = (&PackageReq, &PackageNv)> {
-    self.package_reqs.iter()
+  pub fn mappings(&self) -> &BTreeMap<PackageReq, PackageNv> {
+    &self.package_reqs
   }
 }
 
