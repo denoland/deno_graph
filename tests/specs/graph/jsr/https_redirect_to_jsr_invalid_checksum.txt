@@ -1,0 +1,63 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{
+  "exports": {
+    ".": "./mod.ts"
+  },
+  "manifest": {
+    "/mod.ts": {
+      "size": 21,
+      "checksum": "sha256-invalid"
+    }
+  }
+}
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+export class Test {}
+
+# https://deno.land/example.ts
+HEADERS: {"location":"https://jsr.io/@scope/a/1.0.0/mod.ts"}
+
+# mod.ts
+import "https://deno.land/example.ts";
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "https://deno.land/example.ts",
+          "code": {
+            "specifier": "https://deno.land/example.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 37
+              }
+            }
+          }
+        }
+      ],
+      "size": 39,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
+      "error": "Integrity check failed.\n\nActual: 151a3a3f4587a29c7b3449a3635fed35c4e88a3a773b3bf296804f1a4e1ab86d\nExpected: invalid"
+    }
+  ],
+  "redirects": {
+    "https://deno.land/example.ts": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  }
+}

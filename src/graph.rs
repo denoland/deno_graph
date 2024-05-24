@@ -4309,7 +4309,22 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         match result.await {
           Ok(Some(response)) => match response {
             LoadResponse::Redirect { specifier } => {
-              if redirect_count >= loader.max_redirects() {
+              if jsr_url_provider
+                .package_url_to_nv(&load_specifier)
+                .is_some()
+              {
+                // This should never happen on the JSR registry. If we ever
+                // supported this we'd need a way for the registry to express
+                // redirects in the manifest since we don't store checksums
+                // or redirect information within the package.
+                return Err(ModuleError::LoadingErr(
+                  specifier.clone(),
+                  maybe_range.cloned(),
+                  Arc::new(anyhow!(
+                    "Redirects within a JSR package are not supported.",
+                  )),
+                ));
+              } else if redirect_count >= loader.max_redirects() {
                 return Err(ModuleError::LoadingErr(
                   specifier.clone(),
                   maybe_range.cloned(),

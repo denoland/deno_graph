@@ -14,10 +14,6 @@ export class Test {}
 HEADERS: {"location":"https://jsr.io/@scope/a/1.0.0/mod.ts"}
 
 # mod.ts
-// This is currently not supported because it's a huge edge
-// edge case and we'd need to ensure we take the checksum
-// from the lockfile into account for the package and then
-// the checksum from the package manifest into account.
 import "https://deno.land/example.ts";
 
 # output
@@ -35,25 +31,29 @@ import "https://deno.land/example.ts";
             "specifier": "https://deno.land/example.ts",
             "span": {
               "start": {
-                "line": 4,
+                "line": 0,
                 "character": 7
               },
               "end": {
-                "line": 4,
+                "line": 0,
                 "character": 37
               }
             }
           }
         }
       ],
-      "size": 272,
+      "size": 39,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
     },
     {
-      "specifier": "https://deno.land/example.ts",
-      "error": "Redirecting to a JSR package HTTPS URL is not supported (redirected to 'https://jsr.io/@scope/a/1.0.0/mod.ts')"
+      "kind": "esm",
+      "size": 21,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
   ],
-  "redirects": {}
+  "redirects": {
+    "https://deno.land/example.ts": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  }
 }

@@ -18,10 +18,9 @@ HEADERS: {"location":"./other.ts"}
 
 # https://jsr.io/@scope/a/1.0.0/other.ts
 // This should never happen on the JSR registry. If we ever
-// supported this we'd need to make sure it would use the proper
-// checksums from the manifest. Additionally, we'd need a way to
-// store this redirect in the manifest information to ensure it's
-// locked.
+// supported this we'd need a way for the registry to express
+// redirects in the manifest since we don't store checksums
+// or redirect information within the package.
 console.log(1);
 
 # mod.ts
@@ -58,11 +57,12 @@ import 'jsr:@scope/a';
       "specifier": "file:///mod.ts"
     },
     {
-      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
-      "error": "Redirecting to a JSR package HTTPS URL is not supported (redirected to 'https://jsr.io/@scope/a/1.0.0/other.ts')"
+      "specifier": "https://jsr.io/@scope/a/1.0.0/other.ts",
+      "error": "Redirects within a JSR package are not supported."
     }
   ],
   "redirects": {
+    "https://jsr.io/@scope/a/1.0.0/mod.ts": "https://jsr.io/@scope/a/1.0.0/other.ts",
     "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
   },
   "packages": {
