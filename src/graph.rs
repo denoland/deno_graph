@@ -4051,7 +4051,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     requested_specifier: specifier.clone(),
                     maybe_attribute_type: maybe_attribute_type.clone(),
                     maybe_range: maybe_range.clone(),
-                    load_specifier: load_specifier,
+                    load_specifier,
                     is_dynamic,
                     maybe_checksum: None,
                     maybe_version_info: None,
@@ -4247,7 +4247,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       });
     let fut = async move {
       #[allow(clippy::too_many_arguments)]
-      async fn try_load_with_redirects(
+      async fn try_load(
         is_root: bool,
         redirect_count: usize,
         load_specifier: ModuleSpecifier,
@@ -4317,76 +4317,70 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 // supported this we'd need a way for the registry to express
                 // redirects in the manifest since we don't store checksums
                 // or redirect information within the package.
-                return Err(ModuleError::LoadingErr(
+                Err(ModuleError::LoadingErr(
                   specifier.clone(),
                   maybe_range.cloned(),
                   Arc::new(anyhow!(
                     "Redirects within a JSR package are not supported.",
                   )),
-                ));
+                ))
               } else if redirect_count >= loader.max_redirects() {
-                return Err(ModuleError::LoadingErr(
+                Err(ModuleError::LoadingErr(
                   specifier.clone(),
                   maybe_range.cloned(),
                   Arc::new(anyhow!("Too many redirects.")),
-                ));
+                ))
               } else {
-                return Ok(PendingInfoResponse::Redirect {
+                Ok(PendingInfoResponse::Redirect {
                   count: redirect_count + 1,
                   specifier,
                   maybe_attribute_type,
                   is_dynamic,
-                });
+                })
               }
             }
             LoadResponse::External { specifier } => {
-              return Ok(PendingInfoResponse::External { specifier })
+              Ok(PendingInfoResponse::External { specifier })
             }
             LoadResponse::Module {
               content,
               specifier,
               maybe_headers,
-            } => {
-              return parse_module_source_and_info(
-                module_analyzer,
-                ParseModuleAndSourceInfoOptions {
-                  specifier: specifier.clone(),
-                  maybe_headers,
-                  content,
-                  maybe_attribute_type: maybe_attribute_type.as_ref(),
-                  maybe_referrer: maybe_range,
-                  is_root,
-                  is_dynamic_branch: is_dynamic,
-                },
-              )
-              .await
-              .map(|module_source_and_info| {
-                PendingInfoResponse::Module {
-                  specifier: specifier.clone(),
-                  module_source_and_info,
-                  pending_load: None,
-                }
-              });
-            }
+            } => parse_module_source_and_info(
+              module_analyzer,
+              ParseModuleAndSourceInfoOptions {
+                specifier: specifier.clone(),
+                maybe_headers,
+                content,
+                maybe_attribute_type: maybe_attribute_type.as_ref(),
+                maybe_referrer: maybe_range,
+                is_root,
+                is_dynamic_branch: is_dynamic,
+              },
+            )
+            .await
+            .map(|module_source_and_info| {
+              PendingInfoResponse::Module {
+                specifier: specifier.clone(),
+                module_source_and_info,
+                pending_load: None,
+              }
+            }),
           },
-          Ok(None) => {
-            return Err(ModuleError::Missing(
-              load_specifier.clone(),
-              maybe_range.cloned(),
-            ))
-          }
-          Err(err) => {
-            return Err(ModuleError::LoadingErr(
-              load_specifier.clone(),
-              maybe_range.cloned(),
-              Arc::new(err),
-            ))
-          }
+          Ok(None) => Err(ModuleError::Missing(
+            load_specifier.clone(),
+            maybe_range.cloned(),
+          )),
+          Err(err) => Err(ModuleError::LoadingErr(
+            load_specifier.clone(),
+            maybe_range.cloned(),
+            Arc::new(err),
+          )),
         }
       }
 
       let mut loaded_package_via_https_url = None;
-      let result = try_load_with_redirects(
+      let result = try_load(
         is_root,
         redirect_count,
         load_specifier,
