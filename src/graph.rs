@@ -182,6 +182,12 @@ pub enum JsrLoadError {
   PackageReqUnknown(PackageReq),
   #[error("Redirects in the JSR registry are not supported (redirected to '{}')", .0)]
   RedirectInPackage(ModuleSpecifier),
+  #[error("Unknown export '{}' for '{}'.\n  Package exports:\n{}", export_name, .nv, .exports.iter().map(|e| format!(" * {}", e)).collect::<Vec<_>>().join("\n"))]
+  UnknownExport {
+    nv: PackageNv,
+    export_name: String,
+    exports: Vec<String>,
+  },
 }
 
 #[derive(Debug, Clone, Error)]
@@ -194,6 +200,18 @@ pub enum NpmLoadError {
   PackageReqReferenceParse(PackageReqReferenceParseError),
   #[error(transparent)]
   RegistryInfo(Arc<anyhow::Error>),
+}
+
+#[derive(Debug, Clone, Error)]
+pub enum WorkspaceLoadError {
+  #[error("Failed joining '{}' to '{}'. {:#}", .sub_path, .base, .error)]
+  MemberInvalidExportPath {
+    base: Url,
+    sub_path: String,
+    error: url::ParseError,
+  },
+  #[error("Expected workspace package '{}' to define exports in its deno.json.", .nv)]
+  MissingMemberExports { nv: PackageNv },
 }
 
 #[derive(Debug, Error, Clone)]
@@ -210,14 +228,10 @@ pub enum ModuleLoadError {
   NodeUnknownBuiltinModule(#[from] UnknownBuiltInNodeModuleError),
   #[error(transparent)]
   Npm(#[from] NpmLoadError),
-  #[error("Failed joining '{}' to '{}'. {:#}", .sub_path, .base, .error)]
-  WorkspaceMemberInvalidExportPath {
-    base: Url,
-    sub_path: String,
-    error: url::ParseError,
-  },
   #[error("Too many redirects.")]
   TooManyRedirects,
+  #[error(transparent)]
+  Workspace(#[from] WorkspaceLoadError),
 }
 
 #[derive(Debug, Clone)]
@@ -225,18 +239,6 @@ pub enum ModuleError {
   LoadingErr(ModuleSpecifier, Option<Range>, ModuleLoadError),
   Missing(ModuleSpecifier, Option<Range>),
   MissingDynamic(ModuleSpecifier, Range),
-  MissingWorkspaceMemberExports {
-    specifier: ModuleSpecifier,
-    maybe_range: Option<Range>,
-    nv: PackageNv,
-  },
-  UnknownExport {
-    specifier: ModuleSpecifier,
-    maybe_range: Option<Range>,
-    nv: PackageNv,
-    export_name: String,
-    exports: Vec<String>,
-  },
   ParseErr(ModuleSpecifier, deno_ast::ParseDiagnostic),
   UnsupportedMediaType(ModuleSpecifier, MediaType, Option<Range>),
   InvalidTypeAssertion {
@@ -260,8 +262,6 @@ impl ModuleError {
       | Self::UnsupportedMediaType(s, _, _)
       | Self::Missing(s, _)
       | Self::MissingDynamic(s, _)
-      | Self::MissingWorkspaceMemberExports { specifier: s, .. }
-      | Self::UnknownExport { specifier: s, .. }
       | Self::InvalidTypeAssertion { specifier: s, .. }
       | Self::UnsupportedImportAttributeType { specifier: s, .. } => s,
     }
@@ -272,10 +272,6 @@ impl ModuleError {
       Self::LoadingErr(_, maybe_referrer, _) => maybe_referrer.as_ref(),
       Self::Missing(_, maybe_referrer) => maybe_referrer.as_ref(),
       Self::MissingDynamic(_, range) => Some(range),
-      Self::MissingWorkspaceMemberExports { maybe_range, .. } => {
-        maybe_range.as_ref()
-      }
-      Self::UnknownExport { maybe_range, .. } => maybe_range.as_ref(),
       Self::UnsupportedMediaType(_, _, maybe_referrer) => {
         maybe_referrer.as_ref()
       }
@@ -302,8 +298,6 @@ impl std::error::Error for ModuleError {
       Self::Missing(_, _)
       | Self::MissingDynamic(_, _)
       | Self::ParseErr(_, _)
-      | Self::MissingWorkspaceMemberExports { .. }
-      | Self::UnknownExport { .. }
       | Self::UnsupportedMediaType(_, _, _)
       | Self::InvalidTypeAssertion { .. }
       | Self::UnsupportedImportAttributeType { .. } => None,
@@ -316,17 +310,10 @@ impl fmt::Display for ModuleError {
     match self {
       Self::LoadingErr(_, _, err) => err.fmt(f),
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {diagnostic}"),
-      Self::UnknownExport { export_name, exports, nv, specifier, .. } => {
-        let exports_text = exports.iter().map(|e| format!(" * {}", e)).collect::<Vec<_>>().join("\n");
-        write!(f, "Unknown export '{export_name}' for '{nv}'.\n  Specifier: {specifier}\n  Package exports:\n{exports_text}")
-      }
       Self::UnsupportedMediaType(specifier, MediaType::Json, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
       Self::Missing(specifier, _) => write!(f, "Module not found \"{specifier}\"."),
       Self::MissingDynamic(specifier, _) => write!(f, "Dynamic import not found \"{specifier}\"."),
-      Self::MissingWorkspaceMemberExports { nv, specifier, .. } => {
-        write!(f, "Expected workspace package '{nv}' to define exports in its deno.json.\n  Specifier: {specifier}")
-      }
       Self::InvalidTypeAssertion { specifier, actual_media_type: MediaType::Json, expected_media_type, .. } =>
         write!(f, "Expected a {expected_media_type} module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"),
       Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type, .. } =>
@@ -3518,16 +3505,19 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             None => {
               self.graph.module_slots.insert(
                 resolution_item.specifier.clone(),
-                ModuleSlot::Err(ModuleError::UnknownExport {
-                  specifier: resolution_item.specifier,
-                  maybe_range: resolution_item.maybe_range,
-                  export_name: export_name.to_string(),
-                  nv: resolution_item.nv_ref.into_inner().nv,
-                  exports: version_info
-                    .exports()
-                    .map(|(k, _)| k.to_string())
-                    .collect::<Vec<_>>(),
-                }),
+                ModuleSlot::Err(ModuleError::LoadingErr(
+                  resolution_item.specifier,
+                  resolution_item.maybe_range,
+                  JsrLoadError::UnknownExport {
+                    export_name: export_name.to_string(),
+                    nv: resolution_item.nv_ref.into_inner().nv,
+                    exports: version_info
+                      .exports()
+                      .map(|(k, _)| k.to_string())
+                      .collect::<Vec<_>>(),
+                  }
+                  .into(),
+                )),
               );
             }
           }
@@ -4150,11 +4140,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     workspace_member: &WorkspaceMember,
   ) -> Result<ModuleSpecifier, Box<ModuleError>> {
     if workspace_member.exports.is_empty() {
-      return Err(Box::new(ModuleError::MissingWorkspaceMemberExports {
-        specifier: specifier.clone(),
-        maybe_range: maybe_range.map(ToOwned::to_owned),
-        nv: workspace_member.nv.clone(),
-      }));
+      return Err(Box::new(ModuleError::LoadingErr(
+        specifier.clone(),
+        maybe_range.map(ToOwned::to_owned),
+        WorkspaceLoadError::MissingMemberExports {
+          nv: workspace_member.nv.clone(),
+        }
+        .into(),
+      )));
     }
 
     let export_name = normalize_export_name(package_ref.sub_path());
@@ -4164,21 +4157,25 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Err(err) => Err(Box::new(ModuleError::LoadingErr(
           specifier.clone(),
           maybe_range.map(ToOwned::to_owned),
-          ModuleLoadError::WorkspaceMemberInvalidExportPath {
+          WorkspaceLoadError::MemberInvalidExportPath {
             base: workspace_member.base.clone(),
             sub_path: sub_path.to_string(),
             error: err,
-          },
+          }
+          .into(),
         ))),
       }
     } else {
-      Err(Box::new(ModuleError::UnknownExport {
-        specifier: specifier.clone(),
-        maybe_range: maybe_range.map(ToOwned::to_owned),
-        nv: workspace_member.nv.clone(),
-        export_name: export_name.to_string(),
-        exports: workspace_member.exports.keys().cloned().collect(),
-      }))
+      Err(Box::new(ModuleError::LoadingErr(
+        specifier.clone(),
+        maybe_range.map(ToOwned::to_owned),
+        JsrLoadError::UnknownExport {
+          nv: workspace_member.nv.clone(),
+          export_name: export_name.to_string(),
+          exports: workspace_member.exports.keys().cloned().collect(),
+        }
+        .into(),
+      )))
     }
   }
 
