@@ -119,7 +119,7 @@ impl CacheSetting {
 pub static DEFAULT_JSR_URL: Lazy<Url> =
   Lazy::new(|| Url::parse("https://jsr.io").unwrap());
 
-#[derive(Debug, Error)]
+#[derive(Debug, Clone, Error)]
 #[error("Integrity check failed.\n\nActual: {}\nExpected: {}", .actual, .expected)]
 pub struct ChecksumIntegrityError {
   pub actual: String,
@@ -165,6 +165,12 @@ impl LoaderChecksum {
     let mut hasher = Sha256::new();
     hasher.update(source);
     format!("{:x}", hasher.finalize())
+  }
+}
+
+impl fmt::Display for LoaderChecksum {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "{}", self.0)
   }
 }
 
@@ -344,7 +350,7 @@ pub trait Resolver: fmt::Debug {
   }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 #[error("Unknown built-in \"node:\" module: {module_name}")]
 pub struct UnknownBuiltInNodeModuleError {
   /// Name of the invalid module.

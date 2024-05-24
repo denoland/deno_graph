@@ -8,6 +8,7 @@ use deno_semver::package::PackageNv;
 use futures::future::Shared;
 use futures::FutureExt;
 
+use crate::graph::JsrLoadError;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
 use crate::rt::spawn;
@@ -26,7 +27,7 @@ pub struct PendingJsrPackageVersionInfoLoadItem {
   pub info: Arc<JsrPackageVersionInfo>,
 }
 
-pub type PendingResult<T> = Shared<JoinHandle<Result<T, Arc<anyhow::Error>>>>;
+pub type PendingResult<T> = Shared<JoinHandle<Result<T, JsrLoadError>>>;
 
 #[derive(Clone, Copy)]
 pub struct JsrMetadataStoreServices<'a> {
@@ -38,7 +39,7 @@ pub struct JsrMetadataStoreServices<'a> {
 #[derive(Debug, Default)]
 pub struct JsrMetadataStore {
   pending_package_info_loads:
-    HashMap<String, PendingResult<Option<Arc<JsrPackageInfo>>>>,
+    HashMap<String, PendingResult<Arc<JsrPackageInfo>>>,
   pending_package_version_info_loads:
     HashMap<PackageNv, PendingResult<PendingJsrPackageVersionInfoLoadItem>>,
 }
@@ -47,7 +48,7 @@ impl JsrMetadataStore {
   pub fn get_package_metadata(
     &self,
     package_name: &str,
-  ) -> Option<PendingResult<Option<Arc<JsrPackageInfo>>>> {
+  ) -> Option<PendingResult<Arc<JsrPackageInfo>>> {
     self.pending_package_info_loads.get(package_name).cloned()
   }
 
@@ -81,7 +82,15 @@ impl JsrMetadataStore {
       /* checksum */ None,
       |content| {
         let package_info: JsrPackageInfo = serde_json::from_slice(content)?;
-        Ok(Some(Arc::new(package_info)))
+        Ok(Arc::new(package_info))
+      },
+      {
+        let package_name = package_name.to_string();
+        |e| JsrLoadError::PackageManifestLoad(package_name, e)
+      },
+      {
+        let package_name = package_name.to_string();
+        || JsrLoadError::PackageNotFound(package_name)
       },
     );
     self
@@ -132,19 +141,31 @@ impl JsrMetadataStore {
           info: Arc::new(version_info),
         })
       },
+      {
+        let package_nv = package_nv.clone();
+        |e| JsrLoadError::PackageVersionManifestLoad(package_nv, e)
+      },
+      {
+        let package_nv = package_nv.clone();
+        || JsrLoadError::PackageVersionNotFound(package_nv)
+      },
     );
     self
       .pending_package_version_info_loads
       .insert(package_nv.clone(), fut);
   }
 
+  #[allow(clippy::too_many_arguments)]
   fn load_data<T: Clone + 'static>(
     &self,
     specifier: ModuleSpecifier,
     services: JsrMetadataStoreServices,
     cache_setting: CacheSetting,
     maybe_expected_checksum: Option<LoaderChecksum>,
-    handle_content: impl FnOnce(&[u8]) -> Result<T, anyhow::Error> + 'static,
+    handle_content: impl FnOnce(&[u8]) -> Result<T, serde_json::Error> + 'static,
+    create_failed_load_err: impl FnOnce(Arc<anyhow::Error>) -> JsrLoadError
+      + 'static,
+    create_not_found_error: impl FnOnce() -> JsrLoadError + 'static,
   ) -> PendingResult<T> {
     let fut = services.loader.load(
       &specifier,
@@ -157,18 +178,19 @@ impl JsrMetadataStore {
     let fut = spawn(
       services.executor,
       async move {
-        let data = fut.await.map_err(Arc::new)?;
+        let data = match fut.await {
+          Ok(data) => data,
+          Err(err) => return Err(create_failed_load_err(Arc::new(err))),
+        };
         match data {
           Some(LoadResponse::Module { content, .. }) => {
-            handle_content(&content).map_err(Arc::new)
+            handle_content(&content)
+              .map_err(|e| create_failed_load_err(Arc::new(e.into())))
           }
           Some(LoadResponse::Redirect { specifier }) => {
-            Err(Arc::new(anyhow::anyhow!(
-              "Redirects in the JSR registry are not supported (redirected to '{}')",
-              specifier
-            )))
+            Err(JsrLoadError::RedirectInPackage(specifier))
           }
-          _ => Err(Arc::new(anyhow::anyhow!("Not found: {}", specifier))),
+          _ => Err(create_not_found_error()),
         }
       }
       .boxed_local(),

@@ -29,7 +29,6 @@ use crate::rt::Executor;
 
 use crate::source::*;
 
-use anyhow::anyhow;
 use deno_ast::dep::DependencyKind;
 use deno_ast::dep::ImportAttributes;
 use deno_ast::LineAndColumnIndex;
@@ -159,25 +158,77 @@ impl Range {
   }
 }
 
+#[derive(Debug, Clone, Error)]
+pub enum JsrLoadError {
+  #[error(
+    "Unsupported checksum in JSR package manifest. Maybe try upgrading deno?"
+  )]
+  UnsupportedManifestChecksum,
+  #[error("Loader should never return an external specifier for a jsr: specifier content load.")]
+  ContentLoadExternalSpecifier,
+  #[error(transparent)]
+  ContentLoad(Arc<anyhow::Error>),
+  #[error("JSR package manifest for '{}' failed to load: {:#}", .0, .1)]
+  PackageManifestLoad(String, Arc<anyhow::Error>),
+  #[error("JSR package not found: {}", .0)]
+  PackageNotFound(String),
+  #[error("JSR package version not found: {}", .0)]
+  PackageVersionNotFound(PackageNv),
+  #[error("JSR package manifest for '{}' failed to load: {:#}", .0, .1)]
+  PackageVersionManifestLoad(PackageNv, Arc<anyhow::Error>),
+  #[error(transparent)]
+  PackageFormat(JsrPackageFormatError),
+  #[error("Could version of '{}' that matches specified version constraint '{}'", .0.name, .0.version_req)]
+  PackageReqUnknown(PackageReq),
+  #[error("Redirects in the JSR registry are not supported (redirected to '{}')", .0)]
+  RedirectInPackage(ModuleSpecifier),
+}
+
+#[derive(Debug, Clone, Error)]
+pub enum NpmLoadError {
+  #[error("npm specifiers are not supported in this environment")]
+  NotSupportedEnvironment,
+  #[error(transparent)]
+  PackageReqResolution(Arc<anyhow::Error>),
+  #[error(transparent)]
+  PackageReqReferenceParse(PackageReqReferenceParseError),
+  #[error(transparent)]
+  RegistryInfo(Arc<anyhow::Error>),
+}
+
+#[derive(Debug, Error, Clone)]
+pub enum ModuleLoadError {
+  #[error(transparent)]
+  ChecksumIntegrity(ChecksumIntegrityError),
+  #[error(transparent)]
+  Decode(Arc<std::io::Error>),
+  #[error(transparent)]
+  Loader(Arc<anyhow::Error>),
+  #[error(transparent)]
+  Jsr(#[from] JsrLoadError),
+  #[error(transparent)]
+  NodeUnknownBuiltinModule(#[from] UnknownBuiltInNodeModuleError),
+  #[error(transparent)]
+  Npm(#[from] NpmLoadError),
+  #[error("Failed joining '{}' to '{}'. {:#}", .sub_path, .base, .error)]
+  WorkspaceMemberInvalidExportPath {
+    base: Url,
+    sub_path: String,
+    error: url::ParseError,
+  },
+  #[error("Too many redirects.")]
+  TooManyRedirects,
+}
+
 #[derive(Debug, Clone)]
 pub enum ModuleError {
-  LoadingErr(ModuleSpecifier, Option<Range>, Arc<anyhow::Error>),
+  LoadingErr(ModuleSpecifier, Option<Range>, ModuleLoadError),
   Missing(ModuleSpecifier, Option<Range>),
   MissingDynamic(ModuleSpecifier, Range),
   MissingWorkspaceMemberExports {
     specifier: ModuleSpecifier,
     maybe_range: Option<Range>,
     nv: PackageNv,
-  },
-  UnknownPackage {
-    specifier: ModuleSpecifier,
-    maybe_range: Option<Range>,
-    package_name: String,
-  },
-  UnknownPackageReq {
-    specifier: ModuleSpecifier,
-    maybe_range: Option<Range>,
-    package_req: PackageReq,
   },
   UnknownExport {
     specifier: ModuleSpecifier,
@@ -211,8 +262,6 @@ impl ModuleError {
       | Self::MissingDynamic(s, _)
       | Self::MissingWorkspaceMemberExports { specifier: s, .. }
       | Self::UnknownExport { specifier: s, .. }
-      | Self::UnknownPackage { specifier: s, .. }
-      | Self::UnknownPackageReq { specifier: s, .. }
       | Self::InvalidTypeAssertion { specifier: s, .. }
       | Self::UnsupportedImportAttributeType { specifier: s, .. } => s,
     }
@@ -227,8 +276,6 @@ impl ModuleError {
         maybe_range.as_ref()
       }
       Self::UnknownExport { maybe_range, .. } => maybe_range.as_ref(),
-      Self::UnknownPackage { maybe_range, .. } => maybe_range.as_ref(),
-      Self::UnknownPackageReq { maybe_range, .. } => maybe_range.as_ref(),
       Self::UnsupportedMediaType(_, _, maybe_referrer) => {
         maybe_referrer.as_ref()
       }
@@ -251,14 +298,12 @@ impl ModuleError {
 impl std::error::Error for ModuleError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
-      Self::LoadingErr(_, _, err) => Some(err.as_ref().as_ref()),
+      Self::LoadingErr(_, _, err) => Some(err),
       Self::Missing(_, _)
       | Self::MissingDynamic(_, _)
       | Self::ParseErr(_, _)
       | Self::MissingWorkspaceMemberExports { .. }
       | Self::UnknownExport { .. }
-      | Self::UnknownPackage { .. }
-      | Self::UnknownPackageReq { .. }
       | Self::UnsupportedMediaType(_, _, _)
       | Self::InvalidTypeAssertion { .. }
       | Self::UnsupportedImportAttributeType { .. } => None,
@@ -275,10 +320,6 @@ impl fmt::Display for ModuleError {
         let exports_text = exports.iter().map(|e| format!(" * {}", e)).collect::<Vec<_>>().join("\n");
         write!(f, "Unknown export '{export_name}' for '{nv}'.\n  Specifier: {specifier}\n  Package exports:\n{exports_text}")
       }
-      Self::UnknownPackage { package_name, specifier, .. } =>
-        write!(f, "Unknown package: {package_name}\n  Specifier: {specifier}"),
-      Self::UnknownPackageReq { package_req, specifier, .. } =>
-        write!(f, "Could not find constraint in the list of versions: {package_req}\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType(specifier, MediaType::Json, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
       Self::Missing(specifier, _) => write!(f, "Module not found \"{specifier}\"."),
@@ -1506,6 +1547,10 @@ pub struct ModuleGraph {
   #[serde(skip_serializing)]
   graph_kind: GraphKind,
   pub roots: Vec<ModuleSpecifier>,
+  /// Checksums for verifying loaded modules. These should be
+  /// populated into the module graph before loading.
+  #[serde(skip_serializing)]
+  pub checksums: HashMap<ModuleSpecifier, LoaderChecksum>,
   #[serde(rename = "modules")]
   #[serde(serialize_with = "serialize_module_slots")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
@@ -1527,6 +1572,7 @@ impl ModuleGraph {
     Self {
       graph_kind,
       roots: Default::default(),
+      checksums: Default::default(),
       module_slots: Default::default(),
       imports: Default::default(),
       redirects: Default::default(),
@@ -2128,7 +2174,7 @@ pub(crate) async fn parse_module_source_and_info(
       Err(err) => Err(ModuleError::LoadingErr(
         opts.specifier,
         None,
-        Arc::new(err.into()),
+        ModuleLoadError::Decode(Arc::new(err)),
       )),
     };
   }
@@ -2980,14 +3026,14 @@ impl JsrPackageVersionInfoExt {
     specifier.as_str().strip_prefix(base_url)
   }
 
-  pub fn get_checksum(&self, sub_path: &str) -> Result<&str, anyhow::Error> {
+  pub fn get_checksum(&self, sub_path: &str) -> Result<&str, ModuleLoadError> {
     match self.inner.manifest.get(sub_path) {
       Some(manifest_entry) => {
         match manifest_entry.checksum.strip_prefix("sha256-") {
           Some(checksum) => Ok(checksum),
-          None => {
-            Err(anyhow!("Unsupported checksum in package manifest. Maybe try upgrading deno?"))
-          }
+          None => Err(ModuleLoadError::Jsr(
+            JsrLoadError::UnsupportedManifestChecksum,
+          )),
         }
       }
       // If the checksum is missing then leave it up to the loader to error
@@ -3360,7 +3406,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         .get_package_metadata(package_name)
         .unwrap();
       match fut.await {
-        Ok(Some(info)) => {
+        Ok(info) => {
           // resolve the best version out of the existing versions first
           let package_req = pending_resolution.package_ref.req();
           match self.resolve_jsr_version(&info, package_req) {
@@ -3395,25 +3441,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               } else {
                 self.graph.module_slots.insert(
                   pending_resolution.specifier.clone(),
-                  ModuleSlot::Err(ModuleError::UnknownPackageReq {
-                    specifier: pending_resolution.specifier.clone(),
-                    maybe_range: pending_resolution.maybe_range.clone(),
-                    package_req: package_req.clone(),
-                  }),
+                  ModuleSlot::Err(ModuleError::LoadingErr(
+                    pending_resolution.specifier.clone(),
+                    pending_resolution.maybe_range.clone(),
+                    JsrLoadError::PackageReqUnknown(package_req.clone()).into(),
+                  )),
                 );
               }
             }
           }
-        }
-        Ok(None) => {
-          self.graph.module_slots.insert(
-            pending_resolution.specifier.clone(),
-            ModuleSlot::Err(ModuleError::UnknownPackage {
-              specifier: pending_resolution.specifier.clone(),
-              maybe_range: pending_resolution.maybe_range.clone(),
-              package_name: package_name.clone(),
-            }),
-          );
         }
         Err(err) => {
           self.graph.module_slots.insert(
@@ -3421,7 +3457,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             ModuleSlot::Err(ModuleError::LoadingErr(
               pending_resolution.specifier,
               pending_resolution.maybe_range,
-              err.clone(),
+              err.into(),
             )),
           );
         }
@@ -3502,7 +3538,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             ModuleSlot::Err(ModuleError::LoadingErr(
               resolution_item.specifier,
               resolution_item.maybe_range,
-              err.clone(),
+              err.into(),
             )),
           );
         }
@@ -3548,13 +3584,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               // was setup incorrectly, so return an error
               self.graph.module_slots.insert(
                 item.specifier.clone(),
-                ModuleSlot::Err(
-                  ModuleError::LoadingErr(
-                    item.specifier,
-                    item.maybe_range,
-                    Arc::new(anyhow!("Loader should never return an external specifier for a jsr: specifier.")),
-                  ),
-                ),
+                ModuleSlot::Err(ModuleError::LoadingErr(
+                  item.specifier,
+                  item.maybe_range,
+                  JsrLoadError::ContentLoadExternalSpecifier.into(),
+                )),
               );
             }
             LoadResponse::Module {
@@ -3617,10 +3651,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 ModuleSlot::Err(ModuleError::LoadingErr(
                   item.specifier,
                   item.maybe_range,
-                  Arc::new(anyhow!(
-                    "Redirects in the JSR registry are not supported (redirected to '{}')",
-                    specifier
-                  )),
+                  JsrLoadError::RedirectInPackage(specifier).into(),
                 )),
               );
             }
@@ -3641,7 +3672,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             ModuleSlot::Err(ModuleError::LoadingErr(
               item.specifier,
               item.maybe_range,
-              Arc::new(err),
+              JsrLoadError::ContentLoad(Arc::new(err)).into(),
             )),
           );
         }
@@ -3836,7 +3867,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               ModuleSlot::Err(ModuleError::LoadingErr(
                 specifier.clone(),
                 maybe_range.cloned(),
-                Arc::new(err),
+                err,
               )),
             );
             return;
@@ -3867,7 +3898,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               let result = match response {
                 Ok(None) => {
                   parse_module_source_and_info(
-                    &ProvidedModuleAnalyzer(RefCell::new(Some(module_info.clone()))),
+                    &ProvidedModuleAnalyzer(RefCell::new(Some(
+                      module_info.clone(),
+                    ))),
                     ParseModuleAndSourceInfoOptions {
                       specifier: requested_specifier.clone(),
                       maybe_headers: Default::default(),
@@ -3876,54 +3909,58 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       maybe_referrer: maybe_range.as_ref(),
                       is_root,
                       is_dynamic_branch,
-                    }
-                  ).await.map(|module_source_and_info| {
+                    },
+                  )
+                  .await
+                  .map(|module_source_and_info| {
                     PendingInfoResponse::Module {
                       specifier: requested_specifier.clone(),
                       module_source_and_info,
                       pending_load: Some(Box::new((checksum, module_info))),
                     }
                   })
-                },
-                Ok(Some(response)) => {
-                  match response {
-                    LoadResponse::External { specifier } => {
-                      Ok(PendingInfoResponse::External { specifier })
-                    }
-                    LoadResponse::Redirect { specifier } => Err(ModuleError::LoadingErr(
+                }
+                Ok(Some(response)) => match response {
+                  LoadResponse::External { specifier } => {
+                    Ok(PendingInfoResponse::External { specifier })
+                  }
+                  LoadResponse::Redirect { specifier } => {
+                    Err(ModuleError::LoadingErr(
                       requested_specifier.clone(),
                       maybe_range.clone(),
-                      Arc::new(anyhow!("Redirects in the JSR registry are not supported (redirected to '{}')", specifier)))
-                    ),
-                    LoadResponse::Module {
-                      content,
-                      specifier,
-                      maybe_headers,
-                    } => {
-                     parse_module_source_and_info(
-                        module_analyzer,
-                        ParseModuleAndSourceInfoOptions {
-                          specifier: specifier.clone(),
-                          maybe_headers,
-                          content,
-                          maybe_attribute_type: maybe_attribute_type.as_ref(),
-                          maybe_referrer: maybe_range.as_ref(),
-                          is_root,
-                          is_dynamic_branch,
-                        }
-                      ).await.map(|module_source_and_info| {
-                        PendingInfoResponse::Module {
-                          specifier: specifier.clone(),
-                          module_source_and_info,
-                          pending_load: None,
-                        }
-                      })
-                    }
+                      JsrLoadError::RedirectInPackage(specifier).into(),
+                    ))
                   }
-                }
-                Err(err) => {
-                  Err(ModuleError::LoadingErr(requested_specifier.clone(), maybe_range.clone(), Arc::new(err)))
-                }
+                  LoadResponse::Module {
+                    content,
+                    specifier,
+                    maybe_headers,
+                  } => parse_module_source_and_info(
+                    module_analyzer,
+                    ParseModuleAndSourceInfoOptions {
+                      specifier: specifier.clone(),
+                      maybe_headers,
+                      content,
+                      maybe_attribute_type: maybe_attribute_type.as_ref(),
+                      maybe_referrer: maybe_range.as_ref(),
+                      is_root,
+                      is_dynamic_branch,
+                    },
+                  )
+                  .await
+                  .map(|module_source_and_info| {
+                    PendingInfoResponse::Module {
+                      specifier: specifier.clone(),
+                      module_source_and_info,
+                      pending_load: None,
+                    }
+                  }),
+                },
+                Err(err) => Err(ModuleError::LoadingErr(
+                  requested_specifier.clone(),
+                  maybe_range.clone(),
+                  ModuleLoadError::Loader(Arc::new(err)),
+                )),
               };
               PendingInfo {
                 requested_specifier,
@@ -3989,7 +4026,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             ModuleSlot::Err(ModuleError::LoadingErr(
               specifier.clone(),
               maybe_range,
-              Arc::new(err.into()),
+              err.into(),
             )),
           );
           return;
@@ -4098,7 +4135,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           ModuleSlot::Err(ModuleError::LoadingErr(
             specifier,
             maybe_range,
-            Arc::new(err.into()),
+            JsrLoadError::PackageFormat(err).into(),
           )),
         );
       }
@@ -4124,17 +4161,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     if let Some(sub_path) = workspace_member.exports.get(export_name.as_ref()) {
       match workspace_member.base.join(sub_path) {
         Ok(load_specifier) => Ok(load_specifier),
-        Err(err) => {
-          let err: anyhow::Error = err.into();
-          Err(Box::new(ModuleError::LoadingErr(
-            specifier.clone(),
-            maybe_range.map(ToOwned::to_owned),
-            Arc::new(err.context(format!(
-              "Failed joining '{}' to '{}'.",
-              sub_path, workspace_member.base
-            ))),
-          )))
-        }
+        Err(err) => Err(Box::new(ModuleError::LoadingErr(
+          specifier.clone(),
+          maybe_range.map(ToOwned::to_owned),
+          ModuleLoadError::WorkspaceMemberInvalidExportPath {
+            base: workspace_member.base.clone(),
+            sub_path: sub_path.to_string(),
+            error: err,
+          },
+        ))),
       }
     } else {
       Err(Box::new(ModuleError::UnknownExport {
@@ -4175,14 +4210,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           // request to load
           let package_name = package_ref.req().name.clone();
           let fut = npm_resolver.load_and_cache_npm_package_info(&package_name);
-          self.state.npm.pending_registry_info_loads.push(Box::pin(
-            async move {
+          self.state.npm.pending_registry_info_loads.push(
+            crate::rt::spawn(self.executor, async move {
               PendingNpmRegistryInfoLoad {
                 package_name,
                 result: fut.await.map_err(Arc::new),
               }
-            },
-          ));
+            })
+            .boxed_local(),
+          );
         }
         self
           .state
@@ -4200,7 +4236,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           ModuleSlot::Err(ModuleError::LoadingErr(
             specifier,
             maybe_range,
-            Arc::new(err.into()),
+            NpmLoadError::PackageReqReferenceParse(err).into(),
           )),
         );
       }
@@ -4216,7 +4252,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       maybe_range,
       load_specifier,
       is_dynamic,
-      maybe_checksum,
+      mut maybe_checksum,
       mut maybe_version_info,
     } = item;
     self
@@ -4245,6 +4281,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           .unwrap();
         (package_nv, fut)
       });
+    if maybe_checksum.is_none() {
+      maybe_checksum = self.graph.checksums.get(&requested_specifier).cloned();
+    }
     let fut = async move {
       #[allow(clippy::too_many_arguments)]
       async fn try_load(
@@ -4270,7 +4309,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             ModuleError::LoadingErr(
               jsr_url_provider.package_url(&package_nv),
               maybe_range.cloned(),
-              err,
+              err.into(),
             )
           })?;
           let info = JsrPackageVersionInfoExt {
@@ -4285,7 +4324,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   ModuleError::LoadingErr(
                     load_specifier.clone(),
                     maybe_range.cloned(),
-                    Arc::new(err),
+                    err,
                   )
                 })?
                 .to_string(),
@@ -4317,15 +4356,22 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 Err(ModuleError::LoadingErr(
                   load_specifier.clone(),
                   maybe_range.cloned(),
-                  Arc::new(anyhow!(
-                    "Redirects within a JSR package are not supported.",
-                  )),
+                  JsrLoadError::RedirectInPackage(specifier.clone()).into(),
+                ))
+              } else if let Some(expected_checksum) = maybe_checksum {
+                Err(ModuleError::LoadingErr(
+                  load_specifier.clone(),
+                  maybe_range.cloned(),
+                  ModuleLoadError::ChecksumIntegrity(ChecksumIntegrityError {
+                    actual: format!("Redirect to {}", specifier),
+                    expected: expected_checksum.into_string(),
+                  }),
                 ))
               } else if redirect_count >= loader.max_redirects() {
                 Err(ModuleError::LoadingErr(
                   load_specifier.clone(),
                   maybe_range.cloned(),
-                  Arc::new(anyhow!("Too many redirects.")),
+                  ModuleLoadError::TooManyRedirects,
                 ))
               } else {
                 Ok(PendingInfoResponse::Redirect {
@@ -4371,7 +4417,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           Err(err) => Err(ModuleError::LoadingErr(
             load_specifier.clone(),
             maybe_range.cloned(),
-            Arc::new(err),
+            ModuleLoadError::Loader(Arc::new(err)),
           )),
         }
       }
@@ -4786,7 +4832,7 @@ impl<'a> NpmSpecifierResolver<'a> {
             ModuleSlot::Err(ModuleError::LoadingErr(
               item.specifier.clone(),
               item.maybe_range.clone(),
-              err.clone(),
+              NpmLoadError::RegistryInfo(err.clone()).into(),
             )),
           );
         }
@@ -4858,7 +4904,7 @@ impl<'a> NpmSpecifierResolver<'a> {
                   ModuleSlot::Err(ModuleError::LoadingErr(
                     item.specifier,
                     item.maybe_range,
-                    Arc::new(err),
+                    NpmLoadError::PackageReqResolution(Arc::new(err)).into(),
                   )),
                 );
               }
@@ -4869,9 +4915,7 @@ impl<'a> NpmSpecifierResolver<'a> {
               ModuleSlot::Err(ModuleError::LoadingErr(
                 item.specifier,
                 item.maybe_range,
-                Arc::new(anyhow::anyhow!(
-                  "npm specifiers are not supported in this environment"
-                )),
+                NpmLoadError::NotSupportedEnvironment.into(),
               )),
             );
           }
@@ -4920,7 +4964,7 @@ fn new_source_with_text(
     Box::new(ModuleError::LoadingErr(
       specifier.clone(),
       None,
-      Arc::new(err.into()),
+      ModuleLoadError::Decode(err.into()),
     ))
   })
 }

@@ -58,7 +58,7 @@ import 'jsr:@scope/a';
     },
     {
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
-      "error": "Redirects within a JSR package are not supported."
+      "error": "Redirects in the JSR registry are not supported (redirected to 'https://jsr.io/@scope/a/1.0.0/other.ts')"
     }
   ],
   "redirects": {
