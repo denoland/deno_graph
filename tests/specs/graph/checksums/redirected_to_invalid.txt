@@ -1,0 +1,58 @@
+~~ {
+  "checksums": {
+    "https://localhost/redirected.ts": "invalid"
+  }
+} ~~
+# https://localhost/mod.ts
+HEADERS: {"location":"./redirected.ts"}
+
+# https://localhost/redirected.ts
+console.log('hi');
+
+# mod.ts
+import 'https://localhost/mod.ts'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "https://localhost/mod.ts",
+          "code": {
+            "specifier": "https://localhost/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 33
+              }
+            }
+          }
+        }
+      ],
+      "size": 34,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "https://localhost/redirected.ts",
+      "error": "Integrity check failed.\n\nActual: 19ef95471e555cd6cbdf54bc242eee9ed916b282f8902bc75e7639955802c458\nExpected: invalid"
+    }
+  ],
+  "redirects": {
+    "https://localhost/mod.ts": "https://localhost/redirected.ts"
+  }
+}
+
+checksums:
+{
+  "https://localhost/redirected.ts": "invalid"
+}

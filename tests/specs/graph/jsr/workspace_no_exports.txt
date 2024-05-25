@@ -79,7 +79,7 @@ console.log("Test");
     },
     {
       "specifier": "jsr:@scope/b@2/export",
-      "error": "Expected workspace package '@scope/b@2.0.0' to define exports in its deno.json.\n  Specifier: jsr:@scope/b@2/export"
+      "error": "Expected workspace package '@scope/b@2.0.0' to define exports in its deno.json."
     }
   ],
   "redirects": {}

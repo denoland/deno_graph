@@ -282,6 +282,7 @@ pub async fn js_create_graph(
         reporter: None,
         workspace_members: &[],
         executor: Default::default(),
+        verify_and_fill_checksums: false,
       },
     )
     .await;

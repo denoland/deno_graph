@@ -128,7 +128,7 @@ pub struct ChecksumIntegrityError {
 
 /// A SHA-256 checksum to verify the contents of a module
 /// with while loading.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct LoaderChecksum(String);
 
 impl LoaderChecksum {
@@ -431,12 +431,17 @@ pub struct RawDataUrl {
 }
 
 impl RawDataUrl {
-  pub fn parse(specifier: &ModuleSpecifier) -> Result<Self, Error> {
-    let url = DataUrl::process(specifier.as_str())
-      .map_err(|_| anyhow!("Unable to decode data url."))?;
-    let (bytes, _) = url
-      .decode_to_vec()
-      .map_err(|_| anyhow!("Unable to decode data url."))?;
+  pub fn parse(specifier: &ModuleSpecifier) -> Result<Self, std::io::Error> {
+    use std::io::Error;
+    use std::io::ErrorKind;
+
+    fn unable_to_decode() -> Error {
+      Error::new(ErrorKind::InvalidData, "Unable to decode data url.")
+    }
+
+    let url =
+      DataUrl::process(specifier.as_str()).map_err(|_| unable_to_decode())?;
+    let (bytes, _) = url.decode_to_vec().map_err(|_| unable_to_decode())?;
     Ok(RawDataUrl {
       mime_type: url.mime_type().to_string(),
       bytes,

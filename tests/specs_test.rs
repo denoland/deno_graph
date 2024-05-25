@@ -8,8 +8,10 @@ use std::fmt::Write;
 
 use deno_ast::diagnostics::Diagnostic;
 use deno_ast::emit;
+use deno_ast::swc::ast::Module;
 use deno_ast::EmitOptions;
 use deno_ast::EmittedSource;
+use deno_ast::ModuleSpecifier;
 use deno_ast::SourceMap;
 use deno_graph::source::recommended_registry_package_url;
 use deno_graph::source::recommended_registry_package_url_to_nv;
@@ -86,6 +88,12 @@ fn run_graph_test(test: &CollectedTest) {
   if let Some(options) = &spec.options {
     builder.workspace_fast_check(options.workspace_fast_check);
     builder.fast_check_cache(options.fast_check_cache);
+    if let Some(checksums) = options.checksums.as_ref() {
+      builder.verify_and_fill_checksums(true);
+      for (specifier, checksum) in checksums {
+        builder.add_checksum(specifier, checksum);
+      }
+    }
   }
 
   let rt = tokio::runtime::Builder::new_current_thread()
@@ -95,6 +103,15 @@ fn run_graph_test(test: &CollectedTest) {
   let result = rt.block_on(async { builder.build().await });
   let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
   output_text.push('\n');
+  // include the checksums if non-empty
+  if !result.graph.checksums.is_empty() {
+    let sorted_checksums =
+      result.graph.checksums.iter().collect::<BTreeMap<_, _>>();
+    output_text.push_str("\nchecksums:\n");
+    output_text
+      .push_str(&serde_json::to_string_pretty(&sorted_checksums).unwrap());
+    output_text.push('\n');
+  }
   // include the list of jsr dependencies
   let jsr_deps = result
     .graph
@@ -286,6 +303,9 @@ fn run_symbol_test(test: &CollectedTest) {
 #[serde(rename_all = "camelCase")]
 pub struct SpecOptions {
   #[serde(default)]
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub checksums: Option<HashMap<String, String>>,
+  #[serde(default)]
   #[serde(skip_serializing_if = "is_false")]
   pub workspace_fast_check: bool,
   #[serde(default)]
@@ -311,7 +331,11 @@ impl Spec {
     let mut text = String::new();
     if let Some(options) = &self.options {
       text.push_str("~~ ");
-      text.push_str(&serde_json::to_string(options).unwrap());
+      if options.checksums.is_some() {
+        text.push_str(&serde_json::to_string_pretty(options).unwrap());
+      } else {
+        text.push_str(&serde_json::to_string(options).unwrap());
+      }
       text.push_str(" ~~");
       text.push('\n');
     }
@@ -484,12 +508,13 @@ pub fn parse_spec(text: String) -> Spec {
   let mut files = Vec::new();
   let mut current_file = None;
   let mut options: Option<SpecOptions> = None;
-  for (i, line) in text.split('\n').enumerate() {
-    if i == 0 && line.starts_with("~~ ") {
-      let line = line.replace("~~", "").trim().to_string(); // not ideal, being lazy
-      options = Some(serde_json::from_str(&line).unwrap());
-      continue;
-    }
+  let mut text = text.as_str();
+  if text.starts_with("~~ ") {
+    let end = text.find(" ~~\n").unwrap();
+    options = Some(serde_json::from_str(&text[3..end]).unwrap());
+    text = &text[end + 4..];
+  }
+  for line in text.split('\n') {
     if let Some(specifier) = line.strip_prefix("# ") {
       if let Some(file) = current_file.take() {
         files.push(file);

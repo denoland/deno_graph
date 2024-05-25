@@ -50,7 +50,7 @@ import 'jsr:@scope/a/non_existent' // invalid export
     },
     {
       "specifier": "jsr:@scope/a/non_existent",
-      "error": "Unknown export './non_existent' for '@scope/a@1.0.0'.\n  Specifier: jsr:@scope/a/non_existent\n  Package exports:\n * .\n * ./sub\n * ./other"
+      "error": "Unknown export './non_existent' for '@scope/a@1.0.0'.\n  Package exports:\n * .\n * ./sub\n * ./other"
     }
   ],
   "redirects": {},

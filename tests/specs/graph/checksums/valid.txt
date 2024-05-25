@@ -1,0 +1,55 @@
+~~ {
+  "checksums": {
+    "https://localhost/mod.ts": "57fe7492e0def06ef2f6863f5cab3a5d6ec41ac68f2de7c0e27928cc6fef0ccb"
+  }
+} ~~
+# https://localhost/mod.ts
+console.log(123);
+
+# mod.ts
+import 'https://localhost/mod.ts'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "https://localhost/mod.ts",
+          "code": {
+            "specifier": "https://localhost/mod.ts",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 33
+              }
+            }
+          }
+        }
+      ],
+      "size": 34,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 18,
+      "mediaType": "TypeScript",
+      "specifier": "https://localhost/mod.ts"
+    }
+  ],
+  "redirects": {}
+}
+
+checksums:
+{
+  "https://localhost/mod.ts": "57fe7492e0def06ef2f6863f5cab3a5d6ec41ac68f2de7c0e27928cc6fef0ccb"
+}

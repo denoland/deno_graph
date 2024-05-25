@@ -287,6 +287,7 @@ async fn test_version(
         reporter: None,
         jsr_url_provider: &PassthroughJsrUrlProvider,
         passthrough_jsr_specifiers: true,
+        verify_and_fill_checksums: false,
         executor: Default::default(),
         imports: vec![],
       },

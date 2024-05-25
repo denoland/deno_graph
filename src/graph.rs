@@ -164,6 +164,8 @@ pub enum JsrLoadError {
     "Unsupported checksum in JSR package manifest. Maybe try upgrading deno?"
   )]
   UnsupportedManifestChecksum,
+  #[error(transparent)]
+  ContentChecksumIntegrity(ChecksumIntegrityError),
   #[error("Loader should never return an external specifier for a jsr: specifier content load.")]
   ContentLoadExternalSpecifier,
   #[error(transparent)]
@@ -178,8 +180,8 @@ pub enum JsrLoadError {
   PackageVersionManifestLoad(PackageNv, Arc<anyhow::Error>),
   #[error(transparent)]
   PackageFormat(JsrPackageFormatError),
-  #[error("Could version of '{}' that matches specified version constraint '{}'", .0.name, .0.version_req)]
-  PackageReqUnknown(PackageReq),
+  #[error("Could not find version of '{}' that matches specified version constraint '{}'", .0.name, .0.version_req)]
+  PackageReqNotFound(PackageReq),
   #[error("Redirects in the JSR registry are not supported (redirected to '{}')", .0)]
   RedirectInPackage(ModuleSpecifier),
   #[error("Unknown export '{}' for '{}'.\n  Package exports:\n{}", export_name, .nv, .exports.iter().map(|e| format!(" * {}", e)).collect::<Vec<_>>().join("\n"))]
@@ -217,7 +219,7 @@ pub enum WorkspaceLoadError {
 #[derive(Debug, Error, Clone)]
 pub enum ModuleLoadError {
   #[error(transparent)]
-  ChecksumIntegrity(ChecksumIntegrityError),
+  HttpsChecksumIntegrity(ChecksumIntegrityError),
   #[error(transparent)]
   Decode(Arc<std::io::Error>),
   #[error(transparent)]
@@ -1151,6 +1153,10 @@ pub struct BuildOptions<'a> {
   /// resolving them. This is useful in cases where you want to mark JSR
   /// specifiers as external.
   pub passthrough_jsr_specifiers: bool,
+  /// Whether the builder should verify the checksums found on `graph.checksums`
+  /// and also fill in `graph.checksums` for loaded non-declaration remote non-JSR
+  /// modules.
+  pub verify_and_fill_checksums: bool,
   pub module_analyzer: &'a dyn ModuleAnalyzer,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub reporter: Option<&'a dyn Reporter>,
@@ -1579,23 +1585,7 @@ impl ModuleGraph {
     loader: &dyn Loader,
     options: BuildOptions<'a>,
   ) -> Vec<BuildDiagnostic> {
-    Builder::build(
-      self,
-      roots,
-      options.imports,
-      options.is_dynamic,
-      options.file_system,
-      options.jsr_url_provider,
-      options.passthrough_jsr_specifiers,
-      options.resolver,
-      options.npm_resolver,
-      loader,
-      options.module_analyzer,
-      options.reporter,
-      options.workspace_members,
-      options.executor,
-    )
-    .await
+    Builder::build(self, roots, loader, options).await
   }
 
   #[cfg(feature = "fast_check")]
@@ -2107,6 +2097,20 @@ impl ModuleSourceAndInfo {
     match self {
       Self::Json { specifier, .. } => specifier,
       Self::Js { specifier, .. } => specifier,
+    }
+  }
+
+  pub fn media_type(&self) -> MediaType {
+    match self {
+      Self::Json { .. } => MediaType::Json,
+      Self::Js { media_type, .. } => *media_type,
+    }
+  }
+
+  pub fn source(&self) -> &str {
+    match self {
+      Self::Json { source, .. } => source,
+      Self::Js { source, .. } => source,
     }
   }
 }
@@ -3192,6 +3196,7 @@ struct Builder<'a, 'graph> {
   file_system: &'a dyn FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   passthrough_jsr_specifiers: bool,
+  verify_and_fill_checksums: bool,
   loader: &'a dyn Loader,
   resolver: Option<&'a dyn Resolver>,
   npm_resolver: Option<&'a dyn NpmResolver>,
@@ -3206,45 +3211,35 @@ struct Builder<'a, 'graph> {
 }
 
 impl<'a, 'graph> Builder<'a, 'graph> {
-  #[allow(clippy::too_many_arguments)]
   pub async fn build(
     graph: &'graph mut ModuleGraph,
     roots: Vec<ModuleSpecifier>,
-    imports: Vec<ReferrerImports>,
-    is_dynamic: bool,
-    file_system: &'a dyn FileSystem,
-    jsr_url_provider: &'a dyn JsrUrlProvider,
-    passthrough_jsr_specifiers: bool,
-    resolver: Option<&'a dyn Resolver>,
-    npm_resolver: Option<&'a dyn NpmResolver>,
     loader: &'a dyn Loader,
-    module_analyzer: &'a dyn ModuleAnalyzer,
-    reporter: Option<&'a dyn Reporter>,
-    workspace_members: &'a [WorkspaceMember],
-    executor: &'a dyn Executor,
+    options: BuildOptions<'a>,
   ) -> Vec<BuildDiagnostic> {
     let fill_pass_mode = match graph.roots.is_empty() {
       true => FillPassMode::AllowRestart,
       false => FillPassMode::NoRestart,
     };
     let mut builder = Self {
-      in_dynamic_branch: is_dynamic,
-      file_system,
-      jsr_url_provider,
-      passthrough_jsr_specifiers,
+      in_dynamic_branch: options.is_dynamic,
+      file_system: options.file_system,
+      jsr_url_provider: options.jsr_url_provider,
+      passthrough_jsr_specifiers: options.passthrough_jsr_specifiers,
+      verify_and_fill_checksums: options.verify_and_fill_checksums,
       loader,
-      resolver,
-      npm_resolver,
-      module_analyzer,
-      reporter,
+      resolver: options.resolver,
+      npm_resolver: options.npm_resolver,
+      module_analyzer: options.module_analyzer,
+      reporter: options.reporter,
       graph,
       state: PendingState::default(),
       fill_pass_mode,
-      workspace_members,
+      workspace_members: options.workspace_members,
       diagnostics: Vec::new(),
-      executor,
+      executor: options.executor,
     };
-    builder.fill(roots, imports).await;
+    builder.fill(roots, options.imports).await;
     builder.diagnostics
   }
 
@@ -3431,7 +3426,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   ModuleSlot::Err(ModuleError::LoadingErr(
                     pending_resolution.specifier.clone(),
                     pending_resolution.maybe_range.clone(),
-                    JsrLoadError::PackageReqUnknown(package_req.clone()).into(),
+                    JsrLoadError::PackageReqNotFound(package_req.clone())
+                      .into(),
                   )),
                 );
               }
@@ -4278,7 +4274,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           .unwrap();
         (package_nv, fut)
       });
-    if maybe_checksum.is_none() {
+    if self.verify_and_fill_checksums && maybe_checksum.is_none() {
       maybe_checksum = self.graph.checksums.get(&requested_specifier).cloned();
     }
     let fut = async move {
@@ -4359,10 +4355,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 Err(ModuleError::LoadingErr(
                   load_specifier.clone(),
                   maybe_range.cloned(),
-                  ModuleLoadError::ChecksumIntegrity(ChecksumIntegrityError {
-                    actual: format!("Redirect to {}", specifier),
-                    expected: expected_checksum.into_string(),
-                  }),
+                  ModuleLoadError::HttpsChecksumIntegrity(
+                    ChecksumIntegrityError {
+                      actual: format!("Redirect to {}", specifier),
+                      expected: expected_checksum.into_string(),
+                    },
+                  ),
                 ))
               } else if redirect_count >= loader.max_redirects() {
                 Err(ModuleError::LoadingErr(
@@ -4411,11 +4409,18 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             load_specifier.clone(),
             maybe_range.cloned(),
           )),
-          Err(err) => Err(ModuleError::LoadingErr(
-            load_specifier.clone(),
-            maybe_range.cloned(),
-            ModuleLoadError::Loader(Arc::new(err)),
-          )),
+          Err(err) => match err.downcast::<ChecksumIntegrityError>() {
+            Ok(err) => Err(ModuleError::LoadingErr(
+              load_specifier.clone(),
+              maybe_range.cloned(),
+              ModuleLoadError::HttpsChecksumIntegrity(err),
+            )),
+            Err(err) => Err(ModuleError::LoadingErr(
+              load_specifier.clone(),
+              maybe_range.cloned(),
+              ModuleLoadError::Loader(Arc::new(err)),
+            )),
+          },
         }
       }
 
@@ -4536,6 +4541,18 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             }
             .boxed_local()
           });
+        } else if self.verify_and_fill_checksums
+          && maybe_version_info.is_none()
+          && !module_source_and_info.media_type().is_declaration()
+          && matches!(specifier.scheme(), "https" | "http")
+          && self.graph.checksums.get(&specifier).is_none()
+        {
+          self.graph.checksums.insert(
+            specifier.clone(),
+            LoaderChecksum::new(LoaderChecksum::gen(
+              module_source_and_info.source().as_bytes(),
+            )),
+          );
         }
 
         let module_slot =

@@ -9,6 +9,7 @@ use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadOptions;
 use deno_graph::source::Loader;
+use deno_graph::source::LoaderChecksum;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
 use deno_graph::BuildDiagnostic;
@@ -155,6 +156,7 @@ impl FastCheckCache for TestFastCheckCache {
 }
 
 pub struct TestBuilder {
+  graph: ModuleGraph,
   loader: TestLoader,
   entry_point: String,
   entry_point_types: String,
@@ -162,11 +164,13 @@ pub struct TestBuilder {
   workspace_members: Vec<WorkspaceMember>,
   workspace_fast_check: bool,
   lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
+  verify_and_fill_checksums: bool,
 }
 
 impl TestBuilder {
   pub fn new() -> Self {
     Self {
+      graph: ModuleGraph::new(GraphKind::All),
       loader: Default::default(),
       entry_point: "file:///mod.ts".to_string(),
       entry_point_types: "file:///mod.ts".to_string(),
@@ -174,6 +178,7 @@ impl TestBuilder {
       workspace_members: Default::default(),
       workspace_fast_check: false,
       lockfile_jsr_packages: Default::default(),
+      verify_and_fill_checksums: false,
     }
   }
 
@@ -227,8 +232,22 @@ impl TestBuilder {
     self
   }
 
+  #[allow(unused)]
+  pub fn verify_and_fill_checksums(&mut self, value: bool) -> &mut Self {
+    self.verify_and_fill_checksums = value;
+    self
+  }
+
+  #[allow(unused)]
+  pub fn add_checksum(&mut self, specifier: &str, checksum: &str) -> &mut Self {
+    let specifier = ModuleSpecifier::parse(specifier).unwrap();
+    let loader_checksum = LoaderChecksum::new(checksum.to_string());
+    self.graph.checksums.insert(specifier, loader_checksum);
+    self
+  }
+
   pub async fn build(&mut self) -> BuildResult {
-    let mut graph = deno_graph::ModuleGraph::new(GraphKind::All);
+    let mut graph = self.graph.clone();
     for (req, nv) in &self.lockfile_jsr_packages {
       graph.packages.add_nv(req.clone(), nv.clone());
     }
@@ -243,6 +262,7 @@ impl TestBuilder {
           workspace_members: &self.workspace_members,
           module_analyzer: &capturing_analyzer,
           npm_resolver: Some(&TestNpmResolver),
+          verify_and_fill_checksums: self.verify_and_fill_checksums,
           ..Default::default()
         },
       )
