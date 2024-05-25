@@ -8,10 +8,8 @@ use std::fmt::Write;
 
 use deno_ast::diagnostics::Diagnostic;
 use deno_ast::emit;
-use deno_ast::swc::ast::Module;
 use deno_ast::EmitOptions;
 use deno_ast::EmittedSource;
-use deno_ast::ModuleSpecifier;
 use deno_ast::SourceMap;
 use deno_graph::source::recommended_registry_package_url;
 use deno_graph::source::recommended_registry_package_url_to_nv;
