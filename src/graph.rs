@@ -96,6 +96,10 @@ impl Ord for Position {
 }
 
 impl Position {
+  pub fn new(line: usize, character: usize) -> Self {
+    Self { line, character }
+  }
+
   pub fn zeroed() -> Self {
     Self {
       line: 0,
@@ -2690,6 +2694,7 @@ fn fill_module_dependencies(
       if graph_kind.include_types() && dep.maybe_type.is_none() {
         let specifier = module_specifier.clone();
         let maybe_type = if let Some(types_specifier) = &types_specifier {
+          dep.maybe_deno_types_specifier = Some(types_specifier.text.clone());
           resolve(
             &types_specifier.text,
             Range::from_position_range(specifier, types_specifier.range),
