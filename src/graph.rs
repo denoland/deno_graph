@@ -174,7 +174,7 @@ pub enum JsrLoadError {
   ContentLoadExternalSpecifier,
   #[error(transparent)]
   ContentLoad(Arc<anyhow::Error>),
-  #[error("JSR package manifest for '{}' failed to load: {:#}", .0, .1)]
+  #[error("JSR package manifest for '{}' failed to load. {:#}", .0, .1)]
   PackageManifestLoad(String, Arc<anyhow::Error>),
   #[error("JSR package not found: {}", .0)]
   PackageNotFound(String),
