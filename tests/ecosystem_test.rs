@@ -282,6 +282,7 @@ async fn test_version(
         module_analyzer: &module_analyzer,
         workspace_members: &workspace_members,
         file_system: &NullFileSystem,
+        locker: None,
         resolver: None,
         npm_resolver: None,
         reporter: None,

@@ -276,6 +276,7 @@ pub async fn js_create_graph(
         file_system: &NullFileSystem,
         jsr_url_provider: Default::default(),
         npm_resolver: None,
+        locker: None,
         passthrough_jsr_specifiers: false,
         module_analyzer: Default::default(),
         imports,

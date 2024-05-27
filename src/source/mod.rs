@@ -119,7 +119,7 @@ impl CacheSetting {
 pub static DEFAULT_JSR_URL: Lazy<Url> =
   Lazy::new(|| Url::parse("https://jsr.io").unwrap());
 
-#[derive(Debug, Error)]
+#[derive(Debug, Clone, Error)]
 #[error("Integrity check failed.\n\nActual: {}\nExpected: {}", .actual, .expected)]
 pub struct ChecksumIntegrityError {
   pub actual: String,
@@ -128,7 +128,7 @@ pub struct ChecksumIntegrityError {
 
 /// A SHA-256 checksum to verify the contents of a module
 /// with while loading.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct LoaderChecksum(String);
 
 impl LoaderChecksum {
@@ -168,6 +168,53 @@ impl LoaderChecksum {
   }
 }
 
+impl fmt::Display for LoaderChecksum {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "{}", self.0)
+  }
+}
+
+pub trait Locker {
+  fn get_checksum(&self, specifier: &ModuleSpecifier)
+    -> Option<LoaderChecksum>;
+  fn has_checksum(&self, specifier: &ModuleSpecifier) -> bool;
+  fn set_checksum(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    checksum: LoaderChecksum,
+  );
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct HashMapLocker(HashMap<ModuleSpecifier, LoaderChecksum>);
+
+impl HashMapLocker {
+  pub fn inner(&self) -> &HashMap<ModuleSpecifier, LoaderChecksum> {
+    &self.0
+  }
+}
+
+impl Locker for HashMapLocker {
+  fn get_checksum(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<LoaderChecksum> {
+    self.0.get(specifier).cloned()
+  }
+
+  fn has_checksum(&self, specifier: &ModuleSpecifier) -> bool {
+    self.0.contains_key(specifier)
+  }
+
+  fn set_checksum(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    checksum: LoaderChecksum,
+  ) {
+    self.0.insert(specifier.clone(), checksum);
+  }
+}
+
 #[derive(Debug, Clone)]
 pub struct LoadOptions {
   pub is_dynamic: bool,
@@ -197,6 +244,10 @@ pub trait Loader {
 
   /// A method that given a specifier that asynchronously returns the
   /// source of the file.
+  ///
+  /// To ensure errors surfaced in the graph are more specific for checksum
+  /// integrity errors, ensure this returns a `ChecksumIntegrityError` when
+  /// the checksum on `LoadOptions` does not match the loaded source.
   fn load(
     &self,
     specifier: &ModuleSpecifier,
@@ -344,7 +395,7 @@ pub trait Resolver: fmt::Debug {
   }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 #[error("Unknown built-in \"node:\" module: {module_name}")]
 pub struct UnknownBuiltInNodeModuleError {
   /// Name of the invalid module.
@@ -425,12 +476,17 @@ pub struct RawDataUrl {
 }
 
 impl RawDataUrl {
-  pub fn parse(specifier: &ModuleSpecifier) -> Result<Self, Error> {
-    let url = DataUrl::process(specifier.as_str())
-      .map_err(|_| anyhow!("Unable to decode data url."))?;
-    let (bytes, _) = url
-      .decode_to_vec()
-      .map_err(|_| anyhow!("Unable to decode data url."))?;
+  pub fn parse(specifier: &ModuleSpecifier) -> Result<Self, std::io::Error> {
+    use std::io::Error;
+    use std::io::ErrorKind;
+
+    fn unable_to_decode() -> Error {
+      Error::new(ErrorKind::InvalidData, "Unable to decode data url.")
+    }
+
+    let url =
+      DataUrl::process(specifier.as_str()).map_err(|_| unable_to_decode())?;
+    let (bytes, _) = url.decode_to_vec().map_err(|_| unable_to_decode())?;
     Ok(RawDataUrl {
       mime_type: url.mime_type().to_string(),
       bytes,
