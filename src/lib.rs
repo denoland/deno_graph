@@ -179,11 +179,14 @@ pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
 
 #[cfg(test)]
 mod tests {
+  use crate::graph::Import;
+  use crate::graph::ImportKind;
   use crate::graph::ResolutionResolved;
   use crate::source::NullFileSystem;
   use crate::source::ResolutionMode;
 
   use super::*;
+  use indexmap::IndexMap;
   use pretty_assertions::assert_eq;
   use serde_json::json;
   use source::tests::MockResolver;
@@ -3262,6 +3265,68 @@ export const foo = 'bar';"#,
     .unwrap();
     let actual = actual.js().unwrap();
     assert_eq!(actual.dependencies.len(), 4);
+  }
+
+  #[tokio::test]
+  async fn test_parse_module_deno_types() {
+    let specifier = ModuleSpecifier::parse("file:///a/test01.ts").unwrap();
+    let code = br#"
+    // @deno-types="./a.d.ts"
+    import { a } from "./a.js";
+    "#;
+    let actual = parse_module(ParseModuleOptions {
+      graph_kind: GraphKind::All,
+      specifier: specifier.clone(),
+      maybe_headers: None,
+      content: code.to_vec().into(),
+      file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
+      maybe_resolver: None,
+      maybe_npm_resolver: None,
+      module_analyzer: Default::default(),
+    })
+    .await
+    .unwrap();
+    let actual = actual.js().unwrap();
+    assert_eq!(
+      &actual.dependencies,
+      &[(
+        "./a.js".to_string(),
+        Dependency {
+          maybe_code: Resolution::Ok(Box::new(ResolutionResolved {
+            specifier: ModuleSpecifier::parse("file:///a/a.js").unwrap(),
+            range: Range {
+              specifier: specifier.clone(),
+              start: Position::new(2, 22),
+              end: Position::new(2, 30),
+            },
+          })),
+          maybe_type: Resolution::Ok(Box::new(ResolutionResolved {
+            specifier: ModuleSpecifier::parse("file:///a/a.d.ts").unwrap(),
+            range: Range {
+              specifier: specifier.clone(),
+              start: Position::new(1, 19),
+              end: Position::new(1, 29),
+            },
+          })),
+          maybe_deno_types_specifier: Some("./a.d.ts".to_string()),
+          imports: vec![Import {
+            specifier: "./a.js".to_string(),
+            kind: ImportKind::Es,
+            range: Range {
+              specifier: specifier.clone(),
+              start: Position::new(2, 22),
+              end: Position::new(2, 30),
+            },
+            is_dynamic: false,
+            attributes: Default::default(),
+          }],
+          ..Default::default()
+        },
+      )]
+      .into_iter()
+      .collect::<IndexMap<_, _>>()
+    )
   }
 
   #[tokio::test]
