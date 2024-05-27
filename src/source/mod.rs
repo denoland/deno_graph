@@ -174,6 +174,47 @@ impl fmt::Display for LoaderChecksum {
   }
 }
 
+pub trait Locker {
+  fn get_checksum(&self, specifier: &ModuleSpecifier)
+    -> Option<LoaderChecksum>;
+  fn has_checksum(&self, specifier: &ModuleSpecifier) -> bool;
+  fn set_checksum(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    checksum: LoaderChecksum,
+  );
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct HashMapLocker(HashMap<ModuleSpecifier, LoaderChecksum>);
+
+impl HashMapLocker {
+  pub fn inner(&self) -> &HashMap<ModuleSpecifier, LoaderChecksum> {
+    &self.0
+  }
+}
+
+impl Locker for HashMapLocker {
+  fn get_checksum(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<LoaderChecksum> {
+    self.0.get(specifier).cloned()
+  }
+
+  fn has_checksum(&self, specifier: &ModuleSpecifier) -> bool {
+    self.0.contains_key(specifier)
+  }
+
+  fn set_checksum(
+    &mut self,
+    specifier: &ModuleSpecifier,
+    checksum: LoaderChecksum,
+  ) {
+    self.0.insert(specifier.clone(), checksum);
+  }
+}
+
 #[derive(Debug, Clone)]
 pub struct LoadOptions {
   pub is_dynamic: bool,

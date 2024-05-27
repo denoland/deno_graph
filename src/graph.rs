@@ -1151,16 +1151,13 @@ pub struct BuildOptions<'a> {
   /// runtime types.
   pub imports: Vec<ReferrerImports>,
   pub executor: &'a dyn Executor,
+  pub locker: Option<&'a mut dyn Locker>,
   pub file_system: &'a dyn FileSystem,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
   /// Whether to pass through JSR specifiers to the resolver instead of
   /// resolving them. This is useful in cases where you want to mark JSR
   /// specifiers as external.
   pub passthrough_jsr_specifiers: bool,
-  /// Whether the builder should verify the checksums found on `graph.checksums`
-  /// and also fill in `graph.checksums` for loaded non-declaration remote non-JSR
-  /// modules.
-  pub verify_and_fill_checksums: bool,
   pub module_analyzer: &'a dyn ModuleAnalyzer,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub reporter: Option<&'a dyn Reporter>,
@@ -1544,10 +1541,6 @@ pub struct ModuleGraph {
   #[serde(skip_serializing)]
   graph_kind: GraphKind,
   pub roots: Vec<ModuleSpecifier>,
-  /// Checksums for verifying loaded modules. These should be
-  /// populated into the module graph before loading.
-  #[serde(skip_serializing)]
-  pub checksums: HashMap<ModuleSpecifier, LoaderChecksum>,
   #[serde(rename = "modules")]
   #[serde(serialize_with = "serialize_module_slots")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
@@ -1569,7 +1562,6 @@ impl ModuleGraph {
     Self {
       graph_kind,
       roots: Default::default(),
-      checksums: Default::default(),
       module_slots: Default::default(),
       imports: Default::default(),
       redirects: Default::default(),
@@ -1586,7 +1578,7 @@ impl ModuleGraph {
   pub async fn build<'a>(
     &mut self,
     roots: Vec<ModuleSpecifier>,
-    loader: &dyn Loader,
+    loader: &'a dyn Loader,
     options: BuildOptions<'a>,
   ) -> Vec<BuildDiagnostic> {
     Builder::build(self, roots, loader, options).await
@@ -3201,8 +3193,8 @@ struct Builder<'a, 'graph> {
   file_system: &'a dyn FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   passthrough_jsr_specifiers: bool,
-  verify_and_fill_checksums: bool,
   loader: &'a dyn Loader,
+  locker: Option<&'a mut dyn Locker>,
   resolver: Option<&'a dyn Resolver>,
   npm_resolver: Option<&'a dyn NpmResolver>,
   module_analyzer: &'a dyn ModuleAnalyzer,
@@ -3231,8 +3223,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       file_system: options.file_system,
       jsr_url_provider: options.jsr_url_provider,
       passthrough_jsr_specifiers: options.passthrough_jsr_specifiers,
-      verify_and_fill_checksums: options.verify_and_fill_checksums,
       loader,
+      locker: options.locker,
       resolver: options.resolver,
       npm_resolver: options.npm_resolver,
       module_analyzer: options.module_analyzer,
@@ -4279,8 +4271,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           .unwrap();
         (package_nv, fut)
       });
-    if self.verify_and_fill_checksums && maybe_checksum.is_none() {
-      maybe_checksum = self.graph.checksums.get(&requested_specifier).cloned();
+    if maybe_checksum.is_none() {
+      maybe_checksum = self
+        .locker
+        .as_ref()
+        .and_then(|l| l.get_checksum(&requested_specifier));
     }
     let fut = async move {
       #[allow(clippy::too_many_arguments)]
@@ -4548,18 +4543,21 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             }
             .boxed_local()
           });
-        } else if self.verify_and_fill_checksums
-          && maybe_version_info.is_none()
+        } else if maybe_version_info.is_none()
+          // do not insert checksums for declaration files
           && !module_source_and_info.media_type().is_declaration()
           && matches!(specifier.scheme(), "https" | "http")
-          && self.graph.checksums.get(&specifier).is_none()
         {
-          self.graph.checksums.insert(
-            specifier.clone(),
-            LoaderChecksum::new(LoaderChecksum::gen(
-              module_source_and_info.source().as_bytes(),
-            )),
-          );
+          if let Some(locker) = &mut self.locker {
+            if !locker.has_checksum(&specifier) {
+              locker.set_checksum(
+                &specifier,
+                LoaderChecksum::new(LoaderChecksum::gen(
+                  module_source_and_info.source().as_bytes(),
+                )),
+              );
+            }
+          }
         }
 
         let module_slot =

@@ -102,9 +102,8 @@ fn run_graph_test(test: &CollectedTest) {
   let mut output_text = serde_json::to_string_pretty(&result.graph).unwrap();
   output_text.push('\n');
   // include the checksums if non-empty
-  if !result.graph.checksums.is_empty() {
-    let sorted_checksums =
-      result.graph.checksums.iter().collect::<BTreeMap<_, _>>();
+  if let Some(locker) = &result.locker {
+    let sorted_checksums = locker.inner().iter().collect::<BTreeMap<_, _>>();
     output_text.push_str("\nchecksums:\n");
     output_text
       .push_str(&serde_json::to_string_pretty(&sorted_checksums).unwrap());

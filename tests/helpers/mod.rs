@@ -6,10 +6,12 @@ use std::collections::BTreeMap;
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheInfo;
 use deno_graph::source::CacheSetting;
+use deno_graph::source::HashMapLocker;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadOptions;
 use deno_graph::source::Loader;
 use deno_graph::source::LoaderChecksum;
+use deno_graph::source::Locker;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
 use deno_graph::BuildDiagnostic;
@@ -72,6 +74,7 @@ pub mod symbols {
 }
 
 pub struct BuildResult {
+  pub locker: Option<HashMapLocker>,
   pub graph: ModuleGraph,
   pub diagnostics: Vec<BuildDiagnostic>,
   pub analyzer: deno_graph::CapturingModuleAnalyzer,
@@ -156,6 +159,7 @@ impl FastCheckCache for TestFastCheckCache {
 }
 
 pub struct TestBuilder {
+  locker: Option<HashMapLocker>,
   graph: ModuleGraph,
   loader: TestLoader,
   entry_point: String,
@@ -170,6 +174,7 @@ pub struct TestBuilder {
 impl TestBuilder {
   pub fn new() -> Self {
     Self {
+      locker: Default::default(),
       graph: ModuleGraph::new(GraphKind::All),
       loader: Default::default(),
       entry_point: "file:///mod.ts".to_string(),
@@ -242,7 +247,8 @@ impl TestBuilder {
   pub fn add_checksum(&mut self, specifier: &str, checksum: &str) -> &mut Self {
     let specifier = ModuleSpecifier::parse(specifier).unwrap();
     let loader_checksum = LoaderChecksum::new(checksum.to_string());
-    self.graph.checksums.insert(specifier, loader_checksum);
+    let checksums = self.locker.get_or_insert_with(Default::default);
+    checksums.set_checksum(&specifier, loader_checksum);
     self
   }
 
@@ -262,7 +268,7 @@ impl TestBuilder {
           workspace_members: &self.workspace_members,
           module_analyzer: &capturing_analyzer,
           npm_resolver: Some(&TestNpmResolver),
-          verify_and_fill_checksums: self.verify_and_fill_checksums,
+          locker: self.locker.as_mut().map(|l| l as _),
           ..Default::default()
         },
       )
@@ -290,6 +296,7 @@ impl TestBuilder {
       );
     }
     BuildResult {
+      locker: self.locker.clone(),
       graph,
       diagnostics,
       analyzer: capturing_analyzer,
