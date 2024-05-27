@@ -130,8 +130,18 @@ impl PackageSpecifiers {
     self.package_reqs.is_empty()
   }
 
+  /// The total number of JSR packages found in the graph.
   pub fn packages_len(&self) -> usize {
     self.packages.len()
+  }
+
+  /// The total number of dependencies of jsr packages found in the graph.
+  pub fn package_deps_sum(&self) -> usize {
+    self
+      .packages
+      .iter()
+      .map(|p| p.1.found_dependencies.len())
+      .sum()
   }
 
   pub fn add_nv(&mut self, package_req: PackageReq, nv: PackageNv) {
