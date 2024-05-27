@@ -105,17 +105,9 @@ impl JsrPackageVersionInfo {
 
 #[derive(Debug, Clone)]
 struct PackageNvInfo {
-  manifest_checksum: String,
   /// Collection of exports used.
   exports: BTreeMap<String, String>,
   found_dependencies: HashSet<JsrDepPackageReq>,
-}
-
-#[derive(Debug, Clone)]
-pub struct PackageManifestIntegrityError {
-  pub nv: PackageNv,
-  pub actual: String,
-  pub expected: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
@@ -138,8 +130,18 @@ impl PackageSpecifiers {
     self.package_reqs.is_empty()
   }
 
+  /// The total number of JSR packages found in the graph.
   pub fn packages_len(&self) -> usize {
     self.packages.len()
+  }
+
+  /// The total number of dependencies of jsr packages found in the graph.
+  pub fn package_deps_sum(&self) -> usize {
+    self
+      .packages
+      .iter()
+      .map(|p| p.1.found_dependencies.len())
+      .sum()
   }
 
   pub fn add_nv(&mut self, package_req: PackageReq, nv: PackageNv) {
@@ -153,60 +155,21 @@ impl PackageSpecifiers {
     self.package_reqs.insert(package_req, nv.clone());
   }
 
-  pub(crate) fn ensure_package(
-    &mut self,
-    nv: PackageNv,
-    manifest_checksum: String,
-  ) {
+  pub(crate) fn ensure_package(&mut self, nv: PackageNv) {
     self.packages.entry(nv).or_insert_with(|| PackageNvInfo {
-      manifest_checksum,
       exports: Default::default(),
       found_dependencies: Default::default(),
     });
   }
 
-  pub(crate) fn get_manifest_checksum(&self, nv: &PackageNv) -> Option<&str> {
-    self.packages.get(nv).map(|p| p.manifest_checksum.as_str())
-  }
-
-  pub fn add_manifest_checksum(
-    &mut self,
-    nv: PackageNv,
-    checksum: String,
-  ) -> Result<(), Box<PackageManifestIntegrityError>> {
-    let package = self.packages.get(&nv);
-    if let Some(package) = package {
-      if package.manifest_checksum != checksum {
-        Err(Box::new(PackageManifestIntegrityError {
-          nv,
-          actual: checksum,
-          expected: package.manifest_checksum.clone(),
-        }))
-      } else {
-        Ok(())
-      }
-    } else {
-      self.packages.insert(
-        nv,
-        PackageNvInfo {
-          manifest_checksum: checksum,
-          exports: Default::default(),
-          found_dependencies: Default::default(),
-        },
-      );
-      Ok(())
-    }
-  }
-
   /// Gets the dependencies (package constraints) of JSR packages found in the graph.
-  pub fn packages_with_checksum_and_deps(
+  pub fn packages_with_deps(
     &self,
-  ) -> impl Iterator<
-    Item = (&PackageNv, &String, impl Iterator<Item = &JsrDepPackageReq>),
-  > {
+  ) -> impl Iterator<Item = (&PackageNv, impl Iterator<Item = &JsrDepPackageReq>)>
+  {
     self.packages.iter().map(|(nv, info)| {
       let deps = info.found_dependencies.iter();
-      (nv, &info.manifest_checksum, deps)
+      (nv, deps)
     })
   }
 

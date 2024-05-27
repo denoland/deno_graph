@@ -1,0 +1,70 @@
+~~ {
+  "pkgChecksums": {
+    "@scope/a@1.0.0": "invalid"
+  }
+} ~~
+# https://jsr.io/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.0": {}
+  }
+}
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{
+  "exports": {
+    ".": "./mod.ts"
+  }
+}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+console.log('HI');
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "jsr:@scope/a",
+      "error": "JSR package version manifest for '@scope/a@1.0.0' failed to load: Integrity check failed.\n\nActual: b4d7d4110ba34c5b8f5f5ef2a59b9b5e502211844bcca5e8abc3860101514531\nExpected: invalid"
+    }
+  ],
+  "redirects": {},
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+pkg manifest checksums:
+{
+  "@scope/a@1.0.0": "invalid"
+}

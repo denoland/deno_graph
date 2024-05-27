@@ -86,10 +86,16 @@ fn run_graph_test(test: &CollectedTest) {
   if let Some(options) = &spec.options {
     builder.workspace_fast_check(options.workspace_fast_check);
     builder.fast_check_cache(options.fast_check_cache);
-    if let Some(checksums) = options.checksums.as_ref() {
-      builder.verify_and_fill_checksums(true);
+    if let Some(checksums) = options.remote_checksums.as_ref() {
+      builder.ensure_locker();
       for (specifier, checksum) in checksums {
-        builder.add_checksum(specifier, checksum);
+        builder.add_remote_checksum(specifier, checksum);
+      }
+    }
+    if let Some(checksums) = options.pkg_checksums.as_ref() {
+      builder.ensure_locker();
+      for (pkg_nv, checksum) in checksums {
+        builder.add_pkg_manifest_checksum(pkg_nv, checksum);
       }
     }
   }
@@ -103,18 +109,32 @@ fn run_graph_test(test: &CollectedTest) {
   output_text.push('\n');
   // include the checksums if non-empty
   if let Some(locker) = &result.locker {
-    let sorted_checksums = locker.inner().iter().collect::<BTreeMap<_, _>>();
-    output_text.push_str("\nchecksums:\n");
-    output_text
-      .push_str(&serde_json::to_string_pretty(&sorted_checksums).unwrap());
-    output_text.push('\n');
+    {
+      let sorted_checksums = locker.remote().iter().collect::<BTreeMap<_, _>>();
+      if !sorted_checksums.is_empty() {
+        output_text.push_str("\nremote checksums:\n");
+        output_text
+          .push_str(&serde_json::to_string_pretty(&sorted_checksums).unwrap());
+        output_text.push('\n');
+      }
+    }
+    {
+      let sorted_checksums =
+        locker.pkg_manifests().iter().collect::<BTreeMap<_, _>>();
+      if !sorted_checksums.is_empty() {
+        output_text.push_str("\npkg manifest checksums:\n");
+        output_text
+          .push_str(&serde_json::to_string_pretty(&sorted_checksums).unwrap());
+        output_text.push('\n');
+      }
+    }
   }
   // include the list of jsr dependencies
   let jsr_deps = result
     .graph
     .packages
-    .packages_with_checksum_and_deps()
-    .map(|(k, _checksum, deps)| {
+    .packages_with_deps()
+    .map(|(k, deps)| {
       (k.to_string(), {
         let mut deps = deps.map(|d| d.to_string()).collect::<Vec<_>>();
         deps.sort();
@@ -301,7 +321,10 @@ fn run_symbol_test(test: &CollectedTest) {
 pub struct SpecOptions {
   #[serde(default)]
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub checksums: Option<HashMap<String, String>>,
+  pub remote_checksums: Option<HashMap<String, String>>,
+  #[serde(default)]
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub pkg_checksums: Option<HashMap<String, String>>,
   #[serde(default)]
   #[serde(skip_serializing_if = "is_false")]
   pub workspace_fast_check: bool,
@@ -328,7 +351,7 @@ impl Spec {
     let mut text = String::new();
     if let Some(options) = &self.options {
       text.push_str("~~ ");
-      if options.checksums.is_some() {
+      if options.remote_checksums.is_some() || options.pkg_checksums.is_some() {
         text.push_str(&serde_json::to_string_pretty(options).unwrap());
       } else {
         text.push_str(&serde_json::to_string(options).unwrap());
@@ -382,7 +405,7 @@ impl Spec {
         .find(|f| f.url() == meta_file)
         .unwrap_or_else(|| panic!("Could not find in specs: {}", meta_file));
       let mut meta_value = serde_json::from_str::<
-        HashMap<String, serde_json::Value>,
+        BTreeMap<String, serde_json::Value>,
       >(&meta_file.text)
       .unwrap();
       let manifest = meta_value
@@ -404,10 +427,10 @@ impl Spec {
 
   pub fn get_jsr_checksums(
     &self,
-  ) -> HashMap<PackageNv, HashMap<String, serde_json::Value>> {
-    let mut checksums_by_package: HashMap<
+  ) -> BTreeMap<PackageNv, BTreeMap<String, serde_json::Value>> {
+    let mut checksums_by_package: BTreeMap<
       PackageNv,
-      HashMap<String, serde_json::Value>,
+      BTreeMap<String, serde_json::Value>,
     > = Default::default();
     for file in &self.files {
       if let Some(nv) =

@@ -174,7 +174,7 @@ pub enum JsrLoadError {
   ContentLoadExternalSpecifier,
   #[error(transparent)]
   ContentLoad(Arc<anyhow::Error>),
-  #[error("JSR package manifest for '{}' failed to load: {:#}", .0, .1)]
+  #[error("JSR package manifest for '{}' failed to load. {:#}", .0, .1)]
   PackageManifestLoad(String, Arc<anyhow::Error>),
   #[error("JSR package not found: {}", .0)]
   PackageNotFound(String),
@@ -3057,7 +3057,7 @@ struct PendingModuleLoadItem {
 
 struct LoadedJsrPackageViaHttpsUrl {
   nv: PackageNv,
-  manifest_checksum: String,
+  manifest_checksum_for_locker: Option<LoaderChecksum>,
 }
 
 type PendingInfoFuture<'a> = LocalBoxFuture<'a, PendingInfo>;
@@ -3282,10 +3282,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           loaded_package_via_https_url,
         }) => {
           if let Some(pkg) = loaded_package_via_https_url {
-            self
-              .graph
-              .packages
-              .ensure_package(pkg.nv, pkg.manifest_checksum);
+            if let Some(locker) = &mut self.locker {
+              if let Some(checksum) = pkg.manifest_checksum_for_locker {
+                locker.set_pkg_manifest_checksum(&pkg.nv, checksum);
+              }
+            }
+            self.graph.packages.ensure_package(pkg.nv);
           }
 
           match result {
@@ -3459,10 +3461,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       match version_info_result {
         Ok(version_info_load_item) => {
           let version_info = version_info_load_item.info;
-          self
-            .graph
-            .packages
-            .ensure_package(nv.clone(), version_info_load_item.checksum);
+          self.graph.packages.ensure_package(nv.clone());
+          if let Some(locker) = &mut self.locker {
+            if let Some(checksum) = version_info_load_item.checksum_for_locker {
+              locker.set_pkg_manifest_checksum(nv, checksum);
+            }
+          }
           let base_url = self.jsr_url_provider.package_url(nv);
           let export_name =
             normalize_export_name(resolution_item.nv_ref.sub_path());
@@ -4277,7 +4281,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       maybe_checksum = self
         .locker
         .as_ref()
-        .and_then(|l| l.get_checksum(&requested_specifier));
+        .and_then(|l| l.get_remote_checksum(&requested_specifier));
     }
     let fut = async move {
       #[allow(clippy::too_many_arguments)]
@@ -4328,7 +4332,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           maybe_version_info.replace(info);
           loaded_package_via_https_url.replace(LoadedJsrPackageViaHttpsUrl {
             nv: package_nv,
-            manifest_checksum: inner.checksum,
+            manifest_checksum_for_locker: inner.checksum_for_locker,
           });
         }
 
@@ -4417,7 +4421,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             Ok(err) => Err(ModuleError::LoadingErr(
               load_specifier.clone(),
               maybe_range.cloned(),
-              ModuleLoadError::HttpsChecksumIntegrity(err),
+              if maybe_version_info.is_some() {
+                JsrLoadError::ContentChecksumIntegrity(err).into()
+              } else {
+                ModuleLoadError::HttpsChecksumIntegrity(err)
+              },
             )),
             Err(err) => Err(ModuleError::LoadingErr(
               load_specifier.clone(),
@@ -4474,7 +4482,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     self.state.jsr.metadata.queue_load_package_version_info(
       package_nv,
       self.fill_pass_mode.to_cache_setting(),
-      self.graph.packages.get_manifest_checksum(package_nv),
+      self.locker.as_deref(),
       JsrMetadataStoreServices {
         executor: self.executor,
         jsr_url_provider: self.jsr_url_provider,
@@ -4551,8 +4559,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           && matches!(specifier.scheme(), "https" | "http")
         {
           if let Some(locker) = &mut self.locker {
-            if !locker.has_checksum(&specifier) {
-              locker.set_checksum(
+            if !locker.has_remote_checksum(&specifier) {
+              locker.set_remote_checksum(
                 &specifier,
                 LoaderChecksum::new(LoaderChecksum::gen(
                   module_source_and_info.source().as_bytes(),
