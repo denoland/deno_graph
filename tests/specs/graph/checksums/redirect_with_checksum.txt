@@ -1,5 +1,5 @@
 ~~ {
-  "checksums": {
+  "remoteChecksums": {
     "https://localhost/mod.ts": "57fe7492e0def06ef2f6863f5cab3a5d6ec41ac68f2de7c0e27928cc6fef0ccb"
   }
 } ~~
@@ -50,7 +50,7 @@ import 'https://localhost/mod.ts'
   "redirects": {}
 }
 
-checksums:
+remote checksums:
 {
   "https://localhost/mod.ts": "57fe7492e0def06ef2f6863f5cab3a5d6ec41ac68f2de7c0e27928cc6fef0ccb"
 }

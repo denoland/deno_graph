@@ -1,5 +1,5 @@
 ~~ {
-  "checksums": {
+  "remoteChecksums": {
     "https://localhost/redirected.ts": "invalid"
   }
 } ~~
@@ -52,7 +52,7 @@ import 'https://localhost/mod.ts'
   }
 }
 
-checksums:
+remote checksums:
 {
   "https://localhost/redirected.ts": "invalid"
 }

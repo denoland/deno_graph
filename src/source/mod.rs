@@ -175,43 +175,77 @@ impl fmt::Display for LoaderChecksum {
 }
 
 pub trait Locker {
-  fn get_checksum(&self, specifier: &ModuleSpecifier)
-    -> Option<LoaderChecksum>;
-  fn has_checksum(&self, specifier: &ModuleSpecifier) -> bool;
-  fn set_checksum(
+  fn get_remote_checksum(
+    &self,
+    specifier: &ModuleSpecifier,
+  ) -> Option<LoaderChecksum>;
+  fn has_remote_checksum(&self, specifier: &ModuleSpecifier) -> bool;
+  fn set_remote_checksum(
     &mut self,
     specifier: &ModuleSpecifier,
+    checksum: LoaderChecksum,
+  );
+
+  fn get_pkg_manifest_checksum(
+    &self,
+    package_nv: &PackageNv,
+  ) -> Option<LoaderChecksum>;
+  fn set_pkg_manifest_checksum(
+    &mut self,
+    package_nv: &PackageNv,
     checksum: LoaderChecksum,
   );
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct HashMapLocker(HashMap<ModuleSpecifier, LoaderChecksum>);
+pub struct HashMapLocker {
+  remote: HashMap<ModuleSpecifier, LoaderChecksum>,
+  pkg_manifests: HashMap<PackageNv, LoaderChecksum>,
+}
 
 impl HashMapLocker {
-  pub fn inner(&self) -> &HashMap<ModuleSpecifier, LoaderChecksum> {
-    &self.0
+  pub fn remote(&self) -> &HashMap<ModuleSpecifier, LoaderChecksum> {
+    &self.remote
+  }
+
+  pub fn pkg_manifests(&self) -> &HashMap<PackageNv, LoaderChecksum> {
+    &self.pkg_manifests
   }
 }
 
 impl Locker for HashMapLocker {
-  fn get_checksum(
+  fn get_remote_checksum(
     &self,
     specifier: &ModuleSpecifier,
   ) -> Option<LoaderChecksum> {
-    self.0.get(specifier).cloned()
+    self.remote.get(specifier).cloned()
   }
 
-  fn has_checksum(&self, specifier: &ModuleSpecifier) -> bool {
-    self.0.contains_key(specifier)
+  fn has_remote_checksum(&self, specifier: &ModuleSpecifier) -> bool {
+    self.remote.contains_key(specifier)
   }
 
-  fn set_checksum(
+  fn set_remote_checksum(
     &mut self,
     specifier: &ModuleSpecifier,
     checksum: LoaderChecksum,
   ) {
-    self.0.insert(specifier.clone(), checksum);
+    self.remote.insert(specifier.clone(), checksum);
+  }
+
+  fn get_pkg_manifest_checksum(
+    &self,
+    package_nv: &PackageNv,
+  ) -> Option<LoaderChecksum> {
+    self.pkg_manifests.get(package_nv).cloned()
+  }
+
+  fn set_pkg_manifest_checksum(
+    &mut self,
+    package_nv: &PackageNv,
+    checksum: LoaderChecksum,
+  ) {
+    self.pkg_manifests.insert(package_nv.clone(), checksum);
   }
 }
 

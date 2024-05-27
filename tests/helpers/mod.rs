@@ -168,7 +168,6 @@ pub struct TestBuilder {
   workspace_members: Vec<WorkspaceMember>,
   workspace_fast_check: bool,
   lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
-  verify_and_fill_checksums: bool,
 }
 
 impl TestBuilder {
@@ -183,7 +182,6 @@ impl TestBuilder {
       workspace_members: Default::default(),
       workspace_fast_check: false,
       lockfile_jsr_packages: Default::default(),
-      verify_and_fill_checksums: false,
     }
   }
 
@@ -238,17 +236,34 @@ impl TestBuilder {
   }
 
   #[allow(unused)]
-  pub fn verify_and_fill_checksums(&mut self, value: bool) -> &mut Self {
-    self.verify_and_fill_checksums = value;
+  pub fn ensure_locker(&mut self) -> &mut Self {
+    self.locker.get_or_insert_with(Default::default);
     self
   }
 
   #[allow(unused)]
-  pub fn add_checksum(&mut self, specifier: &str, checksum: &str) -> &mut Self {
+  pub fn add_remote_checksum(
+    &mut self,
+    specifier: &str,
+    checksum: &str,
+  ) -> &mut Self {
     let specifier = ModuleSpecifier::parse(specifier).unwrap();
     let loader_checksum = LoaderChecksum::new(checksum.to_string());
     let checksums = self.locker.get_or_insert_with(Default::default);
-    checksums.set_checksum(&specifier, loader_checksum);
+    checksums.set_remote_checksum(&specifier, loader_checksum);
+    self
+  }
+
+  #[allow(unused)]
+  pub fn add_pkg_manifest_checksum(
+    &mut self,
+    pkg_nv: &str,
+    checksum: &str,
+  ) -> &mut Self {
+    let pkg_nv = PackageNv::from_str(pkg_nv).unwrap();
+    let loader_checksum = LoaderChecksum::new(checksum.to_string());
+    let checksums = self.locker.get_or_insert_with(Default::default);
+    checksums.set_pkg_manifest_checksum(&pkg_nv, loader_checksum);
     self
   }
 

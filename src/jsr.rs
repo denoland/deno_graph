@@ -20,11 +20,12 @@ use crate::source::LoadOptions;
 use crate::source::LoadResponse;
 use crate::source::Loader;
 use crate::source::LoaderChecksum;
+use crate::source::Locker;
 use crate::Executor;
 
 #[derive(Clone)]
 pub struct PendingJsrPackageVersionInfoLoadItem {
-  pub checksum: String,
+  pub checksum_for_locker: Option<LoaderChecksum>,
   pub info: Arc<JsrPackageVersionInfo>,
 }
 
@@ -103,7 +104,7 @@ impl JsrMetadataStore {
     &mut self,
     package_nv: &PackageNv,
     cache_setting: CacheSetting,
-    maybe_expected_checksum: Option<&str>,
+    maybe_locker: Option<&dyn Locker>,
     services: JsrMetadataStoreServices,
   ) {
     if self
@@ -121,24 +122,27 @@ impl JsrMetadataStore {
         package_nv.name, package_nv.version
       ))
       .unwrap();
-    let maybe_expected_checksum =
-      maybe_expected_checksum.map(|c| LoaderChecksum::new(c.to_string()));
+    let maybe_expected_checksum = maybe_locker
+      .as_ref()
+      .and_then(|locker| locker.get_pkg_manifest_checksum(package_nv));
+    let should_compute_checksum =
+      maybe_expected_checksum.is_none() && maybe_locker.is_some();
     let fut = self.load_data(
       specifier,
       services,
       cache_setting,
-      // we won't have a checksum when loading this the
-      // first time or when not using a lockfile
-      maybe_expected_checksum.clone(),
-      |content| {
-        // if we have the expected checksum, then we can re-use that here
-        let checksum = maybe_expected_checksum
-          .map(|c| c.into_string())
-          .unwrap_or_else(|| LoaderChecksum::gen(content));
+      // we won't have a checksum when not using a lockfile
+      maybe_expected_checksum,
+      move |content| {
+        let checksum_for_locker = if should_compute_checksum {
+          Some(LoaderChecksum::new(LoaderChecksum::gen(content)))
+        } else {
+          None
+        };
         let version_info: JsrPackageVersionInfo =
           serde_json::from_slice(content)?;
         Ok(PendingJsrPackageVersionInfoLoadItem {
-          checksum,
+          checksum_for_locker,
           info: Arc::new(version_info),
         })
       },
