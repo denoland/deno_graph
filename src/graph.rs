@@ -180,8 +180,10 @@ pub enum JsrLoadError {
   PackageNotFound(String),
   #[error("JSR package version not found: {}", .0)]
   PackageVersionNotFound(PackageNv),
-  #[error("JSR package manifest for '{}' failed to load: {:#}", .0, .1)]
+  #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
   PackageVersionManifestLoad(PackageNv, Arc<anyhow::Error>),
+  #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
+  PackageVersionManifestChecksumIntegrity(PackageNv, ChecksumIntegrityError),
   #[error(transparent)]
   PackageFormat(JsrPackageFormatError),
   #[error("Could not find version of '{}' that matches specified version constraint '{}'", .0.name, .0.version_req)]

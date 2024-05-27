@@ -244,6 +244,10 @@ pub trait Loader {
 
   /// A method that given a specifier that asynchronously returns the
   /// source of the file.
+  ///
+  /// To ensure errors surfaced in the graph are more specific for checksum
+  /// integrity errors, ensure this returns a `ChecksumIntegrityError` when
+  /// the checksum on `LoadOptions` does not match the loaded source.
   fn load(
     &self,
     specifier: &ModuleSpecifier,

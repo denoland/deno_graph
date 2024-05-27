@@ -14,6 +14,7 @@ use crate::packages::JsrPackageVersionInfo;
 use crate::rt::spawn;
 use crate::rt::JoinHandle;
 use crate::source::CacheSetting;
+use crate::source::ChecksumIntegrityError;
 use crate::source::JsrUrlProvider;
 use crate::source::LoadOptions;
 use crate::source::LoadResponse;
@@ -86,7 +87,7 @@ impl JsrMetadataStore {
       },
       {
         let package_name = package_name.to_string();
-        |e| JsrLoadError::PackageManifestLoad(package_name, e)
+        |e| JsrLoadError::PackageManifestLoad(package_name, Arc::new(e))
       },
       {
         let package_name = package_name.to_string();
@@ -143,7 +144,21 @@ impl JsrMetadataStore {
       },
       {
         let package_nv = package_nv.clone();
-        |e| JsrLoadError::PackageVersionManifestLoad(package_nv, e)
+        |e| {
+          match e.downcast::<ChecksumIntegrityError>() {
+            Ok(err) => {
+              // use a more specific variant in order to allow the
+              // cli to enhance this error message
+              JsrLoadError::PackageVersionManifestChecksumIntegrity(
+                package_nv, err,
+              )
+            }
+            Err(err) => JsrLoadError::PackageVersionManifestLoad(
+              package_nv,
+              Arc::new(err),
+            ),
+          }
+        }
       },
       {
         let package_nv = package_nv.clone();
@@ -163,8 +178,7 @@ impl JsrMetadataStore {
     cache_setting: CacheSetting,
     maybe_expected_checksum: Option<LoaderChecksum>,
     handle_content: impl FnOnce(&[u8]) -> Result<T, serde_json::Error> + 'static,
-    create_failed_load_err: impl FnOnce(Arc<anyhow::Error>) -> JsrLoadError
-      + 'static,
+    create_failed_load_err: impl FnOnce(anyhow::Error) -> JsrLoadError + 'static,
     create_not_found_error: impl FnOnce() -> JsrLoadError + 'static,
   ) -> PendingResult<T> {
     let fut = services.loader.load(
@@ -180,12 +194,12 @@ impl JsrMetadataStore {
       async move {
         let data = match fut.await {
           Ok(data) => data,
-          Err(err) => return Err(create_failed_load_err(Arc::new(err))),
+          Err(err) => return Err(create_failed_load_err(err)),
         };
         match data {
           Some(LoadResponse::Module { content, .. }) => {
             handle_content(&content)
-              .map_err(|e| create_failed_load_err(Arc::new(e.into())))
+              .map_err(|e| create_failed_load_err(e.into()))
           }
           Some(LoadResponse::Redirect { specifier }) => {
             Err(JsrLoadError::RedirectInPackage(specifier))
