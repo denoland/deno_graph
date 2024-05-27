@@ -4421,7 +4421,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             Ok(err) => Err(ModuleError::LoadingErr(
               load_specifier.clone(),
               maybe_range.cloned(),
-              ModuleLoadError::HttpsChecksumIntegrity(err),
+              if maybe_version_info.is_some() {
+                JsrLoadError::ContentChecksumIntegrity(err).into()
+              } else {
+                ModuleLoadError::HttpsChecksumIntegrity(err)
+              },
             )),
             Err(err) => Err(ModuleError::LoadingErr(
               load_specifier.clone(),
