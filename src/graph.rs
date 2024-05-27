@@ -4415,6 +4415,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             maybe_range.cloned(),
           )),
           Err(err) => match err.downcast::<ChecksumIntegrityError>() {
+            // try to return the context of a checksum integrity error
+            // so that it can be more easily enhanced
             Ok(err) => Err(ModuleError::LoadingErr(
               load_specifier.clone(),
               maybe_range.cloned(),
