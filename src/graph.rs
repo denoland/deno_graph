@@ -2951,6 +2951,12 @@ enum PendingInfoResponse {
     module_source_and_info: ModuleSourceAndInfo,
     pending_load: Option<Box<(LoaderChecksum, ModuleInfo)>>,
   },
+  Redirect {
+    count: usize,
+    specifier: ModuleSpecifier,
+    maybe_attribute_type: Option<AttributeTypeWithRange>,
+    is_dynamic: bool,
+  },
 }
 
 impl PendingInfoResponse {
@@ -2961,6 +2967,7 @@ impl PendingInfoResponse {
         module_source_and_info,
         ..
       } => module_source_and_info.specifier(),
+      Self::Redirect { specifier, .. } => specifier,
     }
   }
 }
@@ -3001,10 +3008,20 @@ impl JsrPackageVersionInfoExt {
 struct PendingInfo {
   requested_specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
-  redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
   result: Result<PendingInfoResponse, ModuleError>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
   loaded_package_via_https_url: Option<LoadedJsrPackageViaHttpsUrl>,
+}
+
+struct PendingModuleLoadItem {
+  redirect_count: usize,
+  requested_specifier: Url,
+  maybe_attribute_type: Option<AttributeTypeWithRange>,
+  maybe_range: Option<Range>,
+  load_specifier: Url,
+  is_dynamic: bool,
+  maybe_checksum: Option<LoaderChecksum>,
+  maybe_version_info: Option<JsrPackageVersionInfoExt>,
 }
 
 struct LoadedJsrPackageViaHttpsUrl {
@@ -3239,7 +3256,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           requested_specifier,
           maybe_range,
           result,
-          redirects,
           maybe_version_info,
           loaded_package_via_https_url,
         }) => {
@@ -3250,24 +3266,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               .ensure_package(pkg.nv, pkg.manifest_checksum);
           }
 
-          for (from, to) in redirects {
-            self.add_redirect(from, to);
-          }
-
           match result {
             Ok(response) => {
               self.check_specifier(&requested_specifier, response.specifier());
-
-              // this should have been handled by now
-              debug_assert_eq!(
-                maybe_version_info.is_none(),
-                self
-                  .jsr_url_provider
-                  .package_url_to_nv(response.specifier())
-                  .is_none(),
-                "{}",
-                response.specifier()
-              );
 
               self.visit(
                 response,
@@ -3792,6 +3793,25 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
+    self.load_with_redirect_count(
+      0,
+      specifier,
+      maybe_range,
+      is_dynamic,
+      maybe_attribute_type,
+      maybe_version_info,
+    )
+  }
+
+  fn load_with_redirect_count(
+    &mut self,
+    redirect_count: usize,
+    specifier: &ModuleSpecifier,
+    maybe_range: Option<&Range>,
+    is_dynamic: bool,
+    maybe_attribute_type: Option<AttributeTypeWithRange>,
+    maybe_version_info: Option<&JsrPackageVersionInfoExt>,
+  ) {
     struct ProvidedModuleAnalyzer(RefCell<Option<ModuleInfo>>);
 
     #[async_trait::async_trait(?Send)]
@@ -3914,7 +3934,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 requested_specifier,
                 maybe_range,
                 result,
-                redirects: BTreeMap::new(),
                 maybe_version_info: Some(version_info),
                 loaded_package_via_https_url: None,
               }
@@ -3927,15 +3946,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .insert(specifier.clone(), ModuleSlot::Pending);
           return;
         } else {
-          self.load_pending_module(
-            specifier.clone(),
+          self.load_pending_module(PendingModuleLoadItem {
+            redirect_count,
+            requested_specifier: specifier.clone(),
             maybe_attribute_type,
-            maybe_range.map(ToOwned::to_owned),
-            specifier.clone(),
+            maybe_range: maybe_range.map(ToOwned::to_owned),
+            load_specifier: specifier.clone(),
             is_dynamic,
-            Some(checksum),
-            Some(version_info.clone()),
-          );
+            maybe_checksum: Some(checksum),
+            maybe_version_info: Some(version_info.clone()),
+          });
           return;
         }
       }
@@ -3985,15 +4005,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
 
-    self.load_pending_module(
-      specifier.clone(),
+    self.load_pending_module(PendingModuleLoadItem {
+      redirect_count,
+      requested_specifier: specifier.clone(),
       maybe_attribute_type,
       maybe_range,
-      specifier.clone(),
+      load_specifier: specifier.clone(),
       is_dynamic,
-      None,
-      None,
-    );
+      maybe_checksum: None,
+      maybe_version_info: None,
+    });
   }
 
   fn load_jsr_specifier(
@@ -4030,15 +4051,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               );
               match result {
                 Ok(load_specifier) => {
-                  self.load_pending_module(
-                    specifier.clone(),
-                    maybe_attribute_type.clone(),
-                    maybe_range.clone(),
+                  self.load_pending_module(PendingModuleLoadItem {
+                    redirect_count: 0,
+                    requested_specifier: specifier.clone(),
+                    maybe_attribute_type: maybe_attribute_type.clone(),
+                    maybe_range: maybe_range.clone(),
                     load_specifier,
                     is_dynamic,
-                    None,
-                    None,
-                  );
+                    maybe_checksum: None,
+                    maybe_version_info: None,
+                  });
                 }
                 Err(err) => {
                   self
@@ -4191,16 +4213,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   }
 
   #[allow(clippy::too_many_arguments)]
-  fn load_pending_module(
-    &mut self,
-    requested_specifier: Url,
-    maybe_attribute_type: Option<AttributeTypeWithRange>,
-    maybe_range: Option<Range>,
-    load_specifier: Url,
-    is_dynamic: bool,
-    maybe_checksum: Option<LoaderChecksum>,
-    mut maybe_version_info: Option<JsrPackageVersionInfoExt>,
-  ) {
+  fn load_pending_module(&mut self, item: PendingModuleLoadItem) {
+    let PendingModuleLoadItem {
+      redirect_count,
+      requested_specifier,
+      maybe_attribute_type,
+      maybe_range,
+      load_specifier,
+      is_dynamic,
+      maybe_checksum,
+      mut maybe_version_info,
+    } = item;
     self
       .graph
       .module_slots
@@ -4229,32 +4252,49 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       });
     let fut = async move {
       #[allow(clippy::too_many_arguments)]
-      async fn try_load_with_redirects(
+      async fn try_load(
         is_root: bool,
+        redirect_count: usize,
         load_specifier: ModuleSpecifier,
         mut maybe_checksum: Option<LoaderChecksum>,
         maybe_range: Option<&Range>,
         maybe_version_info: &mut Option<JsrPackageVersionInfoExt>,
-        maybe_attribute_type: Option<&AttributeTypeWithRange>,
-        maybe_referrer: Option<&Range>,
+        maybe_attribute_type: Option<AttributeTypeWithRange>,
         loaded_package_via_https_url: &mut Option<LoadedJsrPackageViaHttpsUrl>,
-        redirects: &mut BTreeMap<ModuleSpecifier, ModuleSpecifier>,
-        maybe_version_load_fut: Option<(PackageNv, PendingResult<PendingJsrPackageVersionInfoLoadItem>)>,
+        maybe_version_load_fut: Option<(
+          PackageNv,
+          PendingResult<PendingJsrPackageVersionInfoLoadItem>,
+        )>,
         is_dynamic: bool,
         loader: &dyn Loader,
         jsr_url_provider: &dyn JsrUrlProvider,
         module_analyzer: &dyn ModuleAnalyzer,
       ) -> Result<PendingInfoResponse, ModuleError> {
         if let Some((package_nv, fut)) = maybe_version_load_fut {
-          let inner = fut.await.map_err(|err| ModuleError::LoadingErr(jsr_url_provider.package_url(&package_nv), maybe_range.cloned(), err))?;
+          let inner = fut.await.map_err(|err| {
+            ModuleError::LoadingErr(
+              jsr_url_provider.package_url(&package_nv),
+              maybe_range.cloned(),
+              err,
+            )
+          })?;
           let info = JsrPackageVersionInfoExt {
             base_url: jsr_url_provider.package_url(&package_nv),
             inner: inner.info,
           };
           if let Some(sub_path) = info.get_subpath(&load_specifier) {
-            maybe_checksum = Some(LoaderChecksum::new(info.get_checksum(sub_path).map_err(|err| {
-              ModuleError::LoadingErr(load_specifier.clone(), maybe_range.cloned(), Arc::new(err))
-            })?.to_string()));
+            maybe_checksum = Some(LoaderChecksum::new(
+              info
+                .get_checksum(sub_path)
+                .map_err(|err| {
+                  ModuleError::LoadingErr(
+                    load_specifier.clone(),
+                    maybe_range.cloned(),
+                    Arc::new(err),
+                  )
+                })?
+                .to_string(),
+            ));
           }
           maybe_version_info.replace(info);
           loaded_package_via_https_url.replace(LoadedJsrPackageViaHttpsUrl {
@@ -4262,116 +4302,107 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             manifest_checksum: inner.checksum,
           });
         }
-        let mut load_specifier = load_specifier;
-        for _ in 0..=loader.max_redirects() {
-          let result = loader.load(
-            &load_specifier,
-            LoadOptions {
-              is_dynamic,
-              cache_setting: CacheSetting::Use,
-              maybe_checksum: maybe_checksum.clone(),
-            },
-          );
-          match result.await {
-            Ok(Some(response)) => match response {
-              LoadResponse::Redirect { specifier } => {
-                if jsr_url_provider.package_url_to_nv(&specifier).is_some() {
-                  // Redirecting to a JSR package HTTPS URL is not supported. If this was implemented
-                  // we'd need to:
-                  // 1. Get the current state's checksum for this package nv.
-                  // 2. Get the version manifest using the current state's checksum.
-                  // 3. Get the URL from the loader, using the checksum from the version's manifest.
-                  // It's important to request from the loader with the checksum so that the loader
-                  // in the CLI doesn't populate the "vendor" folder with data that hasn't been
-                  // verified, because once it ends up in the vendor folder then it's checksum is
-                  // never compared against again in order to allow local modifications.
-                  return Err(ModuleError::LoadingErr(
-                    load_specifier.clone(),
-                    maybe_range.cloned(),
-                    Arc::new(anyhow!(
-                    "Redirecting to a JSR package HTTPS URL is not supported (redirected to '{}')",
-                    specifier
-                  ))));
-                } else {
-                  redirects.insert(load_specifier, specifier.clone());
-                  load_specifier = specifier;
-                }
+
+        let result = loader.load(
+          &load_specifier,
+          LoadOptions {
+            is_dynamic,
+            cache_setting: CacheSetting::Use,
+            maybe_checksum: maybe_checksum.clone(),
+          },
+        );
+        match result.await {
+          Ok(Some(response)) => match response {
+            LoadResponse::Redirect { specifier } => {
+              if maybe_version_info.is_some() {
+                // This should never happen on the JSR registry. If we ever
+                // supported this we'd need a way for the registry to express
+                // redirects in the manifest since we don't store checksums
+                // or redirect information within the package.
+                Err(ModuleError::LoadingErr(
+                  load_specifier.clone(),
+                  maybe_range.cloned(),
+                  Arc::new(anyhow!(
+                    "Redirects within a JSR package are not supported.",
+                  )),
+                ))
+              } else if redirect_count >= loader.max_redirects() {
+                Err(ModuleError::LoadingErr(
+                  load_specifier.clone(),
+                  maybe_range.cloned(),
+                  Arc::new(anyhow!("Too many redirects.")),
+                ))
+              } else {
+                Ok(PendingInfoResponse::Redirect {
+                  count: redirect_count + 1,
+                  specifier,
+                  maybe_attribute_type,
+                  is_dynamic,
+                })
               }
-              LoadResponse::External { specifier } => {
-                if specifier != load_specifier {
-                  redirects.insert(load_specifier, specifier.clone());
-                }
-                return Ok(PendingInfoResponse::External { specifier })
-              }
-              LoadResponse::Module {
-                content,
-                specifier,
+            }
+            LoadResponse::External { specifier } => {
+              Ok(PendingInfoResponse::External { specifier })
+            }
+            LoadResponse::Module {
+              content,
+              specifier,
+              maybe_headers,
+            } => parse_module_source_and_info(
+              module_analyzer,
+              ParseModuleAndSourceInfoOptions {
+                specifier: specifier.clone(),
                 maybe_headers,
-              } => {
-                if specifier != load_specifier {
-                  redirects.insert(load_specifier, specifier.clone());
-                }
-
-                return parse_module_source_and_info(
-                  module_analyzer,
-                  ParseModuleAndSourceInfoOptions {
-                    specifier: specifier.clone(),
-                    maybe_headers,
-                    content,
-                    maybe_attribute_type,
-                    maybe_referrer,
-                    is_root,
-                    is_dynamic_branch: is_dynamic,
-                  }
-                ).await.map(|module_source_and_info| {
-                  PendingInfoResponse::Module {
-                    specifier: specifier.clone(),
-                    module_source_and_info,
-                    pending_load: None,
-                  }
-                });
+                content,
+                maybe_attribute_type: maybe_attribute_type.as_ref(),
+                maybe_referrer: maybe_range,
+                is_root,
+                is_dynamic_branch: is_dynamic,
               },
-            },
-            Ok(None) => return Err(ModuleError::Missing(load_specifier.clone(), maybe_range.cloned())),
-            Err(err) => return Err(ModuleError::LoadingErr(
-              load_specifier.clone(),
-              maybe_range.cloned(),
-              Arc::new(err)
-            )),
-          }
+            )
+            .await
+            .map(|module_source_and_info| {
+              PendingInfoResponse::Module {
+                specifier: specifier.clone(),
+                module_source_and_info,
+                pending_load: None,
+              }
+            }),
+          },
+          Ok(None) => Err(ModuleError::Missing(
+            load_specifier.clone(),
+            maybe_range.cloned(),
+          )),
+          Err(err) => Err(ModuleError::LoadingErr(
+            load_specifier.clone(),
+            maybe_range.cloned(),
+            Arc::new(err),
+          )),
         }
-
-        Err(ModuleError::LoadingErr(
-          load_specifier.clone(),
-          maybe_range.cloned(),
-          Arc::new(anyhow!("Too many redirects."))
-        ))
       }
 
-      let mut redirects = BTreeMap::new();
       let mut loaded_package_via_https_url = None;
-      let result = try_load_with_redirects(
+      let result = try_load(
         is_root,
+        redirect_count,
         load_specifier,
         maybe_checksum,
         maybe_range.as_ref(),
         &mut maybe_version_info,
-        maybe_attribute_type.as_ref(),
-        maybe_range.as_ref(),
+        maybe_attribute_type,
         &mut loaded_package_via_https_url,
-        &mut redirects,
         maybe_version_load_fut,
         is_dynamic,
         loader,
         jsr_url_provider,
         module_analyzer,
-      ).await;
+      )
+      .await;
 
       PendingInfo {
         result,
         requested_specifier,
         maybe_range,
-        redirects,
         maybe_version_info,
         loaded_package_via_https_url,
       }
@@ -4420,19 +4451,30 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_referrer: Option<Range>,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
-    let (specifier, module_slot) = match response {
+    match response {
       PendingInfoResponse::External { specifier } => {
         let module_slot =
           ModuleSlot::Module(Module::External(ExternalModule {
             specifier: specifier.clone(),
           }));
-        (specifier, module_slot)
+        self.graph.module_slots.insert(specifier, module_slot);
       }
       PendingInfoResponse::Module {
         specifier,
         pending_load,
         module_source_and_info,
       } => {
+        // this should have been handled by now
+        debug_assert_eq!(
+          maybe_version_info.is_none(),
+          self
+            .jsr_url_provider
+            .package_url_to_nv(&specifier)
+            .is_none(),
+          "{}",
+          specifier
+        );
+
         if let Some((checksum, module_info)) = pending_load.map(|v| *v) {
           self.state.jsr.pending_content_loads.push({
             let specifier = specifier.clone();
@@ -4460,10 +4502,24 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
         let module_slot =
           self.visit_module(module_source_and_info, maybe_version_info);
-        (specifier, module_slot)
+        self.graph.module_slots.insert(specifier, module_slot);
       }
-    };
-    self.graph.module_slots.insert(specifier, module_slot);
+      PendingInfoResponse::Redirect {
+        count,
+        specifier,
+        is_dynamic,
+        maybe_attribute_type,
+      } => {
+        self.load_with_redirect_count(
+          count,
+          &specifier,
+          maybe_referrer.as_ref(),
+          is_dynamic,
+          maybe_attribute_type,
+          None,
+        );
+      }
+    }
   }
 
   /// Visit a module, parsing it and resolving any dependencies.

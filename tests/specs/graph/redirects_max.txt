@@ -68,14 +68,13 @@ console.log('hi');
       "specifier": "file:///mod.ts"
     },
     {
-      "specifier": "https://localhost/value.ts",
+      "specifier": "https://localhost/redirect10.ts",
       "error": "Too many redirects."
     }
   ],
   "redirects": {
     "https://localhost/redirect.ts": "https://localhost/redirect1.ts",
     "https://localhost/redirect1.ts": "https://localhost/redirect2.ts",
-    "https://localhost/redirect10.ts": "https://localhost/value.ts",
     "https://localhost/redirect2.ts": "https://localhost/redirect3.ts",
     "https://localhost/redirect3.ts": "https://localhost/redirect4.ts",
     "https://localhost/redirect4.ts": "https://localhost/redirect5.ts",
