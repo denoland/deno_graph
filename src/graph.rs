@@ -1684,7 +1684,7 @@ impl ModuleGraph {
 
     let mut new_graph = ModuleGraph::new(self.graph_kind);
     let entries = self.walk(
-      roots.iter().map(|r| *r),
+      roots.iter().copied(),
       WalkOptions {
         follow_dynamic: true,
         follow_type_only: true,
