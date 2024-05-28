@@ -195,6 +195,7 @@ mod tests {
   use source::Source;
   use std::cell::RefCell;
   use std::collections::BTreeMap;
+  use std::collections::BTreeSet;
 
   type Sources<'a> = Vec<(&'a str, Source<&'a str>)>;
 
@@ -235,7 +236,7 @@ mod tests {
       .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 2);
-    assert_eq!(graph.roots, vec![root_specifier.clone()]);
+    assert_eq!(graph.roots, BTreeSet::from([root_specifier.clone()]));
     assert!(graph.contains(&root_specifier));
     assert!(
       !graph.contains(&ModuleSpecifier::parse("file:///a/test03.ts").unwrap())
@@ -303,13 +304,13 @@ mod tests {
       ],
       vec![],
     );
-    let roots = vec![
+    let roots = BTreeSet::from([
       ModuleSpecifier::parse("file:///a/test01.ts").unwrap(),
       ModuleSpecifier::parse("https://example.com/a.ts").unwrap(),
-    ];
+    ]);
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(roots.clone(), &loader, Default::default())
+      .build(roots.iter().cloned().collect(), &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 4);
     assert_eq!(graph.roots, roots);
@@ -382,13 +383,13 @@ mod tests {
       .build(vec![first_root.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 4);
-    assert_eq!(graph.roots, vec![first_root.clone()]);
+    assert_eq!(graph.roots, BTreeSet::from([first_root.clone()]));
 
     // now build with the second root
     graph
       .build(vec![second_root.clone()], &loader, Default::default())
       .await;
-    let mut roots = vec![first_root, second_root];
+    let mut roots = BTreeSet::from([first_root, second_root]);
     assert_eq!(graph.module_slots.len(), 5);
     assert_eq!(graph.roots, roots);
     assert!(
@@ -408,7 +409,7 @@ mod tests {
     graph
       .build(vec![third_root.clone()], &loader, Default::default())
       .await;
-    roots.push(third_root);
+    roots.insert(third_root);
     assert_eq!(graph.module_slots.len(), 5);
     assert_eq!(graph.roots, roots);
   }
@@ -1010,7 +1011,7 @@ console.log(a);
       .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 1);
-    assert_eq!(graph.roots, vec![root_specifier.clone()]);
+    assert_eq!(graph.roots, BTreeSet::from([root_specifier.clone()]));
     let module = graph
       .module_slots
       .get(&root_specifier)
@@ -1743,7 +1744,9 @@ export function a(a) {
       .await;
     assert_eq!(
       graph.roots,
-      vec![ModuleSpecifier::parse("https://example.com/a").unwrap(),]
+      BTreeSet::from(
+        [ModuleSpecifier::parse("https://example.com/a").unwrap()]
+      ),
     );
     assert_eq!(graph.module_slots.len(), 2);
     assert!(
@@ -1806,7 +1809,9 @@ export function a(a) {
       .await;
     assert_eq!(
       graph.roots,
-      vec![ModuleSpecifier::parse("https://example.com/a").unwrap(),]
+      BTreeSet::from(
+        [ModuleSpecifier::parse("https://example.com/a").unwrap()]
+      ),
     );
     assert_eq!(graph.module_slots.len(), 2);
     assert!(
@@ -2045,7 +2050,7 @@ export const foo = 'bar';"#,
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
-        vec![root_specifier],
+        vec![root_specifier.clone()],
         &loader,
         BuildOptions {
           resolver: maybe_resolver,
@@ -2053,7 +2058,7 @@ export const foo = 'bar';"#,
         },
       )
       .await;
-    let module = graph.get(&graph.roots[0]).unwrap().js().unwrap();
+    let module = graph.get(&root_specifier).unwrap().js().unwrap();
     let maybe_dep = module.dependencies.get("b");
     assert!(maybe_dep.is_some());
     let dep = maybe_dep.unwrap();
@@ -2105,7 +2110,7 @@ export const foo = 'bar';"#,
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
-        vec![root_specifier],
+        vec![root_specifier.clone()],
         &loader,
         BuildOptions {
           resolver: maybe_resolver,
@@ -2113,7 +2118,7 @@ export const foo = 'bar';"#,
         },
       )
       .await;
-    let module = graph.get(&graph.roots[0]).unwrap().js().unwrap();
+    let module = graph.get(&root_specifier).unwrap().js().unwrap();
     let types_dep = module.maybe_types_dependency.as_ref().unwrap();
     assert_eq!(types_dep.specifier, "file:///a.js");
     assert_eq!(
@@ -3925,7 +3930,7 @@ export function a(a: A): B {
     let example_a_url =
       ModuleSpecifier::parse("https://example.com/a.ts").unwrap();
     let graph = graph.segment(&[example_a_url.clone()]);
-    assert_eq!(graph.roots, vec![example_a_url]);
+    assert_eq!(graph.roots, BTreeSet::from([example_a_url]));
     // should get the redirect
     assert_eq!(
       graph.redirects,
@@ -4071,7 +4076,7 @@ export function a(a: A): B {
     // all true
     let roots = vec![root.clone()];
     let result = graph.walk(
-      &roots,
+      roots.iter(),
       WalkOptions {
         check_js: true,
         follow_dynamic: true,
@@ -4099,7 +4104,7 @@ export function a(a: A): B {
 
     // all false
     let result = graph.walk(
-      &roots,
+      roots.iter(),
       WalkOptions {
         check_js: false,
         follow_dynamic: false,
@@ -4122,7 +4127,7 @@ export function a(a: A): B {
     );
     // dynamic true
     let result = graph.walk(
-      &roots,
+      roots.iter(),
       WalkOptions {
         check_js: false,
         follow_dynamic: true,
@@ -4147,7 +4152,7 @@ export function a(a: A): B {
 
     // check_js true (won't have any effect since follow_type_only is false)
     let result = graph.walk(
-      &roots,
+      roots.iter(),
       WalkOptions {
         check_js: true,
         follow_dynamic: false,
@@ -4171,7 +4176,7 @@ export function a(a: A): B {
 
     // follow_type_only true
     let result = graph.walk(
-      &roots,
+      roots.iter(),
       WalkOptions {
         check_js: false,
         follow_dynamic: false,
@@ -4196,7 +4201,7 @@ export function a(a: A): B {
 
     // check_js true, follow_type_only true
     let result = graph.walk(
-      &roots,
+      roots.iter(),
       WalkOptions {
         check_js: true,
         follow_dynamic: false,
@@ -4224,7 +4229,7 @@ export function a(a: A): B {
     // try skip analyzing the dependencies after getting the first module
     {
       let mut iterator = graph.walk(
-        &roots,
+        roots.iter(),
         WalkOptions {
           check_js: true,
           follow_dynamic: false,
@@ -4248,7 +4253,7 @@ export function a(a: A): B {
     // try skipping after first remote
     {
       let mut iterator = graph.walk(
-        &roots,
+        roots.iter(),
         WalkOptions {
           check_js: true,
           follow_dynamic: false,
@@ -4527,7 +4532,7 @@ export function a(a: A): B {
       .await;
     let errors = graph
       .walk(
-        &graph.roots,
+        graph.roots.iter(),
         WalkOptions {
           check_js: true,
           follow_type_only: true,
@@ -4574,7 +4579,7 @@ export function a(a: A): B {
       )
       .await;
     assert_eq!(graph.module_slots.len(), 2);
-    assert_eq!(graph.roots, vec![root_specifier.clone()]);
+    assert_eq!(graph.roots, BTreeSet::from([root_specifier.clone()]));
     assert!(graph.contains(&root_specifier));
     let module = graph
       .module_slots
