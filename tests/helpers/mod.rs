@@ -142,6 +142,10 @@ pub struct TestFastCheckCache {
 }
 
 impl FastCheckCache for TestFastCheckCache {
+  fn hash_seed(&self) -> &'static str {
+    "stable-for-tests"
+  }
+
   fn get(
     &self,
     key: deno_graph::FastCheckCacheKey,
