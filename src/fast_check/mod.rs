@@ -570,7 +570,11 @@ pub fn build_fast_check_type_graph<'a>(
             ),
           ));
         }
-        let cache_key = FastCheckCacheKey::build(&nv, &package.entrypoints);
+        let cache_key = FastCheckCacheKey::build(
+          fast_check_cache.hash_seed(),
+          &nv,
+          &package.entrypoints,
+        );
         fast_check_cache.set(
           cache_key,
           FastCheckCacheItem {

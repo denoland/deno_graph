@@ -17,12 +17,14 @@ pub struct FastCheckCacheKey(u64);
 impl FastCheckCacheKey {
   #[cfg(feature = "fast_check")]
   pub fn build(
+    hash_seed: &'static str,
     package_nv: &PackageNv,
     entrypoints: &BTreeSet<ModuleSpecifier>,
   ) -> Self {
     use std::hash::Hash;
     use std::hash::Hasher;
     let mut hasher = twox_hash::XxHash64::default();
+    hash_seed.hash(&mut hasher);
     package_nv.hash(&mut hasher);
     for value in entrypoints {
       value.hash(&mut hasher);
@@ -86,6 +88,10 @@ pub struct FastCheckCacheModuleItemDiagnostic {
 ///
 /// Note: Implementors should bust their cache when their version changes.
 pub trait FastCheckCache {
+  fn hash_seed(&self) -> &'static str {
+    ""
+  }
+
   fn get(&self, key: FastCheckCacheKey) -> Option<FastCheckCacheItem>;
   fn set(&self, key: FastCheckCacheKey, value: FastCheckCacheItem);
 }
