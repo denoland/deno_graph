@@ -254,8 +254,8 @@ fn run_graph_test(test: &CollectedTest) {
   let update = std::env::var("UPDATE").as_deref() == Ok("1");
   let spec = if update {
     let mut spec = spec;
-    spec.output_file.text = output_text.clone();
-    spec.diagnostics = diagnostics.clone();
+    spec.output_file.text.clone_from(&output_text);
+    spec.diagnostics.clone_from(&diagnostics);
     std::fs::write(&test.path, spec.emit()).unwrap();
     spec
   } else {
@@ -302,7 +302,7 @@ fn run_symbol_test(test: &CollectedTest) {
   let result = rt.block_on(async { builder.symbols().await.unwrap() });
   let spec = if std::env::var("UPDATE").as_deref() == Ok("1") {
     let mut spec = spec;
-    spec.output_file.text = result.output.clone();
+    spec.output_file.text.clone_from(&result.output);
     std::fs::write(&test.path, spec.emit()).unwrap();
     spec
   } else {
