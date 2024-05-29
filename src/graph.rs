@@ -838,6 +838,7 @@ pub enum Module {
   // todo(#239): remove this when updating the --json output for 2.0
   #[serde(rename = "asserted")]
   Json(JsonModule),
+  Jsr(JsrModule),
   Npm(NpmModule),
   Node(BuiltInNodeModule),
   External(ExternalModule),
@@ -848,6 +849,7 @@ impl Module {
     match self {
       Module::Js(module) => &module.specifier,
       Module::Json(module) => &module.specifier,
+      Module::Jsr(module) => &module.specifier,
       Module::Npm(module) => &module.specifier,
       Module::Node(module) => &module.specifier,
       Module::External(module) => &module.specifier,
@@ -864,6 +866,14 @@ impl Module {
 
   pub fn js(&self) -> Option<&JsModule> {
     if let Module::Js(module) = &self {
+      Some(module)
+    } else {
+      None
+    }
+  }
+
+  pub fn jsr(&self) -> Option<&JsrModule> {
+    if let Module::Jsr(module) = &self {
       Some(module)
     } else {
       None
@@ -898,11 +908,21 @@ impl Module {
     match self {
       crate::Module::Js(m) => Some(&m.source),
       crate::Module::Json(m) => Some(&m.source),
-      crate::Module::Npm(_)
+      crate::Module::Jsr(_)
+      | crate::Module::Npm(_)
       | crate::Module::Node(_)
       | crate::Module::External(_) => None,
     }
   }
+}
+
+/// A Jsr package entrypoint.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JsrModule {
+  pub specifier: ModuleSpecifier,
+  #[serde(skip_serializing)]
+  pub nv_reference: JsrPackageNvReference,
 }
 
 /// An npm package entrypoint.
@@ -1323,6 +1343,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
         }
         Module::Json(_)
         | Module::External(_)
+        | Module::Jsr(_)
         | Module::Npm(_)
         | Module::Node(_) => {}
       },
@@ -1838,6 +1859,7 @@ impl ModuleGraph {
         self.resolve_dependency_from_dep(dependency, prefer_types)
       }
       Module::Json(_)
+      | Module::Jsr(_)
       | Module::Npm(_)
       | Module::Node(_)
       | Module::External(_) => None,
@@ -3619,7 +3641,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                         Err(err) => *slot = ModuleSlot::Err(*err),
                       }
                     }
-                    Module::Npm(_) | Module::Node(_) | Module::External(_) => {
+                    Module::Jsr(_) | Module::Npm(_) | Module::Node(_) | Module::External(_) => {
                       unreachable!(); // should not happen by design
                     }
                   }
@@ -3681,7 +3703,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
           }
-          Module::External(_) | Module::Npm(_) | Module::Node(_) => {}
+          Module::External(_) | Module::Jsr(_) | Module::Npm(_) | Module::Node(_) => {}
         }
       }
     }

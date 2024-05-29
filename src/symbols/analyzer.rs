@@ -101,7 +101,8 @@ impl<'a> RootSymbol<'a> {
       crate::Module::Json(json_module) => {
         Some(self.analyze_json_module(json_module))
       }
-      crate::Module::Npm(_)
+      crate::Module::Jsr(_)
+      | crate::Module::Npm(_)
       | crate::Module::Node(_)
       | crate::Module::External(_) => None,
     }
