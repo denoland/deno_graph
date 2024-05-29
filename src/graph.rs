@@ -1710,11 +1710,11 @@ impl ModuleGraph {
         }
       }
     }
-    new_graph.imports = self.imports.clone();
+    new_graph.imports.clone_from(&self.imports);
     new_graph.roots = roots.iter().map(|r| (*r).to_owned()).collect();
-    new_graph.npm_packages = self.npm_packages.clone();
+    new_graph.npm_packages.clone_from(&self.npm_packages);
     // todo(dsherret): it should be a bit smarter about this, but this is not terrible
-    new_graph.packages = self.packages.clone();
+    new_graph.packages.clone_from(&self.packages);
     new_graph.has_node_specifier = self.has_node_specifier;
 
     new_graph
