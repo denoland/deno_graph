@@ -85,11 +85,13 @@ pub struct FastCheckCacheModuleItemDiagnostic {
 }
 
 /// Cache for storing the results of fast checks based on a package.
-///
-/// Note: Implementors should bust their cache when their version changes.
 pub trait FastCheckCache {
+  /// Seed that is provided to the hash in order to cache bust
+  /// it on version changes.
+  ///
+  /// This defaults to the current deno_graph version.
   fn hash_seed(&self) -> &'static str {
-    ""
+    env!("CARGO_PKG_VERSION")
   }
 
   fn get(&self, key: FastCheckCacheKey) -> Option<FastCheckCacheItem>;

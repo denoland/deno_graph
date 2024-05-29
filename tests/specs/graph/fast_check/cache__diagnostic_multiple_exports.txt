@@ -186,6 +186,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
 
 
 == fast check cache ==
-FastCheckCacheKey(2640350593211828171):
+FastCheckCacheKey(17039939699199502831):
     Deps - []
     Modules: [["https://jsr.io/@scope/a/1.0.0/mod.ts","diagnostic"],["https://jsr.io/@scope/a/1.0.0/b.ts","diagnostic"],["https://jsr.io/@scope/a/1.0.0/a.ts","diagnostic"]]
