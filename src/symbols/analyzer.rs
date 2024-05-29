@@ -79,9 +79,7 @@ impl<'a> RootSymbol<'a> {
       return Some(module_symbol.as_ref());
     }
 
-    let Some(graph_module) = self.module_graph.get(specifier) else {
-      return None;
-    };
+    let graph_module = self.module_graph.get(specifier)?;
 
     match graph_module {
       crate::Module::Js(js_module) => js_module

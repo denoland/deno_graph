@@ -463,14 +463,10 @@ impl<'a> PublicRangeFinder<'a> {
     nv: &PackageNv,
     entrypoints: &BTreeSet<ModuleSpecifier>,
   ) -> Option<PackagePublicRanges> {
-    let Some(fast_check_cache) = &self.fast_check_cache else {
-      return None;
-    };
+    let fast_check_cache = self.fast_check_cache?;
     let cache_key =
       FastCheckCacheKey::build(fast_check_cache.hash_seed(), nv, entrypoints);
-    let Some(cache_item) = fast_check_cache.get(cache_key) else {
-      return None;
-    };
+    let cache_item = fast_check_cache.get(cache_key)?;
     if !self.is_cache_item_valid(&cache_item) {
       return None;
     }
