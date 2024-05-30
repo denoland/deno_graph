@@ -1,17 +1,28 @@
 tuhana/unocss-catppuccin/1.0.0
 -- deno.lock --
-{}
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@catppuccin/palette@^1.1.0": "npm:@catppuccin/palette@1.2.0",
+      "npm:@unocss/core@^0.58.6": "npm:@unocss/core@0.58.9"
+    },
+    "npm": {
+      "@catppuccin/palette@1.2.0": {
+        "integrity": "sha512-R5fxLcU47mRcsdQkXZBNfxt7SdEqLGWb1qhEKBrnYfEB4ZWOQRBEow4e78PKxaFUECBNOs6uEkwvwxFL9FmQqQ==",
+        "dependencies": {}
+      },
+      "@unocss/core@0.58.9": {
+        "integrity": "sha512-wYpPIPPsOIbIoMIDuH8ihehJk5pAZmyFKXIYO/Kro98GEOFhz6lJoLsy6/PZuitlgp2/TSlubUuWGjHWvp5osw==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
 
 ===
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-error: Failed writing lockfile.
-
-Caused by:
-    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmpiKtaBp')
-
+== TYPE CHECK PASSED ==
