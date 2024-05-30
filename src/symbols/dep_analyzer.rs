@@ -2,6 +2,7 @@
 
 use deno_ast::swc::ast::ArrowExpr;
 use deno_ast::swc::ast::BindingIdent;
+use deno_ast::swc::ast::BlockStmtOrExpr;
 use deno_ast::swc::ast::Class;
 use deno_ast::swc::ast::DefaultDecl;
 use deno_ast::swc::ast::Expr;
@@ -352,6 +353,8 @@ impl Visit for DepsFiller {
     }
     if let Some(return_type) = &n.return_type {
       self.visit_ts_type_ann(return_type);
+    } else if let BlockStmtOrExpr::Expr(expr) = &*n.body {
+      self.visit_expr(expr);
     }
   }
 
