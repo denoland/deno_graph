@@ -192,6 +192,17 @@ error[missing-explicit-type]: missing explicit type in the public API
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /src/unstable-core-do-not-import/createProxy.ts:11:10
+   | 
+11 | function createInnerProxy(callback: ProxyCallback, path: string[]) {
+   |          ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /src/unstable-core-do-not-import/createProxy.ts:38:14
    | 
 38 | export const createRecursiveProxy = (callback: ProxyCallback) =>

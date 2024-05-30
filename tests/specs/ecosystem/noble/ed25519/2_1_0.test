@@ -5,6 +5,28 @@ noble/ed25519/2.1.0
 
 == FAST CHECK EMIT FAILED ==
 error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /index.ts:21:7
+   | 
+21 | const u8n = (data?: any) => new Uint8Array(data);       // creates Uint8Array
+   |       ^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /index.ts:22:7
+   | 
+22 | const toU8 = (a: Hex, len?: number) => au8(str(a) ? h2b(a) : u8n(au8(a)), len);  // norm(hex/u8a) to u8a
+   |       ^^^^ this function is missing an explicit return type
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /index.ts:23:7
    | 
 23 | const mod = (a: bigint, b = P) => { let r = a % b; return r >= 0n ? r : b + r; }; // mod division
@@ -107,6 +129,28 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    --> /index.ts:137:7
     | 
 137 | const concatB = (...arrs: Bytes[]) => {                 // concatenate Uint8Array-s
+    |       ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /index.ts:193:7
+    | 
+193 | const sha512a = (...m: Bytes[]) => etc.sha512Async(...m);  // Async SHA512
+    |       ^^^^^^^ this function is missing an explicit return type
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /index.ts:194:7
+    | 
+194 | const sha512s = (...m: Bytes[]) =>                      // Sync SHA512, not set by default
     |       ^^^^^^^ this function is missing an explicit return type
     = hint: add an explicit return type to the function
 
