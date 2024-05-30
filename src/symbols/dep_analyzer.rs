@@ -1,5 +1,6 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+use deno_ast::swc::ast::ArrowExpr;
 use deno_ast::swc::ast::BindingIdent;
 use deno_ast::swc::ast::Class;
 use deno_ast::swc::ast::DefaultDecl;
@@ -336,6 +337,18 @@ impl Visit for DepsFiller {
     }
     for param in &n.params {
       self.visit_param(param);
+    }
+    if let Some(return_type) = &n.return_type {
+      self.visit_ts_type_ann(return_type);
+    }
+  }
+
+  fn visit_arrow_expr(&mut self, n: &ArrowExpr) {
+    if let Some(type_params) = &n.type_params {
+      self.visit_ts_type_param_decl(type_params);
+    }
+    for param in &n.params {
+      self.visit_pat(param);
     }
     if let Some(return_type) = &n.return_type {
       self.visit_ts_type_ann(return_type);
