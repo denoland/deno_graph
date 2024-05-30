@@ -63,390 +63,80 @@ bureaudouble/checkout/0.0.3
 -- stdout --
 
 -- stderr --
-error: TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ customer: string | Stripe.Customer | Stripe.DeletedCustomer | null;
-                           ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:76:28
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ customer: string | Stripe.Customer | Stripe.DeletedCustomer | null;
-                                             ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:76:46
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ invoice: string | Stripe.Invoice | null;
-                          ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:95:27
-
-TS2304 [ERROR]: Cannot find name 'ApiList'.
-     */ line_items?: ApiList<Stripe.LineItem>;
-                     ~~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:101:22
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ line_items?: ApiList<Stripe.LineItem>;
-                             ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:101:30
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ metadata: Stripe.Metadata | null;
-                  ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:110:19
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ payment_intent: string | Stripe.PaymentIntent | null;
-                                 ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:116:34
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ payment_link: string | Stripe.PaymentLink | null;
-                               ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:119:32
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ setup_intent: string | Stripe.SetupIntent | null;
-                               ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:149:32
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ subscription: string | Stripe.Subscription | null;
-                               ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:172:32
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-         */ account?: string | Stripe.Account;
-                               ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:228:32
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-       */ address: Stripe.Address | null;
-                   ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:296:20
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-         */ account_tax_ids: Array<string | Stripe.TaxId | Stripe.DeletedTaxId> | null;
-                                            ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:440:45
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-         */ account_tax_ids: Array<string | Stripe.TaxId | Stripe.DeletedTaxId> | null;
-                                                           ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:440:60
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-         */ metadata: Stripe.Metadata | null;
-                      ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:455:23
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-           */ account?: string | Stripe.Account;
-                                 ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:472:34
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-       */ shipping_rate: string | Stripe.ShippingRate | null;
-                                  ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:946:35
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-         */ rate: Stripe.TaxRate;
-                  ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:960:19
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-      address?: Stripe.Address;
-                ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:973:17
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-       */ shipping_rate: string | Stripe.ShippingRate;
-                                  ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:993:35
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-           */ discount: Stripe.Discount;
-                        ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:1033:25
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-           */ rate: Stripe.TaxRate;
-                    ~~~~~~
-    at file://<tmpdir>/types/Checkout/Sessions.d.ts:1043:21
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ address?: Stripe.Address | null;
-                ~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:14:17
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ cash_balance?: Stripe.CashBalance | null;
-                     ~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:20:22
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ default_source: string | Stripe.CustomerSource | null;
-                               ~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:31:32
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ discount?: Stripe.Discount | null;
-                 ~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:47:18
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ metadata: Stripe.Metadata;
-                ~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:65:17
-
-TS2304 [ERROR]: Cannot find name 'ApiList'.
-   */ sources?: ApiList<Stripe.CustomerSource>;
-                ~~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:83:17
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ sources?: ApiList<Stripe.CustomerSource>;
-                        ~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:83:25
-
-TS2304 [ERROR]: Cannot find name 'ApiList'.
-   */ subscriptions?: ApiList<Stripe.Subscription>;
-                      ~~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:86:23
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ subscriptions?: ApiList<Stripe.Subscription>;
-                              ~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:86:31
-
-TS2304 [ERROR]: Cannot find name 'ApiList'.
-   */ tax_ids?: ApiList<Stripe.TaxId>;
-                ~~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:93:17
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ tax_ids?: ApiList<Stripe.TaxId>;
-                        ~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:93:25
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ test_clock?: string | Stripe.TestHelpers.TestClock | null;
-                            ~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:96:29
-
-TS1046 [ERROR]: Top-level declarations in .d.ts files must start with either a 'declare' or 'export' modifier.
-namespace Customer {
-~~~~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:98:1
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ default_payment_method: string | Stripe.PaymentMethod | null;
-                                         ~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:105:42
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-    address?: Stripe.Address;
-              ~~~~~~
-    at file://<tmpdir>/types/Customers.d.ts:129:15
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ account_tax_ids: Array<string | Stripe.TaxId | Stripe.DeletedTaxId> | null;
-                                      ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:49:39
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ account_tax_ids: Array<string | Stripe.TaxId | Stripe.DeletedTaxId> | null;
-                                                     ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:49:54
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ application: string | Stripe.Application | Stripe.DeletedApplication | null;
-                            ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:64:29
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ application: string | Stripe.Application | Stripe.DeletedApplication | null;
-                                                 ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:64:50
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ charge: string | Stripe.Charge | null;
-                       ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:91:24
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ customer: string | Stripe.Customer | Stripe.DeletedCustomer | null;
-                         ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:106:26
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ customer: string | Stripe.Customer | Stripe.DeletedCustomer | null;
-                                           ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:106:44
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ customer_address: Stripe.Address | null;
-                        ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:109:25
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ default_payment_method: string | Stripe.PaymentMethod | null;
-                                       ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:130:40
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ default_source: string | Stripe.CustomerSource | null;
-                               ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:133:32
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ default_tax_rates: Array<Stripe.TaxRate>;
-                               ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:136:32
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ discount: Stripe.Discount | null;
-                ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:145:17
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ discounts: Array<string | Stripe.Discount | Stripe.DeletedDiscount> | null;
-                                ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:148:33
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ discounts: Array<string | Stripe.Discount | Stripe.DeletedDiscount> | null;
-                                                  ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:148:51
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ latest_revision: string | Stripe.Invoice | null;
-                                ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:176:33
-
-TS2304 [ERROR]: Cannot find name 'ApiList'.
-   */ lines: ApiList<Stripe.InvoiceLineItem>;
-             ~~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:179:14
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ lines: ApiList<Stripe.InvoiceLineItem>;
-                     ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:179:22
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ metadata: Stripe.Metadata | null;
-                ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:185:17
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ on_behalf_of: string | Stripe.Account | null;
-                             ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:194:30
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ payment_intent: string | Stripe.PaymentIntent | null;
-                               ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:203:32
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ quote: string | Stripe.Quote | null;
-                      ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:219:23
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ subscription: string | Stripe.Subscription | null;
-                             ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:247:30
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ test_clock: string | Stripe.TestHelpers.TestClock | null;
-                           ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:265:28
-
-TS1046 [ERROR]: Top-level declarations in .d.ts files must start with either a 'declare' or 'export' modifier.
-namespace Invoice {
-~~~~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:286:1
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-       */ account?: string | Stripe.Account;
-                             ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:302:30
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-    address?: Stripe.Address;
-              ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:315:15
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ invoice: string | Stripe.Invoice;
-                          ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:355:27
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ account?: string | Stripe.Account;
-                           ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:360:28
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ payment_intent?: Stripe.PaymentIntent;
-                         ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:399:26
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ payment_method?: Stripe.PaymentMethod;
-                         ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:406:26
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ setup_intent?: Stripe.SetupIntent;
-                       ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:435:24
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-    source?: Stripe.CustomerSource;
-             ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:436:14
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ shipping_rate: string | Stripe.ShippingRate | null;
-                                ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:607:33
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-       */ rate: Stripe.TaxRate;
-                ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:621:17
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-    address?: Stripe.Address;
-              ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:634:15
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ metadata: Stripe.Metadata | null;
-                  ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:667:19
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ discount: string | Stripe.Discount | Stripe.DeletedDiscount;
-                           ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:693:28
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ discount: string | Stripe.Discount | Stripe.DeletedDiscount;
-                                             ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:693:46
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ tax_rate: string | Stripe.TaxRate;
-                           ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:704:28
-
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-     */ destination: string | Stripe.Account;
-                              ~~~~~~
-    at file://<tmpdir>/types/Invoices.d.ts:721:31
+error: TS2304 [ERROR]: Cannot find name 'Customer'.
+      retrieve: (id: string, params?: Record<string, any>): Promise<Customer> =>({} as never)
+                                                                    ~~~~~~~~
+    at file://<tmpdir>/stripe.ts:3:69
+
+TS2503 [ERROR]: Cannot find namespace 'Checkout'.
+        create: (payload: Record<string, any>): Promise<Checkout.Session> =>({} as never),
+                                                        ~~~~~~~~
+    at file://<tmpdir>/stripe.ts:7:57
+
+TS2503 [ERROR]: Cannot find namespace 'Checkout'.
+        retrieve: (id: string, params?: Record<string, any>): Promise<Checkout.Session> =>({} as never)
+                                                                      ~~~~~~~~
+    at file://<tmpdir>/stripe.ts:8:71
+
+TS2304 [ERROR]: Cannot find name 'Product'.
+      list: (params?: Record<string, any>): AsyncGenerator<Product, void, unknown> =>({} as never),
+                                                           ~~~~~~~
+    at file://<tmpdir>/stripe.ts:12:60
+
+TS2304 [ERROR]: Cannot find name 'Product'.
+      del: (id: string): Promise<Product> =>({} as never),
+                                 ~~~~~~~
+    at file://<tmpdir>/stripe.ts:13:34
+
+TS2304 [ERROR]: Cannot find name 'Product'.
+      update: (id: string, payload: Record<string, any>): Promise<Product> =>({} as never),
+                                                                  ~~~~~~~
+    at file://<tmpdir>/stripe.ts:14:67
+
+TS2304 [ERROR]: Cannot find name 'Product'.
+      create: (payload: Record<string, any>): Promise<Product> =>({} as never)
+                                                      ~~~~~~~
+    at file://<tmpdir>/stripe.ts:15:55
+
+TS2304 [ERROR]: Cannot find name 'Price'.
+      list: (params?: Record<string, any>): AsyncGenerator<Price, void, unknown> =>({} as never),
+                                                           ~~~~~
+    at file://<tmpdir>/stripe.ts:18:60
+
+TS2304 [ERROR]: Cannot find name 'Price'.
+      del: (id: string): Promise<Price> =>({} as never),
+                                 ~~~~~
+    at file://<tmpdir>/stripe.ts:19:34
+
+TS2304 [ERROR]: Cannot find name 'Price'.
+      update: (id: string, payload: Record<string, any>): Promise<Price> =>({} as never),
+                                                                  ~~~~~
+    at file://<tmpdir>/stripe.ts:20:67
+
+TS2304 [ERROR]: Cannot find name 'Price'.
+      create: (payload: Record<string, any>): Promise<Price> =>({} as never),
+                                                      ~~~~~
+    at file://<tmpdir>/stripe.ts:21:55
+
+TS2304 [ERROR]: Cannot find name 'Price'.
+      search: (params?: Record<string, any>): AsyncGenerator<Price, void, unknown> =>({} as never)
+                                                             ~~~~~
+    at file://<tmpdir>/stripe.ts:22:62
+
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/Prices.d.ts".Price' has no exported member 'BillingScheme'.
+       */ billing_scheme: Price.BillingScheme;
+                                ~~~~~~~~~~~~~
+    at file://<tmpdir>/types/Prices.d.ts:20:33
+
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/Prices.d.ts".Price' has no exported member 'CurrencyOptions'.
+    [key: string]: Price.CurrencyOptions;
+                         ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/types/Prices.d.ts:30:26
+
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/Prices.d.ts".Price' has no exported member 'CustomUnitAmount'.
+       */ custom_unit_amount: Price.CustomUnitAmount | null;
+                                    ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/types/Prices.d.ts:34:37
 
 TS2503 [ERROR]: Cannot find namespace 'Stripe'.
        */ metadata: Stripe.Metadata;
@@ -463,40 +153,85 @@ TS2503 [ERROR]: Cannot find namespace 'Stripe'.
                                              ~~~~~~
     at file://<tmpdir>/types/Prices.d.ts:52:46
 
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/Prices.d.ts".Price' has no exported member 'TaxBehavior'.
+       */ tax_behavior: Price.TaxBehavior | null;
+                              ~~~~~~~~~~~
+    at file://<tmpdir>/types/Prices.d.ts:58:31
+
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/Prices.d.ts".Price' has no exported member 'Tier'.
+       */ tiers?: Array<Price.Tier>;
+                              ~~~~
+    at file://<tmpdir>/types/Prices.d.ts:61:31
+
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/Prices.d.ts".Price' has no exported member 'TiersMode'.
+       */ tiers_mode: Price.TiersMode | null;
+                            ~~~~~~~~~
+    at file://<tmpdir>/types/Prices.d.ts:64:29
+
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/Prices.d.ts".Price' has no exported member 'TransformQuantity'.
+       */ transform_quantity: Price.TransformQuantity | null;
+                                    ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/types/Prices.d.ts:67:37
+
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/Prices.d.ts".Price' has no exported member 'Type'.
+       */ type: Price.Type;
+                      ~~~~
+    at file://<tmpdir>/types/Prices.d.ts:70:23
+
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/Prices.d.ts".Price.Recurring' has no exported member 'AggregateUsage'.
+         */ aggregate_usage: Recurring.AggregateUsage | null;
+                                       ~~~~~~~~~~~~~~
+    at file://<tmpdir>/types/Prices.d.ts:82:40
+
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/Prices.d.ts".Price.Recurring' has no exported member 'UsageType'.
+         */ usage_type: Recurring.UsageType;
+                                  ~~~~~~~~~
+    at file://<tmpdir>/types/Prices.d.ts:97:35
+
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/PricesResource.d.ts".PriceCreateParams' has no exported member 'BillingScheme'.
+       */ billing_scheme?: PriceCreateParams.BillingScheme;
+                                             ~~~~~~~~~~~~~
+    at file://<tmpdir>/types/PricesResource.d.ts:10:46
+
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/PricesResource.d.ts".PriceCreateParams' has no exported member 'CurrencyOptions'.
+    [key: string]: PriceCreateParams.CurrencyOptions;
+                                     ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/types/PricesResource.d.ts:14:38
+
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/PricesResource.d.ts".PriceCreateParams' has no exported member 'CustomUnitAmount'.
+       */ custom_unit_amount?: PriceCreateParams.CustomUnitAmount;
+                                                 ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/types/PricesResource.d.ts:18:50
+
 TS2503 [ERROR]: Cannot find namespace 'Stripe'.
        */ metadata?: Stripe.MetadataParam;
                      ~~~~~~
     at file://<tmpdir>/types/PricesResource.d.ts:27:22
 
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-         */ metadata?: Stripe.MetadataParam;
-                       ~~~~~~
-    at file://<tmpdir>/types/PricesResource.d.ts:138:24
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/PricesResource.d.ts".PriceCreateParams' has no exported member 'ProductData'.
+       */ product_data?: PriceCreateParams.ProductData;
+                                           ~~~~~~~~~~~
+    at file://<tmpdir>/types/PricesResource.d.ts:36:44
 
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-       */ default_price?: string | Stripe.Price | null;
-                                   ~~~~~~
-    at file://<tmpdir>/types/Products.d.ts:25:36
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/PricesResource.d.ts".PriceCreateParams' has no exported member 'TaxBehavior'.
+       */ tax_behavior?: PriceCreateParams.TaxBehavior;
+                                           ~~~~~~~~~~~
+    at file://<tmpdir>/types/PricesResource.d.ts:42:44
 
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-       */ metadata: Stripe.Metadata;
-                    ~~~~~~
-    at file://<tmpdir>/types/Products.d.ts:43:21
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/PricesResource.d.ts".PriceCreateParams' has no exported member 'Tier'.
+       */ tiers?: Array<PriceCreateParams.Tier>;
+                                          ~~~~
+    at file://<tmpdir>/types/PricesResource.d.ts:45:43
 
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-       */ tax_code: string | Stripe.TaxCode | null;
-                             ~~~~~~
-    at file://<tmpdir>/types/Products.d.ts:58:30
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/PricesResource.d.ts".PriceCreateParams' has no exported member 'TiersMode'.
+       */ tiers_mode?: PriceCreateParams.TiersMode;
+                                         ~~~~~~~~~
+    at file://<tmpdir>/types/PricesResource.d.ts:48:42
 
-TS2503 [ERROR]: Cannot find namespace 'Stripe'.
-   */ metadata?: Stripe.MetadataParam;
-                 ~~~~~~
-    at file://<tmpdir>/types/ProductsResource.d.ts:28:18
+TS2694 [ERROR]: Namespace '"file://<tmpdir>/types/PricesResource.d.ts".PriceCreateParams' has no exported member 'TransformQuantity'.
+       */ transform_quantity?: PriceCreateParams.TransformQuantity;
+                                                 ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/types/PricesResource.d.ts:54:50
 
-TS1046 [ERROR]: Top-level declarations in .d.ts files must start with either a 'declare' or 'export' modifier.
-namespace ProductCreateParams {
-~~~~~~~~~
-    at file://<tmpdir>/types/ProductsResource.d.ts:54:1
-
-Found 87 errors.
+Found 34 errors.
 

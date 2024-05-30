@@ -44,5 +44,5 @@ thesgj/nextjs-toploader/1.6.9
 error: TS2503 [ERROR]: Cannot find namespace 'JSX'.
  */ const NextTopLoader = ({}: NextTopLoaderProps): JSX.Element =>({} as never);
                                                     ~~~
-    at file://<tmpdir>/src/index.tsx:62:53
+    at file://<tmpdir>/src/index.tsx:60:53
 

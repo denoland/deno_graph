@@ -23,4 +23,10 @@ bureaudouble/responsive-image/0.0.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'CreatePictureOptions'.
+    at file://<tmpdir>/mod.ts:27:98
+

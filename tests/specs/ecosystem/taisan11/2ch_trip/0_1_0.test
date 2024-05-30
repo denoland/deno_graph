@@ -5,17 +5,6 @@ taisan11/2ch-trip/0.1.0
 
 == FAST CHECK EMIT FAILED ==
 error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/index.ts:11:7
-   | 
-11 | const maskSpecialSymbols = (text: string) => text.replace(/★/g, '☆').replace(/◆/g, '◇')
-   |       ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /src/index.ts:13:14
    | 
 13 | export const createTripByKey = (key: string) => {
@@ -43,39 +32,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 53 | export const createTrip = (text: string, options?: Options) => createTripByText(text, options)
    |              ^^^^^^^^^^ this function is missing an explicit return type
    = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
- --> /src/raw.ts:6:14
-  | 
-6 | export const createRawKeyTrip = (key: string) => {
-  |              ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-  = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
- --> /src/12digits.ts:7:14
-  | 
-7 | export const create12DigitsTrip = (key: string) => {
-  |              ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-  = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
- --> /src/10digits.ts:7:14
-  | 
-7 | export const create10DigitsTrip = (key: string) => {
-  |              ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-  = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type

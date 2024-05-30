@@ -9,4 +9,19 @@ lmscript/client/0.0.23
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'chatTemplates'.
+export const getRoleStart = (template: ChatTemplate, role: Role)=>chatTemplates[template][role][0];
+                                                                  ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/chat-template.ts:31:67
+
+TS2304 [ERROR]: Cannot find name 'chatTemplates'.
+export const getRoleEnd = (template: ChatTemplate, role: Role)=>chatTemplates[template][role][1];
+                                                                ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/chat-template.ts:32:65
+
+Found 2 errors.
+

@@ -16,5 +16,5 @@ pengzhanbo/utils/1.1.1
 error: TS2578 [ERROR]: Unused '@ts-expect-error' directive.
  */ // @ts-expect-error 跳过环境检查
     ~~~~~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/is.ts:56:5
+    at file://<tmpdir>/src/is.ts:55:5
 

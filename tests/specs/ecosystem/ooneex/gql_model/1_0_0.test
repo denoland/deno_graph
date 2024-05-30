@@ -48,12 +48,4 @@ ooneex/gql-model/1.0.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-error: TS2724 [ERROR]: '"https://jsr.io/@ooneex/validation/1.0.4/index.ts"' has no exported member named 'AssertBool'. Did you mean 'AssertBoolean'?
-import { AssertBool } from "jsr:@ooneex/validation@^1.0.0";
-         ~~~~~~~~~~
-    at file://<tmpdir>/src/fields/BooleanGqlField.ts:1:10
-
+== TYPE CHECK PASSED ==

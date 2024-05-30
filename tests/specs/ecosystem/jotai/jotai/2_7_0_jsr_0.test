@@ -30,30 +30,21 @@ jotai/jotai/2.7.0-jsr.0
 
 ===
 
-== FAST CHECK EMIT FAILED ==
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/vanilla/store.ts:28:7
-   | 
-28 | const registerCancelPromise = (
-   |       ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type of 'void' or 'never' to the function
+== FAST CHECK EMIT PASSED ==
 
-  info: all functions in the public API must have an explicit return type
-  info: function expressions without a return statement can have a return type of either 'void' or 'never'
-  info: this function has no return statements, so a return type could not be inferred automatically
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+== TYPE CHECK FAILED ==
+-- stdout --
 
+-- stderr --
+error: TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
+  [Symbol.observable]?: () => ObservableLike<T> | undefined;
+  ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/vanilla/utils/atomWithObservable.ts:12:3
 
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/vanilla/store.ts:36:7
-   | 
-36 | const cancelPromise = (promise: Promise<unknown>, next?: Promise<unknown>) => {
-   |       ^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type of 'void' or 'never' to the function
+TS2339 [ERROR]: Property 'observable' does not exist on type 'SymbolConstructor'.
+  [Symbol.observable]?: () => ObservableLike<T> | undefined;
+          ~~~~~~~~~~
+    at file://<tmpdir>/src/vanilla/utils/atomWithObservable.ts:12:11
 
-  info: all functions in the public API must have an explicit return type
-  info: function expressions without a return statement can have a return type of either 'void' or 'never'
-  info: this function has no return statements, so a return type could not be inferred automatically
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
+Found 2 errors.
 

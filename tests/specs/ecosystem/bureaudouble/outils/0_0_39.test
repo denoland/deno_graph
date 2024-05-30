@@ -681,12 +681,7 @@ bureaudouble/outils/0.0.39
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'Document'.
-const getDocument: () => Document = {} as never;
-                         ~~~~~~~~
-    at file://<tmpdir>/convertToPlain.ts:1:26
-
-TS2304 [ERROR]: Cannot find name 'DOMParserSupportedType'.
+error: TS2304 [ERROR]: Cannot find name 'DOMParserSupportedType'.
   mimeType?: DOMParserSupportedType;
              ~~~~~~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/createVirtualNode.ts:4:14
@@ -701,5 +696,5 @@ export const partialTrigger = (node: HTMLElement, {}: {
                                      ~~~~~~~~~~~
     at file://<tmpdir>/fresh/createPartial.ts:1:38
 
-Found 4 errors.
+Found 3 errors.
 

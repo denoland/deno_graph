@@ -5,39 +5,6 @@ noble/secp256k1/2.1.0
 
 == FAST CHECK EMIT FAILED ==
 error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /index.ts:15:7
-   | 
-15 | const ge = (n: bigint) => big(n) && 0n < n && n < N;    // is group element
-   |       ^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /index.ts:23:7
-   | 
-23 | const u8n = (data?: any) => new Uint8Array(data);       // creates Uint8Array
-   |       ^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /index.ts:24:7
-   | 
-24 | const toU8 = (a: Hex, len?: number) => au8(str(a) ? h2b(a) : u8n(au8(a)), len); // norm(hex/u8a) to u8a
-   |       ^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /index.ts:25:7
    | 
 25 | const mod = (a: bigint, b = P) => { let r = a % b; return r >= 0n ? r : b + r; }; // mod division
@@ -218,28 +185,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 123 |   toRawBytes(isCompressed = true) {                     // Encode point to Uint8Array.
     |   ^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[unsupported-destructuring]: found destructuring, which is not supported in the public API
-   --> /index.ts:127:7
-    | 
-127 | const { BASE: G, ZERO: I } = Point;                     // Generator, identity points
-    |       ^^^^^^^^^^^^^^^^^^^^
-    = hint: separate each destructured symbol into its own export statement
-
-  info: destructuring can not be inferred by fast check
-  docs: https://jsr.io/go/slow-type-unsupported-destructuring
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-   --> /index.ts:128:7
-    | 
-128 | const padh = (n: number | bigint, pad: number) => n.toString(16).padStart(pad, '0');
-    |       ^^^^ this function is missing an explicit return type
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

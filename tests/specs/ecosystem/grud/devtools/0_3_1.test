@@ -260,25 +260,3 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/tools.ts:21:14
-   | 
-21 | export const map = <Fn extends (..._: any[]) => any>(
-   |              ^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/tools.ts:32:14
-   | 
-32 | export const joinMultilangValues = (
-   |              ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
