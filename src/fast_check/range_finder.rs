@@ -827,9 +827,7 @@ impl<'a> PublicRangeFinder<'a> {
           for decl in symbol.decls() {
             log::trace!(
               "Found decl - {}",
-              decl
-                .maybe_name()
-                .unwrap_or_else(|| Cow::Borrowed("<no-name>"))
+              decl.maybe_name().unwrap_or(Cow::Borrowed("<no-name>"))
             );
             found_ranges.insert(decl.range);
 
@@ -908,7 +906,7 @@ impl<'a> PublicRangeFinder<'a> {
                             "Found expando property - {}",
                             export_decl
                               .maybe_name()
-                              .unwrap_or_else(|| Cow::Borrowed("<no-name>"))
+                              .unwrap_or(Cow::Borrowed("<no-name>"))
                           );
                           found_ranges.insert(export_decl.range);
                         }
@@ -987,7 +985,7 @@ impl<'a> PublicRangeFinder<'a> {
                 symbol.members().iter().map(|id| (*id, symbol.symbol_id())),
               )
               .filter(|(symbol_id, _referrer_id)| {
-                !pending_traces.done_id_traces.contains(&symbol_id)
+                !pending_traces.done_id_traces.contains(symbol_id)
               })
               .map(|(symbol_id, referrer_id)| PendingIdTrace::Id {
                 symbol_id,
@@ -1006,9 +1004,7 @@ impl<'a> PublicRangeFinder<'a> {
           for decl in symbol.decls() {
             log::trace!(
               "Found decl - {}",
-              decl
-                .maybe_name()
-                .unwrap_or_else(|| Cow::Borrowed("<no-name>"))
+              decl.maybe_name().unwrap_or(Cow::Borrowed("<no-name>"))
             );
             found_ranges.insert(decl.range);
             match &decl.kind {
