@@ -18,6 +18,7 @@ use crate::source::JsrUrlProvider;
 use crate::symbols::FileDepName;
 use crate::symbols::ModuleInfoRef;
 use crate::symbols::ResolveDepsMode;
+use crate::symbols::ResolvedExportOrReExportAllPath;
 use crate::symbols::RootSymbol;
 use crate::symbols::SymbolDeclKind;
 use crate::symbols::SymbolId;
@@ -560,6 +561,7 @@ impl<'a> PublicRangeFinder<'a> {
   }
 
   fn analyze_trace(&mut self, trace: &PendingTrace) {
+    log::trace!("Trace - {} - {:?}", trace.specifier, trace.exports_to_trace);
     let Some(module) = self.graph.get(&trace.specifier) else {
       return;
     };
@@ -612,7 +614,7 @@ impl<'a> PublicRangeFinder<'a> {
     #[derive(Default)]
     struct PendingTraces {
       traces: VecDeque<PendingIdTrace>,
-      done_id_traces: HashSet<(SymbolId, SymbolId)>,
+      done_id_traces: HashSet<SymbolId>,
     }
 
     impl PendingTraces {
@@ -621,7 +623,10 @@ impl<'a> PublicRangeFinder<'a> {
         symbol_id: SymbolId,
         referrer_id: SymbolId,
       ) {
-        if self.done_id_traces.insert((symbol_id, referrer_id)) {
+        // the referrer_id is only used for diagnostic purposes and we only
+        // care about the first diagnostic, so we can only take the symbol_id
+        // into account when checking if we should trace this
+        if self.done_id_traces.insert(symbol_id) {
           self.traces.push_back(PendingIdTrace::Id {
             symbol_id,
             referrer_id,
@@ -654,6 +659,10 @@ impl<'a> PublicRangeFinder<'a> {
         // add all the specifiers to the list of pending specifiers
         if let Some(re_export_all_nodes) = module_info.re_export_all_nodes() {
           for re_export_all_node in re_export_all_nodes {
+            log::trace!(
+              "Found re-export all - {}",
+              re_export_all_node.src.value
+            );
             found_ranges.insert(re_export_all_node.span.range());
             let specifier_text = re_export_all_node.src.value.as_str();
             if let Some(dep_specifier) = self.graph.resolve_dependency(
@@ -731,14 +740,21 @@ impl<'a> PublicRangeFinder<'a> {
                     if let Some(export_path) =
                       module_exports.resolved.get(export_name)
                     {
-                      found_ranges.insert(re_export_all_node.span.range());
+                      if found_ranges.insert(re_export_all_node.span.range()) {
+                        log::trace!(
+                          "Found re-export all - {}",
+                          re_export_all_node.src.value
+                        );
+                      }
                       let export_name = export_name.clone();
                       let named_exports =
                         named_exports.swap_remove(&export_name).unwrap();
                       let module = match export_path {
-                                crate::symbols::ResolvedExportOrReExportAllPath::Export(e) => e.module,
-                                crate::symbols::ResolvedExportOrReExportAllPath::ReExportAllPath(p) => p.referrer_module,
-                            };
+                        ResolvedExportOrReExportAllPath::Export(e) => e.module,
+                        ResolvedExportOrReExportAllPath::ReExportAllPath(p) => {
+                          p.referrer_module
+                        }
+                      };
                       if let Some(nv) = self
                         .url_converter
                         .registry_package_url_to_nv(module.specifier())
@@ -764,6 +780,10 @@ impl<'a> PublicRangeFinder<'a> {
                 module_info.re_export_all_nodes()
               {
                 for re_export_all_node in re_export_all_nodes {
+                  log::trace!(
+                    "Found re-export all - {}",
+                    re_export_all_node.src.value
+                  );
                   found_ranges.insert(re_export_all_node.span.range());
                 }
               }
@@ -805,6 +825,10 @@ impl<'a> PublicRangeFinder<'a> {
           }
 
           for decl in symbol.decls() {
+            log::trace!(
+              "Found decl - {}",
+              decl.maybe_name().unwrap_or(Cow::Borrowed("<no-name>"))
+            );
             found_ranges.insert(decl.range);
 
             if decl.has_overloads() && decl.has_body() {
@@ -814,7 +838,6 @@ impl<'a> PublicRangeFinder<'a> {
             let referrer_id = symbol_id;
             match &decl.kind {
               SymbolDeclKind::Target(id) => {
-                found_ranges.insert(decl.range);
                 if let Some(symbol_id) =
                   module_info.esm().and_then(|m| m.symbol_id_from_swc(id))
                 {
@@ -822,7 +845,6 @@ impl<'a> PublicRangeFinder<'a> {
                 }
               }
               SymbolDeclKind::QualifiedTarget(id, parts) => {
-                found_ranges.insert(decl.range);
                 if let Some(symbol_id) =
                   module_info.esm().and_then(|m| m.symbol_id_from_swc(id))
                 {
@@ -880,6 +902,12 @@ impl<'a> PublicRangeFinder<'a> {
                         module_info.symbol(*export_id).unwrap();
                       for export_decl in export_symbol.decls() {
                         if !decl.range.contains(&export_decl.range) {
+                          log::trace!(
+                            "Found expando property - {}",
+                            export_decl
+                              .maybe_name()
+                              .unwrap_or(Cow::Borrowed("<no-name>"))
+                          );
                           found_ranges.insert(export_decl.range);
                         }
                       }
@@ -956,10 +984,8 @@ impl<'a> PublicRangeFinder<'a> {
               .chain(
                 symbol.members().iter().map(|id| (*id, symbol.symbol_id())),
               )
-              .filter(|(symbol_id, referrer_id)| {
-                !pending_traces
-                  .done_id_traces
-                  .contains(&(*symbol_id, *referrer_id))
+              .filter(|(symbol_id, _referrer_id)| {
+                !pending_traces.done_id_traces.contains(symbol_id)
               })
               .map(|(symbol_id, referrer_id)| PendingIdTrace::Id {
                 symbol_id,
@@ -976,6 +1002,10 @@ impl<'a> PublicRangeFinder<'a> {
 
           let mut handled = false;
           for decl in symbol.decls() {
+            log::trace!(
+              "Found decl - {}",
+              decl.maybe_name().unwrap_or(Cow::Borrowed("<no-name>"))
+            );
             found_ranges.insert(decl.range);
             match &decl.kind {
               SymbolDeclKind::Target(id) => {

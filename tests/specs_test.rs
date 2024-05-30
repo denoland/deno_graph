@@ -39,6 +39,11 @@ use crate::helpers::TestBuilder;
 mod helpers;
 
 fn main() {
+  // set log level with RUST_LOG env var (ex. `RUST_LOG=trace`)
+  env_logger::builder()
+    .filter(Some("tracing::span"), log::LevelFilter::Off)
+    .filter(Some("swc_ecma_codegen"), log::LevelFilter::Off)
+    .init();
   // Disable colors so that deno_ast diagnostics do not contain escape sequences.
   std::env::set_var("NO_COLOR", "true");
 
