@@ -681,12 +681,7 @@ bureaudouble/outils/0.0.27
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'Document'.
-const getDocument: () => Document = {} as never;
-                         ~~~~~~~~
-    at file://<tmpdir>/convertToPlain.ts:1:26
-
-TS2536 [ERROR]: Type '0' cannot be used to index type 'InferResult<T>'.
+error: TS2536 [ERROR]: Type '0' cannot be used to index type 'InferResult<T>'.
 export type QueryFunction<V> = <T extends CompiledQuery<unknown>>(fn: (qb: Kysely<V>) => T) => Promise<InferResult<T>[0][]>;
                                                                                                        ~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/database/sqlite/createQueryFunction.ts:7:104
@@ -696,5 +691,5 @@ export const partialTrigger = (node: HTMLElement, {}: {
                                      ~~~~~~~~~~~
     at file://<tmpdir>/fresh/Partial.tsx:1:38
 
-Found 3 errors.
+Found 2 errors.
 

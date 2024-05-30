@@ -125,39 +125,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[unsupported-destructuring]: found destructuring, which is not supported in the public API
-   --> /index.ts:119:7
-    | 
-119 | const { BASE: G, ZERO: I } = Point;                     // Generator, identity points
-    |       ^^^^^^^^^^^^^^^^^^^^
-    = hint: separate each destructured symbol into its own export statement
-
-  info: destructuring can not be inferred by fast check
-  docs: https://jsr.io/go/slow-type-unsupported-destructuring
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-   --> /index.ts:120:7
-    | 
-120 | const padh = (num: number | bigint, pad: number) => num.toString(16).padStart(pad, '0')
-    |       ^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-   --> /index.ts:135:7
-    | 
-135 | const n2b_32LE = (num: bigint) => h2b(padh(num, 32 * 2)).reverse(); // number to bytes LE
-    |       ^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
 error[missing-explicit-return-type]: missing explicit return type in the public API
    --> /index.ts:137:7
     | 

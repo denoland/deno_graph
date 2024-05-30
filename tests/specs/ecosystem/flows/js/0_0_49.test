@@ -4,28 +4,6 @@ flows/js/0.0.49
 ===
 
 == FAST CHECK EMIT FAILED ==
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /src/core/document-change.ts:17:14
-   | 
-17 | export const handleDocumentChange = throttle(_handleDocumentChange, 250);
-   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-   = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/cloud/api.ts:42:16
-   | 
-42 |   deleteEvent: (eventId: string) => f(`${baseUrl}/sdk/events/${eventId}`, { method: "DELETE" }),
-   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
 error[missing-explicit-return-type]: missing explicit return type in the public API
    --> /src/core/validation.ts:198:3
     | 
@@ -58,17 +36,6 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 210 | export const validateFlowsOptions = validateStruct(OptionsStruct);
     |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-    = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-   --> /src/core/validation.ts:211:14
-    | 
-211 | export const validateCloudFlowsOptions = validateStruct(CloudOptionsStruct);
-    |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

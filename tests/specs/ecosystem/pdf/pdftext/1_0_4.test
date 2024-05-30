@@ -1,15 +1,9 @@
 pdf/pdftext/1.0.4
 -- deno.lock --
 {}
+
 ===
 
-== FAST CHECK EMIT FAILED ==
-error[unsupported-nested-javascript]: referenced a JavaScript module without type declarations from a TypeScript module
- --> /src/pdf.mjs
-  = hint: add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript
+== FAST CHECK EMIT PASSED ==
 
-  info: JavaScript files with no corresponding declaration require type inference to be type checked
-  info: fast check avoids type inference, so referencing a JavaScript file with no type declarations is not supported
-  docs: https://jsr.io/go/slow-type-unsupported-nested-javascript
-
-
+== TYPE CHECK PASSED ==

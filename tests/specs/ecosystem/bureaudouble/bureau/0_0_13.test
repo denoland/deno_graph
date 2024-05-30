@@ -1937,130 +1937,21 @@ bureaudouble/bureau/0.0.13
 
 ===
 
-== FAST CHECK EMIT FAILED ==
-error[missing-explicit-return-type]: missing explicit return type in the public API
- --> /src/routes/analytics/api/client.ts:9:7
-  | 
-9 | const clientScript = (endpoint: string | URL) => {
-  |       ^^^^^^^^^^^^ this function is missing an explicit return type
-  = hint: add an explicit return type of 'void' or 'never' to the function
+== FAST CHECK EMIT PASSED ==
 
-  info: all functions in the public API must have an explicit return type
-  info: function expressions without a return statement can have a return type of either 'void' or 'never'
-  info: this function has no return statements, so a return type could not be inferred automatically
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+== TYPE CHECK FAILED ==
+-- stdout --
 
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/routes/analytics/utils/createRequiredTables.ts:1:16
-   | 
- 1 | export default async (db: any) => {
-   |                ^^^^^^^^^^^^^^^^^^^^
- 2 |   await db
-   | ^^^^^^^^^^
- 3 |     .query(
-   | ^^^^^^^^^^^
- 4 |       /* sql */ `
-   | ^^^^^^^^^^^^^^^^^
- 5 |   CREATE TABLE IF NOT EXISTS "analytics_visits" (
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 6 |     id INTEGER DEFAULT (
-   | ^^^^^^^^^^^^^^^^^^^^^^^^
- 7 |       CAST(
-   | ^^^^^^^^^^^
- 8 |         ROUND((julianday('now') - 2440587.5) * 86400000) As INTEGER
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 9 |       )
-   | ^^^^^^^
-10 |     ) PRIMARY KEY,
-   | ^^^^^^^^^^^^^^^^^^
-11 |     referrer TEXT,
-   | ^^^^^^^^^^^^^^^^^^
-12 |     ip TEXT,
-   | ^^^^^^^^^^^^
-13 |     user_agent TEXT,
-   | ^^^^^^^^^^^^^^^^^^^^
-14 |     hostname TEXT,
-   | ^^^^^^^^^^^^^^^^^^
-15 |     latitude REAL,
-   | ^^^^^^^^^^^^^^^^^^
-16 |     longitude REAL,
-   | ^^^^^^^^^^^^^^^^^^^
-17 |     country_code TEXT,
-   | ^^^^^^^^^^^^^^^^^^^^^^
-18 |     region_name TEXT,
-   | ^^^^^^^^^^^^^^^^^^^^^
-19 |     city_name TEXT,
-   | ^^^^^^^^^^^^^^^^^^^
-20 |     parameters TEXT,
-   | ^^^^^^^^^^^^^^^^^^^^
-21 |     screen_width INTEGER,
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^
-22 |     screen_height INTEGER,
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^
-23 |     load_time REAL,
-   | ^^^^^^^^^^^^^^^^^^^
-24 |     visit_duration REAL,
-   | ^^^^^^^^^^^^^^^^^^^^^^^^
-25 |     "path" TEXT,
-   | ^^^^^^^^^^^^^^^^
-26 |     session_id INTEGER,
-   | ^^^^^^^^^^^^^^^^^^^^^^^
-27 |     ignore INTEGER
-   | ^^^^^^^^^^^^^^^^^^
-28 |   ) STRICT;
-   | ^^^^^^^^^^^
-29 |   `
-   | ^^^
-30 |     )
-   | ^^^^^
-31 |     .catch(() => null);
-   | ^^^^^^^^^^^^^^^^^^^^^^^
-32 |   await db
-   | ^^^^^^^^^^
-33 |     .query(
-   | ^^^^^^^^^^^
-34 |       /* sql */ `
-   | ^^^^^^^^^^^^^^^^^
-35 |   CREATE TABLE IF NOT EXISTS "analytics_events" (
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-36 |     id INTEGER DEFAULT (
-   | ^^^^^^^^^^^^^^^^^^^^^^^^
-37 |       CAST(
-   | ^^^^^^^^^^^
-38 |         ROUND((julianday('now') - 2440587.5) * 86400000) As INTEGER
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-39 |       )
-   | ^^^^^^^
-40 |     ) NOT NULL,
-   | ^^^^^^^^^^^^^^^
-41 |     visit_id INTEGER NOT NULL,
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-42 |     category TEXT NOT NULL,
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-43 |     action TEXT NOT NULL,
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^
-44 |     value TEXT NULL,
-   | ^^^^^^^^^^^^^^^^^^^^
-45 |     label TEXT NULL,
-   | ^^^^^^^^^^^^^^^^^^^^
-46 |     FOREIGN KEY (visit_id) REFERENCES visits(id) ON UPDATE RESTRICT ON DELETE RESTRICT
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-47 |   );  
-   | ^^^^^^
-48 | `
-   | ^
-49 |     )
-   | ^^^^^
-50 |     .catch(() => null);
-   | ^^^^^^^^^^^^^^^^^^^^^^^
-51 | };
-   | ^ this function is missing an explicit return type
-   = hint: add an explicit return type of 'void' or 'never' to the function
-
-  info: all functions in the public API must have an explicit return type
-  info: async function expressions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'
-  info: this function has no return statements, so a return type could not be inferred automatically
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
+-- stderr --
+error: Uncaught Error: Failed resolving package subpath './client' for '<global_npm_dir>/react-dom/18.2.0/package.json': [ERR_PACKAGE_PATH_NOT_EXPORTED] Package subpath './client' is not defined for types by "exports" in '<global_npm_dir>/react-dom/18.2.0/package.json' imported from '<tmpdir>/src/lib/useClient.ts'
+    at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:756:28)
+    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120792:144)
+    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:121189:22)
+    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:121284:16)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:122847:120)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:122873:13)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
 

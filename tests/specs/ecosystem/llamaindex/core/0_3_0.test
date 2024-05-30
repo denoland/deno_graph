@@ -400,17 +400,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[missing-explicit-return-type]: missing explicit return type in the public API
-   --> /src/Settings.ts:186:14
-    | 
-186 | export const llmFromSettingsOrContext = (serviceContext?: ServiceContext) => {
-    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-    = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
 error[missing-explicit-type]: missing explicit type in the public API
    --> /src/Settings.ts:224:14
     | 
@@ -1064,17 +1053,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-   --> /src/Prompt.ts:276:7
-    | 
-276 | const exampleQueryStr = `Compare and contrast the revenue growth and EBITDA of Uber and Lyft for year 2021`;
-    |       ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-    = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API

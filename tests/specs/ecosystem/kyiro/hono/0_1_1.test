@@ -83,28 +83,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /deno_dist/utils/jwt/jwt.ts:40:7
-   | 
-40 | const utf8Encoder = new TextEncoder()
-   |       ^^^^^^^^^^^ this symbol is missing an explicit type
-   = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /deno_dist/utils/jwt/jwt.ts:41:7
-   | 
-41 | const utf8Decoder = new TextDecoder()
-   |       ^^^^^^^^^^^ this symbol is missing an explicit type
-   = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
 error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /deno_dist/utils/filepath.ts:27:14
    | 
@@ -193,17 +171,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /deno_dist/middleware/timing/index.ts:18:7
-   | 
-18 | const getTime = () => {
-   |       ^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
 error[unsupported-super-class-expr]: super class expression was too complex
   --> /deno_dist/hono-base.ts:96:11
    | 
@@ -284,19 +251,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /deno_dist/helper/streaming/sse.ts:38:7
-   | 
-38 | const setSSEHeaders = (context: Context) => {
-   |       ^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type of 'void' or 'never' to the function
-
-  info: all functions in the public API must have an explicit return type
-  info: function expressions without a return statement can have a return type of either 'void' or 'never'
-  info: this function has no return statements, so a return type could not be inferred automatically
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /deno_dist/helper/streaming/sse.ts:45:14
    | 
 45 | export const streamSSE = (
@@ -316,100 +270,6 @@ error[missing-explicit-type]: missing explicit type in the public API
 
   info: all symbols in the public API must have an explicit type
   docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /deno_dist/helper/ssg/index.ts:32:7
-   | 
-32 | const generateFilePath = (routePath: string, outDir: string, mimeType: string) => {
-   |       ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /deno_dist/client/utils.ts:10:14
-   | 
-10 | export const replaceUrlParam = (urlString: string, params: Record<string, string>) => {
-   |              ^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /deno_dist/helper/ssg/utils.ts:11:14
-   | 
-11 | export const dirname = (path: string) => {
-   |              ^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /deno_dist/helper/ssg/utils.ts:16:7
-   | 
-16 | const normalizePath = (path: string) => {
-   |       ^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /deno_dist/helper/ssg/utils.ts:20:7
-   | 
-20 | const handleDotDot = (resultPaths: string[]) => {
-   |       ^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type of 'void' or 'never' to the function
-
-  info: all functions in the public API must have an explicit return type
-  info: function expressions without a return statement can have a return type of either 'void' or 'never'
-  info: this function has no return statements, so a return type could not be inferred automatically
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /deno_dist/helper/ssg/utils.ts:28:7
-   | 
-28 | const handleNonDot = (path: string, resultPaths: string[]) => {
-   |       ^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type of 'void' or 'never' to the function
-
-  info: all functions in the public API must have an explicit return type
-  info: function expressions without a return statement can have a return type of either 'void' or 'never'
-  info: this function has no return statements, so a return type could not be inferred automatically
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /deno_dist/helper/ssg/utils.ts:35:7
-   | 
-35 | const handleSegments = (paths: string[], resultPaths: string[]) => {
-   |       ^^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type of 'void' or 'never' to the function
-
-  info: all functions in the public API must have an explicit return type
-  info: function expressions without a return statement can have a return type of either 'void' or 'never'
-  info: this function has no return statements, so a return type could not be inferred automatically
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /deno_dist/helper/ssg/utils.ts:47:14
-   | 
-47 | export const joinPaths = (...paths: string[]) => {
-   |              ^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
@@ -435,17 +295,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /deno_dist/helper/dev/index.ts:17:7
-   | 
-17 | const handlerName = (handler: Function) => {
-   |       ^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /deno_dist/helper/dev/index.ts:33:14
    | 
 33 | export const showRoutes = <E extends Env>(hono: Hono<E>, opts?: ShowRoutesOptions) => {
@@ -463,28 +312,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 79 | export const getRouterName = <E extends Env>(app: Hono<E>) => {
    |              ^^^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /deno_dist/helper/accepts/accepts.ts:28:14
-   | 
-28 | export const parseAccept = (acceptHeader: string) => {
-   |              ^^^^^^^^^^^ this function is missing an explicit return type
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /deno_dist/helper/accepts/accepts.ts:45:14
-   | 
-45 | export const defaultMatch = (accepts: Accept[], config: acceptsConfig) => {
-   |              ^^^^^^^^^^^^ this function is missing an explicit return type
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

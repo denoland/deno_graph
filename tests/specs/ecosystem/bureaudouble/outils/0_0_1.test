@@ -145,15 +145,8 @@ bureaudouble/outils/0.0.1
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'Document'.
-const getDocument: () => Document = {} as never;
-                         ~~~~~~~~
-    at file://<tmpdir>/convertToPlain.ts:1:26
-
-TS2304 [ERROR]: Cannot find name 'Plugin'.
+error: TS2304 [ERROR]: Cannot find name 'Plugin'.
   plugins: Plugin[];
            ~~~~~~
     at file://<tmpdir>/createRenderPipe.ts:27:12
-
-Found 2 errors.
 

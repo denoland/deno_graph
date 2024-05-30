@@ -10,6 +10,8 @@ custom-ui/utils/0.1.1
 -- stdout --
 
 -- stderr --
-error: Module not found "file://<tmpdir>/src/vue/vue".
-    at file://<tmpdir>/src/vue/withInstall.ts:1:26
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export function isHTMLElement(elem: any): elem is HTMLElement {
+                                                  ~~~~~~~~~~~
+    at file://<tmpdir>/src/is/dom.ts:9:51
 

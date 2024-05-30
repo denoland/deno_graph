@@ -48,39 +48,6 @@ error[missing-explicit-type]: missing explicit type in the public API
   docs: https://jsr.io/go/slow-type-missing-explicit-type
 
 
-error[missing-explicit-type]: missing explicit type in the public API
- --> /src/assets/AssetsFactory.ts:3:14
-  | 
-3 | export const FontFactory = new Map<string, Font>();
-  |              ^^^^^^^^^^^ this symbol is missing an explicit type
-  = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
- --> /src/assets/AssetsFactory.ts:8:7
-  | 
-8 | const prepareURL = (path: string) => `${BASE_URL}/${path}`;
-  |       ^^^^^^^^^^ this function is missing an explicit return type
-  = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /src/assets/AssetsFactory.ts:13:14
-   | 
-13 | export const ImageFactory = {
-   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
-   = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
 error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /src/canvas/utils.ts:11:14
    | 
@@ -1057,6 +1024,39 @@ error[missing-explicit-type]: missing explicit type in the public API
 4 | export const Fonts = {
   |              ^^^^^ this symbol is missing an explicit type
   = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+ --> /src/assets/AssetsFactory.ts:3:14
+  | 
+3 | export const FontFactory = new Map<string, Font>();
+  |              ^^^^^^^^^^^ this symbol is missing an explicit type
+  = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+ --> /src/assets/AssetsFactory.ts:8:7
+  | 
+8 | const prepareURL = (path: string) => `${BASE_URL}/${path}`;
+  |       ^^^^^^^^^^ this function is missing an explicit return type
+  = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /src/assets/AssetsFactory.ts:13:14
+   | 
+13 | export const ImageFactory = {
+   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
   docs: https://jsr.io/go/slow-type-missing-explicit-type
