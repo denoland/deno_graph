@@ -74,19 +74,4 @@ vicary/fresh-graphql/0.1.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-error: Uncaught Error: Unable to load <global_npm_dir>/@graphql-tools/utils/10.2.0/typings/index.d.ts: The system cannot find the file specified. (os error 2)
-    at Object.getSourceFile (ext:deno_tsc/99_main_compiler.js:635:28)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122523:25)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:122873:13)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:122873:13)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:122873:13)
-
+== TYPE CHECK PASSED ==
