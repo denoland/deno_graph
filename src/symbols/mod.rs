@@ -35,4 +35,3 @@ mod analyzer;
 mod collections;
 mod cross_module;
 mod dep_analyzer;
-mod swc_helpers;

@@ -25,6 +25,7 @@ mod swc_helpers;
 mod transform;
 #[cfg(feature = "fast_check")]
 mod transform_dts;
+mod type_infer;
 
 pub use cache::FastCheckCache;
 pub use cache::FastCheckCacheItem;
@@ -39,11 +40,23 @@ pub use transform::FastCheckModule;
 #[cfg(feature = "fast_check")]
 pub use transform::TransformOptions;
 
+use self::type_infer::ExprInferFailCause;
+use self::type_infer::ReturnTypeInferFailCause;
+
 #[derive(Clone)]
 pub struct FastCheckDiagnosticRange {
   pub specifier: ModuleSpecifier,
   pub range: SourceRange,
   pub text_info: SourceTextInfo,
+}
+
+impl FastCheckDiagnosticRange {
+  fn into_diagnostic_range(&self) -> DiagnosticSourceRange {
+    DiagnosticSourceRange {
+      start: DiagnosticSourcePos::SourcePos(self.range.start),
+      end: DiagnosticSourcePos::SourcePos(self.range.end),
+    }
+  }
 }
 
 impl std::fmt::Debug for FastCheckDiagnosticRange {
@@ -84,11 +97,15 @@ pub enum FastCheckDiagnostic {
   },
   #[error("missing explicit type in the public API")]
   MissingExplicitType { range: FastCheckDiagnosticRange },
-  #[error("missing explicit return type in the public API")]
-  MissingExplicitReturnType {
-    range: FastCheckDiagnosticRange,
-    is_definitely_void_or_never: bool,
-    is_async: bool,
+  #[error("unknown type for variable in the public API")]
+  UnknownVarType {
+    ident: FastCheckDiagnosticRange,
+    cause: Option<Box<ExprInferFailCause>>,
+  },
+  #[error("unknown return type for function in the public API")]
+  UnknownReturnType {
+    ident: FastCheckDiagnosticRange,
+    cause: Option<Box<ReturnTypeInferFailCause>>,
   },
   #[error(
     "found an ambient module, which is a global augmentation, which are not unsupported"
@@ -159,50 +176,13 @@ pub enum FastCheckDiagnostic {
 }
 
 impl FastCheckDiagnostic {
-  /// Return a human readable description of what the range of the diagnostic
-  /// is.
-  ///
-  /// Panics if the diagnostic does not have a range.
-  pub fn range_description(&self) -> Option<&'static str> {
-    use FastCheckDiagnostic::*;
-    match self {
-      NotFoundReference { .. } => Some("this is the reference"),
-      MissingExplicitType { .. } => {
-        Some("this symbol is missing an explicit type")
-      }
-      MissingExplicitReturnType { .. } => {
-        Some("this function is missing an explicit return type")
-      }
-      UnsupportedAmbientModule { .. } => None,
-      UnsupportedComplexReference { .. } => Some("this is the reference"),
-      UnsupportedDefaultExportExpr { .. } => None,
-      UnsupportedDestructuring { .. } => None,
-      UnsupportedExpandoProperty { .. } => None,
-      UnsupportedGlobalModule { .. } => None,
-      UnsupportedRequire { .. } => None,
-      UnsupportedPrivateMemberReference { .. } => Some("this is the reference"),
-      UnsupportedSuperClassExpr { .. } => {
-        Some("this is the superclass expression")
-      }
-      UnsupportedTsExportAssignment { .. } => None,
-      UnsupportedTsNamespaceExport { .. } => None,
-      UnsupportedUsing { .. } => None,
-      UnsupportedNestedJavaScript { .. } => None,
-      UnsupportedJavaScriptEntrypoint { .. } => None,
-      Emit { .. } => None,
-      ExportNotFound { .. } => None,
-      Cached { .. } => None,
-    }
-  }
-}
-
-impl FastCheckDiagnostic {
   pub fn specifier(&self) -> &ModuleSpecifier {
     use FastCheckDiagnostic::*;
     match self {
       NotFoundReference { range, .. } => &range.specifier,
-      MissingExplicitType { range } => &range.specifier,
-      MissingExplicitReturnType { range, .. } => &range.specifier,
+      MissingExplicitType { range, .. } => &range.specifier,
+      UnknownVarType { ident, .. } => &ident.specifier,
+      UnknownReturnType { ident, .. } => &ident.specifier,
       UnsupportedAmbientModule { range } => &range.specifier,
       UnsupportedComplexReference { range, .. } => &range.specifier,
       UnsupportedDefaultExportExpr { range } => &range.specifier,
@@ -227,8 +207,9 @@ impl FastCheckDiagnostic {
     use FastCheckDiagnostic::*;
     match self {
       NotFoundReference { range, .. } => Some(range),
-      MissingExplicitType { range } => Some(range),
-      MissingExplicitReturnType { range, .. } => Some(range),
+      MissingExplicitType { range, .. } => Some(range),
+      UnknownVarType { ident, .. } => Some(ident),
+      UnknownReturnType { ident: range, .. } => Some(range),
       UnsupportedAmbientModule { range } => Some(range),
       UnsupportedComplexReference { range, .. } => Some(range),
       UnsupportedDefaultExportExpr { range } => Some(range),
@@ -256,7 +237,8 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
     match self {
       NotFoundReference { .. }
       | MissingExplicitType { .. }
-      | MissingExplicitReturnType { .. }
+      | UnknownVarType { .. }
+      | UnknownReturnType { .. }
       | UnsupportedAmbientModule { .. }
       | UnsupportedComplexReference { .. }
       | UnsupportedDefaultExportExpr { .. }
@@ -283,7 +265,8 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
     Cow::Borrowed(match self {
       NotFoundReference { .. } => "not-found-reference",
       MissingExplicitType { .. } => "missing-explicit-type",
-      MissingExplicitReturnType { .. } => "missing-explicit-return-type",
+      UnknownVarType { .. } => "unknown-var-type",
+      UnknownReturnType { .. } => "unknown-return-type",
       UnsupportedAmbientModule { .. } => "unsupported-ambient-module",
       UnsupportedComplexReference { .. } => "unsupported-complex-reference",
       UnsupportedDefaultExportExpr { .. } => "unsupported-default-export-expr",
@@ -327,18 +310,110 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
     }
   }
 
-  fn snippet(&self) -> Option<deno_ast::diagnostics::DiagnosticSnippet<'_>> {
-    self.range().map(|range| DiagnosticSnippet {
-      source: Cow::Borrowed(&range.text_info),
-      highlight: DiagnosticSnippetHighlight {
-        style: DiagnosticSnippetHighlightStyle::Error,
-        range: DiagnosticSourceRange {
-          start: DiagnosticSourcePos::SourcePos(range.range.start),
-          end: DiagnosticSourcePos::SourcePos(range.range.end),
-        },
-        description: self.range_description().map(Cow::Borrowed),
-      },
-    })
+  fn snippet(&self) -> Option<DiagnosticSnippet<'_>> {
+    fn simple<'a>(
+      range: &'a FastCheckDiagnosticRange,
+      description: Option<&'static str>,
+    ) -> DiagnosticSnippet<'a> {
+      DiagnosticSnippet {
+        source: Cow::Borrowed(&range.text_info),
+        highlights: vec![DiagnosticSnippetHighlight {
+          style: DiagnosticSnippetHighlightStyle::Error,
+          range: range.into_diagnostic_range(),
+          description: description.map(Cow::Borrowed),
+        }],
+      }
+    }
+
+    match self {
+      FastCheckDiagnostic::NotFoundReference { range, .. } => {
+        Some(simple(range, Some("this is the reference")))
+      }
+      FastCheckDiagnostic::MissingExplicitType { range } => Some(simple(
+        range,
+        Some("this symbol is missing an explicit type"),
+      )),
+      FastCheckDiagnostic::UnknownVarType { ident, cause } => {
+        if let Some(cause) = cause {
+          let mut highlights = vec![
+            DiagnosticSnippetHighlight {
+              style: DiagnosticSnippetHighlightStyle::Error,
+              range: ident.into_diagnostic_range(),
+              description: Some(Cow::Borrowed("this variable's type could not be inferred because its initializer")),
+            },
+          ];
+          cause.highlights(&mut highlights);
+
+          Some(DiagnosticSnippet {
+            source: Cow::Borrowed(&ident.text_info),
+            highlights,
+          })
+        } else {
+          Some(simple(
+            ident,
+            Some("this variable is missing an explicit type"),
+          ))
+        }
+      }
+      FastCheckDiagnostic::UnknownReturnType { ident, cause } => {
+        if let Some(cause) = cause {
+          let mut highlights = vec![];
+          cause.highlights(&mut highlights, ident, "this function", false);
+          Some(DiagnosticSnippet {
+            source: Cow::Borrowed(&ident.text_info),
+            highlights,
+          })
+        } else {
+          Some(simple(
+            ident,
+            Some("this function is missing an explicit return type"),
+          ))
+        }
+      }
+      FastCheckDiagnostic::UnsupportedAmbientModule { range } => {
+        Some(simple(range, None))
+      }
+      FastCheckDiagnostic::UnsupportedComplexReference { range, .. } => {
+        Some(simple(range, Some("this is the reference")))
+      }
+      FastCheckDiagnostic::UnsupportedDefaultExportExpr { range } => {
+        Some(simple(range, None))
+      }
+      FastCheckDiagnostic::UnsupportedDestructuring { range } => {
+        Some(simple(range, None))
+      }
+      FastCheckDiagnostic::UnsupportedExpandoProperty { range, .. } => {
+        Some(simple(range, None))
+      }
+      FastCheckDiagnostic::UnsupportedGlobalModule { range } => {
+        Some(simple(range, None))
+      }
+      FastCheckDiagnostic::UnsupportedRequire { range } => {
+        Some(simple(range, None))
+      }
+      FastCheckDiagnostic::UnsupportedPrivateMemberReference {
+        range, ..
+      } => Some(simple(range, Some("this is the reference"))),
+      FastCheckDiagnostic::UnsupportedSuperClassExpr { range } => {
+        Some(simple(range, Some("this is the superclass expression")))
+      }
+      FastCheckDiagnostic::UnsupportedTsExportAssignment { range } => {
+        Some(simple(range, None))
+      }
+      FastCheckDiagnostic::UnsupportedTsNamespaceExport { range } => {
+        Some(simple(range, None))
+      }
+      FastCheckDiagnostic::UnsupportedUsing { range } => {
+        Some(simple(range, None))
+      }
+      FastCheckDiagnostic::UnsupportedNestedJavaScript { .. } => None,
+      FastCheckDiagnostic::UnsupportedJavaScriptEntrypoint { .. } => None,
+      FastCheckDiagnostic::Emit { .. } => None,
+      FastCheckDiagnostic::ExportNotFound { .. } => None,
+      FastCheckDiagnostic::Cached { .. } => {
+        unreachable!("cached diagnostics should not be displayed")
+      }
+    }
   }
 
   fn hint(&self) -> Option<Cow<'_, str>> {
@@ -350,11 +425,16 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       MissingExplicitType { .. } => {
         Cow::Borrowed("add an explicit type annotation to the symbol")
       }
-      MissingExplicitReturnType { is_definitely_void_or_never, is_async, .. } => {
-        if *is_definitely_void_or_never {
-          Cow::Borrowed("add an explicit return type of 'void' or 'never' to the function")
-        } else if *is_async {
-          Cow::Borrowed("add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function")
+      UnknownVarType { cause, .. } => {
+        if let Some(hint) = cause.as_ref().and_then(|cause| cause.hint(" in the variable declaration initializer".into())) {
+          Cow::Owned(hint)
+        } else {
+          Cow::Borrowed("add an explicit type annotation to the variable declaration")
+        }
+      }
+      UnknownReturnType { cause, .. } => {
+        if let Some(hint) = cause.as_ref().and_then(|cause|cause.hint("function", "".into()))  {
+          Cow::Owned(hint)
         } else {
           Cow::Borrowed("add an explicit return type to the function")
         }
@@ -384,9 +464,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
     })
   }
 
-  fn snippet_fixed(
-    &self,
-  ) -> Option<deno_ast::diagnostics::DiagnosticSnippet<'_>> {
+  fn snippet_fixed(&self) -> Option<DiagnosticSnippet<'_>> {
     None
   }
 
@@ -399,15 +477,21 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       MissingExplicitType { .. } => Cow::Borrowed(&[
         Cow::Borrowed("all symbols in the public API must have an explicit type")
       ]),
-      MissingExplicitReturnType { is_definitely_void_or_never, is_async, .. } => {
-        let mut lines = vec![Cow::Borrowed("all functions in the public API must have an explicit return type")];
-        if *is_definitely_void_or_never {
-          if *is_async {
-            lines.push(Cow::Borrowed("async function expressions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'"));
-          } else {
-            lines.push(Cow::Borrowed("function expressions without a return statement can have a return type of either 'void' or 'never'"));
-          }
-          lines.push(Cow::Borrowed("this function has no return statements, so a return type could not be inferred automatically"));
+      UnknownVarType { cause, .. } => {
+        let mut lines = vec![Cow::Borrowed("all variables in the public API must have a known type")];
+        if let Some(cause) = cause {
+          cause.info(&mut lines);
+        } else {
+          lines.push(Cow::Borrowed("variables without an initializer can not infer a type"));
+        }
+        Cow::Owned(lines)
+      },
+      UnknownReturnType { cause, .. } => {
+        let mut lines = vec![Cow::Borrowed("all functions in the public API must have an known return type")];
+        if let Some(cause) = cause {
+          cause.info(&mut lines, "a function declaration");
+        } else {
+          lines.push(Cow::Borrowed("functions without a body can not infer a return type from the return value"));
         }
         Cow::Owned(lines)
       },
@@ -629,7 +713,8 @@ fn transform_package(
         .module_from_specifier(&specifier)
         .unwrap_or_else(|| panic!("module not found: {}", specifier));
       if let Some(module_info) = module_info.esm() {
-        transform::transform(graph, module_info, &ranges, options).map(Some)
+        transform::transform(graph, module_info, root_symbol, &ranges, options)
+          .map(Some)
       } else {
         Ok(None) // nothing to transform
       }

@@ -62,14 +62,14 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  export const symbols = {
-    writable: function(): void {},
-    readable: 1234
+  export declare const symbols: {
+    writable: () => void;
+    readable: number;
   };
   export type Status = typeof symbols.writable;
   --- DTS ---
   export declare const symbols: {
-    readonly writable: () => void;
-    readonly readable: number;
+    writable: () => void;
+    readable: number;
   };
   export type Status = typeof symbols.writable;

@@ -9,8 +9,8 @@ use crate::FastCheckDiagnostic;
 use crate::FastCheckDiagnosticRange;
 
 use super::swc_helpers::any_type_ann;
-use super::swc_helpers::maybe_lit_to_ts_type;
-use super::swc_helpers::maybe_lit_to_ts_type_const;
+use super::swc_helpers::lit_to_ts_type;
+use super::swc_helpers::lit_to_ts_type_const;
 use super::swc_helpers::ts_readonly;
 use super::swc_helpers::ts_tuple_element;
 use super::swc_helpers::type_ann;
@@ -409,9 +409,9 @@ impl<'a> FastCheckDtsTransformer<'a> {
       }
       Expr::Lit(lit) => {
         if as_const {
-          maybe_lit_to_ts_type_const(&lit)
+          Some(lit_to_ts_type_const(&lit))
         } else {
-          maybe_lit_to_ts_type(&lit)
+          Some(lit_to_ts_type(&lit))
         }
       }
       Expr::TsConstAssertion(ts_const) => {

@@ -1,0 +1,102 @@
+~~ {"workspaceFastCheck":true} ~~
+# workspace_members
+[
+  {
+    "base": "file:///",
+    "nv": "@scope/a@1.0.0",
+    "exports": {
+      ".": "./mod.ts"
+    }
+  }
+]
+
+# mod.ts
+// Arrow functions can not be generator functions
+
+export const b = function*() {
+}
+
+export function* c() {
+}
+
+export class D {
+  *d() {
+  }
+}
+
+export const e = {
+  *e() {
+  }
+};
+
+
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "size": 181,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
+
+Fast check file:///mod.ts:
+  error[unknown-var-type]: unknown type for variable in the public API
+   --> /mod.ts:3:14
+    |
+  3 | export const b = function*() {
+    |              ^ this variable's type could not be inferred because its initializer
+    |              - contains this function expression, which is missing an explicit return type annotation
+    |
+    = hint: add an explicit return type annotation to the function expression in the variable declaration initializer
+
+    info: all variables in the public API must have a known type
+    info: a function expression that is a generator must have an explicit return type annotation because the return type can not be inferred without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-return-type]: unknown return type for function in the public API
+   --> /mod.ts:6:18
+    |
+  6 | export function* c() {
+    |                  - this function is missing an explicit return type annotation
+    |
+    = hint: add an explicit return type to the function
+
+    info: all functions in the public API must have an known return type
+    info: a function declaration that is a generator must have an explicit return type annotation because the return type can not be inferred without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-return-type
+
+  error[unknown-return-type]: unknown return type for function in the public API
+    --> /mod.ts:10:4
+     |
+  10 |   *d() {
+     |    - this function is missing an explicit return type annotation
+     |
+     = hint: add an explicit return type to the function
+
+    info: all functions in the public API must have an known return type
+    info: a function declaration that is a generator must have an explicit return type annotation because the return type can not be inferred without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-return-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:14:14
+     |
+  14 | export const e = {
+     |              ^ this variable's type could not be inferred because its initializer
+     |
+  15 |   *e() {
+     |    - contains this object method, which is missing an explicit return type annotation
+     |
+     = hint: add an explicit return type annotation to the object method in the variable declaration initializer
+
+    info: all variables in the public API must have a known type
+    info: an object method that is a generator must have an explicit return type annotation because the return type can not be inferred without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+

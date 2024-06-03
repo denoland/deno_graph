@@ -42,8 +42,10 @@ use deno_ast::swc::ast::VarDeclarator;
 use deno_ast::swc::visit::Visit;
 use deno_ast::swc::visit::VisitWith;
 
-use super::swc_helpers::ts_entity_name_to_parts;
-use super::swc_helpers::ts_qualified_name_parts;
+use crate::swc_helpers::analyze_return_stmts_in_function_body;
+use crate::swc_helpers::ts_entity_name_to_parts;
+use crate::swc_helpers::ts_qualified_name_parts;
+
 use super::ExportDeclRef;
 use super::SymbolNodeRef;
 
@@ -129,6 +131,7 @@ impl DepsFiller {
         self.visit_expr(&n.expr);
       }
       SymbolNodeRef::FnDecl(n) => self.visit_function(&n.function),
+      SymbolNodeRef::Param(_) => {}
       SymbolNodeRef::TsEnum(n) => {
         self.visit_ts_enum_decl(n);
       }
@@ -341,6 +344,55 @@ impl Visit for DepsFiller {
     }
     if let Some(return_type) = &n.return_type {
       self.visit_ts_type_ann(return_type);
+    } else if let Some(body) = &n.body {
+      match analyze_return_stmts_in_function_body(body) {
+        crate::swc_helpers::ReturnStatementAnalysis::Single(return_stmt) => {
+          if let Some(arg) = &return_stmt.arg {
+            let visited_type_assertion = self.visit_type_if_type_assertion(arg);
+            if !visited_type_assertion && self.mode.visit_exprs() {
+              self.visit_expr(arg);
+            }
+          }
+        }
+        _ => {}
+      }
+    }
+  }
+
+  fn visit_arrow_expr(&mut self, n: &ArrowExpr) {
+    if let Some(type_params) = &n.type_params {
+      self.visit_ts_type_param_decl(type_params);
+    }
+    for param in &n.params {
+      self.visit_pat(param);
+    }
+    if let Some(return_type) = &n.return_type {
+      self.visit_ts_type_ann(return_type);
+    } else {
+      match &*n.body {
+        BlockStmtOrExpr::BlockStmt(body) => {
+          match analyze_return_stmts_in_function_body(body) {
+            crate::swc_helpers::ReturnStatementAnalysis::Single(
+              return_stmt,
+            ) => {
+              if let Some(arg) = &return_stmt.arg {
+                let visited_type_assertion =
+                  self.visit_type_if_type_assertion(arg);
+                if !visited_type_assertion && self.mode.visit_exprs() {
+                  self.visit_expr(arg);
+                }
+              }
+            }
+            _ => {}
+          }
+        }
+        BlockStmtOrExpr::Expr(expr) => {
+          let visited_type_assertion = self.visit_type_if_type_assertion(expr);
+          if !visited_type_assertion && self.mode.visit_exprs() {
+            self.visit_expr(expr);
+          }
+        }
+      }
     }
   }
 

@@ -12,30 +12,35 @@
 
 # mod.ts
 export const a = () => {
+  return 2;
 }
 
 export const b = function() {
+  return 2;
 }
 
 export function c() {
+  return 2;
 }
 
 export class D {
   d() {
+    return 2;
   }
 }
 
 export const e = {
   e() {
+    return 2;
   }
 };
 
-// TODO: these are not yet handled
+// TODO: we don't support this at all
 // export const f = class {
 //   f() {
+//     return 2;
 //   }
 // };
-
 
 # output
 {
@@ -45,7 +50,7 @@ export const e = {
   "modules": [
     {
       "kind": "esm",
-      "size": 241,
+      "size": 324,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
     }
@@ -55,22 +60,26 @@ export const e = {
 
 Fast check file:///mod.ts:
   {}
-  export declare const a: () => void;
-  export declare const b: () => void;
-  export function c(): void {}
+  export declare const a: () => number;
+  export declare const b: () => number;
+  export function c(): number {
+    return {} as never;
+  }
   export class D {
-    d(): void {}
+    d(): number {
+      return {} as never;
+    }
   }
   export declare const e: {
-    e(): void;
+    e(): number;
   };
   --- DTS ---
-  export declare const a: () => void;
-  export declare const b: () => void;
-  export declare function c(): void;
+  export declare const a: () => number;
+  export declare const b: () => number;
+  export declare function c(): number;
   export declare class D {
-    d(): void;
+    d(): number;
   }
   export declare const e: {
-    e(): void;
+    e(): number;
   };

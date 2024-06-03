@@ -1,8 +1,7 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
-use std::ops::ControlFlow;
-
 use deno_ast::swc::ast::*;
+use deno_ast::swc::common::SyntaxContext;
 use deno_ast::swc::common::DUMMY_SP;
 
 pub fn ident(name: String) -> Ident {
@@ -18,101 +17,6 @@ pub fn ts_keyword_type(kind: TsKeywordTypeKind) -> TsType {
     span: DUMMY_SP,
     kind,
   })
-}
-
-#[derive(Debug)]
-pub enum ReturnStatementAnalysis {
-  /// There are no return statements in the function body.
-  None,
-  /// There are only return statements without arguments in the function body,
-  /// or if the function body is empty.
-  Void,
-  /// There is only a single return statement in the function body, and it has
-  /// an argument.
-  Single(ReturnStmt),
-  /// There are multiple return statements in the function body, and at least
-  /// one of them has an argument.
-  Multiple,
-}
-
-pub fn analyze_return_stmts_in_function_body(
-  body: &deno_ast::swc::ast::BlockStmt,
-) -> ReturnStatementAnalysis {
-  if body.stmts.is_empty() {
-    ReturnStatementAnalysis::Void
-  } else {
-    let mut analysis = ReturnStatementAnalysis::None;
-    analyze_return_stmts_from_stmts(&body.stmts, &mut analysis);
-    analysis
-  }
-}
-
-fn analyze_return_stmts_from_stmts(
-  stmts: &[Stmt],
-  analysis: &mut ReturnStatementAnalysis,
-) -> ControlFlow<(), ()> {
-  for stmt in stmts {
-    analyze_return_stmts_from_stmt(stmt, analysis)?;
-  }
-  ControlFlow::Continue(())
-}
-
-fn analyze_return_stmts_from_stmt(
-  stmt: &Stmt,
-  analysis: &mut ReturnStatementAnalysis,
-) -> ControlFlow<(), ()> {
-  match stmt {
-    Stmt::Block(n) => analyze_return_stmts_from_stmts(&n.stmts, analysis),
-    Stmt::With(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
-    Stmt::Return(n) => {
-      match (&n.arg, &*analysis) {
-        (None, ReturnStatementAnalysis::None) => {
-          *analysis = ReturnStatementAnalysis::Void;
-        }
-        (None, ReturnStatementAnalysis::Void) => {}
-        (Some(_), ReturnStatementAnalysis::None)
-        | (Some(_), ReturnStatementAnalysis::Void) => {
-          *analysis = ReturnStatementAnalysis::Single(n.clone());
-        }
-        (_, ReturnStatementAnalysis::Single(_)) => {
-          *analysis = ReturnStatementAnalysis::Multiple;
-          return ControlFlow::Break(());
-        }
-        (_, ReturnStatementAnalysis::Multiple) => unreachable!(), // we break early when analysis is Multiple
-      }
-      ControlFlow::Continue(())
-    }
-    Stmt::Labeled(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
-    Stmt::If(n) => analyze_return_stmts_from_stmt(&n.cons, analysis),
-    Stmt::Switch(n) => {
-      for case in &n.cases {
-        analyze_return_stmts_from_stmts(&case.cons, analysis)?;
-      }
-      ControlFlow::Continue(())
-    }
-    Stmt::Try(n) => {
-      analyze_return_stmts_from_stmts(&n.block.stmts, analysis)?;
-      if let Some(n) = &n.handler {
-        analyze_return_stmts_from_stmts(&n.body.stmts, analysis)?;
-      }
-      if let Some(n) = &n.finalizer {
-        analyze_return_stmts_from_stmts(&n.stmts, analysis)?;
-      }
-      ControlFlow::Continue(())
-    }
-    Stmt::While(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
-    Stmt::DoWhile(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
-    Stmt::For(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
-    Stmt::ForIn(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
-    Stmt::ForOf(n) => analyze_return_stmts_from_stmt(&n.body, analysis),
-    Stmt::Break(_)
-    | Stmt::Continue(_)
-    | Stmt::Throw(_)
-    | Stmt::Debugger(_)
-    | Stmt::Decl(_)
-    | Stmt::Expr(_)
-    | Stmt::Empty(_) => ControlFlow::Continue(()),
-  }
 }
 
 pub fn is_void_type(return_type: &TsType) -> bool {
@@ -172,28 +76,122 @@ pub fn ts_tuple_element(ts_type: TsType) -> TsTupleElement {
   }
 }
 
-pub fn maybe_lit_to_ts_type_const(lit: &Lit) -> Option<TsType> {
+pub fn lit_to_ts_type_const(lit: &Lit) -> TsType {
   match lit {
-    Lit::Str(lit_str) => Some(ts_lit_type(TsLit::Str(lit_str.clone()))),
-    Lit::Bool(lit_bool) => Some(ts_lit_type(TsLit::Bool(*lit_bool))),
-    Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
-    Lit::Num(lit_num) => Some(ts_lit_type(TsLit::Number(lit_num.clone()))),
-    Lit::BigInt(lit_bigint) => {
-      Some(ts_lit_type(TsLit::BigInt(lit_bigint.clone())))
+    Lit::Str(lit_str) => ts_lit_type(TsLit::Str(lit_str.clone())),
+    Lit::Bool(lit_bool) => ts_lit_type(TsLit::Bool(*lit_bool)),
+    Lit::Null(_) => ts_keyword_type(TsKeywordTypeKind::TsNullKeyword),
+    Lit::Num(lit_num) => ts_lit_type(TsLit::Number(lit_num.clone())),
+    Lit::BigInt(lit_bigint) => ts_lit_type(TsLit::BigInt(lit_bigint.clone())),
+    Lit::Regex(_) => regex_type(),
+    Lit::JSXText(_) => {
+      unreachable!("jsx text can only happen inside of jsx elements")
     }
-    Lit::Regex(_) => Some(regex_type()),
-    Lit::JSXText(_) => None,
   }
 }
 
-pub fn maybe_lit_to_ts_type(lit: &Lit) -> Option<TsType> {
+pub fn lit_to_ts_type(lit: &Lit) -> TsType {
   match lit {
-    Lit::Str(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsStringKeyword)),
-    Lit::Bool(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsBooleanKeyword)),
-    Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
-    Lit::Num(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword)),
-    Lit::BigInt(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsBigIntKeyword)),
-    Lit::Regex(_) => Some(regex_type()),
-    Lit::JSXText(_) => None,
+    Lit::Str(_) => ts_keyword_type(TsKeywordTypeKind::TsStringKeyword),
+    Lit::Bool(_) => ts_keyword_type(TsKeywordTypeKind::TsBooleanKeyword),
+    Lit::Null(_) => ts_keyword_type(TsKeywordTypeKind::TsNullKeyword),
+    Lit::Num(_) => ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword),
+    Lit::BigInt(_) => ts_keyword_type(TsKeywordTypeKind::TsBigIntKeyword),
+    Lit::Regex(_) => regex_type(),
+    Lit::JSXText(_) => {
+      unreachable!("jsx text can only happen inside of jsx elements")
+    }
   }
+}
+
+pub fn prop_name_to_ts_key(
+  prop_name: &PropName,
+) -> (Box<Expr>, /* computed */ bool) {
+  match prop_name {
+    PropName::Ident(ident) => (Box::new(Expr::Ident(ident.clone())), false),
+    PropName::Str(str) => match Ident::verify_symbol(str.value.as_str()) {
+      Ok(_) => (
+        Box::new(Expr::Ident(Ident::new(str.value.clone(), str.span))),
+        false,
+      ),
+      Err(_) => (Box::new(Expr::Lit(Lit::Str(str.clone()))), false),
+    },
+    PropName::Num(num) => (Box::new(Expr::Lit(Lit::Num(num.clone()))), false),
+    PropName::Computed(expr) => {
+      // We leave the expression as is. See also https://github.com/microsoft/TypeScript/issues/58533
+      (expr.expr.clone(), true)
+    }
+    PropName::BigInt(bigint) => {
+      (Box::new(Expr::Lit(Lit::BigInt(bigint.clone()))), false)
+    }
+  }
+}
+
+pub fn void_or_promise_void(is_async: bool) -> Box<TsType> {
+  let void_type = Box::new(ts_keyword_type(TsKeywordTypeKind::TsVoidKeyword));
+  if is_async {
+    Box::new(TsType::TsTypeRef(TsTypeRef {
+      span: DUMMY_SP,
+      type_name: TsEntityName::Ident(Ident::new("Promise".into(), DUMMY_SP)),
+      type_params: Some(Box::new(TsTypeParamInstantiation {
+        span: DUMMY_SP,
+        params: vec![void_type],
+      })),
+    }))
+  } else {
+    void_type
+  }
+}
+
+pub fn is_param_pat_optional(pat: &Pat) -> bool {
+  match pat {
+    Pat::Ident(ident) => ident.optional,
+    Pat::Array(a) => a.optional,
+    Pat::Object(o) => o.optional,
+    Pat::Assign(_) | Pat::Rest(_) => true,
+    Pat::Invalid(_) | Pat::Expr(_) => false,
+  }
+}
+
+/// Looks if the call expr is `Symbol("example")` or `Symbol.for("example")`
+pub fn is_call_expr_symbol_create(
+  call_expr: &CallExpr,
+  unresolved_context: SyntaxContext,
+) -> bool {
+  let Some(expr) = call_expr.callee.as_expr() else {
+    return false;
+  };
+  let (expr_ident, is_for) = match &**expr {
+    Expr::Ident(ident) => (ident, false),
+    Expr::Member(member_expr) => {
+      let Some(ident) = member_expr.obj.as_ident() else {
+        return false;
+      };
+      let Some(prop_ident) = member_expr.prop.as_ident() else {
+        return false;
+      };
+      if prop_ident.sym != "for" {
+        return false;
+      }
+      (ident, true)
+    }
+    _ => return false,
+  };
+
+  let is_symbol_global =
+    expr_ident.sym == "Symbol" && expr_ident.to_id().1 == unresolved_context;
+  if !is_symbol_global {
+    return false;
+  }
+  if !is_for && call_expr.args.is_empty() {
+    return true;
+  }
+  if call_expr.args.len() != 1 {
+    return false;
+  }
+  let Some(arg_lit) = call_expr.args.first().and_then(|a| a.expr.as_lit())
+  else {
+    return false;
+  };
+  matches!(arg_lit, Lit::Str(_))
 }

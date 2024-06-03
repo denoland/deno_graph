@@ -1,0 +1,359 @@
+~~ {"workspaceFastCheck":true} ~~
+# workspace_members
+[
+  {
+    "base": "file:///",
+    "nv": "@scope/a@1.0.0",
+    "exports": {
+      ".": "./mod.ts"
+    }
+  }
+]
+
+# mod.ts
+export const tplExpr = `asd ${"asd"}`;
+
+export const arr = [1, 2, 3];
+
+export const call = fetch();
+
+export const objSpread = { ...{ a: 1 } };
+export const objShorthand = { globalThis };
+
+export const tupleSpread = [1, ...[2, 3]] as const;
+
+export const fnExpr = function (a): void {};
+export const fnExpr2 = function () { return globalThis };
+export const fnExpr3 = function (a?: string, b: string): void { };
+export const fnExpr4 = function (a = "asd", b: string): void { };
+
+export const arrowExpr = (a): void => {};
+export const arrowExpr2 = () => globalThis;
+export const arrowExpr3 = (a?: string, b: string): void => { };
+export const arrowExpr4 = (a = "asd", b: string): void => { };
+
+export const getter = {
+  get a() {
+    return globalThis;
+  }
+};
+export const setter = {
+  set a(value) {
+  }
+};
+export const method = {
+  a(): void {
+    return globalThis;
+  }
+};
+export const method2 = {
+  a(val): void {
+  }
+};
+export const method3 = {
+  a(val?: string, b: string): void {
+  }
+};
+export const method4 = {
+  a(val = "asd", b: string): void {
+  }
+};
+
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "size": 1061,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
+
+Fast check file:///mod.ts:
+  error[unknown-var-type]: unknown type for variable in the public API
+   --> /mod.ts:1:14
+    |
+  1 | export const tplExpr = `asd ${"asd"}`;
+    |              ^^^^^^^ this variable's type could not be inferred because its initializer
+    |                               ----- contains this expression in a template literal, which can not be inferred
+    |
+    = hint: add an explicit type annotation to the variable declaration
+
+    info: all variables in the public API must have a known type
+    info: expressions in template literals can not be inferred because the type of the resulting string can not be narrowed without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+   --> /mod.ts:3:14
+    |
+  3 | export const arr = [1, 2, 3];
+    |              ^^^ this variable's type could not be inferred because its initializer
+    |                    --------- contains this array literal, which can not be inferred unless marked 'as const'
+    |
+    = hint: add an explicit type annotation to the variable declaration
+
+    info: all variables in the public API must have a known type
+    info: array literals without 'as const' can not be inferred because the type of the array can not be narrowed without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+   --> /mod.ts:5:14
+    |
+  5 | export const call = fetch();
+    |              ^^^^ this variable's type could not be inferred because its initializer
+    |                     ------- contains this expression, of which the type could not be inferred
+    |
+    = hint: add an explicit type annotation to the variable declaration
+
+    info: all variables in the public API must have a known type
+    info: the type of arbitrary expressions can not be inferred without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+   --> /mod.ts:7:14
+    |
+  7 | export const objSpread = { ...{ a: 1 } };
+    |              ^^^^^^^^^ this variable's type could not be inferred because its initializer
+    |                            --- contains this spread property, which can not be inferred
+    |
+    = hint: add an explicit type annotation to the variable declaration
+
+    info: all variables in the public API must have a known type
+    info: spread properties can not be inferred because the type of the resulting object can not be narrowed without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+   --> /mod.ts:8:14
+    |
+  8 | export const objShorthand = { globalThis };
+    |              ^^^^^^^^^^^^ this variable's type could not be inferred because its initializer
+    |                               ---------- contains this shorthand property, which can not be inferred
+    |
+    = hint: add an explicit type annotation to the variable declaration
+
+    info: all variables in the public API must have a known type
+    info: shorthand properties can not be inferred because the type of the value referred to by the shorthand property is not known without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:10:14
+     |
+  10 | export const tupleSpread = [1, ...[2, 3]] as const;
+     |              ^^^^^^^^^^^ this variable's type could not be inferred because its initializer
+     |                                --- contains this spread element, which can not be inferred
+     |
+     = hint: add an explicit type annotation to the variable declaration
+
+    info: all variables in the public API must have a known type
+    info: spread elements can not be inferred because the type of the resulting array can not be narrowed without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:12:14
+     |
+  12 | export const fnExpr = function (a): void {};
+     |              ^^^^^^ this variable's type could not be inferred because its initializer
+     |              ------ contains this function expression
+     |                                 - which has this parameter, the type of which could not be inferred from the default value
+     |
+     = hint: add an explicit type annotation to the function expression parameter in the variable declaration initializer
+
+    info: all variables in the public API must have a known type
+    info: all parameters of a function expression must have an explicit type annotation or an inferrable default value
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:13:14
+     |
+  13 | export const fnExpr2 = function () { return globalThis };
+     |              ^^^^^^^ this variable's type could not be inferred because its initializer
+     |              ------- contains this function expression, of which the return type could not be inferred
+     |                                      ------ because the value returned here
+     |                                             ---------- contains this expression, of which the type could not be inferred
+     |
+     = hint: add an explicit return type annotation to the function expression in the variable declaration initializer
+
+    info: all variables in the public API must have a known type
+    info: the type of arbitrary expressions can not be inferred without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:14:14
+     |
+  14 | export const fnExpr3 = function (a?: string, b: string): void { };
+     |              ^^^^^^^ this variable's type could not be inferred because its initializer
+     |              ------- contains this function expression
+     |                                              - which has this required parameter following an optional parameter or a parameter with a default value
+     |
+     = hint: make the function expression parameter in the variable declaration initializer optional or provide a default value
+
+    info: all variables in the public API must have a known type
+    info: all required parameters of a function expression must precede optional parameters or parameters with default values
+    info: this is because to compute the type of a optional parameter that is followed by a required parameter, a type checker is needed
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:15:14
+     |
+  15 | export const fnExpr4 = function (a = "asd", b: string): void { };
+     |              ^^^^^^^ this variable's type could not be inferred because its initializer
+     |              ------- contains this function expression
+     |                                             - which has this required parameter following an optional parameter or a parameter with a default value
+     |
+     = hint: make the function expression parameter in the variable declaration initializer optional or provide a default value
+
+    info: all variables in the public API must have a known type
+    info: all required parameters of a function expression must precede optional parameters or parameters with default values
+    info: this is because to compute the type of a optional parameter that is followed by a required parameter, a type checker is needed
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:17:14
+     |
+  17 | export const arrowExpr = (a): void => {};
+     |              ^^^^^^^^^ this variable's type could not be inferred because its initializer
+     |              --------- contains this arrow expression
+     |                           - which has this parameter, the type of which could not be inferred from the default value
+     |
+     = hint: add an explicit type annotation to the arrow expression parameter in the variable declaration initializer
+
+    info: all variables in the public API must have a known type
+    info: all parameters of an arrow expression must have an explicit type annotation or an inferrable default value
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:18:14
+     |
+  18 | export const arrowExpr2 = () => globalThis;
+     |              ^^^^^^^^^^ this variable's type could not be inferred because its initializer
+     |              ---------- contains this arrow expression, of which the return type could not be inferred from the returned value
+     |                                 ---------- contains this expression, of which the type could not be inferred
+     |
+     = hint: add an explicit return type annotation to the arrow expression in the variable declaration initializer
+
+    info: all variables in the public API must have a known type
+    info: the type of arbitrary expressions can not be inferred without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:19:14
+     |
+  19 | export const arrowExpr3 = (a?: string, b: string): void => { };
+     |              ^^^^^^^^^^ this variable's type could not be inferred because its initializer
+     |              ---------- contains this arrow expression
+     |                                        --------- which has this required parameter following an optional parameter or a parameter with a default value
+     |
+     = hint: make the arrow expression parameter in the variable declaration initializer optional or provide a default value
+
+    info: all variables in the public API must have a known type
+    info: all required parameters of an arrow expression must precede optional parameters or parameters with default values
+    info: this is because to compute the type of a optional parameter that is followed by a required parameter, a type checker is needed
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:20:14
+     |
+  20 | export const arrowExpr4 = (a = "asd", b: string): void => { };
+     |              ^^^^^^^^^^ this variable's type could not be inferred because its initializer
+     |              ---------- contains this arrow expression
+     |                                       --------- which has this required parameter following an optional parameter or a parameter with a default value
+     |
+     = hint: make the arrow expression parameter in the variable declaration initializer optional or provide a default value
+
+    info: all variables in the public API must have a known type
+    info: all required parameters of an arrow expression must precede optional parameters or parameters with default values
+    info: this is because to compute the type of a optional parameter that is followed by a required parameter, a type checker is needed
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:22:14
+     |
+  22 | export const getter = {
+     |              ^^^^^^ this variable's type could not be inferred because its initializer
+     |
+  23 |   get a() {
+     |       - contains this object getter, of which the return type could not be inferred
+     |
+  24 |     return globalThis;
+     |     ------ because the value returned here
+     |            ---------- contains this expression, of which the type could not be inferred
+     |
+     = hint: add an explicit return type annotation to the object getter in the variable declaration initializer
+
+    info: all variables in the public API must have a known type
+    info: the type of arbitrary expressions can not be inferred without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:27:14
+     |
+  27 | export const setter = {
+     |              ^^^^^^ this variable's type could not be inferred because its initializer
+     |
+  28 |   set a(value) {
+     |       - contains this object setter
+     |         ----- which has this parameter, the type of which could not be inferred from the default value
+     |
+     = hint: add an explicit type annotation to the object setter parameter in the variable declaration initializer
+
+    info: all variables in the public API must have a known type
+    info: all parameters of an object setter must have an explicit type annotation or an inferrable default value
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:36:14
+     |
+  36 | export const method2 = {
+     |              ^^^^^^^ this variable's type could not be inferred because its initializer
+     |
+  37 |   a(val): void {
+     |   - contains this object method
+     |     --- which has this parameter, the type of which could not be inferred from the default value
+     |
+     = hint: add an explicit type annotation to the object method parameter in the variable declaration initializer
+
+    info: all variables in the public API must have a known type
+    info: all parameters of an object method must have an explicit type annotation or an inferrable default value
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:40:14
+     |
+  40 | export const method3 = {
+     |              ^^^^^^^ this variable's type could not be inferred because its initializer
+     |
+  41 |   a(val?: string, b: string): void {
+     |   - contains this object method
+     |                   - which has this required parameter following an optional parameter or a parameter with a default value
+     |
+     = hint: make the object method parameter in the variable declaration initializer optional or provide a default value
+
+    info: all variables in the public API must have a known type
+    info: all required parameters of an object method must precede optional parameters or parameters with default values
+    info: this is because to compute the type of a optional parameter that is followed by a required parameter, a type checker is needed
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> /mod.ts:44:14
+     |
+  44 | export const method4 = {
+     |              ^^^^^^^ this variable's type could not be inferred because its initializer
+     |
+  45 |   a(val = "asd", b: string): void {
+     |   - contains this object method
+     |                  - which has this required parameter following an optional parameter or a parameter with a default value
+     |
+     = hint: make the object method parameter in the variable declaration initializer optional or provide a default value
+
+    info: all variables in the public API must have a known type
+    info: all required parameters of an object method must precede optional parameters or parameters with default values
+    info: this is because to compute the type of a optional parameter that is followed by a required parameter, a type checker is needed
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+

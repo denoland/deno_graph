@@ -11,17 +11,10 @@
 ]
 
 # mod.ts
-declare function exit(): never;
-
-export function c() {
-  exit();
-}
-
-export class D {
-  d() {
-    exit();
-  }
-}
+// export function a() {
+//   var x = "";
+//   return {} as typeof x;
+// };
 
 # output
 {
@@ -31,7 +24,7 @@ export class D {
   "modules": [
     {
       "kind": "esm",
-      "size": 111,
+      "size": 179,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
     }
@@ -41,12 +34,14 @@ export class D {
 
 Fast check file:///mod.ts:
   {}
-  export function c(): void {}
-  export class D {
-    d(): void {}
+  declare const Y: X;
+  interface X {
+    y: string;
   }
+  export declare const a: (b: string, c?: typeof Y.z) => void;
   --- DTS ---
-  export declare function c(): void;
-  export declare class D {
-    d(): void;
+  declare const Y: X;
+  interface X {
+    y: string;
   }
+  export declare const a: (b: string, c?: typeof Y.z) => void;

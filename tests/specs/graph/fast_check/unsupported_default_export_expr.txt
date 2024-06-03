@@ -65,8 +65,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     |
   3 | export default {
     | ^^^^^^^^^^^^^^^^
+    |
   4 |   test: new Class(),
     | ^^^^^^^^^^^^^^^^^^^^
+    |
   5 | };
     | ^^
     = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable

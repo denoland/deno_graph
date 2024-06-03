@@ -1,0 +1,160 @@
+~~ {"workspaceFastCheck":true} ~~
+# workspace_members
+[
+  {
+    "base": "file:///",
+    "nv": "@scope/a@1.0.0",
+    "exports": {
+      ".": "./mod.ts"
+    }
+  }
+]
+
+# mod.ts
+export const str = "str";
+export let str2 = "str";
+export const num = 1;
+export let num2 = 1;
+export const bool = true;
+export let bool2 = true;
+export const regexp = /./;
+export let regexp2 = /./;
+export const bigint = 1n;
+export let bigint2 = 1n;
+export const symbol = Symbol("");
+export const symbol2 = Symbol.for("");
+export const symbol3 = Symbol();
+export let symbol4 = Symbol("");
+export let symbol5 = Symbol.for("");
+export let symbol6 = Symbol();
+export const tpl = `tpl`;
+export let tpl2 = `tpl`;
+export let tpl3 = `tpl ${globalThis}`;
+export const nul = null;
+export let nul2 = null;
+export const undef = undefined;
+export let undef2 = undefined;
+
+export const paren = (1);
+export let paren2 = (1);
+
+export const satisfies = 1 satisfies number;
+export let satisfies2 = 1 satisfies 1;
+
+export const sequence = (1, 2);
+
+let assign: string;
+export const assign2 = assign = 1;
+
+export const assertion = globalThis as 2;
+export const assertion2 = <2> globalThis;
+
+export const obj = { a: 1, 1: 2, "3": 3 };
+export const obj2 = {
+  get str() { return "" },
+  set str(v: string) {},
+  method(): string {}
+};
+
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "size": 1113,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
+
+Fast check file:///mod.ts:
+  {}
+  export declare const str = "str";
+  export declare let str2: string;
+  export declare const num = 1;
+  export declare let num2: number;
+  export declare const bool = true;
+  export declare let bool2: boolean;
+  export declare const regexp: RegExp;
+  export declare let regexp2: RegExp;
+  export declare const bigint = 1n;
+  export declare let bigint2: bigint;
+  export declare const symbol: unique symbol;
+  export declare const symbol2: unique symbol;
+  export declare const symbol3: unique symbol;
+  export declare let symbol4: symbol;
+  export declare let symbol5: symbol;
+  export declare let symbol6: symbol;
+  export declare const tpl = "tpl";
+  export declare let tpl2: string;
+  export declare let tpl3: string;
+  export declare const nul: null;
+  export declare let nul2: null;
+  export declare const undef: undefined;
+  export declare let undef2: undefined;
+  export declare const paren = 1;
+  export declare let paren2: number;
+  export declare const satisfies = 1;
+  export declare let satisfies2: number;
+  export declare const sequence = 2;
+  export declare const assign2 = 1;
+  export declare const assertion = 2;
+  export declare const assertion2 = 2;
+  export declare const obj: {
+    a: number;
+    1: number;
+    "3": number;
+  };
+  export declare const obj2: {
+    get str(): string;
+    set str(v: string);
+    method(): string;
+  };
+  --- DTS ---
+  export declare const str: string;
+  export declare let str2: string;
+  export declare const num: number;
+  export declare let num2: number;
+  export declare const bool: boolean;
+  export declare let bool2: boolean;
+  export declare const regexp: RegExp;
+  export declare let regexp2: RegExp;
+  export declare const bigint: bigint;
+  export declare let bigint2: bigint;
+  export declare const symbol: unique symbol;
+  export declare const symbol2: unique symbol;
+  export declare const symbol3: unique symbol;
+  export declare let symbol4: symbol;
+  export declare let symbol5: symbol;
+  export declare let symbol6: symbol;
+  export declare const tpl: string;
+  export declare let tpl2: string;
+  export declare let tpl3: string;
+  export declare const nul: null;
+  export declare let nul2: null;
+  export declare const undef: undefined;
+  export declare let undef2: undefined;
+  export declare const paren: number;
+  export declare let paren2: number;
+  export declare const satisfies: number;
+  export declare let satisfies2: number;
+  export declare const sequence: number;
+  export declare const assign2: number;
+  export declare const assertion: number;
+  export declare const assertion2: number;
+  export declare const obj: {
+    a: number;
+    1: number;
+    "3": number;
+  };
+  export declare const obj2: {
+    get str(): string;
+    set str(v: string);
+    method(): string;
+  };

@@ -1,10 +1,9 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
 use std::collections::BTreeMap;
-use std::panic::AssertUnwindSafe;
-
 use std::collections::HashMap;
 use std::fmt::Write;
+use std::panic::AssertUnwindSafe;
 
 use deno_ast::diagnostics::Diagnostic;
 use deno_ast::emit;

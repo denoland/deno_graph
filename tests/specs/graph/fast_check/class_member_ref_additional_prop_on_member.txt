@@ -67,10 +67,13 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     |
   5 | class MyClass {
     | ^^^^^^^^^^^^^^^
+    |
   6 |   member: string;
     | ^^^^^^^^^^^^^^^^^
+    |
   7 | }
     | ^ this is the reference
+    |
     = hint: extract the shared type to a type alias and reference the type alias instead
 
     info: the reference was too complex to be resolved by fast check

@@ -29,12 +29,11 @@ export class D {
   }
 }
 
-// TODO: these are not yet handled
-// export const e = {
-//   e() {
-//     return;
-//   }
-// };
+export const e = {
+  e() {
+    return;
+  }
+};
 
 // TODO: these are not yet handled
 // export const f = class {
@@ -52,7 +51,7 @@ export class D {
   "modules": [
     {
       "kind": "esm",
-      "size": 360,
+      "size": 310,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
     }
@@ -62,12 +61,15 @@ export class D {
 
 Fast check file:///mod.ts:
   {}
-  export const a = (): void =>{};
-  export const b = function(): void {};
+  export declare const a: () => void;
+  export declare const b: () => void;
   export function c(): void {}
   export class D {
     d(): void {}
   }
+  export declare const e: {
+    e(): void;
+  };
   --- DTS ---
   export declare const a: () => void;
   export declare const b: () => void;
@@ -75,3 +77,6 @@ Fast check file:///mod.ts:
   export declare class D {
     d(): void;
   }
+  export declare const e: {
+    e(): void;
+  };

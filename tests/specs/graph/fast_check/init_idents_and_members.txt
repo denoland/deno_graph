@@ -19,7 +19,11 @@ namespace Test {
   export class B {}
 }
 
-export const handlers = {
+export const handlers: {
+  BaseHandler: typeof BaseHandler,
+  Private: typeof Public,
+  C: typeof Test.A,
+} = {
   BaseHandler,
   Private: Public,
   C: Test.A,
@@ -42,8 +46,8 @@ namespace Test {
 }
 
 export function test(
-  a = BaseHandler,
-  C = Test.A,
+  a: typeof BaseHandler = BaseHandler,
+  C: typeof Test.A = Test.A,
 ) {
 }
 
@@ -99,13 +103,13 @@ import 'jsr:@scope/b'
     },
     {
       "kind": "esm",
-      "size": 224,
+      "size": 310,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     },
     {
       "kind": "esm",
-      "size": 173,
+      "size": 208,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/b/1.0.0/mod.ts"
     }
@@ -130,10 +134,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     export class A {
     }
   }
-  export const handlers = {
-    BaseHandler,
-    Private: Public,
-    C: Test.A
+  export declare const handlers: {
+    BaseHandler: typeof BaseHandler;
+    Private: typeof Public;
+    C: typeof Test.A;
   };
   --- DTS ---
   declare class BaseHandler {
@@ -145,12 +149,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     }
   }
   export declare const handlers: {
-    readonly Private;
-    readonly C;
+    BaseHandler: typeof BaseHandler;
+    Private: typeof Public;
+    C: typeof Test.A;
   };
-  --- DTS Diagnostics ---
-  unable to infer type from object property, skipping
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@176
+
 Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
   {}
   class BaseHandler {
@@ -159,7 +162,7 @@ Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
     export class A {
     }
   }
-  export function test(a = BaseHandler, C = Test.A): void {}
+  export function test(a?: typeof BaseHandler, C?: typeof Test.A): void {}
   --- DTS ---
   declare class BaseHandler {
   }
@@ -167,9 +170,4 @@ Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
     export class A {
     }
   }
-  export declare function test(a?: any, C?: any): void;
-  --- DTS Diagnostics ---
-  unable to infer type, falling back to any type
-      at https://jsr.io/@scope/b/1.0.0/mod.ts@140
-  unable to infer type, falling back to any type
-      at https://jsr.io/@scope/b/1.0.0/mod.ts@159
+  export declare function test(a?: typeof BaseHandler, C?: typeof Test.A): void;

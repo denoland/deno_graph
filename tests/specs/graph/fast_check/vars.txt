@@ -108,109 +108,16 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  {}
-  const public1: Public1 = {} as never;
-  export { public1 };
-  class Public1 {
-  }
-  const ERROR_STATUS_MAP = {
-    "BadRequest": 400,
-    "Unauthorized": 401,
-    "PaymentRequired": 402,
-    "Forbidden": 403
-  } as const;
-  export type ErrorStatusKeys = keyof typeof ERROR_STATUS_MAP;
-  export const asIs1 = [
-    1,
-    2,
-    3
-  ];
-  export const asIs2 = {
-    a: [
-      1,
-      2,
-      3
-    ],
-    b: true,
-    c: 10,
-    d: 10n,
-    e: 1 * 2,
-    [1]: 4,
-    f: 1 ? true : false,
-    g: 1++,
-    h: [
-      ...[
-        1,
-        2
-      ],
-      ...[
-        "test"
-      ]
-    ]
-  };
-  export const func1 = function(): string {
-    return {} as never;
-  };
-  export const func2 = (): string =>({} as never);
-  export const func3 = (): string =>({} as never);
-  export const func4 = ()=>"test" as const;
-  export const func5 = (): Promise<string> =>({} as never);
-  export const func6 = (): Promise<1> =>({} as never);
-  export const func7 = (): Promise<1> =>({} as never);
-  export const func8 = async ()=>"test" as const;
-  export const inferred1: 1 = {} as never;
-  export const inferred2: string = {} as never;
-  export const inferred3: true = {} as never;
-  export const inferred4: RegExp = {} as never;
-  export const inferred5: boolean = {} as never;
-  export const inferred6: boolean = {} as never;
-  export const inferred7: 1 | 2 | 3 & 4 = {} as never;
-  export const inferred8: ["test", 1] = {} as never;
-  export const inferred9: [...string] = {} as never;
-  export const inferred10: (1 | 2n)[] = {} as never;
-  export const inferred11: (keyof string)[] = {} as never;
-  export const inferred12: number = {} as never;
-  --- DTS ---
-  declare const public1: Public1;
-  export { public1 };
-  declare class Public1 {
-  }
-  declare const ERROR_STATUS_MAP: {
-    readonly "BadRequest": 400;
-    readonly "Unauthorized": 401;
-    readonly "PaymentRequired": 402;
-    readonly "Forbidden": 403;
-  };
-  export type ErrorStatusKeys = keyof typeof ERROR_STATUS_MAP;
-  export declare const asIs1: readonly [number, number, number];
-  export declare const asIs2: {
-    readonly a: readonly [number, number, number];
-    readonly b: boolean;
-    readonly c: number;
-    readonly d: bigint;
-    readonly e;
-    readonly [1]: number;
-    readonly f;
-    readonly g;
-    readonly h: readonly [readonly [number, number], readonly [string]];
-  };
-  export declare const func1: () => string;
-  export declare const func2: () => string;
-  export declare const func3: () => string;
-  export declare const func4: () => any;
-  export declare const func5: () => Promise<string>;
-  export declare const func6: () => Promise<1>;
-  export declare const func7: () => Promise<1>;
-  export declare const func8: () => any;
-  export declare const inferred1: 1;
-  export declare const inferred2: string;
-  export declare const inferred3: true;
-  export declare const inferred4: RegExp;
-  export declare const inferred5: boolean;
-  export declare const inferred6: boolean;
-  export declare const inferred7: 1 | 2 | 3 & 4;
-  export declare const inferred8: ["test", 1];
-  export declare const inferred9: [...string];
-  export declare const inferred10: (1 | 2n)[];
-  export declare const inferred11: (keyof string)[];
-  export declare const inferred12: number;
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> https://jsr.io/@scope/a/1.0.0/mod.ts:19:14
+     |
+  19 | export const asIs1 = [1, 2, 3];
+     |              ^^^^^ this variable's type could not be inferred because its initializer
+     |                      --------- contains this array literal, which can not be inferred unless marked 'as const'
+     |
+     = hint: add an explicit type annotation to the variable declaration
+
+    info: all variables in the public API must have a known type
+    info: array literals without 'as const' can not be inferred because the type of the array can not be narrowed without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+

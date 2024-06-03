@@ -69,40 +69,18 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  {}
-  export const foo = [
-    1,
-    2
-  ] as const;
-  export const bar = [
-    1,
-    ,
-    2
-  ] as const;
-  export const obj = {
-    str: "bar",
-    bool: true,
-    bool2: false,
-    num: 42,
-    nullish: null
-  } as const;
-  export const spread = {
-    foo: 1,
-    ...obj
-  } as const;
-  --- DTS ---
-  export declare const foo: readonly [1, 2];
-  export declare const bar: readonly [1, any, 2];
-  export declare const obj: {
-    readonly str: "bar";
-    readonly bool: true;
-    readonly bool2: false;
-    readonly num: 42;
-    readonly nullish: null;
-  };
-  export declare const spread: {
-    readonly foo: 1;
-  };
-  --- DTS Diagnostics ---
-  unable to infer type from spread, skipping
-      at https://jsr.io/@scope/a/1.0.0/mod.ts@215
+  error[unknown-var-type]: unknown type for variable in the public API
+    --> https://jsr.io/@scope/a/1.0.0/mod.ts:11:14
+     |
+  11 | export const spread = {
+     |              ^^^^^^ this variable's type could not be inferred because its initializer
+     |
+  13 |   ...obj,
+     |   --- contains this spread property, which can not be inferred
+     |
+     = hint: add an explicit type annotation to the variable declaration
+
+    info: all variables in the public API must have a known type
+    info: spread properties can not be inferred because the type of the resulting object can not be narrowed without a type checker
+    docs: https://jsr.io/go/slow-type-unknown-var-type
+
