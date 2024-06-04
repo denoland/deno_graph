@@ -9,66 +9,97 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 47 | export const {
    |              ^
+   | 
 48 |   cache,
    | ^^^^^^^^
+   | 
 49 |   http,
    | ^^^^^^^
+   | 
 50 |   file,
    | ^^^^^^^
+   | 
 51 |   directory,
    | ^^^^^^^^^^^^
+   | 
 52 |   entries,
    | ^^^^^^^^^^
+   | 
 53 |   devbox,
    | ^^^^^^^^^
+   | 
 54 |   devenv,
    | ^^^^^^^^^
+   | 
 55 |   flox,
    | ^^^^^^^
+   | 
 56 |   nix,
    | ^^^^^^
+   | 
 57 |   pkgx,
    | ^^^^^^^
+   | 
 58 |   pipeline,
    | ^^^^^^^^^^^
+   | 
 59 |   pixi,
    | ^^^^^^^
+   | 
 60 |   mise,
    | ^^^^^^^
+   | 
 61 |   envhub,
    | ^^^^^^^^^
+   | 
 62 |   tar_czvf,
    | ^^^^^^^^^^^
+   | 
 63 |   zip,
    | ^^^^^^
+   | 
 64 |   with_exec,
    | ^^^^^^^^^^^^
+   | 
 65 |   with_workdir,
    | ^^^^^^^^^^^^^^^
+   | 
 66 |   with_cache,
    | ^^^^^^^^^^^^^
+   | 
 67 |   stdout,
    | ^^^^^^^^^
+   | 
 68 |   stderr,
    | ^^^^^^^^^
+   | 
 69 |   set_runner,
    | ^^^^^^^^^^^^^
+   | 
 70 |   git,
    | ^^^^^^
+   | 
 71 |   branch,
    | ^^^^^^^^^
+   | 
 72 |   commit,
    | ^^^^^^^^^
+   | 
 73 |   tree,
    | ^^^^^^^
+   | 
 74 |   md5,
    | ^^^^^^
+   | 
 75 |   sha256,
    | ^^^^^^^^^
+   | 
 76 |   unzip,
    | ^^^^^^^^
+   | 
 77 |   tar_xzvf,
    | ^^^^^^^^^^^
+   | 
 78 | } = Host.getFunctions();
    | ^
    = hint: separate each destructured symbol into its own export statement
@@ -82,6 +113,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 837 |   id = () => {
     |   ^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -93,6 +125,7 @@ error[missing-explicit-type]: missing explicit type in the public API
      | 
 1806 | export const dag = new Client();
      |              ^^^ this symbol is missing an explicit type
+     | 
      = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -104,6 +137,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 41 |   get queryTree() {
    |       ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -115,6 +149,7 @@ error[missing-explicit-type]: missing explicit type in the public API
      | 
 1861 | export const dag = new Client({ ctx: defaultContext });
      |              ^^^ this symbol is missing an explicit type
+     | 
      = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -126,6 +161,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 53 | export const defaultContext = new Context();
    |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

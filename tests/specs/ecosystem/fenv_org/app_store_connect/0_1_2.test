@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
       | 
 15473 |   public setSecurityData = (data: SecurityDataType | null) => {
       |          ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+      | 
       = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -22,6 +23,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
       | 
 15477 |   protected encodeQueryParam(key: string, value: any) {
       |             ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+      | 
       = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -33,6 +35,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
       | 
 15482 |   protected addQueryParam(query: QueryParamsType, key: string) {
       |             ^^^^^^^^^^^^^ this function is missing an explicit return type
+      | 
       = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -44,6 +47,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
       | 
 15486 |   protected addArrayQueryParam(query: QueryParamsType, key: string) {
       |             ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+      | 
       = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -55,6 +59,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
       | 
 15551 |   public abortRequest = (cancelToken: CancelToken) => {
       |          ^^^^^^^^^^^^ this function is missing an explicit return type
+      | 
       = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
