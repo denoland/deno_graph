@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 4 | export const ModelObject = v.object({
   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 12 | export const DeleteModelResponse = v.object({
    |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -31,6 +33,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 4 | export const FileObject = v.object({
   |              ^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -42,6 +45,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 21 | export const UploadFileRequest = v.object({
    |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -53,6 +57,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 31 | export const DeleteFileResponse = v.object({
    |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -64,6 +69,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const ChatCompletionRequestSystemMessage = v.object({
   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -75,6 +81,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 15 | export const ChatCompletionRequestMessageTextContentPart = v.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -86,6 +93,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 23 | export const ChatCompletionRequestMessageImageContentPart = v.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -97,6 +105,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 36 | export const ChatCompletionRequestMessageContentPart = v.union([
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -108,6 +117,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 44 | export const ChatCompletionRequestUserMessage = v.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -119,6 +129,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 56 | export const ChatCompletionMessageToolCall = v.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -130,6 +141,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 68 | export const ChatCompletionRequestAssistantMessage = v.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -141,6 +153,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 78 | export const ChatCompletionRequestToolMessage = v.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -152,6 +165,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 87 | export const ChatCompletionRequestMessage = v.union([
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -163,6 +177,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 95 | export const ChatCompletionTool = v.object({
    |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -174,6 +189,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 107 | export const CreateChatCompletionRequest = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -185,6 +201,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 144 | export const ChatCompletionToolCall = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -196,6 +213,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 154 | export const FinishReason = v.union([
     |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -207,6 +225,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 162 | export const ChatCompletionLogprobs = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -218,6 +237,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 182 | export const ChatCompletionChoiceContent = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -229,6 +249,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 189 | export const ChatCompletionChoice = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -240,6 +261,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 197 | export const ChatCompletionObject = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -251,6 +273,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 214 | export const ChatCompletionChunkChoice = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -262,6 +285,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 224 | export const ChatCompletionChunkObject = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -273,6 +297,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 4 | export const Metadata = v.record(v.string());
   |              ^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -284,6 +309,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 7 | export const ObjectMeta = v.object({
   |              ^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -295,6 +321,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 13 | export const CodeInterpreterTool = v.object({
    |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -306,6 +333,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 18 | export const RetrievalTool = v.object({
    |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -317,6 +345,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 23 | export const FunctionTool = v.object({
    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -328,6 +357,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 33 | export const Tool = v.union([CodeInterpreterTool, RetrievalTool, FunctionTool]);
    |              ^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -339,6 +369,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 36 | export const AssistantObject = v.merge([
    |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -350,6 +381,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 51 | export const AssistantFileObject = v.object({
    |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -361,6 +393,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 57 | export const ThreadObject = v.merge([
    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -372,6 +405,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 66 | export const MessageImageFileContent = v.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -383,6 +417,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 74 | export const FileCitationAnnotation = v.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -394,6 +429,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 86 | export const FilePathAnnotation = v.object({
    |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -405,6 +441,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 97 | export const MessageTextContent = v.object({
    |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -416,6 +453,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 108 | export const MessageObject = v.merge([
     |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -427,6 +465,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 137 | export const MessageFileObject = v.merge([
     |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -438,6 +477,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 146 | export const CodeInterpreterLogOutput = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -449,6 +489,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 152 | export const CodeInterpreterImageOutput = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -460,6 +501,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 160 | export const CodeInterpreterOutput = v.union([
     |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -471,6 +513,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 166 | export const CodeInterpreterToolCall = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -482,6 +525,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 176 | export const RetrievalToolCall = v.object({
     |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -493,6 +537,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 187 | export const FunctionToolCall = v.object({
     |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -504,6 +549,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 198 | export const ToolCall = v.union([CodeInterpreterToolCall, RetrievalToolCall, FunctionToolCall]);
     |              ^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -515,6 +561,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 201 | export const SubmitToolOutputsAction = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -526,6 +573,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 209 | export const Usage = v.object({
     |              ^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -537,6 +585,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 216 | export const RunObject = v.merge([
     |              ^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -548,6 +597,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 261 | export const MessageCreationDetail = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -559,6 +609,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 269 | export const ToolCallsDetail = v.object({
     |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -570,6 +621,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 275 | export const StepObject = v.merge([
     |              ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -581,6 +633,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 309 | export const CreateAssistantRequest = v.merge([
     |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -592,6 +645,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 323 | export const CreateAssistantFileRequest = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -603,6 +657,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 328 | export const ModifyAssistantRequest = v.merge([
     |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -614,6 +669,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 342 | export const CreateMessageRequest = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -625,6 +681,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 349 | export const CreateThreadRequest = v.object({
     |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -636,6 +693,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 355 | export const ModifyThreadRequest = v.object({
     |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -647,6 +705,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 360 | export const ModifyMessageRequest = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -658,6 +717,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 365 | export const CreateRunRequest = v.merge([
     |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -669,6 +729,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 384 | export const CreateThreadAndRunRequest = v.merge([
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -680,6 +741,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 392 | export const ModifyRunRequest = v.object({
     |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -691,6 +753,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 397 | export const ToolOutput = v.object({
     |              ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -702,6 +765,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 403 | export const SubmitToolOutputsToRunRequest = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -713,6 +777,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 409 | export const DeleteResponse = v.object({
     |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -724,6 +789,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 415 | export const DeleteAssistantResponse = v.intersect([
     |              ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -735,6 +801,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 423 | export const DeleteAssistantFileResponse = v.intersect([
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -746,6 +813,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 431 | export const DeleteThreadResponse = v.intersect([
     |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -757,6 +825,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 439 | export const Pagination = v.object({
     |              ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -768,6 +837,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 446 | export const Ordering = v.object({
     |              ^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -779,6 +849,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 4 | export const ImageContentSource = v.object({
   |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -790,6 +861,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 13 | export const ImageContent = v.object({
    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -801,6 +873,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 19 | export const TextContent = v.object({
    |              ^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -812,6 +885,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 25 | export const ToolUseContent = v.object({
    |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -823,6 +897,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 33 | export const ToolResultContent = v.object({
    |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -834,6 +909,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 41 | export const Content = v.union([TextContent, ImageContent, ToolResultContent]);
    |              ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -845,6 +921,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 44 | export const Message = v.object({
    |              ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -856,6 +933,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 50 | export const Tool = v.object({
    |              ^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -867,6 +945,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 57 | export const CreateMessageRequest = v.object({
    |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -878,6 +957,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 78 | export const StopReason = v.union([
    |              ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -889,6 +969,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 86 | export const MessageUsage = v.object({
    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -900,6 +981,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 92 | export const CreateMessageResponse = v.object({
    |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -911,6 +993,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 104 | export const MessageStartEvent = v.object({
     |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -922,6 +1005,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 116 | export const MessageDeltaEvent = v.object({
     |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -933,6 +1017,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 128 | export const MessageStopEvent = v.object({
     |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -944,6 +1029,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 133 | export const ContentBlockStartEvent = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -955,6 +1041,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 143 | export const ContentBlockDeltaEvent = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -966,6 +1053,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 153 | export const ContentBlockStopEvent = v.object({
     |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

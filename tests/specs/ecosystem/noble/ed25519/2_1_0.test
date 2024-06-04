@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 21 | const u8n = (data?: any) => new Uint8Array(data);       // creates Uint8Array
    |       ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 22 | const toU8 = (a: Hex, len?: number) => au8(str(a) ? h2b(a) : u8n(au8(a)), len);  // norm(hex/u8a) to u8a
    |       ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 23 | const mod = (a: bigint, b = P) => { let r = a % b; return r >= 0n ? r : b + r; }; // mod division
    |       ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 28 |   static readonly BASE = new Point(Gx, Gy, 1n, mod(Gx * Gy)); // Generator / Base point
    |                   ^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -53,6 +57,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 29 |   static readonly ZERO = new Point(0n, 1n, 1n, 0n);           // Identity / Zero point
    |                   ^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 30 |   static fromAffine(p: AffinePoint) { return new Point(p.x, p.y, 1n, mod(p.x * p.y)); }
    |          ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 31 |   static fromHex(hex: Hex, zip215 = false) {            // RFC8032 5.1.3: hex / Uint8Array to Point.
    |          ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 51 |   get x() { return this.toAffine().x; }                 // .x, .y will call expensive toAffine.
    |       ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -97,6 +105,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 52 |   get y() { return this.toAffine().y; }                 // Should be used with care.
    |       ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -108,6 +117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 73 |   add(other: Point) {                                   // Point addition. Complete formula.
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -119,6 +129,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 95 |   multiply(scalar: bigint) { return this.mul(scalar); } // Aliases for compatibilty
    |   ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -130,6 +141,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 137 | const concatB = (...arrs: Bytes[]) => {                 // concatenate Uint8Array-s
     |       ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -141,6 +153,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 193 | const sha512a = (...m: Bytes[]) => etc.sha512Async(...m);  // Async SHA512
     |       ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -152,6 +165,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 194 | const sha512s = (...m: Bytes[]) =>                      // Sync SHA512, not set by default
     |       ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -163,6 +177,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 209 | const getExtendedPublicKeyAsync = (priv: Hex) => sha512a(toU8(priv, 32)).then(hash2extK);
     |       ^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -174,6 +189,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 210 | const getExtendedPublicKey = (priv: Hex) => hash2extK(sha512s(toU8(priv, 32)))
     |       ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -185,6 +201,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 269 | const verifyAsync = async (s: Hex, m: Hex, p: Hex, opts = dvo) =>
     |       ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -196,6 +213,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 271 | const verify = (s: Hex, m: Hex, p: Hex, opts = dvo) =>
     |       ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -207,6 +225,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 297 | const utils = {
     |       ^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

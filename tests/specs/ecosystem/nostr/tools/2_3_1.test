@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | export const utf8Decoder = new TextDecoder('utf-8')
   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 4 | export const utf8Encoder = new TextEncoder()
   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 17 | export function insertEventIntoDescendingList(sortedArray: Event[], event: Event) {
    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 29 | export function insertEventIntoAscendingList(sortedArray: Event[], event: Event) {
    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 2 | export function isRegularKind(kind: number) {
   |                 ^^^^^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 7 | export function isReplaceableKind(kind: number) {
   |                 ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 12 | export function isEphemeralKind(kind: number) {
    |                 ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 17 | export function isParameterizedReplaceableKind(kind: number) {
    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -97,6 +105,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export function parseConnectionString(connectionString: string) {
   |                 ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -108,6 +117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 18 | export async function makeNwcRequestEvent(pubkey: string, secretKey: Uint8Array, invoice: string) {
    |                       ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -119,6 +129,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 11 | const u = {
    |       ^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -130,6 +141,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 106 | function encrypt(plaintext: string, conversationKey: Uint8Array, nonce = randomBytes(32)): string {
     |                                                                  ^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -141,6 +153,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export const regex = () => new RegExp(`\\B${EMOJI_SHORTCODE_REGEX.source}\\B`, 'g')
   |              ^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -152,6 +165,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export const regex = () => new RegExp(`\\b${NOSTR_URI_REGEX.source}\\b`, 'g')
   |              ^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -163,6 +177,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 4 | export const NOSTR_URI_REGEX = new RegExp(`nostr:(${BECH32_REGEX.source})`)
   |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -174,6 +189,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 11 | export async function fetchRelayInformation(url: string) {
    |                       ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -185,6 +201,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 18 |   public seenOn = new Map<string, Set<AbstractRelay>>()
    |          ^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -196,6 +213,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 22 |   public trustedRelayURLs = new Set<string>()
    |          ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -207,6 +225,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 29 |   public openSubs = new Map<string, Subscription>()
    |          ^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -218,6 +237,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 47 |   static async connect(url: string, opts: { verifyEvent: Nostr['verifyEvent'] }) {
    |                ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -229,6 +249,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 231 |   public async auth(signAuthEvent: (evt: EventTemplate) => Promise<VerifiedEvent>) {
     |                ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -240,6 +261,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 16 |   static async connect(url: string) {
    |                ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -251,6 +273,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 53 | const i = new JS()
    |       ^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

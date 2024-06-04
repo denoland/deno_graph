@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const ChatCompletionRequestSystemMessage = z.object({
   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 15 | export const ChatCompletionRequestMessageTextContentPart = z.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -31,6 +33,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 23 | export const ChatCompletionRequestMessageImageContentPart = z.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -42,6 +45,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 36 | export const ChatCompletionRequestMessageContentPart = z.union([
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -53,6 +57,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 44 | export const ChatCompletionRequestUserMessage = z.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -64,6 +69,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 56 | export const ChatCompletionMessageToolCall = z.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -75,6 +81,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 68 | export const ChatCompletionRequestAssistantMessage = z.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -86,6 +93,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 78 | export const ChatCompletionRequestToolMessage = z.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -97,6 +105,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 87 | export const ChatCompletionRequestMessage = z.union([
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -108,6 +117,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 95 | export const ChatCompletionTool = z.object({
    |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -119,6 +129,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 107 | export const CreateChatCompletionRequest = z.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -130,6 +141,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 147 | export const ChatCompletionToolCall = z.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -141,6 +153,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 157 | export const FinishReason = z.union([
     |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -152,6 +165,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 165 | export const ChatCompletionLogprobs = z.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -163,6 +177,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 185 | export const ChatCompletionChoiceContent = z.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -174,6 +189,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 192 | export const ChatCompletionChoice = z.object({
     |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -185,6 +201,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 200 | export const ChatCompletionObject = z.object({
     |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -196,6 +213,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 217 | export const ChatCompletionChunkChoice = z.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -207,6 +225,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 227 | export const ChatCompletionChunkObject = z.object({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -218,6 +237,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 4 | export const TextContent = z.object({
   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -229,6 +249,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 10 | export const ImageContentSource = z.object({
    |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -240,6 +261,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 23 | export const ImageContent = z.object({
    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -251,6 +273,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 29 | export const Content = z.union([TextContent, ImageContent]);
    |              ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -262,6 +285,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 32 | export const Message = z.object({
    |              ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -273,6 +297,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 38 | export const CreateMessageRequest = z.object({
    |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -284,6 +309,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 56 | export const StopReason = z.union([
    |              ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -295,6 +321,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 63 | export const MessageUsage = z.object({
    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -306,6 +333,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 69 | export const CreateMessageResponse = z.object({
    |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
