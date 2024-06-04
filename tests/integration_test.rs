@@ -7,7 +7,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use anyhow::anyhow;
 use async_trait::async_trait;
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheSetting;
@@ -21,7 +20,7 @@ use deno_graph::source::UnknownBuiltInNodeModuleError;
 use deno_graph::BuildOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
-use deno_graph::NpmPackageReqResolution;
+use deno_graph::NpmPackageReqsResolution;
 use deno_graph::Range;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
@@ -173,32 +172,27 @@ async fn test_npm_version_not_found_then_found() {
       Box::pin(futures::future::ready(Ok(())))
     }
 
-    async fn resolve_package_reqs(
+    async fn resolve_pkg_reqs(
       &self,
       package_reqs: &[&PackageReq],
-    ) -> Vec<NpmPackageReqResolution> {
+    ) -> NpmPackageReqsResolution {
       let mut value = self.made_first_request.borrow_mut();
       if *value && !self.should_never_succeed {
         assert_eq!(*self.number_times_load_called.borrow(), 2);
-        package_reqs
-          .iter()
-          .map(|req| {
-            NpmPackageReqResolution::Ok(PackageNv {
-              name: req.name.clone(),
-              version: Version::parse_from_npm("1.0.0").unwrap(),
+        NpmPackageReqsResolution::Resolutions(
+          package_reqs
+            .iter()
+            .map(|req| {
+              Ok(PackageNv {
+                name: req.name.clone(),
+                version: Version::parse_from_npm("1.0.0").unwrap(),
+              })
             })
-          })
-          .collect::<Vec<_>>()
+            .collect::<Vec<_>>(),
+        )
       } else {
         *value = true;
-        package_reqs
-          .iter()
-          .map(|_| {
-            NpmPackageReqResolution::ReloadRegistryInfo(
-              anyhow!("failed to resolve").into(),
-            )
-          })
-          .collect()
+        NpmPackageReqsResolution::ReloadRegistryInfo
       }
     }
   }

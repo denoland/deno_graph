@@ -4846,7 +4846,7 @@ impl<'a> NpmSpecifierResolver<'a> {
     &mut self,
     mut pending_npm_registry_info_loads: PendingNpmRegistryInfoLoadFutures,
   ) {
-    let mut previously_restarted = false;
+    let mut restart_count = 0;
     'restart: loop {
       let mut items_by_req: IndexMap<_, Vec<_>> = IndexMap::new();
       while let Some(pending_load) =
@@ -4896,82 +4896,87 @@ impl<'a> NpmSpecifierResolver<'a> {
       if let Some(npm_resolver) = &self.npm_resolver {
         let all_package_reqs = items_by_req.keys().copied().collect::<Vec<_>>();
         let resolutions =
-          npm_resolver.resolve_package_reqs(&all_package_reqs).await;
-        assert_eq!(all_package_reqs.len(), resolutions.len());
-        for (req, resolution) in
-          all_package_reqs.into_iter().zip(resolutions.into_iter())
-        {
-          let items = items_by_req.get(&req).unwrap();
-          for item in items {
-            match &resolution {
-              NpmPackageReqResolution::Ok(pkg_nv) => {
-                self
-                  .pending_info
-                  .specifier_resolutions
-                  .insert(item.specifier.clone(), pkg_nv.clone());
-                let pkg_id_ref =
-                  NpmPackageNvReference::new(PackageNvReference {
-                    nv: pkg_nv.clone(),
-                    sub_path: item
-                      .package_ref
-                      .sub_path()
-                      .map(ToOwned::to_owned),
-                  });
-                let resolved_specifier = pkg_id_ref.as_specifier();
-                if resolved_specifier != item.specifier {
-                  self
-                    .pending_info
-                    .redirects
-                    .insert(item.specifier.clone(), resolved_specifier.clone());
-                }
-                self.pending_info.module_slots.insert(
-                  resolved_specifier.clone(),
-                  ModuleSlot::Module(Module::Npm(NpmModule {
-                    specifier: resolved_specifier,
-                    nv_reference: pkg_id_ref,
-                  })),
-                );
-              }
-              NpmPackageReqResolution::ReloadRegistryInfo(_)
-                if !previously_restarted =>
-              {
-                // the implementer should ideally never return this more than once,
-                // but in case they do, have this safety
-                previously_restarted = true;
-
-                // clear the current pending information and restart from scratch
-                pending_npm_registry_info_loads.clear();
-                self.pending_info.clear();
-
-                // reload all the npm registry information
-                for package_name in self.pending_npm_by_name.keys() {
-                  let package_name = package_name.clone();
-                  let fut =
-                    npm_resolver.load_and_cache_npm_package_info(&package_name);
-                  pending_npm_registry_info_loads.push(Box::pin(async move {
-                    PendingNpmRegistryInfoLoad {
-                      package_name,
-                      result: fut.await.map_err(Arc::new),
+          npm_resolver.resolve_pkg_reqs(&all_package_reqs).await;
+        match resolutions {
+          NpmPackageReqsResolution::Resolutions(resolutions) => {
+            assert_eq!(all_package_reqs.len(), resolutions.len());
+            for (req, resolution) in
+              all_package_reqs.into_iter().zip(resolutions.into_iter())
+            {
+              let items = items_by_req.get(&req).unwrap();
+              for item in items {
+                match &resolution {
+                  Ok(pkg_nv) => {
+                    self
+                      .pending_info
+                      .specifier_resolutions
+                      .insert(item.specifier.clone(), pkg_nv.clone());
+                    let pkg_id_ref =
+                      NpmPackageNvReference::new(PackageNvReference {
+                        nv: pkg_nv.clone(),
+                        sub_path: item
+                          .package_ref
+                          .sub_path()
+                          .map(ToOwned::to_owned),
+                      });
+                    let resolved_specifier = pkg_id_ref.as_specifier();
+                    if resolved_specifier != item.specifier {
+                      self
+                        .pending_info
+                        .redirects
+                        .insert(item.specifier.clone(), resolved_specifier.clone());
                     }
-                  }));
+                    self.pending_info.module_slots.insert(
+                      resolved_specifier.clone(),
+                      ModuleSlot::Module(Module::Npm(NpmModule {
+                        specifier: resolved_specifier,
+                        nv_reference: pkg_id_ref,
+                      })),
+                    );
+                  }
+                  Err(err) => {
+                    self.pending_info.module_slots.insert(
+                      item.specifier.clone(),
+                      ModuleSlot::Err(ModuleError::LoadingErr(
+                        item.specifier.clone(),
+                        item.maybe_range.clone(),
+                        NpmLoadError::PackageReqResolution(err.clone()).into(),
+                      )),
+                    );
+                  }
                 }
-
-                continue 'restart;
-              }
-              NpmPackageReqResolution::Err(err)
-              | NpmPackageReqResolution::ReloadRegistryInfo(err) => {
-                self.pending_info.module_slots.insert(
-                  item.specifier.clone(),
-                  ModuleSlot::Err(ModuleError::LoadingErr(
-                    item.specifier.clone(),
-                    item.maybe_range.clone(),
-                    NpmLoadError::PackageReqResolution(err.clone()).into(),
-                  )),
-                );
               }
             }
+          },
+          NpmPackageReqsResolution::ReloadRegistryInfo => {
+            restart_count += 1;
+
+            if restart_count > 1 {
+              // makes no sense for someone to reload registry information more than once
+              panic!("cannot return back ReloadRegistryInfo more than once");
+            }
+
+            // clear the current pending information and restart from scratch
+            pending_npm_registry_info_loads.clear();
+            self.pending_info.clear();
+
+            // reload all the npm registry information
+            for package_name in self.pending_npm_by_name.keys() {
+              let package_name = package_name.clone();
+              let fut =
+                npm_resolver.load_and_cache_npm_package_info(&package_name);
+              pending_npm_registry_info_loads.push(Box::pin(async move {
+                PendingNpmRegistryInfoLoad {
+                  package_name,
+                  result: fut.await.map_err(Arc::new),
+                }
+              }));
+            }
+
+            continue 'restart;
           }
         }
+        
       } else {
         debug_assert!(items_by_req.is_empty());
       }

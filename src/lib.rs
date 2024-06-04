@@ -93,7 +93,7 @@ pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
 pub use rt::Executor;
-pub use source::NpmPackageReqResolution;
+pub use source::NpmPackageReqsResolution;
 
 pub use deno_ast::dep::DependencyKind;
 pub use deno_ast::dep::ImportAttribute;
@@ -193,6 +193,7 @@ mod tests {
   use source::tests::MockResolver;
   use source::CacheInfo;
   use source::MemoryLoader;
+  use source::NpmPackageReqsResolution;
   use source::Source;
   use std::cell::RefCell;
   use std::collections::BTreeMap;
@@ -1292,10 +1293,10 @@ console.log(a);
       todo!();
     }
 
-    async fn resolve_package_reqs(
+    async fn resolve_pkg_reqs(
       &self,
       _package_reqs: &[&deno_semver::package::PackageReq],
-    ) -> Vec<NpmPackageReqResolution> {
+    ) -> NpmPackageReqsResolution {
       todo!()
     }
 

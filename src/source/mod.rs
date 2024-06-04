@@ -438,9 +438,8 @@ pub struct UnknownBuiltInNodeModuleError {
 }
 
 #[derive(Debug)]
-pub enum NpmPackageReqResolution {
-  Ok(PackageNv),
-  Err(Arc<anyhow::Error>),
+pub enum NpmPackageReqsResolution {
+  Resolutions(Vec<Result<PackageNv, Arc<anyhow::Error>>>),
   /// Error was encountered, but instruct deno_graph to ask for
   /// the registry information again. This is useful to use when
   /// a user specifies an npm specifier that doesn't match any version
@@ -450,10 +449,9 @@ pub enum NpmPackageReqResolution {
   /// cached/loaded registry information and deno_graph will request
   /// the registry information for every package again then re-attempt resolution.
   ///
-  /// deno_graph will restart only once per build call to prevent accidental,
-  /// infinite loops, but the implementation should ensure this is only
-  /// returned once per session.
-  ReloadRegistryInfo(Arc<anyhow::Error>),
+  /// The implementation MUST ensure this doesn't get returned more than
+  /// once in a row or else a panic will occur.
+  ReloadRegistryInfo,
 }
 
 #[async_trait(?Send)]
@@ -488,10 +486,10 @@ pub trait NpmResolver: fmt::Debug {
   ///
   /// The implementation MUST return the same amount of resolutions back as
   /// version reqs provided or else a panic will occur.
-  async fn resolve_package_reqs(
+  async fn resolve_pkg_reqs(
     &self,
     package_req: &[&PackageReq],
-  ) -> Vec<NpmPackageReqResolution>;
+  ) -> NpmPackageReqsResolution;
 
   /// Returns true when bare node specifier resoluion is enabled
   fn enables_bare_builtin_node_module(&self) -> bool {
