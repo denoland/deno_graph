@@ -187,6 +187,7 @@ mod tests {
 
   use super::*;
   use indexmap::IndexMap;
+  use indexmap::IndexSet;
   use pretty_assertions::assert_eq;
   use serde_json::json;
   use source::tests::MockResolver;
@@ -195,7 +196,6 @@ mod tests {
   use source::Source;
   use std::cell::RefCell;
   use std::collections::BTreeMap;
-  use std::collections::BTreeSet;
 
   type Sources<'a> = Vec<(&'a str, Source<&'a str>)>;
 
@@ -236,7 +236,7 @@ mod tests {
       .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 2);
-    assert_eq!(graph.roots, BTreeSet::from([root_specifier.clone()]));
+    assert_eq!(graph.roots, IndexSet::from([root_specifier.clone()]));
     assert!(graph.contains(&root_specifier));
     assert!(
       !graph.contains(&ModuleSpecifier::parse("file:///a/test03.ts").unwrap())
@@ -304,7 +304,7 @@ mod tests {
       ],
       vec![],
     );
-    let roots = BTreeSet::from([
+    let roots = IndexSet::from([
       ModuleSpecifier::parse("file:///a/test01.ts").unwrap(),
       ModuleSpecifier::parse("https://example.com/a.ts").unwrap(),
     ]);
@@ -383,13 +383,13 @@ mod tests {
       .build(vec![first_root.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 4);
-    assert_eq!(graph.roots, BTreeSet::from([first_root.clone()]));
+    assert_eq!(graph.roots, IndexSet::from([first_root.clone()]));
 
     // now build with the second root
     graph
       .build(vec![second_root.clone()], &loader, Default::default())
       .await;
-    let mut roots = BTreeSet::from([first_root, second_root]);
+    let mut roots = IndexSet::from([first_root, second_root]);
     assert_eq!(graph.module_slots.len(), 5);
     assert_eq!(graph.roots, roots);
     assert!(
@@ -1011,7 +1011,7 @@ console.log(a);
       .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
     assert_eq!(graph.module_slots.len(), 1);
-    assert_eq!(graph.roots, BTreeSet::from([root_specifier.clone()]));
+    assert_eq!(graph.roots, IndexSet::from([root_specifier.clone()]));
     let module = graph
       .module_slots
       .get(&root_specifier)
@@ -1744,7 +1744,7 @@ export function a(a) {
       .await;
     assert_eq!(
       graph.roots,
-      BTreeSet::from(
+      IndexSet::from(
         [ModuleSpecifier::parse("https://example.com/a").unwrap()]
       ),
     );
@@ -1809,7 +1809,7 @@ export function a(a) {
       .await;
     assert_eq!(
       graph.roots,
-      BTreeSet::from(
+      IndexSet::from(
         [ModuleSpecifier::parse("https://example.com/a").unwrap()]
       ),
     );
@@ -3930,7 +3930,7 @@ export function a(a: A): B {
     let example_a_url =
       ModuleSpecifier::parse("https://example.com/a.ts").unwrap();
     let graph = graph.segment(&[example_a_url.clone()]);
-    assert_eq!(graph.roots, BTreeSet::from([example_a_url]));
+    assert_eq!(graph.roots, IndexSet::from([example_a_url]));
     // should get the redirect
     assert_eq!(
       graph.redirects,
@@ -4579,7 +4579,7 @@ export function a(a: A): B {
       )
       .await;
     assert_eq!(graph.module_slots.len(), 2);
-    assert_eq!(graph.roots, BTreeSet::from([root_specifier.clone()]));
+    assert_eq!(graph.roots, IndexSet::from([root_specifier.clone()]));
     assert!(graph.contains(&root_specifier));
     let module = graph
       .module_slots

@@ -53,6 +53,7 @@ use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
 use futures::FutureExt;
 use indexmap::IndexMap;
+use indexmap::IndexSet;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
 use serde::Deserialize;
@@ -62,7 +63,6 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
-use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -1543,7 +1543,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
 pub struct ModuleGraph {
   #[serde(skip_serializing)]
   graph_kind: GraphKind,
-  pub roots: BTreeSet<ModuleSpecifier>,
+  pub roots: IndexSet<ModuleSpecifier>,
   #[serde(rename = "modules")]
   #[serde(serialize_with = "serialize_module_slots")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
@@ -1676,8 +1676,8 @@ impl ModuleGraph {
 
   /// Creates a new cloned module graph from the provided roots.
   pub fn segment(&self, roots: &[ModuleSpecifier]) -> Self {
-    let roots = roots.iter().collect::<BTreeSet<_>>();
-    if roots.iter().all(|r| self.roots.contains(r)) {
+    let roots = roots.iter().collect::<IndexSet<_>>();
+    if roots.iter().all(|r| self.roots.contains(*r)) {
       // perf - do a straight clone since the roots are the same
       return self.clone();
     }
@@ -3253,7 +3253,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let provided_imports = imports;
     let roots = provided_roots
       .iter()
-      .filter(|r| !self.graph.roots.contains(r))
+      .filter(|r| !self.graph.roots.contains(*r))
       .cloned()
       .collect::<Vec<_>>();
     let imports = provided_imports
