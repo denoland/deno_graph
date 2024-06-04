@@ -63,12 +63,13 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     |
   1 | global {
     | ^^^^^^^^
+    |
   2 |   declare var Test: 5;
     | ^^^^^^^^^^^^^^^^^^^^^^
+    |
   3 | }
     | ^
     = hint: remove the 'global' augmentation
 
     info: global augmentations are not supported because they can modify global types, which can affect other modules type checking
     docs: https://jsr.io/go/slow-type-unsupported-global-module
-

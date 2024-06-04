@@ -212,7 +212,7 @@ fn run_graph_test(test: &CollectedTest) {
                 None => format!("{}\n    at {}", d, d.specifier()),
               })
               .collect::<Vec<_>>()
-              .join("\n");
+              .join("\n\n");
             output_text.push_str(&indent(&message));
           }
         }
