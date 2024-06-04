@@ -4921,10 +4921,10 @@ impl<'a> NpmSpecifierResolver<'a> {
                       });
                     let resolved_specifier = pkg_id_ref.as_specifier();
                     if resolved_specifier != item.specifier {
-                      self
-                        .pending_info
-                        .redirects
-                        .insert(item.specifier.clone(), resolved_specifier.clone());
+                      self.pending_info.redirects.insert(
+                        item.specifier.clone(),
+                        resolved_specifier.clone(),
+                      );
                     }
                     self.pending_info.module_slots.insert(
                       resolved_specifier.clone(),
@@ -4947,7 +4947,7 @@ impl<'a> NpmSpecifierResolver<'a> {
                 }
               }
             }
-          },
+          }
           NpmPackageReqsResolution::ReloadRegistryInfo => {
             restart_count += 1;
 
@@ -4976,7 +4976,6 @@ impl<'a> NpmSpecifierResolver<'a> {
             continue 'restart;
           }
         }
-        
       } else {
         debug_assert!(items_by_req.is_empty());
       }
