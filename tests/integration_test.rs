@@ -139,64 +139,64 @@ async fn test_symbols_re_export_external_and_npm() {
   );
 }
 
+#[derive(Debug)]
+struct TestNpmResolver {
+  made_first_request: Rc<RefCell<bool>>,
+  should_always_reload: bool,
+  number_times_load_called: Rc<RefCell<u32>>,
+}
+
+#[async_trait(?Send)]
+impl NpmResolver for TestNpmResolver {
+  fn resolve_builtin_node_module(
+    &self,
+    _specifier: &ModuleSpecifier,
+  ) -> Result<Option<String>, UnknownBuiltInNodeModuleError> {
+    Ok(None)
+  }
+
+  fn on_resolve_bare_builtin_node_module(
+    &self,
+    _module_name: &str,
+    _range: &Range,
+  ) {
+  }
+
+  fn load_and_cache_npm_package_info(
+    &self,
+    _package_name: &str,
+  ) -> LocalBoxFuture<'static, Result<(), anyhow::Error>> {
+    *self.number_times_load_called.borrow_mut() += 1;
+    Box::pin(futures::future::ready(Ok(())))
+  }
+
+  async fn resolve_pkg_reqs(
+    &self,
+    package_reqs: &[&PackageReq],
+  ) -> NpmPackageReqsResolution {
+    let mut value = self.made_first_request.borrow_mut();
+    if *value && !self.should_always_reload {
+      assert_eq!(*self.number_times_load_called.borrow(), 2);
+      NpmPackageReqsResolution::Resolutions(
+        package_reqs
+          .iter()
+          .map(|req| {
+            Ok(PackageNv {
+              name: req.name.clone(),
+              version: Version::parse_from_npm("1.0.0").unwrap(),
+            })
+          })
+          .collect::<Vec<_>>(),
+      )
+    } else {
+      *value = true;
+      NpmPackageReqsResolution::ReloadRegistryInfo
+    }
+  }
+}
+
 #[tokio::test]
 async fn test_npm_version_not_found_then_found() {
-  #[derive(Debug)]
-  struct TestNpmResolver {
-    made_first_request: Rc<RefCell<bool>>,
-    should_never_succeed: bool,
-    number_times_load_called: Rc<RefCell<u32>>,
-  }
-
-  #[async_trait(?Send)]
-  impl NpmResolver for TestNpmResolver {
-    fn resolve_builtin_node_module(
-      &self,
-      _specifier: &ModuleSpecifier,
-    ) -> Result<Option<String>, UnknownBuiltInNodeModuleError> {
-      Ok(None)
-    }
-
-    fn on_resolve_bare_builtin_node_module(
-      &self,
-      _module_name: &str,
-      _range: &Range,
-    ) {
-    }
-
-    fn load_and_cache_npm_package_info(
-      &self,
-      _package_name: &str,
-    ) -> LocalBoxFuture<'static, Result<(), anyhow::Error>> {
-      *self.number_times_load_called.borrow_mut() += 1;
-      Box::pin(futures::future::ready(Ok(())))
-    }
-
-    async fn resolve_pkg_reqs(
-      &self,
-      package_reqs: &[&PackageReq],
-    ) -> NpmPackageReqsResolution {
-      let mut value = self.made_first_request.borrow_mut();
-      if *value && !self.should_never_succeed {
-        assert_eq!(*self.number_times_load_called.borrow(), 2);
-        NpmPackageReqsResolution::Resolutions(
-          package_reqs
-            .iter()
-            .map(|req| {
-              Ok(PackageNv {
-                name: req.name.clone(),
-                version: Version::parse_from_npm("1.0.0").unwrap(),
-              })
-            })
-            .collect::<Vec<_>>(),
-        )
-      } else {
-        *value = true;
-        NpmPackageReqsResolution::ReloadRegistryInfo
-      }
-    }
-  }
-
   let mut loader = MemoryLoader::default();
   loader.add_source_with_text("file:///main.ts", "import 'npm:foo@1.0';");
   let root = ModuleSpecifier::parse("file:///main.ts").unwrap();
@@ -205,7 +205,7 @@ async fn test_npm_version_not_found_then_found() {
     let npm_resolver = TestNpmResolver {
       made_first_request: Rc::new(RefCell::new(false)),
       number_times_load_called: Rc::new(RefCell::new(0)),
-      should_never_succeed: false,
+      should_always_reload: false,
     };
 
     let mut graph = ModuleGraph::new(GraphKind::All);
@@ -228,31 +228,44 @@ async fn test_npm_version_not_found_then_found() {
       vec![root.as_str(), "npm:/foo@1.0.0"]
     );
   }
+}
 
-  // now try never succeeding
-  {
-    let npm_resolver = TestNpmResolver {
-      made_first_request: Rc::new(RefCell::new(false)),
-      number_times_load_called: Rc::new(RefCell::new(0)),
-      should_never_succeed: true,
-    };
+#[test]
+fn test_npm_reload_more_than_once() {
+  let mut loader = MemoryLoader::default();
+  loader.add_source_with_text("file:///main.ts", "import 'npm:foo@1.0';");
+  let root = ModuleSpecifier::parse("file:///main.ts").unwrap();
 
-    let mut graph = ModuleGraph::new(GraphKind::All);
-    graph
-      .build(
-        vec![root.clone()],
-        &loader,
-        BuildOptions {
-          npm_resolver: Some(&npm_resolver),
-          ..Default::default()
-        },
-      )
-      .await;
-    assert_eq!(
-      graph.valid().err().unwrap().to_string(),
-      "failed to resolve"
-    );
-  }
+  // try always reloading, it should panic
+  let result = std::panic::catch_unwind(|| {
+    let runtime = tokio::runtime::Builder::new_current_thread()
+      .enable_all()
+      .build()
+      .unwrap();
+    runtime.block_on(async {
+      let npm_resolver = TestNpmResolver {
+        made_first_request: Rc::new(RefCell::new(false)),
+        number_times_load_called: Rc::new(RefCell::new(0)),
+        should_always_reload: true,
+      };
+
+      let mut graph = ModuleGraph::new(GraphKind::All);
+      graph
+        .build(
+          vec![root.clone()],
+          &loader,
+          BuildOptions {
+            npm_resolver: Some(&npm_resolver),
+            ..Default::default()
+          },
+        )
+        .await;
+    });
+  });
+  assert_eq!(
+    format!("{}", result.unwrap_err().downcast_ref::<&str>().unwrap()),
+    "cannot return back ReloadRegistryInfo more than once"
+  );
 }
 
 #[tokio::test]
