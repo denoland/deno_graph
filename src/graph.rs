@@ -5062,7 +5062,6 @@ mod tests {
   use deno_ast::dep::ImportAttribute;
   use deno_ast::emit;
   use deno_ast::EmitOptions;
-  use deno_ast::EmittedSource;
   use deno_ast::SourceMap;
   use pretty_assertions::assert_eq;
   use serde_json::json;
@@ -5970,6 +5969,8 @@ mod tests {
   #[cfg(feature = "fast_check")]
   #[tokio::test]
   async fn fast_check_dts() {
+    use deno_ast::EmittedSourceText;
+
     let mut exports = IndexMap::new();
     exports.insert(".".to_string(), "./foo.ts".to_string());
 
@@ -6017,16 +6018,18 @@ mod tests {
     let dts = fsm.dts.unwrap();
     let source_map =
       SourceMap::single(module.specifier.clone(), module.source.to_string());
-    let EmittedSource { text, .. } = emit(
+    let EmittedSourceText { text, .. } = emit(
       &dts.program,
       &dts.comments.as_single_threaded(),
       &source_map,
       &EmitOptions {
-        keep_comments: true,
+        remove_comments: false,
         source_map: deno_ast::SourceMapOption::None,
         ..Default::default()
       },
     )
+    .unwrap()
+    .into_string()
     .unwrap();
     assert_eq!(
       text.trim(),
@@ -6038,6 +6041,8 @@ mod tests {
   #[cfg(feature = "fast_check")]
   #[tokio::test]
   async fn fast_check_external() {
+    use deno_ast::EmittedSourceText;
+
     let mut exports = IndexMap::new();
     exports.insert(".".to_string(), "./foo.ts".to_string());
 
@@ -6103,16 +6108,18 @@ mod tests {
         module.specifier().clone(),
         module.source().unwrap().to_string(),
       );
-      let EmittedSource { text, .. } = emit(
+      let EmittedSourceText { text, .. } = emit(
         &dts.program,
         &dts.comments.as_single_threaded(),
         &source_map,
         &EmitOptions {
-          keep_comments: true,
+          remove_comments: false,
           source_map: deno_ast::SourceMapOption::None,
           ..Default::default()
         },
       )
+      .unwrap()
+      .into_string()
       .unwrap();
       assert_eq!(text.trim(), "export * from 'jsr:@package/foo';");
       assert!(dts.diagnostics.is_empty());

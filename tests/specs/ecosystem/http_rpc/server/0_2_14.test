@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 1 | export const RPC_CODE_TO_HTTP_STATUS_CODE = {
   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 35 |   public readonly code;
    |                   ^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -31,6 +33,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 36 |   public readonly type;
    |                   ^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -42,6 +45,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 37 |   public readonly title;
    |                   ^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -53,6 +57,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 38 |   public readonly detail;
    |                   ^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -64,6 +69,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 39 |   public readonly extensions;
    |                   ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 117 | export function createRoute<AdapterContext extends BaseCtx>() {
     |                 ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 21 | export const rpcFastify = fp<FastifyPluginOptions>((fastify, opts, done) => {
    |              ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

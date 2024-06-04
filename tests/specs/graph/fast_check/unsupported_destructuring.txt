@@ -70,4 +70,3 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
 
     info: destructuring can not be inferred by fast check
     docs: https://jsr.io/go/slow-type-unsupported-destructuring
-

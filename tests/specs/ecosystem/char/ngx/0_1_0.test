@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 109 | export const listen = (...extras: string[]) =>
     |              ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 115 | export const letsEncrypt = (
     |              ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,10 +33,13 @@ error[unsupported-default-export-expr]: default export expression was too comple
     | 
 125 | export default Object.assign(
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 126 |   (value?: string, children?: LooseConfigNode[]) => ngx(value, children),
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 127 |   { NGX_VERSION, listen, letsEncrypt }
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 128 | );
     | ^^
     = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable

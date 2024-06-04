@@ -13,6 +13,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 44 | export const render2d = (g: CRC2D, dsl: DSL) => {
    |              ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -26,14 +27,19 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 73 | export const stroke = (dsl: DSL) => (g: CRC2D) => {
    |                                     ^^^^^^^^^^^^^^^
+   | 
 74 |     g.beginPath()
    | ^^^^^^^^^^^^^^^^^
+   | 
 75 |     render2d(g, dsl)
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 76 |     g.stroke()
    | ^^^^^^^^^^^^^^
+   | 
 77 | }
    | ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -47,14 +53,19 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 79 | export const fill = (dsl: DSL) => (g: CRC2D) => {
    |                                   ^^^^^^^^^^^^^^^
+   | 
 80 |     g.beginPath()
    | ^^^^^^^^^^^^^^^^^
+   | 
 81 |     render2d(g, dsl)
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 82 |     g.fill()
    | ^^^^^^^^^^^^
+   | 
 83 | }
    | ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -68,10 +79,13 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 132 | export const circle = (x: number, y: number, radius: number) => (g: CRC2D) => {
     |                                                                 ^^^^^^^^^^^^^^^
+    | 
 133 |     g.arc(x, y, radius, 0, Math.PI * 2)
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 134 | }
     | ^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type

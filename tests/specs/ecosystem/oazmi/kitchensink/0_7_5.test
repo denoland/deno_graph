@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 42 | export const env_is_little_endian = /*@__PURE__*/ getEnvironmentEndianness()
    |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 58 | export const hexStringOfArray = (arr: NumericArray, options: Partial<HexStringRepr>) => {
    |              ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 89 | export const toUpperOrLowerCase = (str: string, option: 1 | 0 | -1) => option === 1 ? string_toUpperCase(str) : option === -1 ? string_toLowerCase(str) : str
    |              ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 182 | export const convertCase = (
     |              ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 191 | export const convertCase_Factory = (from_casetype: NamingCaseTuple, to_casetype: NamingCaseTuple) => {
     |              ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 204 | export const kebabToCamel = /*@__PURE__*/ convertCase_Factory(kebabCase, camelCase)
     |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -75,6 +81,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 205 | export const camelToKebab = /*@__PURE__*/ convertCase_Factory(camelCase, kebabCase)
     |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -86,6 +93,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 206 | export const snakeToCamel = /*@__PURE__*/ convertCase_Factory(snakeCase, camelCase)
     |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -97,6 +105,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 207 | export const camelToSnake = /*@__PURE__*/ convertCase_Factory(camelCase, snakeCase)
     |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -108,6 +117,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 208 | export const kebabToSnake = /*@__PURE__*/ convertCase_Factory(kebabCase, snakeCase)
     |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -119,6 +129,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 209 | export const snakeToKebab = /*@__PURE__*/ convertCase_Factory(snakeCase, kebabCase)
     |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -130,6 +141,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 10 | export const THROTTLE_REJECT = /*@__PURE__*/ Symbol(DEBUG.MINIFY || "a rejection by a throttled function")
    |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -141,6 +153,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 11 | export const TIMEOUT = /*@__PURE__*/ Symbol(DEBUG.MINIFY || "a timeout by an awaited promiseTimeout function")
    |              ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -152,6 +165,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 213 | export const promiseTimeout = (wait_time_ms: number, should_reject?: boolean) => {
     |              ^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -163,6 +177,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 21 | export const getBGCanvas = (init_width?: number, init_height?: number) => {
    |              ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -174,6 +189,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 26 | export const getBGCtx = (init_width?: number, init_height?: number) => {
    |              ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -185,6 +201,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 243 | export const cropImageData = <Channels extends (1 | 2 | 3 | 4) = 4>(img_data: SimpleImageData, crop_rect: Partial<Rect>) => {
     |              ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -196,6 +213,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 348 | export const randomRGBA = (alpha?: undefined | number) => {
     |              ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -209,6 +227,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 68 | export const packSeq = (...items: Parameters<typeof pack>[]) => {
    |              ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -220,6 +239,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 18 | export const dump = (...data: any[]) => dumps.push(...data)
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -231,6 +251,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 22 | export const perf = (testname: string, timeoffset: number, callback: Function, ...args: any[]) => {
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -242,6 +263,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 35 | export const printPerfTable = () => console_table(perf_table, ["testName", "executionTime"])
    |              ^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -253,6 +275,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 103 |   readonly file_reader = new FileReader()
     |            ^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -264,6 +287,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 131 |   parseFile(file: File) {
     |   ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -275,6 +299,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 33 | export const Crc32 = (bytes: Uint8Array | Array<number>, crc?: number) => {
    |              ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -286,6 +311,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 735 |   wmap = new WeakMap<K & WeakKey, V>()
     |   ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -297,6 +323,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 736 |   smap = new Map<K & PropertyKey, V>()
     |   ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -308,6 +335,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 764 | export const TREE_VALUE_UNSET = /*@__PURE__*/ Symbol(DEBUG.MINIFY || "represents an unset value for a tree")
     |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -319,6 +347,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 767 | export const treeClass_Factory = /*@__PURE__*/ (base_map_class: new <KT, VT>(...args: any[]) => SimpleMap<KT, VT>) => {
     |              ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -330,6 +359,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 812 | export const WeakTree = /*@__PURE__*/ treeClass_Factory(WeakMap)
     |              ^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -341,6 +371,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 813 | export const StrongTree = /*@__PURE__*/ treeClass_Factory(Map)
     |              ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -352,6 +383,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 814 | export const HybridTree = /*@__PURE__*/ treeClass_Factory(HybridWeakMap)
     |              ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -363,6 +395,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 818 |   $set = new Set<T>()
     |   ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -374,6 +407,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 819 |   $add = bind_set_add(this.$set)
     |   ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -385,6 +419,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 820 |   $del = bind_set_delete(this.$set)
     |   ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -396,6 +431,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 826 |   includes = bind_set_has(this.$set)
     |   ^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -407,6 +443,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 829 |   top = bind_stack_seek(this)
     |   ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -418,6 +455,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 14 |   string_toUpperCase = (str: string) => str.toUpperCase(),
    |   ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -429,6 +467,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 16 |   string_toLowerCase = (str: string) => str.toLowerCase(),
    |   ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -440,6 +479,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 18 |   promise_resolve = /*@__PURE__*/ Promise.resolve.bind(Promise),
    |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -451,6 +491,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 20 |   promise_reject = /*@__PURE__*/ Promise.reject.bind(Promise),
    |   ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -462,6 +503,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 22 |   promise_forever = <T>() => new Promise<T>(noop),
    |   ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -473,12 +515,16 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 40 | export const {
    |              ^
+   | 
 41 |   from: array_from,
    | ^^^^^^^^^^^^^^^^^^^
+   | 
 42 |   isArray: array_isArray,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 43 |   of: array_of,
    | ^^^^^^^^^^^^^^^
+   | 
 44 | } = Array
    | ^
    = hint: separate each destructured symbol into its own export statement
@@ -492,22 +538,31 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 46 | export const {
    |              ^
+   | 
 47 |   MAX_VALUE: number_MAX_VALUE,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 48 |   NEGATIVE_INFINITY: number_NEGATIVE_INFINITY,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 49 |   POSITIVE_INFINITY: number_POSITIVE_INFINITY,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 50 |   isFinite: number_isFinite,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 51 |   isInteger: number_isInteger,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 52 |   isNaN: number_isNaN,
    | ^^^^^^^^^^^^^^^^^^^^^^
+   | 
 53 |   parseFloat: number_parseFloat,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 54 |   parseInt: number_parseInt,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 55 | } = Number
    | ^
    = hint: separate each destructured symbol into its own export statement
@@ -521,8 +576,10 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 57 | export const {
    |              ^
+   | 
 58 |   random: math_random,
    | ^^^^^^^^^^^^^^^^^^^^^^
+   | 
 59 | } = Math
    | ^
    = hint: separate each destructured symbol into its own export statement
@@ -536,20 +593,28 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 61 | export const {
    |              ^
+   | 
 62 |   assign: object_assign,
    | ^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 63 |   defineProperty: object_defineProperty,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 64 |   entries: object_entries,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 65 |   fromEntries: object_fromEntries,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 66 |   keys: object_keys,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 67 |   getPrototypeOf: object_getPrototypeOf,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 68 |   values: object_values,
    | ^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 69 | } = Object
    | ^
    = hint: separate each destructured symbol into its own export statement
@@ -563,10 +628,13 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 73 | export const {
    |              ^
+   | 
 74 |   iterator: symbol_iterator,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 75 |   toStringTag: symbol_toStringTag,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 76 | } = Symbol
    | ^
    = hint: separate each destructured symbol into its own export statement
@@ -580,20 +648,28 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 84 | export const {
    |              ^
+   | 
 85 |   assert: console_assert,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 86 |   clear: console_clear,
    | ^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 87 |   debug: console_debug,
    | ^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 88 |   dir: console_dir,
    | ^^^^^^^^^^^^^^^^^^^
+   | 
 89 |   error: console_error,
    | ^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 90 |   log: console_log,
    | ^^^^^^^^^^^^^^^^^^^
+   | 
 91 |   table: console_table,
    | ^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 92 | } = console
    | ^
    = hint: separate each destructured symbol into its own export statement
@@ -607,8 +683,10 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 94 | export const {
    |              ^
+   | 
 95 |   now: performance_now,
    | ^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 96 | } = performance
    | ^
    = hint: separate each destructured symbol into its own export statement
@@ -622,104 +700,154 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 12 | export const {
    |              ^
+   | 
 13 |   // numeric comparison functions
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 14 |   min: math_min,
    | ^^^^^^^^^^^^^^^^
+   | 
 15 |   max: math_max,
    | ^^^^^^^^^^^^^^^^
+   | 
 16 |   sign: math_sign,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 17 |   abs: math_abs,
    | ^^^^^^^^^^^^^^^^
+   | 
 18 |   // numeric rounding functions
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 19 |   round: math_round,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 20 |   ceil: math_ceil,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 21 |   floor: math_floor,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 22 |   trunc: math_trunc,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 23 |   fround: math_fround,
    | ^^^^^^^^^^^^^^^^^^^^^^
+   | 
 24 |   // triginometric functions
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 25 |   sin: math_sin,
    | ^^^^^^^^^^^^^^^^
+   | 
 26 |   cos: math_cos,
    | ^^^^^^^^^^^^^^^^
+   | 
 27 |   tan: math_tan,
    | ^^^^^^^^^^^^^^^^
+   | 
 28 |   asin: math_asin,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 29 |   acos: math_acos,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 30 |   atan: math_atan,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 31 |   sinh: math_sinh,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 32 |   cosh: math_cosh,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 33 |   tanh: math_tanh,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 34 |   asinh: math_asinh,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 35 |   acosh: math_acosh,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 36 |   atanh: math_atanh,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 37 |   atan2: math_atan2,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 38 |   // math functions
    | ^^^^^^^^^^^^^^^^^^^
+   | 
 39 |   cbrt: math_cbrt,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 40 |   clz32: math_clz32,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 41 |   exp: math_exp,
    | ^^^^^^^^^^^^^^^^
+   | 
 42 |   expm1: math_expm1,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 43 |   hypot: math_hypot,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 44 |   imul: math_imul,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 45 |   log: math_log,
    | ^^^^^^^^^^^^^^^^
+   | 
 46 |   log10: math_log10,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 47 |   log1p: math_log1p,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 48 |   log2: math_log2,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 49 |   pow: math_pow,
    | ^^^^^^^^^^^^^^^^
+   | 
 50 |   sqrt: math_sqrt,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 51 |   // random function
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 52 |   // random: math_random,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 53 |   // math constants
    | ^^^^^^^^^^^^^^^^^^^
+   | 
 54 |   E: math_E,
    | ^^^^^^^^^^^^
+   | 
 55 |   LN10: math_LN10,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 56 |   LN2: math_LN2,
    | ^^^^^^^^^^^^^^^^
+   | 
 57 |   LOG10E: math_LOG10E,
    | ^^^^^^^^^^^^^^^^^^^^^^
+   | 
 58 |   LOG2E: math_LOG2E,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 59 |   PI: math_PI,
    | ^^^^^^^^^^^^^^
+   | 
 60 |   SQRT1_2: math_SQRT1_2,
    | ^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 61 |   SQRT2: math_SQRT2,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 62 | } = Math
    | ^
    = hint: separate each destructured symbol into its own export statement
@@ -733,34 +861,49 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 64 | export const {
    |              ^
+   | 
 65 |   EPSILON: number_EPSILON,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 66 |   MAX_SAFE_INTEGER: number_MAX_SAFE_INTEGER,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 67 |   // MAX_VALUE: number_MAX_VALUE,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 68 |   MIN_SAFE_INTEGER: number_MIN_SAFE_INTEGER,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 69 |   MIN_VALUE: number_MIN_VALUE,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 70 |   // NEGATIVE_INFINITY: number_NEGATIVE_INFINITY,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 71 |   NaN: number_NaN,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 72 |   // POSITIVE_INFINITY: number_POSITIVE_INFINITY,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 73 |   // isFinite: number_isFinite,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 74 |   // isInteger: number_isInteger,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 75 |   // isNaN: number_isNaN,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 76 |   isSafeInteger: number_isSafeInteger,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 77 |   // parseFloat: number_parseFloat,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 78 |   // parseInt: number_parseInt,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 79 | } = Number
    | ^
    = hint: separate each destructured symbol into its own export statement
@@ -774,10 +917,13 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 81 | export const {
    |              ^
+   | 
 82 |   asIntN: bigint_asIntN,
    | ^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 83 |   asUintN: bigint_asUintN,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 84 | } = BigInt
    | ^
    = hint: separate each destructured symbol into its own export statement
@@ -791,12 +937,16 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 86 | export const {
    |              ^
+   | 
 87 |   // fromCharCode: string_fromCharCode,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 88 |   fromCodePoint: string_fromCodePoint,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 89 |   raw: string_raw,
    | ^^^^^^^^^^^^^^^^^^
+   | 
 90 | } = String
    | ^
    = hint: separate each destructured symbol into its own export statement
@@ -810,10 +960,13 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 92 | export const {
    |              ^
+   | 
 93 |   parse: json_parse,
    | ^^^^^^^^^^^^^^^^^^^^
+   | 
 94 |   stringify: json_stringify,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 95 | } = JSON
    | ^
    = hint: separate each destructured symbol into its own export statement
@@ -827,18 +980,25 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
     | 
  97 | export const {
     |              ^
+    | 
  98 |   all: promise_all,
     | ^^^^^^^^^^^^^^^^^^^
+    | 
  99 |   allSettled: promise_allSettled,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 100 |   any: promise_any,
     | ^^^^^^^^^^^^^^^^^^^
+    | 
 101 |   race: promise_race,
     | ^^^^^^^^^^^^^^^^^^^^^
+    | 
 102 |   // reject: promise_reject,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 103 |   // resolve: promise_resolve,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 104 | } = Promise
     | ^
     = hint: separate each destructured symbol into its own export statement
@@ -852,12 +1012,16 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
     | 
 106 | export const {
     |              ^
+    | 
 107 |   error: response_error,
     | ^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 108 |   json: response_json,
     | ^^^^^^^^^^^^^^^^^^^^^^
+    | 
 109 |   redirect: response_redirect,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 110 | } = Response
     | ^
     = hint: separate each destructured symbol into its own export statement
@@ -871,50 +1035,73 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
     | 
 120 | export const {
     |              ^
+    | 
 121 |   // assign: object_assign,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 122 |   create: object_create,
     | ^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 123 |   defineProperties: object_defineProperties,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 124 |   // defineProperty: object_defineProperty,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 125 |   // entries: object_entries,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 126 |   freeze: object_freeze,
     | ^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 127 |   // fromEntries: object_fromEntries,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 128 |   getOwnPropertyDescriptor: object_getOwnPropertyDescriptor,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 129 |   getOwnPropertyDescriptors: object_getOwnPropertyDescriptors,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 130 |   getOwnPropertyNames: object_getOwnPropertyNames,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 131 |   getOwnPropertySymbols: object_getOwnPropertySymbols,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 132 |   // getPrototypeOf: object_getPrototypeOf,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 133 |   hasOwn: object_hasOwn,
     | ^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 134 |   is: object_is,
     | ^^^^^^^^^^^^^^^^
+    | 
 135 |   isExtensible: object_isExtensible,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 136 |   isFrozen: object_isFrozen,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 137 |   isSealed: object_isSealed,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 138 |   // keys: object_keys,
     | ^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 139 |   preventExtensions: object_preventExtensions,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 140 |   seal: object_seal,
     | ^^^^^^^^^^^^^^^^^^^^
+    | 
 141 |   setPrototypeOf: object_setPrototypeOf,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 142 |   // values: object_values,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 143 | } = Object
     | ^
     = hint: separate each destructured symbol into its own export statement
@@ -928,12 +1115,16 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
     | 
 145 | export const {
     |              ^
+    | 
 146 |   UTC: date_UTC,
     | ^^^^^^^^^^^^^^^^
+    | 
 147 |   // now: date_now,
     | ^^^^^^^^^^^^^^^^^^^
+    | 
 148 |   parse: date_parse,
     | ^^^^^^^^^^^^^^^^^^^^
+    | 
 149 | } = Date
     | ^
     = hint: separate each destructured symbol into its own export statement
@@ -947,6 +1138,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 12 | export const downloadBuffer = (data: Uint8Array | string | any, file_name: string = "data.bin", mime_type: string = "application/octet-stream") => {
    |              ^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -960,6 +1152,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 107 | ) => (<S extends T>(thisArg: S) => func.bind<T, A, B, R>(thisArg, ...args))
     |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -971,6 +1164,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 134 | export const bindMethodFactoryByName = /*@__PURE__*/ <
     |              ^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -982,6 +1176,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 176 | export const bindMethodToSelf = /*@__PURE__*/ <
     |              ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -993,6 +1188,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 210 | export const bindMethodToSelfByName = /*@__PURE__*/ <
     |              ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1004,6 +1200,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 222 |   array_proto = /*@__PURE__*/ prototypeOfClass(Array),
     |   ^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1015,6 +1212,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 223 |   map_proto = /*@__PURE__*/ prototypeOfClass(Map),
     |   ^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1026,6 +1224,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 224 |   set_proto = /*@__PURE__*/ prototypeOfClass(Set),
     |   ^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1037,6 +1236,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 225 |   string_proto = /*@__PURE__*/ prototypeOfClass(String)
     |   ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1048,6 +1248,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 229 |   bind_array_at = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "at"),
     |   ^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1059,6 +1260,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 230 |   bind_array_concat = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "concat"),
     |   ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1070,6 +1272,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 231 |   bind_array_copyWithin = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "copyWithin"),
     |   ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1081,6 +1284,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 232 |   bind_array_entries = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "entries"),
     |   ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1092,6 +1296,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 233 |   bind_array_every = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "every"),
     |   ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1103,6 +1308,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 234 |   bind_array_fill = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "fill"),
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1114,6 +1320,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 235 |   bind_array_filter = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "filter"),
     |   ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1125,6 +1332,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 236 |   bind_array_find = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "find"),
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1136,6 +1344,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 237 |   bind_array_findIndex = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "findIndex"),
     |   ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1147,6 +1356,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 238 |   bind_array_findLast = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "findLast"),
     |   ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1158,6 +1368,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 239 |   bind_array_findLastIndex = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "findLastIndex"),
     |   ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1169,6 +1380,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 240 |   bind_array_flat = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "flat"),
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1180,6 +1392,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 241 |   bind_array_flatMap = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "flatMap"),
     |   ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1191,6 +1404,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 242 |   bind_array_forEach = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "forEach"),
     |   ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1202,6 +1416,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 243 |   bind_array_includes = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "includes"),
     |   ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1213,6 +1428,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 244 |   bind_array_indexOf = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "indexOf"),
     |   ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1224,6 +1440,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 245 |   bind_array_join = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "join"),
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1235,6 +1452,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 246 |   bind_array_keys = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "keys"),
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1246,6 +1464,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 247 |   bind_array_lastIndexOf = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "lastIndexOf"),
     |   ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1257,6 +1476,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 248 |   bind_array_map = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "map"),
     |   ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1268,6 +1488,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 249 |   bind_array_pop = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "pop"),
     |   ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1279,6 +1500,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 250 |   bind_array_push = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "push"),
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1290,6 +1512,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 251 |   bind_array_reduce = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "reduce"),
     |   ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1301,6 +1524,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 252 |   bind_array_reduceRight = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "reduceRight"),
     |   ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1312,6 +1536,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 253 |   bind_array_reverse = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "reverse"),
     |   ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1323,6 +1548,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 254 |   bind_array_shift = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "shift"),
     |   ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1334,6 +1560,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 255 |   bind_array_slice = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "slice"),
     |   ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1345,6 +1572,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 256 |   bind_array_some = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "some"),
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1356,6 +1584,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 257 |   bind_array_sort = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "sort"),
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1367,6 +1596,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 258 |   bind_array_splice = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "splice"),
     |   ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1378,6 +1608,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 259 |   bind_array_unshift = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "unshift"),
     |   ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1389,6 +1620,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 260 |   bind_array_toLocaleString = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "toLocaleString"),
     |   ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1400,6 +1632,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 261 |   bind_array_toReversed = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "toReversed"),
     |   ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1411,6 +1644,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 262 |   bind_array_toSorted = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "toSorted"),
     |   ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1422,6 +1656,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 263 |   bind_array_toSpliced = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "toSpliced"),
     |   ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1433,6 +1668,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 264 |   bind_array_toString = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "toString"),
     |   ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1444,6 +1680,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 265 |   bind_array_values = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "values"),
     |   ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1455,6 +1692,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 266 |   bind_array_with = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "with")
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1466,6 +1704,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 271 |   bind_stack_seek = /*@__PURE__*/ bindMethodFactoryByName(array_proto, "at", -1)
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1477,6 +1716,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 275 |   bind_set_add = /*@__PURE__*/ bindMethodFactoryByName(set_proto, "add"),
     |   ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1488,6 +1728,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 276 |   bind_set_clear = /*@__PURE__*/ bindMethodFactoryByName(set_proto, "clear"),
     |   ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1499,6 +1740,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 277 |   bind_set_delete = /*@__PURE__*/ bindMethodFactoryByName(set_proto, "delete"),
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1510,6 +1752,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 278 |   bind_set_entries = /*@__PURE__*/ bindMethodFactoryByName(set_proto, "entries"),
     |   ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1521,6 +1764,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 279 |   bind_set_forEach = /*@__PURE__*/ bindMethodFactoryByName(set_proto, "forEach"),
     |   ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1532,6 +1776,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 280 |   bind_set_has = /*@__PURE__*/ bindMethodFactoryByName(set_proto, "has"),
     |   ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1543,6 +1788,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 281 |   bind_set_keys = /*@__PURE__*/ bindMethodFactoryByName(set_proto, "keys"),
     |   ^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1554,6 +1800,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 282 |   bind_set_values = /*@__PURE__*/ bindMethodFactoryByName(set_proto, "values")
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1565,6 +1812,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 286 |   bind_map_clear = /*@__PURE__*/ bindMethodFactoryByName(map_proto, "clear"),
     |   ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1576,6 +1824,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 287 |   bind_map_delete = /*@__PURE__*/ bindMethodFactoryByName(map_proto, "delete"),
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1587,6 +1836,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 288 |   bind_map_entries = /*@__PURE__*/ bindMethodFactoryByName(map_proto, "entries"),
     |   ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1598,6 +1848,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 289 |   bind_map_forEach = /*@__PURE__*/ bindMethodFactoryByName(map_proto, "forEach"),
     |   ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1609,6 +1860,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 290 |   bind_map_get = /*@__PURE__*/ bindMethodFactoryByName(map_proto, "get"),
     |   ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1620,6 +1872,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 291 |   bind_map_has = /*@__PURE__*/ bindMethodFactoryByName(map_proto, "has"),
     |   ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1631,6 +1884,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 292 |   bind_map_keys = /*@__PURE__*/ bindMethodFactoryByName(map_proto, "keys"),
     |   ^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1642,6 +1896,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 293 |   bind_map_set = /*@__PURE__*/ bindMethodFactoryByName(map_proto, "set"),
     |   ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1653,6 +1908,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 294 |   bind_map_values = /*@__PURE__*/ bindMethodFactoryByName(map_proto, "values")
     |   ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1664,6 +1920,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 298 |   bind_string_at = /*@__PURE__*/ bindMethodFactoryByName(string_proto, "at"),
     |   ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1675,6 +1932,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 299 |   bind_string_charAt = /*@__PURE__*/ bindMethodFactoryByName(string_proto, "charAt"),
     |   ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1686,6 +1944,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 300 |   bind_string_charCodeAt = /*@__PURE__*/ bindMethodFactoryByName(string_proto, "charCodeAt"),
     |   ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1697,6 +1956,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 301 |   bind_string_codePointAt = /*@__PURE__*/ bindMethodFactoryByName(string_proto, "codePointAt")
     |   ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

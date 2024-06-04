@@ -9,34 +9,49 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
    | 
 33 | export const {
    |              ^
+   | 
 34 |   basename,
    | ^^^^^^^^^^^
+   | 
 35 |   delimiter,
    | ^^^^^^^^^^^^
+   | 
 36 |   dirname,
    | ^^^^^^^^^^
+   | 
 37 |   extname,
    | ^^^^^^^^^^
+   | 
 38 |   format,
    | ^^^^^^^^^
+   | 
 39 |   fromFileUrl,
    | ^^^^^^^^^^^^^^
+   | 
 40 |   isAbsolute,
    | ^^^^^^^^^^^^^
+   | 
 41 |   join,
    | ^^^^^^^
+   | 
 42 |   normalize,
    | ^^^^^^^^^^^^
+   | 
 43 |   parse,
    | ^^^^^^^^
+   | 
 44 |   relative,
    | ^^^^^^^^^^^
+   | 
 45 |   resolve,
    | ^^^^^^^^^^
+   | 
 46 |   toFileUrl,
    | ^^^^^^^^^^^^
+   | 
 47 |   toNamespacedPath,
    | ^^^^^^^^^^^^^^^^^^^
+   | 
 48 | } = path;
    | ^
    = hint: separate each destructured symbol into its own export statement

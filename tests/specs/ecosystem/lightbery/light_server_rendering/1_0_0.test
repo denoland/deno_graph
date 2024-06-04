@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 26 |   public get id () {return this._id}
    |              ^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 27 |   public get parent () {return this._parent}
    |              ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 28 |   public get attributes () {
    |              ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 34 |   public get innerHTML () {return this._innerHTML}
    |              ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 35 |   public get style () {
    |              ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 41 |   public set innerHTML (value) {
    |                         ^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 15 |   public get head () {return this._head}
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 16 |   public get body () {return this._body}
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

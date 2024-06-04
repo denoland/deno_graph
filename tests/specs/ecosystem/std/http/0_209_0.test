@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 1057 |   toJSON() {
      |   ^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 419 |   [Symbol.for("Deno.customInspect")]() {
     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 423 |   [Symbol.for("nodejs.util.inspect.custom")](
     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 141 |   async serve(listener: Deno.Listener) {
     |         ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 191 |   async listenAndServe() {
     |         ^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 241 |   async listenAndServeTls(certFile: string, keyFile: string) {
     |         ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 558 | export async function serveListener(
     |                       ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 626 | export async function serve(
     |                       ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -97,6 +105,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 744 | export async function serveTls(
     |                       ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -108,6 +117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 611 | export async function serveDir(req: Request, opts: ServeDirOptions = {}) {
     |                       ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type

@@ -67,4 +67,3 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.js:
     info: JavaScript files with no corresponding declaration require type inference to be type checked
     info: fast check avoids type inference, so JavaScript entrypoints should be avoided
     docs: https://jsr.io/go/slow-type-unsupported-javascript-entrypoint
-

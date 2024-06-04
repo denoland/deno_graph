@@ -330,14 +330,14 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
   fn snippet(&self) -> Option<deno_ast::diagnostics::DiagnosticSnippet<'_>> {
     self.range().map(|range| DiagnosticSnippet {
       source: Cow::Borrowed(&range.text_info),
-      highlight: DiagnosticSnippetHighlight {
+      highlights: vec![DiagnosticSnippetHighlight {
         style: DiagnosticSnippetHighlightStyle::Error,
         range: DiagnosticSourceRange {
           start: DiagnosticSourcePos::SourcePos(range.range.start),
           end: DiagnosticSourcePos::SourcePos(range.range.end),
         },
         description: self.range_description().map(Cow::Borrowed),
-      },
+      }],
     })
   }
 

@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 5 | export const ChartRepoReleaseSchema = FlexObject({
   |              ^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 14 | export const ChartRepoIndexSchema = FlexObject({
    |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -31,6 +33,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 71 | export const ChartMetadataSchema = FlexObject({
    |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -42,6 +45,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 113 | export const KubectlClientVersionCmdOutputSchema = FlexObject({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -53,6 +57,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 119 | export const KubectlServerVersionCmdOutputSchema = FlexObject({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -64,6 +69,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 338 | export const HelmLsResultSchema = Type.Array(Type.Object({
     |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

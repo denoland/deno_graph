@@ -65,8 +65,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     |
   4 | export class Child extends MyFunction(Base) {
     |                            ^^^^^^^^^^^^^^^^ this is the superclass expression
+    |
     = hint: extract the superclass expression into a variable
 
     info: fast check was unable to infer the type of the superclass expression
     docs: https://jsr.io/go/slow-type-unsupported-super-class-expr
-

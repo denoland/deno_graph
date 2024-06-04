@@ -9,6 +9,7 @@ error[unsupported-super-class-expr]: super class expression was too complex
    | 
 96 | > extends defineDynamicClass()<E, S, BasePath> {
    |           ^^^^^^^^^^^^^^^^^^^^ this is the superclass expression
+   | 
    = hint: extract the superclass expression into a variable
 
   info: fast check was unable to infer the type of the superclass expression
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 236 |   onError = (handler: ErrorHandler<E>) => {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 250 |   notFound = (handler: NotFoundHandler<E>) => {
     |   ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 374 |   fetch = (request: Request, Env?: E['Bindings'] | {}, executionCtx?: ExecutionContext) => {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 390 |   request = (
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 415 |   fire = () => {
     |   ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -77,6 +83,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 62 |   get activeRouter() {
    |       ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -88,6 +95,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 282 |   get url() {
     |       ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -99,6 +107,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 296 |   get method() {
     |       ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -110,6 +119,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 218 |   setLayout = (layout: Layout<PropsForRenderer & { Layout: Layout }>) => (this.layout = layout)
     |   ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -121,6 +131,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 240 |   setRenderer = (renderer: Renderer) => {
     |   ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type

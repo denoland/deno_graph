@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 5 | export const Notify = z.object({
   |              ^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 15 | export const Push = <T extends Reference>(T: z.ZodType<T>) =>
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 27 | export const Reference = z.object({
    |              ^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 53 | export const Changes = <T extends Reference>(T: z.ZodType<T>) =>
    |              ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 63 | const Command = z.union([z.literal("delete"), z.literal("put")])
    |       ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 37 |   async init() {
    |         ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 92 |   async getVersion() {
    |         ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 25 |   getVersion() {
    |   ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -97,6 +105,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 43 |   getAll(fromVersion = 0) {
    |   ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -108,6 +117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 49 |   getOne(reference: Reference) {
    |   ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -119,6 +129,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 21 |   getVersion() {
    |   ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -130,6 +141,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 45 |   incrementVersion() {
    |   ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -141,6 +153,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 50 |   put(reference: T) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -152,6 +165,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 62 |   putMany(references: T[]) {
    |   ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -163,6 +177,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 77 |   getAll(fromVersion = 0) {
    |   ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -174,6 +189,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 83 |   getDeletes(fromVersion = 0) {
    |   ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -185,6 +201,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 89 |   getOne(reference: Reference) {
    |   ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -196,6 +213,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 93 |   delete(reference: Reference) {
    |   ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -207,6 +225,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 104 |   deleteMany(references: Reference[]) {
     |   ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

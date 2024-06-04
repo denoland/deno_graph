@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 225 | export function parseBEDEV2ErrorFromString(text: string, contentType: string) {
     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 234 | export function parseBEDEV2Error(response: Response) {
     |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 243 | export function parseBEDEV2ErrorFromStringAndHeaders(
     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 37 | export function parseBEDEV1ErrorFromString(text: string, contentType: string) {
    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 46 | export function parseBEDEV1Error(response: Response) {
    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 54 | export function parseBEDEV1ErrorFromStringAndHeaders(
    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

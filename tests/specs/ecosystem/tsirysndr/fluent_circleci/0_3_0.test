@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 69 |   into() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | export const MachineSchema = z.object({
   |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -31,6 +33,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 7 | export const EnvironmentSchema = z.record(z.string());
   |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -42,6 +45,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 9 | export const DockerSchema = z.object({
   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -53,6 +57,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 13 | export const RunSchema = z.union([
    |              ^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -64,6 +69,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 21 | export const StepSchema = z.union([
    |              ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -75,6 +81,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 33 | export const JobSchema = z.object({
    |              ^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -86,6 +93,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 41 | export const JobsSchema = z.record(JobSchema);
    |              ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -97,6 +105,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 43 | export const WorkflowsSchema = z.record(
    |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -108,6 +117,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 49 | export const Schema = z.object({
    |              ^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

@@ -9,164 +9,244 @@ error[unsupported-default-export-expr]: default export expression was too comple
     | 
  21 | export default new Scheduler<ScheduleCache, Quality>({
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  22 |   name: 'sm2',
     | ^^^^^^^^^^^^^^
+    | 
  23 | 
+    | 
     | 
  24 |   /**
     | ^^^^^
+    | 
  25 |    * 1. Ensures repetition and interval start at 0.
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  26 |    * 2. Ensures that EF starts at 2.5
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  27 |    */
     | ^^^^^
+    | 
  28 |   init(
     | ^^^^^^^
+    | 
  29 |     { efactor = EF, repetition = REPETITION, interval = INTERVAL } = {
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  30 |       efactor: EF,
     | ^^^^^^^^^^^^^^^^^^
+    | 
  31 |       repetition: REPETITION,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  32 |       interval: INTERVAL,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  33 |     },
     | ^^^^^^
+    | 
  34 |   ) {
     | ^^^^^
+    | 
  35 |     return { efactor, repetition, interval }
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  36 |   },
     | ^^^^
+    | 
  37 | 
+    | 
     | 
  38 |   /**
     | ^^^^^
+    | 
  39 |    * Only show cards that have a due date today, or in the past
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  40 |    * After each repetition session of a given day repeat again all items that scored below four
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  41 |    */
     | ^^^^^
+    | 
  42 |   filter(scheduleCache) {
     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  43 |     const due = getDueDate(scheduleCache)
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  44 |     return !due || (due <= new Date())
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  45 |   },
     | ^^^^
+    | 
  46 | 
+    | 
     | 
  47 |   /**
     | ^^^^^
+    | 
  48 |    * Sort by lastStudied. If they are the same day, sort randomly
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  49 |    */
     | ^^^^^
+    | 
  50 |   sort(sA, sB) {
     | ^^^^^^^^^^^^^^^^
+    | 
  51 |     const aDue = getDueDate(sA)
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  52 |     const bDue = getDueDate(sB)
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  53 |     if (!aDue && bDue) return -1
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  54 |     if (!bDue && aDue) return 1
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  55 |     if (!aDue || !bDue) return (Math.random() - 0.5)
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  56 |     if (sameDay(aDue, bDue)) return (Math.random() - 0.5)
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  57 |     return (aDue.getDate() - bDue.getDate())
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  58 |   },
     | ^^^^
+    | 
  59 | 
+    | 
     | 
  60 |   /**
     | ^^^^^
+    | 
  61 |    * Interval(1):=1
     | ^^^^^^^^^^^^^^^^^^^
+    | 
  62 |    * Interval(2):=6
     | ^^^^^^^^^^^^^^^^^^^
+    | 
  63 |    * for n>2: Interval(n):=Interval(n-1)*EF
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  64 |    *
     | ^^^^
+    | 
  65 |    * EF’:=EF+(0.1-(5-quality)*(0.08+(5-quality)*0.02))
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  66 |    *
     | ^^^^
+    | 
  67 |    * If the quality response was lower than 3 then start repetitions for the
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  68 |    * item from the beginning without changing the E-Factor
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  69 |    */
     | ^^^^^
+    | 
  70 |   update({
     | ^^^^^^^^^^
+    | 
  71 |     efactor: prevEfactor,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  72 |     repetition: prevRepetition,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  73 |     interval: prevInterval,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  74 |     lastStudied: prevLastStudied,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  75 |   }, quality) {
     | ^^^^^^^^^^^^^^^
+    | 
  76 |     const efactorModifier = 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  77 |     const efactor = Math.max(1.3, prevEfactor + efactorModifier)
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  78 |     const lastStudied = new Date()
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  79 | 
+    | 
     | 
  80 |     if (quality < 4) {
     | ^^^^^^^^^^^^^^^^^^^^^^
+    | 
  81 |       const studiedToday = sameDay(prevLastStudied || lastStudied, lastStudied)
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  82 |       return {
     | ^^^^^^^^^^^^^^
+    | 
  83 |         efactor: (quality < 3) ? prevEfactor : efactor,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  84 |         lastStudied,
     | ^^^^^^^^^^^^^^^^^^^^
+    | 
  85 |         interval: studiedToday ? 0 : Math.min(1, prevInterval),
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  86 |         repetition: 0,
     | ^^^^^^^^^^^^^^^^^^^^^^
+    | 
  87 |       }
     | ^^^^^^^
+    | 
  88 |     } else if (prevRepetition === 0) {
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  89 |       return { efactor, lastStudied, interval: 1, repetition: 1 }
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  90 |     } else if (prevRepetition === 1) {
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  91 |       return { efactor, lastStudied, interval: 6, repetition: 2 }
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  92 |     } else {
     | ^^^^^^^^^^^^
+    | 
  93 |       return {
     | ^^^^^^^^^^^^^^
+    | 
  94 |         efactor,
     | ^^^^^^^^^^^^^^^^
+    | 
  95 |         lastStudied,
     | ^^^^^^^^^^^^^^^^^^^^
+    | 
  96 |         interval: Math.round(prevInterval * prevEfactor),
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  97 |         repetition: prevRepetition + 1,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
  98 |       }
     | ^^^^^^^
+    | 
  99 |     }
     | ^^^^^
+    | 
 100 |   },
     | ^^^^
+    | 
 101 | })
     | ^^
     = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable
@@ -180,48 +260,70 @@ error[unsupported-default-export-expr]: default export expression was too comple
    | 
 12 | export default new Scheduler<ScheduleCache, Quality>({
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 13 |   name: 'basic-scheduler',
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 14 | 
+   | 
    | 
 15 |   // Ensure that repetition is an int
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 16 |   init(s = { repetition: 0 }) {
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 17 |     return { repetition: s.repetition || 0 }
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 18 |   },
    | ^^^^
+   | 
 19 | 
+   | 
    | 
 20 |   // If answered correctly 3 times, skip it!
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 21 |   filter({ repetition = 0 }) {
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 22 |     return repetition < 3
    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 23 |   },
    | ^^^^
+   | 
 24 | 
+   | 
    | 
 25 |   // Sort by least-repeated. If they are the same, then sort randomly!
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 26 |   sort(sA, sB): number {
    | ^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 27 |     return (sA.repetition - sB.repetition) || (Math.random() - 0.5)
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 28 |   },
    | ^^^^
+   | 
 29 | 
+   | 
    | 
 30 |   // If answered correctly, increment the repetition
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 31 |   update({ repetition }, quality) {
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 32 |     return { repetition: quality ? repetition + 1 : repetition }
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 33 |   },
    | ^^^^
+   | 
 34 | })
    | ^^
    = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable

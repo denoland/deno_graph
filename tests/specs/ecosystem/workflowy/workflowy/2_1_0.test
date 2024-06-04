@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | export const LoginResultSchema = z.object({
   |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 15 | export const InitializationDataSchema = z.object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -31,6 +33,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 27 | export const TreeDataSchema = z.object({
    |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -42,6 +45,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 66 | export const OperationSchema = z.object({
    |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -53,6 +57,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 92 | export const OperationResultSchema = z.object({
    |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 17 |   public getPendingOperations() {
    |          ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 25 |   public isDirty() {
    |          ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 96 |   public getList(id: string) {
    |          ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -97,6 +105,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 200 |   public findOne(namePattern: RegExp, descriptionPattern = /.*/) {
     |          ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -108,6 +117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 206 |   public findAll(
     |          ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -119,6 +129,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 229 |   public createList(priority = -1) {
     |          ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -130,6 +141,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 273 |   public createItem(priority = -1) {
     |          ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

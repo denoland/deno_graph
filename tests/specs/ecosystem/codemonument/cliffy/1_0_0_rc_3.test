@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 71 |   public get unclosedAnsiRuns() {
    |              ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 186 |   protected get selectedOption() {
     |                 ^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 449 |   protected getListItemIndent(option: TOption | TGroup) {
     |             ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 459 |   protected getListItemPointer(option: TOption | TGroup, isSelected?: boolean) {
     |             ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 507 |   protected getBreadCrumb() {
     |             ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 527 |   protected getListIndex(value?: TValue) {
     |             ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 541 |   protected getPageOffset(index: number) {
     |             ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | const CSI = `${ESC}[`;
   |       ^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -97,6 +105,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 15 | export const cursorPosition = `${CSI}6n`;
    |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -108,6 +117,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 101 | export const cursorLeft = `${CSI}G`;
     |              ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -119,6 +129,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 103 | export const cursorHide = `${CSI}?25l`;
     |              ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -130,6 +141,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 105 | export const cursorShow = `${CSI}?25h`;
     |              ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -141,6 +153,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 107 | export const cursorSave = `${ESC}7`;
     |              ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -152,6 +165,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 109 | export const cursorRestore = `${ESC}8`;
     |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -163,6 +177,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 128 | export const eraseScreen = `${CSI}2J`;
     |              ^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -174,6 +189,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 147 | export const eraseLine = `${CSI}2K`;
     |              ^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -185,6 +201,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 149 | export const eraseLineEnd = `${CSI}0K`;
     |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -196,6 +213,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 151 | export const eraseLineStart = `${CSI}1K`;
     |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -207,6 +225,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 173 | export const clearTerminal = Deno.build.os === "windows"
     |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -218,6 +237,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2260 |   public hasArguments() {
      |          ^^^^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -229,6 +249,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2283 |   public getUsage() {
      |          ^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -240,6 +261,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2764 |   public getCompletions() {
      |          ^^^^^^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

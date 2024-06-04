@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 5 | export const prefixes = Object.freeze(
   |              ^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 65 | export const builtInUnits = Object.freeze(
    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
