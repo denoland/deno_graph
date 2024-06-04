@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 120 | export function IsTemplateLiteralFinite<T extends TTemplateLiteral>(schema: T) {
     |                 ^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 54 | function FromIntersect<T extends TSchema[], K extends PropertyKey[]>(T: T, K: K) {
    |          ^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 65 | function FromUnion<T extends TSchema[], K extends PropertyKey[]>(T: T, K: K) {
    |          ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 76 | function FromProperties<T extends TProperties, K extends PropertyKey[]>(T: T, K: K) {
    |          ^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 82 | function FromProperties(properties: TProperties, references: TSchema[]) {
    |          ^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 34 | export function Entries() {
    |                 ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 38 | export function Clear() {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 42 | export function Delete(kind: string) {
    |                 ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -97,6 +105,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 46 | export function Has(kind: string) {
    |                 ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -108,6 +117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 54 | export function Get(kind: string) {
    |                 ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -119,6 +129,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 33 | export function Entries() {
    |                 ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -130,6 +141,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 37 | export function Clear() {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -141,6 +153,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 41 | export function Delete(format: string) {
    |                 ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -152,6 +165,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 45 | export function Has(format: string) {
    |                 ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -163,6 +177,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 53 | export function Get(format: string) {
    |                 ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -174,6 +189,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 32 | export const PatternBooleanExact = `^${PatternBoolean}$`;
    |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -185,6 +201,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 33 | export const PatternNumberExact = `^${PatternNumber}$`;
    |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -196,6 +213,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 34 | export const PatternStringExact = `^${PatternString}$`;
    |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

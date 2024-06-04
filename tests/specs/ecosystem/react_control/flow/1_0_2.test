@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 32 | export const SwitchMap = genericMemo(SwitchMapComponent)
    |              ^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 23 | export const Show = genericMemo(ShowComponent)
    |              ^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -31,6 +33,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 40 | export const For = genericMemo(ForComponent)
    |              ^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

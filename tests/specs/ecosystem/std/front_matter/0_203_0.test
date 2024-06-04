@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 14 | export const extract = createExtractor({ [Format.YAML]: parse as Parser });
    |              ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 14 | export const extract = createExtractor({ [Format.TOML]: parse as Parser });
    |              ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -31,6 +33,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 13 | export const extract = createExtractor({ [Format.JSON]: JSON.parse as Parser });
    |              ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -42,6 +45,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 10 | export const extract = createExtractor({
    |              ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

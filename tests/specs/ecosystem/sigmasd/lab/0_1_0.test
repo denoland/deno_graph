@@ -13,10 +13,13 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 170 |     free: (addr: number) => {
     |           ^^^^^^^^^^^^^^^^^^^
+    | 
 171 |       this.#blocks[Block.addressToIndex(addr)] = null;
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 172 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -30,16 +33,22 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 188 |     store_u8: (addr: bigint, n: number) => {
     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 189 |       const blockIdx = Block.addressToIndex(addr);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 190 |       const offset = Block.maskAddress(addr);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 191 |       const block = this.#blocks[blockIdx];
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 192 |       block?.view.setUint8(Number(offset), Number(n));
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 193 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,16 +62,22 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 195 |     store_u64: (addr: bigint, n: bigint) => {
     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 196 |       const blockIdx = Block.addressToIndex(addr);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 197 |       const offset = Block.maskAddress(addr);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 198 |       const block = this.#blocks[blockIdx];
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 199 |       block?.view.setBigUint64(Number(offset), n, true);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 200 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -76,30 +91,43 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 221 |     output_set: (addr: bigint, length: bigint) => {
     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 222 |       const blockIdx = Block.addressToIndex(addr);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 223 |       const block = this.#blocks[blockIdx];
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 224 |       if (!block) {
     | ^^^^^^^^^^^^^^^^^^^
+    | 
 225 |         throw new Error(`cannot assign to this block (addr=${addr.toString(16).padStart(16, '0')}; length=${length})`);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 226 |       }
     | ^^^^^^^
+    | 
 227 | 
+    | 
     | 
 228 |       if (length > block.buffer.byteLength) {
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 229 |         throw new Error('length longer than target block');
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 230 |       }
     | ^^^^^^^
+    | 
 231 | 
+    | 
     | 
 232 |       this.#stack[this.#stack.length - 1][1] = blockIdx;
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 233 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -113,22 +141,31 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 235 |     error_set: (addr: bigint) => {
     |                ^^^^^^^^^^^^^^^^^^^
+    | 
 236 |       const blockIdx = Block.addressToIndex(addr);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 237 |       const block = this.#blocks[blockIdx];
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 238 |       if (!block) {
     | ^^^^^^^^^^^^^^^^^^^
+    | 
 239 |         throw new Error('cannot assign to this block');
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 240 |       }
     | ^^^^^^^
+    | 
 241 | 
+    | 
     | 
 242 |       this.#stack[this.#stack.length - 1][2] = blockIdx;
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 243 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type

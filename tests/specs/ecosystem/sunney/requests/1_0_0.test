@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 148 |   public get baseUrl() {
     |              ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 156 |   public create(opts?: RequestlyOptions | string) {
     |          ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 160 |   public get params() {
     |              ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,10 +45,13 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 169 |     set: (key: string, value: string) => {
     |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 170 |       this._headers[key] = value;
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 171 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -59,10 +65,13 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 172 |     get: (key: string) => {
     |          ^^^^^^^^^^^^^^^^^^
+    | 
 173 |       return this._headers[key];
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 174 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -74,10 +83,13 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 175 |     getAll: () => {
     |             ^^^^^^^
+    | 
 176 |       return this._headers;
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 177 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -89,10 +101,13 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 178 |     remove: (key: string) => {
     |             ^^^^^^^^^^^^^^^^^^
+    | 
 179 |       delete this._headers[key];
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 180 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -106,16 +121,22 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 181 |     update: (headers: Record<string, string>) => {
     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 182 |       this._headers = {
     | ^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 183 |         ...headers,
     | ^^^^^^^^^^^^^^^^^^^
+    | 
 184 |         ...this._headers,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 185 |       };
     | ^^^^^^^^
+    | 
 186 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -129,10 +150,13 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 190 |     set: (key: string, value: string) => {
     |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 191 |       this._cookies[key] = value;
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 192 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -146,10 +170,13 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 193 |     get: (key: string) => {
     |          ^^^^^^^^^^^^^^^^^^
+    | 
 194 |       return this._cookies[key];
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 195 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -161,10 +188,13 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 196 |     getAll: () => {
     |             ^^^^^^^
+    | 
 197 |       return this._cookies;
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 198 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -176,10 +206,13 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 199 |     remove: (key: string) => {
     |             ^^^^^^^^^^^^^^^^^^
+    | 
 200 |       delete this._cookies[key];
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 201 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -193,16 +226,22 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 202 |     update: (cookies: Record<string, string>) => {
     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 203 |       this._cookies = {
     | ^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 204 |         ...cookies,
     | ^^^^^^^^^^^^^^^^^^^
+    | 
 205 |         ...this._cookies,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 206 |       };
     | ^^^^^^^^
+    | 
 207 |     },
     | ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -216,6 +255,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 208 |     toString: () => utils.stringifyCookies(this.cookies.getAll()),
     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -227,6 +267,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 211 |   public get<T>(url: string, options?: Omit<RequestOptions, "body">) {
     |          ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -238,6 +279,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 215 |   public post<T>(url: string, options?: RequestOptions) {
     |          ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -249,6 +291,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 219 |   public put<T>(url: string, options?: RequestOptions) {
     |          ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -260,6 +303,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 223 |   public delete<T>(url: string, options?: RequestOptions) {
     |          ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -271,6 +315,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 227 |   public patch<T>(url: string, options?: RequestOptions) {
     |          ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -282,6 +327,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 242 | export const requestly = new Requestly();
     |              ^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

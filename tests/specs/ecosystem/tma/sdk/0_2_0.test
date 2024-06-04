@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 167 |   on = this.ee.on.bind(this.ee);
     |   ^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 172 |   off = this.ee.off.bind(this.ee);
     |   ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -31,6 +33,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 9 | export const themeParamsParser = createValueParserGenerator<ThemeParamsParsed>(
   |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -42,6 +45,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 86 |   on = this.ee.on.bind(this.ee);
    |   ^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -53,6 +57,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 91 |   off = this.ee.off.bind(this.ee);
    |   ^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -64,6 +69,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 83 |   on = this.ee.on.bind(this.ee);
    |   ^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -75,6 +81,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 88 |   off = this.ee.off.bind(this.ee);
    |   ^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -86,6 +93,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 47 |   on = this.ee.on.bind(this.ee);
    |   ^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -97,6 +105,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 52 |   off = this.ee.off.bind(this.ee);
    |   ^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -108,6 +117,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 7 | export const string = createValueParserGenerator<string>((value) => {
   |              ^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -119,6 +129,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 9 | export const rgb = createValueParserGenerator<RGB>((value) => toRGB(string().parse(value)), 'rgb');
   |              ^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -130,6 +141,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 7 | export const number = createValueParserGenerator<number>((value) => {
   |              ^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -141,6 +153,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 7 | export const date = createValueParserGenerator<Date>((value) => (
   |              ^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -152,6 +165,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 7 | export const boolean = createValueParserGenerator<boolean>((value) => {
   |              ^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -163,6 +177,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 213 |   on = this.ee.on.bind(this.ee);
     |   ^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -174,6 +189,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 218 |   off = this.ee.off.bind(this.ee);
     |   ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -185,6 +201,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 157 |   on = this.ee.on.bind(this.ee);
     |   ^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -196,6 +213,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 162 |   off = this.ee.off.bind(this.ee);
     |   ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -207,6 +225,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 68 |   on = this.ee.on.bind(this.ee);
    |   ^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -218,6 +237,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 73 |   off = this.ee.off.bind(this.ee);
    |   ^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

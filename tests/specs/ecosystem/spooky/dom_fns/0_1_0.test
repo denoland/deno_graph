@@ -9,10 +9,13 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export const el = (sel: string) => () => {
   |                                    ^^^^^^^
+  | 
 6 |   return document.querySelector(sel);
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  | 
 7 | };
   | ^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -24,6 +27,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 48 | function createDOMValueFn<Prop, Primitive, Tag>(defn: ValueDefn<Prop>) {
    |          ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -35,6 +39,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 69 | export const text = domValue<never, string, 'Text'>({
    |              ^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -46,6 +51,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 74 | export const attr = domValue<string, string, 'Attr'>({
    |              ^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -57,6 +63,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 92 | export const prop = domValue<string, any, 'Prop'>({
    |              ^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -68,6 +75,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 97 | export const className = domValue<string, boolean, 'Class'>({
    |              ^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -79,6 +87,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 102 | export const data = domValue<string, any, 'Data'>({
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -90,6 +99,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 107 | export const empty = (el: ElementFn) => () => { el().replaceChildren(); };
     |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -103,6 +113,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 115 | let filterFn = (cond: FilterFn, fn: (...args: any[]) => any) => (...args: any[]) => cond(...args) && fn(...args);
     |                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -114,10 +125,13 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 117 | export const debug = () =>  (...args: any[]) => {
     |                             ^^^^^^^^^^^^^^^^^^^^^
+    | 
 118 |   debugger;
     | ^^^^^^^^^^^
+    | 
 119 | };
     | ^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -131,10 +145,13 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 122 |   (init: any) => 
     |   ^^^^^^^^^^^^^^^
+    | 
 123 |   /** @ts-ignore */
     | ^^^^^^^^^^^^^^^^^^^
+    | 
 124 |   filterFn(cond, pipe(init, ...fns));
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -146,6 +163,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 126 | export let memo = (fn: (...args: any[]) => any) => {
     |            ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -157,6 +175,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 135 | export let combine = (...fns: ((...args: any[]) => any)[]) => (...args: any[]) => fns.forEach(fn => fn(...args));
     |                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -168,16 +187,22 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 137 | export let action = (eventName: string, fn: (ev: Event) => any) => (el: ElementFn) => () => {
     |                                                                                       ^^^^^^^
+    | 
 138 |   let _el = el();
     | ^^^^^^^^^^^^^^^^^
+    | 
 139 |   let handler = (ev: Event) => fn(ev);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 140 |   _el.addEventListener(eventName, handler);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 141 |   return () => _el.removeEventListener(eventName, handler);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 142 | };
     | ^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

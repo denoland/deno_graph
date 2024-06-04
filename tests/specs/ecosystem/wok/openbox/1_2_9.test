@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 47 |   toResponse() {
    |   ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 54 | export const OpenboxRequestErrorSourceSchema = Type.Union([
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -31,6 +33,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 63 | const SchemaValidationErrorTypeSchema = Type.Literal("schemaValidation");
    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -42,6 +45,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 64 | const ProtocolValidationErrorTypeSchema = Type.Literal("protocolValidation");
    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -53,6 +57,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 65 | const InternalErrorTypeSchema = Type.Literal("internal");
    |       ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -64,6 +69,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 67 | export const OpenboxRequestErrorTypeSchema = Type.Union([
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -75,6 +81,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 75 | export const OpenboxSchemaValidationErrorSchema = Type.Object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -86,6 +93,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 85 | export const OpenboxProtocolValidationErrorSchema = Type.Object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -97,6 +105,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 94 | export const OpenboxInternalErrorSchema = Type.Object({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -108,174 +117,259 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 132 | (
     | ^
+    | 
 133 |   source: OpenboxRequestErrorSource,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 134 |   type: OpenboxRequestErrorType,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 135 |   error: unknown,
     | ^^^^^^^^^^^^^^^^^
+    | 
 136 |   name?: string,
     | ^^^^^^^^^^^^^^^^
+    | 
 137 | ) => {
     | ^^^^^^
+    | 
 138 |   if (type === "schemaValidation") {
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 139 |     return new Response(
     | ^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 140 |       JSON.stringify(
     | ^^^^^^^^^^^^^^^^^^^^^
+    | 
 141 |         {
     | ^^^^^^^^^
+    | 
 142 |           type,
     | ^^^^^^^^^^^^^^^
+    | 
 143 |           message: "Schema validation failed",
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 144 |           source,
     | ^^^^^^^^^^^^^^^^^
+    | 
 145 |           error,
     | ^^^^^^^^^^^^^^^^
+    | 
 146 |           ...(name !== undefined ? { name } : {}),
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 147 |         } satisfies OpenboxSchemaValidationError,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 148 |         null,
     | ^^^^^^^^^^^^^
+    | 
 149 |         2,
     | ^^^^^^^^^^
+    | 
 150 |       ),
     | ^^^^^^^^
+    | 
 151 |       {
     | ^^^^^^^
+    | 
 152 |         status: 422,
     | ^^^^^^^^^^^^^^^^^^^^
+    | 
 153 |         headers: {
     | ^^^^^^^^^^^^^^^^^^
+    | 
 154 |           "Content-Type": MediaTypes.Json,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 155 |         },
     | ^^^^^^^^^^
+    | 
 156 |       },
     | ^^^^^^^^
+    | 
 157 |     );
     | ^^^^^^
+    | 
 158 |   }
     | ^^^
+    | 
 159 | 
+    | 
     | 
 160 |   if (type === "protocolValidation") {
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 161 |     const underlyingCause = (error instanceof Error) ? error.cause : undefined;
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 162 | 
+    | 
     | 
 163 |     if (underlyingCause) {
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 164 |       log?.(
     | ^^^^^^^^^^^^
+    | 
 165 |         "Request failed with underlying cause",
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 166 |         "type:",
     | ^^^^^^^^^^^^^^^^
+    | 
 167 |         type,
     | ^^^^^^^^^^^^^
+    | 
 168 |         "source:",
     | ^^^^^^^^^^^^^^^^^^
+    | 
 169 |         source,
     | ^^^^^^^^^^^^^^^
+    | 
 170 |         "name:",
     | ^^^^^^^^^^^^^^^^
+    | 
 171 |         name,
     | ^^^^^^^^^^^^^
+    | 
 172 |         "error:",
     | ^^^^^^^^^^^^^^^^^
+    | 
 173 |         error,
     | ^^^^^^^^^^^^^^
+    | 
 174 |       );
     | ^^^^^^^^
+    | 
 175 |     }
     | ^^^^^
+    | 
 176 | 
+    | 
     | 
 177 |     return new Response(
     | ^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 178 |       JSON.stringify(
     | ^^^^^^^^^^^^^^^^^^^^^
+    | 
 179 |         {
     | ^^^^^^^^^
+    | 
 180 |           type,
     | ^^^^^^^^^^^^^^^
+    | 
 181 |           source,
     | ^^^^^^^^^^^^^^^^^
+    | 
 182 |           ...(error instanceof Error ? { message: error.message } : {}),
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 183 |           ...(name !== undefined ? { name } : {}),
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 184 |         } satisfies OpenboxProtocolValidationError,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 185 |         null,
     | ^^^^^^^^^^^^^
+    | 
 186 |         2,
     | ^^^^^^^^^^
+    | 
 187 |       ),
     | ^^^^^^^^
+    | 
 188 |       {
     | ^^^^^^^
+    | 
 189 |         status: 400,
     | ^^^^^^^^^^^^^^^^^^^^
+    | 
 190 |         headers: {
     | ^^^^^^^^^^^^^^^^^^
+    | 
 191 |           "Content-Type": MediaTypes.Json,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 192 |         },
     | ^^^^^^^^^^
+    | 
 193 |       },
     | ^^^^^^^^
+    | 
 194 |     );
     | ^^^^^^
+    | 
 195 |   }
     | ^^^
+    | 
 196 | 
+    | 
     | 
 197 |   if (type === "internal") {
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 198 |     log?.("Internal server error", "type:", type, "source:", source, "name:", name, "error:", error);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 199 |     return new Response(
     | ^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 200 |       JSON.stringify(
     | ^^^^^^^^^^^^^^^^^^^^^
+    | 
 201 |         {
     | ^^^^^^^^^
+    | 
 202 |           type,
     | ^^^^^^^^^^^^^^^
+    | 
 203 |           message: "Internal server error",
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 204 |         } satisfies OpenboxInternalError,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 205 |       ),
     | ^^^^^^^^
+    | 
 206 |       {
     | ^^^^^^^
+    | 
 207 |         status: 500,
     | ^^^^^^^^^^^^^^^^^^^^
+    | 
 208 |         headers: {
     | ^^^^^^^^^^^^^^^^^^
+    | 
 209 |           "Content-Type": MediaTypes.Json,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 210 |         },
     | ^^^^^^^^^^
+    | 
 211 |       },
     | ^^^^^^^^
+    | 
 212 |     );
     | ^^^^^^
+    | 
 213 |   }
     | ^^^
+    | 
 214 | 
+    | 
     | 
 215 |   assertUnreachable(type);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 216 | };
     | ^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -287,6 +381,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 233 | export function streamingMultipartFormData(schema: TSchema) {
     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -298,6 +393,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 316 |   static encodeJson(body: unknown) {
     |          ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -309,6 +405,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 320 |   static encodeUrl(body: unknown) {
     |          ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -320,6 +417,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 327 |   media(mediaType: string, encoder?: (body: unknown) => BodyInit) {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -331,6 +429,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 337 |   headers(headers: HeadersInit) {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -342,6 +441,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 341 |   empty() {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -353,6 +453,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 345 |   get json() {
     |       ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -364,6 +465,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 349 |   get urlEncoded() {
     |       ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -375,6 +477,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 353 |   get text() {
     |       ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -386,6 +489,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 357 |   get html() {
     |       ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -397,6 +501,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 361 |   get binary() {
     |       ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -408,6 +513,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 366 | function withPath<
     |          ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -419,6 +525,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 546 |   addRoute(
     |   ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -430,6 +537,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 834 |   complete(_: UnimplementedRoutes<Routes>) {
     |   ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -441,6 +549,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 236 |   async *partReaders() {
     |          ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -452,6 +561,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 11 |   static default = new OpenboxSchemaRegistry();
    |          ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -463,6 +573,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 15 |   merge(registry: OpenboxSchemaRegistry) {
    |   ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -474,6 +585,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 43 |   compile(schema: TSchema) {
    |   ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -485,6 +597,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 52 |   check(schema: TSchema, value: unknown) {
    |   ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -496,6 +609,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 56 |   deref(schema: TSchema) {
    |   ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -507,6 +621,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 204 |   jsonEndpoint<P extends string, J extends OpenboxJsonRouteConfig<P>>(
     |   ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -518,6 +633,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 275 | function eraseRoute<Routes, Path extends string, Method extends OpenboxRouteMethod, ReqMediaType extends string>() {
     |          ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -529,6 +645,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 56 | export function toOpenapiSpecSchemas(registry: OpenboxSchemaRegistry) {
    |                 ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -540,26 +657,37 @@ error[not-found-reference]: could not resolve 'OpenboxClientUnexpectedResponseEr
    | 
 54 | export class OpenboxClientUnexpectedResponseError extends Error {
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 55 |   readonly name = OpenboxClientUnexpectedResponseError.name;
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 56 |   constructor(readonly body: unknown, readonly response: Response) {
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 57 |     super(
    | ^^^^^^^^^^
+   | 
 58 |       `Received an unexpected response with status=${response.status} statusText=${response.statusText} contentType=${
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 59 |         response.headers.get("content-type")
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 60 |       }`,
    | ^^^^^^^^^
+   | 
 61 |     );
    | ^^^^^^
+   | 
 62 |     Object.setPrototypeOf(this, new.target.prototype);
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 63 |   }
    | ^^^
+   | 
 64 | }
    | ^ this is the reference
+   | 
    = hint: fix the reference to point to a symbol that exists
 
   info: this error may be the result of a bug in Deno - if you think this is the case, please open an issue
@@ -571,32 +699,46 @@ error[not-found-reference]: could not resolve 'OpenboxClientResponseHeaderValida
    | 
 66 | export class OpenboxClientResponseHeaderValidationError extends Error {
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 67 |   readonly name = OpenboxClientResponseHeaderValidationError.name;
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 68 |   constructor(readonly headerName: string, readonly headerValue: unknown, readonly error: ValueError) {
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 69 |     super(`Header with name '${headerName}' and value '${headerValue}' failed schema validation`);
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 70 |     Object.setPrototypeOf(this, new.target.prototype);
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 71 |     Object.defineProperty(this, "message", {
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 72 |       get() {
    | ^^^^^^^^^^^^^
+   | 
 73 |         return JSON.stringify(error);
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 74 |       },
    | ^^^^^^^^
+   | 
 75 |       enumerable: false,
    | ^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 76 |       configurable: false,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 77 |     });
    | ^^^^^^^
+   | 
 78 |   }
    | ^^^
+   | 
 79 | }
    | ^ this is the reference
+   | 
    = hint: fix the reference to point to a symbol that exists
 
   info: this error may be the result of a bug in Deno - if you think this is the case, please open an issue
@@ -608,32 +750,46 @@ error[not-found-reference]: could not resolve 'OpenboxClientResponseValidationEr
    | 
 81 | export class OpenboxClientResponseValidationError extends Error {
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 82 |   readonly name = OpenboxClientResponseValidationError.name;
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 83 |   constructor(readonly response: Response, readonly data: string, readonly error: ValueError) {
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 84 |     super(response.statusText);
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 85 |     Object.setPrototypeOf(this, new.target.prototype);
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 86 |     Object.defineProperty(this, "message", {
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 87 |       get() {
    | ^^^^^^^^^^^^^
+   | 
 88 |         return JSON.stringify(error);
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 89 |       },
    | ^^^^^^^^
+   | 
 90 |       enumerable: false,
    | ^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 91 |       configurable: false,
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
 92 |     });
    | ^^^^^^^
+   | 
 93 |   }
    | ^^^
+   | 
 94 | }
    | ^ this is the reference
+   | 
    = hint: fix the reference to point to a symbol that exists
 
   info: this error may be the result of a bug in Deno - if you think this is the case, please open an issue
