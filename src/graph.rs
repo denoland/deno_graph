@@ -47,6 +47,7 @@ use deno_semver::package::PackageReq;
 use deno_semver::package::PackageReqReferenceParseError;
 use deno_semver::RangeSetOrTag;
 use deno_semver::Version;
+use deno_semver::VersionReq;
 use futures::future::LocalBoxFuture;
 use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
@@ -4851,7 +4852,7 @@ impl<'a> NpmSpecifierResolver<'a> {
     {
       let items = self
         .pending_npm_by_name
-        .get_mut(&pending_load.package_name)
+        .get(&pending_load.package_name)
         .unwrap();
       if let Err(err) = pending_load.result {
         for item in items {
@@ -4865,11 +4866,28 @@ impl<'a> NpmSpecifierResolver<'a> {
             )),
           );
         }
-      } else {
-        while let Some(item) = items.pop_front() {
-          if let Some(npm_resolver) = &self.npm_resolver {
-            let resolution = npm_resolver.resolve_npm(item.package_ref.req());
-            match resolution {
+      } else if let Some(npm_resolver) = &self.npm_resolver {
+        let mut items_by_req: IndexMap<VersionReq, Vec<_>> =
+          items
+            .iter()
+            .fold(IndexMap::new(), |mut items_by_req, item| {
+              items_by_req
+                .entry(item.package_ref.req().version_req.clone())
+                .or_default()
+                .push(item);
+              items_by_req
+            });
+        let reqs = items_by_req.keys().cloned().collect::<Vec<_>>();
+        let resolutions = npm_resolver
+          .resolve_package_reqs(&pending_load.package_name, &reqs)
+          .await;
+        assert_eq!(resolutions.len(), reqs.len());
+        'outer: for (req, resolution) in
+          reqs.into_iter().zip(resolutions.into_iter())
+        {
+          let items = items_by_req.swap_remove(&req).unwrap();
+          for item in items {
+            match &resolution {
               NpmPackageReqResolution::Ok(pkg_nv) => {
                 self
                   .pending_info
@@ -4877,7 +4895,7 @@ impl<'a> NpmSpecifierResolver<'a> {
                   .insert(item.specifier.clone(), pkg_nv.clone());
                 let pkg_id_ref =
                   NpmPackageNvReference::new(PackageNvReference {
-                    nv: pkg_nv,
+                    nv: pkg_nv.clone(),
                     sub_path: item
                       .package_ref
                       .sub_path()
@@ -4888,7 +4906,7 @@ impl<'a> NpmSpecifierResolver<'a> {
                   self
                     .pending_info
                     .redirects
-                    .insert(item.specifier, resolved_specifier.clone());
+                    .insert(item.specifier.clone(), resolved_specifier.clone());
                 }
                 self.pending_info.module_slots.insert(
                   resolved_specifier.clone(),
@@ -4909,9 +4927,6 @@ impl<'a> NpmSpecifierResolver<'a> {
                 pending_npm_registry_info_loads.clear();
                 self.pending_info.clear();
 
-                // add back the failed item so it can be retried
-                items.push_front(item);
-
                 // reload all the npm registry information
                 for package_name in self.pending_npm_by_name.keys() {
                   let package_name = package_name.clone();
@@ -4924,30 +4939,32 @@ impl<'a> NpmSpecifierResolver<'a> {
                     }
                   }));
                 }
-                break;
+                break 'outer;
               }
               NpmPackageReqResolution::Err(err)
               | NpmPackageReqResolution::ReloadRegistryInfo(err) => {
                 self.pending_info.module_slots.insert(
                   item.specifier.clone(),
                   ModuleSlot::Err(ModuleError::LoadingErr(
-                    item.specifier,
-                    item.maybe_range,
-                    NpmLoadError::PackageReqResolution(Arc::new(err)).into(),
+                    item.specifier.clone(),
+                    item.maybe_range.clone(),
+                    NpmLoadError::PackageReqResolution(err.clone()).into(),
                   )),
                 );
               }
             }
-          } else {
-            self.pending_info.module_slots.insert(
-              item.specifier.clone(),
-              ModuleSlot::Err(ModuleError::LoadingErr(
-                item.specifier,
-                item.maybe_range,
-                NpmLoadError::NotSupportedEnvironment.into(),
-              )),
-            );
           }
+        }
+      } else {
+        for item in items {
+          self.pending_info.module_slots.insert(
+            item.specifier.clone(),
+            ModuleSlot::Err(ModuleError::LoadingErr(
+              item.specifier.clone(),
+              item.maybe_range.clone(),
+              NpmLoadError::NotSupportedEnvironment.into(),
+            )),
+          );
         }
       }
     }

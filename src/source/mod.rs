@@ -7,14 +7,15 @@ use crate::packages::JsrPackageVersionInfo;
 use crate::text_encoding;
 use crate::ModuleInfo;
 use crate::SpecifierError;
+use async_trait::async_trait;
 use deno_ast::MediaType;
 use deno_semver::package::PackageNv;
-use deno_semver::package::PackageReq;
 
 use anyhow::anyhow;
 use anyhow::Error;
 use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
+use deno_semver::VersionReq;
 use futures::future;
 use futures::future::LocalBoxFuture;
 use once_cell::sync::Lazy;
@@ -439,7 +440,7 @@ pub struct UnknownBuiltInNodeModuleError {
 #[derive(Debug)]
 pub enum NpmPackageReqResolution {
   Ok(PackageNv),
-  Err(anyhow::Error),
+  Err(Arc<anyhow::Error>),
   /// Error was encountered, but instruct deno_graph to ask for
   /// the registry information again. This is useful to use when
   /// a user specifies an npm specifier that doesn't match any version
@@ -452,9 +453,10 @@ pub enum NpmPackageReqResolution {
   /// deno_graph will restart only once per build call to prevent accidental,
   /// infinite loops, but the implementation should ensure this is only
   /// returned once per session.
-  ReloadRegistryInfo(anyhow::Error),
+  ReloadRegistryInfo(Arc<anyhow::Error>),
 }
 
+#[async_trait(?Send)]
 pub trait NpmResolver: fmt::Debug {
   /// Gets the builtin node module name from the specifier (ex. "node:fs" -> "fs").
   fn resolve_builtin_node_module(
@@ -482,8 +484,15 @@ pub trait NpmResolver: fmt::Debug {
     package_name: &str,
   ) -> LocalBoxFuture<'static, Result<(), anyhow::Error>>;
 
-  /// Resolves an npm package requirement to a resolved npm package name and version.
-  fn resolve_npm(&self, package_req: &PackageReq) -> NpmPackageReqResolution;
+  /// Resolves a the version requirements for the provided package.
+  ///
+  /// The implementation MUST return the same amount of resolutions back as
+  /// version reqs provided or else a panic will occur.
+  async fn resolve_package_reqs(
+    &self,
+    package_name: &str,
+    version_reqs: &[VersionReq],
+  ) -> Vec<NpmPackageReqResolution>;
 
   /// Returns true when bare node specifier resoluion is enabled
   fn enables_bare_builtin_node_module(&self) -> bool {

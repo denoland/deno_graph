@@ -186,6 +186,8 @@ mod tests {
   use crate::source::ResolutionMode;
 
   use super::*;
+  use async_trait::async_trait;
+  use futures::future::LocalBoxFuture;
   use indexmap::IndexMap;
   use pretty_assertions::assert_eq;
   use serde_json::json;
@@ -1254,6 +1256,7 @@ console.log(a);
     enables_bare_builtin_node_module: bool,
   }
 
+  #[async_trait(?Send)]
   impl NpmResolver for MockNpmResolver {
     fn resolve_builtin_node_module(
       &self,
@@ -1290,10 +1293,11 @@ console.log(a);
       todo!();
     }
 
-    fn resolve_npm(
+    async fn resolve_package_reqs(
       &self,
-      _package_req: &deno_semver::package::PackageReq,
-    ) -> NpmPackageReqResolution {
+      _package_name: &str,
+      _package_reqs: &[deno_semver::VersionReq],
+    ) -> Vec<NpmPackageReqResolution> {
       todo!()
     }
 

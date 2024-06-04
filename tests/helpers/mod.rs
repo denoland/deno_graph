@@ -2,7 +2,9 @@
 
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
+use async_trait::async_trait;
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheInfo;
 use deno_graph::source::CacheSetting;
@@ -24,6 +26,7 @@ use deno_graph::WorkspaceMember;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
+use futures::future::LocalBoxFuture;
 use futures::FutureExt;
 
 #[derive(Default)]
@@ -92,6 +95,7 @@ impl BuildResult {
 #[derive(Debug)]
 struct TestNpmResolver;
 
+#[async_trait(?Send)]
 impl NpmResolver for TestNpmResolver {
   fn resolve_builtin_node_module(
     &self,
@@ -118,18 +122,24 @@ impl NpmResolver for TestNpmResolver {
     async { Ok(()) }.boxed_local()
   }
 
-  fn resolve_npm(
+  async fn resolve_package_reqs(
     &self,
-    package_req: &deno_semver::package::PackageReq,
-  ) -> NpmPackageReqResolution {
+    package_name: &str,
+    version_reqs: &[deno_semver::VersionReq],
+  ) -> Vec<NpmPackageReqResolution> {
     // for now, this requires version reqs that are resolved
-    match Version::parse_from_npm(&package_req.version_req.to_string()) {
-      Ok(version) => NpmPackageReqResolution::Ok(PackageNv {
-        name: package_req.name.clone(),
-        version,
-      }),
-      Err(err) => NpmPackageReqResolution::Err(err.into()),
-    }
+    version_reqs
+      .iter()
+      .map(|version_req| {
+        match Version::parse_from_npm(&version_req.to_string()) {
+          Ok(version) => NpmPackageReqResolution::Ok(PackageNv {
+            name: package_name.to_string(),
+            version,
+          }),
+          Err(err) => NpmPackageReqResolution::Err(Arc::new(err.into())),
+        }
+      })
+      .collect::<Vec<_>>()
   }
 }
 

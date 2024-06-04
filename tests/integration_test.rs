@@ -8,6 +8,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use anyhow::anyhow;
+use async_trait::async_trait;
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
@@ -25,7 +26,9 @@ use deno_graph::Range;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
+use deno_semver::VersionReq;
 use futures::future::LocalBoxFuture;
+use futures::FutureExt;
 use pretty_assertions::assert_eq;
 use url::Url;
 
@@ -148,6 +151,7 @@ async fn test_npm_version_not_found_then_found() {
     number_times_load_called: Rc<RefCell<u32>>,
   }
 
+  #[async_trait(?Send)]
   impl NpmResolver for TestNpmResolver {
     fn resolve_builtin_node_module(
       &self,
@@ -171,19 +175,33 @@ async fn test_npm_version_not_found_then_found() {
       Box::pin(futures::future::ready(Ok(())))
     }
 
-    fn resolve_npm(&self, package_req: &PackageReq) -> NpmPackageReqResolution {
+    async fn resolve_package_reqs(
+      &self,
+      package_name: &str,
+      version_reqs: &[VersionReq],
+    ) -> Vec<NpmPackageReqResolution> {
       let mut value = self.made_first_request.borrow_mut();
       if *value && !self.should_never_succeed {
         assert_eq!(*self.number_times_load_called.borrow(), 2);
-        NpmPackageReqResolution::Ok(PackageNv {
-          name: package_req.name.clone(),
-          version: Version::parse_from_npm("1.0.0").unwrap(),
-        })
+        version_reqs
+          .iter()
+          .map(|_| {
+            NpmPackageReqResolution::Ok(PackageNv {
+              name: package_name.to_string(),
+              version: Version::parse_from_npm("1.0.0").unwrap(),
+            })
+          })
+          .collect::<Vec<_>>()
       } else {
         *value = true;
-        NpmPackageReqResolution::ReloadRegistryInfo(anyhow!(
-          "failed to resolve"
-        ))
+        version_reqs
+          .iter()
+          .map(|_| {
+            NpmPackageReqResolution::ReloadRegistryInfo(
+              anyhow!("failed to resolve").into(),
+            )
+          })
+          .collect()
       }
     }
   }
