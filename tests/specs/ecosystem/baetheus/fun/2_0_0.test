@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 293 | export const tap = createTap(FlatmappableTree);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 298 | export const bind = createBind(FlatmappableTree);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -31,6 +33,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 303 | export const bindTo = createBindTo(MappableTree);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -42,6 +45,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 277 | export const tap = createTap(FailableSyncEither);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -53,6 +57,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 282 | export const bind = createBind(FlatmappableSyncEither);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -64,6 +69,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 287 | export const bindTo = createBindTo(MappableSyncEither);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -75,6 +81,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 148 | export const tap = createTap(FlatmappableSync);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -86,6 +93,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 153 | export const bind = createBind(FlatmappableSync);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -97,6 +105,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 158 | export const bindTo = createBindTo(MappableSync);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -108,6 +117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 171 | export function split(separator: string | RegExp) {
     |                 ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -119,6 +129,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 195 | export function includes(searchString: string, position?: number) {
     |                 ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -130,6 +141,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 216 | export function startsWith<T extends string>(
     |                 ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -141,6 +153,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 241 | export function endsWith<T extends string>(searchString: T, position?: number) {
     |                 ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -152,6 +165,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 293 | export function replace(searchValue: string | RegExp, replaceValue: string) {
     |                 ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -163,6 +177,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 397 | export function slice(start: number, end: number) {
     |                 ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -174,6 +189,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 419 | export function match(regex: RegExp) {
     |                 ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -185,6 +201,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 443 | export function test(r: RegExp) {
     |                 ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -196,6 +213,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 359 | export const tap = createTap(FlatmappableState);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -207,6 +225,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 364 | export const bind = createBind(FlatmappableState);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -218,6 +237,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 369 | export const bindTo = createBindTo(MappableState);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -229,6 +249,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 738 | export function traverse<V extends Kind>(
     |                 ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -240,6 +261,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 937 | export const tap = createTap(FlatmappableSet);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -251,6 +273,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 942 | export const bind = createBind(FlatmappableSet);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -262,6 +285,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 947 | export const bindTo = createBindTo(MappableSet);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -273,6 +297,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 508 | export const tap = createTap(FlatmappablePromise);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -284,6 +309,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 513 | export const bind = createBind(FlatmappablePromise);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -295,6 +321,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 518 | export const bindTo = createBindTo(MappablePromise);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -306,6 +333,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 129 | export function or<A>(second: Predicate<A>) {
     |                 ^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -317,6 +345,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 157 | export function and<A>(second: Predicate<A>) {
     |                 ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -328,6 +357,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 385 | export function traverse<V extends Kind>(A: Applicable<V>) {
     |                 ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -339,6 +369,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 233 | export function match<A, B>(onNone: () => B, onSome: (a: A) => B) {
     |                 ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -350,6 +381,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 253 | export function getOrElse<B>(onNone: () => B) {
     |                 ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -361,6 +393,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 867 | export const tap = createTap(FlatmappableOption);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -372,6 +405,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 872 | export const bind = createBind(FlatmappableOption);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -383,6 +417,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 877 | export const bindTo = createBindTo(MappableOption);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -394,6 +429,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 396 | export const tap = createTap(FlatmappableNil);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -405,6 +441,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 401 | export const bind = createBind(FlatmappableNil);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -416,6 +453,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 406 | export const bindTo = createBindTo(MappableNil);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -427,6 +465,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 230 | export function fold<B, A, O>(
     |                 ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -438,6 +477,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 283 | export function insert<B>(
     |                 ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -449,6 +489,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 313 | export function insertAt<B>(
     |                 ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -460,6 +501,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 220 | export const sequenceArray = sequenceA(FlatmappableJsonBuilder);
     |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -471,6 +513,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 225 | export const sequenceRecord = sequenceR(FlatmappableJsonBuilder);
     |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -482,6 +525,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 176 | export function fold<A, O>(
     |                 ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -493,6 +537,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 483 | export const tap = createTap(FlatmappableIterable);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -504,6 +549,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 488 | export const bind = createBind(FlatmappableIterable);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -515,6 +561,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 493 | export const bindTo = createBindTo(FlatmappableIterable);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -526,6 +573,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 145 | export function intercalcate<A>(middle: A) {
     |                 ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -537,6 +585,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 743 | export const tap = createTap(FailableFnEither);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -548,6 +597,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 748 | export const bind = createBind(FlatmappableFnEither);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -559,6 +609,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 753 | export const bindTo = createBindTo(MappableFnEither);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -570,6 +621,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 906 | export const tap = createTap(FlatmappableFn);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -581,6 +633,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 911 | export const bind = createBind(FlatmappableFn);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -592,6 +645,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 916 | export const bindTo = createBindTo(MappableFn);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -603,6 +657,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 99 | export function fromNullable<E>(fe: () => E) {
    |                 ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -614,6 +669,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 149 | export function getOrElse<E, A>(onLeft: (e: E) => A) {
     |                 ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -625,6 +681,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 510 | export const tap = createTap(FailableEither);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -636,6 +693,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 515 | export const bind = createBind(FlatmappableEither);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -647,6 +705,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 520 | export const bindTo = createBindTo(MappableEither);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -658,6 +717,7 @@ error[missing-explicit-type]: missing explicit type in the public API
      | 
 1472 | export const _null = literal(null);
      |              ^^^^^ this symbol is missing an explicit type
+     | 
      = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -669,6 +729,7 @@ error[missing-explicit-type]: missing explicit type in the public API
      | 
 1502 | export const _undefined = literal(undefined);
      |              ^^^^^^^^^^ this symbol is missing an explicit type
+     | 
      = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -680,6 +741,7 @@ error[missing-explicit-type]: missing explicit type in the public API
      | 
 1918 | export const tap = createTap(FlatmappableDecoder);
      |              ^^^ this symbol is missing an explicit type
+     | 
      = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -691,6 +753,7 @@ error[missing-explicit-type]: missing explicit type in the public API
      | 
 1923 | export const bind = createBind(FlatmappableDecoder);
      |              ^^^^ this symbol is missing an explicit type
+     | 
      = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -702,6 +765,7 @@ error[missing-explicit-type]: missing explicit type in the public API
      | 
 1928 | export const bindTo = createBindTo(MappableDecoder);
      |              ^^^^^^ this symbol is missing an explicit type
+     | 
      = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -713,6 +777,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 330 | export function intercalcate<A>(middle: A) {
     |                 ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -724,6 +789,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 432 | export const tap = createTap(FlatmappableAsyncIterable);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -735,6 +801,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 437 | export const bind = createBind(FlatmappableAsyncIterable);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -746,6 +813,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 442 | export const bindTo = createBindTo(MappableAsyncIterable);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -757,6 +825,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 486 | export const tap = createTap(FailableAsyncEitherParallel);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -768,6 +837,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 491 | export const bind = createBind(FlatmappableAsyncEitherParallel);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -779,6 +849,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 496 | export const bindTo = createBindTo(FlatmappableAsyncEitherParallel);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -790,6 +861,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 170 | export const tap = createTap(FlatmappableAsync);
     |              ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -801,6 +873,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 175 | export const bind = createBind(FlatmappableAsync);
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -812,6 +885,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 180 | export const bindTo = createBindTo(MappableAsync);
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -823,6 +897,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 1048 | export function modify<A>(modifyFn: (a: A) => A) {
      |                 ^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -834,6 +909,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 1125 | export function deleteAt(index: number) {
      |                 ^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -845,6 +921,7 @@ error[missing-explicit-type]: missing explicit type in the public API
      | 
 1525 | export const bind = createBind(FlatmappableArray);
      |              ^^^^ this symbol is missing an explicit type
+     | 
      = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -856,6 +933,7 @@ error[missing-explicit-type]: missing explicit type in the public API
      | 
 1530 | export const bindTo = createBindTo(MappableArray);
      |              ^^^^^^ this symbol is missing an explicit type
+     | 
      = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

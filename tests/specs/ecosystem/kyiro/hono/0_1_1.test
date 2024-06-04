@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 218 |   setLayout = (layout: Layout<PropsForRenderer & { Layout: Layout }>) => (this.layout = layout)
     |   ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 240 |   setRenderer = (renderer: Renderer) => {
     |   ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -33,6 +35,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 282 |   get url() {
     |       ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -44,6 +47,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 296 |   get method() {
     |       ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -55,6 +59,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 33 |   async write(input: Uint8Array | string) {
    |         ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -66,6 +71,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 45 |   async writeln(input: string) {
    |         ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -77,6 +83,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 50 |   sleep(ms: number) {
    |   ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -88,6 +95,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 27 | export const getFilePathWithoutDefaultDocument = (
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -99,6 +107,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 8 | export const sha256 = async (data: Data) => {
   |              ^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -110,6 +119,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 14 | export const sha1 = async (data: Data) => {
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -121,6 +131,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 20 | export const md5 = async (data: Data) => {
    |              ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -132,6 +143,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 3 | export const equal = (a: ArrayBuffer, b: ArrayBuffer) => {
   |              ^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -143,6 +155,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 24 | export const timingSafeEqual = async (
    |              ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -154,6 +167,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 51 | export const bufferToFormData = (arrayBuffer: ArrayBuffer, contentType: string) => {
    |              ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -165,6 +179,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 62 |   get activeRouter() {
    |       ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -176,6 +191,7 @@ error[unsupported-super-class-expr]: super class expression was too complex
    | 
 96 | > extends defineDynamicClass()<E, S, BasePath> {
    |           ^^^^^^^^^^^^^^^^^^^^ this is the superclass expression
+   | 
    = hint: extract the superclass expression into a variable
 
   info: fast check was unable to infer the type of the superclass expression
@@ -187,6 +203,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 236 |   onError = (handler: ErrorHandler<E>) => {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -198,6 +215,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 250 |   notFound = (handler: NotFoundHandler<E>) => {
     |   ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -209,6 +227,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 374 |   fetch = (request: Request, Env?: E['Bindings'] | {}, executionCtx?: ExecutionContext) => {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -220,6 +239,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 390 |   request = (
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -231,6 +251,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 415 |   fire = () => {
     |   ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -244,6 +265,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 9 | export const testClient = <T extends Hono<any, any, any>>(
   |              ^^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -255,6 +277,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 45 | export const streamSSE = (
    |              ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -266,6 +289,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 9 | export const SSG_DISABLED_RESPONSE = new Response('SSG is disabled', { status: 404 })
   |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -277,6 +301,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 212 | export const createFactory = <E extends Env = any, P extends string = any>() => new Factory<E, P>()
     |              ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -288,6 +313,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 214 | export const createMiddleware = <E extends Env = any, P extends string = any, I extends Input = {}>(
     |              ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -299,6 +325,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 33 | export const showRoutes = <E extends Env>(hono: Hono<E>, opts?: ShowRoutesOptions) => {
    |              ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -312,6 +339,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 79 | export const getRouterName = <E extends Env>(app: Hono<E>) => {
    |              ^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -323,6 +351,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 64 | export const accepts = (c: Context, options: acceptsOptions) => {
    |              ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

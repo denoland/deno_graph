@@ -127,14 +127,19 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 4 | export default (options?: UnpluginStylexOptions) => {
   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  | 
 5 |   if (isDevelopment || options?.dev) {
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  | 
 6 |     throw new Error('If you want to use this plugin through webpack, please use "@stylexjs/webpack-plugin" instead')
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  | 
 7 |   }
   | ^^^
+  | 
 8 | }
   | ^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -148,14 +153,19 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 4 | export default (options?: UnpluginStylexOptions) => {
   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  | 
 5 |   if (isDevelopment || options?.dev) {
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  | 
 6 |     throw new Error('If you want to use this plugin through rollup, please use "@stylexjs/rollup-plugin" instead')
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  | 
 7 |   }
   | ^^^
+  | 
 8 | }
   | ^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type

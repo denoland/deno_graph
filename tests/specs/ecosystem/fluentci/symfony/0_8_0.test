@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 45 |   get queryTree() {
    |       ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2555 |   with = (arg: (param: Container) => Container) => {
      |   ^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 3061 |   with = (arg: (param: Directory) => Directory) => {
      |   ^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 3441 |   with = (arg: (param: File) => File) => {
      |   ^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 3634 |   with = (arg: (param: Function_) => Function_) => {
      |   ^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 5607 |   with = (arg: (param: Module_) => Module_) => {
      |   ^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 5925 |   with = (arg: (param: ModuleSource) => ModuleSource) => {
      |   ^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 7909 |   with = (arg: (param: TypeDef) => TypeDef) => {
      |   ^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

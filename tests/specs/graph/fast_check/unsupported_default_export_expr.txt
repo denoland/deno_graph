@@ -65,12 +65,13 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     |
   3 | export default {
     | ^^^^^^^^^^^^^^^^
+    |
   4 |   test: new Class(),
     | ^^^^^^^^^^^^^^^^^^^^
+    |
   5 | };
     | ^^
     = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable
 
     info: fast check was unable to infer the type of the default export expression
     docs: https://jsr.io/go/slow-type-unsupported-default-export-expr
-

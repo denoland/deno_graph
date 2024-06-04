@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 44 |   _getPromptModules() {
    |   ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 83 |   client() {
    |   ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 70 |   client() {
    |   ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 74 |   async index() {
    |         ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 84 |   async clearIndex() {
    |         ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 113 |   protected async saveChunk(idx: Index, chunk: any) {
     |                   ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 200 |   toPineconeFilter(stdFilters?: MetadataFilters) {
     |   ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 220 |   nodeToRecord(node: BaseNode<Metadata>) {
     |   ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -97,6 +105,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 139 |   client() {
     |   ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -108,6 +117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 148 |   async clearCollection() {
     |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -119,6 +129,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 10 |   constructor(indexId = randomUUID(), summary = undefined) {
    |               ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -130,6 +141,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 16 | export const defaultMultiSelectPrompt = (
    |              ^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -141,6 +153,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 36 |   async select(choices: MetadataType[], query: QueryType) {
    |         ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -152,6 +165,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 48 |   getOptions() {
    |   ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -163,6 +177,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 44 |   protected async transcribeOrGetTranscript(params: TranscribeParams | string) {
    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -174,6 +189,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 52 |   protected async getTranscriptId(params: TranscribeParams | string) {
    |                   ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -185,6 +201,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 11 |   async postprocessNodes(nodes: NodeWithScore[]) {
    |         ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -196,6 +213,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 60 |   getNodesFromDocuments(documents: BaseNode[]) {
    |   ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -207,6 +225,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 51 |   getNodesFromDocuments(documents: BaseNode[]) {
    |   ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -218,6 +237,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 211 | export async function readImage(input: ImageType) {
     |                       ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -229,6 +249,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 39 |   async getClient() {
    |         ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -240,6 +261,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 76 |   get metadata() {
    |       ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -251,6 +273,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 6 |   protected override authHeaders() {
   |                      ^^^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -262,6 +285,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 50 | export function getOpenAISession(
    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -273,6 +297,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 166 |   get metadata() {
     |       ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -284,6 +309,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 216 |   toOpenAIMessage(messages: ChatMessage[]) {
     |   ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -295,6 +321,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 430 |   get metadata() {
     |       ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -306,6 +333,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 441 |   mapMessagesToPrompt(messages: ChatMessage[]) {
     |   ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -317,6 +345,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 463 |   mapMessagesToPromptA16Z(messages: ChatMessage[]) {
     |   ^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -328,6 +357,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 490 |   mapMessagesToPromptMeta(
     |   ^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -339,6 +369,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 666 |   get metadata() {
     |       ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -350,6 +381,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 677 |   mapMessagesToPrompt(messages: ChatMessage[]) {
     |   ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -361,6 +393,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 239 |   static async fromVectorStore(
     |                ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -372,6 +405,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 508 |   protected buildNodeListFromQueryResult(result: VectorStoreQueryResult) {
     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -383,6 +417,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 46 |   _getPromptModules() {
    |   ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -394,6 +429,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 1 | export const defaultUserPrompt = ({
   |              ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -405,6 +441,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 22 | export const defaultCorrectnessSystemPrompt =
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -416,6 +453,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 54 | export const defaultFaithfulnessRefinePrompt = ({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -427,6 +465,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 78 | export const defaultFaithfulnessTextQaPrompt = ({
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -438,6 +477,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 117 | export const defaultRelevancyEvalPrompt = ({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -449,6 +489,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 132 | export const defaultRelevancyRefinePrompt = ({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -460,6 +501,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 41 |   _getPrompts() {
    |   ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -471,6 +513,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 59 |   static fromDefaults(init: {
    |          ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -482,6 +525,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 92 |   static fromDefaults(init: {
    |          ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -493,6 +537,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 85 |   toString() {
    |   ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -504,6 +549,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 31 |   async getExtractor() {
    |         ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -515,6 +561,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 19 |   async getTokenizer() {
    |         ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -526,6 +573,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 27 |   async getProcessor() {
    |         ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -537,6 +585,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 35 |   async getVisionModel() {
    |         ^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -548,6 +597,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 48 |   async getTextModel() {
    |         ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -559,6 +609,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 47 |   format(output: string) {
    |   ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -570,6 +621,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 262 |   protected async _chat({
     |                   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -581,6 +633,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 33 | export function serviceContextFromDefaults(options?: ServiceContextOptions) {
    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -592,6 +645,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 51 | export function serviceContextFromServiceContext(
    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -603,6 +657,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 20 |   toString() {
    |   ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -614,6 +669,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 11 | export function getEmptyPromptTxt(prompt: SimplePrompt) {
    |                 ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -625,6 +681,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 21 | export function getBiggestPrompt(prompts: SimplePrompt[]) {
    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -636,6 +693,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 100 |   getTextSplitterGivenPrompt(
     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -647,6 +705,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 121 |   repack(
     |   ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -658,6 +717,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 27 | export const defaultTextQaPrompt = ({ context = "", query = "" }) => {
    |              ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -669,6 +729,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 27 | export const defaultTextQaPrompt = ({ context = "", query = "" }) => {
    |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -680,6 +741,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 65 | export const defaultSummaryPrompt = ({ context = "" }) => {
    |              ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -691,6 +753,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 65 | export const defaultSummaryPrompt = ({ context = "" }) => {
    |                                      ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -702,6 +765,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 104 | export const defaultRefinePrompt = ({
     |              ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -713,14 +777,19 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 104 | export const defaultRefinePrompt = ({
     |                                     ^
+    | 
 105 |   query = "",
     | ^^^^^^^^^^^^^
+    | 
 106 |   existingAnswer = "",
     | ^^^^^^^^^^^^^^^^^^^^^^
+    | 
 107 |   context = "",
     | ^^^^^^^^^^^^^^^
+    | 
 108 | }) => {
     | ^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -732,6 +801,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 134 | export const defaultTreeSummarizePrompt = ({ context = "", query = "" }) => {
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -743,6 +813,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 134 | export const defaultTreeSummarizePrompt = ({ context = "", query = "" }) => {
     |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -754,6 +825,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 146 | export const defaultChoiceSelectPrompt = ({ context = "", query = "" }) => {
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -765,6 +837,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 146 | export const defaultChoiceSelectPrompt = ({ context = "", query = "" }) => {
     |                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -776,6 +849,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 256 | export function buildToolsText(tools: ToolMetadata[]) {
     |                 ^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -787,6 +861,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 297 | export const defaultSubQuestionPrompt = ({ toolsStr = "", queryStr = "" }) => {
     |              ^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -798,6 +873,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 297 | export const defaultSubQuestionPrompt = ({ toolsStr = "", queryStr = "" }) => {
     |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -809,6 +885,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 343 | export const defaultCondenseQuestionPrompt = ({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -820,12 +897,16 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 343 | export const defaultCondenseQuestionPrompt = ({
     |                                               ^
+    | 
 344 |   chatHistory = "",
     | ^^^^^^^^^^^^^^^^^^^
+    | 
 345 |   question = "",
     | ^^^^^^^^^^^^^^^^
+    | 
 346 | }) => {
     | ^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -837,6 +918,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 361 | export function messagesToHistoryStr(messages: ChatMessage[]) {
     |                 ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -848,6 +930,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 373 | export const defaultContextSystemPrompt = ({ context = "" }) => {
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -859,6 +942,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 373 | export const defaultContextSystemPrompt = ({ context = "" }) => {
     |                                            ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -870,6 +954,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 382 | export const defaultKeywordExtractPrompt = ({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -881,12 +966,16 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 382 | export const defaultKeywordExtractPrompt = ({
     |                                             ^
+    | 
 383 |   context = "",
     | ^^^^^^^^^^^^^^^
+    | 
 384 |   maxKeywords = 10,
     | ^^^^^^^^^^^^^^^^^^^
+    | 
 385 | }) => {
     | ^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -898,6 +987,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 397 | export const defaultQueryKeywordExtractPrompt = ({
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -909,12 +999,16 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 397 | export const defaultQueryKeywordExtractPrompt = ({
     |                                                  ^
+    | 
 398 |   question = "",
     | ^^^^^^^^^^^^^^^^
+    | 
 399 |   maxKeywords = 10,
     | ^^^^^^^^^^^^^^^^^^^
+    | 
 400 | }) => {
     | ^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -926,6 +1020,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 41 | export function parseJsonMarkdown(text: string) {
    |                 ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -937,6 +1032,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 195 |   generateHash() {
     |   ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -948,6 +1044,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 240 |   getNodeInfo() {
     |   ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -959,6 +1056,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 244 |   getText() {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -970,6 +1068,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 279 |   getType() {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -981,6 +1080,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 284 | export function jsonToNode(json: any, type?: ObjectType) {
     |                 ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -992,6 +1092,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 340 |   getType() {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1003,6 +1104,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 39 |   tokenizer(encoding?: Tokenizers) {
    |   ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1014,6 +1116,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 50 |   tokenizerDecoder(encoding?: Tokenizers) {
    |   ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1025,6 +1128,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 80 | export const globalsHelper = new GlobalsHelper();
    |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1036,6 +1140,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 49 |   async requestMessages(transientMessages?: ChatMessage[]) {
    |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1047,6 +1152,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 57 |   newMessages() {
    |   ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1058,6 +1164,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 177 |   async requestMessages(transientMessages?: ChatMessage[]) {
     |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1069,6 +1176,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 207 |   newMessages() {
     |   ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

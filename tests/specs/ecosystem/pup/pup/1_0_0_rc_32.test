@@ -90,6 +90,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 335 |   public restart = (reason: string) => {
     |          ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -103,6 +104,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 344 |   public block = (reason: string) => {
     |          ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -116,6 +118,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 353 |   public unblock = (reason: string) => {
     |          ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -129,6 +132,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 112 |   public cleanup = async () => {
     |          ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -142,6 +146,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 126 |   public init = async () => {
     |          ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -155,6 +160,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 28 |   public override start = async (reason?: string, restart?: boolean) => {
    |                   ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -168,6 +174,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 38 |   public setInstances = (nInstances: number) => {
    |          ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -181,6 +188,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 128 |   public override restart = (reason: string) => {
     |                   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -194,6 +202,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 132 |   public override block = (reason: string) => {
     |                   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -207,6 +216,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 136 |   public override unblock = (reason: string) => {
     |                   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -220,6 +230,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 178 |   public cleanup = () => {
     |          ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type

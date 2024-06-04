@@ -940,7 +940,7 @@ mod tests {
   use crate::ModuleGraph;
   use deno_ast::emit;
   use deno_ast::EmitOptions;
-  use deno_ast::EmittedSource;
+  use deno_ast::EmittedSourceText;
   use deno_ast::SourceMap;
   use url::Url;
 
@@ -983,27 +983,27 @@ mod tests {
     let module = parsed_source.module().to_owned();
 
     let mut transformer =
-      FastCheckDtsTransformer::new(parsed_source.text_info(), &specifier);
+      FastCheckDtsTransformer::new(parsed_source.text_info_lazy(), &specifier);
     let module = transformer.transform(module).unwrap();
 
     let comments = parsed_source.comments().as_single_threaded();
 
-    let source_map = SourceMap::single(
-      specifier,
-      parsed_source.text_info().text_str().to_owned(),
-    );
+    let source_map =
+      SourceMap::single(specifier, parsed_source.text().to_string());
 
-    let EmittedSource { text: actual, .. } = emit(
+    let EmittedSourceText { text: actual, .. } = emit(
       &deno_ast::swc::ast::Program::Module(module),
       &comments,
       &source_map,
       &EmitOptions {
-        keep_comments: true,
+        remove_comments: false,
         source_map: deno_ast::SourceMapOption::None,
         source_map_file: None,
         inline_sources: false,
       },
     )
+    .unwrap()
+    .into_string()
     .unwrap();
 
     assert_eq!(actual.trim(), expected.trim());

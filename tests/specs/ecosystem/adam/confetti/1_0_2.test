@@ -13,6 +13,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 183 | export const throwConfetti = function (options?: ThrowConfettiOptions) {
     |              ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type

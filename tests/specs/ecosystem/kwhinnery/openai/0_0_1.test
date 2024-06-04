@@ -9,32 +9,46 @@ error[unsupported-destructuring]: found destructuring, which is not supported in
     | 
 189 | export const {
     |              ^
+    | 
 190 |   OpenAIError,
     | ^^^^^^^^^^^^^^
+    | 
 191 |   APIError,
     | ^^^^^^^^^^^
+    | 
 192 |   APIConnectionError,
     | ^^^^^^^^^^^^^^^^^^^^^
+    | 
 193 |   APIConnectionTimeoutError,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 194 |   APIUserAbortError,
     | ^^^^^^^^^^^^^^^^^^^^
+    | 
 195 |   NotFoundError,
     | ^^^^^^^^^^^^^^^^
+    | 
 196 |   ConflictError,
     | ^^^^^^^^^^^^^^^^
+    | 
 197 |   RateLimitError,
     | ^^^^^^^^^^^^^^^^^
+    | 
 198 |   BadRequestError,
     | ^^^^^^^^^^^^^^^^^^
+    | 
 199 |   AuthenticationError,
     | ^^^^^^^^^^^^^^^^^^^^^^
+    | 
 200 |   InternalServerError,
     | ^^^^^^^^^^^^^^^^^^^^^^
+    | 
 201 |   PermissionDeniedError,
     | ^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 202 |   UnprocessableEntityError,
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 203 | } = Errors;
     | ^
     = hint: separate each destructured symbol into its own export statement
@@ -48,6 +62,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 24 |   static fromSSEResponse<Item>(
    |          ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -59,6 +74,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 112 |   static fromReadableStream<Item>(
     |          ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -70,6 +86,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 58 |   static generate(
    |          ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -81,6 +98,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 431 |   protected makeStatusError(
     |             ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -92,6 +110,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 763 |   async *iterPages() {
     |          ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -103,6 +122,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 773 |   async *[Symbol.asyncIterator]() {
     |          ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -114,6 +134,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 821 |   async *[Symbol.asyncIterator]() {
     |          ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type

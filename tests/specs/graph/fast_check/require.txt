@@ -93,4 +93,3 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
 
     info: CommonJS features such as require are not supported in ES modules
     docs: https://jsr.io/go/slow-type-unsupported-require
-

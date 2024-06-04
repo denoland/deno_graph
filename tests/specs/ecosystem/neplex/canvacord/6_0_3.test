@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 102 | function CanvacordConstructor(source: ImageSource, options?: CanvacordInit) {
     |          ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 22 |   public resolved() {
    |          ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 40 | export const createTemplate = <
    |              ^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 57 | export const TemplateFactory = {
    |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 11 | export const createCanvasImage = async (img: ImageSource) => {
    |              ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 11 |   public rotate(degrees: number) {
    |          ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 175 |   public static from(template: IImageGenerationTemplate) {
     |                 ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 195 |   public setSteps(steps: ImageGenerationStep[]) {
     |          ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -97,6 +105,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 204 |   public setGifOptions(options?: EncoderOptions) {
     |          ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -108,6 +117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 212 |   public isGif() {
     |          ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -119,6 +129,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 220 |   public addStep(step: ImageGenerationStep) {
     |          ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -130,6 +141,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 229 |   public addSteps(steps: ImageGenerationStep[]) {
     |          ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -141,6 +153,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 237 |   public clearSteps() {
     |          ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -152,6 +165,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 245 |   public isInferrable() {
     |          ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -163,6 +177,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 252 |   public getWidth() {
     |          ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -174,6 +189,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 259 |   public getHeight() {
     |          ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -185,6 +201,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 290 |   public addStep(step: ImageGenerationStep) {
     |          ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -196,6 +213,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 299 |   public addSteps(steps: ImageGenerationStep[]) {
     |          ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -207,6 +225,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 308 |   public setGifOptions(options?: EncoderOptions) {
     |          ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -218,6 +237,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 316 |   public isGif() {
     |          ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -229,6 +249,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 341 |   public async generateGif() {
     |                ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -240,6 +261,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 378 |   public async render() {
     |                ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -251,6 +273,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 474 | export function createImageGenerator(template: ImageGenerationTemplate) {
     |                 ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -262,6 +285,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 17 |   public drawImage(image: ImageSource, x = 0, y = 0, width = this.width, height = this.height) {
    |          ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -273,6 +297,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 30 |   public invert(value: number) {
    |          ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -284,6 +309,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 40 |   public grayscale(value = 100) {
    |          ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -295,6 +321,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 49 |   public sepia(value: number) {
    |          ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -306,6 +333,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 59 |   public opacity(value: number) {
    |          ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -317,6 +345,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 69 |   public saturate(value: number) {
    |          ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -328,6 +357,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 79 |   public hueRotate(value: number) {
    |          ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -339,6 +369,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 89 |   public contrast(value: number) {
    |          ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -350,6 +381,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 99 |   public brightness(value: number) {
    |          ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -361,6 +393,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 109 |   public blur(value: number) {
     |          ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -372,6 +405,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 123 |   public dropShadow(config: DropShadowConfig) {
     |          ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -383,6 +417,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 38 |   public draw(x = 0, y = 0, width?: number, height?: number) {
    |          ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -394,6 +429,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 58 |   public circle(width?: number, height?: number) {
    |          ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -405,6 +441,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 79 |   public pixelate(pixels = 5) {
    |          ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -416,6 +453,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 104 |   public save() {
     |          ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -427,6 +465,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 115 |   public restore() {
     |          ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -438,6 +477,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 45 | const FluentEmojiBase = (s: string) => `https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/${s}.svg`;
    |       ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -449,6 +489,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 47 | export const BuiltInGraphemeProvider = {
    |              ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -460,6 +501,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 66 | export const EmojiCache = new Map<string, string>();
    |              ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -471,6 +513,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 133 |   public components = new Array<Node | Element>();
     |          ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -482,6 +525,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 137 |   public options = new BuilderOptionsManager<T>();
     |          ^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -493,6 +537,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 166 |   public adjustCanvas() {
     |          ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -504,6 +549,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 179 |   public get style() {
     |              ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -515,6 +561,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 194 |   public addComponent<T extends Node | Element>(component: T | T[]) {
     |          ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -526,6 +573,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 211 |   public setGraphemeProvider(provider: GraphemeProvider) {
     |          ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -537,6 +585,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 220 |   public setStyle(newStyle: CSSProperties) {
     |          ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -548,6 +597,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 246 |   public async build(options: Partial<BuilderBuildOptions> = {}) {
     |                ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -559,6 +609,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 296 |   public static from(template: BuilderTemplate) {
     |                 ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -570,6 +621,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 62 | export const JSX = {
    |              ^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -581,6 +633,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 120 | export function render(components: (Node | Element | unknown)[]) {
     |                 ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -592,6 +645,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 91 |   public toBase64() {
    |          ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -603,6 +657,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 95 |   public toDataURL() {
    |          ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -614,6 +669,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 61 | export async function loadImage(source: ImageSource, options: LoadImageOptions = {}) {
    |                       ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -625,6 +681,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 19 | export const performObjectCleanup = (
    |              ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -638,6 +695,7 @@ error[unsupported-super-class-expr]: super class expression was too complex
    | 
 30 | export class StyleSheet extends null {
    |                                 ^^^^ this is the superclass expression
+   | 
    = hint: extract the superclass expression into a variable
 
   info: fast check was unable to infer the type of the superclass expression
@@ -649,6 +707,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 49 |   public static compose(style1: CSSProperties, style2: CSSProperties) {
    |                 ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -660,6 +719,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 59 |   public static flatten(style: CSSProperties[]) {
    |                 ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -671,6 +731,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 69 |   public static cn(...classes: ClassNameValue[]) {
    |                 ^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -682,6 +743,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 76 |   public static tw(data?: Stylable) {
    |                 ^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -693,6 +755,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 84 |   public static css(data?: Stylable) {
    |                 ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -704,6 +767,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 87 |   public setFonts(fontConfig: Required<RankCardBuilderProps["fonts"]>) {
    |          ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -715,6 +779,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 96 |   public setAvatar(image: ImageSource) {
    |          ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -726,6 +791,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 105 |   public setBackground(image: ImageSource) {
     |          ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -737,6 +803,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 114 |   public setStatus(status: RankCardUserStatus | StatusData) {
     |          ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -748,6 +815,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 123 |   public setDisplayName(name: string) {
     |          ^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -759,6 +827,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 132 |   public setUsername(name: string) {
     |          ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -770,6 +839,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 140 |   public setOverlay(overlay: RankCardProps["overlay"]) {
     |          ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -781,6 +851,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 149 |   public setCurrentXP(xp: number) {
     |          ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -792,6 +863,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 158 |   public setRequiredXP(xp: number) {
     |          ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -803,6 +875,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 167 |   public setLevel(level: number) {
     |          ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -814,6 +887,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 176 |   public setRank(rank: number) {
     |          ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -825,6 +899,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 185 |   public setStyles(config: Partial<RankCardBuilderProps["styles"]>) {
     |          ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -836,6 +911,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 193 |   public setBackgroundCrop(pos: Partial<RankCardBuilderProps["backgroundCrop"]>) {
     |          ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -847,6 +923,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 202 |   public setTextStyles(config: Partial<RankCardBuilderProps["texts"]>) {
     |          ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -858,6 +935,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 212 |   public setProgressCalculator(calc: RankCardProps["calculateProgress"]) {
     |          ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -869,6 +947,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 220 |   public async render() {
     |                ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -880,6 +959,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 133 |   public setVariant(variant: LeaderboardVariants) {
     |          ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -891,6 +971,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 142 |   public setBackground(background: ImageSource) {
     |          ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -902,6 +983,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 151 |   public setBackgroundColor(color: string) {
     |          ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -913,6 +995,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 160 |   public setHeader(data: LeaderboardProps["header"] & {}) {
     |          ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -924,6 +1007,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 169 |   public setPlayers(players: LeaderboardProps["players"]) {
     |          ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -935,6 +1019,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 180 |   public setTextStyles(config: Partial<LeaderboardProps["text"]>) {
     |          ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -946,6 +1031,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 188 |   public async render() {
     |                ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -957,6 +1043,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 199 |   public renderDefaultPlayers(players: JSX.Element[]) {
     |          ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -968,6 +1055,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 206 |   public async renderDefaultTop({
     |                ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -979,6 +1067,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 260 |   public async renderDefaultPlayer({
     |                ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -990,6 +1079,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 295 |   public async renderDefaultVariant() {
     |                ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1001,6 +1091,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 353 |   public async renderHorizontalPlayer({
     |                ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1012,6 +1103,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 384 |   public async renderHorizontalVariant() {
     |                ^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1023,6 +1115,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 4 | export const Fonts = {
   |              ^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1034,6 +1127,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | export const FontFactory = new Map<string, Font>();
   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1045,6 +1139,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 8 | const prepareURL = (path: string) => `${BASE_URL}/${path}`;
   |       ^^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1056,6 +1151,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 13 | export const ImageFactory = {
    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1067,6 +1163,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 25 |     public alias = randomAlias(),
    |            ^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1078,6 +1175,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 34 |   public get name() {
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1089,6 +1187,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 53 |   public toString() {
    |          ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1100,6 +1199,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 60 |   public toJSON() {
    |          ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1111,6 +1211,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 72 |   public static async fromFile(path: string, alias?: string) {
    |                       ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1122,6 +1223,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 84 |   public static fromFileSync(path: string, alias?: string) {
    |                 ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1133,6 +1235,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 98 |   public static fromBuffer(buffer: Buffer, alias?: string) {
    |                 ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1144,6 +1247,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 108 |   public static loadDefault() {
     |                 ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

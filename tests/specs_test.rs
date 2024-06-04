@@ -9,7 +9,7 @@ use std::fmt::Write;
 use deno_ast::diagnostics::Diagnostic;
 use deno_ast::emit;
 use deno_ast::EmitOptions;
-use deno_ast::EmittedSource;
+use deno_ast::EmittedSourceText;
 use deno_ast::SourceMap;
 use deno_graph::source::recommended_registry_package_url;
 use deno_graph::source::recommended_registry_package_url_to_nv;
@@ -180,16 +180,18 @@ fn run_graph_test(test: &CollectedTest) {
             module.specifier.clone(),
             module.source.to_string(),
           );
-          let EmittedSource { text, .. } = emit(
+          let EmittedSourceText { text, .. } = emit(
             &dts.program,
             &dts.comments.as_single_threaded(),
             &source_map,
             &EmitOptions {
-              keep_comments: true,
+              remove_comments: false,
               source_map: deno_ast::SourceMapOption::None,
               ..Default::default()
             },
           )
+          .unwrap()
+          .into_string()
           .unwrap();
           if !text.is_empty() {
             output_text.push_str(&indent("--- DTS ---\n"));
@@ -210,7 +212,7 @@ fn run_graph_test(test: &CollectedTest) {
                 None => format!("{}\n    at {}", d, d.specifier()),
               })
               .collect::<Vec<_>>()
-              .join("\n");
+              .join("\n\n");
             output_text.push_str(&indent(&message));
           }
         }

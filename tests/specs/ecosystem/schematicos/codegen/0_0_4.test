@@ -40,6 +40,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export const transform = ({
   |              ^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +54,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 4 | export const transform = ({
   |              ^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -66,6 +68,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 6 | export const transform = ({
   |              ^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -79,6 +82,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 4 | export const transform = ({
   |              ^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type

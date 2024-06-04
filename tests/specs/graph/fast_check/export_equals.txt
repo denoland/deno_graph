@@ -65,4 +65,3 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
 
     info: CommonJS features such as export assignments are not supported in ES modules
     docs: https://jsr.io/go/slow-type-unsupported-ts-export-assignment
-

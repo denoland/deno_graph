@@ -76,4 +76,3 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
 
     info: expando properties get converted to a namespace and the reference conflicts with a namespace export
     docs: https://jsr.io/go/slow-type-unsupported-expando-property
-

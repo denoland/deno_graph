@@ -68,4 +68,3 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     info: using declarations have unclear semantics in the public API
     info: they are thus not supported in the public API
     docs: https://jsr.io/go/slow-type-unsupported-using
-

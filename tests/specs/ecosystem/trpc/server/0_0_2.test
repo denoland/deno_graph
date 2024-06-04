@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 113 | export function transformTRPCResponse<
     |                 ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 129 | function transformResultInner<TRouter extends AnyRouter, TOutput>(
     |          ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 134 | export function createRouterFactory<TRoot extends AnyRootTypes>(
     |                 ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 223 | export function callProcedure(
     |                 ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 245 | export function createCallerFactory<TRoot extends AnyRootTypes>() {
     |                 ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 122 | export function createMiddlewareFactory<
     |                 ^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 163 | export const experimental_standaloneMiddleware = <
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 181 | export function createInputMiddleware<TInput>(parse: ParseFn<TInput>) {
     |                 ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -97,6 +105,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 214 | export function createOutputMiddleware<TOutput>(parse: ParseFn<TOutput>) {
     |                 ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -108,6 +117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 50 |   context<TNewContext extends object | ((...args: unknown[]) => object)>() {
    |   ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -119,6 +129,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 58 |   meta<TNewMeta extends object>() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -130,6 +141,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 66 |   create<TOptions extends RuntimeConfigOptions<TContext, TMeta>>(
    |   ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -141,6 +153,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 148 | export const initTRPC = new TRPCBuilder();
     |              ^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -152,6 +165,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 20 | export function getBatchStreamFormatter() {
    |                 ^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -163,6 +177,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 32 | export function getHTTPStatusCode(json: TRPCResponse | TRPCResponse[]) {
    |                 ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -174,6 +189,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 59 | export function getHTTPStatusCodeFromError(error: TRPCError) {
    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -185,6 +201,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 60 |   public readonly code;
    |                   ^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -196,6 +213,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 11 | function createInnerProxy(callback: ProxyCallback, path: string[]) {
    |          ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -207,6 +225,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 38 | export const createRecursiveProxy = (callback: ProxyCallback) =>
    |              ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -218,6 +237,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 121 | export function observableToPromise<TValue>(
     |                 ^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -229,6 +249,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 72 | export function applyWSSHandler<TRouter extends AnyRouter>(
    |                 ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -240,6 +261,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 29 | export function createHTTPHandler<TRouter extends AnyRouter>(
    |                 ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -251,6 +273,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 49 | export function createHTTPServer<TRouter extends AnyRouter>(
    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -262,6 +285,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 20 | export function createNodeHTTPContentTypeHandler(
    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -273,6 +297,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 33 | export async function nodeHTTPRequestHandler<
    |                       ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -284,6 +309,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 5 | export const nodeHTTPJSONContentTypeHandler = createNodeHTTPContentTypeHandler({
   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -295,6 +321,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 35 | async function parseMultipartFormData(
    |                ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -306,6 +333,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 108 | function isMultipartFormDataRequest(req: NodeHTTPRequest) {
     |          ^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -317,6 +345,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 116 | export const nodeHTTPFormDataContentTypeHandler =
     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -328,6 +357,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 44 | export async function fastifyRequestHandler<
    |                       ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -339,6 +369,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 104 | export function getHTTPMethod(event: APIGatewayEvent) {
     |                 ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -350,6 +381,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 117 | export function getPath(event: APIGatewayEvent) {
     |                 ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

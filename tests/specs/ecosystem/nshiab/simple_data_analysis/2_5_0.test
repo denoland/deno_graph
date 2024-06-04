@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 1904 |     async customQuery(
      |           ^^^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 1973 |     async getSchema(table: string) {
      |           ^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 1997 |     async getDescription(table: string) {
      |           ^^^^^^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2008 |     async getTables() {
      |           ^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2021 |     async hasTable(table: string) {
      |           ^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2038 |     async getColumns(table: string) {
      |           ^^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2052 |     async hasColumn(table: string, column: string) {
      |           ^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2069 |     async getWidth(table: string) {
      |           ^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -97,6 +105,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2086 |     async getLength(table: string) {
      |           ^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -108,6 +117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2099 |     async getValuesCount(table: string) {
      |           ^^^^^^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -119,6 +129,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2117 |     async getTypes(table: string) {
      |           ^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -130,6 +141,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2133 |     async getValues(table: string, column: string) {
      |           ^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -141,6 +153,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2149 |     async getMin(table: string, column: string) {
      |           ^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -152,6 +165,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2165 |     async getMax(table: string, column: string) {
      |           ^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -163,6 +177,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2183 |     async getMean(
      |           ^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -174,6 +189,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2207 |     async getMedian(
      |           ^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -185,6 +201,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2229 |     async getSum(table: string, column: string) {
      |           ^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -196,6 +213,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2247 |     async getSkew(
      |           ^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -207,6 +225,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2271 |     async getStdDev(
      |           ^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -218,6 +237,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2295 |     async getVar(
      |           ^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -229,6 +249,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2320 |     async getQuantile(
      |           ^^^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -240,6 +261,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2341 |     async getUniques(table: string, column: string) {
      |           ^^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -251,6 +273,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2362 |     async getFirstRow(
      |           ^^^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -262,6 +285,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2388 |     async getLastRow(
      |           ^^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -273,6 +297,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2414 |     async getTop(
      |           ^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -284,6 +309,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2446 |     async getBottom(
      |           ^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -295,6 +321,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2474 |     async getData(
      |           ^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -306,6 +333,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
      | 
 2501 |     async getExtensions() {
      |           ^^^^^^^^^^^^^ this function is missing an explicit return type
+     | 
      = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type

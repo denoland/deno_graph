@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 6 | export function addDuration(
   |                 ^^^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 30 | export function subtractDuration(
    |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 60 | export function since(a: Date, b: Date) {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 71 | export function until(a: Date, b: Date) {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -53,6 +57,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 76 | export const stripTime = (date: Date) =>
    |              ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -64,6 +69,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 79 | export const getToday = () => stripTime(new Date());
    |              ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -75,6 +81,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 80 | export const getTomorrow = () => addDuration(getToday(), { days: 1 });
    |              ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -86,6 +93,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 81 | export const getYesterday = () => subtractDuration(getToday(), { days: 1 });
    |              ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -97,6 +105,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 88 | export function sameDay(a: Date, b: Date) {
    |                 ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -108,6 +117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 100 | export function validDate(date: Date) {
     |                 ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -119,6 +129,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 9 |   copy() {
   |   ^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -130,6 +141,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 34 |   removeIndex(index: uint) {
    |   ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -141,6 +153,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 31 |   static override from<T>(values: Iterable<T>, compare?: Compare<T>) {
    |                   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -152,6 +165,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 37 |   override insert(value: T) {
    |            ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -163,6 +177,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 50 |   override remove(value: T) {
    |            ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -174,6 +189,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 31 |   static from<T>(
    |          ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -185,6 +201,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 55 |   get size() {
    |       ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -196,6 +213,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 59 |   min() {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -207,6 +225,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 65 |   max() {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -218,6 +237,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 76 |   has(value: T) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -229,6 +249,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 80 |   protected findNode(value: T) {
    |             ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -240,6 +261,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 96 |   insert(value: T) {
    |   ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -251,6 +273,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 100 |   protected insertNode(node: BinaryNode<T>) {
     |             ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -262,6 +285,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 134 |   remove(value: T) {
     |   ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -273,6 +297,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 182 |   protected rotate(node: BinaryNode<any>, direction: BinaryNodeDirection) {
     |             ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -284,6 +309,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 200 |   *lnrValues() {
     |    ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -295,6 +321,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 219 |   *rnlValues() {
     |    ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -306,6 +333,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 238 |   *nlrValues() {
     |    ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -317,6 +345,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 253 |   *lrnValues() {
     |    ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -328,6 +357,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 277 |   *lvlValues() {
     |    ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -339,6 +369,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 292 |   *[Symbol.iterator]() {
     |    ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -350,6 +381,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 25 |   valueOf() {
    |   ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -361,6 +393,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 29 |   keys() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -372,6 +405,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 33 |   values() {
    |   ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -383,6 +417,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 37 |   entries() {
    |   ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -394,6 +429,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 41 |   [Symbol.iterator]() {
    |   ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -405,6 +441,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 45 |   length() {
    |   ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -416,6 +453,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 49 |   at(index: uint) {
    |   ^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -427,6 +465,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 53 |   copy() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -438,6 +477,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 61 |   indexOf(value: T) {
    |   ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -449,6 +489,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 80 |   has(value: T) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -460,6 +501,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 90 |   push(value: T) {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -471,6 +513,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 15 |   get size() {
    |       ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -482,6 +525,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 23 |   dequeue() {
    |   ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -493,6 +537,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 27 |   *[Symbol.iterator]() {
    |    ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -504,6 +549,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 24 |   get length() {
    |       ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -515,6 +561,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 35 |   *[Symbol.iterator]() {
    |    ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -526,6 +573,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 62 |   get(index: uint) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -537,6 +585,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 66 |   set(index: uint, value: T) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -548,6 +597,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 107 |   shift() {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -559,6 +609,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 9 |   override copy() {
   |            ^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -570,6 +621,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 30 |   get length() {
    |       ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -581,6 +633,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 34 |   get height() {
    |       ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -592,6 +645,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 38 |   valueOf() {
    |   ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -603,6 +657,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 42 |   copy() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -614,6 +669,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 49 |   peek() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -625,6 +681,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 56 |   pop() {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -636,6 +693,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 68 |   push(...values: T[]) {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -647,6 +705,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 84 |   *drain() {
    |    ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -658,6 +717,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 90 |   [Symbol.iterator]() {
    |   ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -669,6 +729,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 9 |   override copy() {
   |            ^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -680,6 +741,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 23 |   get length() {
    |       ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -691,6 +753,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 27 |   *[Symbol.iterator]() {
    |    ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -702,6 +765,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 61 |   push(value: T) {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -713,6 +777,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 88 |   unshift(value: T) {
    |   ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -724,6 +789,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 115 |   reverse() {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -735,6 +801,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export function reverse(str: string) {
   |                 ^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -746,6 +813,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 9 | export function replace(str: string, replacements: Record<string, string>) {
   |                 ^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -757,6 +825,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 42 | export function titalize(str: string) {
    |                 ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -768,6 +837,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 1 | export function listItems(items: string[], conjunction = "and") {
   |                 ^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -779,6 +849,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 5 | export const hexdigits = `${digits}abcdefABCDEF`;
   |              ^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -790,6 +861,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export function min(iter: Iterable<number>) {
   |                 ^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -801,6 +873,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 14 | export function max(iter: Iterable<number>) {
    |                 ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -812,6 +885,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 34 | export function sum(iter: Iterable<number>) {
    |                 ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -823,6 +897,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 43 | export function product(iter: Iterable<number>) {
    |                 ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -834,6 +909,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 52 | export function avg(iter: Iterable<number>) {
    |                 ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -845,6 +921,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 63 | export function median(array: number[]) {
    |                 ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -856,6 +933,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 71 | export function mode(iter: Iterable<number>) {
    |                 ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -867,6 +945,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 85 | export function variance(iter: Iterable<number>) {
    |                 ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -878,6 +957,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 96 | export function stddev(iter: Iterable<number>) {
    |                 ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -889,6 +969,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 100 | export function meanAbsDev(iter: Iterable<number>) {
     |                 ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -900,6 +981,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 43 | export function shuffle<T extends ArrayLike<unknown>>(array: T) {
    |                 ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -911,6 +993,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 102 | export function sample<T>(array: ArrayLike<T> & Iterable<T>, n: uint) {
     |                 ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -922,6 +1005,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 12 | export function shallowEquals<A, B>(a: A, b: B) {
    |                 ^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -933,6 +1017,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 26 | export function deepEquals<A, B>(a: A, b: B) {
    |                 ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -944,6 +1029,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 75 | export function objectMap<T, U>(obj: T, fn: (value: Entry<T>) => U) {
    |                 ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -955,6 +1041,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 26 |   /* prettier-ignore */ get x() { return this[0] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -966,6 +1053,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 28 |   /* prettier-ignore */ get y() { return this[1] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -977,6 +1065,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 30 |   /* prettier-ignore */ get z() { return this[2] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -988,6 +1077,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 32 |   /* prettier-ignore */ get w() { return this[2] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -999,6 +1089,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 35 |   /* prettier-ignore */ get r() { return this[0] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1010,6 +1101,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 37 |   /* prettier-ignore */ get g() { return this[1] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1021,6 +1113,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 39 |   /* prettier-ignore */ get b() { return this[2] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1032,6 +1125,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 41 |   /* prettier-ignore */ get a() { return this[2] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1043,6 +1137,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 44 |   override toString() {
    |            ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1054,6 +1149,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 49 |   copy() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1065,6 +1161,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 53 |   eq(x: First, y?: number, z?: number, w?: number) {
    |   ^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1076,6 +1173,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 66 |   add(x: First, y?: number, z?: number, w?: number) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1087,6 +1185,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 82 |   static add(v1: Vec4, x: First, y?: number, z?: number, w?: number) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1098,6 +1197,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 86 |   sub(x: First, y?: number, z?: number, w?: number) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1109,6 +1209,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 102 |   static sub(v1: Vec4, x: First, y?: number, z?: number, w?: number) {
     |          ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1120,6 +1221,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 106 |   mul(x: First, y?: number, z?: number, w?: number) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1131,6 +1233,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 122 |   static mul(v1: Vec4, x: First, y?: number, z?: number, w?: number) {
     |          ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1142,6 +1245,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 126 |   div(x: First, y?: number, z?: number, w?: number) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1153,6 +1257,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 142 |   static div(v1: Vec4, x: First, y?: number, z?: number, w?: number) {
     |          ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1164,6 +1269,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 146 |   static fma(a: ReadonlyVec4Like, b: ReadonlyVec4Like, c: ReadonlyVec4Like) {
     |          ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1175,6 +1281,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 155 |   lt(x: ReadonlyVec4Like) {
     |   ^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1186,6 +1293,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 164 |   lte(x: ReadonlyVec4Like) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1197,6 +1305,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 173 |   gt(x: ReadonlyVec4Like) {
     |   ^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1208,6 +1317,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 182 |   gte(x: ReadonlyVec4Like) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1219,6 +1329,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 191 |   limit(max: number) {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1230,6 +1341,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 198 |   normalize() {
     |   ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1241,6 +1353,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 204 |   static normalize(v: Vec4) {
     |          ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1252,6 +1365,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 208 |   mag() {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1263,6 +1377,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 212 |   setMag(n: number) {
     |   ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1274,6 +1389,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 216 |   magSq() {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1285,6 +1401,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 221 |   dist(v: Vec4) {
     |   ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1296,6 +1413,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 225 |   distSq(v: Vec4) {
     |   ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1307,6 +1425,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 229 |   dot(v: ReadonlyVec4Like) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1318,6 +1437,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 234 |   lerp(v: ReadonlyVec4Like, norm: number) {
     |   ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1329,6 +1449,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 243 |   static lerp(v1: Vec4, v2: ReadonlyVec4Like, norm: number) {
     |          ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1340,6 +1461,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 247 |   clamp(min: ReadonlyVec4Like, max: ReadonlyVec4Like) {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1351,6 +1473,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 256 |   static clamp(v: Vec4, min: ReadonlyVec4Like, max: ReadonlyVec4Like) {
     |          ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1362,6 +1485,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 260 |   reflect(normal: Vec4) {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1373,6 +1497,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 264 |   static reflect(v: Vec4, normal: Vec4) {
     |          ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1384,6 +1509,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 268 |   refract(normal: Vec4, eta: number) {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1395,6 +1521,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 280 | export function vec4(x?: First, y?: number, z?: number, w?: number) {
     |                 ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1406,6 +1533,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 23 |   /* prettier-ignore */ get x() { return this[0] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1417,6 +1545,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 25 |   /* prettier-ignore */ get y() { return this[1] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1428,6 +1557,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 27 |   /* prettier-ignore */ get z() { return this[2] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1439,6 +1569,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 30 |   /* prettier-ignore */ get r() { return this[0] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1450,6 +1581,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 32 |   /* prettier-ignore */ get g() { return this[1] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1461,6 +1593,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 34 |   /* prettier-ignore */ get b() { return this[2] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1472,6 +1605,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 37 |   override toString() {
    |            ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1483,6 +1617,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 42 |   copy() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1494,6 +1629,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 46 |   static random(mag = 1) {
    |          ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1505,6 +1641,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 53 |   eq(x: First, y?: number, z?: number) {
    |   ^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1516,6 +1653,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 63 |   neg() {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1527,6 +1665,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 67 |   add(x: First, y?: number, z?: number) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1538,6 +1677,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 81 |   static add(v1: Vec3, x: First, y?: number, z?: number) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1549,6 +1689,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 85 |   sub(x: First, y?: number, z?: number) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1560,6 +1701,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 99 |   static sub(v1: Vec3, x: First, y?: number, z?: number) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1571,6 +1713,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 103 |   mul(x: First, y?: number, z?: number) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1582,6 +1725,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 117 |   static mul(v1: Vec3, x: First, y?: number, z?: number) {
     |          ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1593,6 +1737,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 121 |   div(x: First, y?: number, z?: number) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1604,6 +1749,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 135 |   static div(v1: Vec3, x: First, y?: number, z?: number) {
     |          ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1615,6 +1761,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 139 |   static fma(a: ReadonlyVec3Like, b: ReadonlyVec3Like, c: ReadonlyVec3Like) {
     |          ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1626,6 +1773,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 143 |   lt(x: ReadonlyVec3Like) {
     |   ^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1637,6 +1785,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 151 |   lte(x: ReadonlyVec3Like) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1648,6 +1797,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 159 |   gt(x: ReadonlyVec3Like) {
     |   ^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1659,6 +1809,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 167 |   gte(x: ReadonlyVec3Like) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1670,6 +1821,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 175 |   limit(max: number) {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1681,6 +1833,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 182 |   normalize() {
     |   ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1692,6 +1845,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 188 |   static normalize(v: Vec3) {
     |          ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1703,6 +1857,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 192 |   mag() {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1714,6 +1869,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 196 |   setMag(n: number) {
     |   ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1725,6 +1881,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 200 |   magSq() {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1736,6 +1893,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 205 |   dist(v: Vec3) {
     |   ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1747,6 +1905,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 209 |   distSq(v: Vec3) {
     |   ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1758,6 +1917,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 213 |   dot(v: ReadonlyVec3Like) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1769,6 +1929,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 218 |   cross(v: ReadonlyVec3Like) {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1780,6 +1941,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 223 |   lerp(v: ReadonlyVec3Like, norm: number) {
     |   ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1791,6 +1953,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 231 |   static lerp(v1: Vec3, v2: ReadonlyVec3Like, norm: number) {
     |          ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1802,6 +1965,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 235 |   clamp(min: ReadonlyVec3Like, max: ReadonlyVec3Like) {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1813,6 +1977,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 243 |   static clamp(v: Vec3, min: ReadonlyVec3Like, max: ReadonlyVec3Like) {
     |          ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1824,6 +1989,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 247 |   rotateX(angle: number) {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1835,6 +2001,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 256 |   rotateY(angle: number) {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1846,6 +2013,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 265 |   rotateZ(angle: number) {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1857,6 +2025,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 274 |   reflect(normal: Vec3) {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1868,6 +2037,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 278 |   static reflect(v: Vec3, normal: Vec3) {
     |          ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1879,6 +2049,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 282 |   refract(normal: Vec3, eta: number) {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1890,6 +2061,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 294 | export function vec3(x?: First, y?: number, z?: number) {
     |                 ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1901,6 +2073,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 22 |   /* prettier-ignore */ get x() { return this[0] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1912,6 +2085,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 24 |   /* prettier-ignore */ get y() { return this[1] || 0; }
    |                             ^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1923,6 +2097,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 27 |   override toString() {
    |            ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1934,6 +2109,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 32 |   copy() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1945,6 +2121,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 36 |   static random(mag = 1) {
    |          ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1956,6 +2133,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 42 |   eq(x: First, y?: number) {
    |   ^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1967,6 +2145,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 47 |   add(x: First, y?: number) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1978,6 +2157,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 59 |   static add(v1: Vec2, x: First, y?: number) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1989,6 +2169,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 63 |   sub(x: First, y?: number) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2000,6 +2181,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 75 |   static sub(v1: Vec2, x: First, y?: number) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2011,6 +2193,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 79 |   mul(x: First, y?: number) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2022,6 +2205,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 91 |   static mul(v1: Vec2, x: First, y?: number) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2033,6 +2217,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 95 |   div(x: First, y?: number) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2044,6 +2229,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 107 |   static div(v1: Vec2, x: First, y?: number) {
     |          ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2055,6 +2241,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 111 |   static fma(a: ReadonlyVec2Like, b: ReadonlyVec2Like, c: ReadonlyVec2Like) {
     |          ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2066,6 +2253,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 115 |   lt(x: ReadonlyVec2Like) {
     |   ^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2077,6 +2265,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 119 |   lte(x: ReadonlyVec2Like) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2088,6 +2277,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 123 |   gt(x: ReadonlyVec2Like) {
     |   ^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2099,6 +2289,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 127 |   gte(x: ReadonlyVec2Like) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2110,6 +2301,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 131 |   mag() {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2121,6 +2313,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 135 |   setMag(n: number) {
     |   ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2132,6 +2325,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 139 |   magSq() {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2143,6 +2337,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 144 |   limit(max: number) {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2154,6 +2349,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 151 |   normalize() {
     |   ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2165,6 +2361,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 157 |   static normalize(v: Vec2) {
     |          ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2176,6 +2373,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 161 |   dist(v: Vec2) {
     |   ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2187,6 +2385,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 165 |   distSq(v: Vec2) {
     |   ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2198,6 +2397,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 169 |   dot(v: ReadonlyVec2Like) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2209,6 +2409,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 173 |   cross(v: ReadonlyVec2Like) {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2220,6 +2421,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 177 |   lerp(v: ReadonlyVec2Like, norm: number) {
     |   ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2231,6 +2433,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 184 |   static lerp(v1: Vec2, v2: ReadonlyVec2Like, norm: number) {
     |          ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2242,6 +2445,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 188 |   clamp(min: ReadonlyVec2Like, max: ReadonlyVec2Like) {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2253,6 +2457,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 195 |   static clamp(v: Vec2, min: ReadonlyVec2Like, max: ReadonlyVec2Like) {
     |          ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2264,6 +2469,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 199 |   perp() {
     |   ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2275,6 +2481,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 203 |   angle() {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2286,6 +2493,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 217 |   rotate(angle: number) {
     |   ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2297,6 +2505,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 226 |   static rotate(v: Vec2, angle: number) {
     |          ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2308,6 +2517,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 230 |   rotateAbout(angle: number, center: Vec2) {
     |   ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2319,6 +2529,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 234 |   reflect(normal: Vec2) {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2330,6 +2541,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 238 |   refract(normal: Vec2, eta: number) {
     |   ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2341,6 +2553,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 250 | export function vec2(x?: First, y?: number) {
     |                 ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2352,6 +2565,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 15 | export const sec = (x: number) => 1 / cos(x);
    |              ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2363,6 +2577,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 16 | export const csc = (x: number) => 1 / sin(x);
    |              ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2374,6 +2589,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 17 | export const cot = (x: number) => 1 / tan(x);
    |              ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2385,6 +2601,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 19 | export const asec = (x: number) => 1 / acos(x);
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2396,6 +2613,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 20 | export const acsc = (x: number) => 1 / asin(x);
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2407,6 +2625,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 21 | export const acot = (x: number) => 1 / atan(x);
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2418,6 +2637,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 23 | export const sech = (x: number) => 1 / cosh(x);
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2429,6 +2649,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 24 | export const csch = (x: number) => 1 / sinh(x);
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2440,6 +2661,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 25 | export const coth = (x: number) => 1 / tanh(x);
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2451,6 +2673,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 27 | export const asech = (x: number) => 1 / acosh(x);
    |              ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2462,6 +2685,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 28 | export const acsch = (x: number) => 1 / asinh(x);
    |              ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2473,6 +2697,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 29 | export const acoth = (x: number) => 1 / atanh(x);
    |              ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2484,6 +2709,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 34 |   override toString() {
    |            ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2495,6 +2721,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 44 |   copy() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2506,6 +2733,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 48 |   eq(m: ReadonlyMat4Like, precision?: int) {
    |   ^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2517,6 +2745,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 58 |   add(m: ReadonlyMat4Like) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2528,6 +2757,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 66 |   static add(m1: Mat4, m2: ReadonlyMat4Like) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2539,6 +2769,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 70 |   sub(m: ReadonlyMat4Like) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2550,6 +2781,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 78 |   static sub(m1: Mat4, m2: ReadonlyMat4Like) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2561,6 +2793,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 82 |   mul(m: number | ReadonlyMat4Like) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2572,6 +2805,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 87 |   static mul(m1: ReadonlyMat4Like, m2: number | ReadonlyMat4Like) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2583,6 +2817,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 156 |   div(m: number) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2594,6 +2829,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 160 |   transpose() {
     |   ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2605,6 +2841,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 187 |   det() {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2616,6 +2853,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 214 |   adj() {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2627,6 +2865,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 253 |   inv() {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2638,6 +2877,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 258 | export function mat4(matrix?: ReadonlyMat4Like) {
     |                 ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2649,6 +2889,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 26 |   override toString() {
    |            ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2660,6 +2901,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 35 |   copy() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2671,6 +2913,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 39 |   identity() {
    |   ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2682,6 +2925,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 44 |   eq(m: ReadonlyMat3Like, precision?: int) {
    |   ^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2693,6 +2937,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 54 |   add(m: ReadonlyMat3Like) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2704,6 +2949,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 62 |   static add(m1: Mat3, m2: ReadonlyMat3Like) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2715,6 +2961,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 66 |   sub(m: ReadonlyMat3Like) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2726,6 +2973,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 74 |   static sub(m1: Mat3, m2: ReadonlyMat3Like) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2737,6 +2985,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 78 |   mul(m: number | ReadonlyMat3Like) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2748,6 +2997,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 83 |   static mul(m1: ReadonlyMat3Like, m2: number | ReadonlyMat3Like) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2759,6 +3009,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 130 |   div(m: number) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2770,6 +3021,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 134 |   transpose() {
     |   ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2781,6 +3033,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 142 |   det() {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2792,6 +3045,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 148 |   adj() {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2803,6 +3057,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 166 |   inv() {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2814,6 +3069,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 171 | export function mat3(matrix?: ReadonlyMat3Like) {
     |                 ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2825,6 +3081,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 16 |   override toString() {
    |            ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2836,6 +3093,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 24 |   copy() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2847,6 +3105,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 28 |   identity() {
    |   ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2858,6 +3117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 33 |   eq(m: ReadonlyMat2Like, precision?: int) {
    |   ^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2869,6 +3129,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 43 |   add(m: ReadonlyMat2Like) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2880,6 +3141,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 51 |   static add(m1: Mat2, m2: ReadonlyMat2Like) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2891,6 +3153,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 55 |   sub(m: ReadonlyMat2Like) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2902,6 +3165,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 63 |   static sub(m1: Mat2, m2: ReadonlyMat2Like) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2913,6 +3177,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 67 |   mul(m: number | ReadonlyMat2Like) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2924,6 +3189,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 72 |   static mul(m1: ReadonlyMat2Like, m2: number | ReadonlyMat2Like) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2935,6 +3201,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 93 |   div(m: number) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2946,6 +3213,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 98 |   transpose() {
    |   ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2957,6 +3225,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 104 |   det() {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2968,6 +3237,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 109 |   adj() {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2979,6 +3249,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 114 |   inv() {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2990,6 +3261,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 119 | export function mat2(matrix?: ReadonlyMat2Like) {
     |                 ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3001,6 +3273,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 24 |   get cols() {
    |       ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3012,6 +3285,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 28 |   override toString() {
    |            ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3023,6 +3297,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 36 |   copy() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3034,6 +3309,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 42 |   static random(rows: uint, cols: uint) {
    |          ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3045,6 +3321,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 51 |   eq(m: Mat, precision?: uint) {
    |   ^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3056,6 +3333,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 63 |   add(m: Mat) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3067,6 +3345,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 73 |   static add(m1: Mat, m2: Mat) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3078,6 +3357,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 77 |   sub(m: Mat) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3089,6 +3369,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 87 |   static sub(m1: Mat, m2: Mat) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3100,6 +3381,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 95 |   static mul(m1: Mat, m2: Mat | number) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3111,6 +3393,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 126 |   static transpose(m: Mat) {
     |          ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3122,6 +3405,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 33 | export function roundToMultiple(x: number, n: number) {
    |                 ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3133,6 +3417,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 41 | export function roundToEven(x: number) {
    |                 ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3144,6 +3429,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 45 | export function norm(x: number, min: number, max: number) {
    |                 ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3155,6 +3441,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 49 | export function lerp(min: number, max: number, norm: number) {
    |                 ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3166,6 +3453,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 53 | export function map(
    |                 ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3177,6 +3465,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 63 | export function step(x: number, edge = 0) {
    |                 ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3188,6 +3477,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 67 | export function smoothstep(x: number, min: number, max: number) {
    |                 ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3199,6 +3489,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 72 | export function smootherstep(x: number, min: number, max: number) {
    |                 ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3210,6 +3501,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 77 | export function clamp(n: number, min: number, max: number) {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3221,6 +3513,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 81 | export function overlap(
    |                 ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3232,6 +3525,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 96 | export function closer(x: number, a: [number, number], b: [number, number]) {
    |                 ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3243,6 +3537,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 100 | export function round(n: number, precision: int = 0) {
     |                 ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3254,6 +3549,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 105 | export function floor(n: number, precision: int = 0) {
     |                 ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3265,6 +3561,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 110 | export function ceil(n: number, precision: int = 0) {
     |                 ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3276,6 +3573,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 115 | export function trunc(n: number, precision: int = 0) {
     |                 ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3287,6 +3585,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 120 | export function fract(x: number) {
     |                 ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3298,6 +3597,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 124 | export function closeTo(n: number, target: number, precision: int = 5) {
     |                 ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3309,6 +3609,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 128 | export function factorial(n: uint) {
     |                 ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3320,6 +3621,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 137 | export function log(base: number, x: number) {
     |                 ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3331,6 +3633,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 149 | export function gcd(a: uint, b: uint) {
     |                 ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3342,6 +3645,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 159 | export function fibonacci(n: uint) {
     |                 ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3353,6 +3657,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 201 | export const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
     |              ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3364,6 +3669,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 210 | export function permutations(n: uint, k: uint) {
     |                 ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3375,6 +3681,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 220 | export function combinations(n: uint, k: uint) {
     |                 ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3386,6 +3693,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 225 | export function dot(a: Iterable<number>, b: Iterable<number>) {
     |                 ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3397,6 +3705,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const Φ = (1 + Math.sqrt(5)) / 2;
   |              ^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -3408,6 +3717,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 8 | export const i = complex(0, 1);
   |              ^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -3419,6 +3729,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 12 |   toString() {
    |   ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3430,6 +3741,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 16 |   valueOf() {
    |   ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3441,6 +3753,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 20 |   copy() {
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3452,6 +3765,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 24 |   get conj() {
    |       ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3463,6 +3777,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 28 |   static fromAngle(angle: number, mag = 1) {
    |          ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3474,6 +3789,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 32 |   isReal() {
    |   ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3485,6 +3801,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 36 |   add(c: number | ComplexLike) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3496,6 +3813,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 47 |   static add(c1: Complex, c2: number | ComplexLike) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3507,6 +3825,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 51 |   sub(c: number | ComplexLike) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3518,6 +3837,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 62 |   static sub(c1: Complex, c2: number | ComplexLike) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3529,6 +3849,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 66 |   mul(c: number | ComplexLike) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3540,6 +3861,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 79 |   static mul(c1: Complex, c2: number | ComplexLike) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3551,6 +3873,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 83 |   div(c: number | Complex) {
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3562,6 +3885,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 95 |   static div(c1: Complex, c2: number | Complex) {
    |          ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3573,6 +3897,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 99 |   sq() {
    |   ^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3584,6 +3909,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 107 |   mag() {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3595,6 +3921,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 111 |   magSq() {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3606,6 +3933,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 116 |   angle() {
     |   ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3617,6 +3945,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 120 |   pow(z: ComplexLike) {
     |   ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3628,6 +3957,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 129 | export function complex(real?: number, imaginary?: number) {
     |                 ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3639,6 +3969,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 4 | export const isin = (x: number, c = 0) => -cos(x) + c;
   |              ^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3650,6 +3981,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export const icos = (x: number, c = 0) => sin(x) + c;
   |              ^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3661,6 +3993,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 6 | export const itan = (x: number, c = 0) => -ln(Math.abs(cos(x))) + c;
   |              ^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3672,6 +4005,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 8 | export const isec = (x: number, c = 0) => ln(Math.abs(sec(x) + tan(x))) + c;
   |              ^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3683,6 +4017,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 9 | export const icsc = (x: number, c = 0) => -ln(Math.abs(csc(x) + cot(x))) + c;
   |              ^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3694,6 +4029,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 10 | export const icot = (x: number, c = 0) => ln(Math.abs(sin(x))) + c;
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3705,6 +4041,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 4 | export const dcos = (x: number) => -sin(x);
   |              ^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3716,6 +4053,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export const dtan = (x: number) => {
   |              ^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3727,6 +4065,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 10 | export const dsec = (x: number) => sec(x) * tan(x);
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3738,6 +4077,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 11 | export const dcsc = (x: number) => -csc(x) * cot(x);
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3749,6 +4089,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 12 | export const dcot = (x: number) => {
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3760,6 +4101,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 20 | export const dlog = (base: number, x: number) => 1 / (x * ln(base));
    |              ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3771,6 +4113,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 6 | export function last<T>(iter: Iterable<T>) {
   |                 ^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3782,6 +4125,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export function first<T>(iter: Iterable<T>) {
   |                 ^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3793,6 +4137,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export function* cycle<T>(iter: Iterable<T>) {
   |                  ^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3804,6 +4149,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export function count<T>(iter: Iterable<T>) {
   |                 ^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3815,6 +4161,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 6 | export function collect<T>(iter: Iterable<T>) {
   |                 ^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3826,6 +4173,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export function* chain<T>(...iterables: Array<Iterable<T>>) {
   |                  ^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3837,6 +4185,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 3 | export function hsv2rgb(h: number, s: number, v: number) {
   |                 ^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3848,6 +4197,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 67 | export function luminance(r: number, g: number, b: number) {
    |                 ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3859,6 +4209,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 44 | export function memo<T>(fn: () => T) {
    |                 ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3870,6 +4221,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 55 | export function ttlCache<T>(fn: () => T, ttl: number) {
    |                 ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3881,6 +4233,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 8 | export const curry = <Args extends any[], R>(fn: (...args: Args) => R) => {
   |              ^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3892,6 +4245,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 14 |   listenersCount(event?: keyof Events) {
    |   ^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3903,6 +4257,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 19 |   listeners(event: keyof Events) {
    |   ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3914,6 +4269,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 48 |   emit<EventName extends keyof Events>(
    |   ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3925,6 +4281,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 62 |   off<EventName extends keyof Events>(
    |   ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3936,6 +4293,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 71 |   removeAllListeners(event?: keyof Events) {
    |   ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3947,6 +4305,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 1 | export function linear(t: number) {
   |                 ^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3958,6 +4317,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 5 | export function easeInQuad(t: number) {
   |                 ^^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3969,6 +4329,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 9 | export function easeOutQuad(t: number) {
   |                 ^^^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3980,6 +4341,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 13 | export function easeInOutQuad(t: number) {
    |                 ^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3991,6 +4353,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 18 | export function easeInCubic(t: number) {
    |                 ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4002,6 +4365,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 22 | export function easeOutCubic(t: number) {
    |                 ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4013,6 +4377,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 26 | export function easeInOutCubic(t: number) {
    |                 ^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4024,6 +4389,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 31 | export function easeInQuart(t: number) {
    |                 ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4035,6 +4401,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 36 | export function easeOutQuart(t: number) {
    |                 ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4046,6 +4413,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 41 | export function easeInOutQuart(t: number) {
    |                 ^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4057,6 +4425,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 48 | export function easeInQuint(t: number) {
    |                 ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4068,6 +4437,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 53 | export function easeOutQuint(t: number) {
    |                 ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4079,6 +4449,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 58 | export function easeInOutQuint(t: number) {
    |                 ^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4090,6 +4461,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 65 | export function easeInSine(t: number) {
    |                 ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4101,6 +4473,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 69 | export function easeOutSine(t: number) {
    |                 ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4112,6 +4485,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 73 | export function easeInOutSine(t: number) {
    |                 ^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4123,6 +4497,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 77 | export function easeInExpo(t: number) {
    |                 ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4134,6 +4509,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 81 | export function easeOutExpo(t: number) {
    |                 ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4145,6 +4521,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 85 | export function easeInOutExpo(t: number) {
    |                 ^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4156,6 +4533,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 90 | export function easeInCirc(t: number) {
    |                 ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4167,6 +4545,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 94 | export function easeOutCirc(t: number) {
    |                 ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4178,6 +4557,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 98 | export function easeInOutCirc(t: number) {
    |                 ^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4189,6 +4569,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 104 | export function easeInElastic(t: number) {
     |                 ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4200,6 +4581,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 109 | export function easeOutElastic(t: number) {
     |                 ^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4211,6 +4593,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 114 | export function easeInOutElastic(t: number) {
     |                 ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4222,6 +4605,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 121 | export function easeInBack(t: number) {
     |                 ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4233,6 +4617,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 125 | export function easeOutBack(t: number) {
     |                 ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4244,6 +4629,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 129 | export function easeInOutBack(t: number) {
     |                 ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4255,6 +4641,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 135 | export function easeInBounce(t: number) {
     |                 ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4266,6 +4653,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 139 | export function easeOutBounce(t: number) {
     |                 ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4277,6 +4665,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 147 | export function easeInOutBounce(t: number) {
     |                 ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4288,6 +4677,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 4 | export const descend = <T>(a: T, b: T) => -ascend(a, b);
   |              ^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4299,8 +4689,10 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 8 |   (a: T, b: T) =>
   |   ^^^^^^^^^^^^^^^
+  | 
 9 |     ascend(f(a), f(b));
   | ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4312,8 +4704,10 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 12 |   (a: T, b: T) =>
    |   ^^^^^^^^^^^^^^^
+   | 
 13 |     descend(f(a), f(b));
    | ^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4325,6 +4719,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 3 | export function csqrt(z: Complex) {
   |                 ^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4336,6 +4731,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 11 | export function clog(z: Complex) {
    |                 ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4347,6 +4743,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 17 | export function cexp({ r, i }: ComplexLike) {
    |                 ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4358,6 +4755,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 22 | export function csin({ r, i }: ComplexLike) {
    |                 ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4369,6 +4767,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 26 | export function ccos({ r, i }: ComplexLike) {
    |                 ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4380,6 +4779,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 30 | export function ctan(z: ComplexLike) {
    |                 ^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4391,6 +4791,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 34 | export function casin({ r, i }: ComplexLike) {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4402,6 +4803,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 38 | export function cacos({ r, i }: ComplexLike) {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4413,6 +4815,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 42 | export function catan({ r, i }: ComplexLike) {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4424,6 +4827,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 46 | export function csinh({ r, i }: ComplexLike) {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4435,6 +4839,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 50 | export function ccosh({ r, i }: ComplexLike) {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4446,6 +4851,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 54 | export function ctanh(z: ComplexLike) {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4457,6 +4863,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 58 | export function casinh({ r, i }: ComplexLike) {
    |                 ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4468,6 +4875,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 62 | export function cacosh({ r, i }: ComplexLike) {
    |                 ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4479,6 +4887,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 66 | export function catanh({ r, i }: ComplexLike) {
    |                 ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4490,6 +4899,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 8 | export function hex(buffer: Iterable<uint>) {
   |                 ^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4501,6 +4911,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 22 | export function unhex(hex: string) {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4512,6 +4923,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 36 | export function popcnt(n: uint) {
    |                 ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4523,6 +4935,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 7 | export const sleep = async (ms = 0) =>
   |              ^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4534,6 +4947,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 49 | export async function concurrently<T>(
    |                       ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4545,6 +4959,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   | 
 7 |   async *[Symbol.asyncIterator]() {
   |          ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+  | 
   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4556,6 +4971,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 23 | export function remove<T>(array: T[], item: T) {
    |                 ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4567,6 +4983,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 36 | export function unorderedRemove<T>(array: T[], index: number) {
    |                 ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4578,6 +4995,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 51 | export function added<T, U>(oldArray: readonly T[], newArray: readonly U[]) {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4589,6 +5007,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 55 | export function removed<T, U>(oldArray: readonly T[], newArray: readonly U[]) {
    |                 ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4600,6 +5019,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 66 | export function difference<T>(array1: readonly T[], array2: readonly T[]) {
    |                 ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4611,6 +5031,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 75 | export function union<T>(...arrays: ReadonlyArray<readonly T[]>) {
    |                 ^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4622,6 +5043,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 79 | export function arraysEqual<T>(a: readonly T[], b: readonly T[]) {
    |                 ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4633,6 +5055,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 94 | export function includesAny<T, U>(a: readonly T[], b: readonly U[]) {
    |                 ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4644,6 +5067,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 104 | export function includesAll<T, U>(a: readonly T[], b: readonly U[]) {
     |                 ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4655,6 +5079,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 108 | export function dedupe<T extends { [K in keyof T]: T[K] }>(
     |                 ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4666,6 +5091,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 125 | export function filterByKey<T>(array: readonly T[], key: keyof T) {
     |                 ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -4677,6 +5103,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 129 | export function sortByKeys<T, K extends keyof T>(
     |                 ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

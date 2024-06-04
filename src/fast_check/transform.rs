@@ -16,6 +16,7 @@ use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::SyntaxContext;
 use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::swc::visit::VisitWith;
+use deno_ast::EmitError;
 use deno_ast::EmitOptions;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
@@ -128,7 +129,7 @@ pub fn transform(
   let module_info = ParserModuleAnalyzer::module_info_from_swc(
     parsed_source.media_type(),
     &module,
-    parsed_source.text_info(),
+    parsed_source.text_info_lazy(),
     &comments,
   );
 
@@ -142,17 +143,15 @@ pub fn transform(
   };
 
   // now emit
-  let source_map = SourceMap::single(
-    specifier.clone(),
-    parsed_source.text_info().text_str().to_owned(),
-  );
+  let source_map =
+    SourceMap::single(specifier.clone(), parsed_source.text().to_string());
   let program = Program::Module(module);
   let emitted_source = emit(
     &program,
     &fast_check_comments,
     &source_map,
     &EmitOptions {
-      keep_comments: true,
+      remove_comments: false,
       source_map: deno_ast::SourceMapOption::Separate,
       source_map_file: None,
       inline_sources: false,
@@ -164,10 +163,16 @@ pub fn transform(
       inner: Arc::new(e),
     }]
   })?;
+  let emitted_text = String::from_utf8(emitted_source.source).map_err(|e| {
+    vec![FastCheckDiagnostic::Emit {
+      specifier: specifier.clone(),
+      inner: Arc::new(EmitError::SwcEmit(e.into())),
+    }]
+  })?;
 
   let dts = if let Some(dts_comments) = dts_comments {
     let mut dts_transformer =
-      FastCheckDtsTransformer::new(parsed_source.text_info(), specifier);
+      FastCheckDtsTransformer::new(parsed_source.text_info_lazy(), specifier);
 
     let module = dts_transformer.transform(program.expect_module())?;
 
@@ -182,9 +187,9 @@ pub fn transform(
 
   Ok(FastCheckModule {
     module_info: module_info.into(),
-    text: emitted_source.text.into(),
+    text: emitted_text.into(),
     dts,
-    source_map: emitted_source.source_map.unwrap().into_bytes().into(),
+    source_map: emitted_source.source_map.unwrap().into(),
   })
 }
 
@@ -766,7 +771,7 @@ impl<'a> FastCheckTransformer<'a> {
                 }
                 for arg in c.args.iter_mut() {
                   arg.expr = if arg.spread.is_some() {
-                    Box::new(paren_expr(obj_as_never_expr()))
+                    paren_expr(array_as_never_array_expr())
                   } else {
                     obj_as_never_expr()
                   };
@@ -1246,7 +1251,7 @@ impl<'a> FastCheckTransformer<'a> {
       // there is an explicit return type, so we can clear the body
       let return_expr = replacement_return_value(&t.type_ann);
       *n.body = return_expr
-        .map(|e| BlockStmtOrExpr::Expr(Box::new(paren_expr(e))))
+        .map(|e| BlockStmtOrExpr::Expr(paren_expr(e)))
         .unwrap_or_else(|| {
           BlockStmtOrExpr::BlockStmt(BlockStmt {
             span: DUMMY_SP,
@@ -1658,7 +1663,7 @@ impl<'a> FastCheckTransformer<'a> {
   ) -> FastCheckDiagnosticRange {
     FastCheckDiagnosticRange {
       specifier: self.specifier.clone(),
-      text_info: self.parsed_source.text_info().clone(),
+      text_info: self.parsed_source.text_info_lazy().clone(),
       range,
     }
   }
@@ -1746,11 +1751,11 @@ impl<'a> FastCheckTransformer<'a> {
       Expr::Await(n) => recurse(&mut n.arg)?,
       Expr::Paren(n) => recurse(&mut n.expr)?,
       Expr::TsTypeAssertion(assertion) => {
-        assertion.expr = Box::new(paren_expr(obj_as_never_expr()));
+        assertion.expr = paren_expr(obj_as_never_expr());
         true
       }
       Expr::TsAs(assertion) => {
-        assertion.expr = Box::new(paren_expr(obj_as_never_expr()));
+        assertion.expr = paren_expr(obj_as_never_expr());
         true
       }
       Expr::TsConstAssertion(n) => recurse(&mut n.expr)?,
@@ -2168,38 +2173,64 @@ fn is_expr_ident_or_member_idents(expr: &Expr) -> bool {
 
 fn array_as_never_expr() -> Box<Expr> {
   expr_as_keyword_expr(
-    Expr::Array(ArrayLit {
-      span: DUMMY_SP,
-      elems: Default::default(),
-    }),
+    empty_array_lit_expr(),
     TsKeywordTypeKind::TsNeverKeyword,
   )
 }
 
 fn obj_as_never_expr() -> Box<Expr> {
-  expr_as_keyword_expr(
-    Expr::Object(ObjectLit {
+  expr_as_keyword_expr(empty_obj_lit_expr(), TsKeywordTypeKind::TsNeverKeyword)
+}
+
+fn array_as_never_array_expr() -> Box<Expr> {
+  as_expr(
+    empty_array_lit_expr(),
+    Box::new(TsType::TsArrayType(TsArrayType {
       span: DUMMY_SP,
-      props: Default::default(),
-    }),
-    TsKeywordTypeKind::TsNeverKeyword,
+      elem_type: Box::new(ts_keyword_type(TsKeywordTypeKind::TsNeverKeyword)),
+    })),
   )
 }
 
-fn expr_as_keyword_expr(expr: Expr, keyword: TsKeywordTypeKind) -> Box<Expr> {
-  Box::new(Expr::TsAs(TsAsExpr {
+fn empty_array_lit_expr() -> Box<Expr> {
+  Box::new(Expr::Array(ArrayLit {
     span: DUMMY_SP,
-    expr: Box::new(expr),
-    type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
-      span: DUMMY_SP,
-      kind: keyword,
-    })),
+    elems: Default::default(),
   }))
 }
 
-fn paren_expr(expr: Box<Expr>) -> Expr {
-  Expr::Paren(ParenExpr {
+fn empty_obj_lit_expr() -> Box<Expr> {
+  Box::new(Expr::Object(ObjectLit {
+    span: DUMMY_SP,
+    props: Default::default(),
+  }))
+}
+
+fn expr_as_keyword_expr(
+  expr: Box<Expr>,
+  keyword: TsKeywordTypeKind,
+) -> Box<Expr> {
+  as_expr(expr, keyword_type(keyword))
+}
+
+fn keyword_type(keyword: TsKeywordTypeKind) -> Box<TsType> {
+  Box::new(TsType::TsKeywordType(TsKeywordType {
+    span: DUMMY_SP,
+    kind: keyword,
+  }))
+}
+
+fn as_expr(expr: Box<Expr>, type_ann: Box<TsType>) -> Box<Expr> {
+  Box::new(Expr::TsAs(TsAsExpr {
     span: DUMMY_SP,
     expr,
-  })
+    type_ann,
+  }))
+}
+
+fn paren_expr(expr: Box<Expr>) -> Box<Expr> {
+  Box::new(Expr::Paren(ParenExpr {
+    span: DUMMY_SP,
+    expr,
+  }))
 }
