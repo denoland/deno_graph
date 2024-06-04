@@ -93,7 +93,7 @@ pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
 pub use rt::Executor;
-pub use source::NpmPackageReqResolution;
+pub use source::NpmPackageReqsResolution;
 
 pub use deno_ast::dep::DependencyKind;
 pub use deno_ast::dep::ImportAttribute;
@@ -186,6 +186,7 @@ mod tests {
   use crate::source::ResolutionMode;
 
   use super::*;
+  use async_trait::async_trait;
   use indexmap::IndexMap;
   use indexmap::IndexSet;
   use pretty_assertions::assert_eq;
@@ -193,6 +194,7 @@ mod tests {
   use source::tests::MockResolver;
   use source::CacheInfo;
   use source::MemoryLoader;
+  use source::NpmPackageReqsResolution;
   use source::Source;
   use std::cell::RefCell;
   use std::collections::BTreeMap;
@@ -1255,6 +1257,7 @@ console.log(a);
     enables_bare_builtin_node_module: bool,
   }
 
+  #[async_trait(?Send)]
   impl NpmResolver for MockNpmResolver {
     fn resolve_builtin_node_module(
       &self,
@@ -1291,10 +1294,10 @@ console.log(a);
       todo!();
     }
 
-    fn resolve_npm(
+    async fn resolve_pkg_reqs(
       &self,
-      _package_req: &deno_semver::package::PackageReq,
-    ) -> NpmPackageReqResolution {
+      _package_reqs: &[&deno_semver::package::PackageReq],
+    ) -> NpmPackageReqsResolution {
       todo!()
     }
 

@@ -7,7 +7,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use anyhow::anyhow;
+use async_trait::async_trait;
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
@@ -20,7 +20,7 @@ use deno_graph::source::UnknownBuiltInNodeModuleError;
 use deno_graph::BuildOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
-use deno_graph::NpmPackageReqResolution;
+use deno_graph::NpmPackageReqsResolution;
 use deno_graph::Range;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
@@ -144,10 +144,11 @@ async fn test_npm_version_not_found_then_found() {
   #[derive(Debug)]
   struct TestNpmResolver {
     made_first_request: Rc<RefCell<bool>>,
-    should_never_succeed: bool,
+    should_always_reload: bool,
     number_times_load_called: Rc<RefCell<u32>>,
   }
 
+  #[async_trait(?Send)]
   impl NpmResolver for TestNpmResolver {
     fn resolve_builtin_node_module(
       &self,
@@ -171,19 +172,27 @@ async fn test_npm_version_not_found_then_found() {
       Box::pin(futures::future::ready(Ok(())))
     }
 
-    fn resolve_npm(&self, package_req: &PackageReq) -> NpmPackageReqResolution {
+    async fn resolve_pkg_reqs(
+      &self,
+      package_reqs: &[&PackageReq],
+    ) -> NpmPackageReqsResolution {
       let mut value = self.made_first_request.borrow_mut();
-      if *value && !self.should_never_succeed {
+      if *value && !self.should_always_reload {
         assert_eq!(*self.number_times_load_called.borrow(), 2);
-        NpmPackageReqResolution::Ok(PackageNv {
-          name: package_req.name.clone(),
-          version: Version::parse_from_npm("1.0.0").unwrap(),
-        })
+        NpmPackageReqsResolution::Resolutions(
+          package_reqs
+            .iter()
+            .map(|req| {
+              Ok(PackageNv {
+                name: req.name.clone(),
+                version: Version::parse_from_npm("1.0.0").unwrap(),
+              })
+            })
+            .collect::<Vec<_>>(),
+        )
       } else {
         *value = true;
-        NpmPackageReqResolution::ReloadRegistryInfo(anyhow!(
-          "failed to resolve"
-        ))
+        NpmPackageReqsResolution::ReloadRegistryInfo
       }
     }
   }
@@ -196,7 +205,7 @@ async fn test_npm_version_not_found_then_found() {
     let npm_resolver = TestNpmResolver {
       made_first_request: Rc::new(RefCell::new(false)),
       number_times_load_called: Rc::new(RefCell::new(0)),
-      should_never_succeed: false,
+      should_always_reload: false,
     };
 
     let mut graph = ModuleGraph::new(GraphKind::All);
@@ -225,7 +234,7 @@ async fn test_npm_version_not_found_then_found() {
     let npm_resolver = TestNpmResolver {
       made_first_request: Rc::new(RefCell::new(false)),
       number_times_load_called: Rc::new(RefCell::new(0)),
-      should_never_succeed: true,
+      should_always_reload: true,
     };
 
     let mut graph = ModuleGraph::new(GraphKind::All);
@@ -241,7 +250,7 @@ async fn test_npm_version_not_found_then_found() {
       .await;
     assert_eq!(
       graph.valid().err().unwrap().to_string(),
-      "failed to resolve"
+      "programming error: do not request reloading npm registry info more than once"
     );
   }
 }
