@@ -4074,7 +4074,7 @@ export function a(a: A): B {
     assert!(graph.valid().is_ok());
 
     // all true
-    let roots = vec![root.clone()];
+    let roots = [root.clone()];
     let result = graph.walk(
       roots.iter(),
       WalkOptions {
