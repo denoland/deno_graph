@@ -349,87 +349,87 @@ impl std::fmt::Debug for SymbolNode {
       .field(&match &self.0 {
         SymbolNodeInner::Json => "<json>".to_string(),
         SymbolNodeInner::Module(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::ClassDecl(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::ExportDecl(d, _) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::ExportDefaultDecl(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::ExportDefaultExpr(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::FnDecl(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::TsEnum(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::TsNamespace(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::TsTypeAlias(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::TsInterface(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::Var(d, _, ident) => {
           format!(
             "{}: {}",
             ident.sym,
-            d.value().text_fast(d.source.text_info())
+            d.value().text_fast(d.source.text_info_lazy())
           )
         }
         SymbolNodeInner::UsingVar(d, _, ident) => {
           format!(
             "{}: {}",
             ident.sym,
-            d.value().text_fast(d.source.text_info())
+            d.value().text_fast(d.source.text_info_lazy())
           )
         }
         SymbolNodeInner::AutoAccessor(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::ClassMethod(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::ClassProp(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::ClassParamProp(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::Constructor(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::ExpandoProperty(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::TsIndexSignature(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::TsCallSignatureDecl(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::TsConstructSignatureDecl(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::TsPropertySignature(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::TsGetterSignature(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::TsSetterSignature(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
         SymbolNodeInner::TsMethodSignature(d) => {
-          d.value().text_fast(d.source.text_info()).to_string()
+          d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
       })
       .finish()
@@ -1382,7 +1382,7 @@ impl<'a> ModuleInfoRef<'a> {
   pub fn text_info(&self) -> &'a SourceTextInfo {
     match self {
       Self::Json(m) => &m.source_text_info,
-      Self::Esm(m) => m.source.text_info(),
+      Self::Esm(m) => m.source.text_info_lazy(),
     }
   }
 

@@ -478,9 +478,7 @@ impl TestBuilder {
                     symbol_deps_text.push_str(&format!(
                       "{:?}:{:?} {:?}\n",
                       symbol.symbol_id(),
-                      decl
-                        .range
-                        .as_byte_range(source.text_info().range().start),
+                      decl.range.as_byte_range(source.range().start),
                       deps
                     ));
                   }

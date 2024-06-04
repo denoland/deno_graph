@@ -169,7 +169,7 @@ pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
     options.parsed_source.media_type(),
     options.maybe_headers,
     ParserModuleAnalyzer::module_info(options.parsed_source),
-    options.parsed_source.text_info().text(),
+    options.parsed_source.text().clone(),
     options.file_system,
     options.jsr_url_provider,
     options.maybe_resolver,

@@ -16,6 +16,7 @@ use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::SyntaxContext;
 use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::swc::visit::VisitWith;
+use deno_ast::EmitError;
 use deno_ast::EmitOptions;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
@@ -128,7 +129,7 @@ pub fn transform(
   let module_info = ParserModuleAnalyzer::module_info_from_swc(
     parsed_source.media_type(),
     &module,
-    parsed_source.text_info(),
+    parsed_source.text_info_lazy(),
     &comments,
   );
 
@@ -142,17 +143,15 @@ pub fn transform(
   };
 
   // now emit
-  let source_map = SourceMap::single(
-    specifier.clone(),
-    parsed_source.text_info().text_str().to_owned(),
-  );
+  let source_map =
+    SourceMap::single(specifier.clone(), parsed_source.text().to_string());
   let program = Program::Module(module);
   let emitted_source = emit(
     &program,
     &fast_check_comments,
     &source_map,
     &EmitOptions {
-      keep_comments: true,
+      remove_comments: false,
       source_map: deno_ast::SourceMapOption::Separate,
       source_map_file: None,
       inline_sources: false,
@@ -164,10 +163,16 @@ pub fn transform(
       inner: Arc::new(e),
     }]
   })?;
+  let emitted_text = String::from_utf8(emitted_source.source).map_err(|e| {
+    vec![FastCheckDiagnostic::Emit {
+      specifier: specifier.clone(),
+      inner: Arc::new(EmitError::SwcEmit(e.into())),
+    }]
+  })?;
 
   let dts = if let Some(dts_comments) = dts_comments {
     let mut dts_transformer =
-      FastCheckDtsTransformer::new(parsed_source.text_info(), specifier);
+      FastCheckDtsTransformer::new(parsed_source.text_info_lazy(), specifier);
 
     let module = dts_transformer.transform(program.expect_module())?;
 
@@ -182,9 +187,9 @@ pub fn transform(
 
   Ok(FastCheckModule {
     module_info: module_info.into(),
-    text: emitted_source.text.into(),
+    text: emitted_text.into(),
     dts,
-    source_map: emitted_source.source_map.unwrap().into_bytes().into(),
+    source_map: emitted_source.source_map.unwrap().into(),
   })
 }
 
@@ -1658,7 +1663,7 @@ impl<'a> FastCheckTransformer<'a> {
   ) -> FastCheckDiagnosticRange {
     FastCheckDiagnosticRange {
       specifier: self.specifier.clone(),
-      text_info: self.parsed_source.text_info().clone(),
+      text_info: self.parsed_source.text_info_lazy().clone(),
       range,
     }
   }

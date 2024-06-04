@@ -91,7 +91,7 @@ impl ModuleParser for DefaultModuleParser {
   ) -> Result<ParsedSource, ParseDiagnostic> {
     deno_ast::parse_module(deno_ast::ParseParams {
       specifier: options.specifier.clone(),
-      text_info: SourceTextInfo::new(options.source),
+      text: options.source,
       media_type: options.media_type,
       capture_tokens: options.scope_analysis,
       scope_analysis: options.scope_analysis,
@@ -210,7 +210,7 @@ impl<'a> CapturingModuleParser<'a> {
       self.store.get_parsed_source(options.specifier)?
     };
     if parsed_source.media_type() == options.media_type
-      && parsed_source.text_info().text_str() == options.source.as_ref()
+      && parsed_source.text().as_ref() == options.source.as_ref()
     {
       Some(parsed_source)
     } else {
@@ -276,7 +276,7 @@ impl<'a> ParserModuleAnalyzer<'a> {
     Self::module_info_from_swc(
       parsed_source.media_type(),
       module,
-      parsed_source.text_info(),
+      parsed_source.text_info_lazy(),
       parsed_source.comments(),
     )
   }
@@ -779,7 +779,7 @@ mod tests {
         scope_analysis: false,
       })
       .unwrap();
-    let text_info = parsed_source.text_info();
+    let text_info = parsed_source.text_info_lazy();
     let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
     let dependencies = module_info.dependencies;
     assert_eq!(dependencies.len(), 9);
@@ -905,7 +905,7 @@ mod tests {
       })
       .unwrap();
     let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
-    let text_info = parsed_source.text_info();
+    let text_info = parsed_source.text_info_lazy();
     let dependencies = module_info.dependencies;
     assert_eq!(dependencies.len(), 10);
     let dep = dependencies[0].as_static().unwrap();
@@ -940,7 +940,7 @@ mod tests {
       })
       .unwrap();
     let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
-    let text_info = parsed_source.text_info();
+    let text_info = parsed_source.text_info_lazy();
     let dependencies = module_info.dependencies;
     assert_eq!(dependencies.len(), 1);
     let dep = dependencies[0].as_static().unwrap();
