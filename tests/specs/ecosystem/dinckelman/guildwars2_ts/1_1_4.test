@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 60 |   readonly account = new AccountApi(this.getParams());
    |            ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 63 |   readonly achievements = new AchievementsApi(this.getParams());
    |            ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -31,6 +33,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 66 |   readonly backstory = new BackstoryApi(this.getParams());
    |            ^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -42,6 +45,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 69 |   readonly build = new BuildApi(this.getParams());
    |            ^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -53,6 +57,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 72 |   readonly characters = new CharactersApi(this.getParams());
    |            ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -64,6 +69,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 75 |   readonly colors = new ColorsApi(this.getParams());
    |            ^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -75,6 +81,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 78 |   readonly commerce = new CommerceApi(this.getParams());
    |            ^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -86,6 +93,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 81 |   readonly continents = new ContinentsApi(this.getParams());
    |            ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -97,6 +105,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 84 |   readonly currencies = new CurrenciesApi(this.getParams());
    |            ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -108,6 +117,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 87 |   readonly dailyCrafting = new DailyCraftingApi(this.getParams());
    |            ^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -119,6 +129,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 90 |   readonly dungeons = new DungeonsApi(this.getParams());
    |            ^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -130,6 +141,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 93 |   readonly emblem = new EmblemApi(this.getParams());
    |            ^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -141,6 +153,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 96 |   readonly emotes = new EmotesApi(this.getParams());
    |            ^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -152,6 +165,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 99 |   readonly files = new FilesApi(this.getParams());
    |            ^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -163,6 +177,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 102 |   readonly finishers = new FinishersApi(this.getParams());
     |            ^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -174,6 +189,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 105 |   readonly gliders = new GlidersApi(this.getParams());
     |            ^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -185,6 +201,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 108 |   readonly guild = new GuildApi(this.getParams());
     |            ^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -196,6 +213,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 111 |   readonly home = new HomeApi(this.getParams());
     |            ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -207,6 +225,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 114 |   readonly items = new ItemsApi(this.getParams());
     |            ^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -218,6 +237,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 117 |   readonly itemstats = new ItemStatsApi(this.getParams());
     |            ^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -229,6 +249,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 120 |   readonly jadebots = new JadebotsApi(this.getParams());
     |            ^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -240,6 +261,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 123 |   readonly legendaryArmory = new LegendaryArmoryApi(this.getParams());
     |            ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -251,6 +273,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 126 |   readonly legends = new LegendsApi(this.getParams());
     |            ^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -262,6 +285,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 129 |   readonly mailCarriers = new MailCarriersApi(this.getParams());
     |            ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -273,6 +297,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 132 |   readonly mapChests = new MapChestsApi(this.getParams());
     |            ^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -284,6 +309,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 135 |   readonly maps = new MapsApi(this.getParams());
     |            ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -295,6 +321,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 138 |   readonly masteries = new MasteriesApi(this.getParams());
     |            ^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -306,6 +333,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 141 |   readonly materials = new MaterialsApi(this.getParams());
     |            ^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -317,6 +345,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 144 |   readonly minis = new MinisApi(this.getParams());
     |            ^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -328,6 +357,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 147 |   readonly mounts = new MountsApi(this.getParams());
     |            ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -339,6 +369,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 150 |   readonly novelties = new NoveltiesApi(this.getParams());
     |            ^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -350,6 +381,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 153 |   readonly outfits = new OutfitsApi(this.getParams());
     |            ^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -361,6 +393,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 156 |   readonly pets = new PetsApi(this.getParams());
     |            ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -372,6 +405,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 159 |   readonly professions = new ProfessionsApi(this.getParams());
     |            ^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -383,6 +417,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 162 |   readonly pvp = new PvPApi(this.getParams());
     |            ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -394,6 +429,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 165 |   readonly quaggans = new QuaggansApi(this.getParams());
     |            ^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -405,6 +441,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 168 |   readonly quests = new QuestsApi(this.getParams());
     |            ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -416,6 +453,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 171 |   readonly races = new RacesApi(this.getParams());
     |            ^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -427,6 +465,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 174 |   readonly raids = new RaidsApi(this.getParams());
     |            ^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -438,6 +477,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 177 |   readonly recipes = new RecipesApi(this.getParams());
     |            ^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -449,6 +489,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 180 |   readonly skiffs = new SkiffsApi(this.getParams());
     |            ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -460,6 +501,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 183 |   readonly skills = new SkillsApi(this.getParams());
     |            ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -471,6 +513,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 186 |   readonly skins = new SkinsApi(this.getParams());
     |            ^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -482,6 +525,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 189 |   readonly specializations = new SpecializationsApi(this.getParams());
     |            ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -493,6 +537,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 192 |   readonly stories = new StoriesApi(this.getParams());
     |            ^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -504,6 +549,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 195 |   readonly subtoken = new SubtokenApi(this.getParams());
     |            ^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -515,6 +561,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 198 |   readonly titles = new TitlesApi(this.getParams());
     |            ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -526,6 +573,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 201 |   readonly tokenInfo = new TokenInfoApi(this.getParams());
     |            ^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -537,6 +585,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 204 |   readonly traits = new TraitsApi(this.getParams());
     |            ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -548,6 +597,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 207 |   readonly wizardsVault = new WizardsVaultApi(this.getParams());
     |            ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -559,6 +609,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 210 |   readonly worldBosses = new WorldBossesApi(this.getParams());
     |            ^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -570,6 +621,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 213 |   readonly worlds = new WorldsApi(this.getParams());
     |            ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -581,6 +633,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 216 |   readonly wvw = new WorldVsWorldApi(this.getParams());
     |            ^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -592,6 +645,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 64 |   async getMatchesByWorld(type: 'overview' | 'scores' | 'stats', world: number) {
    |         ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -603,6 +657,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const WvWUpgradesDTO = z.array(
   |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -614,6 +669,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const WvWRanksDTO = z.array(
   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -625,6 +681,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const WvWObjectivesDTO = z.array(
   |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -636,6 +693,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | export const Scores = z.object({
   |              ^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -647,6 +705,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 15 | export const WvWMatchesDTO = z.array(
    |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -658,6 +717,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const WvWAbilitiesDTO = z.array(
   |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -669,6 +729,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 67 | export const stringArrayType = z.array(z.string());
    |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -680,6 +741,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 68 | export const numberArrayType = z.array(z.number());
    |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -691,6 +753,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 11 |   async get() {
    |         ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -702,6 +765,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const WizardsVaultObjectivesDTO = z.array(
   |              ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -713,6 +777,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const WizardsVaultListingsDTO = z.array(
   |              ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -724,6 +789,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 132 |   async getStandings() {
     |         ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -735,6 +801,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 139 |   async getStats() {
     |         ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -746,6 +813,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const PvPSeasonLeaderboardsDTO = z.array(
   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -757,6 +825,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 32 | export const PvPSeasonLeaderboardRegionsDTO = z.array(
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -768,6 +837,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | const Divisions = z.object({
   |       ^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -779,6 +849,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 23 | const Ranks = z.object({
    |       ^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -790,6 +861,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 43 | const Settings = z.object({
    |       ^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -801,6 +873,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 59 | const Scorings = z.object({
    |       ^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -812,6 +885,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 72 | const Leaderboards = z.object({
    |       ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -823,6 +897,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 87 | export const PvPSeasonDTO = z.array(
    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -834,6 +909,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const PvPRanksDTO = z.array(
   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -845,6 +921,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | const Skins = z.object({
   |       ^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -856,6 +933,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 19 | export const PvPHeroesDTO = z.array(
    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -867,6 +945,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const PvPGamesDTO = z.array(
   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -878,6 +957,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 7 | export const PvPAmuletsDTO = z.array(
   |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -889,6 +969,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | export const ItemAttributesGeneric = z.object({
   |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -900,6 +981,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const WorldsDTO = z.array(
   |              ^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -911,6 +993,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 12 |   async get() {
    |         ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -922,6 +1005,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 21 | const BuffConversion = z.object({
    |       ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -933,6 +1017,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 31 | const Facts = z
    |       ^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -944,6 +1029,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 66 | const TraitedFacts = Facts.and(
    |       ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -955,6 +1041,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 76 | const Skills = z.object({
    |       ^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -966,6 +1053,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 94 | export const TraitsDTO = z.array(
    |              ^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -977,6 +1065,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | export const AttributeAdjust = z.object({
   |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -988,6 +1077,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 11 | export const Buff = z.object({
    |              ^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -999,6 +1089,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 24 | export const ComboField = z.object({
    |              ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1010,6 +1101,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 30 | export const Finisher = z.object({
    |              ^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1021,6 +1113,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 38 | export const Damage = z.object({
    |              ^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1032,6 +1125,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 46 | export const Distance = z.object({
    |              ^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1043,6 +1137,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 70 | export const NoData = z.object({
    |              ^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1054,6 +1149,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 75 | export const NumberType = z.object({
    |              ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1065,6 +1161,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 81 | export const Percent = z.object({
    |              ^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1076,6 +1173,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 87 | export const PrefixedBuff = z.object({
    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1087,6 +1185,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 107 | export const Radius = z.object({
     |              ^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1098,6 +1197,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 113 | export const Range = z.object({
     |              ^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1109,6 +1209,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 119 | export const Recharge = z.object({
     |              ^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1120,6 +1221,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 125 | export const StunBreak = z.object({
     |              ^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1131,6 +1233,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 131 | export const Time = z.object({
     |              ^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1142,6 +1245,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 137 | export const Unblockable = z.object({
     |              ^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1153,6 +1257,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 12 |   async get() {
    |         ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1164,6 +1269,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const TitlesDTO = z.array(
   |              ^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1175,6 +1281,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 18 |   async get(expire: string, permissions: ApiPermissions[], urls?: EndpointUrls[]) {
    |         ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1186,6 +1293,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | const storiesCore = z.array(z.number());
   |       ^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1197,6 +1305,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const StoriesSeasonsDTO = z.array(
   |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1208,6 +1317,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const StoriesDTO = z.array(
   |              ^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1219,6 +1329,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const SpecializationsDTO = z.array(
   |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1230,6 +1341,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | const WeaponDetails = z.object({
   |       ^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1241,6 +1353,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 10 | const GatheringToolDetails = z.object({
    |       ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1252,6 +1365,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 15 | const RaceGenderChoice = z.enum([
    |       ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1263,6 +1377,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 28 | const ArmorDetails = z.object({
    |       ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1274,6 +1389,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 64 | export const SkinsDTO = z.array(
    |              ^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1285,6 +1401,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 14 |   async get(ids: number[]) {
    |         ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1296,6 +1413,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const SkiffsDTO = z.array(
   |              ^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1307,6 +1425,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 34 |   async search(type: 'input' | 'output', ids: number[]) {
    |         ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1318,6 +1437,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | const WeaponRecipes = z.enum([
   |       ^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1329,6 +1449,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 25 | const ArmorRecipes = z.enum(['Boots', 'Coat', 'Gloves', 'Helm', 'Leggings', 'Shoulders']);
    |       ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1340,6 +1461,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 27 | const TrinketRecipes = z.enum(['Amulet', 'Earring', 'Ring']);
    |       ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1351,6 +1473,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 29 | const FoodRecipes = z.enum(['Dessert', 'Feast', 'IngredientCooking', 'Meal', 'Seasoning', 'Snack', 'Soup', 'Food']);
    |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1362,6 +1485,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 31 | const CraftingComponentRecipes = z.enum(['Component', 'Inscription', 'Insignia', 'LegendaryComponent']);
    |       ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1373,6 +1497,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 33 | const RefinementRecipes = z.enum(['Refinement', 'RefinementEctoplasm', 'RefinementObsidian']);
    |       ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1384,6 +1509,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 35 | const GuildRecipes = z.enum(['GuildConsumable', 'GuildDecoration', 'GuildConsumableWvw']);
    |       ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1395,6 +1521,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 37 | const OtherRecipes = z.enum(['Backpack', 'Bag', 'Bulk', 'Consumable', 'Dye', 'Food', 'Potion', 'UpgradeComponent']);
    |       ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1406,6 +1533,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 42 | export const RecipesDTO = z.array(
    |              ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1417,6 +1545,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const RaidsDTO = z.array(
   |              ^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1428,6 +1557,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const RacesDTO = z.array(
   |              ^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1439,6 +1569,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const QuestsDTO = z.array(
   |              ^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1450,6 +1581,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const QuaggansDTO = z.array(
   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1461,6 +1593,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | const Weapon = z.enum([
   |       ^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1472,6 +1605,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 28 | export const ProfessionsDTO = z.array(
    |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1483,6 +1617,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const PetsDTO = z.array(
   |              ^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1494,6 +1629,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const OutfitsDTO = z.array(
   |              ^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1505,6 +1641,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const NoveltiesDTO = z.array(
   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1516,6 +1653,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const MountsTypesDTO = z.array(
   |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1527,6 +1665,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const MountsSkinsDTO = z.array(
   |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1538,6 +1677,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const MinisDTO = z.array(
   |              ^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1549,6 +1689,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const MaterialsDTO = z.array(
   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1560,6 +1701,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | const Levels = z.object({
   |       ^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1571,6 +1713,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 21 | export const MasteriesDTO = z.array(
    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1582,6 +1725,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const MapsDTO = z.array(
   |              ^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1593,6 +1737,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 13 |   async get() {
    |         ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -1604,6 +1749,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const MailCarriersDTO = z.array(
   |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1615,6 +1761,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const LegendsDTO = z.array(
   |              ^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1626,6 +1773,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const LegendaryArmoryDTO = z.array(
   |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1637,6 +1785,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const JadebotsDTO = z.array(
   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1648,6 +1797,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | const Attributes = z.enum([
   |       ^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1659,6 +1809,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 16 | const Attribute = z.object({
    |       ^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1670,6 +1821,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 28 | export const ItemStatsDTO = z.array(
    |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1681,6 +1833,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 3 | const ItemType = z.enum([
   |       ^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1692,6 +1845,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 24 | const ItemRarity = z.enum(['Junk', 'Basic', 'Fine', 'Masterwork', 'Rare', 'Exotic', 'Ascended', 'Legendary']);
    |       ^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1703,6 +1857,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 26 | const ItemFlags = z.enum([
    |       ^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1714,6 +1869,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 46 | const ItemGameTypes = z.enum(['Activity', 'Dungeon', 'Pve', 'Pvp', 'Wvw', 'PvpLobby']);
    |       ^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1725,6 +1881,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 48 | const ItemRestrictions = z.enum([
    |       ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1736,6 +1893,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 65 | const ItemUpgrade = z.object({
    |       ^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1747,6 +1905,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 72 | const Attribute = z.object({
    |       ^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1758,6 +1917,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 90 | const InfixUpgrade = z.object({
    |       ^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1769,6 +1929,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 109 | const InfusionSlot = z.object({
     |       ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1780,6 +1941,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 121 | const ArmorDetails = z.object({
     |       ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1791,6 +1953,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 136 | const BackItemDetails = z.object({
     |       ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1802,6 +1965,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 151 | const BagDetails = z.object({
     |       ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1813,6 +1977,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 158 | const ConsumableType = z.enum([
     |       ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1824,6 +1989,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 176 | const UnlockType = z.enum([
     |       ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1835,6 +2001,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 192 | const ConsumableDetails = z.object({
     |       ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1846,6 +2013,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 219 | const ContainerDetails = z.object({
     |       ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1857,6 +2025,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 224 | const GatheringDetails = z.object({
     |       ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1868,6 +2037,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 229 | const GizmoDetails = z.object({
     |       ^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1879,6 +2049,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 238 | const MiniatureDetails = z.object({
     |       ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1890,6 +2061,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 243 | const SalvageKitDetails = z.object({
     |       ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1901,6 +2073,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 250 | const TrinketDetails = z.object({
     |       ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1912,6 +2085,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 267 | const UpgradeComponentFlags = z.enum([
     |       ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1923,6 +2097,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 294 | const UpgradeComponentDetails = z.object({
     |       ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1934,6 +2109,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 309 | const WeaponType = z.enum([
     |       ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1945,6 +2121,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 335 | const WeaponDetails = z.object({
     |       ^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1956,6 +2133,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 363 | export const ItemsDTO = z.array(
     |              ^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1967,6 +2145,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const GlidersDTO = z.array(
   |              ^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1978,6 +2157,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const FinishersDTO = z.array(
   |              ^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -1989,6 +2169,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const FilesDTO = z.array(
   |              ^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2000,6 +2181,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const EmotesDTO = z.array(
   |              ^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2011,6 +2193,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const DungeonsDTO = z.array(
   |              ^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2022,6 +2205,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 12 |   async get() {
    |         ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2033,6 +2217,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const CurrenciesDTO = z.array(
   |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2044,6 +2229,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | const ContinentsMaps = z.object({
   |       ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2055,6 +2241,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 120 | export const ContinentsMapsDTO = z.array(ContinentsMaps);
     |              ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2066,6 +2253,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 125 | const ContinentsRegions = z.object({
     |       ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2077,6 +2265,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 137 | export const ContinentsRegionsDTO = z.array(ContinentsRegions);
     |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2088,6 +2277,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 142 | const ContinentsFloors = z.object({
     |       ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2099,6 +2289,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 155 | export const ContinentsFloorsDTO = z.array(ContinentsFloors);
     |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2110,6 +2301,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 160 | const Continents = z.object({
     |       ^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2121,6 +2313,7 @@ error[missing-explicit-type]: missing explicit type in the public API
     | 
 174 | export const ContinentsDTO = z.array(Continents);
     |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
+    | 
     = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2132,6 +2325,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | const MaterialColorData = z.object({
   |       ^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2143,6 +2337,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 24 | const Hue = z.enum(['Gray', 'Brown', 'Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Purple']);
    |       ^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2154,6 +2349,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 29 | const Material = z.enum(['Vibrant', 'Leather', 'Metal']);
    |       ^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2165,6 +2361,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 34 | const Rarity = z.enum(['Starter', 'Common', 'Uncommon', 'Rare', 'Exclusive']);
    |       ^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2176,6 +2373,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 39 | export const ColorsDTO = z.array(
    |              ^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2187,6 +2385,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 13 |   async get() {
    |         ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2198,6 +2397,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const BackstoryQuestionsDTO = z.array(
   |              ^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2209,6 +2409,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const BackstoryAnswersDTO = z.array(
   |              ^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2220,6 +2421,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 15 |   async getCats(ids: number[] | 'all' = 'all') {
    |         ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2231,6 +2433,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 25 |   async getNodes(ids: string[] | 'all' = 'all') {
    |         ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2242,6 +2445,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 30 |   async get(id: string) {
    |         ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2253,6 +2457,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 41 |   async getLog(id: string, since = 0) {
    |         ^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2264,6 +2469,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 51 |   async getMembers(id: string) {
    |         ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2275,6 +2481,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 61 |   async getRanks(id: string) {
    |         ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2286,6 +2493,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 71 |   async getStash(id: string) {
    |         ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2297,6 +2505,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 81 |   async getStorage(id: string) {
    |         ^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2308,6 +2517,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 91 |   async getTeams(id: string) {
    |         ^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2319,6 +2529,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 101 |   async getTreasury(id: string) {
     |         ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2330,6 +2541,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 111 |   async getUpgrades(id: string) {
     |         ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2341,6 +2553,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 120 |   async getPermissions(ids?: string[]) {
     |         ^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2352,6 +2565,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 135 |   async find(name: string) {
     |         ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2363,6 +2577,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 144 |   async upgradeInfo(ids: number[]) {
     |         ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2374,6 +2589,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 15 |   async get(type: 'foregrounds' | 'backgrounds', ids: number[] | 'all' = 'all') {
    |         ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2385,6 +2601,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 18 |   async getDeliveries() {
    |         ^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2396,6 +2613,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 32 |   async getExchange(type: 'gems' | 'coins', quantity: number) {
    |         ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2407,6 +2625,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 46 |   async getListings(ids: number[]) {
    |         ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2418,6 +2637,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 60 |   async getPrices(ids: number[]) {
    |         ^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2429,6 +2649,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 71 |   async getTransactions(status: 'current' | 'history', type: 'buys' | 'sells') {
    |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2440,6 +2661,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 30 |   async get() {
    |         ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2451,6 +2673,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 39 |   async getBackstory(id: string) {
    |         ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2462,6 +2685,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 53 |   async getBuildTabs(id: string, tabs: number[] | 'all' = 'all') {
    |         ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2473,6 +2697,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 77 |   async getCore(id: string) {
    |         ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2484,6 +2709,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 86 |   async getCrafting(id: string) {
    |         ^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2495,6 +2721,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 99 |   async getEquipment(id: string) {
    |         ^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2506,6 +2733,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 113 |   async getEquipmentTabs(id: string, tabs: number[] | 'all' = 'all') {
     |         ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2517,6 +2745,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 137 |   async getActiveEquipmentTab(id: string) {
     |         ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2528,6 +2757,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 152 |   async getHeroPoints(id: string) {
     |         ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2539,6 +2769,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 165 |   async getInventory(id: string) {
     |         ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2550,6 +2781,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 178 |   async getQuests(id: string) {
     |         ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2561,6 +2793,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 191 |   async getRecipes(id: string) {
     |         ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2572,6 +2805,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 204 |   async getSAB(id: string) {
     |         ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2583,6 +2817,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 217 |   async getSkills(id: string) {
     |         ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2594,6 +2829,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 230 |   async getSpecializations(id: string) {
     |         ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2605,6 +2841,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 245 |   async getTraining(id: string) {
     |         ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2616,6 +2853,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const AchievementGroupsDTO = z.object({
   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2627,6 +2865,7 @@ error[missing-explicit-type]: missing explicit type in the public API
   | 
 6 | export const AchievementCategoriesDTO = z.array(
   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+  | 
   = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -2638,6 +2877,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 52 |   async get() {
    |         ^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2649,6 +2889,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 59 |   async getAchievements() {
    |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2660,6 +2901,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 71 |   async getBank() {
    |         ^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2671,6 +2913,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 78 |   async getBuildStorage() {
    |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2682,6 +2925,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 89 |   async getDailyCrafts() {
    |         ^^^^^^^^^^^^^^ this function is missing an explicit return type
+   | 
    = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2693,6 +2937,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 100 |   async getDungeons() {
     |         ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2704,6 +2949,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 107 |   async getDyes() {
     |         ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2715,6 +2961,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 114 |   async getEmotes() {
     |         ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2726,6 +2973,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 121 |   async getFinishers() {
     |         ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2737,6 +2985,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 132 |   async getGliders() {
     |         ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2748,6 +2997,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 139 |   async getHomeNodes() {
     |         ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2759,6 +3009,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 150 |   async getHomeCats() {
     |         ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2770,6 +3021,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 158 |   async getInventory() {
     |         ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2781,6 +3033,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 169 |   async getJadebots() {
     |         ^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2792,6 +3045,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 176 |   async getLegendaryArmory() {
     |         ^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2803,6 +3057,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 187 |   async getLuck() {
     |         ^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2814,6 +3069,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 194 |   async getMailCarriers() {
     |         ^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2825,6 +3081,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 205 |   async getMapChests() {
     |         ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2836,6 +3093,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 217 |   async getMasteries() {
     |         ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2847,6 +3105,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 229 |   async getMasteryPoints() {
     |         ^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2858,6 +3117,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 240 |   async getMaterials() {
     |         ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2869,6 +3129,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 251 |   async getMinis() {
     |         ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2880,6 +3141,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 258 |   async getMountSkins() {
     |         ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2891,6 +3153,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 269 |   async getMountTypes() {
     |         ^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2902,6 +3165,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 280 |   async getNovelties() {
     |         ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2913,6 +3177,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 291 |   async getOutfits() {
     |         ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2924,6 +3189,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 298 |   async getProgression() {
     |         ^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2935,6 +3201,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 309 |   async getPvpHeroes() {
     |         ^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2946,6 +3213,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 320 |   async getRaids() {
     |         ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2957,6 +3225,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 327 |   async getRecipes() {
     |         ^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2968,6 +3237,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 334 |   async getSkiffs() {
     |         ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2979,6 +3249,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 341 |   async getSkins() {
     |         ^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -2990,6 +3261,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 348 |   async getTitles() {
     |         ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3001,6 +3273,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 355 |   async getWallet() {
     |         ^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3012,6 +3285,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 362 |   async getWizardsVaultDaily() {
     |         ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3023,6 +3297,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 373 |   async getWizardsVaultListings() {
     |         ^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3034,6 +3309,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 384 |   async getWizardsVaultSpecial() {
     |         ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3045,6 +3321,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 395 |   async getWizardsVaultWeekly() {
     |         ^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -3056,6 +3333,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 406 |   async getWorldBosses() {
     |         ^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 
   info: all functions in the public API must have an explicit return type

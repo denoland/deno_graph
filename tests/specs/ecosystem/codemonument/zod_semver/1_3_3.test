@@ -9,6 +9,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 22 | export const ZodSemverUnbranded = z.string().regex(
    |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type
@@ -20,6 +21,7 @@ error[missing-explicit-type]: missing explicit type in the public API
    | 
 38 | export const ZodSemver = ZodSemverUnbranded.brand<
    |              ^^^^^^^^^ this symbol is missing an explicit type
+   | 
    = hint: add an explicit type annotation to the symbol
 
   info: all symbols in the public API must have an explicit type

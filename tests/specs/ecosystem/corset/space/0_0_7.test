@@ -9,6 +9,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 228 | export const mark = <T>(label?: any) => {
     |              ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -20,6 +21,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 246 | export const recall = <T>(label: any) => {
     |              ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -31,6 +33,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 263 | export const get = <T>(label: any, depth: number = 1) => {
     |              ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -42,6 +45,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 281 | export const set = <T>(label: any, value: T, depth: number = 1) => {
     |              ^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type of 'void' or 'never' to the function
 
   info: all functions in the public API must have an explicit return type
@@ -55,6 +59,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 295 | export const define = <T>(label: any, value: T, depth: number = 1) => {
     |              ^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -66,6 +71,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 302 | export const drag = <T>() => {
     |              ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -77,6 +83,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 317 | export const pull = <T>() => {
     |              ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -88,6 +95,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 332 | export const clear = <T>() => {
     |              ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -99,6 +107,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 350 | export const space = <T = any>(cb: Scope<T>) => {
     |              ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -110,6 +119,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 378 | export const place = <T extends Scope>(cb: T) => {
     |              ^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -121,6 +131,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 230 |     [Symbol.iterator]() {
     |     ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -132,6 +143,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 243 |     [Symbol.toStringTag]() {
     |     ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -143,6 +155,7 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 246 |     static from<T>(
     |            ^^^^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type

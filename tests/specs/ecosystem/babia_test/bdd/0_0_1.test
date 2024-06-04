@@ -13,18 +13,25 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 187 | it.only = function itOnly<T>(...args: ItArgs<T>) {
     |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 188 |   const options = itDefinition(...args);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 189 |   return it({
     | ^^^^^^^^^^^^^
+    | 
 190 |     ...options,
     | ^^^^^^^^^^^^^^^
+    | 
 191 |     only: true,
     | ^^^^^^^^^^^^^^^
+    | 
 192 |   });
     | ^^^^^
+    | 
 193 | };
     | ^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
@@ -36,18 +43,25 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
     | 
 195 | it.ignore = function itIgnore<T>(...args: ItArgs<T>) {
     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 196 |   const options = itDefinition(...args);
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
 197 |   return it({
     | ^^^^^^^^^^^^^
+    | 
 198 |     ...options,
     | ^^^^^^^^^^^^^^^
+    | 
 199 |     ignore: true,
     | ^^^^^^^^^^^^^^^^^
+    | 
 200 |   });
     | ^^^^^
+    | 
 201 | };
     | ^ this function is missing an explicit return type
+    | 
     = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
