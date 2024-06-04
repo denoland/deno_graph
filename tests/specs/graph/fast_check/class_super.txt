@@ -87,7 +87,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export class SpreadChild extends SpreadBase {
     constructor(){
-      super(...({} as never));
+      super(...([] as never[]));
     }
   }
   --- DTS ---

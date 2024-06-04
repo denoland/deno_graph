@@ -771,7 +771,7 @@ impl<'a> FastCheckTransformer<'a> {
                 }
                 for arg in c.args.iter_mut() {
                   arg.expr = if arg.spread.is_some() {
-                    Box::new(paren_expr(obj_as_never_expr()))
+                    paren_expr(array_as_never_array_expr())
                   } else {
                     obj_as_never_expr()
                   };
@@ -1251,7 +1251,7 @@ impl<'a> FastCheckTransformer<'a> {
       // there is an explicit return type, so we can clear the body
       let return_expr = replacement_return_value(&t.type_ann);
       *n.body = return_expr
-        .map(|e| BlockStmtOrExpr::Expr(Box::new(paren_expr(e))))
+        .map(|e| BlockStmtOrExpr::Expr(paren_expr(e)))
         .unwrap_or_else(|| {
           BlockStmtOrExpr::BlockStmt(BlockStmt {
             span: DUMMY_SP,
@@ -1751,11 +1751,11 @@ impl<'a> FastCheckTransformer<'a> {
       Expr::Await(n) => recurse(&mut n.arg)?,
       Expr::Paren(n) => recurse(&mut n.expr)?,
       Expr::TsTypeAssertion(assertion) => {
-        assertion.expr = Box::new(paren_expr(obj_as_never_expr()));
+        assertion.expr = paren_expr(obj_as_never_expr());
         true
       }
       Expr::TsAs(assertion) => {
-        assertion.expr = Box::new(paren_expr(obj_as_never_expr()));
+        assertion.expr = paren_expr(obj_as_never_expr());
         true
       }
       Expr::TsConstAssertion(n) => recurse(&mut n.expr)?,
@@ -2173,38 +2173,64 @@ fn is_expr_ident_or_member_idents(expr: &Expr) -> bool {
 
 fn array_as_never_expr() -> Box<Expr> {
   expr_as_keyword_expr(
-    Expr::Array(ArrayLit {
-      span: DUMMY_SP,
-      elems: Default::default(),
-    }),
+    empty_array_lit_expr(),
     TsKeywordTypeKind::TsNeverKeyword,
   )
 }
 
 fn obj_as_never_expr() -> Box<Expr> {
-  expr_as_keyword_expr(
-    Expr::Object(ObjectLit {
+  expr_as_keyword_expr(empty_obj_lit_expr(), TsKeywordTypeKind::TsNeverKeyword)
+}
+
+fn array_as_never_array_expr() -> Box<Expr> {
+  as_expr(
+    empty_array_lit_expr(),
+    Box::new(TsType::TsArrayType(TsArrayType {
       span: DUMMY_SP,
-      props: Default::default(),
-    }),
-    TsKeywordTypeKind::TsNeverKeyword,
+      elem_type: Box::new(ts_keyword_type(TsKeywordTypeKind::TsNeverKeyword)),
+    })),
   )
 }
 
-fn expr_as_keyword_expr(expr: Expr, keyword: TsKeywordTypeKind) -> Box<Expr> {
-  Box::new(Expr::TsAs(TsAsExpr {
+fn empty_array_lit_expr() -> Box<Expr> {
+  Box::new(Expr::Array(ArrayLit {
     span: DUMMY_SP,
-    expr: Box::new(expr),
-    type_ann: Box::new(TsType::TsKeywordType(TsKeywordType {
-      span: DUMMY_SP,
-      kind: keyword,
-    })),
+    elems: Default::default(),
   }))
 }
 
-fn paren_expr(expr: Box<Expr>) -> Expr {
-  Expr::Paren(ParenExpr {
+fn empty_obj_lit_expr() -> Box<Expr> {
+  Box::new(Expr::Object(ObjectLit {
+    span: DUMMY_SP,
+    props: Default::default(),
+  }))
+}
+
+fn expr_as_keyword_expr(
+  expr: Box<Expr>,
+  keyword: TsKeywordTypeKind,
+) -> Box<Expr> {
+  as_expr(expr, keyword_type(keyword))
+}
+
+fn keyword_type(keyword: TsKeywordTypeKind) -> Box<TsType> {
+  Box::new(TsType::TsKeywordType(TsKeywordType {
+    span: DUMMY_SP,
+    kind: keyword,
+  }))
+}
+
+fn as_expr(expr: Box<Expr>, type_ann: Box<TsType>) -> Box<Expr> {
+  Box::new(Expr::TsAs(TsAsExpr {
     span: DUMMY_SP,
     expr,
-  })
+    type_ann,
+  }))
+}
+
+fn paren_expr(expr: Box<Expr>) -> Box<Expr> {
+  Box::new(Expr::Paren(ParenExpr {
+    span: DUMMY_SP,
+    expr,
+  }))
 }
