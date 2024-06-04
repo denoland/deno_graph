@@ -4848,7 +4848,7 @@ impl<'a> NpmSpecifierResolver<'a> {
     &mut self,
     mut pending_npm_registry_info_loads: PendingNpmRegistryInfoLoadFutures,
   ) {
-    let mut restart_count = 0;
+    let mut has_restarted = false;
     'restart: loop {
       let mut items_by_req: IndexMap<_, Vec<_>> = IndexMap::new();
       while let Some(pending_load) =
@@ -4951,12 +4951,25 @@ impl<'a> NpmSpecifierResolver<'a> {
             }
           }
           NpmPackageReqsResolution::ReloadRegistryInfo => {
-            restart_count += 1;
-
-            if restart_count > 1 {
+            if has_restarted {
               // makes no sense for someone to reload registry information more than once
-              panic!("cannot return back ReloadRegistryInfo more than once");
+              for items in self.pending_npm_by_name.values() {
+                for item in items {
+                  self.pending_info.module_slots.insert(
+                    item.specifier.clone(),
+                    ModuleSlot::Err(ModuleError::LoadingErr(
+                      item.specifier.clone(),
+                      item.maybe_range.clone(),
+                      NpmLoadError::RegistryInfo(
+                        Arc::new(anyhow::anyhow!("programming error: do not request reloading npm registry info more than once"))
+                      ).into()
+                    )),
+                  );
+                }
+              }
+              break;
             }
+            has_restarted = true;
 
             // clear the current pending information and restart from scratch
             pending_npm_registry_info_loads.clear();
