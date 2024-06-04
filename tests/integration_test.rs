@@ -26,9 +26,7 @@ use deno_graph::Range;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
-use deno_semver::VersionReq;
 use futures::future::LocalBoxFuture;
-use futures::FutureExt;
 use pretty_assertions::assert_eq;
 use url::Url;
 
@@ -177,24 +175,23 @@ async fn test_npm_version_not_found_then_found() {
 
     async fn resolve_package_reqs(
       &self,
-      package_name: &str,
-      version_reqs: &[VersionReq],
+      package_reqs: &[&PackageReq],
     ) -> Vec<NpmPackageReqResolution> {
       let mut value = self.made_first_request.borrow_mut();
       if *value && !self.should_never_succeed {
         assert_eq!(*self.number_times_load_called.borrow(), 2);
-        version_reqs
+        package_reqs
           .iter()
-          .map(|_| {
+          .map(|req| {
             NpmPackageReqResolution::Ok(PackageNv {
-              name: package_name.to_string(),
+              name: req.name.clone(),
               version: Version::parse_from_npm("1.0.0").unwrap(),
             })
           })
           .collect::<Vec<_>>()
       } else {
         *value = true;
-        version_reqs
+        package_reqs
           .iter()
           .map(|_| {
             NpmPackageReqResolution::ReloadRegistryInfo(

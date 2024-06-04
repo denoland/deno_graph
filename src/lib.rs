@@ -187,7 +187,6 @@ mod tests {
 
   use super::*;
   use async_trait::async_trait;
-  use futures::future::LocalBoxFuture;
   use indexmap::IndexMap;
   use pretty_assertions::assert_eq;
   use serde_json::json;
@@ -1295,8 +1294,7 @@ console.log(a);
 
     async fn resolve_package_reqs(
       &self,
-      _package_name: &str,
-      _package_reqs: &[deno_semver::VersionReq],
+      _package_reqs: &[&deno_semver::package::PackageReq],
     ) -> Vec<NpmPackageReqResolution> {
       todo!()
     }

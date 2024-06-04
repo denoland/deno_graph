@@ -26,7 +26,6 @@ use deno_graph::WorkspaceMember;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
-use futures::future::LocalBoxFuture;
 use futures::FutureExt;
 
 #[derive(Default)]
@@ -124,16 +123,15 @@ impl NpmResolver for TestNpmResolver {
 
   async fn resolve_package_reqs(
     &self,
-    package_name: &str,
-    version_reqs: &[deno_semver::VersionReq],
+    package_reqs: &[&PackageReq],
   ) -> Vec<NpmPackageReqResolution> {
     // for now, this requires version reqs that are resolved
-    version_reqs
+    package_reqs
       .iter()
-      .map(|version_req| {
-        match Version::parse_from_npm(&version_req.to_string()) {
+      .map(|pkg_req| {
+        match Version::parse_from_npm(&pkg_req.version_req.to_string()) {
           Ok(version) => NpmPackageReqResolution::Ok(PackageNv {
-            name: package_name.to_string(),
+            name: pkg_req.name.clone(),
             version,
           }),
           Err(err) => NpmPackageReqResolution::Err(Arc::new(err.into())),

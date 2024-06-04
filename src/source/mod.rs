@@ -15,7 +15,7 @@ use anyhow::anyhow;
 use anyhow::Error;
 use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
-use deno_semver::VersionReq;
+use deno_semver::package::PackageReq;
 use futures::future;
 use futures::future::LocalBoxFuture;
 use once_cell::sync::Lazy;
@@ -484,14 +484,13 @@ pub trait NpmResolver: fmt::Debug {
     package_name: &str,
   ) -> LocalBoxFuture<'static, Result<(), anyhow::Error>>;
 
-  /// Resolves a the version requirements for the provided package.
+  /// Resolves a the package version requirements.
   ///
   /// The implementation MUST return the same amount of resolutions back as
   /// version reqs provided or else a panic will occur.
   async fn resolve_package_reqs(
     &self,
-    package_name: &str,
-    version_reqs: &[VersionReq],
+    package_req: &[&PackageReq],
   ) -> Vec<NpmPackageReqResolution>;
 
   /// Returns true when bare node specifier resoluion is enabled

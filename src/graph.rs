@@ -47,7 +47,6 @@ use deno_semver::package::PackageReq;
 use deno_semver::package::PackageReqReferenceParseError;
 use deno_semver::RangeSetOrTag;
 use deno_semver::Version;
-use deno_semver::VersionReq;
 use futures::future::LocalBoxFuture;
 use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
@@ -4797,7 +4796,7 @@ struct NpmSpecifierResolver<'a> {
   /// Ordered npm specifiers.
   npm_specifiers: Vec<ModuleSpecifier>,
   pending_info: NpmSpecifierBuildPendingInfo,
-  pending_npm_by_name: HashMap<String, VecDeque<PendingNpmResolutionItem>>,
+  pending_npm_by_name: HashMap<String, Vec<PendingNpmResolutionItem>>,
 }
 
 impl<'a> NpmSpecifierResolver<'a> {
@@ -4828,10 +4827,10 @@ impl<'a> NpmSpecifierResolver<'a> {
     for item in pending_npm_specifiers.drain(..) {
       npm_specifiers.push(item.specifier.clone());
       if seen_specifiers.insert(item.specifier.clone()) {
-        let items: &mut VecDeque<_> = pending_npm_by_name
+        let items: &mut Vec<_> = pending_npm_by_name
           .entry(item.package_ref.req().name.clone())
           .or_default();
-        items.push_back(item);
+        items.push(item);
       }
     }
 
@@ -4848,44 +4847,61 @@ impl<'a> NpmSpecifierResolver<'a> {
     mut pending_npm_registry_info_loads: PendingNpmRegistryInfoLoadFutures,
   ) {
     let mut previously_restarted = false;
-    while let Some(pending_load) = pending_npm_registry_info_loads.next().await
-    {
-      let items = self
-        .pending_npm_by_name
-        .get(&pending_load.package_name)
-        .unwrap();
-      if let Err(err) = pending_load.result {
-        for item in items {
-          // load failure
-          self.pending_info.module_slots.insert(
-            item.specifier.clone(),
-            ModuleSlot::Err(ModuleError::LoadingErr(
+    'restart: loop {
+      let mut items_by_req: IndexMap<_, Vec<_>> = IndexMap::new();
+      while let Some(pending_load) =
+        pending_npm_registry_info_loads.next().await
+      {
+        let items = self
+          .pending_npm_by_name
+          .get(&pending_load.package_name)
+          .unwrap();
+        if let Err(err) = pending_load.result {
+          for item in items {
+            // load failure
+            self.pending_info.module_slots.insert(
               item.specifier.clone(),
-              item.maybe_range.clone(),
-              NpmLoadError::RegistryInfo(err.clone()).into(),
-            )),
-          );
+              ModuleSlot::Err(ModuleError::LoadingErr(
+                item.specifier.clone(),
+                item.maybe_range.clone(),
+                NpmLoadError::RegistryInfo(err.clone()).into(),
+              )),
+            );
+          }
+        } else if self.npm_resolver.is_some() {
+          for item in items {
+            items_by_req
+              .entry(item.package_ref.req())
+              .or_default()
+              .push(item);
+          }
+        } else {
+          for item in items {
+            self.pending_info.module_slots.insert(
+              item.specifier.clone(),
+              ModuleSlot::Err(ModuleError::LoadingErr(
+                item.specifier.clone(),
+                item.maybe_range.clone(),
+                NpmLoadError::NotSupportedEnvironment.into(),
+              )),
+            );
+          }
         }
-      } else if let Some(npm_resolver) = &self.npm_resolver {
-        let mut items_by_req: IndexMap<VersionReq, Vec<_>> =
-          items
-            .iter()
-            .fold(IndexMap::new(), |mut items_by_req, item| {
-              items_by_req
-                .entry(item.package_ref.req().version_req.clone())
-                .or_default()
-                .push(item);
-              items_by_req
-            });
-        let reqs = items_by_req.keys().cloned().collect::<Vec<_>>();
-        let resolutions = npm_resolver
-          .resolve_package_reqs(&pending_load.package_name, &reqs)
-          .await;
-        assert_eq!(resolutions.len(), reqs.len());
-        'outer: for (req, resolution) in
-          reqs.into_iter().zip(resolutions.into_iter())
+      }
+
+      if items_by_req.is_empty() {
+        break; // nothing to do, so exit
+      }
+
+      if let Some(npm_resolver) = &self.npm_resolver {
+        let all_package_reqs = items_by_req.keys().copied().collect::<Vec<_>>();
+        let resolutions =
+          npm_resolver.resolve_package_reqs(&all_package_reqs).await;
+        assert_eq!(all_package_reqs.len(), resolutions.len());
+        for (req, resolution) in
+          all_package_reqs.into_iter().zip(resolutions.into_iter())
         {
-          let items = items_by_req.swap_remove(&req).unwrap();
+          let items = items_by_req.get(&req).unwrap();
           for item in items {
             match &resolution {
               NpmPackageReqResolution::Ok(pkg_nv) => {
@@ -4939,7 +4955,8 @@ impl<'a> NpmSpecifierResolver<'a> {
                     }
                   }));
                 }
-                break 'outer;
+
+                continue 'restart;
               }
               NpmPackageReqResolution::Err(err)
               | NpmPackageReqResolution::ReloadRegistryInfo(err) => {
@@ -4956,17 +4973,10 @@ impl<'a> NpmSpecifierResolver<'a> {
           }
         }
       } else {
-        for item in items {
-          self.pending_info.module_slots.insert(
-            item.specifier.clone(),
-            ModuleSlot::Err(ModuleError::LoadingErr(
-              item.specifier.clone(),
-              item.maybe_range.clone(),
-              NpmLoadError::NotSupportedEnvironment.into(),
-            )),
-          );
-        }
+        debug_assert!(items_by_req.is_empty());
       }
+
+      break;
     }
   }
 
