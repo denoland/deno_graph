@@ -53,6 +53,7 @@ use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
 use futures::FutureExt;
 use indexmap::IndexMap;
+use indexmap::IndexSet;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
 use serde::Deserialize;
@@ -1202,7 +1203,7 @@ pub struct ModuleEntryIterator<'a> {
 impl<'a> ModuleEntryIterator<'a> {
   fn new(
     graph: &'a ModuleGraph,
-    roots: &'a [ModuleSpecifier],
+    roots: impl Iterator<Item = &'a ModuleSpecifier>,
     options: WalkOptions,
   ) -> Self {
     let mut seen =
@@ -1542,7 +1543,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
 pub struct ModuleGraph {
   #[serde(skip_serializing)]
   graph_kind: GraphKind,
-  pub roots: Vec<ModuleSpecifier>,
+  pub roots: IndexSet<ModuleSpecifier>,
   #[serde(rename = "modules")]
   #[serde(serialize_with = "serialize_module_slots")]
   pub(crate) module_slots: BTreeMap<ModuleSpecifier, ModuleSlot>,
@@ -1675,14 +1676,15 @@ impl ModuleGraph {
 
   /// Creates a new cloned module graph from the provided roots.
   pub fn segment(&self, roots: &[ModuleSpecifier]) -> Self {
-    if roots == self.roots {
+    let roots = roots.iter().collect::<IndexSet<_>>();
+    if roots.iter().all(|r| self.roots.contains(*r)) {
       // perf - do a straight clone since the roots are the same
       return self.clone();
     }
 
     let mut new_graph = ModuleGraph::new(self.graph_kind);
     let entries = self.walk(
-      roots,
+      roots.iter().copied(),
       WalkOptions {
         follow_dynamic: true,
         follow_type_only: true,
@@ -1723,7 +1725,7 @@ impl ModuleGraph {
   /// Iterates over all the module entries in the module graph searching from the provided roots.
   pub fn walk<'a>(
     &'a self,
-    roots: &'a [ModuleSpecifier],
+    roots: impl Iterator<Item = &'a ModuleSpecifier>,
     options: WalkOptions,
   ) -> ModuleEntryIterator<'a> {
     ModuleEntryIterator::new(self, roots, options)
@@ -1945,7 +1947,7 @@ impl ModuleGraph {
   pub fn valid(&self) -> Result<(), ModuleGraphError> {
     self
       .walk(
-        &self.roots,
+        self.roots.iter(),
         WalkOptions {
           check_js: true,
           follow_type_only: false,
@@ -3251,7 +3253,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let provided_imports = imports;
     let roots = provided_roots
       .iter()
-      .filter(|r| !self.graph.roots.contains(r))
+      .filter(|r| !self.graph.roots.contains(*r))
       .cloned()
       .collect::<Vec<_>>();
     let imports = provided_imports
@@ -5435,7 +5437,7 @@ mod tests {
     // should not follow the dynamic import error when walking and not following
     let error_count = graph
       .walk(
-        &roots,
+        roots.iter(),
         WalkOptions {
           follow_dynamic: false,
           follow_type_only: true,
@@ -5450,7 +5452,7 @@ mod tests {
     // should return as dynamic import missing when walking
     let errors = graph
       .walk(
-        &roots,
+        roots.iter(),
         WalkOptions {
           follow_dynamic: true,
           follow_type_only: true,
@@ -5588,7 +5590,7 @@ mod tests {
     assert_eq!(graph.specifiers_count(), 4);
     let errors = graph
       .walk(
-        &roots,
+        roots.iter(),
         WalkOptions {
           check_js: true,
           follow_dynamic: false,
