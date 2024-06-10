@@ -6,6 +6,7 @@ use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
 use crate::text_encoding;
 use crate::ModuleInfo;
+use crate::NpmLoadError;
 use crate::SpecifierError;
 use async_trait::async_trait;
 use deno_ast::MediaType;
@@ -438,20 +439,16 @@ pub struct UnknownBuiltInNodeModuleError {
 }
 
 #[derive(Debug)]
-pub enum NpmPackageReqsResolution {
-  Resolutions(Vec<Result<PackageNv, Arc<anyhow::Error>>>),
-  /// Error was encountered, but instruct deno_graph to ask for
-  /// the registry information again. This is useful to use when
-  /// a user specifies an npm specifier that doesn't match any version
-  /// found in a cache and you want to cache bust the registry information.
+pub struct NpmResolvePkgReqsResult {
+  /// The individual results of resolving the package requirements.
   ///
-  /// When the implementation provides this, it should cache bust its
-  /// cached/loaded registry information and deno_graph will request
-  /// the registry information for every package again then re-attempt resolution.
+  /// This MUST correspond to the indexes of the provided package requirements.
+  pub results: Vec<Result<PackageNv, NpmLoadError>>,
+  /// Result of resolving the entire dependency graph after the initial reqs
+  /// were resolved to NVs.
   ///
-  /// The implementation MUST ensure this doesn't get returned more than
-  /// once in a row or else a panic will occur.
-  ReloadRegistryInfo,
+  /// Don't run dependency graph resolution if there are any individual failures.
+  pub dep_graph_result: Result<(), Arc<anyhow::Error>>,
 }
 
 #[async_trait(?Send)]
@@ -470,17 +467,9 @@ pub trait NpmResolver: fmt::Debug {
     range: &Range,
   );
 
-  /// This tells the implementation to asynchronously load within itself the
-  /// npm registry package information so that synchronous resolution can occur
-  /// afterwards.
-  ///
-  /// WARNING: deno_graph will stop executing these futures when a
-  /// `NpmPackageReqResolution::ReloadRegistryInfo` is returned from
-  /// `resolve_npm`. The implementation should be resilient to this.
-  fn load_and_cache_npm_package_info(
-    &self,
-    package_name: &str,
-  ) -> LocalBoxFuture<'static, Result<(), anyhow::Error>>;
+  /// This is an optimization for the implementation to start loading and caching
+  /// the npm registry package information ahead of time.
+  fn load_and_cache_npm_package_info(&self, package_name: &str);
 
   /// Resolves a the package version requirements.
   ///
@@ -488,8 +477,8 @@ pub trait NpmResolver: fmt::Debug {
   /// version reqs provided or else a panic will occur.
   async fn resolve_pkg_reqs(
     &self,
-    package_req: &[&PackageReq],
-  ) -> NpmPackageReqsResolution;
+    package_req: &[PackageReq],
+  ) -> NpmResolvePkgReqsResult;
 
   /// Returns true when bare node specifier resoluion is enabled
   fn enables_bare_builtin_node_module(&self) -> bool {
