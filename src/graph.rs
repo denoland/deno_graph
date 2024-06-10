@@ -1558,8 +1558,10 @@ pub struct ModuleGraph {
   #[serde(rename = "packages")]
   #[serde(skip_serializing_if = "PackageSpecifiers::is_empty")]
   pub packages: PackageSpecifiers,
+  /// The result of resolving all npm dependencies of non-dynamic
+  /// npm specifiers in the graph.
   #[serde(skip_serializing)]
-  pub npm_resolution_result: Result<(), Arc<anyhow::Error>>,
+  pub npm_dep_graph_result: Result<(), Arc<anyhow::Error>>,
 }
 
 impl ModuleGraph {
@@ -1573,7 +1575,7 @@ impl ModuleGraph {
       npm_packages: Default::default(),
       has_node_specifier: false,
       packages: Default::default(),
-      npm_resolution_result: Ok(()),
+      npm_dep_graph_result: Ok(()),
     }
   }
 
@@ -4965,7 +4967,7 @@ impl<'a> NpmSpecifierResolver<'a> {
 
     graph.npm_packages.extend(pending_info.found_pkg_nvs);
     if let Some(result) = pending_info.dependencies_resolution {
-      graph.npm_resolution_result = result;
+      graph.npm_dep_graph_result = result;
     }
   }
 }
