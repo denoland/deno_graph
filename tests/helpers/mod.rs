@@ -20,7 +20,8 @@ use deno_graph::BuildDiagnostic;
 use deno_graph::FastCheckCache;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
-use deno_graph::NpmPackageReqsResolution;
+use deno_graph::NpmLoadError;
+use deno_graph::NpmResolvePkgReqsResult;
 use deno_graph::WorkspaceFastCheckOption;
 use deno_graph::WorkspaceMember;
 use deno_semver::package::PackageNv;
@@ -111,23 +112,15 @@ impl NpmResolver for TestNpmResolver {
   ) {
   }
 
-  fn load_and_cache_npm_package_info(
-    &self,
-    _package_name: &str,
-  ) -> futures::prelude::future::LocalBoxFuture<
-    'static,
-    Result<(), anyhow::Error>,
-  > {
-    async { Ok(()) }.boxed_local()
-  }
+  fn load_and_cache_npm_package_info(&self, _package_name: &str) {}
 
   async fn resolve_pkg_reqs(
     &self,
     package_reqs: &[&PackageReq],
-  ) -> NpmPackageReqsResolution {
+  ) -> NpmResolvePkgReqsResult {
     // for now, this requires version reqs that are resolved
-    NpmPackageReqsResolution::Resolutions(
-      package_reqs
+    NpmResolvePkgReqsResult {
+      resolutions: package_reqs
         .iter()
         .map(|pkg_req| {
           match Version::parse_from_npm(&pkg_req.version_req.to_string()) {
@@ -135,11 +128,14 @@ impl NpmResolver for TestNpmResolver {
               name: pkg_req.name.clone(),
               version,
             }),
-            Err(err) => Err(Arc::new(err.into())),
+            Err(err) => {
+              Err(NpmLoadError::PackageReqResolution(Arc::new(err.into())))
+            }
           }
         })
         .collect::<Vec<_>>(),
-    )
+      dependencies: Ok(()),
+    }
   }
 }
 

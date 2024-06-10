@@ -93,7 +93,7 @@ pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
 pub use rt::Executor;
-pub use source::NpmPackageReqsResolution;
+pub use source::NpmResolvePkgReqsResult;
 
 pub use deno_ast::dep::DependencyKind;
 pub use deno_ast::dep::ImportAttribute;
@@ -194,7 +194,7 @@ mod tests {
   use source::tests::MockResolver;
   use source::CacheInfo;
   use source::MemoryLoader;
-  use source::NpmPackageReqsResolution;
+  use source::NpmResolvePkgReqsResult;
   use source::Source;
   use std::cell::RefCell;
   use std::collections::BTreeMap;
@@ -1284,20 +1284,14 @@ console.log(a);
       log::warn!("Warning: Resolving \"{module_name}\" as \"node:{module_name}\" at {specifier}:{line}:{column}. If you want to use a built-in Node module, add a \"node:\" prefix.");
     }
 
-    fn load_and_cache_npm_package_info(
-      &self,
-      _package_name: &str,
-    ) -> futures::future::LocalBoxFuture<
-      'static,
-      anyhow::Result<(), anyhow::Error>,
-    > {
-      todo!();
+    fn load_and_cache_npm_package_info(&self, _package_name: &str) {
+      // do nothing for these tests
     }
 
     async fn resolve_pkg_reqs(
       &self,
       _package_reqs: &[&deno_semver::package::PackageReq],
-    ) -> NpmPackageReqsResolution {
+    ) -> NpmResolvePkgReqsResult {
       todo!()
     }
 

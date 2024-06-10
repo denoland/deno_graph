@@ -5,9 +5,7 @@
 // out of deno_graph that should be public
 
 use std::cell::RefCell;
-use std::rc::Rc;
 
-use async_trait::async_trait;
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
@@ -15,17 +13,9 @@ use deno_graph::source::LoadOptions;
 use deno_graph::source::LoadResponse;
 use deno_graph::source::MemoryFileSystem;
 use deno_graph::source::MemoryLoader;
-use deno_graph::source::NpmResolver;
-use deno_graph::source::UnknownBuiltInNodeModuleError;
 use deno_graph::BuildOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
-use deno_graph::NpmPackageReqsResolution;
-use deno_graph::Range;
-use deno_semver::package::PackageNv;
-use deno_semver::package::PackageReq;
-use deno_semver::Version;
-use futures::future::LocalBoxFuture;
 use pretty_assertions::assert_eq;
 use url::Url;
 
@@ -137,122 +127,6 @@ async fn test_symbols_re_export_external_and_npm() {
       .collect::<Vec<_>>(),
     vec!["npm:example@1.0.0", "external:other"]
   );
-}
-
-#[tokio::test]
-async fn test_npm_version_not_found_then_found() {
-  #[derive(Debug)]
-  struct TestNpmResolver {
-    made_first_request: Rc<RefCell<bool>>,
-    should_always_reload: bool,
-    number_times_load_called: Rc<RefCell<u32>>,
-  }
-
-  #[async_trait(?Send)]
-  impl NpmResolver for TestNpmResolver {
-    fn resolve_builtin_node_module(
-      &self,
-      _specifier: &ModuleSpecifier,
-    ) -> Result<Option<String>, UnknownBuiltInNodeModuleError> {
-      Ok(None)
-    }
-
-    fn on_resolve_bare_builtin_node_module(
-      &self,
-      _module_name: &str,
-      _range: &Range,
-    ) {
-    }
-
-    fn load_and_cache_npm_package_info(
-      &self,
-      _package_name: &str,
-    ) -> LocalBoxFuture<'static, Result<(), anyhow::Error>> {
-      *self.number_times_load_called.borrow_mut() += 1;
-      Box::pin(futures::future::ready(Ok(())))
-    }
-
-    async fn resolve_pkg_reqs(
-      &self,
-      package_reqs: &[&PackageReq],
-    ) -> NpmPackageReqsResolution {
-      let mut value = self.made_first_request.borrow_mut();
-      if *value && !self.should_always_reload {
-        assert_eq!(*self.number_times_load_called.borrow(), 2);
-        NpmPackageReqsResolution::Resolutions(
-          package_reqs
-            .iter()
-            .map(|req| {
-              Ok(PackageNv {
-                name: req.name.clone(),
-                version: Version::parse_from_npm("1.0.0").unwrap(),
-              })
-            })
-            .collect::<Vec<_>>(),
-        )
-      } else {
-        *value = true;
-        NpmPackageReqsResolution::ReloadRegistryInfo
-      }
-    }
-  }
-
-  let mut loader = MemoryLoader::default();
-  loader.add_source_with_text("file:///main.ts", "import 'npm:foo@1.0';");
-  let root = ModuleSpecifier::parse("file:///main.ts").unwrap();
-
-  {
-    let npm_resolver = TestNpmResolver {
-      made_first_request: Rc::new(RefCell::new(false)),
-      number_times_load_called: Rc::new(RefCell::new(0)),
-      should_always_reload: false,
-    };
-
-    let mut graph = ModuleGraph::new(GraphKind::All);
-    graph
-      .build(
-        vec![root.clone()],
-        &loader,
-        BuildOptions {
-          npm_resolver: Some(&npm_resolver),
-          ..Default::default()
-        },
-      )
-      .await;
-    assert!(graph.valid().is_ok());
-    assert_eq!(
-      graph
-        .modules()
-        .map(|m| m.specifier().to_string())
-        .collect::<Vec<_>>(),
-      vec![root.as_str(), "npm:/foo@1.0.0"]
-    );
-  }
-
-  // now try never succeeding
-  {
-    let npm_resolver = TestNpmResolver {
-      made_first_request: Rc::new(RefCell::new(false)),
-      number_times_load_called: Rc::new(RefCell::new(0)),
-      should_always_reload: true,
-    };
-
-    let mut graph = ModuleGraph::new(GraphKind::All);
-    graph
-      .build(
-        vec![root.clone()],
-        &loader,
-        BuildOptions {
-          npm_resolver: Some(&npm_resolver),
-          ..Default::default()
-        },
-      )
-      .await;
-    assert_eq!(
-      graph.valid().err().unwrap().to_string(),
-      "programming error: do not request reloading npm registry info more than once"
-    );
-  }
 }
 
 #[tokio::test]
