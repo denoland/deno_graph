@@ -4838,14 +4838,15 @@ impl<'a> NpmSpecifierResolver<'a> {
       .partition::<Vec<_>, _>(|item| !item.is_dynamic);
 
     if !main_items.is_empty() {
-      let items_by_req = IndexMap::with_capacity(main_items.len());
+      let items_by_req: IndexMap<_, Vec<_>> =
+        IndexMap::with_capacity(main_items.len());
       let items_by_req =
         main_items
           .into_iter()
           .fold(items_by_req, |mut items_by_req, item| {
             items_by_req
               .entry(item.package_ref.req().clone())
-              .or_insert_with(Vec::new)
+              .or_default()
               .push(item);
             items_by_req
           });
