@@ -1290,7 +1290,7 @@ console.log(a);
 
     async fn resolve_pkg_reqs(
       &self,
-      _package_reqs: &[&deno_semver::package::PackageReq],
+      _package_reqs: &[deno_semver::package::PackageReq],
     ) -> NpmResolvePkgReqsResult {
       todo!()
     }

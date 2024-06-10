@@ -441,7 +441,7 @@ pub struct UnknownBuiltInNodeModuleError {
 #[derive(Debug)]
 pub struct NpmResolvePkgReqsResult {
   pub resolutions: Vec<Result<PackageNv, NpmLoadError>>,
-  pub dependencies: Result<(), anyhow::Error>,
+  pub dependencies: Result<(), Arc<anyhow::Error>>,
 }
 
 #[async_trait(?Send)]
@@ -470,7 +470,7 @@ pub trait NpmResolver: fmt::Debug {
   /// version reqs provided or else a panic will occur.
   async fn resolve_pkg_reqs(
     &self,
-    package_req: &[&PackageReq],
+    package_req: &[PackageReq],
   ) -> NpmResolvePkgReqsResult;
 
   /// Returns true when bare node specifier resoluion is enabled

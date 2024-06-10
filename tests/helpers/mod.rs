@@ -116,7 +116,7 @@ impl NpmResolver for TestNpmResolver {
 
   async fn resolve_pkg_reqs(
     &self,
-    package_reqs: &[&PackageReq],
+    package_reqs: &[PackageReq],
   ) -> NpmResolvePkgReqsResult {
     // for now, this requires version reqs that are resolved
     NpmResolvePkgReqsResult {
