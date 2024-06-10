@@ -120,7 +120,7 @@ impl NpmResolver for TestNpmResolver {
   ) -> NpmResolvePkgReqsResult {
     // for now, this requires version reqs that are resolved
     NpmResolvePkgReqsResult {
-      resolutions: package_reqs
+      results: package_reqs
         .iter()
         .map(|pkg_req| {
           match Version::parse_from_npm(&pkg_req.version_req.to_string()) {
@@ -134,7 +134,7 @@ impl NpmResolver for TestNpmResolver {
           }
         })
         .collect::<Vec<_>>(),
-      dependencies: Ok(()),
+      graph_result: Ok(()),
     }
   }
 }

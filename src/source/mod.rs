@@ -440,8 +440,15 @@ pub struct UnknownBuiltInNodeModuleError {
 
 #[derive(Debug)]
 pub struct NpmResolvePkgReqsResult {
-  pub resolutions: Vec<Result<PackageNv, NpmLoadError>>,
-  pub dependencies: Result<(), Arc<anyhow::Error>>,
+  /// The individual results of resolving the package requirements.
+  ///
+  /// This MUST correspond to the indexes of the provided package requirements.
+  pub results: Vec<Result<PackageNv, NpmLoadError>>,
+  /// Result of resolving the entire dependency graph after the initial reqs
+  /// were resolved to NVs.
+  ///
+  /// Don't run dependency graph resolution if there are any individual failures.
+  pub graph_result: Result<(), Arc<anyhow::Error>>,
 }
 
 #[async_trait(?Send)]

@@ -4853,12 +4853,11 @@ impl<'a> NpmSpecifierResolver<'a> {
       let all_package_reqs = items_by_req.keys().cloned().collect::<Vec<_>>();
       let result = npm_resolver.resolve_pkg_reqs(&all_package_reqs).await;
 
-      self.pending_info.dependencies_resolution = Some(result.dependencies);
+      self.pending_info.dependencies_resolution = Some(result.graph_result);
 
-      assert_eq!(all_package_reqs.len(), result.resolutions.len());
-      for (req, resolution) in all_package_reqs
-        .into_iter()
-        .zip(result.resolutions.into_iter())
+      assert_eq!(all_package_reqs.len(), result.results.len());
+      for (req, resolution) in
+        all_package_reqs.into_iter().zip(result.results.into_iter())
       {
         let items = items_by_req.get(&req).unwrap();
         for item in items {
@@ -4890,10 +4889,10 @@ impl<'a> NpmSpecifierResolver<'a> {
       let mut result = npm_resolver
         .resolve_pkg_reqs(&[item.package_ref.req().clone()])
         .await;
-      assert_eq!(result.resolutions.len(), 1);
-      match result.resolutions.remove(0) {
+      assert_eq!(result.results.len(), 1);
+      match result.results.remove(0) {
         Ok(pkg_nv) => {
-          if let Err(err) = result.dependencies {
+          if let Err(err) = result.graph_result {
             self.pending_info.module_slots.insert(
               item.specifier.clone(),
               ModuleSlot::Err(ModuleError::LoadingErr(
