@@ -448,7 +448,7 @@ pub struct NpmResolvePkgReqsResult {
   /// were resolved to NVs.
   ///
   /// Don't run dependency graph resolution if there are any individual failures.
-  pub graph_result: Result<(), Arc<anyhow::Error>>,
+  pub dep_graph_result: Result<(), Arc<anyhow::Error>>,
 }
 
 #[async_trait(?Send)]

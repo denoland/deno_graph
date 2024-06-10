@@ -134,7 +134,7 @@ impl NpmResolver for TestNpmResolver {
           }
         })
         .collect::<Vec<_>>(),
-      graph_result: Ok(()),
+      dep_graph_result: Ok(()),
     }
   }
 }
