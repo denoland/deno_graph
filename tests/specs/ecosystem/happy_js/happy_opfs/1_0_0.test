@@ -11,5 +11,5 @@ happy-js/happy-opfs/1.0.0
 
 -- stderr --
 error: npm package '@jsr/happy-js__happy-rusty' does not exist.
-    at file://<tmpdir>/src/fs/opfs_core.ts:1:29
+    at file://<tmpdir>/src/fs/opfs_ext.ts:1:29
 
