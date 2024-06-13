@@ -11,5 +11,5 @@ stump/adapter-filesystem/0.0.1
 
 -- stderr --
 error: npm package '@jsr/stump__core' does not exist.
-    at file://<tmpdir>/src/drivers/bun/index.ts:1:36
+    at file://<tmpdir>/src/base.ts:1:62
 
