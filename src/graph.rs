@@ -2011,7 +2011,7 @@ fn resolve(
       use ResolveError::*;
       use SpecifierError::*;
       let res_ref = response.as_ref();
-      if matches!(res_ref, Err(Specifier(ImportPrefixMissing(_, _))))
+      if matches!(res_ref, Err(Specifier(ImportPrefixMissing { .. })))
         || matches!(res_ref, Err(Other(e)) if matches!(e.downcast_ref::<ImportMapError>(), Some(&ImportMapError::UnmappedBareSpecifier(_, _))))
       {
         if let Ok(specifier) =
