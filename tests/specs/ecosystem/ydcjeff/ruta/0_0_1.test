@@ -192,9 +192,5 @@ TS1170 [ERROR]: A computed property name in a type literal must refer to an expr
   ~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/ruta_core.ts:91:3
 
-TS2322 [ERROR]: Type 'TChildren[number]' is not assignable to type 'string | number | symbol'.
-  Type 'RouteOptions<string, Record<string, never>, Record<string, never>, {}>' is not assignable to type 'string | number | symbol'.
-    at file://<tmpdir>/src/ruta_core.ts:128:11
-
-Found 10 errors.
+Found 9 errors.
 

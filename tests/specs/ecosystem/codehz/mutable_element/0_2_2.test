@@ -228,14 +228,19 @@ TS2304 [ERROR]: Cannot find name 'Node'.
     at file://<tmpdir>/src/types.ts:3:68
 
 TS2304 [ERROR]: Cannot find name 'CSSStyleDeclaration'.
-  [K in keyof CSSStyleDeclaration]?: string | boolean | null;
+  [K in keyof CSSStyleDeclaration as [K, CSSStyleDeclaration[K]] extends [string, string] ? K : never]?: string | boolean | null;
               ~~~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/types.ts:33:15
+
+TS2304 [ERROR]: Cannot find name 'CSSStyleDeclaration'.
+  [K in keyof CSSStyleDeclaration as [K, CSSStyleDeclaration[K]] extends [string, string] ? K : never]?: string | boolean | null;
+                                         ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:33:42
 
 TS2304 [ERROR]: Cannot find name 'IdleDeadline'.
 export function idle(): Reactor<IdleDeadline> {
                                 ~~~~~~~~~~~~
     at file://<tmpdir>/src/utils.ts:55:33
 
-Found 46 errors.
+Found 47 errors.
 
