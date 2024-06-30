@@ -129,6 +129,7 @@ impl DepsFiller {
         self.visit_expr(&n.expr);
       }
       SymbolNodeRef::FnDecl(n) => self.visit_function(&n.function),
+      SymbolNodeRef::Param(_) => {}
       SymbolNodeRef::TsEnum(n) => {
         self.visit_ts_enum_decl(n);
       }

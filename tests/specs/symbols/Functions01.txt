@@ -34,49 +34,73 @@ file:///mod.ts: EsModuleInfo {
             #2,
         ): 1,
         (
-            "TypeParam",
-            #2,
+            "T",
+            #3,
         ): 2,
         (
-            "Param",
-            #2,
+            "param",
+            #3,
         ): 3,
         (
-            "Return",
+            "TypeParam",
             #2,
         ): 4,
         (
-            "Default",
+            "Param",
             #2,
         ): 5,
         (
-            "overloaded",
+            "Return",
             #2,
         ): 6,
         (
-            "OverloadTypeParam",
+            "Default",
             #2,
         ): 7,
         (
-            "OverloadParam",
+            "overloaded",
             #2,
         ): 8,
         (
+            "T",
+            #4,
+        ): 9,
+        (
+            "param",
+            #4,
+        ): 10,
+        (
+            "T",
+            #6,
+        ): 11,
+        (
+            "param",
+            #6,
+        ): 12,
+        (
+            "OverloadTypeParam",
+            #2,
+        ): 13,
+        (
+            "OverloadParam",
+            #2,
+        ): 14,
+        (
             "OverloadReturn",
             #2,
-        ): 9,
+        ): 15,
         (
             "PrivateTypeParam",
             #2,
-        ): 10,
+        ): 16,
         (
             "PrivateParam",
             #2,
-        ): 11,
+        ): 17,
         (
             "PrivateReturn",
             #2,
-        ): 12,
+        ): 18,
     },
     symbols: {
         0: Symbol {
@@ -105,21 +129,21 @@ file:///mod.ts: EsModuleInfo {
             ],
             child_ids: {
                 1,
-                2,
-                3,
                 4,
                 5,
                 6,
                 7,
                 8,
-                9,
-                10,
-                11,
-                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
             },
             exports: {
                 "test": 1,
-                "overloaded": 6,
+                "overloaded": 8,
             },
             members: {},
         },
@@ -159,6 +183,66 @@ file:///mod.ts: EsModuleInfo {
             ),
             symbol_id: 2,
             parent_id: Some(
+                1,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "T",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            21,
+                        ),
+                        end: SourcePos(
+                            22,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        3: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 3,
+            parent_id: Some(
+                1,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "param",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            52,
+                        ),
+                        end: SourcePos(
+                            57,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        4: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 4,
+            parent_id: Some(
                 0,
             ),
             decls: [
@@ -183,11 +267,11 @@ file:///mod.ts: EsModuleInfo {
             exports: {},
             members: {},
         },
-        3: Symbol {
+        5: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 3,
+            symbol_id: 5,
             parent_id: Some(
                 0,
             ),
@@ -213,11 +297,11 @@ file:///mod.ts: EsModuleInfo {
             exports: {},
             members: {},
         },
-        4: Symbol {
+        6: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 4,
+            symbol_id: 6,
             parent_id: Some(
                 0,
             ),
@@ -243,11 +327,11 @@ file:///mod.ts: EsModuleInfo {
             exports: {},
             members: {},
         },
-        5: Symbol {
+        7: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 5,
+            symbol_id: 7,
             parent_id: Some(
                 0,
             ),
@@ -273,11 +357,11 @@ file:///mod.ts: EsModuleInfo {
             exports: {},
             members: {},
         },
-        6: Symbol {
+        8: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 6,
+            symbol_id: 8,
             parent_id: Some(
                 0,
             ),
@@ -335,11 +419,131 @@ file:///mod.ts: EsModuleInfo {
             exports: {},
             members: {},
         },
-        7: Symbol {
+        9: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 7,
+            symbol_id: 9,
+            parent_id: Some(
+                8,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "T",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            228,
+                        ),
+                        end: SourcePos(
+                            229,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        10: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 10,
+            parent_id: Some(
+                8,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "param",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            257,
+                        ),
+                        end: SourcePos(
+                            262,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        11: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 11,
+            parent_id: Some(
+                8,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "T",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            361,
+                        ),
+                        end: SourcePos(
+                            362,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        12: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 12,
+            parent_id: Some(
+                8,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "param",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            389,
+                        ),
+                        end: SourcePos(
+                            394,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        13: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 13,
             parent_id: Some(
                 0,
             ),
@@ -365,11 +569,11 @@ file:///mod.ts: EsModuleInfo {
             exports: {},
             members: {},
         },
-        8: Symbol {
+        14: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 8,
+            symbol_id: 14,
             parent_id: Some(
                 0,
             ),
@@ -395,11 +599,11 @@ file:///mod.ts: EsModuleInfo {
             exports: {},
             members: {},
         },
-        9: Symbol {
+        15: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 9,
+            symbol_id: 15,
             parent_id: Some(
                 0,
             ),
@@ -425,11 +629,11 @@ file:///mod.ts: EsModuleInfo {
             exports: {},
             members: {},
         },
-        10: Symbol {
+        16: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 10,
+            symbol_id: 16,
             parent_id: Some(
                 0,
             ),
@@ -455,11 +659,11 @@ file:///mod.ts: EsModuleInfo {
             exports: {},
             members: {},
         },
-        11: Symbol {
+        17: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 11,
+            symbol_id: 17,
             parent_id: Some(
                 0,
             ),
@@ -485,11 +689,11 @@ file:///mod.ts: EsModuleInfo {
             exports: {},
             members: {},
         },
-        12: Symbol {
+        18: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 12,
+            symbol_id: 18,
             parent_id: Some(
                 0,
             ),
@@ -519,13 +723,13 @@ file:///mod.ts: EsModuleInfo {
 }
 == symbol deps (types and exprs) ==
 1:0..77 [Id(("TypeParam", #2)), Id(("Default", #2)), Id(("Param", #2)), Id(("Return", #2))]
-6:201..295 [Id(("OverloadTypeParam", #2)), Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
-6:334..428 [Id(("PrivateTypeParam", #2)), Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]
+8:201..295 [Id(("OverloadTypeParam", #2)), Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
+8:334..428 [Id(("PrivateTypeParam", #2)), Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]
 
 == symbol deps (types only) ==
 1:0..77 [Id(("TypeParam", #2)), Id(("Default", #2)), Id(("Param", #2)), Id(("Return", #2))]
-6:201..295 [Id(("OverloadTypeParam", #2)), Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
-6:334..428 [Id(("PrivateTypeParam", #2)), Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]
+8:201..295 [Id(("OverloadTypeParam", #2)), Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
+8:334..428 [Id(("PrivateTypeParam", #2)), Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]
 
 == export definitions ==
 [test]: file:///mod.ts:0..77

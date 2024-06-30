@@ -24,13 +24,17 @@ file:///mod.ts: EsModuleInfo {
             #2,
         ): 1,
         (
+            "regularParam",
+            #3,
+        ): 5,
+        (
             "PublicClass",
             #2,
-        ): 5,
+        ): 6,
         (
             "PrivateClass",
             #2,
-        ): 6,
+        ): 7,
     },
     symbols: {
         0: Symbol {
@@ -59,8 +63,8 @@ file:///mod.ts: EsModuleInfo {
             ],
             child_ids: {
                 1,
-                5,
                 6,
+                7,
             },
             exports: {
                 "Class": 1,
@@ -200,6 +204,36 @@ file:///mod.ts: EsModuleInfo {
             ),
             symbol_id: 5,
             parent_id: Some(
+                2,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            "regularParam",
+                        ),
+                    ),
+                    range: SourceRange {
+                        start: SourcePos(
+                            119,
+                        ),
+                        end: SourcePos(
+                            131,
+                        ),
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {},
+        },
+        6: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 6,
+            parent_id: Some(
                 0,
             ),
             decls: [
@@ -224,11 +258,11 @@ file:///mod.ts: EsModuleInfo {
             exports: {},
             members: {},
         },
-        6: Symbol {
+        7: Symbol {
             module_id: ModuleId(
                 0,
             ),
-            symbol_id: 6,
+            symbol_id: 7,
             parent_id: Some(
                 0,
             ),

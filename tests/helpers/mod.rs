@@ -352,39 +352,41 @@ impl TestBuilder {
           }
         }
 
-        if let Some(parent_id) = symbol.parent_id() {
-          let parent_symbol = module.symbol(parent_id).unwrap();
-          let has_child =
-            parent_symbol.child_ids().any(|id| id == symbol.symbol_id());
-          let has_member = parent_symbol
-            .members()
-            .iter()
-            .any(|id| *id == symbol.symbol_id());
-          let is_definition_decl =
-            symbol.decls().iter().all(|d| d.kind.is_definition());
-          if is_definition_decl {
-            // ensure it's possible to go from a parent to its child
-            if !has_child && !has_member {
+        if !symbol.is_param() {
+          if let Some(parent_id) = symbol.parent_id() {
+            let parent_symbol = module.symbol(parent_id).unwrap();
+            let has_child =
+              parent_symbol.child_ids().any(|id| id == symbol.symbol_id());
+            let has_member = parent_symbol
+              .members()
+              .iter()
+              .any(|id| *id == symbol.symbol_id());
+            let is_definition_decl =
+              symbol.decls().iter().all(|d| d.kind.is_definition());
+            if is_definition_decl {
+              // ensure it's possible to go from a parent to its child
+              if !has_child && !has_member {
+                results.push(format!(
+                  "Parent {:#?} does not have child {:#?}",
+                  parent_symbol.symbol_id(),
+                  symbol.symbol_id()
+                ));
+              }
+            } else if has_child || has_member {
               results.push(format!(
-                "Parent {:#?} does not have child {:#?}",
+                "Parent {:#?} should not have the child or member {:#?}",
                 parent_symbol.symbol_id(),
                 symbol.symbol_id()
               ));
             }
-          } else if has_child || has_member {
-            results.push(format!(
-              "Parent {:#?} should not have the child or member {:#?}",
-              parent_symbol.symbol_id(),
-              symbol.symbol_id()
-            ));
-          }
 
-          if has_child && has_member {
-            results.push(format!(
-              "Parent {:?} should not have both a child and a member {:?}",
-              parent_symbol.symbol_id(),
-              symbol.symbol_id()
-            ));
+            if has_child && has_member {
+              results.push(format!(
+                "Parent {:?} should not have both a child and a member {:?}",
+                parent_symbol.symbol_id(),
+                symbol.symbol_id()
+              ));
+            }
           }
         }
 
