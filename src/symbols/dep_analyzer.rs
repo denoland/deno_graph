@@ -264,15 +264,6 @@ impl Visit for DepsFiller {
     if n.computed {
       self.visit_expr(&n.key);
     }
-    if let Some(init) = &n.init {
-      self.visit_expr(init);
-    }
-    if let Some(type_params) = &n.type_params {
-      self.visit_ts_type_param_decl(type_params);
-    }
-    for param in &n.params {
-      self.visit_ts_fn_param(param);
-    }
     if let Some(type_ann) = &n.type_ann {
       self.visit_ts_type_ann(type_ann)
     }

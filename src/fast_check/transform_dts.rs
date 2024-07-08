@@ -378,10 +378,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
                       key: Box::new(key),
                       computed,
                       optional: false,
-                      init: None,
-                      params: vec![],
                       type_ann: init_type,
-                      type_params: None,
                     },
                   ));
                 }
