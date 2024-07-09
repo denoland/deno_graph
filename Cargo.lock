@@ -334,8 +334,9 @@ dependencies = [
 
 [[package]]
 name = "deno_ast"
-version = "0.39.2"
-source = "git+https://github.com/bartlomieju/deno_ast?branch=bump_swc_crates#61e0ee1f74444810b323daae3666b200c0013a90"
+version = "0.40.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d08372522975cce97fe0efbe42fea508c76eea4421619de6d63baae32792f7d"
 dependencies = [
  "anyhow",
  "base64 0.21.7",
