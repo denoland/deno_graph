@@ -710,15 +710,15 @@ bureaudouble/bureau/0.0.94
 -- stdout --
 
 -- stderr --
-error: Uncaught Error: Failed resolving package subpath './client' for '<global_npm_dir>/react-dom/19.0.0-beta-04b058868c-20240508/package.json': [ERR_INVALID_PACKAGE_TARGET] Invalid "exports" target {"react-server":"./client.react-server.js","default":"./client.js"} defined for './client' in the package config <global_npm_dir>/react-dom/19.0.0-beta-04b058868c-20240508/package.json imported from file://<tmpdir>/src/lib/useClient.ts; target must start with "./"
-    at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:756:28)
-    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120792:144)
-    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:121189:22)
-    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:121284:16)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:122847:120)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:122873:13)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
+error: Uncaught Error: [ERR_INVALID_PACKAGE_TARGET] Invalid "exports" target {"react-server":"./client.react-server.js","default":"./client.js"} defined for './client' in the package config <global_npm_dir>/react-dom/19.0.0-beta-04b058868c-20240508/package.json imported from 'file://<tmpdir>/src/lib/useClient.ts'; target must start with "./"
+    at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:765:28)
+    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:124316:142)
+    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:124748:20)
+    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:124834:14)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:126351:118)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:126129:7)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:125980:20)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:126377:11)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:126129:7)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:125980:20)
 
