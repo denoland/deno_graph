@@ -90,9 +90,6 @@
     "dependencies": [
       "jsr:@std/assert@^0.218.2",
       "jsr:@std/path@^0.218.2"
-    ],
-    "members": {
-      "@deno/graph": {}
-    }
+    ]
   }
 }

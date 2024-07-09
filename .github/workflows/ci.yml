@@ -45,11 +45,9 @@ jobs:
           cargo fmt -- --check
           deno fmt --check
 
-      - name: Lint
+      - name: Clippy
         if: contains(matrix.os, 'ubuntu')
-        run: |
-          cargo clippy --locked --all-features --all-targets -- -D clippy::all
-          deno lint
+        run: cargo clippy --locked --all-features --all-targets -- -D clippy::all
 
       - name: Cargo Build
         run: cargo build --locked --all-features --all-targets
@@ -64,6 +62,10 @@ jobs:
 
       - name: Build Wasm
         run: deno task build
+
+      - name: Lint JS
+        if: contains(matrix.os, 'ubuntu')
+        run: deno lint
 
       - name: Test JavaScript
         run: deno task test

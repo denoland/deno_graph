@@ -9,7 +9,7 @@
     "target",
     "tests/ecosystem/jsr_mirror"
   ],
-  "workspaces": [
+  "workspace": [
     "./js"
   ],
   "imports": {
