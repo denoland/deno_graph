@@ -9,4 +9,54 @@ fp-utils/option/0.13.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2677 [ERROR]: A type predicate's type must be assignable to its parameter's type.
+  Type 'None' is not assignable to type 'Option<unknown>'.
+    Types of property 'isSome' are incompatible.
+      Type '() => false' is not assignable to type '<U extends unknown>() => this is Some<U>'.
+        Signature '(): false' must be a type predicate.
+   */ static isNone(option: Option<unknown>): option is None {
+                                                        ~~~~
+    at file://<tmpdir>/option.ts:112:57
+
+TS2416 [ERROR]: Property 'isNone' in type 'Some<T>' is not assignable to the same property in base type 'Option<T>'.
+  Type '() => false' is not assignable to type '() => this is None'.
+    Signature '(): false' must be a type predicate.
+  /** {@link Option.isNone} */ isNone(): false {
+                               ~~~~~~
+    at file://<tmpdir>/option.ts:406:32
+
+TS2416 [ERROR]: Property 'map' in type 'None' is not assignable to the same property in base type 'Option<never>'.
+  Type '<U>(_fn: (value: never) => NonNullable<U>) => this' is not assignable to type '<U>(fn: (value: never) => NonNullable<U>) => Option<NonNullable<U>>'.
+    Type 'this' is not assignable to type 'Option<NonNullable<U>>'.
+      Type 'None' is not assignable to type 'Option<NonNullable<U>>'.
+        Types of property 'isSome' are incompatible.
+          Type '() => false' is not assignable to type '<U extends NonNullable<U>>() => this is Some<U>'.
+            Signature '(): false' must be a type predicate.
+  /** {@link Option.map} */ map<U>(_fn: (value: never) => NonNullable<U>): this {
+                            ~~~
+    at file://<tmpdir>/option.ts:425:29
+
+TS2416 [ERROR]: Property 'isSome' in type 'None' is not assignable to the same property in base type 'Option<never>'.
+  Type '() => false' is not assignable to type '<U extends never>() => this is Some<U>'.
+    Signature '(): false' must be a type predicate.
+  /** {@link Option.isSome} */ isSome(): false {
+                               ~~~~~~
+    at file://<tmpdir>/option.ts:437:32
+
+TS2416 [ERROR]: Property 'zip' in type 'None' is not assignable to the same property in base type 'Option<never>'.
+  Type '<U>(_option: Option<U>) => this' is not assignable to type '<U>(option: Option<U>) => Option<[never, U]>'.
+    Type 'this' is not assignable to type 'Option<[never, U]>'.
+      Type 'None' is not assignable to type 'Option<[never, U]>'.
+        Types of property 'isSome' are incompatible.
+          Type '() => false' is not assignable to type '<U extends [never, U]>() => this is Some<U>'.
+            Signature '(): false' must be a type predicate.
+  /** {@link Option.zip} */ zip<U>(_option: Option<U>): this {
+                            ~~~
+    at file://<tmpdir>/option.ts:443:29
+
+Found 5 errors.
+

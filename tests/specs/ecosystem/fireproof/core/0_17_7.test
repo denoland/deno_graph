@@ -1287,15 +1287,15 @@ fireproof/core/0.17.7
 -- stdout --
 
 -- stderr --
-error: Uncaught Error: Failed resolving package subpath './db-index' for '<global_npm_dir>/prolly-trees/1.0.4/package.json': [ERR_INVALID_PACKAGE_TARGET] Invalid "exports" target {"browser":"./esm/src/db-index.js","require":"./cjs/src/db-index.js","import":"./esm/src/db-index.js"} defined for './db-index' in the package config <global_npm_dir>/prolly-trees/1.0.4/package.json imported from file://<tmpdir>/src/indexer-helpers.ts; target must start with "./"
-    at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:756:28)
-    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:120792:144)
-    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:121189:22)
-    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:121284:16)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:122847:120)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:122873:13)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:122578:9)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:122442:22)
+error: Uncaught Error: [ERR_INVALID_PACKAGE_TARGET] Invalid "exports" target {"browser":"./esm/src/db-index.js","require":"./cjs/src/db-index.js","import":"./esm/src/db-index.js"} defined for './db-index' in the package config <global_npm_dir>/prolly-trees/1.0.4/package.json imported from 'file://<tmpdir>/src/indexer-helpers.ts'; target must start with "./"
+    at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:765:28)
+    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:124316:142)
+    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:124748:20)
+    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:124834:14)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:126351:118)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:126129:7)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:125980:20)
+    at processImportedModules (ext:deno_tsc/00_typescript.js:126377:11)
+    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:126129:7)
+    at findSourceFile (ext:deno_tsc/00_typescript.js:125980:20)
 

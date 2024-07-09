@@ -24,7 +24,7 @@ export const isTransformStream = (a: unknown): a is GenericTransformStream =>({}
     'TransformStream' is declared here.
     declare var TransformStream: {
                 ~~~~~~~~~~~~~~~
-        at asset:///lib.deno.web.d.ts:914:13
+        at asset:///lib.deno.web.d.ts:915:13
 
 Found 2 errors.
 
