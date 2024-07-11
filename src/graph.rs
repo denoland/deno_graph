@@ -3854,13 +3854,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
 
+    let original_specifier = specifier;
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     if self.graph.module_slots.contains_key(specifier) {
-      // ensure the dependency is tracked
-      if let Ok(load_specifier) =
-        self.parse_load_specifier_kind(specifier, maybe_range)
-      {
-        self.maybe_mark_dep(&load_specifier, maybe_range);
+      // ensure any jsr/npm dependencies that we've already seen are marked
+      // as a dependency of the referrer
+      if matches!(original_specifier.scheme(), "jsr" | "npm") {
+        if let Ok(load_specifier) =
+          self.parse_load_specifier_kind(original_specifier, maybe_range)
+        {
+          self.maybe_mark_dep(&load_specifier, maybe_range);
+        }
       }
 
       return;
