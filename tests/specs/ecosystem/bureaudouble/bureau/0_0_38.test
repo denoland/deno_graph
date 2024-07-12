@@ -1940,7 +1940,7 @@ bureaudouble/bureau/0.0.38
 
 -- stderr --
 error: Uncaught Error: [ERR_PACKAGE_PATH_NOT_EXPORTED] Package subpath './client' is not defined for types by "exports" in '<global_npm_dir>/react-dom/18.2.0/package.json' imported from 'file://<tmpdir>/src/lib/useClient.ts'
-    at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:765:28)
+    at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:766:28)
     at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:124316:142)
     at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:124748:20)
     at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:124834:14)
