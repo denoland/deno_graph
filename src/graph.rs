@@ -199,6 +199,14 @@ pub enum JsrLoadError {
   },
 }
 
+#[derive(Error, Debug, Clone)]
+pub enum JsrPackageFormatError {
+  #[error(transparent)]
+  JsrPackageParseError(PackageReqReferenceParseError),
+  #[error("Version tag not supported in jsr specifiers.")]
+  VersionTagNotSupported,
+}
+
 #[derive(Debug, Clone, Error)]
 pub enum NpmLoadError {
   #[error("npm specifiers are not supported in this environment")]
@@ -3043,6 +3051,13 @@ impl JsrPackageVersionInfoExt {
   }
 }
 
+enum LoadSpecifierKind {
+  Jsr(JsrPackageReqReference),
+  Npm(NpmPackageReqReference),
+  Node(String),
+  Url,
+}
+
 struct PendingInfo {
   requested_specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
@@ -3839,8 +3854,19 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
 
+    let original_specifier = specifier;
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     if self.graph.module_slots.contains_key(specifier) {
+      // ensure any jsr/npm dependencies that we've already seen are marked
+      // as a dependency of the referrer
+      if matches!(original_specifier.scheme(), "jsr" | "npm") {
+        if let Ok(load_specifier) =
+          self.parse_load_specifier_kind(original_specifier, maybe_range)
+        {
+          self.maybe_mark_dep(&load_specifier, maybe_range);
+        }
+      }
+
       return;
     }
 
@@ -3969,7 +3995,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             redirect_count,
             requested_specifier: specifier.clone(),
             maybe_attribute_type,
-            maybe_range: maybe_range.map(ToOwned::to_owned),
+            maybe_range: maybe_range.cloned(),
             load_specifier: specifier.clone(),
             is_dynamic,
             maybe_checksum: Some(checksum),
@@ -3980,158 +4006,146 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
 
-    let maybe_range = maybe_range.map(ToOwned::to_owned);
-    if !self.passthrough_jsr_specifiers && specifier.scheme() == "jsr" {
-      self.load_jsr_specifier(
-        specifier.clone(),
-        maybe_attribute_type,
-        maybe_range,
-        is_dynamic,
-      );
-      return;
-    } else if let Some(npm_resolver) = self.npm_resolver {
-      if specifier.scheme() == "npm" {
-        self.load_npm_specifier(
-          npm_resolver,
-          specifier.clone(),
-          maybe_range,
-          is_dynamic,
-        );
-        return;
-      }
-
-      match npm_resolver.resolve_builtin_node_module(specifier) {
-        Ok(Some(module_name)) => {
-          self.graph.has_node_specifier = true;
+    let specifier = specifier.clone();
+    match self.parse_load_specifier_kind(&specifier, maybe_range) {
+      Ok(LoadSpecifierKind::Jsr(package_req_ref)) => {
+        self.mark_jsr_dep(&package_req_ref, maybe_range);
+        if self.passthrough_jsr_specifiers {
+          // mark external
           self.graph.module_slots.insert(
             specifier.clone(),
-            ModuleSlot::Module(Module::Node(BuiltInNodeModule {
+            ModuleSlot::Module(Module::External(ExternalModule {
               specifier: specifier.clone(),
-              module_name,
             })),
           );
-          return;
-        }
-        Err(err) => {
-          self.graph.module_slots.insert(
-            specifier.clone(),
-            ModuleSlot::Err(ModuleError::LoadingErr(
-              specifier.clone(),
-              maybe_range,
-              err.into(),
-            )),
+        } else {
+          self.load_jsr_specifier(
+            specifier,
+            package_req_ref,
+            maybe_attribute_type,
+            maybe_range,
+            is_dynamic,
           );
-          return;
-        }
-        Ok(None) => {
-          // ignore, not a builtin node module name
         }
       }
+      Ok(LoadSpecifierKind::Npm(package_req_ref)) => {
+        self.mark_npm_dep(&package_req_ref, maybe_range);
+        if let Some(npm_resolver) = self.npm_resolver {
+          self.load_npm_specifier(
+            npm_resolver,
+            specifier.clone(),
+            package_req_ref,
+            maybe_range,
+            is_dynamic,
+          );
+        } else {
+          // mark external
+          self.graph.module_slots.insert(
+            specifier.clone(),
+            ModuleSlot::Module(Module::External(ExternalModule {
+              specifier: specifier.clone(),
+            })),
+          );
+        }
+      }
+      Ok(LoadSpecifierKind::Node(module_name)) => {
+        self.graph.has_node_specifier = true;
+        self.graph.module_slots.insert(
+          specifier.clone(),
+          ModuleSlot::Module(Module::Node(BuiltInNodeModule {
+            specifier: specifier.clone(),
+            module_name,
+          })),
+        );
+      }
+      Ok(LoadSpecifierKind::Url) => {
+        self.load_pending_module(PendingModuleLoadItem {
+          redirect_count,
+          requested_specifier: specifier.clone(),
+          maybe_attribute_type,
+          maybe_range: maybe_range.cloned(),
+          load_specifier: specifier.clone(),
+          is_dynamic,
+          maybe_checksum: None,
+          maybe_version_info: None,
+        });
+      }
+      Err(err) => {
+        self
+          .graph
+          .module_slots
+          .insert(specifier.clone(), ModuleSlot::Err(*err));
+      }
     }
-
-    self.load_pending_module(PendingModuleLoadItem {
-      redirect_count,
-      requested_specifier: specifier.clone(),
-      maybe_attribute_type,
-      maybe_range,
-      load_specifier: specifier.clone(),
-      is_dynamic,
-      maybe_checksum: None,
-      maybe_version_info: None,
-    });
   }
 
   fn load_jsr_specifier(
     &mut self,
     specifier: Url,
+    package_ref: JsrPackageReqReference,
     maybe_attribute_type: Option<AttributeTypeWithRange>,
-    maybe_range: Option<Range>,
+    maybe_range: Option<&Range>,
     is_dynamic: bool,
   ) {
-    match validate_jsr_specifier(&specifier) {
-      Ok(package_ref) => {
-        if let Some(range) = &maybe_range {
-          if let Some(nv) =
-            self.jsr_url_provider.package_url_to_nv(&range.specifier)
-          {
-            self.graph.packages.add_dependency(
-              &nv,
-              JsrDepPackageReq::jsr(package_ref.req().clone()),
-            );
-          }
-        }
-        for workspace_member in self.workspace_members {
-          if workspace_member.nv.name == package_ref.req().name {
-            if package_ref
-              .req()
-              .version_req
-              .matches(&workspace_member.nv.version)
-            {
-              let result = self.resolve_workspace_jsr_specifier(
-                &specifier,
-                maybe_range.as_ref(),
-                &package_ref,
-                workspace_member,
-              );
-              match result {
-                Ok(load_specifier) => {
-                  self.load_pending_module(PendingModuleLoadItem {
-                    redirect_count: 0,
-                    requested_specifier: specifier.clone(),
-                    maybe_attribute_type: maybe_attribute_type.clone(),
-                    maybe_range: maybe_range.clone(),
-                    load_specifier,
-                    is_dynamic,
-                    maybe_checksum: None,
-                    maybe_version_info: None,
-                  });
-                }
-                Err(err) => {
-                  self
-                    .graph
-                    .module_slots
-                    .insert(specifier.clone(), ModuleSlot::Err(*err));
-                }
-              }
-              return;
-            } else {
-              self.diagnostics.push(BuildDiagnostic {
-                maybe_range: maybe_range.clone(),
-                kind:
-                  BuildDiagnosticKind::ConstraintNotMatchedWorkspaceVersion {
-                    reference: package_ref.clone(),
-                    workspace_version: workspace_member.nv.version.clone(),
-                  },
+    for workspace_member in self.workspace_members {
+      if workspace_member.nv.name == package_ref.req().name {
+        if package_ref
+          .req()
+          .version_req
+          .matches(&workspace_member.nv.version)
+        {
+          let result = self.resolve_workspace_jsr_specifier(
+            &specifier,
+            maybe_range,
+            &package_ref,
+            workspace_member,
+          );
+          match result {
+            Ok(load_specifier) => {
+              self.load_pending_module(PendingModuleLoadItem {
+                redirect_count: 0,
+                requested_specifier: specifier.clone(),
+                maybe_attribute_type: maybe_attribute_type.clone(),
+                maybe_range: maybe_range.cloned(),
+                load_specifier,
+                is_dynamic,
+                maybe_checksum: None,
+                maybe_version_info: None,
               });
             }
+            Err(err) => {
+              self
+                .graph
+                .module_slots
+                .insert(specifier.clone(), ModuleSlot::Err(*err));
+            }
           }
-        }
-
-        let package_name = &package_ref.req().name;
-        let specifier = specifier.clone();
-        self.queue_load_package_info(package_name);
-        self
-          .state
-          .jsr
-          .pending_resolutions
-          .push(PendingJsrReqResolutionItem {
-            specifier,
-            package_ref,
-            maybe_attribute_type,
-            maybe_range,
+          return;
+        } else {
+          self.diagnostics.push(BuildDiagnostic {
+            maybe_range: maybe_range.cloned(),
+            kind: BuildDiagnosticKind::ConstraintNotMatchedWorkspaceVersion {
+              reference: package_ref.clone(),
+              workspace_version: workspace_member.nv.version.clone(),
+            },
           });
-      }
-      Err(err) => {
-        self.graph.module_slots.insert(
-          specifier.clone(),
-          ModuleSlot::Err(ModuleError::LoadingErr(
-            specifier,
-            maybe_range,
-            JsrLoadError::PackageFormat(err).into(),
-          )),
-        );
+        }
       }
     }
+
+    let package_name = &package_ref.req().name;
+    let specifier = specifier.clone();
+    self.queue_load_package_info(package_name);
+    self
+      .state
+      .jsr
+      .pending_resolutions
+      .push(PendingJsrReqResolutionItem {
+        specifier,
+        package_ref,
+        maybe_attribute_type,
+        maybe_range: maybe_range.cloned(),
+      });
   }
 
   fn resolve_workspace_jsr_specifier(
@@ -4144,7 +4158,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     if workspace_member.exports.is_empty() {
       return Err(Box::new(ModuleError::LoadingErr(
         specifier.clone(),
-        maybe_range.map(ToOwned::to_owned),
+        maybe_range.cloned(),
         WorkspaceLoadError::MissingMemberExports {
           nv: workspace_member.nv.clone(),
         }
@@ -4158,7 +4172,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Ok(load_specifier) => Ok(load_specifier),
         Err(err) => Err(Box::new(ModuleError::LoadingErr(
           specifier.clone(),
-          maybe_range.map(ToOwned::to_owned),
+          maybe_range.cloned(),
           WorkspaceLoadError::MemberInvalidExportPath {
             base: workspace_member.base.clone(),
             sub_path: sub_path.to_string(),
@@ -4170,7 +4184,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     } else {
       Err(Box::new(ModuleError::LoadingErr(
         specifier.clone(),
-        maybe_range.map(ToOwned::to_owned),
+        maybe_range.cloned(),
         JsrLoadError::UnknownExport {
           nv: workspace_member.nv.clone(),
           export_name: export_name.to_string(),
@@ -4185,51 +4199,125 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     &mut self,
     npm_resolver: &dyn NpmResolver,
     specifier: Url,
-    maybe_range: Option<Range>,
+    package_ref: NpmPackageReqReference,
+    maybe_range: Option<&Range>,
     is_dynamic: bool,
   ) {
-    match NpmPackageReqReference::from_specifier(&specifier) {
-      Ok(package_ref) => {
-        if let Some(range) = &maybe_range {
-          if let Some(nv) =
-            self.jsr_url_provider.package_url_to_nv(&range.specifier)
-          {
-            self.graph.packages.add_dependency(
-              &nv,
-              JsrDepPackageReq::npm(package_ref.req().clone()),
-            );
+    if self
+      .state
+      .npm
+      .requested_registry_info_loads
+      .insert(package_ref.req().name.clone())
+    {
+      // request to load
+      npm_resolver.load_and_cache_npm_package_info(&package_ref.req().name);
+    }
+
+    self
+      .state
+      .npm
+      .pending_resolutions
+      .push(PendingNpmResolutionItem {
+        specifier,
+        package_ref,
+        maybe_range: maybe_range.cloned(),
+        is_dynamic,
+      });
+  }
+
+  fn parse_load_specifier_kind(
+    &self,
+    specifier: &Url,
+    maybe_range: Option<&Range>,
+  ) -> Result<LoadSpecifierKind, Box<ModuleError>> {
+    match specifier.scheme() {
+      "jsr" => validate_jsr_specifier(specifier)
+        .map(LoadSpecifierKind::Jsr)
+        .map_err(|err| {
+          Box::new(ModuleError::LoadingErr(
+            specifier.clone(),
+            maybe_range.cloned(),
+            JsrLoadError::PackageFormat(err).into(),
+          ))
+        }),
+      "npm" => NpmPackageReqReference::from_specifier(specifier)
+        .map(LoadSpecifierKind::Npm)
+        .map_err(|err| {
+          Box::new(ModuleError::LoadingErr(
+            specifier.clone(),
+            maybe_range.cloned(),
+            NpmLoadError::PackageReqReferenceParse(err).into(),
+          ))
+        }),
+      _ => {
+        if let Some(npm_resolver) = self.npm_resolver {
+          match npm_resolver.resolve_builtin_node_module(specifier) {
+            Ok(Some(builtin_module)) => {
+              return Ok(LoadSpecifierKind::Node(builtin_module))
+            }
+            Ok(None) => {}
+            Err(err) => {
+              return Err(Box::new(ModuleError::LoadingErr(
+                specifier.clone(),
+                maybe_range.cloned(),
+                err.into(),
+              )))
+            }
           }
         }
 
-        if self
-          .state
-          .npm
-          .requested_registry_info_loads
-          .insert(package_ref.req().name.clone())
-        {
-          // request to load
-          npm_resolver.load_and_cache_npm_package_info(&package_ref.req().name);
-        }
-
-        self
-          .state
-          .npm
-          .pending_resolutions
-          .push(PendingNpmResolutionItem {
-            specifier,
-            package_ref,
-            maybe_range,
-            is_dynamic,
-          });
+        Ok(LoadSpecifierKind::Url)
       }
-      Err(err) => {
-        self.graph.module_slots.insert(
-          specifier.clone(),
-          ModuleSlot::Err(ModuleError::LoadingErr(
-            specifier,
-            maybe_range,
-            NpmLoadError::PackageReqReferenceParse(err).into(),
-          )),
+    }
+  }
+
+  fn maybe_mark_dep(
+    &mut self,
+    load_specifier: &LoadSpecifierKind,
+    maybe_range: Option<&Range>,
+  ) {
+    match load_specifier {
+      LoadSpecifierKind::Jsr(package_ref) => {
+        self.mark_jsr_dep(package_ref, maybe_range);
+      }
+      LoadSpecifierKind::Npm(package_ref) => {
+        self.mark_npm_dep(package_ref, maybe_range);
+      }
+      LoadSpecifierKind::Node(_) | LoadSpecifierKind::Url => {
+        // ignore the rest
+      }
+    }
+  }
+
+  fn mark_jsr_dep(
+    &mut self,
+    package_ref: &JsrPackageReqReference,
+    maybe_range: Option<&Range>,
+  ) {
+    if let Some(range) = &maybe_range {
+      if let Some(nv) =
+        self.jsr_url_provider.package_url_to_nv(&range.specifier)
+      {
+        self.graph.packages.add_dependency(
+          &nv,
+          JsrDepPackageReq::jsr(package_ref.req().clone()),
+        );
+      }
+    }
+  }
+
+  fn mark_npm_dep(
+    &mut self,
+    package_ref: &NpmPackageReqReference,
+    maybe_range: Option<&Range>,
+  ) {
+    if let Some(range) = &maybe_range {
+      if let Some(nv) =
+        self.jsr_url_provider.package_url_to_nv(&range.specifier)
+      {
+        self.graph.packages.add_dependency(
+          &nv,
+          JsrDepPackageReq::npm(package_ref.req().clone()),
         );
       }
     }
@@ -4713,14 +4801,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
     module_slot
   }
-}
-
-#[derive(Error, Debug, Clone)]
-pub enum JsrPackageFormatError {
-  #[error(transparent)]
-  JsrPackageParseError(PackageReqReferenceParseError),
-  #[error("Version tag not supported in jsr specifiers.")]
-  VersionTagNotSupported,
 }
 
 fn validate_jsr_specifier(
