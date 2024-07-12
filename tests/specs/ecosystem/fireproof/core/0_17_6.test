@@ -1288,7 +1288,7 @@ fireproof/core/0.17.6
 
 -- stderr --
 error: Uncaught Error: [ERR_INVALID_PACKAGE_TARGET] Invalid "exports" target {"browser":"./esm/src/db-index.js","require":"./cjs/src/db-index.js","import":"./esm/src/db-index.js"} defined for './db-index' in the package config <global_npm_dir>/prolly-trees/1.0.4/package.json imported from 'file://<tmpdir>/src/indexer-helpers.ts'; target must start with "./"
-    at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:765:28)
+    at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:766:28)
     at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:124316:142)
     at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:124748:20)
     at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:124834:14)
