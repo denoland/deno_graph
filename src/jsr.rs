@@ -5,7 +5,8 @@ use std::sync::Arc;
 
 use deno_ast::ModuleSpecifier;
 use deno_semver::package::PackageNv;
-use futures::future::Shared;
+use deno_unsync::future::LocalFutureExt;
+use deno_unsync::future::SharedLocal;
 use futures::FutureExt;
 
 use crate::graph::JsrLoadError;
@@ -23,13 +24,13 @@ use crate::source::LoaderChecksum;
 use crate::source::Locker;
 use crate::Executor;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct PendingJsrPackageVersionInfoLoadItem {
   pub checksum_for_locker: Option<LoaderChecksum>,
   pub info: Arc<JsrPackageVersionInfo>,
 }
 
-pub type PendingResult<T> = Shared<JoinHandle<Result<T, JsrLoadError>>>;
+pub type PendingResult<T> = SharedLocal<JoinHandle<Result<T, JsrLoadError>>>;
 
 #[derive(Clone, Copy)]
 pub struct JsrMetadataStoreServices<'a> {
@@ -213,6 +214,6 @@ impl JsrMetadataStore {
       }
       .boxed_local(),
     );
-    fut.shared()
+    fut.shared_local()
   }
 }
