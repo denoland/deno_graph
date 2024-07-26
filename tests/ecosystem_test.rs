@@ -24,7 +24,6 @@ use indexmap::IndexMap;
 use serde::Deserialize;
 use std::fmt::Write;
 use tempfile::tempdir;
-use tempfile::NamedTempFile;
 use url::Url;
 
 #[derive(Debug, Clone, Deserialize)]
