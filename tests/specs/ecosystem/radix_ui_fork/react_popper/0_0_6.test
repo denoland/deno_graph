@@ -18,6 +18,7 @@ radix-ui-fork/react-popper/0.0.6
       "@radix-ui-fork/react-arrow@0.0.6": {
         "integrity": "6c55a0e1856a438917d7f6d10052391dc3391dadcfe8158e49d7204371a74ef5",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.6",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -111,8 +112,8 @@ radix-ui-fork/react-popper/0.0.6
 -- stdout --
 
 -- stderr --
-error: Failed writing lockfile.
-
-Caused by:
-    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmpXm8IQf')
+error: TS2304 [ERROR]: Cannot find name 'Element'.
+type Boundary = Element | null;
+                ~~~~~~~
+    at file://<tmpdir>/src/Popper.tsx:32:17
 

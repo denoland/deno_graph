@@ -47,12 +47,14 @@ radix-ui-fork/react-alert-dialog/0.0.4
         "dependencies": [
           "jsr:@radix-ui-fork/primitive@0.0.4",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
+          "jsr:@radix-ui-fork/react-context@0.0.4",
           "jsr:@radix-ui-fork/react-dismissable-layer@0.0.4",
           "jsr:@radix-ui-fork/react-focus-guards@0.0.4",
           "jsr:@radix-ui-fork/react-focus-scope@0.0.4",
           "jsr:@radix-ui-fork/react-id@0.0.4",
           "jsr:@radix-ui-fork/react-portal@0.0.4",
           "jsr:@radix-ui-fork/react-presence@0.0.4",
+          "jsr:@radix-ui-fork/react-primitive@0.0.4",
           "jsr:@radix-ui-fork/react-slot@0.0.4",
           "jsr:@radix-ui-fork/react-use-controllable-state@0.0.4",
           "npm:@types/react@^18.2.0",
@@ -63,6 +65,9 @@ radix-ui-fork/react-alert-dialog/0.0.4
       "@radix-ui-fork/react-dismissable-layer@0.0.4": {
         "integrity": "b02217d3f726ee6611568d375886d2552ac5219413772b1249198ccd3295f871",
         "dependencies": [
+          "jsr:@radix-ui-fork/primitive@0.0.4",
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
+          "jsr:@radix-ui-fork/react-primitive@0.0.4",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
           "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.4",
           "npm:@types/react@^18.2.0"
@@ -77,6 +82,8 @@ radix-ui-fork/react-alert-dialog/0.0.4
       "@radix-ui-fork/react-focus-scope@0.0.4": {
         "integrity": "1bcdf22b1af617547b9c50b53b0dd36d1e94bd9e26a9b98a2077ec54fdf5ba02",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
+          "jsr:@radix-ui-fork/react-primitive@0.0.4",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
           "npm:@types/react@^18.2.0"
         ]
@@ -91,6 +98,7 @@ radix-ui-fork/react-alert-dialog/0.0.4
       "@radix-ui-fork/react-portal@0.0.4": {
         "integrity": "00c148789d1874b881e306a160b27bc4056b3be2e86823a9051f31782cfeaa29",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.4",
           "npm:@types/react@^18.2.0",
           "npm:react-dom@^18.0.0"
         ]
@@ -98,6 +106,7 @@ radix-ui-fork/react-alert-dialog/0.0.4
       "@radix-ui-fork/react-presence@0.0.4": {
         "integrity": "87c63a5606628030805172cc903d57d0826f14aa32dbd580f77a33914c776855",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
           "jsr:@radix-ui-fork/react-use-layout-effect@0.0.4",
           "npm:@types/react@^18.2.0",
           "npm:react-dom@^18.0.0"
@@ -114,6 +123,7 @@ radix-ui-fork/react-alert-dialog/0.0.4
       "@radix-ui-fork/react-slot@0.0.4": {
         "integrity": "a42d541d041d3efb25af23134632558e53212d43a9379fba3238c91d15fe56b3",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -133,6 +143,7 @@ radix-ui-fork/react-alert-dialog/0.0.4
       "@radix-ui-fork/react-use-escape-keydown@0.0.4": {
         "integrity": "7be647f9b2d97768d6a1cd536eac7f4f86e80c7b44d54bca6e677574b97674fe",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -270,12 +281,4 @@ radix-ui-fork/react-alert-dialog/0.0.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-error: Failed writing lockfile.
-
-Caused by:
-    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmpqmxqMP')
-
+== TYPE CHECK PASSED ==

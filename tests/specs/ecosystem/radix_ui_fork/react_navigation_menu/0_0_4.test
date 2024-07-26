@@ -38,6 +38,7 @@ radix-ui-fork/react-navigation-menu/0.0.4
         "dependencies": [
           "jsr:@radix-ui-fork/primitive@0.0.4",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
+          "jsr:@radix-ui-fork/react-primitive@0.0.4",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
           "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.4",
           "npm:@types/react@^18.2.0"
@@ -54,6 +55,7 @@ radix-ui-fork/react-navigation-menu/0.0.4
       "@radix-ui-fork/react-slot@0.0.4": {
         "integrity": "a42d541d041d3efb25af23134632558e53212d43a9379fba3238c91d15fe56b3",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -66,12 +68,14 @@ radix-ui-fork/react-navigation-menu/0.0.4
       "@radix-ui-fork/react-use-escape-keydown@0.0.4": {
         "integrity": "7be647f9b2d97768d6a1cd536eac7f4f86e80c7b44d54bca6e677574b97674fe",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
           "npm:@types/react@^18.2.0"
         ]
       },
       "@radix-ui-fork/react-visually-hidden@0.0.4": {
         "integrity": "b4058a1f0ce67392e35b93f87d3660aaa1cd10c8725a1f6f6e4c62b3961befef",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.4",
           "npm:@types/react@^18.2.0"
         ]
       }
@@ -131,12 +135,4 @@ radix-ui-fork/react-navigation-menu/0.0.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-error: Failed writing lockfile.
-
-Caused by:
-    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmpVQC18q')
-
+== TYPE CHECK PASSED ==

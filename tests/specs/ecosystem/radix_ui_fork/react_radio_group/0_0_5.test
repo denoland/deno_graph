@@ -27,6 +27,10 @@ radix-ui-fork/react-radio-group/0.0.5
       "@radix-ui-fork/react-collection@0.0.5": {
         "integrity": "dafed41f834b9827495f579d24e2b092a3cbce1695e40b1cefb1cb2c66e55cdd",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-context@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
+          "jsr:@radix-ui-fork/react-slot@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -69,8 +73,10 @@ radix-ui-fork/react-radio-group/0.0.5
           "jsr:@radix-ui-fork/primitive@0.0.5",
           "jsr:@radix-ui-fork/react-collection@0.0.5",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-context@0.0.5",
           "jsr:@radix-ui-fork/react-direction@0.0.5",
           "jsr:@radix-ui-fork/react-id@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
           "jsr:@radix-ui-fork/react-use-controllable-state@0.0.5",
           "npm:@types/react@^18.2.0"
@@ -79,6 +85,7 @@ radix-ui-fork/react-radio-group/0.0.5
       "@radix-ui-fork/react-slot@0.0.5": {
         "integrity": "da6db6dbef8bf1ea63f3b8ceeb67b9347e208902795517f512da1651ee5b5d30",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -91,6 +98,7 @@ radix-ui-fork/react-radio-group/0.0.5
       "@radix-ui-fork/react-use-controllable-state@0.0.5": {
         "integrity": "3b06b23bf0f089c86fc911aca8e757d51a669382a55f50b3a7078133fe7b465f",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -156,12 +164,4 @@ radix-ui-fork/react-radio-group/0.0.5
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-error: Failed writing lockfile.
-
-Caused by:
-    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmpT9FbkZ')
-
+== TYPE CHECK PASSED ==

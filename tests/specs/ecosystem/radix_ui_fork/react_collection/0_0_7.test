@@ -28,6 +28,7 @@ radix-ui-fork/react-collection/0.0.7
       "@radix-ui-fork/react-primitive@0.0.7": {
         "integrity": "09990e5b708b9f1957babc8577a12c9e43332b3b3ad62c5e6a03b3a75ae4d146",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-slot@0.0.7",
           "npm:@types/react-dom@^18.2.0",
           "npm:@types/react@^18.2.0"
         ]
@@ -91,8 +92,20 @@ radix-ui-fork/react-collection/0.0.7
 -- stdout --
 
 -- stderr --
-error: Failed writing lockfile.
+error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+type CollectionElement = HTMLElement;
+                         ~~~~~~~~~~~
+    at file://<tmpdir>/src/Collection.tsx:6:26
 
-Caused by:
-    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmpvxJYgN')
+TS2552 [ERROR]: Cannot find name 'HTMLElement'. Did you mean 'ItemElement'?
+type Collection<ItemElement extends HTMLElement, ItemData = {
+                                    ~~~~~~~~~~~
+    at file://<tmpdir>/src/Collection.tsx:15:37
+
+TS2552 [ERROR]: Cannot find name 'HTMLElement'. Did you mean 'ItemElement'?
+function createCollection<ItemElement extends HTMLElement, ItemData = {
+                                              ~~~~~~~~~~~
+    at file://<tmpdir>/src/Collection.tsx:26:47
+
+Found 3 errors.
 

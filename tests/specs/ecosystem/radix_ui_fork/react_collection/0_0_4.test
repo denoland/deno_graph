@@ -21,6 +21,7 @@ radix-ui-fork/react-collection/0.0.4
       "@radix-ui-fork/react-primitive@0.0.4": {
         "integrity": "913a0c06a5d46add620e3d7a81c0ab09692dda8b325f714641de610406f43c80",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-slot@0.0.4",
           "npm:@types/react@^18.2.0",
           "npm:react-dom@^18.0.0"
         ]
@@ -92,8 +93,15 @@ radix-ui-fork/react-collection/0.0.4
 -- stdout --
 
 -- stderr --
-error: Failed writing lockfile.
+error: TS2552 [ERROR]: Cannot find name 'HTMLElement'. Did you mean 'ItemElement'?
+function createCollection<ItemElement extends HTMLElement, ItemData = {
+                                              ~~~~~~~~~~~
+    at file://<tmpdir>/src/Collection.tsx:8:47
 
-Caused by:
-    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmp45puEV')
+TS2552 [ERROR]: Cannot find name 'HTMLElement'. Did you mean 'ItemElement'?
+    readonly Slot: React.ForwardRefExoticComponent<CollectionProps & React.RefAttributes<HTMLElement>>;
+                                                                                         ~~~~~~~~~~~
+    at file://<tmpdir>/src/Collection.tsx:14:90
+
+Found 2 errors.
 

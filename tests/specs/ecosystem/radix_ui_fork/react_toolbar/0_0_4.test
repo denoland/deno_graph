@@ -30,6 +30,10 @@ radix-ui-fork/react-toolbar/0.0.4
       "@radix-ui-fork/react-collection@0.0.4": {
         "integrity": "9f03d1a4bce66bab0ef87eae5c1b58c32aa68aa165d921c58901172f327381ad",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
+          "jsr:@radix-ui-fork/react-context@0.0.4",
+          "jsr:@radix-ui-fork/react-primitive@0.0.4",
+          "jsr:@radix-ui-fork/react-slot@0.0.4",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -72,8 +76,10 @@ radix-ui-fork/react-toolbar/0.0.4
           "jsr:@radix-ui-fork/primitive@0.0.4",
           "jsr:@radix-ui-fork/react-collection@0.0.4",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
+          "jsr:@radix-ui-fork/react-context@0.0.4",
           "jsr:@radix-ui-fork/react-direction@0.0.4",
           "jsr:@radix-ui-fork/react-id@0.0.4",
+          "jsr:@radix-ui-fork/react-primitive@0.0.4",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
           "jsr:@radix-ui-fork/react-use-controllable-state@0.0.4",
           "npm:@types/react@^18.2.0"
@@ -82,19 +88,24 @@ radix-ui-fork/react-toolbar/0.0.4
       "@radix-ui-fork/react-separator@0.0.4": {
         "integrity": "85bca160c5da5f231a01ccf8957c8d55f26cd937a61648414caa1aad0e0b1ca0",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.4",
           "npm:@types/react@^18.2.0"
         ]
       },
       "@radix-ui-fork/react-slot@0.0.4": {
         "integrity": "a42d541d041d3efb25af23134632558e53212d43a9379fba3238c91d15fe56b3",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
           "npm:@types/react@^18.2.0"
         ]
       },
       "@radix-ui-fork/react-toggle-group@0.0.4": {
         "integrity": "a8607cfd9f11440072f34f7bb2c8ec993dc71fdebcb00eb7ff38a782fffa486c",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-context@0.0.4",
           "jsr:@radix-ui-fork/react-direction@0.0.4",
+          "jsr:@radix-ui-fork/react-primitive@0.0.4",
+          "jsr:@radix-ui-fork/react-roving-focus@0.0.4",
           "jsr:@radix-ui-fork/react-toggle@0.0.4",
           "jsr:@radix-ui-fork/react-use-controllable-state@0.0.4",
           "npm:@types/react@^18.2.0"
@@ -103,6 +114,9 @@ radix-ui-fork/react-toolbar/0.0.4
       "@radix-ui-fork/react-toggle@0.0.4": {
         "integrity": "738a8b6c59fafb12c6cb29e374333be1a7163b6533418576bc02b262cdfddb42",
         "dependencies": [
+          "jsr:@radix-ui-fork/primitive@0.0.4",
+          "jsr:@radix-ui-fork/react-primitive@0.0.4",
+          "jsr:@radix-ui-fork/react-use-controllable-state@0.0.4",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -115,6 +129,7 @@ radix-ui-fork/react-toolbar/0.0.4
       "@radix-ui-fork/react-use-controllable-state@0.0.4": {
         "integrity": "b0944cfaa721131c26451036fa1f6b1ac3859e37ad5d719656ee214bb896f603",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
           "npm:@types/react@^18.2.0"
         ]
       },

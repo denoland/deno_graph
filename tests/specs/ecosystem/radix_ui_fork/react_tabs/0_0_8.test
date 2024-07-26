@@ -27,6 +27,10 @@ radix-ui-fork/react-tabs/0.0.8
       "@radix-ui-fork/react-collection@0.0.8": {
         "integrity": "d8686057c236a554af0062b095ea663f1cd3856a14ee91ddfeefa5a16346aa06",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
+          "jsr:@radix-ui-fork/react-context@0.0.8",
+          "jsr:@radix-ui-fork/react-primitive@0.0.8",
+          "jsr:@radix-ui-fork/react-slot@0.0.8",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -69,8 +73,10 @@ radix-ui-fork/react-tabs/0.0.8
           "jsr:@radix-ui-fork/primitive@0.0.8",
           "jsr:@radix-ui-fork/react-collection@0.0.8",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
+          "jsr:@radix-ui-fork/react-context@0.0.8",
           "jsr:@radix-ui-fork/react-direction@0.0.8",
           "jsr:@radix-ui-fork/react-id@0.0.8",
+          "jsr:@radix-ui-fork/react-primitive@0.0.8",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.8",
           "jsr:@radix-ui-fork/react-use-controllable-state@0.0.8",
           "npm:@types/react@^18.2.0"
@@ -79,6 +85,7 @@ radix-ui-fork/react-tabs/0.0.8
       "@radix-ui-fork/react-slot@0.0.8": {
         "integrity": "ab722b1cb0b4b2ed64402ada44def2352eb2b47ddd8af605f44c7768a4e48a78",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -91,6 +98,7 @@ radix-ui-fork/react-tabs/0.0.8
       "@radix-ui-fork/react-use-controllable-state@0.0.8": {
         "integrity": "40a3f4b72a0bf6e604f90f276c10133bbfe07e2a0e9b89f72c8d3041fb7b5dea",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.8",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -148,12 +156,4 @@ radix-ui-fork/react-tabs/0.0.8
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-error: Failed writing lockfile.
-
-Caused by:
-    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmps4UefF')
-
+== TYPE CHECK PASSED ==

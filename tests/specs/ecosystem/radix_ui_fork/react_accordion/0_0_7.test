@@ -28,8 +28,10 @@ radix-ui-fork/react-accordion/0.0.7
         "dependencies": [
           "jsr:@radix-ui-fork/primitive@0.0.7",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.7",
+          "jsr:@radix-ui-fork/react-context@0.0.7",
           "jsr:@radix-ui-fork/react-id@0.0.7",
           "jsr:@radix-ui-fork/react-presence@0.0.7",
+          "jsr:@radix-ui-fork/react-primitive@0.0.7",
           "jsr:@radix-ui-fork/react-use-controllable-state@0.0.7",
           "jsr:@radix-ui-fork/react-use-layout-effect@0.0.7",
           "npm:@types/react@^18.2.0"
@@ -50,12 +52,15 @@ radix-ui-fork/react-accordion/0.0.7
       "@radix-ui-fork/react-id@0.0.7": {
         "integrity": "9dd6eb60f69a9fd92f125a0e2d2238d324558a28a76a3e862778ba98488b929e",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-layout-effect@0.0.7",
           "npm:@types/react@^18.2.0"
         ]
       },
       "@radix-ui-fork/react-presence@0.0.7": {
         "integrity": "2639a73d942865b6e4cbeb3cf1ff4bf068ffd26fa70d01370d0ecf4d844453ad",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.7",
+          "jsr:@radix-ui-fork/react-use-layout-effect@0.0.7",
           "npm:@types/react-dom@^18.2.0",
           "npm:@types/react@^18.2.0"
         ]
@@ -71,6 +76,7 @@ radix-ui-fork/react-accordion/0.0.7
       "@radix-ui-fork/react-slot@0.0.7": {
         "integrity": "079a5759efe0e888bbd5f973b5e281add7b87a54fa6ca5d06ee0d15187a760e8",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.7",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -141,12 +147,4 @@ radix-ui-fork/react-accordion/0.0.7
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-error: Failed writing lockfile.
-
-Caused by:
-    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmpNChX7G')
-
+== TYPE CHECK PASSED ==

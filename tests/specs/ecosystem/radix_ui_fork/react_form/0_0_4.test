@@ -29,6 +29,7 @@ radix-ui-fork/react-form/0.0.4
       "@radix-ui-fork/react-label@0.0.4": {
         "integrity": "4f741f3567d500e7a12c955940ed823b6cb296a98a10f44c7cd76c5fa45cfce2",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.4",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -107,8 +108,8 @@ radix-ui-fork/react-form/0.0.4
 -- stdout --
 
 -- stderr --
-error: Failed writing lockfile.
-
-Caused by:
-    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmpSRcedl')
+error: TS2749 [ERROR]: 'ValidityState' refers to a value, but is being used as a type here. Did you mean 'typeof ValidityState'?
+  children(validity: ValidityState | undefined): React.ReactNode;
+                     ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Form.tsx:61:22
 

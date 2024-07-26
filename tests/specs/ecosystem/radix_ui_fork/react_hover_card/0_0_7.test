@@ -49,6 +49,7 @@ radix-ui-fork/react-hover-card/0.0.7
       "@radix-ui-fork/react-arrow@0.0.7": {
         "integrity": "cf4a4d2f85be770dcdbc6c08d920777c0d3bdf9923f285825c67cb6967156a63",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.7",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -69,6 +70,7 @@ radix-ui-fork/react-hover-card/0.0.7
         "dependencies": [
           "jsr:@radix-ui-fork/primitive@0.0.7",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.7",
+          "jsr:@radix-ui-fork/react-primitive@0.0.7",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.7",
           "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.7",
           "npm:@types/react@^18.2.0"
@@ -80,6 +82,8 @@ radix-ui-fork/react-hover-card/0.0.7
           "jsr:@bureaudouble-forks/floating-ui-react-dom@0.0.1",
           "jsr:@radix-ui-fork/react-arrow@0.0.7",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.7",
+          "jsr:@radix-ui-fork/react-context@0.0.7",
+          "jsr:@radix-ui-fork/react-primitive@0.0.7",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.7",
           "jsr:@radix-ui-fork/react-use-layout-effect@0.0.7",
           "jsr:@radix-ui-fork/react-use-size@0.0.7",
@@ -90,6 +94,7 @@ radix-ui-fork/react-hover-card/0.0.7
       "@radix-ui-fork/react-portal@0.0.7": {
         "integrity": "3bdf3789bc3e17ea34bd5275798ee01537b0828182aea8352827434afb31e9c4",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.7",
           "npm:@types/react-dom@^18.2.0",
           "npm:@types/react@^18.2.0"
         ]
@@ -105,6 +110,7 @@ radix-ui-fork/react-hover-card/0.0.7
       "@radix-ui-fork/react-slot@0.0.7": {
         "integrity": "079a5759efe0e888bbd5f973b5e281add7b87a54fa6ca5d06ee0d15187a760e8",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.7",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -117,6 +123,7 @@ radix-ui-fork/react-hover-card/0.0.7
       "@radix-ui-fork/react-use-escape-keydown@0.0.7": {
         "integrity": "c86cb6df9b1f88ddc5c061161a11c3d152b867e81f156c34e9506d68c5b7b743",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.7",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -129,6 +136,7 @@ radix-ui-fork/react-hover-card/0.0.7
       "@radix-ui-fork/react-use-size@0.0.7": {
         "integrity": "8d532f9bade606dddde20e38e5e44a87c577ba0897e5b4af60e039a30f4f70f3",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-layout-effect@0.0.7",
           "npm:@types/react@^18.2.0",
           "npm:@types/resize-observer-browser@0.1.11"
         ]
@@ -205,12 +213,4 @@ radix-ui-fork/react-hover-card/0.0.7
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-error: Failed writing lockfile.
-
-Caused by:
-    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmpPLom3C')
-
+== TYPE CHECK PASSED ==

@@ -39,7 +39,10 @@ molt/integration/0.18.0
         ]
       },
       "@molt/lib@0.18.0": {
-        "integrity": "c5b10f134f8ba68f6f6a389ad08fedca705a12d3d1d12ec2b45b06cf67b9b9e1"
+        "integrity": "c5b10f134f8ba68f6f6a389ad08fedca705a12d3d1d12ec2b45b06cf67b9b9e1",
+        "dependencies": [
+          "jsr:@std/path@^0.222.1"
+        ]
       },
       "@std/assert@0.222.1": {
         "integrity": "691637161ee584a9919d1f9950ddd1272feb8e0a19e83aa5b7563cedaf73d74c",
@@ -88,12 +91,4 @@ molt/integration/0.18.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-error: Failed writing lockfile.
-
-Caused by:
-    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmp9NFNNO')
-
+== TYPE CHECK PASSED ==
