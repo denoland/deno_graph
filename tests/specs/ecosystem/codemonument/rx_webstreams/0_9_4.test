@@ -20,12 +20,4 @@ codemonument/rx-webstreams/0.9.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-error: TS2552 [ERROR]: Cannot find name 'UnderlyingDefaultSource'. Did you mean 'UnderlyingSource'?
- */ export class UnderlyingSourceWithController<R = unknown> implements UnderlyingDefaultSource<R> {
-                                                                        ~~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/lib/utils/UnderlyingSourceWithController.ts:3:73
-
+== TYPE CHECK PASSED ==
