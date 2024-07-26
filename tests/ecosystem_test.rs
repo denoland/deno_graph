@@ -347,10 +347,10 @@ async fn test_version(
       tmpdir_path
     };
 
-    let mut lockfile_file = NamedTempFile::new().unwrap();
-    lockfile_file.write_all(lockfile.trim().as_bytes()).unwrap();
-    lockfile_file.flush().unwrap();
-    let lockfile_path = lockfile_file.path().canonicalize().unwrap();
+    let temp_file =
+      std::env::temp_dir().join(format!("{}_{}_{}.lock", scope, name, version));
+    std::fs::write(&temp_file, lockfile.trim()).unwrap();
+    let lockfile_path = temp_file.canonicalize().unwrap();
 
     let base_path =
       format!("./tests/ecosystem/jsr_mirror/{scope}/{name}/{version}");
@@ -418,7 +418,7 @@ async fn test_version(
       writeln!(&mut output, "-- stderr --\n{}", stderr).unwrap();
     }
 
-    new_lockfile = std::fs::read_to_string(lockfile_path).unwrap();
+    new_lockfile = std::fs::read_to_string(&lockfile_path).unwrap();
     if !new_lockfile.ends_with('\n') {
       new_lockfile.push('\n');
     };
@@ -426,7 +426,8 @@ async fn test_version(
     if std::env::var("DONT_CLEAN").is_ok() {
       println!("leaving tempdir: {}", tmpdir_path.display());
       Box::leak(Box::new(tmpdir));
-      Box::leak(Box::new(lockfile_file));
+    } else {
+      std::fs::remove_file(lockfile_path).unwrap();
     }
   }
 

@@ -23,7 +23,10 @@ oxi/schema/0.1.0
         ]
       },
       "@oxi/option@0.1.1": {
-        "integrity": "4d41eeeb26d9e67bcaa44767cded88e79b327c34a7e142800f22b57d401f544b"
+        "integrity": "4d41eeeb26d9e67bcaa44767cded88e79b327c34a7e142800f22b57d401f544b",
+        "dependencies": [
+          "jsr:@oxi/core@^0.2.1"
+        ]
       },
       "@oxi/option@0.2.0": {
         "integrity": "31eb26fe703146a827c446589784918633f6d2250a8b6a00cab10f37f1feeb69",

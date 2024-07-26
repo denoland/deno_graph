@@ -143,6 +143,7 @@ bureaudouble/bureau/0.0.89
           "jsr:@radix-ui-fork/primitive@0.0.5",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
           "jsr:@radix-ui-fork/react-context@0.0.5",
+          "jsr:@radix-ui-fork/react-dialog@0.0.5",
           "jsr:@radix-ui-fork/react-primitive@0.0.5",
           "jsr:@radix-ui-fork/react-slot@0.0.5",
           "npm:@types/react@^18.2.0"
@@ -151,6 +152,7 @@ bureaudouble/bureau/0.0.89
       "@radix-ui-fork/react-arrow@0.0.5": {
         "integrity": "bc95feacc83e63c568afcda0dad6c03f18f0ecf24bd6b25b9498ab87e0d1bcc4",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -171,6 +173,10 @@ bureaudouble/bureau/0.0.89
       "@radix-ui-fork/react-collection@0.0.5": {
         "integrity": "dafed41f834b9827495f579d24e2b092a3cbce1695e40b1cefb1cb2c66e55cdd",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-context@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
+          "jsr:@radix-ui-fork/react-slot@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -215,6 +221,9 @@ bureaudouble/bureau/0.0.89
       "@radix-ui-fork/react-dismissable-layer@0.0.5": {
         "integrity": "18ca37d00396cce53abec13f2730b54c1d4c217b7c13b5c129956670b79e67c5",
         "dependencies": [
+          "jsr:@radix-ui-fork/primitive@0.0.5",
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
           "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.5",
           "npm:@types/react@^18.2.0"
@@ -242,6 +251,8 @@ bureaudouble/bureau/0.0.89
       "@radix-ui-fork/react-focus-scope@0.0.5": {
         "integrity": "b66dd6a7a6d6ced1d88f139438de6bcf14dbe2466524d9dfde5ad79ffc31c437",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
@@ -263,8 +274,21 @@ bureaudouble/bureau/0.0.89
       "@radix-ui-fork/react-menu@0.0.5": {
         "integrity": "ba1b4505d042622f7b365b10834558daffc942cc0c1c84400dbd51cc73352174",
         "dependencies": [
+          "jsr:@radix-ui-fork/primitive@0.0.5",
           "jsr:@radix-ui-fork/react-collection@0.0.5",
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-context@0.0.5",
+          "jsr:@radix-ui-fork/react-direction@0.0.5",
+          "jsr:@radix-ui-fork/react-dismissable-layer@0.0.5",
+          "jsr:@radix-ui-fork/react-focus-guards@0.0.5",
+          "jsr:@radix-ui-fork/react-focus-scope@0.0.5",
+          "jsr:@radix-ui-fork/react-id@0.0.5",
           "jsr:@radix-ui-fork/react-popper@0.0.5",
+          "jsr:@radix-ui-fork/react-portal@0.0.5",
+          "jsr:@radix-ui-fork/react-presence@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
+          "jsr:@radix-ui-fork/react-roving-focus@0.0.5",
+          "jsr:@radix-ui-fork/react-slot@0.0.5",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
           "npm:@types/react@^18.2.0",
           "npm:aria-hidden@1.2.4",
@@ -275,6 +299,12 @@ bureaudouble/bureau/0.0.89
         "integrity": "69860df2436a6b5cad6f390d7f015dc7b7051213d6535d1fef4cddd57c10860c",
         "dependencies": [
           "jsr:@radix-ui-fork/react-arrow@0.0.5",
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-context@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
+          "jsr:@radix-ui-fork/react-use-layout-effect@0.0.5",
+          "jsr:@radix-ui-fork/react-use-size@0.0.5",
           "jsr:@radix-ui-fork/rect@0.0.5",
           "npm:@floating-ui/react-dom@2.0.8",
           "npm:@types/react@^18.2.0"
@@ -283,6 +313,7 @@ bureaudouble/bureau/0.0.89
       "@radix-ui-fork/react-portal@0.0.5": {
         "integrity": "b51510819a5ec95d21ea7f6784d5fe60c0b1383f445e0a81c434c5888467f487",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
           "npm:@types/react@^18.2.0",
           "npm:react-dom@^18.0.0"
         ]
@@ -290,6 +321,7 @@ bureaudouble/bureau/0.0.89
       "@radix-ui-fork/react-presence@0.0.5": {
         "integrity": "9a3c024230f1e46090c22979d55f43a32b71a3e5817523bbf66ccf943d94d024",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
           "jsr:@radix-ui-fork/react-use-layout-effect@0.0.5",
           "npm:@types/react@^18.2.0",
           "npm:react-dom@^18.0.0"
@@ -298,6 +330,7 @@ bureaudouble/bureau/0.0.89
       "@radix-ui-fork/react-primitive@0.0.5": {
         "integrity": "61ad02faf46775f34b1ea0e4dc2bd4ee71aca54a1dc58bca9383abacbfaad14f",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-slot@0.0.5",
           "npm:@types/react@^18.2.0",
           "npm:react-dom@^18.0.0"
         ]
@@ -305,14 +338,22 @@ bureaudouble/bureau/0.0.89
       "@radix-ui-fork/react-roving-focus@0.0.5": {
         "integrity": "69768ff4a0168cde8656c41ffdc2d4b2a2552b62db147f7259300a3868726391",
         "dependencies": [
+          "jsr:@radix-ui-fork/primitive@0.0.5",
           "jsr:@radix-ui-fork/react-collection@0.0.5",
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-context@0.0.5",
+          "jsr:@radix-ui-fork/react-direction@0.0.5",
+          "jsr:@radix-ui-fork/react-id@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
+          "jsr:@radix-ui-fork/react-use-controllable-state@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
       "@radix-ui-fork/react-slot@0.0.5": {
         "integrity": "da6db6dbef8bf1ea63f3b8ceeb67b9347e208902795517f512da1651ee5b5d30",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -359,6 +400,7 @@ bureaudouble/bureau/0.0.89
       "@radix-ui-fork/react-use-escape-keydown@0.0.5": {
         "integrity": "39d1b0e26e9fb02113082caae1ed610e53051ced18915a60777363d11d27a523",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -743,15 +785,223 @@ bureaudouble/bureau/0.0.89
 -- stdout --
 
 -- stderr --
-error: Uncaught Error: [ERR_PACKAGE_PATH_NOT_EXPORTED] Package subpath './client' is not defined for types by "exports" in '<global_npm_dir>/react-dom/18.2.0/package.json' imported from 'file://<tmpdir>/src/lib/useClient.ts'
-    at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:766:28)
-    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:124316:142)
-    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:124748:20)
-    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:124834:14)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:126351:118)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:126129:7)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:125980:20)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:126377:11)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:126129:7)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:125980:20)
+error: TS2503 [ERROR]: Cannot find namespace 'JSX'.
+export const CustomInput = ({}: CustomInputProps): JSX.Element =>({} as never);
+                                                   ~~~
+    at file://<tmpdir>/src/components/CustomInput.tsx:16:52
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+export default <TData = Record<string, unknown>>({}: DataTableProps<TData>): JSX.Element =>({} as never);
+                                                                             ~~~
+    at file://<tmpdir>/src/components/DataTable.tsx:21:78
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/DeleteDialog.tsx:7:5
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/Media.tsx:18:5
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/SqlInput.tsx:10:5
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element {
+    ~~~
+    at file://<tmpdir>/src/components/bureau-ui/combobox.tsx:16:5
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/bureau-ui/integer-switch.tsx:6:117
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/bureau-ui/integer-switch.tsx:6:166
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+export function Editor({}: EditorProps): JSX.Element {
+                                         ~~~
+    at file://<tmpdir>/src/components/editor/Editor.tsx:8:42
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:15:131
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:15:177
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:16:131
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:16:177
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) : JSX.Element;
+                                                 ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:18:50
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) : JSX.Element;
+                                                                    ~~~
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:18:69
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) : JSX.Element;
+                                                 ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:22:50
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) : JSX.Element;
+                                                                    ~~~
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:22:69
+
+TS2304 [ERROR]: Cannot find name 'HTMLHeadingElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:25:127
+
+TS2304 [ERROR]: Cannot find name 'HTMLHeadingElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:25:177
+
+TS2304 [ERROR]: Cannot find name 'HTMLParagraphElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:26:139
+
+TS2304 [ERROR]: Cannot find name 'HTMLParagraphElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:26:191
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:27:129
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+}> & ClassProp) | undefined) => string> & React.RefAttributes<HTMLButtonElement>> = {} as never;
+                                                              ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:42:63
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:43:129
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:43:178
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/checkbox.tsx:6:108
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/checkbox.tsx:6:157
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+const DialogHeader = ({}: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element =>({} as never);
+                                               ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/dialog.tsx:12:48
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+const DialogFooter = ({}: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element =>({} as never);
+                                               ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/dialog.tsx:13:48
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:12:140
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+} & React.RefAttributes<HTMLDivElement>> = {} as never;
+                        ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:14:25
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:15:140
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:15:186
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:16:134
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:16:180
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:17:128
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+} & React.RefAttributes<HTMLDivElement>> = {} as never;
+                        ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:19:25
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:20:144
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:20:190
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:21:138
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:21:184
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:22:130
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+} & React.RefAttributes<HTMLDivElement>> = {} as never;
+                        ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:24:25
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:25:138
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:25:184
+
+TS2304 [ERROR]: Cannot find name 'HTMLSpanElement'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) : JSX.Element;
+                                                 ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:27:50
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) : JSX.Element;
+                                                                     ~~~
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:27:70
+
+TS2503 [ERROR]: Cannot find namespace 'React'.
+type ToasterProps = React.ComponentProps<typeof Sonner>;
+                    ~~~~~
+    at file://<tmpdir>/src/components/ui/sonner.tsx:5:21
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+const Toaster = ({}: ToasterProps): JSX.Element =>({} as never);
+                                    ~~~
+    at file://<tmpdir>/src/components/ui/sonner.tsx:6:37
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/ui/sonner.tsx:9:5
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/switch.tsx:3:103
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/switch.tsx:3:152
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/tabs.tsx:7:104
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/tabs.tsx:7:150
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/tabs.tsx:8:110
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/tabs.tsx:8:159
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/tabs.tsx:9:110
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/tabs.tsx:9:156
+
+Found 58 errors.
 

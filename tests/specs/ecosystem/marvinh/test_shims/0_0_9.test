@@ -11,7 +11,10 @@ marvinh/test-shims/0.0.9
     },
     "jsr": {
       "@std/assert@0.221.0": {
-        "integrity": "a5f1aa6e7909dbea271754fd4ab3f4e687aeff4873b4cef9a320af813adb489a"
+        "integrity": "a5f1aa6e7909dbea271754fd4ab3f4e687aeff4873b4cef9a320af813adb489a",
+        "dependencies": [
+          "jsr:@std/fmt@^0.221.0"
+        ]
       },
       "@std/expect@0.221.0": {
         "integrity": "9b157d134c56cda134d7a5b054279a6b2204eb37875c83bdb5d8a8ba327a7a48",

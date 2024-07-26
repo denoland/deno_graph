@@ -343,4 +343,12 @@ radix-ui-fork/react-dropdown-menu/0.0.6
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Failed writing lockfile.
+
+Caused by:
+    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmpq82Who')
+

@@ -111,8 +111,8 @@ radix-ui-fork/react-popper/0.0.4
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'Element'.
-type Boundary = Element | null;
-                ~~~~~~~
-    at file://<tmpdir>/src/Popper.tsx:32:17
+error: Failed writing lockfile.
+
+Caused by:
+    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmpIp0rBd')
 

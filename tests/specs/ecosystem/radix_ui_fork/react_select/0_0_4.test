@@ -212,4 +212,12 @@ radix-ui-fork/react-select/0.0.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Failed writing lockfile.
+
+Caused by:
+    Access is denied. (os error 5) (for '//?/C:/Users/david/AppData/Local/Temp/.tmpELTAd1')
+
