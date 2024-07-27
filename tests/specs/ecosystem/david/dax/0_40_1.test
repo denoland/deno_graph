@@ -36,7 +36,10 @@ david/dax/0.40.1
         ]
       },
       "@std/path@0.221.0": {
-        "integrity": "0a36f6b17314ef653a3a1649740cc8db51b25a133ecfe838f20b79a56ebe0095"
+        "integrity": "0a36f6b17314ef653a3a1649740cc8db51b25a133ecfe838f20b79a56ebe0095",
+        "dependencies": [
+          "jsr:@std/assert@^0.221.0"
+        ]
       }
     }
   },

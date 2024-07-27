@@ -25,19 +25,26 @@ polyseam/cliffy-provider-gh-releases/0.2.0
         ]
       },
       "@cliffy/flags@1.0.0-rc.4": {
-        "integrity": "29f370ade4ddf6e150a4d25fc44661234c19870ffcf7fb07cd100f1843fcd6e1"
+        "integrity": "29f370ade4ddf6e150a4d25fc44661234c19870ffcf7fb07cd100f1843fcd6e1",
+        "dependencies": [
+          "jsr:@std/text@0.221"
+        ]
       },
       "@cliffy/table@1.0.0-rc.4": {
         "integrity": "990e4e0b3910e6c9cf7a5b4318b8f5e121cf681494c94fd113febb9b4d4c0741",
         "dependencies": [
-          "jsr:@std/console@0.221"
+          "jsr:@std/console@0.221",
+          "jsr:@std/fmt@0.221"
         ]
       },
       "@std/assert@0.221.0": {
         "integrity": "a5f1aa6e7909dbea271754fd4ab3f4e687aeff4873b4cef9a320af813adb489a"
       },
       "@std/console@0.221.0": {
-        "integrity": "8f2afc1f3f14f5d6039c0c767f057e4aa1897d2210e167c4667cb155cafb9d11"
+        "integrity": "8f2afc1f3f14f5d6039c0c767f057e4aa1897d2210e167c4667cb155cafb9d11",
+        "dependencies": [
+          "jsr:@std/assert@^0.221.0"
+        ]
       },
       "@std/fmt@0.221.0": {
         "integrity": "379fed69bdd9731110f26b9085aeb740606b20428ce6af31ef6bd45ef8efa62a"

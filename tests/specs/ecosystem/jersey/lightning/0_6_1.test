@@ -50,7 +50,10 @@ jersey/lightning/0.6.1
         "integrity": "8dc38dd72e36cd68857a5837e24eb09a64bb296b96c295239c75eec17d45d23f"
       },
       "@std/io@0.220.1": {
-        "integrity": "c14c3237cfc73dd8086ac82673212939f8c49f0803d6da68eea32249caffdd67"
+        "integrity": "c14c3237cfc73dd8086ac82673212939f8c49f0803d6da68eea32249caffdd67",
+        "dependencies": [
+          "jsr:@std/bytes@^0.220.1"
+        ]
       }
     }
   },

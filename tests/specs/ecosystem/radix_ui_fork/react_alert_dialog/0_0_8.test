@@ -37,6 +37,7 @@ radix-ui-fork/react-alert-dialog/0.0.8
       "@bureaudouble-forks/react-remove-scroll-bar@0.0.3": {
         "integrity": "2111f669ac506dd280102bd412f346980f98eefeb06670620ccb7858d1725a9f",
         "dependencies": [
+          "jsr:@bureaudouble-forks/react-style-singleton@0.0.2",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -92,12 +93,14 @@ radix-ui-fork/react-alert-dialog/0.0.8
           "jsr:@bureaudouble-forks/react-remove-scroll@0.0.2",
           "jsr:@radix-ui-fork/primitive@0.0.8",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
+          "jsr:@radix-ui-fork/react-context@0.0.8",
           "jsr:@radix-ui-fork/react-dismissable-layer@0.0.8",
           "jsr:@radix-ui-fork/react-focus-guards@0.0.8",
           "jsr:@radix-ui-fork/react-focus-scope@0.0.8",
           "jsr:@radix-ui-fork/react-id@0.0.8",
           "jsr:@radix-ui-fork/react-portal@0.0.8",
           "jsr:@radix-ui-fork/react-presence@0.0.8",
+          "jsr:@radix-ui-fork/react-primitive@0.0.8",
           "jsr:@radix-ui-fork/react-slot@0.0.8",
           "jsr:@radix-ui-fork/react-use-controllable-state@0.0.8",
           "npm:@types/react@^18.2.0"
@@ -106,6 +109,9 @@ radix-ui-fork/react-alert-dialog/0.0.8
       "@radix-ui-fork/react-dismissable-layer@0.0.8": {
         "integrity": "dfb7798ff99899a29694efd23f4ff5b5577b44c5d808355c9a334743bc16919d",
         "dependencies": [
+          "jsr:@radix-ui-fork/primitive@0.0.8",
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
+          "jsr:@radix-ui-fork/react-primitive@0.0.8",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.8",
           "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.8",
           "npm:@types/react@^18.2.0"
@@ -120,6 +126,8 @@ radix-ui-fork/react-alert-dialog/0.0.8
       "@radix-ui-fork/react-focus-scope@0.0.8": {
         "integrity": "1b97674bab2d21db76181103ada3a0dbe1cab71090f98b03415b9377a9e3347a",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
+          "jsr:@radix-ui-fork/react-primitive@0.0.8",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.8",
           "npm:@types/react@^18.2.0"
         ]
@@ -134,6 +142,7 @@ radix-ui-fork/react-alert-dialog/0.0.8
       "@radix-ui-fork/react-portal@0.0.8": {
         "integrity": "2dbfdc3e31aedd3a1a6ea080e8c708c06c7c4ce223c8c0def51bd0192041c52d",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.8",
           "npm:@types/react-dom@^18.2.0",
           "npm:@types/react@^18.2.0"
         ]
@@ -141,6 +150,7 @@ radix-ui-fork/react-alert-dialog/0.0.8
       "@radix-ui-fork/react-presence@0.0.8": {
         "integrity": "0bf1cd10231626a6e411f46df7c44ad97a0323a8892a478407e15c30df2ace6d",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
           "jsr:@radix-ui-fork/react-use-layout-effect@0.0.8",
           "npm:@types/react-dom@^18.2.0",
           "npm:@types/react@^18.2.0"
@@ -157,6 +167,7 @@ radix-ui-fork/react-alert-dialog/0.0.8
       "@radix-ui-fork/react-slot@0.0.8": {
         "integrity": "ab722b1cb0b4b2ed64402ada44def2352eb2b47ddd8af605f44c7768a4e48a78",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -176,6 +187,7 @@ radix-ui-fork/react-alert-dialog/0.0.8
       "@radix-ui-fork/react-use-escape-keydown@0.0.8": {
         "integrity": "c7c9ba96c010063e11c45e27fac8ff07c3a0583184cf06518e0bc04e3daeb58d",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.8",
           "npm:@types/react@^18.2.0"
         ]
       },

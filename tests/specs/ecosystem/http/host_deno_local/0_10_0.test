@@ -12,7 +12,10 @@ http/host-deno-local/0.10.0
         "integrity": "af550deb51e96a9b7ccdc92f2aecd566e78892bf5a71f1e8ad25a74fee3b8969"
       },
       "@http/interceptor@0.10.0": {
-        "integrity": "d60c0b5e6ee3d22cd971c25e88476147dec5379aea7d12afb59d1f9fd526e81e"
+        "integrity": "d60c0b5e6ee3d22cd971c25e88476147dec5379aea7d12afb59d1f9fd526e81e",
+        "dependencies": [
+          "jsr:@http/handler@0.10.0"
+        ]
       }
     }
   },

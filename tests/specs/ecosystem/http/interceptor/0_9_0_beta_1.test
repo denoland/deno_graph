@@ -12,7 +12,10 @@ http/interceptor/0.9.0-beta.1
         "integrity": "bdc35d28794b3bd28e42c079be25107d2c231c1ba37bfadf28544b8e31047dbe"
       },
       "@http/route@0.9.0-beta.1": {
-        "integrity": "5f0e045e6b0b39472739ae08415c2a8110e0d067344bf0e23f92e0695a6e4f80"
+        "integrity": "5f0e045e6b0b39472739ae08415c2a8110e0d067344bf0e23f92e0695a6e4f80",
+        "dependencies": [
+          "jsr:@http/handler@0.9.0-beta.1"
+        ]
       }
     }
   },

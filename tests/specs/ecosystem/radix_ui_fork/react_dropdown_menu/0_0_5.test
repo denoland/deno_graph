@@ -42,12 +42,17 @@ radix-ui-fork/react-dropdown-menu/0.0.5
       "@radix-ui-fork/react-arrow@0.0.5": {
         "integrity": "bc95feacc83e63c568afcda0dad6c03f18f0ecf24bd6b25b9498ab87e0d1bcc4",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
       "@radix-ui-fork/react-collection@0.0.5": {
         "integrity": "dafed41f834b9827495f579d24e2b092a3cbce1695e40b1cefb1cb2c66e55cdd",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-context@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
+          "jsr:@radix-ui-fork/react-slot@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -72,6 +77,10 @@ radix-ui-fork/react-dropdown-menu/0.0.5
       "@radix-ui-fork/react-dismissable-layer@0.0.5": {
         "integrity": "18ca37d00396cce53abec13f2730b54c1d4c217b7c13b5c129956670b79e67c5",
         "dependencies": [
+          "jsr:@radix-ui-fork/primitive@0.0.5",
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
           "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
@@ -85,6 +94,9 @@ radix-ui-fork/react-dropdown-menu/0.0.5
       "@radix-ui-fork/react-focus-scope@0.0.5": {
         "integrity": "b66dd6a7a6d6ced1d88f139438de6bcf14dbe2466524d9dfde5ad79ffc31c437",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -101,6 +113,7 @@ radix-ui-fork/react-dropdown-menu/0.0.5
           "jsr:@radix-ui-fork/primitive@0.0.5",
           "jsr:@radix-ui-fork/react-collection@0.0.5",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-context@0.0.5",
           "jsr:@radix-ui-fork/react-direction@0.0.5",
           "jsr:@radix-ui-fork/react-dismissable-layer@0.0.5",
           "jsr:@radix-ui-fork/react-focus-guards@0.0.5",
@@ -109,6 +122,7 @@ radix-ui-fork/react-dropdown-menu/0.0.5
           "jsr:@radix-ui-fork/react-popper@0.0.5",
           "jsr:@radix-ui-fork/react-portal@0.0.5",
           "jsr:@radix-ui-fork/react-presence@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
           "jsr:@radix-ui-fork/react-roving-focus@0.0.5",
           "jsr:@radix-ui-fork/react-slot@0.0.5",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
@@ -121,6 +135,10 @@ radix-ui-fork/react-dropdown-menu/0.0.5
         "integrity": "69860df2436a6b5cad6f390d7f015dc7b7051213d6535d1fef4cddd57c10860c",
         "dependencies": [
           "jsr:@radix-ui-fork/react-arrow@0.0.5",
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-context@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
           "jsr:@radix-ui-fork/react-use-layout-effect@0.0.5",
           "jsr:@radix-ui-fork/react-use-size@0.0.5",
           "jsr:@radix-ui-fork/rect@0.0.5",
@@ -131,6 +149,7 @@ radix-ui-fork/react-dropdown-menu/0.0.5
       "@radix-ui-fork/react-portal@0.0.5": {
         "integrity": "b51510819a5ec95d21ea7f6784d5fe60c0b1383f445e0a81c434c5888467f487",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
           "npm:@types/react@^18.2.0",
           "npm:react-dom@^18.0.0"
         ]
@@ -138,6 +157,7 @@ radix-ui-fork/react-dropdown-menu/0.0.5
       "@radix-ui-fork/react-presence@0.0.5": {
         "integrity": "9a3c024230f1e46090c22979d55f43a32b71a3e5817523bbf66ccf943d94d024",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
           "jsr:@radix-ui-fork/react-use-layout-effect@0.0.5",
           "npm:@types/react@^18.2.0",
           "npm:react-dom@^18.0.0"
@@ -154,6 +174,14 @@ radix-ui-fork/react-dropdown-menu/0.0.5
       "@radix-ui-fork/react-roving-focus@0.0.5": {
         "integrity": "69768ff4a0168cde8656c41ffdc2d4b2a2552b62db147f7259300a3868726391",
         "dependencies": [
+          "jsr:@radix-ui-fork/primitive@0.0.5",
+          "jsr:@radix-ui-fork/react-collection@0.0.5",
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
+          "jsr:@radix-ui-fork/react-context@0.0.5",
+          "jsr:@radix-ui-fork/react-direction@0.0.5",
+          "jsr:@radix-ui-fork/react-id@0.0.5",
+          "jsr:@radix-ui-fork/react-primitive@0.0.5",
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
           "jsr:@radix-ui-fork/react-use-controllable-state@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
@@ -161,6 +189,7 @@ radix-ui-fork/react-dropdown-menu/0.0.5
       "@radix-ui-fork/react-slot@0.0.5": {
         "integrity": "da6db6dbef8bf1ea63f3b8ceeb67b9347e208902795517f512da1651ee5b5d30",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -173,12 +202,14 @@ radix-ui-fork/react-dropdown-menu/0.0.5
       "@radix-ui-fork/react-use-controllable-state@0.0.5": {
         "integrity": "3b06b23bf0f089c86fc911aca8e757d51a669382a55f50b3a7078133fe7b465f",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
       "@radix-ui-fork/react-use-escape-keydown@0.0.5": {
         "integrity": "39d1b0e26e9fb02113082caae1ed610e53051ced18915a60777363d11d27a523",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.5",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -191,6 +222,7 @@ radix-ui-fork/react-dropdown-menu/0.0.5
       "@radix-ui-fork/react-use-size@0.0.5": {
         "integrity": "84388e400c6cf92f8d392489e7401206302224594210cc1d7bc72b148ad33466",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-layout-effect@0.0.5",
           "npm:@types/react@^18.2.0",
           "npm:@types/resize-observer-browser@0.1.11"
         ]

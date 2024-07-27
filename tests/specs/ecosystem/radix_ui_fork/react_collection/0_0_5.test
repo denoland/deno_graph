@@ -28,6 +28,7 @@ radix-ui-fork/react-collection/0.0.5
       "@radix-ui-fork/react-primitive@0.0.5": {
         "integrity": "61ad02faf46775f34b1ea0e4dc2bd4ee71aca54a1dc58bca9383abacbfaad14f",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-slot@0.0.5",
           "npm:@types/react@^18.2.0",
           "npm:react-dom@^18.0.0"
         ]

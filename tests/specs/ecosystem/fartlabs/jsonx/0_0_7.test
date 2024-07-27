@@ -20,7 +20,10 @@ fartlabs/jsonx/0.0.7
         ]
       },
       "@std/path@0.217.0": {
-        "integrity": "1217cc25534bca9a2f672d7fe7c6f356e4027df400c0e85c0ef3e4343bc67d11"
+        "integrity": "1217cc25534bca9a2f672d7fe7c6f356e4027df400c0e85c0ef3e4343bc67d11",
+        "dependencies": [
+          "jsr:@std/assert@^0.217.0"
+        ]
       }
     }
   },

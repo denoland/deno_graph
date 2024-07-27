@@ -18,6 +18,7 @@ radix-ui-fork/react-popper/0.0.4
       "@radix-ui-fork/react-arrow@0.0.4": {
         "integrity": "10577f1b6a909326a8beedddf9be26ee81b72828a7d5ee4a63f9473c4dd0bab9",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.4",
           "npm:@types/react@^18.2.0"
         ]
       },

@@ -20,7 +20,10 @@ gnome/assert/0.0.0
         "integrity": "e20e9a2312a8b5393272c26191c0a68eda8d2c4b08b046bad1673148f1d69851"
       },
       "@std/internal@0.224.0": {
-        "integrity": "afc50644f9cdf4495eeb80523a8f6d27226b4b36c45c7c195dfccad4b8509291"
+        "integrity": "afc50644f9cdf4495eeb80523a8f6d27226b4b36c45c7c195dfccad4b8509291",
+        "dependencies": [
+          "jsr:@std/fmt@^0.224.0"
+        ]
       }
     }
   },

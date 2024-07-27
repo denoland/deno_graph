@@ -24,10 +24,10 @@ impl<'a> Default for &'a dyn Executor {
 
       impl Executor for DefaultExecutor {
         fn execute(&self, future: BoxedFuture) -> BoxedFuture {
-          #[cfg(not(feature = "tokio_executor"))]
+          #[cfg(target_arch = "wasm32")]
           return future;
 
-          #[cfg(feature = "tokio_executor")]
+          #[cfg(not(target_arch = "wasm32"))]
           {
             use futures::FutureExt;
             deno_unsync::spawn(future).map(|v| v.unwrap()).boxed_local()

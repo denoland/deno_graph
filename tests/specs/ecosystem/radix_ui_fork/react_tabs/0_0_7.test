@@ -27,6 +27,10 @@ radix-ui-fork/react-tabs/0.0.7
       "@radix-ui-fork/react-collection@0.0.7": {
         "integrity": "f1e00ae3fb49e80ac21f4bf245f3ca92fa6af181ef4f246665f6b2373c9880f5",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.7",
+          "jsr:@radix-ui-fork/react-context@0.0.7",
+          "jsr:@radix-ui-fork/react-primitive@0.0.7",
+          "jsr:@radix-ui-fork/react-slot@0.0.7",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -69,8 +73,10 @@ radix-ui-fork/react-tabs/0.0.7
           "jsr:@radix-ui-fork/primitive@0.0.7",
           "jsr:@radix-ui-fork/react-collection@0.0.7",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.7",
+          "jsr:@radix-ui-fork/react-context@0.0.7",
           "jsr:@radix-ui-fork/react-direction@0.0.7",
           "jsr:@radix-ui-fork/react-id@0.0.7",
+          "jsr:@radix-ui-fork/react-primitive@0.0.7",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.7",
           "jsr:@radix-ui-fork/react-use-controllable-state@0.0.7",
           "npm:@types/react@^18.2.0"
@@ -79,6 +85,7 @@ radix-ui-fork/react-tabs/0.0.7
       "@radix-ui-fork/react-slot@0.0.7": {
         "integrity": "079a5759efe0e888bbd5f973b5e281add7b87a54fa6ca5d06ee0d15187a760e8",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.7",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -91,6 +98,7 @@ radix-ui-fork/react-tabs/0.0.7
       "@radix-ui-fork/react-use-controllable-state@0.0.7": {
         "integrity": "a04c6c1116f8d3f63e08c2892aec06bdb2f8c959c5d8d7187cbbd77cc3494e4b",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.7",
           "npm:@types/react@^18.2.0"
         ]
       },

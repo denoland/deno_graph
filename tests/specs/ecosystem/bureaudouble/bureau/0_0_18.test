@@ -1943,15 +1943,191 @@ bureaudouble/bureau/0.0.18
 -- stdout --
 
 -- stderr --
-error: Uncaught Error: [ERR_PACKAGE_PATH_NOT_EXPORTED] Package subpath './client' is not defined for types by "exports" in '<global_npm_dir>/react-dom/18.2.0/package.json' imported from 'file://<tmpdir>/src/lib/useClient.ts'
-    at Object.resolveModuleNames (ext:deno_tsc/99_main_compiler.js:766:28)
-    at actualResolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:124316:142)
-    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:124748:20)
-    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:124834:14)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:126351:118)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:126129:7)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:125980:20)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:126377:11)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:126129:7)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:125980:20)
+error: TS2503 [ERROR]: Cannot find namespace 'JSX'.
+export const CustomInput = ({}: CustomInputProps): JSX.Element =>({} as never);
+                                                   ~~~
+    at file://<tmpdir>/src/components/CustomInput.tsx:16:52
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+export default <TData = Record<string, unknown>>({}: DataTableProps<TData>): JSX.Element =>({} as never);
+                                                                             ~~~
+    at file://<tmpdir>/src/components/DataTable.tsx:19:78
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/Media.tsx:16:5
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/SqlInput.tsx:10:5
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element {
+    ~~~
+    at file://<tmpdir>/src/components/bureau-ui/combobox.tsx:15:5
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:15:131
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:15:177
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:16:131
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:16:177
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) : JSX.Element;
+                                                 ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:18:50
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) : JSX.Element;
+                                                                    ~~~
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:18:69
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) : JSX.Element;
+                                                 ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:22:50
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) : JSX.Element;
+                                                                    ~~~
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:22:69
+
+TS2304 [ERROR]: Cannot find name 'HTMLHeadingElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:25:127
+
+TS2304 [ERROR]: Cannot find name 'HTMLHeadingElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:25:177
+
+TS2304 [ERROR]: Cannot find name 'HTMLParagraphElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:26:139
+
+TS2304 [ERROR]: Cannot find name 'HTMLParagraphElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:26:191
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:27:129
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+}> & ClassProp) | undefined) => string> & React.RefAttributes<HTMLButtonElement>> = {} as never;
+                                                              ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:42:63
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:43:129
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/alert-dialog.tsx:43:178
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/checkbox.tsx:6:108
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/checkbox.tsx:6:157
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:12:140
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+} & React.RefAttributes<HTMLDivElement>> = {} as never;
+                        ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:14:25
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:15:140
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:15:186
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:16:134
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:16:180
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:17:128
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+} & React.RefAttributes<HTMLDivElement>> = {} as never;
+                        ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:19:25
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:20:144
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:20:190
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:21:138
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:21:184
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:22:130
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+} & React.RefAttributes<HTMLDivElement>> = {} as never;
+                        ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:24:25
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:25:138
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:25:184
+
+TS2304 [ERROR]: Cannot find name 'HTMLSpanElement'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) : JSX.Element;
+                                                 ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:27:50
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+  ({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) : JSX.Element;
+                                                                     ~~~
+    at file://<tmpdir>/src/components/ui/dropdown-menu.tsx:27:70
+
+TS2503 [ERROR]: Cannot find namespace 'React'.
+type ToasterProps = React.ComponentProps<typeof Sonner>;
+                    ~~~~~
+    at file://<tmpdir>/src/components/ui/sonner.tsx:5:21
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+const Toaster = ({}: ToasterProps): JSX.Element =>({} as never);
+                                    ~~~
+    at file://<tmpdir>/src/components/ui/sonner.tsx:6:37
+
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
+}): JSX.Element =>({} as never);
+    ~~~
+    at file://<tmpdir>/src/components/ui/sonner.tsx:9:5
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/tabs.tsx:7:104
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/tabs.tsx:7:150
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/tabs.tsx:8:110
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+    at file://<tmpdir>/src/components/ui/tabs.tsx:8:159
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/tabs.tsx:9:110
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/src/components/ui/tabs.tsx:9:156
+
+Found 50 errors.
 

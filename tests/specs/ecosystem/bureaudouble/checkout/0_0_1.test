@@ -15,6 +15,7 @@ bureaudouble/checkout/0.0.1
       "@bureaudouble/context-session@0.0.2": {
         "integrity": "39a41bbf91b18224255db10de063a875405a3b95c401aad1e890ab37f8110bd7",
         "dependencies": [
+          "jsr:@bureaudouble/outils@0.0.42",
           "jsr:@std/http@0.217",
           "npm:oslo@1.2.0"
         ]

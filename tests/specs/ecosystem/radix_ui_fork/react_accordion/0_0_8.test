@@ -28,8 +28,10 @@ radix-ui-fork/react-accordion/0.0.8
         "dependencies": [
           "jsr:@radix-ui-fork/primitive@0.0.8",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
+          "jsr:@radix-ui-fork/react-context@0.0.8",
           "jsr:@radix-ui-fork/react-id@0.0.8",
           "jsr:@radix-ui-fork/react-presence@0.0.8",
+          "jsr:@radix-ui-fork/react-primitive@0.0.8",
           "jsr:@radix-ui-fork/react-use-controllable-state@0.0.8",
           "jsr:@radix-ui-fork/react-use-layout-effect@0.0.8",
           "npm:@types/react@^18.2.0"
@@ -50,12 +52,15 @@ radix-ui-fork/react-accordion/0.0.8
       "@radix-ui-fork/react-id@0.0.8": {
         "integrity": "a1dce22ea575f2fe384115a722c7a12e6ce87c69513bbbcab1f8da6cbfbaf807",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-layout-effect@0.0.8",
           "npm:@types/react@^18.2.0"
         ]
       },
       "@radix-ui-fork/react-presence@0.0.8": {
         "integrity": "0bf1cd10231626a6e411f46df7c44ad97a0323a8892a478407e15c30df2ace6d",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
+          "jsr:@radix-ui-fork/react-use-layout-effect@0.0.8",
           "npm:@types/react-dom@^18.2.0",
           "npm:@types/react@^18.2.0"
         ]
@@ -71,6 +76,7 @@ radix-ui-fork/react-accordion/0.0.8
       "@radix-ui-fork/react-slot@0.0.8": {
         "integrity": "ab722b1cb0b4b2ed64402ada44def2352eb2b47ddd8af605f44c7768a4e48a78",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.8",
           "npm:@types/react@^18.2.0"
         ]
       },

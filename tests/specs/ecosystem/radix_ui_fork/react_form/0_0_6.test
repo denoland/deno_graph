@@ -29,6 +29,7 @@ radix-ui-fork/react-form/0.0.6
       "@radix-ui-fork/react-label@0.0.6": {
         "integrity": "e100888ab00048a9e8ce5f0a24da63e484ff9e6a189b49f56433f438bbffd314",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.6",
           "npm:@types/react@^18.2.0"
         ]
       },

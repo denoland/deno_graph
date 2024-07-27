@@ -56,12 +56,17 @@ radix-ui-fork/react-menu/0.0.6
       "@radix-ui-fork/react-arrow@0.0.6": {
         "integrity": "6c55a0e1856a438917d7f6d10052391dc3391dadcfe8158e49d7204371a74ef5",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.6",
           "npm:@types/react@^18.2.0"
         ]
       },
       "@radix-ui-fork/react-collection@0.0.6": {
         "integrity": "8bdc0a72cf92d1206b95b7d6270dd54d970aab27a51a976e8c51985a83a0faa3",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.6",
+          "jsr:@radix-ui-fork/react-context@0.0.6",
+          "jsr:@radix-ui-fork/react-primitive@0.0.6",
+          "jsr:@radix-ui-fork/react-slot@0.0.6",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -88,6 +93,7 @@ radix-ui-fork/react-menu/0.0.6
         "dependencies": [
           "jsr:@radix-ui-fork/primitive@0.0.6",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.6",
+          "jsr:@radix-ui-fork/react-primitive@0.0.6",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.6",
           "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.6",
           "npm:@types/react@^18.2.0"
@@ -97,6 +103,7 @@ radix-ui-fork/react-menu/0.0.6
         "integrity": "b354d04557cd11b1b61935aad4fca95d5e472efd4127f87f8d5fc9a79e4628b0",
         "dependencies": [
           "jsr:@radix-ui-fork/react-compose-refs@0.0.6",
+          "jsr:@radix-ui-fork/react-primitive@0.0.6",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.6",
           "npm:@types/react@^18.2.0"
         ]
@@ -104,6 +111,7 @@ radix-ui-fork/react-menu/0.0.6
       "@radix-ui-fork/react-id@0.0.6": {
         "integrity": "e600c02692b35991b821487f7f037f952e3a574a3b6c61e2ca9fc5e54b9f741a",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-layout-effect@0.0.6",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -113,6 +121,8 @@ radix-ui-fork/react-menu/0.0.6
           "jsr:@bureaudouble-forks/floating-ui-react-dom@0.0.1",
           "jsr:@radix-ui-fork/react-arrow@0.0.6",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.6",
+          "jsr:@radix-ui-fork/react-context@0.0.6",
+          "jsr:@radix-ui-fork/react-primitive@0.0.6",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.6",
           "jsr:@radix-ui-fork/react-use-layout-effect@0.0.6",
           "jsr:@radix-ui-fork/react-use-size@0.0.6",
@@ -123,6 +133,7 @@ radix-ui-fork/react-menu/0.0.6
       "@radix-ui-fork/react-portal@0.0.6": {
         "integrity": "ef3d623aa20122d627293e4efab63f1a9d361b435029bb895f4e0f45fb28ce20",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.6",
           "npm:@types/react@^18.2.0",
           "npm:react-dom@^18.0.0"
         ]
@@ -141,8 +152,10 @@ radix-ui-fork/react-menu/0.0.6
           "jsr:@radix-ui-fork/primitive@0.0.6",
           "jsr:@radix-ui-fork/react-collection@0.0.6",
           "jsr:@radix-ui-fork/react-compose-refs@0.0.6",
+          "jsr:@radix-ui-fork/react-context@0.0.6",
           "jsr:@radix-ui-fork/react-direction@0.0.6",
           "jsr:@radix-ui-fork/react-id@0.0.6",
+          "jsr:@radix-ui-fork/react-primitive@0.0.6",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.6",
           "jsr:@radix-ui-fork/react-use-controllable-state@0.0.6",
           "npm:@types/react@^18.2.0"
@@ -151,6 +164,7 @@ radix-ui-fork/react-menu/0.0.6
       "@radix-ui-fork/react-slot@0.0.6": {
         "integrity": "96bf65dbe6fcd1f7baf8147e1cee83ed1ff2c59242349ca2ea76074305b54deb",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.6",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -163,12 +177,14 @@ radix-ui-fork/react-menu/0.0.6
       "@radix-ui-fork/react-use-controllable-state@0.0.6": {
         "integrity": "09c820899a7f82bb3540927849f8b3b99811e91b32480b71f61000b99598236b",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.6",
           "npm:@types/react@^18.2.0"
         ]
       },
       "@radix-ui-fork/react-use-escape-keydown@0.0.6": {
         "integrity": "e17fdce7f8f6b9ee7de1efdbe79c82b606d20c64cffef01cb66b854f6ef8dc77",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.6",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -181,6 +197,7 @@ radix-ui-fork/react-menu/0.0.6
       "@radix-ui-fork/react-use-size@0.0.6": {
         "integrity": "0e0ee23f08a1822e0eb3eee01054b99c48bce053a9b491420f0e7d6514cd063b",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-layout-effect@0.0.6",
           "npm:@types/react@^18.2.0",
           "npm:@types/resize-observer-browser@0.1.11"
         ]
