@@ -37,6 +37,7 @@ bureaudouble/vaul/0.0.3
       "@bureaudouble-forks/react-remove-scroll-bar@0.0.2": {
         "integrity": "30196c385c68d1281f4656ff183b71c542d11008cdca448438c029d196ab83e3",
         "dependencies": [
+          "jsr:@bureaudouble-forks/react-style-singleton@0.0.1",
           "npm:@types/react@^18.2"
         ]
       },
@@ -108,6 +109,9 @@ bureaudouble/vaul/0.0.3
       "@radix-ui-fork/react-dismissable-layer@0.0.7": {
         "integrity": "5e508e617b23515796902a0e962d2c64bae7f191151ecaaae7bf43d1985b2111",
         "dependencies": [
+          "jsr:@radix-ui-fork/primitive@0.0.7",
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.7",
+          "jsr:@radix-ui-fork/react-primitive@0.0.7",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.7",
           "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.7",
           "npm:@types/react@^18.2.0"
@@ -122,6 +126,8 @@ bureaudouble/vaul/0.0.3
       "@radix-ui-fork/react-focus-scope@0.0.7": {
         "integrity": "306509faad03daefb5276c45a3888950cd6375c517f1f92b6d26e74117e9fc9d",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.7",
+          "jsr:@radix-ui-fork/react-primitive@0.0.7",
           "jsr:@radix-ui-fork/react-use-callback-ref@0.0.7",
           "npm:@types/react@^18.2.0"
         ]
@@ -136,6 +142,7 @@ bureaudouble/vaul/0.0.3
       "@radix-ui-fork/react-portal@0.0.7": {
         "integrity": "3bdf3789bc3e17ea34bd5275798ee01537b0828182aea8352827434afb31e9c4",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-primitive@0.0.7",
           "npm:@types/react-dom@^18.2.0",
           "npm:@types/react@^18.2.0"
         ]
@@ -143,6 +150,7 @@ bureaudouble/vaul/0.0.3
       "@radix-ui-fork/react-presence@0.0.7": {
         "integrity": "2639a73d942865b6e4cbeb3cf1ff4bf068ffd26fa70d01370d0ecf4d844453ad",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.7",
           "jsr:@radix-ui-fork/react-use-layout-effect@0.0.7",
           "npm:@types/react-dom@^18.2.0",
           "npm:@types/react@^18.2.0"
@@ -151,6 +159,7 @@ bureaudouble/vaul/0.0.3
       "@radix-ui-fork/react-primitive@0.0.7": {
         "integrity": "09990e5b708b9f1957babc8577a12c9e43332b3b3ad62c5e6a03b3a75ae4d146",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-slot@0.0.7",
           "npm:@types/react-dom@^18.2.0",
           "npm:@types/react@^18.2.0"
         ]
@@ -158,6 +167,7 @@ bureaudouble/vaul/0.0.3
       "@radix-ui-fork/react-slot@0.0.7": {
         "integrity": "079a5759efe0e888bbd5f973b5e281add7b87a54fa6ca5d06ee0d15187a760e8",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-compose-refs@0.0.7",
           "npm:@types/react@^18.2.0"
         ]
       },
@@ -177,6 +187,7 @@ bureaudouble/vaul/0.0.3
       "@radix-ui-fork/react-use-escape-keydown@0.0.7": {
         "integrity": "c86cb6df9b1f88ddc5c061161a11c3d152b867e81f156c34e9506d68c5b7b743",
         "dependencies": [
+          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.7",
           "npm:@types/react@^18.2.0"
         ]
       },

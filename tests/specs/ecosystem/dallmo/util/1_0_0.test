@@ -16,6 +16,7 @@ dallmo/util/1.0.0
       "@dallmo/util-array@1.2.0": {
         "integrity": "bb6cd4de4b7145b927fd808d93cf4bf759c9b93fcba6828cd12cef1fd4491a71",
         "dependencies": [
+          "jsr:@dallmo/util-math@^1.1.0",
           "jsr:@std/assert@^0.218.2"
         ]
       },

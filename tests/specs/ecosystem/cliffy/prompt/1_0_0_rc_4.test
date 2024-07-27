@@ -15,7 +15,8 @@ cliffy/prompt/1.0.0-rc.4
         "integrity": "df561b6a69bb5177c31618c027274504ed24b996b854fa072eb7d0a380e41ac1",
         "dependencies": [
           "jsr:@std/encoding@0.221",
-          "jsr:@std/fmt@0.221"
+          "jsr:@std/fmt@0.221",
+          "jsr:@std/io@0.221"
         ]
       },
       "@cliffy/keycode@1.0.0-rc.4": {

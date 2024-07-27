@@ -26,7 +26,11 @@ space-operator/deno-command-rpc/0.8.2
     },
     "jsr": {
       "@oak/commons@0.7.0": {
-        "integrity": "4bd889b3dc9ddac1b602034d88c137f06de7078775961b51081beb5f175c120b"
+        "integrity": "4bd889b3dc9ddac1b602034d88c137f06de7078775961b51081beb5f175c120b",
+        "dependencies": [
+          "jsr:@std/assert@0.218",
+          "jsr:@std/media-types@0.218"
+        ]
       },
       "@oak/oak@14.2.0": {
         "integrity": "b683b089693004ac3bca80b52159b3e9ad214dc8246ff5dc61ba658da78bc166",
