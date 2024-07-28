@@ -586,7 +586,7 @@ fn member_expr_into_id_and_parts(
   fn member_prop_to_str(member_prop: &MemberProp) -> Option<String> {
     match member_prop {
       MemberProp::Ident(ident) => Some(ident.sym.to_string()),
-      MemberProp::PrivateName(n) => Some(format!("#{}", n.id.sym)),
+      MemberProp::PrivateName(n) => Some(format!("#{}", n.name)),
       MemberProp::Computed(n) => match &*n.expr {
         Expr::Lit(Lit::Str(str)) => Some(str.value.to_string()),
         _ => None,

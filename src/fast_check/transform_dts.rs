@@ -1,4 +1,5 @@
 use deno_ast::swc::ast::*;
+use deno_ast::swc::common::SyntaxContext;
 use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::ModuleSpecifier;
 use deno_ast::SourceRange;
@@ -223,7 +224,8 @@ impl<'a> FastCheckDtsTransformer<'a> {
             }
 
             let name = self.gen_unique_name();
-            let name_ident = Ident::new(name.into(), DUMMY_SP);
+            let name_ident =
+              Ident::new(name.into(), DUMMY_SP, SyntaxContext::default());
             let type_ann = self
               .expr_to_ts_type(*export_default_expr.expr.clone(), false, true)
               .map(type_ann);
@@ -232,6 +234,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
               new_items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(
                 Box::new(VarDecl {
                   span: DUMMY_SP,
+                  ctxt: Default::default(),
                   kind: VarDeclKind::Const,
                   declare: true,
                   decls: vec![VarDeclarator {
@@ -356,7 +359,15 @@ impl<'a> FastCheckDtsTransformer<'a> {
               match prop {
                 Prop::KeyValue(key_value) => {
                   let (key, computed) = match key_value.key {
-                    PropName::Ident(ident) => (Expr::Ident(ident), false),
+                    PropName::Ident(ident_name) => (
+                      Expr::Ident(Ident {
+                        span: ident_name.span,
+                        ctxt: SyntaxContext::default(),
+                        sym: ident_name.sym,
+                        optional: false,
+                      }),
+                      false,
+                    ),
                     PropName::Str(str_prop) => {
                       (Expr::Lit(Lit::Str(str_prop)), false)
                     }
@@ -904,13 +915,13 @@ impl<'a> FastCheckDtsTransformer<'a> {
         .expr_to_ts_type(*assign_pat.right, false, false)
         .map(|param| {
           let name = if let Pat::Ident(ident) = *assign_pat.left {
-            ident.id.sym.as_str().to_string()
+            ident.id.sym.clone()
           } else {
-            self.gen_unique_name()
+            self.gen_unique_name().into()
           };
 
           TsFnParam::Ident(BindingIdent {
-            id: Ident::new(name.into(), assign_pat.span),
+            id: Ident::new(name, assign_pat.span, Default::default()),
             type_ann: Some(type_ann(param)),
           })
         }),
@@ -995,6 +1006,7 @@ mod tests {
       &EmitOptions {
         remove_comments: false,
         source_map: deno_ast::SourceMapOption::None,
+        source_map_base: None,
         source_map_file: None,
         inline_sources: false,
       },
