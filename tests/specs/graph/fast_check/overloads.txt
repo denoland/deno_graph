@@ -27,6 +27,18 @@ export function overloadLast(value: string | number, ...args: unknown[]) {
   return args;
 }
 
+function overloadsNonExportDecl(args: string): void;
+function overloadsNonExportDecl(args: number): void;
+function overloadsNonExportDecl(args: any): void {
+}
+
+export { overloadsNonExportDecl };
+
+export default function defaultExport(args: string): void;
+export default function defaultExport(args: number): void;
+export default function defaultExport(args: any): void {
+}
+
 # mod.ts
 import 'jsr:@scope/a'
 
@@ -62,7 +74,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 682,
+      "size": 1056,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -97,6 +109,17 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export function overloadLast(param0?: any, ...param1: any): any {
     return {} as never;
   }
+  function overloadsNonExportDecl(args: string): void;
+  function overloadsNonExportDecl(args: number): void;
+  function overloadsNonExportDecl(param0?: any): any {
+    return {} as never;
+  }
+  export { overloadsNonExportDecl };
+  export default function defaultExport(args: string): void;
+  export default function defaultExport(args: number): void;
+  export default function defaultExport(param0?: any): any {
+    return {} as never;
+  }
   --- DTS ---
   export declare class argsToArray {
     constructor(..._args: string[]);
@@ -108,3 +131,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export declare function overloadSpread(...args: number[]): void;
   export declare function overloadLast(value: string, ...args: string[]): void;
   export declare function overloadLast(value: number, ...args: number[]): void;
+  declare function overloadsNonExportDecl(args: string): void;
+  declare function overloadsNonExportDecl(args: number): void;
+  export { overloadsNonExportDecl };
+  export default function defaultExport(args: string): void;
+  export default function defaultExport(args: number): void;

@@ -194,7 +194,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export declare function test7(param?: number, param2?: PublicOther2): number;
   declare function test8(param: number): number;
   declare function test8(param: string): string;
-  declare function test8(param0?: any): any;
   export { test8 };
   export default function test9(param: number): number;
   export default function test9(param: string): string;
