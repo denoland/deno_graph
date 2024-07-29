@@ -1382,7 +1382,7 @@ impl<'a> FastCheckTransformer<'a> {
                 if !is_expr_leavable {
                   self.mark_diagnostic(
                     FastCheckDiagnostic::MissingExplicitType {
-                      range: self.source_range_to_range(ident.range()),
+                      range: self.source_range_to_range(ident.id.range()),
                     },
                   )?;
                 }
@@ -1518,7 +1518,7 @@ impl<'a> FastCheckTransformer<'a> {
               if !is_init_leavable {
                 self.mark_diagnostic(
                   FastCheckDiagnostic::MissingExplicitType {
-                    range: self.source_range_to_range(ident.range()),
+                    range: self.source_range_to_range(ident.id.range()),
                   },
                 )?;
               }
