@@ -72,4 +72,5 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   --- DTS ---
   export declare abstract class Value {
     protected body?(): string | undefined | Promise<string | undefined>;
+    protected footer(): string | undefined;
   }

@@ -799,35 +799,14 @@ impl<'a> FastCheckDtsTransformer<'a> {
   }
 
   fn class_body_to_type(&mut self, body: Vec<ClassMember>) -> Vec<ClassMember> {
-    // Track if the previous member was an overload signature or not.
-    // When overloads are present the last item has the implementation
-    // body. For declaration files the implementation always needs to
-    // be dropped. Needs to be unique for each class because another
-    // class could be created inside a class method.
-    let mut prev_is_overload = false;
-
     body
       .into_iter()
       .filter(|member| match member {
-        ClassMember::Constructor(class_constructor) => {
-          let is_overload = class_constructor.body.is_none();
-          if !prev_is_overload || is_overload {
-            prev_is_overload = is_overload;
-            true
-          } else {
-            prev_is_overload = false;
-            false
-          }
-        }
+        ClassMember::Constructor(constructor) => !self
+          .public_ranges
+          .is_impl_with_overloads(&constructor.range()),
         ClassMember::Method(method) => {
-          let is_overload = method.function.body.is_none();
-          if !prev_is_overload || is_overload {
-            prev_is_overload = is_overload;
-            true
-          } else {
-            prev_is_overload = false;
-            false
-          }
+          !self.public_ranges.is_impl_with_overloads(&method.range())
         }
         ClassMember::TsIndexSignature(_)
         | ClassMember::ClassProp(_)
@@ -835,10 +814,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
         | ClassMember::Empty(_)
         | ClassMember::StaticBlock(_)
         | ClassMember::AutoAccessor(_)
-        | ClassMember::PrivateMethod(_) => {
-          prev_is_overload = false;
-          true
-        }
+        | ClassMember::PrivateMethod(_) => true,
       })
       .filter_map(|member| match member {
         ClassMember::Constructor(mut class_constructor) => {
