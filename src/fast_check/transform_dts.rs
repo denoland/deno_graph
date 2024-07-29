@@ -9,6 +9,7 @@ use deno_ast::SourceTextInfo;
 use crate::FastCheckDiagnostic;
 use crate::FastCheckDiagnosticRange;
 
+use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::any_type_ann;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::maybe_lit_to_ts_type_const;
@@ -67,6 +68,7 @@ impl FastCheckDtsDiagnostic {
 pub struct FastCheckDtsTransformer<'a> {
   id_counter: usize,
   text_info: &'a SourceTextInfo,
+  public_ranges: &'a ModulePublicRanges,
   pub diagnostics: Vec<FastCheckDtsDiagnostic>,
   specifier: &'a ModuleSpecifier,
   is_top_level: bool,
@@ -75,12 +77,14 @@ pub struct FastCheckDtsTransformer<'a> {
 impl<'a> FastCheckDtsTransformer<'a> {
   pub fn new(
     text_info: &'a SourceTextInfo,
+    public_ranges: &'a ModulePublicRanges,
     specifier: &'a ModuleSpecifier,
   ) -> Self {
     Self {
       id_counter: 0,
       text_info,
       specifier,
+      public_ranges,
       diagnostics: vec![],
       is_top_level: true,
     }
@@ -140,26 +144,21 @@ impl<'a> FastCheckDtsTransformer<'a> {
     body: Vec<ModuleItem>,
   ) -> Vec<ModuleItem> {
     let mut new_items: Vec<ModuleItem> = vec![];
-    let mut prev_is_overload = false;
 
     for item in body {
       match item {
         ModuleItem::ModuleDecl(module_decl) => match module_decl {
           ModuleDecl::Import(_) => {
-            prev_is_overload = false;
             new_items.push(ModuleItem::ModuleDecl(module_decl));
           }
           ModuleDecl::ExportDecl(export_decl) => {
-            let is_overload = if let Decl::Fn(fn_decl) = &export_decl.decl {
-              fn_decl.function.body.is_none()
-            } else {
-              false
-            };
-
-            let should_keep = prev_is_overload && !is_overload;
-            prev_is_overload = is_overload;
-            if should_keep {
-              continue;
+            if let Decl::Fn(_) = &export_decl.decl {
+              if self
+                .public_ranges
+                .is_impl_with_overloads(&export_decl.range())
+              {
+                continue; // skip implementation signature
+              }
             }
 
             if let Some(decl) = self.decl_to_type_decl(export_decl.decl.clone())
@@ -177,8 +176,6 @@ impl<'a> FastCheckDtsTransformer<'a> {
             }
           }
           ModuleDecl::ExportDefaultDecl(export_decl) => {
-            let mut is_overload = false;
-
             let value = match export_decl.decl {
               DefaultDecl::Class(mut class_expr) => {
                 class_expr.class.body =
@@ -189,7 +186,12 @@ impl<'a> FastCheckDtsTransformer<'a> {
                 }
               }
               DefaultDecl::Fn(mut fn_expr) => {
-                is_overload = fn_expr.function.body.is_none();
+                if self
+                  .public_ranges
+                  .is_impl_with_overloads(&export_decl.span.range())
+                {
+                  continue; // skip implementation signature
+                }
 
                 fn_expr.function.body = None;
                 ExportDefaultDecl {
@@ -200,29 +202,11 @@ impl<'a> FastCheckDtsTransformer<'a> {
               DefaultDecl::TsInterfaceDecl(_) => export_decl,
             };
 
-            let should_keep = prev_is_overload && !is_overload;
-            prev_is_overload = is_overload;
-            if should_keep {
-              continue;
-            }
-
             new_items.push(ModuleItem::ModuleDecl(
               ModuleDecl::ExportDefaultDecl(value),
             ))
           }
           ModuleDecl::ExportDefaultExpr(export_default_expr) => {
-            let is_overload =
-              if let Expr::Fn(fn_expr) = &*export_default_expr.expr {
-                fn_expr.function.body.is_none()
-              } else {
-                false
-              };
-            let should_keep = prev_is_overload && !is_overload;
-            prev_is_overload = is_overload;
-            if should_keep {
-              continue;
-            }
-
             let name = self.gen_unique_name();
             let name_ident =
               Ident::new(name.into(), DUMMY_SP, SyntaxContext::default());
@@ -270,13 +254,16 @@ impl<'a> FastCheckDtsTransformer<'a> {
           | ModuleDecl::TsExportAssignment(_)
           | ModuleDecl::ExportNamed(_)
           | ModuleDecl::ExportAll(_) => {
-            prev_is_overload = false;
             new_items.push(ModuleItem::ModuleDecl(module_decl));
           }
         },
         ModuleItem::Stmt(stmt) => {
-          prev_is_overload = false;
           if let Stmt::Decl(decl) = stmt {
+            if let Decl::Fn(_) = &decl {
+              if self.public_ranges.is_impl_with_overloads(&decl.range()) {
+                continue; // skip implementation signature
+              }
+            }
             match decl {
               Decl::TsEnum(_)
               | Decl::Class(_)
@@ -823,35 +810,14 @@ impl<'a> FastCheckDtsTransformer<'a> {
   }
 
   fn class_body_to_type(&mut self, body: Vec<ClassMember>) -> Vec<ClassMember> {
-    // Track if the previous member was an overload signature or not.
-    // When overloads are present the last item has the implementation
-    // body. For declaration files the implementation always needs to
-    // be dropped. Needs to be unique for each class because another
-    // class could be created inside a class method.
-    let mut prev_is_overload = false;
-
     body
       .into_iter()
       .filter(|member| match member {
-        ClassMember::Constructor(class_constructor) => {
-          let is_overload = class_constructor.body.is_none();
-          if !prev_is_overload || is_overload {
-            prev_is_overload = is_overload;
-            true
-          } else {
-            prev_is_overload = false;
-            false
-          }
-        }
+        ClassMember::Constructor(constructor) => !self
+          .public_ranges
+          .is_impl_with_overloads(&constructor.range()),
         ClassMember::Method(method) => {
-          let is_overload = method.function.body.is_none();
-          if !prev_is_overload || is_overload {
-            prev_is_overload = is_overload;
-            true
-          } else {
-            prev_is_overload = false;
-            false
-          }
+          !self.public_ranges.is_impl_with_overloads(&method.range())
         }
         ClassMember::TsIndexSignature(_)
         | ClassMember::ClassProp(_)
@@ -859,10 +825,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
         | ClassMember::Empty(_)
         | ClassMember::StaticBlock(_)
         | ClassMember::AutoAccessor(_)
-        | ClassMember::PrivateMethod(_) => {
-          prev_is_overload = false;
-          true
-        }
+        | ClassMember::PrivateMethod(_) => true,
       })
       .filter_map(|member| match member {
         ClassMember::Constructor(mut class_constructor) => {
@@ -938,6 +901,9 @@ impl<'a> FastCheckDtsTransformer<'a> {
 
 #[cfg(test)]
 mod tests {
+  use std::collections::VecDeque;
+
+  use crate::fast_check::range_finder::find_public_ranges;
   use crate::fast_check::transform_dts::FastCheckDtsTransformer;
   use crate::source::MemoryLoader;
   use crate::source::Source;
@@ -946,10 +912,14 @@ mod tests {
   use crate::CapturingModuleAnalyzer;
   use crate::GraphKind;
   use crate::ModuleGraph;
+  use crate::WorkspaceMember;
   use deno_ast::emit;
   use deno_ast::EmitOptions;
   use deno_ast::EmittedSourceText;
+  use deno_ast::ModuleSpecifier;
   use deno_ast::SourceMap;
+  use deno_semver::package::PackageNv;
+  use indexmap::IndexMap;
   use url::Url;
 
   async fn transform_dts_test(source: &str, expected: &str) {
@@ -989,9 +959,30 @@ mod tests {
 
     let parsed_source = module_info.source();
     let module = parsed_source.module().to_owned();
+    let nv = PackageNv::from_str("package@1.0.0").unwrap();
+    let public_ranges = find_public_ranges(
+      None,
+      Default::default(),
+      &graph,
+      &root_sym,
+      &[WorkspaceMember {
+        base: ModuleSpecifier::parse("file:///").unwrap(),
+        nv: nv.clone(),
+        exports: IndexMap::from([(".".to_string(), "./mod.ts".to_string())]),
+      }],
+      VecDeque::from([nv.clone()]),
+    )
+    .remove(&nv)
+    .unwrap()
+    .module_ranges
+    .shift_remove(&specifier)
+    .unwrap();
 
-    let mut transformer =
-      FastCheckDtsTransformer::new(parsed_source.text_info_lazy(), &specifier);
+    let mut transformer = FastCheckDtsTransformer::new(
+      parsed_source.text_info_lazy(),
+      &public_ranges,
+      &specifier,
+    );
     let module = transformer.transform(module).unwrap();
 
     let comments = parsed_source.comments().as_single_threaded();

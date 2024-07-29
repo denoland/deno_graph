@@ -172,8 +172,11 @@ pub fn transform(
   })?;
 
   let dts = if let Some(dts_comments) = dts_comments {
-    let mut dts_transformer =
-      FastCheckDtsTransformer::new(parsed_source.text_info_lazy(), specifier);
+    let mut dts_transformer = FastCheckDtsTransformer::new(
+      parsed_source.text_info_lazy(),
+      public_ranges,
+      specifier,
+    );
 
     let module = dts_transformer.transform(program.expect_module())?;
 
