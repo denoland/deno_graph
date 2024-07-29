@@ -32,7 +32,7 @@ pub enum ReturnStatementAnalysis {
   Void,
   /// There is only a single return statement in the function body, and it has
   /// an argument.
-  Single(ReturnStmt),
+  Single,
   /// There are multiple return statements in the function body, and at least
   /// one of them has an argument.
   Multiple,
@@ -75,9 +75,9 @@ fn analyze_return_stmts_from_stmt(
         (None, ReturnStatementAnalysis::Void) => {}
         (Some(_), ReturnStatementAnalysis::None)
         | (Some(_), ReturnStatementAnalysis::Void) => {
-          *analysis = ReturnStatementAnalysis::Single(n.clone());
+          *analysis = ReturnStatementAnalysis::Single;
         }
-        (_, ReturnStatementAnalysis::Single(_)) => {
+        (_, ReturnStatementAnalysis::Single { .. }) => {
           *analysis = ReturnStatementAnalysis::Multiple;
           return ControlFlow::Break(());
         }
@@ -152,7 +152,7 @@ pub fn type_ref(name: Atom) -> TsTypeRef {
   TsTypeRef {
     span: DUMMY_SP,
     type_name: TsEntityName::Ident(Ident::new(
-      name.into(),
+      name,
       DUMMY_SP,
       SyntaxContext::default(),
     )),

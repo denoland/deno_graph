@@ -806,13 +806,13 @@ impl<'a> FastCheckTransformer<'a> {
                 key: match &prop.param {
                   TsParamPropParam::Ident(binding_ident) => {
                     PropName::Ident(IdentName {
-                      span: binding_ident.span.clone(),
+                      span: binding_ident.span,
                       sym: binding_ident.sym.clone(),
                     })
                   }
                   TsParamPropParam::Assign(assign) => match &*assign.left {
                     Pat::Ident(binding_ident) => PropName::Ident(IdentName {
-                      span: binding_ident.span.clone(),
+                      span: binding_ident.span,
                       sym: binding_ident.sym.clone(),
                     }),
                     Pat::Array(_)
@@ -1318,7 +1318,7 @@ impl<'a> FastCheckTransformer<'a> {
           },
         )?;
       }
-      (ReturnStatementAnalysis::Single(_), _) => {
+      (ReturnStatementAnalysis::Single { .. }, _) => {
         // TODO: infer return type based on return type
         self.mark_diagnostic(
           FastCheckDiagnostic::MissingExplicitReturnType {
