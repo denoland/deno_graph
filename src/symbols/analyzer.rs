@@ -10,6 +10,8 @@ use deno_ast::swc::ast::*;
 use deno_ast::swc::atoms::Atom;
 use deno_ast::swc::utils::find_pat_ids;
 use deno_ast::swc::utils::is_valid_ident;
+use deno_ast::swc::visit::Visit;
+use deno_ast::swc::visit::VisitWith as _;
 use deno_ast::ModuleSpecifier;
 use deno_ast::ParsedSource;
 use deno_ast::SourceRange;
@@ -18,6 +20,9 @@ use deno_ast::SourceTextInfo;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
+use crate::swc_helpers::analyze_return_stmts_in_function_body;
+use crate::swc_helpers::FunctionKind;
+use crate::swc_helpers::ReturnStatementAnalysis;
 use crate::JsModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
@@ -366,6 +371,7 @@ impl std::fmt::Debug for SymbolNode {
         SymbolNodeInner::FnDecl(d) => {
           d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
+        SymbolNodeInner::Param { ident, .. } => ident.sym.to_string(),
         SymbolNodeInner::TsEnum(d) => {
           d.value().text_fast(d.source.text_info_lazy()).to_string()
         }
@@ -490,6 +496,9 @@ impl SymbolNode {
       SymbolNodeInner::FnDecl(n) => {
         Some((SymbolNodeRef::FnDecl(n.value()), n.source()))
       }
+      SymbolNodeInner::Param { ident, source } => {
+        Some((SymbolNodeRef::Param(ident), source))
+      }
       SymbolNodeInner::TsEnum(n) => {
         Some((SymbolNodeRef::TsEnum(n.value()), n.source()))
       }
@@ -575,6 +584,7 @@ enum SymbolNodeInner {
   ExportDefaultDecl(NodeRefBox<ExportDefaultDecl>),
   ExportDefaultExpr(NodeRefBox<ExportDefaultExpr>),
   FnDecl(NodeRefBox<FnDecl>),
+  Param { ident: Ident, source: ParsedSource },
   TsEnum(NodeRefBox<TsEnumDecl>),
   TsNamespace(NodeRefBox<TsModuleDecl>),
   TsTypeAlias(NodeRefBox<TsTypeAliasDecl>),
@@ -615,6 +625,7 @@ pub enum SymbolNodeRef<'a> {
   ExportDefaultExpr(&'a ExportDefaultExpr),
   ClassDecl(&'a ClassDecl),
   FnDecl(&'a FnDecl),
+  Param(&'a Ident),
   TsEnum(&'a TsEnumDecl),
   TsInterface(&'a TsInterfaceDecl),
   TsNamespace(&'a TsModuleDecl),
@@ -713,6 +724,7 @@ impl<'a> SymbolNodeRef<'a> {
       },
       Self::ExportDefaultExpr(_) => None,
       Self::FnDecl(n) => Some(Cow::Borrowed(&n.ident.sym)),
+      Self::Param(n) => Some(Cow::Borrowed(&n.sym)),
       Self::TsEnum(n) => Some(Cow::Borrowed(&n.id.sym)),
       Self::TsInterface(n) => Some(Cow::Borrowed(&n.id.sym)),
       Self::TsNamespace(n) => {
@@ -827,7 +839,8 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::ClassDecl(_)
       | SymbolNodeRef::TsEnum(_)
       | SymbolNodeRef::TsInterface(_) => true,
-      SymbolNodeRef::TsTypeAlias(_)
+      SymbolNodeRef::Param(_)
+      | SymbolNodeRef::TsTypeAlias(_)
       | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::Var(..)
       | SymbolNodeRef::UsingVar(..)
@@ -857,6 +870,7 @@ impl<'a> SymbolNodeRef<'a> {
       SymbolNodeRef::Module(_)
       | SymbolNodeRef::ClassDecl(_)
       | SymbolNodeRef::FnDecl(_)
+      | SymbolNodeRef::Param(_)
       | SymbolNodeRef::TsEnum(_)
       | SymbolNodeRef::TsInterface(_)
       | SymbolNodeRef::TsNamespace(_)
@@ -900,6 +914,7 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::ClassParamProp(_)
       | SymbolNodeRef::Constructor(_)
       | SymbolNodeRef::ExpandoProperty(..)
+      | SymbolNodeRef::Param(_)
       | SymbolNodeRef::TsIndexSignature(_)
       | SymbolNodeRef::TsCallSignatureDecl(_)
       | SymbolNodeRef::TsConstructSignatureDecl(_)
@@ -919,6 +934,7 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::ExportDefaultDecl(_)
       | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::FnDecl(_)
+      | SymbolNodeRef::Param(_)
       | SymbolNodeRef::TsEnum(_)
       | SymbolNodeRef::TsInterface(_)
       | SymbolNodeRef::TsNamespace(_)
@@ -950,6 +966,7 @@ impl<'a> SymbolNodeRef<'a> {
       | SymbolNodeRef::ExportDefaultDecl(_)
       | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::FnDecl(_)
+      | SymbolNodeRef::Param(_)
       | SymbolNodeRef::TsEnum(_)
       | SymbolNodeRef::TsInterface(_)
       | SymbolNodeRef::TsNamespace(_)
@@ -1331,6 +1348,16 @@ impl Symbol {
       .first()
       .and_then(|d| d.maybe_node())
       .map(|n| n.is_private_member())
+      .unwrap_or(false)
+  }
+
+  /// If the symbol is a parameter.
+  pub fn is_param(&self) -> bool {
+    self
+      .decls()
+      .first()
+      .and_then(|d| d.maybe_node())
+      .map(|n| matches!(n, SymbolNodeRef::Param(_)))
       .unwrap_or(false)
   }
 }
@@ -1987,6 +2014,11 @@ impl<'a> SymbolFiller<'a> {
             );
             module_symbol.add_export(n.ident.sym.to_string(), symbol_id);
             module_symbol.add_child_id(symbol_id);
+            self.fill_function(
+              symbol_id,
+              &n.function,
+              FunctionKind::DeclarationLike,
+            );
           }
           Decl::Var(n) => {
             for decl in &n.decls {
@@ -2013,6 +2045,7 @@ impl<'a> SymbolFiller<'a> {
                 module_symbol.add_child_id(symbol_id);
                 module_symbol.add_export(export_name, symbol_id);
               }
+              self.fill_var_decl(module_symbol.symbol_id(), decl);
             }
           }
           Decl::TsInterface(n) => {
@@ -2259,8 +2292,12 @@ impl<'a> SymbolFiller<'a> {
             DefaultDecl::Class(n) => {
               self.fill_class(symbol, &n.class);
             }
-            DefaultDecl::Fn(_) => {
-              // nothing to fill
+            DefaultDecl::Fn(n) => {
+              self.fill_function(
+                symbol.symbol_id(),
+                &n.function,
+                FunctionKind::DeclarationLike,
+              );
             }
             DefaultDecl::TsInterfaceDecl(n) => {
               self.fill_ts_interface(symbol, n)
@@ -2392,6 +2429,11 @@ impl<'a> SymbolFiller<'a> {
               if decls_are_exports {
                 module_symbol.add_export(n.ident.sym.to_string(), symbol_id);
               }
+              self.fill_function(
+                symbol_id,
+                &n.function,
+                FunctionKind::DeclarationLike,
+              );
             }
             Decl::Var(var_decl) => {
               for decl in &var_decl.decls {
@@ -2417,6 +2459,7 @@ impl<'a> SymbolFiller<'a> {
                     module_symbol.add_export(export_name, symbol_id);
                   }
                 }
+                self.fill_var_decl(module_symbol.symbol_id(), decl);
               }
             }
             Decl::TsInterface(n) => {
@@ -2532,6 +2575,7 @@ impl<'a> SymbolFiller<'a> {
                     module_symbol.add_export(export_name, symbol_id);
                   }
                 }
+                self.fill_var_decl(module_symbol.symbol_id(), decl);
               }
             }
           };
@@ -2618,6 +2662,11 @@ impl<'a> SymbolFiller<'a> {
   }
 
   fn fill_class(&self, symbol: &SymbolMut, n: &Class) {
+    if let Some(type_params) = n.type_params.as_ref() {
+      for param in &type_params.params {
+        self.add_param(symbol.symbol_id(), param.name.clone());
+      }
+    }
     self.fill_ts_class_members(symbol, &n.body);
   }
 
@@ -2730,33 +2779,49 @@ impl<'a> SymbolFiller<'a> {
     for member in members {
       match member {
         ClassMember::Constructor(ctor) => {
-          self.create_symbol_member_or_export(
+          let ctor_symbol = self.create_symbol_member_or_export(
             symbol,
             SymbolNodeRef::Constructor(ctor),
           );
           for param in &ctor.params {
-            if let ParamOrTsParamProp::TsParamProp(prop) = param {
-              self.create_symbol_member_or_export(
-                symbol,
-                SymbolNodeRef::ClassParamProp(prop),
-              );
+            match param {
+              ParamOrTsParamProp::TsParamProp(prop) => {
+                self.create_symbol_member_or_export(
+                  symbol,
+                  SymbolNodeRef::ClassParamProp(prop),
+                );
+              }
+              ParamOrTsParamProp::Param(param) => self.fill_fn_params(
+                ctor_symbol.symbol_id(),
+                [&param.pat].into_iter(),
+              ),
             }
           }
         }
         ClassMember::Method(method) => {
-          self.create_symbol_member_or_export(
+          let method_symbol = self.create_symbol_member_or_export(
             symbol,
             SymbolNodeRef::ClassMethod(method),
+          );
+          self.fill_function(
+            method_symbol.symbol_id(),
+            &method.function,
+            FunctionKind::DeclarationLike,
           );
         }
         ClassMember::PrivateMethod(_) => {
           // todo(dsherret): add private methods
         }
         ClassMember::ClassProp(prop) => {
-          self.create_symbol_member_or_export(
+          let prop_symbol = self.create_symbol_member_or_export(
             symbol,
             SymbolNodeRef::ClassProp(prop),
           );
+          if prop.type_ann.is_none() {
+            if let Some(value) = &prop.value {
+              self.fill_expr(prop_symbol.symbol_id(), value);
+            }
+          }
         }
         ClassMember::PrivateProp(_) => {
           // todo(dsherret): add private properties
@@ -2881,6 +2946,7 @@ impl<'a> SymbolFiller<'a> {
       | SymbolNodeRef::ExportDefaultDecl(_)
       | SymbolNodeRef::ExportDefaultExpr(_)
       | SymbolNodeRef::FnDecl(_)
+      | SymbolNodeRef::Param(_)
       | SymbolNodeRef::TsEnum(_)
       | SymbolNodeRef::TsInterface(_)
       | SymbolNodeRef::TsNamespace(_)
@@ -2975,5 +3041,197 @@ impl<'a> SymbolFiller<'a> {
       }
     }
     None
+  }
+
+  fn fill_function(
+    &self,
+    symbol_id: SymbolId,
+    n: &Function,
+    fn_kind: FunctionKind,
+  ) {
+    if let Some(type_params) = n.type_params.as_ref() {
+      for param in &type_params.params {
+        self.add_param(symbol_id, param.name.clone());
+      }
+    }
+    self.fill_fn_params(symbol_id, n.params.iter().map(|p| &p.pat));
+    if let Some(type_ann) = n.return_type.as_ref() {
+      self.fill_ts_type(symbol_id, &type_ann.type_ann);
+    } else if let Some(body) = n.body.as_ref() {
+      self.fill_fn_body(symbol_id, body, fn_kind);
+    }
+  }
+
+  fn fill_arrow_expr(&self, symbol_id: SymbolId, n: &ArrowExpr) {
+    if let Some(type_params) = n.type_params.as_ref() {
+      for param in &type_params.params {
+        self.add_param(symbol_id, param.name.clone());
+      }
+    }
+    self.fill_fn_params(symbol_id, n.params.iter());
+    if let Some(type_ann) = n.return_type.as_ref() {
+      self.fill_ts_type(symbol_id, &type_ann.type_ann);
+    } else {
+      match &*n.body {
+        BlockStmtOrExpr::BlockStmt(block) => {
+          self.fill_fn_body(symbol_id, block, FunctionKind::ExpressionLike);
+        }
+        BlockStmtOrExpr::Expr(expr) => {
+          self.fill_expr(symbol_id, expr);
+        }
+      }
+    }
+  }
+
+  fn fill_fn_params<'b>(
+    &self,
+    symbol_id: SymbolId,
+    params: impl Iterator<Item = &'b Pat>,
+  ) {
+    for param in params {
+      let (pat, default_value) = match param {
+        Pat::Assign(pat) => (&*pat.left, Some(&pat.right)),
+        _ => (param, None),
+      };
+
+      let type_ann = match pat {
+        Pat::Ident(n) => n.type_ann.as_ref(),
+        Pat::Array(n) => n.type_ann.as_ref(),
+        Pat::Object(n) => n.type_ann.as_ref(),
+        Pat::Rest(n) => n.type_ann.as_ref(),
+        Pat::Invalid(_) | Pat::Expr(_) | Pat::Assign(_) => unreachable!(),
+      };
+
+      if let Some(type_ann) = type_ann {
+        self.fill_ts_type(symbol_id, &type_ann.type_ann);
+      } else if let Some(default_value) = default_value {
+        self.fill_expr(symbol_id, default_value);
+      }
+
+      for ident in find_pat_ids::<_, Ident>(pat) {
+        self.add_param(symbol_id, ident);
+      }
+    }
+  }
+
+  fn add_param(&self, parent_id: SymbolId, ident: Ident) {
+    let range = ident.range();
+    self.builder.ensure_symbol_for_swc_id(
+      ident.to_id(),
+      SymbolDecl::new(
+        SymbolDeclKind::Definition(SymbolNode(SymbolNodeInner::Param {
+          ident,
+          source: self.source.clone(),
+        })),
+        range,
+      ),
+      parent_id,
+    );
+  }
+
+  fn fill_ts_type(&self, symbol_id: SymbolId, type_ann: &TsType) {
+    struct TsTypeVisitor<I: Fn(&Ident)> {
+      idents: I,
+    }
+    impl<I: Fn(&Ident)> Visit for TsTypeVisitor<I> {
+      fn visit_ts_infer_type(&mut self, n: &TsInferType) {
+        (self.idents)(&n.type_param.name);
+      }
+
+      fn visit_ts_type_param(&mut self, n: &TsTypeParam) {
+        (self.idents)(&n.name);
+      }
+
+      fn visit_ts_fn_param(&mut self, n: &TsFnParam) {
+        match n {
+          TsFnParam::Ident(ident) => {
+            (self.idents)(&ident.id);
+          }
+          TsFnParam::Array(n) => {
+            for ident in find_pat_ids::<_, Ident>(n) {
+              (self.idents)(&ident);
+            }
+          }
+          TsFnParam::Rest(n) => {
+            for ident in find_pat_ids::<_, Ident>(n) {
+              (self.idents)(&ident);
+            }
+          }
+          TsFnParam::Object(n) => {
+            for ident in find_pat_ids::<_, Ident>(n) {
+              (self.idents)(&ident);
+            }
+          }
+        }
+      }
+    }
+
+    let mut visitor = TsTypeVisitor {
+      idents: |ident| {
+        self.add_param(symbol_id, ident.clone());
+      },
+    };
+    type_ann.visit_with(&mut visitor);
+  }
+
+  fn fill_fn_body(
+    &self,
+    symbol_id: SymbolId,
+    body: &BlockStmt,
+    fn_kind: FunctionKind,
+  ) {
+    let analysis = analyze_return_stmts_in_function_body(body);
+    if let (
+      FunctionKind::DeclarationLike | FunctionKind::ExpressionLike,
+      ReturnStatementAnalysis::Single(stmt),
+    ) = (fn_kind, analysis)
+    {
+      self.fill_expr(symbol_id, stmt.arg.as_ref().unwrap());
+    }
+  }
+
+  fn fill_expr(&self, symbol_id: SymbolId, expr: &Expr) {
+    struct ExprVisitor<F: Fn(&FnExpr), A: Fn(&ArrowExpr)> {
+      fn_exprs: F,
+      arrow_exprs: A,
+    }
+    impl<F: Fn(&FnExpr), A: Fn(&ArrowExpr)> Visit for ExprVisitor<F, A> {
+      fn visit_fn_expr(&mut self, n: &FnExpr) {
+        (self.fn_exprs)(n);
+      }
+      fn visit_arrow_expr(&mut self, n: &ArrowExpr) {
+        (self.arrow_exprs)(n);
+      }
+    }
+
+    let mut visitor = ExprVisitor {
+      fn_exprs: |n| {
+        self.fill_function(
+          symbol_id,
+          &n.function,
+          FunctionKind::ExpressionLike,
+        );
+      },
+      arrow_exprs: |n| {
+        self.fill_arrow_expr(symbol_id, n);
+      },
+    };
+    expr.visit_with(&mut visitor);
+  }
+
+  fn fill_var_decl(&self, symbol_id: SymbolId, decl: &VarDeclarator) {
+    let type_ann = match &decl.name {
+      Pat::Ident(n) => n.type_ann.as_ref(),
+      Pat::Array(n) => n.type_ann.as_ref(),
+      Pat::Object(n) => n.type_ann.as_ref(),
+      Pat::Rest(_) | Pat::Invalid(_) | Pat::Expr(_) | Pat::Assign(_) => {
+        unreachable!()
+      }
+    };
+    if let Some(type_ann) = type_ann {
+      self.fill_ts_type(symbol_id, &type_ann.type_ann);
+    } else if let Some(init) = decl.init.as_ref() {
+      self.fill_expr(symbol_id, init);
+    }
   }
 }

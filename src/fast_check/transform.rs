@@ -26,6 +26,9 @@ use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use indexmap::IndexMap;
 
+use crate::swc_helpers::analyze_return_stmts_in_function_body;
+use crate::swc_helpers::FunctionKind;
+use crate::swc_helpers::ReturnStatementAnalysis;
 use crate::symbols::EsModuleInfo;
 use crate::symbols::ExpandoPropertyRef;
 use crate::symbols::Symbol;
@@ -35,13 +38,11 @@ use crate::ParserModuleAnalyzer;
 use crate::WorkspaceMember;
 
 use super::range_finder::ModulePublicRanges;
-use super::swc_helpers::analyze_return_stmts_in_function_body;
 use super::swc_helpers::any_type_ann;
 use super::swc_helpers::ident;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::ts_keyword_type;
-use super::swc_helpers::ReturnStatementAnalysis;
 use super::transform_dts::FastCheckDtsDiagnostic;
 use super::transform_dts::FastCheckDtsTransformer;
 use super::FastCheckDiagnostic;
@@ -1904,17 +1905,6 @@ impl<'a> FastCheckTransformer<'a> {
       })),
     }
   }
-}
-
-enum FunctionKind {
-  /// function declarations, class method declarations (both class decl and class expr)
-  DeclarationLike,
-  /// function expressions, arrow functions, object method shorthand properties
-  ExpressionLike,
-  /// getters, both on classes and object literals
-  Getter,
-  /// setters, both on classes and object literals
-  Setter,
 }
 
 fn is_ts_private_computed_class_member(m: &ClassMember) -> bool {
