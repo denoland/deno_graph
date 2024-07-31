@@ -649,7 +649,7 @@ impl<'a> SymbolNodeRef<'a> {
 
     fn maybe_key_name(key: &Key) -> Option<Cow<str>> {
       match key {
-        Key::Private(n) => Some(Cow::Owned(format!("#{}", n.id.sym))),
+        Key::Private(n) => Some(Cow::Owned(format!("#{}", n.name))),
         Key::Public(n) => maybe_prop_name(n),
       }
     }

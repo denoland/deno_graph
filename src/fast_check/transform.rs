@@ -37,9 +37,9 @@ use crate::WorkspaceMember;
 use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::analyze_return_stmts_in_function_body;
 use super::swc_helpers::any_type_ann;
-use super::swc_helpers::ident;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::maybe_lit_to_ts_type;
+use super::swc_helpers::new_ident;
 use super::swc_helpers::ts_keyword_type;
 use super::swc_helpers::ReturnStatementAnalysis;
 use super::transform_dts::FastCheckDtsDiagnostic;
@@ -153,6 +153,7 @@ pub fn transform(
     &EmitOptions {
       remove_comments: false,
       source_map: deno_ast::SourceMapOption::Separate,
+      source_map_base: None,
       source_map_file: None,
       inline_sources: false,
     },
@@ -303,7 +304,11 @@ impl<'a> FastCheckTransformer<'a> {
         span: DUMMY_SP,
         declare: false,
         global: false,
-        id: TsModuleName::Ident(Ident::new(swc_id.0, DUMMY_SP)),
+        id: TsModuleName::Ident(Ident::new(
+          swc_id.0,
+          DUMMY_SP,
+          SyntaxContext::default(),
+        )),
         body: Some(TsNamespaceBody::TsModuleBlock(TsModuleBlock {
           span: DUMMY_SP,
           body: vec![ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
@@ -311,6 +316,7 @@ impl<'a> FastCheckTransformer<'a> {
               span: DUMMY_SP,
               decl: Decl::Var(Box::new(VarDecl {
                 span: DUMMY_SP,
+                ctxt: SyntaxContext::empty(),
                 kind: VarDeclKind::Var,
                 declare: false,
                 decls: var_decls,
@@ -732,8 +738,9 @@ impl<'a> FastCheckTransformer<'a> {
           span: DUMMY_SP,
           key: PrivateName {
             span: DUMMY_SP,
-            id: ident("private".to_string()),
+            name: "private".into(),
           },
+          ctxt: SyntaxContext::default(),
           value: None,
           type_ann: Some(Box::new(TsTypeAnn {
             span: DUMMY_SP,
@@ -800,11 +807,17 @@ impl<'a> FastCheckTransformer<'a> {
               insert_members.push(ClassMember::ClassProp(ClassProp {
                 span: DUMMY_SP,
                 key: match &prop.param {
-                  TsParamPropParam::Ident(ident) => {
-                    PropName::Ident(ident.id.clone())
+                  TsParamPropParam::Ident(binding_ident) => {
+                    PropName::Ident(IdentName {
+                      span: binding_ident.span,
+                      sym: binding_ident.sym.clone(),
+                    })
                   }
                   TsParamPropParam::Assign(assign) => match &*assign.left {
-                    Pat::Ident(ident) => PropName::Ident(ident.id.clone()),
+                    Pat::Ident(binding_ident) => PropName::Ident(IdentName {
+                      span: binding_ident.span,
+                      sym: binding_ident.sym.clone(),
+                    }),
                     Pat::Array(_)
                     | Pat::Rest(_)
                     | Pat::Object(_)
@@ -892,6 +905,7 @@ impl<'a> FastCheckTransformer<'a> {
                   arg: Box::new(Pat::Ident(BindingIdent {
                     id: Ident {
                       span: DUMMY_SP,
+                      ctxt: SyntaxContext::default(),
                       sym: format!("param{}", i).into(),
                       optional: false,
                     },
@@ -906,6 +920,7 @@ impl<'a> FastCheckTransformer<'a> {
                 pat: Pat::Ident(BindingIdent {
                   id: Ident {
                     span: DUMMY_SP,
+                    ctxt: SyntaxContext::default(),
                     sym: format!("param{}", i).into(),
                     optional: true,
                   },
@@ -1107,6 +1122,7 @@ impl<'a> FastCheckTransformer<'a> {
               arg: Box::new(Pat::Ident(BindingIdent {
                 id: Ident {
                   span: DUMMY_SP,
+                  ctxt: SyntaxContext::default(),
                   sym: format!("param{}", i).into(),
                   optional: false,
                 },
@@ -1121,6 +1137,7 @@ impl<'a> FastCheckTransformer<'a> {
             pat: Pat::Ident(BindingIdent {
               id: Ident {
                 span: DUMMY_SP,
+                ctxt: SyntaxContext::default(),
                 sym: format!("param{}", i).into(),
                 optional: true,
               },
@@ -1258,6 +1275,7 @@ impl<'a> FastCheckTransformer<'a> {
         .unwrap_or_else(|| {
           BlockStmtOrExpr::BlockStmt(BlockStmt {
             span: DUMMY_SP,
+            ctxt: SyntaxContext::default(),
             stmts: vec![],
           })
         });
@@ -1303,7 +1321,7 @@ impl<'a> FastCheckTransformer<'a> {
           },
         )?;
       }
-      (ReturnStatementAnalysis::Single(_), _) => {
+      (ReturnStatementAnalysis::Single { .. }, _) => {
         // TODO: infer return type based on return type
         self.mark_diagnostic(
           FastCheckDiagnostic::MissingExplicitReturnType {
@@ -1367,7 +1385,7 @@ impl<'a> FastCheckTransformer<'a> {
                 if !is_expr_leavable {
                   self.mark_diagnostic(
                     FastCheckDiagnostic::MissingExplicitType {
-                      range: self.source_range_to_range(ident.range()),
+                      range: self.source_range_to_range(ident.id.range()),
                     },
                   )?;
                 }
@@ -1503,7 +1521,7 @@ impl<'a> FastCheckTransformer<'a> {
               if !is_init_leavable {
                 self.mark_diagnostic(
                   FastCheckDiagnostic::MissingExplicitType {
-                    range: self.source_range_to_range(ident.range()),
+                    range: self.source_range_to_range(ident.id.range()),
                   },
                 )?;
               }
@@ -1638,6 +1656,7 @@ impl<'a> FastCheckTransformer<'a> {
           id: Ident::new(
             expando_prop.prop_name().clone(),
             expando_prop.prop_name_range().into(),
+            SyntaxContext::default(),
           ),
           type_ann: None,
         }),
@@ -1803,7 +1822,7 @@ impl<'a> FastCheckTransformer<'a> {
             op: TsTypeOperatorOp::Unique,
             type_ann: Box::new(TsType::TsTypeRef(TsTypeRef {
               span: DUMMY_SP,
-              type_name: TsEntityName::Ident(ident("symbol".to_string())),
+              type_name: TsEntityName::Ident(new_ident("symbol".into())),
               type_params: None,
             })),
           }))
@@ -1896,7 +1915,7 @@ impl<'a> FastCheckTransformer<'a> {
       }
       _ => Box::new(TsType::TsTypeRef(TsTypeRef {
         span: DUMMY_SP,
-        type_name: TsEntityName::Ident(ident("Promise".into())),
+        type_name: TsEntityName::Ident(new_ident("Promise".into())),
         type_params: Some(Box::new(TsTypeParamInstantiation {
           span: DUMMY_SP,
           params: vec![ty],
@@ -1962,7 +1981,11 @@ fn void_or_promise_void(is_async: bool) -> Box<TsType> {
   if is_async {
     Box::new(TsType::TsTypeRef(TsTypeRef {
       span: DUMMY_SP,
-      type_name: TsEntityName::Ident(Ident::new("Promise".into(), DUMMY_SP)),
+      type_name: TsEntityName::Ident(Ident::new(
+        "Promise".into(),
+        DUMMY_SP,
+        SyntaxContext::default(),
+      )),
       type_params: Some(Box::new(TsTypeParamInstantiation {
         span: DUMMY_SP,
         params: vec![void_type],

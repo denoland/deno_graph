@@ -3,12 +3,15 @@
 use std::ops::ControlFlow;
 
 use deno_ast::swc::ast::*;
+use deno_ast::swc::atoms::Atom;
+use deno_ast::swc::common::SyntaxContext;
 use deno_ast::swc::common::DUMMY_SP;
 
-pub fn ident(name: String) -> Ident {
+pub fn new_ident(name: Atom) -> Ident {
   Ident {
     span: DUMMY_SP,
-    sym: name.clone().into(),
+    ctxt: Default::default(),
+    sym: name,
     optional: false,
   }
 }
@@ -29,7 +32,7 @@ pub enum ReturnStatementAnalysis {
   Void,
   /// There is only a single return statement in the function body, and it has
   /// an argument.
-  Single(ReturnStmt),
+  Single,
   /// There are multiple return statements in the function body, and at least
   /// one of them has an argument.
   Multiple,
@@ -72,9 +75,9 @@ fn analyze_return_stmts_from_stmt(
         (None, ReturnStatementAnalysis::Void) => {}
         (Some(_), ReturnStatementAnalysis::None)
         | (Some(_), ReturnStatementAnalysis::Void) => {
-          *analysis = ReturnStatementAnalysis::Single(n.clone());
+          *analysis = ReturnStatementAnalysis::Single;
         }
-        (_, ReturnStatementAnalysis::Single(_)) => {
+        (_, ReturnStatementAnalysis::Single { .. }) => {
           *analysis = ReturnStatementAnalysis::Multiple;
           return ControlFlow::Break(());
         }
@@ -145,10 +148,14 @@ pub fn type_ann(ts_type: TsType) -> Box<TsTypeAnn> {
   })
 }
 
-pub fn type_ref(name: String) -> TsTypeRef {
+pub fn type_ref(name: Atom) -> TsTypeRef {
   TsTypeRef {
     span: DUMMY_SP,
-    type_name: TsEntityName::Ident(Ident::new(name.into(), DUMMY_SP)),
+    type_name: TsEntityName::Ident(Ident::new(
+      name,
+      DUMMY_SP,
+      SyntaxContext::default(),
+    )),
     type_params: None,
   }
 }
@@ -161,7 +168,7 @@ pub fn ts_lit_type(lit: TsLit) -> TsType {
 }
 
 pub fn regex_type() -> TsType {
-  TsType::TsTypeRef(type_ref("RegExp".to_string()))
+  TsType::TsTypeRef(type_ref("RegExp".into()))
 }
 
 pub fn ts_tuple_element(ts_type: TsType) -> TsTupleElement {

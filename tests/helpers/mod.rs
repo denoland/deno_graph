@@ -72,15 +72,19 @@ impl Loader for TestLoader {
 #[cfg(feature = "symbols")]
 pub mod symbols {
   pub struct SymbolsResult {
+    #[allow(unused)]
     pub output: String,
   }
 }
 
 pub struct BuildResult {
+  #[allow(unused)]
   pub locker: Option<HashMapLocker>,
   pub graph: ModuleGraph,
+  #[allow(unused)]
   pub diagnostics: Vec<BuildDiagnostic>,
   pub analyzer: deno_graph::CapturingModuleAnalyzer,
+  #[allow(unused)]
   pub fast_check_cache: Option<TestFastCheckCache>,
 }
 

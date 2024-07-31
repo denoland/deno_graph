@@ -3704,7 +3704,7 @@ error[missing-explicit-type]: missing explicit type in the public API
  --> /src/math/constants.ts:6:14
   | 
 6 | export const Φ = (1 + Math.sqrt(5)) / 2;
-  |              ^^ this symbol is missing an explicit type
+  |              ^ this symbol is missing an explicit type
   | 
   = hint: add an explicit type annotation to the symbol
 

@@ -1,0 +1,74 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+export default {
+	inner: {
+		prop: (value: string) => Math.random(value),
+	}
+};
+
+export { links }
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 98,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> https://jsr.io/@scope/a/1.0.0/mod.ts:3:9
+    |
+  3 |     prop: (value: string) => Math.random(value),
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    |
+    = hint: add an explicit return type to the function
+
+    info: all functions in the public API must have an explicit return type
+    docs: https://jsr.io/go/slow-type-missing-explicit-return-type
