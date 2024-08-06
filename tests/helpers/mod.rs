@@ -610,16 +610,15 @@ impl deno_graph::source::Resolver for WorkspaceMemberResolver {
   ) -> Result<deno_ast::ModuleSpecifier, deno_graph::source::ResolveError> {
     if let Ok(package_ref) = JsrPackageReqReference::from_str(specifier_text) {
       for workspace_member in &self.members {
-        if workspace_member.nv.name == package_ref.req().name {
-          if package_ref
+        if workspace_member.nv.name == package_ref.req().name
+          && package_ref
             .req()
             .version_req
             .matches(&workspace_member.nv.version)
-          {
-            let export_name = package_ref.sub_path().unwrap_or(".");
-            let export = workspace_member.exports.get(export_name).unwrap();
-            return Ok(workspace_member.base.join(export).unwrap());
-          }
+        {
+          let export_name = package_ref.sub_path().unwrap_or(".");
+          let export = workspace_member.exports.get(export_name).unwrap();
+          return Ok(workspace_member.base.join(export).unwrap());
         }
       }
     }
