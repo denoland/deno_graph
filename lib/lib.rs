@@ -281,7 +281,6 @@ pub async fn js_create_graph(
         module_analyzer: Default::default(),
         imports,
         reporter: None,
-        workspace_members: &[],
         executor: Default::default(),
       },
     )

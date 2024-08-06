@@ -57,7 +57,6 @@ pub use fast_check::FastCheckDiagnostic;
 pub use fast_check::FastCheckDiagnosticRange;
 #[cfg(feature = "fast_check")]
 pub use fast_check::FastCheckModule;
-pub use graph::BuildDiagnostic;
 #[cfg(feature = "fast_check")]
 pub use graph::BuildFastCheckTypeGraphOptions;
 pub use graph::BuildOptions;
@@ -87,7 +86,6 @@ pub use graph::TypesDependency;
 pub use graph::WalkOptions;
 #[cfg(feature = "fast_check")]
 pub use graph::WorkspaceFastCheckOption;
-pub use graph::WorkspaceLoadError;
 pub use graph::WorkspaceMember;
 pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;

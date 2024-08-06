@@ -219,18 +219,6 @@ pub enum NpmLoadError {
   RegistryInfo(Arc<anyhow::Error>),
 }
 
-#[derive(Debug, Clone, Error)]
-pub enum WorkspaceLoadError {
-  #[error("Failed joining '{}' to '{}'. {:#}", .sub_path, .base, .error)]
-  MemberInvalidExportPath {
-    base: Url,
-    sub_path: String,
-    error: url::ParseError,
-  },
-  #[error("Expected workspace package '{}' to define exports in its deno.json.", .nv)]
-  MissingMemberExports { nv: PackageNv },
-}
-
 #[derive(Debug, Error, Clone)]
 pub enum ModuleLoadError {
   #[error(transparent)]
@@ -247,8 +235,6 @@ pub enum ModuleLoadError {
   Npm(#[from] NpmLoadError),
   #[error("Too many redirects.")]
   TooManyRedirects,
-  #[error(transparent)]
-  Workspace(#[from] WorkspaceLoadError),
 }
 
 #[derive(Debug, Clone)]
@@ -1173,7 +1159,6 @@ pub struct BuildOptions<'a> {
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub reporter: Option<&'a dyn Reporter>,
   pub resolver: Option<&'a dyn Resolver>,
-  pub workspace_members: &'a [WorkspaceMember],
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -1596,7 +1581,7 @@ impl ModuleGraph {
     roots: Vec<ModuleSpecifier>,
     loader: &'a dyn Loader,
     options: BuildOptions<'a>,
-  ) -> Vec<BuildDiagnostic> {
+  ) {
     Builder::build(self, roots, loader, options).await
   }
 
@@ -3103,6 +3088,7 @@ struct PendingJsrReqResolutionItem {
   package_ref: JsrPackageReqReference,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
+  is_dynamic: bool,
 }
 
 #[derive(Debug)]
@@ -3111,6 +3097,7 @@ struct PendingJsrNvResolutionItem {
   nv_ref: JsrPackageNvReference,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
+  is_dynamic: bool,
 }
 
 #[derive(Debug)]
@@ -3161,48 +3148,6 @@ impl FillPassMode {
   }
 }
 
-#[derive(Debug, Clone)]
-pub struct BuildDiagnostic {
-  pub maybe_range: Option<Range>,
-  pub kind: BuildDiagnosticKind,
-}
-
-impl std::fmt::Display for BuildDiagnostic {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{}", self.kind)?;
-    if let Some(range) = &self.maybe_range {
-      write!(f, "\n    at {range}")?;
-    }
-    Ok(())
-  }
-}
-
-#[derive(Debug, Clone)]
-pub enum BuildDiagnosticKind {
-  ConstraintNotMatchedWorkspaceVersion {
-    reference: JsrPackageReqReference,
-    workspace_version: Version,
-  },
-}
-
-impl std::fmt::Display for BuildDiagnosticKind {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      Self::ConstraintNotMatchedWorkspaceVersion {
-        reference,
-        workspace_version,
-      } => {
-        write!(
-          f,
-          "Version constraint '{}' did not match workspace member version '{}'",
-          reference.req(),
-          workspace_version,
-        )
-      }
-    }
-  }
-}
-
 struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
   file_system: &'a dyn FileSystem,
@@ -3217,8 +3162,6 @@ struct Builder<'a, 'graph> {
   graph: &'graph mut ModuleGraph,
   state: PendingState<'a>,
   fill_pass_mode: FillPassMode,
-  workspace_members: &'a [WorkspaceMember],
-  diagnostics: Vec<BuildDiagnostic>,
   executor: &'a dyn Executor,
 }
 
@@ -3228,7 +3171,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     roots: Vec<ModuleSpecifier>,
     loader: &'a dyn Loader,
     options: BuildOptions<'a>,
-  ) -> Vec<BuildDiagnostic> {
+  ) {
     let fill_pass_mode = match graph.roots.is_empty() {
       true => FillPassMode::AllowRestart,
       false => FillPassMode::NoRestart,
@@ -3247,12 +3190,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       graph,
       state: PendingState::default(),
       fill_pass_mode,
-      workspace_members: options.workspace_members,
-      diagnostics: Vec::new(),
       executor: options.executor,
     };
     builder.fill(roots, options.imports).await;
-    builder.diagnostics
   }
 
   async fn fill(
@@ -3429,6 +3369,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 }),
                 maybe_attribute_type: pending_resolution.maybe_attribute_type,
                 maybe_range: pending_resolution.maybe_range,
+                is_dynamic: pending_resolution.is_dynamic,
               });
             }
             None => {
@@ -3509,7 +3450,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               self.load(
                 &specifier,
                 resolution_item.maybe_range.as_ref(),
-                self.in_dynamic_branch,
+                resolution_item.is_dynamic,
                 resolution_item.maybe_attribute_type,
                 Some(&version_info),
               );
@@ -4087,52 +4028,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_range: Option<&Range>,
     is_dynamic: bool,
   ) {
-    for workspace_member in self.workspace_members {
-      if workspace_member.nv.name == package_ref.req().name {
-        if package_ref
-          .req()
-          .version_req
-          .matches(&workspace_member.nv.version)
-        {
-          let result = self.resolve_workspace_jsr_specifier(
-            &specifier,
-            maybe_range,
-            &package_ref,
-            workspace_member,
-          );
-          match result {
-            Ok(load_specifier) => {
-              self.load_pending_module(PendingModuleLoadItem {
-                redirect_count: 0,
-                requested_specifier: specifier.clone(),
-                maybe_attribute_type: maybe_attribute_type.clone(),
-                maybe_range: maybe_range.cloned(),
-                load_specifier,
-                is_dynamic,
-                maybe_checksum: None,
-                maybe_version_info: None,
-              });
-            }
-            Err(err) => {
-              self
-                .graph
-                .module_slots
-                .insert(specifier.clone(), ModuleSlot::Err(*err));
-            }
-          }
-          return;
-        } else {
-          self.diagnostics.push(BuildDiagnostic {
-            maybe_range: maybe_range.cloned(),
-            kind: BuildDiagnosticKind::ConstraintNotMatchedWorkspaceVersion {
-              reference: package_ref.clone(),
-              workspace_version: workspace_member.nv.version.clone(),
-            },
-          });
-        }
-      }
-    }
-
     let package_name = &package_ref.req().name;
     let specifier = specifier.clone();
     self.queue_load_package_info(package_name);
@@ -4145,54 +4040,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         package_ref,
         maybe_attribute_type,
         maybe_range: maybe_range.cloned(),
+        is_dynamic,
       });
-  }
-
-  fn resolve_workspace_jsr_specifier(
-    &self,
-    specifier: &Url,
-    maybe_range: Option<&Range>,
-    package_ref: &JsrPackageReqReference,
-    workspace_member: &WorkspaceMember,
-  ) -> Result<ModuleSpecifier, Box<ModuleError>> {
-    if workspace_member.exports.is_empty() {
-      return Err(Box::new(ModuleError::LoadingErr(
-        specifier.clone(),
-        maybe_range.cloned(),
-        WorkspaceLoadError::MissingMemberExports {
-          nv: workspace_member.nv.clone(),
-        }
-        .into(),
-      )));
-    }
-
-    let export_name = normalize_export_name(package_ref.sub_path());
-    if let Some(sub_path) = workspace_member.exports.get(export_name.as_ref()) {
-      match workspace_member.base.join(sub_path) {
-        Ok(load_specifier) => Ok(load_specifier),
-        Err(err) => Err(Box::new(ModuleError::LoadingErr(
-          specifier.clone(),
-          maybe_range.cloned(),
-          WorkspaceLoadError::MemberInvalidExportPath {
-            base: workspace_member.base.clone(),
-            sub_path: sub_path.to_string(),
-            error: err,
-          }
-          .into(),
-        ))),
-      }
-    } else {
-      Err(Box::new(ModuleError::LoadingErr(
-        specifier.clone(),
-        maybe_range.cloned(),
-        JsrLoadError::UnknownExport {
-          nv: workspace_member.nv.clone(),
-          export_name: export_name.to_string(),
-          exports: workspace_member.exports.keys().cloned().collect(),
-        }
-        .into(),
-      )))
-    }
   }
 
   fn load_npm_specifier(
@@ -6062,7 +5911,6 @@ mod tests {
         vec![Url::parse("file:///foo.ts").unwrap()],
         &test_loader,
         BuildOptions {
-          workspace_members: &workspace_members,
           ..Default::default()
         },
       )
@@ -6149,10 +5997,7 @@ mod tests {
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
         &test_loader,
-        BuildOptions {
-          workspace_members: &workspace_members,
-          ..Default::default()
-        },
+        BuildOptions::default(),
       )
       .await;
     graph.build_fast_check_type_graph(BuildFastCheckTypeGraphOptions {

@@ -55,7 +55,7 @@ class Private {
         {
           "specifier": "jsr:@scope/b",
           "code": {
-            "specifier": "jsr:@scope/b",
+            "specifier": "file:///mod.ts",
             "span": {
               "start": {
                 "line": 0,
@@ -97,7 +97,6 @@ class Private {
     }
   ],
   "redirects": {
-    "jsr:@scope/b": "file:///mod.ts",
     "jsr:@scope/c": "https://jsr.io/@scope/c/1.0.0/mod.ts"
   },
   "packages": {

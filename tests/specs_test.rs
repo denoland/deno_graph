@@ -18,6 +18,7 @@ use deno_graph::source::Source;
 use deno_graph::source::DEFAULT_JSR_URL;
 use deno_graph::FastCheckCacheModuleItem;
 use deno_graph::WorkspaceMember;
+use deno_semver::jsr::JsrPackageReqReference;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use file_test_runner::collect_and_run_tests;
@@ -253,16 +254,10 @@ fn run_graph_test(test: &CollectedTest) {
   if !output_text.ends_with('\n') {
     output_text.push('\n');
   }
-  let diagnostics = result
-    .diagnostics
-    .iter()
-    .map(|d| serde_json::to_value(d.to_string()).unwrap())
-    .collect::<Vec<_>>();
   let update = std::env::var("UPDATE").as_deref() == Ok("1");
   let spec = if update {
     let mut spec = spec;
     spec.output_file.text.clone_from(&output_text);
-    spec.diagnostics.clone_from(&diagnostics);
     std::fs::write(&test.path, spec.emit()).unwrap();
     spec
   } else {
@@ -271,12 +266,6 @@ fn run_graph_test(test: &CollectedTest) {
   assert_eq!(
     output_text,
     spec.output_file.text,
-    "Should be same for {}",
-    test.path.display()
-  );
-  assert_eq!(
-    diagnostics,
-    spec.diagnostics,
     "Should be same for {}",
     test.path.display()
   );
@@ -348,7 +337,6 @@ pub struct Spec {
   pub options: Option<SpecOptions>,
   pub files: Vec<SpecFile>,
   pub output_file: SpecFile,
-  pub diagnostics: Vec<serde_json::Value>,
   pub workspace_members: Vec<WorkspaceMember>,
   pub lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
 }
@@ -379,11 +367,6 @@ impl Spec {
     }
     text.push_str(&self.output_file.emit());
     if !text.ends_with('\n') {
-      text.push('\n');
-    }
-    if !self.diagnostics.is_empty() {
-      text.push_str("\n# diagnostics\n");
-      text.push_str(&serde_json::to_string_pretty(&self.diagnostics).unwrap());
       text.push('\n');
     }
     if !self.lockfile_jsr_packages.is_empty() {
@@ -566,14 +549,12 @@ pub fn parse_spec(text: String) -> Spec {
   files.push(current_file.unwrap());
   let output_file =
     files.remove(files.iter().position(|f| f.specifier == "output").unwrap());
-  let diagnostics = take_file(&mut files, "diagnostics");
   let workspace_members = take_file(&mut files, "workspace_members");
   let lockfile_jsr_packages = take_file(&mut files, "lockfile_jsr_packages");
   Spec {
     options,
     files,
     output_file,
-    diagnostics,
     workspace_members,
     lockfile_jsr_packages,
   }
