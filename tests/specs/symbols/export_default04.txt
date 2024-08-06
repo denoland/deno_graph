@@ -77,20 +77,3 @@ file:///mod.ts: EsModuleInfo {
 == export definitions ==
 [default]: file:///mod.ts:0..21
   export default 1 + 1;
-
-# diagnostics
-[
-  {
-    "kind": "UnsupportedDefaultExpr",
-    "range": {
-      "start": {
-        "line": 0,
-        "character": 0
-      },
-      "end": {
-        "line": 0,
-        "character": 21
-      }
-    }
-  }
-]

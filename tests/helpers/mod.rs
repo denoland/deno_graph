@@ -16,7 +16,6 @@ use deno_graph::source::LoaderChecksum;
 use deno_graph::source::Locker;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
-use deno_graph::BuildDiagnostic;
 use deno_graph::FastCheckCache;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
@@ -24,6 +23,7 @@ use deno_graph::NpmLoadError;
 use deno_graph::NpmResolvePkgReqsResult;
 use deno_graph::WorkspaceFastCheckOption;
 use deno_graph::WorkspaceMember;
+use deno_semver::jsr::JsrPackageReqReference;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::Version;
@@ -81,8 +81,6 @@ pub struct BuildResult {
   #[allow(unused)]
   pub locker: Option<HashMapLocker>,
   pub graph: ModuleGraph,
-  #[allow(unused)]
-  pub diagnostics: Vec<BuildDiagnostic>,
   pub analyzer: deno_graph::CapturingModuleAnalyzer,
   #[allow(unused)]
   pub fast_check_cache: Option<TestFastCheckCache>,
@@ -289,15 +287,18 @@ impl TestBuilder {
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
     let roots = vec![entry_point_url.clone()];
     let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::default();
-    let diagnostics = graph
+    let resolver = WorkspaceMemberResolver {
+      members: self.workspace_members.clone(),
+    };
+    graph
       .build(
         roots.clone(),
         &self.loader,
         deno_graph::BuildOptions {
-          workspace_members: &self.workspace_members,
           module_analyzer: &capturing_analyzer,
           npm_resolver: Some(&TestNpmResolver),
           locker: self.locker.as_mut().map(|l| l as _),
+          resolver: Some(&resolver),
           ..Default::default()
         },
       )
@@ -327,7 +328,6 @@ impl TestBuilder {
     BuildResult {
       locker: self.locker.clone(),
       graph,
-      diagnostics,
       analyzer: capturing_analyzer,
       fast_check_cache,
     }
@@ -593,5 +593,38 @@ impl TestBuilder {
         output_text
       },
     })
+  }
+}
+
+#[derive(Debug)]
+struct WorkspaceMemberResolver {
+  members: Vec<WorkspaceMember>,
+}
+
+impl deno_graph::source::Resolver for WorkspaceMemberResolver {
+  fn resolve(
+    &self,
+    specifier_text: &str,
+    referrer_range: &deno_graph::Range,
+    _mode: deno_graph::source::ResolutionMode,
+  ) -> Result<deno_ast::ModuleSpecifier, deno_graph::source::ResolveError> {
+    if let Ok(package_ref) = JsrPackageReqReference::from_str(specifier_text) {
+      for workspace_member in &self.members {
+        if workspace_member.nv.name == package_ref.req().name
+          && package_ref
+            .req()
+            .version_req
+            .matches(&workspace_member.nv.version)
+        {
+          let export_name = package_ref.sub_path().unwrap_or(".");
+          let export = workspace_member.exports.get(export_name).unwrap();
+          return Ok(workspace_member.base.join(export).unwrap());
+        }
+      }
+    }
+    Ok(deno_graph::resolve_import(
+      specifier_text,
+      &referrer_range.specifier,
+    )?)
   }
 }

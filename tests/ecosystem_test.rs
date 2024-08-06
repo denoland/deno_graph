@@ -279,7 +279,6 @@ async fn test_version(
       BuildOptions {
         is_dynamic: false,
         module_analyzer: &module_analyzer,
-        workspace_members: &workspace_members,
         file_system: &NullFileSystem,
         locker: None,
         resolver: None,
