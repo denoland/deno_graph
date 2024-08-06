@@ -18,7 +18,6 @@ use deno_graph::source::Source;
 use deno_graph::source::DEFAULT_JSR_URL;
 use deno_graph::FastCheckCacheModuleItem;
 use deno_graph::WorkspaceMember;
-use deno_semver::jsr::JsrPackageReqReference;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use file_test_runner::collect_and_run_tests;
