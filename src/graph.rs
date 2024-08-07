@@ -3109,7 +3109,7 @@ struct PendingContentLoadItem {
 
 #[derive(Debug, Default)]
 struct PendingJsrState {
-  pending_resolutions: Vec<PendingJsrReqResolutionItem>,
+  pending_resolutions: VecDeque<PendingJsrReqResolutionItem>,
   pending_content_loads:
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
   metadata: JsrMetadataStore,
@@ -3325,14 +3325,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
   async fn resolve_pending_jsr_specifiers(&mut self) -> bool {
     // first load the package information
-    let pending_resolutions =
+    let mut pending_resolutions =
       std::mem::take(&mut self.state.jsr.pending_resolutions);
     let mut pending_version_resolutions =
       Vec::with_capacity(pending_resolutions.len());
     let should_collect_top_level_nvs =
       self.graph.packages.top_level_packages().is_empty()
         && self.graph.graph_kind.include_types();
-    for pending_resolution in pending_resolutions {
+    let mut restarted_pkgs = HashSet::new();
+    while let Some(pending_resolution) = pending_resolutions.pop_front() {
       let package_name = &pending_resolution.package_ref.req().name;
       let fut = self
         .state
@@ -3374,6 +3375,24 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             None => {
               if self.fill_pass_mode == FillPassMode::AllowRestart {
                 return true; // restart
+              } else if self.fill_pass_mode == FillPassMode::NoRestart
+                && restarted_pkgs.insert(package_name.clone())
+              {
+                self
+                  .state
+                  .jsr
+                  .metadata
+                  .remove_package_metadata(package_name);
+                self.state.jsr.metadata.queue_load_package_info(
+                  package_name,
+                  CacheSetting::Reload, // force reload this specific package
+                  JsrMetadataStoreServices {
+                    executor: self.executor,
+                    jsr_url_provider: self.jsr_url_provider,
+                    loader: self.loader,
+                  },
+                );
+                pending_resolutions.push_front(pending_resolution);
               } else {
                 self.graph.module_slots.insert(
                   pending_resolution.specifier.clone(),
@@ -4032,7 +4051,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .state
       .jsr
       .pending_resolutions
-      .push(PendingJsrReqResolutionItem {
+      .push_back(PendingJsrReqResolutionItem {
         specifier,
         package_ref,
         maybe_attribute_type,
