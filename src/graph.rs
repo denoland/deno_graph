@@ -59,7 +59,6 @@ use serde::ser::SerializeStruct;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
-use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
@@ -3422,15 +3421,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             }
           }
           let base_url = self.jsr_url_provider.package_url(nv);
-          let export_name =
-            normalize_export_name(resolution_item.nv_ref.sub_path());
+          let export_name = resolution_item.nv_ref.export_name();
           match version_info.export(&export_name) {
             Some(export_value) => {
               self.graph.packages.add_export(
                 nv,
                 (
-                  normalize_export_name(resolution_item.nv_ref.sub_path())
-                    .to_string(),
+                  resolution_item.nv_ref.export_name().into_owned(),
                   export_value.to_string(),
                 ),
               );
@@ -4660,28 +4657,6 @@ fn validate_jsr_specifier(
   match package_ref.req().version_req.inner() {
     RangeSetOrTag::Tag(_) => Err(JsrPackageFormatError::VersionTagNotSupported),
     RangeSetOrTag::RangeSet(_) => Ok(package_ref),
-  }
-}
-
-fn normalize_export_name(sub_path: Option<&str>) -> Cow<str> {
-  let Some(sub_path) = sub_path else {
-    return Cow::Borrowed(".");
-  };
-  if sub_path.is_empty() || matches!(sub_path, "/" | ".") {
-    Cow::Borrowed(".")
-  } else {
-    let sub_path = if sub_path.starts_with('/') {
-      Cow::Owned(format!(".{}", sub_path))
-    } else if !sub_path.starts_with("./") {
-      Cow::Owned(format!("./{}", sub_path))
-    } else {
-      Cow::Borrowed(sub_path)
-    };
-    if let Some(prefix) = sub_path.strip_suffix('/') {
-      Cow::Owned(prefix.to_string())
-    } else {
-      sub_path
-    }
   }
 }
 
