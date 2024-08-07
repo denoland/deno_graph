@@ -3332,6 +3332,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let should_collect_top_level_nvs =
       self.graph.packages.top_level_packages().is_empty()
         && self.graph.graph_kind.include_types();
+    // don't bother pre-allocating because adding to this should be rare
     let mut restarted_pkgs = HashSet::new();
     while let Some(pending_resolution) = pending_resolutions.pop_front() {
       let package_name = &pending_resolution.package_ref.req().name;
@@ -3373,9 +3374,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               });
             }
             None => {
+              // Generally, prefer a full restart that cache busts if we can
+              // because it will cause the meta files for users to be updated
+              // more frequently. In cases like non-statically analyzable dynamic
+              // branches, FillPassMode will not allow restarting, so just update
+              // the single package metadata.
               if self.fill_pass_mode == FillPassMode::AllowRestart {
                 return true; // restart
-              } else if self.fill_pass_mode == FillPassMode::NoRestart
+              } else if self.fill_pass_mode != FillPassMode::CacheBusting
                 && restarted_pkgs.insert(package_name.clone())
               {
                 self
