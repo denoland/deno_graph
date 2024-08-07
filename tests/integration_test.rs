@@ -156,6 +156,13 @@ async fn test_jsr_version_not_found_then_found() {
             content: b"import 'jsr:@scope/a@1.2".to_vec().into(),
           }))
         }),
+        "file:///empty.ts" => Box::pin(async move {
+          Ok(Some(LoadResponse::Module {
+            specifier: specifier.clone(),
+            maybe_headers: None,
+            content: Default::default(),
+          }))
+        }),
         "https://jsr.io/@scope/a/meta.json" => {
           Box::pin(async move {
             Ok(Some(LoadResponse::Module {
@@ -203,39 +210,90 @@ async fn test_jsr_version_not_found_then_found() {
     }
   }
 
-  let loader = TestLoader::default();
-  let mut graph = ModuleGraph::new(GraphKind::All);
-  graph
-    .build(
-      vec![Url::parse("file:///main.ts").unwrap()],
-      &loader,
-      Default::default(),
-    )
-    .await;
-  graph.valid().unwrap();
-  assert_eq!(
-    *loader.requests.borrow(),
-    vec![
-      ("file:///main.ts".to_string(), CacheSetting::Use),
-      (
-        "https://jsr.io/@scope/a/meta.json".to_string(),
-        CacheSetting::Use
-      ),
-      ("file:///main.ts".to_string(), CacheSetting::Use),
-      (
-        "https://jsr.io/@scope/a/meta.json".to_string(),
-        CacheSetting::Reload
-      ),
-      (
-        "https://jsr.io/@scope/a/1.2.0_meta.json".to_string(),
-        CacheSetting::Reload
-      ),
-      (
-        "https://jsr.io/@scope/a/1.2.0/mod.ts".to_string(),
-        CacheSetting::Use
-      ),
-    ]
-  );
+  {
+    let loader = TestLoader::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///main.ts").unwrap()],
+        &loader,
+        Default::default(),
+      )
+      .await;
+    graph.valid().unwrap();
+    assert_eq!(
+      *loader.requests.borrow(),
+      vec![
+        ("file:///main.ts".to_string(), CacheSetting::Use),
+        (
+          "https://jsr.io/@scope/a/meta.json".to_string(),
+          CacheSetting::Use
+        ),
+        ("file:///main.ts".to_string(), CacheSetting::Use),
+        (
+          "https://jsr.io/@scope/a/meta.json".to_string(),
+          CacheSetting::Reload
+        ),
+        (
+          "https://jsr.io/@scope/a/1.2.0_meta.json".to_string(),
+          CacheSetting::Reload
+        ),
+        (
+          "https://jsr.io/@scope/a/1.2.0/mod.ts".to_string(),
+          CacheSetting::Use
+        ),
+      ]
+    );
+  }
+
+  {
+    let loader = TestLoader::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    // do an initial build
+    graph
+      .build(
+        vec![Url::parse("file:///empty.ts").unwrap()],
+        &loader,
+        Default::default(),
+      )
+      .await;
+    graph.valid().unwrap();
+
+    // full restart won't be supported at this point because
+    // a build previously happened, so it will only reload
+    // specific meta files
+    graph
+      .build(
+        vec![Url::parse("file:///main.ts").unwrap()],
+        &loader,
+        Default::default(),
+      )
+      .await;
+    graph.valid().unwrap();
+    assert_eq!(
+      *loader.requests.borrow(),
+      vec![
+        ("file:///empty.ts".to_string(), CacheSetting::Use),
+        ("file:///main.ts".to_string(), CacheSetting::Use),
+        (
+          "https://jsr.io/@scope/a/meta.json".to_string(),
+          CacheSetting::Use
+        ),
+        (
+          "https://jsr.io/@scope/a/meta.json".to_string(),
+          CacheSetting::Reload
+        ),
+        (
+          "https://jsr.io/@scope/a/1.2.0_meta.json".to_string(),
+          CacheSetting::Use
+        ),
+        (
+          "https://jsr.io/@scope/a/1.2.0/mod.ts".to_string(),
+          CacheSetting::Use
+        ),
+      ]
+    );
+  }
 }
 
 #[tokio::test]

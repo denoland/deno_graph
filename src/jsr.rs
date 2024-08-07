@@ -55,6 +55,10 @@ impl JsrMetadataStore {
     self.pending_package_info_loads.get(package_name).cloned()
   }
 
+  pub fn remove_package_metadata(&mut self, package_name: &str) {
+    self.pending_package_info_loads.remove(package_name);
+  }
+
   pub fn get_package_version_metadata(
     &self,
     nv: &PackageNv,
