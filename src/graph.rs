@@ -2004,7 +2004,10 @@ fn resolve(
       use SpecifierError::*;
       let res_ref = response.as_ref();
       if matches!(res_ref, Err(Specifier(ImportPrefixMissing { .. })))
-        || matches!(res_ref, Err(ImportMap(ImportMapError::UnmappedBareSpecifier(_, _))))
+        || matches!(
+          res_ref,
+          Err(ImportMap(ImportMapError::UnmappedBareSpecifier(_, _)))
+        )
       {
         if let Ok(specifier) =
           ModuleSpecifier::parse(&format!("node:{}", specifier_text))
@@ -4370,15 +4373,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             load_specifier.clone(),
             maybe_range.cloned(),
           )),
-          Err(LoadError::ChecksumIntegrity(err)) => Err(ModuleError::LoadingErr(
-            load_specifier.clone(),
-            maybe_range.cloned(),
-            if maybe_version_info.is_some() {
-              JsrLoadError::ContentChecksumIntegrity(err).into()
-            } else {
-              ModuleLoadError::HttpsChecksumIntegrity(err)
-            },
-          )),
+          Err(LoadError::ChecksumIntegrity(err)) => {
+            Err(ModuleError::LoadingErr(
+              load_specifier.clone(),
+              maybe_range.cloned(),
+              if maybe_version_info.is_some() {
+                JsrLoadError::ContentChecksumIntegrity(err).into()
+              } else {
+                ModuleLoadError::HttpsChecksumIntegrity(err)
+              },
+            ))
+          }
           Err(err) => Err(ModuleError::LoadingErr(
             load_specifier.clone(),
             maybe_range.cloned(),

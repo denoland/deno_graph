@@ -310,7 +310,8 @@ pub trait Loader {
     _specifier: &ModuleSpecifier,
     _source: &Arc<[u8]>,
     _module_info: &ModuleInfo,
-  ) {}
+  ) {
+  }
 }
 
 pub trait JsrUrlProvider {
@@ -938,7 +939,7 @@ pub mod tests {
     let actual: LoadResponse = serde_json::from_value(
       json!({ "kind": "external", "specifier": "https://example.com/bundle" }),
     )
-      .unwrap();
+    .unwrap();
     assert_eq!(
       actual,
       LoadResponse::External {
@@ -1218,7 +1219,7 @@ pub mod tests {
     let text = decode_owned_file_source(
       format!("{}{}", text_encoding::BOM_CHAR, "Hello").into_bytes(),
     )
-      .unwrap();
+    .unwrap();
     assert_eq!(text, "Hello");
   }
 

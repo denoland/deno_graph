@@ -24,7 +24,6 @@ pub enum DirEntryError {
   DirEntry(std::io::Error),
 }
 
-
 #[derive(Debug)]
 pub struct DirEntry {
   pub kind: DirEntryKind,

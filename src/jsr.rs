@@ -216,7 +216,7 @@ impl JsrMetadataStore {
           _ => Err(create_not_found_error()),
         }
       }
-        .boxed_local(),
+      .boxed_local(),
     );
     fut.shared_local()
   }
