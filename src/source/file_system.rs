@@ -11,8 +11,19 @@ pub enum DirEntryKind {
   File,
   Dir,
   Symlink,
-  Error(anyhow::Error),
+  Error(DirEntryError),
 }
+
+#[derive(Debug, thiserror::Error)]
+pub enum DirEntryError {
+  #[error("Failed to read directory.")]
+  Dir(std::io::Error),
+  #[error("Failed to read file type.")]
+  FileType(std::io::Error),
+  #[error("Failed to read entry in directory.")]
+  DirEntry(std::io::Error),
+}
+
 
 #[derive(Debug)]
 pub struct DirEntry {
@@ -132,10 +143,7 @@ impl FileSystem for RealFileSystem {
       }
       Err(err) => {
         return vec![DirEntry {
-          kind: DirEntryKind::Error(
-            anyhow::Error::from(err)
-              .context("Failed to read directory.".to_string()),
-          ),
+          kind: DirEntryKind::Error(DirEntryError::Dir(err)),
           url: dir_url.clone(),
         }];
       }
@@ -162,9 +170,7 @@ impl FileSystem for RealFileSystem {
               continue;
             }
             Err(err) => DirEntry {
-              kind: DirEntryKind::Error(
-                anyhow::Error::from(err).context("Failed to read file type."),
-              ),
+              kind: DirEntryKind::Error(DirEntryError::FileType(err)),
               url: ModuleSpecifier::from_file_path(entry.path()).unwrap(),
             },
           }
@@ -179,10 +185,7 @@ impl FileSystem for RealFileSystem {
         }
         Err(err) => DirEntry {
           url: dir_url.clone(),
-          kind: DirEntryKind::Error(
-            anyhow::Error::from(err)
-              .context("Failed to read entry in directory.".to_string()),
-          ),
+          kind: DirEntryKind::Error(DirEntryError::DirEntry(err)),
         },
       };
 

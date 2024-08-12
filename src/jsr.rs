@@ -15,8 +15,8 @@ use crate::packages::JsrPackageVersionInfo;
 use crate::rt::spawn;
 use crate::rt::JoinHandle;
 use crate::source::CacheSetting;
-use crate::source::ChecksumIntegrityError;
 use crate::source::JsrUrlProvider;
+use crate::source::LoadError;
 use crate::source::LoadOptions;
 use crate::source::LoadResponse;
 use crate::source::Loader;
@@ -154,15 +154,15 @@ impl JsrMetadataStore {
       {
         let package_nv = package_nv.clone();
         |e| {
-          match e.downcast::<ChecksumIntegrityError>() {
-            Ok(err) => {
+          match e {
+            LoadError::ChecksumIntegrity(err) => {
               // use a more specific variant in order to allow the
               // cli to enhance this error message
               JsrLoadError::PackageVersionManifestChecksumIntegrity(
                 package_nv, err,
               )
             }
-            Err(err) => JsrLoadError::PackageVersionManifestLoad(
+            err => JsrLoadError::PackageVersionManifestLoad(
               package_nv,
               Arc::new(err),
             ),
@@ -187,7 +187,7 @@ impl JsrMetadataStore {
     cache_setting: CacheSetting,
     maybe_expected_checksum: Option<LoaderChecksum>,
     handle_content: impl FnOnce(&[u8]) -> Result<T, serde_json::Error> + 'static,
-    create_failed_load_err: impl FnOnce(anyhow::Error) -> JsrLoadError + 'static,
+    create_failed_load_err: impl FnOnce(LoadError) -> JsrLoadError + 'static,
     create_not_found_error: impl FnOnce() -> JsrLoadError + 'static,
   ) -> PendingResult<T> {
     let fut = services.loader.load(
@@ -216,7 +216,7 @@ impl JsrMetadataStore {
           _ => Err(create_not_found_error()),
         }
       }
-      .boxed_local(),
+        .boxed_local(),
     );
     fut.shared_local()
   }

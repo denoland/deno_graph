@@ -178,16 +178,15 @@ impl deno_graph::source::Loader for Loader<'_> {
             specifier: specifier.clone(),
           })),
           Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
-          Err(err) => Err(anyhow::Error::from(err)),
+          Err(err) => Err(anyhow::Error::from(err).into()),
         }
       }
       "data" => deno_graph::source::load_data_url(specifier),
       "jsr" | "npm" | "node" => Ok(Some(LoadResponse::External {
         specifier: specifier.clone(),
       })),
-      _ => Err(anyhow::anyhow!(
-        "Unsupported scheme: {}",
-        specifier.scheme()
+      _ => Err(deno_graph::source::LoadError::UnsupportedScheme(
+        specifier.scheme().to_string(),
       )),
     };
     async move { res }.boxed()

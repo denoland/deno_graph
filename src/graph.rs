@@ -173,15 +173,15 @@ pub enum JsrLoadError {
   #[error("Loader should never return an external specifier for a jsr: specifier content load.")]
   ContentLoadExternalSpecifier,
   #[error(transparent)]
-  ContentLoad(Arc<anyhow::Error>),
+  ContentLoad(Arc<LoadError>),
   #[error("JSR package manifest for '{}' failed to load. {:#}", .0, .1)]
-  PackageManifestLoad(String, Arc<anyhow::Error>),
+  PackageManifestLoad(String, Arc<LoadError>),
   #[error("JSR package not found: {}", .0)]
   PackageNotFound(String),
   #[error("JSR package version not found: {}", .0)]
   PackageVersionNotFound(PackageNv),
   #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
-  PackageVersionManifestLoad(PackageNv, Arc<anyhow::Error>),
+  PackageVersionManifestLoad(PackageNv, Arc<LoadError>),
   #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
   PackageVersionManifestChecksumIntegrity(PackageNv, ChecksumIntegrityError),
   #[error(transparent)]
@@ -225,7 +225,7 @@ pub enum ModuleLoadError {
   #[error(transparent)]
   Decode(Arc<std::io::Error>),
   #[error(transparent)]
-  Loader(Arc<anyhow::Error>),
+  Loader(Arc<LoadError>),
   #[error(transparent)]
   Jsr(#[from] JsrLoadError),
   #[error(transparent)]
@@ -2004,7 +2004,7 @@ fn resolve(
       use SpecifierError::*;
       let res_ref = response.as_ref();
       if matches!(res_ref, Err(Specifier(ImportPrefixMissing { .. })))
-        || matches!(res_ref, Err(Other(e)) if matches!(e.downcast_ref::<ImportMapError>(), Some(&ImportMapError::UnmappedBareSpecifier(_, _))))
+        || matches!(res_ref, Err(ImportMap(ImportMapError::UnmappedBareSpecifier(_, _))))
       {
         if let Ok(specifier) =
           ModuleSpecifier::parse(&format!("node:{}", specifier_text))
@@ -4370,24 +4370,20 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             load_specifier.clone(),
             maybe_range.cloned(),
           )),
-          Err(err) => match err.downcast::<ChecksumIntegrityError>() {
-            // try to return the context of a checksum integrity error
-            // so that it can be more easily enhanced
-            Ok(err) => Err(ModuleError::LoadingErr(
-              load_specifier.clone(),
-              maybe_range.cloned(),
-              if maybe_version_info.is_some() {
-                JsrLoadError::ContentChecksumIntegrity(err).into()
-              } else {
-                ModuleLoadError::HttpsChecksumIntegrity(err)
-              },
-            )),
-            Err(err) => Err(ModuleError::LoadingErr(
-              load_specifier.clone(),
-              maybe_range.cloned(),
-              ModuleLoadError::Loader(Arc::new(err)),
-            )),
-          },
+          Err(LoadError::ChecksumIntegrity(err)) => Err(ModuleError::LoadingErr(
+            load_specifier.clone(),
+            maybe_range.cloned(),
+            if maybe_version_info.is_some() {
+              JsrLoadError::ContentChecksumIntegrity(err).into()
+            } else {
+              ModuleLoadError::HttpsChecksumIntegrity(err)
+            },
+          )),
+          Err(err) => Err(ModuleError::LoadingErr(
+            load_specifier.clone(),
+            maybe_range.cloned(),
+            ModuleLoadError::Loader(Arc::new(err)),
+          )),
         }
       }
 
