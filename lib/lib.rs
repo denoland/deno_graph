@@ -86,7 +86,7 @@ impl Loader for JsLoader {
         cache_setting: options.cache_setting.as_js_str(),
         checksum: options.maybe_checksum.map(|c| c.into_string()),
       })
-        .unwrap();
+      .unwrap();
       let result = self.load.call2(&context, &arg1, &arg2);
       let f = async move {
         let response = match result {
@@ -94,7 +94,7 @@ impl Loader for JsLoader {
             wasm_bindgen_futures::JsFuture::from(js_sys::Promise::resolve(
               &result,
             ))
-              .await
+            .await
           }
           Err(err) => Err(err),
         };
@@ -335,7 +335,7 @@ pub async fn js_parse_module(
     module_analyzer: Default::default(),
     maybe_npm_resolver: None,
   })
-    .await
+  .await
   {
     Ok(module) => {
       let serializer =
@@ -362,7 +362,7 @@ mod tests {
         "specifier": "file:///package.json"
       }
     }))
-      .unwrap();
+    .unwrap();
     assert_eq!(
       actual,
       Some(JsResolveTypesResponse {
@@ -377,7 +377,7 @@ mod tests {
     let actual: Option<JsResolveTypesResponse> = from_value(json!({
       "types": "https://deno.land/x/mod.d.ts",
     }))
-      .unwrap();
+    .unwrap();
     assert_eq!(
       actual,
       Some(JsResolveTypesResponse {
