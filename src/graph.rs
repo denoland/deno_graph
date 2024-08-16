@@ -2474,6 +2474,27 @@ pub(crate) fn parse_js_module_from_module_info(
             maybe_npm_resolver,
           );
           dep.maybe_deno_types_specifier = Some(specifier_text);
+        } else {
+          let types_resolution = resolve(
+            &specifier_text,
+            range.clone(),
+            ResolutionMode::Types,
+            jsr_url_provider,
+            maybe_resolver,
+            maybe_npm_resolver,
+          );
+          if types_resolution.maybe_specifier()
+            != dep.maybe_code.maybe_specifier()
+          {
+            dep.maybe_type = resolve(
+              &specifier_text,
+              range.clone(),
+              ResolutionMode::Types,
+              jsr_url_provider,
+              maybe_resolver,
+              maybe_npm_resolver,
+            );
+          }
         }
       }
       dep.imports.push(Import {
@@ -5833,7 +5854,83 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn dependency_jsx_import_source_types() {
+  async fn dependency_jsx_import_source_types_resolution() {
+    let mut mem_loader = MemoryLoader::default();
+    mem_loader.add_source_with_text(
+      "file:///foo.tsx",
+      "
+/* @jsxImportSource foo */
+",
+    );
+    mem_loader.add_source(
+      "file:///foo/jsx-runtime",
+      Source::Module {
+        specifier: "file:///foo/jsx-runtime",
+        maybe_headers: Some(vec![("content-type", "application/javascript")]),
+        content: "",
+      },
+    );
+    mem_loader.add_source(
+      "file:///foo/types/jsx-runtime",
+      Source::Module {
+        specifier: "file:///foo/types/jsx-runtime",
+        maybe_headers: Some(vec![("content-type", "application/typescript")]),
+        content: "",
+      },
+    );
+    let mut graph = ModuleGraph::new(GraphKind::All);
+
+    #[derive(Debug)]
+    struct TestResolver;
+    impl Resolver for TestResolver {
+      fn resolve(
+        &self,
+        specifier_text: &str,
+        referrer_range: &Range,
+        mode: ResolutionMode,
+      ) -> Result<ModuleSpecifier, ResolveError> {
+        if specifier_text == "foo/jsx-runtime" {
+          match mode {
+            ResolutionMode::Execution => {
+              Ok(ModuleSpecifier::parse("file:///foo/jsx-runtime").unwrap())
+            }
+            ResolutionMode::Types => Ok(
+              ModuleSpecifier::parse("file:///foo/types/jsx-runtime").unwrap(),
+            ),
+          }
+        } else {
+          Ok(resolve_import(specifier_text, &referrer_range.specifier)?)
+        }
+      }
+    }
+
+    let resolver = TestResolver;
+    graph
+      .build(
+        vec![Url::parse("file:///foo.tsx").unwrap()],
+        &mem_loader,
+        BuildOptions {
+          resolver: Some(&resolver),
+          ..Default::default()
+        },
+      )
+      .await;
+    graph.valid().unwrap();
+    let module = graph.get(&Url::parse("file:///foo.tsx").unwrap()).unwrap();
+    let module = module.js().unwrap();
+    let dependency_a = module.dependencies.get("foo/jsx-runtime").unwrap();
+    assert_eq!(
+      dependency_a.maybe_code.maybe_specifier().unwrap().as_str(),
+      "file:///foo/jsx-runtime"
+    );
+    assert_eq!(
+      dependency_a.maybe_type.maybe_specifier().unwrap().as_str(),
+      "file:///foo/types/jsx-runtime"
+    );
+  }
+
+  #[tokio::test]
+  async fn dependency_jsx_import_source_types_pragma() {
     let mut mem_loader = MemoryLoader::default();
     mem_loader.add_source_with_text(
       "file:///foo.tsx",
