@@ -2486,14 +2486,7 @@ pub(crate) fn parse_js_module_from_module_info(
           if types_resolution.maybe_specifier()
             != dep.maybe_code.maybe_specifier()
           {
-            dep.maybe_type = resolve(
-              &specifier_text,
-              range.clone(),
-              ResolutionMode::Types,
-              jsr_url_provider,
-              maybe_resolver,
-              maybe_npm_resolver,
-            );
+            dep.maybe_type = types_resolution;
           }
         }
       }
