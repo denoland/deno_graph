@@ -350,9 +350,6 @@ pub fn recommended_registry_package_url_to_nv(
   let scope = parts.next()?;
   let name = parts.next()?;
   let version = parts.next()?;
-  if parts.next().is_some() {
-    return None;
-  }
   Some(PackageNv {
     name: format!("{}/{}", scope, name),
     version: deno_semver::Version::parse_standard(version).ok()?,
