@@ -346,13 +346,13 @@ pub fn recommended_registry_package_url_to_nv(
 ) -> Option<PackageNv> {
   let path = url.as_str().strip_prefix(registry_url.as_str())?;
   let path = path.strip_prefix('/').unwrap_or(path);
-  let parts = path.split('/').take(3).collect::<Vec<_>>();
-  if parts.len() != 3 {
-    return None;
-  }
+  let mut parts = path.split('/');
+  let scope = parts.next()?;
+  let name = parts.next()?;
+  let version = parts.next()?;
   Some(PackageNv {
-    name: format!("{}/{}", parts[0], parts[1]),
-    version: deno_semver::Version::parse_standard(parts[2]).ok()?,
+    name: format!("{}/{}", scope, name),
+    version: deno_semver::Version::parse_standard(version).ok()?,
   })
 }
 
