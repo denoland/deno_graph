@@ -1775,19 +1775,24 @@ impl ModuleGraph {
   /// Resolve a specifier from the module graph following any possible redirects
   /// returning the "final" module.
   pub fn resolve(&self, specifier: &ModuleSpecifier) -> ModuleSpecifier {
+    const MAX_REDIRECTS: usize = 10;
     let mut redirected_specifier = specifier;
-    let max_redirects = 10;
-    let mut seen = HashSet::with_capacity(max_redirects);
-    seen.insert(redirected_specifier);
-    while let Some(specifier) = self.redirects.get(redirected_specifier) {
-      if !seen.insert(specifier) {
-        log::warn!("An infinite loop of redirections detected.\n  Original specifier: {specifier}");
-        break;
-      }
+    // only allocate if there's a redirect
+    if let Some(specifier) = self.redirects.get(specifier) {
+      let mut seen = HashSet::with_capacity(MAX_REDIRECTS);
+      seen.insert(redirected_specifier);
+      seen.insert(specifier);
       redirected_specifier = specifier;
-      if seen.len() >= max_redirects {
-        log::warn!("An excessive number of redirections detected.\n  Original specifier: {specifier}");
-        break;
+      while let Some(specifier) = self.redirects.get(redirected_specifier) {
+        if !seen.insert(specifier) {
+          log::warn!("An infinite loop of redirections detected.\n  Original specifier: {specifier}");
+          break;
+        }
+        redirected_specifier = specifier;
+        if seen.len() >= MAX_REDIRECTS {
+          log::warn!("An excessive number of redirections detected.\n  Original specifier: {specifier}");
+          break;
+        }
       }
     }
     redirected_specifier.clone()
