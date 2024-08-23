@@ -1777,8 +1777,8 @@ impl ModuleGraph {
   pub fn resolve(&self, specifier: &ModuleSpecifier) -> ModuleSpecifier {
     const MAX_REDIRECTS: usize = 10;
     let mut redirected_specifier = specifier;
-    // only allocate if there's a redirect
     if let Some(specifier) = self.redirects.get(specifier) {
+      // only allocate if there's a redirect
       let mut seen = HashSet::with_capacity(MAX_REDIRECTS);
       seen.insert(redirected_specifier);
       seen.insert(specifier);
