@@ -392,7 +392,7 @@ impl<'a> FastCheckTransformer<'a> {
     else {
       return;
     };
-    if let Some(relative) = self.specifier.make_relative(&resolved_specifier) {
+    if let Some(relative) = self.specifier.make_relative(resolved_specifier) {
       if !relative.starts_with("../") {
         src.value = format!("./{}", relative).into();
       } else {

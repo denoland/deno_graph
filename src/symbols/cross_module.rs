@@ -322,7 +322,7 @@ fn go_to_file_export<'a>(
       referrer_module.specifier(),
       /* prefer types */ true,
     )
-    .and_then(|dep| specifier_to_module(&dep));
+    .and_then(specifier_to_module);
 
   let Some(dep_module) = maybe_dep_module else {
     return vec![DefinitionPathNode::Unresolved(DefinitionUnresolved {
@@ -355,8 +355,7 @@ fn go_to_file_export<'a>(
             dep_module.specifier(),
             /* prefer_types */ true,
           );
-          let maybe_module =
-            maybe_specifier.and_then(|s| specifier_to_module(&s));
+          let maybe_module = maybe_specifier.and_then(specifier_to_module);
           let mut visited = HashSet::new();
           if let Some(module) = maybe_module {
             // todo(dsherret): this could be optimized to use an iterator
@@ -452,8 +451,7 @@ pub fn resolve_symbol_dep<'a>(
         module.specifier(),
         /* prefer types */ true,
       );
-      let maybe_module =
-        maybe_dep_specifier.as_ref().and_then(specifier_to_module);
+      let maybe_module = maybe_dep_specifier.and_then(specifier_to_module);
       let Some(module) = maybe_module else {
         return vec![ResolvedSymbolDepEntry::Path(
           DefinitionPathNode::Unresolved(DefinitionUnresolved {
@@ -665,7 +663,7 @@ fn resolve_qualified_name_internal<'a>(
               /* prefer types */ true,
             );
             let specifier_module =
-              maybe_dep_specifier.and_then(|s| specifier_to_module(&s));
+              maybe_dep_specifier.and_then(specifier_to_module);
             if let Some(module) = specifier_module {
               next.extend(resolve_qualified_export_name_internal(
                 graph,
@@ -841,7 +839,7 @@ fn exports_and_re_exports_inner<'a>(
         module.specifier(),
         /* prefer_types */ true,
       );
-      let maybe_module = maybe_specifier.and_then(|s| specifier_to_module(&s));
+      let maybe_module = maybe_specifier.and_then(specifier_to_module);
       if let Some(module) = maybe_module {
         let inner = exports_and_re_exports_inner(
           module_graph,

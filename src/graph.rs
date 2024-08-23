@@ -1407,7 +1407,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
           let resolved_specifier =
             self.iterator.graph.resolve(&resolved.specifier);
           let module_slot =
-            self.iterator.graph.module_slots.get(&resolved_specifier);
+            self.iterator.graph.module_slots.get(resolved_specifier);
           if let Some(ModuleSlot::Err(ModuleError::Missing(
             specifier,
             maybe_range,
@@ -1734,7 +1734,7 @@ impl ModuleGraph {
     let specifier = self.resolve(specifier);
     self
       .module_slots
-      .get(&specifier)
+      .get(specifier)
       .map_or(false, |ms| matches!(ms, ModuleSlot::Module(_)))
   }
 
@@ -1754,7 +1754,7 @@ impl ModuleGraph {
   /// return any resolution error as the error in the result.
   pub fn get(&self, specifier: &ModuleSpecifier) -> Option<&Module> {
     let specifier = self.resolve(specifier);
-    match self.module_slots.get(&specifier) {
+    match self.module_slots.get(specifier) {
       Some(ModuleSlot::Module(module)) => Some(module),
       _ => None,
     }
@@ -1774,7 +1774,10 @@ impl ModuleGraph {
 
   /// Resolve a specifier from the module graph following any possible redirects
   /// returning the "final" module.
-  pub fn resolve(&self, specifier: &ModuleSpecifier) -> ModuleSpecifier {
+  pub fn resolve<'a>(
+    &'a self,
+    specifier: &'a ModuleSpecifier,
+  ) -> &'a ModuleSpecifier {
     const MAX_REDIRECTS: usize = 10;
     let mut redirected_specifier = specifier;
     if let Some(specifier) = self.redirects.get(specifier) {
@@ -1795,7 +1798,7 @@ impl ModuleGraph {
         }
       }
     }
-    redirected_specifier.clone()
+    redirected_specifier
   }
 
   /// Resolve a dependency of a referring module providing the string specifier
@@ -1807,22 +1810,22 @@ impl ModuleGraph {
   /// of a code dependency. If `false` a code dependency will be returned in
   /// favor of a type dependency. The value should be set to `true` when
   /// resolving specifiers for type checking, or otherwise `false`.
-  pub fn resolve_dependency(
-    &self,
+  pub fn resolve_dependency<'a>(
+    &'a self,
     specifier: &str,
     referrer: &ModuleSpecifier,
     prefer_types: bool,
-  ) -> Option<ModuleSpecifier> {
+  ) -> Option<&'a ModuleSpecifier> {
     let referrer = self.resolve(referrer);
     if let Some(ModuleSlot::Module(referring_module)) =
-      self.module_slots.get(&referrer)
+      self.module_slots.get(referrer)
     {
       self.resolve_dependency_from_module(
         specifier,
         referring_module,
         prefer_types,
       )
-    } else if let Some(graph_import) = self.imports.get(&referrer) {
+    } else if let Some(graph_import) = self.imports.get(referrer) {
       let dependency = graph_import.dependencies.get(specifier)?;
       self.resolve_dependency_from_dep(dependency, prefer_types)
     } else {
@@ -1830,12 +1833,12 @@ impl ModuleGraph {
     }
   }
 
-  pub fn resolve_dependency_from_module(
-    &self,
+  pub fn resolve_dependency_from_module<'a>(
+    &'a self,
     specifier: &str,
-    referring_module: &Module,
+    referring_module: &'a Module,
     prefer_types: bool,
-  ) -> Option<ModuleSpecifier> {
+  ) -> Option<&'a ModuleSpecifier> {
     match referring_module {
       Module::Js(referring_module) => {
         let dependency = referring_module.dependencies.get(specifier)?;
@@ -1848,11 +1851,11 @@ impl ModuleGraph {
     }
   }
 
-  pub fn resolve_dependency_from_dep(
-    &self,
-    dependency: &Dependency,
+  pub fn resolve_dependency_from_dep<'a>(
+    &'a self,
+    dependency: &'a Dependency,
     prefer_types: bool,
-  ) -> Option<ModuleSpecifier> {
+  ) -> Option<&'a ModuleSpecifier> {
     let (maybe_first, maybe_second) = if prefer_types {
       (&dependency.maybe_type, &dependency.maybe_code)
     } else {
@@ -1864,7 +1867,7 @@ impl ModuleGraph {
     let resolved_specifier = self.resolve(unresolved_specifier);
     // Even if we resolved the specifier, it doesn't mean the module is actually
     // there, so check in the module slots
-    match self.module_slots.get(&resolved_specifier) {
+    match self.module_slots.get(resolved_specifier) {
       Some(ModuleSlot::Module(Module::Js(module))) if prefer_types => {
         // check for if this module has a types dependency
         if let Some(Resolution::Ok(resolved)) = module
@@ -1874,7 +1877,7 @@ impl ModuleGraph {
         {
           let resolved_specifier = self.resolve(&resolved.specifier);
           if matches!(
-            self.module_slots.get(&resolved_specifier),
+            self.module_slots.get(resolved_specifier),
             Some(ModuleSlot::Module(_))
           ) {
             return Some(resolved_specifier);
@@ -1913,7 +1916,7 @@ impl ModuleGraph {
     specifier: &ModuleSpecifier,
   ) -> Result<Option<&Module>, &ModuleError> {
     let specifier = self.resolve(specifier);
-    match self.module_slots.get(&specifier) {
+    match self.module_slots.get(specifier) {
       Some(ModuleSlot::Module(module)) => Ok(Some(module)),
       Some(ModuleSlot::Err(err)) => Err(err),
       _ => Ok(None),
