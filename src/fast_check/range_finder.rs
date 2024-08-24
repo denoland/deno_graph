@@ -671,15 +671,14 @@ impl<'a> PublicRangeFinder<'a> {
               /* prefer types */ true,
             ) {
               // only analyze registry specifiers
-              if let Some(dep_nv) = self
-                .url_converter
-                .registry_package_url_to_nv(&dep_specifier)
+              if let Some(dep_nv) =
+                self.url_converter.registry_package_url_to_nv(dep_specifier)
               {
                 self.add_pending_nv(&dep_nv, pkg_nv);
 
                 self.add_pending_trace(
                   &dep_nv,
-                  &dep_specifier,
+                  dep_specifier,
                   ImportedExports::star(),
                 );
               }
@@ -731,7 +730,7 @@ impl<'a> PublicRangeFinder<'a> {
                 /* prefer types */ true,
               ) {
                 if let Some(module_info) =
-                  self.root_symbol.module_from_specifier(&dep_specifier)
+                  self.root_symbol.module_from_specifier(dep_specifier)
                 {
                   let module_exports = module_info.exports(self.root_symbol);
 
@@ -864,13 +863,13 @@ impl<'a> PublicRangeFinder<'a> {
                   /* prefer types */ true,
                 ) {
                   if let Some(dep_nv) =
-                    self.url_converter.registry_package_url_to_nv(&specifier)
+                    self.url_converter.registry_package_url_to_nv(specifier)
                   {
                     if dep_nv == *pkg_nv {
                       // just add this specifier
                       self.add_pending_trace(
                         &dep_nv,
-                        &specifier,
+                        specifier,
                         ImportedExports::from_file_dep_name(&file_dep.name),
                       );
                     } else {
@@ -947,13 +946,13 @@ impl<'a> PublicRangeFinder<'a> {
                         ) {
                           if let Some(dep_nv) = self
                             .url_converter
-                            .registry_package_url_to_nv(&specifier)
+                            .registry_package_url_to_nv(specifier)
                           {
                             if dep_nv == *pkg_nv {
                               // just add this specifier
                               self.add_pending_trace(
                                 &dep_nv,
-                                &specifier,
+                                specifier,
                                 if parts.is_empty() {
                                   ImportedExports::star_with_default()
                                 } else {
@@ -1048,7 +1047,7 @@ impl<'a> PublicRangeFinder<'a> {
                   /* prefer types */ true,
                 ) {
                   if let Some(dep_nv) =
-                    self.url_converter.registry_package_url_to_nv(&specifier)
+                    self.url_converter.registry_package_url_to_nv(specifier)
                   {
                     if dep_nv == *pkg_nv {
                       let named_exports = match &file_dep.name {
@@ -1066,11 +1065,7 @@ impl<'a> PublicRangeFinder<'a> {
                         }
                       };
                       // just add this specifier
-                      self.add_pending_trace(
-                        &dep_nv,
-                        &specifier,
-                        named_exports,
-                      );
+                      self.add_pending_trace(&dep_nv, specifier, named_exports);
                     } else {
                       // need to analyze the whole package
                       self.add_pending_nv(&dep_nv, pkg_nv);

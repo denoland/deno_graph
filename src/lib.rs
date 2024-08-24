@@ -952,6 +952,7 @@ console.log(a);
         false
       ),
       Some(ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
+        .as_ref()
     );
     assert_eq!(
       graph.resolve_dependency(
@@ -962,6 +963,7 @@ console.log(a);
       Some(
         ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts").unwrap()
       )
+      .as_ref()
     );
     assert_eq!(
       graph
@@ -3950,6 +3952,7 @@ export function a(a: A): B {
         false
       ),
       Some(ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
+        .as_ref()
     );
     assert_eq!(
       graph.resolve_dependency(
@@ -3960,6 +3963,7 @@ export function a(a: A): B {
       Some(
         ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts").unwrap()
       )
+      .as_ref()
     );
   }
 
