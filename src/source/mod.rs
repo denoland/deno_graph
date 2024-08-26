@@ -285,7 +285,11 @@ pub trait Loader {
   }
 
   /// An optional method which returns cache info for a module specifier.
-  fn get_cache_info(&self, _specifier: &ModuleSpecifier) -> Option<CacheInfo> {
+  fn get_cache_info(
+    &self,
+    _specifier: &ModuleSpecifier,
+    _destination: RequestDestination,
+  ) -> Option<CacheInfo> {
     None
   }
 
@@ -699,7 +703,11 @@ impl MemoryLoader {
 }
 
 impl Loader for MemoryLoader {
-  fn get_cache_info(&self, specifier: &ModuleSpecifier) -> Option<CacheInfo> {
+  fn get_cache_info(
+    &self,
+    specifier: &ModuleSpecifier,
+    _destination: RequestDestination,
+  ) -> Option<CacheInfo> {
     self.cache_info.get(specifier).cloned()
   }
 

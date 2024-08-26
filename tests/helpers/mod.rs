@@ -16,6 +16,7 @@ use deno_graph::source::LoaderChecksum;
 use deno_graph::source::Locker;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
+use deno_graph::source::RequestDestination;
 use deno_graph::FastCheckCache;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
@@ -36,8 +37,12 @@ pub struct TestLoader {
 }
 
 impl Loader for TestLoader {
-  fn get_cache_info(&self, specifier: &ModuleSpecifier) -> Option<CacheInfo> {
-    self.cache.get_cache_info(specifier)
+  fn get_cache_info(
+    &self,
+    specifier: &ModuleSpecifier,
+    destination: RequestDestination,
+  ) -> Option<CacheInfo> {
+    self.cache.get_cache_info(specifier, destination)
   }
 
   fn load(

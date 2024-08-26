@@ -3787,12 +3787,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       if let ModuleSlot::Module(ref mut module) = slot {
         match module {
           Module::Json(module) => {
-            module.maybe_cache_info =
-              self.loader.get_cache_info(&module.specifier);
+            module.maybe_cache_info = self
+              .loader
+              .get_cache_info(&module.specifier, RequestDestination::Json);
           }
           Module::Js(module) => {
-            module.maybe_cache_info =
-              self.loader.get_cache_info(&module.specifier);
+            module.maybe_cache_info = self
+              .loader
+              .get_cache_info(&module.specifier, RequestDestination::Script);
           }
           Module::External(_) | Module::Npm(_) | Module::Node(_) => {}
         }

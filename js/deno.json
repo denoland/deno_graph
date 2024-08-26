@@ -1,6 +1,5 @@
 {
   "name": "@deno/graph",
-  "version": "0.0.0",
   "exports": {
     ".": "./mod.ts",
     "./loader": "./loader.ts",
