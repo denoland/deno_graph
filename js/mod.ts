@@ -19,7 +19,7 @@
  */
 
 import * as wasm from "./deno_graph_wasm.generated.js";
-import { load as defaultLoad } from "./loader.ts";
+import { load as defaultLoad, type RequestDestination } from "./loader.ts";
 import type {
   CacheInfo,
   LoadResponse,
@@ -28,7 +28,11 @@ import type {
   TypesDependency,
 } from "./types.ts";
 
-export { load, withResolvingRedirects } from "./loader.ts";
+export {
+  load,
+  type RequestDestination,
+  withResolvingRedirects,
+} from "./loader.ts";
 export { MediaType } from "./media_type.ts";
 export type {
   CacheInfo,
@@ -45,6 +49,13 @@ const encoder = new TextEncoder();
 // note: keep this in line with deno_cache
 export type CacheSetting = "only" | "use" | "reload";
 
+export interface LoadOptions {
+  destination: RequestDestination;
+  isDynamic: boolean;
+  cacheSetting: CacheSetting;
+  checksum: string | undefined;
+}
+
 export interface CreateGraphOptions {
   /**
    * A callback that is called with the URL string of the resource to be loaded
@@ -59,6 +70,7 @@ export interface CreateGraphOptions {
    */
   load?(
     specifier: string,
+    destination: RequestDestination,
     isDynamic: boolean,
     cacheSetting: CacheSetting,
     checksum: string | undefined,
@@ -154,10 +166,12 @@ export async function createGraph(
         isDynamic: boolean;
         cacheSetting: CacheSetting;
         checksum: string | undefined;
+        destination: RequestDestination;
       },
     ) => {
       const result = await load(
         specifier,
+        options.destination,
         options.isDynamic,
         options.cacheSetting,
         options.checksum,

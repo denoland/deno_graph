@@ -15,7 +15,7 @@ Deno.test({
   name: "createGraph()",
   async fn() {
     const graph = await createGraph("https://example.com/a", {
-      load(specifier, isDynamic) {
+      load(specifier, _destination, isDynamic) {
         assert(!isDynamic);
         assertEquals(specifier, "https://example.com/a");
         return Promise.resolve({
@@ -72,8 +72,9 @@ Deno.test({
   name: "createGraph() - root module missing",
   async fn() {
     const graph = await createGraph("file:///a/test.ts", {
-      load(specifier, isDynamic, cacheSetting, checksum) {
+      load(specifier, requestDestination, isDynamic, cacheSetting, checksum) {
         assert(specifier != null);
+        assert(requestDestination === "script");
         assert(isDynamic != null);
         assert(cacheSetting != null);
         assert(checksum === undefined); // in this case
@@ -510,6 +511,7 @@ Deno.test({
   async fn() {
     const response = await load(
       "https://deno.land/std@0.103.0/examples/chat/server.ts",
+      "script",
     ) as LoadResponseModule;
     assert(response);
     assert(response.kind === "module");
@@ -526,6 +528,7 @@ Deno.test({
   async fn() {
     const response = await load(
       "https://deno.land/x/bad-url",
+      "script",
     );
     assertEquals(response, undefined);
   },
@@ -887,7 +890,13 @@ Deno.test({
         resolveCount++;
         return new URL(specifier, referrer).toString();
       },
-      load(specifier, _isDynamic, _cacheSetting, checksum) {
+      load(
+        specifier,
+        _requestDestination,
+        _isDynamic,
+        _cacheSetting,
+        checksum,
+      ) {
         if (checksum != null) {
           foundChecksum = checksum;
         }

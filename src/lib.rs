@@ -2305,7 +2305,7 @@ export const foo = 'bar';"#,
   }
 
   #[tokio::test]
-  async fn test_build_graph_mixed_assertions() {
+  async fn test_build_graph_mixed_import_attributes() {
     let loader = setup(
       vec![
         (
@@ -2315,7 +2315,7 @@ export const foo = 'bar';"#,
             maybe_headers: None,
             content: r#"
             import a from "./a.json";
-            import b from "./a.json" assert { type: "json" };
+            import b from "./a.json" with { type: "json" };
             "#,
           },
         ),
@@ -2354,14 +2354,27 @@ export const foo = 'bar';"#,
               {
                 "specifier": "./a.json",
                 "code": {
-                  "specifier": "file:///a/a.json",
+                  "error": "Inconsistent import attribute type.\n  Previous: <none>\n  Current: json",
                   "span": {
                     "start": {
-                      "line": 1,
+                      "line": 2,
                       "character": 26
                     },
                     "end": {
-                      "line": 1,
+                      "line": 2,
+                      "character": 36
+                    }
+                  }
+                },
+                "type": {
+                  "specifier": "file:///a/a.json",
+                  "span": {
+                    "start": {
+                      "line": 2,
+                      "character": 26
+                    },
+                    "end": {
+                      "line": 2,
                       "character": 36
                     }
                   }
@@ -2370,7 +2383,7 @@ export const foo = 'bar';"#,
               }
             ],
             "kind": "esm",
-            "size": 113,
+            "size": 111,
             "mediaType": "TypeScript",
             "specifier": "file:///a/test01.ts"
           }

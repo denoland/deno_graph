@@ -6,6 +6,13 @@ const hasPermissions = "permissions" in Deno;
 let readRequested = false;
 const netRequested = new Set<string>();
 
+/**
+ * What the import attribute was for the request.
+ *
+ * https://fetch.spec.whatwg.org/#concept-request-destination
+ */
+export type RequestDestination = "script" | "json";
+
 async function requestRead(path: URL): Promise<void> {
   if (readRequested || !hasPermissions) {
     return;
@@ -24,10 +31,14 @@ async function requestNet(host: string): Promise<void> {
 
 export async function withResolvingRedirects(
   specifier: string,
-  customLoad: (specifier: string) => Promise<LoadResponse | undefined> = load,
+  destination: RequestDestination,
+  customLoad: (
+    specifier: string,
+    destination: RequestDestination,
+  ) => Promise<LoadResponse | undefined> = load,
 ): Promise<Exclude<LoadResponse, LoadResponseRedirect> | undefined> {
   for (let i = 0; i <= 10; i++) {
-    const response = await customLoad(specifier);
+    const response = await customLoad(specifier, destination);
     if (response === undefined || response.kind !== "redirect") {
       return response;
     }
@@ -44,6 +55,7 @@ export async function withResolvingRedirects(
  */
 export async function load(
   specifier: string,
+  destination: "script" | "json",
 ): Promise<LoadResponse | undefined> {
   const url = new URL(specifier);
   try {
@@ -60,7 +72,11 @@ export async function load(
       case "http:":
       case "https:": {
         await requestNet(url.host);
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          headers: {
+            accept: acceptHeader(destination),
+          },
+        });
         if (response.status !== 200) {
           // ensure the body is read as to not leak resources
           await response.arrayBuffer();
@@ -95,5 +111,19 @@ export async function load(
     }
   } catch {
     return undefined;
+  }
+}
+
+function acceptHeader(destination: RequestDestination) {
+  switch (destination) {
+    case "script":
+      return "*/*";
+    case "json":
+      return "application/json, */*;q=0.8";
+    default:
+      throw new Error(
+        "Missing request destination, which is a requirement for Deno 2.0. " +
+          "Ensure all your dependencies are up to date.",
+      );
   }
 }

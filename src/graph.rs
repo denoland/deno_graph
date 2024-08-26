@@ -3208,6 +3208,7 @@ impl FillPassMode {
   }
 }
 
+// this is a diagnostic instead of an error in order to silently ignore this in the lsp
 #[derive(Debug, Clone)]
 pub struct BuildDiagnostic {
   pub maybe_range: Option<Range>,

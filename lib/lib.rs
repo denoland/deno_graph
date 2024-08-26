@@ -73,6 +73,7 @@ impl Loader for JsLoader {
       is_dynamic: bool,
       cache_setting: &'static str,
       checksum: Option<String>,
+      destination: &'static str,
     }
 
     if specifier.scheme() == "data" {
@@ -85,6 +86,11 @@ impl Loader for JsLoader {
         is_dynamic: options.is_dynamic,
         cache_setting: options.cache_setting.as_js_str(),
         checksum: options.maybe_checksum.map(|c| c.into_string()),
+        destination: match options.destination {
+          // NOTICE: update the JS code when changing this
+          deno_graph::source::RequestDestination::Script => "script",
+          deno_graph::source::RequestDestination::Json => "json",
+        },
       })
       .unwrap();
       let result = self.load.call2(&context, &arg1, &arg2);
