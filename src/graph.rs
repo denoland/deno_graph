@@ -234,9 +234,6 @@ pub enum ModuleLoadError {
   Npm(#[from] NpmLoadError),
   #[error("Too many redirects.")]
   TooManyRedirects,
-  // todo(THIS PR): give this an actual name
-  #[error("No. Stop what you're doing.")]
-  StupidShit,
 }
 
 #[derive(Debug, Clone)]
