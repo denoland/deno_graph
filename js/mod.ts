@@ -96,7 +96,7 @@ export interface CreateGraphOptions {
   /** An optional callback that will be called with a URL string of the resource
    * to provide additional meta data about the resource to enrich the module
    * graph. */
-  cacheInfo?(specifier: string): CacheInfo;
+  cacheInfo?(specifier: string, destination: RequestDestination): CacheInfo;
   /** An optional callback that allows the default resolution logic of the
    * module graph to be "overridden". This is intended to allow items like an
    * import map to be used with the module graph. The callback takes the string

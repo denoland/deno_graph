@@ -14,6 +14,7 @@ use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadOptions;
 use deno_graph::source::Loader;
 use deno_graph::source::NullFileSystem;
+use deno_graph::source::RequestDestination;
 use deno_graph::source::ResolutionMode;
 use deno_graph::source::ResolveError;
 use deno_graph::source::Resolver;
@@ -50,11 +51,16 @@ impl JsLoader {
 }
 
 impl Loader for JsLoader {
-  fn get_cache_info(&self, specifier: &ModuleSpecifier) -> Option<CacheInfo> {
+  fn get_cache_info(
+    &self,
+    specifier: &ModuleSpecifier,
+    destination: RequestDestination,
+  ) -> Option<CacheInfo> {
     if let Some(cache_info_fn) = &self.maybe_cache_info {
       let this = JsValue::null();
       let arg0 = JsValue::from(specifier.to_string());
-      let value = cache_info_fn.call1(&this, &arg0).ok()?;
+      let arg1 = JsValue::from(destination_for_wasm(destination));
+      let value = cache_info_fn.call2(&this, &arg0, &arg1).ok()?;
       let cache_info: CacheInfo = serde_wasm_bindgen::from_value(value).ok()?;
       Some(cache_info)
     } else {
@@ -86,11 +92,7 @@ impl Loader for JsLoader {
         is_dynamic: options.is_dynamic,
         cache_setting: options.cache_setting.as_js_str(),
         checksum: options.maybe_checksum.map(|c| c.into_string()),
-        destination: match options.destination {
-          // NOTICE: update the JS code when changing this
-          deno_graph::source::RequestDestination::Script => "script",
-          deno_graph::source::RequestDestination::Json => "json",
-        },
+        destination: destination_for_wasm(options.destination),
       })
       .unwrap();
       let result = self.load.call2(&context, &arg1, &arg2);
@@ -110,6 +112,14 @@ impl Loader for JsLoader {
       };
       Box::pin(f)
     }
+  }
+}
+
+fn destination_for_wasm(destination: RequestDestination) -> &'static str {
+  match destination {
+    // NOTICE: update the JS code when changing this
+    deno_graph::source::RequestDestination::Script => "script",
+    deno_graph::source::RequestDestination::Json => "json",
   }
 }
 
