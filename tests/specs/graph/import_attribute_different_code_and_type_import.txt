@@ -1,0 +1,60 @@
+# mod.ts
+import type dataA from "./a.json" with { type: "json" };
+import dataB from "./a.json";
+
+# a.json
+{"a":"b"}
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "asserted",
+      "specifier": "file:///a.json",
+      "size": 10,
+      "mediaType": "Json"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.json",
+          "code": {
+            "error": "Inconsistent import attribute type.\n  Previous: json\n  Current: <none>",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 18
+              },
+              "end": {
+                "line": 1,
+                "character": 28
+              }
+            }
+          },
+          "type": {
+            "specifier": "file:///a.json",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 23
+              },
+              "end": {
+                "line": 0,
+                "character": 33
+              }
+            }
+          },
+          "assertionType": "json"
+        }
+      ],
+      "size": 87,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}

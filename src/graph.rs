@@ -673,6 +673,16 @@ impl ImportKind {
   fn is_es(&self) -> bool {
     matches!(self, ImportKind::Es)
   }
+
+  pub fn can_have_import_attribute(&self) -> bool {
+    match self {
+      ImportKind::Es | ImportKind::TsType => true,
+      ImportKind::TsReferencePath
+      | ImportKind::TsReferenceTypes
+      | ImportKind::JsxImportSource
+      | ImportKind::JsDoc => false,
+    }
+  }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -2738,13 +2748,19 @@ fn fill_module_dependencies(
 
       let current_import_attribute = import.attributes.get("type");
       if dep.maybe_attribute_type.as_ref() != current_import_attribute {
-        dep.maybe_code = Resolution::Err(Box::new(
-          ResolutionError::InconsistentImportAttribute {
-            previous: dep.maybe_attribute_type.clone(),
-            current: current_import_attribute.cloned(),
-            range: import.range.clone(),
-          },
-        ));
+        // only error for runtime import attributes that are inconsistent
+        if import.kind.can_have_import_attribute()
+          // only surface this warning if there is a conflict between imports that can have an import attribute
+          && dep.imports.iter().any(|i| i.kind.can_have_import_attribute())
+        {
+          dep.maybe_code = Resolution::Err(Box::new(
+            ResolutionError::InconsistentImportAttribute {
+              previous: dep.maybe_attribute_type.clone(),
+              current: current_import_attribute.cloned(),
+              range: import.range.clone(),
+            },
+          ));
+        }
 
         if dep.maybe_attribute_type.is_none() {
           dep.maybe_attribute_type = current_import_attribute.cloned();
