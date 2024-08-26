@@ -410,6 +410,11 @@ pub enum ResolutionError {
     error: SpecifierError,
     range: Range,
   },
+  InconsistentImportAttribute {
+    previous: Option<String>,
+    current: Option<String>,
+    range: Range,
+  },
   ResolverError {
     error: Arc<ResolveError>,
     specifier: String,
@@ -425,6 +430,7 @@ impl ResolutionError {
       | Self::InvalidJsrHttpsTypesImport { range, .. }
       | Self::InvalidLocalImport { range, .. }
       | Self::InvalidSpecifier { range, .. }
+      | Self::InconsistentImportAttribute { range, .. }
       | Self::ResolverError { range, .. } => range,
     }
   }
@@ -440,7 +446,8 @@ impl std::error::Error for ResolutionError {
     match self {
       Self::InvalidDowngrade { .. }
       | Self::InvalidJsrHttpsTypesImport { .. }
-      | Self::InvalidLocalImport { .. } => None,
+      | Self::InvalidLocalImport { .. }
+      | Self::InconsistentImportAttribute { .. } => None,
       Self::InvalidSpecifier { ref error, .. } => Some(error),
       Self::ResolverError { error, .. } => Some(error.as_ref()),
     }
@@ -510,6 +517,10 @@ impl PartialEq for ResolutionError {
           ..
         },
       ) => a == b && a_range == b_range,
+      (
+        Self::InconsistentImportAttribute { range: a_range, .. },
+        Self::InconsistentImportAttribute { range: b_range, .. },
+      ) => a_range == b_range,
       _ => false,
     }
   }
@@ -523,6 +534,7 @@ impl fmt::Display for ResolutionError {
       Self::InvalidDowngrade { specifier, .. } => write!(f, "Modules imported via https are not allowed to import http modules.\n  Importing: {specifier}"),
       Self::InvalidJsrHttpsTypesImport { specifier, .. } => write!(f, "Importing JSR packages via HTTPS specifiers for type checking is not supported for performance reasons. If you would like types, import via a `jsr:` specifier instead or else use a non-statically analyzable dynamic import.\n  Importing: {specifier}"),
       Self::InvalidLocalImport { specifier, .. } => write!(f, "Remote modules are not allowed to import local modules. Consider using a dynamic import instead.\n  Importing: {specifier}"),
+      Self::InconsistentImportAttribute { previous, current, .. } => write!(f, "Inconsistent import attribute type.\n  Previous: {}\n  Current: {}", previous.as_deref().unwrap_or("<none>"), current.as_deref().unwrap_or("<none>")),
       Self::ResolverError { error, .. } => error.fmt(f),
       Self::InvalidSpecifier { error, .. } => error.fmt(f),
     }
@@ -1051,21 +1063,15 @@ impl ModuleSlot {
     }
   }
 
-  pub fn matches_destination(&self, destination: RequestDestination) -> bool {
+  /// Gets the request destination if it's known.
+  pub fn destination(&self) -> Option<RequestDestination> {
     match self {
-      ModuleSlot::Pending(current_dest) => *current_dest == destination,
-      ModuleSlot::Err(_) => true,
+      ModuleSlot::Pending(current_dest) => Some(*current_dest),
+      ModuleSlot::Err(_) => None,
       ModuleSlot::Module(module) => match module {
-        Module::Js(_) => match destination {
-          RequestDestination::Script => true,
-          RequestDestination::Json => false,
-        },
-        Module::Json(_) => match destination {
-          RequestDestination::Json => true,
-          RequestDestination::Script => false,
-        },
-        // not important for these, so just say yes and handle it at runtime
-        Module::Npm(_) | Module::Node(_) | Module::External(_) => true,
+        Module::Js(_) => Some(RequestDestination::Script),
+        Module::Json(_) => Some(RequestDestination::Json),
+        Module::Npm(_) | Module::Node(_) | Module::External(_) => None,
       },
     }
   }
@@ -2728,11 +2734,24 @@ fn fill_module_dependencies(
     for import in imports {
       let dep = module_dependencies
         .entry(import.specifier.clone())
-        .or_default();
-      // TODO(nayeemrmn): Import attributes should be visited and checked for
-      // every import, not one per specifier.
-      if dep.maybe_attribute_type.is_none() {
-        dep.maybe_attribute_type = import.attributes.get("type").cloned();
+        .or_insert_with(|| Dependency {
+          maybe_attribute_type: import.attributes.get("type").cloned(),
+          ..Default::default()
+        });
+
+      let current_import_attribute = import.attributes.get("type");
+      if dep.maybe_attribute_type.as_ref() != current_import_attribute {
+        dep.maybe_code = Resolution::Err(Box::new(
+          ResolutionError::InconsistentImportAttribute {
+            previous: dep.maybe_attribute_type.clone(),
+            current: current_import_attribute.cloned(),
+            range: import.range.clone(),
+          },
+        ));
+
+        if dep.maybe_attribute_type.is_none() {
+          dep.maybe_attribute_type = current_import_attribute.cloned();
+        }
       }
 
       if import.kind == ImportKind::TsType {
@@ -3210,15 +3229,29 @@ impl std::fmt::Display for BuildDiagnostic {
 
 #[derive(Debug, Clone)]
 pub enum BuildDiagnosticKind {
-  // todo(THIS PR): actual name, of course
-  StupidShit,
+  InconsistentRequestDestination {
+    previous: RequestDestination,
+    current: RequestDestination,
+  },
 }
 
 impl std::fmt::Display for BuildDiagnosticKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+    fn format_destination(destination: RequestDestination) -> &'static str {
+      match destination {
+        RequestDestination::Script => "script",
+        RequestDestination::Json => "json",
+      }
+    }
+
     match self {
-      Self::StupidShit => {
-        write!(f, "No. Stop what you're doing.",)
+      Self::InconsistentRequestDestination { previous, current } => {
+        write!(
+          f,
+          "Inconsistent request destination due to inconsistent import attribute types. Ensure all import attributes types that import this module are the same.\n Previous: {}\n  Current: {}",
+          format_destination(*previous),
+          format_destination(*current),
+        )
       }
     }
   }
@@ -3864,19 +3897,21 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     debug_assert_ne!(requested_specifier, target_specifier);
     // remove a potentially pending redirect that will never resolve
     if let Some(slot) = self.graph.module_slots.get(&requested_specifier) {
-      match slot {
-        ModuleSlot::Pending(pending_destination) => {
-          if requested_destination != *pending_destination {
-            self.diagnostics.push(BuildDiagnostic {
-              maybe_range: maybe_range.cloned(),
-              kind: BuildDiagnosticKind::StupidShit,
-            });
-            return false;
-          } else {
-            self.graph.module_slots.remove(&requested_specifier);
-          }
+      if let Some(previous_destination) = slot.destination() {
+        if requested_destination != previous_destination {
+          self.diagnostics.push(BuildDiagnostic {
+            maybe_range: maybe_range.cloned(),
+            kind: BuildDiagnosticKind::InconsistentRequestDestination {
+              previous: previous_destination,
+              current: requested_destination,
+            },
+          });
+          return false;
         }
-        _ => {}
+      }
+
+      if let ModuleSlot::Pending(_) = slot {
+        self.graph.module_slots.remove(&requested_specifier);
       }
     }
 
@@ -3935,11 +3970,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     if let Some(module_slot) = self.graph.module_slots.get(specifier) {
       let request_destination =
         attribute_type_to_destination(maybe_attribute_type.as_ref());
-      if !module_slot.matches_destination(request_destination) {
-        self.diagnostics.push(BuildDiagnostic {
-          maybe_range: maybe_range.cloned(),
-          kind: BuildDiagnosticKind::StupidShit,
-        });
+      if let Some(previous_destination) = module_slot.destination() {
+        if request_destination != previous_destination {
+          self.diagnostics.push(BuildDiagnostic {
+            maybe_range: maybe_range.cloned(),
+            kind: BuildDiagnosticKind::InconsistentRequestDestination {
+              previous: previous_destination,
+              current: request_destination,
+            },
+          });
+        }
       }
 
       // ensure any jsr/npm dependencies that we've already seen are marked
@@ -5985,7 +6025,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn same_specifier_different_request_destination_should_error() {
+  async fn same_specifier_different_import_attribute_same_file_errors() {
     struct TestLoader;
     impl Loader for TestLoader {
       fn load(
@@ -6030,14 +6070,182 @@ mod tests {
       }
     }
     let mut graph = ModuleGraph::new(GraphKind::All);
-    let diagnostics = graph
+    graph
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
         &TestLoader,
         Default::default(),
       )
       .await;
-    assert_eq!(diagnostics.len(), 1);
+    let err = graph.valid().unwrap_err();
+    match err {
+      ModuleGraphError::ResolutionError(err) => {
+        assert_eq!(
+          err,
+          ResolutionError::InconsistentImportAttribute {
+            previous: Some("json".to_string()),
+            current: None,
+            range: Range {
+              specifier: Url::parse("file:///foo.ts").unwrap(),
+              start: Position {
+                line: 2,
+                character: 37
+              },
+              end: Position {
+                line: 2,
+                character: 66
+              },
+            }
+          }
+        );
+      }
+      _ => unreachable!(),
+    }
+  }
+
+  #[tokio::test]
+  async fn same_specifier_different_import_attribute_different_file_errors() {
+    struct TestLoader;
+    impl Loader for TestLoader {
+      fn load(
+        &self,
+        specifier: &ModuleSpecifier,
+        options: LoadOptions,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///foo.ts" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: b"
+              import './bar.ts';
+              import dataJson from 'https://deno.land/data.json' with { type: 'json' };
+              console.log(dataJson);
+              "
+              .to_vec()
+              .into(),
+            }))
+          }),
+          "file:///bar.ts" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: b"import dataScript from 'https://deno.land/data.json'; console.log(dataScript);"
+                .to_vec()
+                .into(),
+            }))
+          }),
+          "https://deno.land/data.json" => match options.destination {
+            RequestDestination::Script => Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: Some(HashMap::from([(
+                  "content-type".to_string(),
+                  "application/javascript".to_string(),
+                )])),
+                content: b"console.log(4)".to_vec().into(),
+              }))
+            }),
+            RequestDestination::Json => Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: Some(HashMap::from([(
+                  "content-type".to_string(),
+                  "application/json".to_string(),
+                )])),
+                content: b"{}".to_vec().into(),
+              }))
+            }),
+          },
+          _ => unreachable!(),
+        }
+      }
+    }
+
+    {
+      let mut graph = ModuleGraph::new(GraphKind::All);
+      let diagnostics = graph
+        .build(
+          vec![Url::parse("file:///foo.ts").unwrap()],
+          &TestLoader,
+          Default::default(),
+        )
+        .await;
+      graph.valid().unwrap();
+      assert_eq!(diagnostics.len(), 1);
+      let diagnostic = &diagnostics[0];
+      assert_eq!(
+        diagnostic.maybe_range,
+        Some(Range {
+          specifier: Url::parse("file:///bar.ts").unwrap(),
+          start: Position {
+            line: 0,
+            character: 23
+          },
+          end: Position {
+            line: 0,
+            character: 52
+          },
+        })
+      );
+      match diagnostic.kind {
+        BuildDiagnosticKind::InconsistentRequestDestination {
+          previous,
+          current,
+        } => {
+          assert_eq!(previous, RequestDestination::Json);
+          assert_eq!(current, RequestDestination::Script);
+        }
+      }
+    }
+
+    // this time load bar, then later come around and load foo
+    {
+      let mut graph = ModuleGraph::new(GraphKind::All);
+      let diagnostics = graph
+        .build(
+          vec![Url::parse("file:///bar.ts").unwrap()],
+          &TestLoader,
+          Default::default(),
+        )
+        .await;
+      graph.valid().unwrap();
+      assert_eq!(diagnostics.len(), 0);
+      // now load foo
+      let diagnostics = graph
+        .build(
+          vec![Url::parse("file:///foo.ts").unwrap()],
+          &TestLoader,
+          Default::default(),
+        )
+        .await;
+      graph.valid().unwrap();
+      let diagnostic = &diagnostics[0];
+      assert_eq!(
+        diagnostic.maybe_range,
+        Some(Range {
+          specifier: Url::parse("file:///foo.ts").unwrap(),
+          start: Position {
+            line: 2,
+            character: 35
+          },
+          end: Position {
+            line: 2,
+            character: 64
+          },
+        })
+      );
+      match diagnostic.kind {
+        BuildDiagnosticKind::InconsistentRequestDestination {
+          previous,
+          current,
+        } => {
+          assert_eq!(previous, RequestDestination::Script);
+          assert_eq!(current, RequestDestination::Json);
+        }
+      }
+    }
   }
 
   #[tokio::test]
