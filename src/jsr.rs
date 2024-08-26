@@ -196,6 +196,7 @@ impl JsrMetadataStore {
         is_dynamic: false,
         cache_setting,
         maybe_checksum: maybe_expected_checksum,
+        destination: crate::source::RequestDestination::Json,
       },
     );
     let fut = spawn(

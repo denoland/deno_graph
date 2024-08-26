@@ -251,10 +251,25 @@ impl Locker for HashMapLocker {
   }
 }
 
+/// What the import attribute was for the request.
+///
+/// https://fetch.spec.whatwg.org/#concept-request-destination
+///
+/// Note: deno_graph does not error for the same specifier requested
+/// multiple times with different request destinations. This will
+/// error in the runtime.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
+pub enum RequestDestination {
+  Script,
+  /// Loaders should use an "application/json,*/*;q=0.5" accept header (https://fetch.spec.whatwg.org/#fetching).
+  Json,
+}
+
 #[derive(Debug, Clone)]
 pub struct LoadOptions {
   pub is_dynamic: bool,
   pub cache_setting: CacheSetting,
+  pub destination: RequestDestination,
   /// It is the loader's responsibility to verify the provided checksum if it
   /// exists because in the CLI we only verify the checksum of the source when
   /// it is loaded from the global cache. We don't verify it when loaded from

@@ -234,6 +234,9 @@ pub enum ModuleLoadError {
   Npm(#[from] NpmLoadError),
   #[error("Too many redirects.")]
   TooManyRedirects,
+  // todo(THIS PR): give this an actual name
+  #[error("No. Stop what you're doing.")]
+  StupidShit,
 }
 
 #[derive(Debug, Clone)]
@@ -278,8 +281,8 @@ impl ModuleError {
         maybe_referrer.as_ref()
       }
       Self::ParseErr(_, _) => None,
-      Self::InvalidTypeAssertion { range, .. } => Some(range),
-      Self::UnsupportedImportAttributeType { range, .. } => Some(range),
+      Self::InvalidTypeAssertion { range, .. }
+      | Self::UnsupportedImportAttributeType { range, .. } => Some(range),
     }
   }
 
@@ -1035,7 +1038,7 @@ pub(crate) enum ModuleSlot {
   /// When trying to load or parse the module, an error occurred.
   Err(ModuleError),
   /// An internal state set when loading a module asynchronously.
-  Pending,
+  Pending(RequestDestination),
 }
 
 impl ModuleSlot {
@@ -1045,6 +1048,25 @@ impl ModuleSlot {
       Some(module)
     } else {
       None
+    }
+  }
+
+  pub fn matches_destination(&self, destination: RequestDestination) -> bool {
+    match self {
+      ModuleSlot::Pending(current_dest) => *current_dest == destination,
+      ModuleSlot::Err(_) => true,
+      ModuleSlot::Module(module) => match module {
+        Module::Js(_) => match destination {
+          RequestDestination::Script => true,
+          RequestDestination::Json => false,
+        },
+        Module::Json(_) => match destination {
+          RequestDestination::Json => true,
+          RequestDestination::Script => false,
+        },
+        // not important for these, so just say yes and handle it at runtime
+        Module::Npm(_) | Module::Node(_) | Module::External(_) => true,
+      },
     }
   }
 }
@@ -1060,7 +1082,7 @@ fn to_result<'a>(
   match module_slot {
     ModuleSlot::Err(err) => Some((specifier, Err(err))),
     ModuleSlot::Module(module) => Some((specifier, Ok(module))),
-    ModuleSlot::Pending => None,
+    ModuleSlot::Pending(_) => None,
   }
 }
 
@@ -1332,7 +1354,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
       match self.graph.module_slots.get_key_value(specifier) {
         Some((specifier, module_slot)) => {
           match module_slot {
-            ModuleSlot::Pending => {
+            ModuleSlot::Pending(_) => {
               // ignore
             }
             ModuleSlot::Module(module) => {
@@ -1580,7 +1602,7 @@ impl ModuleGraph {
     roots: Vec<ModuleSpecifier>,
     loader: &'a dyn Loader,
     options: BuildOptions<'a>,
-  ) {
+  ) -> Vec<BuildDiagnostic> {
     Builder::build(self, roots, loader, options).await
   }
 
@@ -1639,7 +1661,7 @@ impl ModuleGraph {
           Module::Js(m) => m,
           _ => continue,
         },
-        ModuleSlot::Err(_) | ModuleSlot::Pending => continue,
+        ModuleSlot::Err(_) | ModuleSlot::Pending(_) => continue,
       };
       module.fast_check = Some(match fast_check_module_result {
         Ok(fast_check_module) => {
@@ -1744,7 +1766,7 @@ impl ModuleGraph {
   pub fn module_errors(&self) -> impl Iterator<Item = &ModuleError> {
     self.module_slots.values().filter_map(|ms| match ms {
       ModuleSlot::Err(err) => Some(err),
-      ModuleSlot::Module(_) | ModuleSlot::Pending => None,
+      ModuleSlot::Module(_) | ModuleSlot::Pending(_) => None,
     })
   }
 
@@ -2050,7 +2072,7 @@ where
         "specifier": specifier,
         "error": err.to_string(),
       }))?,
-      ModuleSlot::Pending => seq.serialize_element(&serde_json::json!({
+      ModuleSlot::Pending(_) => seq.serialize_element(&serde_json::json!({
         "specifier": specifier,
         "error": "[INTERNAL ERROR] A pending module load never completed.",
       }))?,
@@ -3001,7 +3023,7 @@ enum PendingInfoResponse {
   Module {
     specifier: ModuleSpecifier,
     module_source_and_info: ModuleSourceAndInfo,
-    pending_load: Option<Box<(LoaderChecksum, ModuleInfo)>>,
+    pending_load: Option<Box<(LoaderChecksum, RequestDestination, ModuleInfo)>>,
   },
   Redirect {
     count: usize,
@@ -3066,6 +3088,7 @@ enum LoadSpecifierKind {
 
 struct PendingInfo {
   requested_specifier: ModuleSpecifier,
+  destination: RequestDestination,
   maybe_range: Option<Range>,
   result: Result<PendingInfoResponse, ModuleError>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
@@ -3169,6 +3192,38 @@ impl FillPassMode {
   }
 }
 
+#[derive(Debug, Clone)]
+pub struct BuildDiagnostic {
+  pub maybe_range: Option<Range>,
+  pub kind: BuildDiagnosticKind,
+}
+
+impl std::fmt::Display for BuildDiagnostic {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.kind)?;
+    if let Some(range) = &self.maybe_range {
+      write!(f, "\n    at {range}")?;
+    }
+    Ok(())
+  }
+}
+
+#[derive(Debug, Clone)]
+pub enum BuildDiagnosticKind {
+  // todo(THIS PR): actual name, of course
+  StupidShit,
+}
+
+impl std::fmt::Display for BuildDiagnosticKind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::StupidShit => {
+        write!(f, "No. Stop what you're doing.",)
+      }
+    }
+  }
+}
+
 struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
   file_system: &'a dyn FileSystem,
@@ -3181,6 +3236,7 @@ struct Builder<'a, 'graph> {
   module_analyzer: &'a dyn ModuleAnalyzer,
   reporter: Option<&'a dyn Reporter>,
   graph: &'graph mut ModuleGraph,
+  diagnostics: Vec<BuildDiagnostic>,
   state: PendingState<'a>,
   fill_pass_mode: FillPassMode,
   executor: &'a dyn Executor,
@@ -3192,7 +3248,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     roots: Vec<ModuleSpecifier>,
     loader: &'a dyn Loader,
     options: BuildOptions<'a>,
-  ) {
+  ) -> Vec<BuildDiagnostic> {
     let fill_pass_mode = match graph.roots.is_empty() {
       true => FillPassMode::AllowRestart,
       false => FillPassMode::NoRestart,
@@ -3210,10 +3266,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       reporter: options.reporter,
       graph,
       state: PendingState::default(),
+      diagnostics: Vec::new(),
       fill_pass_mode,
       executor: options.executor,
     };
     builder.fill(roots, options.imports).await;
+    builder.diagnostics
   }
 
   async fn fill(
@@ -3250,6 +3308,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let specifier = match self.state.pending.next().await {
         Some(PendingInfo {
           requested_specifier,
+          destination,
           maybe_range,
           result,
           maybe_version_info,
@@ -3266,22 +3325,33 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
           match result {
             Ok(response) => {
-              self.check_specifier(&requested_specifier, response.specifier());
-
-              self.visit(
-                response,
-                maybe_range.clone(),
-                maybe_version_info.as_ref(),
-              );
+              if self.check_specifier(
+                &requested_specifier,
+                destination,
+                response.specifier(),
+                maybe_range.as_ref(),
+              ) {
+                self.visit(
+                  response,
+                  maybe_range.clone(),
+                  maybe_version_info.as_ref(),
+                );
+              }
 
               Some(requested_specifier)
             }
             Err(err) => {
-              self.check_specifier(&requested_specifier, err.specifier());
-              self
-                .graph
-                .module_slots
-                .insert(err.specifier().clone(), ModuleSlot::Err(err));
+              if self.check_specifier(
+                &requested_specifier,
+                destination,
+                err.specifier(),
+                maybe_range.as_ref(),
+              ) {
+                self
+                  .graph
+                  .module_slots
+                  .insert(err.specifier().clone(), ModuleSlot::Err(err));
+              }
               Some(requested_specifier)
             }
           }
@@ -3548,15 +3618,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       for (specifier, dynamic_branch) in
         std::mem::take(&mut self.state.dynamic_branches)
       {
-        if !self.graph.module_slots.contains_key(&specifier) {
-          self.load(
-            &specifier,
-            Some(&dynamic_branch.range),
-            true,
-            dynamic_branch.maybe_attribute_type,
-            dynamic_branch.maybe_version_info.as_ref(),
-          );
-        }
+        self.load(
+          &specifier,
+          Some(&dynamic_branch.range),
+          true,
+          dynamic_branch.maybe_attribute_type,
+          dynamic_branch.maybe_version_info.as_ref(),
+        );
       }
     }
   }
@@ -3625,7 +3693,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 ModuleSlot::Err(_) => {
                   // the module errored some other way, so ignore
                 }
-                ModuleSlot::Pending => {
+                ModuleSlot::Pending(_) => {
                   unreachable!(); // should not happen by design
                 }
               }
@@ -3769,24 +3837,46 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   fn check_specifier(
     &mut self,
     requested_specifier: &ModuleSpecifier,
+    requested_destination: RequestDestination,
     specifier: &ModuleSpecifier,
-  ) {
+    maybe_range: Option<&Range>,
+  ) -> bool {
     // If the response was redirected, then we add the module to the redirects
-    if requested_specifier != specifier {
-      self.add_redirect(requested_specifier.clone(), specifier.clone());
+    if requested_specifier == specifier {
+      return true;
     }
+
+    self.add_redirect(
+      requested_specifier.clone(),
+      requested_destination,
+      specifier.clone(),
+      maybe_range,
+    )
   }
 
   fn add_redirect(
     &mut self,
     requested_specifier: ModuleSpecifier,
-    specifier: ModuleSpecifier,
-  ) {
-    debug_assert_ne!(requested_specifier, specifier);
+    requested_destination: RequestDestination,
+    target_specifier: ModuleSpecifier,
+    maybe_range: Option<&Range>,
+  ) -> bool {
+    debug_assert_ne!(requested_specifier, target_specifier);
     // remove a potentially pending redirect that will never resolve
     if let Some(slot) = self.graph.module_slots.get(&requested_specifier) {
-      if matches!(slot, ModuleSlot::Pending) {
-        self.graph.module_slots.remove(&requested_specifier);
+      match slot {
+        ModuleSlot::Pending(pending_destination) => {
+          if requested_destination != *pending_destination {
+            self.diagnostics.push(BuildDiagnostic {
+              maybe_range: maybe_range.cloned(),
+              kind: BuildDiagnosticKind::StupidShit,
+            });
+            return false;
+          } else {
+            self.graph.module_slots.remove(&requested_specifier);
+          }
+        }
+        _ => {}
       }
     }
 
@@ -3794,7 +3884,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .graph
       .redirects
       .entry(requested_specifier)
-      .or_insert(specifier);
+      .or_insert(target_specifier);
+    true
   }
 
   /// Enqueue a request to load the specifier via the loader.
@@ -3841,7 +3932,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     let original_specifier = specifier;
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
-    if self.graph.module_slots.contains_key(specifier) {
+    if let Some(module_slot) = self.graph.module_slots.get(specifier) {
+      let request_destination =
+        attribute_type_to_destination(maybe_attribute_type.as_ref());
+      if !module_slot.matches_destination(request_destination) {
+        self.diagnostics.push(BuildDiagnostic {
+          maybe_range: maybe_range.cloned(),
+          kind: BuildDiagnosticKind::StupidShit,
+        });
+      }
+
       // ensure any jsr/npm dependencies that we've already seen are marked
       // as a dependency of the referrer
       if matches!(original_specifier.scheme(), "jsr" | "npm") {
@@ -3872,6 +3972,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           }
         };
         let checksum = LoaderChecksum::new(checksum.to_string());
+        let request_destination =
+          attribute_type_to_destination(maybe_attribute_type.as_ref());
         if let Some(module_info) = version_info.inner.module_info(sub_path) {
           // Check if this specifier is in the cache. If it is, then
           // don't use the module information as it may be out of date
@@ -3882,6 +3984,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               is_dynamic: self.in_dynamic_branch,
               cache_setting: CacheSetting::Only,
               maybe_checksum: Some(checksum.clone()),
+              destination: request_destination,
             },
           );
           let is_root = self.roots_contain(specifier);
@@ -3914,7 +4017,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     PendingInfoResponse::Module {
                       specifier: requested_specifier.clone(),
                       module_source_and_info,
-                      pending_load: Some(Box::new((checksum, module_info))),
+                      pending_load: Some(Box::new((
+                        checksum,
+                        request_destination,
+                        module_info,
+                      ))),
                     }
                   })
                 }
@@ -3962,6 +4069,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               };
               PendingInfo {
                 requested_specifier,
+                destination: request_destination,
                 maybe_range,
                 result,
                 maybe_version_info: Some(version_info),
@@ -3970,10 +4078,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             }
             .boxed_local()
           });
-          self
-            .graph
-            .module_slots
-            .insert(specifier.clone(), ModuleSlot::Pending);
+          self.graph.module_slots.insert(
+            specifier.clone(),
+            ModuleSlot::Pending(request_destination),
+          );
           return;
         } else {
           self.load_pending_module(PendingModuleLoadItem {
@@ -4228,10 +4336,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       mut maybe_checksum,
       mut maybe_version_info,
     } = item;
-    self
-      .graph
-      .module_slots
-      .insert(requested_specifier.clone(), ModuleSlot::Pending);
+    let destination =
+      attribute_type_to_destination(maybe_attribute_type.as_ref());
+    self.graph.module_slots.insert(
+      requested_specifier.clone(),
+      ModuleSlot::Pending(destination),
+    );
     let loader = self.loader;
     let module_analyzer = self.module_analyzer;
     let jsr_url_provider = self.jsr_url_provider;
@@ -4318,6 +4428,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           LoadOptions {
             is_dynamic,
             cache_setting: CacheSetting::Use,
+            destination: attribute_type_to_destination(
+              maybe_attribute_type.as_ref(),
+            ),
             maybe_checksum: maybe_checksum.clone(),
           },
         );
@@ -4434,6 +4547,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       PendingInfo {
         result,
         requested_specifier,
+        destination,
         maybe_range,
         maybe_version_info,
         loaded_package_via_https_url,
@@ -4507,7 +4621,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           specifier
         );
 
-        if let Some((checksum, module_info)) = pending_load.map(|v| *v) {
+        if let Some((checksum, request_destination, module_info)) =
+          pending_load.map(|v| *v)
+        {
           self.state.jsr.pending_content_loads.push({
             let specifier = specifier.clone();
             let maybe_range = maybe_referrer.clone();
@@ -4516,6 +4632,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               LoadOptions {
                 is_dynamic: self.in_dynamic_branch,
                 cache_setting: CacheSetting::Use,
+                destination: request_destination,
                 maybe_checksum: Some(checksum.clone()),
               },
             );
@@ -4693,6 +4810,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
     }
     module_slot
+  }
+}
+
+fn attribute_type_to_destination(
+  maybe_attribute_type: Option<&AttributeTypeWithRange>,
+) -> RequestDestination {
+  match maybe_attribute_type {
+    Some(AttributeTypeWithRange { kind, .. }) if kind == "json" => {
+      RequestDestination::Json
+    }
+    _ => RequestDestination::Script,
   }
 }
 
@@ -5677,7 +5805,7 @@ mod tests {
                 import 'file:///bar.ts';
                 await import('file:///bar.ts');
                 await import('file:///bar.ts', { assert: eval('') });
-                import 'file:///baz.json' assert { type: 'json' };
+                import 'file:///baz.json' with { type: 'json' };
                 import type {} from 'file:///bar.ts';
                 /** @typedef { import('file:///bar.ts') } bar */
               "
@@ -5687,6 +5815,7 @@ mod tests {
           }),
           "file:///bar.ts" => {
             assert!(!options.is_dynamic);
+            assert_eq!(options.destination, RequestDestination::Script);
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -5697,6 +5826,7 @@ mod tests {
           }
           "file:///baz.json" => {
             assert!(!options.is_dynamic);
+            assert_eq!(options.destination, RequestDestination::Json);
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -5852,6 +5982,62 @@ mod tests {
         )])),
       },]
     );
+  }
+
+  #[tokio::test]
+  async fn same_specifier_different_request_destination_should_error() {
+    struct TestLoader;
+    impl Loader for TestLoader {
+      fn load(
+        &self,
+        specifier: &ModuleSpecifier,
+        options: LoadOptions,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///foo.ts" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: b"
+              import dataJson from 'https://deno.land/data.json' with { type: 'json' };
+              import dataScript from 'https://deno.land/data.json';
+              console.log(dataJson, dataScript);
+              "
+              .to_vec()
+              .into(),
+            }))
+          }),
+          "https://deno.land/data.json" => {
+            match options.destination {
+              RequestDestination::Script => {
+                unreachable!(); // should not be called
+              }
+              RequestDestination::Json => Box::pin(async move {
+                Ok(Some(LoadResponse::Module {
+                  specifier: specifier.clone(),
+                  maybe_headers: Some(HashMap::from([(
+                    "content-type".to_string(),
+                    "application/json".to_string(),
+                  )])),
+                  content: b"{}".to_vec().into(),
+                }))
+              }),
+            }
+          }
+          _ => unreachable!(),
+        }
+      }
+    }
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    let diagnostics = graph
+      .build(
+        vec![Url::parse("file:///foo.ts").unwrap()],
+        &TestLoader,
+        Default::default(),
+      )
+      .await;
+    assert_eq!(diagnostics.len(), 1);
   }
 
   #[tokio::test]
