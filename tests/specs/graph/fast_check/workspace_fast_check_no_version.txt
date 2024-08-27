@@ -4,7 +4,6 @@
   {
     "base": "file:///",
     "name": "@scope/b",
-    "version": "1.0.1",
     "exports": {
       ".": "./mod.ts"
     }

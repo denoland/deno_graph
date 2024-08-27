@@ -317,7 +317,10 @@ struct RegistryUrlConverter<'a> {
 
 impl<'a> RegistryUrlConverter<'a> {
   fn registry_package_url(&self, nv: &PackageNv) -> Url {
-    if let Some(member) = self.workspace_members.iter().find(|m| m.nv == *nv) {
+    if let Some(member) = self.workspace_members.iter().find(|m| {
+      m.name == nv.name
+        && m.version.as_ref().map(|v| v == &nv.version).unwrap_or(true)
+    }) {
       member.base.clone()
     } else {
       self.jsr_url_provider.package_url(nv)
@@ -328,7 +331,7 @@ impl<'a> RegistryUrlConverter<'a> {
     if url.scheme() == "file" {
       for member in self.workspace_members.iter() {
         if url.as_str().starts_with(member.base.as_str()) {
-          return Some(member.nv.clone());
+          return Some(member.as_nv());
         }
       }
       None
@@ -378,7 +381,14 @@ impl<'a> PublicRangeFinder<'a> {
             self
               .workspace_members
               .iter()
-              .find(|m| m.nv == nv)?
+              .find(|m| {
+                m.name == nv.name
+                  && m
+                    .version
+                    .as_ref()
+                    .map(|v| *v == nv.version)
+                    .unwrap_or(true)
+              })?
               .exports
               .iter()
               .map(|(k, v)| (k.clone(), v.clone()))
