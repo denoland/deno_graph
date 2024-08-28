@@ -904,7 +904,7 @@ Deno.test({
         "jsr:@denotest/a": "https://jsr.io/@denotest/a/1.0.0/mod.js",
       },
       "packages": {
-        "@denotest/a": "@denotest/a@1.0.0",
+        "@denotest/a*": "@denotest/a@1.0.0",
       },
       "modules": [
         {
