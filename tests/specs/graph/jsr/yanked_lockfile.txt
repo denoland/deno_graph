@@ -63,7 +63,8 @@ import "jsr:@scope/a@^1.0";
     "jsr:@scope/a@^1.0": "https://jsr.io/@scope/a/1.0.1/mod.ts"
   },
   "packages": {
-    "@scope/a@^1.0": "@scope/a@1.0.1"
+    "@scope/a@1": "@scope/a@1.0.1",
+    "@scope/a@1": "@scope/a@1.0.1"
   }
 }
 
@@ -73,5 +74,5 @@ Fast check https://jsr.io/@scope/a/1.0.1/mod.ts:
 
 # lockfile_jsr_packages
 {
-  "@scope/a@^1.0": "@scope/a@1.0.1"
+  "@scope/a@1": "@scope/a@1.0.1"
 }

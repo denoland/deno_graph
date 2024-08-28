@@ -64,7 +64,7 @@ console.log('HI');
     "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
   },
   "packages": {
-    "@scope/a": "@scope/a@1.0.0"
+    "@scope/a@*": "@scope/a@1.0.0"
   }
 }
 

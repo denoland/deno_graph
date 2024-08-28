@@ -55,6 +55,6 @@ import 'jsr:@scope/a/non_existent' // invalid export
   ],
   "redirects": {},
   "packages": {
-    "@scope/a": "@scope/a@1.0.0"
+    "@scope/a@*": "@scope/a@1.0.0"
   }
 }
