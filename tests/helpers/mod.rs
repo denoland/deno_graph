@@ -610,11 +610,12 @@ impl deno_graph::source::Resolver for WorkspaceMemberResolver {
   ) -> Result<deno_ast::ModuleSpecifier, deno_graph::source::ResolveError> {
     if let Ok(package_ref) = JsrPackageReqReference::from_str(specifier_text) {
       for workspace_member in &self.members {
-        if workspace_member.nv.name == package_ref.req().name
-          && package_ref
-            .req()
-            .version_req
-            .matches(&workspace_member.nv.version)
+        if workspace_member.name == package_ref.req().name
+          && workspace_member
+            .version
+            .as_ref()
+            .map(|version| package_ref.req().version_req.matches(version))
+            .unwrap_or(true)
         {
           let export_name = package_ref.sub_path().unwrap_or(".");
           let export = workspace_member.exports.get(export_name).unwrap();

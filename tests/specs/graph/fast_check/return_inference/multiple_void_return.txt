@@ -3,7 +3,8 @@
 [
   {
     "base": "file:///",
-    "nv": "@scope/a@1.0.0",
+    "name": "@scope/a",
+    "version": "1.0.0",
     "exports": {
       ".": "./mod.ts"
     }

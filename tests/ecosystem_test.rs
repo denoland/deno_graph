@@ -255,10 +255,8 @@ async fn test_version(
   let workspace_members = vec![WorkspaceMember {
     base: Url::parse("file:///").unwrap(),
     exports: version_meta.exports.clone(),
-    nv: PackageNv {
-      name: format!("@{scope}/{name}"),
-      version: deno_semver::Version::parse_standard(version).unwrap(),
-    },
+    name: format!("@{scope}/{name}"),
+    version: Some(deno_semver::Version::parse_standard(version).unwrap()),
   }];
 
   let mut roots = vec![];

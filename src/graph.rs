@@ -818,8 +818,23 @@ fn is_media_type_unknown(media_type: &MediaType) -> bool {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WorkspaceMember {
   pub base: Url,
-  pub nv: PackageNv,
+  pub name: String,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub version: Option<Version>,
   pub exports: IndexMap<String, String>,
+}
+
+impl WorkspaceMember {
+  pub fn as_nv(&self) -> PackageNv {
+    PackageNv {
+      name: self.name.clone(),
+      version: self
+        .version
+        .clone()
+        // use a dummy version
+        .unwrap_or_else(|| Version::parse_standard("0.0.0").unwrap()),
+    }
+  }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1602,7 +1617,7 @@ impl ModuleGraph {
     if let WorkspaceFastCheckOption::Enabled(workspace_members) =
       options.workspace_fast_check
     {
-      pending_nvs.extend(workspace_members.iter().map(|n| n.nv.clone()));
+      pending_nvs.extend(workspace_members.iter().map(|n| n.as_nv()));
     }
     if pending_nvs.is_empty() {
       return;
@@ -5992,7 +6007,8 @@ mod tests {
     let workspace_members = vec![WorkspaceMember {
       base: Url::parse("file:///").unwrap(),
       exports: exports.clone(),
-      nv: PackageNv::from_str("@foo/bar@1.0.0").unwrap(),
+      name: "@foo/bar".to_string(),
+      version: Some(Version::parse_standard("1.0.0").unwrap()),
     }];
     let mut test_loader = MemoryLoader::default();
     test_loader.add_source_with_text(
@@ -6063,7 +6079,8 @@ mod tests {
     let workspace_members = vec![WorkspaceMember {
       base: Url::parse("file:///").unwrap(),
       exports: exports.clone(),
-      nv: PackageNv::from_str("@foo/bar@1.0.0").unwrap(),
+      name: "@foo/bar".to_string(),
+      version: Some(Version::parse_standard("1.0.0").unwrap()),
     }];
     let mut test_loader = MemoryLoader::default();
     test_loader.add_source_with_text(
