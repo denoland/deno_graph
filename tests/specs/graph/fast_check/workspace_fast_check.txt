@@ -100,7 +100,7 @@ class Private {
     "jsr:@scope/c": "https://jsr.io/@scope/c/1.0.0/mod.ts"
   },
   "packages": {
-    "@scope/c": "@scope/c@1.0.0"
+    "@scope/c@*": "@scope/c@1.0.0"
   }
 }
 

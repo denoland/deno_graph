@@ -60,7 +60,7 @@ console.log('HI');
   ],
   "redirects": {},
   "packages": {
-    "@scope/a": "@scope/a@1.0.0"
+    "@scope/a@*": "@scope/a@1.0.0"
   }
 }
 

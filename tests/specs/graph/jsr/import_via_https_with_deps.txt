@@ -107,7 +107,7 @@ console.log(Test);
     "jsr:@scope/b": "https://jsr.io/@scope/b/1.0.0/mod.ts"
   },
   "packages": {
-    "@scope/b": "@scope/b@1.0.0"
+    "@scope/b@*": "@scope/b@1.0.0"
   }
 }
 
