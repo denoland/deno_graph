@@ -819,6 +819,7 @@ fn is_media_type_unknown(media_type: &MediaType) -> bool {
 pub struct WorkspaceMember {
   pub base: Url,
   pub name: String,
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub version: Option<Version>,
   pub exports: IndexMap<String, String>,
 }
