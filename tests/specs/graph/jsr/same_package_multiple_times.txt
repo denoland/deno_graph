@@ -138,7 +138,7 @@ import "jsr:@scope/b@1.1";
     "jsr:@scope/b@1.1": "https://jsr.io/@scope/b/1.1.0/mod.ts"
   },
   "packages": {
-    "@scope/a@^1.0": "@scope/a@1.0.0",
+    "@scope/a@1": "@scope/a@1.0.0",
     "@scope/b@1.1": "@scope/b@1.1.0",
     "@scope/b@1": "@scope/b@1.1.0"
   }

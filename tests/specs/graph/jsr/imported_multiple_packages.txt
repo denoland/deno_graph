@@ -148,9 +148,9 @@ import "jsr:@scope/c";
     "jsr:@scope/c": "https://jsr.io/@scope/c/1.0.0/mod.ts"
   },
   "packages": {
-    "@scope/a": "@scope/a@1.0.0",
-    "@scope/b": "@scope/b@1.0.0",
-    "@scope/c": "@scope/c@1.0.0"
+    "@scope/a@*": "@scope/a@1.0.0",
+    "@scope/b@*": "@scope/b@1.0.0",
+    "@scope/c@*": "@scope/c@1.0.0"
   }
 }
 

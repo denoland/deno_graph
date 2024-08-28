@@ -240,8 +240,8 @@ import './c.ts';
     "jsr:@scope/b/export": "https://jsr.io/@scope/b/9.0.0/mod.ts"
   },
   "packages": {
-    "@scope/a@^1.0": "@scope/a@1.0.0",
-    "@scope/b": "@scope/b@9.0.0"
+    "@scope/a@1": "@scope/a@1.0.0",
+    "@scope/b@*": "@scope/b@9.0.0"
   }
 }
 

@@ -171,7 +171,7 @@ console.log(1);
     "jsr:@scope/c@3.0.0": "https://jsr.io/@scope/c/3.0.0/mod.ts"
   },
   "packages": {
-    "@scope/a": "@scope/a@1.0.1",
+    "@scope/a@*": "@scope/a@1.0.1",
     "@scope/b@2": "@scope/b@2.0.0",
     "@scope/c@3.0.0": "@scope/c@3.0.0",
     "@scope/c@3": "@scope/c@3.0.0"

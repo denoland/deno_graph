@@ -967,7 +967,8 @@ mod tests {
       &root_sym,
       &[WorkspaceMember {
         base: ModuleSpecifier::parse("file:///").unwrap(),
-        nv: nv.clone(),
+        name: nv.name.clone(),
+        version: Some(nv.version.clone()),
         exports: IndexMap::from([(".".to_string(), "./mod.ts".to_string())]),
       }],
       VecDeque::from([nv.clone()]),
