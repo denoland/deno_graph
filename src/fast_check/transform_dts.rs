@@ -933,6 +933,7 @@ fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
       Expr::TsAs(e) => prop_name_from_expr(&e.expr),
       Expr::TsSatisfies(e) => prop_name_from_expr(&e.expr),
       Expr::Ident(_) => Some(PropName::Computed(ComputedPropName {
+        #[allow(clippy::disallowed_methods)]
         span: deno_ast::swc::common::Spanned::span(&expr),
         expr: Box::new(expr.clone()),
       })),
@@ -973,7 +974,7 @@ fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
     | PropName::Str(_)
     | PropName::Num(_)
     | PropName::BigInt(_) => Some(prop_name.clone()),
-    PropName::Computed(computed) => prop_name_from_expr(&*computed.expr),
+    PropName::Computed(computed) => prop_name_from_expr(&computed.expr),
   }
 }
 
