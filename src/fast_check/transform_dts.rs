@@ -775,6 +775,12 @@ impl<'a> FastCheckDtsTransformer<'a> {
           Some(ClassMember::Constructor(class_constructor))
         }
         ClassMember::Method(mut method) => {
+          if let Some(new_prop_name) = valid_prop_name(&method.key) {
+            method.key = new_prop_name;
+          } else {
+            return None;
+          }
+
           method.function.body = None;
           if method.kind == MethodKind::Setter {
             method.function.return_type = None;
@@ -783,6 +789,11 @@ impl<'a> FastCheckDtsTransformer<'a> {
           Some(ClassMember::Method(method))
         }
         ClassMember::ClassProp(mut prop) => {
+          if let Some(new_prop_name) = valid_prop_name(&prop.key) {
+            prop.key = new_prop_name;
+          } else {
+            return None;
+          }
           if prop.type_ann.is_none() {
             if let Some(value) = prop.value {
               prop.type_ann = self
@@ -953,6 +964,74 @@ impl<'a> FastCheckDtsTransformer<'a> {
       // a parse error here.
       Pat::Invalid(_) => None,
     }
+  }
+}
+
+fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
+  fn prop_name_from_expr(expr: &Expr) -> Option<PropName> {
+    match expr {
+      Expr::Lit(e) => match &e {
+        Lit::Str(e) => Some(PropName::Str(e.clone())),
+        Lit::Num(e) => Some(PropName::Num(e.clone())),
+        Lit::BigInt(e) => Some(PropName::BigInt(e.clone())),
+        Lit::Bool(_) | Lit::Null(_) | Lit::Regex(_) | Lit::JSXText(_) => None,
+      },
+      Expr::Tpl(e) => {
+        if e.quasis.is_empty() && e.exprs.len() == 1 {
+          prop_name_from_expr(&e.exprs[0])
+        } else {
+          None
+        }
+      }
+      Expr::Paren(e) => prop_name_from_expr(&e.expr),
+      Expr::TsTypeAssertion(e) => prop_name_from_expr(&e.expr),
+      Expr::TsConstAssertion(e) => prop_name_from_expr(&e.expr),
+      Expr::TsNonNull(e) => prop_name_from_expr(&e.expr),
+      Expr::TsAs(e) => prop_name_from_expr(&e.expr),
+      Expr::TsSatisfies(e) => prop_name_from_expr(&e.expr),
+      Expr::Ident(_) => Some(PropName::Computed(ComputedPropName {
+        #[allow(clippy::disallowed_methods)]
+        span: deno_ast::swc::common::Spanned::span(&expr),
+        expr: Box::new(expr.clone()),
+      })),
+      Expr::TaggedTpl(_)
+      | Expr::This(_)
+      | Expr::Array(_)
+      | Expr::Object(_)
+      | Expr::Fn(_)
+      | Expr::Unary(_)
+      | Expr::Update(_)
+      | Expr::Bin(_)
+      | Expr::Assign(_)
+      | Expr::Member(_)
+      | Expr::SuperProp(_)
+      | Expr::Cond(_)
+      | Expr::Call(_)
+      | Expr::New(_)
+      | Expr::Seq(_)
+      | Expr::Arrow(_)
+      | Expr::Class(_)
+      | Expr::Yield(_)
+      | Expr::Await(_)
+      | Expr::MetaProp(_)
+      | Expr::JSXMember(_)
+      | Expr::JSXNamespacedName(_)
+      | Expr::JSXEmpty(_)
+      | Expr::JSXElement(_)
+      | Expr::JSXFragment(_)
+      | Expr::TsInstantiation(_)
+      | Expr::PrivateName(_)
+      | Expr::OptChain(_)
+      | Expr::Invalid(_) => None,
+    }
+  }
+
+  match prop_name {
+    PropName::Ident(_)
+    | PropName::Str(_)
+    | PropName::Num(_)
+    | PropName::BigInt(_) => Some(prop_name.clone()),
+    PropName::Computed(computed) => prop_name_from_expr(&computed.expr),
   }
 }
 
