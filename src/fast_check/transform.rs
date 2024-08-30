@@ -167,7 +167,10 @@ pub fn transform(
   let emitted_text = String::from_utf8(emitted_source.source).map_err(|e| {
     vec![FastCheckDiagnostic::Emit {
       specifier: specifier.clone(),
-      inner: Arc::new(EmitError::SwcEmit(e.into())),
+      inner: Arc::new(EmitError::SwcEmit(std::io::Error::new(
+        std::io::ErrorKind::InvalidData,
+        e,
+      ))),
     }]
   })?;
 
