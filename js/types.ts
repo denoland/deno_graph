@@ -12,9 +12,6 @@ export interface CacheInfo {
   /** The string path to where a transpiled version of the source content is
    * located, if any. */
   emit?: string;
-  /** The string path to where an external source map of the transpiled source
-   * content is located, if any. */
-  map?: string;
 }
 
 export interface TypesDependency {
