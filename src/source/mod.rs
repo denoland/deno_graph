@@ -295,6 +295,7 @@ pub trait Loader {
   fn cache_module_info(
     &self,
     _specifier: &ModuleSpecifier,
+    _media_type: MediaType,
     _source: &Arc<[u8]>,
     _module_info: &ModuleInfo,
   ) {
