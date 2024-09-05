@@ -3598,17 +3598,18 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               specifier,
               maybe_headers: _maybe_headers,
             } if specifier == item.specifier => {
-              self.loader.cache_module_info(
-                &specifier,
-                &content,
-                &item.module_info,
-              );
               // fill the existing module slot with the loaded source
               let slot = self.graph.module_slots.get_mut(&specifier).unwrap();
               match slot {
                 ModuleSlot::Module(module) => {
                   match module {
                     Module::Js(module) => {
+                      self.loader.cache_module_info(
+                        &specifier,
+                        module.media_type,
+                        &content,
+                        &item.module_info,
+                      );
                       match new_source_with_text(
                         &module.specifier,
                         content,
