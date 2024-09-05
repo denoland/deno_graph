@@ -686,3 +686,10 @@ export type QueryFunction<V> = <T extends CompiledQuery<unknown>>(fn: (qb: Kysel
                                                                                                        ~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/database/sqlite/createQueryFunction.ts:7:104
 
+TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+  server: Partial<Deno.ServeTlsOptions>;
+                       ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/fresh/types.ts:72:24
+
+Found 2 errors.
+
