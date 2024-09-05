@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use deno_ast::diagnostics::Diagnostic;
+use deno_ast::MediaType;
 use deno_graph::source::LoadResponse;
 use deno_graph::source::NullFileSystem;
 use deno_graph::BuildFastCheckTypeGraphOptions;
@@ -289,7 +290,21 @@ async fn test_version(
       },
     )
     .await;
-  graph.valid().unwrap();
+  if let Err(err) = graph.valid() {
+    match err {
+      deno_graph::ModuleGraphError::ModuleError(
+        deno_graph::ModuleError::UnsupportedMediaType(
+          _,
+          MediaType::Cjs | MediaType::Cts,
+          _,
+        ),
+      ) => {
+        // ignore, old packages with cjs and cts
+        return;
+      }
+      err => panic!("{}", err),
+    }
+  }
   graph.build_fast_check_type_graph(BuildFastCheckTypeGraphOptions {
     fast_check_cache: Default::default(),
     fast_check_dts: true,
