@@ -43,12 +43,6 @@ pub struct CacheInfo {
   /// path to the original file, if a remote file, the path to the file in the
   /// cache.
   pub local: Option<PathBuf>,
-  /// If the file has been transpiled, the path to the cached version of the
-  /// transpiled JavaScript.
-  pub emit: Option<PathBuf>,
-  /// If the file has been transpiled and there is a source map separate from
-  /// the transpiled JavaScript, the path to this file.
-  pub map: Option<PathBuf>,
 }
 
 /// The response that is expected from a loader's `.load()` method.

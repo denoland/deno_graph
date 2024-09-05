@@ -9,12 +9,6 @@ export interface CacheInfo {
    * non `file:` URLs, this is the location of the cached content, otherwise it
    * is the absolute path to the local file. */
   local?: string;
-  /** The string path to where a transpiled version of the source content is
-   * located, if any. */
-  emit?: string;
-  /** The string path to where an external source map of the transpiled source
-   * content is located, if any. */
-  map?: string;
 }
 
 export interface TypesDependency {
