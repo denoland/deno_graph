@@ -11,6 +11,5 @@ bureaudouble/bureau/0.0.98
 
 -- stderr --
 error: Failed resolving types. Relative import path "@types/react" not prefixed with / or ./ or ../
-  hint: If you want to use a JSR or npm package, try running `deno add @types/react`
     at https://jsr.io/@bureaudouble/islet/0.0.43/src/react/use-client.ts:3:16
 
