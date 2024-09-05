@@ -501,7 +501,10 @@ impl SpecFile {
       .specifier
       .strip_prefix("cache:")
       .unwrap_or(&self.specifier);
-    if !specifier.starts_with("http") && !specifier.starts_with("file") {
+    if !specifier.starts_with("http:")
+      && !specifier.starts_with("https:")
+      && !specifier.starts_with("file:")
+    {
       Url::parse(&format!("file:///{}", specifier)).unwrap()
     } else {
       Url::parse(specifier).unwrap()

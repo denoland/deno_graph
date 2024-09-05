@@ -277,7 +277,7 @@ impl ModuleError {
       Self::UnsupportedMediaType(_, _, maybe_referrer) => {
         maybe_referrer.as_ref()
       }
-      Self::ParseErr(_, _) => None,
+      Self::ParseErr { .. } => None,
       Self::InvalidTypeAssertion { range, .. } => Some(range),
       Self::UnsupportedImportAttributeType { range, .. } => Some(range),
     }
@@ -297,10 +297,10 @@ impl std::error::Error for ModuleError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
       Self::LoadingErr(_, _, err) => Some(err),
-      Self::Missing(_, _)
-      | Self::MissingDynamic(_, _)
-      | Self::ParseErr(_, _)
-      | Self::UnsupportedMediaType(_, _, _)
+      Self::Missing { .. }
+      | Self::MissingDynamic { .. }
+      | Self::ParseErr { .. }
+      | Self::UnsupportedMediaType { .. }
       | Self::InvalidTypeAssertion { .. }
       | Self::UnsupportedImportAttributeType { .. } => None,
     }
@@ -2211,11 +2211,9 @@ pub(crate) async fn parse_module_source_and_info(
   match media_type {
     MediaType::JavaScript
     | MediaType::Mjs
-    | MediaType::Cjs
     | MediaType::Jsx
     | MediaType::TypeScript
     | MediaType::Mts
-    | MediaType::Cts
     | MediaType::Tsx
     | MediaType::Dts
     | MediaType::Dmts
@@ -2242,7 +2240,9 @@ pub(crate) async fn parse_module_source_and_info(
         }
       }
     }
-    MediaType::Json
+    MediaType::Cjs
+    | MediaType::Cts
+    | MediaType::Json
     | MediaType::Wasm
     | MediaType::TsBuildInfo
     | MediaType::SourceMap
