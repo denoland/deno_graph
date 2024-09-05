@@ -40,4 +40,12 @@ marvinh-test/fresh/2.0.0-prealpha.11
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+export interface ListenOptions extends Partial<Deno.ServeTlsOptions> {
+                                                    ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/app.ts:27:53
+

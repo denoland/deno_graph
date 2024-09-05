@@ -9,4 +9,12 @@ clappcodes/transporter/0.2.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+  serve = (options?: Partial<Deno.ServeTlsOptions>): Deno.HttpServer =>({} as never);
+                                  ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/app.ts:18:35
+

@@ -9,4 +9,12 @@ open-fn/core/0.1.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+export type ServerOptions = (Deno.ServeOptions | Deno.ServeTlsOptions) & {
+                                                      ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/server/server.ts:4:55
+
