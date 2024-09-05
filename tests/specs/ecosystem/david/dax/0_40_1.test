@@ -50,4 +50,34 @@ david/dax/0.40.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2304 [ERROR]: Cannot find name 'PipeOptions'.
+  stdout(kind: WritableStream<Uint8Array>, options?: PipeOptions): CommandBuilder;
+                                                     ~~~~~~~~~~~
+    at file://<tmpdir>/src/command.ts:100:54
+
+TS2304 [ERROR]: Cannot find name 'PipeOptions'.
+  stderr(kind: WritableStream<Uint8Array>, options?: PipeOptions): CommandBuilder;
+                                                     ~~~~~~~~~~~
+    at file://<tmpdir>/src/command.ts:105:54
+
+TS2304 [ERROR]: Cannot find name 'PipeOptions'.
+  /** Opens the file and pipes it to the writable stream. */ pipeTo(dest: WritableStream<Uint8Array>, options?: PipeOptions): Promise<this> {
+                                                                                                                ~~~~~~~~~~~
+    at file://<tmpdir>/src/path.ts:414:113
+
+TS2304 [ERROR]: Cannot find name 'PipeOptions'.
+  /** Pipes the response body to the provided writable stream. */ pipeTo(dest: WritableStream<Uint8Array>, options?: PipeOptions): Promise<void> {
+                                                                                                                     ~~~~~~~~~~~
+    at file://<tmpdir>/src/request.ts:109:118
+
+TS2304 [ERROR]: Cannot find name 'PipeOptions'.
+  /** Pipes the response body to the provided writable stream. */ pipeTo(dest: WritableStream<Uint8Array>, options?: PipeOptions): Promise<void> {
+                                                                                                                     ~~~~~~~~~~~
+    at file://<tmpdir>/src/request.ts:217:118
+
+Found 5 errors.
+

@@ -150,3 +150,10 @@ error: TS2304 [ERROR]: Cannot find name 'Plugin'.
            ~~~~~~
     at file://<tmpdir>/createRenderPipe.ts:27:12
 
+TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+  server: Partial<Deno.ServeTlsOptions>;
+                       ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/createRenderPipe.ts:30:24
+
+Found 2 errors.
+

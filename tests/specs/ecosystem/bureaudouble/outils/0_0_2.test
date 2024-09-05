@@ -155,10 +155,15 @@ error: TS2304 [ERROR]: Cannot find name 'Plugin'.
            ~~~~~~
     at file://<tmpdir>/createRenderPipe.ts:27:12
 
+TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+  server: Partial<Deno.ServeTlsOptions>;
+                       ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/createRenderPipe.ts:30:24
+
 TS2536 [ERROR]: Type '0' cannot be used to index type 'InferResult<T>'.
 export type QueryFunction<V> = <T extends CompiledQuery<unknown>>(fn: (qb: Kysely<V>) => T) => Promise<InferResult<T>[0][]>;
                                                                                                        ~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/database/createSqliteQueryFunction.ts:7:104
 
-Found 2 errors.
+Found 3 errors.
 
