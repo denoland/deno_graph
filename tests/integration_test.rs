@@ -5,8 +5,6 @@
 // out of deno_graph that should be public
 
 use std::cell::RefCell;
-use std::collections::BTreeMap;
-use std::collections::HashMap;
 
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheSetting;
