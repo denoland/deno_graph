@@ -519,7 +519,7 @@ fn test_fill_from_lockfile() {
     *graph
       .packages
       .mappings()
-      .get(&PackageReq::from_str("jsr:@scope/example").unwrap())
+      .get(&PackageReq::from_str("@scope/example").unwrap())
       .unwrap(),
     PackageNv::from_str("@scope/example@1.0.0").unwrap(),
   );
