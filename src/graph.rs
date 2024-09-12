@@ -1196,6 +1196,15 @@ pub struct WalkOptions {
   pub prefer_fast_check_graph: bool,
 }
 
+pub struct FillFromLockfileOptions<
+  'a,
+  TRedirectIter: Iterator<Item = (&'a str, &'a str)>,
+  TPackageSpecifiersIter: Iterator<Item = (&'a JsrDepPackageReq, &'a str)>,
+> {
+  pub redirects: TRedirectIter,
+  pub package_specifiers: TPackageSpecifiersIter,
+}
+
 pub struct ModuleEntryIterator<'a> {
   graph: &'a ModuleGraph,
   seen: HashSet<&'a ModuleSpecifier>,
@@ -1588,6 +1597,45 @@ impl ModuleGraph {
 
   pub fn graph_kind(&self) -> GraphKind {
     self.graph_kind
+  }
+
+  /// Fills the upfront information (redirects and JSR specifiers) from
+  /// the lockfile into the graph.
+  pub fn fill_from_lockfile<
+    'a,
+    TRedirectIter: Iterator<Item = (&'a str, &'a str)>,
+    TPackageSpecifiersIter: Iterator<Item = (&'a JsrDepPackageReq, &'a str)>,
+  >(
+    &mut self,
+    options: FillFromLockfileOptions<'a, TRedirectIter, TPackageSpecifiersIter>,
+  ) {
+    for (from, to) in options.redirects {
+      if let Ok(from) = ModuleSpecifier::parse(from) {
+        if let Ok(to) = ModuleSpecifier::parse(to) {
+          if !matches!(from.scheme(), "file" | "npm" | "jsr") {
+            self.redirects.insert(from, to);
+          }
+        }
+      }
+    }
+    for (req_dep, value) in options.package_specifiers {
+      match req_dep.kind {
+        deno_semver::package::PackageKind::Jsr => {
+          if let Ok(version) = Version::parse_standard(value) {
+            self.packages.add_nv(
+              req_dep.req.clone(),
+              PackageNv {
+                name: req_dep.req.name.clone(),
+                version,
+              },
+            );
+          }
+        }
+        deno_semver::package::PackageKind::Npm => {
+          // ignore
+        }
+      }
+    }
   }
 
   pub async fn build<'a>(

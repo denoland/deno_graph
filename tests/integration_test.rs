@@ -5,6 +5,8 @@
 // out of deno_graph that should be public
 
 use std::cell::RefCell;
+use std::collections::BTreeMap;
+use std::collections::HashMap;
 
 use deno_ast::ModuleSpecifier;
 use deno_graph::source::CacheSetting;
@@ -14,8 +16,12 @@ use deno_graph::source::LoadResponse;
 use deno_graph::source::MemoryFileSystem;
 use deno_graph::source::MemoryLoader;
 use deno_graph::BuildOptions;
+use deno_graph::FillFromLockfileOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
+use deno_semver::jsr::JsrDepPackageReq;
+use deno_semver::package::PackageNv;
+use deno_semver::package::PackageReq;
 use pretty_assertions::assert_eq;
 use url::Url;
 
@@ -488,4 +494,35 @@ await import(`./a/${test}`);
     ],
   )
   .await;
+}
+
+#[test]
+fn test_fill_from_lockfile() {
+  let mut graph = ModuleGraph::new(GraphKind::All);
+  let redirects = [("https://example.com", "https://example.com/final")];
+  let specifiers = [(
+    JsrDepPackageReq::from_str("jsr:@scope/example").unwrap(),
+    "1.0.0",
+  )];
+  graph.fill_from_lockfile(FillFromLockfileOptions {
+    redirects: redirects.iter().copied(),
+    package_specifiers: specifiers.iter().map(|(k, v)| (k, *v)),
+  });
+
+  assert_eq!(
+    graph
+      .redirects
+      .get(&Url::parse("https://example.com").unwrap())
+      .unwrap()
+      .as_str(),
+    "https://example.com/final"
+  );
+  assert_eq!(
+    *graph
+      .packages
+      .mappings()
+      .get(&PackageReq::from_str("jsr:@scope/example").unwrap())
+      .unwrap(),
+    PackageNv::from_str("@scope/example@1.0.0").unwrap(),
+  );
 }
