@@ -68,4 +68,12 @@ neon/serverless/0.9.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2834 [ERROR]: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Consider adding an extension to the import path.
+export { DatabaseError } from "./pg-protocol";
+                              ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.d.ts:1:31
+

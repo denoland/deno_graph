@@ -9,4 +9,12 @@ rdtlabs/ts-utils/0.2.16
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
+  public get cause(): ErrorLike {
+             ~~~~~
+    at file://<tmpdir>/src/cancellation/CancellationError.ts:11:14
+

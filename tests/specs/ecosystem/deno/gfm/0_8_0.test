@@ -107,4 +107,29 @@ deno/gfm/0.8.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class '_Renderer'.
+  heading(text: string, level: 1 | 2 | 3 | 4 | 5 | 6, raw: string): string {
+  ~~~~~~~
+    at file://<tmpdir>/mod.ts:12:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class '_Renderer'.
+  image(src: string, title: string | null, alt: string): string {
+  ~~~~~
+    at file://<tmpdir>/mod.ts:15:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class '_Renderer'.
+  code(code: string, language?: string): string {
+  ~~~~
+    at file://<tmpdir>/mod.ts:18:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class '_Renderer'.
+  link(href: string, title: string | null, text: string): string {
+  ~~~~
+    at file://<tmpdir>/mod.ts:21:3
+
+Found 4 errors.
+

@@ -42,4 +42,37 @@ oak/acorn/0.5.1-alpha.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+  addEventListener(type: "error", listener: RouterErrorEventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions): void;
+  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/router.ts:475:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+  addEventListener(type: "handled", listener: HandledEventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions): void;
+  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/router.ts:476:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+    at file://<tmpdir>/router.ts:477:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+  addEventListener(type: "notfound", listener: NotFoundEventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions): void;
+  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/router.ts:478:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+  addEventListener(type: "request", listener: RouterRequestListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions): void;
+  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/router.ts:479:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+  addEventListener(param0?: any, param1?: any, param2?: any): any {
+  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/router.ts:480:3
+
+Found 6 errors.
+

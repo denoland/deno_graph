@@ -61,6 +61,8 @@ export interface MagicStringAST extends MagicString {
 
 TS2416 [ERROR]: Property 'clone' in type 'MagicStringAST' is not assignable to the same property in base type 'MagicString'.
   Type '() => MagicStringAST' is not assignable to type '() => this'.
+    Type 'MagicStringAST' is not assignable to type 'this'.
+      'MagicStringAST' is assignable to the constraint of type 'this', but 'this' could be instantiated with a different subtype of constraint 'MagicStringAST'.
   clone(): MagicStringAST {
   ~~~~~
     at file://<tmpdir>/src/index.ts:39:3

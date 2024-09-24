@@ -9,4 +9,19 @@ becojo/foo/0.3.5
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'AbstractType<Output | undefined>'.
+  optional(): Optional<Output> {
+  ~~~~~~~~
+    at file://<tmpdir>/src/index.ts:281:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Type<Infer<T[number]>>'.
+  toTerminals(func: (t: TerminalType) => void): void {}
+  ~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:357:3
+
+Found 2 errors.
+

@@ -31,4 +31,12 @@ lowlighter/xml/3.0.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2694 [ERROR]: Namespace 'Deno' has no exported member 'SeekerSync'.
+/** Flux */ export type Flux = ReaderSync & Deno.SeekerSync;
+                                                 ~~~~~~~~~~
+    at file://<tmpdir>/utils/types.ts:6:50
+
