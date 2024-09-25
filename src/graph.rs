@@ -1298,7 +1298,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
       Some(ModuleEntryRef::Module(module)) => match module {
         Module::Js(module) => {
           let check_types =
-            self.is_checkable(module.media_type) && self.kind.include_types();
+            self.kind.include_types() && self.is_checkable(module.media_type);
           let module_deps = if check_types && self.prefer_fast_check_graph {
             module.dependencies_prefer_fast_check()
           } else {
