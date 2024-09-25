@@ -64,6 +64,7 @@ pub use graph::Dependency;
 pub use graph::ExternalModule;
 pub use graph::FastCheckTypeModule;
 pub use graph::FastCheckTypeModuleSlot;
+pub use graph::FillFromLockfileOptions;
 pub use graph::GraphImport;
 pub use graph::GraphKind;
 pub use graph::JsModule;
