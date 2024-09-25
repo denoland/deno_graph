@@ -2738,6 +2738,22 @@ fn fill_module_dependencies(
         dep.maybe_attribute_type = import.attributes.get("type").cloned();
       }
 
+      if let Some(types_specifier) = &types_specifier {
+        if graph_kind.include_types() && dep.maybe_type.is_none() {
+          dep.maybe_deno_types_specifier = Some(types_specifier.text.clone());
+          dep.maybe_type = resolve(
+            &types_specifier.text,
+            Range::from_position_range(
+              module_specifier.clone(),
+              types_specifier.range,
+            ),
+            ResolutionMode::Types,
+            jsr_url_provider,
+            maybe_resolver,
+            maybe_npm_resolver,
+          );
+        }
+      }
       if import.kind == ImportKind::TsType {
         if dep.maybe_type.is_none() {
           dep.maybe_type = resolve(
@@ -2769,42 +2785,19 @@ fn fill_module_dependencies(
         dep.is_dynamic = dep.is_dynamic && import.is_dynamic;
       }
       if graph_kind.include_types() && dep.maybe_type.is_none() {
-        let specifier = module_specifier.clone();
-        let maybe_type = if let Some(types_specifier) = &types_specifier {
-          dep.maybe_deno_types_specifier = Some(types_specifier.text.clone());
-          resolve(
-            &types_specifier.text,
-            Range::from_position_range(specifier, types_specifier.range),
-            ResolutionMode::Types,
-            jsr_url_provider,
-            maybe_resolver,
-            maybe_npm_resolver,
-          )
-        } else {
-          // only check if the code resolution is for the same range
-          if Some(&import.range) == dep.maybe_code.maybe_range() {
-            let types_resolution = resolve(
-              &import.specifier,
-              import.range.clone(),
-              ResolutionMode::Types,
-              jsr_url_provider,
-              maybe_resolver,
-              maybe_npm_resolver,
-            );
-            // only bother setting if the resolved specifier
-            // does not match the code specifier
-            if types_resolution.maybe_specifier()
-              != dep.maybe_code.maybe_specifier()
-            {
-              types_resolution
-            } else {
-              Resolution::None
-            }
-          } else {
-            Resolution::None
-          }
-        };
-        dep.maybe_type = maybe_type;
+        let maybe_type = resolve(
+          &import.specifier,
+          import.range.clone(),
+          ResolutionMode::Types,
+          jsr_url_provider,
+          maybe_resolver,
+          maybe_npm_resolver,
+        );
+        // only bother setting if the resolved specifier
+        // does not match the code specifier
+        if maybe_type.maybe_specifier() != dep.maybe_code.maybe_specifier() {
+          dep.maybe_type = maybe_type
+        }
       }
       dep.imports.push(import);
     }
@@ -5877,6 +5870,62 @@ mod tests {
           ImportAttribute::Known("json".to_string())
         )])),
       },]
+    );
+  }
+
+  #[tokio::test]
+  async fn dependency_ts_type_import_with_deno_types() {
+    struct TestLoader;
+    impl Loader for TestLoader {
+      fn load(
+        &self,
+        specifier: &ModuleSpecifier,
+        options: LoadOptions,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///foo.ts" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: b"
+                // @deno-types='file:///bar.d.ts'
+                import type { Bar as _ } from 'bar';
+              "
+              .to_vec()
+              .into(),
+            }))
+          }),
+          "file:///bar.d.ts" => {
+            assert!(!options.is_dynamic);
+            Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: b"export type Bar = null;\n".to_vec().into(),
+              }))
+            })
+          }
+          _ => unreachable!(),
+        }
+      }
+    }
+    let mut graph = ModuleGraph::new(GraphKind::TypesOnly);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.ts").unwrap()],
+        &TestLoader,
+        Default::default(),
+      )
+      .await;
+    graph.valid().unwrap();
+    let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
+    let module = module.js().unwrap();
+    let dependency = module.dependencies.get("bar").unwrap();
+    assert_eq!(dependency.maybe_code, Resolution::None);
+    assert_eq!(
+      dependency.maybe_type.maybe_specifier().unwrap().as_str(),
+      "file:///bar.d.ts",
     );
   }
 
