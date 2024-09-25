@@ -78,6 +78,11 @@ TS2300 [ERROR]: Duplicate identifier 'isVisible'.
           ~~~~~~~~~
     at file://<tmpdir>/src/main-button/MainButton.ts:29:11
 
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Navigator<Promise<void>>'.
+  back = (): Promise<void> =>({} as never);
+  ~~~~
+    at file://<tmpdir>/src/navigation/HashNavigator/HashNavigator.ts:38:3
+
 TS2300 [ERROR]: Duplicate identifier 'isOpened'.
   declare private isOpened: any;
                   ~~~~~~~~
@@ -108,5 +113,5 @@ TS2300 [ERROR]: Duplicate identifier 'isVisible'.
           ~~~~~~~~~
     at file://<tmpdir>/src/settings-button/SettingsButton.ts:15:11
 
-Found 19 errors.
+Found 20 errors.
 

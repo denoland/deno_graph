@@ -9,4 +9,24 @@ halvardm/sqlx/0.0.0-12
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+   */ addEventListener(type: EventType, listener: Listener | null, options?: boolean | ListenerOptions): void {}
+      ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/lib/events.ts:94:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+   */ dispatchEvent(event: Event): boolean {
+      ~~~~~~~~~~~~~
+    at file://<tmpdir>/lib/events.ts:99:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+   */ removeEventListener(type: EventType, callback: Listener | null, options?: boolean | RemoveListenerOptions): void {}
+      ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/lib/events.ts:106:7
+
+Found 3 errors.
+

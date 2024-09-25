@@ -9,4 +9,34 @@ orama/minbpe/0.0.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'RegexTokenizer'.
+  _encodeChunk(textBytes: Uint8Array): number[] {
+  ~~~~~~~~~~~~
+    at file://<tmpdir>/src/gpt4.ts:8:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'RegexTokenizer'.
+  decode(ids: number[]): string {
+  ~~~~~~
+    at file://<tmpdir>/src/gpt4.ts:11:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'RegexTokenizer'.
+  train(text: string, vocabSize: number, verbose?: boolean): void {}
+  ~~~~~
+    at file://<tmpdir>/src/gpt4.ts:14:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'RegexTokenizer'.
+  save(filePrefix: string): void {}
+  ~~~~
+    at file://<tmpdir>/src/gpt4.ts:15:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'RegexTokenizer'.
+  load(modelFile: string): void {}
+  ~~~~
+    at file://<tmpdir>/src/gpt4.ts:16:3
+
+Found 5 errors.
+

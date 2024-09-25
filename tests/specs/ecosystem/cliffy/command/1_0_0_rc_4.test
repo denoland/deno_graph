@@ -33,4 +33,34 @@ cliffy/command/1.0.0-rc.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'StringType'.
+  /** Complete action names. */ public complete(): string[] {
+                                       ~~~~~~~~
+    at file://<tmpdir>/types/action_list.ts:8:40
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Type<boolean>'.
+  /** Complete boolean type. */ public complete(): string[] {
+                                       ~~~~~~~~
+    at file://<tmpdir>/types/boolean.ts:7:40
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'StringType'.
+  /** Complete child command names. */ public complete(cmd: Command): string[] {
+                                              ~~~~~~~~
+    at file://<tmpdir>/types/child_command.ts:8:47
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'StringType'.
+  /** Complete sub-command names of global parent command. */ public complete(_cmd: Command, parent?: Command): string[] {
+                                                                     ~~~~~~~~
+    at file://<tmpdir>/types/command.ts:4:70
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Provider'.
+  listVersions(name: string, currentVersion?: string): Promise<void> {
+  ~~~~~~~~~~~~
+    at file://<tmpdir>/upgrade/provider/github.ts:31:3
+
+Found 5 errors.
+

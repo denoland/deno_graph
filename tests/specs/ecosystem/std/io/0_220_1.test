@@ -9,4 +9,19 @@ std/io/0.220.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Seeker'.
+ */ export function readRange(r: Reader & Deno.Seeker, range: ByteRange): Promise<Uint8Array> {
+                                               ~~~~~~
+    at file://<tmpdir>/read_range.ts:24:48
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'SeekerSync'.
+ */ export function readRangeSync(r: ReaderSync & Deno.SeekerSync, range: ByteRange): Uint8Array {
+                                                       ~~~~~~~~~~
+    at file://<tmpdir>/read_range.ts:43:56
+
+Found 2 errors.
+
