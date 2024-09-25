@@ -3237,6 +3237,7 @@ impl FillPassMode {
 
 struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
+  was_dynamic_root: bool,
   file_system: &'a dyn FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   passthrough_jsr_specifiers: bool,
@@ -3265,6 +3266,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     };
     let mut builder = Self {
       in_dynamic_branch: options.is_dynamic,
+      was_dynamic_root: options.is_dynamic,
       file_system: options.file_system,
       jsr_url_provider: options.jsr_url_provider,
       passthrough_jsr_specifiers: options.passthrough_jsr_specifiers,
@@ -3947,6 +3949,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             specifier,
             LoadOptions {
               is_dynamic: self.in_dynamic_branch,
+              was_dynamic_root: self.was_dynamic_root,
               cache_setting: CacheSetting::Only,
               maybe_checksum: Some(checksum.clone()),
             },
@@ -4303,6 +4306,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let module_analyzer = self.module_analyzer;
     let jsr_url_provider = self.jsr_url_provider;
     let is_root = self.roots_contain(&requested_specifier);
+    let was_dynamic_root = self.was_dynamic_root;
     let maybe_nv_when_no_version_info = if maybe_version_info.is_none() {
       self
         .jsr_url_provider
@@ -4343,6 +4347,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           PendingResult<PendingJsrPackageVersionInfoLoadItem>,
         )>,
         is_dynamic: bool,
+        was_dynamic_root: bool,
         loader: &dyn Loader,
         jsr_url_provider: &dyn JsrUrlProvider,
         module_analyzer: &dyn ModuleAnalyzer,
@@ -4384,6 +4389,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           &load_specifier,
           LoadOptions {
             is_dynamic,
+            was_dynamic_root,
             cache_setting: CacheSetting::Use,
             maybe_checksum: maybe_checksum.clone(),
           },
@@ -4492,6 +4498,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         &mut loaded_package_via_https_url,
         maybe_version_load_fut,
         is_dynamic,
+        was_dynamic_root,
         loader,
         jsr_url_provider,
         module_analyzer,
@@ -4582,6 +4589,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               &specifier,
               LoadOptions {
                 is_dynamic: self.in_dynamic_branch,
+                was_dynamic_root: self.was_dynamic_root,
                 cache_setting: CacheSetting::Use,
                 maybe_checksum: Some(checksum.clone()),
               },
@@ -5315,10 +5323,12 @@ mod tests {
 
   #[tokio::test]
   async fn static_dep_of_dynamic_dep_is_dynamic() {
+    #[derive(Default)]
     struct TestLoader {
       loaded_foo: RefCell<bool>,
       loaded_bar: RefCell<bool>,
       loaded_baz: RefCell<bool>,
+      loaded_dynamic_root: RefCell<bool>,
     }
     impl Loader for TestLoader {
       fn load(
@@ -5330,6 +5340,7 @@ mod tests {
         match specifier.as_str() {
           "file:///foo.js" => {
             assert!(!options.is_dynamic);
+            assert!(!options.was_dynamic_root);
             *self.loaded_foo.borrow_mut() = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
@@ -5341,6 +5352,7 @@ mod tests {
           }
           "file:///bar.js" => {
             assert!(options.is_dynamic);
+            assert!(!options.was_dynamic_root);
             *self.loaded_bar.borrow_mut() = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
@@ -5352,7 +5364,20 @@ mod tests {
           }
           "file:///baz.js" => {
             assert!(options.is_dynamic);
+            assert!(!options.was_dynamic_root);
             *self.loaded_baz.borrow_mut() = true;
+            Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                content: b"console.log('Hello, world!')".to_vec().into(),
+              }))
+            })
+          }
+          "file:///dynamic_root.js" => {
+            assert!(options.is_dynamic);
+            assert!(options.was_dynamic_root);
+            *self.loaded_dynamic_root.borrow_mut() = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -5366,11 +5391,7 @@ mod tests {
       }
     }
 
-    let loader = TestLoader {
-      loaded_foo: RefCell::new(false),
-      loaded_bar: RefCell::new(false),
-      loaded_baz: RefCell::new(false),
-    };
+    let loader = TestLoader::default();
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
@@ -5382,7 +5403,21 @@ mod tests {
     assert!(*loader.loaded_foo.borrow());
     assert!(*loader.loaded_bar.borrow());
     assert!(*loader.loaded_baz.borrow());
+    assert!(!*loader.loaded_dynamic_root.borrow());
     assert_eq!(graph.specifiers_count(), 3);
+
+    graph
+      .build(
+        vec![Url::parse("file:///dynamic_root.js").unwrap()],
+        &loader,
+        BuildOptions {
+          is_dynamic: true,
+          ..Default::default()
+        },
+      )
+      .await;
+    assert!(*loader.loaded_dynamic_root.borrow());
+    assert_eq!(graph.specifiers_count(), 4);
   }
 
   #[tokio::test]
