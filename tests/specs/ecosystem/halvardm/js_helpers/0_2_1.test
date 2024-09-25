@@ -77,4 +77,27 @@ halvardm/js-helpers/0.2.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
+  name = this.constructor.name;
+  ~~~~
+    at file://<tmpdir>/lib/default/cookie.ts:77:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
+  name = this.constructor.name;
+  ~~~~
+    at file://<tmpdir>/lib/default/fetcher.ts:78:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Fetcher'.
+   */ requester<R extends ValidatorFetcherRequesterOptions = ValidatorFetcherRequesterOptions>(input: string, options?: R): Promise<Response> {
+      ~~~~~~~~~
+    at file://<tmpdir>/lib/default/fetcher.ts:256:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Fetcher'.
+    at file://<tmpdir>/lib/default/fetcher.ts:261:7
+
+Found 4 errors.
+

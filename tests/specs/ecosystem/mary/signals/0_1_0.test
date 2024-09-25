@@ -9,4 +9,34 @@ mary/signals/0.1.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Signal<T>'.
+  /** @internal */ _refresh(): boolean {
+                   ~~~~~~~~
+    at file://<tmpdir>/mod.ts:69:20
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Signal<T>'.
+  /** @internal */ _subscribe(target: Computation): void {}
+                   ~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:72:20
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Signal<T>'.
+  /** @internal */ _unsubscribe(target: Computation): void {}
+                   ~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:73:20
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Signal<T>'.
+	 */ peek(): T {
+	    ~~~~
+    at file://<tmpdir>/mod.ts:77:6
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Signal<T>'.
+	 */ get value(): T {
+	        ~~~~~
+    at file://<tmpdir>/mod.ts:82:10
+
+Found 5 errors.
+

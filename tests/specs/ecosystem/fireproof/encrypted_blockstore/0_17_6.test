@@ -198,6 +198,13 @@ fireproof/encrypted-blockstore/0.17.6
 -- stdout --
 
 -- stderr --
+Warning The following packages contained npm lifecycle scripts (preinstall/install/postinstall) that were not executed:
+┠─ npm:es5-ext@0.10.64
+┃
+┠─ This may cause the packages to not work correctly.
+┠─ Lifecycle scripts are only supported when using a `node_modules` directory.
+┠─ Enable it in your deno config file:
+┖─ "nodeModulesDir": "auto"
 error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { EncryptedBlockstore, CompactionFetcher, BlockFetcher, CarTransaction, TransactionMeta } from "./transaction.ts";
                                                  ~~~~~~~~~~~~
@@ -243,5 +250,10 @@ export { DbMeta, AnyBlock, AnyLink, CryptoOpts, StoreOpts, CommitOpts } from "./
                                                            ~~~~~~~~~~
     at file://<tmpdir>/src/index.ts:5:60
 
-Found 9 errors.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'MemoryBlockstore'.
+  get(cid: AnyAnyLink): Promise<AnyAnyBlock | undefined> {
+  ~~~
+    at file://<tmpdir>/src/transaction.ts:13:3
+
+Found 10 errors.
 

@@ -863,4 +863,41 @@ nshiab/simple-data-analysis/2.7.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+Warning The following packages contained npm lifecycle scripts (preinstall/install/postinstall) that were not executed:
+┠─ npm:duckdb@0.10.2
+┃
+┠─ This may cause the packages to not work correctly.
+┠─ Lifecycle scripts are only supported when using a `node_modules` directory.
+┠─ Enable it in your deno config file:
+┖─ "nodeModulesDir": "auto"
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'SimpleDB'.
+     */ start(): Promise<void> {
+        ~~~~~
+    at file://<tmpdir>/src/class/SimpleGeoDB.ts:22:9
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'SimpleGeoDB'.
+     */ start(): Promise<void> {
+        ~~~~~
+    at file://<tmpdir>/src/class/SimpleNodeDB.ts:43:9
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'SimpleGeoDB'.
+     */ loadArray(table: string, arrayOfObjects: {
+        ~~~~~~~~~
+    at file://<tmpdir>/src/class/SimpleNodeDB.ts:58:9
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'SimpleGeoDB'.
+     */ loadData(table: string, files: string | string[], options?: {
+        ~~~~~~~~
+    at file://<tmpdir>/src/class/SimpleNodeDB.ts:98:9
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'SimpleGeoDB'.
+     */ done(): Promise<void> {
+        ~~~~
+    at file://<tmpdir>/src/class/SimpleNodeDB.ts:233:9
+
+Found 5 errors.
+

@@ -61,4 +61,38 @@ oak/oak/13.2.5
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+    at file://<tmpdir>/application.ts:208:77
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+    at file://<tmpdir>/application.ts:211:26
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+    at file://<tmpdir>/application.ts:213:80
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+   * `"error"` and `"listen"`. */ addEventListener(param0?: any, param1?: any, param2?: any): any {
+                                  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/application.ts:215:35
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+  constructor(file: (Deno.Reader & Deno.Seeker & Deno.Closer) | Uint8Array, type: string, ranges: ByteRange[], size: number, boundary: string){
+                          ~~~~~~
+    at file://<tmpdir>/range.ts:22:27
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Seeker'.
+  constructor(file: (Deno.Reader & Deno.Seeker & Deno.Closer) | Uint8Array, type: string, ranges: ByteRange[], size: number, boundary: string){
+                                        ~~~~~~
+    at file://<tmpdir>/range.ts:22:41
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Closer'.
+  constructor(file: (Deno.Reader & Deno.Seeker & Deno.Closer) | Uint8Array, type: string, ranges: ByteRange[], size: number, boundary: string){
+                                                      ~~~~~~
+    at file://<tmpdir>/range.ts:22:55
+
+Found 7 errors.
+

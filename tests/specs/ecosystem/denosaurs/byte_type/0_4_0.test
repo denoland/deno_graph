@@ -9,4 +9,49 @@ denosaurs/byte-type/0.4.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'UnsizedType<T[]>'.
+  read(dt: DataView, options?: Options): T[] {
+  ~~~~
+    at file://<tmpdir>/src/array/array.ts:11:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'UnsizedType<T[]>'.
+  write(value: T[], dt: DataView, options?: Options): void {}
+  ~~~~~
+    at file://<tmpdir>/src/array/array.ts:15:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'UnsizedType<V>'.
+  read(dt: DataView, options?: Options): V {
+  ~~~~
+    at file://<tmpdir>/src/compound/struct.ts:14:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'UnsizedType<V>'.
+  write(value: V, dt: DataView, options?: Options): void {}
+  ~~~~~
+    at file://<tmpdir>/src/compound/struct.ts:18:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'UnsizedType<V>'.
+  read(dt: DataView, options?: Options): V {
+  ~~~~
+    at file://<tmpdir>/src/compound/tagged_union.ts:18:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'UnsizedType<V>'.
+  write(variant: V, dt: DataView, options?: Options): void {}
+  ~~~~~
+    at file://<tmpdir>/src/compound/tagged_union.ts:22:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'UnsizedType<V>'.
+  read(dt: DataView, options?: Options): V {
+  ~~~~
+    at file://<tmpdir>/src/compound/tuple.ts:12:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'UnsizedType<V>'.
+  write(value: V, dt: DataView, options?: Options): void {}
+  ~~~~~
+    at file://<tmpdir>/src/compound/tuple.ts:16:3
+
+Found 8 errors.
+
