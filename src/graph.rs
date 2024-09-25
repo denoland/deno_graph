@@ -1184,9 +1184,11 @@ pub enum ModuleEntryRef<'a> {
 
 #[derive(Debug, Clone)]
 pub struct WalkOptions {
+  /// Whether to walk js modules when `kind` is `GraphKind::TypesOnly`.
   pub check_js: bool,
   pub follow_dynamic: bool,
-  pub follow_type_only: bool,
+  /// Part of the graph to walk.
+  pub kind: GraphKind,
   /// If the fast check module graph should be preferred
   /// to walk over walking all modules.
   ///
@@ -1201,7 +1203,7 @@ pub struct ModuleEntryIterator<'a> {
   seen: HashSet<&'a ModuleSpecifier>,
   visiting: VecDeque<&'a ModuleSpecifier>,
   follow_dynamic: bool,
-  follow_type_only: bool,
+  kind: GraphKind,
   check_js: bool,
   prefer_fast_check_graph: bool,
   previous_module: Option<ModuleEntryRef<'a>>,
@@ -1223,7 +1225,7 @@ impl<'a> ModuleEntryIterator<'a> {
     for (_, dep) in graph.imports.values().flat_map(|i| &i.dependencies) {
       let mut resolutions = Vec::with_capacity(2);
       resolutions.push(&dep.maybe_code);
-      if options.follow_type_only {
+      if options.kind.include_types() {
         resolutions.push(&dep.maybe_type);
       }
       #[allow(clippy::manual_flatten)]
@@ -1242,7 +1244,7 @@ impl<'a> ModuleEntryIterator<'a> {
       seen,
       visiting,
       follow_dynamic: options.follow_dynamic,
-      follow_type_only: options.follow_type_only,
+      kind: options.kind,
       check_js: options.check_js,
       prefer_fast_check_graph: options.prefer_fast_check_graph,
       previous_module: None,
@@ -1275,6 +1277,18 @@ impl<'a> ModuleEntryIterator<'a> {
       Ok(())
     }
   }
+
+  /// Gets if the specified media type can be type checked.
+  fn is_checkable(&self, media_type: MediaType) -> bool {
+    self.check_js
+      || !matches!(
+        media_type,
+        MediaType::JavaScript
+          | MediaType::Mjs
+          | MediaType::Cjs
+          | MediaType::Jsx
+      )
+  }
 }
 
 impl<'a> Iterator for ModuleEntryIterator<'a> {
@@ -1284,27 +1298,8 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
     match self.previous_module.take() {
       Some(ModuleEntryRef::Module(module)) => match module {
         Module::Js(module) => {
-          let check_types = (self.check_js
-            || !matches!(
-              module.media_type,
-              MediaType::JavaScript
-                | MediaType::Mjs
-                | MediaType::Cjs
-                | MediaType::Jsx
-            ))
-            && self.follow_type_only;
-          if check_types {
-            if let Some(Resolution::Ok(resolved)) = module
-              .maybe_types_dependency
-              .as_ref()
-              .map(|d| &d.dependency)
-            {
-              let specifier = &resolved.specifier;
-              if self.seen.insert(specifier) {
-                self.visiting.push_front(specifier);
-              }
-            }
-          }
+          let check_types =
+            self.kind.include_types() && self.is_checkable(module.media_type);
           let module_deps = if check_types && self.prefer_fast_check_graph {
             module.dependencies_prefer_fast_check()
           } else {
@@ -1314,7 +1309,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
             if !dep.is_dynamic || self.follow_dynamic {
               let mut resolutions = Vec::with_capacity(2);
               resolutions.push(&dep.maybe_code);
-              if check_types {
+              if self.kind.include_types() {
                 resolutions.push(&dep.maybe_type);
               }
               #[allow(clippy::manual_flatten)]
@@ -1351,7 +1346,28 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
               // ignore
             }
             ModuleSlot::Module(module) => {
-              break (specifier, ModuleEntryRef::Module(module))
+              if let Module::Js(module) = &module {
+                if self.kind.include_types() {
+                  if let Some(Resolution::Ok(resolved)) = module
+                    .maybe_types_dependency
+                    .as_ref()
+                    .map(|d| &d.dependency)
+                  {
+                    let specifier = &resolved.specifier;
+                    if self.seen.insert(specifier) {
+                      self.visiting.push_front(specifier);
+                    }
+                    if self.kind == GraphKind::TypesOnly {
+                      continue; // skip visiting the code module
+                    }
+                  } else if self.kind == GraphKind::TypesOnly
+                    && !self.is_checkable(module.media_type)
+                  {
+                    continue; // skip visiting
+                  }
+                }
+              }
+              break (specifier, ModuleEntryRef::Module(module));
             }
             ModuleSlot::Err(err) => {
               break (specifier, ModuleEntryRef::Err(err))
@@ -1460,23 +1476,14 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
 
   fn next(&mut self) -> Option<Self::Item> {
     while self.next_errors.is_empty() {
-      let follow_type_only = self.iterator.follow_type_only;
-      let check_js = self.iterator.check_js;
+      let kind = self.iterator.kind;
       let follow_dynamic = self.iterator.follow_dynamic;
+      let prefer_fast_check_graph = self.iterator.prefer_fast_check_graph;
 
       if let Some((_, module_entry)) = self.iterator.next() {
         match module_entry {
           ModuleEntryRef::Module(Module::Js(module)) => {
-            let check_types = (check_js
-              || !matches!(
-                module.media_type,
-                MediaType::JavaScript
-                  | MediaType::Mjs
-                  | MediaType::Cjs
-                  | MediaType::Jsx
-              ))
-              && follow_type_only;
-            if check_types {
+            if kind.include_types() {
               if let Some(dep) = module.maybe_types_dependency.as_ref() {
                 if let Some(err) = self.check_resolution(
                   module,
@@ -1489,7 +1496,10 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
                 }
               }
             }
-            let module_deps = if follow_type_only {
+
+            let check_types = kind.include_types()
+              && self.iterator.is_checkable(module.media_type);
+            let module_deps = if check_types && prefer_fast_check_graph {
               module.dependencies_prefer_fast_check()
             } else {
               &module.dependencies
@@ -1699,7 +1709,7 @@ impl ModuleGraph {
       roots.iter().copied(),
       WalkOptions {
         follow_dynamic: true,
-        follow_type_only: true,
+        kind: self.graph_kind,
         check_js: true,
         prefer_fast_check_graph: false,
       },
@@ -1970,7 +1980,7 @@ impl ModuleGraph {
         self.roots.iter(),
         WalkOptions {
           check_js: true,
-          follow_type_only: false,
+          kind: GraphKind::CodeOnly,
           follow_dynamic: false,
           prefer_fast_check_graph: false,
         },
@@ -5393,7 +5403,7 @@ mod tests {
         roots.iter(),
         WalkOptions {
           follow_dynamic: false,
-          follow_type_only: true,
+          kind: GraphKind::All,
           check_js: true,
           prefer_fast_check_graph: false,
         },
@@ -5408,7 +5418,7 @@ mod tests {
         roots.iter(),
         WalkOptions {
           follow_dynamic: true,
-          follow_type_only: true,
+          kind: GraphKind::All,
           check_js: true,
           prefer_fast_check_graph: false,
         },
@@ -5547,7 +5557,7 @@ mod tests {
         WalkOptions {
           check_js: true,
           follow_dynamic: false,
-          follow_type_only: true,
+          kind: GraphKind::All,
           prefer_fast_check_graph: false,
         },
       )
