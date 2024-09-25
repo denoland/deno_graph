@@ -1278,6 +1278,7 @@ impl<'a> ModuleEntryIterator<'a> {
     }
   }
 
+  /// Gets if the specified media type can be type checked.
   fn is_checkable(&self, media_type: MediaType) -> bool {
     self.check_js
       || !matches!(
